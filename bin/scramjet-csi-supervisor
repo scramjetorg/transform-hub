@@ -1,5 +1,15 @@
 #!/usr/bin/env node
 
-process.stdout.write("Nothing to see here");
+const verbose = [...process.argv]
+    .slice(2)
+    .find(val => ['-v', '--verbose'].includes(val))
+;
 
-process.exit(1);
+console.error('verbose', verbose)
+
+require("../dist/supervisor/index")
+    .supervisor()
+    .catch(e => {
+        console.error(e.stack);
+        process.exitCode = e.exitCode || 10;
+    });

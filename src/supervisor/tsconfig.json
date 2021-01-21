@@ -1,4 +1,6 @@
 {
   "compilerOptions": {"outDir": "../../dist/supervisor"},
-  "extends": "../../tsconfig.json"
+  "extends": "../../conf/tsconfig.json",
+  "include": ["**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
 }

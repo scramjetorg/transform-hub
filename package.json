@@ -7,6 +7,10 @@
     "csi-supervisor": "bin/scramjet-csi-supervisor"
   },
   "scripts": {
+    "build": "npm run build:supervisor",
+    "build:supervisor": "tsc -p src/supervisor/tsconfig.json",
+    "clean": "npm run clean:dist",
+    "clean:dist": "find dist/ -mindepth 1 -not -iwholename dist/.keep -delete",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Scramjet <open-source@scramjet.org>",
