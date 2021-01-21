@@ -10,9 +10,12 @@
     "build": "npm run build:supervisor",
     "build:supervisor": "tsc -p src/supervisor/tsconfig.json",
     "clean": "npm run clean:dist",
-    "clean:dist": "find dist/ -mindepth 1 -not -iwholename dist/.keep -delete",
+    "clean:dist": "find dist/ -mindepth 1 -not -wholename dist/.keep -delete",
+    "postinstall": "find src/ scripts/ lib/ -name 'package.json' -not -wholename '*node_modules*' -execdir npm install \\;",
+    "update": "",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0"
+  "license": "AGPL-3.0",
+  "devDependencies": {}
 }
