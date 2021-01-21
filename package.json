@@ -1,0 +1,11 @@
+{
+  "name": "scramjet-csi-dev",
+  "version": "0.0.0",
+  "description": "A development repo for Scramjet CSI, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "AGPL-3.0"
+}
