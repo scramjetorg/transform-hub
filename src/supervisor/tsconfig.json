@@ -1,0 +1,4 @@
+{
+  "compilerOptions": {"outDir": "../../dist/supervisor"},
+  "extends": "../../tsconfig.json"
+}

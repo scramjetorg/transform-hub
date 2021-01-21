@@ -1,0 +1,14 @@
+{
+  "name": "@scramjet/supervisor",
+  "version": "0.0.0",
+  "description": "The supervisor application for the underlying container and program wrapper executed within it.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "@types/node": "^14.14.22"
+  }
+}
