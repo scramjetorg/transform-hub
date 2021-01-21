@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "A development repo for Scramjet CSI, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
+  "bin": {
+    "csi-supervisor": "bin/scramjet-csi-supervisor"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
