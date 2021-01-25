@@ -120,3 +120,5 @@ dist
 
 # scramjet specific
 .work/
+# bdd
+bdd/*report*.html

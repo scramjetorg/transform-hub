@@ -1,0 +1,11 @@
+{
+  "name": "scramjet-bdd",
+  "version": "1.0.0",
+  "description": "",
+  "main": "_cucumber.js",
+  "dependencies": {
+    "cucumber": "^7.0.0-rc.0",
+    "n-readlines": "^1.0.1"
+  },
+  "devDependencies": {}
+}
