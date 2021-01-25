@@ -1,0 +1,16 @@
+{
+  "name": "@scramjet/csi-types",
+  "version": "0.0.0",
+  "description": "types.",
+  "main": "wrapper.ts",
+  "scripts": {
+    "build": "npm run test:expose && npx tsc",
+    "test:expose": "echo '// Generated file, do not edit!' > index.ts; find -iname '*.spec.ts' -not -wholename '*node_modules*' -exec node -p 'x = \"{}\";`import * as ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} from \"${x.substr(0,x.length-3)}\"\nexport { ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} }`' \\; >> index.ts",
+    "test": "npm run test:expose && npx tsc --noEmit"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "@types/node": "^14.14.22"
+  }
+}
