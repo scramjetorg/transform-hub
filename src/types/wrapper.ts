@@ -1,3 +1,5 @@
+import {exposeSequenceSymbol} from "@scramjet/symbols";
+
 /**
  * This is a polyfill to TypeScripts rather poor expression of `function*`
  * @ignore
@@ -104,8 +106,8 @@ type MulMulTFunction<T,S,Z=any,Y=any,X=any,W=any> =
     [TFunction<T, Z>, TFunction<Z, S>] |
     [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, S>] |
     [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, MulTFunction<Y,X>, TFunction<X, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, MulTFunction<Y,X>, MulTFunction<X,W>, TFunction<W, S>]
+    [TFunction<T, Z>, TFunction<Z, Y>, ...MulTFunction<Y,X>, TFunction<X, S>] |
+    [TFunction<T, Z>, TFunction<Z, Y>, ...MulTFunction<Y,X>, ...MulTFunction<X,W>, TFunction<W, S>]
 ;
 
 type TFunctionChain<Consumes,Produces,Z=any,Y=any,X=any> = 
@@ -233,18 +235,17 @@ export type InertApp<Z extends any[] = any[], AppConfigType extends AppConfig = 
 ) => MaybePromise<WriteSequence<void>|void>
 ;
 
-export type Application<Consumes = any, Produces = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
-    TransformApp<Consumes, Produces, Z, AppConfigType> |
-    ReadableApp<Produces, Z, AppConfigType> |
-    WritableApp<Consumes, Z, AppConfigType> |
-    InertApp<Z>
-;
-
-export const CSIExposeSymbol = Symbol("expose");
-
 export type ApplicationExpose<
     Consumes = any, Produces = any, Z extends any[] = any[], 
     AppConfigType extends AppConfig = AppConfig
 > = {
-    [CSIExposeSymbol]: Application<Consumes, Produces, Z, AppConfigType>;
-}
+    [exposeSequenceSymbol]: Application<Consumes, Produces, Z, AppConfigType>;
+};
+
+export type Application<Consumes = any, Produces = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
+    TransformApp<Consumes, Produces, Z, AppConfigType> |
+    ReadableApp<Produces, Z, AppConfigType> |
+    WritableApp<Consumes, Z, AppConfigType> |
+    InertApp<Z> |
+    ApplicationExpose<Consumes, Produces, Z, AppConfigType>
+;

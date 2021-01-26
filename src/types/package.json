@@ -11,6 +11,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "devDependencies": {
+    "@scramjet/symbols": "file:../symbols",
     "@types/node": "^14.14.22"
   }
 }
