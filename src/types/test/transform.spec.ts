@@ -1,6 +1,6 @@
 import {ReadableStream, TransformApp2} from "../wrapper";
 
-export const app: TransformApp2 = async function abc(
+export const app: TransformApp2<number, {i: number, x: number}> = async function abc(
     source: ReadableStream<number>
 ) {
     const ref = this;
