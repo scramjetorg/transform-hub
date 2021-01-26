@@ -1,35 +1,87 @@
-
+/**
+ * This is a polyfill to TypeScripts rather poor expression of `function*`
+ * @ignore
+ */
 type Gen<W, R, C extends any[] = []> = 
     (...config: C) => Generator<R, W, W>;
+/**
+ * This is a polyfill to TypeScripts rather poor expression of `async function*`
+ * @ignore
+ */
 type AsyncGen<W, R, C extends any[] = []> = 
     (...config: C) => AsyncGenerator<R, W, W>;
 
-type MaybePromise<R> = Promise<R> | R;
-type FReturns<T> = T | (<Z extends any[]>(...args: Z) => MaybePromise<T>);
+/**
+ * This is a simple utility type for an argument for `Promise.resolve`
+ * 
+ * @ignore
+ */
+type MaybePromise<T> = Promise<T> | T;
 
-export interface PipeableStream<Produces> {
+/**
+ * This is a simple utility type for a function that can be passed to `Promise..then`
+ * 
+ * @ignore
+ */
+type FReturns<T, Z extends any[] = any[]> = MaybePromise<T> | ((...args: Z) => MaybePromise<T>);
+
+/**
+ * Represents any pipeable type (a stream) that outputs the generic <Produces>.
+ * 
+ * @ignore
+ */
+interface PipeableStream<Produces> {
     read(count?: number): Produces[] | null;
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
     pipe<T extends WritableStream<Produces>>(destination: T, options?: { end?: boolean; }): T;
 }
 
+/**
+ * A readable stream representation with generic chunks.
+ * 
+ * @see https://nodejs.org/api/stream.html#stream_readable_streams Node.js Readable stream documentation
+ */
 export interface ReadableStream<Produces> extends PipeableStream<Produces> {
     [Symbol.asyncIterator](): AsyncIterableIterator<Produces>;
 };
 
+/**
+ * Writable stream representation with generic chunks.
+ * 
+ * @see https://nodejs.org/api/stream.html#stream_writable_streams Node.js Writable stream documentation
+ */
 export interface WritableStream<Consumes> {
     objectMode: true;
     writable: boolean;
     write(item: Consumes, cb?: (err?: Error | null) => void): boolean;
-    write(str: string, encoding: never, cb?: (err?: Error | null) => void): boolean;
+    write(str: never, encoding: never, cb?: (err?: Error | null) => void): boolean;
     end(cb?: () => void): void;
     end(data: Consumes, cb?: () => void): void;
-    end(str: string, encoding: never, cb?: () => void): void;
+    end(str: never, encoding: never, cb?: () => void): void;
 }
 
+/**
+ * Represents all readable stream types that will be accepted as return values from {@see TFunction} 
+ */
 export type Streamable<Produces> = PipeableStream<Produces> | AsyncGen<Produces, void> | Gen<Produces, void> | Iterable<Produces> | AsyncIterable<Produces>;
-export type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;
 
+/**
+ * Helper: A maybe function that returns maybe a promise of a streamable.
+ * 
+ * Acceptable results:
+ * 
+ * - Streamable<Produces>
+ * - () => Streamable<Produces>
+ * - Promise<Streamable<Produces>>
+ * - () => Promise<Streamable<Produces>>
+ * 
+ * @ignore
+ */
+type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;
+
+/**
+ * 
+ */
 export type ReadFunction<Produces> = (...parameters: any[]) => StreambleMaybeFunction<Produces>;
 export type WriteFunction<Consumes> = (stream: ReadableStream<Consumes>, ...parameters: any[]) => MaybePromise<void>;
 export type TranformFunction<Consumes, Produces> = (stream: ReadableStream<Consumes>, ...parameters: any[]) => StreambleMaybeFunction<Produces>;
@@ -38,24 +90,27 @@ export type RFunction<Produces> = Streamable<Produces> | ReadFunction<Produces>;
 export type TFunction<Consumes, Produces> = AsyncGen<Produces, Consumes> | Gen<Produces, Consumes> | TranformFunction<Consumes, Produces>;
 export type WFunction<Consumes> = WritableStream<Consumes> | Gen<any, Consumes> | AsyncGen<any, Consumes> | WriteFunction<Consumes>;
 
-type MMultipleTFunction<T,S,Z=any> = 
-    [TFunction<T, S>] |
-    [TFunction<T, Z>, TFunction<Z, S>] |
-    [TFunction<T, Z>, TFunction<Z, any>, TFunction<any, S>] |
-    [TFunction<T, Z>, TFunction<Z, any>, TFunction<any, any>, MultipleTFunction<any, S>];
-
-type MultipleTFunction<T,S,Z=any,Y=any,X=any,W=any> = 
+type MulTFunction<T,S,Z=any,Y=any,X=any,W=any,V=any> = 
     [TFunction<T, S>] |
     [TFunction<T, Z>, TFunction<Z, S>] |
     [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, S>] |
     [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, MMultipleTFunction<Y,X>, TFunction<X, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, MMultipleTFunction<Y,X>, MMultipleTFunction<X,W>, TFunction<W, S>]
+    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, W>, TFunction<W, S>] |
+    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, W>, TFunction<W, V>, TFunction<V, S>]
+;
+
+type MulMulTFunction<T,S,Z=any,Y=any,X=any,W=any> = 
+    [TFunction<T, S>] |
+    [TFunction<T, Z>, TFunction<Z, S>] |
+    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, S>] |
+    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, S>] |
+    [TFunction<T, Z>, TFunction<Z, Y>, MulTFunction<Y,X>, TFunction<X, S>] |
+    [TFunction<T, Z>, TFunction<Z, Y>, MulTFunction<Y,X>, MulTFunction<X,W>, TFunction<W, S>]
 ;
 
 type TFunctionChain<Consumes,Produces,Z=any,Y=any,X=any> = 
-    [TFunction<Consumes, Z>, ...MultipleTFunction<Z, Y>, TFunction<Y, Produces>] |
-    [TFunction<Consumes, Z>, ...MultipleTFunction<Z, Y>, ...MultipleTFunction<Y, X>, TFunction<X, Produces>] |
+    [TFunction<Consumes, Z>, ...MulMulTFunction<Z, Y>, TFunction<Y, Produces>] |
+    [TFunction<Consumes, Z>, ...MulMulTFunction<Z, Y>, ...MulMulTFunction<Y, X>, TFunction<X, Produces>] |
     never
 ;
 
@@ -121,65 +176,75 @@ export type AppError = Error & {
  */
 type AppErrorConstructor = new (code: AppErrorCode, message?: string) => AppError;
 
-export interface App2Context {
+export interface App2Context<AppConfigType extends AppConfig> {
     monitor?: (resp: MonitoringResponse) => MaybePromise<MonitoringResponse>;
     describe?: (tx: SequenceDefinition[]) => void;
-    inspect?: (status: any) => void;
+    
     stopHandler?: () => Promise<void>;
     killHandler?: () => Promise<void>;
-
+    
     keepAlive(milliseconds?: number): this;
     end(): this;
     destroy(): this;
     
-    on(ev: string, handler: (message: any) => void): this;
+    on(ev: string, handler: (message?: any) => void): this;
     on(ev: "error", handler: (message: Error) => void): this;
     
     emit(ev: string, message?: any): this;
     emit(ev: "error", message: AppError): this;
-
-    readonly config: AppConfig;
+    
+    definition?: SequenceDefinition[];
+    readonly config: AppConfigType;
     readonly AppError: AppErrorConstructor;
 }
 
 
 type TransformAppAcceptableSequence<Consumes,Produces> = CleanSequence | TransformSeqence<Consumes,Produces>;
 
-export type TransformApp2<Consumes = any, Produces = any, Z extends any[] = any[]> = 
+export type TransformApp<Consumes = any, Produces = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
    (
-        this: App2Context, 
+        this: App2Context<AppConfigType>, 
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<TransformAppAcceptableSequence<Consumes,Produces>>
 ;
 
-export type ReadableApp2<Produces = any, Z extends any[] = any[]> = 
+export type ReadableApp<Produces = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
     (
-        this: App2Context, 
+        this: App2Context<AppConfigType>, 
         source: ReadableStream<never>,
         ...args: Z
     ) => MaybePromise<ReadSequence<Produces>>
 ;
 
-export type WritableApp2<Consumes = any, Z extends any[] = any[]> = 
+export type WritableApp<Consumes = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
     (
-        this: App2Context, 
+        this: App2Context<AppConfigType>, 
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<WriteSequence<Consumes>|void>
 ;
 
-export type InertApp2<Z extends any[] = any[]> = 
+export type InertApp<Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
 (
-    this: App2Context, 
+    this: App2Context<AppConfigType>, 
     source: ReadableStream<void>,
     ...args: Z
 ) => MaybePromise<WriteSequence<void>|void>
 ;
 
-export type Application<Consumes = any, Produces = any, Z extends any[] = any[]> = 
-    TransformApp2<Consumes, Produces, Z> |
-    ReadableApp2<Produces, Z> |
-    WritableApp2<Consumes, Z> |
-    InertApp2<Z>
+export type Application<Consumes = any, Produces = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
+    TransformApp<Consumes, Produces, Z, AppConfigType> |
+    ReadableApp<Produces, Z, AppConfigType> |
+    WritableApp<Consumes, Z, AppConfigType> |
+    InertApp<Z>
 ;
+
+export const CSIExposeSymbol = Symbol("expose");
+
+export type ApplicationExpose<
+    Consumes = any, Produces = any, Z extends any[] = any[], 
+    AppConfigType extends AppConfig = AppConfig
+> = {
+    [CSIExposeSymbol]: Application<Consumes, Produces, Z, AppConfigType>;
+}

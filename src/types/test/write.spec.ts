@@ -1,11 +1,10 @@
 import { access, constants, createWriteStream } from "fs";
 import { Transform } from "stream";
 import { promisify } from "util";
-import {ReadableStream, WritableApp2} from "../wrapper";
+import {WritableApp} from "../wrapper";
 
-export const app: WritableApp2<number> = async function abc(
-    source: ReadableStream<number>,
-    {filename}: {filename?: string} = {}
+export const app: WritableApp<number, [{filename?: string}]> = async function abc(
+    source, {filename} = {}
 ) {
     const outname = filename || this.config.filename || null;
     if (!outname || typeof outname !== 'string')
