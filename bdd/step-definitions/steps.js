@@ -6,8 +6,8 @@ const lineByLine = require('n-readlines');
 const testPath = "../fromdisk-bdd/";
 const {promisify} = require("util");
 
-Given('input file containing names {string}', function (filename) {
-  assert.equal(fs.existsSync(`${testPath}${filename}`), true);
+Given('input file containing names {string}', async function (filename) {
+  assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
 When('scramjet server porcesses input file as a stream', function () {
