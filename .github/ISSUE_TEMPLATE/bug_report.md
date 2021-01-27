@@ -12,18 +12,18 @@ A clear and concise description of what the bug is.
 
 **Steps to Reproduce**
 1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+2. ...
+
+***Reproduction repo/branch***
+1. `git clone <repo>` // optional
+2. `git checkout -b test/somebranch user:branch` // so we can check out the problem
+3. run `npm test:someculprit --that-s=buggin me`
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
-
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
 
 **Version (please complete the following information):**
  - Product Version [e.g. 22]
  - Web browser with version if applicable
 
-**Additional information like logs etc.**
+**Additional information like logs, screenshots etc.**
