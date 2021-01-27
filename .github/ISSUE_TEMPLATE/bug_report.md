@@ -23,7 +23,8 @@ A clear and concise description of what the bug is.
 A clear and concise description of what you expected to happen.
 
 **Version (please complete the following information):**
- - Product Version [e.g. 22]
- - Web browser with version if applicable
+ - csi version:
+ - node version:
+ - os: 
 
 **Additional information like logs, screenshots etc.**
