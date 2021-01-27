@@ -1,25 +1,21 @@
 const { Given, When, Then, And } = require("cucumber");
 const assert = require("assert").strict
-const execSync = require('child_process').execSync;
+const exec = require('child_process').exec;
 const fs = require('fs');
 const lineByLine = require('n-readlines');
 const testPath = "../fromdisk-bdd/";
-const {promisify} = require("util");
+const { promisify } = require("util");
 
 Given('input file containing names {string}', async function (filename) {
   assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
-When('scramjet server porcesses input file as a stream', function () {
-  //TODO relative paths will work only when run from /scramjet-server/test/bdd directory consider using cwd or another solution
-  // execSync(`cd ../../scramjet-server; npm i;`, { encoding: 'utf-8' })
-  const output = execSync(`cd ${testPath}; npm i; node ../../scramjet-server/index --source names.txt`, { encoding: 'utf-8' });
-  //console.log('Output was:\n', output);
+When('scramjet server porcesses input file as a stream', async function () {
+  await promisify(exec)(`cd ${testPath}; npm i; node ../../scramjet-server/index --source names.txt`, { encoding: 'utf-8' });
 });
 
 Then('file {string} is generated', async function (filename) {
-  assert.equal(fs.existsSync(`${testPath}${filename}`), true);
-  //TODO const fsAccess = (...args) => util.promisify(fs.access)(...args)
+  assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
 Then('file {string} in each line contains {string} followed by name from file {string}', function (file1, greeting, file2) {
