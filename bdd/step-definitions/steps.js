@@ -4,6 +4,7 @@ const execSync = require('child_process').execSync;
 const fs = require('fs');
 const lineByLine = require('n-readlines');
 const testPath = "../fromdisk-bdd/";
+const {promisify} = require("util");
 
 Given('input file containing names {string}', function (filename) {
   assert.equal(fs.existsSync(`${testPath}${filename}`), true);
@@ -32,4 +33,3 @@ Then('file {string} in each line contains {string} followed by name from file {s
     assert.deepEqual(greeting + line1, '' + line2)
   }
 });
-
