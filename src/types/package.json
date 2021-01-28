@@ -12,6 +12,7 @@
   "license": "AGPL-3.0",
   "devDependencies": {
     "@scramjet/symbols": "file:../symbols",
-    "@types/node": "^14.14.22"
+    "@types/node": "^14.14.22",
+    "scramjet": "^4.35.11"
   }
 }

@@ -1,19 +1,6 @@
 import {exposeSequenceSymbol} from "@scramjet/symbols";
 
 /**
- * This is a polyfill to TypeScripts rather poor expression of `function*`
- * @ignore
- */
-type Gen<W, R, C extends any[] = []> = 
-    (...config: C) => Generator<R, W, W>;
-/**
- * This is a polyfill to TypeScripts rather poor expression of `async function*`
- * @ignore
- */
-type AsyncGen<W, R, C extends any[] = []> = 
-    (...config: C) => AsyncGenerator<R, W, W>;
-
-/**
  * This is a simple utility type for an argument for `Promise.resolve`
  * 
  * @ignore
@@ -67,6 +54,20 @@ export interface WritableStream<Consumes> {
  */
 export type Streamable<Produces> = PipeableStream<Produces> | AsyncGen<Produces, void> | Gen<Produces, void> | Iterable<Produces> | AsyncIterable<Produces>;
 
+
+/**
+ * This is a polyfill to TypeScripts rather poor expression of `function*`
+ * @ignore
+ */
+type Gen<W, R, C extends any[] = []> = 
+    (...config: C) => Generator<R, W|void, W>;
+/**
+ * This is a polyfill to TypeScripts rather poor expression of `async function*`
+ * @ignore
+ */
+type AsyncGen<W, R, C extends any[] = []> = 
+    (...config: C) => AsyncGenerator<R, W|void, W>;
+
 /**
  * Helper: A maybe function that returns maybe a promise of a streamable.
  * 
@@ -92,47 +93,43 @@ export type RFunction<Produces> = Streamable<Produces> | ReadFunction<Produces>;
 export type TFunction<Consumes, Produces> = AsyncGen<Produces, Consumes> | Gen<Produces, Consumes> | TranformFunction<Consumes, Produces>;
 export type WFunction<Consumes> = WritableStream<Consumes> | Gen<any, Consumes> | AsyncGen<any, Consumes> | WriteFunction<Consumes>;
 
-type MulTFunction<T,S,Z=any,Y=any,X=any,W=any,V=any> = 
-    [TFunction<T, S>] |
-    [TFunction<T, Z>, TFunction<Z, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, W>, TFunction<W, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, W>, TFunction<W, V>, TFunction<V, S>]
-;
+type ArrayMin<Y,X,W,V extends any[]> = [] | [Y] | [Y,X] | [Y,X,W,V];
 
-type MulMulTFunction<T,S,Z=any,Y=any,X=any,W=any> = 
+// @ts-ignore
+type MulTFunction<T,S,Z extends ArrayMin<[Y,X,W,...V]>,Y=any,X=any,W=any,V=any[]> = 
     [TFunction<T, S>] |
-    [TFunction<T, Z>, TFunction<Z, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, TFunction<Y, X>, TFunction<X, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, ...MulTFunction<Y,X>, TFunction<X, S>] |
-    [TFunction<T, Z>, TFunction<Z, Y>, ...MulTFunction<Y,X>, ...MulTFunction<X,W>, TFunction<W, S>]
-;
-
-type TFunctionChain<Consumes,Produces,Z=any,Y=any,X=any> = 
-    [TFunction<Consumes, Z>, ...MulMulTFunction<Z, Y>, TFunction<Y, Produces>] |
-    [TFunction<Consumes, Z>, ...MulMulTFunction<Z, Y>, ...MulMulTFunction<Y, X>, TFunction<X, Produces>] |
+    [TFunction<T, Y>, TFunction<Y, S>] |
+    [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, S>] |
+    [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, W>, TFunction<W, S>] |
     never
 ;
 
-type CleanSequence<Z=any,Y=any> = TFunctionChain<Y,Z>;
-type WriteSequence<Consumes,Z=any> = 
-    WFunction<Consumes> |
+// @ts-ignore
+type MulMulTFunction<T,S,Z extends ArrayMin<[Y,X,W,...V,...U]>,Y=any,X=any,W=any,V=any[],U=any[]> = 
+    [TFunction<T, Y>, TFunction<Y, S>] |
+    [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, S>] |
+    [TFunction<T, Y>, ...MulTFunction<Y,X,V>, TFunction<X, S>] |
+    [TFunction<T, Y>, ...MulTFunction<Y,X,U>, ...MulTFunction<X,W,V>, TFunction<W, S>]
+;
+
+type TFunctionChain<Consumes,Produces,Z extends any[]> = 
+    [TFunction<Consumes, Produces>] |
+    [...MulMulTFunction<Consumes, Produces, Z>]
+;
+
+export type InertSequence<Z=any,Y=any,X extends any[] = any[]> = TFunctionChain<Y,Z,X>;
+
+export type WriteSequence<Consumes,Y extends any[] = any[],Z=any> = 
     [WFunction<Consumes>] | 
-    [...TFunctionChain<Consumes,Z>, WFunction<Z>]
+    [...TFunctionChain<Consumes,Z,Y>, WFunction<Z>]
 ;
-type ReadSequence<Produces,Z=any,Y=any> = 
-    RFunction<Produces> | 
+export type ReadSequence<Produces,Y extends any[] = any[],Z=any> = 
     [RFunction<Produces>] | 
-    [RFunction<Z>, TFunction<Z,Produces>] | 
-    [RFunction<Z>, ...TFunctionChain<Z,Y>, TFunction<Y,Produces>]
+    [RFunction<Z>, ...TFunctionChain<Z,Produces,Y>]
 ;
-type TransformSeqence<Consumes,Produces,Z=any,Y=any> = 
-    TFunction<Consumes,Produces> | 
+export type TransformSeqence<Consumes,Produces,Z=any,X extends any[] = any[]> = 
     [TFunction<Consumes,Produces>] | 
-    [TFunctionChain<Z,Y>, TFunction<Z,Produces>] | 
-    [TFunction<Consumes,Z>, ...TFunctionChain<Z,Y>, TFunction<Y,Produces>]
+    [...TFunctionChain<Consumes,Z,X>, TFunction<Z,Produces>]
 ;
 
 type ScalabilityOptions = "CSP" | "CS" | "CP" | "SP" | "C" | "S" | "V";
@@ -200,8 +197,7 @@ export interface App2Context<AppConfigType extends AppConfig> {
     readonly AppError: AppErrorConstructor;
 }
 
-
-type TransformAppAcceptableSequence<Consumes,Produces> = CleanSequence | TransformSeqence<Consumes,Produces>;
+type TransformAppAcceptableSequence<Consumes,Produces> = TFunction<Consumes,Produces> | InertSequence | TransformSeqence<Consumes,Produces> ;
 
 export type TransformApp<Consumes = any, Produces = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
    (
@@ -216,7 +212,7 @@ export type ReadableApp<Produces = any, Z extends any[] = any[], AppConfigType e
         this: App2Context<AppConfigType>, 
         source: ReadableStream<never>,
         ...args: Z
-    ) => MaybePromise<ReadSequence<Produces>>
+    ) => MaybePromise<RFunction<Produces> | ReadSequence<Produces>>
 ;
 
 export type WritableApp<Consumes = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
@@ -224,7 +220,7 @@ export type WritableApp<Consumes = any, Z extends any[] = any[], AppConfigType e
         this: App2Context<AppConfigType>, 
         source: ReadableStream<Consumes>,
         ...args: Z
-    ) => MaybePromise<WriteSequence<Consumes>|void>
+    ) => MaybePromise<WFunction<Consumes>|WriteSequence<Consumes>|void>
 ;
 
 export type InertApp<Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> = 
@@ -232,7 +228,7 @@ export type InertApp<Z extends any[] = any[], AppConfigType extends AppConfig = 
     this: App2Context<AppConfigType>, 
     source: ReadableStream<void>,
     ...args: Z
-) => MaybePromise<WriteSequence<void>|void>
+) => MaybePromise<WFunction<void>|WriteSequence<void>|void>
 ;
 
 export type ApplicationExpose<
