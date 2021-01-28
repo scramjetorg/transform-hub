@@ -14,6 +14,7 @@
     "update": "",
     "lint": "eslint . --ext .ts",
     "watch": "echo \"Error: no watcher specified\" && exit 1",
+    "----todo-1": "These tests seem to be ok, but actually don't return non-zero exit status, when any of tests fail",
     "test": "find src/ scripts/ lib/ -name 'package.json' -not -wholename '*node_modules*' -execdir npm test \\;",
     "test-bdd": "cd bdd && ./node_modules/.bin/cucumber-js"
   },
