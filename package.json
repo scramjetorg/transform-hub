@@ -14,7 +14,7 @@
     "update": "",
     "lint": "eslint . --ext .ts",
     "watch": "echo \"Error: no watcher specified\" && exit 1",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "find src/ scripts/ lib/ -name 'package.json' -not -wholename '*node_modules*' -execdir npm test \\;",
     "test-bdd": "cd bdd && ./node_modules/.bin/cucumber-js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
