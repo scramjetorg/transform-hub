@@ -7,16 +7,20 @@
     "csi-supervisor": "bin/scramjet-csi-supervisor"
   },
   "scripts": {
-    "build": "npm run build:supervisor",
-    "build:supervisor": "tsc -p src/supervisor/tsconfig.json",
+    "build": "find src/ scripts/ lib/ -name 'package.json' -not -wholename '*node_modules*' -execdir npm run build ';'",
     "clean": "npm run clean:dist",
     "clean:dist": "find dist/ -mindepth 1 -not -wholename dist/.keep -delete",
-    "postinstall": "find src/ scripts/ lib/ -name 'package.json' -not -wholename '*node_modules*' -execdir npm install \\;",
+    "postinstall": "find src/ scripts/ lib/ -name 'package.json' -not -wholename '*node_modules*' -execdir npm install ';'",
     "update": "",
+    "watch":"echo \"Error: no watcher specified\" && exit 1",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test-bdd": "cd bdd && ./node_modules/.bin/cucumber-js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/node": "^14.14.22",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
+  }
 }
