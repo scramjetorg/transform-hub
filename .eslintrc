@@ -4,6 +4,7 @@
     "plugins": [
         "@typescript-eslint"
     ],
+    "ignorePatterns": ["dist/"],
     "extends": [],
     "rules": {
         /* possible errors */
