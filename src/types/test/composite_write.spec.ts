@@ -1,4 +1,4 @@
-import {WriteSequence, WritableApp} from "../wrapper";
+import { WriteSequence, WritableApp } from "../runner";
 import transform from "./lib/transform";
 
 export const app: WritableApp<{x: number}, [{test: number}]> =
@@ -32,6 +32,6 @@ export const app: WritableApp<{x: number}, [{test: number}]> =
                 }
             }
         ];
-        
+
         return sequence;
     };

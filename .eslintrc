@@ -103,9 +103,8 @@
         "no-undef-init" : 2,
         "no-undef" : 0,
         "no-undefined:" : 0,
-        "no-unused-vars" : [2, {"varsIgnorePattern" : "^(_this|options|defaults)", "argsIgnorePattern" : "^(options|defaults)"}],
         "no-use-before-define" : 2,
-
+        
         /* stylistic issues */
         "array-bracket-spacing" : 1,
         "block-spacing" : 1,
@@ -140,7 +139,7 @@
         "no-restricted-syntax" : 0,
         "no-spaced-func" : 1,
         "no-ternary" : 0,
-        "no-trailing-spaces" : 1,
+        "no-trailing-spaces" : [1, {"ignoreComments": true}],
         "no-underscore-dangle" : 0,
         "no-unneeded-ternary" : 1,
         "object-curly-spacing" : [2, "always"],
@@ -161,7 +160,7 @@
         "space-unary-ops" : 1,
         "spaced-comment" : 0,
         "wrap-regex" : 1,
-        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-unused-vars": [2, {"varsIgnorePattern" : "^(_this|options|defaults)", "argsIgnorePattern" : "^(options|defaults)"}],
         "@typescript-eslint/no-useless-constructor": "error",
         "max-len": [
             "warn",
