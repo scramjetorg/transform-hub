@@ -1,13 +1,13 @@
-import {ReadableApp, ReadSequence} from "../wrapper";
+import { ReadableApp } from "../wrapper";
 import transform from "./lib/transform";
 
-export const app: ReadableApp<{x: number}, [{test: number}], {start: number}> =
-    function abc(_source, {test}) {
-        const ref = this;
+export const app: ReadableApp<any, [{ test: number }], { start: number }> =
+    function abc(_source, { test }) {
+        const start = this.config.start;
 
-        const sequence: ReadSequence<{x: number}> = [
+        const sequence = [
             function* () {
-                let i: number = ref.config.start + test;
+                let i: number = start + test;
                 while (i-- > 0) {
                     yield { y: i };
                 }
@@ -38,6 +38,6 @@ export const app: ReadableApp<{x: number}, [{test: number}], {start: number}> =
                 }
             }
         ];
-        
+
         return sequence;
     };
