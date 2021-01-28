@@ -91,7 +91,7 @@ export type TranformFunction<Consumes, Produces> = (stream: ReadableStream<Consu
 
 export type RFunction<Produces> = Streamable<Produces> | ReadFunction<Produces>;
 export type TFunction<Consumes, Produces> = AsyncGen<Produces, Consumes> | Gen<Produces, Consumes> | TranformFunction<Consumes, Produces>;
-export type WFunction<Consumes> = WritableStream<Consumes> | Gen<any, Consumes> | AsyncGen<any, Consumes> | WriteFunction<Consumes>;
+export type WFunction<Consumes> = TFunction<Consumes, never>;
 
 type ArrayMin<Y,X,W,V extends any[]> = [] | [Y] | [Y,X] | [Y,X,W,V];
 
@@ -121,7 +121,9 @@ export type InertSequence<Z=any,Y=any,X extends any[] = any[]> = TFunctionChain<
 
 export type WriteSequence<Consumes,Y extends any[] = any[],Z=any> = 
     [WFunction<Consumes>] | 
-    [...TFunctionChain<Consumes,Z,Y>, WFunction<Z>]
+    [...TFunctionChain<Consumes,Z,Y>, WFunction<Z>] |
+    [RFunction<Consumes>,  WFunction<Consumes>] | 
+    [RFunction<Consumes>,  ...TFunctionChain<Consumes,Z,Y>, WFunction<Z>]
 ;
 export type ReadSequence<Produces,Y extends any[] = any[],Z=any> = 
     [RFunction<Produces>] | 

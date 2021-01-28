@@ -1,11 +1,9 @@
-import {ReadSequence, WritableApp} from "../wrapper";
+import {WriteSequence, WritableApp} from "../wrapper";
 import transform from "./lib/transform";
 
-export const app: WritableApp<{x: number}, [{test: number}], {start: number}> =
-    function abc(_source, {test}) {
-        // const tr: TranformFunction<{x?:number; y?:number},{z:number}> = transform;
-
-        const sequence: ReadSequence<{x: number}> = [
+export const app: WritableApp<{x: number}, [{test: number}]> =
+    function abc(_source) {
+        const sequence: WriteSequence<{x: number}> = [
             _source,
             // this should fail
             function* () {
