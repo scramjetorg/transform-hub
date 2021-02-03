@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/csi-types",
+  "name": "@scramjet/types",
   "version": "0.0.0",
   "description": "types.",
   "main": "runner.ts",
