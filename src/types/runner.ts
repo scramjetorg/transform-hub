@@ -129,42 +129,95 @@ type TFunctionChain<Consumes, Produces, Z extends any[]> =
     [...MulMulTFunction<Consumes, Produces, Z>]
 ;
 
+/**
+ * Minimal type of Sequence that doesn't read anything from the outside, doesn't
+ * write anything to outside. It may be doing anything, but it's not able to report
+ * the progress via streaming.
+ */
 export type InertSequence<Z=any, Y=any, X extends any[] = any[]> = TFunctionChain<Y, Z, X>;
 
+/**
+ * A Sequence of functions that accept some input, transforms it through
+ * a number of functions and writes to some destination.
+ */
 export type WriteSequence<Consumes, Y extends any[] = any[], Z=any> =
     [WFunction<Consumes>] |
     [...TFunctionChain<Consumes, Z, Y>, WFunction<Z>] |
     [RFunction<Consumes>, WFunction<Consumes>] |
     [RFunction<Consumes>, ...TFunctionChain<Consumes, Z, Y>, WFunction<Z>]
 ;
+
+/**
+ * A sequence of functions reads input from a source and outputs it after
+ * a chain of transforms.
+ */
 export type ReadSequence<Produces, Y extends any[] = any[], Z=any> =
     [RFunction<Produces>] |
     [RFunction<Z>, ...TFunctionChain<Z, Produces, Y>]
 ;
+
+/**
+ * A Transform Sequence is a sequence that accept input, perform operations on it, and
+ * outputs the result. 
+ */
 export type TransformSeqence<Consumes, Produces, Z=any, X extends any[] = any[]> =
     [TFunction<Consumes, Produces>] |
     [...TFunctionChain<Consumes, Z, X>, TFunction<Z, Produces>]
 ;
 
-type ScalabilityOptions = "CSP" | "CS" | "CP" | "SP" | "C" | "S" | "V";
+/**
+ * Defines scalability options for writable or readable side of the Function:
+ * 
+ * * C - Concurrency - the funcion accepts and processes more than one item at the 
+ *   same time, and therefore can be composed with consecutive ones.
+ * * S - Sequentiality - the function can be executed on a different host to it's neighbours.
+ * * P - Parallelism - the function can be spawned to multiple hosts at the same time
+ */
+type ScalabilityOptions = "CSP" | "CS" | "CP" | "SP" | "C" | "S" | "V" | "";
 
-export type SequenceDefinition = {
-    mode: "buffer" | "object";
+/**
+ * Definition that informs the platform of the details of a single function.
+ */
+export type FunctionDefinition = {
+    /**
+     * Stream mode:
+     * 
+     * * buffer - carries binary/string chunks that have no fixed size chunks and can be passed through sockets
+     * * object - carries any type of object, that is serializable via JSON or analogue
+     * * reference - carries non-serializable object references that should not be passed outside of a single process
+     */
+    mode: "buffer" | "object" | "reference";
+    /**
+     * Optional name for the function (which will be shown in UI/CLI)
+     */
     name?: string;
+    /**
+     * Addtional description of the function
+     */
     description?: string;
+    /**
+     * Describes how head (readable side) and tail (writable side) of this Function can be
+     * scaled to other machines. 
+     */
     scalability?: {
+        /**
+         * Writable side scalability
+         */
         head?: ScalabilityOptions;
+        /**
+         * Readable side scalability
+         */
         tail?: ScalabilityOptions;
     }
 }
 
-export type SequenceStatus = {
+export type FunctionStatus = {
     throughput: number;
     pressure: number;
 }
 
 export type MonitoringResponse = {
-    sequences?: SequenceStatus[];
+    sequences?: FunctionStatus[];
     healthy?: boolean;
 };
 
@@ -191,7 +244,7 @@ type AppErrorConstructor = new (code: AppErrorCode, message?: string) => AppErro
 
 export interface App2Context<AppConfigType extends AppConfig> {
     monitor?: (resp: MonitoringResponse) => MaybePromise<MonitoringResponse>;
-    describe?: (tx: SequenceDefinition[]) => void;
+    describe?: (tx: FunctionDefinition[]) => void;
 
     stopHandler?: () => Promise<void>;
     killHandler?: () => Promise<void>;
@@ -206,7 +259,7 @@ export interface App2Context<AppConfigType extends AppConfig> {
     emit(ev: string, message?: any): this;
     emit(ev: "error", message: AppError): this;
 
-    definition?: SequenceDefinition[];
+    definition?: FunctionDefinition[];
     readonly config: AppConfigType;
     readonly AppError: AppErrorConstructor;
 }
