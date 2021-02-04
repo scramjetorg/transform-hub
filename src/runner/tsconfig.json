@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "outDir": "../../dist/runner",
+    "outDir": "../../dist",
   },
   "extends": "../../conf/tsconfig.json",
-  "include": ["**/*"],
+  "include": ["**/*.ts"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }
