@@ -5,7 +5,9 @@
   "main": "index.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",
+    "stop": "./stop-superviosor.sh"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

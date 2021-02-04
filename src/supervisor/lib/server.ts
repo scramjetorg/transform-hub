@@ -13,8 +13,8 @@ const makeServer: () => Server = () => {
         // });
     })
     .on('error',(err:Error) => {
-        process.exitCode = 1; 
         console.error(err);
+        process.exit(1); 
     })
 };
 
