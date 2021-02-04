@@ -1,7 +1,16 @@
 import { StringStream } from "scramjet";
+import { MonitoringResponse } from "../../types/runner";
+
+enum MessageCode {
+    PONG = 3000,
+    PING = 4000,
+    STOP = 4001,
+    KILL = 4002,
+    MONITORING_RATE = 4003
+}
 
 type Payload = {
-    message?: string
+    msgCode?: MessageCode;
 }
 
 class Runner {
@@ -9,7 +18,7 @@ class Runner {
 
     private readonly LOGGER_INTERVAL = 5000;
 
-    private readonly MOCK_MESSAGE: object = {
+    private readonly MOCK_MESSAGE: MonitoringResponse = {
         healthy: true
     }
 
@@ -18,30 +27,36 @@ class Runner {
     private stream(): void {
         StringStream.from(process.stdin)
             .lines()
-            .map((input: string) => {
-                let data: Payload = { };
-
-                try {
-                    data = JSON.parse(input);
-                } catch (ignore) { /**/ }
-
-                return data;
-            })
-            .map((payload: Payload) => {
-                let response = this.PREFIX + payload.message || "unknown message";
-
-                if (payload.message === "kill") {
-                    this.handleKillRequest();
-                }
-
-                if (payload.message === "ping") {
-                    response = "pong";
-                }
-
-                return JSON.stringify({ response });
-            })
+            .map((input: string) => this.getPayload(input))
+            .map((payload: Payload) => this.readPayload(payload))
             .append("\n")
             .pipe(process.stdout);
+    }
+
+    private getPayload(line: string): Payload {
+        let data: Payload = { };
+
+        try {
+            data = JSON.parse(line);
+        } catch (ignore) { /**/ }
+
+        return data;
+    }
+
+    private readPayload(payload: Payload) {
+        let response: any = {
+            received: this.PREFIX + payload.msgCode || "unknown message"
+        };
+
+        if (payload.msgCode === MessageCode.KILL) {
+            this.handleKillRequest();
+        }
+
+        if (payload.msgCode === MessageCode.PING) {
+            response = { msgCode: MessageCode.PONG };
+        }
+
+        return JSON.stringify({ response });
     }
 
     private logger(): void {
@@ -65,4 +80,4 @@ class Runner {
     }
 }
 
-export { Runner };
+export { Runner, MessageCode, Payload };
