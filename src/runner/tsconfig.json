@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "outDir": "../../dist",
+    "outDir": "../../dist/runner",
   },
   "extends": "../../conf/tsconfig.json",
   "include": ["**/*.ts"],

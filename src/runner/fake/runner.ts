@@ -1,30 +1,33 @@
 import { StringStream } from "scramjet";
-import { MonitoringResponse } from "../../types/runner";
 
 enum MessageCode {
     PONG = 3000,
+    ACKNOWLEDGE = 3004,
     PING = 4000,
     STOP = 4001,
     KILL = 4002,
-    MONITORING_RATE = 4003
+    MONITORING_RATE = 4003,
+    ALIVE = 3010 // temporary message code
 }
 
-type Payload = {
-    msgCode?: MessageCode;
-}
+type Payload = [
+    MessageCode,
+    object
+];
 
 class Runner {
-    private readonly PREFIX = "Received: ";
-
     private readonly LOGGER_INTERVAL = 5000;
 
-    private readonly MOCK_MESSAGE: MonitoringResponse = {
-        healthy: true
-    }
+    private readonly MOCK_MESSAGE: Payload = [
+        MessageCode.ALIVE,
+        {
+            healthy: true
+        }
+    ]
 
-    private statusIntervalHandle: NodeJS.Timeout;
+    private statusIntervalHandle: any;
 
-    private stream(): void {
+    stream(): void {
         StringStream.from(process.stdin)
             .lines()
             .map((input: string) => this.getPayload(input))
@@ -33,8 +36,8 @@ class Runner {
             .pipe(process.stdout);
     }
 
-    private getPayload(line: string): Payload {
-        let data: Payload = { };
+    getPayload(line: string): Payload {
+        let data: Payload = [0, {}];
 
         try {
             data = JSON.parse(line);
@@ -43,38 +46,42 @@ class Runner {
         return data;
     }
 
-    private readPayload(payload: Payload) {
-        let response: any = {
-            received: this.PREFIX + payload.msgCode || "unknown message"
-        };
+    readPayload(payload: Payload): string {
+        let response: Payload = [
+            MessageCode.ACKNOWLEDGE,
+            { received: payload[0] || "unknown message" }
+        ];
 
-        if (payload.msgCode === MessageCode.KILL) {
+        if (payload[0] === MessageCode.KILL) {
             this.handleKillRequest();
         }
 
-        if (payload.msgCode === MessageCode.PING) {
-            response = { msgCode: MessageCode.PONG };
+        if (payload[0] === MessageCode.PING) {
+            response = [
+                MessageCode.PONG,
+                {}
+            ];
         }
 
-        return JSON.stringify({ response });
+        return JSON.stringify(response);
     }
 
-    private logger(): void {
+    logger(): void {
         process.stdout.write(
             JSON.stringify(this.MOCK_MESSAGE) + "\n",
             "utf8"
         );
     }
 
-    private handleKillRequest(): void {
+    handleKillRequest(): void {
         clearInterval(this.statusIntervalHandle);
         process.exit(0);
     }
 
-    public constructor() {
+    start(): void {
         this.stream();
         this.statusIntervalHandle = setInterval(
-            () => this.logger(),
+            this.logger.bind(this),
             this.LOGGER_INTERVAL
         );
     }
