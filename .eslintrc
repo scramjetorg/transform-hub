@@ -100,12 +100,12 @@
         "no-delete-var" : 2,
         "no-label-var" : 2,
         "no-shadow-restricted-names" : 2,
-        "no-shadow" : 2,
+        "no-shadow" : 0,
         "no-undef-init" : 2,
         "no-undef" : 0,
         "no-undefined:" : 0,
         "no-use-before-define" : 2,
-        
+
         /* stylistic issues */
         "array-bracket-spacing" : 1,
         "block-spacing" : 1,
@@ -163,6 +163,7 @@
         "wrap-regex" : 1,
         "@typescript-eslint/no-unused-vars": [2, {"varsIgnorePattern" : "^(_this|options|defaults)", "argsIgnorePattern" : "^(options|defaults)"}],
         "@typescript-eslint/no-useless-constructor": "error",
+        "@typescript-eslint/no-shadow": ["error"],
         "max-len": [
             "warn",
             {
