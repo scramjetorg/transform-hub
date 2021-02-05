@@ -1,6 +1,6 @@
 import server from "../lib/server";
 
-const fs = require('fs');
+const fs = require("fs");
 const socket: string = process.argv[2];
 
 if (fs.existsSync(socket)) {
@@ -9,11 +9,11 @@ if (fs.existsSync(socket)) {
 }
 
 server(socket)
-    .on('error', (err: Error) => {
+    .on("error", (err: Error) => {
         console.error(err);
         //TODO check process exitCode -  
         process.exit(1);
     })
     .listen(socket, () => {
-        console.log('listening on socket', socket);
+        console.log("listening on socket", socket);
     });

@@ -8,13 +8,13 @@ test("start supervisor on " + testSocket, async t => {
     const child = spawn("/usr/bin/env", ["npx", "ts-node", "bin/supervisor.ts", testSocket]);
 
     await new Promise(async(resolve) => {
-        setTimeout(async() => {
+        setTimeout(() => {
             spawn("/usr/bin/env", ["rm", testSocket]);
             child.kill(9);
         }, 8000);
 
         const data = await StringStream.from(child.stdout).lines().slice(0, 1).whenRead();
-        console.log(data);
+        t.is(data, `listening on socket ${testSocket}`);
 
         child.on("exit", function(code: any, signal: any) {
             if (code === 1) {
