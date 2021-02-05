@@ -283,7 +283,7 @@ type AppErrorConstructor = new (code: AppErrorCode, message?: string) => AppErro
  * 
  * 
  */
-interface AutoApp2Context<AppConfigType extends AppConfig, State extends any> {
+interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
     /**
      * This method should be overridden by the Sequence if auto detection of the Sequence
      * state is not precise enough.
@@ -422,10 +422,10 @@ interface AutoApp2Context<AppConfigType extends AppConfig, State extends any> {
  * with the Platform to ensure that it's in operation and should be kept alive without 
  * interruption.
  */
-interface FullApp2Context<
+interface FullAppContext<
     AppConfigType extends AppConfig,
     State extends any
-    > extends AutoApp2Context<AppConfigType, State> {
+    > extends AutoAppContext<AppConfigType, State> {
     /**
      * This method must be overridden by the Sequence if definition is not 
      * providing the correct outcome.
@@ -447,8 +447,11 @@ interface FullApp2Context<
     describe: () => FunctionDefinition[];
 }
 
-export type App2Context<AppConfigType extends AppConfig, State extends any> =
-    AutoApp2Context<AppConfigType, State> | FullApp2Context<AppConfigType, State>;
+/**
+ * Application context
+ */
+export type AppContext<AppConfigType extends AppConfig, State extends any> =
+    AutoAppContext<AppConfigType, State> | FullAppContext<AppConfigType, State>;
 
 type TransformAppAcceptableSequence<Consumes, Produces> =
     TFunction<Consumes, Produces> |
@@ -456,6 +459,12 @@ type TransformAppAcceptableSequence<Consumes, Produces> =
     TransformSeqence<Consumes, Produces>
     ;
 
+/**
+ * A Transformation App that accepts data from the platform, performs operations on the data,
+ * and returns the data to the platforms for further use.
+ * 
+ * Has both active readable and writable sides.
+ */
 export type TransformApp<
     Consumes = any,
     Produces = any,
@@ -464,12 +473,16 @@ export type TransformApp<
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: App2Context<AppConfigType, S>,
+        this: AppContext<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<TransformAppAcceptableSequence<Consumes, Produces>>
     ;
 
+/**
+ * A Readable App is an app that obtains the data by it's own means and preforms
+ * 0 to any number of transforms on that data before returning it.
+ */
 export type ReadableApp<
     Produces = any,
     Z extends any[] = any[],
@@ -477,12 +490,15 @@ export type ReadableApp<
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: App2Context<AppConfigType, S>,
+        this: AppContext<AppConfigType, S>,
         source: ReadableStream<never>,
         ...args: Z
-    ) => MaybePromise<RFunction<Produces> | ReadSequence<Produces>>
-    ;
+    ) => MaybePromise<RFunction<Produces> | ReadSequence<Produces>>;
 
+/**
+ * A Writable App is an app that accepts the data from the platform, performs any number
+ * of transforms and then saves it to the data destination by it's own means.
+ */
 export type WritableApp<
     Consumes = any,
     Z extends any[] = any[],
@@ -490,23 +506,25 @@ export type WritableApp<
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: App2Context<AppConfigType, S>,
+        this: AppContext<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
-    ) => MaybePromise<WFunction<Consumes> | WriteSequence<Consumes> | void>
-    ;
+    ) => MaybePromise<WFunction<Consumes> | WriteSequence<Consumes> | void>;
 
+/**
+ * An Inert App is an app that doesn't accept data from the platform and doesn't output it.
+ * 
+ */
 export type InertApp<
     Z extends any[] = any[],
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: App2Context<AppConfigType, S>,
+        this: FullAppContext<AppConfigType, S>,
         source: ReadableStream<void>,
         ...args: Z
-    ) => MaybePromise<WFunction<void> | WriteSequence<void> | void>
-    ;
+    ) => MaybePromise<WFunction<void> | WriteSequence<void> | void>;
 
 export type ApplicationExpose<
     Consumes = any,
@@ -520,6 +538,9 @@ export type ApplicationExpose<
         [exposeSequenceSymbol]: Application<Consumes, Produces, Z, S, AppConfigType>;
     };
 
+/**
+ * Application is an acceptable input for the runner.
+ */
 export type Application<
     Consumes = any,
     Produces = any,
