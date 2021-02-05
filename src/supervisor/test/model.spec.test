@@ -1,0 +1,28 @@
+import { ModelUtils } from "../supervisor/lib/model";
+import { MonitoringRateMessage } from "../types/model";
+
+const testModel = require("ava");
+
+testModel("Deserialization must reject a promise if incorrect message code is provided", async t => {
+    const err = await t.throwsAsync(ModelUtils.deserializeMessage([-1, "{\"monitoringRate\":1000}"]));
+    console.log("err.constructor.name" + err.constructor.name);
+    t.is(err.constructor.name, "TypeError");
+});
+
+testModel("Deserialization must retrun a message of correct type", async t => {
+    const monitoringRateMessage = new MonitoringRateMessage(1000);
+    const deserialized = await ModelUtils.deserializeMessage([4003, "{\"monitoringRate\":1000}"]);
+    t.deepEqual(deserialized, monitoringRateMessage);
+});
+
+testModel("Serialization must retrun message in the correct format", (t: any) => {
+
+    const monitoringRateMessage = new MonitoringRateMessage(1000);
+    const serialized = ModelUtils.serializeMessage(monitoringRateMessage);
+    console.log(serialized);
+    t.deepEqual(
+        serialized,
+        [4003, "{\"monitoringRate\":1000}"]
+    );
+});
+

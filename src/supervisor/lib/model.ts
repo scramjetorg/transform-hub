@@ -19,7 +19,8 @@ import { ErrorMessage } from "../../types/model";
  * 
  * An example of serialization:
  * 
- * const monitoringMessage: MonitoringMessage = { messageTypeCode: 5, itemThroughput: 5, itemsThroughput: [1, 2], pressure: 8, cpu: 0.7, memoryUsed: 424343234, memoryFree: 424423432, swapUsed: 424343234, swapFree: 424343234 };
+ * const monitoringMessage: MonitoringMessage = { messageTypeCode: 5, itemThroughput: 5, itemsThroughput: [1, 2], 
+ * pressure: 8, cpu: 0.7, memoryUsed: 424343234, memoryFree: 424423432, swapUsed: 424343234, swapFree: 424343234 };
  * serializeMessage(monitoringMessage);
  *
  */
@@ -32,59 +33,65 @@ class ModelUtils {
      * @return {Message} - an instance of message class
      */
     static async deserializeMessage(data: [number, string]) {
-        const code = data[0]; 
-        switch (code) { 
-            case 3000: 
-                try {
-                    const retVal = await KeepAliveMessage.fromJSON(data[1]);
-                    return retVal;
-                } catch (e) { console.log(e); }
-                break;
-            case 3001: 
-                try {
-                    const retVal = await MonitoringMessage.fromJSON(data[1]);
-                    return retVal;
-                } catch (e) { console.log(e); }
-                break;             
-                break; 
-            case 3002: 
-                try {
-                    const retVal = await DescribeSequenceMessage.fromJSON(data[1]);
-                    return retVal;
-                } catch (e) { console.log(e); }
-                break;
-            case 3003: 
-                try {
-                    const retVal = await ErrorMessage.fromJSON(data[1]);
-                    return retVal;
-                } catch (e) { console.log(e); }            
-                break;
-            case 3004: 
-                try {
-                    const retVal = await AcknowledgeMessage.fromJSON(data[1]);
-                    return retVal;
-                } catch (e) { console.log(e); }
-            case 4000: 
-                return new ConfirmAliveMessage();
-                break;
-            case 4001: 
-                try {
-                    const retVal = await StopSequenceMessage.fromJSON(data[1]);
-                    return retVal;
-                } catch (e) { console.log(e); }
-                break;
-            case 4002: 
-                return new KillSequenceMessage();
-                break;
-            case 4003: 
-                try {
-                    const retVal = await MonitoringRateMessage.fromJSON(data[1]);
-                    return retVal;
-                } catch (e) { console.log(e); }
-                break;
-            default:
-                throw new Error("Unrecognized message code: " + code);      
-        } 
+
+        if (data[0] >= 3000 && data[0] < 4000) {
+            console.log("Bingo! 11");
+            let retval = ModelUtils.getMonitorStreamMessage(data[0], data[1]);
+            console.log(retval);
+            return ModelUtils.getMonitorStreamMessage(data[0], data[1]);
+        } else if (data[0] >= 4000 && data[0] < 5000) {
+            console.log("Bingo! 22");
+            let retval = ModelUtils.getControlStreamMessage(data[0], data[1]);
+            console.log(retval);
+            return ModelUtils.getControlStreamMessage(data[0], data[1]);
+        }
+
+        return Promise.reject(new TypeError("🦄"));
+    }
+
+    /**
+    * Returns an instance of monitor type message class, which comes from Runner-->Supervisor control stream
+    * @param {number} code - a numeric code of message type
+    * @param {string} data - a message in stringified JSON format
+    * @return {Message} - an instance of message class
+    */
+    private static getMonitorStreamMessage(code: number, data: string) {
+        switch (code) {
+        case 3000:
+            return KeepAliveMessage.fromJSON(data);
+        case 3001:
+            return MonitoringMessage.fromJSON(data);
+        case 3002:
+            return DescribeSequenceMessage.fromJSON(data);
+        case 3003:
+            return ErrorMessage.fromJSON(data);
+        case 3004:
+            return AcknowledgeMessage.fromJSON(data);
+        default:
+            throw new Error("Unrecognized message code: " + code);
+        }
+    }
+
+    /**
+    * Returns an instance of control type message class, which comes from Supervisor-->Runner monitoring stream
+    * @param {number} code - a numeric code of message type
+    * @param {string} data - a message in stringified JSON format
+    * @return {Message} - an instance of message class
+    */
+    private static getControlStreamMessage(code: number, data: string) {
+        switch (code) {
+        case 4000:
+            return new ConfirmAliveMessage();
+        case 4001:
+            return StopSequenceMessage.fromJSON(data);
+        case 4002:
+            return new KillSequenceMessage();
+        case 4003:
+            return MonitoringRateMessage.fromJSON(data);
+        default:
+            throw new Error("Unrecognized message code: " + code);
+        }
+
     }
 
     /**
@@ -96,8 +103,19 @@ class ModelUtils {
     static serializeMessage(message: Message) {
         const code = message.messageTypeCode;
         const json = JSON.stringify(message);
-        return [code, json];
+        const obj = JSON.parse(json);
+        delete obj.messageTypeCode;
+        return [code, JSON.stringify(obj)]; // [1001, '{msgCod: 1001, prop1: 1,...}']
     }
+
+    static testThow() {
+        throw new Error("Testing err thorwing");
+    }
+
+    withPromise() {
+        return Promise.reject("Rejected promise");
+    }
+
 
 }
 
