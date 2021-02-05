@@ -1,5 +1,5 @@
 import test from 'ava';
-// import { StringStream } from 'scramjet';
+import { StringStream } from 'scramjet';
 import { spawn } from 'child_process';
 
 const testSocket = "/tmp/test-socketx.sock";
@@ -8,12 +8,7 @@ test("start supervisor on " + testSocket, async t => {
     const child = spawn("/usr/bin/env", ["npx", "ts-node", "bin/supervisor.ts", testSocket]);
 
     await new Promise(async (resolve) => {
-        // const resultLines = await StringStream.from(child.stdout.read())
-        //     .lines()
-        //     .slice(0, 1)
-        //     .toArray();
-        // await console.log(resultLines[0]);
-
+        //TODO const data = await StringStream.from(child.stdout).whenRead(10);
         setTimeout(async () => {
             spawn("/usr/bin/env", ["rm", testSocket]);
             child.kill(9);
