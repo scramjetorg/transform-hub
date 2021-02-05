@@ -111,7 +111,6 @@ class ModelUtils {
         delete obj.messageTypeCode;
         return [code, JSON.stringify(obj)]; // [1001, '{msgCod: 1001, prop1: 1,...}']
     }
-
 }
 
 export { ModelUtils };
