@@ -14,14 +14,18 @@ import { ErrorMessage } from "../../types/model";
  *
  * An example of deserialization:
  * 
+ * ```js
  * const msgObj = { "monitoringRate": 1 }
  * deserializeMessage([4003, JSON.stringify(msgObj);
+ * ```
  * 
  * An example of serialization:
  * 
+ * ```js
  * const monitoringMessage: MonitoringMessage = { messageTypeCode: 5, itemThroughput: 5, itemsThroughput: [1, 2], 
  * pressure: 8, cpu: 0.7, memoryUsed: 424343234, memoryFree: 424423432, swapUsed: 424343234, swapFree: 424343234 };
  * serializeMessage(monitoringMessage);
+ * ```
  *
  */
 class ModelUtils {
