@@ -425,7 +425,7 @@ interface AutoApp2Context<AppConfigType extends AppConfig, State extends any> {
 interface FullApp2Context<
     AppConfigType extends AppConfig,
     State extends any
-> extends AutoApp2Context<AppConfigType, State> {
+    > extends AutoApp2Context<AppConfigType, State> {
     /**
      * This method must be overridden by the Sequence if definition is not 
      * providing the correct outcome.
@@ -460,59 +460,78 @@ export type TransformApp<
     Consumes = any,
     Produces = any,
     Z extends any[] = any[],
+    S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: App2Context<AppConfigType>,
+        this: App2Context<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<TransformAppAcceptableSequence<Consumes, Produces>>
     ;
 
-export type ReadableApp<Produces = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> =
+export type ReadableApp<
+    Produces = any,
+    Z extends any[] = any[],
+    S extends any = any,
+    AppConfigType extends AppConfig = AppConfig
+    > =
     (
-        this: App2Context<AppConfigType>,
+        this: App2Context<AppConfigType, S>,
         source: ReadableStream<never>,
         ...args: Z
     ) => MaybePromise<RFunction<Produces> | ReadSequence<Produces>>
     ;
 
-export type WritableApp<Consumes = any, Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> =
+export type WritableApp<
+    Consumes = any,
+    Z extends any[] = any[],
+    S extends any = any,
+    AppConfigType extends AppConfig = AppConfig
+    > =
     (
-        this: App2Context<AppConfigType>,
+        this: App2Context<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<WFunction<Consumes> | WriteSequence<Consumes> | void>
     ;
 
-export type InertApp<Z extends any[] = any[], AppConfigType extends AppConfig = AppConfig> =
+export type InertApp<
+    Z extends any[] = any[],
+    S extends any = any,
+    AppConfigType extends AppConfig = AppConfig
+    > =
     (
-        this: App2Context<AppConfigType>,
+        this: App2Context<AppConfigType, S>,
         source: ReadableStream<void>,
         ...args: Z
     ) => MaybePromise<WFunction<void> | WriteSequence<void> | void>
     ;
 
 export type ApplicationExpose<
-    Consumes = any, Produces = any, Z extends any[] = any[],
+    Consumes = any,
+    Produces = any,
+    Z extends any[] = any[],
+    S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > = {
         // Because we need this a bit lower again, so it's an egg-hen problem.
         // eslint-disable-next-line no-use-before-define
-        [exposeSequenceSymbol]: Application<Consumes, Produces, Z, AppConfigType>;
+        [exposeSequenceSymbol]: Application<Consumes, Produces, Z, S, AppConfigType>;
     };
 
 export type Application<
     Consumes = any,
     Produces = any,
     Z extends any[] = any[],
+    S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > =
-    TransformApp<Consumes, Produces, Z, AppConfigType> |
-    ReadableApp<Produces, Z, AppConfigType> |
-    WritableApp<Consumes, Z, AppConfigType> |
-    InertApp<Z> |
-    ApplicationExpose<Consumes, Produces, Z, AppConfigType>
+    TransformApp<Consumes, Produces, Z, S, AppConfigType> |
+    ReadableApp<Produces, Z, S, AppConfigType> |
+    WritableApp<Consumes, Z, S, AppConfigType> |
+    InertApp<Z, S> |
+    ApplicationExpose<Consumes, Produces, Z, S, AppConfigType>
 ;
 
 export enum RunnerMessageCode {
