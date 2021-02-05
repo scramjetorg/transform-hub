@@ -108,15 +108,6 @@ class ModelUtils {
         return [code, JSON.stringify(obj)]; // [1001, '{msgCod: 1001, prop1: 1,...}']
     }
 
-    static testThow() {
-        throw new Error("Testing err thorwing");
-    }
-
-    withPromise() {
-        return Promise.reject("Rejected promise");
-    }
-
-
 }
 
 export { ModelUtils };
