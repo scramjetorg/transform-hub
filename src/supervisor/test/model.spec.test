@@ -26,3 +26,22 @@ testModel("Serialization must retrun message in the correct format", (t: any) =>
     );
 });
 
+testModel("Message after being serizalized --> deserialized --> serizalized must be equal to the orginally serizalized message",
+    async(t: any) => {
+
+        const monitoringRateMessage = new MonitoringRateMessage(1000);
+        let serialized: [number, string];
+        serialized = ModelUtils.serializeMessage(monitoringRateMessage);
+        console.log(serialized);
+
+        const deserialized = await ModelUtils.deserializeMessage(serialized);
+        console.log(deserialized);
+
+        const serializedAgain = ModelUtils.serializeMessage(deserialized);
+        console.log(serializedAgain);
+
+        t.deepEqual(
+            serialized,
+            serializedAgain
+        );
+    });

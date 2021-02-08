@@ -39,12 +39,10 @@ class ModelUtils {
     static async deserializeMessage(data: [number, string]) {
 
         if (data[0] >= 3000 && data[0] < 4000) {
-            console.log("Bingo! 11");
             let retval = ModelUtils.getMonitorStreamMessage(data[0], data[1]);
             console.log(retval);
             return ModelUtils.getMonitorStreamMessage(data[0], data[1]);
         } else if (data[0] >= 4000 && data[0] < 5000) {
-            console.log("Bingo! 22");
             let retval = ModelUtils.getControlStreamMessage(data[0], data[1]);
             console.log(retval);
             return ModelUtils.getControlStreamMessage(data[0], data[1]);
@@ -104,7 +102,7 @@ class ModelUtils {
      * @return {[]} - a serizalized message in a format [msgCode, '{msgBody}'] where 'msgCode' is a message type code
      * and 'msgBody' is a message in stringified JSON format
      */
-    static serializeMessage(message: Message) {
+    static serializeMessage(message: Message): [number, string] {
         const code = message.messageTypeCode;
         const json = JSON.stringify(message);
         const obj = JSON.parse(json);

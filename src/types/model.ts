@@ -265,7 +265,7 @@ class StopSequenceMessage extends Message {
 
         if (!objMsg.hasOwnProperty("delay")) {
             throw new Error("StopSequenceMessage requires a 'delay' property.");
-        } 
+        }
 
         const stopSequenceMessage = new StopSequenceMessage(objMsg.delay);
         return stopSequenceMessage;
