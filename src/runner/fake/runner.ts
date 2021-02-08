@@ -1,6 +1,6 @@
 import { StringStream } from "scramjet";
 
-enum MessageCode {
+enum RunnerMessageCode {
     PONG = 3000,
     ACKNOWLEDGE = 3004,
     PING = 4000,
@@ -10,16 +10,20 @@ enum MessageCode {
     ALIVE = 3010 // temporary message code
 }
 
-type Payload = [
-    MessageCode,
+type RunnerMessage = [
+    RunnerMessageCode,
     object
 ];
 
-class Runner {
-    private readonly LOGGER_INTERVAL = 5000;
+type RunnerOptions = {
+    monitoringInterval?: number
+}
 
-    private readonly MOCK_MESSAGE: Payload = [
-        MessageCode.ALIVE,
+class Runner {
+    options: RunnerOptions;
+
+    private readonly MOCK_MESSAGE: RunnerMessage = [
+        RunnerMessageCode.ALIVE,
         {
             healthy: true
         }
@@ -27,17 +31,21 @@ class Runner {
 
     private statusIntervalHandle: any;
 
+    constructor(options: RunnerOptions) {
+        this.options = options;
+    }
+
     stream(): void {
         StringStream.from(process.stdin)
             .lines()
             .map((input: string) => this.getPayload(input))
-            .map((payload: Payload) => this.readPayload(payload))
+            .map((payload: RunnerMessage) => this.readPayload(payload))
             .append("\n")
             .pipe(process.stdout);
     }
 
-    getPayload(line: string): Payload {
-        let data: Payload = [0, {}];
+    getPayload(line: string): RunnerMessage {
+        let data: RunnerMessage = [0, {}];
 
         try {
             data = JSON.parse(line);
@@ -46,19 +54,19 @@ class Runner {
         return data;
     }
 
-    readPayload(payload: Payload): string {
-        let response: Payload = [
-            MessageCode.ACKNOWLEDGE,
+    readPayload(payload: RunnerMessage): string {
+        let response: RunnerMessage = [
+            RunnerMessageCode.ACKNOWLEDGE,
             { received: payload[0] || "unknown message" }
         ];
 
-        if (payload[0] === MessageCode.KILL) {
+        if (payload[0] === RunnerMessageCode.KILL) {
             this.handleKillRequest();
         }
 
-        if (payload[0] === MessageCode.PING) {
+        if (payload[0] === RunnerMessageCode.PING) {
             response = [
-                MessageCode.PONG,
+                RunnerMessageCode.PONG,
                 {}
             ];
         }
@@ -74,17 +82,30 @@ class Runner {
     }
 
     handleKillRequest(): void {
-        clearInterval(this.statusIntervalHandle);
+        this.stopMonitoring();
         process.exit(0);
     }
 
     start(): void {
         this.stream();
-        this.statusIntervalHandle = setInterval(
-            this.logger.bind(this),
-            this.LOGGER_INTERVAL
-        );
+
+        if (this.options.monitoringInterval) {
+            this.startMonitoring();
+        }
+    }
+
+    startMonitoring(): void {
+        if (this.options.monitoringInterval) {
+            this.statusIntervalHandle = setInterval(
+                this.logger.bind(this),
+                this.options.monitoringInterval
+            );
+        }
+    }
+
+    stopMonitoring(): void {
+        clearInterval(this.statusIntervalHandle);
     }
 }
 
-export { Runner, MessageCode, Payload };
+export { Runner, RunnerMessageCode, RunnerMessage, RunnerOptions };

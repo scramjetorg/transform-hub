@@ -1,14 +1,15 @@
 import { StringStream } from "scramjet";
-import { Runner, MessageCode } from "../../fake/runner";
+import { Runner, RunnerMessageCode, RunnerOptions } from "../../fake/runner";
 
 const test = require("ninos")(require("ava"));
 
 let runner: Runner;
 
 let processExit = process.exit;
+let runnerOptions: RunnerOptions = {};
 
 test.beforeEach(() => {
-    runner = new Runner();
+    runner = new Runner(runnerOptions);
 
     process.exit = () => { throw new Error("exit"); };
 });
@@ -29,12 +30,14 @@ test("start method should call stream method", (t: any) => {
     t.is(streamSpy.calls.length, 1);
 });
 
-test("start method should call setInterval with function as first parameter", (t: any) => {
+test("startMonitoring method should call setInterval with proper parameters", (t: any) => {
     const setIntervalSpy = t.context.spy(global, "setInterval");
+    runner.options.monitoringInterval = 2000;
 
-    runner.start();
+    runner.startMonitoring();
 
     t.is(typeof setIntervalSpy.calls[0].arguments[0], "function");
+    t.is(setIntervalSpy.calls[0].arguments[1], 2000);
 });
 
 test("stream method should call StringStream.from with stdin passed", (t: any) => {
@@ -59,26 +62,41 @@ test("logger method should call write of process.stdout", (t: any) => {
     t.is(stdoutSpy.calls.length, 1);
 });
 
-test("handleKillRequest should clearInterval and exit", (t: any) => {
-    const clearIntervalSpy = t.context.spy(global, "clearInterval");
+test("handleKillRequest should call stopMonitoring", (t: any) => {
+    const stopMonitoringSpy = t.context.spy(runner, "stopMonitoring");
 
+    try {
+        runner.handleKillRequest();
+    } catch (ignore) {
+        /* */
+    }
+
+    t.is(stopMonitoringSpy.calls.length, 1);
+});
+
+test("handleKillRequest should call process.exit", (t: any) => {
     t.throws(() => {
         runner.handleKillRequest();
     }, { message: "exit" });
+});
 
+test("stopMonitoring should call clearInterval", (t: any) => {
+    const clearIntervalSpy = t.context.spy(global, "clearInterval");
+
+    runner.stopMonitoring();
     t.is(clearIntervalSpy.calls.length, 1);
 });
 
 test("readPayload method should call handleKillRequest on KILL message", (t: any) => {
     t.throws(() => {
-        runner.readPayload([MessageCode.KILL, {}]);
+        runner.readPayload([RunnerMessageCode.KILL, {}]);
     }, { message: "exit" });
 });
 
 test("readPayload method should return PONG on PING payload", (t: any) => {
     t.is(
-        runner.readPayload([MessageCode.PING, {}]),
-        JSON.stringify([MessageCode.PONG, {}])
+        runner.readPayload([RunnerMessageCode.PING, {}]),
+        JSON.stringify([RunnerMessageCode.PONG, {}])
     );
 });
 
