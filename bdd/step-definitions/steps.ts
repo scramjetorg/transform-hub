@@ -1,10 +1,11 @@
-const { Given, When, Then } = require("cucumber");
-const assert = require("assert").strict;
-const exec = require("child_process").exec;
-const fs = require("fs");
+import { Given, When, Then } from "cucumber";
+import { promisify } from "util";
+import { strict as assert } from "assert";
+import { exec } from "child_process";
+import * as fs from "fs";
+
 const lineByLine = require("n-readlines");
 const testPath = "../fromdisk-bdd/";
-const { promisify } = require("util");
 
 Given("input file containing names {string}", async function(filename) {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
