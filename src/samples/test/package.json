@@ -10,6 +10,9 @@
     "node": ">=10",
     "scramjet": ">=0.9"
   },
+  "scramjet": {
+    "image": "node"
+  },
   "author": "Signicode <open-source@signicode.com>",
   "license": "GPL-3.0",
   "dependencies": {

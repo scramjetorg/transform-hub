@@ -3,8 +3,10 @@
   "version": "0.2.0",
   "description": "",
   "scripts": {
-    "build": "docker build -t @scramjet/pre-runner # perhaps we could generate the name with a script?",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "docker build -t scramjet/pre-runner:latest . # perhaps we could generate the name with a script?",
+    "start": "./analyze.sh",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../samples/test ."
   },
   "author": "",
   "license": "AGPL-3.0"
