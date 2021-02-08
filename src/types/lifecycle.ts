@@ -11,17 +11,27 @@ export type RunnerConfig = {
     config?: any;
 }
 
+export type LifeCycleConfig = {
+    makeSnapshotOnError: boolean;
+}
+
 export type DockerRunnerConfig = RunnerConfig & {
     config: {volumesFrom: string};
 }
 
-export interface LifeCycle {
-    idenitfy(stream: Readable): MaybePromise<RunnerConfig>;
-    run(config: RunnerConfig): MaybePromise<void>;
+type ExitCode = number;
 
-    pushStdio(stream: "stdin", input: ReadableStream<string>): this;
-    readStdio(stream: "stdout"): ReadableStream<string>;
-    readStdio(stream: "stderr"): ReadableStream<string>;
+export interface LifeCycle {
+    // lifecycle operations
+    idenitfy(stream: Readable): MaybePromise<RunnerConfig>;
+    // resolves when 
+    run(config: RunnerConfig): Promise<ExitCode>;
+    cleanup(): MaybePromise<void>;
+    snapshot(): MaybePromise<string>; // returns url identifier of made snapshot
+
+    pushStdio(stream: "stdin"|0, input: ReadableStream<string>): this;
+    readStdio(stream: "stdout"|1): ReadableStream<string>;
+    readStdio(stream: "stderr"|2): ReadableStream<string>;
 
     monitorRate(rps: number): this;
     monitor(): ReadableStream<MonitoringMessage>;
@@ -29,3 +39,5 @@ export interface LifeCycle {
     stop(): MaybePromise<void>;
     kill(): MaybePromise<void>;
 }
+
+export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});
