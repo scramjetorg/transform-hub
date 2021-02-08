@@ -45,3 +45,12 @@ testModel("Message after being serizalized --> deserialized --> serizalized must
             serializedAgain
         );
     });
+    
+testModel("When unrecognized property is passed to create an instance of message class, an error must be thrown",
+    t => {
+        const error = t.throws(() => {
+            MonitoringRateMessage.fromJSON("{\"fakeProp\":1000}");
+        }, { instanceOf: Error });
+
+        t.is(error.message, "MonitoringRateMessage requires a 'monitoringRate' property.");
+    });
