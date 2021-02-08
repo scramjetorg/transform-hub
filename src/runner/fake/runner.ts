@@ -1,23 +1,6 @@
 import { StringStream } from "scramjet";
 
-enum RunnerMessageCode {
-    PONG = 3000,
-    ACKNOWLEDGE = 3004,
-    PING = 4000,
-    STOP = 4001,
-    KILL = 4002,
-    MONITORING_RATE = 4003,
-    ALIVE = 3010 // temporary message code
-}
-
-type RunnerMessage = [
-    RunnerMessageCode,
-    object
-];
-
-type RunnerOptions = {
-    monitoringInterval?: number
-}
+import { RunnerOptions, RunnerMessage, RunnerMessageCode } from "../../types";
 
 class Runner {
     options: RunnerOptions;

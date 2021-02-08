@@ -15,21 +15,21 @@ type AsyncGen<W, R, C extends any[] = []> =
 
 /**
  * This is a simple utility type for an argument for `Promise.resolve`
- * 
+ *
  * @ignore
  */
 type MaybePromise<T> = Promise<T> | T;
 
 /**
  * This is a simple utility type for a function that can be passed to `Promise..then`
- * 
+ *
  * @ignore
  */
 type FReturns<T, Z extends any[] = any[]> = MaybePromise<T> | ((...args: Z) => MaybePromise<T>);
 
 /**
  * Represents any pipeable type (a stream) that outputs the generic <Produces>.
- * 
+ *
  * @ignore
  */
 interface PipeableStream<Produces> {
@@ -42,7 +42,7 @@ interface PipeableStream<Produces> {
 
 /**
  * A readable stream representation with generic chunks.
- * 
+ *
  * @see https://nodejs.org/api/stream.html#stream_readable_streams Node.js Readable stream documentation
  */
 export interface ReadableStream<Produces> extends PipeableStream<Produces> {
@@ -51,7 +51,7 @@ export interface ReadableStream<Produces> extends PipeableStream<Produces> {
 
 /**
  * Writable stream representation with generic chunks.
- * 
+ *
  * @see https://nodejs.org/api/stream.html#stream_writable_streams Node.js Writable stream documentation
  */
 export interface WritableStream<Consumes> {
@@ -65,7 +65,7 @@ export interface WritableStream<Consumes> {
 }
 
 /**
- * Represents all readable stream types that will be accepted as return values from {@see TFunction} 
+ * Represents all readable stream types that will be accepted as return values from {@see TFunction}
  */
 export type Streamable<Produces> =
     PipeableStream<Produces> |
@@ -76,20 +76,20 @@ export type Streamable<Produces> =
 
 /**
  * Helper: A maybe function that returns maybe a promise of a streamable.
- * 
+ *
  * Acceptable results:
- * 
+ *
  * - Streamable<Produces>
  * - () => Streamable<Produces>
  * - Promise<Streamable<Produces>>
  * - () => Promise<Streamable<Produces>>
- * 
+ *
  * @ignore
  */
 type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;
 
 /**
- * 
+ *
  */
 export type ReadFunction<Produces> = (...parameters: any[]) => StreambleMaybeFunction<Produces>;
 export type WriteFunction<Consumes> = (stream: ReadableStream<Consumes>, ...parameters: any[]) => MaybePromise<void>;
@@ -183,7 +183,7 @@ export type AppError = Error & {
 
 /**
  * Constructs an AppError
- * 
+ *
  * @param code One of the predefined error codes
  * @param message Optional additional explanatory message
  */
@@ -275,3 +275,22 @@ export type Application<
     InertApp<Z> |
     ApplicationExpose<Consumes, Produces, Z, AppConfigType>
 ;
+
+export enum RunnerMessageCode {
+    PONG = 3000,
+    ACKNOWLEDGE = 3004,
+    PING = 4000,
+    STOP = 4001,
+    KILL = 4002,
+    MONITORING_RATE = 4003,
+    ALIVE = 3010 // temporary message code
+}
+
+export type RunnerMessage = [
+    RunnerMessageCode,
+    object
+];
+
+export type RunnerOptions = {
+    monitoringInterval?: number
+}
