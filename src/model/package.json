@@ -4,8 +4,10 @@
     "description": "Important model of the scramjet platform",
     "main": "index.ts",
     "scripts": {
-        "build": "npx tsc",
-        "test": "echo 'No test for symbols yet'"
+        "start": "node ../../dist/model/messages-utils",
+        "build": "tsc -p tsconfig.json",
+        "postbuild": "cp -r node_modules ../../dist/model/",
+        "test": "ava"
     },
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
@@ -25,5 +27,5 @@
         "require": [
             "ts-node/register"
         ]
-    }    
+    }
 }

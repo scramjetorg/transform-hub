@@ -1,14 +1,10 @@
 {
     "compilerOptions": {
-        "outDir": "../../dist/model"
+        "outDir": "../../dist/",
     },
     "extends": "../../conf/tsconfig.json",
     "include": [
-        "**/*"
-    ],
-    "lib": [
-        "es6",
-        "dom"  
+        "**/*.ts"
     ],
     "exclude": [
         "node_modules",

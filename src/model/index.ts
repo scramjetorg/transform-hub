@@ -10,4 +10,3 @@ export { MonitoringMessage } from "./messages/monitoring";
 export { StopSequenceMessage } from "./messages/stop-sequence";
 export { Message } from "./messages/message";
 export { EncodedMessage } from "./messages/message";
-
