@@ -15,7 +15,7 @@
     "watch": "echo \"Error: no watcher specified\" && exit 1",
     "postinstall": "scripts/install-all.sh",
     "test": "scripts/test-all.sh",
-    "test-bdd": "cd bdd && ./node_modules/.bin/cucumber-js"
+    "test-bdd": "cd bdd && npm run test-bdd"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

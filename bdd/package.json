@@ -5,7 +5,11 @@
   "main": "_cucumber.js",
   "dependencies": {
     "cucumber": "^7.0.0-rc.0",
-    "n-readlines": "^1.0.1"
+    "n-readlines": "^1.0.1",
+    "promisify": "^0.0.3",
+    "scramjet": "^4.35.12"
   },
-  "devDependencies": {}
+  "scripts": {
+    "test-bdd": "./node_modules/.bin/cucumber-js"
+  }
 }
