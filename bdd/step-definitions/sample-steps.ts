@@ -1,14 +1,8 @@
-const assert = require("assert");
-const exec = require("child_process").exec;
-const promisify = require("promisify");
-const { Given, Then, When } = require("cucumber");
-const fs = require("fs");
-
-// import { Given, When, Then } from "cucumber";
-// import { promisify } from "util";
-// import { strict as assert } from "assert";
-// import { exec } from "child_process";
-// import * as fs from "fs";
+import { Given, When, Then } from "cucumber";
+import { promisify } from "util";
+import { strict as assert } from "assert";
+import { exec } from "child_process";
+import * as fs from "fs";
 
 const lineByLine = require("n-readlines");
 const testPath = "../fromdisk-bdd/";
