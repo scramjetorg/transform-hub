@@ -1,0 +1,24 @@
+{
+  "bin": {},
+  "name": "pre-publish",
+  "version": "0.0.1",
+  "description": "Autogenerate packages",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "keywords": [
+    "ikea",
+    "menu"
+  ],
+  "author": "",
+  "license": "",
+  "dependencies": {
+    "chalk": "^1.1.3",
+    "moment": "^2.17.1",
+    "request": "^2.79.0"
+  }
+}

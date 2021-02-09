@@ -4,13 +4,18 @@
   "description": "Important symbols of the scramjet platform",
   "main": "symbols.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.json",
+    "watch": "tsc -b --watch",
+    "clean": "rimraf -rf ./dist",
+    "prepack": "node ../../scripts/publish.js",
+    "compile": "tsc -p tsconfig.build.json",
     "test": "tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "devDependencies": {
     "@types/node": "^14.14.22",
-    "typescript": "^4.1.4"
+    "typescript": "^4.1.4",
+    "rimraf": "^3.0.2"
   }
 }

@@ -1,6 +1,5 @@
 {
-  "compilerOptions": {"outDir": "../../dist/supervisor"},
-  "extends": "../../conf/tsconfig.json",
-  "include": ["**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "compilerOptions": {"outDir": "./dist"},
+  "extends": "./tsconfig.build.json",
+  "include": ["./src"]
 }

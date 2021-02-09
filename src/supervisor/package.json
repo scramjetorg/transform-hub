@@ -8,7 +8,10 @@
     "test:ava": "ava",
     "build": "tsc -p tsconfig.json",
     "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",
-    "stop": "./stop-superviosor.sh"
+    "stop": "./stop-superviosor.sh",
+    "watch": "tsc -b --watch",
+    "prepack": "node ../../scripts/publish.js",
+    "clean": "rimraf -rf ./dist"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

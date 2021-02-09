@@ -4,9 +4,14 @@
   "description": "types.",
   "main": "runner.ts",
   "scripts": {
-    "build": "npm run test:expose && npx tsc",
-    "test:expose": "echo '// Generated file, do not edit!' > .work/generated_test.ts; find -iname '*.spec.ts' -not -wholename '*node_modules*' -exec node -p 'x = \"{}\";`import * as ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} from \"../${x.substr(0,x.length-3)}\"\nexport { ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} }`' \\; >> .work/generated_test.ts",
-    "test": "npm run test:expose && npx tsc --noEmit"
+    "clean": "rimraf -rf ./dist",
+    "compile": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
+    "prepack": "node ../../scripts/publish.js",
+    "build": "tsc -p tsconfig.json && npm run test:expose",
+    "watch": "tsc -b --watch",
+    "test:expose": "bash scripts/generate.sh",
+    "test": "yarn run test:expose && npx tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

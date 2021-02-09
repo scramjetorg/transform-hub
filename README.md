@@ -7,23 +7,75 @@ npm install -g lerna
 ```
 
 ```bash
-npm i
+npm install --global yarn
+```
+
+```bash
+yarn install
 ```
 
 It'll install all dependencies at once.
 
 ## Publish
 
+Create a new release of the packages that have been updated.
+Prompts for a new version and updates all the packages on git and npm.
 ```bash
-npm run publish
+lerna publish
+```
+
+```bash
+yarn publish
 ```
 
 ## Commands
 
+Build all packages
+```bash
+yarn build
+```
+
+Remove all files in *dist/* directory
+```bash
+yarn clean
+```
+
+Check and fix syntax
+```bash
+yarn lint
+```
+
+Watch files
+```bash
+yarn watch
+```
+
+Test files
+```bash
+yarn test
+```
+
+Test files parallel
+```bash
+yarn test:parallel
+```
+
+BDD Test
+```bash
+yarn test-bdd
+```
+
+Run script only in one package
+```bash
+lerna run --scope @scramjet/<package_name> <script-name>
+```
+
+<!-- 
 - `npm run build` - build all services, samples etc.,
 - `npm run build:supervisor` - build only supervisor,
 - `npm run clean` - remove all files in *dist/* directory,
 - `npm run lint` - check files
+ -->
 
 ---
 
@@ -60,12 +112,6 @@ lerna import <pathToRepo>
 Run an npm script in each package that contains that script.
 ```bash
 lerna run [script]
-```
-
-Create a new release of the packages that have been updated.
-Prompts for a new version and updates all the packages on git and npm.
-```bash
-lerna publish
 ```
 
 ## Documentation

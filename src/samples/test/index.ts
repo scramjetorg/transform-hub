@@ -5,5 +5,4 @@ const hello = (names:Array<string>) => {
         console.log(`Hello ${name}!`);
     });
 };
-
 hello(namesArr);

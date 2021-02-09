@@ -10,11 +10,14 @@
   "scripts": {
     "build": "lerna run build",
     "clean": "lerna run clean",
-    "pub": "lerna publish",
     "update": "",
+    "remove:json": "find packages/ -wholename '**/dist/package.json' -delete",
+    "prepack": "yarn remove:json && lerna run prepack",
+    "postpack": "yarn remove:json",
     "lint": "eslint . --ext .ts",
-    "watch": "echo \"Error: no watcher specified\" && exit 1",
+    "watch": "lerna run watch",
     "postinstall": "lerna bootstrap",
+    "webpack": "",
     "test": "lerna run test",
     "test:parallel": "lerna run test --parallel",
     "test-bdd": "cd bdd && npm run test-bdd"
@@ -27,13 +30,13 @@
     "@typescript-eslint/parser": "^4.14.0",
     "eslint": "^7.18.0",
     "lerna": "^3.22.1",
+    "ts-loader": "^8.0.15",
     "ts-node": "^9.1.1",
     "typescript": "^4.1.3"
   },
   "workspaces": {
     "packages": [
       "packages/**"
-    ],
-    "nohoist": []
+    ]
   }
 }
