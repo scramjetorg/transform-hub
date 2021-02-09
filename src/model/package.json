@@ -1,0 +1,29 @@
+{
+    "name": "@scramjet/model",
+    "version": "1.0.0",
+    "description": "Important model of the scramjet platform",
+    "main": "index.ts",
+    "scripts": {
+        "build": "npx tsc",
+        "test": "echo 'No test for symbols yet'"
+    },
+    "author": "Scramjet <open-source@scramjet.org>",
+    "license": "AGPL-3.0",
+    "devDependencies": {
+        "@scramjet/types": "file:../types",
+        "@types/node": "^14.14.22",
+        "ts-node": "^9.1.1",
+        "typescript": "^4.1.3"
+    },
+    "ava": {
+        "extensions": [
+            "ts"
+        ],
+        "files": [
+            "**/*.spec.ts"
+        ],
+        "require": [
+            "ts-node/register"
+        ]
+    }    
+}
