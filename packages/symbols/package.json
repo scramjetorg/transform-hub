@@ -1,14 +1,13 @@
 {
-  "name": "@scramjet/symbols",
+  "name": "@scramjet/example",
   "version": "1.0.0",
   "description": "Important symbols of the scramjet platform",
-  "main": "symbols.ts",
+  "main": "example.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "watch": "tsc -b --watch",
     "clean": "rimraf -rf ./dist",
-    "prepack": "node ../../scripts/publish.js",
     "compile": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "yarn run build",
     "test": "tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",

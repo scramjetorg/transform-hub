@@ -1,6 +1,0 @@
-{
-  "compilerOptions": {"outDir": "../../../dist/samples/test"},
-  "extends": "../../../conf/tsconfig.json",
-  "include": ["**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
-}
