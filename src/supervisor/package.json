@@ -26,5 +26,8 @@
     "require": [
       "ts-node/register"
     ]
+  },
+  "dependencies": {
+    "scramjet": "^4.35.12"
   }
 }
