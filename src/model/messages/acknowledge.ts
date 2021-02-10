@@ -1,4 +1,3 @@
-import { BaseMessage } from "./base-message";
 import { ErrorMessage } from "./error";
 
 import { RunnerMessageCode } from "@scramjet/types";
