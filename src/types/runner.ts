@@ -1,4 +1,5 @@
 import { exposeSequenceSymbol } from "@scramjet/symbols";
+import { AppErrorCode, AppError } from "./app-error";
 import { PipeableStream, ReadableStream, AsyncGen, Gen, FReturns, MaybePromise } from "./utils";
 
 /**
@@ -187,23 +188,6 @@ export type MonitoringMessage = {
  * App configuration primitive.
  */
 export type AppConfig = { [key: string]: null | string | number | boolean | AppConfig };
-
-/**
- * Acceptable error codes
- */
-export type AppErrorCode =
-    "GENERAL_ERROR" |
-    "COMPILE_ERROR" |
-    "SEQUENCE_MISCONFIGURED"
-    ;
-
-/**
- * Application error class
- */
-export type AppError = Error & {
-    code: AppErrorCode;
-    exitcode?: number;
-};
 
 /**
  * Constructs an AppError

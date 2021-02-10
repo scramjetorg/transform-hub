@@ -3,7 +3,7 @@ import transform from "./lib/transform";
 
 export const app: ReadableApp<any, [{ test: number }], { start: number }> =
     function abc(_source, { test }) {
-        const start = this.config.start;
+        const start = +(this.config.start || 0) || 0;
 
         const sequence = [
             function* () {

@@ -2,7 +2,7 @@ import { TransformApp } from "../runner";
 
 export const app: TransformApp<number, {i: number, x: number}, [], {abc: number, from: number}> =
     async function abc(source) {
-        const frm = this.config.from;
+        const frm = this.config.from || 0;
 
         const y = async function* () {
             let i:number = +frm;

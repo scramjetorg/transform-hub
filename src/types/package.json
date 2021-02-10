@@ -5,7 +5,7 @@
   "main": "runner.ts",
   "scripts": {
     "build": "npm run test:expose && npx tsc",
-    "test:expose": "echo '// Generated file, do not edit!' > generated_test.ts; find -iname '*.spec.ts' -not -wholename '*node_modules*' -exec node -p 'x = \"{}\";`import * as ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} from \"${x.substr(0,x.length-3)}\"\nexport { ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} }`' \\; >> generated_test.ts",
+    "test:expose": "echo '// Generated file, do not edit!' > .work/generated_test.ts; find -iname '*.spec.ts' -not -wholename '*node_modules*' -exec node -p 'x = \"{}\";`import * as ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} from \"../${x.substr(0,x.length-3)}\"\nexport { ${x.replace(/(\\.\\.?\\/|\\/)+|.spec.ts$/g,\"\")} }`' \\; >> .work/generated_test.ts",
     "test": "npm run test:expose && npx tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",
@@ -13,6 +13,8 @@
   "devDependencies": {
     "@scramjet/symbols": "file:../symbols",
     "@types/node": "^14.14.22",
-    "scramjet": "^4.35.11"
-  }
+    "scramjet": "^4.35.11",
+    "typescript": "^4.1.4"
+  },
+  "dependencies": {}
 }
