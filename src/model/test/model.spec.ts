@@ -27,8 +27,17 @@ testModel("Message after being serizalized --> deserialized --> serizalized must
 
 });
 
-testModel("Deserialization must reject a promise if incorrect message code is provided", t => {
+testModel("Deserialization must throw an error when an incorrect message code is provided", t => {
     const msg = "[-1,{\"delay\":1000}]";
+    const error = t.throws(() => {
+        MessageUtilities.deserializeMessage(msg);
+    }, { instanceOf: TypeError });
+
+    t.is(error.message, "Error while parsing a message.");
+});
+
+testModel("Deserialization must throw an error when a message is incorrectly serialized", t => {
+    const msg = "[-1,{\"delay\":1000},-1";
     const error = t.throws(() => {
         MessageUtilities.deserializeMessage(msg);
     }, { instanceOf: TypeError });

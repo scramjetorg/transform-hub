@@ -77,9 +77,7 @@ export module MessageUtilities {
                 data.msgCode = code;
                 data = JSON.stringify(data);
                 return getMessage(code, data);
-            }
-            throw new Error("Not a recognized array: " + obj);
-
+            } throw new TypeError("Not a recognized array: " + obj);
         } catch (e) {
             throw new TypeError("Error while parsing a message.");
         }
