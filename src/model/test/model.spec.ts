@@ -13,3 +13,16 @@ testModel("Deserialization must return a message of correct type", async t => {
     const deserialized = MessageUtilities.deserializeMessage("[4001,{\"delay\":1000}]");
     t.deepEqual(deserialized, stopMsg);
 });
+
+testModel("Message after being serizalized --> deserialized --> serizalized must be equal to the orginally serizalized message", async t => {
+
+    const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, delay: 1000 };
+    const serizalized = MessageUtilities.serializeMessage(stopMsg);
+
+    const deserialized = MessageUtilities.deserializeMessage(JSON.stringify(serizalized));
+
+    const serializedAgain = MessageUtilities.serializeMessage(deserialized);
+
+    t.is(JSON.stringify(serizalized), JSON.stringify(serializedAgain));
+
+});
