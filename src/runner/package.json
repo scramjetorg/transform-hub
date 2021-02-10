@@ -4,7 +4,9 @@
   "description": "Runner Mock",
   "main": "index.ts",
   "scripts": {
-    "start": "node ../../dist/runner/index",
+    "build-docker": "./docker-build.sh",
+    "start-docker": "docker run -i --rm -v PACKAGE:/package scramjet/runner:latest -t",
+    "start": "ts-node .",
     "build": "tsc -p tsconfig.json",
     "postbuild": "cp -r node_modules ../../dist/runner/",
     "test": "ava",
