@@ -1,4 +1,4 @@
-import { BaseMessage } from "./base-message";
+import { RunnerMessageCode } from "@scramjet/types";
 
 /**
  * Message forcing Runner to emit a keep alive message.
@@ -6,5 +6,6 @@ import { BaseMessage } from "./base-message";
  * It forces Runner to emit a keep alive message to confirm it is active.
  * This message type is sent from Supervisor.
  */
-export interface ConfirmAliveMessage extends BaseMessage {
+export interface ConfirmAliveMessage {
+    msgCode: RunnerMessageCode
 }
