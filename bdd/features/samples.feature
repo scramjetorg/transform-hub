@@ -1,5 +1,6 @@
 Feature: Samples
     
+    @ignore  
     Scenario: Execute sample test
         Given input file containing names "names.txt"
         When scramjet server porcesses input file as a stream

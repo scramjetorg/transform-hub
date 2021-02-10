@@ -6,13 +6,25 @@ import { StringStream } from "scramjet";
 let runner;
 let runnerProcessStopped;
 
-Given("mock runner is running", () => {
-    runner = spawn("/usr/bin/env", ["npx", "ts-node", "../src/runner/index.ts"]);
+function runRunner(withMonnitioring: boolean): void {
+    let command: string[] = ["npx", "ts-node", "../src/runner/index.ts"];
+    if (withMonnitioring) {
+        command = ["MONITORING_INTERVAL=1000"].concat(command);
+    }
+    runner = spawn("/usr/bin/env", command);
     runnerProcessStopped = false;
     runner.on("exit", () => {
         runnerProcessStopped = true;
     });
+}
 
+Given("mock runner is running with monitoring", () => {
+    runRunner(true);
+    assert.equal(runnerProcessStopped, false);
+});
+
+Given("mock runner is running", () => {
+    runRunner(false);
     assert.equal(runnerProcessStopped, false);
 });
 
@@ -27,12 +39,12 @@ Then("message {string} is received", async(message) => {
 });
 
 Then("mock runner is not running", async() => {
-    await new Promise(resolve => setTimeout(() => resolve(1), 1000));
+    await new Promise(resolve => setTimeout(() => resolve(1), 2000));
     assert.equal(runnerProcessStopped, true);
 });
 
-After(function() {
-    if (runnerProcessStopped){
+After(async() => {
+    if (!runnerProcessStopped) {
         runner.kill(9);
     }
 });
