@@ -81,19 +81,7 @@ export module MessageUtilities {
             throw new Error("Not a recognized array: " + obj);
 
         } catch (e) {
-            throw new Error("Error while parsing a message: " + msg);
+            throw new Error("Error while parsing a message");
         }
     }
 }
-
-const Activity = {
-    id: "",
-    title: "",
-    body: "",
-    json: {}
-};
-
-type Activity = typeof Activity;
-const headers: Array<Object> = Object.keys(Activity).map(key => {
-    return { text: key, value: key };
-});
