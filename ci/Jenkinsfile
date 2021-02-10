@@ -1,0 +1,83 @@
+pipeline {
+  agent {
+    node {
+      label "scp"
+    }
+  }
+  stages {
+    stage("Checkout SCM") {
+      steps {
+        checkout scm
+      }
+    }
+    stage("Install package") {
+      steps {
+        script {
+          docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
+            sh("npm cache clean --force")
+            sh("npm ci")
+          }
+        }  
+      }
+    }
+    stage("Run Linter") {
+      steps {
+        script {
+          docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
+            sh("npm run lint")
+          }
+        }  
+      }
+    }
+    stage("Run Tests") {
+      parallel {
+        stage("TS") {
+          steps {
+            script {
+              docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
+                sh("npm run test")
+              }
+            }  
+          }
+        }
+        stage("BDD") {
+          steps {
+            script {
+              docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
+                sh("npm run test-bdd")
+              }
+            }  
+          }
+        }
+      }
+    }
+    stage("Build all") {
+      steps {
+        script {
+          docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
+            sh("npm run build")
+          }
+        }  
+      }
+    }
+  }
+  post {
+    always {
+      // When successed currentBuild.result is null
+      script {
+        if (currentBuild.result == null) {
+          currentBuild.result = 'SUCCESS'
+        }
+      }
+      echo "Cleaning.."
+      cleanWs()
+    }
+    // Slack Notifications syntax: https://www.jenkins.io/doc/pipeline/steps/slack/
+    failure {
+      slackSend (color: '#FF0000', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) failed")
+    }
+    changed {
+      slackSend (color: '#00FF00', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) back to normal")
+    }
+  }
+}

@@ -1,0 +1,42 @@
+pipeline {
+  agent {
+    node {
+      label "scp"
+    }
+  }
+  stages {
+    stage("Checkout SCM") {
+      steps {
+        checkout scm
+      }
+    }
+    stage("Build Docker") {
+      steps {
+        script {
+          dir('../src/pre-runner') {
+            image = docker.build("scramjet/csi-prerunner")
+          }
+        }
+      }
+    }
+  }
+  post {
+    always {
+      // When successed currentBuild.result is null
+      script {
+        if (currentBuild.result == null) {
+          currentBuild.result = 'SUCCESS'
+        }
+      }
+      echo "Cleaning.."
+      cleanWs()
+    }
+    // Slack Notifications syntax: https://www.jenkins.io/doc/pipeline/steps/slack/
+    failure {
+      slackSend (color: '#FF0000', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) failed")
+    }
+    changed {
+      slackSend (color: '#00FF00', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) back to normal")
+    }
+  }
+}
