@@ -1,6 +1,5 @@
-import { MonitoringMessage, RunnerMessageCode } from "@scramjet/types";
-import { RunnerMessage } from "@scramjet/types";
-import { ConfirmAliveMessage, DescribeSequenceMessage, ErrorMessage, KeepAliveMessage, KillSequenceMessage, MonitoringRateMessage, StopSequenceMessage } from ".";
+import { RunnerMessage, RunnerMessageCode } from "@scramjet/types";
+import * as messages from "./index";
 
 export module MessageUtilities {
 
@@ -28,35 +27,35 @@ export module MessageUtilities {
     export function getMessage(code: RunnerMessageCode, msgData: string): any {
         switch (code) {
         case RunnerMessageCode.STOP: {
-            const msg: StopSequenceMessage = JSON.parse(msgData);
+            const msg: messages.StopSequenceMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.KILL: {
-            const msg: KillSequenceMessage = JSON.parse(msgData);
+            const msg: messages.KillSequenceMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.ALIVE: {
-            const msg: KeepAliveMessage = JSON.parse(msgData);
+            const msg: messages.KeepAliveMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.MONITORING_RATE: {
-            const msg: MonitoringRateMessage = JSON.parse(msgData);
+            const msg: messages.MonitoringRateMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.FORCE_CONFIRM_ALIVE: {
-            const msg: ConfirmAliveMessage = JSON.parse(msgData);
+            const msg: messages.ConfirmAliveMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.DESCRIBE_SEQUENCEMESSAGE: {
-            const msg: DescribeSequenceMessage = JSON.parse(msgData);
+            const msg: messages.DescribeSequenceMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.ERROR: {
-            const msg: ErrorMessage = JSON.parse(msgData);
+            const msg: messages.ErrorMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.MONITORING: {
-            const msg: MonitoringMessage = JSON.parse(msgData);
+            const msg: messages.MonitoringMessage = JSON.parse(msgData);
             return msg;
         }
         default:
@@ -87,3 +86,14 @@ export module MessageUtilities {
     }
 }
 
+const Activity = {
+    id: "",
+    title: "",
+    body: "",
+    json: {}
+};
+
+type Activity = typeof Activity;
+const headers: Array<Object> = Object.keys(Activity).map(key => {
+    return { text: key, value: key };
+});
