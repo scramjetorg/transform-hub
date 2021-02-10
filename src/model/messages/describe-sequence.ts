@@ -1,12 +1,18 @@
-import { RunnerMessageCode } from "@scramjet/types";
+import { FunctionStatus, RunnerMessageCode } from "@scramjet/types";
 
 /**
  * Message providing the description of Sequence.
- * It is an array of subsequences from which the sequence is construced.
+ * It includes the basic status information on each function from which Sequence is construced.
  * This message type is sent from Runner.
  */
-
 export interface DescribeSequenceMessage {
+
+    /** Message type code from RunnerMessageCode enumeration */
     msgCode: RunnerMessageCode,
-    subsequences: string[];
+
+    /** An array containing basic function status information for each of the Sequence's functions */
+    sequences?: FunctionStatus[];
+
+    /** Indicates whether there are no issues with the Sequence's processing activity  */
+    healthy?: boolean;
 }

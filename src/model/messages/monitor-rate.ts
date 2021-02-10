@@ -5,6 +5,10 @@ import { RunnerMessageCode } from "@scramjet/types";
  * This message type is sent from Supervisor.
  */
 export interface MonitoringRateMessage {
+
+    /** Message type code from RunnerMessageCode enumeration */
     msgCode: RunnerMessageCode,
+
+    /** . */
     monitoringRate: number;
 }

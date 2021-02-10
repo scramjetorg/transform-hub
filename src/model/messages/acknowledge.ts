@@ -8,7 +8,11 @@ import { RunnerMessageCode } from "@scramjet/types";
  * This message type is sent from Runner.
  */
 export interface AcknowledgeMessage {
+
+    /** Message type code from RunnerMessageCode enumeration */
     msgCode: RunnerMessageCode,
+
+    /** Indicates whether a message was received. */
     acknowledged: boolean;
     status: number;
     errorMsg?: ErrorMessage;

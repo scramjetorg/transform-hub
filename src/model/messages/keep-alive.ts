@@ -5,6 +5,8 @@ import { RunnerMessageCode } from "@scramjet/types";
  * This message type is sent from Runner.
  */
 export interface KeepAliveMessage {
+
+    /** Message type code from RunnerMessageCode enumeration */
     msgCode: RunnerMessageCode,
     keepAlive: number;
 }
