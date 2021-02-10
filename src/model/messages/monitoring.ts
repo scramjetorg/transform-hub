@@ -7,7 +7,6 @@ import { RunnerMessageCode } from "@scramjet/types";
 export interface MonitoringMessage {
     msgCode: RunnerMessageCode,
     itemThroughput: number;
-    itemsThroughput: number[];
     pressure: number;
     cpu: number;
     memoryUsed: number;
