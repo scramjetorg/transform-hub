@@ -7,12 +7,12 @@ import { RunnerMessageCode } from "@scramjet/types";
  */
 export interface StopSequenceMessage {
 
-    /** Message type code from RunnerMessageCode enumeration */
+    /** Message type code from RunnerMessageCode enumeration. */
     msgCode: RunnerMessageCode,
 
     /** The number of seconds before the Sequence will be killed. */
     timeout: number;
 
-    /** Informs if keepAlive can be called to prolong the running of the Sequence */
+    /** Informs if keepAlive can be called to prolong the running of the Sequence. */
     canCallKeepalive: boolean
 }
