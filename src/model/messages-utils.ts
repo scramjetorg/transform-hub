@@ -81,7 +81,7 @@ export module MessageUtilities {
             throw new Error("Not a recognized array: " + obj);
 
         } catch (e) {
-            throw new Error("Error while parsing a message");
+            throw new TypeError("Error while parsing a message.");
         }
     }
 }

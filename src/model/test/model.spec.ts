@@ -26,3 +26,12 @@ testModel("Message after being serizalized --> deserialized --> serizalized must
     t.is(JSON.stringify(serizalized), JSON.stringify(serializedAgain));
 
 });
+
+testModel("Deserialization must reject a promise if incorrect message code is provided", t => {
+    const msg = "[-1,{\"delay\":1000}]";
+    const error = t.throws(() => {
+        MessageUtilities.deserializeMessage(msg);
+    }, { instanceOf: TypeError });
+
+    t.is(error.message, "Error while parsing a message.");
+});
