@@ -12,7 +12,7 @@
     "clean": "lerna run clean",
     "update": "",
     "remove:json": "find packages/ -wholename '**/dist/package.json' -delete",
-    "prepack": "yarn remove:json && lerna run prepack",
+    "prepack": "lerna run prepack",
     "postpack": "yarn remove:json",
     "lint": "eslint . --ext .ts",
     "watch": "lerna run watch",
