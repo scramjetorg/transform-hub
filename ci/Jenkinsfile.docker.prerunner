@@ -49,8 +49,8 @@ pipeline {
       echo "Cleaning.."
       cleanWs()
     }
-    // Slack Notifications syntax: https://www.jenkins.io/doc/pipeline/steps/slack/. Run this only PRs.
-    failure {
+    // Slack Notifications syntax: https://www.jenkins.io/doc/pipeline/steps/slack/
+    unsuccessful {
       script {
         // CHANGE_ID is set only for pull requests
         if (env.CHANGE_ID) {
@@ -58,7 +58,7 @@ pipeline {
         }
       }
     }
-    changed {
+    fixed {
       script {
         // CHANGE_ID is set only for pull requests
         if (env.CHANGE_ID) {
