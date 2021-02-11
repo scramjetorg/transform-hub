@@ -39,14 +39,10 @@ class PrePack {
             fse.readJson(`${this.currDir}/package.json`, (err, content) => {
                 if (err) reject(`Unable to read package.json, error code: ${err.code}`);
                 else {
-                    try {
-                        content.scripts = {};
-                        content.devDependencies = {};
-                        this.jsonFile = content;
-                        resolve();
-                    } catch (e) {
-                        reject("Unable to parse file projects.json to JSON format");
-                    }
+                    content.scripts = {};
+                    content.devDependencies = {};
+                    this.jsonFile = content;
+                    resolve();
                 }
             });
         });
