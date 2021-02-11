@@ -1,5 +1,4 @@
-const fs = require("fs"),
-    fse = require("fs-extra"),
+const fse = require("fs-extra"),
     path = require("path");
 
 class PrePack {
@@ -9,6 +8,8 @@ class PrePack {
         this.rootDir = path.join(__dirname, "../../");
         this.rootDist = path.join(this.rootDir, "/dist");
         this.currDirDist = path.join(this.currDir, "/dist");
+        this.license = path.join(this.currDir, "/LICENSE");
+        this.rootDistPackPath = path.join(this.rootDist, this.folderName);
 
         this.readJson()
             .then(this.writeJson.bind(this))
@@ -17,28 +18,17 @@ class PrePack {
     }
     handleDistFiles() {
         return new Promise((resolve, reject) => {
-            this.copyFile(this.rootDir, this.currDirDist, "LICENSE")
-                .then(this.copyFolder.bind(this, this.currDirDist, this.rootDist))
+            this.copyFiles(this.license, this.currDirDist)
+                .then(this.copyFiles.bind(this, this.currDirDist, this.rootDistPackPath))
                 .then(resolve)
                 .catch(reject);
         });
     }
-    copyFolder(input, output) {
+    copyFiles(input, output) {
         console.log(`Copy files form ${input} to ${output}`);
         return new Promise((resolve, reject) => {
-            fse.copy(`${input}/`, `${output}/${this.folderName}`, (err) => {
-                if (err) reject(`Unable to copy folder form ${input} to ${output}, error code: ${err.code}`);
-                else resolve();
-            });
-            resolve();
-        });
-    }
-    copyFile(input, output, fileName) {
-        console.log(`Copy ${fileName} file form ${input} to ${output}`);
-        return new Promise((resolve, reject) => {
-            if (typeof fileName !== "string") reject(`${fileName} is invalid type name`);
-            fs.copyFile(`${input}/${fileName}`, `${output}/${fileName}`, (err) => {
-                if (err) reject(`Unable to copy ${fileName} form ${input} to ${output}, error code: ${err.code}`);
+            fse.copy(input, output, err => {
+                if (err) reject(`Unable to copy files form ${input} to ${output}, error code: ${err.code}`);
                 else resolve();
             });
             resolve();
@@ -46,11 +36,13 @@ class PrePack {
     }
     readJson() {
         return new Promise((resolve, reject) => {
-            fs.readFile(`${this.currDir}/package.json`, (err, content) => {
+            fse.readJson(`${this.currDir}/package.json`, (err, content) => {
                 if (err) reject(`Unable to read package.json, error code: ${err.code}`);
                 else {
                     try {
-                        this.jsonFile = JSON.parse(content);
+                        content.scripts = {};
+                        content.devDependencies = {};
+                        this.jsonFile = content;
                         resolve();
                     } catch (e) {
                         reject("Unable to parse file projects.json to JSON format");
@@ -59,16 +51,10 @@ class PrePack {
             });
         });
     }
-    editJson() {
-        console.log(`Path: ${this.currDir}. Editing package.json.`);
-        this.jsonFile.scripts = {};
-        this.jsonFile.devDependencies = {};
-    }
     writeJson() {
-        this.editJson();
         console.log(`Add package.json to ${this.currDir}`);
         return new Promise((resolve, reject) => {
-            fs.writeFile(`${this.currDirDist}/package.json`, JSON.stringify(this.jsonFile, null, 2), "utf8", (err) => {
+            fse.writeJson(path.join(this.currDirDist, 'package.json'), this.jsonFile, {spaces: 2}, err => {
                 if (err) reject(`Unable to overwrite ${this.jsonFile} package.json`);
                 else resolve();
             });

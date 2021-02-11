@@ -17,7 +17,6 @@
     "lint": "eslint . --ext .ts",
     "watch": "lerna run watch",
     "postinstall": "lerna bootstrap",
-    "webpack": "",
     "test": "lerna run test",
     "test:parallel": "lerna run test --parallel",
     "test-bdd": "cd bdd && npm run test-bdd"
