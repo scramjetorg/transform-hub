@@ -43,7 +43,7 @@ export module MessageUtilities {
             return msg;
         }
         case RunnerMessageCode.FORCE_CONFIRM_ALIVE: {
-            const msg: messages.ConfirmAliveMessage = JSON.parse(msgData);
+            const msg: messages.ConfirmHealthMessage = JSON.parse(msgData);
             return msg;
         }
         case RunnerMessageCode.DESCRIBE_SEQUENCEMESSAGE: {

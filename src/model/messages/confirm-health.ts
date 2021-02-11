@@ -6,7 +6,7 @@ import { RunnerMessageCode } from "@scramjet/types";
  * It forces Runner to emit a keep alive message to confirm it is still active.
  * This message type is sent from Supervisor.
  */
-export interface ConfirmAliveMessage {
+export interface ConfirmHealthMessage {
 
     /** Message type code from RunnerMessageCode enumeration. */
     msgCode: RunnerMessageCode

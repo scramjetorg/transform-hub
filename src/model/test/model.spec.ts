@@ -2,7 +2,7 @@ import testModel from "ava";
 import { MessageUtilities, StopSequenceMessage } from "../index";
 import { RunnerMessageCode } from "@scramjet/types";
 
-testModel("Serialization must return message in the correct format", async t => {
+testModel("Serialization must return a message in the correct format", async t => {
     const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, timeout: 1000, canCallKeepalive: true };
     const serizalized = MessageUtilities.serializeMessage(stopMsg);
     t.is(JSON.stringify(serizalized), "[4001,{\"timeout\":1000,\"canCallKeepalive\":true}]");

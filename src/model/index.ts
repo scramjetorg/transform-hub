@@ -1,5 +1,5 @@
 export { AcknowledgeMessage } from "./messages/acknowledge";
-export { ConfirmAliveMessage } from "./messages/confirm-alive";
+export { ConfirmHealthMessage } from "./messages/confirm-health";
 export { DescribeSequenceMessage } from "./messages/describe-sequence";
 export { ErrorMessage } from "./messages/error";
 export { KeepAliveMessage } from "./messages/keep-alive";
