@@ -2,24 +2,24 @@ Feature: Mock runner tests.
 
     Scenario: After sending ping, mock runner replies with pong.
         Given mock runner is running
-        When message "[4000,{}]" is sent
-        Then message "[3000,{}]" is received
+        When a message "PING" is sent
+        Then a message "PONG" is received
 
-    Scenario: Mock runner confirms receiving correct reguest.
+    Scenario: Mock runner confirms receiving correct request.
         Given mock runner is running
-        When message "[3010,{}]" is sent
-        Then message "[3004,{\"received\":3010}]" is received
+        When a message "ALIVE" is sent
+        Then a message "ALIVE_RESPONSE" is received
     
     Scenario: Mock runner recognizes incorrect messages.
         Given mock runner is running
-        When message "incorrect" is sent
-        Then message "[3004,{\"received\":\"unknown message\"}]" is received
+        When a message "INCORRECT" is sent
+        Then a message "INCORRECT_MESSAGE_RESPONSE" is received
 
     Scenario: Mock runner stops running after sending kill message.
         Given mock runner is running
-        When message "[4002,{}]" is sent
+        When a message "KILL" is sent
         Then mock runner is not running
         
     Scenario: Monitoring message is received when runner is running in monitoring mode.
         Given mock runner is running with monitoring
-        Then message "[3010,{\"healthy\":true}]" is received
+        Then a message "HEALTHY" is received

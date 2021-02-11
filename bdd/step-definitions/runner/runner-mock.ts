@@ -2,13 +2,14 @@ import { Given, When, Then, After } from "cucumber";
 import { strict as assert } from "assert";
 import { spawn } from "child_process";
 import { StringStream } from "scramjet";
+import { runnerMessages } from "../../data/runner-messages";
 
 let runner;
 let runnerProcessStopped;
 
-function runRunner(withMonnitioring: boolean): void {
+function runRunner(withMonitoring: boolean): void {
     let command: string[] = ["npx", "ts-node", "../src/runner/index.ts"];
-    if (withMonnitioring) {
+    if (withMonitoring) {
         command = ["MONITORING_INTERVAL=1000"].concat(command);
     }
     runner = spawn("/usr/bin/env", command);
@@ -28,14 +29,14 @@ Given("mock runner is running", () => {
     assert.equal(runnerProcessStopped, false);
 });
 
-When("message {string} is sent", (message) => {
-    runner.stdin.write(`${message}\n`);
+When("a message {string} is sent", (message:string) => {
+    runner.stdin.write(runnerMessages.get(message) + "\n");
     runner.stdin.end();
 });
 
-Then("message {string} is received", async(message) => {
+Then("a message {string} is received", async(message:string) => {
     const data = await StringStream.from(runner.stdout).lines().slice(0, 1).whenRead();
-    assert.equal(data, message);
+    assert.equal(data, runnerMessages.get(message));
 });
 
 Then("mock runner is not running", async() => {
