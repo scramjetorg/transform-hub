@@ -5,6 +5,4 @@ import { RunnerMessageCode } from "@scramjet/types";
  * It causes an ungraceful termination of Sequence.
  * This message type is sent from Supervisor.
  */
-export type KillSequenceMessageData = {}
-
-export type KillSequenceMessage = { msgCode: RunnerMessageCode.KILL } & KillSequenceMessageData;
+export type KillSequenceMessage = { msgCode: RunnerMessageCode.KILL };

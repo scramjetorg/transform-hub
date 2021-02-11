@@ -487,6 +487,24 @@ export type Application<
     ApplicationExpose<Consumes, Produces, Z, S, AppConfigType>
 ;
 
+export namespace MessageCodes {
+    export type PONG = "PONG";
+    export type ACKNOWLEDGE = "ACKNOWLEDGE";
+    export type PING = "PING";
+    export type STOP = "STOP";
+    export type KILL = "KILL";
+    export type MONITORING_RATE = "MONITORING_RATE";
+    export type ALIVE = "ALIVE";
+    export type FORCE_CONFIRM_ALIVE = "FORCE_CONFIRM_ALIVE";
+    export type DESCRIBE_SEQUENCE = "DESCRIBE_SEQUENCE";
+    export type ERROR = "ERROR";
+    export type MONITORING = "MONITORING";
+
+    export type ANY = STOP | KILL;
+}
+
+export type MessageCode = MessageCodes.ANY;
+
 export enum RunnerMessageCode {
     PONG = 3000,
     ACKNOWLEDGE = 3004,

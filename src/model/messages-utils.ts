@@ -1,16 +1,17 @@
 import { RunnerMessage, RunnerMessageCode } from "@scramjet/types";
-import { Message } from "./index";
+
 import { getMessage } from "./get-message";
+import { MessageType } from ".";
 
 export module MessageUtilities {
 
     /**
     * Serizalized message
-    * @param {any} msg - an object of message type
-    * @return { RunnerMessage } - a serizalized message in a format [msgCode, {msgBody}] 
-    * where 'msgCode' is a message type code and 'msgBody' is a message in stringified JSON format
+    * @param msg - an object of message type
+    * @return - a serializable message in a format [msgCode, {msgBody}] 
+    * where 'msgCode' is a message type code and 'msgBody' is a message body
     * */
-    export function serializeMessage<T extends Message>({ msgCode, ...msg }: T): RunnerMessage {
+    export function serializeMessage<T extends RunnerMessageCode>({ msgCode, ...msg }: MessageType<T>): RunnerMessage {
         // DO TYPEGUARDS...
 
         const json = JSON.parse(JSON.stringify(msg));
@@ -22,11 +23,11 @@ export module MessageUtilities {
     * @param { string } msg - a stringified and serialized message
     * @return { any } - an object of message type
     * */
-    export function deserializeMessage<T extends Message>(msg: string): T {
+    export function deserializeMessage(msg: string): MessageType<RunnerMessageCode> {
         try {
             const obj = JSON.parse(msg);
             if (Array.isArray(obj) && obj.length === 2) {
-                const code = +obj[0];
+                const code: RunnerMessageCode = +obj[0];
                 let data = obj[1];
                 if (Object.values(RunnerMessageCode).includes(code))
                     return getMessage(code, data);

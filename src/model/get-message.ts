@@ -1,27 +1,22 @@
 /* eslint-disable no-extra-parens */
-/* eslint-disable complexity */
 import {
-    Message, MessageData,
     AcknowledgeMessage, AcknowledgeMessageData,
-    ConfirmHealthMessage, ConfirmHealthMessageData,
+    ConfirmHealthMessage,
     DescribeSequenceMessage, DescribeSequenceMessageData,
     ErrorMessage, ErrorMessageData,
     KeepAliveMessage, KeepAliveMessageData,
-    KillSequenceMessage, KillSequenceMessageData,
+    KillSequenceMessage,
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
-    StopSequenceMessage, StopSequenceMessageData
+    StopSequenceMessage, StopSequenceMessageData, MessageDataType, MessageType
 } from "./index";
+
 import { RunnerMessageCode } from "@scramjet/types";
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
     if (typeof (data as StopSequenceMessageData).timeout !== "number") return false;
     if (typeof (data as StopSequenceMessageData).canCallKeepalive !== "boolean") return false;
     return true;
-}
-
-function isKillSequenceMessage(data: object): data is KillSequenceMessageData {
-    return Object.keys(data as KillSequenceMessageData).length === 0;
 }
 function isAcknowledgeMessage(data: object): data is AcknowledgeMessageData {
     return typeof (data as AcknowledgeMessageData).acknowledged === "boolean";
@@ -31,9 +26,6 @@ function isKeepAliveMessage(data: object): data is KeepAliveMessageData {
 }
 function isMonitoringRateMessage(data: object): data is MonitoringRateMessageData {
     return (data as MonitoringRateMessageData).monitoringRate >= 0;
-}
-function isConfirmHealthMessage(data: object): data is ConfirmHealthMessageData {
-    return Object.keys(data as ConfirmHealthMessageData).length === 0;
 }
 function isDescribeSequenceMessage(data: object): data is DescribeSequenceMessageData {
     // TODO: better checks needed
@@ -53,45 +45,6 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
     return true;
 }
 
-type AcceptableCodes = RunnerMessageCode.KILL | RunnerMessageCode.STOP | RunnerMessageCode.ALIVE | 
-    RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.FORCE_CONFIRM_ALIVE | 
-    RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | 
-    RunnerMessageCode.ACKNOWLEDGE;
-
-type MessageType<T> =
-    T extends RunnerMessageCode.KILL ? KillSequenceMessage :
-    T extends RunnerMessageCode.STOP ? StopSequenceMessage :
-    T extends RunnerMessageCode.ALIVE ? KeepAliveMessage :
-    T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
-    T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? ConfirmHealthMessage :
-    T extends RunnerMessageCode.DESCRIBE_SEQUENCE ? DescribeSequenceMessage :
-    T extends RunnerMessageCode.ERROR ? ErrorMessage :
-    T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
-    T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
-    never;
-
-type MessageDataType<T> =
-    T extends RunnerMessageCode.KILL ? KillSequenceMessageData :
-    T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
-    T extends RunnerMessageCode.ALIVE ? KeepAliveMessage :
-    T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
-    T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? ConfirmHealthMessage :
-    T extends RunnerMessageCode.DESCRIBE_SEQUENCE ? DescribeSequenceMessage :
-    T extends RunnerMessageCode.ERROR ? ErrorMessage :
-    T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
-    T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
-    never;
-
-const _md: MessageDataType<RunnerMessageCode.STOP> = {
-    canCallKeepalive: false,
-    timeout: 1e3
-};
-
-const _mt: MessageType<RunnerMessageCode.STOP> = {
-    msgCode: RunnerMessageCode.STOP,
-    ..._md
-};
-
 /**
 * Get an object of message type from serialized message.
 * A helper method used for deserializing messages.
@@ -99,20 +52,40 @@ const _mt: MessageType<RunnerMessageCode.STOP> = {
 * @param msgData - a message object
 * @return - an object of message type
 */
-export const getMessage: <X extends RunnerMessageCode.STOP>(
-    msgCode: X, 
+/* eslint-disable complexity */
+export const getMessage = <X extends RunnerMessageCode>(
+    msgCode: X,
     msgData: MessageDataType<X>
-) => MessageType<X> =
-(msgCode, msgData) => {
+): MessageType<X> => {
+    if (msgCode === RunnerMessageCode.KILL) {
+        return { msgCode: RunnerMessageCode.KILL } as KillSequenceMessage as MessageType<X>;
+    }
+    if (msgCode === RunnerMessageCode.FORCE_CONFIRM_ALIVE) {
+        return { msgCode: RunnerMessageCode.FORCE_CONFIRM_ALIVE } as ConfirmHealthMessage as MessageType<X>;
+    }
     if (msgCode === RunnerMessageCode.STOP && isStopSequenceMessage(msgData)) {
-        const _ret: MessageType<RunnerMessageCode.STOP> = { msgCode: RunnerMessageCode.STOP, ...msgData };
-        return _ret;
+        return { msgCode: RunnerMessageCode.STOP, ...msgData } as StopSequenceMessage as MessageType<X>;
+    }
+    if (msgCode === RunnerMessageCode.ALIVE && isKeepAliveMessage(msgData)) {
+        return { msgCode: RunnerMessageCode.ALIVE, ...msgData } as KeepAliveMessage as MessageType<X>;
+    }
+    if (msgCode === RunnerMessageCode.MONITORING_RATE && isMonitoringRateMessage(msgData)) {
+        return { msgCode: RunnerMessageCode.MONITORING_RATE, ...msgData } as MonitoringRateMessage as MessageType<X>;
+    }
+    if (msgCode === RunnerMessageCode.DESCRIBE_SEQUENCE && isDescribeSequenceMessage(msgData)) {
+        return {
+            msgCode: RunnerMessageCode.DESCRIBE_SEQUENCE, ...msgData
+        } as DescribeSequenceMessage as MessageType<X>;
+    }
+    if (msgCode === RunnerMessageCode.ERROR && isErrorMessage(msgData)) {
+        return { msgCode: RunnerMessageCode.ERROR, ...msgData } as ErrorMessage as MessageType<X>;
+    }
+    if (msgCode === RunnerMessageCode.MONITORING && isMonitoringMessage(msgData)) {
+        return { msgCode: RunnerMessageCode.MONITORING, ...msgData } as MonitoringMessage as MessageType<X>;
+    }
+    if (msgCode === RunnerMessageCode.ACKNOWLEDGE && isAcknowledgeMessage(msgData)) {
+        return { msgCode: RunnerMessageCode.ACKNOWLEDGE, ...msgData } as AcknowledgeMessage as MessageType<X>;
     }
 
     throw new Error("Unrecognized message code: " + msgCode);
 };
-
-const ok1 = getMessage(RunnerMessageCode.KILL, {});
-const ok2 = getMessage(RunnerMessageCode.STOP, { canCallKeepalive: false, timeout: 1e6 });
-
-

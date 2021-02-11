@@ -12,3 +12,5 @@ export type Message = {
     /** Message type code from RunnerMessageCode enumeration. */
     msgCode: RunnerMessageCode
 }
+
+export type EmptyMessageData = {};
