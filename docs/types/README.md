@@ -1,43 +1,24 @@
-# Scramjet Cloud Server Instance (CSI)
-
 @scramjet/types / [Exports](modules.md)
 
-## Table of contents
+# Scramjet Cloud Server Instance (CSI)
 
-### Enumerations
+## Installation
 
-- [RunnerMessageCode](enums/runnermessagecode.md)
+Simply run:
 
-### Interfaces
+```sh
+npm i
+```
 
-- [App2Context](interfaces/app2context.md)
-- [ReadableStream](interfaces/readablestream.md)
-- [WritableStream](interfaces/writablestream.md)
+ It'll install all dependencies at once.
 
-### Type aliases
+## Commands
 
-- [AppConfig](modules.md#appconfig)
-- [AppError](modules.md#apperror)
-- [AppErrorCode](modules.md#apperrorcode)
-- [Application](modules.md#application)
-- [ApplicationExpose](modules.md#applicationexpose)
-- [InertApp](modules.md#inertapp)
-- [InertSequence](modules.md#inertsequence)
-- [MonitoringResponse](modules.md#monitoringresponse)
-- [RFunction](modules.md#rfunction)
-- [ReadFunction](modules.md#readfunction)
-- [ReadSequence](modules.md#readsequence)
-- [ReadableApp](modules.md#readableapp)
-- [RunnerMessage](modules.md#runnermessage)
-- [RunnerOptions](modules.md#runneroptions)
-- [SequenceDefinition](modules.md#sequencedefinition)
-- [SequenceStatus](modules.md#sequencestatus)
-- [Streamable](modules.md#streamable)
-- [TFunction](modules.md#tfunction)
-- [TranformFunction](modules.md#tranformfunction)
-- [TransformApp](modules.md#transformapp)
-- [TransformSeqence](modules.md#transformseqence)
-- [WFunction](modules.md#wfunction)
-- [WritableApp](modules.md#writableapp)
-- [WriteFunction](modules.md#writefunction)
-- [WriteSequence](modules.md#writesequence)
+- `npm run build` - build all services, samples etc.,
+- `npm run build:supervisor` - build only supervisor,
+- `npm run clean` - remove all files in *dist/* directory,
+- `npm run lint` - check files
+
+## Documentation
+
+Want to check out more? [See the doc =>](https://github.com/scramjet-cloud-platform/docs)
