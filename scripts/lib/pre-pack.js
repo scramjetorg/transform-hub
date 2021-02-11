@@ -30,6 +30,7 @@ class PrePack {
                 if (err) reject(`Unable to copy folder form ${input} to ${output}, error code: ${err.code}`);
                 else resolve();
             });
+            resolve();
         });
     }
     copyFile(input, output, fileName) {
@@ -40,6 +41,7 @@ class PrePack {
                 if (err) reject(`Unable to copy ${fileName} form ${input} to ${output}, error code: ${err.code}`);
                 else resolve();
             });
+            resolve();
         });
     }
     readJson() {
