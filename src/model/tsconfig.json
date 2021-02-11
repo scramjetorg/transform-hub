@@ -9,5 +9,9 @@
     "exclude": [
         "node_modules",
         "**/*.spec.ts"
-    ]
+    ],
+    "typedocOptions": {
+        "entryPoints": ["index.ts"],
+        "out": "../../docs/model"
+      }
 }

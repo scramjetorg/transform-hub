@@ -2,5 +2,9 @@
   "compilerOptions": {"outDir": "../../dist/types"},
   "extends": "../../conf/tsconfig.json",
   "include": ["**/*.ts", ".work/generated_test.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "exclude": ["node_modules", "**/*.spec.ts"],
+  "typedocOptions": {
+    "entryPoints": ["runner.ts"],
+    "out": "../../docs/types"
+  }
 }

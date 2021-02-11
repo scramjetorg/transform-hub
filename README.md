@@ -3,9 +3,11 @@
 ## Installation
 
 Simply run:
+
 ```sh
 npm i
 ```
+
  It'll install all dependencies at once.
 
 ## Commands
@@ -16,4 +18,5 @@ npm i
 - `npm run lint` - check files
 
 ## Documentation
+
 Want to check out more? [See the doc =>](https://github.com/scramjet-cloud-platform/docs)
