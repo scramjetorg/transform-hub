@@ -32,7 +32,7 @@
         "no-sparse-arrays" : 2,
         "no-unreachable" : 2,
         "use-isnan" : 2,
-        "valid-jsdoc" : 2,
+        "valid-jsdoc" : [1, {"requireReturnType": false, "requireParamType": false}],
         "valid-typeof" : 2,
         "no-unexpected-multiline" : 2,
 
@@ -161,7 +161,10 @@
         "space-unary-ops" : 1,
         "spaced-comment" : 0,
         "wrap-regex" : 1,
-        "@typescript-eslint/no-unused-vars": [2, {"varsIgnorePattern" : "^(_this|options|defaults)", "argsIgnorePattern" : "^(options|defaults)"}],
+        "@typescript-eslint/no-unused-vars": [2, {
+            "varsIgnorePattern" : "^(_this|options|defaults)", 
+            "argsIgnorePattern" : "^(_|options|defaults)"}
+        ],
         "@typescript-eslint/no-useless-constructor": "error",
         "@typescript-eslint/no-shadow": ["error"],
         "max-len": [

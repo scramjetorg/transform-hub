@@ -1,32 +1,31 @@
-import { RunnerMessageCode } from "@scramjet/types";
+import { FunctionStatus, RunnerMessageCode } from "@scramjet/types";
+
+export type MonitoringMessageData = {
+
+    /** How many items are processed by the Sequence per second. */
+    sequences?: FunctionStatus[];
+
+    /** Calculated backpressure: processing * throughput / buffer. */
+    healthy: boolean;
+
+    /** CPU usage */
+    cpu?: number;
+
+    /** The amount of RAM in use. */
+    memoryUsed?: number;
+
+    /** The amount of free RAM. */
+    memoryFree?: number;
+
+    /** The amount of swap memory in use. */
+    swapUsed?: number;
+
+    /** The amount of free swap memory. */
+    swapFree?: number;
+}
 
 /**
  * Monitoring message including detailed performance statistics.
  * This message type is sent from Runner.
  */
-export interface MonitoringMessage {
-
-    /** Message type code from RunnerMessageCode enumeration */
-    msgCode: RunnerMessageCode,
-
-    /** How many items are processed by the Sequence per second. */
-    throughput: number;
-
-    /** Calculated backpressure: processing * throughput / buffer. */
-    pressure: number;
-
-    /** CPU usage */
-    cpu: number;
-
-    /** The amount of RAM in use. */
-    memoryUsed: number;
-
-    /** The amount of free RAM. */
-    memoryFree: number;
-
-    /** The amount of swap memory in use. */
-    swapUsed: number;
-
-    /** The amount of free swap memory. */
-    swapFree: number;
-}
+export type MonitoringMessage = { msgCode: RunnerMessageCode.MONITORING } & MonitoringMessageData;

@@ -1,13 +1,6 @@
 import { RunnerMessageCode } from "@scramjet/types";
 
-/**
- * A general purpose error message.
- * This message type is sent from Runner.
- */
-export interface ErrorMessage {
-
-    /** Message type code from RunnerMessageCode enumeration */
-    msgCode: RunnerMessageCode,
+export type ErrorMessageData = {
 
     /** The operation's exit code. */
     exitCode: number;
@@ -19,5 +12,11 @@ export interface ErrorMessage {
     errorCode: number;
 
     /** Error stack trace. */
-    stacktrace: string;
+    stack: string;
 }
+
+/**
+ * A general purpose error message.
+ * This message type is sent from Runner.
+ */
+export type ErrorMessage = { msgCode: RunnerMessageCode.ERROR } & ErrorMessageData;

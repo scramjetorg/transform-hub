@@ -496,10 +496,9 @@ export enum RunnerMessageCode {
     MONITORING_RATE = 4003,
     ALIVE = 3010, // temporary message code
     FORCE_CONFIRM_ALIVE = 4004,
-    DESCRIBE_SEQUENCEMESSAGE = 3002,
+    DESCRIBE_SEQUENCE = 3002,
     ERROR = 3003,
     MONITORING = 3001
-
 }
 
 export type RunnerMessage = [
