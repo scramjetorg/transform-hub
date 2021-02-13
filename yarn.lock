@@ -6189,7 +6189,7 @@ scramjet-core@^4.31.12:
   resolved "https://registry.npmjs.org/scramjet-core/-/scramjet-core-4.31.12.tgz"
   integrity sha512-E+LuR1jQQjqPAfErwjVvPM7IXUYsZxIGSXjPX1P9HWMxeWxbnjmwgnkdzsNmM6IjmRocoAZEFEI1z8L2H82iJg==
 
-scramjet@^4.35.11:
+scramjet@^4.35.11, scramjet@^4.35.12:
   version "4.35.12"
   resolved "https://registry.npmjs.org/scramjet/-/scramjet-4.35.12.tgz"
   integrity sha512-p80kOKrjjFifv0/8+sBvs3goUbvwDo6Nq9aiGqTiSL5sn95pSh9S5Mk+lC3vN2dTMFYYTfmuiaag1PjE8ddsuw==
