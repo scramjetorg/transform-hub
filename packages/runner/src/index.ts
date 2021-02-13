@@ -1,4 +1,4 @@
-import { Runner } from "./fake/runner";
+import { Runner } from "./mock/runner";
 
 const options = {
     monitoringInterval: parseInt(process.env.MONITORING_INTERVAL || "", 10)

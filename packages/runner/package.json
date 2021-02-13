@@ -1,12 +1,13 @@
 {
   "name": "@scramjet/runner",
+  "private": true,
   "version": "0.0.1",
   "description": "Runner Mock",
-  "main": "index.ts",
+  "main": "./src/index.ts",
   "scripts": {
     "build-docker": "./docker-build.sh",
     "start-docker": "docker run -i --rm -v PACKAGE:/package scramjet/runner:latest -t",
-    "start": "ts-node .",
+    "start": "ts-node ./src/index",
     "build": "tsc -p tsconfig.json",
     "postbuild": "cp -r node_modules ../../dist/runner/",
     "test": "ava",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^14.14.22",
+    "@scramjet/types": "0.0.0",
     "ava": "^3.15.0",
     "ninos": "^3.0.0",
     "nyc": "^15.1.0",
