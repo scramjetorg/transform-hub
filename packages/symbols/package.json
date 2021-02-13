@@ -1,8 +1,8 @@
 {
-  "name": "@scramjet/example",
+  "name": "@scramjet/symbols",
   "version": "1.0.0",
   "description": "Important symbols of the scramjet platform",
-  "main": "example.ts",
+  "main": "./src/symbols.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rimraf -rf ./dist",
