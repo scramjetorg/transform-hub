@@ -14,8 +14,7 @@ pipeline {
       steps {
         script {
           docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
-            sh("npm cache clean --force")
-            sh("npm ci")
+            sh("yarn install")
           }
         }  
       }
@@ -24,7 +23,7 @@ pipeline {
       steps {
         script {
           docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
-            sh("npm run lint")
+            sh("yarn lint")
           }
         }  
       }
@@ -38,7 +37,7 @@ pipeline {
               // temporary until tests will be fixed
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                 docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
-                  sh("npm run test")
+                  sh("yarn test")
                 }
               }
             }  
@@ -50,7 +49,7 @@ pipeline {
               // temporary until tests will be fixed
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                 docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
-                  sh("npm run test-bdd")
+                  sh("yarn test-bdd")
                 }
               }
             }  
@@ -62,7 +61,7 @@ pipeline {
       steps {
         script {
           docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
-            sh("npm run build")
+            sh("yarn build")
           }
         }  
       }
