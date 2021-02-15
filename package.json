@@ -8,7 +8,9 @@
     "csi-supervisor": "bin/scramjet-csi-supervisor"
   },
   "scripts": {
-    "build": "lerna run build",
+    "build": "npx lerna run build:docker && build:packages",
+    "build:packages": "lerna run build:packages",
+    "build:docker": "lerna run build:docker",
     "clean:root": "rimraf -rf ./dist/",
     "clean": "lerna run clean && yarn clean:root",
     "update": "",
