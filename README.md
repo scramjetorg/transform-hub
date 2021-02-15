@@ -65,6 +65,15 @@ BDD Test
 yarn test-bdd
 ```
 
+Run script excluding package
+
+```bash
+lerna run --ignore @scramjet/<package_name> build
+```
+```bash
+lerna run --ignore @scramjet/<package_name> build && @scramjet/<package_name> build
+```
+
 Run script only in one package
 ```bash
 lerna run --scope @scramjet/<package_name> <script-name>

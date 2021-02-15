@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "",
   "scripts": {
-    "build": "docker build -t @scramjet/node",
+    "build:docker": "docker build -t @scramjet/node",
     "test": "echo \"Warning: no test specified\""
   },
   "author": "",

@@ -10,7 +10,7 @@
     "prepack": "node ../../scripts/publish.js",
     "build": "tsc -p tsconfig.json && npm run test:expose",
     "watch": "tsc -b --watch",
-    "test:expose": "bash scripts/generate.sh",
+    "test:expose": "bash src/scripts/generate.sh",
     "test": "yarn run test:expose && npx tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { Readable } from "stream";
-import { LifeCycle, LifeCycleError, LifeCycleConfig } from "@scramjet/types/lifecycle";
+import { LifeCycle, LifeCycleError, LifeCycleConfig } from "@scramjet/types/src/lifecycle";
 
 async function LifeCycleController(tgz: Readable, lifecycleAdapter: LifeCycle, lifecycleConfig: LifeCycleConfig) {
     // this executes pre-runner

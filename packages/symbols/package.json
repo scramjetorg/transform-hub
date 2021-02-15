@@ -6,8 +6,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rimraf -rf ./dist",
+    "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.build.json",
     "prepublishOnly": "yarn run build",
+    "prepack": "node ../../scripts/publish.js",
     "test": "tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",

@@ -9,9 +9,13 @@
     "start-docker": "docker run -i --rm -v PACKAGE:/package scramjet/runner:latest -t",
     "start": "ts-node ./src/index",
     "build": "tsc -p tsconfig.json",
+    "watch": "tsc -b --watch",
     "postbuild": "cp -r node_modules ../../dist/runner/",
     "test": "ava",
-    "test-coverage": "nyc ava"
+    "test-coverage": "nyc ava",
+    "clean": "rimraf -rf ./dist",
+    "prepack": "node ../../scripts/publish.js"
+
   },
   "author": "",
   "license": "AGPL-3.0",

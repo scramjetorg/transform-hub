@@ -1,8 +1,16 @@
 {
-  "compilerOptions": {"outDir": "./dist"},
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
   "extends": "./tsconfig.build.json",
-  "include": ["src/", ".work/generated_test.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts"],
+  "include": [
+    "./src/", 
+    ".work/generated_test.ts"
+  ],
+  "exclude": [
+    "node_modules",
+     "**/*.spec.ts"
+    ],
   "typedocOptions": {
     "entryPoints": ["runner.ts"],
     "out": "../../docs/types"

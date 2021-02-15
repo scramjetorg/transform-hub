@@ -4,11 +4,13 @@
     "description": "Important model of the scramjet platform",
     "main": "index.ts",
     "scripts": {
-        "start": "node ../../dist/model/messages-utils",
+        "start": "node ./dist/model/messages-utils",
         "build": "tsc -p tsconfig.json",
+        "watch": "tsc -b --watch",
         "postbuild": "cp -r node_modules ../../dist/model/",
         "test": "npm i && npm run test:ava",
-        "test:ava": "ava"
+        "test:ava": "ava",
+        "prepack": "node ../../scripts/publish.js"
     },
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
