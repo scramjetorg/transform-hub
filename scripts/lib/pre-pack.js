@@ -10,8 +10,8 @@ class PrePack {
         this.rootDistPackPath = path.join(this.rootDir, "dist", this.folderName);
 
         this.changeJson()
-            .then(this.saveJson.bind(this))
-            .then(this.handleDistFiles.bind(this))
+            .then(this.saveJson)
+            .then(this.handleDistFiles)
             .catch(message => console.log(message));
     }
 

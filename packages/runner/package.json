@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/runner",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.2.0",
   "description": "Runner Mock",
   "main": "./src/index.ts",
   "scripts": {

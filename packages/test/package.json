@@ -1,6 +1,6 @@
 {
     "name": "test-ava-ts-node",
-    "version": "1.0.0",
+    "version": "0.2.0",
     "devDependencies": {
         "@types/node": "^14.14.22",
         "ava": "^3.15.0",

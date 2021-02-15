@@ -1,8 +1,8 @@
 {
     "name": "@scramjet/model",
-    "version": "1.0.0",
+    "version": "0.2.0",
     "description": "Important model of the scramjet platform",
-    "main": "index.ts",
+    "main": "./src/index.ts",
     "scripts": {
         "start": "node ./dist/model/messages-utils",
         "build": "tsc -p tsconfig.json",
@@ -15,8 +15,8 @@
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
     "devDependencies": {
-        "@scramjet/symbols": "file:../symbols",
-        "@scramjet/types": "file:../types",
+        "@scramjet/symbols": "0.2.0",
+        "@scramjet/types": "0.2.0",
         "@types/node": "^14.14.22",
         "ava": "^3.15.0",
         "ts-node": "^9.1.1",

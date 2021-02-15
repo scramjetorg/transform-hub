@@ -11,6 +11,10 @@ npm install --global yarn
 ```
 
 ```bash
+yarn link
+```
+
+```bash
 yarn install
 ```
 
