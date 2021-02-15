@@ -17,12 +17,16 @@ class PrePack {
 
     handleDistFiles() {
         const licenseFilename = "LICENSE";
+        const nodeModules = "/node_modules";
 
         return new Promise((resolve, reject) => {
             this.copyFiles(
                 path.join(this.rootDir, licenseFilename),
                 path.join(this.rootDistPackPath, licenseFilename))
                 .then(() => this.copyFiles(this.currDirDist, this.rootDistPackPath))
+                .then(() => this.copyFiles(
+                    path.join(this.currDir, nodeModules),
+                    path.join(this.rootDistPackPath, nodeModules)))
                 .then(resolve)
                 .catch(reject);
         });
