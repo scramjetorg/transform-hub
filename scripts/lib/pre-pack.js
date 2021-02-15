@@ -10,8 +10,8 @@ class PrePack {
         this.rootDistPackPath = path.join(this.rootDir, "dist", this.folderName);
 
         this.changeJson()
-            .then(this.saveJson)
-            .then(this.handleDistFiles)
+            .then(() => this.saveJson())
+            .then(() => this.handleDistFiles())
             .catch(message => console.log(message));
     }
 
@@ -22,7 +22,7 @@ class PrePack {
             this.copyFiles(
                 path.join(this.rootDir, licenseFilename),
                 path.join(this.rootDistPackPath, licenseFilename))
-                .then(this.copyFiles(this.currDirDist, this.rootDistPackPath))
+                .then(() => this.copyFiles(this.currDirDist, this.rootDistPackPath))
                 .then(resolve)
                 .catch(reject);
         });
@@ -30,37 +30,32 @@ class PrePack {
 
     copyFiles(input, output) {
         console.log(`Copy files form ${input} to ${output}`);
-        return new Promise((resolve, reject) => {
-            fse.copy(input, output, err => {
-                if (err) reject(`Unable to copy file(s) form ${input} to ${output}, error code: ${err.code}`);
-                else resolve();
+        return fse.copy(input, output)
+            .then(() => console.log("Success"))
+            .catch(err => {
+                console.error(`Unable to copy file(s) form ${input} to ${output}, error code: ${err}`);
             });
-            resolve();
-        });
     }
 
     changeJson() {
-        return new Promise((resolve, reject) => {
-            fse.readJson(path.join(this.currDir, "package.json"), (err, content) => {
-                if (err) reject(`Unable to read package.json, error code: ${err.code}`);
-                else {
-                    content.scripts = {};
-                    content.devDependencies = {};
-                    this.jsonFile = content;
-                    resolve();
-                }
+        return fse.readJson(path.join(this.currDir, "package.json"))
+            .then(content => {
+                content.scripts = {};
+                content.devDependencies = {};
+                this.jsonFile = content;
+            })
+            .catch(err => {
+                console.error(`Unable to read package.json, error code: ${err}`);
             });
-        });
     }
 
     saveJson() {
         console.log(`Add package.json to ${this.rootDistPackPath}`);
-        return new Promise((resolve, reject) => {
-            fse.outputJSON(path.join(this.rootDistPackPath, "package.json"), this.jsonFile, { spaces: 2 }, err => {
-                if (err) reject(`Unable to write package.json, error code: ${err.code}`);
-                else resolve();
+        return fse.outputJSON(path.join(this.rootDistPackPath, "package.json"), this.jsonFile, { spaces: 2 })
+            .then(() => console.log("Success"))
+            .catch(err => {
+                console.error(`Unable to write package.json, error code: ${err}`);
             });
-        });
     }
 }
 
