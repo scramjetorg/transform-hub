@@ -4,11 +4,12 @@ import { spawn } from "child_process";
 import { StringStream } from "scramjet";
 import { runnerMessages } from "../../data/runner-messages";
 
+const mockRunnerExec = "../packages/runner/src/index.ts";
 let runner;
 let runnerProcessStopped;
 
 function runRunner(withMonitoring: boolean): void {
-    let command: string[] = ["npx", "ts-node", "../src/runner/index.ts"];
+    let command: string[] = ["npx", "ts-node", mockRunnerExec];
     if (withMonitoring) {
         command = ["MONITORING_INTERVAL=1000"].concat(command);
     }
