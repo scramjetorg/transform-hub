@@ -10,7 +10,6 @@
     "start": "ts-node ./src/index",
     "build:packages": "tsc -p tsconfig.json",
     "watch": "tsc -b --watch",
-    "postbuild": "cp -r node_modules ../../dist/runner/",
     "test": "ava",
     "test-coverage": "nyc ava",
     "clean": "rimraf -rf ./dist",
