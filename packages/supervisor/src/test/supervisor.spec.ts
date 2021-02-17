@@ -5,7 +5,7 @@ import { spawn } from "child_process";
 const testSocket = `/tmp/test-socket-${process.pid}.sock`;
 
 test("start supervisor on " + testSocket, async t => {
-    const child = spawn("/usr/bin/env", ["npx", "ts-node", "bin/supervisor.ts", testSocket]);
+    const child = spawn("/usr/bin/env", ["npx", "ts-node", "src/bin/supervisor.ts", testSocket]);
 
     await new Promise(async(resolve) => {
         setTimeout(() => {
