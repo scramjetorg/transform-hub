@@ -1,5 +1,6 @@
 import { StringStream } from "scramjet";
-import { RunnerOptions, RunnerMessage, RunnerMessageCode } from "@scramjet/types";
+import { RunnerOptions } from "@scramjet/types";
+import { RunnerMessage, RunnerMessageCode } from "@scramjet/model";
 
 class Runner {
     options: RunnerOptions;

@@ -8,6 +8,6 @@ COPY --chown=runner:runnerg ./docker-tmp/ /home/runner
 
 WORKDIR /home/runner/src/runner
 
-RUN npm ci
+RUN npm i
 
 ENTRYPOINT ["npm", "start"]

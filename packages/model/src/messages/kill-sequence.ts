@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "@scramjet/types";
+import { RunnerMessageCode } from "../.";
 
 /**
  * Message instructing Runner to terminate Sequence using the kill signal.

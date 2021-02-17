@@ -1,4 +1,5 @@
-import { FunctionStatus, RunnerMessageCode } from "@scramjet/types";
+import { FunctionStatus } from "@scramjet/types";
+import { RunnerMessageCode } from "../.";
 
 export type MonitoringMessageData = {
 

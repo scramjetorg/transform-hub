@@ -8,10 +8,8 @@ import {
     KillSequenceMessage,
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
-    StopSequenceMessage, StopSequenceMessageData, MessageDataType, MessageType
+    StopSequenceMessage, StopSequenceMessageData, MessageDataType, MessageType, RunnerMessageCode
 } from "./index";
-
-import { RunnerMessageCode } from "@scramjet/types";
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
     if (typeof (data as StopSequenceMessageData).timeout !== "number") return false;

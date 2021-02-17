@@ -96,7 +96,7 @@ export type ReadSequence<Produces, Y extends any[] = any[], Z = any> =
 
 /**
  * A Transform Sequence is a sequence that accept input, perform operations on it, and
- * outputs the result. 
+ * outputs the result.
  */
 export type TransformSeqence<Consumes, Produces, Z = any, X extends any[] = any[]> =
     [TFunction<Consumes, Produces>] |
@@ -105,8 +105,8 @@ export type TransformSeqence<Consumes, Produces, Z = any, X extends any[] = any[
 
 /**
  * Defines scalability options for writable or readable side of the Function:
- * 
- * * C - Concurrency - the funcion accepts and processes more than one item at the 
+ *
+ * * C - Concurrency - the funcion accepts and processes more than one item at the
  *   same time, and therefore can be composed with consecutive ones.
  * * S - Sequentiality - the function can be executed on a different host to it's neighbours.
  * * P - Parallelism - the function can be spawned to multiple hosts at the same time
@@ -119,7 +119,7 @@ type ScalabilityOptions = "CSP" | "CS" | "CP" | "SP" | "C" | "S" | "V" | "";
 export type FunctionDefinition = {
     /**
      * Stream mode:
-     * 
+     *
      * * buffer - carries binary/string chunks that have no fixed size chunks and can be passed through sockets
      * * object - carries any type of object, that is serializable via JSON or analogue
      * * reference - carries non-serializable object references that should not be passed outside of a single process
@@ -135,7 +135,7 @@ export type FunctionDefinition = {
     description?: string;
     /**
      * Describes how head (readable side) and tail (writable side) of this Function can be
-     * scaled to other machines. 
+     * scaled to other machines.
      */
     scalability?: {
         /**
@@ -154,7 +154,7 @@ export type FunctionDefinition = {
  */
 export type FunctionStatus = {
     /**
-     * Average number of stream entries passing that specific function over the duration 
+     * Average number of stream entries passing that specific function over the duration
      * of 1 second during the last 10 seconds.
      */
     throughput: number;
@@ -178,7 +178,7 @@ export type FunctionStatus = {
  */
 export type MonitoringMessage = {
     /**
-     * 
+     *
      */
     sequences?: FunctionStatus[];
     healthy?: boolean;
@@ -199,22 +199,22 @@ type AppErrorConstructor = new (code: AppErrorCode, message?: string) => AppErro
 
 /**
  * Object of this interface is passed to Application context and allows it to communicate
- * with the Platform to ensure that it's in operation and should be kept alive without 
+ * with the Platform to ensure that it's in operation and should be kept alive without
  * interruption.
- * 
- * 
+ *
+ *
  */
 interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
     /**
      * This method should be overridden by the Sequence if auto detection of the Sequence
      * state is not precise enough.
-     * 
-     * The Runner will call this message periodically to obtain information on the 
+     *
+     * The Runner will call this message periodically to obtain information on the
      * condition of the Sequence.
-     * 
-     * If not provided, a monitoring function will be determined based on the 
+     *
+     * If not provided, a monitoring function will be determined based on the
      * return value from the Sequence.
-     * 
+     *
      * @param resp passed if the system was able to determine monitoring message by itself.
      * @returns the monitoring information
      */
@@ -223,15 +223,15 @@ interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
     /**
      * This method can be overridden to handle the stop signal from the Runner and perform
      * a graceful shutdown. The platform will provide a grace period in order to save current
-     * work and provide. 
-     * 
+     * work and provide.
+     *
      * This method can be called under two conditions:
      * * the instance will be terminated for extraneous reasons
      * * the instance was not able to confirm if the Sequence is alive
-     * 
+     *
      * The method can call @{see this.state} as many times as it likes, the valkue from the
      * last call will be made sure to be saved before the process will be terminated.
-     * 
+     *
      * @param timeout the number of seconds before the operation will be killed
      * @param canCallKeepalive informs if keepAlive can be called to prolong the operation
      * @returns the returned value can be a promise, once it's resolved the system will
@@ -243,10 +243,10 @@ interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
      * This method can be overridden to handle the kill signal from the Runner and perform
      * the final cleanup. This method is synchroneous and once it's exits the process will be
      * synchronously terminated.
-     * 
+     *
      * The method can call @{see this.state} as many times as it likes, the valkue from the
      * last call will be made sure to be saved before the process will be terminated.
-     * 
+     *
      * If this methods fails to exit within `100 ms` the process will be forcefully terminated
      * and the data will be lost.
      */
@@ -255,51 +255,51 @@ interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
     /**
      * The Sequence may call this process in order to confirm continued operation and provide
      * an information on how long the Sequence should not be considered stale.
-     * 
+     *
      * Sequences that expose read or write functions do not need to call this when the data
      * is flowing.
-     * 
+     *
      * If the platform finds no indication that the Sequence is still alive it will attempt to
      * stop it.
-     * 
+     *
      * @param milliseconds provides information on how long the process should wait before
      */
     keepAlive(milliseconds?: number): this;
 
     /**
-     * Calling this method will inform the Instance that the Sequence has completed the 
+     * Calling this method will inform the Instance that the Sequence has completed the
      * operation and can be gracefully terminated.
-     * 
+     *
      * If the Sequence is Writable or Inert then it will call the stopHandler immediatelly.
      * If the Sequence is Readable of Transform then it will call the stopHandler when all the
      * data is passed to the neighours.
-     * 
+     *
      * This method will be called automatically when the readable side of the sequence ends.
      */
     end(): this;
     /**
      * Calling this method will inform the Instance that the Sequence has enountered a fatal
      * exception and should not be kept alive.
-     * 
+     *
      * If the Sequence is Writable or Inert then it will call the stopHandler immediatelly.
-     * If the Sequence is Readable of Transform then it will call the stopHandler when any 
-     * error occurs on the readable side or it reaches end and all the data is passed to the 
+     * If the Sequence is Readable of Transform then it will call the stopHandler when any
+     * error occurs on the readable side or it reaches end and all the data is passed to the
      * neighours.
-     * 
-     * This method will be called automatically when the readable side of the sequence errors 
+     *
+     * This method will be called automatically when the readable side of the sequence errors
      * out.
-     * 
+     *
      * @param error optional error object for inspection
      */
     destroy(error?: AppError): this;
 
     /**
-     * This method can be used to ensure that the data is passed here will be stored for 
+     * This method can be used to ensure that the data is passed here will be stored for
      * another process. The operation is synchroneous and blocking.
-     * 
+     *
      * You can call the method as many times as you want, the last state will be safely
      * passed to the process that will take over after this one is terminated.
-     * 
+     *
      * @param state any serializable value
      */
     save(state: State): void;
@@ -311,18 +311,18 @@ interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
     initialState?: State;
 
     /**
-     * Receives events sent by the Instance that can be triggered via CLI and configured 
+     * Receives events sent by the Instance that can be triggered via CLI and configured
      * actions.
-     * 
-     * @param ev 
-     * @param handler 
+     *
+     * @param ev
+     * @param handler
      */
     on(ev: string, handler: (message?: any) => void): this;
     on(ev: "error", handler: (message: Error) => void): this;
 
     /**
      * Sends events to the Instance that can be received by CLI and configured actions
-     * 
+     *
      * @param ev event name
      * @param message any serializable object
      */
@@ -330,7 +330,7 @@ interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
     emit(ev: "error", message: AppError): this;
 
     /**
-     * Provides automated definition as understood by 
+     * Provides automated definition as understood by
      */
     definition?: FunctionDefinition[];
 
@@ -340,7 +340,7 @@ interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
 
 /**
  * Object of this interface is passed to Application context and allows it to communicate
- * with the Platform to ensure that it's in operation and should be kept alive without 
+ * with the Platform to ensure that it's in operation and should be kept alive without
  * interruption.
  */
 interface FullAppContext<
@@ -348,15 +348,15 @@ interface FullAppContext<
     State extends any
     > extends AutoAppContext<AppConfigType, State> {
     /**
-     * This method must be overridden by the Sequence if definition is not 
+     * This method must be overridden by the Sequence if definition is not
      * providing the correct outcome.
-     * 
-     * The Runner will call this message periodically to obtain information on the 
+     *
+     * The Runner will call this message periodically to obtain information on the
      * condition of the Sequence.
-     * 
-     * If not provided, a monitoring function will be determined based on the 
+     *
+     * If not provided, a monitoring function will be determined based on the
      * return value from the Sequence.
-     * 
+     *
      * @param resp passed if the system was able to determine monitoring message by itself.
      * @returns the monitoring information
      */
@@ -370,7 +370,7 @@ interface FullAppContext<
 
 /**
  * Application context
- * 
+ *
  * @interface
  */
 export type AppContext<AppConfigType extends AppConfig, State extends any> =
@@ -385,9 +385,9 @@ type TransformAppAcceptableSequence<Consumes, Produces> =
 /**
  * A Transformation App that accepts data from the platform, performs operations on the data,
  * and returns the data to the platforms for further use.
- * 
+ *
  * Has both active readable and writable sides.
- * 
+ *
  * @interface
  */
 export type TransformApp<
@@ -407,7 +407,7 @@ export type TransformApp<
 /**
  * A Readable App is an app that obtains the data by it's own means and preforms
  * 0 to any number of transforms on that data before returning it.
- * 
+ *
  * @interface
  */
 export type ReadableApp<
@@ -425,7 +425,7 @@ export type ReadableApp<
 /**
  * A Writable App is an app that accepts the data from the platform, performs any number
  * of transforms and then saves it to the data destination by it's own means.
- * 
+ *
  * @interface
  */
 export type WritableApp<
@@ -442,7 +442,7 @@ export type WritableApp<
 
 /**
  * An Inert App is an app that doesn't accept data from the platform and doesn't output it.
- * 
+ *
  * @interface
  */
 export type InertApp<
@@ -470,7 +470,7 @@ export type ApplicationExpose<
 
 /**
  * Application is an acceptable input for the runner.
- * 
+ *
  * @interface
  */
 export type Application<
@@ -504,25 +504,6 @@ export namespace MessageCodes {
 }
 
 export type MessageCode = MessageCodes.ANY;
-
-export enum RunnerMessageCode {
-    PONG = 3000,
-    ACKNOWLEDGE = 3004,
-    PING = 4000,
-    STOP = 4001,
-    KILL = 4002,
-    MONITORING_RATE = 4003,
-    ALIVE = 3010, // temporary message code
-    FORCE_CONFIRM_ALIVE = 4004,
-    DESCRIBE_SEQUENCE = 3002,
-    ERROR = 3003,
-    MONITORING = 3001
-}
-
-export type RunnerMessage = [
-    RunnerMessageCode,
-    object
-];
 
 export type RunnerOptions = {
     monitoringInterval?: number

@@ -1,4 +1,5 @@
-import { FunctionDefinition, RunnerMessageCode } from "@scramjet/types";
+import { FunctionDefinition } from "@scramjet/types";
+import { RunnerMessageCode } from "../.";
 
 export type DescribeSequenceMessageData = {
 

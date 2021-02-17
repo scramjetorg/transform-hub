@@ -1,5 +1,5 @@
 import { ErrorMessage } from "./error";
-import { RunnerMessageCode } from "@scramjet/types";
+import { RunnerMessageCode } from "../.";
 
 export type AcknowledgeMessageData = {
 
@@ -14,7 +14,7 @@ export type AcknowledgeMessageData = {
 }
 
 /**
- * Message indicating whether the command message (e.g. stop or kill) was received. 
+ * Message indicating whether the command message (e.g. stop or kill) was received.
  * Optionally, it can indicate if the command was performed successfully, or
  * (in case of issues) attach a related error description.
  * This message type is sent from Runner.

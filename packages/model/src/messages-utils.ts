@@ -1,14 +1,12 @@
-import { RunnerMessage, RunnerMessageCode } from "@scramjet/types";
-
 import { getMessage } from "./get-message";
-import { MessageType } from ".";
+import { MessageType, RunnerMessage, RunnerMessageCode } from ".";
 
 export module MessageUtilities {
 
     /**
     * Serizalized message
     * @param msg - an object of message type
-    * @return - a serializable message in a format [msgCode, {msgBody}] 
+    * @return - a serializable message in a format [msgCode, {msgBody}]
     * where 'msgCode' is a message type code and 'msgBody' is a message body
     * */
     export function serializeMessage<T extends RunnerMessageCode>({ msgCode, ...msg }: MessageType<T>): RunnerMessage {

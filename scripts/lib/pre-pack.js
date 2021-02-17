@@ -1,58 +1,95 @@
-const fse = require("fs-extra"),
-    path = require("path");
+const
+    fse = require("fs-extra"),
+    path = require("path"),
+    { exec } = require("child_process");
 
 class PrePack {
-    build() {
+    LICENSE_FILENAME = "LICENSE";
+    PACKAGES_DIR = "packages";
+
+    getPackagesNames() {
+        return fse.readdir(path.join(this.rootDir, this.PACKAGES_DIR))
+            .then((res) => Promise.all(
+                res.map(
+                    packageDir => fse.readJSON(path.join(this.rootDir, this.PACKAGES_DIR, packageDir, "package.json"))
+                        .then(contents => [contents.name, packageDir])
+                        .catch(() => {
+                            console.warn(`Can't read package.json from sibling package (${packageDir}): `);
+                        })
+                )
+            ));
+    }
+
+    cleanup(packages) {
+        return Promise.resolve(packages.filter(x => x));
+    }
+
+    constructor() {
         this.currDir = process.cwd();
         this.rootDir = path.join(__dirname, "..", "..");
         this.currDirDist = path.join(this.currDir, "dist");
         this.folderName = this.currDir.split(path.sep).pop();
         this.rootDistPackPath = path.join(this.rootDir, "dist", this.folderName);
-
-        this.changeJson()
-            .then(() => this.saveJson())
-            .then(() => this.handleDistFiles())
-            .catch(message => console.log(message));
     }
 
-    handleDistFiles() {
-        const licenseFilename = "LICENSE";
-
-        return new Promise((resolve, reject) => {
-            this.copyFiles(
-                path.join(this.rootDir, licenseFilename),
-                path.join(this.rootDistPackPath, licenseFilename))
-                .then(() => this.copyFiles(this.currDirDist, this.rootDistPackPath))
-                .then(resolve)
-                .catch(reject);
-        });
+    build() {
+        this.getPackagesNames()
+            .then(this.cleanup)
+            .then(this.changeJson.bind(this))
+            .then(this.saveJson.bind(this))
+            .then(this.copyFiles.bind(this))
+            .then(this.install.bind(this))
+            .catch(message => console.error(message));
     }
 
-    copyFiles(input, output) {
+    install() {
+        exec(`cd ${this.rootDistPackPath} && npm i`).stderr.pipe(process.stdout);
+    }
+
+    copyFiles() {
+        return Promise.all([
+            this.copy(
+                path.join(this.rootDir, this.LICENSE_FILENAME),
+                path.join(this.rootDistPackPath, this.LICENSE_FILENAME)
+            ),
+            this.copy(this.currDirDist, this.rootDistPackPath)
+        ]);
+    }
+
+    copy(input, output) {
         console.log(`Copy files form ${input} to ${output}`);
+
         return fse.copy(input, output)
-            .then(() => console.log("Success"))
             .catch(err => {
                 console.error(`Unable to copy file(s) form ${input} to ${output}, error code: ${err}`);
             });
     }
 
-    changeJson() {
+    changeJson(packages) {
         return fse.readJson(path.join(this.currDir, "package.json"))
-            .then(content => {
-                content.scripts = {};
-                content.devDependencies = {};
-                this.jsonFile = content;
-            })
+            .then(content => new Promise((res) => {
+                content.dependencies = content.dependencies || {};
+
+                Object.keys(content.dependencies).forEach((dependency) => {
+                    let pkg = packages.find(p => Array.isArray(p) && p[0] === dependency);
+
+                    if (pkg) {
+                        content.dependencies[dependency] = `file:../${pkg[1]}`;
+                    }
+                });
+
+                delete content.devDependencies;
+                res(content);
+            }))
             .catch(err => {
-                console.error(`Unable to read package.json, error code: ${err}`);
+                console.error(`Unable to read package.json in ${this.currDir}, error code: ${err}`);
             });
     }
 
-    saveJson() {
+    saveJson(content) {
         console.log(`Add package.json to ${this.rootDistPackPath}`);
-        return fse.outputJSON(path.join(this.rootDistPackPath, "package.json"), this.jsonFile, { spaces: 2 })
-            .then(() => console.log("Success"))
+
+        return fse.outputJSON(path.join(this.rootDistPackPath, "package.json"), content, { spaces: 2 })
             .catch(err => {
                 console.error(`Unable to write package.json, error code: ${err}`);
             });

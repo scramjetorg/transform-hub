@@ -1,5 +1,4 @@
-import { RunnerMessageCode } from "@scramjet/types";
-
+import { RunnerMessage, RunnerMessageCode } from "./runner-message";
 import { MessageUtilities } from "./messages-utils";
 import { AcknowledgeMessage, AcknowledgeMessageData } from "./messages/acknowledge";
 import { ConfirmHealthMessage } from "./messages/confirm-health";
@@ -58,4 +57,6 @@ export {
     MonitoringRateMessageData,
     StopSequenceMessage,
     StopSequenceMessageData,
+    RunnerMessageCode,
+    RunnerMessage
 };

@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "@scramjet/types";
+import { RunnerMessageCode } from "../.";
 
 export type StopSequenceMessageData = {
 
