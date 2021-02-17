@@ -39,5 +39,8 @@
     "packages": [
       "packages/**"
     ]
+  },
+  "dependencies": {
+    "glob": "^7.1.6"
   }
 }

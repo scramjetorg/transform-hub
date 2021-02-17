@@ -1,43 +1,54 @@
 const
     fse = require("fs-extra"),
+    glob = require("glob"),
     path = require("path"),
     { exec } = require("child_process");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
     PACKAGES_DIR = "packages";
-
-    getPackagesNames() {
-        return fse.readdir(path.join(this.rootDir, this.PACKAGES_DIR))
-            .then((res) => Promise.all(
-                res.map(
-                    packageDir => fse.readJSON(path.join(this.rootDir, this.PACKAGES_DIR, packageDir, "package.json"))
-                        .then(contents => [contents.name, packageDir])
-                        .catch(() => {
-                            console.warn(`Can't read package.json from sibling package (${packageDir}): `);
-                        })
-                )
-            ));
-    }
-
-    cleanup(packages) {
-        return Promise.resolve(packages.filter(x => x));
-    }
+    DIST_DIR = "dist";
 
     constructor() {
         this.currDir = process.cwd();
         this.rootDir = path.join(__dirname, "..", "..");
-        this.currDirDist = path.join(this.currDir, "dist");
-        this.folderName = this.currDir.split(path.sep).pop();
-        this.rootDistPackPath = path.join(this.rootDir, "dist", this.folderName);
+        this.currDirDist = path.join(this.currDir, this.DIST_DIR);
+        this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.DIST_DIR);
+    }
+
+    findPackages() {
+        return new Promise((res, rej) => {
+            glob(`../../${this.PACKAGES_DIR}/!(node_modules)/package.json`, (err, packages) => {
+                if (err) {
+                    rej(err);
+                } else {
+                    res(packages);
+                }
+            });
+        });
+    }
+
+    getPackagesMap() {
+        return this.findPackages()
+            .then((res) => Promise.all(
+                res.map(
+                    packageJson =>
+                        fse.readJSON(packageJson)
+                            .then(contents => [contents.name, packageJson.replace(`../../${this.PACKAGES_DIR}/`, "").replace("/package.json", "")])
+                            .catch(() => {
+                                console.warn(`Can't read package.json (${packageJson}): `);
+                            })
+                )
+            )).then((packagesMap) => { this.packagesMap = packagesMap; });
     }
 
     build() {
-        this.getPackagesNames()
-            .then(this.cleanup)
-            .then(this.changeJson.bind(this))
-            .then(this.saveJson.bind(this))
-            .then(this.copyFiles.bind(this))
+        this.getPackagesMap().then(
+            () => Promise.all([
+                this.transformPackageJson().then(content => this.saveJson(content)),
+                this.copyFiles()
+            ])
+        )
             .then(this.install.bind(this))
             .catch(message => console.error(message));
     }
@@ -47,13 +58,12 @@ class PrePack {
     }
 
     copyFiles() {
-        return Promise.all([
-            this.copy(
-                path.join(this.rootDir, this.LICENSE_FILENAME),
-                path.join(this.rootDistPackPath, this.LICENSE_FILENAME)
-            ),
+        this.copy(
+            path.join(this.rootDir, this.LICENSE_FILENAME),
+            path.join(this.rootDistPackPath, this.LICENSE_FILENAME)
+        ).then(() =>
             this.copy(this.currDirDist, this.rootDistPackPath)
-        ]);
+        );
     }
 
     copy(input, output) {
@@ -65,13 +75,13 @@ class PrePack {
             });
     }
 
-    changeJson(packages) {
+    transformPackageJson() {
         return fse.readJson(path.join(this.currDir, "package.json"))
             .then(content => new Promise((res) => {
                 content.dependencies = content.dependencies || {};
 
                 Object.keys(content.dependencies).forEach((dependency) => {
-                    let pkg = packages.find(p => Array.isArray(p) && p[0] === dependency);
+                    let pkg = this.packagesMap.find(p => Array.isArray(p) && p[0] === dependency);
 
                     if (pkg) {
                         content.dependencies[dependency] = `file:../${pkg[1]}`;
@@ -79,6 +89,7 @@ class PrePack {
                 });
 
                 delete content.devDependencies;
+
                 res(content);
             }))
             .catch(err => {
@@ -96,4 +107,4 @@ class PrePack {
     }
 }
 
-module.exports = new PrePack();
+module.exports = PrePack;
