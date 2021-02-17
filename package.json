@@ -18,7 +18,7 @@
     "postinstall": "lerna bootstrap",
     "test": "lerna run test",
     "test:parallel": "lerna run test --parallel",
-    "test-bdd": "cd bdd && npm run test-bdd"
+    "test-bdd": "cd bdd && yarn install && yarn run test-bdd"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
