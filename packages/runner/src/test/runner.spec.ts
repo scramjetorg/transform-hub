@@ -1,7 +1,8 @@
 import { StringStream } from "scramjet";
 
 import { Runner } from "../mock/runner";
-import { RunnerOptions, RunnerMessageCode } from "@scramjet/types";
+import { RunnerOptions } from "@scramjet/types";
+import { RunnerMessageCode } from "@scramjet/model";
 
 const test = require("ninos")(require("ava"));
 
