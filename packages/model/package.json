@@ -5,7 +5,7 @@
     "main": "./src/index.ts",
     "scripts": {
         "start": "node ./dist/model/messages-utils",
-        "build:packages": "tsc -p tsconfig.json",
+        "build": "tsc -p tsconfig.json",
         "watch": "tsc -b --watch",
         "test": "npm i && npm run test:ava",
         "test:ava": "ava",

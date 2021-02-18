@@ -5,13 +5,13 @@
   "description": "Runner Mock",
   "main": "./src/index.ts",
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "build:docker": "./docker-build.sh",
     "start:docker": "docker run -i --rm -v PACKAGE:/package scramjet/runner:latest -t",
     "start": "ts-node ./src/index",
-    "build:packages": "tsc -p tsconfig.json",
     "watch": "tsc -b --watch",
-    "test": "ava",
-    "test-coverage": "nyc ava",
+    "test": "ava --",
+    "test-coverage": "nyc --all=true --exclude=**/*.spec.ts --exclude=**/dist ava",
     "clean": "rimraf -rf ./dist",
     "prepack": "node ../../scripts/publish.js"
 

@@ -4,7 +4,7 @@
   "description": "Important symbols of the scramjet platform",
   "main": "./src/symbols.ts",
   "scripts": {
-    "build:packages": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json",
     "clean": "rimraf -rf ./dist",
     "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.build.json",
