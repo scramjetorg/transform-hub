@@ -13,7 +13,7 @@
     "test": "ava --",
     "test-coverage": "nyc --all=true --exclude=**/*.spec.ts --exclude=**/dist ava",
     "clean": "rimraf -rf ./dist",
-    "prepack": "node ../../scripts/publish.js"
+    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
   },
   "author": "",
   "license": "AGPL-3.0",

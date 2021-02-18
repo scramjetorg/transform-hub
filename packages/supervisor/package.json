@@ -10,7 +10,7 @@
     "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",
     "stop": "./stop-superviosor.sh",
     "watch": "tsc -b --watch",
-    "prepack": "node ../../scripts/publish.js",
+    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
     "clean": "rimraf -rf ./dist"
   },
   "author": "Scramjet <open-source@scramjet.org>",

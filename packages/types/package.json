@@ -7,7 +7,7 @@
     "clean": "rimraf -rf ./dist",
     "compile": "tsc -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
-    "prepack": "node ../../scripts/publish.js",
+    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
     "build": "tsc -p tsconfig.json && npm run test:expose",
     "watch": "tsc -b --watch",
     "test:expose": "bash src/scripts/generate.sh",

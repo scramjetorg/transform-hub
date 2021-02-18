@@ -7,7 +7,6 @@ const
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
     PACKAGES_DIR = "packages";
-    DIST_DIR = "dist";
 
     constructor(options) {
         this.options = options || {};
@@ -18,8 +17,8 @@ class PrePack {
 
         this.currDir = process.cwd();
         this.rootDir = path.join(__dirname, "..", "..");
-        this.currDirDist = path.join(this.currDir, this.DIST_DIR);
-        this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.DIST_DIR);
+        this.currDirDist = path.join(this.currDir, "dist");
+        this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
     }
 
     findPackages() {
@@ -55,7 +54,11 @@ class PrePack {
                 this.copyFiles()
             ])
         )
-            .then(this.install.bind(this))
+            .then(() => {
+                if (!this.options.noInstall) {
+                    this.install();
+                }
+            })
             .catch(message => console.error(message));
     }
 

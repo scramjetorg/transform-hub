@@ -4,10 +4,10 @@ RUN addgroup runnerg -g 902 && adduser -D -u 903 runner runnerg
 
 USER runner
 
-COPY --chown=runner:runnerg ./docker-tmp/ /home/runner
+COPY --chown=runner:runnerg ./docker-tmp /home/app
 
-WORKDIR /home/runner/src/runner
+WORKDIR /home/app/runner
 
-RUN npm i
+RUN npm i --no-package-lock
 
-ENTRYPOINT ["npm", "start"]
+ENTRYPOINT ["node", "index.js"]

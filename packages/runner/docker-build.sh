@@ -1,14 +1,19 @@
-mkdir -p /tmp/docker-tmp/src/runner
+yarn build
+NO_INSTALL=true OUT_DIR=docker-tmp LOCAL_PKGS=true node ../../scripts/publish.js
 
-cp -r . /tmp/docker-tmp/src/runner
-cp -r ../types /tmp/docker-tmp/src
-cp -r ../symbols /tmp/docker-tmp/src
+cd ../model
 
-cp -r ../../conf /tmp/docker-tmp/
+yarn build
+NO_INSTALL=true OUT_DIR=docker-tmp LOCAL_PKGS=true node ../../scripts/publish.js
 
-cp -r /tmp/docker-tmp ./docker-tmp/
+cd ../runner
 
-docker build . -t scramjet/runner:latest
+mkdir -p docker-tmp
 
-rm -rf /tmp/docker-tmp
-rm -rf ./docker-tmp
+cp -r ../../docker-tmp ./docker-tmp/
+
+echo "Building image"
+docker build -t scramjet/runner:latest .
+
+rm -rf docker-tmp
+rm -rf ../../docker-tmp
