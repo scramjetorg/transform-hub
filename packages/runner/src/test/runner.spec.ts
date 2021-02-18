@@ -3,13 +3,16 @@ import { StringStream } from "scramjet";
 import { Runner } from "../mock/runner";
 import { RunnerOptions } from "@scramjet/types";
 import { RunnerMessageCode } from "@scramjet/model";
+import * as sinon from "sinon";
 
-const test = require("ninos")(require("ava"));
+const test = require("ava");
 
 let runner: Runner;
 
 let processExit = process.exit;
 let runnerOptions: RunnerOptions = {};
+
+const sandbox = sinon.createSandbox();
 
 test.beforeEach(() => {
     runner = new Runner(runnerOptions);
@@ -19,6 +22,7 @@ test.beforeEach(() => {
 
 test.afterEach(() => {
     process.exit = processExit;
+    sandbox.restore();
 });
 
 test("Initialized", (t: any) => {
@@ -26,29 +30,29 @@ test("Initialized", (t: any) => {
 });
 
 test("start method should call stream method", (t: any) => {
-    const streamSpy = t.context.spy(runner, "stream");
+    const streamSpy = sandbox.spy(runner, "stream");
 
     runner.start();
 
-    t.is(streamSpy.calls.length, 1);
+    t.is(streamSpy.callCount, 1);
 });
 
 test("startMonitoring method should call setInterval with proper parameters", (t: any) => {
-    const setIntervalSpy = t.context.spy(global, "setInterval");
+    const setIntervalSpy = sandbox.spy(global, "setInterval");
     runner.options.monitoringInterval = 2000;
 
     runner.startMonitoring();
 
-    t.is(typeof setIntervalSpy.calls[0].arguments[0], "function");
-    t.is(setIntervalSpy.calls[0].arguments[1], 2000);
+    t.is(typeof setIntervalSpy.firstCall.args[0], "function");
+    t.is(setIntervalSpy.firstCall.args[1], 2000);
 });
 
 test("stream method should call StringStream.from with stdin passed", (t: any) => {
-    const stringStreamSpy = t.context.spy(StringStream, "from");
+    const stringStreamSpy = sandbox.spy(StringStream, "from");
 
     runner.start();
 
-    t.is(stringStreamSpy.calls[0].arguments[0], process.stdin);
+    t.is(stringStreamSpy.getCall(0).args[0], process.stdin);
 });
 
 test("getPayload should parse input to JSON", (t: any) => {
@@ -58,15 +62,15 @@ test("getPayload should parse input to JSON", (t: any) => {
 });
 
 test("logger method should call write of process.stdout", (t: any) => {
-    const stdoutSpy = t.context.spy(process.stdout, "write");
+    const stdoutSpy = sandbox.spy(process.stdout, "write");
 
     runner.logger();
 
-    t.is(stdoutSpy.calls.length, 1);
+    t.is(stdoutSpy.callCount, 1);
 });
 
 test("handleKillRequest should call stopMonitoring", (t: any) => {
-    const stopMonitoringSpy = t.context.spy(runner, "stopMonitoring");
+    const stopMonitoringSpy = sandbox.spy(runner, "stopMonitoring");
 
     try {
         runner.handleKillRequest();
@@ -74,7 +78,7 @@ test("handleKillRequest should call stopMonitoring", (t: any) => {
         /* */
     }
 
-    t.is(stopMonitoringSpy.calls.length, 1);
+    t.is(stopMonitoringSpy.callCount, 1);
 });
 
 test("handleKillRequest should call process.exit", (t: any) => {
@@ -84,10 +88,10 @@ test("handleKillRequest should call process.exit", (t: any) => {
 });
 
 test("stopMonitoring should call clearInterval", (t: any) => {
-    const clearIntervalSpy = t.context.spy(global, "clearInterval");
+    const clearIntervalSpy = sandbox.spy(global, "clearInterval");
 
     runner.stopMonitoring();
-    t.is(clearIntervalSpy.calls.length, 1);
+    t.is(clearIntervalSpy.callCount, 1);
 });
 
 test("readPayload method should call handleKillRequest on KILL message", (t: any) => {
