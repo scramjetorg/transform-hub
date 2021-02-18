@@ -2,5 +2,5 @@
 
 const PrePack = require("./lib/pre-pack");
 
-prePack = new PrePack();
+prePack = new PrePack({ outDir: "dist", localPkgs: false });
 prePack.build();

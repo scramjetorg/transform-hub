@@ -9,7 +9,13 @@ class PrePack {
     PACKAGES_DIR = "packages";
     DIST_DIR = "dist";
 
-    constructor() {
+    constructor(options) {
+        this.options = options || {};
+
+        if (!this.options.outDir) {
+            throw new Error("No output folder specified");
+        }
+
         this.currDir = process.cwd();
         this.rootDir = path.join(__dirname, "..", "..");
         this.currDirDist = path.join(this.currDir, this.DIST_DIR);
@@ -80,13 +86,15 @@ class PrePack {
             .then(content => new Promise((res) => {
                 content.dependencies = content.dependencies || {};
 
-                Object.keys(content.dependencies).forEach((dependency) => {
-                    let pkg = this.packagesMap.find(p => Array.isArray(p) && p[0] === dependency);
+                if (this.options.localPkgs) {
+                    Object.keys(content.dependencies).forEach((dependency) => {
+                        let pkg = this.packagesMap.find(p => Array.isArray(p) && p[0] === dependency);
 
-                    if (pkg) {
-                        content.dependencies[dependency] = `file:../${pkg[1]}`;
-                    }
-                });
+                        if (pkg) {
+                            content.dependencies[dependency] = `file:../${pkg[1]}`;
+                        }
+                    });
+                }
 
                 delete content.devDependencies;
 
