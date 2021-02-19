@@ -1,5 +1,5 @@
 import testModel from "ava";
-import { MessageUtilities, StopSequenceMessage } from "../src/index";
+import { MessageUtilities, StopSequenceMessage } from "../../../dist/model/index";
 import { RunnerMessageCode } from "@scramjet/model";
 
 testModel("Serialization must return a message in the correct format", async t => {
