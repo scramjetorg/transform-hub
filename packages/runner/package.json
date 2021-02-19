@@ -10,8 +10,8 @@
     "start:docker": "docker run -i --rm -v PACKAGE:/package scramjet/runner:latest -t",
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
-    "test": "ava --",
-    "test-coverage": "nyc --all=true --exclude=**/*.spec.ts --exclude=**/dist ava",
+    "test": "yarn build && ava --",
+    "test-coverage": "yarn build && nyc ava",
     "clean": "rimraf -rf ./dist",
     "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
   },
@@ -27,6 +27,7 @@
     "@types/sinon": "^9.0.10",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
+    "proxyquire": "^2.1.3",
     "sinon": "^9.2.4",
     "ts-node": "^9.1.1",
     "typescript": "^4.1.3"

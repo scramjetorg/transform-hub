@@ -1,18 +1,42 @@
-import { StringStream } from "scramjet";
-
-import { Runner } from "../mock/runner";
+/* tslint:disable */
 import { RunnerOptions } from "@scramjet/types";
 import { RunnerMessageCode } from "@scramjet/model";
 import * as sinon from "sinon";
 
 const test = require("ava");
-
-let runner: Runner;
+const proxyquire = require("proxyquire");
 
 let processExit = process.exit;
 let runnerOptions: RunnerOptions = {};
 
 const sandbox = sinon.createSandbox();
+
+let stringStreamFromStub = sandbox.stub();
+let stringStreamLinesStub = sandbox.stub();
+let stringStreamMapStub = sandbox.stub();
+let stringStreamAppendStub = sandbox.stub();
+let stringStreamPipeStub = sandbox.stub();
+
+const scramjetMock = {
+    StringStream: {
+        from: stringStreamFromStub,
+        lines: stringStreamLinesStub,
+        map: stringStreamMapStub,
+        append: stringStreamAppendStub,
+        pipe: stringStreamPipeStub
+    }
+};
+
+stringStreamFromStub.returns(scramjetMock.StringStream);
+stringStreamLinesStub.returns(scramjetMock.StringStream);
+stringStreamMapStub.returns(scramjetMock.StringStream);
+stringStreamAppendStub.returns(scramjetMock.StringStream);
+
+let { Runner } = proxyquire("../dist/mock/runner", {
+    scramjet: scramjetMock
+});
+
+let runner: any;
 
 test.beforeEach(() => {
     runner = new Runner(runnerOptions);
@@ -30,11 +54,9 @@ test("Initialized", (t: any) => {
 });
 
 test("start method should call stream method", (t: any) => {
-    const streamSpy = sandbox.spy(runner, "stream");
-
     runner.start();
 
-    t.is(streamSpy.callCount, 1);
+    t.is(stringStreamFromStub.callCount, 1);
 });
 
 test("startMonitoring method should call setInterval with proper parameters", (t: any) => {
@@ -48,11 +70,9 @@ test("startMonitoring method should call setInterval with proper parameters", (t
 });
 
 test("stream method should call StringStream.from with stdin passed", (t: any) => {
-    const stringStreamSpy = sandbox.spy(StringStream, "from");
-
     runner.start();
 
-    t.is(stringStreamSpy.getCall(0).args[0], process.stdin);
+    t.is(stringStreamFromStub.getCall(0).args[0], process.stdin);
 });
 
 test("getPayload should parse input to JSON", (t: any) => {
