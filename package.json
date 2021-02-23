@@ -12,7 +12,6 @@
     "build:docker": "lerna run build:docker",
     "clean:root": "rimraf -rf ./dist/",
     "clean": "lerna run clean && yarn clean:root",
-    "update": "",
     "prepack": "lerna run prepack",
     "lint": "eslint . --ext .ts",
     "watch": "lerna run watch",

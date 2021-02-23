@@ -16,58 +16,83 @@ class PrePack {
         }
 
         this.currDir = process.cwd();
-        this.rootDir = path.join(__dirname, "..", "..");
+        this.rootDir = path.resolve(__dirname, "../..");
         this.currDirDist = path.join(this.currDir, "dist");
         this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
+
+        this.rootPackageJson = "";
+        this.packagesMap = null;
     }
 
-    findPackages() {
+    /**
+     * @returns {string[]} found package paths
+     */
+    async findPackages() {
+        const cwd = path.join(this.rootDir, this.PACKAGES_DIR);
+
         return new Promise((res, rej) => {
-            glob(`../../${this.PACKAGES_DIR}/!(node_modules)/package.json`, (err, packages) => {
+            glob("!(node_modules)/package.json", { cwd }, (err, packages) => {
                 if (err) {
                     rej(err);
                 } else {
-                    res(packages);
+                    res(packages.map(found => path.join(cwd, found)));
                 }
             });
         });
     }
 
-    getPackagesMap() {
-        return this.findPackages()
-            .then((res) => Promise.all(
-                res.map(
-                    packageJson =>
-                        fse.readJSON(packageJson)
-                            .then(contents => [contents.name, packageJson.replace(`../../${this.PACKAGES_DIR}/`, "").replace("/package.json", "")])
-                            .catch(() => {
-                                console.warn(`Can't read package.json (${packageJson}): `);
-                            })
-                )
-            )).then((packagesMap) => { this.packagesMap = packagesMap; });
+    async readRootPackage() {
+        this.rootPackageJson = await fse.readJson(path.join(this.currDir, "package.json"));
     }
 
-    build() {
-        this.getPackagesMap().then(
-            () => Promise.all([
-                this.transformPackageJson().then(content => this.saveJson(content)),
-                this.copyFiles()
-            ])
-        )
-            .then(() => {
-                if (!this.options.noInstall) {
-                    this.install();
-                }
-            })
-            .catch(message => console.error(message));
+    async makePackagesMap() {
+        const res = await this.findPackages();
+
+        const packages = await Promise.all(res.map(async packageJson => {
+            try {
+                const contents = await fse.readJSON(packageJson);
+                return [contents.name, path.basename(path.dirname(packageJson))];
+            } catch (e) {
+                console.warn(`Can't read package.json (${packageJson}) `);
+                return null;
+            }
+        }));
+
+        this.packagesMap = new Map();
+        for (let [k, v] of packages) {
+            this.packagesMap.set(k, v);
+        }
     }
 
-    install() {
-        exec(`cd ${this.rootDistPackPath} && npm i`).stderr.pipe(process.stdout);
+    async build() {
+        try {
+            await this.readRootPackage();
+            await this.makePackagesMap();
+            await this.copyFiles();
+
+            await this.saveJson(await this.transformPackageJson());
+
+            if (!this.options.noInstall) {
+                await this.install();
+            }
+
+        } catch (message) {
+            console.error(message);
+            process.exitCode = 1;
+        }
     }
 
-    copyFiles() {
-        this.copy(
+    async install() {
+        return new Promise((res, rej) =>
+            exec(`cd ${this.rootDistPackPath} && npm i`)
+                .on("exit", (err) => err ? rej(err) : res())
+                .stderr.pipe(process.stderr)
+        );
+    }
+
+    async copyFiles() {
+        // we should copy these from packages if exist.
+        return this.copy(
             path.join(this.rootDir, this.LICENSE_FILENAME),
             path.join(this.rootDistPackPath, this.LICENSE_FILENAME)
         ).then(() =>
@@ -75,45 +100,81 @@ class PrePack {
         );
     }
 
-    copy(input, output) {
+    async copy(input, output) {
         console.log(`Copy files form ${input} to ${output}`);
 
-        return fse.copy(input, output)
+        return fse.copy(input, output, { recursive: true })
             .catch(err => {
-                console.error(`Unable to copy file(s) form ${input} to ${output}, error code: ${err}`);
+                throw new Error(`Unable to copy file(s) form ${input} to ${output}, error code: ${err}`);
             });
     }
 
-    transformPackageJson() {
-        return fse.readJson(path.join(this.currDir, "package.json"))
-            .then(content => new Promise((res) => {
-                content.dependencies = content.dependencies || {};
-
-                if (this.options.localPkgs) {
-                    Object.keys(content.dependencies).forEach((dependency) => {
-                        let pkg = this.packagesMap.find(p => Array.isArray(p) && p[0] === dependency);
-
-                        if (pkg) {
-                            content.dependencies[dependency] = `file:../${pkg[1]}`;
-                        }
-                    });
-                }
-
-                delete content.devDependencies;
-
-                res(content);
-            }))
-            .catch(err => {
-                console.error(`Unable to read package.json in ${this.currDir}, error code: ${err}`);
-            });
+    async readPackageJson() {
+        try {
+            return await fse.readJson(path.join(this.currDir, "package.json"));
+        } catch (err) {
+            throw new Error(`Unable to read ${this.currDir}, error code: ${err}`);
+        }
     }
 
-    saveJson(content) {
+    localizeDependencies(dependencies) {
+        if (!dependencies) return null;
+
+        if (this.options.localPkgs) {
+            const ret = {};
+            for (let [dependency, version] of Object.entries(dependencies)) {
+                ret[dependency] = this.packagesMap.has(dependency)
+                    ? `file:../${this.packagesMap.get(dependency)}`
+                    : version
+                ;
+            }
+
+            return ret;
+        }
+
+        return { ...dependencies };
+    }
+
+    async transformPackageJson() {
+        const content = await this.readPackageJson();
+        content.dependencies = content.dependencies || {};
+
+        const dependencies = this.localizeDependencies(content.dependencies);
+
+        const {
+            bin: _bin, main: _main,
+            name, version, description, keywords, homepage, bugs,
+            license, author, contributors, funding, files, browser,
+            man, directories, repository, config, peerDependencies,
+            peerDependenciesMeta, bundledDependencies, optionalDependencies,
+            engines, os, cpu, private: priv, publishConfig
+        } = { ...this.rootPackageJson, ...content };
+
+        const srcRe = str => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, "");
+
+        const main = srcRe(_main);
+        console.log(main);
+        const bin = _bin && (typeof _bin === "string"
+            ? srcRe(_bin)
+            // eslint-disable-next-line no-return-assign,no-sequences
+            : Object.entries(_bin).map().reduce(acc, ([k, v]) => (acc[k] = v, acc), {})
+        );
+
+        return {
+            name, version, description, keywords, homepage, bugs,
+            license, author, contributors, funding, files, main, browser,
+            bin, man, directories, repository, config, dependencies,
+            peerDependencies, peerDependenciesMeta, bundledDependencies, optionalDependencies,
+            engines, os, cpu, private: priv, publishConfig
+        };
+    }
+
+    async saveJson(content) {
         console.log(`Add package.json to ${this.rootDistPackPath}`);
 
         return fse.outputJSON(path.join(this.rootDistPackPath, "package.json"), content, { spaces: 2 })
             .catch(err => {
-                console.error(`Unable to write package.json, error code: ${err}`);
+                throw new Error(`Unable to write package.json, error code: ${err}`);
             });
     }
 }
