@@ -1,8 +1,10 @@
+const { constants } = require("fs-extra");
 const
     fse = require("fs-extra"),
     glob = require("glob"),
     path = require("path"),
     { exec } = require("child_process");
+const { access } = require("fs/promises");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
@@ -20,8 +22,29 @@ class PrePack {
         this.currDirDist = path.join(this.currDir, "dist");
         this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
 
-        this.rootPackageJson = "";
+        this.rootPackageJson = null;
+        this.currPackageJson = null;
         this.packagesMap = null;
+    }
+
+    async build() {
+        try {
+            await this.readPackageJson();
+            await this.readRootPackage();
+            await this.makePackagesMap();
+            await this.copyFiles();
+            await this.copyAssets();
+
+            await this.saveJson(await this.transformPackageJson());
+
+            if (!this.options.noInstall) {
+                await this.install();
+            }
+
+        } catch (message) {
+            console.error(message);
+            process.exitCode = 1;
+        }
     }
 
     /**
@@ -42,7 +65,19 @@ class PrePack {
     }
 
     async readRootPackage() {
-        this.rootPackageJson = await fse.readJson(path.join(this.currDir, "package.json"));
+        try {
+            this.rootPackageJson = await fse.readJson(path.join(this.rootDir, "package.json"));
+        } catch (err) {
+            throw new Error(`Unable to read package.json in ${this.rootDir}, error code: ${err}`);
+        }
+    }
+
+    async readPackageJson() {
+        try {
+            this.currPackageJson = await fse.readJson(path.join(this.currDir, "package.json"));
+        } catch (err) {
+            throw new Error(`Unable to read package.json in ${this.currDir}, error code: ${err}`);
+        }
     }
 
     async makePackagesMap() {
@@ -64,22 +99,16 @@ class PrePack {
         }
     }
 
-    async build() {
-        try {
-            await this.readRootPackage();
-            await this.makePackagesMap();
-            await this.copyFiles();
+    async copyAssets() {
+        const assets = Array.isArray(this.currPackageJson.assets) ? [...this.currPackageJson.assets] : [];
 
-            await this.saveJson(await this.transformPackageJson());
+        if (!assets.length) return;
 
-            if (!this.options.noInstall) {
-                await this.install();
-            }
+        // TODO: what about package.json/files?
 
-        } catch (message) {
-            console.error(message);
-            process.exitCode = 1;
-        }
+        await Promise.all(assets.map(
+            asset => this.copyToDist(this.currDir, asset)
+        ));
     }
 
     async install() {
@@ -90,14 +119,24 @@ class PrePack {
         );
     }
 
+    async isReadable(file) {
+        return access(file, constants.R_OK).then(() => true, () => false);
+    }
+
     async copyFiles() {
         // we should copy these from packages if exist.
-        return this.copy(
-            path.join(this.rootDir, this.LICENSE_FILENAME),
-            path.join(this.rootDistPackPath, this.LICENSE_FILENAME)
-        ).then(() =>
-            this.copy(this.currDirDist, this.rootDistPackPath)
-        );
+        const copies = [
+            this.copyToDist(this.rootDir, this.LICENSE_FILENAME)
+        ];
+        if (await this.isReadable(path.join(this.currDir, "README.md"))) {
+            copies.push(this.copyToDist(this.currDir, "README.md"));
+        }
+        await Promise.all(copies);
+        await this.copy(this.currDirDist, this.rootDistPackPath);
+    }
+
+    async copyToDist(src, filename) {
+        return this.copy(path.join(src, filename), path.join(this.rootDistPackPath, filename));
     }
 
     async copy(input, output) {
@@ -109,16 +148,9 @@ class PrePack {
             });
     }
 
-    async readPackageJson() {
-        try {
-            return await fse.readJson(path.join(this.currDir, "package.json"));
-        } catch (err) {
-            throw new Error(`Unable to read ${this.currDir}, error code: ${err}`);
-        }
-    }
-
     localizeDependencies(dependencies) {
-        if (!dependencies) return null;
+        if (!dependencies) return undefined;
+        if (Object.keys(dependencies).length === 0) return undefined;
 
         if (this.options.localPkgs) {
             const ret = {};
@@ -136,28 +168,41 @@ class PrePack {
     }
 
     async transformPackageJson() {
-        const content = await this.readPackageJson();
+        const content = this.currPackageJson;
         content.dependencies = content.dependencies || {};
 
         const dependencies = this.localizeDependencies(content.dependencies);
 
         const {
             bin: _bin, main: _main,
-            name, version, description, keywords, homepage, bugs,
-            license, author, contributors, funding, files, browser,
-            man, directories, repository, config, peerDependencies,
-            peerDependenciesMeta, bundledDependencies, optionalDependencies,
-            engines, os, cpu, private: priv, publishConfig
-        } = { ...this.rootPackageJson, ...content };
+            name, version, description, keywords,
+            files = this.rootPackageJson.files,
+            browser = this.rootPackageJson.browser,
+            license = this.rootPackageJson.license,
+            author = this.rootPackageJson.author,
+            contributors = this.rootPackageJson.contributors,
+            funding = this.rootPackageJson.funding,
+            homepage = this.rootPackageJson.homepage,
+            bugs = this.rootPackageJson.bugs,
+            repository = this.rootPackageJson.repository,
+            engines = this.rootPackageJson.engines,
+            os = this.rootPackageJson.os,
+            cpu = this.rootPackageJson.cpu,
+            private: priv = this.rootPackageJson.private,
+            publishConfig = this.rootPackageJson.publishConfig,
+            man, directories, config, peerDependencies,
+            peerDependenciesMeta, bundledDependencies, optionalDependencies
+        } = content;
 
         const srcRe = str => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, "");
 
         const main = srcRe(_main);
-        console.log(main);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)
-            // eslint-disable-next-line no-return-assign,no-sequences
-            : Object.entries(_bin).map().reduce(acc, ([k, v]) => (acc[k] = v, acc), {})
+            : Object.entries(_bin)
+                .map()
+                // eslint-disable-next-line no-return-assign,no-sequences
+                .reduce((acc, [k, v]) => (acc[k] = srcRe(v), acc), {})
         );
 
         return {
