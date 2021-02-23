@@ -1,6 +1,7 @@
 {
   "name": "@scramjet/supervisor",
   "version": "0.2.0",
+  "private": true,
   "description": "The supervisor application for the underlying container and program wrapper executed within it.",
   "main": "./src/index.ts",
   "scripts": {

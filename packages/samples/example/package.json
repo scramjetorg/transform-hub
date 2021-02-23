@@ -1,6 +1,7 @@
 {
   "name": "@scramjet/example",
   "version": "0.2.0",
+  "private": true,
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
