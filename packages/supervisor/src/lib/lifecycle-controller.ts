@@ -5,7 +5,7 @@ import { LifeCycle, LifeCycleError, LifeCycleConfig } from "@scramjet/types/src/
 
 async function LifeCycleController(tgz: Readable, lifecycleAdapter: LifeCycle, lifecycleConfig: LifeCycleConfig) {
     // this executes pre-runner
-    const config = await lifecycleAdapter.idenitfy(tgz);
+    const config = await lifecycleAdapter.identify(tgz);
     try {
         // this executes runner
         // this may run for 24 hours or even longer...

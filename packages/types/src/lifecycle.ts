@@ -19,11 +19,11 @@ export type DockerRunnerConfig = RunnerConfig & {
     config: {volumesFrom: string};
 }
 
-type ExitCode = number;
+export type ExitCode = number;
 
 export interface LifeCycle {
     // lifecycle operations
-    idenitfy(stream: Readable): MaybePromise<RunnerConfig>;
+    identify(stream: Readable): MaybePromise<RunnerConfig>;
     // resolves when 
     run(config: RunnerConfig): Promise<ExitCode>;
     cleanup(): MaybePromise<void>;
