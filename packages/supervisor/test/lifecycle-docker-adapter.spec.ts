@@ -1,5 +1,6 @@
-import { LifecycleDockerAdapter } from "@scramjet/supervisor/src/lib/lifecycle-docker-adapter";
-
+import { LifecycleDockerAdapter } from "../../../dist/supervisor";
+// import { LifecycleDockerAdapter } from "@scramjet/supervisor/src/lib/lifecycle-docker-adapter";
+//todo run js version of LifecycleDockerAdapter
 const test = require("ava");
 
 let ldca: LifecycleDockerAdapter;
