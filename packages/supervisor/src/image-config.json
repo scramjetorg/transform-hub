@@ -1,0 +1,4 @@
+{
+    "prerunner": "repo.int.scp.ovh/scramjet/pre-runner:latest",
+    "runner": "repo.int.scp.ovh/scramjet/runner:latest"
+ }
