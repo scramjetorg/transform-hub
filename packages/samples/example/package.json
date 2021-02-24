@@ -1,17 +1,17 @@
 {
   "name": "@scramjet/example",
   "version": "0.2.0",
-  "private": true,
   "main": "dist/index",
   "types": "dist/index",
   "scripts": {
-    "test": "echo \"Error: no test specified\"",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p tsconfig.json",
     "clean": "rimraf -rf ./dist",
     "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.build.json",
     "prepublishOnly": "yarn run build",
-    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js"
+    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js",
+    "start": "node dist/index.js"
   },
   "engines": {
     "node": ">=10",
@@ -24,11 +24,11 @@
   "license": "GPL-3.0",
   "devDependencies": {
     "@types/node": "^14.14.22",
+    "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",
-    "typescript": "^4.1.3",
-    "rimraf": "^3.0.2"
+    "typescript": "^4.1.3"
   },
-  "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+  "dependencies": {
+    "scramjet": "^4.35.12"
   }
 }

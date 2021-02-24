@@ -1,8 +1,20 @@
-const namesArr: Array<string> = ["Alice", "Bob", "Mike"];
+const scramjet = require("scramjet");
+const JSONStream = require("JSONStream");
+const fs = require("fs");
 
-const hello = (names:Array<string>) => {
-    names.map((name: string) => {
-        console.log(`Hello ${name}!`);
-    });
-};
-hello(namesArr);
+interface Persons {
+    name: string,
+    age: string,
+    city: string
+}
+
+fs.createReadStream("./names.json") // open the file
+    .pipe(JSONStream.parse("*")) // parse JSON array to object stream
+    .pipe(new scramjet.DataStream()) // pipe for transformation
+    .map(
+        (names: Persons) => {
+            console.log(`Hello ${names.name}!`);
+            return `Hello ${names.name}! \n`;
+        }
+    )
+    .pipe(fs.createWriteStream("./namesOut.txt")); // write to output
