@@ -1,10 +1,8 @@
-const { constants } = require("fs-extra");
-const
-    fse = require("fs-extra"),
-    glob = require("glob"),
-    path = require("path"),
-    { exec } = require("child_process");
-const { access } = require("fs/promises");
+const fse = require("fs-extra");
+const glob = require("glob");
+const path = require("path");
+const { exec } = require("child_process");
+const { promises: { access }, constants } = require("fs");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
