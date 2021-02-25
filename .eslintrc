@@ -155,14 +155,14 @@
         "semi": ["error", "always"],
         "sort-vars" : 0,
         "keyword-spacing" : ["error", { "before": true, "after": true }],
-        "space-before-function-paren" : [1, "never"],
+        "space-before-function-paren" : [1, {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
         "space-in-parens": [1, "never"],
         "space-infix-ops" : 1,
         "space-unary-ops" : 1,
         "spaced-comment" : 0,
         "wrap-regex" : 1,
         "@typescript-eslint/no-unused-vars": [2, {
-            "varsIgnorePattern" : "^(_this|options|defaults)", 
+            "varsIgnorePattern" : "^(_this|options|defaults)",
             "argsIgnorePattern" : "^(_|options|defaults)"}
         ],
         "@typescript-eslint/no-useless-constructor": "error",
