@@ -3,14 +3,17 @@ import { MaybePromise, ReadableStream } from "@scramjet/types/src/utils";
 import { MonitoringMessage } from "@scramjet/types/src/runner";
 import { Readable } from "stream";
 
+
 const data = require("../../../image-config.json");
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 class LifecycleDockerAdapter implements LifeCycle {
-    readonly runnerConfig: string;
-    readonly prerunnerConfig: string;
+    // @ts-ignore
+    private runnerConfig?: string;
+    // @ts-ignore
+    private prerunnerConfig?: string;
 
-    constructor(){
+    async init(): Promise<void> {
         this.runnerConfig = data.runner;
         this.prerunnerConfig = data.prerunner;
     }
@@ -22,7 +25,7 @@ class LifecycleDockerAdapter implements LifeCycle {
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    run(config: RunnerConfig): Promise<ExitCode>{
+    run(config: RunnerConfig): Promise<ExitCode> {
     }
 
     // @ts-ignore

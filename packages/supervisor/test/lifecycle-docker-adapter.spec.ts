@@ -4,12 +4,11 @@ const test = require("ava");
 
 let ldca: LifecycleDockerAdapter;
 
-test.beforeEach(() => {
+test.beforeEach(async() => {
     ldca = new LifecycleDockerAdapter();
+    await ldca.init();
 });
 
 test("Initialized", (t: any) => {
     t.not(ldca, null);
-    t.not(ldca.runnerConfig, null);
-    t.not(ldca.prerunnerConfig, null);
 });
