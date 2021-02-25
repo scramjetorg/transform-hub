@@ -10,5 +10,9 @@
   },
   "scripts": {
     "test-bdd": "cucumber-js"
+  },
+  "private": true,
+  "publishConfig": {
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
   }
 }

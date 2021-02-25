@@ -10,5 +10,8 @@
     "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../samples/test ."
   },
   "author": "",
-  "license": "AGPL-3.0"
+  "license": "AGPL-3.0",
+  "publishConfig": {
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+  }
 }

@@ -24,5 +24,8 @@
     "typedoc": "^0.20.23",
     "typedoc-plugin-markdown": "^3.4.5",
     "rimraf": "^3.0.2"
+  },
+  "publishConfig": {
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
   }
 }

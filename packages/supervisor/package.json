@@ -33,5 +33,8 @@
   },
   "dependencies": {
     "scramjet": "^4.35.12"
+  },
+  "publishConfig": {
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
   }
 }
