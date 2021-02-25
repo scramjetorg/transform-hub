@@ -31,12 +31,12 @@ export class DockerodeDockerHelper implements DockerHelper {
     }
 
     createContainer(
-        image: DockerImage,
+        dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[] = [],
         binds: string[] = []
     ): Promise<DockerContainer> {
         return this.dockerode.createContainer({
-            Image: image,
+            Image: dockerImage,
             AttachStdin: true,
             AttachStdout: true,
             AttachStderr: true,
@@ -58,11 +58,11 @@ export class DockerodeDockerHelper implements DockerHelper {
         return this.dockerode.getContainer(containerId).stop();
     }
 
-    removeContainer(id: DockerContainer): Promise<void> {
-        return this.dockerode.getContainer(id).remove();
+    removeContainer(containerId: DockerContainer): Promise<void> {
+        return this.dockerode.getContainer(containerId).remove();
     }
 
-    execCommand(containerId: string, command: string[]): Promise<DockerAdapterStreams> {
+    execCommand(containerId: DockerContainer, command: string[]): Promise<DockerAdapterStreams> {
         const options = {
             AttachStdin: true,
             AttachStdout: true,
@@ -123,4 +123,3 @@ export class DockerodeDockerHelper implements DockerHelper {
         });
     }
 }
-

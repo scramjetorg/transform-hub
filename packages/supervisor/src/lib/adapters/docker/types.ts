@@ -32,14 +32,14 @@ export type DockerAdapterRunResponse = {
 export interface DockerHelper {
     translateVolumesConfig: (volumeConfigs: DockerAdapterVolumeConfig[]) => any;
     createContainer: (
-        image: DockerImage,
+        dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[],
         binds: string[]) => Promise<DockerContainer>;
-    startContainer: (image: DockerImage) => Promise<void>;
-    stopContainer: (image: string) => Promise<void>;
-    removeContainer: (image: string) => Promise<void>;
-    execCommand: (containerId: string, command: string[]) => Promise<DockerAdapterStreams>;
+    startContainer: (dockerImage: DockerImage) => Promise<void>;
+    stopContainer: (containerId: DockerContainer) => Promise<void>;
+    removeContainer: (containerId: DockerContainer) => Promise<void>;
+    execCommand: (containerId: DockerContainer, command: string[]) => Promise<DockerAdapterStreams>;
     createVolume: (name?: string) => Promise<DockerVolume>;
-    removeVolume: (id: string) => Promise<void>;
+    removeVolume: (volumeId: DockerVolume) => Promise<void>;
     run: (config: DockerAdapterRunConfig) => Promise<DockerAdapterRunResponse>;
 }
