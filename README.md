@@ -11,7 +11,7 @@ npm install --global yarn
 ```
 
 ```bash
-yarn lint
+yarn link
 ```
 
 ```bash
