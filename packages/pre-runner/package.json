@@ -6,7 +6,7 @@
   "scripts": {
     "build:docker": "docker build -t scramjet/pre-runner:latest . # perhaps we could generate the name with a script?",
     "start": "./analyze.sh",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"Error: no test specified\"",
     "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../samples/test ."
   },
   "author": "",
