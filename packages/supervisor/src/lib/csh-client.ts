@@ -1,6 +1,6 @@
 // import { createReadStream, ReadStream } from "fs";
 
-class CshClient {
+class CSHClient implement CSHConnector {
     constructor() {
 
     }
