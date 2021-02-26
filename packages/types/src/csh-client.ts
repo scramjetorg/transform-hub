@@ -1,10 +1,13 @@
 import { ReadableStream } from "./utils";
 
 export type StreamsConfig = [
-    stdin: ReadableStream<string>,
-    stdout: ReadableStream<string>,
-    stderr: ReadableStream<string>,
-    // controllers (?)
+    stdin: ReadableStream<string>, // standard input stream piped to runner
+    stdout: WritableStream<string>, // standard output stream piped pulled from runner
+    stderr: WritableStream<string>, // standard error stream piped from runner - with loggers etc.
+    monitor: WritableStream<string>, // the monitoring stream piped from runner with info on the sequence state
+    control: ReadableStream<string>, // the contol stream piped to runner that controls the sequence (kills etc)
+    input?: ReadableStream<string>, // optional input stream piped from runner - if none passed, `this.stdin` will be used
+    output?: WritableStream<string> // optional output stream piped to runner - if none passed, `this.stdout` will be used
 ];
 
 export interface CSHConnector {
