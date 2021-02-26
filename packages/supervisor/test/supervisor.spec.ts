@@ -7,7 +7,7 @@ const testSocket = `/tmp/test-socket-${process.pid}.sock`;
 test("start supervisor on " + testSocket, async t => {
     const child = spawn("/usr/bin/env", ["node", "../../dist/supervisor/bin/supervisor.js", testSocket]);
 
-    await new Promise(async(resolve) => {
+    await new Promise(async (resolve) => {
         setTimeout(() => {
             spawn("/usr/bin/env", ["rm", testSocket]);
             child.kill(9);

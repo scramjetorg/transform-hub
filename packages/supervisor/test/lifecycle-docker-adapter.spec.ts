@@ -5,7 +5,7 @@ const test = require("ava");
 
 let ldca: LifecycleDockerAdapter;
 
-test.beforeEach(async() => {
+test.beforeEach(async () => {
     ldca = new LifecycleDockerAdapter();
     await ldca.init();
 });
@@ -14,7 +14,7 @@ test("Initialized", (t: any) => {
     t.not(ldca, null);
 });
 
-test("Run", async(t: any) => {
+test("Run", async (t: any) => {
     const config: RunnerConfig = {
         image: "image",
         version: "",

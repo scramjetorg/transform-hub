@@ -7,15 +7,15 @@ import * as fs from "fs";
 const lineByLine = require("n-readlines");
 const testPath = "../fromdisk-bdd/";
 
-Given("input file containing names {string}", async(filename) => {
+Given("input file containing names {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
-When("scramjet server porcesses input file as a stream", async() => {
+When("scramjet server porcesses input file as a stream", async () => {
     await promisify(exec)(`cd ${testPath}; npm i; node ../../scramjet-server/index --source names.txt`, { encoding: "utf-8" });
 });
 
-Then("file {string} is generated", async(filename) => {
+Then("file {string} is generated", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 

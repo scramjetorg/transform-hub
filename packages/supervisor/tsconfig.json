@@ -4,13 +4,13 @@
   },
   "extends": "./tsconfig.build.json",
   "include": [
-    "./src/", 
+    "./src/",
     ".work/generated_test.ts"
   ],
   "exclude": [
     "node_modules",
-     "**/*.spec.ts"
-    ],
+    "**/*.spec.ts"
+  ],
   "typedocOptions": {
     "entryPoints": ["runner.ts"],
     "out": "../../docs/types"

@@ -35,17 +35,17 @@ When("a message {string} is sent", (message:string) => {
     runner.stdin.end();
 });
 
-Then("a message {string} is received", async(message:string) => {
+Then("a message {string} is received", async (message:string) => {
     const data = await StringStream.from(runner.stdout).lines().slice(0, 1).whenRead();
     assert.equal(data, runnerMessages.get(message));
 });
 
-Then("mock runner is not running", async() => {
+Then("mock runner is not running", async () => {
     await new Promise(resolve => setTimeout(() => resolve(1), 2000));
     assert.equal(runnerProcessStopped, true);
 });
 
-After(async() => {
+After(async () => {
     if (!runnerProcessStopped) {
         runner.kill(9);
     }
