@@ -1,5 +1,6 @@
-import { ReadableStream } from "./utils";
+import { ReadableStream, WritableStream } from "./utils";
 
+// @ToDo: verify streams types
 export type StreamsConfig = [
     stdin: ReadableStream<string>, // standard input stream piped to runner
     stdout: WritableStream<string>, // standard output stream piped pulled from runner
@@ -18,7 +19,7 @@ export interface CSHConnector {
     /**
      * Create streams on LCC demand.
      * Temporary log streams to the console.
-     * @param array of streams [stdin, stdout, stdr, controllers]
+     * @param array of streams [stdin, stdout, stdr, monitor, controll]
      * @returns array of streams
      */
     getClient(streamArray: StreamsConfig): StreamsConfig

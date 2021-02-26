@@ -1,4 +1,4 @@
-// import { CshClient, StreamsConfig } from "@scramjet/types/src/csh-client";
+// import { CSHConnector } from "@scramjet/types/src/csh-client"
 import test from "ava";
 
 const testPath = `...`;

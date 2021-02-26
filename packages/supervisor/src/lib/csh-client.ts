@@ -1,6 +1,7 @@
 // import { createReadStream, ReadStream } from "fs";
+import { CSHConnector } from "@scramjet/types/src/csh-client"
 
-class CSHClient implement CSHConnector {
+class CSHClient implements CSHConnector {
     constructor() {
 
     }
@@ -15,6 +16,7 @@ class CSHClient implement CSHConnector {
     getPackage() {
 
     }
+
 }
 
-export { CshClient };
+export { CSHClient };
