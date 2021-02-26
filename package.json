@@ -8,7 +8,9 @@
     "csi-supervisor": "bin/scramjet-csi-supervisor"
   },
   "scripts": {
-    "build": "lerna run build",
+    "build": "yarn build:packages",
+    "build:all": "yarn build:docker && yarn build:packages",
+    "build:packages": "lerna run build",
     "build:docker": "lerna run build:docker",
     "clean:root": "rimraf -rf ./dist/",
     "clean:modules": "find -iname node_modules -exec rm -rf {} ';' 2> /dev/null",
@@ -18,9 +20,10 @@
     "watch": "lerna run watch",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "lerna bootstrap",
-    "test": "lerna run test",
+    "test": "yarn test:parallel && yarn test:bdd",
+    "test:packages": "lerna run test",
     "test:parallel": "lerna run test --parallel",
-    "test-bdd": "cd bdd && yarn install && yarn run test-bdd"
+    "test:bdd": "cd bdd && yarn install && yarn run test-bdd"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -29,6 +32,7 @@
     "@typescript-eslint/eslint-plugin": "^4.14.0",
     "@typescript-eslint/parser": "^4.14.0",
     "eslint": "^7.18.0",
+    "eslint-to-editorconfig": "^2.0.0",
     "lerna": "^3.22.1",
     "rimraf": "^3.0.2",
     "ts-loader": "^8.0.15",

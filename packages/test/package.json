@@ -1,5 +1,5 @@
 {
-    "name": "test-ava-ts-node",
+    "name": "@scramjet/test-ava-ts-node",
     "version": "0.2.0",
     "private": true,
     "devDependencies": {

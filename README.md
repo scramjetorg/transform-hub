@@ -74,7 +74,7 @@ yarn test:parallel
 BDD Test
 
 ```bash
-yarn test-bdd
+yarn test:bdd
 ```
 
 Run script excluding package
