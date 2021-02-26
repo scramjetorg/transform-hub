@@ -7,7 +7,7 @@ export type StreamsConfig = [
     // controllers (?)
 ];
 
-export interface CshClient {
+export interface CSHConnector {
     /**
      * Cloud Server Host Client (CSHC) communicates with Cloud Server Host (CSH) and LifeCycle Controller (LCC).
      */
