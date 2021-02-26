@@ -21,7 +21,7 @@ export interface CSHConnector {
      * @param array of streams [stdin, stdout, stdr, controllers]
      * @returns array of streams
      */
-    getClient(streamArray: StreamsConfig): ReadableStream<string>
+    getClient(streamArray: StreamsConfig): StreamsConfig
 
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.
