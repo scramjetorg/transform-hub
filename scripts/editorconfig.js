@@ -13,6 +13,10 @@ const { writeFile } = require("fs/promises");
 
     // Transform them into EditorConfig rules
     const editorConfigRules = transform(rules);
+    editorConfigRules.end_of_line = "lf";
+    editorConfigRules.charset = "utf-8";
+    editorConfigRules.root = "true";
+
     await writeFile(
         resolve(__dirname, "../.editorconfig.json"),
         JSON.stringify(editorConfigRules, null, 2)
