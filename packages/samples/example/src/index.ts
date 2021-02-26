@@ -1,3 +1,6 @@
+import { InertApp } from "@scramjet/types/src/runner";
+import { Readable } from "stream";
+
 const scramjet = require("scramjet");
 const JSONStream = require("JSONStream");
 const fs = require("fs");
@@ -8,13 +11,18 @@ interface Persons {
     city: string
 }
 
-fs.createReadStream("./names.json") // open the file
-    .pipe(JSONStream.parse("*")) // parse JSON array to object stream
-    .pipe(new scramjet.DataStream()) // pipe for transformation
-    .map(
-        (names: Persons) => {
-            console.log(`Hello ${names.name}!`);
-            return `Hello ${names.name}! \n`;
-        }
-    )
-    .pipe(fs.createWriteStream("./namesOut.txt")); // write to output
+// This method needs to expose  a function that will be executed by the runner.
+
+const mod: InertApp = function(input: Readable, ffrom: string, fto: string) {
+    return fs.createReadStream(ffrom)
+        .pipe(JSONStream.parse("*"))
+        .pipe(new scramjet.DataStream())
+        .map(
+            (names: Persons) => {
+                return `Hello ${names.name}! \n`;
+            }
+        )
+        .pipe(fs.createWriteStream(fto));
+};
+
+export default mod;
