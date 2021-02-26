@@ -37,6 +37,9 @@ pipeline {
               // temporary until tests will be fixed
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                 docker.image("repo.int.scp.ovh:5000/ext/node:14.15.4-buster-slim").inside() {
+                  sh("yarn install")
+                  sh("yarn build")
+                  sh("yarn prepack")
                   sh("yarn test:packages")
                 }
               }
