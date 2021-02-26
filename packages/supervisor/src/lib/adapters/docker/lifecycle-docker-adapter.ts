@@ -2,16 +2,20 @@
 import { LifeCycle, RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle";
 import { MaybePromise, ReadableStream } from "@scramjet/types/src/utils";
 import { MonitoringMessage } from "@scramjet/types/src/runner";
+
 import { Readable } from "stream";
 import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
 import { exec } from "child_process";
 import * as shellescape from "shell-escape";
+import * as fs from "fs";
 
-const data = require("../../../image-config.json");
-
+import { DockerodeDockerHelper } from "./dockerode-docker-helper";
+import { DockerHelper, DockerVolume } from "./types";
 class LifecycleDockerAdapter implements LifeCycle {
+    private dockerHelper: DockerHelper;
+
     // @ts-ignore
     private runnerConfig?: string;
     // @ts-ignore
@@ -20,10 +24,26 @@ class LifecycleDockerAdapter implements LifeCycle {
     private monitorFifoPath?: string;
     // @ts-ignore
     private controlFifoPath?: string;
+    private imageConfig: {
+        runner?: string,
+        prerunner?: string
+    } = {};
+
+    constructor() {
+        this.dockerHelper = new DockerodeDockerHelper();
+    }
 
     async init(): Promise<void> {
-        this.runnerConfig = data.runner;
-        this.prerunnerConfig = data.prerunner;
+        return new Promise((res, rej) => {
+            fs.readFile("../../../image-config.json", { encoding: "utf-8" }, (err, data) => {
+                if (err) {
+                    rej(err);
+                }
+
+                this.imageConfig = JSON.parse(data);
+                res();
+            });
+        });
     }
 
     private async createFifo(dir: string, fifoName: string): Promise<string> {
@@ -62,6 +82,40 @@ class LifecycleDockerAdapter implements LifeCycle {
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     identify(stream: Readable): MaybePromise<RunnerConfig> {
+        return new Promise(async (resolve) => {
+            const volume: DockerVolume = await this.dockerHelper.createVolume();
+
+            const { streams, stopAndRemove } = await this.dockerHelper.run({
+                imageName: this.imageConfig.prerunner || "",
+                command: ["sh", "/unpack-identify.sh"],
+                volumes: [
+                    { mountPoint: "/package", volume }
+                ]
+            });
+
+            stream.pipe(streams.stdin);
+
+            let preRunnerResponse = "";
+
+            streams.stdout
+                .on("data", (chunk) => {
+                    preRunnerResponse += chunk.toString();
+                })
+                .on("end", async () => {
+                    const res = JSON.parse(preRunnerResponse);
+
+                    await stopAndRemove();
+
+                    resolve({
+                        image: this.imageConfig.runner || "",
+                        version: res.version || "",
+                        engines: {
+                            ...res.engines
+                        },
+                        packageVolumeId: volume
+                    });
+                });
+        });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -113,7 +167,7 @@ class LifecycleDockerAdapter implements LifeCycle {
     }
 
     // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars    
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     kill(): MaybePromise<void> {
     }
 }
