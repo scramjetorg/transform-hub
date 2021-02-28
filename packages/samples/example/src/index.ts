@@ -13,7 +13,7 @@ interface Persons {
 
 // This method needs to expose  a function that will be executed by the runner.
 
-const mod: InertApp = function(input: Readable, ffrom: string, fto: string) {
+const mod: InertApp = function(input, ffrom, fto) {
     return fs.createReadStream(ffrom)
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())
