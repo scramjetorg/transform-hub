@@ -48,8 +48,9 @@ Then("mock runner is not running", async () => {
     assert.equal(runnerProcessStopped, true);
 });
 
-After(async () => {
-    if (!runnerProcessStopped) {
-        runner.kill(9);
-    }
-});
+// ToDo: waiting for Maciek's fix
+// After(async () => {
+//     if (!runnerProcessStopped) {
+//         runner.kill(9);
+//     }
+// });

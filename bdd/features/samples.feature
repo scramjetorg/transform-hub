@@ -1,8 +1,7 @@
 Feature: Samples
     
-    @ignore  
-    Scenario: Execute sample test
-        Given input file containing names "names.txt"
-        When scramjet server porcesses input file as a stream
-        Then file "output.txt" is generated
-        And file "output.txt" in each line contains "Hello," followed by name from file "names.txt"
+    Scenario: Execute sample HelloAlice
+        Given input file containing data "data.json"
+        # When scramjet server porcesses input file as a stream
+        # Then file "dataOut.txt" is generated
+        # And file "dataOut.txt" in each line contains "Hello " followed by name from file "data.json" finished by "!"
