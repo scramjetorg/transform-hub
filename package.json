@@ -47,7 +47,8 @@
     ]
   },
   "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+    "access": "restricted"
   },
   "husky": {
     "hooks": {

@@ -1,6 +1,5 @@
 {
   "name": "@scramjet/runner",
-  "private": true,
   "version": "0.2.0",
   "description": "Runner Mock",
   "main": "./src/index.ts",
@@ -44,6 +43,7 @@
     ]
   },
   "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+    "access": "restricted"
   }
 }

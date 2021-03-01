@@ -1,12 +1,12 @@
 {
-  "version": "0.0.0",
+  "version": "0.2.0",
   "npmClient": "yarn",
   "useWorkspaces": true,
   "stream": true,
   "command": {
     "publish": {
       "message": "chore(release): publish %s",
-      "registry": ""
+      "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
     },
     "bootstrap": {
       "npmClientArgs": ["--no-package-lock"]

@@ -1,7 +1,6 @@
 {
   "name": "@scramjet/types",
   "version": "0.2.0",
-  "private": true,
   "description": "types.",
   "main": "./src/runner.ts",
   "scripts": {
@@ -26,6 +25,7 @@
     "rimraf": "^3.0.2"
   },
   "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+    "access": "restricted"
   }
 }

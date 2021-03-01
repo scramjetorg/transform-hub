@@ -1,7 +1,6 @@
 {
   "name": "@scramjet/supervisor",
   "version": "0.2.0",
-  "private": true,
   "description": "The supervisor application for the underlying container and program wrapper executed within it.",
   "main": "./src/index.ts",
   "scripts": {
@@ -39,6 +38,7 @@
     "scramjet": "^4.35.12"
   },
   "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+    "access": "restricted" 
   }
 }

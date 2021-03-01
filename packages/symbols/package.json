@@ -1,7 +1,6 @@
 {
   "name": "@scramjet/symbols",
   "version": "0.2.0",
-  "private": true,
   "description": "Important symbols of the scramjet platform",
   "main": "./src/symbols.ts",
   "scripts": {
@@ -21,6 +20,7 @@
     "rimraf": "^3.0.2"
   },
   "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+    "access": "restricted"
   }
 }

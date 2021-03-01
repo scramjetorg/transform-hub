@@ -1,7 +1,6 @@
 {
     "name": "@scramjet/test-ava-ts-node",
     "version": "0.2.0",
-    "private": true,
     "devDependencies": {
         "@types/node": "^14.14.22",
         "ava": "^3.15.0",
@@ -20,6 +19,7 @@
         ]
     },
     "publishConfig": {
-        "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+        "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+        "access": "restricted"
     }
 }
