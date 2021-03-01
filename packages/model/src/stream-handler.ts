@@ -85,10 +85,12 @@ export class CommunicationHandler implements ICommunicationHandler {
         throw new Error("Not yet implemented");
     }
 
-    addMonitoringHandler<T extends MonitoringMessageCode>(_code: T, _handler: MonitoringMessageHandler<T>): this {
-        throw new Error("Method not implemented.");
+    addMonitoringHandler<T extends MonitoringMessageCode>(_code: T, handler: MonitoringMessageHandler<T>): this {
+        this._monitoringHandlers.push(handler as unknown as MonitoringMessageHandler<MonitoringMessageCode>);
+        return this;
     }
-    addControlHandler<T extends ControlMessageCode>(_code: T, _handler: ControlMessageHandler<T>): this {
-        throw new Error("Method not implemented.");
+    addControlHandler<T extends ControlMessageCode>(_code: T, handler: ControlMessageHandler<T>): this {
+        this._controlHandlers.push(handler as unknown as ControlMessageHandler<ControlMessageCode>);
+        return this;
     }
 }
