@@ -4,7 +4,7 @@ const scramjet = require("scramjet");
 const JSONStream = require("JSONStream");
 const fs = require("fs");
 
-interface Persons {
+interface Person {
     name: string,
     age: string,
     city: string
@@ -17,7 +17,7 @@ const mod: InertApp = function(input, ffrom, fto) {
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())
         .map(
-            (names: Persons) => {
+            (names: Person) => {
                 return `Hello ${names.name}! \n`;
             }
         )
