@@ -1,5 +1,4 @@
 import { InertApp } from "@scramjet/types/src/runner";
-import { Readable } from "stream";
 
 const scramjet = require("scramjet");
 const JSONStream = require("JSONStream");
