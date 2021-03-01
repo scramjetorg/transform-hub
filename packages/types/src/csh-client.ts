@@ -1,15 +1,5 @@
-import { ReadableStream, WritableStream } from "./utils";
-
-// @ToDo: verify streams types
-export type StreamsConfig = [
-    stdin: ReadableStream<string>, // standard input stream piped to runner
-    stdout: WritableStream<string>, // standard output stream piped pulled from runner
-    stderr: WritableStream<string>, // standard error stream piped from runner - with loggers etc.
-    monitor: WritableStream<string>, // the monitoring stream piped from runner with info on the sequence state
-    control: ReadableStream<string>, // the contol stream piped to runner that controls the sequence (kills etc)
-    input?: ReadableStream<string>, // optional input stream piped from runner - if none passed, `this.stdin` will be used
-    output?: WritableStream<string> // optional output stream piped to runner - if none passed, `this.stdout` will be used
-];
+import { ReadableStream } from "./utils";
+import { UpstreamStreamsConfig } from "./message-streams";
 
 export interface CSHConnector {
     /**
@@ -22,7 +12,7 @@ export interface CSHConnector {
      * @param array of streams [stdin, stdout, stdr, monitor, controll]
      * @returns array of streams
      */
-    getClient(streamArray: StreamsConfig): StreamsConfig
+    getClient(streamArray: UpstreamStreamsConfig): UpstreamStreamsConfig
 
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.
