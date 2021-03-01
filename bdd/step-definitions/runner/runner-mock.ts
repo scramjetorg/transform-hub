@@ -49,8 +49,8 @@ Then("mock runner is not running", async () => {
 });
 
 // ToDo: waiting for Maciek's fix
-// After(async () => {
-//     if (!runnerProcessStopped) {
-//         runner.kill(9);
-//     }
-// });
+After(async () => {
+    if (!runnerProcessStopped) {
+        runner.kill(9);
+    }
+});
