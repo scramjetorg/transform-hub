@@ -1,10 +1,17 @@
+/* eslint-disable new-cap */
+
 import { MaybePromise, ReadableStream, WritableStream } from "@scramjet/types/src/utils";
 
-import { RunnerMessageCode, MessageType } from ".";
-import { EncodedControlMessage, EncodedMonitoringMessage, DownstreamStreamsConfig, UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import { EncodedControlMessage, EncodedMonitoringMessage, DownstreamStreamsConfig,
+    UpstreamStreamsConfig, MonitoringMessageCode, ControlMessageCode, EncodedMessage } from "@scramjet/types/src/message-streams";
 import { ICommunicationHandler } from "@scramjet/types/src/communication-handler";
+import { StringStream } from "scramjet";
+import { Readable, Writable } from "stream";
 
-export type MessageHandler<T extends RunnerMessageCode> = (msg: MessageType<T>) => MaybePromise<MessageType<T>>;
+export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
+    (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T>>;
+export type ControlMessageHandler<T extends ControlMessageCode> =
+    (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T>>;
 
 export class CommunicationHandler implements ICommunicationHandler {
     _controlUpstream?: ReadableStream<EncodedControlMessage>;
@@ -14,6 +21,9 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     _upstreams?: UpstreamStreamsConfig;
     _downstreams?: DownstreamStreamsConfig;
+
+    _monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
+    _controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
 
     hookClientStreams(streams: UpstreamStreamsConfig): this {
         this._controlUpstream = streams[3];
@@ -33,8 +43,32 @@ export class CommunicationHandler implements ICommunicationHandler {
     pipeMessageStreams() {
         if (this._controlDownstream && this._controlUpstream &&
             this._monitoringDownstream && this._monitoringUpstream) {
-            this._controlUpstream.pipe(this._controlDownstream);
-            this._monitoringDownstream.pipe(this._monitoringUpstream);
+            StringStream.from(this._monitoringDownstream as Readable)
+                .JSONParse()
+                .map(async (message: EncodedMonitoringMessage) => {
+                    if (this._monitoringHandlers.length) {
+                        let currentMessage = message;
+                        for (const handler of this._monitoringHandlers) {
+                            currentMessage = await handler(currentMessage);
+                        }
+                    }
+                    return message;
+                })
+                .JSONStringify()
+                .pipe(this._monitoringUpstream as unknown as Writable);
+            StringStream.from(this._controlUpstream as Readable)
+                .JSONParse()
+                .map(async (message: EncodedControlMessage) => {
+                    if (this._monitoringHandlers.length) {
+                        let currentMessage = message;
+                        for (const handler of this._controlHandlers) {
+                            currentMessage = await handler(currentMessage);
+                        }
+                    }
+                    return message;
+                })
+                .JSONStringify()
+                .pipe(this._controlDownstream as unknown as Writable);
         } else {
             // TODO: specifiy which streams are missing.
             throw new Error("Cannot pipe stream, some stream missing");
@@ -51,10 +85,10 @@ export class CommunicationHandler implements ICommunicationHandler {
         throw new Error("Not yet implemented");
     }
 
-    addMonitoringHandler<T extends RunnerMessageCode>(_code: T, _handler: MessageHandler<T>): this {
+    addMonitoringHandler<T extends MonitoringMessageCode>(_code: T, _handler: MonitoringMessageHandler<T>): this {
         throw new Error("Method not implemented.");
     }
-    addControlHandler<T extends RunnerMessageCode>(_code: T, _handler: MessageHandler<T>): this {
+    addControlHandler<T extends ControlMessageCode>(_code: T, _handler: ControlMessageHandler<T>): this {
         throw new Error("Method not implemented.");
     }
 }

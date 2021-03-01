@@ -1,5 +1,5 @@
 export { RunnerMessage, RunnerMessageCode } from "./runner-message";
-export { MessageUtilities } from "./messages-utils";
+export { serializeMessage, deserializeMessage } from "./messages-utils";
 export { AcknowledgeMessage, AcknowledgeMessageData } from "./messages/acknowledge";
 export { ConfirmHealthMessage } from "./messages/confirm-health";
 export { DescribeSequenceMessage, DescribeSequenceMessageData } from "./messages/describe-sequence";
