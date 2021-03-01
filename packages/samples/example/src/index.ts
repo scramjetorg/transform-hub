@@ -6,7 +6,7 @@ const fs = require("fs");
 
 interface Person {
     name: string,
-    age: string,
+    age: number,
     city: string
 }
 
