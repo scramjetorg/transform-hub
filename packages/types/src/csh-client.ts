@@ -5,8 +5,9 @@ export interface CSHConnector {
     /**
      * Cloud Server Host Client (CSHC) communicates with Cloud Server Host (CSH) and LifeCycle Controller (LCC).
      */
+    PATH: string;
 
-    /**
+    /**s
      * Create streams on LCC demand.
      * Temporary log streams to the console.
      * @param array of streams [stdin, stdout, stdr, monitor, controll]
@@ -20,5 +21,5 @@ export interface CSHConnector {
      * @param string with path form ENV
      * @returns stream with file sequence
      */
-    getPackage(path: String): ReadableStream<string>
+    getPackage(path: string): ReadableStream<string>
 }
