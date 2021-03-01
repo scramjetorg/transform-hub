@@ -21,7 +21,8 @@ type MessageType<T> =
     T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
-    never;
+    never
+;
 
 type MessageDataType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -33,7 +34,22 @@ type MessageDataType<T> =
     T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
-    never;
+    never
+;
+
+export type EncodedMessage<T extends RunnerMessageCode> = [T, MessageDataType<T>];
+export type ControlMessageCode =
+    RunnerMessageCode.FORCE_CONFIRM_ALIVE | RunnerMessageCode.KILL |
+    RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP
+;
+
+export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
+export type MonitoringMessageCode =
+    RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE |
+    RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING
+;
+
+export type EncodedMonitoringMessage = EncodedMessage<MonitoringMessageCode>;
 
 export {
     AcknowledgeMessage,

@@ -13,7 +13,7 @@
     "build:packages": "lerna run build",
     "build:docker": "lerna run build:docker",
     "clean:root": "rimraf -rf ./dist/",
-    "clean:modules": "find -iname node_modules -exec rm -rf {} ';' 2> /dev/null",
+    "clean:modules": "find -name node_modules -not -wholename '*node_modules/*' -exec rm -rf {} ';' 2> /dev/null",
     "clean": "lerna run clean && yarn clean:root",
     "prepack": "lerna run prepack",
     "lint": "eslint . --ext .ts",
@@ -34,6 +34,7 @@
     "eslint": "^7.18.0",
     "eslint-to-editorconfig": "^2.0.0",
     "husky": "4.3.8",
+    "glob": "^7.1.6",
     "lerna": "^3.22.1",
     "rimraf": "^3.0.2",
     "ts-loader": "^8.0.15",
@@ -44,9 +45,6 @@
     "packages": [
       "packages/**"
     ]
-  },
-  "dependencies": {
-    "glob": "^7.1.6"
   },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"

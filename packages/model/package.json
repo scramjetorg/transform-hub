@@ -15,12 +15,10 @@
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
     "dependencies": {
-        "@scramjet/types": "0.2.0",
         "@scramjet/symbols": "0.2.0",
         "scramjet": "^4.35.11"
     },
     "devDependencies": {
-        "@scramjet/symbols": "0.2.0",
         "@scramjet/types": "0.2.0",
         "@types/node": "^14.14.22",
         "ava": "^3.15.0",
