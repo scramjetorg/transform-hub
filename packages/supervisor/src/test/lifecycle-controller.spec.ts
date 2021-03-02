@@ -3,7 +3,7 @@ import { Readable, Stream } from "stream";
 
 import { UpstreamStreamsConfig, DownstreamStreamsConfig, EncodedControlMessage, EncodedMonitoringMessage } from "@scramjet/types/src/message-streams";
 import { MaybePromise, ReadableStream, WritableStream } from "@scramjet/types/src/utils";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler"
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle";
 
 test("Just a placeholder for a test", async t => {
@@ -16,13 +16,21 @@ test("Just a placeholder for a test", async t => {
 /*
 * Temporary mocks
 */
+export interface CSHConnectorMock {
+
+    getStreams(streamArray: UpstreamStreamsConfig): UpstreamStreamsConfig
+
+    hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void>;
+
+    getPackage(): Readable
+}
 
 class CSHClientMock implements CSHConnectorMock {
 
     getStreams(): UpstreamStreamsConfig {
 
-        const controlStream = new Stream.Readable as ReadableStream<EncodedControlMessage>;
-        const monitorStream = new Stream.Writable as unknown as WritableStream<EncodedMonitoringMessage>;
+        const controlStream = new Stream.Readable() as ReadableStream<EncodedControlMessage>;
+        const monitorStream = new Stream.Writable() as unknown as WritableStream<EncodedMonitoringMessage>;
 
         const upstreamStreamsConfig: UpstreamStreamsConfig =
             [
@@ -36,25 +44,16 @@ class CSHClientMock implements CSHConnectorMock {
         return upstreamStreamsConfig;
     }
 
-    hookStreams(communicationHandler: CommunicationHandler): MaybePromise<void> {
-
+    hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void> {
+        console.log(communicationHandler);
     }
 
     getPackage(): Readable {
 
-        var fs = require('fs');
+        var fs = require("fs");
         const packageStream = fs.createReadStream(process.env.SCRAMJET_SEQUENCE_PATH);
         return packageStream;
     }
-}
-
-export interface CSHConnectorMock {
-
-    getStreams(streamArray: UpstreamStreamsConfig): UpstreamStreamsConfig
-
-    hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void>;
-
-    getPackage(): Readable
 }
 
 export interface LifeCycleMock {
@@ -72,4 +71,4 @@ export interface LifeCycleMock {
     kill(): MaybePromise<void>;
 }
 
-export { CSHClientMock }
+export { CSHClientMock };
