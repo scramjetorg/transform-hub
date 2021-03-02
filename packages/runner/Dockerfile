@@ -8,11 +8,11 @@ RUN yarn install --frozen-lockfile
 COPY . ./
 RUN yarn install --frozen-lockfile
 
-WORKDIR /app/packages/model
-RUN yarn build \
- && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
-
 WORKDIR /app/packages/symbols
+RUN yarn build \
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+
+WORKDIR /app/packages/model
 RUN yarn build \
  && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
