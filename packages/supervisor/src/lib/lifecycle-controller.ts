@@ -1,5 +1,5 @@
-import { LifeCycleConfig } from "@scramjet/types/src/lifecycle";
-import { CSHClientMock, LifeCycleMock } from "@scramjet/supervisor/src/mocks/supervisor-component-mocks";
+import { LifeCycleError, LifeCycleConfig } from "@scramjet/types/src/lifecycle";
+import { CSHClientMock, LifeCycleMock } from "../test/lifecycle-controller.spec";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
 class LifeCycleController {
@@ -19,11 +19,14 @@ class LifeCycleController {
         const packageStream = this.client.getPackage();
 
         const config = await this.lifecycleAdapterMock.identify(packageStream);
-
         try {
 
+            const upstreamsConfig = this.client.getStreams();
+            this.communicationHandler.hookClientStreams(upstreamsConfig);
             this.client.hookCommunicationHandler(this.communicationHandler);
 
+            const downstreamStreamsConfig = this.lifecycleAdapterMock.getStreams();
+            this.communicationHandler.hookLifecycleStreams(downstreamStreamsConfig);
             this.lifecycleAdapterMock.hookCommunicationHandler(this.communicationHandler);
 
             this.communicationHandler.pipeMessageStreams();
@@ -31,7 +34,7 @@ class LifeCycleController {
 
             await this.lifecycleAdapterMock.run(config);
 
-        } catch (error) {
+        } catch (error: LifeCycleError) {
 
             if (this.lifecycleConfig.makeSnapshotOnError) {
 

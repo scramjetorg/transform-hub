@@ -30,20 +30,22 @@ type ControlMessageHandlerList = {
 
 export class CommunicationHandler implements ICommunicationHandler {
     private stdInUpstream?: Readable;
-    private stdInDownstream?: Writable;
+    private stdInDownstream?: Writable; 
     private stdOutUpstream?: Writable;
-    private stdOutDownstream?: Readable;
+    private stdOutDownstream?: Readable  
     private stdErrUpstream?: Writable;
-    private stdErrDownstream?: Readable;
+    private stdErrDownstream?: Readable
+               
     private controlUpstream?: ReadableStream<EncodedControlMessage>;
     private controlDownstream?: WritableStream<EncodedControlMessage>;
     private monitoringUpstream?: WritableStream<EncodedMonitoringMessage>;
     private monitoringDownstream?: ReadableStream<EncodedMonitoringMessage>;
+
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
 
-    // private monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
-    // private controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
+    private monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
+    private controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
 
     private monitoringHandlerHash: MonitoringMessageHandlerList;
     private controlHandlerHash: ControlMessageHandlerList;
@@ -76,8 +78,8 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     hookLifecycleStreams(streams: DownstreamStreamsConfig): this {
-        this.stdOutDownstream = streams[1];
         this.stdInDownstream = streams[0];
+        this.stdOutDownstream = streams[1];
         this.stdErrDownstream = streams[2];
         this.controlDownstream = streams[3];
         this.monitoringDownstream = streams[4];
@@ -127,9 +129,7 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     private areStreamsHooked() {
-        return this.upstreams &&
-            this.downstreams &&
-            this.controlDownstream &&
+        return this.controlDownstream &&
             this.controlUpstream &&
             this.monitoringDownstream &&
             this.monitoringUpstream
