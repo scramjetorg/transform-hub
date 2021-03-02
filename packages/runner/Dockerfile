@@ -1,13 +1,42 @@
-FROM node:14.15.4-alpine3.10
+FROM repo.int.scp.ovh/scramjet/nodejs:buster AS builder
 
-RUN addgroup runnerg -g 902 && adduser -D -u 903 runner runnerg
+WORKDIR /app/build
 
+COPY package.json yarn.lock lerna.json ./
+
+RUN yarn install --frozen-lockfile
+
+COPY . ./
+
+RUN yarn install --frozen-lockfile
+
+RUN set -ex \
+ && cd packages/model \
+ && yarn build \
+ && NO_INSTALL=true OUT_DIR=dist LOCAL_PKGS=true node ../../scripts/publish.js \
+ && cd ../runner \
+ && yarn build \
+ && NO_INSTALL=true OUT_DIR=dist LOCAL_PKGS=true node ../../scripts/publish.js \
+ && cd ../symbols \
+ && yarn build \
+ && NO_INSTALL=true OUT_DIR=dist LOCAL_PKGS=true node ../../scripts/publish.js
+
+FROM repo.int.scp.ovh/scramjet/nodejs:buster
+
+RUN groupadd -g 1200 runner \
+ && useradd -g 1200 -u 1200 -m -d /app -s /bin/bash runner
+
+COPY --chown=runner:runner --from=builder /app/build/dist /app/
+
+WORKDIR /app/runner
 USER runner
 
-COPY --chown=runner:runnerg ./docker-tmp /home/app
+RUN set -ex \
+ && cd ../model \
+ && npm install --no-package-lock /app/symbols \
+ && npm install --no-package-lock \
+ && cd ../runner \
+ && npm install --no-package-lock /app/model \
+ && npm install --no-package-lock
 
-WORKDIR /home/app/runner
-
-RUN npm i --no-package-lock
-
-ENTRYPOINT ["node", "index.js"]
+CMD ["node", "index.js"]

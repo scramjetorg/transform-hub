@@ -3,11 +3,7 @@
 ## Installation
 
 ```bash
-npm install -g lerna
-```
-
-```bash
-npm install --global yarn
+npm install -g lerna yarn
 ```
 
 ```bash

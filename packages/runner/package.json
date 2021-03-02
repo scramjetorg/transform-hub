@@ -5,8 +5,8 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "build:docker": "./docker-build.sh",
-    "start:docker": "docker run -i --rm -v PACKAGE:/package scramjet/runner:latest -t",
+    "build:docker": "docker build -t scramjet/runner -f Dockerfile ../../",
+    "start:docker": "docker run -ti --rm -v PACKAGE:/package scramjet/runner:latest",
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
     "test": "yarn build && ava --",
