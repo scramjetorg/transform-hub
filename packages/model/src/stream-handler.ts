@@ -1,11 +1,10 @@
-/* eslint-disable new-cap */
-
 import { MaybePromise, ReadableStream, WritableStream } from "@scramjet/types/src/utils";
-
-import { EncodedControlMessage, EncodedMonitoringMessage, DownstreamStreamsConfig,
-    UpstreamStreamsConfig, MonitoringMessageCode, ControlMessageCode, EncodedMessage } from "@scramjet/types/src/message-streams";
+import {
+    EncodedControlMessage, EncodedMonitoringMessage, DownstreamStreamsConfig,
+    UpstreamStreamsConfig, MonitoringMessageCode, ControlMessageCode, EncodedMessage
+} from "@scramjet/types/src/message-streams";
 import { ICommunicationHandler } from "@scramjet/types/src/communication-handler";
-import { StringStream } from "scramjet";
+import { DataStream, StringStream } from "scramjet";
 import { Readable, Writable } from "stream";
 import { RunnerMessageCode } from "./runner-message";
 
@@ -31,17 +30,15 @@ type ControlMessageHandlerList = {
 
 export class CommunicationHandler implements ICommunicationHandler {
     private stdInUpstream?: Readable;
-    private stdInDownstream?: Writable; 
+    private stdInDownstream?: Writable;
     private stdOutUpstream?: Writable;
-    private stdOutDownstream?: Readable  
+    private stdOutDownstream?: Readable;
     private stdErrUpstream?: Writable;
-    private stdErrDownstream?: Readable
-               
+    private stdErrDownstream?: Readable;
     private controlUpstream?: ReadableStream<EncodedControlMessage>;
     private controlDownstream?: WritableStream<EncodedControlMessage>;
     private monitoringUpstream?: WritableStream<EncodedMonitoringMessage>;
     private monitoringDownstream?: ReadableStream<EncodedMonitoringMessage>;
-
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
 
@@ -79,6 +76,9 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     hookLifecycleStreams(streams: DownstreamStreamsConfig): this {
+        this.stdOutDownstream = streams[1];
+        this.stdInDownstream = streams[0];
+        this.stdErrDownstream = streams[2];
         this.controlDownstream = streams[3];
         this.monitoringDownstream = streams[4];
         this.downstreams = streams;
@@ -88,7 +88,6 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     pipeMessageStreams() {
         if (this.areStreamsHooked()) {
-
             StringStream.from(this.monitoringDownstream as Readable)
                 .JSONParse()
                 .map(async (message: EncodedMonitoringMessage) => {
@@ -136,7 +135,17 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     pipeStdio(): this {
-        throw new Error("Not yet implemented");
+
+        DataStream.from(this.stdInUpstream as Readable)
+            .pipe(this.stdInDownstream as unknown as Writable);
+
+        DataStream.from(this.stdOutDownstream as Readable)
+            .pipe(this.stdOutUpstream as unknown as Writable);
+
+        DataStream.from(this.stdErrDownstream as Readable)
+            .pipe(this.stdErrUpstream as unknown as Writable);
+
+        return this;
     }
 
     pipeDataStreams(): this {
