@@ -1,6 +1,6 @@
 import { Readable } from "stream";
-import { MonitoringMessage } from "./runner";
 import { MaybePromise, ReadableStream } from "./utils";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
 export type RunnerConfig = {
     image: string;
@@ -34,8 +34,9 @@ export interface LifeCycle {
     readStdio(stream: "stdout"|1): ReadableStream<string>;
     readStdio(stream: "stderr"|2): ReadableStream<string>;
 
+    hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void>;
+
     monitorRate(rps: number): this;
-    monitor(): ReadableStream<MonitoringMessage>;
 
     stop(): MaybePromise<void>;
     kill(): MaybePromise<void>;

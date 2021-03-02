@@ -1,9 +1,9 @@
-
 import { LifeCycle, RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle";
-import { MaybePromise, ReadableStream } from "@scramjet/types/src/utils";
-import { MonitoringMessage } from "@scramjet/types/src/runner";
-
-import { Readable } from "stream";
+import { DelayedStream, MaybePromise, ReadableStream } from "@scramjet/types/src/utils";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
+import { DownstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import { createReadStream, createWriteStream } from "fs";
+import { Readable, Writable } from "stream";
 import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
@@ -13,6 +13,8 @@ import * as fs from "fs";
 
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerHelper, DockerVolume } from "./types";
+
+
 class LifecycleDockerAdapter implements LifeCycle {
     private dockerHelper: DockerHelper;
 
@@ -21,19 +23,31 @@ class LifecycleDockerAdapter implements LifeCycle {
     // @ts-ignore
     private prerunnerConfig?: string;
     // @ts-ignore
-    private monitorFifoPath?: string;
+    private monitorFifoPath: string;
     // @ts-ignore
-    private controlFifoPath?: string;
+    private controlFifoPath: string;
     private imageConfig: {
         runner?: string,
         prerunner?: string
     } = {};
 
+    private runnerStdin: Writable;
+    private runnerStdout: Readable;
+    private runnerStderr: Readable;
+    private monitorStream: DelayedStream;
+    private controlStream: DelayedStream;
+
     constructor() {
+        this.runnerStdin = new Writable();
+        this.runnerStdout = new Readable();
+        this.runnerStderr = new Readable();
         this.dockerHelper = new DockerodeDockerHelper();
+        this.monitorStream = new DelayedStream();
+        this.controlStream = new DelayedStream();
     }
 
     async init(): Promise<void> {
+
         return new Promise((res, rej) => {
             fs.readFile("../../../image-config.json", { encoding: "utf-8" }, (err, data) => {
                 if (err) {
@@ -79,8 +93,6 @@ class LifecycleDockerAdapter implements LifeCycle {
         }
     }
 
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     identify(stream: Readable): MaybePromise<RunnerConfig> {
         return new Promise(async (resolve) => {
             const volume: DockerVolume = await this.dockerHelper.createVolume();
@@ -118,10 +130,38 @@ class LifecycleDockerAdapter implements LifeCycle {
         });
     }
 
+    hookCommunicationHandler(communicationHandler: CommunicationHandler): void {
+        const downstreamStreamsConfig: DownstreamStreamsConfig =
+            [
+                this.runnerStdin,
+                this.runnerStdout,
+                this.runnerStderr,
+                this.controlStream.getStream(),
+                this.monitorStream.getStream()
+            ];
+
+        communicationHandler.hookLifecycleStreams(downstreamStreamsConfig);
+    }
+
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async run(config: RunnerConfig): Promise<ExitCode> {
         await this.createFifoStreams("monitor.fifo", "control.fifo");
-        //TODO add logic here
+
+        this.monitorStream.run(createReadStream(this.monitorFifoPath));
+        this.controlStream.run(createWriteStream(this.controlFifoPath));
+
+        //TODO  
+        // new Promise(async (resolve) => {
+        //     const { streams, stopAndRemove } = await this.dockerHelper.run(config);
+
+        //     streams.stdin.pipe(this.runnerStdin);
+        //     streams.stdout.pipe(this.runnerStdout);
+        //     streams.stderr.pipe(this.runnerStderr);
+
+        //     stopAndRemove();
+        // }); 
+
         return 0;
     }
 
@@ -139,16 +179,19 @@ class LifecycleDockerAdapter implements LifeCycle {
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     pushStdio(stream: "stdin" | 0, input: ReadableStream<string>): this {
+        throw new Error("To delete later.");
     }
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     readStdio(stream: "stdout" | 1): ReadableStream<string> {
+        throw new Error("To delete later.");
     }
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     readStdio(stream: "stderr" | 2): ReadableStream<string> {
+        throw new Error("To delete later.");
     }
 
     // @ts-ignore
@@ -156,10 +199,6 @@ class LifecycleDockerAdapter implements LifeCycle {
     monitorRate(rps: number): this {
     }
 
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    monitor(): ReadableStream<MonitoringMessage> {
-    }
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -1,3 +1,5 @@
+import { PassThrough, Readable, Writable } from "stream";
+
 /**
  * This is a polyfill to TypeScripts rather poor expression of `function*`
  * @ignore
@@ -49,11 +51,37 @@ export interface ReadableStream<Produces> extends PipeableStream<Produces> {
  */
 
 export interface WritableStream<Consumes> {
-    objectMode: true;
+    objectMode?: true;
     writable: boolean;
     write(item: Consumes, cb?: (err?: Error | null) => void): boolean;
     write(str: never, encoding: never, cb?: (err?: Error | null) => void): boolean;
     end(cb?: () => void): void;
     end(data: Consumes, cb?: () => void): void;
     end(str: never, encoding: never, cb?: () => void): void;
+}
+
+/**
+ * Delayed stream TODO  
+ *
+ */
+export class DelayedStream {
+    private _stream?: PassThrough;
+
+    getStream() {
+        if (typeof this._stream === "undefined") {
+            throw new Error("Double initialization, getStream() method can be called only once.");
+        }
+
+        this._stream = new PassThrough();
+        return this._stream;
+    }
+
+    run(inputStream: Readable | Writable) {
+        if (typeof this._stream !== "undefined") {
+            inputStream.pipe(this._stream);
+            return;
+        }
+
+        throw new Error("Delayed stream not initialized.");
+    }
 }
