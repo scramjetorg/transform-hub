@@ -5,15 +5,20 @@ export interface CSHConnector {
     /**
      * Cloud Server Host Client (CSHC) communicates with Cloud Server Host (CSH) and LifeCycle Controller (LCC).
      */
-    PATH: string;
+    PATH: string; // temporrary path to the sequence 
 
-    /**s
+    /**
      * Create streams on LCC demand.
-     * Temporary log streams to the console.
-     * @param array of streams [stdin, stdout, stdr, monitor, controll]
      * @returns array of streams
      */
-    getClient(streamArray: UpstreamStreamsConfig): UpstreamStreamsConfig
+    getClient(): UpstreamStreamsConfig;
+
+    /**
+     * Hook streams form LCC
+     * @param array of streams
+     * Temporary log streams to the console.
+     */
+    hookStreams(strem: UpstreamStreamsConfig): void;
 
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.
@@ -21,5 +26,5 @@ export interface CSHConnector {
      * @param string with path form ENV
      * @returns stream with file sequence
      */
-    getPackage(path: string): ReadableStream<string>
+    getPackage(path: string): ReadableStream<string>;
 }

@@ -1,14 +1,11 @@
 import { CSHClient } from "@scramjet/supervisor/src/lib/csh-client";
-// import { ReadableStream } from "@scramjet/types/src/utils";
-// import * as stream  from 'stream';
 import { join } from "path";
-import { readFile } from 'fs';
+import { readFile } from "fs";
 import test from "ava";
 
 const PACKAGES_DIR = "test-file.tar.gz";
 const mockFilePath = join("src", "mock", PACKAGES_DIR);
-const cshClient = new CSHClient;
-// const mockStreamArray = ['','','','',''];
+const cshClient = new CSHClient();
 
 test.cb("load package form path " + mockFilePath, _t => {
     // Test if path from env can be load.
@@ -17,30 +14,27 @@ test.cb("load package form path " + mockFilePath, _t => {
 
 test("check file path " + mockFilePath, _t => {
     // Test if path from env is string.
-    _t.is(typeof mockFilePath, 'string');
+    _t.is(typeof mockFilePath, "string");
 });
 
-test("return readable stream with package " + mockFilePath, t => {
+test("return readable stream with package " + mockFilePath, _t => {
     // Test if getPackage method returns a readable stream.
-    const result = cshClient.getPackage(mockFilePath)
-    t.is(typeof result._read, 'function');
+    const result = cshClient.getPackage(mockFilePath);
+    _t.is(typeof result._read, "function");
 });
 
-test("return to the console", _t => {
+test("throw an error when string is empty " + mockFilePath, _t => {
+    // Test if getPackage method throw an error when path to file is empty.
+    const error = _t.throws(() => cshClient.getPackage(), { instanceOf: Error });
+    _t.is(error.message, "Path is empty");
+});
+
+test("return a proper streams", _t => {
     _t.pass();
-    // Test if getClient method log output to the console.
-    // const result = cshClient.getClient(mockStreamArray);
-    // t.is(typeof result, 'StreamsConfig');
-    // t.is(typeof result, 'array');
+    // Test if getClient method return a proper streams.
 });
 
-test("sed monitor message through strem", _t => {
-    _t.pass();
-    //Verify if third arg is monitor and it contains message
-    // const result = cshClient.getClient(mockStreamArray);
-});
-
-test("array contains proper elements", async _t => {
+test("array contains proper elements", _t => {
 //     // Test if array passed to getClient method contains stdio, stderr and controllers.
     _t.pass();
 //     let controlStream;
@@ -48,4 +42,9 @@ test("array contains proper elements", async _t => {
 //     controlStream.write("sdfsdf");
 //     let fromStream = result[1].read();
 //     t.is(fromStream, "sdfsdf");
+});
+
+test("log to the console", _t => {
+    _t.pass();
+    // Test if getClient method log output to the console.
 });
