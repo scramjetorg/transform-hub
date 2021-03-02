@@ -30,17 +30,15 @@ type ControlMessageHandlerList = {
 
 export class CommunicationHandler implements ICommunicationHandler {
     private stdInUpstream?: Readable;
-    private stdInDownstream?: Writable; 
+    private stdInDownstream?: Writable;
     private stdOutUpstream?: Writable;
-    private stdOutDownstream?: Readable  
+    private stdOutDownstream?: Readable;
     private stdErrUpstream?: Writable;
-    private stdErrDownstream?: Readable
-               
+    private stdErrDownstream?: Readable;
     private controlUpstream?: ReadableStream<EncodedControlMessage>;
     private controlDownstream?: WritableStream<EncodedControlMessage>;
     private monitoringUpstream?: WritableStream<EncodedMonitoringMessage>;
     private monitoringDownstream?: ReadableStream<EncodedMonitoringMessage>;
-
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
 
