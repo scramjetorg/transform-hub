@@ -22,14 +22,14 @@ class LifeCycleController {
 
         try {
 
-            this.client.hookCommunicationHandler(this.communicationHandler);
+            this.client.hookCommunicationHandler(this.communicationHandler)
 
-            this.lifecycleAdapterMock.hookCommunicationHandler(this.communicationHandler);
+            this.lifecycleAdapterMock.hookCommunicationHandler(this.communicationHandler)
 
-            this.communicationHandler.pipeMessageStreams();
-            this.communicationHandler.pipeStdio();
+            this.communicationHandler.pipeMessageStreams()
+            this.communicationHandler.pipeStdio()
 
-            await this.lifecycleAdapterMock.run(config);
+            await this.lifecycleAdapterMock.run(config)
 
         } catch (error) {
 
