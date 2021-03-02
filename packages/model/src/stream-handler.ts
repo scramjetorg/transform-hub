@@ -30,28 +30,35 @@ type ControlMessageHandlerList = {
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
-    _controlUpstream?: ReadableStream<EncodedControlMessage>;
-    _controlDownstream?: WritableStream<EncodedControlMessage>;
-    _monitoringUpstream?: WritableStream<EncodedMonitoringMessage>;
-    _monitoringDownstream?: ReadableStream<EncodedMonitoringMessage>;
+    private stdInUpstream?: Readable;
+    private stdInDownstream?: Writable; 
+    private stdOutUpstream?: Writable;
+    private stdOutDownstream?: Readable  
+    private stdErrUpstream?: Writable;
+    private stdErrDownstream?: Readable
+               
+    private controlUpstream?: ReadableStream<EncodedControlMessage>;
+    private controlDownstream?: WritableStream<EncodedControlMessage>;
+    private monitoringUpstream?: WritableStream<EncodedMonitoringMessage>;
+    private monitoringDownstream?: ReadableStream<EncodedMonitoringMessage>;
 
-    _upstreams?: UpstreamStreamsConfig;
-    _downstreams?: DownstreamStreamsConfig;
+    private upstreams?: UpstreamStreamsConfig;
+    private downstreams?: DownstreamStreamsConfig;
 
-    _monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
-    _controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
+    private monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
+    private controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
 
-    _monitoringHandlerHash: MonitoringMessageHandlerList;
-    _controlHandlerHash: ControlMessageHandlerList;
+    private monitoringHandlerHash: MonitoringMessageHandlerList;
+    private controlHandlerHash: ControlMessageHandlerList;
 
     constructor() {
-        this._controlHandlerHash = {
+        this.controlHandlerHash = {
             [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: [],
             [RunnerMessageCode.KILL]: [],
             [RunnerMessageCode.MONITORING_RATE]: [],
             [RunnerMessageCode.STOP]: []
         };
-        this._monitoringHandlerHash = {
+        this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],
             [RunnerMessageCode.DESCRIBE_SEQUENCE]: [],
             [RunnerMessageCode.ALIVE]: [],
@@ -61,16 +68,20 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     hookClientStreams(streams: UpstreamStreamsConfig): this {
-        this._controlUpstream = streams[3];
-        this._monitoringUpstream = streams[4];
-        this._upstreams = streams;
+        this.stdInUpstream = streams[0];
+        this.stdOutUpstream = streams[1];
+        this.stdErrUpstream = streams[2];
+        this.controlUpstream = streams[3];
+        this.monitoringUpstream = streams[4];
+        this.upstreams = streams;
 
         return this;
     }
+
     hookLifecycleStreams(streams: DownstreamStreamsConfig): this {
-        this._controlDownstream = streams[3];
-        this._monitoringDownstream = streams[4];
-        this._downstreams = streams;
+        this.controlDownstream = streams[3];
+        this.monitoringDownstream = streams[4];
+        this.downstreams = streams;
 
         return this;
     }
@@ -78,12 +89,12 @@ export class CommunicationHandler implements ICommunicationHandler {
     pipeMessageStreams() {
         if (this.areStreamsHooked()) {
 
-            StringStream.from(this._monitoringDownstream as Readable)
+            StringStream.from(this.monitoringDownstream as Readable)
                 .JSONParse()
                 .map(async (message: EncodedMonitoringMessage) => {
-                    if (this._monitoringHandlerHash[message[0]].length) {
+                    if (this.monitoringHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
-                        for (const handler of this._monitoringHandlerHash[message[0]]) {
+                        for (const handler of this.monitoringHandlerHash[message[0]]) {
                             currentMessage = await handler(currentMessage);
                         }
                         return currentMessage as EncodedMonitoringMessage;
@@ -91,14 +102,14 @@ export class CommunicationHandler implements ICommunicationHandler {
                     return message;
                 })
                 .JSONStringify()
-                .pipe(this._monitoringUpstream as unknown as Writable);
+                .pipe(this.monitoringUpstream as unknown as Writable);
 
-            StringStream.from(this._controlUpstream as Readable)
+            StringStream.from(this.controlUpstream as Readable)
                 .JSONParse()
                 .map(async (message: EncodedControlMessage) => {
-                    if (this._controlHandlerHash[message[0]].length) {
+                    if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
-                        for (const handler of this._controlHandlerHash[message[0]]) {
+                        for (const handler of this.controlHandlerHash[message[0]]) {
                             currentMessage = await handler(currentMessage);
                         }
                         return currentMessage as EncodedMonitoringMessage;
@@ -106,7 +117,7 @@ export class CommunicationHandler implements ICommunicationHandler {
                     return message;
                 })
                 .JSONStringify()
-                .pipe(this._controlDownstream as unknown as Writable);
+                .pipe(this.controlDownstream as unknown as Writable);
 
         } else {
             // TODO: specifiy which streams are missing.
@@ -117,10 +128,10 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     private areStreamsHooked() {
-        return this._controlDownstream &&
-            this._controlUpstream &&
-            this._monitoringDownstream &&
-            this._monitoringUpstream
+        return this.controlDownstream &&
+            this.controlUpstream &&
+            this.monitoringDownstream &&
+            this.monitoringUpstream
         ;
     }
 
@@ -133,11 +144,12 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     addMonitoringHandler<T extends MonitoringMessageCode>(_code: T, handler: MonitoringMessageHandler<T>): this {
-        this._monitoringHandlerHash[_code].push(handler as any);
+        this.monitoringHandlerHash[_code].push(handler as any);
         return this;
     }
+
     addControlHandler<T extends ControlMessageCode>(_code: T, handler: ControlMessageHandler<T>): this {
-        this._controlHandlerHash[_code].push(handler as any);
+        this.controlHandlerHash[_code].push(handler as any);
         return this;
     }
 }

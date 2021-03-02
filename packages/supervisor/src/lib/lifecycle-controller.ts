@@ -1,25 +1,51 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+import { LifeCycleError, LifeCycleConfig } from "@scramjet/types/src/lifecycle";
+import { CSHClientMock, LifeCycleMock } from "../test/lifecycle-controller.spec";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler"
 
-import { Readable } from "stream";
-import { LifeCycle, LifeCycleError, LifeCycleConfig } from "@scramjet/types/src/lifecycle";
+class LifeCycleController {
 
-async function LifeCycleController(tgz: Readable, lifecycleAdapter: LifeCycle, lifecycleConfig: LifeCycleConfig) {
-    // this executes pre-runner
-    const config = await lifecycleAdapter.identify(tgz);
-    try {
-        // this executes runner
-        // this may run for 24 hours or even longer...
-        await lifecycleAdapter.run(config);
-    } catch (error: LifeCycleError) {
-        // Dunno what?
-        if (lifecycleConfig.makeSnapshotOnError) {
-            // remove all artifacts
-            return await lifecycleAdapter.snapshot();
-        }
+    private communicationHandler: CommunicationHandler = new CommunicationHandler();
+    private client: CSHClientMock = new CSHClientMock();
+    private lifecycleAdapterMock: LifeCycleMock;
+    private lifecycleConfig: LifeCycleConfig;
+
+    constructor(lifecycleAdapter: LifeCycleMock, lifecycleConfig: LifeCycleConfig) {
+        this.lifecycleAdapterMock = lifecycleAdapter;
+        this.lifecycleConfig = lifecycleConfig;
     }
 
-    // remove all artifacts
-    return lifecycleAdapter.cleanup();
+    async start(): Promise<void> {
+
+        const packageStream = this.client.getPackage();
+
+        const config = await this.lifecycleAdapterMock.identify(packageStream);
+        try {
+
+            const upstreamsConfig = this.client.getStreams();
+            this.communicationHandler.hookClientStreams(upstreamsConfig);
+            this.client.hookCommunicationHandler(this.communicationHandler);
+
+            const downstreamStreamsConfig = this.lifecycleAdapterMock.getStreams();
+            this.communicationHandler.hookLifecycleStreams(downstreamStreamsConfig);
+            this.lifecycleAdapterMock.hookCommunicationHandler(this.communicationHandler);
+
+            this.communicationHandler.pipeMessageStreams();
+            this.communicationHandler.pipeStdio();
+
+            await this.lifecycleAdapterMock.run(config);
+
+        } catch (error: LifeCycleError) {
+
+            if (this.lifecycleConfig.makeSnapshotOnError) {
+
+                return await this.lifecycleAdapterMock.snapshot();
+
+            }
+        }
+
+        return this.lifecycleAdapterMock.cleanup();
+    }
+
 }
 
 export { LifeCycleController };
