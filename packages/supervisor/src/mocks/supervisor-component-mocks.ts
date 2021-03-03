@@ -1,17 +1,8 @@
-import test from "ava";
 import { Readable, Stream } from "stream";
-
 import { UpstreamStreamsConfig, DownstreamStreamsConfig, EncodedControlMessage, EncodedMonitoringMessage } from "@scramjet/types/src/message-streams";
 import { MaybePromise, ReadableStream, WritableStream } from "@scramjet/types/src/utils";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle";
-
-test("Just a placeholder for a test", async t => {
-
-    t.pass();
-
-});
-
 
 /*
 * Temporary mocks
@@ -25,7 +16,7 @@ export interface CSHConnectorMock {
     getPackage(): Readable
 }
 
-class CSHClientMock implements CSHConnectorMock {
+export class CSHClientMock implements CSHConnectorMock {
 
     getStreams(): UpstreamStreamsConfig {
 
@@ -70,5 +61,3 @@ export interface LifeCycleMock {
     stop(): MaybePromise<void>;
     kill(): MaybePromise<void>;
 }
-
-export { CSHClientMock };
