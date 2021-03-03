@@ -23,7 +23,9 @@ pipeline {
     stage("Publish Docker Dev") {
       // Run only on Tags
       when {
-        not buildingTag()
+        not {
+          buildingTag()
+        }
       }
       steps {
         script {
