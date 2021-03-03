@@ -12,7 +12,10 @@
     "**/*.spec.ts"
   ],
   "typedocOptions": {
-    "entryPoints": ["runner.ts"],
-    "out": "../../docs/types"
+    "entryPoints": ["./src/lib/adapters/docker/types.ts"],
+    "out": "../../docs/supervisor",
+    "plugin": [
+      "typedoc-plugin-markdown"
+    ]
   }
 }
