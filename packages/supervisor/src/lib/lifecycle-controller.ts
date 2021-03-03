@@ -1,5 +1,5 @@
 import { LifeCycleConfig } from "@scramjet/types/src/lifecycle";
-import { CSHClientMock, LifeCycleMock } from "../test/lifecycle-controller.spec";
+import { CSHClientMock, LifeCycleMock } from "@scramjet/supervisor/src/mocks/supervisor-component-mocks";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
 class LifeCycleController {
