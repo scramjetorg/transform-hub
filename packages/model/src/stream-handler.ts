@@ -42,8 +42,8 @@ export class CommunicationHandler implements ICommunicationHandler {
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
 
-    private monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
-    private controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
+    // private monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
+    // private controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
 
     private monitoringHandlerHash: MonitoringMessageHandlerList;
     private controlHandlerHash: ControlMessageHandlerList;
@@ -127,7 +127,9 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     private areStreamsHooked() {
-        return this.controlDownstream &&
+        return this.upstreams &&
+            this.downstreams &&
+            this.controlDownstream &&
             this.controlUpstream &&
             this.monitoringDownstream &&
             this.monitoringUpstream
