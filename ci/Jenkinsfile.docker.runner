@@ -16,7 +16,7 @@ pipeline {
     stage("Build Docker") {
       steps {
         script {
-            image = docker.build("scramjet/runner", "-f Dockerfile packages/runner")
+            image = docker.build("scramjet/runner", "-f packages/runner/Dockerfile .")
         }
       }
     }
