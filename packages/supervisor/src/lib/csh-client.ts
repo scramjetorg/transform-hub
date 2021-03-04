@@ -7,7 +7,7 @@ import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { ReadableStream, WritableStream } from "@scramjet/types/src/utils";
 import { CSHConnector } from "@scramjet/types/src/csh-client";
 import { createReadStream } from "fs";
-import { Readable, Stream } from "stream";
+import { Readable, Writable } from "stream";
 
 class CSHClient implements CSHConnector {
     PATH = process.env.SEQUENCE_PATH || "";
@@ -17,14 +17,13 @@ class CSHClient implements CSHConnector {
     }
 
     getClient(): UpstreamStreamsConfig {
-        const StreamConfig: UpstreamStreamsConfig = [
-            new Stream.Readable(),
-            new Stream.Writable(),
-            new Stream.Writable(),
-            new Stream.Readable() as ReadableStream<EncodedControlMessage>,
-            new Stream.Writable() as unknown as WritableStream<EncodedMonitoringMessage>
-        ];
-        return StreamConfig;
+        return [
+            new Readable(),
+            new Writable(),
+            new Writable(),
+            new Readable() as ReadableStream<EncodedControlMessage>,
+            new Writable() as unknown as WritableStream<EncodedMonitoringMessage>
+        ] as UpstreamStreamsConfig;
     }
 
     hookStreams(stream: UpstreamStreamsConfig) {
