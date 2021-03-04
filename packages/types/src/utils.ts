@@ -68,7 +68,7 @@ export class DelayedStream {
     private _stream?: PassThrough;
 
     getStream() {
-        if (typeof this._stream === "undefined") {
+        if (typeof this._stream !== "undefined") {
             throw new Error("Double initialization, getStream() method can be called only once.");
         }
 

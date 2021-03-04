@@ -1,5 +1,4 @@
 import { RunnerConfig } from "@scramjet/types/src/lifecycle";
-
 import test from "ava";
 import * as sinon from "sinon";
 import { PassThrough } from "stream";
@@ -8,7 +7,7 @@ const proxyquire = require("proxyquire");
 const sandbox = sinon.createSandbox();
 
 let readFileStub = sandbox.stub();
-
+let mkdtempStub = sandbox.stub();
 let dockerHelperMockCreateVolumeStub = sandbox.stub();
 let dockerHelperMockRunStub = sandbox.stub();
 
@@ -19,11 +18,20 @@ class DockerHelperMock {
 
 let { LifecycleDockerAdapter } = proxyquire("@scramjet/supervisor/dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
     fs: {
-        readFile: readFileStub
+        readFile: readFileStub,
+        createReadStream: sandbox.stub(),
+        createWriteStream: sandbox.stub(),
+    },
+    "fs/promises": {
+        mkdtemp: mkdtempStub
+    },
+    "@scramjet/types/src/utils": {
+        DelayedStream: function () {
+            return { run: sandbox.stub() };
+        }
     },
     "./dockerode-docker-helper": { DockerodeDockerHelper: DockerHelperMock }
 });
-
 
 //let lcda: typeof LifecycleDockerAdapter;
 let configFileContents = {
@@ -33,7 +41,6 @@ let configFileContents = {
 
 test.beforeEach(() => {
     sandbox.reset();
-
 });
 
 test("Constructor should create instance.", async (t: any) => {
@@ -55,13 +62,26 @@ test("Init should read file and set config.", async (t) => {
     t.deepEqual(lcda.imageConfig, configFileContents);
 });
 
-
 test("Init should reject on read file error.", async (t) => {
     readFileStub.reset();
     readFileStub.yields(new Error(), null);
 
     let lcda = new LifecycleDockerAdapter();
     await t.throwsAsync(lcda.init());
+});
+
+test("CreateFifoStreams should create monitor and conrol streams.", async (t) => {
+    let lcda = new LifecycleDockerAdapter();
+    lcda.createFifo = sandbox.stub().resolves();
+
+    mkdtempStub.returns("uniqDir");
+    await lcda.createFifoStreams("testMonitor.fifo", "testControl.fifo");
+
+    t.is(lcda.createFifo.callCount, 2);
+    t.is(lcda.createFifo.getCall(0).args[0], "uniqDir");
+    t.is(lcda.createFifo.getCall(0).args[1], "testMonitor.fifo");
+    t.is(lcda.createFifo.getCall(1).args[0], "uniqDir");
+    t.is(lcda.createFifo.getCall(1).args[1], "testControl.fifo");
 });
 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
@@ -74,12 +94,17 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
     };
 
     let lcda = new LifecycleDockerAdapter();
-    let createFifoStreamsSpy = sandbox.spy(lcda, "createFifoStreams");
+    let createFifoStreamsSpy = sandbox.stub().resolves();
 
-    lcda.run(config);
+    lcda.createFifoStreams = createFifoStreamsSpy;
+    lcda.monitorStream.run = sandbox.stub();
+    lcda.controlStream.run = sandbox.stub();
+
+    await lcda.run(config);
 
     t.true(createFifoStreamsSpy.calledOnceWith("monitor.fifo", "control.fifo"));
-    createFifoStreamsSpy.restore();
+    t.true(lcda.monitorStream.run.calledOnce);
+    t.true(lcda.controlStream.run.calledOnce);
 });
 
 test("Run should exit with 0.", async (t: any) => {
@@ -92,8 +117,10 @@ test("Run should exit with 0.", async (t: any) => {
     };
 
     let lcda = new LifecycleDockerAdapter();
-    let res = await lcda.run(config);
 
+    lcda.createFifoStreams = sandbox.stub().resolves();
+
+    let res = await lcda.run(config);
     t.is(res, 0);
 });
 

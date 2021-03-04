@@ -2,14 +2,13 @@ import { LifeCycle, RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle
 import { DelayedStream, MaybePromise, ReadableStream } from "@scramjet/types/src/utils";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { DownstreamStreamsConfig } from "@scramjet/types/src/message-streams";
-import { createReadStream, createWriteStream } from "fs";
+import { createReadStream, createWriteStream, readFile } from "fs";
 import { Readable, Writable } from "stream";
 import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
 import { exec } from "child_process";
 import * as shellescape from "shell-escape";
-import * as fs from "fs";
 
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerHelper, DockerVolume } from "./types";
@@ -47,9 +46,8 @@ class LifecycleDockerAdapter implements LifeCycle {
     }
 
     async init(): Promise<void> {
-
         return new Promise((res, rej) => {
-            fs.readFile("../../../image-config.json", { encoding: "utf-8" }, (err, data) => {
+            readFile("../../../image-config.json", { encoding: "utf-8" }, (err, data) => {
                 if (err) {
                     rej(err);
                 }
@@ -83,6 +81,7 @@ class LifecycleDockerAdapter implements LifeCycle {
 
         try {
             createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
+            // createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
             console.log(createdDir + " has been created.");
             [this.controlFifoPath, this.monitorFifoPath] = await Promise.all([
                 this.createFifo(createdDir, controlFifo),
@@ -147,7 +146,7 @@ class LifecycleDockerAdapter implements LifeCycle {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async run(config: RunnerConfig): Promise<ExitCode> {
         await this.createFifoStreams("monitor.fifo", "control.fifo");
-
+        
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));
 
