@@ -7,7 +7,7 @@ const { ESLint } = require("eslint");
 const { resolve } = require("path");
 const { writeFile } = require("fs/promises");
 
-(async() => {
+(async () => {
     const { rules } = await new ESLint({ cwd: resolve(__dirname, "../") })
         .calculateConfigForFile(".eslintrc");
 
