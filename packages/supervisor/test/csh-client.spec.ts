@@ -9,7 +9,7 @@ const mockFilePath = join(__dirname, "..", "src", "mocks", PACKAGES_DIR);
 const cshClient = new CSHClient();
 const streams = cshClient.getClient();
 // let consoleSpy: any;
- 
+
 test.cb("load package form path " + mockFilePath, _t => {
     // Test if path from env can be load.
     readFile(mockFilePath, _t.end);
@@ -51,5 +51,5 @@ test("log to the console", _t => {
     // cshClient.hookStreams(streams)
     // consoleSpy.called.should.be.true;
     // consoleSpy.restore();
-    _t.pass()
+    _t.pass();
 });
