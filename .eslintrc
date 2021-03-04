@@ -125,7 +125,7 @@
         "lines-around-comment" : 0,
         "linebreak-style" : [2, "unix"],
         "max-nested-callbacks" : [1, 3],
-        "new-cap" : 1,
+        "new-cap" : 0,
         "new-parens" : 1,
         "newline-after-var" : 0,
         "no-array-constructor" : 1,
