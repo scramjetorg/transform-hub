@@ -7,7 +7,7 @@ import { RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle";
 /*
 * Temporary mocks
 */
-export interface CSHConnectorMock {
+export interface CSHConnector {
 
     getStreams(streamArray: UpstreamStreamsConfig): UpstreamStreamsConfig
 
@@ -16,7 +16,7 @@ export interface CSHConnectorMock {
     getPackage(): Readable
 }
 
-export class CSHClientMock implements CSHConnectorMock {
+export class CSHClientMock implements CSHConnector {
 
     getStreams(): UpstreamStreamsConfig {
 
@@ -46,7 +46,7 @@ export class CSHClientMock implements CSHConnectorMock {
     }
 }
 
-export interface LifeCycleMock {
+export interface LifeCycle {
     identify(stream: Readable): MaybePromise<RunnerConfig>;
     run(config: RunnerConfig): Promise<ExitCode>;
     cleanup(): MaybePromise<void>;
@@ -60,7 +60,7 @@ export interface LifeCycleMock {
     kill(): MaybePromise<void>;
 }
 
-class LifecycleDockerAdapterMock implements LifeCycleMock {
+class LifecycleDockerAdapterMock implements LifeCycle {
 
     async init(): Promise<void> {
 
