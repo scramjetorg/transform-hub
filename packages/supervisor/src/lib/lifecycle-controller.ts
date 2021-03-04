@@ -2,6 +2,21 @@ import { LifeCycleConfig } from "@scramjet/types/src/lifecycle";
 import { CSHClientMock, LifeCycleMock } from "@scramjet/supervisor/src/mocks/supervisor-component-mocks";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
+/**
+ * LifeCycleController is a main component of Supervisor.
+ * When Supervisor is started it creates LifeCycleController class and
+ * initiates Supervisor's lifecycle by calling its start() method.
+ *
+ * An example usage with LifeCycle Docker Adapter:
+ * ```typescript
+ *  const config: LifeCycleConfig = {
+ *      makeSnapshotOnError: true
+ *   };
+ * const lcda = new LifecycleDockerAdapter();
+ * const controller = new LifeCycleController(lcda, config);
+ * controller.start();
+ * ```
+ */
 class LifeCycleController {
 
     private communicationHandler: CommunicationHandler = new CommunicationHandler();
@@ -16,11 +31,11 @@ class LifeCycleController {
 
     async start(): Promise<void> {
 
-        const packageStream = this.client.getPackage();
-
-        const config = await this.lifecycleAdapterMock.identify(packageStream);
-
         try {
+
+            const packageStream = this.client.getPackage();
+
+            const config = await this.lifecycleAdapterMock.identify(packageStream);
 
             this.client.hookCommunicationHandler(this.communicationHandler);
 
@@ -38,11 +53,12 @@ class LifeCycleController {
                 return await this.lifecycleAdapterMock.snapshot();
 
             }
+
+            return Promise.reject(new Error(error.message));
         }
 
         return this.lifecycleAdapterMock.cleanup();
     }
-
 }
 
 export { LifeCycleController };
