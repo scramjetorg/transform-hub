@@ -9,7 +9,7 @@ import {
 } from "@scramjet/types";
 
 import { CommunicationHandler } from "@scramjet/model";
-import { createReadStream, createWriteStream, readFile } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import { Readable, PassThrough } from "stream";
 import { mkdtemp, chmod } from "fs/promises";
 import { tmpdir } from "os";
@@ -52,16 +52,7 @@ class LifecycleDockerAdapter implements LifeCycle {
     }
 
     async init(): Promise<void> {
-        return new Promise((res, rej) => {
-            readFile("../../../image-config.json", { encoding: "utf-8" }, (err, data) => {
-                if (err) {
-                    rej(err);
-                }
-
-                this.imageConfig = JSON.parse(data);
-                res();
-            });
-        });
+        this.imageConfig = require("@scramjet/csi-config/image-config.json");
     }
 
     private async createFifo(dir: string, fifoName: string): Promise<string> {

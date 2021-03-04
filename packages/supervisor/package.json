@@ -8,7 +8,6 @@
     "test-coverage": "nyc yarn test",
     "build": "tsc -p tsconfig.json",
     "build:docs": "typedoc",
-    "postbuild": "cp ./src/image-config.json ./dist/",
     "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",
     "stop": "./stop-superviosor.sh",
     "watch": "tsc -b --watch",
@@ -44,7 +43,8 @@
   },
   "dependencies": {
     "dockerode": "^3.2.1",
-    "scramjet": "^4.35.12"
+    "scramjet": "^4.35.12",
+    "@scramjet/csi-config": "0.2.0"
   },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
