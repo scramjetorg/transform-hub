@@ -3,10 +3,12 @@
   "version": "0.2.0",
   "description": "",
   "scripts": {
-    "build:docker": "docker build -t repo.int.scp.ovh/scramjet/pre-runner:latest . # perhaps we could generate the name with a script?",
+    "build:docker": "docker build -t scramjet/pre-runner .",
     "start": "./analyze.sh",
+    "start:docker": "yarn prepare-sample-tar && cat sample-package/package.tar.gz | docker run -i --name pre-runner -v vol-$(git rev-parse --short HEAD):/package scramjet/pre-runner",
     "test": "echo \"Error: no test specified\"",
-    "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../samples/test ."
+    "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../samples/example .",
+    "clean:docker": "docker volume rm $(git rev-parse --short HEAD); docker rm -f runner"
   },
   "author": "",
   "license": "AGPL-3.0",
