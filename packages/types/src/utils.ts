@@ -61,9 +61,11 @@ export interface WritableStream<Consumes> {
 }
 
 /**
- * Delayed stream TODO  
- *
+ * Delayed stream - stream with lazy initialization
+ * in first phase PassThrough stream is created by calling getStream() method
+ * is second phase the stream is piped from external stream by running run() method.
  */
+
 export class DelayedStream {
     private _stream?: PassThrough;
 

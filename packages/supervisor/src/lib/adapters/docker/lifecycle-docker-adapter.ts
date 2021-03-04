@@ -81,7 +81,6 @@ class LifecycleDockerAdapter implements LifeCycle {
 
         try {
             createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
-            // createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
             console.log(createdDir + " has been created.");
             [this.controlFifoPath, this.monitorFifoPath] = await Promise.all([
                 this.createFifo(createdDir, controlFifo),
