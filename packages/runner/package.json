@@ -5,14 +5,14 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "build:docker": "docker build -t scramjet/runner -f Dockerfile ../../",
-    "start:docker": "docker run -i --name runner -v vol-$(git rev-parse --short HEAD):/package scramjet/runner:latest",
+    "build:docker": "docker build -t repo.int.scp.ovh/scramjet/runner:$npm_package_version -f Dockerfile ../../",
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
     "test": "yarn build && ava --",
     "test-coverage": "yarn build && nyc ava",
+    "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjet/runner:$npm_package_version",
     "clean": "rimraf -rf ./dist",
-    "clean:docker": "docker volume rm $(git rev-parse --short HEAD); docker rm -f runner",
+    "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
     "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
   },
   "author": "",

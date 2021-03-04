@@ -25,8 +25,8 @@ FROM repo.int.scp.ovh/scramjet/nodejs:buster
 
 RUN groupadd -g 1200 runner \
  && useradd -g 1200 -u 1200 -m -d /app -s /bin/bash runner \
- && mkdir /package \
- && chown runner:runner /package
+ && mkdir /package /pipes \
+ && chown runner:runner /package /pipes
 
 
 COPY --chown=runner:runner --from=builder /app/dist /app/
