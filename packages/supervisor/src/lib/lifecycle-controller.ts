@@ -1,5 +1,5 @@
 import { LifeCycleConfig } from "@scramjet/types/src/lifecycle";
-import { CSHClientMock, LifeCycleMock } from "@scramjet/supervisor/src/mocks/supervisor-component-mocks";
+import { CSHClientMock, LifeCycle } from "@scramjet/supervisor/src/mocks/supervisor-component-mocks";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
 /**
@@ -33,9 +33,9 @@ class LifeCycleController {
 
     /**
     * Interface specifing methods that can be performed during Supervisor's lifecycle. 
-    * @type {LifeCycleMock}
+    * @type {LifeCycle}
     */
-    private lifecycleAdapterMock: LifeCycleMock;
+    private lifecycleAdapterMock: LifeCycle;
 
     /**
     * Configurations specific to a lifecycle, e.g. whether to take snapshot in case of erroneous Sequence termination.
@@ -44,10 +44,10 @@ class LifeCycleController {
     private lifecycleConfig: LifeCycleConfig;
 
     /**
-     * @param {LifeCycleMock} lifecycleAdapter an implemenation of LifeCycle interface
+     * @param {LifeCycle} lifecycleAdapter an implemenation of LifeCycle interface
      * @param {LifeCycleConfig} lifecycleConfig configuration specific to this lifecycle
      */
-    constructor(lifecycleAdapter: LifeCycleMock, lifecycleConfig: LifeCycleConfig) {
+    constructor(lifecycleAdapter: LifeCycle, lifecycleConfig: LifeCycleConfig) {
         this.lifecycleAdapterMock = lifecycleAdapter;
         this.lifecycleConfig = lifecycleConfig;
     }
