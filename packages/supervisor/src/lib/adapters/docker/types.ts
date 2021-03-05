@@ -87,6 +87,10 @@ export type DockerAdapterStreams = {
     stderr: Stream
 };
 
+export type DockerAdapterWaitOptions = {
+    condition: "not-running" | "next-exit" | "removed"
+}
+
 /**
  * Result of running command in container.
  */
@@ -99,7 +103,9 @@ export type DockerAdapterRunResponse = {
     /**
      * @type {Function} Function to stop and remove container.
      */
-    stopAndRemove: Function
+    stopAndRemove: Function,
+
+    containerId: DockerContainer
 };
 
 export interface DockerHelper {
@@ -189,4 +195,10 @@ export interface DockerHelper {
      * @returns {Promise<DockerAdapterRunResponse>}
      */
     run: (config: DockerAdapterRunConfig) => Promise<DockerAdapterRunResponse>;
+
+    /**
+     *
+     * @param {DockerContainer} container
+     */
+    wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<void>;
 }

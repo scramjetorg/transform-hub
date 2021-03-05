@@ -10,8 +10,16 @@ import {
     DockerImage,
     DockerContainer,
     DockerHelper,
-    DockerAdapterStreams
+    DockerAdapterStreams,
+    DockerAdapterWaitOptions
 } from "./types";
+
+type DockerodeVolumeMountConfig = {
+    Target: string,
+    Source: string,
+    Type: "volume",
+    ReadOnly: boolean
+}
 
 export class DockerodeDockerHelper implements DockerHelper {
     dockerode: Dockerode;
@@ -20,17 +28,18 @@ export class DockerodeDockerHelper implements DockerHelper {
         this.dockerode = new Dockerode();
     }
 
-    translateVolumesConfig(volumeConfigs: DockerAdapterVolumeConfig[]): { [k: string]: Dockerode.Volume } {
-        const result: any = {};
-
-        for (let cfg of volumeConfigs) {
-            result[cfg.mountPoint] = this.dockerode.getVolume(cfg.volume);
-        }
-
-        return result;
+    translateVolumesConfig(volumeConfigs: DockerAdapterVolumeConfig[]): DockerodeVolumeMountConfig[] {
+        return volumeConfigs.map(cfg => {
+            return {
+                Target: cfg.mountPoint,
+                Source: cfg.volume,
+                Type: "volume",
+                ReadOnly: false
+            };
+        });
     }
 
-    createContainer(
+    async createContainer(
         dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[] = [],
         binds: string[] = []
@@ -43,9 +52,9 @@ export class DockerodeDockerHelper implements DockerHelper {
             Tty: false,
             OpenStdin: true,
             StdinOnce: true,
-            Volumes: this.translateVolumesConfig(volumes),
             HostConfig: {
-                Binds: binds
+                Binds: binds,
+                Mounts: this.translateVolumesConfig(volumes)
             }
         }).then((container: Dockerode.Container) => container.id);
     }
@@ -62,7 +71,7 @@ export class DockerodeDockerHelper implements DockerHelper {
         return this.dockerode.getContainer(containerId).remove();
     }
 
-    execCommand(containerId: DockerContainer, command: string[]): Promise<DockerAdapterStreams> {
+    async execCommand(containerId: DockerContainer, command: string[]): Promise<DockerAdapterStreams> {
         const options = {
             AttachStdin: true,
             AttachStdout: true,
@@ -97,10 +106,12 @@ export class DockerodeDockerHelper implements DockerHelper {
         });
     }
 
-    createVolume(name: string = ""): Promise<DockerVolume> {
+    async createVolume(name: string = ""): Promise<DockerVolume> {
         return this.dockerode.createVolume({
             Name: name,
-        }).then((volume: Dockerode.Volume) => volume.name);
+        }).then((volume: Dockerode.Volume) => {
+            return volume.name;
+        });
     }
 
     removeVolume(volumeId: DockerVolume): Promise<void> {
@@ -116,9 +127,14 @@ export class DockerodeDockerHelper implements DockerHelper {
                     resolve({
                         streams: await this.execCommand(container, config.command),
                         stopAndRemove: () => this.stopContainer(container)
-                            .then(() => this.removeContainer(container))
+                            .then(() => this.removeContainer(container)),
+                        containerId: container
                     });
                 });
         });
+    }
+
+    wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<void> {
+        return this.dockerode.getContainer(container).wait(options);
     }
 }

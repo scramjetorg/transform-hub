@@ -10,12 +10,15 @@ let readFileStub = sandbox.stub();
 let mkdtempStub = sandbox.stub();
 let dockerHelperMockCreateVolumeStub = sandbox.stub();
 let dockerHelperMockRunStub = sandbox.stub();
+let dockerHelperMockWaitStub = sandbox.stub();
 
 class DockerHelperMock {
     createVolume = dockerHelperMockCreateVolumeStub;
-    run = dockerHelperMockRunStub
+    run = dockerHelperMockRunStub;
+    wait = dockerHelperMockWaitStub;
 }
 
+let chmodStub = sandbox.stub();
 let { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
     fs: {
         readFile: readFileStub,
@@ -23,9 +26,10 @@ let { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecyc
         createWriteStream: sandbox.stub(),
     },
     "fs/promises": {
-        mkdtemp: mkdtempStub
+        mkdtemp: mkdtempStub,
+        chmod: chmodStub
     },
-    "@scramjet/types/src/utils": {
+    "@scramjet/types": {
         DelayedStream: function() {
             return { run: sandbox.stub() };
         }
@@ -70,7 +74,7 @@ test("Init should reject on read file error.", async (t) => {
     await t.throwsAsync(lcda.init());
 });
 
-test("CreateFifoStreams should create monitor and conrol streams.", async (t) => {
+test("CreateFifoStreams should create monitor and control streams.", async (t) => {
     let lcda = new LifecycleDockerAdapter();
 
     lcda.createFifo = sandbox.stub().resolves();
@@ -95,17 +99,22 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
     };
 
     let lcda = new LifecycleDockerAdapter();
-    let createFifoStreamsSpy = sandbox.stub().resolves();
 
-    lcda.createFifoStreams = createFifoStreamsSpy;
-    lcda.monitorStream.run = sandbox.stub();
-    lcda.controlStream.run = sandbox.stub();
+    dockerHelperMockWaitStub.resolves();
+
+    dockerHelperMockRunStub.resolves({
+        streams: {
+            stdin: new PassThrough(),
+            stdout: new PassThrough(),
+            stderr: new PassThrough()
+        }
+    });
+
+    lcda.createFifoStreams = sandbox.stub();
 
     await lcda.run(config);
 
-    t.true(createFifoStreamsSpy.calledOnceWith("monitor.fifo", "control.fifo"));
-    t.true(lcda.monitorStream.run.calledOnce);
-    t.true(lcda.controlStream.run.calledOnce);
+    t.true(lcda.createFifoStreams.calledOnceWith("monitor.fifo", "control.fifo"));
 });
 
 test("Identify should return response from stream with added packageVolumeId and image.", async (t) => {

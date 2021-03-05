@@ -10,8 +10,8 @@ import {
 
 import { CommunicationHandler } from "@scramjet/model";
 import { createReadStream, createWriteStream, readFile } from "fs";
-import { Readable, Writable } from "stream";
-import { mkdtemp } from "fs/promises";
+import { Readable, PassThrough } from "stream";
+import { mkdtemp, chmod } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
 import { exec } from "child_process";
@@ -19,7 +19,6 @@ import * as shellescape from "shell-escape";
 
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerHelper, DockerVolume } from "./types";
-
 
 class LifecycleDockerAdapter implements LifeCycle {
     private dockerHelper: DockerHelper;
@@ -37,16 +36,16 @@ class LifecycleDockerAdapter implements LifeCycle {
         prerunner?: string
     } = {};
 
-    private runnerStdin: Writable;
-    private runnerStdout: Readable;
-    private runnerStderr: Readable;
+    private runnerStdin: PassThrough;
+    private runnerStdout: PassThrough;
+    private runnerStderr: PassThrough;
     private monitorStream: DelayedStream;
     private controlStream: DelayedStream;
 
     constructor() {
-        this.runnerStdin = new Writable();
-        this.runnerStdout = new Readable();
-        this.runnerStderr = new Readable();
+        this.runnerStdin = new PassThrough();
+        this.runnerStdout = new PassThrough();
+        this.runnerStderr = new PassThrough();
         this.dockerHelper = new DockerodeDockerHelper();
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
@@ -66,7 +65,7 @@ class LifecycleDockerAdapter implements LifeCycle {
     }
 
     private async createFifo(dir: string, fifoName: string): Promise<string> {
-        const fifoPath: string = shellescape([dir + "/" + fifoName]);
+        const fifoPath: string = shellescape([dir + "/" + fifoName]).replace(/\'/g, "");
 
         await new Promise<void>((resolve, reject) => {
             exec(`mkfifo ${fifoPath}`, (error) => {
@@ -82,17 +81,22 @@ class LifecycleDockerAdapter implements LifeCycle {
         return fifoPath;
     }
 
-    private async createFifoStreams(controlFifo: string, monitorFifo: string): Promise<void> {
+    private async createFifoStreams(controlFifo: string, monitorFifo: string): Promise<string> {
         const dirPrefix: string = "fifos";
 
         let createdDir: string;
 
         try {
             createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
-            console.log(createdDir + " has been created.");
+
+            //TODO: TBD how to allow docker user "runner" to access this directory.
+            await chmod(createdDir, 0o777);
+
             [this.controlFifoPath, this.monitorFifoPath] = await Promise.all([
                 this.createFifo(createdDir, controlFifo),
                 this.createFifo(createdDir, monitorFifo)]);
+
+            return createdDir;
         } catch (err) {
             console.error(err);
             throw err;
@@ -104,7 +108,7 @@ class LifecycleDockerAdapter implements LifeCycle {
             const volume: DockerVolume = await this.dockerHelper.createVolume();
             const { streams, stopAndRemove } = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
-                command: ["sh", "/unpack-identify.sh"],
+                command: ["sh", "unpack-identify.sh"],
                 volumes: [
                     { mountPoint: "/package", volume }
                 ]
@@ -148,26 +152,32 @@ class LifecycleDockerAdapter implements LifeCycle {
         communicationHandler.hookLifecycleStreams(downstreamStreamsConfig);
     }
 
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async run(config: RunnerConfig): Promise<ExitCode> {
-        await this.createFifoStreams("monitor.fifo", "control.fifo");
+        let createdDir = await this.createFifoStreams("monitor.fifo", "control.fifo");
 
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));
 
-        //TODO  
-        // new Promise(async (resolve) => {
-        //     const { streams, stopAndRemove } = await this.dockerHelper.run(config);
+        return new Promise(async (resolve) => {
+            const { streams, containerId } = await this.dockerHelper.run({
+                imageName: this.imageConfig.runner || "",
+                command: ["node", "index"],
+                volumes: [
+                    { mountPoint: "/package", volume: config.packageVolumeId || "" }
+                ],
+                binds: [
+                    `${createdDir}:/pipes`
+                ]
+            });
 
-        //     streams.stdin.pipe(this.runnerStdin);
-        //     streams.stdout.pipe(this.runnerStdout);
-        //     streams.stderr.pipe(this.runnerStderr);
+            this.runnerStdin.pipe(streams.stdin);
+            streams.stdout.pipe(this.runnerStdout);
+            streams.stderr.pipe(this.runnerStderr);
 
-        //     stopAndRemove();
-        // }); 
-
-        return 0;
+            await this.dockerHelper.wait(containerId, { condition: "not-running" });
+            resolve(0);
+        });
     }
 
     // @ts-ignore
