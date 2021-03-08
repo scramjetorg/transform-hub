@@ -65,7 +65,6 @@ class LifeCycleController {
             * Receive a readable stream to compressed Sequence code and configuration file
             */
             const packageStream = this.client.getPackage();
-
             /**
             * LifeCycle Adapter calls identify method to unpack the compressed file 
             * and obtain the Runner's container configuration

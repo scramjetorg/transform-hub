@@ -23,12 +23,14 @@ test("check file path " + mockFilePath, _t => {
 test("return readable stream with package " + mockFilePath, _t => {
     // Test if getPackage method returns a readable stream.
     const result = cshClient.getPackage(mockFilePath);
+
     _t.is(result.readable, true);
 });
 
 test("throw an error when string is empty " + mockFilePath, _t => {
     // Test if getPackage method throw an error when path to file is empty.
     const error = _t.throws(() => cshClient.getPackage(), { instanceOf: Error });
+
     _t.is(error.message, "Path is empty");
 });
 

@@ -28,6 +28,7 @@ class CSHClient implements CSHConnector {
 
     hookStreams(stream: UpstreamStreamsConfig) {
         let hook = new CommunicationHandler().hookClientStreams(stream);
+
         console.log(hook);
     }
 

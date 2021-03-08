@@ -14,5 +14,6 @@ test("context test", t => {
 
 test("async test", async t => {
     const bar = Promise.resolve("bar");
+
     t.is(await bar, "bar");
 });

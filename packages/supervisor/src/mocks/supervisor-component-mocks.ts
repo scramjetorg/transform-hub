@@ -22,7 +22,6 @@ export class CSHClientMock implements CSHConnector {
 
         const controlStream = new Stream.Readable() as ReadableStream<EncodedControlMessage>;
         const monitorStream = new Stream.Writable() as unknown as WritableStream<EncodedMonitoringMessage>;
-
         const upstreamStreamsConfig: UpstreamStreamsConfig =
             [
                 new Stream.Readable(),
@@ -86,7 +85,6 @@ class LifecycleDockerAdapterMock implements LifeCycle {
 
         const controlStream = new Stream.Readable() as ReadableStream<EncodedMonitoringMessage>;
         const monitorStream = new Stream.Writable() as unknown as WritableStream<EncodedControlMessage>;
-
         const downstreamStreamsConfig: DownstreamStreamsConfig =
             [
                 new Stream.Writable(),

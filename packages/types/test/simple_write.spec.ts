@@ -7,6 +7,7 @@ export const app: WritableApp<number, [{filename?: string}]> = async function ab
     source, { filename } = {}
 ) {
     const outname = filename || this.config.filename || null;
+
     if (!outname || typeof outname !== "string")
         throw new this.AppError("SEQUENCE_MISCONFIGURED", "Output filename needed");
 

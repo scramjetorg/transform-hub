@@ -11,6 +11,7 @@ export function serializeMessage<T extends RunnerMessageCode>({ msgCode, ...msg 
     // DO TYPEGUARDS...
 
     const json = JSON.parse(JSON.stringify(msg));
+
     return [msgCode, json];
 }
 
@@ -22,9 +23,12 @@ export function serializeMessage<T extends RunnerMessageCode>({ msgCode, ...msg 
 export function deserializeMessage(msg: string): MessageType<RunnerMessageCode> {
     try {
         const obj = JSON.parse(msg);
+
         if (Array.isArray(obj) && obj.length === 2) {
             const code: RunnerMessageCode = +obj[0];
+
             let data = obj[1];
+
             if (Object.values(RunnerMessageCode).includes(code))
                 return getMessage(code, data);
         }

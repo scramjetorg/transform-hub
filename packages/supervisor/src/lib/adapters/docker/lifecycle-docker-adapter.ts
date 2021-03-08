@@ -77,6 +77,7 @@ class LifecycleDockerAdapter implements LifeCycle {
 
     private async createFifoStreams(controlFifo: string, monitorFifo: string): Promise<void> {
         const dirPrefix: string = "fifos";
+
         let createdDir: string;
 
         try {
@@ -94,7 +95,6 @@ class LifecycleDockerAdapter implements LifeCycle {
     identify(stream: Readable): MaybePromise<RunnerConfig> {
         return new Promise(async (resolve) => {
             const volume: DockerVolume = await this.dockerHelper.createVolume();
-
             const { streams, stopAndRemove } = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
                 command: ["sh", "/unpack-identify.sh"],
@@ -145,7 +145,7 @@ class LifecycleDockerAdapter implements LifeCycle {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async run(config: RunnerConfig): Promise<ExitCode> {
         await this.createFifoStreams("monitor.fifo", "control.fifo");
-        
+
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));
 

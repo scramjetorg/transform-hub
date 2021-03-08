@@ -8,10 +8,9 @@ test("When an instance of LifeCycleController is construcred with correct parame
     const config: LifeCycleConfig = {
         makeSnapshotOnError: false
     };
-
     const lcda = new LifecycleDockerAdapterMock();
-
     const controller = new LifeCycleController(lcda, config);
+
     t.not(controller, null);
 
 });

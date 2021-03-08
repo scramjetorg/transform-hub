@@ -35,7 +35,6 @@ stringStreamAppendStub.returns(scramjetMock.StringStream);
 let { Runner } = proxyquire("../dist/mock/runner", {
     scramjet: scramjetMock
 });
-
 let runner: any;
 
 test.beforeEach(() => {
@@ -61,6 +60,7 @@ test("start method should call stream method", (t: any) => {
 
 test("startMonitoring method should call setInterval with proper parameters", (t: any) => {
     const setIntervalSpy = sandbox.spy(global, "setInterval");
+
     runner.options.monitoringInterval = 2000;
 
     runner.startMonitoring();

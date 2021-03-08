@@ -4,12 +4,14 @@ import { RunnerMessageCode, MessageUtilities, StopSequenceMessage } from "@scram
 testModel("Serialization must return a message in the correct format", async t => {
     const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, timeout: 1000, canCallKeepalive: true };
     const serizalized = MessageUtilities.serializeMessage(stopMsg);
+
     t.is(JSON.stringify(serizalized), "[4001,{\"timeout\":1000,\"canCallKeepalive\":true}]");
 });
 
 testModel("Deserialization must return a message of correct type", async t => {
     const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, timeout: 1000, canCallKeepalive: true };
     const deserialized = MessageUtilities.deserializeMessage("[4001,{\"timeout\":1000,\"canCallKeepalive\":true}]");
+
     t.deepEqual(deserialized, stopMsg);
 });
 
@@ -17,9 +19,7 @@ testModel("Message after being serizalized --> deserialized --> serizalized must
 
     const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, timeout: 1000, canCallKeepalive: true };
     const serizalized = MessageUtilities.serializeMessage(stopMsg);
-
     const deserialized = MessageUtilities.deserializeMessage(JSON.stringify(serizalized));
-
     const serializedAgain = MessageUtilities.serializeMessage(deserialized);
 
     t.is(JSON.stringify(serizalized), JSON.stringify(serializedAgain));

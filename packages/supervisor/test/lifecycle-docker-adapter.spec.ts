@@ -26,13 +26,12 @@ let { LifecycleDockerAdapter } = proxyquire("@scramjet/supervisor/dist/lib/adapt
         mkdtemp: mkdtempStub
     },
     "@scramjet/types/src/utils": {
-        DelayedStream: function () {
+        DelayedStream: function() {
             return { run: sandbox.stub() };
         }
     },
     "./dockerode-docker-helper": { DockerodeDockerHelper: DockerHelperMock }
 });
-
 //let lcda: typeof LifecycleDockerAdapter;
 let configFileContents = {
     runner: "runner-example-image",
@@ -67,11 +66,13 @@ test("Init should reject on read file error.", async (t) => {
     readFileStub.yields(new Error(), null);
 
     let lcda = new LifecycleDockerAdapter();
+
     await t.throwsAsync(lcda.init());
 });
 
 test("CreateFifoStreams should create monitor and conrol streams.", async (t) => {
     let lcda = new LifecycleDockerAdapter();
+
     lcda.createFifo = sandbox.stub().resolves();
 
     mkdtempStub.returns("uniqDir");
@@ -121,6 +122,7 @@ test("Run should exit with 0.", async (t: any) => {
     lcda.createFifoStreams = sandbox.stub().resolves();
 
     let res = await lcda.run(config);
+
     t.is(res, 0);
 });
 
@@ -146,6 +148,7 @@ test("Identify should return response from stream with added packageVolumeId and
     });
 
     let lcda = new LifecycleDockerAdapter();
+
     lcda.imageConfig.runner = configFileContents.runner;
 
     let res = lcda.identify(streams.stdin);

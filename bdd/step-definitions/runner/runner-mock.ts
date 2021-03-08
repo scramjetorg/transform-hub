@@ -5,11 +5,13 @@ import { StringStream } from "scramjet";
 import { runnerMessages } from "../../data/runner-messages";
 
 const mockRunnerExec = "../packages/runner/src/index.ts";
+
 let runner;
 let runnerProcessStopped;
 
 function runRunner(withMonitoring: boolean): void {
     let command: string[] = ["npx", "ts-node", mockRunnerExec];
+
     if (withMonitoring) {
         command = ["MONITORING_INTERVAL=1000"].concat(command);
     }
@@ -37,6 +39,7 @@ When("a message {string} is sent", (message:string) => {
 
 Then("a message {string} is received", async (message:string) => {
     const data = await StringStream.from(runner.stdout).lines().slice(0, 1).whenRead();
+
     assert.equal(data, runnerMessages.get(message));
 });
 

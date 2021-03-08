@@ -93,6 +93,7 @@ export class CommunicationHandler implements ICommunicationHandler {
                 .map(async (message: EncodedMonitoringMessage) => {
                     if (this.monitoringHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
+
                         for (const handler of this.monitoringHandlerHash[message[0]]) {
                             currentMessage = await handler(currentMessage);
                         }
@@ -108,6 +109,7 @@ export class CommunicationHandler implements ICommunicationHandler {
                 .map(async (message: EncodedControlMessage) => {
                     if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
+
                         for (const handler of this.controlHandlerHash[message[0]]) {
                             currentMessage = await handler(currentMessage);
                         }

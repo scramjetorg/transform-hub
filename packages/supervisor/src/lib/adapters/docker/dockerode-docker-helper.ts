@@ -73,7 +73,6 @@ export class DockerodeDockerHelper implements DockerHelper {
             StdinOnce: false,
             Cmd: command
         };
-
         const container = this.dockerode.getContainer(containerId);
 
         return container.exec(options).then((exec: Dockerode.Exec) => exec.start({
