@@ -212,7 +212,7 @@ type AppErrorConstructor = new (code: AppErrorCode, message?: string) => AppErro
  *
  *
  */
-interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
+export interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
     /**
      * This method should be overridden by the Sequence if auto detection of the Sequence
      * state is not precise enough.
