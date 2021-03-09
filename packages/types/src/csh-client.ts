@@ -12,7 +12,7 @@ export interface CSHConnector {
      * @param communicationHandler
      * Temporary log streams to the console.
      */
-    hookStreams(communicationHandler: CommunicationHandler): void;
+    hookCommunicationHandler(communicationHandler: CommunicationHandler): void;
 
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.
