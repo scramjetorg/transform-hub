@@ -16,20 +16,17 @@ class CSHClient implements CSHConnector {
         emptyPath: "Path is empty"
     }
 
-    getClient(): UpstreamStreamsConfig {
-        return [
+    hookStreams(communicationHandler: CommunicationHandler) {
+        const upstreamStreamsConfig = [
             new Readable(),
             new Writable(),
             new Writable(),
             new Readable() as ReadableStream<EncodedControlMessage>,
             new Writable() as unknown as WritableStream<EncodedMonitoringMessage>
         ] as UpstreamStreamsConfig;
-    }
+        const handler = communicationHandler.hookClientStreams(upstreamStreamsConfig);
 
-    hookStreams(stream: UpstreamStreamsConfig) {
-        let hook = new CommunicationHandler().hookClientStreams(stream);
-
-        console.log(hook);
+        console.log(handler);
     }
 
     getPackage(path = this.PATH): Readable {

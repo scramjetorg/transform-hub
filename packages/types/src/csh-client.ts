@@ -1,24 +1,18 @@
 import { ReadableStream } from "./utils";
-import { UpstreamStreamsConfig } from "./message-streams";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
 export interface CSHConnector {
     /**
      * Cloud Server Host Client (CSHC) communicates with Cloud Server Host (CSH) and LifeCycle Controller (LCC).
      */
-    PATH: string; // temporrary path to the sequence 
+    PATH: string; // temporrary path to the sequence
 
     /**
-     * Create streams on LCC demand.
-     * @returns array of streams
-     */
-    getClient(): UpstreamStreamsConfig;
-
-    /**
-     * Hook streams form LCC
-     * @param array of streams
+     * Create array of streams on LCC demand than hook streams
+     * @param communicationHandler
      * Temporary log streams to the console.
      */
-    hookStreams(strem: UpstreamStreamsConfig): void;
+    hookStreams(communicationHandler: CommunicationHandler): void;
 
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.
