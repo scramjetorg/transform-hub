@@ -1,5 +1,5 @@
-import { ReadableStream } from ".";
-import { CommunicationHandler } from "@scramjet/model";
+import { ReadableStream, MaybePromise } from "./utils";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
 export interface CSHConnector {
     /**
@@ -21,4 +21,6 @@ export interface CSHConnector {
      * @returns stream with file sequence
      */
     getPackage(path: string): ReadableStream<string>;
+
+    kill(): MaybePromise<void>;
 }
