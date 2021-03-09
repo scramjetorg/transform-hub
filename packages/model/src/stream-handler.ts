@@ -101,7 +101,6 @@ export class CommunicationHandler implements ICommunicationHandler {
                     }
                     return message;
                 })
-                .JSONStringify()
                 .pipe(this.monitoringUpstream as unknown as Writable);
 
             StringStream.from(this.controlUpstream as Readable)
@@ -117,7 +116,6 @@ export class CommunicationHandler implements ICommunicationHandler {
                     }
                     return message;
                 })
-                .JSONStringify()
                 .pipe(this.controlDownstream as unknown as Writable);
 
         } else {
