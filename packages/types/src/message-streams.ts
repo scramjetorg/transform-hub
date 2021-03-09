@@ -26,7 +26,8 @@ export type MessageType<T> =
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     never
-;
+    ;
+
 export type MessageDataType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessageData :
     T extends RunnerMessageCode.ALIVE ? KeepAliveMessageData :
@@ -38,17 +39,17 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     never
-;
+    ;
 
 export type EncodedMessage<T extends RunnerMessageCode> = [T, MessageDataType<T>];
 export type ControlMessageCode =
     RunnerMessageCode.FORCE_CONFIRM_ALIVE | RunnerMessageCode.KILL |
-    RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP;
+    RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE |
-    RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING;
+    RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT;
 
 export type EncodedMonitoringMessage = EncodedMessage<MonitoringMessageCode>;
 // @ToDo: verify streams types

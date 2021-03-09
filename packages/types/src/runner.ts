@@ -406,7 +406,7 @@ export type TransformApp<
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: AppContext<AppConfigType, S>,
+        this: AutoAppContext<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<TransformAppAcceptableSequence<Consumes, Produces>>
@@ -425,7 +425,7 @@ export type ReadableApp<
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: AppContext<AppConfigType, S>,
+        this: AutoAppContext<AppConfigType, S>,
         source: ReadableStream<never>,
         ...args: Z
     ) => MaybePromise<RFunction<Produces> | ReadSequence<Produces>>;
@@ -443,7 +443,7 @@ export type WritableApp<
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: AppContext<AppConfigType, S>,
+        this: AutoAppContext<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
     ) => MaybePromise<WFunction<Consumes> | WriteSequence<Consumes> | void>;
@@ -459,7 +459,7 @@ export type InertApp<
     AppConfigType extends AppConfig = AppConfig
     > =
     (
-        this: FullAppContext<AppConfigType, S>,
+        this: AutoAppContext<AppConfigType, S>,
         source: ReadableStream<void>,
         ...args: Z
     ) => MaybePromise<WFunction<void> | WriteSequence<void> | void>;
@@ -491,9 +491,9 @@ export type Application<
     TransformApp<Consumes, Produces, Z, S, AppConfigType> |
     ReadableApp<Produces, Z, S, AppConfigType> |
     WritableApp<Consumes, Z, S, AppConfigType> |
-    InertApp<Z, S> |
-    ApplicationExpose<Consumes, Produces, Z, S, AppConfigType>
-;
+    InertApp<Z, S>
+    //|ApplicationExpose<Consumes, Produces, Z, S, AppConfigType>
+    ;
 
 export namespace MessageCodes {
     export type PONG = "PONG";

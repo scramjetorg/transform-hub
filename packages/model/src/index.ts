@@ -1,7 +1,6 @@
 export { MessageDataType, MessageType } from "@scramjet/types";
 import { serializeMessage, deserializeMessage } from "./messages-utils";
 export const MessageUtilities = { serializeMessage, deserializeMessage };
-export { AcknowledgeMessage, AcknowledgeMessageData } from "./messages/acknowledge";
 export { ConfirmHealthMessage } from "./messages/confirm-health";
 export { DescribeSequenceMessage, DescribeSequenceMessageData } from "./messages/describe-sequence";
 export { ErrorMessage, ErrorMessageData } from "./messages/error";
@@ -16,5 +15,5 @@ export * from "./get-message";
 export * from "./messages-utils";
 export * from "./runner-message";
 export * from "./stream-handler";
-
-
+export { EventMessage, EventMessageData } from "./messages/event";
+export { AppError } from "./app-error";

@@ -9,7 +9,8 @@ export enum RunnerMessageCode {
     FORCE_CONFIRM_ALIVE = 4004,
     DESCRIBE_SEQUENCE = 3002,
     ERROR = 3003,
-    MONITORING = 3001
+    MONITORING = 3001,
+    EVENT = 4005
 }
 
 export type RunnerMessage = [
