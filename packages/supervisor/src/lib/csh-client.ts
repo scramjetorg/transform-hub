@@ -16,7 +16,7 @@ class CSHClient implements CSHConnector {
         emptyPath: "Path is empty"
     }
 
-    hookStreams(communicationHandler: CommunicationHandler) {
+hookCommunicationHandler(communicationHandler: CommunicationHandler): {
         const upstreamStreamsConfig = [
             new Readable(),
             new Writable(),
