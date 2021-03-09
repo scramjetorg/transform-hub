@@ -10,7 +10,7 @@ export class Runner {
     private emitter = new EventEmitter();
     // @ts-ignore
     private statusIntervalHandle: any;
-    private context!: AutoAppContext<any, any>s;
+    private context!: AutoAppContext<any, any>;
     private interval!: NodeJS.Timeout;
     // @ts-ignore
     private monitorStream!: WritableStream<EncodedMonitoringMessage>;
