@@ -1,5 +1,5 @@
-import { ReadableStream } from "./utils";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
+import { ReadableStream } from "@scramjet/types";
+import { CommunicationHandler } from "@scramjet/model";
 
 export interface CSHConnector {
     /**
