@@ -27,13 +27,14 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.ALIVE]: MonitoringMessageHandler<RunnerMessageCode.ALIVE>[];
     [RunnerMessageCode.ERROR]: MonitoringMessageHandler<RunnerMessageCode.ERROR>[];
     [RunnerMessageCode.MONITORING]: MonitoringMessageHandler<RunnerMessageCode.MONITORING>[];
+    [RunnerMessageCode.EVENT]: MonitoringMessageHandler<RunnerMessageCode.EVENT>[];
 };
 type ControlMessageHandlerList = {
     [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: ControlMessageHandler<RunnerMessageCode.FORCE_CONFIRM_ALIVE>[];
     [RunnerMessageCode.KILL]: ControlMessageHandler<RunnerMessageCode.KILL>[];
     [RunnerMessageCode.MONITORING_RATE]: ControlMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
     [RunnerMessageCode.STOP]: ControlMessageHandler<RunnerMessageCode.STOP>[];
-
+    [RunnerMessageCode.EVENT]: ControlMessageHandler<RunnerMessageCode.EVENT>[];
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -61,14 +62,16 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: [],
             [RunnerMessageCode.KILL]: [],
             [RunnerMessageCode.MONITORING_RATE]: [],
-            [RunnerMessageCode.STOP]: []
+            [RunnerMessageCode.STOP]: [],
+            [RunnerMessageCode.EVENT]: []
         };
         this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],
             [RunnerMessageCode.DESCRIBE_SEQUENCE]: [],
             [RunnerMessageCode.ALIVE]: [],
             [RunnerMessageCode.ERROR]: [],
-            [RunnerMessageCode.MONITORING]: []
+            [RunnerMessageCode.MONITORING]: [],
+            [RunnerMessageCode.EVENT]: []
         };
     }
 
