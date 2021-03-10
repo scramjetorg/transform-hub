@@ -1,4 +1,4 @@
-import { InertApp } from "@scramjet/types/src/runner";
+import { InertApp } from "@scramjet/types";
 
 const scramjet = require("scramjet");
 const JSONStream = require("JSONStream");
