@@ -7,14 +7,29 @@ import { EventEmitter } from "events";
 import { ReadableStream } from "@scramjet/types/src/utils";
 
 export class Runner {
-    private emitter = new EventEmitter();
+    private emitter;
     // @ts-ignore
     private statusIntervalHandle: any;
-    private context!: AutoAppContext<any, any>;
-    private interval!: NodeJS.Timeout;
+    private context?: AutoAppContext<any, any>;
+    private interval?: NodeJS.Timeout;
     // @ts-ignore
-    private monitorStream!: WritableStream<EncodedMonitoringMessage>;
+    private monitorStream?: WritableStream<EncodedMonitoringMessage>;
+    private controlStream?: any;//TODO change type ReadableStream<EncodedControlMessage>;
+    private monitorFifoPath: string;
+    private controlFifoPath: string;
+    private sequencePath: string;
+
     // docker -v /app/data/:/tmp/proces-39374/data/
+    constructor(sequencePath: string, fifosPath: string) {
+        this.emitter = new EventEmitter();
+        this.controlFifoPath = `${fifosPath}/control.fifo`;
+        this.monitorFifoPath = `${fifosPath}/monitor.fifo`;
+        this.sequencePath = sequencePath;
+    }
+
+    async hookupStdStreams() {
+        throw new Error("Method not implemented.");
+    }
 
     async hookupFifo() {
         // @ts-ignore
@@ -27,30 +42,32 @@ export class Runner {
             [RunnerMessageCode.EVENT]: "event"
         };
 
+        this.controlStream = createReadStream(this.controlFifoPath);
+        
         StringStream
-            .from(createReadStream("/run/scramjet-pipes/control.fifo"))
+            .from(this.controlStream)
             .JSONParse()
             .map(async ([code, data]: EncodedControlMessage) => {
                 switch (code) {
-                case RunnerMessageCode.MONITORING_RATE:
-                    await this.handleMonitoringRequest(data as MonitoringRateMessageData);
-                    break;
-                case RunnerMessageCode.KILL:
-                    await this.handleKillRequest();
-                    break;
-                case RunnerMessageCode.STOP:
-                    await this.handleStopRequest(data as StopSequenceMessageData);
-                    break;
-                case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-                    await this.handleForceConfirmAliveRequest();
-                    break;
-                case RunnerMessageCode.EVENT:
-                    let eventData = data as EventMessageData;
+                    case RunnerMessageCode.MONITORING_RATE:
+                        await this.handleMonitoringRequest(data as MonitoringRateMessageData);
+                        break;
+                    case RunnerMessageCode.KILL:
+                        await this.handleKillRequest();
+                        break;
+                    case RunnerMessageCode.STOP:
+                        await this.handleStopRequest(data as StopSequenceMessageData);
+                        break;
+                    case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
+                        await this.handleForceConfirmAliveRequest();
+                        break;
+                    case RunnerMessageCode.EVENT:
+                        let eventData = data as EventMessageData;
 
-                    this.emitter.emit(eventData.eventName, eventData.message);
-                    break;
-                default:
-                    break;
+                        this.emitter.emit(eventData.eventName, eventData.message);
+                        break;
+                    default:
+                        break;
                 }
             });
 
@@ -60,7 +77,7 @@ export class Runner {
 
         monitoring
             .JSONStringify()
-            .pipe(createWriteStream("/run/scramjet-pipes/monitoring.fifo"));
+            .pipe(createWriteStream(this.monitorFifoPath));
     }
 
     handleForceConfirmAliveRequest() {
@@ -68,11 +85,17 @@ export class Runner {
     }
 
     async handleMonitoringRequest(data: MonitoringRateMessageData): Promise<void> {
-        if (this.interval) clearInterval(this.interval);
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
 
         this.interval = setInterval(() => {
             const message: MonitoringMessageData = { healthy: true };
 
+            if (this.context === undefined || this.context.monitor === undefined) {
+                throw new Error("Unrecognized message code: ");
+            }
+            
             this.context.monitor(message);
         }, data.monitoringRate);
     }
@@ -108,14 +131,16 @@ export class Runner {
     }
 
     /**
-     * init(sequence)     
-     * * initilize streams
-     * * send handshake (monitor stream) to LCDA and receive an answer from LCDA (control stream)  
+     * Initialization of runner class.     
+     * * initilize streams (fifo and std)
      * * initialize app context 
-     * @param sequence 
+     * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)  
      */
     init() {
-        throw new Error("Method not implemented.");
+        this.hookupFifo();
+        this.hookupStdStreams();
+        this.initAppContext("TODO config");
+        this.sendHandshakeMessage();
     }
 
     /**
@@ -123,31 +148,12 @@ export class Runner {
      * set up streams process.stdin, process.stdout, process.stderr, fifo downstream, fifo upstream
      * require sequence
      */
-    initAppContext() {
-        throw new Error("Method not implemented.");
-    }
-
-    sendHandshakeMessage() {
-    }
-
-    getSequence(): Application {
-        //TODO verify volumen and sequence path
-        let sequence = require("/volume/sequence_file_on_volument.js");
-
-        return sequence;
-    }
-
-    /**
-     * run sequence
-     */
-    executeSequence() {
-        const sequence: any = this.getSequence();
-        const args: any[] = [];// from
+    initAppContext(config: string) {
         const monitor = this.monitorStream;
-        // const appError: AppErrorConstructor;
         const that = this;
-        const context: AutoAppContext<any, any> = {
-            config: "TODO config",
+
+        this.context = {
+            config: config,
             AppError: AppError,
 
             keepAlive(millis: number = 1000) {
@@ -182,9 +188,25 @@ export class Runner {
                 return this;
             }
         };
+    }
+
+    sendHandshakeMessage() {
+        throw new Error("Method not implemented.");
+    }
+
+    getSequence(): Application {
+        return require(this.sequencePath);
+    }
+
+    /**
+     * run sequence
+     */
+    executeSequence() {
+        const sequence: any = this.getSequence();
+        const args: any[] = [];// from PONG
 
         sequence.call(
-            context,
+            this.context,
             new DataStream() as unknown as ReadableStream<never>,
             ...args
         );
