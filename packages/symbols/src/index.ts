@@ -1,0 +1,1 @@
+export { exposeSequenceSymbol } from "./symbols";

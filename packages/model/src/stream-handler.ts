@@ -1,12 +1,20 @@
-import { MaybePromise, ReadableStream, WritableStream } from "@scramjet/types/src/utils";
 import {
-    EncodedControlMessage, EncodedMonitoringMessage, DownstreamStreamsConfig,
-    UpstreamStreamsConfig, MonitoringMessageCode, ControlMessageCode, EncodedMessage
-} from "@scramjet/types/src/message-streams";
-import { ICommunicationHandler } from "@scramjet/types/src/communication-handler";
+    ControlMessageCode,
+    DownstreamStreamsConfig,
+    EncodedMessage,
+    EncodedControlMessage,
+    EncodedMonitoringMessage,
+    ICommunicationHandler,
+    MaybePromise,
+    MonitoringMessageCode,
+    ReadableStream,
+    UpstreamStreamsConfig,
+    WritableStream,
+} from "@scramjet/types";
+import { RunnerMessageCode } from "@scramjet/model";
 import { DataStream, StringStream } from "scramjet";
 import { Readable, Writable } from "stream";
-import { RunnerMessageCode } from "./runner-message";
+
 
 export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T>>;

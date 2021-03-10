@@ -2,7 +2,7 @@
   "name": "@scramjet/types",
   "version": "0.2.0",
   "description": "types.",
-  "main": "./src/runner.ts",
+  "main": "./src/index.ts",
   "scripts": {
     "clean": "rimraf -rf ./dist",
     "compile": "tsc -p tsconfig.build.json",

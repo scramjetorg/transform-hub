@@ -1,6 +1,6 @@
-import { LifeCycleConfig } from "@scramjet/types/src/lifecycle";
+import { LifeCycleConfig } from "@scramjet/types";
 import { CSHClientMock, LifeCycle } from "@scramjet/supervisor/src/mocks/supervisor-component-mocks";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
+import { CommunicationHandler } from "@scramjet/model";
 
 /**
  * LifeCycleController is a main component of Supervisor.

@@ -1,5 +1,5 @@
 import { Readable } from "stream";
-import { MaybePromise, ReadableStream } from "./utils";
+import { MaybePromise, ReadableStream } from "@scramjet/types";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 
 export type RunnerConfig = {

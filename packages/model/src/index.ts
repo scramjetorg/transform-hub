@@ -1,4 +1,4 @@
-export { RunnerMessage, RunnerMessageCode } from "./runner-message";
+export { MessageDataType, MessageType } from "@scramjet/types";
 import { serializeMessage, deserializeMessage } from "./messages-utils";
 export const MessageUtilities = { serializeMessage, deserializeMessage };
 export { AcknowledgeMessage, AcknowledgeMessageData } from "./messages/acknowledge";
@@ -11,4 +11,10 @@ export { Message, EmptyMessageData } from "./messages/message";
 export { MonitoringMessage, MonitoringMessageData } from "./messages/monitoring";
 export { MonitoringRateMessage, MonitoringRateMessageData } from "./messages/monitor-rate";
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
-export { MessageDataType, MessageType } from "@scramjet/types/src/message-streams";
+export * from "./messages/acknowledge";
+export * from "./get-message";
+export * from "./messages-utils";
+export * from "./runner-message";
+export * from "./stream-handler";
+
+

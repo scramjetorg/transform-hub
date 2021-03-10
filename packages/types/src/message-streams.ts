@@ -1,16 +1,20 @@
 import { Readable, Writable } from "stream";
-import { ReadableStream, WritableStream } from "@scramjet/types/src/utils";
-import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
-import { AcknowledgeMessage } from "@scramjet/model/src/messages/acknowledge";
-import { ConfirmHealthMessage } from "@scramjet/model/src/messages/confirm-health";
-import { DescribeSequenceMessage } from "@scramjet/model/src/messages/describe-sequence";
-import { ErrorMessage } from "@scramjet/model/src/messages/error";
-import { KeepAliveMessage } from "@scramjet/model/src/messages/keep-alive";
-import { KillSequenceMessage } from "@scramjet/model/src/messages/kill-sequence";
-import { EmptyMessageData } from "@scramjet/model/src/messages/message";
-import { MonitoringMessage } from "@scramjet/model/src/messages/monitoring";
-import { MonitoringRateMessage } from "@scramjet/model/src/messages/monitor-rate";
-import { StopSequenceMessage, StopSequenceMessageData } from "@scramjet/model/src/messages/stop-sequence";
+import { ReadableStream, WritableStream } from "@scramjet/types";
+import {
+    AcknowledgeMessage,
+    ConfirmHealthMessage,
+    DescribeSequenceMessage,
+    EmptyMessageData,
+    ErrorMessage,
+    KeepAliveMessage,
+    KillSequenceMessage,
+    MonitoringMessage,
+    MonitoringRateMessage,
+    RunnerMessageCode,
+    StopSequenceMessage,
+    StopSequenceMessageData
+} from "@scramjet/model";
+
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :

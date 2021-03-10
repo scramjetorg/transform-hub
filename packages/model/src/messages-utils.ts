@@ -1,5 +1,10 @@
-import { getMessage } from "./get-message";
-import { MessageType, RunnerMessage, RunnerMessageCode } from ".";
+import {
+    getMessage,
+    MessageType,
+    RunnerMessage,
+    RunnerMessageCode
+} from "@scramjet/model";
+
 
 /**
     * Serizalized message
