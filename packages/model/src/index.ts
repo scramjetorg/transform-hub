@@ -12,6 +12,7 @@ export { MonitoringRateMessage, MonitoringRateMessageData } from "./messages/mon
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
 export { HandshakeMessage } from "./messages/handshake";
 export { HandshakeAcknowledgeMessage, HandshakeAcknowledgeMessageData } from "./messages/handshake-acknowledge";
+export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./messages/snapshot-response";
 export * from "./messages/acknowledge";
 export * from "./get-message";
 export * from "./messages-utils";

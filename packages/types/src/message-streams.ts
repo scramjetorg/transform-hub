@@ -22,6 +22,8 @@ import {
     HandshakeMessage,
     HandshakeAcknowledgeMessageData,
     HandshakeAcknowledgeMessage,
+    SnapshotResponseMessage,
+    SnapshotResponseMessageData
 } from "@scramjet/model";
 
 export type MessageType<T> =
@@ -36,6 +38,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
+    T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessage :
     never
     ;
 
@@ -51,6 +54,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     T extends RunnerMessageCode.PING ? EmptyMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
+    T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
     never
     ;
 
@@ -64,7 +68,7 @@ export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PING;
+    RunnerMessageCode.PING | RunnerMessageCode.SNAPSHOT_RESPONSE;
 
 export type EncodedMonitoringMessage = EncodedMessage<MonitoringMessageCode>;
 // @ToDo: verify streams types

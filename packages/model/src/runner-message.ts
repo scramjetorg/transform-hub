@@ -10,7 +10,8 @@ export enum RunnerMessageCode {
     DESCRIBE_SEQUENCE = 3002,
     ERROR = 3003,
     MONITORING = 3001,
-    EVENT = 4005
+    EVENT = 4005,
+    SNAPSHOT_RESPONSE = 3005
 }
 
 export type RunnerMessage = [
