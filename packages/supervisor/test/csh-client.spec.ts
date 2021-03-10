@@ -1,12 +1,103 @@
-import { CSHClient } from "../src/lib/csh-client";
-import { join } from "path";
-import { readFile } from "fs";
+/* eslint-disable */
+
+//import { join } from "path";
+//import { readFile } from "fs";
 import test from "ava";
+import * as proxyquire from "proxyquire";
+import * as sinon from "sinon";
 
-const PACKAGES_DIR = "test-file.tar.gz";
-const mockFilePath = join(__dirname, "..", "src", "mocks", PACKAGES_DIR);
-const cshClient = new CSHClient();
+//const PACKAGES_DIR = "test-file.tar.gz";
+//const mockFilePath = join(__dirname, "..", "src", "mocks", PACKAGES_DIR);
 
+
+class CommunicationHandler {
+    addControlHandler =  sinon.stub();
+}
+
+let createReadStreamStub = sinon.stub();
+
+let { CSHClient } = proxyquire("@scramjet/supervisor/src/lib/csh-client", {
+    "@scramjet/model/src/stream-handler": CommunicationHandler,
+    "fs": {
+        createReadStream: createReadStreamStub
+    }
+});
+
+test("Should create instance.", t => {
+    const cshClient = new CSHClient(new CommunicationHandler());
+
+    t.not(cshClient, null);
+});
+
+test("Should assign streams.", t => {
+    const communicationHandler = new CommunicationHandler();
+    const cshClient = new CSHClient(communicationHandler);
+
+    t.not(cshClient["monitorStream"], null);
+    t.not(cshClient["controlStream"], null);
+});
+
+test("Should store communication handler passed as param in contructor.", t => {
+    const communicationHandler = new CommunicationHandler();
+
+    const cshClient = new CSHClient(communicationHandler);
+
+    t.is(cshClient["communicationHandler"], communicationHandler);
+});
+
+test("getPackage should throw an error if path is not defined.", t => {
+    const communicationHandler = new CommunicationHandler();
+
+    const cshClient = new CSHClient(communicationHandler);
+
+    const error = t.throws(() => cshClient.getPackage(), { instanceOf: Error });
+    t.is(error.message, "Path is empty");
+});
+
+test("getPackage should return createReadStream results. (path not passed)", t => {
+    const envPath = "example_path"
+
+    process.env.SEQUENCE_PATH = '';
+    sinon.stub(process.env, "SEQUENCE_PATH").value(envPath);
+
+    const communicationHandler = new CommunicationHandler();
+
+    const cshClient = new CSHClient(communicationHandler);
+    cshClient.PATH = process.env.SEQUENCE_PATH || "";
+
+    createReadStreamStub.returns(envPath);
+    createReadStreamStub.calledOnceWith(envPath);
+
+    t.is(cshClient.getPackage(), envPath);
+});
+
+test("getPackage should return createReadStream results. (path passed)", t => {
+    const path = "example_path"
+    const communicationHandler = new CommunicationHandler();
+    const cshClient = new CSHClient(communicationHandler);
+
+    createReadStreamStub.returns(path);
+    createReadStreamStub.calledOnceWith(path);
+
+    t.is(cshClient.getPackage(path), path);
+});
+
+test("kill should execute addControlHandler with proper params", t => {
+    const communicationHandler = new CommunicationHandler();
+    const cshClient = new CSHClient(communicationHandler);
+
+    cshClient.kill();
+
+    t.true(communicationHandler.addControlHandler.calledOnceWith(4002, cshClient.killHandler));
+});
+
+test("killHandler should return encoded message for kill", t => {
+    const communicationHandler = new CommunicationHandler();
+    const cshClient = new CSHClient(communicationHandler);
+
+    t.deepEqual(cshClient.killHandler(), [4002, {}]);
+});
+/*
 test.cb("load package form path " + mockFilePath, _t => {
     // Test if path from env can be load.
     readFile(mockFilePath, _t.end);
@@ -53,3 +144,4 @@ test("log to the console", _t => {
     // consoleSpy.restore();
     _t.pass();
 });
+*/

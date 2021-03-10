@@ -1,4 +1,4 @@
-import { UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import { EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
 import { MaybePromise, DelayedStream } from "@scramjet/types/src/utils";
@@ -34,18 +34,29 @@ class CSHClient implements CSHConnector {
 
         this.communicationHandler.hookClientStreams(upstreamStreamsConfig);
 
+        /* eslint-disable */
         DataStream.from(this.communicationHandler["monitoringDownstream"] as Readable)
             .do((...arr: any[]) => console.log(...arr))
             .run();
     }
 
-    getPackage(path = this.PATH): Readable {
+    getPackage(path: string): Readable {
+        if (!path) {
+            path = this.PATH
+        }
+        //path = path || this.PATH;
+
         if (path === "") throw new Error(this.errors.emptyPath);
         return createReadStream(path);
     }
 
     kill(): MaybePromise<void> {
-        this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, () => [RunnerMessageCode.KILL, {}]);
+        this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, this.killHandler);
+        //this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, () => [RunnerMessageCode.KILL, {}]);
+    }
+
+    killHandler(): EncodedMessage<RunnerMessageCode.KILL> {
+        return [RunnerMessageCode.KILL, {}]
     }
 }
 
