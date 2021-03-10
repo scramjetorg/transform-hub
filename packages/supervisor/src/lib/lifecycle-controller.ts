@@ -1,6 +1,7 @@
-import { LifeCycleConfig } from "@scramjet/types";
-import { CSHClientMock, LifeCycle } from "../mocks/supervisor-component-mocks";
-import { CommunicationHandler } from "@scramjet/model";
+import { LifeCycleConfig, LifeCycle } from "@scramjet/types/src/lifecycle";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
+import { CSHClient } from "./csh-client";
+import { RunnerMessageCode } from "@scramjet/model";
 
 /**
  * LifeCycleController is a main component of Supervisor.
@@ -27,15 +28,15 @@ class LifeCycleController {
 
     /**
     * CSH Client handles communication with CSH
-    * @type {CSHClientMock}
+    * @type {CSHClient}
     */
-    private client: CSHClientMock = new CSHClientMock();
+    private client: CSHClient;
 
     /**
     * Interface specifing methods that can be performed during Supervisor's lifecycle. 
     * @type {LifeCycle}
     */
-    private lifecycleAdapterMock: LifeCycle;
+    private lifecycleAdapter: LifeCycle;
 
     /**
     * Configurations specific to a lifecycle, e.g. whether to take snapshot in case of erroneous Sequence termination.
@@ -48,8 +49,10 @@ class LifeCycleController {
      * @param {LifeCycleConfig} lifecycleConfig configuration specific to this lifecycle
      */
     constructor(lifecycleAdapter: LifeCycle, lifecycleConfig: LifeCycleConfig) {
-        this.lifecycleAdapterMock = lifecycleAdapter;
+        this.lifecycleAdapter = lifecycleAdapter;
         this.lifecycleConfig = lifecycleConfig;
+        this.communicationHandler = new CommunicationHandler();
+        this.client = new CSHClient(this.communicationHandler);
     }
 
     /**
@@ -69,17 +72,12 @@ class LifeCycleController {
             * LifeCycle Adapter calls identify method to unpack the compressed file 
             * and obtain the Runner's container configuration
             */
-            const config = await this.lifecycleAdapterMock.identify(packageStream);
-
-            /**
-            *  Pass CommunicationHandler to CSH Client so it can hook its upstreams to it
-            */
-            this.client.hookCommunicationHandler(this.communicationHandler);
+            const config = await this.lifecycleAdapter.identify(packageStream);
 
             /**
             *  Pass CommunicationHandler to LifeCycle Adapter so it can hook its downstreams to it
             */
-            this.lifecycleAdapterMock.hookCommunicationHandler(this.communicationHandler);
+            this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler);
 
             /**
             * Pipe control and monitor streams between CSH Client and LifeCycle Adapter
@@ -94,7 +92,7 @@ class LifeCycleController {
             /**
             * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration 
             */
-            await this.lifecycleAdapterMock.run(config);
+            await this.lifecycleAdapter.run(config);
 
         } catch (error) {
 
@@ -103,7 +101,10 @@ class LifeCycleController {
             */
             if (this.lifecycleConfig.makeSnapshotOnError) {
 
-                return await this.lifecycleAdapterMock.snapshot();
+                const retUrl = await this.lifecycleAdapter.snapshot();
+
+                this.communicationHandler.addMonitoringHandler(RunnerMessageCode.SNAPSHOT_RESPONSE,
+                    () => [RunnerMessageCode.SNAPSHOT_RESPONSE, { url: retUrl }]);
 
             }
 
@@ -113,7 +114,7 @@ class LifeCycleController {
         /**
         * LifeCycle Adapter performs cleanup operations including removing created volume, directory and container
         */
-        return this.lifecycleAdapterMock.cleanup();
+        return this.lifecycleAdapter.cleanup();
     }
 }
 
