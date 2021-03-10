@@ -22,5 +22,8 @@ export interface CSHConnector {
      */
     getPackage(path: string): ReadableStream<string>;
 
+    /**
+     * kontrolnym strumieniem przesyłamy wiadomość typu kill w formacie wew. code, ...
+     */
     kill(): MaybePromise<void>;
 }

@@ -1,15 +1,11 @@
-import { createReadStream } from "fs";
-import { Readable, Writable } from "stream";
-import {
-    UpstreamStreamsConfig,
-} from "@scramjet/types/src/message-streams";
-import { 
-    CommunicationHandler
-    //  MonitoringMessageHandlerList
-} from "@scramjet/model/src/stream-handler";
+import { UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
+import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
 import { MaybePromise, DelayedStream } from "@scramjet/types/src/utils";
 import { CSHConnector } from "@scramjet/types/src/csh-client";
-// import { DataStream } from "scramjet";
+import { createReadStream } from "fs";
+import { Readable, Writable } from "stream";
+import { DataStream } from "scramjet";
 
 class CSHClient implements CSHConnector {
     PATH = process.env.SEQUENCE_PATH || "";
@@ -19,13 +15,15 @@ class CSHClient implements CSHConnector {
     }
     private monitorStream: DelayedStream;
     private controlStream: DelayedStream;
+    private communicationHandler: CommunicationHandler;
 
-    constructor() {
+    constructor(communicationHandler: CommunicationHandler) {
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
+        this.communicationHandler = communicationHandler;
     }
 
-    hookCommunicationHandler(communicationHandler: CommunicationHandler) {
+    hookCommunicationHandler() {
         const upstreamStreamsConfig = [
             new Readable(),
             new Writable(),
@@ -33,12 +31,12 @@ class CSHClient implements CSHConnector {
             this.controlStream.getStream(),
             this.monitorStream.getStream()
         ] as UpstreamStreamsConfig;
-        const stream = communicationHandler.hookClientStreams(upstreamStreamsConfig);
 
-        console.log(stream);
-        // DataStream.from(stream["monitoringHandlerHash"] as MonitoringMessageHandlerList) // (?)
-        //     .do((...arr: any[]) => console.log(...arr)) // could be for each to show message code
-        //     .run();
+        this.communicationHandler.hookClientStreams(upstreamStreamsConfig);
+
+        DataStream.from(this.communicationHandler["monitoringDownstream"] as Readable)
+            .do((...arr: any[]) => console.log(...arr))
+            .run();
     }
 
     getPackage(path = this.PATH): Readable {
@@ -47,6 +45,7 @@ class CSHClient implements CSHConnector {
     }
 
     kill(): MaybePromise<void> {
+        this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, () => [RunnerMessageCode.KILL, {}]);
     }
 }
 
