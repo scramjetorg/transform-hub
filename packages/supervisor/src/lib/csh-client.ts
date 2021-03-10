@@ -1,13 +1,15 @@
-import {
-    UpstreamStreamsConfig,
-    EncodedControlMessage,
-    EncodedMonitoringMessage,
-} from "@scramjet/types/src/message-streams";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { ReadableStream, WritableStream } from "@scramjet/types/src/utils";
-import { CSHConnector } from "@scramjet/types/src/csh-client";
 import { createReadStream } from "fs";
 import { Readable, Writable } from "stream";
+import { CommunicationHandler } from "@scramjet/model";
+import {
+    CSHConnector,
+    EncodedControlMessage,
+    EncodedMonitoringMessage,
+    ReadableStream,
+    UpstreamStreamsConfig,
+    WritableStream
+} from "@scramjet/types";
+
 
 class CSHClient implements CSHConnector {
     PATH = process.env.SEQUENCE_PATH || "";

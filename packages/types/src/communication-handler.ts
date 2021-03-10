@@ -1,8 +1,10 @@
+import { MonitoringMessageHandler, ControlMessageHandler } from "@scramjet/model";
 import {
-    MonitoringMessageCode, ControlMessageCode,
-    DownstreamStreamsConfig, UpstreamStreamsConfig
-} from "@scramjet/types/src/message-streams";
-import { MonitoringMessageHandler, ControlMessageHandler } from "@scramjet/model/src/stream-handler";
+    ControlMessageCode,
+    DownstreamStreamsConfig,
+    MonitoringMessageCode,
+    UpstreamStreamsConfig
+} from "@scramjet/types";
 
 
 export interface ICommunicationHandler {

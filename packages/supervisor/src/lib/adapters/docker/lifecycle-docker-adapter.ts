@@ -1,7 +1,14 @@
-import { LifeCycle, RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle";
-import { DelayedStream, MaybePromise, ReadableStream } from "@scramjet/types/src/utils";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { DownstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import {
+    DelayedStream,
+    DownstreamStreamsConfig,
+    ExitCode,
+    LifeCycle,
+    MaybePromise,
+    ReadableStream,
+    RunnerConfig,
+} from "@scramjet/types";
+
+import { CommunicationHandler } from "@scramjet/model";
 import { createReadStream, createWriteStream, readFile } from "fs";
 import { Readable, Writable } from "stream";
 import { mkdtemp } from "fs/promises";

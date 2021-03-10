@@ -1,8 +1,17 @@
 import { Readable, Stream } from "stream";
-import { UpstreamStreamsConfig, DownstreamStreamsConfig, EncodedControlMessage, EncodedMonitoringMessage } from "@scramjet/types/src/message-streams";
-import { MaybePromise, ReadableStream, WritableStream } from "@scramjet/types/src/utils";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { RunnerConfig, ExitCode } from "@scramjet/types/src/lifecycle";
+import { CommunicationHandler } from "@scramjet/model";
+import {
+    DownstreamStreamsConfig,
+    EncodedControlMessage,
+    EncodedMonitoringMessage,
+    ExitCode,
+    MaybePromise,
+    ReadableStream,
+    RunnerConfig,
+    UpstreamStreamsConfig,
+    WritableStream
+} from "@scramjet/types";
+
 
 /*
 * Temporary mocks
