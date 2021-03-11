@@ -76,7 +76,6 @@ export class Runner {
         this.monitorStream = monitoring;
 
         monitoring
-            .JSONStringify()
             .pipe(createWriteStream(this.monitorFifoPath));
     }
 
