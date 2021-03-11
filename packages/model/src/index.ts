@@ -10,6 +10,8 @@ export { Message, EmptyMessageData } from "./messages/message";
 export { MonitoringMessage, MonitoringMessageData } from "./messages/monitoring";
 export { MonitoringRateMessage, MonitoringRateMessageData } from "./messages/monitor-rate";
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
+export { HandshakeMessage } from "./messages/handshake";
+export { HandshakeAcknowledgeMessage, HandshakeAcknowledgeMessageData } from "./messages/handshake-acknowledge";
 export * from "./messages/acknowledge";
 export * from "./get-message";
 export * from "./messages-utils";

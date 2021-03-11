@@ -18,7 +18,10 @@ import {
     MonitoringRateMessageData,
     RunnerMessageCode,
     StopSequenceMessage,
-    StopSequenceMessageData
+    StopSequenceMessageData,
+    HandshakeMessage,
+    HandshakeAcknowledgeMessageData,
+    HandshakeAcknowledgeMessage,
 } from "@scramjet/model";
 
 export type MessageType<T> =
@@ -31,6 +34,8 @@ export type MessageType<T> =
     T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
+    T extends RunnerMessageCode.PING ? HandshakeMessage :
+    T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
     never
     ;
 
@@ -44,18 +49,22 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.MONITORING ? MonitoringMessageData :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
+    T extends RunnerMessageCode.PING ? EmptyMessageData :
+    T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     never
     ;
 
 export type EncodedMessage<T extends RunnerMessageCode> = [T, MessageDataType<T>];
 export type ControlMessageCode =
     RunnerMessageCode.FORCE_CONFIRM_ALIVE | RunnerMessageCode.KILL |
-    RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT;
+    RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
+    RunnerMessageCode.PONG;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE |
-    RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT;
+    RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
+    RunnerMessageCode.PING;
 
 export type EncodedMonitoringMessage = EncodedMessage<MonitoringMessageCode>;
 // @ToDo: verify streams types
