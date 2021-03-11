@@ -1,6 +1,6 @@
-export { MessageDataType, MessageType } from "@scramjet/types";
 import { serializeMessage, deserializeMessage } from "./messages-utils";
 export const MessageUtilities = { serializeMessage, deserializeMessage };
+export { MessageDataType, MessageType } from "@scramjet/types";
 export { ConfirmHealthMessage } from "./messages/confirm-health";
 export { DescribeSequenceMessage, DescribeSequenceMessageData } from "./messages/describe-sequence";
 export { ErrorMessage, ErrorMessageData } from "./messages/error";
