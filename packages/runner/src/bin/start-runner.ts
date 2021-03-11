@@ -1,4 +1,5 @@
 import { Runner } from "../runner";
+
 const fs = require("fs");
 const sequencePath: string = process.argv[2];
 const fifosPath: string = process.argv[3];
@@ -16,11 +17,14 @@ if (!fs.existsSync(sequencePath)) {
 /**
  * Runner running script. 
  * 
- * * Creates an instance of runner. 
- * * Run sequence.
+ * * Creates an instance of a runner. 
+ * * Runs a sequence.
+ * 
+ * @param sequencePath - sequence file path
+ * @param fifosPath - fifo files path
  */
 
-let runner: Runner = new Runner(sequencePath, fifosPath);
+const runner: Runner = new Runner(sequencePath, fifosPath);
 
 runner.init();
-// // runner.executeSequence();
+runner.executeSequence();
