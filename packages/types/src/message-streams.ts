@@ -2,14 +2,20 @@ import { Readable, Writable } from "stream";
 import { ReadableStream, WritableStream } from "@scramjet/types";
 import {
     AcknowledgeMessage,
+    AcknowledgeMessageData,
     ConfirmHealthMessage,
     DescribeSequenceMessage,
+    DescribeSequenceMessageData,
     EmptyMessageData,
     ErrorMessage,
+    ErrorMessageData,
     KeepAliveMessage,
+    KeepAliveMessageData,
     KillSequenceMessage,
     MonitoringMessage,
+    MonitoringMessageData,
     MonitoringRateMessage,
+    MonitoringRateMessageData,
     RunnerMessageCode,
     StopSequenceMessage,
     StopSequenceMessageData

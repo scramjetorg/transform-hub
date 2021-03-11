@@ -108,24 +108,6 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
     t.true(lcda.controlStream.run.calledOnce);
 });
 
-test("Run should exit with 0.", async (t: any) => {
-    const config: RunnerConfig = {
-        image: "image",
-        version: "",
-        engines: {
-            [""]: ""
-        }
-    };
-
-    let lcda = new LifecycleDockerAdapter();
-
-    lcda.createFifoStreams = sandbox.stub().resolves();
-
-    let res = await lcda.run(config);
-
-    t.is(res, 0);
-});
-
 test("Identify should return response from stream with added packageVolumeId and image.", async (t) => {
     let streams = {
         stdin: new PassThrough(),
