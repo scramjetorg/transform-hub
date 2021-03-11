@@ -1,6 +1,5 @@
 import { Runner } from "../runner";
 const fs = require("fs");
-
 const sequencePath: string = process.argv[2];
 const fifosPath: string = process.argv[3];
 
