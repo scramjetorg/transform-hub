@@ -12,7 +12,7 @@ let { LifeCycleController } = proxyquire("@scramjet/supervisor/src/lib/lifecycle
     "@scramjet/supervisor/src/lib/csh-client": {
         getPackage: getPackageStub,
         hookCommunicationHandler: hookCommunicationHandlerStub
-    }, 
+    },
     "@scramjet/model/src/stream-handler": {
         pipeStdio: pipeStdioStub,
         pipeMessageStreams: pipeMessageStreamsStub
@@ -38,7 +38,7 @@ test.beforeEach(() => {
     lcc = new LifeCycleController(LCDAInstance, config);
 })
 
-test("When an instance of LifeCycleController is construcred with correct parameters it must not be null", t => {
+test("When an instance of LifeCycleController is constructed with correct parameters it must not be null", t => {
     t.not(lcc, null);
 });
 
@@ -47,13 +47,7 @@ test("Should store passed parameter in internal fields", t => {
     t.is(lcc["lifecycleConfig"], config);
 });
 
-/*
-Homework done, but the test must also mock the following communicationHandler methods:
-            this.communicationHandler.pipeMessageStreams();
-            this.communicationHandler.pipeStdio();
-Currently, for some reason, these mocks fail.
-
- test("Should call LCDA.identify with value returned by client.getPackage", async (t) => {
+test("Should call LCDA.identify with value returned by client.getPackage", async (t) => {
     
     let getPackageResult = "example-readable";
 
@@ -64,9 +58,12 @@ Currently, for some reason, these mocks fail.
     let getPckg = sinon.stub(lcc.client, "getPackage");
     getPckg.returns(getPackageResult);
 
+    let pipeStd = sinon.stub(lcc.communicationHandler, "pipeStdio");
+    pipeStd.returns(lcc.communicationHandler);
+    let pipeMessages = sinon.stub(lcc.communicationHandler, "pipeMessageStreams");
+    pipeMessages.callsFake(function fakeFn() {});
+
     lcc.start();
 
-    console.dir(lcc, {depth: null})
     t.true(lcc.lifecycleAdapter.identify.calledOnceWith(getPackageResult));
 })
-*/
