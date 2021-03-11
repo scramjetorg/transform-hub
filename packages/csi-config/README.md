@@ -4,8 +4,8 @@
 
 ## Usage
 
-```
+```js
 const config = require('@scramjet/config');
 
-// TODO: DEMONSTRATE API
+await config.getImageConfig();
 ```

@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "extends": "./tsconfig.build.json",
+  "include": [
+    "./src/",
+    ".work/generated_test.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ],
+  "typedocOptions": {
+    "entryPoints": ["./src/lib/adapters/docker/types.ts"],
+    "out": "../../docs/supervisor",
+    "plugin": [
+      "typedoc-plugin-markdown"
+    ]
+  }
+}

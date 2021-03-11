@@ -8,6 +8,8 @@ import {
     RunnerConfig,
 } from "@scramjet/types";
 
+import { imageConfig } from "@scramjet/csi-config";
+
 import { CommunicationHandler } from "@scramjet/model";
 import { createReadStream, createWriteStream } from "fs";
 import { Readable, PassThrough } from "stream";
@@ -52,7 +54,7 @@ class LifecycleDockerAdapter implements LifeCycle {
     }
 
     async init(): Promise<void> {
-        this.imageConfig = require("@scramjet/csi-config/image-config.json");
+        this.imageConfig = await imageConfig();
     }
 
     private async createFifo(dir: string, fifoName: string): Promise<string> {

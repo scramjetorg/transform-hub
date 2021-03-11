@@ -5,7 +5,23 @@
   "author": "Budleigh Salterton <cz@scramjet.org>",
   "homepage": "https://github.com/scramjet-cloud-platform/scramjet-csi-dev#readme",
   "license": "ISC",
-  "main": "index.js",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && npm run copy:configs",
+    "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
+    "test": "npm run test:ava",
+    "test:ava": "ava",
+    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
+  },
+  "ava": {
+    "extensions": [
+      "ts",
+      "js"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
     "access": "restricted"

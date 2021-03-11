@@ -1,12 +1,11 @@
 import { RunnerConfig } from "@scramjet/types/src/lifecycle";
 import test from "ava";
 import * as sinon from "sinon";
+import * as proxyquire from "proxyquire";
 import { PassThrough } from "stream";
 
-const proxyquire = require("proxyquire");
 const sandbox = sinon.createSandbox();
 
-let readFileStub = sandbox.stub();
 let mkdtempStub = sandbox.stub();
 let dockerHelperMockCreateVolumeStub = sandbox.stub();
 let dockerHelperMockRunStub = sandbox.stub();
@@ -18,16 +17,26 @@ class DockerHelperMock {
     wait = dockerHelperMockWaitStub;
 }
 
-let chmodStub = sandbox.stub();
-let { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
+const chmodStub = sandbox.stub();
+const configFileContents = {
+    runner: "runner-example-image",
+    prerunner: "pre-runner-example-image"
+};
+const configStub = sandbox.stub();
+
+configStub.returns(Promise.resolve(configFileContents));
+
+const { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
     fs: {
-        readFile: readFileStub,
         createReadStream: sandbox.stub(),
         createWriteStream: sandbox.stub(),
     },
     "fs/promises": {
         mkdtemp: mkdtempStub,
         chmod: chmodStub
+    },
+    "@scramjet/csi-config": {
+        imageConfig: () => configStub()
     },
     "@scramjet/types": {
         DelayedStream: function() {
@@ -37,37 +46,27 @@ let { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecyc
     "./dockerode-docker-helper": { DockerodeDockerHelper: DockerHelperMock }
 });
 //let lcda: typeof LifecycleDockerAdapter;
-let configFileContents = {
-    runner: "runner-example-image",
-    prerunner: "pre-runner-example-image"
-};
 
 test.beforeEach(() => {
     sandbox.reset();
 });
 
 test("Constructor should create instance.", async (t: any) => {
-    let lcda = new LifecycleDockerAdapter();
+    const lcda = new LifecycleDockerAdapter();
 
     t.not(lcda, null);
 });
 
 test("Init should read file and set config.", async (t) => {
-    readFileStub.reset();
-    readFileStub.yields(null, JSON.stringify(configFileContents));
-
-    let lcda = new LifecycleDockerAdapter();
+    const lcda = new LifecycleDockerAdapter();
 
     await lcda.init();
-
-    t.is(readFileStub.callCount, 1);
 
     t.deepEqual(lcda.imageConfig, configFileContents);
 });
 
 test("Init should reject on read file error.", async (t) => {
-    readFileStub.reset();
-    readFileStub.yields(new Error(), null);
+    configStub.rejects(new Error("ENOENT: File not found"));
 
     let lcda = new LifecycleDockerAdapter();
 
@@ -75,7 +74,7 @@ test("Init should reject on read file error.", async (t) => {
 });
 
 test("CreateFifoStreams should create monitor and control streams.", async (t) => {
-    let lcda = new LifecycleDockerAdapter();
+    const lcda = new LifecycleDockerAdapter();
 
     lcda.createFifo = sandbox.stub().resolves();
 
@@ -97,8 +96,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
             [""]: ""
         }
     };
-
-    let lcda = new LifecycleDockerAdapter();
+    const lcda = new LifecycleDockerAdapter();
 
     dockerHelperMockWaitStub.resolves();
 
@@ -118,19 +116,17 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
 });
 
 test("Identify should return response from stream with added packageVolumeId and image.", async (t) => {
-    let streams = {
+    const streams = {
         stdin: new PassThrough(),
         stdout: new PassThrough(),
         stderr: new PassThrough()
     };
-
     const createdVolumeId = "uniqueVolumeId";
     const preRunnerResponse = {
         engines: { engine1: "diesel" },
         version: "0.3.0"
     };
-
-    let stopAndRemove = sandbox.stub().resolves();
+    const stopAndRemove = sandbox.stub().resolves();
 
     dockerHelperMockCreateVolumeStub.resolves(createdVolumeId);
     dockerHelperMockRunStub.resolves({
@@ -138,20 +134,20 @@ test("Identify should return response from stream with added packageVolumeId and
         stopAndRemove
     });
 
-    let lcda = new LifecycleDockerAdapter();
+    const lcda = new LifecycleDockerAdapter();
 
     lcda.imageConfig.runner = configFileContents.runner;
 
-    let res = lcda.identify(streams.stdin);
+    const res = lcda.identify(streams.stdin);
 
     streams.stdout.push(JSON.stringify(preRunnerResponse), "utf-8");
     streams.stdout.end();
 
-    let identifyResponse = await res;
+    const identifyResponse = await res;
 
     t.is(dockerHelperMockCreateVolumeStub.calledOnce, true);
 
-    let expectedResponse = {
+    const expectedResponse = {
         ...preRunnerResponse,
         packageVolumeId: createdVolumeId,
         image: lcda.imageConfig.runner
