@@ -43,31 +43,31 @@ export class Runner {
         };
 
         this.controlStream = createReadStream(this.controlFifoPath);
-        
+
         StringStream
             .from(this.controlStream)
             .JSONParse()
             .map(async ([code, data]: EncodedControlMessage) => {
                 switch (code) {
-                    case RunnerMessageCode.MONITORING_RATE:
-                        await this.handleMonitoringRequest(data as MonitoringRateMessageData);
-                        break;
-                    case RunnerMessageCode.KILL:
-                        await this.handleKillRequest();
-                        break;
-                    case RunnerMessageCode.STOP:
-                        await this.handleStopRequest(data as StopSequenceMessageData);
-                        break;
-                    case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-                        await this.handleForceConfirmAliveRequest();
-                        break;
-                    case RunnerMessageCode.EVENT:
-                        let eventData = data as EventMessageData;
+                case RunnerMessageCode.MONITORING_RATE:
+                    await this.handleMonitoringRequest(data as MonitoringRateMessageData);
+                    break;
+                case RunnerMessageCode.KILL:
+                    await this.handleKillRequest();
+                    break;
+                case RunnerMessageCode.STOP:
+                    await this.handleStopRequest(data as StopSequenceMessageData);
+                    break;
+                case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
+                    await this.handleForceConfirmAliveRequest();
+                    break;
+                case RunnerMessageCode.EVENT:
+                    let eventData = data as EventMessageData;
 
-                        this.emitter.emit(eventData.eventName, eventData.message);
-                        break;
-                    default:
-                        break;
+                    this.emitter.emit(eventData.eventName, eventData.message);
+                    break;
+                default:
+                    break;
                 }
             });
 
@@ -94,7 +94,7 @@ export class Runner {
             if (this.context === undefined || this.context.monitor === undefined) {
                 throw new Error("Unrecognized message code: ");
             }
-            
+
             this.context.monitor(message);
         }, data.monitoringRate);
     }
