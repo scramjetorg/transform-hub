@@ -1,6 +1,6 @@
 import { ReadableStream, MaybePromise } from "./utils";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { EncodedMessage } from "@scramjet/types/src/message-streams";
+import { EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
 import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
 
 export interface CSHConnector {
@@ -10,7 +10,13 @@ export interface CSHConnector {
     PATH: string; // temporrary path to the sequence
 
     /**
-     * Create array of streams on LCC demand than hook streams
+     * Helper method that creates an array with streams.
+     * @returns array with stdio, stderr, control, and monitor streams
+     */
+    upstreamStreamsConfig(): UpstreamStreamsConfig;
+
+    /**
+     * Create array of streams on LCC demand than hook streams.
      * @param communicationHandler
      * Temporary log streams to the console.
      */
@@ -25,16 +31,14 @@ export interface CSHConnector {
     getPackage(path: string): ReadableStream<string>;
 
     /**
-     * Message type stream is sent via control stream
-     * @returns
-     * kontrolnym strumieniem przesyłamy wiadomość typu kill w formacie wew. code, ...
+     * Kill message type stream sent via control stream.
+     * The message contains RunnerMessageCode.KILL and kill handler.
      */
     kill(): MaybePromise<void>;
 
     /**
-     * Message type stream is sent via control stream
-     * @returns
-     * kontrolnym strumieniem przesyłamy wiadomość typu kill w formacie wew. code, ...
+     * Helper method with control message kill code and control message handler.
+     * @returns array with RunnerMessageCode.KILL and empty object
      */
     killHandler(): EncodedMessage<RunnerMessageCode.KILL>;
 }

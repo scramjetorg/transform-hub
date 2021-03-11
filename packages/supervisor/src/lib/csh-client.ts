@@ -24,17 +24,22 @@ class CSHClient implements CSHConnector {
         this.communicationHandler = communicationHandler;
     }
 
-    hookCommunicationHandler() {
-        const upstreamStreamsConfig = [
+    upstreamStreamsConfig() {
+        return [
             new Readable(),
             new Writable(),
             new Writable(),
             this.controlStream.getStream(),
             this.monitorStream.getStream()
         ] as UpstreamStreamsConfig;
+    }
 
-        this.communicationHandler.hookClientStreams(upstreamStreamsConfig);
+    hookCommunicationHandler() {
+        this.communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
+        this.getMonitoringDownstream();
+    }
 
+    getMonitoringDownstream() {
         DataStream.from(this.communicationHandler["monitoringDownstream"] as Readable)
             .do((...arr: any[]) => console.log(...arr))
             .run();
