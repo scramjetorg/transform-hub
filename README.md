@@ -140,6 +140,15 @@ Run an npm script in each package that contains that script.
 lerna run [script]
 ```
 
+## Howto run components
+### Runner
+Starting `Runner` script: `/scramjet-csi-dev/packages/runner/src/bin/start-runner.ts `
+
+Example of usage:   
+```bash
+$ node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
+```
+
 ## Documentation
 
 Want to check out more? [See the doc =>](https://github.com/scramjet-cloud-platform/docs)

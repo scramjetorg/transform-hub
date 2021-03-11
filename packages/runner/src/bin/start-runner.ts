@@ -15,7 +15,7 @@ if (!fs.existsSync(sequencePath)) {
 }
 
 /**
- * Runner running script. 
+ * Start runner script. 
  * 
  * * Creates an instance of a runner. 
  * * Runs a sequence.
