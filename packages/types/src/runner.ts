@@ -8,7 +8,7 @@ import {
     MaybePromise,
     PipeableStream,
     ReadableStream
-} from "@scramjet/types";
+} from ".";
 
 /**
  * Represents all readable stream types that will be accepted as return values from {@see TFunction}

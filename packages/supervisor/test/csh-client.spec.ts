@@ -1,4 +1,4 @@
-import { CSHClient } from "@scramjet/supervisor/src/lib/csh-client";
+import { CSHClient } from "../src/lib/csh-client";
 import { join } from "path";
 import { readFile } from "fs";
 import test from "ava";

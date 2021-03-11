@@ -1,5 +1,5 @@
 import { Readable, Writable } from "stream";
-import { ReadableStream, WritableStream } from "@scramjet/types";
+import { ReadableStream, WritableStream } from ".";
 import {
     AcknowledgeMessage,
     AcknowledgeMessageData,

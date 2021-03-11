@@ -9,7 +9,7 @@ import {
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
     StopSequenceMessage, StopSequenceMessageData, MessageDataType, MessageType, RunnerMessageCode
-} from "@scramjet/model";
+} from ".";
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
     if (typeof (data as StopSequenceMessageData).timeout !== "number") return false;

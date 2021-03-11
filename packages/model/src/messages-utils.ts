@@ -3,8 +3,7 @@ import {
     MessageType,
     RunnerMessage,
     RunnerMessageCode
-} from "@scramjet/model";
-
+} from ".";
 
 /**
     * Serizalized message

@@ -4,8 +4,7 @@ import {
     DownstreamStreamsConfig,
     MonitoringMessageCode,
     UpstreamStreamsConfig
-} from "@scramjet/types";
-
+} from ".";
 
 export interface ICommunicationHandler {
     hookClientStreams(str: UpstreamStreamsConfig): this;

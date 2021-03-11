@@ -1,5 +1,5 @@
 import testModel from "ava";
-import { RunnerMessageCode, MessageUtilities, StopSequenceMessage } from "@scramjet/model";
+import { RunnerMessageCode, MessageUtilities, StopSequenceMessage } from "../";
 
 testModel("Serialization must return a message in the correct format", async t => {
     const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, timeout: 1000, canCallKeepalive: true };

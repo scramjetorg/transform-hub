@@ -16,7 +16,7 @@ class DockerHelperMock {
     run = dockerHelperMockRunStub
 }
 
-let { LifecycleDockerAdapter } = proxyquire("@scramjet/supervisor/dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
+let { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
     fs: {
         readFile: readFileStub,
         createReadStream: sandbox.stub(),
