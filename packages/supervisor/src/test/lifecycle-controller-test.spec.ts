@@ -61,7 +61,7 @@ test("Should call LCDA.identify with value returned by client.getPackage", async
     let pipeStd = sinon.stub(lcc.communicationHandler, "pipeStdio");
     pipeStd.returns(lcc.communicationHandler);
     let pipeMessages = sinon.stub(lcc.communicationHandler, "pipeMessageStreams");
-    pipeMessages.callsFake(function fakeFn() {});
+    pipeMessages.callsFake(() => {});
 
     lcc.start();
 
