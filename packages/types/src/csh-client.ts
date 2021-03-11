@@ -1,5 +1,7 @@
 import { ReadableStream, MaybePromise } from "./utils";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
+import { EncodedMessage } from "@scramjet/types/src/message-streams";
+import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
 
 export interface CSHConnector {
     /**
@@ -23,7 +25,16 @@ export interface CSHConnector {
     getPackage(path: string): ReadableStream<string>;
 
     /**
+     * Message type stream is sent via control stream
+     * @returns
      * kontrolnym strumieniem przesyłamy wiadomość typu kill w formacie wew. code, ...
      */
     kill(): MaybePromise<void>;
+
+    /**
+     * Message type stream is sent via control stream
+     * @returns
+     * kontrolnym strumieniem przesyłamy wiadomość typu kill w formacie wew. code, ...
+     */
+    killHandler(): EncodedMessage<RunnerMessageCode.KILL>;
 }
