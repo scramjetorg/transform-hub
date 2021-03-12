@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { Runner } from "../runner";
 
 const fs = require("fs");
