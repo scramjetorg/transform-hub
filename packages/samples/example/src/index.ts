@@ -10,10 +10,10 @@ interface Person {
     city: string
 }
 
-// This method needs to expose  a function that will be executed by the runner.
+// This method needs to expose a function that will be executed by the runner.
 
 const mod: InertApp = function(input, ffrom, fto) {
-    this.on("test", () => console.error("Got test event")); // jeśli eventy będą odpowiednio podpięte w CShClient to powinniśmy zobaczyć ten event na consoli
+    this.on("test", () => console.error("Got test event"));
 
     return fs.createReadStream(ffrom)
         .pipe(JSONStream.parse("*"))
