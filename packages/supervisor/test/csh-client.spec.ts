@@ -3,10 +3,14 @@ import test from "ava";
 import * as proxyquire from "proxyquire";
 import * as sinon from "sinon";
 // import { DataStream } from "scramjet";
+import * as process from "process";
 
 let cshClient: any;
 let upstream: any;
 let createReadStreamStub = sinon.stub();
+
+const sandbox = sinon.createSandbox();
+
 let { CSHClient } = proxyquire("@scramjet/supervisor/src/lib/csh-client", {
     fs: {
         createReadStream: createReadStreamStub
@@ -91,8 +95,16 @@ test("hookCommunicationHandler should create upstream config", t => {
 });
 
 test("getMonitoringDownstream should call DataStream", t => {
+    const stdoutSpy = sandbox.spy(process.stdout, "write");
+
+    console.log(stdoutSpy);
     // cshClient.getMonitoringDownstream();
     // no idea how to stub monitoringDownstream
     // t.not(DataStream, null);
+    t.pass();
+});
+
+test("Repl should log proper output to the console", t => {
+
     t.pass();
 });
