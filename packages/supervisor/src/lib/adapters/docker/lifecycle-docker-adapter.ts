@@ -189,7 +189,7 @@ class LifecycleDockerAdapter implements LifeCycle {
     // returns url identifier of made snapshot
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    snapshot(): MaybePromise<void> {
+    snapshot(): MaybePromise<string> {
     }
 
     // @ts-ignore
