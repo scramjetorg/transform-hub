@@ -34,7 +34,7 @@ export interface CSHConnector {
      * Kill message type stream sent via control stream.
      * The message contains RunnerMessageCode.KILL and kill handler.
      */
-    kill(): MaybePromise<void>;
+    kill(communicationHandler: CommunicationHandler): MaybePromise<void>;
 
     /**
      * Helper method with control message kill code and control message handler.

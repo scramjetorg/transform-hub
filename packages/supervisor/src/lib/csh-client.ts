@@ -16,12 +16,10 @@ class CSHClient implements CSHConnector {
     }
     private monitorStream: DelayedStream;
     private controlStream: DelayedStream;
-    private communicationHandler: CommunicationHandler;
 
-    constructor(communicationHandler: CommunicationHandler) {
+    constructor() {
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
-        this.communicationHandler = communicationHandler;
     }
 
     upstreamStreamsConfig() {
@@ -34,13 +32,13 @@ class CSHClient implements CSHConnector {
         ] as UpstreamStreamsConfig;
     }
 
-    hookCommunicationHandler() {
-        this.communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
-        this.getMonitoringDownstream();
+    hookCommunicationHandler(communicationHandler: CommunicationHandler) {
+        communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
+        this.getMonitoringDownstream(communicationHandler);
     }
 
-    getMonitoringDownstream() {
-        DataStream.from(this.communicationHandler["monitoringDownstream"] as Readable)
+    getMonitoringDownstream(communicationHandler: CommunicationHandler) {
+        DataStream.from(communicationHandler["monitoringDownstream"] as Readable)
             .do((...arr: any[]) => console.log(...arr))
             .run();
     }
@@ -51,8 +49,9 @@ class CSHClient implements CSHConnector {
         return createReadStream(path);
     }
 
-    kill(): MaybePromise<void> {
-        this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, this.killHandler);
+    kill(communicationHandler: CommunicationHandler): MaybePromise<void> {
+        if (communicationHandler)
+            communicationHandler.addControlHandler(RunnerMessageCode.KILL, this.killHandler);
     }
 
     killHandler(): EncodedMessage<RunnerMessageCode.KILL> {

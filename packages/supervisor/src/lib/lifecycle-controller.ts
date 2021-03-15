@@ -52,7 +52,7 @@ class LifeCycleController {
         this.lifecycleAdapter = lifecycleAdapter;
         this.lifecycleConfig = lifecycleConfig;
         this.communicationHandler = new CommunicationHandler();
-        this.client = new CSHClient(this.communicationHandler);
+        this.client = new CSHClient();
     }
 
     /**
@@ -77,21 +77,22 @@ class LifeCycleController {
             /**
             *  Pass CommunicationHandler to LifeCycle Adapter so it can hook its downstreams to it
             */
-            //this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler);
+            this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler);
+
+            /**
+            *  Pass CommunicationHandler to CSH Client so it can hook its downstreams to it
+            */
+            this.client.hookCommunicationHandler(this.communicationHandler);
 
             /**
             * Pipe control and monitor streams between CSH Client and LifeCycle Adapter
             */
-
-            // TODO pipe message streams
-            //this.communicationHandler.pipeMessageStreams();
+            this.communicationHandler.pipeMessageStreams();
 
             /**
             * Pipe standard IO streams between CSH Client and LifeCycle Adapter
             */
-
-            // TODO pipe stdio streams
-            //this.communicationHandler.pipeStdio();
+            this.communicationHandler.pipeStdio();
 
             /**
             * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration
