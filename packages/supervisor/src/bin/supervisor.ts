@@ -1,28 +1,28 @@
-import server from "../lib/server";
-const fs = require("fs");
-const socketName: string = process.argv[2];
+import { LifeCycle, LifeCycleConfig } from "@scramjet/types";
+import { LifecycleDockerAdapter } from "../lib/adapters/docker/lifecycle-docker-adapter";
+import { LifeCycleController } from "../lib/lifecycle-controller";
 
 /**
- * Supervisor running script. 
- * Creates an instance of a new http server. 
- * The server provides read/write communication through named unix socket passed as a command-line argument.  
  * 
- * @returns
- * Script prints to stdout socket name.
- * If socket file exists or an error occured, exit code is returned.
+ * The script runs Supervisor.
+ * 
  */
 
-if (fs.existsSync(socketName)) {
-    console.error("Socket file already exists. " + socketName);
-    process.exit(1);
-}
+(async () => {
+    const config: LifeCycleConfig = {
+        makeSnapshotOnError: true
+    };
+    const lcda: LifecycleDockerAdapter = new LifecycleDockerAdapter();
 
-server(socketName)
-    .on("error", (err: Error) => {
-        console.error(err);
-        //TODO check process exitCode -  
-        process.exit(1);
-    })
-    .listen(socketName, () => {
-        console.log("listening on socket", socketName);
-    });
+    await lcda.init();
+
+    // lcda as unknown: needs LifeCycle interface fix
+    const lcc: LifeCycleController = new LifeCycleController(lcda as unknown as LifeCycle, config);
+
+    await lcc.start();
+
+})().catch(e => {
+    console.error(e.stack);
+    process.exitCode = e.exitCode || 10;
+}
+);
