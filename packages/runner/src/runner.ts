@@ -33,28 +33,28 @@ export class Runner {
             .JSONParse()
             .map(async ([code, data]: EncodedControlMessage) => {
                 switch (code) {
-                    case RunnerMessageCode.MONITORING_RATE:
-                        await this.handleMonitoringRequest(data as MonitoringRateMessageData);
-                        break;
-                    case RunnerMessageCode.KILL:
-                        await this.handleKillRequest();
-                        break;
-                    case RunnerMessageCode.STOP:
-                        await this.handleStopRequest(data as StopSequenceMessageData);
-                        break;
-                    case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-                        await this.handleForceConfirmAliveRequest();
-                        break;
-                    case RunnerMessageCode.PONG:
-                        await this.handleReceptionOfHandshake(data as HandshakeAcknowledgeMessageData);
-                        break;
-                    case RunnerMessageCode.EVENT:
-                        let eventData = data as EventMessageData;
+                case RunnerMessageCode.MONITORING_RATE:
+                    await this.handleMonitoringRequest(data as MonitoringRateMessageData);
+                    break;
+                case RunnerMessageCode.KILL:
+                    await this.handleKillRequest();
+                    break;
+                case RunnerMessageCode.STOP:
+                    await this.handleStopRequest(data as StopSequenceMessageData);
+                    break;
+                case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
+                    await this.handleForceConfirmAliveRequest();
+                    break;
+                case RunnerMessageCode.PONG:
+                    await this.handleReceptionOfHandshake(data as HandshakeAcknowledgeMessageData);
+                    break;
+                case RunnerMessageCode.EVENT:
+                    let eventData = data as EventMessageData;
 
-                        this.emitter.emit(eventData.eventName, eventData.message);
-                        break;
-                    default:
-                        break;
+                    this.emitter.emit(eventData.eventName, eventData.message);
+                    break;
+                default:
+                    break;
                 }
             })
             .run()
@@ -94,18 +94,19 @@ export class Runner {
         throw new Error("Method not implemented.");
     }
 
-    // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
         await this.handleStopSequence();
         throw new Error("Method not implemented.");
     }
 
-    async handleStopSequence(): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async handleStopSequence(err?: Error): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
-    handleSave(): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    handleSave(state: any): void {
         throw new Error("Method not implemented.");
     }
 
@@ -127,6 +128,8 @@ export class Runner {
     /**
      * initialize app context
      * set up streams process.stdin, process.stdout, process.stderr, fifo downstream, fifo upstream
+     *
+     * @param config Configuration for App.
      */
     initAppContext(config: AppConfig) {
         if (this.monitorStream === undefined) {
@@ -134,6 +137,7 @@ export class Runner {
         }
 
         const monitor = this.monitorStream;
+        // eslint-disable-next-line consistent-this
         const that = this;
 
         this.context = {
@@ -154,20 +158,16 @@ export class Runner {
                 that.emitter.on(eventName, handler);
                 return this;
             },
-            // @ts-ignore
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             save(state) {
-                that.handleSave();
-                return;
+                that.handleSave(state);
+                return this;
             },
-            // @ts-ignore
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             destroy(error?: AppError) {
-                that.handleStopSequence();
+                that.handleStopSequence(error);
                 return this;
             },
             end() {
-                //should this method notify instance that the pocess is stopped?  
+                //should this method notify instance that the pocess is stopped?
                 that.handleStopSequence();
                 return this;
             }
@@ -188,6 +188,8 @@ export class Runner {
 
     /**
      * run sequence
+     *
+     * @param args arguments that the app will be called with
      */
     runSequence(args: any[]) {
         const sequence: any = this.getSequence();

@@ -310,7 +310,7 @@ export interface AutoAppContext<AppConfigType extends AppConfig, State extends a
      *
      * @param state any serializable value
      */
-    save(state: State): void;
+    save(state: State): this;
 
     /**
      * Holds the previous state if there was a previous process in existance and it called the
