@@ -1,6 +1,6 @@
+import { CommunicationHandler } from "@scramjet/model";
 import { Readable } from "stream";
 import { MaybePromise, ReadableStream } from ".";
-import { CommunicationHandler } from "@scramjet/model";
 
 export type RunnerConfig = {
     image: string;
@@ -9,6 +9,7 @@ export type RunnerConfig = {
         [key: string]: string
     };
     config?: any;
+    sequencePath: string,
     packageVolumeId?: string;
 }
 
@@ -30,9 +31,9 @@ export interface LifeCycle {
     cleanup(): MaybePromise<void>;
     snapshot(): MaybePromise<string>; // returns url identifier of made snapshot
 
-    pushStdio(stream: "stdin"|0, input: ReadableStream<string>): this;
-    readStdio(stream: "stdout"|1): ReadableStream<string>;
-    readStdio(stream: "stderr"|2): ReadableStream<string>;
+    pushStdio(stream: "stdin" | 0, input: ReadableStream<string>): this;
+    readStdio(stream: "stdout" | 1): ReadableStream<string>;
+    readStdio(stream: "stderr" | 2): ReadableStream<string>;
 
     hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void>;
 

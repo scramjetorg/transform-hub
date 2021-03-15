@@ -1,7 +1,7 @@
-import { LifeCycleConfig, LifeCycle } from "@scramjet/types/src/lifecycle";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { CSHClient } from "./csh-client";
 import { RunnerMessageCode } from "@scramjet/model";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
+import { LifeCycle, LifeCycleConfig } from "@scramjet/types/src/lifecycle";
+import { CSHClient } from "./csh-client";
 
 /**
  * LifeCycleController is a main component of Supervisor.
@@ -33,7 +33,7 @@ class LifeCycleController {
     private client: CSHClient;
 
     /**
-    * Interface specifing methods that can be performed during Supervisor's lifecycle. 
+    * Interface specifing methods that can be performed during Supervisor's lifecycle.
     * @type {LifeCycle}
     */
     private lifecycleAdapter: LifeCycle;
@@ -69,7 +69,7 @@ class LifeCycleController {
             */
             const packageStream = this.client.getPackage();
             /**
-            * LifeCycle Adapter calls identify method to unpack the compressed file 
+            * LifeCycle Adapter calls identify method to unpack the compressed file
             * and obtain the Runner's container configuration
             */
             const config = await this.lifecycleAdapter.identify(packageStream);
@@ -77,20 +77,24 @@ class LifeCycleController {
             /**
             *  Pass CommunicationHandler to LifeCycle Adapter so it can hook its downstreams to it
             */
-            this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler);
+            //this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler);
 
             /**
             * Pipe control and monitor streams between CSH Client and LifeCycle Adapter
             */
-            this.communicationHandler.pipeMessageStreams();
+
+            // TODO pipe message streams
+            //this.communicationHandler.pipeMessageStreams();
 
             /**
             * Pipe standard IO streams between CSH Client and LifeCycle Adapter
             */
-            this.communicationHandler.pipeStdio();
+
+            // TODO pipe stdio streams
+            //this.communicationHandler.pipeStdio();
 
             /**
-            * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration 
+            * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration
             */
             await this.lifecycleAdapter.run(config);
 

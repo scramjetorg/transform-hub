@@ -1,7 +1,7 @@
 import { RunnerConfig } from "@scramjet/types/src/lifecycle";
 import test from "ava";
-import * as sinon from "sinon";
 import * as proxyquire from "proxyquire";
+import * as sinon from "sinon";
 import { PassThrough } from "stream";
 
 const sandbox = sinon.createSandbox();
@@ -23,12 +23,12 @@ const configFileContents = {
     prerunner: "pre-runner-example-image"
 };
 const configStub = sandbox.stub();
+const createReadStreamStub = sandbox.stub();
 
 configStub.returns(Promise.resolve(configFileContents));
-
 const { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
     fs: {
-        createReadStream: sandbox.stub(),
+        createReadStream: createReadStreamStub,
         createWriteStream: sandbox.stub(),
     },
     "fs/promises": {
@@ -57,7 +57,9 @@ test("Constructor should create instance.", async (t: any) => {
     t.not(lcda, null);
 });
 
-test("Init should read file and set config.", async (t) => {
+test("Init should call imageConfig and set results locally.", async (t) => {
+    configStub.resolves(configFileContents);
+
     const lcda = new LifecycleDockerAdapter();
 
     await lcda.init();
@@ -74,6 +76,8 @@ test("Init should reject on read file error.", async (t) => {
 });
 
 test("CreateFifoStreams should create monitor and control streams.", async (t) => {
+    configStub.resolves();
+
     const lcda = new LifecycleDockerAdapter();
 
     lcda.createFifo = sandbox.stub().resolves();
@@ -94,9 +98,15 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         version: "",
         engines: {
             [""]: ""
-        }
+        },
+        sequencePath: "sequence.js"
     };
     const lcda = new LifecycleDockerAdapter();
+
+    // TODO remove when removed from code
+    createReadStreamStub.returns({
+        pipe: () => {}
+    });
 
     dockerHelperMockWaitStub.resolves();
 
@@ -108,14 +118,14 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         }
     });
 
-    lcda.createFifoStreams = sandbox.stub();
+    lcda.createFifoStreams = sandbox.stub().resolves();
 
     await lcda.run(config);
 
-    t.true(lcda.createFifoStreams.calledOnceWith("monitor.fifo", "control.fifo"));
+    t.true(lcda.createFifoStreams.calledOnceWith("control.fifo", "monitor.fifo"));
 });
 
-test("Identify should return response from stream with added packageVolumeId and image.", async (t) => {
+test("Identify should return parsed response from stream.", async (t) => {
     const streams = {
         stdin: new PassThrough(),
         stdout: new PassThrough(),
@@ -124,7 +134,8 @@ test("Identify should return response from stream with added packageVolumeId and
     const createdVolumeId = "uniqueVolumeId";
     const preRunnerResponse = {
         engines: { engine1: "diesel" },
-        version: "0.3.0"
+        version: "0.3.0",
+        main: "example-sequence-path"
     };
     const stopAndRemove = sandbox.stub().resolves();
 
@@ -148,9 +159,11 @@ test("Identify should return response from stream with added packageVolumeId and
     t.is(dockerHelperMockCreateVolumeStub.calledOnce, true);
 
     const expectedResponse = {
-        ...preRunnerResponse,
+        engines: preRunnerResponse.engines,
+        version: preRunnerResponse.version,
         packageVolumeId: createdVolumeId,
-        image: lcda.imageConfig.runner
+        image: lcda.imageConfig.runner,
+        sequencePath: preRunnerResponse.main
     };
 
     t.deepEqual(identifyResponse, expectedResponse);

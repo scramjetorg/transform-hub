@@ -1,10 +1,10 @@
-import { DataStream, StringStream } from "scramjet";
-import { Application, AutoAppContext } from "@scramjet/types";
 import { AppError, EventMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { createReadStream, createWriteStream } from "fs";
+import { Application, AutoAppContext } from "@scramjet/types";
 import { EncodedControlMessage } from "@scramjet/types/src/message-streams";
-import { EventEmitter } from "events";
 import { ReadableStream } from "@scramjet/types/src/utils";
+import { EventEmitter } from "events";
+import { createReadStream, createWriteStream } from "fs";
+import { DataStream, StringStream } from "scramjet";
 
 export class Runner {
     private emitter;
@@ -71,12 +71,7 @@ export class Runner {
                 }
             });
 
-        const monitoring = new DataStream();
-
-        this.monitorStream = monitoring;
-
-        monitoring
-            .pipe(createWriteStream(this.monitorFifoPath));
+        this.monitorStream = createWriteStream(this.monitorFifoPath);
     }
 
     handleForceConfirmAliveRequest() {
@@ -130,15 +125,15 @@ export class Runner {
     }
 
     /**
-     * Initialization of runner class.     
+     * Initialization of runner class.
      * * initilize streams (fifo and std)
-     * * initialize app context 
-     * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)  
+     * * initialize app context
+     * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)
      */
     init() {
         this.hookupFifo();
-        this.hookupStdStreams();
-        this.initAppContext("TODO config");
+        //this.hookupStdStreams();
+        //this.initAppContext("TODO config");
         this.sendHandshakeMessage();
     }
 
@@ -190,7 +185,7 @@ export class Runner {
     }
 
     sendHandshakeMessage() {
-        throw new Error("Method not implemented.");
+        this.monitorStream.write(JSON.stringify([RunnerMessageCode.PING, {}]) + "\r\n", "utf-8");
     }
 
     getSequence(): Application {

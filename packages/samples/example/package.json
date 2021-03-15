@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/example",
   "version": "0.2.0",
-  "main": "dist/index",
+  "main": "index",
   "types": "dist/index",
   "scripts": {
     "test": "echo \"Error: no test specified\"",

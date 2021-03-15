@@ -21,4 +21,4 @@ if [ ! -r "${pkg_dir}/${pkg_file}" ]; then
 fi
 
 cat ${pkg_dir}/${pkg_file} \
-  | jq -c '{ engines, image: .scramjet.image }'
+  | jq -c '{ main, engines, image: .scramjet.image }'

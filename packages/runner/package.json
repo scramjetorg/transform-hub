@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "Runner Mock",
   "main": "./src/index.ts",
+  "bin": "bin/start-runner.js",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "build:docker": "docker build -t repo.int.scp.ovh/scramjet/runner:$npm_package_version -f Dockerfile ../../",

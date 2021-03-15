@@ -1,12 +1,12 @@
 /* eslint-disable dot-notation */
-import { EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
-import { MaybePromise, DelayedStream } from "@scramjet/types/src/utils";
+import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { CSHConnector } from "@scramjet/types/src/csh-client";
+import { EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import { DelayedStream, MaybePromise } from "@scramjet/types/src/utils";
 import { createReadStream } from "fs";
-import { Readable, Writable } from "stream";
 import { DataStream } from "scramjet";
+import { Readable, Writable } from "stream";
 
 class CSHClient implements CSHConnector {
     PATH = process.env.SEQUENCE_PATH || "";
@@ -47,6 +47,7 @@ class CSHClient implements CSHConnector {
 
     getPackage(path = this.PATH): Readable {
         if (path === "") throw new Error(this.errors.emptyPath);
+
         return createReadStream(path);
     }
 

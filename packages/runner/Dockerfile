@@ -35,6 +35,4 @@ WORKDIR /app/runner
 USER runner
 
 RUN yarn install --frozen-lockfile --production \
- && yarn cache clean
-
-CMD [ "node", "index.js" ]
+ && yarn cache clean && chmod +x ./bin/start-runner.js
