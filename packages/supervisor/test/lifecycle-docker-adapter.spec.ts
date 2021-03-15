@@ -36,7 +36,7 @@ const { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifec
         chmod: chmodStub
     },
     "@scramjet/csi-config": {
-        imageConfig: () => configStub()
+        imageConfig: configStub
     },
     "@scramjet/types": {
         DelayedStream: function() {
