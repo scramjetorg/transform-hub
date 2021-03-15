@@ -6,7 +6,6 @@ import {
     ExitCode,
     LifeCycle,
     MaybePromise,
-    ReadableStream,
     RunnerConfig
 } from "@scramjet/types";
 import { exec } from "child_process";
@@ -191,24 +190,6 @@ class LifecycleDockerAdapter implements LifeCycle {
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     snapshot(): MaybePromise<void> {
-    }
-
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    pushStdio(stream: "stdin" | 0, input: ReadableStream<string>): this {
-        throw new Error("To delete later.");
-    }
-
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    readStdio(stream: "stdout" | 1): ReadableStream<string> {
-        throw new Error("To delete later.");
-    }
-
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    readStdio(stream: "stderr" | 2): ReadableStream<string> {
-        throw new Error("To delete later.");
     }
 
     // @ts-ignore

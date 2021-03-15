@@ -20,7 +20,7 @@ export interface CSHConnector {
      * @param communicationHandler
      * Temporary log streams to the console.
      */
-    hookCommunicationHandler(communicationHandler: CommunicationHandler): void;
+    hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void>;
 
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.
