@@ -94,10 +94,25 @@ class LifeCycleController {
             */
             this.communicationHandler.pipeStdio();
 
+            const endOfSequence = this.lifecycleAdapter.run(config);
+
+            this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, message => {
+                const didTimeout = Symbol("res");
+
+                // wait for this before cleanups
+                // handle errors there
+                Promise.race([
+                    endOfSequence,
+                    new Promise(res => setTimeout(() => res(didTimeout), 1000)) // where to config this?
+                ])
+                    .then(val => val === didTimeout ? this.lifecycleAdapter.kill() : null);
+                return message;
+            });
+
             /**
             * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration
             */
-            await this.lifecycleAdapter.run(config);
+            await endOfSequence;
 
         } catch (error) {
 
