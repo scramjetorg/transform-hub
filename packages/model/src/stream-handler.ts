@@ -120,7 +120,6 @@ export class CommunicationHandler implements ICommunicationHandler {
                 .pipe(this.monitoringUpstream as unknown as Writable);
 
             StringStream.from(this.controlUpstream as Readable)
-                .JSONParse()
                 .map(async (message: EncodedControlMessage) => {
                     if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
@@ -132,6 +131,7 @@ export class CommunicationHandler implements ICommunicationHandler {
                     }
                     return message;
                 })
+                .JSONStringify()
                 .pipe(this.controlDownstream as unknown as Writable);
 
         } else {
