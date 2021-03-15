@@ -1,7 +1,7 @@
-import { AppError, EventMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { Application, AutoAppContext } from "@scramjet/types";
+import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
+import { AppConfig, Application, AutoAppContext } from "@scramjet/types";
 import { EncodedControlMessage } from "@scramjet/types/src/message-streams";
-import { ReadableStream } from "@scramjet/types/src/utils";
+import { ReadableStream, WritableStream } from "@scramjet/types/src/utils";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
 import { DataStream, StringStream } from "scramjet";
@@ -12,14 +12,21 @@ export class Runner {
     private statusIntervalHandle: any;
     private context?: AutoAppContext<any, any>;
     private interval?: NodeJS.Timeout;
-    // @ts-ignore
-    private monitorStream?: WritableStream<EncodedMonitoringMessage>;
+    private monitorStream?: WritableStream<any>;//TODO change any to EncodedMonitoringMessage
     private controlStream?: any;//TODO change type ReadableStream<EncodedControlMessage>;
     private monitorFifoPath: string;
     private controlFifoPath: string;
     private sequencePath: string;
 
-    // docker -v /app/data/:/tmp/proces-39374/data/
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    readonly eventMap = {
+        [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: "confirm_alive",
+        [RunnerMessageCode.KILL]: "kill",
+        [RunnerMessageCode.MONITORING_RATE]: "monitoring_rate",
+        [RunnerMessageCode.STOP]: "stop",
+        [RunnerMessageCode.EVENT]: "event"
+    };
+
     constructor(sequencePath: string, fifosPath: string) {
         this.emitter = new EventEmitter();
         this.controlFifoPath = `${fifosPath}/control.fifo`;
@@ -27,21 +34,7 @@ export class Runner {
         this.sequencePath = sequencePath;
     }
 
-    async hookupStdStreams() {
-        throw new Error("Method not implemented.");
-    }
-
-    async hookupFifo() {
-        // @ts-ignore
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const eventMap = {
-            [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: "confirm_alive",
-            [RunnerMessageCode.KILL]: "kill",
-            [RunnerMessageCode.MONITORING_RATE]: "monitoring_rate",
-            [RunnerMessageCode.STOP]: "stop",
-            [RunnerMessageCode.EVENT]: "event"
-        };
-
+    async hookupControlStream() {
         this.controlStream = createReadStream(this.controlFifoPath);
 
         StringStream
@@ -49,29 +42,41 @@ export class Runner {
             .JSONParse()
             .map(async ([code, data]: EncodedControlMessage) => {
                 switch (code) {
-                case RunnerMessageCode.MONITORING_RATE:
-                    await this.handleMonitoringRequest(data as MonitoringRateMessageData);
-                    break;
-                case RunnerMessageCode.KILL:
-                    await this.handleKillRequest();
-                    break;
-                case RunnerMessageCode.STOP:
-                    await this.handleStopRequest(data as StopSequenceMessageData);
-                    break;
-                case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-                    await this.handleForceConfirmAliveRequest();
-                    break;
-                case RunnerMessageCode.EVENT:
-                    let eventData = data as EventMessageData;
+                    case RunnerMessageCode.MONITORING_RATE:
+                        await this.handleMonitoringRequest(data as MonitoringRateMessageData);
+                        break;
+                    case RunnerMessageCode.KILL:
+                        await this.handleKillRequest();
+                        break;
+                    case RunnerMessageCode.STOP:
+                        await this.handleStopRequest(data as StopSequenceMessageData);
+                        break;
+                    case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
+                        await this.handleForceConfirmAliveRequest();
+                        break;
+                    case RunnerMessageCode.PONG:
+                        await this.handleReceptionOfHandshake(data as HandshakeAcknowledgeMessageData);
+                        break;
+                    case RunnerMessageCode.EVENT:
+                        let eventData = data as EventMessageData;
 
-                    this.emitter.emit(eventData.eventName, eventData.message);
-                    break;
-                default:
-                    break;
+                        this.emitter.emit(eventData.eventName, eventData.message);
+                        break;
+                    default:
+                        break;
                 }
-            });
+            })
+            .run()
+            .catch(async () => { console.error("An error occurred during parsing control message."); });
+    }
 
+    async hookupMonitorStream() {
         this.monitorStream = createWriteStream(this.monitorFifoPath);
+    }
+
+    async hookupFifoStreams() {
+        this.hookupControlStream();
+        this.hookupMonitorStream();
     }
 
     handleForceConfirmAliveRequest() {
@@ -113,36 +118,30 @@ export class Runner {
         throw new Error("Method not implemented.");
     }
 
-    async receivedHandshake(): Promise<void> {
-        return new Promise((res, rej) => {
-            const to = setTimeout(rej, 5000).unref(); // this timeout should be in some config
-
-            this.emitter.once("confirm_alive", () => {
-                clearTimeout(to);
-                res();
-            });
-        });
+    async handleReceptionOfHandshake(data: HandshakeAcknowledgeMessageData): Promise<void> {
+        this.initAppContext(data.appConfig);
+        this.runSequence(data.arguments);
     }
 
     /**
      * Initialization of runner class.
      * * initilize streams (fifo and std)
-     * * initialize app context
      * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)
      */
     init() {
-        this.hookupFifo();
-        //this.hookupStdStreams();
-        //this.initAppContext("TODO config");
+        this.hookupFifoStreams();
         this.sendHandshakeMessage();
     }
 
     /**
      * initialize app context
      * set up streams process.stdin, process.stdout, process.stderr, fifo downstream, fifo upstream
-     * require sequence
      */
-    initAppContext(config: string) {
+    initAppContext(config: AppConfig) {
+        if (this.monitorStream === undefined) {
+            throw new Error("Monitor Stream is not defined.");
+        }
+
         const monitor = this.monitorStream;
         const that = this;
 
@@ -177,7 +176,7 @@ export class Runner {
                 return this;
             },
             end() {
-                monitor.write([RunnerMessageCode.STOP]);
+                //should this method notify instance that the pocess is stopped?  
                 that.handleStopSequence();
                 return this;
             }
@@ -185,7 +184,11 @@ export class Runner {
     }
 
     sendHandshakeMessage() {
-        this.monitorStream.write(JSON.stringify([RunnerMessageCode.PING, {}]) + "\r\n", "utf-8");
+        if (this.monitorStream === undefined) {
+            throw new Error("Monitor Stream is not defined.");
+        }
+
+        this.monitorStream.write(JSON.stringify([RunnerMessageCode.PING, {}]) + "\r\n");
     }
 
     getSequence(): Application {
@@ -195,9 +198,8 @@ export class Runner {
     /**
      * run sequence
      */
-    executeSequence() {
+    runSequence(args: any[]) {
         const sequence: any = this.getSequence();
-        const args: any[] = [];// from PONG
 
         sequence.call(
             this.context,
