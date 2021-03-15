@@ -2,9 +2,9 @@
 import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
 import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { CSHConnector } from "@scramjet/types/src/csh-client";
-import { EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
-import { DelayedStream, MaybePromise } from "@scramjet/types/src/utils";
+import { UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
 import { createReadStream } from "fs";
+import { PassThrough } from "node:stream";
 import { DataStream } from "scramjet";
 import { Readable, Writable } from "stream";
 
@@ -14,12 +14,12 @@ class CSHClient implements CSHConnector {
         params: "Wrong number of array params",
         emptyPath: "Path is empty"
     }
-    private monitorStream: DelayedStream;
-    private controlStream: DelayedStream;
+    private monitorStream: PassThrough;
+    private controlStream: PassThrough;
 
     constructor() {
-        this.monitorStream = new DelayedStream();
-        this.controlStream = new DelayedStream();
+        this.monitorStream = new PassThrough({ objectMode: true });
+        this.controlStream = new PassThrough({ objectMode: true });
     }
 
     upstreamStreamsConfig() {
@@ -27,18 +27,18 @@ class CSHClient implements CSHConnector {
             new Readable(),
             new Writable(),
             new Writable(),
-            this.controlStream.getStream(),
-            this.monitorStream.getStream()
+            this.controlStream,
+            this.monitorStream
         ] as UpstreamStreamsConfig;
     }
 
     hookCommunicationHandler(communicationHandler: CommunicationHandler) {
         communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
-        this.getMonitoringDownstream(communicationHandler);
+        this.getMonitoringDownstream();
     }
 
-    getMonitoringDownstream(communicationHandler: CommunicationHandler) {
-        DataStream.from(communicationHandler["monitoringDownstream"] as Readable)
+    getMonitoringDownstream() {
+        DataStream.from(this.monitorStream)
             .do((...arr: any[]) => console.log(...arr))
             .run();
     }
@@ -49,13 +49,8 @@ class CSHClient implements CSHConnector {
         return createReadStream(path);
     }
 
-    kill(communicationHandler: CommunicationHandler): MaybePromise<void> {
-        if (communicationHandler)
-            communicationHandler.addControlHandler(RunnerMessageCode.KILL, this.killHandler);
-    }
-
-    killHandler(): EncodedMessage<RunnerMessageCode.KILL> {
-        return [RunnerMessageCode.KILL, {}];
+    kill() {
+        this.controlStream.write([RunnerMessageCode.KILL, {}]);
     }
 }
 
