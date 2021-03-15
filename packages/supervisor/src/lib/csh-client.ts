@@ -4,7 +4,6 @@ import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
 import { CSHConnector } from "@scramjet/types/src/csh-client";
 import { UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
 import { createReadStream } from "fs";
-import { PassThrough } from "node:stream";
 import { DataStream } from "scramjet";
 import { Readable, Writable } from "stream";
 
@@ -14,12 +13,17 @@ class CSHClient implements CSHConnector {
         params: "Wrong number of array params",
         emptyPath: "Path is empty"
     }
-    private monitorStream: PassThrough;
-    private controlStream: PassThrough;
+    private monitorStream: DataStream;
+    private controlStream: DataStream;
 
     constructor() {
-        this.monitorStream = new PassThrough({ objectMode: true });
-        this.controlStream = new PassThrough({ objectMode: true });
+        this.controlStream = new DataStream();
+
+        this.monitorStream = new DataStream();
+        this.monitorStream
+            .do((...arr: any[]) => console.log(...arr))
+            .run()
+            .catch(e => console.error(e));
     }
 
     upstreamStreamsConfig() {
@@ -27,20 +31,13 @@ class CSHClient implements CSHConnector {
             new Readable(),
             new Writable(),
             new Writable(),
-            this.controlStream,
-            this.monitorStream
+            this.controlStream as unknown as Readable,
+            this.monitorStream as unknown as Writable
         ] as UpstreamStreamsConfig;
     }
 
     hookCommunicationHandler(communicationHandler: CommunicationHandler) {
         communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
-        this.getMonitoringDownstream();
-    }
-
-    getMonitoringDownstream() {
-        DataStream.from(this.monitorStream)
-            .do((...arr: any[]) => console.log(...arr))
-            .run();
     }
 
     getPackage(path = this.PATH): Readable {
@@ -49,8 +46,8 @@ class CSHClient implements CSHConnector {
         return createReadStream(path);
     }
 
-    kill() {
-        this.controlStream.write([RunnerMessageCode.KILL, {}]);
+    async kill() {
+        await this.controlStream.whenWrote([RunnerMessageCode.KILL, {}]);
     }
 }
 
