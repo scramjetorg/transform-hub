@@ -3,8 +3,8 @@
 import { Runner } from "../runner";
 
 const fs = require("fs");
-const sequencePath: string = "/package/" + process.argv[2].replace(/.js$/, "") + ".js";
-const fifosPath: string = process.argv[3];
+const sequencePath: string = "/package/" + process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
+const fifosPath: string = process.env.FIFOS_DIR || "";
 
 if (!fs.existsSync(fifosPath)) {
     console.error("Incorrect run argument: fifo path (" + fifosPath + ") does not exists. ");

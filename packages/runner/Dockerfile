@@ -14,19 +14,19 @@ RUN yarn build \
 
 WORKDIR /app/packages/model
 RUN yarn build \
- && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
 WORKDIR /app/packages/runner
 RUN yarn build \
- && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
 
 FROM repo.int.scp.ovh/scramjet/nodejs:buster
 
 RUN groupadd -g 1200 runner \
- && useradd -g 1200 -u 1200 -m -d /app -s /bin/bash runner \
- && mkdir /package /pipes \
- && chown runner:runner /package /pipes
+    && useradd -g 1200 -u 1200 -m -d /app -s /bin/bash runner \
+    && mkdir /package /pipes \
+    && chown runner:runner /package /pipes
 
 
 COPY --chown=runner:runner --from=builder /app/dist /app/
@@ -35,4 +35,6 @@ WORKDIR /app/runner
 USER runner
 
 RUN yarn install --frozen-lockfile --production \
- && yarn cache clean && chmod +x ./bin/start-runner.js
+    && yarn cache clean && chmod +x ./bin/start-runner.js
+
+CMD node bin/start-runner $SEQUENCE_PATH $FIFOS_DIR

@@ -97,16 +97,15 @@ class LifecycleDockerAdapter implements LifeCycle {
     identify(stream: Readable): MaybePromise<RunnerConfig> {
         return new Promise(async (resolve) => {
             const volume: DockerVolume = await this.dockerHelper.createVolume();
-            const { streams, stopAndRemove } = await this.dockerHelper.run({
+            const { streams, wait } = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
-                command: ["sh", "unpack-identify.sh"],
                 volumes: [
                     { mountPoint: "/package", volume }
-                ]
+                ],
+                autoRemove: true
             });
 
             stream.pipe(streams.stdin);
-
             let preRunnerResponse = "";
 
             streams.stdout
@@ -115,8 +114,6 @@ class LifecycleDockerAdapter implements LifeCycle {
                 })
                 .on("end", async () => {
                     const res = JSON.parse(preRunnerResponse);
-
-                    await stopAndRemove();
 
                     resolve({
                         image: this.imageConfig.runner || "",
@@ -128,6 +125,8 @@ class LifecycleDockerAdapter implements LifeCycle {
                         packageVolumeId: volume
                     });
                 });
+
+            await wait();
         });
     }
 
@@ -159,13 +158,13 @@ class LifecycleDockerAdapter implements LifeCycle {
         return new Promise(async (resolve) => {
             const { streams, containerId } = await this.dockerHelper.run({
                 imageName: this.imageConfig.runner || "",
-                command: ["./bin/start-runner.js", config.sequencePath, "/pipes"],
                 volumes: [
                     { mountPoint: "/package", volume: config.packageVolumeId || "" }
                 ],
                 binds: [
                     `${createdDir}:/pipes`
-                ]
+                ],
+                envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`]
             });
 
             // dev

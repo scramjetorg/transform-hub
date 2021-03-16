@@ -54,7 +54,7 @@ export type DockerAdapterRunConfig = {
      *
      * @property {string[]} command Command to be executed.
      */
-    command: string[];
+    command?: string[];
 
     /**
      * @property {DockerAdapterVolumeConfig[]} volumes Volumes configuration.
@@ -64,7 +64,18 @@ export type DockerAdapterRunConfig = {
     /**
      * @property {string[]} binds Directories mount configuration.
      */
-    binds?: string[]
+    binds?: string[],
+
+    /**
+     * @property {string[]} envs A list of environment variables
+     * to set inside the container in the form ```["VAR=value", ...]```
+     */
+    envs?: string[],
+
+    /**
+     * @private {boolean} autoRemove If true container will be removed after container's process exit.
+     */
+    autoRemove?: boolean
 };
 
 /**
@@ -101,10 +112,13 @@ export type DockerAdapterRunResponse = {
     streams: DockerAdapterStreams,
 
     /**
-     * @type {Function} Function to stop and remove container.
+     * @type {Function} Waits till container stop.
      */
-    stopAndRemove: Function,
+    wait: Function
 
+    /**
+     * @type {DockerContainer} Docker container.
+     */
     containerId: DockerContainer
 };
 
@@ -130,7 +144,9 @@ export interface DockerHelper {
     createContainer: (
         dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[],
-        binds: string[]) => Promise<DockerContainer>;
+        binds: string[],
+        envs: string[],
+        autoRemove: boolean) => Promise<DockerContainer>;
 
     /**
      * Starts container.
@@ -158,16 +174,6 @@ export interface DockerHelper {
      * @returns {Promise}
      */
     removeContainer: (containerId: DockerContainer) => Promise<void>;
-
-    /**
-     * Executes command in container.
-     *
-     * @param {DockerContainer} containerId Container.
-     * @param {string[]} command Command with optional parameters.
-     *
-     * @returns {Promise} Container standard streams.
-     */
-    execCommand: (containerId: DockerContainer, command: string[]) => Promise<DockerAdapterStreams>;
 
     /**
      * Creates volume.

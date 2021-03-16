@@ -1,17 +1,12 @@
-import { Duplex, PassThrough } from "stream";
-
 import * as Dockerode from "dockerode";
-
+import { PassThrough } from "stream";
 import {
     DockerAdapterRunConfig,
     DockerAdapterRunResponse,
-    DockerAdapterVolumeConfig,
-    DockerVolume,
-    DockerImage,
+    DockerAdapterStreams, DockerAdapterVolumeConfig,
+    DockerAdapterWaitOptions,
     DockerContainer,
-    DockerHelper,
-    DockerAdapterStreams,
-    DockerAdapterWaitOptions
+    DockerHelper, DockerImage, DockerVolume
 } from "./types";
 
 type DockerodeVolumeMountConfig = {
@@ -42,7 +37,9 @@ export class DockerodeDockerHelper implements DockerHelper {
     async createContainer(
         dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[] = [],
-        binds: string[] = []
+        binds: string[] = [],
+        envs: string[] = [],
+        autoRemove: boolean = false
     ): Promise<DockerContainer> {
         return this.dockerode.createContainer({
             Image: dockerImage,
@@ -52,9 +49,11 @@ export class DockerodeDockerHelper implements DockerHelper {
             Tty: false,
             OpenStdin: true,
             StdinOnce: true,
+            Env: envs,
             HostConfig: {
                 Binds: binds,
-                Mounts: this.translateVolumesConfig(volumes)
+                Mounts: this.translateVolumesConfig(volumes),
+                AutoRemove: autoRemove
             }
         }).then((container: Dockerode.Container) => container.id);
     }
@@ -71,41 +70,6 @@ export class DockerodeDockerHelper implements DockerHelper {
         return this.dockerode.getContainer(containerId).remove();
     }
 
-    async execCommand(containerId: DockerContainer, command: string[]): Promise<DockerAdapterStreams> {
-        const options = {
-            AttachStdin: true,
-            AttachStdout: true,
-            AttachStderr: true,
-            Tty: false,
-            Detach: false,
-            OpenStdin: false,
-            StdinOnce: false,
-            Cmd: command
-        };
-        const container = this.dockerode.getContainer(containerId);
-
-        return container.exec(options).then((exec: Dockerode.Exec) => exec.start({
-            hijack: true,
-            Tty: false,
-            stdin: true
-        })).then((duplex: Duplex) => {
-            const streams: DockerAdapterStreams = {
-                stdin: new PassThrough().pipe(duplex),
-                stdout: new PassThrough(),
-                stderr: new PassThrough()
-            };
-
-            container.modem.demuxStream(duplex, streams.stdout, streams.stderr);
-
-            duplex.on("close", () => {
-                streams.stdout.emit("end");
-                streams.stderr.emit("end");
-            });
-
-            return streams;
-        });
-    }
-
     async createVolume(name: string = ""): Promise<DockerVolume> {
         return this.dockerode.createVolume({
             Name: name,
@@ -118,19 +82,49 @@ export class DockerodeDockerHelper implements DockerHelper {
         return this.dockerode.getVolume(volumeId).remove();
     }
 
-    run(config: DockerAdapterRunConfig): Promise<DockerAdapterRunResponse> {
-        return new Promise((resolve) => {
-            this.createContainer(config.imageName, config.volumes, config.binds)
-                .then(async (container) => {
-                    await this.startContainer(container);
+    async attach(container: DockerContainer, opts: any): Promise<any> {
+        return this.dockerode.getContainer(container).attach(opts);
+    }
 
-                    resolve({
-                        streams: await this.execCommand(container, config.command),
-                        stopAndRemove: () => this.stopContainer(container)
-                            .then(() => this.removeContainer(container)),
-                        containerId: container
-                    });
-                });
+    run(config: DockerAdapterRunConfig): Promise<DockerAdapterRunResponse> {
+        return new Promise(async (resolve) => {
+            const streams: DockerAdapterStreams = {
+                stdin: new PassThrough(),
+                stdout: new PassThrough(),
+                stderr: new PassThrough()
+            };
+
+            let container = await this.createContainer(
+                config.imageName,
+                config.volumes,
+                config.binds,
+                config.envs,
+                config.autoRemove);
+            let stream = await this.attach(container, {
+                stream: true,
+                stdin: true,
+                stdout: true,
+                stderr: true,
+                hijack: true
+            });
+
+            stream.on("close", () => {
+                streams.stdout.emit("end");
+                streams.stderr.emit("end");
+            });
+
+            await this.startContainer(container);
+
+            streams.stdin.pipe(stream);
+
+            this.dockerode.getContainer(container)
+                .modem.demuxStream(stream, streams.stdout, streams.stderr);
+
+            resolve({
+                streams: streams,
+                containerId: container,
+                wait: () => this.wait(container, { condition: "not-running" })
+            });
         });
     }
 

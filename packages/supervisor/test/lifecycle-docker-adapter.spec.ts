@@ -39,7 +39,7 @@ const { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifec
         imageConfig: configStub
     },
     "@scramjet/types": {
-        DelayedStream: function() {
+        DelayedStream: function () {
             return { run: sandbox.stub() };
         }
     },
@@ -105,7 +105,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
 
     // TODO remove when removed from code
     createReadStreamStub.returns({
-        pipe: () => {}
+        pipe: () => { }
     });
 
     dockerHelperMockWaitStub.resolves();
@@ -115,7 +115,8 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
             stdin: new PassThrough(),
             stdout: new PassThrough(),
             stderr: new PassThrough()
-        }
+        },
+        wait: sinon.stub().resolves()
     });
 
     lcda.createFifoStreams = sandbox.stub().resolves();
@@ -137,12 +138,12 @@ test("Identify should return parsed response from stream.", async (t) => {
         version: "0.3.0",
         main: "example-sequence-path"
     };
-    const stopAndRemove = sandbox.stub().resolves();
+    const wait = sandbox.stub().resolves();
 
     dockerHelperMockCreateVolumeStub.resolves(createdVolumeId);
     dockerHelperMockRunStub.resolves({
         streams,
-        stopAndRemove
+        wait
     });
 
     const lcda = new LifecycleDockerAdapter();
