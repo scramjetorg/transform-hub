@@ -6,7 +6,7 @@ pipeline {
   }
   environment {
       docker_ci_image = "repo.int.scp.ovh/scramjet/nodejs-ci:buster"
-      docker_run_args = "-u root"
+      docker_run_args = ""
   }
   stages {
     stage("Checkout SCM") {
