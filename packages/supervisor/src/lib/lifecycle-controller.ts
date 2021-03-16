@@ -1,6 +1,5 @@
-import { RunnerMessageCode } from "@scramjet/model";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { LifeCycle, LifeCycleConfig } from "@scramjet/types/src/lifecycle";
+import { RunnerMessageCode, CommunicationHandler } from "@scramjet/model";
+import { LifeCycle, LifeCycleConfig } from "@scramjet/types";
 import { CSHClient } from "./csh-client";
 
 /**

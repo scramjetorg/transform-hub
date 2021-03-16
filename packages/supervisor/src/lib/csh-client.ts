@@ -1,9 +1,6 @@
 /* eslint-disable dot-notation */
-import { HandshakeAcknowledgeMessage, MessageUtilities } from "@scramjet/model";
-import { RunnerMessageCode } from "@scramjet/model/src/runner-message";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { CSHConnector } from "@scramjet/types/src/csh-client";
-import { EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
+import { CSHConnector, EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types";
 import { createReadStream } from "fs";
 import { DataStream } from "scramjet";
 import { Readable, Writable } from "stream";
@@ -19,6 +16,7 @@ class CSHClient implements CSHConnector {
 
     constructor() {
         this.controlStream = new DataStream();
+
         this.monitorStream = new DataStream();
         this.monitorStream
             .do((...arr: any[]) => console.log("[from monitoring]", ...arr))
@@ -50,6 +48,7 @@ class CSHClient implements CSHConnector {
 
     async kill() {
         await this.controlStream.whenWrote([RunnerMessageCode.KILL, {}]);
+        this.controlStream.whenWrote([RunnerMessageCode.STOP, { timeout: 3000, canCallKeepalive: true }]);
     }
 
     async pingHandler(message: EncodedMessage<RunnerMessageCode.PING>) {
