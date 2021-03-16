@@ -9,7 +9,7 @@ import {
     RunnerConfig
 } from "@scramjet/types";
 import { exec } from "child_process";
-import { createReadStream } from "fs";
+import { createReadStream, createWriteStream } from "fs";
 import { chmod, mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
@@ -147,13 +147,8 @@ class LifecycleDockerAdapter implements LifeCycle {
     async run(config: RunnerConfig): Promise<ExitCode> {
         let createdDir = await this.createFifoStreams("control.fifo", "monitor.fifo");
 
-        //this.monitorStream.run(createReadStream(this.monitorFifoPath));
-        //this.controlStream.run(createWriteStream(this.controlFifoPath));
-
-        // dev - log monitoring stream
-        createReadStream(this.monitorFifoPath, {
-            encoding: "utf-8"
-        }).pipe(process.stdout);
+        this.monitorStream.run(createReadStream(this.monitorFifoPath));
+        this.controlStream.run(createWriteStream(this.controlFifoPath));
 
         return new Promise(async (resolve) => {
             const { streams, containerId } = await this.dockerHelper.run({
@@ -166,10 +161,6 @@ class LifecycleDockerAdapter implements LifeCycle {
                 ],
                 envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`]
             });
-
-            // dev
-            streams.stdout.pipe(process.stdout);
-            streams.stderr.pipe(process.stdout);
 
             this.runnerStdin.pipe(streams.stdin);
             streams.stdout.pipe(this.runnerStdout);

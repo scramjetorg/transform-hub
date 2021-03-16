@@ -80,7 +80,12 @@ export class DelayedStream {
 
     run(inputStream: Readable | Writable) {
         if (typeof this._stream !== "undefined") {
-            inputStream.pipe(this._stream);
+            if (inputStream instanceof Readable) {
+                inputStream.pipe(this._stream);
+            } else {
+                this._stream.pipe(inputStream);
+            }
+
             return;
         }
 
