@@ -39,7 +39,7 @@ const { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifec
         imageConfig: configStub
     },
     "@scramjet/types": {
-        DelayedStream: function () {
+        DelayedStream: function() {
             return { run: sandbox.stub() };
         }
     },
