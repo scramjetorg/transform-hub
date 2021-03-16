@@ -18,15 +18,6 @@ export class Runner {
     private controlFifoPath: string;
     private sequencePath: string;
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    readonly eventMap = {
-        [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: "confirm_alive",
-        [RunnerMessageCode.KILL]: "kill",
-        [RunnerMessageCode.MONITORING_RATE]: "monitoring_rate",
-        [RunnerMessageCode.STOP]: "stop",
-        [RunnerMessageCode.EVENT]: "event"
-    };
-
     constructor(sequencePath: string, fifosPath: string) {
         this.emitter = new EventEmitter();
         this.controlFifoPath = `${fifosPath}/control.fifo`;
