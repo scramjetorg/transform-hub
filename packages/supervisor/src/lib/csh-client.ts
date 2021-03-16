@@ -55,7 +55,7 @@ class CSHClient implements CSHConnector {
     async pingHandler(message: EncodedMessage<RunnerMessageCode.PING>) {
         const pongMsg: HandshakeAcknowledgeMessage = {
             msgCode: RunnerMessageCode.PONG,
-            appConfig: { key: "app configuration value" },
+            appConfig: { key: "app configuration value TODO" },
             arguments: ["../../package/data.json", "out.txt"]//TODO think how to avoid passing relative path (from runner)
         };
 

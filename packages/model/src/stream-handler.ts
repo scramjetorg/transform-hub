@@ -123,6 +123,9 @@ export class CommunicationHandler implements ICommunicationHandler {
 
             DataStream.from(this.controlUpstream as Readable)
                 .map(async (message: EncodedControlMessage) => {
+                    // console.log("message=====",message); 
+                    // const deserializedMessage = MessageUtilities.deserializeMessage(message);
+                    // if (this.controlHandlerHash[deserializedMessage[0] as unknown as ControlMessageHandlerList].length) {
                     if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
 
