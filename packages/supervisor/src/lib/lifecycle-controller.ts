@@ -79,9 +79,6 @@ class LifeCycleController {
             */
             this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler);
 
-            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING,
-                this.client.pingHandler.bind(this.client) );
-
             /**
             *  Pass CommunicationHandler to CSH Client so it can hook its downstreams to it
             */
@@ -95,7 +92,7 @@ class LifeCycleController {
             /**
             * Pipe standard IO streams between CSH Client and LifeCycle Adapter
             */
-            // this.communicationHandler.pipeStdio();
+            this.communicationHandler.pipeStdio();
 
             const endOfSequence = this.lifecycleAdapter.run(config);
 
