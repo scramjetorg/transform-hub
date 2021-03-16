@@ -165,7 +165,7 @@ class LifecycleDockerAdapter implements LifeCycle {
             this.runnerStdin.pipe(streams.stdin);
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
-
+            
             await this.dockerHelper.wait(containerId, { condition: "not-running" });
             resolve(0);
         });

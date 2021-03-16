@@ -100,7 +100,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlDownstream = streams[3];
         this.monitoringDownstream = streams[4];
         this.downstreams = streams;
-
+          
         return this;
     }
 
@@ -123,7 +123,6 @@ export class CommunicationHandler implements ICommunicationHandler {
 
             DataStream.from(this.controlUpstream as Readable)
                 .map(async (message: EncodedControlMessage) => {
-                    console.log("message=====",message);//TODO delete 
                     if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
 

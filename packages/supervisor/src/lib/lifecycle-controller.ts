@@ -92,7 +92,7 @@ class LifeCycleController {
             /**
             * Pipe standard IO streams between CSH Client and LifeCycle Adapter
             */
-            // this.communicationHandler.pipeStdio();
+            this.communicationHandler.pipeStdio();
 
             const endOfSequence = this.lifecycleAdapter.run(config);
 

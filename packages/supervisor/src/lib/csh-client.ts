@@ -21,16 +21,16 @@ class CSHClient implements CSHConnector {
         this.controlStream = new DataStream();
         this.monitorStream = new DataStream();
         this.monitorStream
-            .do((...arr: any[]) => console.log(...arr))
+            .do((...arr: any[]) => console.log("[from monitoring]",...arr))
             .run()
             .catch(e => console.error(e));
     }
 
     upstreamStreamsConfig() {
         return [
-            new Readable(),
-            new Writable(),
-            new Writable(),
+            process.stdin,
+            process.stdout,
+            process.stderr,
             this.controlStream as unknown as Readable,
             this.monitorStream as unknown as Writable
         ] as UpstreamStreamsConfig;
@@ -53,11 +53,10 @@ class CSHClient implements CSHConnector {
     }
 
     async pingHandler(message: EncodedMessage<RunnerMessageCode.PING>) {
-        console.log("------pingHandler");//TODO delete
         const pongMsg: HandshakeAcknowledgeMessage = {
             msgCode: RunnerMessageCode.PONG,
             appConfig: { key: "app configuration value" },
-            arguments: ["arg1", "arg2"]
+            arguments: ["../../package/data.json", "out.txt"]//TODO think how to avoid passing relative path (from runner)
         };
 
         await this.controlStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));

@@ -29,6 +29,3 @@ if (!fs.existsSync(sequencePath)) {
 const runner: Runner = new Runner(sequencePath, fifosPath);
 
 runner.init();
-
-// To be run on pong
-//runner.executeSequence();
