@@ -70,6 +70,9 @@ export type MonitoringMessageCode =
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.SNAPSHOT_RESPONSE;
 
+export type EncodedSerializedControlMessage = string;
+export type EncodedSerializedMonitoringMessage = string;
+
 export type EncodedMonitoringMessage = EncodedMessage<MonitoringMessageCode>;
 // @ToDo: verify streams types
 
@@ -87,8 +90,8 @@ export type DownstreamStreamsConfig = [
     stdin: Writable,
     stdout: Readable,
     stderr: Readable,
-    control: WritableStream<EncodedControlMessage>,
-    monitor: ReadableStream<EncodedMonitoringMessage>,
+    control: WritableStream<EncodedSerializedControlMessage>,
+    monitor: ReadableStream<EncodedSerializedMonitoringMessage>,
     input?: WritableStream<any>,
     output?: ReadableStream<any> // optional output stream piped to runner - if none passed, `this.stdout` will be used
 ];

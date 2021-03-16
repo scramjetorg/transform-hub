@@ -10,6 +10,8 @@ import {
     ReadableStream,
     UpstreamStreamsConfig,
     WritableStream,
+    EncodedSerializedControlMessage,
+    EncodedSerializedMonitoringMessage
 } from "@scramjet/types";
 import { RunnerMessageCode } from ".";
 import { DataStream, StringStream } from "scramjet";
@@ -47,9 +49,9 @@ export class CommunicationHandler implements ICommunicationHandler {
     private stdErrUpstream?: Writable;
     private stdErrDownstream?: Readable;
     private controlUpstream?: ReadableStream<EncodedControlMessage>;
-    private controlDownstream?: WritableStream<EncodedControlMessage>;
+    private controlDownstream?: WritableStream<EncodedSerializedControlMessage>;
     private monitoringUpstream?: WritableStream<EncodedMonitoringMessage>;
-    private monitoringDownstream?: ReadableStream<EncodedMonitoringMessage>;
+    private monitoringDownstream?: ReadableStream<EncodedSerializedMonitoringMessage>;
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
 
@@ -119,7 +121,7 @@ export class CommunicationHandler implements ICommunicationHandler {
                 })
                 .pipe(this.monitoringUpstream as unknown as Writable);
 
-            StringStream.from(this.controlUpstream as Readable)
+            DataStream.from(this.controlUpstream as Readable)
                 .map(async (message: EncodedControlMessage) => {
                     if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
