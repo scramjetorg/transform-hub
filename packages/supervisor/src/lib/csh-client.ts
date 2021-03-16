@@ -21,7 +21,7 @@ class CSHClient implements CSHConnector {
         this.controlStream = new DataStream();
         this.monitorStream = new DataStream();
         this.monitorStream
-            .do((...arr: any[]) => console.log("[from monitoring]",...arr))
+            .do((...arr: any[]) => console.log("[from monitoring]", ...arr))
             .run()
             .catch(e => console.error(e));
     }
@@ -39,7 +39,7 @@ class CSHClient implements CSHConnector {
     hookCommunicationHandler(communicationHandler: CommunicationHandler) {
         communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
         communicationHandler.addMonitoringHandler(RunnerMessageCode.PING,
-             (message) => this.pingHandler(message) );
+            (message) => this.pingHandler(message));
     }
 
     getPackage(path = this.PATH): Readable {

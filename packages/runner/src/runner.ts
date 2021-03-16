@@ -193,7 +193,7 @@ export class Runner {
      */
     runSequence(args: any[]) {
         const sequence: any = this.getSequence();
-        
+
         sequence.call(
             this.context,
             new DataStream() as unknown as ReadableStream<never>,

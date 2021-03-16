@@ -1,21 +1,21 @@
 import {
     ControlMessageCode,
     DownstreamStreamsConfig,
-    EncodedMessage,
     EncodedControlMessage,
+    EncodedMessage,
     EncodedMonitoringMessage,
+    EncodedSerializedControlMessage,
+    EncodedSerializedMonitoringMessage,
     ICommunicationHandler,
     MaybePromise,
     MonitoringMessageCode,
     ReadableStream,
     UpstreamStreamsConfig,
-    WritableStream,
-    EncodedSerializedControlMessage,
-    EncodedSerializedMonitoringMessage
+    WritableStream
 } from "@scramjet/types";
-import { RunnerMessageCode } from ".";
 import { DataStream, StringStream } from "scramjet";
 import { Readable, Writable } from "stream";
+import { RunnerMessageCode } from ".";
 
 export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T>>;
@@ -100,7 +100,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlDownstream = streams[3];
         this.monitoringDownstream = streams[4];
         this.downstreams = streams;
-          
+
         return this;
     }
 
@@ -123,7 +123,6 @@ export class CommunicationHandler implements ICommunicationHandler {
 
             DataStream.from(this.controlUpstream as Readable)
                 .map(async (message: EncodedControlMessage) => {
-                    console.log("message=====",message);//TODO delete 
                     if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
 

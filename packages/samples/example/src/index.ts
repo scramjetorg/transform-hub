@@ -11,7 +11,6 @@ interface Person {
 }
 
 // This method needs to expose a function that will be executed by the runner.
-
 const mod: InertApp = function (input, ffrom, fto) {
     this.on("test", () => console.error("Got test event"));
 
