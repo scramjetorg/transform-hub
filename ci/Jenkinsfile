@@ -6,7 +6,8 @@ pipeline {
   }
   environment {
       docker_ci_image = "repo.int.scp.ovh/scramjet/nodejs-ci:buster"
-      docker_run_args = ""
+      // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
+      HOME = "."
   }
   stages {
     stage("Checkout SCM") {
@@ -17,7 +18,7 @@ pipeline {
     stage("Install packages") {
       steps {
         script {
-          docker.image("${docker_ci_image}").inside("${docker_run_args}") {
+          docker.image("${docker_ci_image}").inside() {
             sh("yarn install")
           }
         }  
@@ -26,7 +27,7 @@ pipeline {
     stage("Run Linter") {
       steps {
         script {
-          docker.image("${docker_ci_image}").inside("${docker_run_args}") {
+          docker.image("${docker_ci_image}").inside() {
             sh("yarn lint")
           }
         }  
@@ -35,7 +36,7 @@ pipeline {
     stage("Build packages") {
       steps {
         script {
-          docker.image("${docker_ci_image}").inside("${docker_run_args}") {
+          docker.image("${docker_ci_image}").inside() {
             sh("yarn build")
           }
         }  
@@ -44,7 +45,7 @@ pipeline {
     stage("Prepack packages") {
       steps {
         script {
-          docker.image("${docker_ci_image}").inside("${docker_run_args}") {
+          docker.image("${docker_ci_image}").inside() {
             sh("yarn prepack")
           }
         }  
@@ -58,7 +59,7 @@ pipeline {
             script {
               // temporary until tests will be fixed
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                docker.image("${docker_ci_image}").inside("${docker_run_args}") {
+                docker.image("${docker_ci_image}").inside() {
                   sh("yarn test:packages")               
                 }
               }
@@ -70,7 +71,7 @@ pipeline {
             script {
               // temporary until tests will be fixed
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                docker.image("${docker_ci_image}").inside("${docker_run_args}") {
+                docker.image("${docker_ci_image}").inside() {
                   sh("yarn test:bdd")
                 }
               }
