@@ -58,7 +58,7 @@ export class Runner {
                 }
             })
             .run()
-            .catch(async () => { console.error("An error occurred during parsing control message."); });
+            .catch(async (error) => { console.error("An error occurred during parsing control message.", error.stack); });
     }
 
     async hookupMonitorStream() {

@@ -38,6 +38,8 @@ class CSHClient implements CSHConnector {
 
     hookCommunicationHandler(communicationHandler: CommunicationHandler) {
         communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
+        communicationHandler.addMonitoringHandler(RunnerMessageCode.PING,
+             (message) => this.pingHandler(message) );
     }
 
     getPackage(path = this.PATH): Readable {

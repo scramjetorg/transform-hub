@@ -79,9 +79,6 @@ class LifeCycleController {
             */
             this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler);
 
-            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING,
-                this.client.pingHandler.bind(this.client) );
-
             /**
             *  Pass CommunicationHandler to CSH Client so it can hook its downstreams to it
             */
