@@ -1,0 +1,106 @@
+pipeline {
+  agent {
+    node {
+      label "scp"
+    }
+  }
+  environment {
+      docker_ci_image = "repo.int.scp.ovh/scramjet/nodejs-ci:buster"
+      // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
+      HOME = "."
+  }
+  stages {
+    stage("Checkout SCM") {
+      steps {
+        checkout scm
+      }
+    }
+    stage("Install packages") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn install")
+          }
+        }  
+      }
+    }
+    stage("Build packages") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn build")
+          }
+        }  
+      }
+    }
+    stage("Build docker images") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside("-v /var/run/docker.sock:/var/run/docker.sock") {
+            sh("yarn build:docker")
+          }
+        }  
+      }
+    }
+    stage("Prepack packages") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn prepack")
+          }
+        }  
+      }
+    }
+    stage("Prepare sample") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            dir("packages/pre-runner") {
+              sh("yarn prepare-sample-tar")
+            }
+          }
+        }  
+      }
+    }
+    stage("Start Sequence") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            dir("dist/supervisor/bin") {
+              sh("SEQUENCE_PATH=../../../packages/pre-runner/sample-package/package.tar.gz node supervisor.js")
+            }
+          }
+        }  
+      }
+    }
+  }
+  post {
+    always {
+      // When successed currentBuild.result is null
+      script {
+        if (currentBuild.result == null) {
+          currentBuild.result = 'SUCCESS'
+        }
+      }
+      echo "Cleaning.."
+      cleanWs()
+    }
+    // Slack Notifications syntax: https://www.jenkins.io/doc/pipeline/steps/slack/
+    unsuccessful {
+      script {
+        // CHANGE_ID is set only for pull requests
+        if (env.CHANGE_ID) {
+          slackSend (color: '#FF0000', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) failed.")
+        }
+      }
+    }
+    fixed {
+      script {
+        // CHANGE_ID is set only for pull requests
+        if (env.CHANGE_ID) {
+          slackSend (color: '#00FF00', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) back to normal.")
+        }
+      }
+    }
+  }
+}
