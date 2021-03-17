@@ -44,15 +44,15 @@ class CSHClient implements CSHConnector {
     controlStreamsHandler() {
         this.vorpal
             .command("alive", "Confirm that sequence is alive when it is not responding")
-            .action(() => this.controlStream.whenWrote(RunnerMessageCode.ALIVE, {}));
+            .action(() => this.controlStream.whenWrote([RunnerMessageCode.ALIVE, {}]));
 
         this.vorpal
             .command("kill", "Kill forcefully sequence")
-            .action(() => this.controlStream.whenWrote(RunnerMessageCode.KILL, {}));
+            .action(() => this.kill());
 
         this.vorpal
             .command("stop", "Stop gracefully sequence")
-            .action(() => this.controlStream.whenWrote(RunnerMessageCode.STOP, {}));
+            .action(() => this.controlStream.whenWrote([RunnerMessageCode.STOP, {}]));
 
         this.vorpal
             .command("event [EVENT_NAME] [JSON | ARRAY | ... ]", "Send event to the sequence")
@@ -94,14 +94,19 @@ class CSHClient implements CSHConnector {
 
     async kill() {
         await this.controlStream.whenWrote([RunnerMessageCode.KILL, {}]);
-        this.controlStream.whenWrote([RunnerMessageCode.STOP, { timeout: 3000, canCallKeepalive: true }]);
+
+        this.controlStream.whenWrote(
+            [RunnerMessageCode.STOP, {
+                timeout: 3000, canCallKeepalive: true
+            }]
+        );
     }
 
     async pingHandler(message: EncodedMessage<RunnerMessageCode.PING>) {
         const pongMsg: HandshakeAcknowledgeMessage = {
             msgCode: RunnerMessageCode.PONG,
             appConfig: { key: "app configuration value TODO" },
-            arguments: ["../../package/data.json", "out.txt"]//TODO think how to avoid passing relative path (from runner)
+            arguments: ["../../package/data.json", "out.txt"] //TODO think how to avoid passing relative path (from runner)
         };
 
         await this.controlStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
