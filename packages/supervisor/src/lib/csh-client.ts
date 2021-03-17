@@ -59,7 +59,7 @@ class CSHClient implements CSHConnector {
             .action((eventName: string, message: string) => {
                 let obj = eval(message); // temp eval
 
-                this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, obj }]);
+                return this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, obj }]);
             });
 
         this.vorpal
@@ -68,7 +68,7 @@ class CSHClient implements CSHConnector {
             .action((rate: string) => {
                 let rateNum = parseInt(rate, 10);
 
-                isNaN(rateNum)
+                return isNaN(rateNum)
                     ? this.vorpal.log(this.errors.notNumber)
                     : this.controlStream.whenWrote([RunnerMessageCode.MONITORING_RATE, { rateNum }]);
             });
