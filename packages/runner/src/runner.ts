@@ -91,7 +91,8 @@ export class Runner {
     }
 
     async handleKillRequest(): Promise<void> {
-        throw new Error("Method not implemented.");
+        require("child_process").execSync(`echo "" > ${this.controlFifoPath}`);
+        process.exit(0);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -189,7 +190,7 @@ export class Runner {
     /**
      * run sequence
      *
-     * @param args arguments that the app will be called with
+     * @param args {any[]} arguments that the app will be called with
      */
     runSequence(args: any[]) {
         const sequence: any = this.getSequence();

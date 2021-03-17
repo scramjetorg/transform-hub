@@ -10,13 +10,13 @@ import {
 } from "@scramjet/types";
 import { exec } from "child_process";
 import { createReadStream, createWriteStream } from "fs";
-import { chmod, mkdtemp } from "fs/promises";
+import { chmod, mkdtemp, rmdir } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
 import * as shellescape from "shell-escape";
 import { PassThrough, Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerHelper, DockerVolume } from "./types";
+import { DockerAdapterResources, DockerHelper } from "./types";
 
 class LifecycleDockerAdapter implements LifeCycle {
     private dockerHelper: DockerHelper;
@@ -39,6 +39,8 @@ class LifecycleDockerAdapter implements LifeCycle {
     private runnerStderr: PassThrough;
     private monitorStream: DelayedStream;
     private controlStream: DelayedStream;
+
+    private resources: DockerAdapterResources = {};
 
     constructor() {
         this.runnerStdin = new PassThrough();
@@ -96,11 +98,12 @@ class LifecycleDockerAdapter implements LifeCycle {
 
     identify(stream: Readable): MaybePromise<RunnerConfig> {
         return new Promise(async (resolve) => {
-            const volume: DockerVolume = await this.dockerHelper.createVolume();
+            this.resources.volumeId = await this.dockerHelper.createVolume();
+
             const { streams, wait } = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
                 volumes: [
-                    { mountPoint: "/package", volume }
+                    { mountPoint: "/package", volume: this.resources.volumeId }
                 ],
                 autoRemove: true
             });
@@ -122,7 +125,7 @@ class LifecycleDockerAdapter implements LifeCycle {
                             ...res.engines
                         },
                         sequencePath: res.main,
-                        packageVolumeId: volume
+                        packageVolumeId: this.resources.volumeId
                     });
                 });
 
@@ -145,35 +148,54 @@ class LifecycleDockerAdapter implements LifeCycle {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async run(config: RunnerConfig): Promise<ExitCode> {
-        let createdDir = await this.createFifoStreams("control.fifo", "monitor.fifo");
+        this.resources.fifosDir = await this.createFifoStreams("control.fifo", "monitor.fifo");
 
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));
 
-        return new Promise(async (resolve) => {
+        return new Promise(async (resolve, reject) => {
             const { streams, containerId } = await this.dockerHelper.run({
                 imageName: this.imageConfig.runner || "",
                 volumes: [
                     { mountPoint: "/package", volume: config.packageVolumeId || "" }
                 ],
                 binds: [
-                    `${createdDir}:/pipes`
+                    `${this.resources.fifosDir}:/pipes`
                 ],
-                envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`]
+                envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
+                autoRemove: true
             });
 
             this.runnerStdin.pipe(streams.stdin);
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
 
-            await this.dockerHelper.wait(containerId, { condition: "not-running" });
-            resolve(0);
+            const { error, statusCode } = await this.dockerHelper.wait(containerId, { condition: "removed" });
+
+            console.log(
+                "Runner container finished with exit code", statusCode
+            );
+
+            if (error) {
+                reject(statusCode);
+            } else {
+                resolve(statusCode);
+            }
         });
     }
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    cleanup(): MaybePromise<void> {
+    async cleanup(): MaybePromise<void> {
+        if (this.resources.volumeId) {
+            await this.dockerHelper.removeVolume(this.resources.volumeId);
+            console.log("Volume removed");
+        }
+
+        if (this.resources.fifosDir) {
+            await rmdir(this.resources.fifosDir, { recursive: true });
+            console.log("Fifo folder removed");
+        }
     }
 
     // returns url identifier of made snapshot

@@ -1,3 +1,5 @@
+import { ExitCode } from "@scramjet/types";
+import { PathLike } from "node:fs";
 import { Stream, Writable } from "stream";
 
 /**
@@ -97,6 +99,16 @@ export type DockerAdapterStreams = {
      */
     stderr: Stream
 };
+
+export type ExitData = {
+    error: Error,
+    statusCode: ExitCode
+}
+
+export type DockerAdapterResources = {
+    volumeId?: DockerVolume,
+    fifosDir?: PathLike
+}
 
 export type DockerAdapterWaitOptions = {
     condition: "not-running" | "next-exit" | "removed"
@@ -205,6 +217,8 @@ export interface DockerHelper {
     /**
      *
      * @param {DockerContainer} container
+     *
+     * @returns {Promise<ExitCode>}
      */
-    wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<void>;
+    wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData>;
 }

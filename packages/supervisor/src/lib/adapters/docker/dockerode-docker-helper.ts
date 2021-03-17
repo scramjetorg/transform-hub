@@ -6,7 +6,7 @@ import {
     DockerAdapterStreams, DockerAdapterVolumeConfig,
     DockerAdapterWaitOptions,
     DockerContainer,
-    DockerHelper, DockerImage, DockerVolume
+    DockerHelper, DockerImage, DockerVolume, ExitData
 } from "./types";
 
 type DockerodeVolumeMountConfig = {
@@ -128,7 +128,12 @@ export class DockerodeDockerHelper implements DockerHelper {
         });
     }
 
-    wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<void> {
-        return this.dockerode.getContainer(container).wait(options);
+    async wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData> {
+        const { StatusCode, Error } = await this.dockerode.getContainer(container).wait(options);
+
+        return Promise.resolve({
+            statusCode: StatusCode, error: Error
+        });
+
     }
 }

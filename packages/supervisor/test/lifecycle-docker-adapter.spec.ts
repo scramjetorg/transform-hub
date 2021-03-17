@@ -108,7 +108,11 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         pipe: () => { }
     });
 
-    dockerHelperMockWaitStub.resolves();
+
+    dockerHelperMockWaitStub.resolves({
+        error: false,
+        statusCode: 0
+    });
 
     dockerHelperMockRunStub.resolves({
         streams: {
