@@ -91,8 +91,11 @@ export class Runner {
     }
 
     async handleKillRequest(): Promise<void> {
-        require("child_process").execSync(`echo "" > ${this.controlFifoPath}`);
-        process.exit(0);
+        require("child_process").exec(`echo "" > ${this.controlFifoPath}`);
+        await new Promise(res => { 
+            res(); 
+            setTimeout(() => process.exit(10), 5000).unref();
+        });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
