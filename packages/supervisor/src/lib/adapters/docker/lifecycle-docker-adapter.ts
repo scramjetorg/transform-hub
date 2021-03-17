@@ -146,7 +146,6 @@ class LifecycleDockerAdapter implements LifeCycle {
         communicationHandler.hookLifecycleStreams(downstreamStreamsConfig);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async run(config: RunnerConfig): Promise<ExitCode> {
         this.resources.fifosDir = await this.createFifoStreams("control.fifo", "monitor.fifo");
 
