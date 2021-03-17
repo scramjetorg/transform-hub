@@ -37,4 +37,4 @@ USER runner
 RUN yarn install --frozen-lockfile --production \
     && yarn cache clean && chmod +x ./bin/start-runner.js
 
-CMD node bin/start-runner $SEQUENCE_PATH $FIFOS_DIR
+CMD node bin/start-runner

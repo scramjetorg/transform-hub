@@ -183,16 +183,20 @@ class LifecycleDockerAdapter implements LifeCycle {
         });
     }
 
-    async cleanup(): MaybePromise<void> {
-        if (this.resources.volumeId) {
-            await this.dockerHelper.removeVolume(this.resources.volumeId);
-            console.log("Volume removed");
-        }
+    cleanup(): MaybePromise<void> {
+        return new Promise(async (resolve) => {
+            if (this.resources.volumeId) {
+                await this.dockerHelper.removeVolume(this.resources.volumeId);
+                console.log("Volume removed");
+            }
 
-        if (this.resources.fifosDir) {
-            await rmdir(this.resources.fifosDir, { recursive: true });
-            console.log("Fifo folder removed");
-        }
+            if (this.resources.fifosDir) {
+                await rmdir(this.resources.fifosDir, { recursive: true });
+                console.log("Fifo folder removed");
+            }
+
+            resolve();
+        });
     }
 
     // returns url identifier of made snapshot

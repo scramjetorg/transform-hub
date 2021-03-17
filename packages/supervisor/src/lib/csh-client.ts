@@ -94,12 +94,6 @@ class CSHClient implements CSHConnector {
 
     async kill() {
         await this.controlStream.whenWrote([RunnerMessageCode.KILL, {}]);
-
-        this.controlStream.whenWrote(
-            [RunnerMessageCode.STOP, {
-                timeout: 3000, canCallKeepalive: true
-            }]
-        );
     }
 
     async pingHandler(message: EncodedMessage<RunnerMessageCode.PING>) {
