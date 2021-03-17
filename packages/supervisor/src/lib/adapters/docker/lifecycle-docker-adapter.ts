@@ -184,8 +184,6 @@ class LifecycleDockerAdapter implements LifeCycle {
         });
     }
 
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async cleanup(): MaybePromise<void> {
         if (this.resources.volumeId) {
             await this.dockerHelper.removeVolume(this.resources.volumeId);
