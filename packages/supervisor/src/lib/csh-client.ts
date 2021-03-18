@@ -52,6 +52,15 @@ class CSHClient implements CSHConnector {
 
         this.vorpal
             .command("stop", "Stop gracefully sequence")
+            /* 
+            * @feature/analysis-stop-kill-invocation
+            * Stop message must include two properties:
+            * timeout: number - the Sequence will be stopped after the provided timeout (miliseconds)
+            * canCallKeepalive: boolean - indicates whether Sequence can prolong operation to complete the task
+            * required for AppContext's:
+            * stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
+            * once the promise is resolved the Runner assumes it is safe to stop the Sequence
+            */
             .action(() => this.controlStream.whenWrote([RunnerMessageCode.STOP, {}]));
 
         this.vorpal

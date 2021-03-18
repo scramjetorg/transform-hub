@@ -2,7 +2,7 @@ import { RunnerMessageCode } from "../.";
 
 export type StopSequenceMessageData = {
 
-    /** The number of seconds before the Sequence will be killed. */
+    /** The number of milliseconds before the Sequence will be killed. */
     timeout: number;
 
     /** Informs if keepAlive can be called to prolong the running of the Sequence. */

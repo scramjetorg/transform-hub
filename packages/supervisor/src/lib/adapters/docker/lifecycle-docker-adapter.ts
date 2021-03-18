@@ -214,11 +214,28 @@ class LifecycleDockerAdapter implements LifeCycle {
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     stop(): MaybePromise<void> {
+        /*
+        * @feature/analysis-stop-kill-invocation
+        * This method is called by the LifeCycle Controller instance when it receives the stop message.
+        * The method requires two arguments: 
+        * timeout: number
+        * canCallKeepalive: boolean
+        * that must be added to the LifeCycle interface.
+        * We must create a stop message and sent it using the control stream.
+        * The Runner should send us back the response with the Sequence's status (not completed yet), 
+        *  and (optionally) exit code and error (if the Sequence stopped but threw errors).
+        */
     }
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     kill(): MaybePromise<void> {
+        /*
+        * @feature/analysis-stop-kill-invocation
+        * This method is called by the LifeCycle Controller instance when it receives the kill message.
+        * We must creates the kill message and sent it using the control stream.
+        * The Runner should send us the response with exit code using the monitoring stream.
+        */
     }
 }
 
