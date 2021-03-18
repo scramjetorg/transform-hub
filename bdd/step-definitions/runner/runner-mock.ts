@@ -37,11 +37,7 @@ When("a message {string} is sent", (message: string) => {
     runner.stdin.end();
 });
 
-<<<<<<< HEAD
-Then("a message {string} is received", async (message:string) => {
-=======
 Then("a message {string} is received", async (message: string) => {
->>>>>>> 782169b... fix bdd tests
     const data = await StringStream.from(runner.stdout).lines().slice(0, 1).whenRead();
 
     assert.equal(data, runnerMessages.get(message));
