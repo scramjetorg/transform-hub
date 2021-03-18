@@ -5,12 +5,12 @@
   "types": "dist/index",
   "scripts": {
     "test": "echo \"Error: no test specified\"",
-    "build": "tsc -p tsconfig.json && cp data.csv dist/",
+    "build": "tsc -p tsconfig.json",
     "clean": "rimraf -rf ./dist",
     "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.build.json",
     "prepublishOnly": "yarn run build",
-    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js",
+    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
     "start": "node dist/index.js"
   },
   "engines": {
