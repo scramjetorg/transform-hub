@@ -5,32 +5,42 @@ import { exec } from "child_process";
 import * as fs from "fs";
 
 const lineByLine = require("n-readlines");
-const testPath = "../dist/samples/hello-alice/";
+const testPath = "../dist/samples/example/";
+const supervisorExecutableFilePath = "../dist/supervisor/bin/supervisor.js";
 
 Given("input file containing data {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
 When("scramjet server porcesses input file as a stream", async () => {
-    // ToDo: change command to: 'run examples in CSI'
-    await promisify(exec)(`cd ${testPath}; npm i; node ../../scramjet-server/index --source names.txt`, { encoding: "utf-8" });
+    process.env.SEQUENCE_PATH = '../packages/pre-runner/sample-package/package.tar.gz';
+
+    await new Promise(async (resolve, reject) => {
+        exec(`node ${supervisorExecutableFilePath} > dataOut.txt`, { timeout: 2000 }, (error, stdout, stderr) => {
+            if (error) {
+                //kill sequence workaround to delete in the future
+                resolve(1);
+                return;
+            }
+            resolve(1);
+        });
+    });
 });
 
 Then("file {string} is generated", async (filename) => {
-    assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
+    assert.equal(await promisify(fs.exists)(`${filename}`), true);
 });
 
 Then("file {string} in each line contains {string} followed by name from file {string} finished by {string}", (file1, greeting, file2, suffix) => {
-    const input = new lineByLine(`${testPath}${file2}${suffix}`); // zmienić na pobieranie linii z jsona
-    const output = new lineByLine(`${testPath}${file1}${suffix}`);
-    // w tym miejscu wczytaj tablicę jsonów z input file do zmiennej tablicowej
+    const output = new lineByLine(`${file1}`);
+
+    let input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, 'utf8'));
     let line1;
     let line2;
-
-    while ((line1 = input.next()) && (line2 = output.next())) {
-        // eslint-disable-next-line max-len
-        // pobieraj przez index kolejne komórki z tablicy z jsona z input file i potównaj z wierszem z pliku wyjściowego output file
-        assert.deepEqual(greeting + line1, "" + line2);
-        // assert.deepEqual(greeting + jsonTab[i].name + suffix, "" + line2);
+    let i = 0;
+    
+    output.next();//skipp first line
+    while ((line2 = output.next()) && (line1 = input[i++].name)) {
+        assert.deepEqual(greeting + line1 + suffix, "" + line2);
     }
 });
