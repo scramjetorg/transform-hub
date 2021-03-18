@@ -77,6 +77,12 @@ pipeline {
           }
         }
         stage("BDD") {
+          // Currently runner is not exiting correctly, so to avoid hanging job it will abort after timeout.
+          // It will still end with error if something goes wrong in this stage.
+          // Saw on: https://e.printstacktrace.blog/how-to-time-out-jenkins-pipeline-stage-and-keep-the-pipeline-running/
+          options {
+            timeout(time: 10, unit: "SECONDS")
+          }
           steps {
             script {
               Exception caughtException = null
