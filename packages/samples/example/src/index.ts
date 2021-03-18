@@ -14,19 +14,24 @@ interface Person {
 const mod: InertApp = function(input, ffrom, fto) {
     this.on("test", () => console.error("Got test event"));
 
-    return fs.createReadStream(ffrom)
-        .pipe(JSONStream.parse("*"))
-        .pipe(new scramjet.DataStream())
-        .do(
-            (names: Person) => {
-                console.log(`Hello ${names.name}!`);
-            }
-        ).map(
-            (names: Person) => {
-                return `Hello ${names.name}! \n`;
-            }
-        )
-        .pipe(fs.createWriteStream(fto));
+    return new Promise((resolve) => {
+        fs.createReadStream(ffrom)
+            .pipe(JSONStream.parse("*"))
+            .pipe(new scramjet.DataStream())
+            .do(
+                (names: Person) => {
+                    console.log(`Hello ${names.name}!`);
+                }
+            ).map(
+                (names: Person) => {
+                    return `Hello ${names.name}! \n`;
+                }
+            )
+            .pipe(fs.createWriteStream(fto))
+            .on("finish", () => {
+                resolve();
+            });
+    });
 
 };
 

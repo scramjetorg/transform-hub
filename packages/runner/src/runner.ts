@@ -61,6 +61,11 @@ export class Runner {
             .catch(async (error) => { console.error("An error occurred during parsing control message.", error.stack); });
     }
 
+    cleanupControlStream() {
+        this.controlStream.destroy();
+        require("child_process").exec(`echo "\r\n" > ${this.controlFifoPath}`);
+    }
+
     async hookupMonitorStream() {
         this.monitorStream = createWriteStream(this.monitorFifoPath);
     }
@@ -91,8 +96,7 @@ export class Runner {
     }
 
     async handleKillRequest(): Promise<void> {
-        this.controlStream.destroy();
-        require("child_process").exec(`echo "\r\n" > ${this.controlFifoPath}`);
+        this.cleanupControlStream();
 
         setTimeout(() => {
             process.exit(10);
@@ -196,13 +200,15 @@ export class Runner {
      *
      * @param args {any[]} arguments that the app will be called with
      */
-    runSequence(args: any[]) {
+    async runSequence(args: any[]) {
         const sequence: any = this.getSequence();
 
-        sequence.call(
+        await sequence.call(
             this.context,
             new DataStream() as unknown as ReadableStream<never>,
             ...args
         );
+
+        this.cleanupControlStream();
     }
 }
