@@ -81,7 +81,7 @@ pipeline {
           // It will still end with error if something goes wrong in this stage.
           // Saw on: https://e.printstacktrace.blog/how-to-time-out-jenkins-pipeline-stage-and-keep-the-pipeline-running/
           options {
-            timeout(time: 10, unit: "SECONDS")
+            timeout(time: 60, unit: "SECONDS")
           }
           steps {
             script {
