@@ -91,8 +91,10 @@ export class Runner {
     }
 
     async handleKillRequest(): Promise<void> {
+        this.controlStream.destroy();
+        require("child_process").exec(`echo "\r\n" > ${this.controlFifoPath}`);
+
         setTimeout(() => {
-            require("child_process").exec(`echo "\r\n" > ${this.controlFifoPath}`);
             process.exit(10);
         }, 5000).unref();
     }
