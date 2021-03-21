@@ -24,6 +24,7 @@ export type DockerRunnerConfig = RunnerConfig & {
 export type ExitCode = number;
 
 export interface LifeCycle {
+    init(): MaybePromise<void>;
     // lifecycle operations
     identify(stream: Readable): MaybePromise<RunnerConfig>;
     // resolves when

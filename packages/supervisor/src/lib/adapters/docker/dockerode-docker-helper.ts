@@ -41,7 +41,7 @@ export class DockerodeDockerHelper implements DockerHelper {
         envs: string[] = [],
         autoRemove: boolean = false
     ): Promise<DockerContainer> {
-        return this.dockerode.createContainer({
+        const { id } = await this.dockerode.createContainer({
             Image: dockerImage,
             AttachStdin: true,
             AttachStdout: true,
@@ -55,7 +55,9 @@ export class DockerodeDockerHelper implements DockerHelper {
                 Mounts: this.translateVolumesConfig(volumes),
                 AutoRemove: autoRemove
             }
-        }).then((container: Dockerode.Container) => container.id);
+        });
+
+        return id;
     }
 
     startContainer(containerId: DockerContainer): Promise<void> {
@@ -78,7 +80,7 @@ export class DockerodeDockerHelper implements DockerHelper {
         });
     }
 
-    removeVolume(volumeId: DockerVolume): Promise<void> {
+    async removeVolume(volumeId: DockerVolume): Promise<void> {
         return this.dockerode.getVolume(volumeId).remove();
     }
 
@@ -86,54 +88,51 @@ export class DockerodeDockerHelper implements DockerHelper {
         return this.dockerode.getContainer(container).attach(opts);
     }
 
-    run(config: DockerAdapterRunConfig): Promise<DockerAdapterRunResponse> {
-        return new Promise(async (resolve) => {
-            const streams: DockerAdapterStreams = {
-                stdin: new PassThrough(),
-                stdout: new PassThrough(),
-                stderr: new PassThrough()
-            };
+    async run(config: DockerAdapterRunConfig): Promise<DockerAdapterRunResponse> {
+        const streams: DockerAdapterStreams = {
+            stdin: new PassThrough(),
+            stdout: new PassThrough(),
+            stderr: new PassThrough()
+        };
 
-            let container = await this.createContainer(
-                config.imageName,
-                config.volumes,
-                config.binds,
-                config.envs,
-                config.autoRemove);
-            let stream = await this.attach(container, {
-                stream: true,
-                stdin: true,
-                stdout: true,
-                stderr: true,
-                hijack: true
-            });
-
-            stream.on("close", () => {
-                streams.stdout.emit("end");
-                streams.stderr.emit("end");
-            });
-
-            await this.startContainer(container);
-
-            streams.stdin.pipe(stream);
-
-            this.dockerode.getContainer(container)
-                .modem.demuxStream(stream, streams.stdout, streams.stderr);
-
-            resolve({
-                streams: streams,
-                containerId: container,
-                wait: () => this.wait(container, { condition: "not-running" })
-            });
+        let container = await this.createContainer(
+            config.imageName,
+            config.volumes,
+            config.binds,
+            config.envs,
+            config.autoRemove);
+        // ------
+        let stream = await this.attach(container, {
+            stream: true,
+            stdin: true,
+            stdout: true,
+            stderr: true,
+            hijack: true
         });
+
+        stream.on("close", () => {
+            streams.stdout.emit("end");
+            streams.stderr.emit("end");
+        });
+
+        await this.startContainer(container);
+
+        streams.stdin.pipe(stream);
+
+        this.dockerode.getContainer(container)
+            .modem.demuxStream(stream, streams.stdout, streams.stderr);
+
+        return {
+            streams: streams,
+            containerId: container,
+            wait: () => this.wait(container, { condition: "not-running" })
+        };
     }
 
     async wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData> {
         const { StatusCode, Error } = await this.dockerode.getContainer(container).wait(options);
 
-        return Promise.resolve({
-            statusCode: StatusCode, error: Error
-        });
-
+        // TODO: why are we resolving on an error - maybe just throw?
+        return { statusCode: StatusCode, error: Error };
     }
 }

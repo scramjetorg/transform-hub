@@ -5,6 +5,7 @@
 export type AppErrorCode =
     "GENERAL_ERROR" |
     "COMPILE_ERROR" |
+    "SEQUENCE_RUN_BEFORE_INIT" |
     "SEQUENCE_MISCONFIGURED";
 /**
  * Application error class

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { Runner } from "../runner";
+import * as fs from "fs";
 
-const fs = require("fs");
 const sequencePath: string = "/package/" + process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const fifosPath: string = process.env.FIFOS_DIR || "";
 
@@ -28,4 +28,4 @@ if (!fs.existsSync(sequencePath)) {
 
 const runner: Runner = new Runner(sequencePath, fifosPath);
 
-runner.init();
+runner.main();

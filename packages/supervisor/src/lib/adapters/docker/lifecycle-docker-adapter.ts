@@ -1,5 +1,5 @@
 import { imageConfig } from "@scramjet/csi-config";
-import { CommunicationHandler } from "@scramjet/model";
+import { AppError, CommunicationHandler } from "@scramjet/model";
 import {
     DelayedStream,
     DownstreamStreamsConfig,
@@ -21,14 +21,15 @@ import { DockerAdapterResources, DockerHelper } from "./types";
 class LifecycleDockerAdapter implements LifeCycle {
     private dockerHelper: DockerHelper;
 
+    // TODO: why these ignores?
     // @ts-ignore
     private runnerConfig?: string;
     // @ts-ignore
     private prerunnerConfig?: string;
-    // @ts-ignore
-    private monitorFifoPath: string;
-    // @ts-ignore
-    private controlFifoPath: string;
+
+    private monitorFifoPath?: string;
+    private controlFifoPath?: string;
+
     private imageConfig: {
         runner?: string,
         prerunner?: string
@@ -148,6 +149,13 @@ class LifecycleDockerAdapter implements LifeCycle {
 
     async run(config: RunnerConfig): Promise<ExitCode> {
         this.resources.fifosDir = await this.createFifoStreams("control.fifo", "monitor.fifo");
+
+        if (
+            typeof this.monitorFifoPath === "undefined" ||
+            typeof this.controlFifoPath === "undefined"
+        ) {
+            throw new AppError("SEQUENCE_RUN_BEFORE_INIT");
+        }
 
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));

@@ -14,6 +14,7 @@ export enum RunnerMessageCode {
     SNAPSHOT_RESPONSE = 3005
 }
 
+// TODO: this not used anywhere?
 export type RunnerMessage = [
     RunnerMessageCode,
     object

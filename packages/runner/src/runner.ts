@@ -2,18 +2,17 @@ import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, Monitoring
 import { AppConfig, Application, AutoAppContext } from "@scramjet/types";
 import { EncodedControlMessage } from "@scramjet/types";
 import { ReadableStream, WritableStream } from "@scramjet/types";
+import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
 import { DataStream, StringStream } from "scramjet";
 
 export class Runner {
     private emitter;
-    // @ts-ignore
-    private statusIntervalHandle: any;
     private context?: AutoAppContext<any, any>;
-    private interval?: NodeJS.Timeout;
-    private monitorStream?: WritableStream<any>;//TODO change any to EncodedMonitoringMessage
-    private controlStream?: any;//TODO change type ReadableStream<EncodedControlMessage>;
+    private monitoringInterval?: NodeJS.Timeout;
+    private monitorStream?: WritableStream<any>; //TODO change any to EncodedMonitoringMessage
+    private controlStream?: any; //TODO change type ReadableStream<EncodedControlMessage>;
     private monitorFifoPath: string;
     private controlFifoPath: string;
     private sequencePath: string;
@@ -74,12 +73,15 @@ export class Runner {
                 }
             })
             .run()
-            .catch(async (error) => { console.error("An error occurred during parsing control message.", error.stack); });
+            .catch(async (error) => {
+                console.error("An error occurred during parsing control message.", error.stack);
+            });
     }
 
-    cleanupControlStream() {
+    async cleanupControlStream() {
         this.controlStream.destroy();
-        require("child_process").exec(`echo "\r\n" > ${this.controlFifoPath}`);
+        // TODO: needs error handling and a callback?
+        exec(`echo "\r\n" > ${this.controlFifoPath}`);
     }
 
     async hookupMonitorStream() {
@@ -87,8 +89,10 @@ export class Runner {
     }
 
     async hookupFifoStreams() {
-        this.hookupControlStream();
-        this.hookupMonitorStream();
+        return Promise.all([
+            this.hookupControlStream(),
+            this.hookupMonitorStream()
+        ]);
     }
 
     handleForceConfirmAliveRequest() {
@@ -96,11 +100,11 @@ export class Runner {
     }
 
     async handleMonitoringRequest(data: MonitoringRateMessageData): Promise<void> {
-        if (this.interval) {
-            clearInterval(this.interval);
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
         }
 
-        this.interval = setInterval(() => {
+        this.monitoringInterval = setInterval(() => {
             const message: MonitoringMessageData = { healthy: true };
 
             if (this.context === undefined || this.context.monitor === undefined) {
@@ -124,7 +128,9 @@ export class Runner {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
+        // TODO: use timeout and canKeepAlive from data
         await this.handleStopSequence();
+        // why still throw?
         throw new Error("Method not implemented.");
     }
 
@@ -139,18 +145,25 @@ export class Runner {
     }
 
     async handleReceptionOfHandshake(data: HandshakeAcknowledgeMessageData): Promise<void> {
-        this.initAppContext(data.appConfig);
+        await this.initAppContext(data.appConfig);
+        // TODO: this needs to somehow error handled
         this.runSequence(data.arguments);
     }
 
+    // TODO: this should be the foll class logic
     /**
      * Initialization of runner class.
      * * initilize streams (fifo and std)
      * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)
      */
-    init() {
-        this.hookupFifoStreams();
+    async main() {
+        await this.hookupFifoStreams();
         this.sendHandshakeMessage();
+        // TODO:
+        // await this.waitForHandshakeResponse();
+        // await this.initAppContext()
+        // await this.runSequence();
+        // await this.cleanupControlStream();
     }
 
     /**
@@ -168,6 +181,7 @@ export class Runner {
         // eslint-disable-next-line consistent-this
         const that = this;
 
+        // TODO: perhaps this should be a class in a separate file, this one will get big otherwise
         this.context = {
             config: config,
             AppError: AppError,
@@ -228,6 +242,6 @@ export class Runner {
             ...args
         );
 
-        this.cleanupControlStream();
+        await this.cleanupControlStream();
     }
 }

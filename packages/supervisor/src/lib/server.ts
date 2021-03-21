@@ -1,12 +1,14 @@
 import { createServer, IncomingMessage, Server } from "http";
 
+// TODO: we don't need this here, right?
+
 /**
- * Creates an instance of a new http server. 
- * The server listens on a socket specified by unix path passed as an argument. 
+ * Creates an instance of a new http server.
+ * The server listens on a socket specified by unix path passed as an argument.
  *
  * @example makeServer("/tmp/unix-socket.sock");
- * @param {string} socket The unix socket path which will be used for communication  
- * 
+ * @param {string} socket The unix socket path which will be used for communication
+ *
  * @returns {Server} New http server instance.
  */
 

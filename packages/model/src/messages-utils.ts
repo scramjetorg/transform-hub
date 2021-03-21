@@ -5,12 +5,14 @@ import {
     RunnerMessageCode
 } from ".";
 
+// TODO: this serializes the message to array and deserializeMessage from string.
 /**
-    * Serizalized message
-    * @param msg - an object of message type
-    * @return - a serializable message in a format [msgCode, {msgBody}]
-    * where 'msgCode' is a message type code and 'msgBody' is a message body
-    * */
+ * Serizalized message.
+ *
+ * @param msg - an object of message type
+ * @return - a serializable message in a format [msgCode, {msgBody}]
+ *           where 'msgCode' is a message type code and 'msgBody' is a message body
+ **/
 export function serializeMessage<T extends RunnerMessageCode>({ msgCode, ...msg }: MessageType<T>): RunnerMessage {
     // DO TYPEGUARDS...
 
@@ -20,10 +22,11 @@ export function serializeMessage<T extends RunnerMessageCode>({ msgCode, ...msg 
 }
 
 /**
-    * Get an object of message type from serialized message.
-    * @param { string } msg - a stringified and serialized message
-    * @return { any } - an object of message type
-    * */
+ * Get an object of message type from serialized message.
+ *
+ * @param { string } msg - a stringified and serialized message
+ * @return { any } - an object of message type
+ **/
 export function deserializeMessage(msg: string): MessageType<RunnerMessageCode> {
     try {
         const obj = JSON.parse(msg);

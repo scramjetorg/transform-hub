@@ -9,6 +9,11 @@ export interface CSHConnector {
     PATH: string; // temporrary path to the sequence
 
     /**
+     * Initializes the client
+     */
+    init(): MaybePromise<void>;
+
+    /**
      * Helper method that creates an array with streams.
      * @returns array with stdio, stderr, control, and monitor streams
      */
@@ -24,10 +29,10 @@ export interface CSHConnector {
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.
      * Temporary the file is taken from declared path on local machine.
-     * @param string with path form ENV
+     *
      * @returns stream with file sequence
      */
-    getPackage(path: string): ReadableStream<string>;
+    getPackage(): ReadableStream<string>;
 
     /**
      * Kill message type stream sent via control stream.

@@ -7,7 +7,9 @@ import { Readable, Writable } from "stream";
 import * as vorpal from "vorpal";
 
 class CSHClient implements CSHConnector {
+    // TODO: get this from constructor invocation - move env to bin/
     PATH = process.env.SEQUENCE_PATH || "";
+    // TODO: why is this public?
     errors = {
         notNumber: "Provide a number",
         emptyPath: "Path is empty"
@@ -24,7 +26,6 @@ class CSHClient implements CSHConnector {
             .do((...arr: any[]) => console.log("[from monitoring]", ...arr))
             .run()
             .catch(e => console.error(e));
-        this.init();
     }
 
     upstreamStreamsConfig() {
