@@ -48,7 +48,7 @@ Then("mock runner is not running", async () => {
     assert.equal(runnerProcessStopped, true);
 });
 
-After({ tags: "@mockRunner" }, async function () {
+After({ tags: "@mockRunner" }, async function() {
     if (!runnerProcessStopped) {
         runner.kill(9);
     }
