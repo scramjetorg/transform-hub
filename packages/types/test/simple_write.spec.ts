@@ -1,7 +1,8 @@
+// does this show compile errors in VSCode only for me?
 import { access, constants, createWriteStream } from "fs";
 import { Transform } from "stream";
 import { promisify } from "util";
-import { WritableApp } from "../runner";
+import { WritableApp } from "..";
 
 export const app: WritableApp<number, [{filename?: string}]> = async function abc(
     source, { filename } = {}

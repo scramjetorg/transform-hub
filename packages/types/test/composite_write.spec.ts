@@ -1,18 +1,19 @@
-import { WriteSequence, WritableApp } from "../runner";
-import transform from "./lib/transform";
+import { Gen } from "../src";
+// import { WriteSequence, WritableApp } from "../src/";
+// import transform from "./lib/transform";
 
-export const app: WritableApp<{x: number}, [{test: number}]> =
+export const gen: Gen<{ x:number }, { y:number }> = function* () {
+    let prev: { x: number; } | undefined = yield;
+
+    while (prev) {
+        prev = yield { y: prev.x + 199 };
+    }
+};
+/*
+export const app: WritableApp<{x: number}> =
     function abc(_source) {
         const sequence: WriteSequence<{x: number}> = [
-            _source,
-            // this should fail
-            function* () {
-                let prev: { x: number; } | undefined = yield;
-
-                while (prev) {
-                    prev = yield { y: prev.x + 199 };
-                }
-            },
+            gen,
             function* () {
                 let prev: { y: number; } | undefined = yield;
 
@@ -39,3 +40,4 @@ export const app: WritableApp<{x: number}, [{test: number}]> =
 
         return sequence;
     };
+*/

@@ -4,12 +4,12 @@ import { PassThrough, Readable, Writable } from "stream";
  * This is a polyfill to TypeScripts rather poor expression of `function*`
  * @ignore
  */
-export type Gen<W, R, C extends any[] = []> = (...config: C) => Generator<R, W | void, W>;
+export type Gen<W, R, C extends any[] = any[]> = (...config: C) => Generator<R, void, W>;
 /**
  * This is a polyfill to TypeScripts rather poor expression of `async function*`
  * @ignore
  */
-export type AsyncGen<W, R, C extends any[] = []> = (...config: C) => AsyncGenerator<R, W | void, W>;
+export type AsyncGen<W, R, C extends any[] = any[]> = (...config: C) => AsyncGenerator<R, void, W>;
 /**
  * This is a simple utility type for an argument for `Promise.resolve`
  *

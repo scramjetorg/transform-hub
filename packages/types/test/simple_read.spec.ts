@@ -1,4 +1,4 @@
-import { ReadableApp } from "../runner";
+import { ReadableApp } from "..";
 
 export const app: ReadableApp<{ x: number }, [{ test: number }], {start: number}> =
     async function abc(_source, { test }) {

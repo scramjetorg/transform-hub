@@ -32,12 +32,13 @@ type MulTFunction<T, S, W = any, X = any, Y = any> =
     [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, S>] |
     [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, W>, TFunction<W, S>] |
     never;
+
 // eslint-disable-next-line no-use-before-define, @typescript-eslint/no-unused-vars
-type MulMulTFunction<T, S, Y = any, X = any, W = any, V = any[], U = any[]> =
+type MulMulTFunction<T, S, Y = any, X = any, W = any, A = any, B = any, C = any, D = any, E = any, F = any> =
     [TFunction<T, Y>, TFunction<Y, S>] |
     [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, S>] |
-    [TFunction<T, Y>, ...MulTFunction<Y, X, V>, TFunction<X, S>] |
-    [TFunction<T, Y>, ...MulTFunction<Y, X, U>, ...MulTFunction<X, W, V>, TFunction<W, S>];
+    [TFunction<T, Y>, ...MulTFunction<Y, X, A, B, C>, TFunction<X, S>] |
+    [TFunction<T, Y>, ...MulTFunction<Y, X, A, B, C>, ...MulTFunction<X, W, D, E, F>, TFunction<W, S>];
 
 export type TFunctionChain<Consumes, Produces, Z extends any[]> =
     [TFunction<Consumes, Produces>] |

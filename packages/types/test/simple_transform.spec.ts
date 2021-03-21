@@ -1,4 +1,4 @@
-import { TransformApp } from "../runner";
+import { TransformApp } from "..";
 
 export const app: TransformApp<number, {i: number, x: number}, [], {abc: number, from: number}> =
     async function abc(source) {
