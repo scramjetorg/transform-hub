@@ -92,3 +92,28 @@ export class DelayedStream {
         throw new Error("Delayed stream not initialized.");
     }
 }
+
+type SynchronousStreamable<Produces> =
+    PipeableStream<Produces> | AsyncGen<Produces, void> |
+    Gen<Produces, void> | Iterable<Produces> |
+    AsyncIterable<Produces>;
+
+/**
+ * Represents all readable stream types that will be accepted as return values
+ * from {@see TFunction}
+ */
+export type Streamable<Produces> = MaybePromise<SynchronousStreamable<Produces>>;
+
+/**
+ * Helper: A maybe function that returns maybe a promise of a streamable.
+ *
+ * Acceptable results:
+ *
+ * - Streamable<Produces>
+ * - () => Streamable<Produces>
+ * - Promise<Streamable<Produces>>
+ * - () => Promise<Streamable<Produces>>
+ *
+ * @ignore
+ */
+export type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;

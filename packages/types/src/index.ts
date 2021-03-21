@@ -1,5 +1,6 @@
 export * from "./runner";
 export * from "./utils";
+export * from "./functions";
 export * from "./message-streams";
 export * from "./lifecycle";
 export * from "./csh-client";

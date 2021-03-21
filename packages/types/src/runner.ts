@@ -2,78 +2,10 @@ import { exposeSequenceSymbol } from "@scramjet/symbols";
 import {
     AppErrorCode,
     AppError,
-    AsyncGen,
-    FReturns,
-    Gen,
     MaybePromise,
-    PipeableStream,
     ReadableStream
 } from ".";
-
-/**
- * Represents all readable stream types that will be accepted as return values from {@see TFunction}
- */
-export type Streamable<Produces> =
-    PipeableStream<Produces> |
-    AsyncGen<Produces, void> |
-    Gen<Produces, void> |
-    Iterable<Produces> |
-    AsyncIterable<Produces>;
-
-/**
- * Helper: A maybe function that returns maybe a promise of a streamable.
- *
- * Acceptable results:
- *
- * - Streamable<Produces>
- * - () => Streamable<Produces>
- * - Promise<Streamable<Produces>>
- * - () => Promise<Streamable<Produces>>
- *
- * @ignore
- */
-type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;
-
-/**
- *
- */
-export type ReadFunction<Produces> = (...parameters: any[]) => StreambleMaybeFunction<Produces>;
-export type WriteFunction<Consumes> = (stream: ReadableStream<Consumes>, ...parameters: any[]) => MaybePromise<void>;
-export type TranformFunction<Consumes, Produces> =
-    (stream: ReadableStream<Consumes>, ...parameters: any[]) => StreambleMaybeFunction<Produces>;
-
-export type RFunction<Produces> = Streamable<Produces> | ReadFunction<Produces>;
-export type TFunction<Consumes, Produces> =
-    AsyncGen<Produces, Consumes> |
-    Gen<Produces, Consumes> |
-    TranformFunction<Consumes, Produces>
-    ;
-export type WFunction<Consumes> = TFunction<Consumes, never>;
-
-type ArrayMin<Y, X, W, V extends any[]> = [] | [Y] | [Y, X] | [Y, X, W, V];
-
-// @ts-ignore
-type MulTFunction<T, S, W = any, X = any, Y = any> =
-    [TFunction<T, S>] |
-    [TFunction<T, Y>, TFunction<Y, S>] |
-    [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, S>] |
-    [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, W>, TFunction<W, S>] |
-    never
-    ;
-
-// @ts-ignore
-// eslint-disable-next-line no-use-before-define, @typescript-eslint/no-unused-vars
-type MulMulTFunction<T, S, Z extends ArrayMin<[Y, X, W, ...V, ...U]>, Y = any, X = any, W = any, V = any[], U = any[]> =
-    [TFunction<T, Y>, TFunction<Y, S>] |
-    [TFunction<T, Y>, TFunction<Y, X>, TFunction<X, S>] |
-    [TFunction<T, Y>, ...MulTFunction<Y, X, V>, TFunction<X, S>] |
-    [TFunction<T, Y>, ...MulTFunction<Y, X, U>, ...MulTFunction<X, W, V>, TFunction<W, S>]
-    ;
-
-type TFunctionChain<Consumes, Produces, Z extends any[]> =
-    [TFunction<Consumes, Produces>] |
-    [...MulMulTFunction<Consumes, Produces, Z>]
-    ;
+import { TFunctionChain, WFunction, RFunction, TFunction } from "./functions";
 
 /**
  * Minimal type of Sequence that doesn't read anything from the outside, doesn't
@@ -88,10 +20,7 @@ export type InertSequence<Z = any, Y = any, X extends any[] = any[]> = TFunction
  */
 export type WriteSequence<Consumes, Y extends any[] = any[], Z = any> =
     [WFunction<Consumes>] |
-    [...TFunctionChain<Consumes, Z, Y>, WFunction<Z>] |
-    [RFunction<Consumes>, WFunction<Consumes>] |
-    [RFunction<Consumes>, ...TFunctionChain<Consumes, Z, Y>, WFunction<Z>]
-    ;
+    [...TFunctionChain<Consumes, Z, Y>, WFunction<Z>];
 
 /**
  * A sequence of functions reads input from a source and outputs it after
@@ -99,8 +28,7 @@ export type WriteSequence<Consumes, Y extends any[] = any[], Z = any> =
  */
 export type ReadSequence<Produces, Y extends any[] = any[], Z = any> =
     [RFunction<Produces>] |
-    [RFunction<Z>, ...TFunctionChain<Z, Produces, Y>]
-    ;
+    [RFunction<Z>, ...TFunctionChain<Z, Produces, Y>];
 
 /**
  * A Transform Sequence is a sequence that accept input, perform operations on it, and
@@ -108,8 +36,7 @@ export type ReadSequence<Produces, Y extends any[] = any[], Z = any> =
  */
 export type TransformSeqence<Consumes, Produces, Z = any, X extends any[] = any[]> =
     [TFunction<Consumes, Produces>] |
-    [...TFunctionChain<Consumes, Z, X>, TFunction<Z, Produces>]
-    ;
+    [...TFunctionChain<Consumes, Z, X>, TFunction<Z, Produces>];
 
 /**
  * Defines scalability options for writable or readable side of the Function:

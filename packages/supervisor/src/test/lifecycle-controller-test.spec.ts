@@ -48,7 +48,7 @@ test("Should store passed parameter in internal fields", t => {
 });
 
 test("Should call LCDA.identify with value returned by client.getPackage", async (t) => {
-    
+
     let getPackageResult = "example-readable";
 
     lcc.lifecycleAdapter.identify.resolves({image: "example-image"});

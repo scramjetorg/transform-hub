@@ -1,4 +1,4 @@
-import { AppError as IAppError, AppErrorCode } from "@scramjet/types/src/app-error";
+import { AppError as IAppError, AppErrorCode } from "@scramjet/types";
 
 export class AppError extends Error implements IAppError {
 

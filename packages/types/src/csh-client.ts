@@ -1,6 +1,6 @@
 import { ReadableStream, MaybePromise } from "./utils";
-import { CommunicationHandler } from "@scramjet/model/src/stream-handler";
-import { UpstreamStreamsConfig } from "@scramjet/types/src/message-streams";
+import { CommunicationHandler } from "@scramjet/model";
+import { UpstreamStreamsConfig } from "@scramjet/types";
 
 export interface CSHConnector {
     /**

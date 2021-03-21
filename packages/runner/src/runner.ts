@@ -1,7 +1,7 @@
 import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
 import { AppConfig, Application, AutoAppContext } from "@scramjet/types";
-import { EncodedControlMessage } from "@scramjet/types/src/message-streams";
-import { ReadableStream, WritableStream } from "@scramjet/types/src/utils";
+import { EncodedControlMessage } from "@scramjet/types";
+import { ReadableStream, WritableStream } from "@scramjet/types";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
 import { DataStream, StringStream } from "scramjet";

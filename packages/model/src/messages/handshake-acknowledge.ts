@@ -1,4 +1,4 @@
-import { AppConfig } from "@scramjet/types/src/runner";
+import { AppConfig } from "@scramjet/types";
 import { RunnerMessageCode } from "../.";
 
 export type HandshakeAcknowledgeMessageData = {
@@ -10,7 +10,7 @@ export type HandshakeAcknowledgeMessageData = {
 
 /**
  * Cloud Server Host (CSH) sends handshake acknowledge message (PONG) to the Runner in response to
- * the received handshake message (PING). 
+ * the received handshake message (PING).
  * The message includes the Sequence configuration information.
  */
 export type HandshakeAcknowledgeMessage = { msgCode: RunnerMessageCode.PONG } & HandshakeAcknowledgeMessageData;
