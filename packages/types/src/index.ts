@@ -2,7 +2,7 @@ export * from "./app-error";
 export * from "./app-context";
 export * from "./application";
 export * from "./communication-handler";
-export * from "./csh-client";
+export * from "./csh-connector";
 export * from "./functions";
 export * from "./lifecycle";
 export * from "./message-streams";
