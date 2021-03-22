@@ -1,6 +1,6 @@
 import { ReadableStream, MaybePromise } from "./utils";
-import { CommunicationHandler } from "@scramjet/model";
 import { UpstreamStreamsConfig } from "@scramjet/types";
+import { ICommunicationHandler } from "./communication-handler";
 
 export interface CSHConnector {
     /**
@@ -24,7 +24,7 @@ export interface CSHConnector {
      * @param communicationHandler
      * Temporary log streams to the console.
      */
-    hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void>;
+    hookCommunicationHandler(communicationHandler: ICommunicationHandler): MaybePromise<void>;
 
     /**
      * Load file with sequence (for example zipped file) from ENV and return it as a stream.

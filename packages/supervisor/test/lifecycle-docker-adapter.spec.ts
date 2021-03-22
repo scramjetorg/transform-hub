@@ -26,6 +26,8 @@ const configStub = sandbox.stub();
 const createReadStreamStub = sandbox.stub();
 
 configStub.returns(Promise.resolve(configFileContents));
+// TODO: these tests seem to act directly on js files.
+//       could these refer ts files here - maybe some ts flavour of this???
 const { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
     fs: {
         createReadStream: createReadStreamStub,
@@ -103,11 +105,14 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
     };
     const lcda = new LifecycleDockerAdapter();
 
+    lcda.monitorFifoPath = new PassThrough();
+    lcda.controlFifoPath = new PassThrough();
+
     // TODO remove when removed from code
     createReadStreamStub.returns({
         pipe: () => { }
     });
-
+    configStub.resolves(configFileContents);
 
     dockerHelperMockWaitStub.resolves({
         error: false,
@@ -125,6 +130,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
 
     lcda.createFifoStreams = sandbox.stub().resolves();
 
+    await lcda.init();
     await lcda.run(config);
 
     t.true(lcda.createFifoStreams.calledOnceWith("control.fifo", "monitor.fifo"));

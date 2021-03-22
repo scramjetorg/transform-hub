@@ -1,5 +1,5 @@
 import { RunnerMessageCode, CommunicationHandler } from "@scramjet/model";
-import { CSHConnector, LifeCycle, LifeCycleConfig } from "@scramjet/types";
+import { CSHConnector, ICommunicationHandler, LifeCycle, LifeCycleConfig } from "@scramjet/types";
 import { Readable } from "stream";
 
 /**
@@ -21,9 +21,9 @@ class LifeCycleController {
 
     /**
     * CommunicationHandler is responsible for all operations on communication streams.
-    * @type {CommunicationHandler}
+    * @type {ICommunicationHandler}
     */
-    private communicationHandler: CommunicationHandler = new CommunicationHandler();
+    private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
     /**
     * CSH Client handles communication with CSH
@@ -95,9 +95,8 @@ class LifeCycleController {
             * Pipe control and monitor streams between CSH Client and LifeCycle Adapter
             * Pipe standard IO streams between CSH Client and LifeCycle Adapter
             */
-            this.communicationHandler
-                .pipeMessageStreams()
-                .pipeStdio();
+            this.communicationHandler.pipeMessageStreams();
+            this.communicationHandler.pipeStdio();
 
             const endOfSequence = this.lifecycleAdapter.run(config);
 
@@ -150,7 +149,7 @@ class LifeCycleController {
 
             }
 
-            return Promise.reject(new Error(error.message));
+            return Promise.reject(error);
         }
 
         /**

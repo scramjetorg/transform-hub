@@ -1,5 +1,5 @@
-import { CommunicationHandler } from "@scramjet/model";
 import { Readable } from "stream";
+import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
 
 export type RunnerConfig = {
@@ -32,7 +32,7 @@ export interface LifeCycle {
     cleanup(): MaybePromise<void>;
     snapshot(): MaybePromise<string>; // returns url identifier of made snapshot
 
-    hookCommunicationHandler(communicationHandler: CommunicationHandler): MaybePromise<void>;
+    hookCommunicationHandler(communicationHandler: ICommunicationHandler): MaybePromise<void>;
 
     monitorRate(rps: number): this;
 

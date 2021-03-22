@@ -67,6 +67,7 @@ class CSHClient implements CSHConnector {
         this.vorpal
             .command("event [EVENT_NAME] [JSON | ARRAY | ... ]", "Send event to the sequence")
             .action((eventName: string, message: string) => {
+                // TODO: needs removal... why not JSON.parse?
                 let obj = eval(message); // temp eval
 
                 return this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, obj }]);
