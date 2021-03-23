@@ -15,10 +15,15 @@ export class HostOne {
     private monitorStream: DataStream;
     // @ts-ignore
     private controlStream: DataStream;
+    // @ts-ignore
+    private sequencePath: string;
+    // @ts-ignore
+    private configPath: string;
 
-    constructor() {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    constructor(sequencePath: string, configPath: string){
         this.controlStream = new DataStream();
-
+        
         this.monitorStream = new DataStream();
         this.monitorStream
             .do((...arr: any[]) => console.log("[from monitoring]", ...arr))
@@ -33,8 +38,8 @@ export class HostOne {
         await this.hookupMonitorStream();
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async createNetServer(socketName: string): Promise<void> {
-        console.log(socketName);//TODO delete
         throw new Error("Method not implemented.");
     }
 
@@ -42,8 +47,8 @@ export class HostOne {
         throw new Error("Method not implemented.");
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async startSupervisor(socketName: string): Promise<void> {
-        console.log(socketName);//TODO delete
         throw new Error("Method not implemented.");
     }
 
