@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/example",
-  "version": "0.2.0",
+  "version": "0.7.0-pre.1",
   "main": "index",
   "types": "dist/index",
   "scripts": {
@@ -29,8 +29,8 @@
     "typescript": "^4.1.3"
   },
   "dependencies": {
-    "scramjet": "^4.35.12",
-    "JSONStream": "^1.3.5"
+    "JSONStream": "^1.3.5",
+    "scramjet": "^4.35.12"
   },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",

@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/supervisor",
-  "version": "0.2.0",
+  "version": "0.7.0-pre.1",
   "description": "The supervisor application for the underlying container and program wrapper executed within it.",
   "main": "./src/index.ts",
   "scripts": {
@@ -43,9 +43,9 @@
     ]
   },
   "dependencies": {
-    "@scramjet/csi-config": "0.2.0",
-    "@scramjet/types": "0.2.0",
-    "@scramjet/model": "0.2.0",
+    "@scramjet/csi-config": "^0.7.0-pre.1",
+    "@scramjet/model": "^0.7.0-pre.1",
+    "@scramjet/types": "^0.7.0-pre.1",
     "dockerode": "^3.2.1",
     "scramjet": "^4.35.12",
     "vorpal": "^1.12.0"
