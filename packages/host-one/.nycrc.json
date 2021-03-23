@@ -1,0 +1,8 @@
+{
+    "all": true,
+    "exclude": [
+        "**/*.spec.ts",
+        ".src",
+        "**/*.ts"
+    ]
+}
