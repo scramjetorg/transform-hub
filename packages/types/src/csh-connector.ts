@@ -1,23 +1,16 @@
 import { ReadableStream, MaybePromise } from "./utils";
-import { UpstreamStreamsConfig } from "@scramjet/types";
 import { ICommunicationHandler } from "./communication-handler";
 
 export interface CSHConnector {
     /**
-     * Cloud Server Host Client (CSHC) communicates with Cloud Server Host (CSH) and LifeCycle Controller (LCC).
+     * CSHConnector is the interface used by the LifeCycle Controller (LCC) 
+     * to communicate with the Cloud Server Host (CSH).
      */
-    PATH: string; // temporrary path to the sequence
 
     /**
      * Initializes the client
      */
     init(): MaybePromise<void>;
-
-    /**
-     * Helper method that creates an array with streams.
-     * @returns array with stdio, stderr, control, and monitor streams
-     */
-    upstreamStreamsConfig(): UpstreamStreamsConfig;
 
     /**
      * Create array of streams on LCC demand than hook streams.
@@ -34,15 +27,4 @@ export interface CSHConnector {
      */
     getPackage(): ReadableStream<string>;
 
-    /**
-     * Kill message type stream sent via control stream.
-     * The message contains RunnerMessageCode.KILL and kill handler.
-     */
-    kill(): MaybePromise<void>;
-
-    /**
-     * Helper method with control message kill code and control message handler.
-     * @returns array with RunnerMessageCode.KILL and empty object
-     */
-    // killHandler(): EncodedMessage<RunnerMessageCode.KILL>;
 }
