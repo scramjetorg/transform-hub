@@ -19,7 +19,7 @@
     "lint": "eslint . --ext .ts",
     "watch": "lerna run watch",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
-    "postinstall": "lerna bootstrap",
+    "postinstall": "lerna exec yarn && lerna link",
     "test": "yarn test:parallel && yarn test:bdd",
     "test:packages": "lerna run test",
     "test:parallel": "lerna run test --parallel",

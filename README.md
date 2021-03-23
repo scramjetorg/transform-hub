@@ -149,6 +149,14 @@ Example of usage:
 $ node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
 ```
 
+### HostOne
+Starting `HostOne` script: `/scramjet-csi-dev/packages/host-one/src/bin/start-host-one.ts `
+
+Example of usage:
+```bash
+$ node dist/host-one/bin/start-host-one.js sequence-file-path config-file-path
+```
+
 ## Documentation
 
 Want to check out more? [See the doc =>](https://github.com/scramjet-cloud-platform/docs)
