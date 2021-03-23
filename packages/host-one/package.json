@@ -16,6 +16,8 @@
   "author": "",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/types": "^0.7.0-pre.1",
+    "@scramjet/model": "^0.7.0-pre.1"
   },
   "devDependencies": {
     "@types/node": "^14.14.22",

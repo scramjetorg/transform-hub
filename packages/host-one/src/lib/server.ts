@@ -12,6 +12,7 @@ import { createServer, IncomingMessage, Server } from "http";
  * @returns {Server} New http server instance.
  */
 
+// TODO probably to change to net server, to verify
 const makeServer: (socketName: string) => Server = () => {
     return createServer((message: IncomingMessage) => {
         message.on("data", (data) => {
