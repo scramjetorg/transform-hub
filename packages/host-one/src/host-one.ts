@@ -6,7 +6,7 @@ import { DataStream } from "scramjet";
 
 export class HostOne {
     // @ts-ignore    
-    private socketName: string;
+    private socketName: string = "";//TODO should be unique
     // @ts-ignore
     private netServer: NetServer;
     // @ts-ignore
@@ -53,6 +53,7 @@ export class HostOne {
     }
 
     async hookupMonitorStream() {
+        //TODO monitorStream has to be demuxed before?
         this.monitorStream
             .stringify()
             .JSONParse()
