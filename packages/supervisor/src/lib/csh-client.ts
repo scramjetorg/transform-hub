@@ -13,9 +13,7 @@ class CSHClient implements CSHConnector {
     private upstreamStreamsConfig?: UpstreamStreamsConfig;
 
     constructor(socketPath: string) {
-        // We get socket path
         this.socketPath = socketPath;
-        // We create a connection
         this.clientSocket = createConnection(this.socketPath);
     }
 
