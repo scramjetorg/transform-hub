@@ -131,9 +131,10 @@ export class HostOne {
         this.vorpal
             .command("event [EVENT_NAME] [ANY]", "Send event and any object, arry, function to the sequence")
             .action((args: any) => {
-                // TODO: needs removal... why not JSON.parse?
                 let eventName = args.EVENT_NAME;
-                let message = args.ANY; // temp eval
+                let argAny = args.ANY;
+                // TODO: eval needs removal... think about diff solution for all cases func, arr, string, num
+                let message = eval(argAny) === null || eval(argAny) === undefined ? argAny : eval(argAny);
 
                 return eventName === undefined && message === undefined
                     ? this.vorpal.log(this.errors.noParams)
@@ -146,8 +147,6 @@ export class HostOne {
             .action((args: any) => {
                 let monitoringRate = parseInt(args.NUMBER, 10);
 
-                console.log();
-
                 return isNaN(monitoringRate)
                     ? this.vorpal.log(this.errors.noParams)
                     : this.controlStream.whenWrote([RunnerMessageCode.MONITORING_RATE, { monitoringRate }]);
@@ -159,10 +158,8 @@ export class HostOne {
             .parse(process.argv);
     }
 
-    /**
-     * For testing puspose only
-     */
-    vorpalExec(command: string) {
-        this.vorpal.exec(command);
+    // For testing puspose only
+    async vorpalExec(command: string) {
+        await this.vorpal.execSync(command);
     }
 }
