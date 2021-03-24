@@ -28,7 +28,7 @@ import * as fs from "fs";
     let socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
 
     if (!fs.existsSync(socketPath)) {
-        console.error("Incorrect run argument: sequence path (" + socketPath + ") does not exists. ");
+        console.error("Incorrect run argument: socket path (" + socketPath + ") does not exists. ");
         process.exit(1);
     }
     const cshc: CSHClient = new CSHClient(socketPath);
