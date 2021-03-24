@@ -17,14 +17,17 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/types": "^0.7.0-pre.1",
-    "@scramjet/model": "^0.7.0-pre.1"
+    "@scramjet/model": "^0.7.0-pre.1",
+    "vorpal": "^1.12.0"
   },
   "devDependencies": {
     "@types/node": "^14.14.22",
     "@types/sinon": "^9.0.10",
+    "@types/vorpal": "^1.12.0",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
-    "typescript": "^4.1.3"
+    "typescript": "^4.1.3",
+    "proxyquire": "^2.1.3"
   },
   "ava": {
     "extensions": [

@@ -24,8 +24,9 @@ export class HostOne {
     private vorpal: any;
 
     errors = {
-        notNumber: "Provide a number",
-        emptyPath: "Path is empty"
+        noParams: "No params provided. Type help to know more.",
+        parsingError: "An error occurred during parsing monitoring message.",
+        noImplement: "Method not implemented."
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -39,24 +40,25 @@ export class HostOne {
         await this.startSupervisor(this.socketName);
         await this.createApiServer();
         await this.hookupMonitorStream();
+        await this.init();
     }
 
-    init() {
+    async init() {
         this.vorpal = new vorpal();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async createNetServer(socketName: string): Promise<void> {
-        throw new Error("Method not implemented.");
+        throw new Error(this.errors.noImplement);
     }
 
     async createApiServer(): Promise<void> {
-        throw new Error("Method not implemented.");
+        throw new Error(this.errors.noImplement);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async startSupervisor(socketName: string): Promise<void> {
-        throw new Error("Method not implemented.");
+        throw new Error(this.errors.noImplement);
     }
 
     async hookupMonitorStream() {
@@ -90,7 +92,7 @@ export class HostOne {
             })
             .run()
             .catch(async (error) => {
-                console.error("An error occurred during parsing monitoring message.", error.stack);
+                console.error(this.errors.parsingError, error.stack);
             });
     }
 
@@ -111,7 +113,7 @@ export class HostOne {
 
         this.vorpal
             .command("kill", "Kill forcefully sequence")
-            .action(() => this.kill());
+            .action(() => this.controlStream.whenWrote([RunnerMessageCode.KILL, {}]));
 
         this.vorpal
             .command("stop", "Stop gracefully sequence")
@@ -127,28 +129,39 @@ export class HostOne {
             .action(() => this.controlStream.whenWrote([RunnerMessageCode.STOP, {}]));
 
         this.vorpal
-            .command("event [EVENT_NAME] [JSON | ARRAY | ... ]", "Send event to the sequence")
-            .action((eventName: string, message: string) => {
+            .command("event [EVENT_NAME] [ANY]", "Send event and any object, arry, function to the sequence")
+            .action((args: any) => {
                 // TODO: needs removal... why not JSON.parse?
-                let obj = eval(message); // temp eval
-
-                return this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, obj }]);
+                let eventName = args.EVENT_NAME;
+                let obj = args.ANY // temp eval
+                
+                return (eventName === undefined && obj === undefined)
+                    ? this.vorpal.log(this.errors.noParams)
+                    : this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, obj }]);
             });
 
         this.vorpal
             .command("monitor [NUMBER]", "Change sequence monitoring rate")
             .alias("rate")
-            .action((rate: string) => {
-                let rateNum = parseInt(rate, 10);
+            .action((args: any) => {
+                let monitoringRate = parseInt(args.NUMBER, 10);
+                console.log()
 
-                return isNaN(rateNum)
-                    ? this.vorpal.log(this.errors.notNumber)
-                    : this.controlStream.whenWrote([RunnerMessageCode.MONITORING_RATE, { rateNum }]);
+                return isNaN(monitoringRate)
+                    ? this.vorpal.log(this.errors.noParams)
+                    : this.controlStream.whenWrote([RunnerMessageCode.MONITORING_RATE, { monitoringRate }]);
             });
 
         this.vorpal
             .delimiter("sequence:")
             .show()
             .parse(process.argv);
+    }
+
+    /**
+     * For testing puspose only
+     */ 
+    vorpalExec(command: string) {
+        this.vorpal.exec(command)
     }
 }
