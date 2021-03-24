@@ -2,10 +2,10 @@
 
 const verbose = [...process.argv]
     .slice(2)
-    .find(val => ['-v', '--verbose'].includes(val))
+    .find(val => ["-v", "--verbose"].includes(val))
 ;
 
-console.error('verbose', verbose)
+console.error("verbose", verbose);
 
 require("../dist/supervisor/index")
     .supervisor()

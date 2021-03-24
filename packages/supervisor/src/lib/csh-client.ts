@@ -1,4 +1,3 @@
-/* eslint-disable dot-notation */
 import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
 import { CSHConnector, EncodedMessage, UpstreamStreamsConfig } from "@scramjet/types";
 import { createReadStream } from "fs";
@@ -18,9 +17,9 @@ class CSHClient implements CSHConnector {
     private controlStream: DataStream;
     private vorpal: any;
 
-    constructor() {
+    constructor(socketPath: string) {
+        console.log(socketPath); // to be deleted
         this.controlStream = new DataStream();
-
         this.monitorStream = new DataStream();
         this.monitorStream
             .do((...arr: any[]) => console.log("[from monitoring]", ...arr))
@@ -53,7 +52,7 @@ class CSHClient implements CSHConnector {
 
         this.vorpal
             .command("stop", "Stop gracefully sequence")
-            /* 
+            /*
             * @feature/analysis-stop-kill-invocation
             * Stop message must include two properties:
             * timeout: number - the Sequence will be stopped after the provided timeout (miliseconds)
