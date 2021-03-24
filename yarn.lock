@@ -1264,6 +1264,11 @@
   resolved "https://repo.int.scp.ovh/repository/npm-all/@types/sinonjs__fake-timers/-/sinonjs__fake-timers-6.0.2.tgz#3a84cf5ec3249439015e14049bd3161419bf9eae"
   integrity sha512-dIPoZ3g5gcx9zZEszaxLSVTvMReD3xxyyDnQUjA6IYDG9Ba2AV0otMPs+77sG9ojB4Qr2N2Vk5RnKeuA0X/0bg==
 
+"@types/trouter@^3.1.0":
+  version "3.1.0"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/@types/trouter/-/trouter-3.1.0.tgz#8a3c7b34352b1cb454217a194e8bf03e5cdf7cc4"
+  integrity sha512-4LPNrqSJknLzILMVXn2P/mh0djNgFvom4T9Y1hmhaB8OBm1cY71bMMSrGRu1q5qF4JZzY6iaGT11BHmCMY/NZg==
+
 "@types/vorpal@^1.12.0":
   version "1.12.0"
   resolved "https://repo.int.scp.ovh/repository/npm-all/@types/vorpal/-/vorpal-1.12.0.tgz#9074d26f6f09d134b99b8fce2ffa0030495e1550"
