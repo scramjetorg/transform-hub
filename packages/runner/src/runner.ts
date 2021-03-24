@@ -34,25 +34,25 @@ export class Runner {
                     await this.handleMonitoringRequest(data as MonitoringRateMessageData);
                     break;
                 case RunnerMessageCode.KILL:
-                /*  @feature/analysis-stop-kill-invocation
-                *   Kill message has no properties.
-                *   We should call AutoAppContext's killHandler().
-                *   The killHandler() call returns void. The call is synchronous.
-                *   We do not wait, the Sequence is terminated without a delay.
-                */
+                    /*  @feature/analysis-stop-kill-invocation
+                    *   Kill message has no properties.
+                    *   We should call AutoAppContext's killHandler().
+                    *   The killHandler() call returns void. The call is synchronous.
+                    *   We do not wait, the Sequence is terminated without a delay.
+                    */
                     await this.handleKillRequest();
                     break;
                 case RunnerMessageCode.STOP:
-                /*  @feature/analysis-stop-kill-invocation
-                *   Stop message has two properties:
-                *   timeout: number - the Sequence will be stopped after the provided timeout (miliseconds),
-                *   canCallKeepalive: boolean - indicates whether Sequence can be prolong operation to complete the task
-                *   We should call AutoAppContext's providing their values:
-                *   stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
-                *   If canCallKeepalive is true the Sequence can call keepAlive to indicate
-                *   the time required to complete the execution.
-                *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
-                */
+                    /*  @feature/analysis-stop-kill-invocation
+                    *   Stop message has two properties:
+                    *   timeout: number - the Sequence will be stopped after the provided timeout (miliseconds),
+                    *   canCallKeepalive: boolean - indicates whether Sequence can be prolong operation to complete the task
+                    *   We should call AutoAppContext's providing their values:
+                    *   stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
+                    *   If canCallKeepalive is true the Sequence can call keepAlive to indicate
+                    *   the time required to complete the execution.
+                    *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
+                    */
                     await this.handleStopRequest(data as StopSequenceMessageData);
                     break;
                 case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
@@ -231,14 +231,21 @@ export class Runner {
      *
      * @param args {any[]} arguments that the app will be called with
      */
-    async runSequence(args: any[]) {
+    async runSequence(args?: any[]) {
         const sequence: any = this.getSequence();
 
-        await sequence.call(
-            this.context,
-            new DataStream() as unknown as ReadableStream<never>,
-            ...args
-        );
+        if (typeof args !== "undefined") {
+            await sequence.call(
+                this.context,
+                new DataStream() as unknown as ReadableStream<never>,
+                ...args
+            );
+        } else {
+            await sequence.call(
+                this.context,
+                new DataStream() as unknown as ReadableStream<never>
+            );
+        }
 
         await this.cleanupControlStream();
     }

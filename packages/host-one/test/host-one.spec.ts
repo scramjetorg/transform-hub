@@ -2,7 +2,7 @@ import test from "ava";
 import { HostOne } from "../src/host-one";
 import * as sinon from "sinon";
 
-test("Placeholder for test. Tests coming after the class gets OK", t => {
+test("Host one creation", t => {
     let hostOne = new HostOne("sequencePath", "configPath");
 
     t.not(hostOne, null);
@@ -136,4 +136,9 @@ test("Vorpal should execute controlStream when command monitor is provided", t =
 
     t.is(conStream.getCall(0).firstArg[0], 4003);
     t.deepEqual(conStream.getCall(0).firstArg[1], { monitoringRate: 200 });
+
+test("Host one creation with sequence args", t => {
+    let hostOne = new HostOne("sequencePath", "configPath", ["arg1", "arg2"]);
+
+    t.not(hostOne, null);
 });

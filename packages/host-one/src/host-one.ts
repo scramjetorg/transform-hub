@@ -1,6 +1,6 @@
 import { Server as NetServer } from "net";
 import { Server as HttpServer } from "http";
-import { EncodedMonitoringMessage } from "@scramjet/types";
+import { AppConfig, EncodedMonitoringMessage } from "@scramjet/types";
 import { RunnerMessageCode, HandshakeAcknowledgeMessage, MessageUtilities } from "@scramjet/model";
 import { DataStream } from "scramjet";
 import * as vorpal from "vorpal";
@@ -29,10 +29,15 @@ export class HostOne {
         noImplement: "Method not implemented."
     }
 
+    private appConfig: AppConfig;
+    private sequenceArgs?: string[];// = ["../../package/data.json", "out.txt"];
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    constructor(sequencePath: string, configPath: string){
+    constructor(sequencePath: string, configPath: string, sequenceArgs?: any[]){
         this.controlStream = new DataStream();
         this.monitorStream = new DataStream();
+        this.appConfig = this.getAppConfig(configPath);
+        this.sequenceArgs = sequenceArgs;
     }
 
     async main(): Promise<void> {
@@ -45,6 +50,10 @@ export class HostOne {
 
     async init() {
         this.vorpal = new vorpal();
+    }
+
+    getAppConfig(configPath: string): AppConfig {
+        return require(configPath);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -99,8 +108,8 @@ export class HostOne {
     async handleHandshake() {
         const pongMsg: HandshakeAcknowledgeMessage = {
             msgCode: RunnerMessageCode.PONG,
-            appConfig: { key: "app configuration value TODO" }, //TODO
-            arguments: ["../../package/data.json", "out.txt"] //TODO think how to avoid passing relative path (from runner)
+            appConfig: this.appConfig,
+            arguments: this.sequenceArgs
         };
 
         await this.controlStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
