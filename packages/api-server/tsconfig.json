@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist"
+    },
+    "extends": "./tsconfig.build.json",
+    "include": ["./src"],
+    "exclude": [
+        "node_modules",
+        "**/*.spec.ts"
+    ],
+    "typedocOptions": {
+        "entryPoints": ["index.ts"],
+        "out": "../../docs/model"
+    }
+}
