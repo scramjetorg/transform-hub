@@ -1,6 +1,7 @@
-import { Stream } from "stream";
-import { cero, CeroRouterConfig, sequentialRouter } from "./0http";
+import { cero, sequentialRouter } from "./0http";
+import { CeroRouterConfig } from "./definitions";
 import { createGetterHandler } from "./get-handler";
+import { createStreamHandler } from "./stream-handler";
 
 export function createServer(conf: { verbose?: boolean }) {
     const config: CeroRouterConfig = {
@@ -16,6 +17,7 @@ export function createServer(conf: { verbose?: boolean }) {
     };
     const { server, router } = cero({ router: sequentialRouter(config) });
     const get = createGetterHandler(router);
+    const { upstream } = createStreamHandler(router);
 
     return {
         server, router,
@@ -23,9 +25,7 @@ export function createServer(conf: { verbose?: boolean }) {
         op(_path: string|RegExp, _op: (args: any) => void): void {
 
         },
-        stream(_path: string|RegExp, _stream: Stream, _config: any): void {
-
-        }
+        upstream
     };
 }
 
