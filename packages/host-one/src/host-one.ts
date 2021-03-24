@@ -30,7 +30,7 @@ export class HostOne {
     }
 
     private appConfig: AppConfig;
-    private sequenceArgs?: string[];// = ["../../package/data.json", "out.txt"];
+    private sequenceArgs?: string[];
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(sequencePath: string, configPath: string, sequenceArgs?: any[]){

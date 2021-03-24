@@ -27,6 +27,10 @@ if (!fs.existsSync(sequencePath)) {
 * @param configPath - config file path
 */
 
+//TODO an array of strings - sequenceArguments can be passed as a third argument 
+//like here:["../../package/data.json", "out.txt"];
+//to discuss what would be the best solution? 
+//to avoid ./start-host-one sequencePath configPath seqArg1 seqArg2 ...
 const hostOne: HostOne = new HostOne(sequencePath, configPath);
 
 hostOne.main();
