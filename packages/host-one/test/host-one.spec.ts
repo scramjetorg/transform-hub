@@ -13,7 +13,7 @@ test("Vorpal should not execute controlStream when params in 'event' command are
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
     hostOne.init();
-    hostOne.controlStreamsHandler();
+    hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("event");
 
     t.is(conStream.getCall(0), null);
@@ -24,7 +24,7 @@ test("Vorpal should execute controlStream with proper params when command 'event
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
     hostOne.init();
-    hostOne.controlStreamsHandler();
+    hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("event fooBar {'foo':'bar'}");
 
     t.is(conStream.getCall(0).firstArg[0], 4005);
@@ -36,7 +36,7 @@ test("Vorpal should execute controlStream with proper code when command 'kill' i
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
     hostOne.init();
-    hostOne.controlStreamsHandler();
+    hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("kill");
 
     t.is(conStream.getCall(0).firstArg[0], 4002);
@@ -47,7 +47,7 @@ test("Vorpal should execute controlStream with proper code when command 'stop' i
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
     hostOne.init();
-    hostOne.controlStreamsHandler();
+    hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("stop");
 
     t.is(conStream.getCall(0).firstArg[0], 4001);
@@ -58,7 +58,7 @@ test("Vorpal should not execute controlStream when proper params in 'monitor' co
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
     hostOne.init();
-    hostOne.controlStreamsHandler();
+    hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("monitor");
     t.is(conStream.getCall(0), null);
 });
@@ -68,7 +68,7 @@ test("Vorpal should execute controlStream when command monitor is provided", t =
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
     hostOne.init();
-    hostOne.controlStreamsHandler();
+    hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("monitor 200");
 
     t.is(conStream.getCall(0).firstArg[0], 4003);
