@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-const verbose = [...process.argv]
-    .slice(2)
+const verbose = [...process.argv.slice(2)]
     .find(val => ["-v", "--verbose"].includes(val))
 ;
 
