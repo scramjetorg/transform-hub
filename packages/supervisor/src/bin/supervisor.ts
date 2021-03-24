@@ -25,7 +25,7 @@ import * as fs from "fs";
     };
     const lcda: LifecycleDockerAdapter = new LifecycleDockerAdapter();
 
-    let socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
+    const socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
 
     if (!fs.existsSync(socketPath)) {
         console.error("Incorrect run argument: socket path (" + socketPath + ") does not exists. ");
