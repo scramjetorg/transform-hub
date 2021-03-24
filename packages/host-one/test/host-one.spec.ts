@@ -12,7 +12,7 @@ test("Vorpal should not execute controlStream when params in 'event' command are
     const hostOne = new HostOne("sequencePath", "configPath");
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
-    hostOne.init()
+    hostOne.init();
     hostOne.controlStreamsHandler();
     hostOne.vorpalExec("event");
 
@@ -23,19 +23,19 @@ test("Vorpal should execute controlStream with proper params when command 'event
     const hostOne = new HostOne("sequencePath", "configPath");
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
-    hostOne.init()
+    hostOne.init();
     hostOne.controlStreamsHandler();
     hostOne.vorpalExec("event fooBar {'foo':'bar'}");
 
     t.is(conStream.getCall(0).firstArg[0], 4005);
-    t.is(typeof conStream.getCall(0).firstArg[1], 'object');
+    t.is(typeof conStream.getCall(0).firstArg[1], "object");
 });
 
 test("Vorpal should execute controlStream with proper code when command 'kill' is provided", t => {
     const hostOne = new HostOne("sequencePath", "configPath");
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
-    hostOne.init()
+    hostOne.init();
     hostOne.controlStreamsHandler();
     hostOne.vorpalExec("kill");
 
@@ -46,7 +46,7 @@ test("Vorpal should execute controlStream with proper code when command 'stop' i
     const hostOne = new HostOne("sequencePath", "configPath");
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
-    hostOne.init()
+    hostOne.init();
     hostOne.controlStreamsHandler();
     hostOne.vorpalExec("stop");
 
@@ -57,7 +57,7 @@ test("Vorpal should not execute controlStream when proper params in 'monitor' co
     const hostOne = new HostOne("sequencePath", "configPath");
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
-    hostOne.init()
+    hostOne.init();
     hostOne.controlStreamsHandler();
     hostOne.vorpalExec("monitor");
     t.is(conStream.getCall(0), null);
@@ -67,7 +67,7 @@ test("Vorpal should execute controlStream when command monitor is provided", t =
     const hostOne = new HostOne("sequencePath", "configPath");
     const conStream = sinon.spy(hostOne["controlStream"], "whenWrote");
 
-    hostOne.init()
+    hostOne.init();
     hostOne.controlStreamsHandler();
     hostOne.vorpalExec("monitor 200");
 

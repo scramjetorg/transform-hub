@@ -133,9 +133,9 @@ export class HostOne {
             .action((args: any) => {
                 // TODO: needs removal... why not JSON.parse?
                 let eventName = args.EVENT_NAME;
-                let obj = args.ANY // temp eval
-                
-                return (eventName === undefined && obj === undefined)
+                let obj = args.ANY; // temp eval
+
+                return eventName === undefined && obj === undefined
                     ? this.vorpal.log(this.errors.noParams)
                     : this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, obj }]);
             });
@@ -145,7 +145,8 @@ export class HostOne {
             .alias("rate")
             .action((args: any) => {
                 let monitoringRate = parseInt(args.NUMBER, 10);
-                console.log()
+
+                console.log();
 
                 return isNaN(monitoringRate)
                     ? this.vorpal.log(this.errors.noParams)
@@ -160,8 +161,8 @@ export class HostOne {
 
     /**
      * For testing puspose only
-     */ 
+     */
     vorpalExec(command: string) {
-        this.vorpal.exec(command)
+        this.vorpal.exec(command);
     }
 }
