@@ -89,7 +89,7 @@ Run script only in one package
 lerna run --scope @scramjet/<package_name> <script-name>
 ```
 
-<!-- 
+<!--
 - `npm run build` - build all services, samples etc.,
 - `npm run build:supervisor` - build only supervisor,
 - `npm run clean` - remove all files in *dist/* directory,
@@ -141,21 +141,70 @@ lerna run [script]
 ```
 
 ## Howto run components
-### Runner
-Starting `Runner` script: `/scramjet-csi-dev/packages/runner/src/bin/start-runner.ts `
 
-Example of usage:   
+### Runner
+
+Starting `Runner` script: `/scramjet-csi-dev/packages/runner/src/bin/start-runner.ts`
+
+Example of usage:
+
 ```bash
-$ node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
+node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
 ```
 
 ### HostOne
-Starting `HostOne` script: `/scramjet-csi-dev/packages/host-one/src/bin/start-host-one.ts `
+
+Starting `HostOne` script: `/scramjet-csi-dev/packages/host-one/src/bin/start-host-one.ts`
 
 Example of usage:
+
 ```bash
-$ node dist/host-one/bin/start-host-one.js sequence-file-path config-file-path
+node dist/host-one/bin/start-host-one.js sequence-file-path config-file-path
 ```
+
+## How to run tests
+
+### BDD test
+
+BDD tests are located in a `bdd` folder, to execute them there are several steps to follow:
+
+- start with:
+
+```bash
+yarn install &&
+yarn build &&yarn install &&yarn build &&
+yarn build:docker &&
+yarn prepack &&
+cd packages/pre-runner &&
+yarn prepare-sample-tar &&
+cd $(git rev-parse --show-toplevel)
+```
+
+- go to `bdd` folder:
+
+```bash
+cd bdd
+```
+
+- run `npm i`
+
+```bash
+npm i
+```
+
+- execute all bdd test using from the command line:
+
+```bash
+yarn test:bdd
+```
+
+- or execute a particular bdd scenario by adding the scenario title after a `--name` flag:
+
+```bash
+yarn test-bdd --name="Execute example HelloAlice"
+```
+
+Results of the performed test will be displayed in the console. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a bdd test, those html's are saved in `bdd` folder.
 
 ## Documentation
 
