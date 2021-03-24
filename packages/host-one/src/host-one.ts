@@ -106,7 +106,7 @@ export class HostOne {
         await this.controlStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
     }
 
-    controlStreamsHandler() {
+    controlStreamsCliHandler() {
         this.vorpal
             .command("alive", "Confirm that sequence is alive when it is not responding")
             .action(() => this.controlStream.whenWrote([RunnerMessageCode.ALIVE, {}]));
@@ -133,11 +133,11 @@ export class HostOne {
             .action((args: any) => {
                 // TODO: needs removal... why not JSON.parse?
                 let eventName = args.EVENT_NAME;
-                let obj = args.ANY; // temp eval
+                let message = args.ANY; // temp eval
 
-                return eventName === undefined && obj === undefined
+                return eventName === undefined && message === undefined
                     ? this.vorpal.log(this.errors.noParams)
-                    : this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, obj }]);
+                    : this.controlStream.whenWrote([RunnerMessageCode.EVENT, { eventName, message }]);
             });
 
         this.vorpal
