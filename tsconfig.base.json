@@ -12,7 +12,6 @@
     "sourceMap": true,
     "allowJs": true,
     "target": "es6",
-    "typeRoots": ["@types", "./typings"],
     "lib": ["es7"],
     "strict": true,
     "resolveJsonModule": true,

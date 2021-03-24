@@ -1,5 +1,5 @@
-import * as cero from "0http";
+import { cero } from "./0http";
 
-export default function server(handlers) {
-    cero
+export default function server() {
+    return cero({});
 }
