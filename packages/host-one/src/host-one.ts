@@ -23,12 +23,7 @@ export class HostOne {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     constructor(sequencePath: string, configPath: string){
         this.controlStream = new DataStream();
-        
         this.monitorStream = new DataStream();
-        this.monitorStream
-            .do((...arr: any[]) => console.log("[from monitoring]", ...arr))
-            .run()
-            .catch(e => console.error(e));
     }
 
     async main(): Promise<void> {

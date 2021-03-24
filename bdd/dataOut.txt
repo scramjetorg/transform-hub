@@ -1,0 +1,9 @@
+sequence: [10D[10C[from monitoring] [ 4000, {} ]
+Hello Alice!
+Hello Ada!
+Hello Aga!
+Hello Michał!
+Hello Maciek!
+Hello Marcin!
+Hello Patryk!
+Hello Rafał!
