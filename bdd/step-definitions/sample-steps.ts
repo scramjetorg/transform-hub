@@ -44,4 +44,5 @@ Then("file {string} in each line contains {string} followed by name from file {s
     while ((line2 = output.next()) && (line1 = input[i++].name)) {
         assert.deepEqual(greeting + line1 + suffix, "" + line2);
     }
+    assert.equal(i, input.length - 1, "incorrect number of elements compared");
 });
