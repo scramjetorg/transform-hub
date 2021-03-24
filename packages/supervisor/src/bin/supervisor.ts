@@ -24,7 +24,6 @@ import * as fs from "fs";
         makeSnapshotOnError: false
     };
     const lcda: LifecycleDockerAdapter = new LifecycleDockerAdapter();
-
     const socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
 
     if (!fs.existsSync(socketPath)) {
