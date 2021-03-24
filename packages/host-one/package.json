@@ -5,7 +5,7 @@
   "main": "./src/index.ts",
   "bin": "bin/start-host-one.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && chmod +x ./dist/bin/start-host-one.js",
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
     "test": "yarn build && ava --",

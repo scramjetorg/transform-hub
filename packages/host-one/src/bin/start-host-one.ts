@@ -1,4 +1,4 @@
-#!/usr/bin / env node
+#!/usr/bin/env node
 
 import { HostOne } from "../host-one";
 import * as path from "path";
