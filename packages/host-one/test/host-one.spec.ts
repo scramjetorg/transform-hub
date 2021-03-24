@@ -2,11 +2,17 @@ import test from "ava";
 import { HostOne } from "../src/host-one";
 import * as sinon from "sinon";
 
-test("Host one creation", t => {
-    let hostOne = new HostOne("sequencePath", "configPath");
+const appConfig = {
+    configKey: "configValue"
+};
+const getAppConfigStub = sinon.stub(HostOne.prototype, "getAppConfig").returns(appConfig);
+
+test("Host one creation with sequence args", t => {
+    const hostOne = new HostOne("sequencePath", "configPath", ["arg1", "arg2"]);
 
     t.not(hostOne, null);
 });
+
 
 test("Vorpal should not execute controlStream when params in 'event' command are not provided", t => {
     const hostOne = new HostOne("sequencePath", "configPath");
@@ -136,9 +142,16 @@ test("Vorpal should execute controlStream when command monitor is provided", t =
 
     t.is(conStream.getCall(0).firstArg[0], 4003);
     t.deepEqual(conStream.getCall(0).firstArg[1], { monitoringRate: 200 });
+});
 
-test("Host one creation with sequence args", t => {
-    let hostOne = new HostOne("sequencePath", "configPath", ["arg1", "arg2"]);
-
+test("Host one creation", t => {
+    const hostOne = new HostOne("sequencePath", "incorrectConfigPath");
     t.not(hostOne, null);
+});
+
+test("Host one throws exception for incorrectConfigPath", t => {
+    getAppConfigStub.restore();
+    t.throws(() => {
+        new HostOne("sequencePath", "incorrectConfigPath", ["arg1", "arg2"]);
+    }, { instanceOf: Error });
 });
