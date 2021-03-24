@@ -1,14 +1,7 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { CeroError, NextCallback, SequentialCeroRouter } from "./definitions";
+import { getObject } from "./data-extractors";
 import { mimeAccepts } from "./mime";
-
-async function getObject(object: any, req: IncomingMessage) {
-    if (typeof object === "function") {
-        return await object(req);
-    }
-
-    return object;
-}
 
 export function createGetterHandler(router: SequentialCeroRouter) {
     const check = (req: IncomingMessage): void => {
