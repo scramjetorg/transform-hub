@@ -31,6 +31,6 @@ if (!fs.existsSync(sequencePath)) {
 //like here:["../../package/data.json", "out.txt"];
 //to discuss what would be the best solution? 
 //to avoid ./start-host-one sequencePath configPath seqArg1 seqArg2 ...
-const hostOne: HostOne = new HostOne(sequencePath, configPath);
+const hostOne: HostOne = new HostOne();
 
 hostOne.main();

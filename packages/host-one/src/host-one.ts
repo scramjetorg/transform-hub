@@ -4,6 +4,7 @@ import { AppConfig, EncodedMonitoringMessage } from "@scramjet/types";
 import { RunnerMessageCode, HandshakeAcknowledgeMessage, MessageUtilities } from "@scramjet/model";
 import { DataStream } from "scramjet";
 import * as vorpal from "vorpal";
+import { PassThrough } from "stream";
 
 export class HostOne {
     // @ts-ignore    
@@ -17,11 +18,11 @@ export class HostOne {
     // @ts-ignore
     private controlStream: DataStream;
     // @ts-ignore
-    private sequencePath: string;
-    // @ts-ignore
     private configPath: string;
     // @ts-ignore
     private vorpal: any;
+    // @ts-ignore
+    private packageStream?: PassThrough;
 
     errors = {
         noParams: "No params provided. Type help to know more.",
@@ -29,26 +30,22 @@ export class HostOne {
         noImplement: "Method not implemented."
     }
 
-    private appConfig: AppConfig;
+    private appConfig: AppConfig = {};
     private sequenceArgs?: string[];
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    constructor(sequencePath: string, configPath: string, sequenceArgs?: any[]){
-        this.controlStream = new DataStream();
-        this.monitorStream = new DataStream();
-        this.appConfig = this.getAppConfig(configPath);
-        this.sequenceArgs = sequenceArgs;
-    }
 
     async main(): Promise<void> {
         await this.createNetServer(this.socketName);
         await this.startSupervisor(this.socketName);
         await this.createApiServer();
         await this.hookupMonitorStream();
-        await this.init();
     }
 
-    async init() {
+    async init(packageStrem: PassThrough, appConfig: AppConfig, sequenceArgs?: any[]) {
+        this.packageStream = packageStrem;
+        this.controlStream = new DataStream();
+        this.monitorStream = new DataStream();
+        this.appConfig = appConfig;
+        this.sequenceArgs = sequenceArgs;
         this.vorpal = new vorpal();
     }
 
