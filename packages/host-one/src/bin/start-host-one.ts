@@ -52,8 +52,6 @@ default:
 
 packageStrem = checkIfPathExist(2, (arg: string) => fs.createReadStream(arg));
 appConfig = checkIfPathExist(3, (arg: string) => fs.readFileSync(arg, "utf8"));
-/* eslint-disable no-unused-expressions */
-/* eslint no-unused-expressions: [2, { allowShortCircuit: true, allowTernary: true}] */
 sequenceArgs = process.argv[4] !== undefined ? process.argv.slice(4) : undefined;
 
 /**
