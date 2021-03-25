@@ -36,47 +36,6 @@ pipeline {
         }  
       }
     }
-    stage("Run SonarScanner") {
-      failFast false
-      parallel {
-        stage("Scan Model") {
-          steps {
-            script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
-              }
-            }
-          }
-        }
-        stage("Scan Pre-Runner") {
-          steps {
-            script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
-              }
-            }
-          }
-        }
-        stage("Scan Runner") {
-          steps {
-            script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
-              }
-            }
-          }
-        }
-        stage("Scan Supervisor") {
-          steps {
-            script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
-              }
-            }
-          }
-        }
-      }
-    }
     stage("Build packages") {
       steps {
         script {
@@ -143,6 +102,47 @@ pipeline {
               }
               if (caughtException) {
                   error caughtException.message
+              }
+            }
+          }
+        }
+      }
+    }
+    stage("Run SonarScanner") {
+      failFast false
+      parallel {
+        stage("Scan Model") {
+          steps {
+            script {
+              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
+              }
+            }
+          }
+        }
+        stage("Scan Pre-Runner") {
+          steps {
+            script {
+              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
+              }
+            }
+          }
+        }
+        stage("Scan Runner") {
+          steps {
+            script {
+              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
+              }
+            }
+          }
+        }
+        stage("Scan Supervisor") {
+          steps {
+            script {
+              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_LOGIN')
               }
             }
           }

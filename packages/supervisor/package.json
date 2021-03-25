@@ -4,8 +4,8 @@
   "description": "The supervisor application for the underlying container and program wrapper executed within it.",
   "main": "./src/index.ts",
   "scripts": {
-    "test": "ava -v",
-    "test-coverage": "nyc yarn test",
+    "test": "yarn test:coverage",
+    "test:coverage": "yarn build && nyc --reporter=lcov ava",
     "build": "tsc -p tsconfig.json",
     "build:docs": "typedoc",
     "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",
