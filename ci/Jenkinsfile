@@ -89,7 +89,7 @@ pipeline {
             script {
               Exception caughtException = null
 
-              catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED') { 
+              catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED') {
                 try { 
                   docker.image("${docker_ci_image}").inside("--group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
                      sh("yarn test:bdd")
@@ -100,8 +100,11 @@ pipeline {
                   caughtException = e
                 }
               }
-              if (caughtException) {
-                  error caughtException.message
+              // Catch other exceptions that timeout and fail Stage, but not whole build
+              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                if (caughtException) {
+                    error caughtException.message
+                }
               }
             }
           }
