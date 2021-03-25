@@ -44,7 +44,7 @@ export class HostOne {
         this.packageStream = packageStrem;
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
-        
+
         this.controlStream = new DataStream();
         this.monitorStream = new DataStream();
         this.vorpal = new vorpal();
