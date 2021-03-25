@@ -1,4 +1,4 @@
-import { RunnerMessageCode, CommunicationHandler } from "@scramjet/model";
+import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
 import { CSHConnector, ICommunicationHandler, LifeCycle, LifeCycleConfig } from "@scramjet/types";
 import { Readable } from "stream";
 
@@ -173,7 +173,7 @@ class LifeCycleController {
             * Then we must call:
             * this.lifecycleAdapter.stop()
             * However, we must add two missing arguments to function stop() - timeout and canCallKeepalive
-            * 
+            *
             * General question: do we perform snapshot() only on error?
             */
 

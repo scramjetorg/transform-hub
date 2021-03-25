@@ -1,25 +1,69 @@
-import { createServer, IncomingMessage, Server } from "http";
+import { DownstreamStreamsConfig, UpstreamStreamsConfig } from "@scramjet/types";
+import { PathLike } from "fs";
+import { unlink } from "fs/promises";
+import * as net from "net";
+import { PassThrough } from "stream";
 
-// TODO: we don't need this here, right?
-
-/**
- * Creates an instance of a new http server.
- * The server listens on a socket specified by unix path passed as an argument.
- *
- * @example makeServer("/tmp/unix-socket.sock");
- * @param {string} socket The unix socket path which will be used for communication
- *
- * @returns {Server} New http server instance.
- */
+const BPMux = require("bpmux").BPMux;
 
 // TODO probably to change to net server, to verify
-const makeServer: (socketName: string) => Server = () => {
-    return createServer((message: IncomingMessage) => {
-        message.on("data", (data) => {
-            console.log("data" + data.toString());
-            message.socket.write("from server: " + data.toString());
-        });
-    });
-};
+export class SocketServer {
+    server?: net.Server;
+    address: PathLike;
+    streams?: DownstreamStreamsConfig;
 
-export default makeServer;
+    start() {
+        this.server = net.createServer(c => {
+            console.log("[H1][Server] on connect");
+
+            let mux = new BPMux(c);
+
+            mux.on("handshake", (stream: any) => {
+                console.log("CHannel", stream._chan);
+
+                if (this.streams) {
+                    let hash: any = {
+                        0: () => new PassThrough().pipe(stream), // stdin
+
+                        1: () => stream.pipe(process.stdout),
+
+                        2: () => stream.pipe(process.stderr),
+
+                        // @ts-ignore: Object is possibly 'null'.
+                        3: () => this.streams[3].pipe(stream),
+
+                        // @ts-ignore: Object is possibly 'null'.
+                        4: () => stream.pipe(this.streams[4]),
+                        //4: () => stream.pipe(process.stdout),
+                        5: () => stream.pipe(new PassThrough()),
+
+                        // @ts-ignore: Object is possibly 'null'.
+                        6: () => this.streams[6].pipe(stream),
+                    };
+
+                    if (hash[stream._chan.toString()]) {
+                        hash[stream._chan.toString()]();
+                    }
+                }
+            });
+
+        })
+            .listen(this.address, () => {
+                console.log("[H1][Server] Started at", this.server?.address());
+            });
+    }
+
+    constructor(address: PathLike) {
+        this.address = address;
+
+        this.removeSocket(); // TODO just when server ends.
+    }
+
+    async removeSocket() {
+        await unlink(this.address);
+    }
+
+    attachStreams(streams: UpstreamStreamsConfig | any) {
+        this.streams = streams;
+    }
+}

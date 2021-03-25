@@ -110,6 +110,7 @@ class LifecycleDockerAdapter implements LifeCycle {
             });
 
             stream.pipe(streams.stdin);
+
             let preRunnerResponse = "";
 
             streams.stdout
@@ -225,12 +226,12 @@ class LifecycleDockerAdapter implements LifeCycle {
         /*
         * @feature/analysis-stop-kill-invocation
         * This method is called by the LifeCycle Controller instance when it receives the stop message.
-        * The method requires two arguments: 
+        * The method requires two arguments:
         * timeout: number
         * canCallKeepalive: boolean
         * that must be added to the LifeCycle interface.
         * We must create a stop message and sent it using the control stream.
-        * The Runner should send us back the response with the Sequence's status (not completed yet), 
+        * The Runner should send us back the response with the Sequence's status (not completed yet),
         *  and (optionally) exit code and error (if the Sequence stopped but threw errors).
         */
     }

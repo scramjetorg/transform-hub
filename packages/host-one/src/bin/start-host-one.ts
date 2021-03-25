@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
-import { HostOne } from "../host-one";
-import * as path from "path";
 import * as fs from "fs";
+import { HostOne } from "../host-one";
+import path = require("path");
 /**
- * Script can be run via commands: 
+ * Script can be run via commands:
  * * path/start-host-one.js package.tar.gz config.json arg1 arg2 arg3
  * * path/start-host-one.js "$(cat package.tar.gz)" "$(cat config.json)" "$(cat args.txt)"
  */
@@ -68,3 +68,4 @@ const hostOne: HostOne = new HostOne();
  * @param { Array<any> } sequenceArgs - other optional arguments
  */
 hostOne.init(packageStrem, appConfig, sequenceArgs);
+hostOne.main();

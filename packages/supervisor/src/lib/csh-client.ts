@@ -1,59 +1,63 @@
 /* eslint-disable dot-notation */
 import { CommunicationHandler } from "@scramjet/model";
-import { CSHConnector, UpstreamStreamsConfig } from "@scramjet/types";
-import { PassThrough, Readable, Writable } from "stream";
+import { CSHConnector, DownstreamStreamsConfig, UpstreamStreamsConfig } from "@scramjet/types";
 import * as net from "net";
-import { DataStream } from "scramjet";
+import { PassThrough, Readable } from "stream";
+
+const { BPMux } = require("bpmux");
 
 class CSHClient implements CSHConnector {
-
     private socketPath: string;
-    // private muxer = new StreamMuxer();
     private packageStream: PassThrough;
+    private streams: DownstreamStreamsConfig;
 
     constructor(socketPath: string) {
         this.socketPath = socketPath;
         this.packageStream = new PassThrough();
+
+        this.streams = [
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough(),
+            //new DataStream() as unknown as Writable,
+            new PassThrough(),
+            //new DataStream() as unknown as Readable,
+            new PassThrough(),
+            this.packageStream
+        ];
     }
 
     async init(): Promise<void> {
-
         await this.connect();
-
     }
 
     connect(): Promise<void> {
-        return new Promise((resolve, reject) => {
-            let socket = net.connect({
+        return new Promise((resolve) => {
+            let mux = new BPMux(net.createConnection({
                 path: this.socketPath
-            });
+            }));
 
-            socket
-                .on("connect", () => {
-                //    this.muxer.duplex(this.upstreamStreamsConfig(), socket);
+            // from h1
+            mux.multiplex({ channel: 0 }).pipe(this.streams[0]); // stdin
+            mux.multiplex({ channel: 3 }).pipe(this.streams[3]); // control
+            mux.multiplex({ channel: 5 }).pipe(new PassThrough()); // ?
+            mux.multiplex({ channel: 6 }).pipe(this.packageStream); // package
 
-                    console.log("[CSHClient] Connected");
-                    resolve();
-                })
-                .on("error", reject);
+            // up to h1
+            this.streams[1].pipe(mux.multiplex({ channel: 1 })); // stdout
+            this.streams[2].pipe(mux.multiplex({ channel: 2 })); // stderr
+            this.streams[4].pipe(mux.multiplex({ channel: 4 })); // monitor
+
+            resolve();
         });
     }
 
     upstreamStreamsConfig() {
-        return [
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new DataStream() as unknown as Readable,
-            new DataStream() as unknown as Writable,
-            this.packageStream
-        ] as UpstreamStreamsConfig;
+        return this.streams as unknown as UpstreamStreamsConfig;
     }
 
     getPackage(): Readable {
-
         return this.packageStream;
-
     }
 
     hookCommunicationHandler(communicationHandler: CommunicationHandler) {

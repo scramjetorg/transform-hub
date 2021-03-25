@@ -1,5 +1,5 @@
 import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { ReadableStream, WritableStream, AppConfig, Application, AutoAppContext, EncodedControlMessage } from "@scramjet/types";
+import { AppConfig, Application, AutoAppContext, EncodedControlMessage, ReadableStream, WritableStream } from "@scramjet/types";
 import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
@@ -120,7 +120,7 @@ export class Runner {
             process.exit(10);
         }, 5000).unref();
 
-        /* We must call 
+        /* We must call
         */
     }
 
@@ -234,7 +234,7 @@ export class Runner {
     async runSequence(args?: any[]) {
         const sequence: any = this.getSequence();
 
-        if (typeof args !== "undefined") {
+        if (Array.isArray(args) && args.length) {
             await sequence.call(
                 this.context,
                 new DataStream() as unknown as ReadableStream<never>,
