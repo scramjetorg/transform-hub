@@ -10,7 +10,7 @@
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
     "test": "yarn test:coverage",
-    "test:coverage": "yarn build && nyc --reporter=lcov --reporter=text ava",
+    "test:coverage": "yarn build && nyc --reporter=lcovonly --reporter=text-summary ava",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjet/runner:$npm_package_version",
     "clean": "rimraf -rf ./dist",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
