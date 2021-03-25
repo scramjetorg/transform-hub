@@ -177,7 +177,7 @@ yarn build:docker &&
 yarn prepack &&
 cd packages/pre-runner &&
 yarn prepare-sample-tar &&
-cd $(git rev-parse --show-toplevel)
+cd $(git rev-parse --show-toplevel)  // this line will throw you back to the main folder
 ```
 
 - go to `bdd` folder:
