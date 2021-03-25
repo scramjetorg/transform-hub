@@ -42,10 +42,11 @@ export class HostOne {
 
     async init(packageStrem: PassThrough, appConfig: AppConfig, sequenceArgs?: any[]) {
         this.packageStream = packageStrem;
-        this.controlStream = new DataStream();
-        this.monitorStream = new DataStream();
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
+        
+        this.controlStream = new DataStream();
+        this.monitorStream = new DataStream();
         this.vorpal = new vorpal();
     }
 
