@@ -162,22 +162,42 @@ Example of usage:
 node dist/host-one/bin/start-host-one.js sequence-file-path config-file-path
 ```
 
+## How to run samples
+
+### "Hello Alice" sample
+
+The following instructions apply to the state of the repository from the `release/0.4`.
+To execute the sample simply run the following commands from the level of the main folder:
+
+```bash
+yarn install &&
+yarn build &&
+yarn build:docker &&
+yarn prepack &&
+cd packages/pre-runner &&
+yarn prepare-sample-tar &&
+cd $(git rev-parse --show-toplevel) &&  # this line will throw you back to the main folder
+cd dist/supervisor/bin &&
+SEQUENCE_PATH=../../../packages/pre-runner/sample-package/package.tar.gz node supervisor.js
+```
+
 ## How to run tests
 
 ### BDD test
 
+The following instructions apply to the state of the repository from the `release/0.4`.
 BDD tests are located in a `bdd` folder, to execute them there are several steps to follow:
 
 - start with:
 
 ```bash
 yarn install &&
-yarn build &&yarn install &&yarn build &&
+yarn build &&
 yarn build:docker &&
 yarn prepack &&
 cd packages/pre-runner &&
 yarn prepare-sample-tar &&
-cd $(git rev-parse --show-toplevel)  // this line will throw you back to the main folder
+cd $(git rev-parse --show-toplevel) &&  # this line will throw you back to the main folder
 ```
 
 - go to `bdd` folder:
