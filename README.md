@@ -1,5 +1,19 @@
 # Scramjet Cloud Server Instance (CSI)
 
+## Table of contents
+
+- [Installation](#installation)
+- [Publish](#publish)
+- [Commands](#commands)
+- [How to run components](#howto-run-components)
+  - [Runner](#runner)
+  - [HostOne](#hostone)
+- [How to run samples](#how-to-run-samples)
+  - ["Hello Alice" sample](#"hello-alice"-sample)
+- [How to run tests](#how-to-run-tests)
+  - [BDD test](#bdd-test)
+- [Documentation](#documentation)
+
 ## Installation
 
 ```bash
@@ -179,6 +193,26 @@ yarn prepare-sample-tar &&
 cd $(git rev-parse --show-toplevel) &&  # this line will throw you back to the main folder
 cd dist/supervisor/bin &&
 SEQUENCE_PATH=../../../packages/pre-runner/sample-package/package.tar.gz node supervisor.js
+```
+
+as a result you should see something like this in the console:
+
+```bash
+sequence: [10D[10C[from monitoring] [ 4000, {} ]
+Hello Alice!
+Hello Ada!
+Hello Aga!
+Hello Michał!
+Hello Maciek!
+Hello Marcin!
+Hello Patryk!
+Hello Rafał!
+```
+
+after that hit enter and type kill to exit the process:
+
+```bash
+sequence: kill
 ```
 
 ## How to run tests
