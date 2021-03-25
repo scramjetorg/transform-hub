@@ -84,7 +84,7 @@ class LifeCycleController {
      * 
      * LifeCycle Controller than requests LifeCycle Adapter to run the Sequence.
      * 
-     * The Sequence runs until it has not terminate, either by itself or by command sent from the CSH.
+     * The Sequence runs until it has not terminated, either by itself or by a command sent from the CSH.
      * 
      * After the Sequence terminates it is possible to perform a snapshot of the container in which it was run.
      * 
