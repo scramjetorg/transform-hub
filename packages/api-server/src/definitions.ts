@@ -1,6 +1,5 @@
-import { MaybePromise } from "@scramjet/types";
+import { APIError } from "@scramjet/types";
 import { Server, IncomingMessage, ServerResponse } from "http";
-import { Readable, Writable } from "node:stream";
 import * as Trouter from "trouter";
 
 export type NextCallback = (e: Error) => void;
@@ -35,7 +34,7 @@ const codelist = {
 
 export type CeroCode = keyof typeof codelist;
 
-export class CeroError extends Error {
+export class CeroError extends Error implements APIError {
     code: number;
     httpMessage: string;
     cause?: Error;
@@ -66,6 +65,3 @@ export type CeroRouterConfig = Partial<{
     cacheSize: number;
     id: string;
 }>;
-
-export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
-export type StreamOutput = ((req: IncomingMessage) => MaybePromise<void>) | MaybePromise<Writable>;

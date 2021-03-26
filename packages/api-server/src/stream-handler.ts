@@ -1,8 +1,9 @@
 import { ServerResponse } from "http";
 import { Readable } from "node:stream";
 import { mimeAccepts } from "./mime";
-import { CeroError, SequentialCeroRouter, StreamInput, StreamOutput } from "./definitions";
+import { CeroError, SequentialCeroRouter } from "./definitions";
 import { getStream, getWritable } from "./data-extractors";
+import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 
 function checkAccepts(acc: string|undefined, text: boolean, json: boolean) {
     const types = [];
@@ -57,13 +58,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         } catch (e) {
             throw new CeroError("ERR_FAILED_TO_SERIALIZE", e);
         }
-    };
-
-    type StreamConfig = {
-        json?: boolean;
-        text?: boolean;
-        end?: boolean;
-        encoding?: BufferEncoding;
     };
 
     const upstream = (

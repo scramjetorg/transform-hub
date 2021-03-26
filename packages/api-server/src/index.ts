@@ -1,10 +1,11 @@
+import { APIExpose } from "@scramjet/types";
 import { cero, sequentialRouter } from "./0http";
 import { CeroRouterConfig } from "./definitions";
 import { createGetterHandler } from "./get-handler";
 import { createOperationHandler } from "./op-handler";
 import { createStreamHandlers } from "./stream-handler";
 
-export function createServer(conf: { verbose?: boolean }) {
+export function createServer(conf: { verbose?: boolean }): APIExpose {
     const config: CeroRouterConfig = {
         defaultRoute: (req, res) => {
             res.writeHead(404);

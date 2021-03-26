@@ -1,3 +1,4 @@
+export * from "./api-expose";
 export * from "./app-error";
 export * from "./app-context";
 export * from "./application";

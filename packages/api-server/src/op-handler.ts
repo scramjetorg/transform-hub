@@ -29,7 +29,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         }
     };
     /**
-     * Simple GET request hook for static data in monitoring stream.
+     * Simple POST request hook for static data in monitoring stream.
      *
      * @param path the request path as string or regex
      * @param message which operation

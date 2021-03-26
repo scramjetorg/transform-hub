@@ -21,13 +21,6 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
         }
     };
-    /**
-     * Simple GET request hook for static data in monitoring stream.
-     *
-     * @param path the request path as string or regex
-     * @param op which operation
-     * @param conn the communication handler to use
-     */
     const get = <T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: CommunicationHandler): void => {
         let lastItem: MessageDataType<T>|null = null;
 
