@@ -12,7 +12,16 @@ export class SocketServer {
     streams?: DownstreamStreamsConfig;
 
     start() {
+        let connected = false;
+
         this.server = net.createServer(c => {
+            if (connected) {
+                c.end();
+                return;
+            }
+
+            connected = true;
+
             let mux = new BPMux(c);
 
             mux.on("handshake", (stream: any) => {
