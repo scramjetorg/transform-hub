@@ -47,7 +47,7 @@ class LifeCycleController {
     private lifecycleAdapter: LifeCycle;
 
     /**
-    * Configurations specific to a lifecycle, e.g. whether to take snapshot 
+    * Configurations specific to a lifecycle, e.g. whether to take a snapshot 
     * in case of erroneous Sequence termination.
     * @type {LifeCycleConfig}
     */
