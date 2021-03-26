@@ -19,7 +19,7 @@ function checkAccepts(acc: string|undefined, text: boolean, json: boolean) {
     return mimeAccepts(acc, types);
 }
 
-export function createStreamHandler(router: SequentialCeroRouter) {
+export function createStreamHandlers(router: SequentialCeroRouter) {
     const decorator = (
         data: Readable,
         type: string,
@@ -44,6 +44,15 @@ export function createStreamHandler(router: SequentialCeroRouter) {
                 "content-type": cType,
                 "transfer-encoding": "chunked"
             });
+
+            // Error handling on disconnect!
+            const disconnect = () => out.unpipe(res);
+
+            res
+                .on("error", disconnect)
+                .on("unpipe", disconnect)
+            ;
+
             return out.pipe(res);
         } catch (e) {
             throw new CeroError("ERR_FAILED_TO_SERIALIZE", e);
