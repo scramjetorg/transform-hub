@@ -3,5 +3,5 @@
     "outDir": "./dist"
   },
   "extends": "./tsconfig.build.json",
-  "include": ["./src", "./test", "scripts"]
+  "include": ["./src"]
 }
