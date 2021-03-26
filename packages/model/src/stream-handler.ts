@@ -181,4 +181,24 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlHandlerHash[_code].push(handler as any);
         return this;
     }
+
+    async sendMonitoringMessage<T extends MonitoringMessageCode>(_code: T, msg: EncodedMessage<T>): this {
+        const encoded: EncodedMonitoringMessage = [_code, msg];
+
+        await new Promise(res => {
+            if (this.monitoringUpstream?.write(encoded)) res(this);
+            else this.monitoringUpstream?.once(, res);
+        });
+
+    }
+
+    async sendControlMessage<T extends ControlMessageCode>(_code: T, msg: EncodedMessage<T>): this {
+        const encoded: EncodedControlMessage = [_code, msg];
+
+        await new Promise(res => {
+            if (this.controlDownstream?.write(JSON.stringify(encoded))) res(this);
+            else this.controlDownstream?.once(, res);
+        });
+    }
+
 }
