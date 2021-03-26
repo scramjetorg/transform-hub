@@ -187,7 +187,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         await new Promise(res => {
             if (this.monitoringUpstream?.write(encoded)) res(this);
-            else this.monitoringUpstream?.once(, res);
+            else this.monitoringUpstream?.once("drained", res);
         });
 
     }
@@ -197,7 +197,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         await new Promise(res => {
             if (this.controlDownstream?.write(JSON.stringify(encoded))) res(this);
-            else this.controlDownstream?.once(, res);
+            else this.controlDownstream?.once("drained", res);
         });
     }
 

@@ -1,36 +1,18 @@
-import { IncomingMessage, ServerResponse } from "http";
-import { CeroError, NextCallback, SequentialCeroRouter } from "./definitions";
-import { getObject } from "./data-extractors";
-import { mimeAccepts } from "./mime";
+import { SequentialCeroRouter } from "./definitions";
+import { MonitoringMessageCode } from "@scramjet/types";
+import { CommunicationHandler, MessageDataType } from "@scramjet/model";
 
 export function createGetterHandler(router: SequentialCeroRouter) {
-    const check = (req: IncomingMessage): void => {
-        if (req.headers.accept) mimeAccepts(req.headers.accept, ["application/json", "text/json"]);
-    };
-    const output = (data: object, req: IncomingMessage, res: ServerResponse, next: NextCallback) => {
-        try {
-            const out = JSON.stringify(data);
+    return <T extends MonitoringMessageCode>(_path: string|RegExp, _op: T, _conn: CommunicationHandler): void => {
+        let lastItem: MessageDataType<T>|null = null;
 
-            res.writeHead(200, "OK", {
-                "content-type": "application/json"
-            });
-            return res.end(out);
-        } catch (e) {
-            return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
-        }
-    };
+        _conn.addMonitoringHandler(_op, (data) => {
+            lastItem = data[1];
+            return data;
+        });
 
-    return function getHandler(path: string | RegExp, object: any): void {
-        router.get(path, async (req, res, next) => {
-            let data;
-
-            try {
-                check(req);
-                data = await getObject(req, object);
-                return output(data, req, res, next);
-            } catch (e) {
-                return next(new CeroError("ERR_INTERNAL_ERROR", e));
-            }
+        router.get(_path, (req, res) => {
+            res.end(lastItem);
         });
     };
 }

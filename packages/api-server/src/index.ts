@@ -1,6 +1,4 @@
-import { CommunicationHandler, MonitoringMessageData, RunnerMessageCode } from "@scramjet/model";
-import { MonitoringMessageCode, WritableStream } from "@scramjet/types";
-import { Readable, Writable } from "node:stream";
+import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
 import { cero, sequentialRouter } from "./0http";
 import { CeroRouterConfig } from "./definitions";
 import { createGetterHandler } from "./get-handler";
@@ -25,16 +23,7 @@ export function createServer(conf: { verbose?: boolean }) {
     return {
         server,
         router,
-        get(_path: string|RegExp, _op: MonitoringMessageCode, _conn: CommunicationHandler): void {
-            let lastItem: MonitoringMessageData|null = null;
-
-            _conn.addMonitoringHandler(_op, (data) => {
-                lastItem = data[1];
-                return data;
-            });
-
-            router.add();
-        },
+        get,
         op(_path: string|RegExp, _op: RunnerMessageCode, _conn: CommunicationHandler): void {
 
         },

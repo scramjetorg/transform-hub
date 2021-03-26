@@ -1,3 +1,4 @@
+import EventEmitter = require("node:events");
 import { PassThrough, Readable, Writable } from "stream";
 
 /**
@@ -28,7 +29,7 @@ export type FReturns<T, Z extends any[] = any[]> = MaybePromise<T> | ((...args: 
  *
  * @ignore
  */
-export interface PipeableStream<Produces> {
+export interface PipeableStream<Produces> extends EventEmitter {
     read(count?: number): Produces[] | null;
     pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
     // Again a hen-egg issue
@@ -50,7 +51,7 @@ export interface ReadableStream<Produces> extends PipeableStream<Produces> {
  * @see https://nodejs.org/api/stream.html#stream_writable_streams Node.js Writable stream documentation
  */
 
-export interface WritableStream<Consumes> {
+export interface WritableStream<Consumes> extends EventEmitter {
     objectMode?: true;
     writable: boolean;
     write(item: Consumes, cb?: (err?: Error | null) => void): boolean;
