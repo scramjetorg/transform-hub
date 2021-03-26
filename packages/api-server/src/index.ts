@@ -1,7 +1,7 @@
-import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
 import { cero, sequentialRouter } from "./0http";
 import { CeroRouterConfig } from "./definitions";
 import { createGetterHandler } from "./get-handler";
+import { createOperationHandler } from "./op-handler";
 import { createStreamHandlers } from "./stream-handler";
 
 export function createServer(conf: { verbose?: boolean }) {
@@ -18,15 +18,14 @@ export function createServer(conf: { verbose?: boolean }) {
     };
     const { server, router } = cero({ router: sequentialRouter(config) });
     const get = createGetterHandler(router);
+    const op = createOperationHandler(router);
     const { upstream, downstream } = createStreamHandlers(router);
 
     return {
         server,
         router,
         get,
-        op(_path: string|RegExp, _op: RunnerMessageCode, _conn: CommunicationHandler): void {
-
-        },
+        op,
         upstream,
         downstream
     };

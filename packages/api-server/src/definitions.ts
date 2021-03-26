@@ -28,7 +28,9 @@ const codelist = {
     ERR_FAILED_FETCH_DATA: [500, "Failed to fetch data"],
     ERR_FAILED_TO_SERIALIZE: [500, "Failed to serialize data"],
     ERR_INTERNAL_ERROR: [500, "Internal error occurred"],
-    ERR_INVALID_CONTENT_TYPE: [400, "Invalid content-type"]
+    ERR_INVALID_CONTENT_TYPE: [400, "Invalid content-type"],
+    ERR_CANNOT_PARSE_CONTENT: [400, "Could not parse content"],
+    ERR_UNSUPPORTED_ENCODING: [400, "Invalid encoding in content-type"]
 };
 
 export type CeroCode = keyof typeof codelist;

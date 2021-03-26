@@ -8,6 +8,7 @@ import {
     EncodedSerializedMonitoringMessage,
     ICommunicationHandler,
     MaybePromise,
+    MessageDataType,
     MonitoringMessageCode,
     ReadableStream,
     UpstreamStreamsConfig,
@@ -182,8 +183,8 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
-    async sendMonitoringMessage<T extends MonitoringMessageCode>(_code: T, msg: EncodedMessage<T>): this {
-        const encoded: EncodedMonitoringMessage = [_code, msg];
+    async sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: EncodedMessage<T>): Promise<void> {
+        const encoded: EncodedMonitoringMessage = [code, msg];
 
         await new Promise(res => {
             if (this.monitoringUpstream?.write(encoded)) res(this);
@@ -192,8 +193,8 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     }
 
-    async sendControlMessage<T extends ControlMessageCode>(_code: T, msg: EncodedMessage<T>): this {
-        const encoded: EncodedControlMessage = [_code, msg];
+    async sendControlMessage<T extends ControlMessageCode>(code: T, msg: MessageDataType<T>): Promise<void> {
+        const encoded: EncodedControlMessage = [code, msg];
 
         await new Promise(res => {
             if (this.controlDownstream?.write(JSON.stringify(encoded))) res(this);

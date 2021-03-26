@@ -43,6 +43,40 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
     return true;
 }
 
+export const checkMessage = <X extends RunnerMessageCode>(
+    msgCode: X,
+    msgData: MessageDataType<RunnerMessageCode>
+): MessageDataType<X> => {
+    if (msgCode === RunnerMessageCode.KILL) {
+        return msgData as MessageDataType<KillSequenceMessage>;
+    }
+    if (msgCode === RunnerMessageCode.FORCE_CONFIRM_ALIVE) {
+        return msgData as MessageDataType<ConfirmHealthMessage>;
+    }
+    if (msgCode === RunnerMessageCode.STOP && isStopSequenceMessage(msgData)) {
+        return msgData as MessageDataType<StopSequenceMessage>;
+    }
+    if (msgCode === RunnerMessageCode.ALIVE && isKeepAliveMessage(msgData)) {
+        return msgData as MessageDataType<KeepAliveMessage>;
+    }
+    if (msgCode === RunnerMessageCode.MONITORING_RATE && isMonitoringRateMessage(msgData)) {
+        return msgData as MessageDataType<MonitoringRateMessage>;
+    }
+    if (msgCode === RunnerMessageCode.DESCRIBE_SEQUENCE && isDescribeSequenceMessage(msgData)) {
+        return msgData as MessageDataType<DescribeSequenceMessage>;
+    }
+    if (msgCode === RunnerMessageCode.ERROR && isErrorMessage(msgData)) {
+        return msgData as MessageDataType<ErrorMessage>;
+    }
+    if (msgCode === RunnerMessageCode.MONITORING && isMonitoringMessage(msgData)) {
+        return msgData as MessageDataType<MonitoringMessage>;
+    }
+    if (msgCode === RunnerMessageCode.ACKNOWLEDGE && isAcknowledgeMessage(msgData)) {
+        return msgData as MessageDataType<AcknowledgeMessage>;
+    }
+
+    throw new Error(`Bad message of type ${msgCode}`);
+}
 /**
 * Get an object of message type from serialized message.
 * A helper method used for deserializing messages.
@@ -50,40 +84,12 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
 * @param msgData - a message object
 * @return - an object of message type
 */
-/* eslint-disable complexity */
 export const getMessage = <X extends RunnerMessageCode>(
     msgCode: X,
     msgData: MessageDataType<X>
 ): MessageType<X> => {
-    if (msgCode === RunnerMessageCode.KILL) {
-        return { msgCode: RunnerMessageCode.KILL } as KillSequenceMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.FORCE_CONFIRM_ALIVE) {
-        return { msgCode: RunnerMessageCode.FORCE_CONFIRM_ALIVE } as ConfirmHealthMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.STOP && isStopSequenceMessage(msgData)) {
-        return { msgCode: RunnerMessageCode.STOP, ...msgData } as StopSequenceMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.ALIVE && isKeepAliveMessage(msgData)) {
-        return { msgCode: RunnerMessageCode.ALIVE, ...msgData } as KeepAliveMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.MONITORING_RATE && isMonitoringRateMessage(msgData)) {
-        return { msgCode: RunnerMessageCode.MONITORING_RATE, ...msgData } as MonitoringRateMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.DESCRIBE_SEQUENCE && isDescribeSequenceMessage(msgData)) {
-        return {
-            msgCode: RunnerMessageCode.DESCRIBE_SEQUENCE, ...msgData
-        } as DescribeSequenceMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.ERROR && isErrorMessage(msgData)) {
-        return { msgCode: RunnerMessageCode.ERROR, ...msgData } as ErrorMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.MONITORING && isMonitoringMessage(msgData)) {
-        return { msgCode: RunnerMessageCode.MONITORING, ...msgData } as MonitoringMessage as MessageType<X>;
-    }
-    if (msgCode === RunnerMessageCode.ACKNOWLEDGE && isAcknowledgeMessage(msgData)) {
-        return { msgCode: RunnerMessageCode.ACKNOWLEDGE, ...msgData } as AcknowledgeMessage as MessageType<X>;
-    }
-
-    throw new Error("Unrecognized message code: " + msgCode);
+    return {
+        msgCode,
+        ...checkMessage(msgCode, msgData)
+    } as unknown as MessageType<X>;
 };
