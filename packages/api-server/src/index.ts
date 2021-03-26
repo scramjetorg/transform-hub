@@ -24,7 +24,6 @@ export function createServer(conf: { verbose?: boolean }): APIExpose {
 
     return {
         server,
-        router,
         get,
         op,
         upstream,

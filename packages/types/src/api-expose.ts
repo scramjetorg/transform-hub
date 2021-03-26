@@ -1,5 +1,6 @@
 import { CommunicationHandler } from "@scramjet/model";
 import { IncomingMessage } from "http";
+import { Server } from "node:http";
 import { Readable, Writable } from "stream";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";
@@ -45,10 +46,10 @@ export interface APIError extends Error {
 }
 
 export interface APIExpose {
-    // /**
-    //  * The raw HTTP server
-    //  */
-    // server: Server
+    /**
+     * The raw HTTP server
+     */
+    server: Server
     // /**
     //  * The Trouter
     //  */
