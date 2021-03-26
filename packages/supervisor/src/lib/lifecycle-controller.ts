@@ -24,9 +24,8 @@ class LifeCycleController {
 
     /**
     * CommunicationHandler is responsible for all operations on communication streams.
-    * CommunicationHandler not only pipes the multiple data and message streams used
-    * across the Supervisor, but also ensures the information carried by them is of 
-    * a correct type.
+    * CommunicationHandler pipes the multiple data and message streams 
+    * and ensures the information carried by them is of a correct type.
     * @type {ICommunicationHandler}
     */
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
