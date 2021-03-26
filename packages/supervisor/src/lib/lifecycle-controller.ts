@@ -41,7 +41,7 @@ class LifeCycleController {
     /**
     * Interface specifying methods that can be performed during Supervisor's lifecycle.
     * This interface is used by the LifeCycle Controller to invoke Lifecycle Adapter methods
-    * that handles all operations related to unpacking and executing the Sequence.
+    * that handle all operations related to unpacking and executing the Sequence.
     * @type {LifeCycle}
     */
     private lifecycleAdapter: LifeCycle;
