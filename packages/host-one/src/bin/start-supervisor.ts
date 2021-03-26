@@ -8,8 +8,8 @@ async function startSupervisor(socketPath: string) {
     }
 
     const path = join(__dirname, "..", "..", "supervisor", "bin", "supervisor.js");
-    const command: string[] = ["node", path, socketPath];
-    const supervisor = spawn("/usr/bin/env", command);
+    const command: string[] = [path, socketPath];
+    const supervisor = spawn(process.execPath, command);
 
     supervisor.on("error", function(err) {
         // What do we want to do if a Supervisor child process emits error event?
