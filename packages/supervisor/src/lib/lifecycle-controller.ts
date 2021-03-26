@@ -6,7 +6,7 @@ import { Readable } from "stream";
  * LifeCycleController is a main component of Supervisor.
  * The Supervisor is started by the CSH when the new Sequence is to be deployed.
  * Each Supervisor is responsible for deploying and running only one Sequence.
- * When Supervisor is started it creates LifeCycleController class and
+ * When Supervisor starts it creates LifeCycleController class and
  * initiates Supervisor's lifecycle by calling its start() method.
  *
  * An example usage with LifeCycle Docker Adapter:
