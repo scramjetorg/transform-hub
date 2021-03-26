@@ -110,7 +110,7 @@ class LifeCycleController {
             // TODO: we need to align stream types here
 
             /**
-            * Request to the client to retrieve a readable stream 
+            * Request from the client to retrieve a readable stream 
             * that transports the compressed Sequence and its configuration file.
             */
             const packageStream = this.client.getPackage();
