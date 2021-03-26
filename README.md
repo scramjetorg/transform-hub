@@ -154,7 +154,7 @@ Run an npm script in each package that contains that script.
 lerna run [script]
 ```
 
-## Howto run components
+## How to run components
 
 ### Runner
 
@@ -249,7 +249,7 @@ npm i
 - execute all bdd test using from the command line:
 
 ```bash
-yarn test:bdd
+yarn test-bdd
 ```
 
 - or execute a particular bdd scenario by adding the scenario title after a `--name` flag:
