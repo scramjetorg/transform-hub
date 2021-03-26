@@ -19,9 +19,7 @@ class CSHClient implements CSHConnector {
             new PassThrough(),
             new PassThrough(),
             new PassThrough(),
-            //new DataStream() as unknown as Writable,
             new PassThrough(),
-            //new DataStream() as unknown as Readable,
             new PassThrough(),
             this.packageStream
         ];
@@ -37,13 +35,13 @@ class CSHClient implements CSHConnector {
                 path: this.socketPath
             }));
 
-            // from h1
+            // from host-one
             mux.multiplex({ channel: 0 }).pipe(this.streams[0]); // stdin
             mux.multiplex({ channel: 3 }).pipe(this.streams[3]); // control
             mux.multiplex({ channel: 5 }).pipe(new PassThrough()); // ?
             mux.multiplex({ channel: 6 }).pipe(this.packageStream); // package
 
-            // up to h1
+            // to host-onet
             this.streams[1].pipe(mux.multiplex({ channel: 1 })); // stdout
             this.streams[2].pipe(mux.multiplex({ channel: 2 })); // stderr
             this.streams[4].pipe(mux.multiplex({ channel: 4 })); // monitor
@@ -64,6 +62,7 @@ class CSHClient implements CSHConnector {
         if (typeof this.upstreamStreamsConfig === "undefined") {
             throw new Error("Upstreams not initated.");
         }
+
         communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
     }
 

@@ -119,10 +119,8 @@ export class CommunicationHandler implements ICommunicationHandler {
     pipeMessageStreams() {
         if (this.areStreamsHooked()) {
             StringStream.from(this.monitoringDownstream as Readable)
-                .do(d => { console.log("Stream handler from monitorDownstream", d); })
                 .JSONParse()
                 .map(async (message: EncodedMonitoringMessage) => {
-                    console.log(message[0]);
                     if (this.monitoringHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
 
@@ -131,13 +129,13 @@ export class CommunicationHandler implements ICommunicationHandler {
                         }
                         return currentMessage as EncodedMonitoringMessage;
                     }
+
                     return message;
                 })
                 .JSONStringify()
                 .pipe(this.monitoringUpstream as unknown as Writable);
 
             StringStream.from(this.controlUpstream as Readable)
-                .do(d => { console.log("Stream handler from controlUpstream", d); })
                 .JSONParse()
                 .map(async (message: EncodedControlMessage) => {
                     if (this.controlHandlerHash[message[0]].length) {
@@ -148,6 +146,7 @@ export class CommunicationHandler implements ICommunicationHandler {
                         }
                         return currentMessage as EncodedMonitoringMessage;
                     }
+
                     return message;
                 })
                 .JSONStringify()

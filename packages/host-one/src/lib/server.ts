@@ -14,29 +14,20 @@ export class SocketServer {
 
     start() {
         this.server = net.createServer(c => {
-            console.log("[H1][Server] on connect");
-
             let mux = new BPMux(c);
 
             mux.on("handshake", (stream: any) => {
-                console.log("CHannel", stream._chan);
-
                 if (this.streams) {
                     let hash: any = {
                         0: () => new PassThrough().pipe(stream), // stdin
-
-                        1: () => stream.pipe(process.stdout),
-
-                        2: () => stream.pipe(process.stderr),
-
+                        1: () => stream.pipe(process.stdout), // stdout
+                        2: () => stream.pipe(process.stderr), // stderr
                         // @ts-ignore: Object is possibly 'null'.
                         3: () => this.streams[3].pipe(stream),
-
                         // @ts-ignore: Object is possibly 'null'.
                         4: () => stream.pipe(this.streams[4]),
                         //4: () => stream.pipe(process.stdout),
                         5: () => stream.pipe(new PassThrough()),
-
                         // @ts-ignore: Object is possibly 'null'.
                         6: () => this.streams[6].pipe(stream),
                     };
@@ -49,7 +40,7 @@ export class SocketServer {
 
         })
             .listen(this.address, () => {
-                console.log("[H1][Server] Started at", this.server?.address());
+                console.log("[HostOne][Server] Started at", this.server?.address());
             });
     }
 

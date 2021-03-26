@@ -7,6 +7,7 @@ import { DataStream, StringStream } from "scramjet";
 import { PassThrough } from "stream";
 import * as vorpal from "vorpal";
 import { SocketServer } from "./lib/server";
+import vorpal = require("vorpal");
 
 export class HostOne {
     // @ts-ignore
@@ -20,7 +21,7 @@ export class HostOne {
     private controlStream: PassThrough;
 
     // @ts-ignore
-    private controlStreamD: DataStream;
+    private controlDataStream: DataStream;
     // @ts-ignore
     private configPath: string;
     // @ts-ignore
@@ -41,7 +42,7 @@ export class HostOne {
         await this.hookupMonitorStream();
         await this.createNetServer();
         await this.startSupervisor();
-        await this.createApiServer();
+        //await this.createApiServer();
     }
 
     async init(packageStream: ReadStream, appConfig: AppConfig, sequenceArgs?: any[]) {
@@ -50,11 +51,9 @@ export class HostOne {
         this.sequenceArgs = sequenceArgs;
 
         this.controlStream = new PassThrough();
+        this.controlDataStream = new DataStream();
 
-        this.controlStreamD = new DataStream();
-
-
-        this.controlStreamD.JSONStringify()
+        this.controlDataStream.JSONStringify()
             .pipe(this.controlStream);
 
         this.monitorStream = new PassThrough();
@@ -65,7 +64,6 @@ export class HostOne {
         return require(configPath);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async createNetServer(): Promise<void> {
         this.netServer = new SocketServer(this.socketName);
 
@@ -87,31 +85,28 @@ export class HostOne {
 
 
     async createApiServer(): Promise<void> {
-        //throw new Error(this.errors.noImplement);
+        throw new Error(this.errors.noImplement);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async startSupervisor(): Promise<void> {
-        //throw new Error("Method not implemented.");
-
-        console.log("[H1] Starting supervisor");
-        let cp =
         exec("ts-node ../../../supervisor/src/bin/supervisor " + this.socketName, (err) => {
-            if (err) console.error(err);
+            if (err) {
+                throw new Error(err.message);
+            }
         });
-
-        cp.stdout?.pipe(process.stdout);
-        cp.stderr?.pipe(process.stdout);
+        /* TODO: to be (?)
+        spawn("ts-node ../../../supervisor/src/bin/supervisor " + this.socketName, {
+            detached: true,
+            stdio: "ignore"
+        });
+        */
     }
 
     async hookupMonitorStream() {
-        //TODO monitorStream has to be demuxed before?
         StringStream.from(this.monitorStream)
-            //.stringify()
-            .do(d => { console.log("hookupMonitorStream", d); })
             .JSONParse()
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             .map(async ([code, data]: EncodedMonitoringMessage) => {
-                console.log(code, data);//TODO delete
                 switch (code) {
                 case RunnerMessageCode.ACKNOWLEDGE:
                     break;
@@ -141,26 +136,23 @@ export class HostOne {
     }
 
     async handleHandshake() {
-        console.log("handle handshake");
         const pongMsg: HandshakeAcknowledgeMessage = {
             msgCode: RunnerMessageCode.PONG,
             appConfig: this.appConfig,
             arguments: this.sequenceArgs
         };
 
-        console.log("write handshake");
-        await this.controlStreamD.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
-        console.log("after write handshake");
+        await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
     }
 
     controlStreamsCliHandler() {
         this.vorpal
             .command("alive", "Confirm that sequence is alive when it is not responding")
-            .action(() => this.controlStreamD.whenWrote([RunnerMessageCode.ALIVE, {}]));
+            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.ALIVE, {}]));
 
         this.vorpal
             .command("kill", "Kill forcefully sequence")
-            .action(() => this.controlStreamD.whenWrote([RunnerMessageCode.KILL, {}]));
+            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.KILL, {}]));
 
         this.vorpal
             .command("stop", "Stop gracefully sequence")
@@ -173,7 +165,7 @@ export class HostOne {
             * stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
             * once the promise is resolved the Runner assumes it is safe to stop the Sequence
             */
-            .action(() => this.controlStreamD.whenWrote([RunnerMessageCode.STOP, {}]));
+            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.STOP, {}]));
 
         this.vorpal
             .command("event [EVENT_NAME] [ANY]", "Send event and any object, arry, function to the sequence")
@@ -185,7 +177,7 @@ export class HostOne {
 
                 return eventName === undefined && message === undefined
                     ? this.vorpal.log(this.errors.noParams)
-                    : this.controlStreamD.whenWrote([RunnerMessageCode.EVENT, { eventName, message }]);
+                    : this.controlDataStream.whenWrote([RunnerMessageCode.EVENT, { eventName, message }]);
             });
 
         this.vorpal
@@ -196,7 +188,7 @@ export class HostOne {
 
                 return isNaN(monitoringRate)
                     ? this.vorpal.log(this.errors.noParams)
-                    : this.controlStreamD.whenWrote([RunnerMessageCode.MONITORING_RATE, { monitoringRate }]);
+                    : this.controlDataStream.whenWrote([RunnerMessageCode.MONITORING_RATE, { monitoringRate }]);
             });
 
         this.vorpal
