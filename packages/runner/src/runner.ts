@@ -40,6 +40,7 @@ export class Runner {
                 *   The killHandler() call returns void. The call is synchronous.
                 *   We do not wait, the Sequence is terminated without a delay.
                 */
+                    //sprawdzic czy ubija proces działający .call
                     await this.handleKillRequest();
                     break;
                 case RunnerMessageCode.STOP:
@@ -53,6 +54,11 @@ export class Runner {
                 *   the time required to complete the execution.
                 *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
                 */
+                    await this.context?.stopHandler?.call(this.context,
+                        (data as StopSequenceMessageData).timeout,
+                        (data as StopSequenceMessageData).canCallKeepalive
+                    );
+                    // await this.context.stopHandler(data as StopSequenceMessageData);
                     await this.handleStopRequest(data as StopSequenceMessageData);
                     break;
                 case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
@@ -62,7 +68,7 @@ export class Runner {
                     await this.handleReceptionOfHandshake(data as HandshakeAcknowledgeMessageData);
                     break;
                 case RunnerMessageCode.EVENT:
-                    let eventData = data as EventMessageData;
+                    const eventData = data as EventMessageData;
 
                     this.emitter.emit(eventData.eventName, eventData.message);
                     break;
@@ -114,22 +120,22 @@ export class Runner {
     }
 
     async handleKillRequest(): Promise<void> {
+        this.context?.killHandler?.call(this.context);
         this.cleanupControlStream();
 
-        setTimeout(() => {
-            process.exit(10);
-        }, 5000).unref();
-
-        /* We must call
-        */
+        process.exit(137);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
+        // if(seqNotStopped){
+        //     process exit albo cos podobnego
+        // }
+        // close streams 
+        // wyslij po mmonitoringu wiadomosc ze sekwencja sie zatrzymała
         // TODO: use timeout and canKeepAlive from data
+
         await this.handleStopSequence();
-        // why still throw?
-        throw new Error("Method not implemented.");
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -157,11 +163,6 @@ export class Runner {
     async main() {
         await this.hookupFifoStreams();
         this.sendHandshakeMessage();
-        // TODO:
-        // await this.waitForHandshakeResponse();
-        // await this.initAppContext()
-        // await this.runSequence();
-        // await this.cleanupControlStream();
     }
 
     /**
