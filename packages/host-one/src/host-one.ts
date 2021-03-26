@@ -1,17 +1,18 @@
 import { HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
 import { AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage } from "@scramjet/types";
 import { exec } from "child_process";
-import { ReadStream } from "fs";
+import { ReadStream, unlink } from "fs";
 import { Server as HttpServer } from "http";
+import * as os from "os";
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough } from "stream";
 import * as vorpal from "vorpal";
 import { SocketServer } from "./lib/server";
 import vorpal = require("vorpal");
+import path = require("path");
 
 export class HostOne {
-    // @ts-ignore
-    private socketName: string = "/tmp/test-server-sock";//TODO should be unique
+    private socketName: string;
     private netServer?: SocketServer;
     // @ts-ignore
     private httpApiServer: HttpServer;
@@ -37,6 +38,10 @@ export class HostOne {
 
     private appConfig: AppConfig = {};
     private sequenceArgs?: string[];
+
+    constructor() {
+        this.socketName = path.join(os.tmpdir(), process.pid.toString());
+    }
 
     async main(): Promise<void> {
         await this.hookupMonitorStream();
@@ -80,9 +85,16 @@ export class HostOne {
         this.netServer.attachStreams(streams);
         this.netServer.start();
 
+        process.on("beforeExit", () => {
+            unlink(this.socketName, (err) => {
+                if (err) {
+                    throw new Error("Can't remove socket file");
+                }
+            });
+        });
+
         return Promise.resolve();
     }
-
 
     async createApiServer(): Promise<void> {
         throw new Error(this.errors.noImplement);

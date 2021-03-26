@@ -1,6 +1,5 @@
 import { DownstreamStreamsConfig, UpstreamStreamsConfig } from "@scramjet/types";
 import { PathLike } from "fs";
-import { unlink } from "fs/promises";
 import * as net from "net";
 import { PassThrough } from "stream";
 
@@ -46,12 +45,6 @@ export class SocketServer {
 
     constructor(address: PathLike) {
         this.address = address;
-
-        this.removeSocket(); // TODO just when server ends.
-    }
-
-    async removeSocket() {
-        await unlink(this.address);
     }
 
     attachStreams(streams: UpstreamStreamsConfig | any) {
