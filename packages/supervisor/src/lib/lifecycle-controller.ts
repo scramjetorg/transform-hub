@@ -207,8 +207,8 @@ class LifeCycleController {
 
         /**
         * LifeCycle Adapter performs cleanup operations.
-        * The cleanup operations depend on the LifeCycle interface implementation but
-        * they can include, for example; removal of the created volume, directory and container.
+        * The cleanup operations depend on the LifeCycle interface implementation.
+        * They can include, for example, the removal of the created volume, directory, and container.
         */
         return this.lifecycleAdapter.cleanup();
     }
