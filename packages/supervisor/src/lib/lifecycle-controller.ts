@@ -88,8 +88,8 @@ class LifeCycleController {
      * 
      * After the Sequence terminates it is possible to perform a snapshot of the container in which it was run.
      * 
-     * When the Sequence is terminated and (optionally) the snapshot was created the LifeCycle Controller
-     * requests LifeCycle Adapter to perform the cleanup (e.g. removing unused volumes and containers).
+     * When the Sequence terminates and (optionally) the snapshot is created, the LifeCycle Controller
+     * requests the LifeCycle Adapter to perform the cleanup (e.g. removing unused volumes and containers).
      * 
      * @returns {Promise} resolves when Supervisor completed lifecycle without errors. 
      */
