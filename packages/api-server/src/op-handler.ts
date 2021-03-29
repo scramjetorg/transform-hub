@@ -3,11 +3,11 @@ import { ControlMessageCode } from "@scramjet/types";
 import { CommunicationHandler, checkMessage, MessageDataType } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "./mime";
-import { StringDecoder } from "node:string_decoder";
+import { StringDecoder } from "string_decoder";
 
 export function createOperationHandler(router: SequentialCeroRouter) {
     const getData = async (req: IncomingMessage): Promise<object> => {
-        if (!(req.headers["content-type"]))
+        if (!req.headers["content-type"])
             throw new CeroError("ERR_INVALID_CONTENT_TYPE");
 
         mimeAccepts(req.headers["content-type"], ["application/json", "text/json"]);
@@ -18,13 +18,14 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         if (encoding !== "utf-8") throw new CeroError("ERR_UNSUPPORTED_ENCODING");
 
         const out = new StringDecoder();
+
         for await (const chunk of req) {
             out.write(chunk);
         }
 
         try {
             return JSON.parse(out.end());
-        } catch(e) {
+        } catch (e) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
     };
@@ -39,6 +40,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         router.post(path, async (req, res, next) => {
             try {
                 const obj = await getData(req) as MessageDataType<T>;
+
                 conn.sendControlMessage(message, checkMessage(message, obj));
 
                 res.writeHead(202, "Accepted", { "content-type": "application/json" });

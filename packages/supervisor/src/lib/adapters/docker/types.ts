@@ -1,5 +1,5 @@
 import { ExitCode } from "@scramjet/types";
-import { PathLike } from "node:fs";
+import { PathLike } from "fs";
 import { Stream, Writable } from "stream";
 
 /**

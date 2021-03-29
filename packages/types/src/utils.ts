@@ -1,4 +1,4 @@
-import EventEmitter = require("node:events");
+import EventEmitter = require("events");
 import { PassThrough, Readable, Writable } from "stream";
 
 /**

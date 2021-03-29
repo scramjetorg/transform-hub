@@ -1,9 +1,8 @@
 import { CeroError, NextCallback, SequentialCeroRouter } from "./definitions";
 import { MonitoringMessageCode } from "@scramjet/types";
 import { CommunicationHandler, MessageDataType } from "@scramjet/model";
-import { IncomingMessage, ServerResponse } from "node:http";
+import { IncomingMessage, ServerResponse } from "http";
 import { mimeAccepts } from "./mime";
-import { getObject } from "./data-extractors";
 
 export function createGetterHandler(router: SequentialCeroRouter) {
     const check = (req: IncomingMessage): void => {
@@ -32,9 +31,8 @@ export function createGetterHandler(router: SequentialCeroRouter) {
         router.get(path, async (req, res, next) => {
             try {
                 check(req);
-                const data = await getObject(lastItem, req);
 
-                return output(data, req, res, next);
+                return output(lastItem as object, req, res, next);
             } catch (e) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));
             }

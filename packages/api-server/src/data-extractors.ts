@@ -1,6 +1,6 @@
 import { StreamInput } from "@scramjet/types";
 import { IncomingMessage } from "http";
-import { Readable, Writable } from "node:stream";
+import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";
 
 export async function getObject(object: any, req: IncomingMessage): Promise<any> {

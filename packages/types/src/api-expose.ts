@@ -1,6 +1,6 @@
 import { CommunicationHandler } from "@scramjet/model";
 import { IncomingMessage } from "http";
-import { Server } from "node:http";
+import { Server } from "http";
 import { Readable, Writable } from "stream";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";

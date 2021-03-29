@@ -7,7 +7,7 @@ import * as vorpal from "vorpal";
 import { PassThrough } from "stream";
 
 export class HostOne {
-    // @ts-ignore    
+    // @ts-ignore
     private socketName: string = "";//TODO should be unique
     // @ts-ignore
     private netServer: NetServer;

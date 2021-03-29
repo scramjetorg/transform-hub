@@ -43,6 +43,7 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
     return true;
 }
 
+// eslint-disable-next-line complexity
 export const checkMessage = <X extends RunnerMessageCode>(
     msgCode: X,
     msgData: MessageDataType<RunnerMessageCode>
@@ -76,7 +77,7 @@ export const checkMessage = <X extends RunnerMessageCode>(
     }
 
     throw new Error(`Bad message of type ${msgCode}`);
-}
+};
 /**
 * Get an object of message type from serialized message.
 * A helper method used for deserializing messages.

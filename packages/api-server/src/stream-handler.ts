@@ -1,5 +1,5 @@
 import { ServerResponse } from "http";
-import { Readable } from "node:stream";
+import { Readable } from "stream";
 import { mimeAccepts } from "./mime";
 import { CeroError, SequentialCeroRouter } from "./definitions";
 import { getStream, getWritable } from "./data-extractors";
@@ -59,7 +59,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             throw new CeroError("ERR_FAILED_TO_SERIALIZE", e);
         }
     };
-
     const upstream = (
         path: string|RegExp,
         stream: StreamInput,
