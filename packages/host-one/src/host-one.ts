@@ -85,6 +85,7 @@ export class HostOne {
         this.netServer.start();
 
         process.on("beforeExit", () => {
+            // TODO: check if this works for process.on("SIGINT"
             unlink(this.socketName, (err) => {
                 if (err) {
                     throw new Error("Can't remove socket file");
@@ -100,17 +101,13 @@ export class HostOne {
     }
 
     async startSupervisor(): Promise<void> {
-        exec("ts-node ../../../supervisor/src/bin/supervisor " + this.socketName, (err) => {
+        const execPath = path.join(__dirname, "../../dist/supervisor/bin/supervisor");
+
+        exec("node " + execPath + " " + this.socketName, (err) => {
             if (err) {
                 throw new Error(err.message);
             }
         });
-        /* TODO: to be (?)
-        spawn("ts-node ../../../supervisor/src/bin/supervisor " + this.socketName, {
-            detached: true,
-            stdio: "ignore"
-        });
-        */
     }
 
     async hookupMonitorStream() {
