@@ -1,8 +1,8 @@
-import { CeroError, SequentialCeroRouter } from "./definitions";
+import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { ControlMessageCode } from "@scramjet/types";
 import { CommunicationHandler, checkMessage, MessageDataType } from "@scramjet/model";
 import { IncomingMessage } from "http";
-import { mimeAccepts } from "./mime";
+import { mimeAccepts } from "../lib/mime";
 import { StringDecoder } from "string_decoder";
 
 export function createOperationHandler(router: SequentialCeroRouter) {

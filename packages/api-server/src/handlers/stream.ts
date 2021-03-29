@@ -1,8 +1,8 @@
 import { ServerResponse } from "http";
 import { Readable } from "stream";
-import { mimeAccepts } from "./mime";
-import { CeroError, SequentialCeroRouter } from "./definitions";
-import { getStream, getWritable } from "./data-extractors";
+import { mimeAccepts } from "../lib/mime";
+import { CeroError, SequentialCeroRouter } from "../lib/definitions";
+import { getStream, getWritable } from "../lib/data-extractors";
 import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 
 function checkAccepts(acc: string|undefined, text: boolean, json: boolean) {
@@ -96,7 +96,9 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     req.pipe(data, { end });
                     req.on("end", resolve);
                 });
-                if (end) await new Promise(resolve => data.once("finish", resolve));
+                if (end) {
+                    await new Promise(resolve => data.once("finish", resolve));
+                }
                 res.writeHead(202, "Accepted");
                 res.end();
             } catch (e) {

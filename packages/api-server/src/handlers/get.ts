@@ -1,8 +1,8 @@
-import { CeroError, NextCallback, SequentialCeroRouter } from "./definitions";
+import { CeroError, NextCallback, SequentialCeroRouter } from "../lib/definitions";
 import { MonitoringMessageCode } from "@scramjet/types";
 import { CommunicationHandler, MessageDataType } from "@scramjet/model";
 import { IncomingMessage, ServerResponse } from "http";
-import { mimeAccepts } from "./mime";
+import { mimeAccepts } from "../lib/mime";
 
 export function createGetterHandler(router: SequentialCeroRouter) {
     const check = (req: IncomingMessage): void => {

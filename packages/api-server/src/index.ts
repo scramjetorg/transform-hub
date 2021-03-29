@@ -1,9 +1,9 @@
 import { APIExpose } from "@scramjet/types";
-import { cero, sequentialRouter } from "./0http";
-import { CeroRouterConfig } from "./definitions";
-import { createGetterHandler } from "./get-handler";
-import { createOperationHandler } from "./op-handler";
-import { createStreamHandlers } from "./stream-handler";
+import { cero, sequentialRouter } from "./lib/0http";
+import { CeroRouterConfig } from "./lib/definitions";
+import { createGetterHandler } from "./handlers/get";
+import { createOperationHandler } from "./handlers/op";
+import { createStreamHandlers } from "./handlers/stream";
 
 export function createServer(conf: { verbose?: boolean }): APIExpose {
     const config: CeroRouterConfig = {
@@ -31,4 +31,4 @@ export function createServer(conf: { verbose?: boolean }): APIExpose {
     };
 }
 
-export * from "./definitions";
+export * from "./lib/definitions";
