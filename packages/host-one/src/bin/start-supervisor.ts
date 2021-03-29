@@ -7,7 +7,8 @@ async function startSupervisor(socketPath: string) {
         return Promise.reject(new Error("The path to socket is incorrect: " + socketPath));
     }
 
-    const path = join(__dirname, "..", "..", "supervisor", "bin", "supervisor.js");
+    // TODO: is it possible to rewrite this in such a way that it works with ts-node as well?
+    const path = resolve(__dirname, "../../supervisor/bin/supervisor.js");
     const command: string[] = [path, socketPath];
     const supervisor = spawn(process.execPath, command);
 
