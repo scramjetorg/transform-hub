@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { join } from "path";
+import { resolve } from "path";
 
 async function startSupervisor(socketPath: string) {
 
