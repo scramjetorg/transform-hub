@@ -123,5 +123,5 @@ dist
 # bdd
 bdd/*report*.html
 
-#pre-runner sample-package
+# pre-runner sample-package
 packages/pre-runner/sample-package/

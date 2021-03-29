@@ -78,7 +78,7 @@ class LifecycleDockerAdapter implements LifeCycle {
                     reject(error);
                 }
 
-                await chmod(fifoPath, 0o777);
+                await chmod(fifoPath, 0o660);
 
                 resolve(fifoPath);
             });
@@ -106,7 +106,7 @@ class LifecycleDockerAdapter implements LifeCycle {
                     this.createFifo(createdDir, controlFifo),
                     this.createFifo(createdDir, monitorFifo)]);
 
-                await chmod(createdDir, 0o777);
+                await chmod(createdDir, 0o750);
 
                 resolve(createdDir);
             } catch (err) {
