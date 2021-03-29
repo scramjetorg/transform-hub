@@ -1,5 +1,5 @@
 import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { AppConfig, Application, AutoAppContext, EncodedControlMessage, ReadableStream, WritableStream } from "@scramjet/types";
+import { ReadableStream, WritableStream, AppConfig, Application, AutoAppContext, EncodedControlMessage, EncodedMonitoringMessage } from "@scramjet/types";
 import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
@@ -23,7 +23,6 @@ export class Runner {
     }
 
     async controlStreamHandler([code, data]: EncodedControlMessage){
-
         switch (code) {
         case RunnerMessageCode.MONITORING_RATE:
             await this.handleMonitoringRequest(data as MonitoringRateMessageData);
@@ -32,21 +31,6 @@ export class Runner {
             await this.handleKillRequest();
             break;
         case RunnerMessageCode.STOP:
-        /*  @feature/analysis-stop-kill-invocation
-        *   Stop message has two properties:
-        *   timeout: number - the Sequence will be stopped after the provided timeout (miliseconds),
-        *   canCallKeepalive: boolean - indicates whether Sequence can be prolong operation to complete the task
-        *   We should call AutoAppContext's providing their values:
-        *   stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
-        *   If canCallKeepalive is true the Sequence can call keepAlive to indicate
-        *   the time required to complete the execution.
-        *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
-        */
-            await this.context?.stopHandler?.call(this.context,
-                (data as StopSequenceMessageData).timeout,
-                (data as StopSequenceMessageData).canCallKeepalive
-            );
-            // await this.context.stopHandler(data as StopSequenceMessageData);
             await this.handleStopRequest(data as StopSequenceMessageData);
             break;
         case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
@@ -67,7 +51,6 @@ export class Runner {
 
     async hookupControlStream() {
         this.controlStream = createReadStream(this.controlFifoPath);
-        console.log("AFTER createReadStream hookupFifoStreams to delete");
         StringStream
             .from(this.controlStream)
             .JSONParse()
@@ -86,7 +69,6 @@ export class Runner {
 
     async hookupMonitorStream() {
         this.monitorStream = createWriteStream(this.monitorFifoPath);
-        console.log("hookupMonitorStream to delete");
     }
 
     async hookupFifoStreams() {
@@ -123,16 +105,42 @@ export class Runner {
         process.exit(137);
     }
 
+
+
+            /*  @feature/analysis-stop-kill-invocation
+        *   Stop message has two properties:
+        *   timeout: number - the Sequence will be stopped after the provided timeout (miliseconds),
+        *   canCallKeepalive: boolean - indicates whether Sequence can be prolong operation to complete the task
+        *   + We should call AutoAppContext's providing their values:
+        *   + stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
+        *   If canCallKeepalive is true the Sequence can call keepAlive to indicate
+        *   the time required to complete the execution.
+        *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
+        */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
+        await this.context?.stopHandler?.call(this.context,
+            (data as StopSequenceMessageData).timeout,
+            (data as StopSequenceMessageData).canCallKeepalive
+        );
         // if(seqNotStopped){
         //     process exit albo cos podobnego
         // }
         // close streams 
         // wyslij po mmonitoringu wiadomosc ze sekwencja sie zatrzymała
         // TODO: use timeout and canKeepAlive from data
+    
+        this.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, {}], this.monitorStream);
 
         await this.handleStopSequence();
+    }
+
+    writeMessageOnStream([code, data]: EncodedMonitoringMessage, streamToWrite?: WritableStream<any>){
+        if (streamToWrite === undefined) {
+            throw new Error("Monitor Stream is not defined.");
+        }
+
+        streamToWrite.write(JSON.stringify([code, data]) + "\r\n");
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -183,13 +191,13 @@ export class Runner {
             AppError: AppError,
 
             keepAlive(millis: number = 1000) {
-                monitor.write([
+                that.writeMessageOnStream([
                     RunnerMessageCode.ALIVE, { keepAlive: millis || 0 }
-                ]);
+                ], monitor);
                 return this;
             },
             emit(eventName: string, message: any) {
-                monitor.write([RunnerMessageCode.EVENT, { eventName, message }]);
+                that.writeMessageOnStream([RunnerMessageCode.EVENT, { eventName, message }], monitor);
                 return this;
             },
             on(eventName: string, handler: (message?: any) => void) {
@@ -213,11 +221,7 @@ export class Runner {
     }
 
     sendHandshakeMessage() {
-        if (this.monitorStream === undefined) {
-            throw new Error("Monitor Stream is not defined.");
-        }
-
-        this.monitorStream.write(JSON.stringify([RunnerMessageCode.PING, {}]) + "\r\n");
+        this.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
     }
 
     getSequence(): Application {
