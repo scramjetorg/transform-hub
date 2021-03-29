@@ -105,32 +105,11 @@ export class Runner {
         process.exit(137);
     }
 
-
-
-            /*  @feature/analysis-stop-kill-invocation
-        *   Stop message has two properties:
-        *   timeout: number - the Sequence will be stopped after the provided timeout (miliseconds),
-        *   canCallKeepalive: boolean - indicates whether Sequence can be prolong operation to complete the task
-        *   + We should call AutoAppContext's providing their values:
-        *   + stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
-        *   If canCallKeepalive is true the Sequence can call keepAlive to indicate
-        *   the time required to complete the execution.
-        *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
-        */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
-        await this.context?.stopHandler?.call(this.context,
-            (data as StopSequenceMessageData).timeout,
-            (data as StopSequenceMessageData).canCallKeepalive
+        this.context?.stopHandler?.call(this.context,
+            data.timeout,
+            data.canCallKeepalive
         );
-        // if(seqNotStopped){
-        //     process exit albo cos podobnego
-        // }
-        // close streams 
-        // wyslij po mmonitoringu wiadomosc ze sekwencja sie zatrzymała
-        // TODO: use timeout and canKeepAlive from data
-    
-        this.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, {}], this.monitorStream);
 
         await this.handleStopSequence();
     }
@@ -143,9 +122,8 @@ export class Runner {
         streamToWrite.write(JSON.stringify([code, data]) + "\r\n");
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async handleStopSequence(err?: Error): Promise<void> {
-        throw new Error("Method not implemented.");
+        this.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

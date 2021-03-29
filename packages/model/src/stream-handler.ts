@@ -32,6 +32,7 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.EVENT]: MonitoringMessageHandler<RunnerMessageCode.EVENT>[];
     [RunnerMessageCode.PING]: MonitoringMessageHandler<RunnerMessageCode.PING>[];
     [RunnerMessageCode.SNAPSHOT_RESPONSE]: MonitoringMessageHandler<RunnerMessageCode.SNAPSHOT_RESPONSE>[];
+    [RunnerMessageCode.SEQUENCE_STOPPED]: MonitoringMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
 };
 type ControlMessageHandlerList = {
     [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: ControlMessageHandler<RunnerMessageCode.FORCE_CONFIRM_ALIVE>[];
@@ -90,7 +91,8 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.MONITORING]: [],
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PING]: [],
-            [RunnerMessageCode.SNAPSHOT_RESPONSE]: []
+            [RunnerMessageCode.SNAPSHOT_RESPONSE]: [],
+            [RunnerMessageCode.SEQUENCE_STOPPED]: []
         };
     }
 
