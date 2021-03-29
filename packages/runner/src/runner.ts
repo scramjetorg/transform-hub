@@ -22,60 +22,56 @@ export class Runner {
         this.sequencePath = sequencePath;
     }
 
+    async controlStreamHandler([code, data]: EncodedControlMessage){
+
+        switch (code) {
+        case RunnerMessageCode.MONITORING_RATE:
+            await this.handleMonitoringRequest(data as MonitoringRateMessageData);
+            break;
+        case RunnerMessageCode.KILL:
+            await this.handleKillRequest();
+            break;
+        case RunnerMessageCode.STOP:
+        /*  @feature/analysis-stop-kill-invocation
+        *   Stop message has two properties:
+        *   timeout: number - the Sequence will be stopped after the provided timeout (miliseconds),
+        *   canCallKeepalive: boolean - indicates whether Sequence can be prolong operation to complete the task
+        *   We should call AutoAppContext's providing their values:
+        *   stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
+        *   If canCallKeepalive is true the Sequence can call keepAlive to indicate
+        *   the time required to complete the execution.
+        *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
+        */
+            await this.context?.stopHandler?.call(this.context,
+                (data as StopSequenceMessageData).timeout,
+                (data as StopSequenceMessageData).canCallKeepalive
+            );
+            // await this.context.stopHandler(data as StopSequenceMessageData);
+            await this.handleStopRequest(data as StopSequenceMessageData);
+            break;
+        case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
+            await this.handleForceConfirmAliveRequest();
+            break;
+        case RunnerMessageCode.PONG:
+            await this.handleReceptionOfHandshake(data as HandshakeAcknowledgeMessageData);
+            break;
+        case RunnerMessageCode.EVENT:
+            const eventData = data as EventMessageData;
+
+            this.emitter.emit(eventData.eventName, eventData.message);
+            break;
+        default:
+            break;
+        }
+    }
+
     async hookupControlStream() {
         this.controlStream = createReadStream(this.controlFifoPath);
-
+        console.log("AFTER createReadStream hookupFifoStreams to delete");
         StringStream
             .from(this.controlStream)
             .JSONParse()
-            .map(async ([code, data]: EncodedControlMessage) => {
-                switch (code) {
-                case RunnerMessageCode.MONITORING_RATE:
-                    await this.handleMonitoringRequest(data as MonitoringRateMessageData);
-                    break;
-                case RunnerMessageCode.KILL:
-                /*  @feature/analysis-stop-kill-invocation
-                *   Kill message has no properties.
-                *   We should call AutoAppContext's killHandler().
-                *   The killHandler() call returns void. The call is synchronous.
-                *   We do not wait, the Sequence is terminated without a delay.
-                */
-                    //sprawdzic czy ubija proces działający .call
-                    await this.handleKillRequest();
-                    break;
-                case RunnerMessageCode.STOP:
-                /*  @feature/analysis-stop-kill-invocation
-                *   Stop message has two properties:
-                *   timeout: number - the Sequence will be stopped after the provided timeout (miliseconds),
-                *   canCallKeepalive: boolean - indicates whether Sequence can be prolong operation to complete the task
-                *   We should call AutoAppContext's providing their values:
-                *   stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
-                *   If canCallKeepalive is true the Sequence can call keepAlive to indicate
-                *   the time required to complete the execution.
-                *   Once stopHandler promise is resolve we assume it is safe to terminate the Sequence.
-                */
-                    await this.context?.stopHandler?.call(this.context,
-                        (data as StopSequenceMessageData).timeout,
-                        (data as StopSequenceMessageData).canCallKeepalive
-                    );
-                    // await this.context.stopHandler(data as StopSequenceMessageData);
-                    await this.handleStopRequest(data as StopSequenceMessageData);
-                    break;
-                case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-                    await this.handleForceConfirmAliveRequest();
-                    break;
-                case RunnerMessageCode.PONG:
-                    await this.handleReceptionOfHandshake(data as HandshakeAcknowledgeMessageData);
-                    break;
-                case RunnerMessageCode.EVENT:
-                    const eventData = data as EventMessageData;
-
-                    this.emitter.emit(eventData.eventName, eventData.message);
-                    break;
-                default:
-                    break;
-                }
-            })
+            .map(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
             .run()
             .catch(async (error) => {
                 console.error("An error occurred during parsing control message.", error.stack);
@@ -90,6 +86,7 @@ export class Runner {
 
     async hookupMonitorStream() {
         this.monitorStream = createWriteStream(this.monitorFifoPath);
+        console.log("hookupMonitorStream to delete");
     }
 
     async hookupFifoStreams() {
