@@ -4,12 +4,11 @@ import { exec } from "child_process";
 import { ReadStream, unlink } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
+import * as path from "path";
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough } from "stream";
 import * as vorpal from "vorpal";
 import { SocketServer } from "./lib/server";
-import vorpal = require("vorpal");
-import path = require("path");
 
 export class HostOne {
     private socketName: string;
