@@ -42,6 +42,17 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.PONG]: ControlMessageHandler<RunnerMessageCode.PONG>[];
 };
 
+
+async function whenWrote<T extends any>(encoded: T, target: WritableStream<T>) {
+    return new Promise<void>(res => {
+        if (target.write(encoded)) {
+            res();
+        } else {
+            target.once("drained", res);
+        }
+    });
+}
+
 export class CommunicationHandler implements ICommunicationHandler {
     private stdInUpstream?: Readable;
     private stdInDownstream?: Writable;
@@ -186,20 +197,16 @@ export class CommunicationHandler implements ICommunicationHandler {
     async sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: EncodedMessage<T>): Promise<void> {
         const encoded: EncodedMonitoringMessage = [code, msg];
 
-        await new Promise(res => {
-            if (this.monitoringUpstream?.write(encoded)) res(this);
-            else this.monitoringUpstream?.once("drained", res);
-        });
-
+        if (this.monitoringUpstream)
+            await whenWrote(encoded, this.monitoringUpstream);
     }
 
     async sendControlMessage<T extends ControlMessageCode>(code: T, msg: MessageDataType<T>): Promise<void> {
         const encoded: EncodedControlMessage = [code, msg];
 
-        await new Promise(res => {
-            if (this.controlDownstream?.write(JSON.stringify(encoded))) res(this);
-            else this.controlDownstream?.once("drained", res);
-        });
+        if (this.controlDownstream)
+            await whenWrote(JSON.stringify(encoded), this.controlDownstream);
     }
 
 }
+
