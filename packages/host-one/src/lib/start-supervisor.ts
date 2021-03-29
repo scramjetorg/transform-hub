@@ -8,7 +8,7 @@ async function startSupervisor(socketPath: string) {
     }
 
     // TODO: is it possible to rewrite this in such a way that it works with ts-node as well?
-    const path = resolve(__dirname, "../../supervisor/bin/supervisor.js");
+    const path = resolve(__dirname, "../../../../dist/supervisor/bin/supervisor.js");
     const command: string[] = [path, socketPath];
     const supervisor = spawn(process.execPath, command);
 

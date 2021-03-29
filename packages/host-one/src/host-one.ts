@@ -1,6 +1,5 @@
 import { HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
 import { AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage } from "@scramjet/types";
-import { exec } from "child_process";
 import { ReadStream, unlink } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
@@ -9,6 +8,7 @@ import { DataStream, StringStream } from "scramjet";
 import { PassThrough } from "stream";
 import * as vorpal from "vorpal";
 import { SocketServer } from "./lib/server";
+import { startSupervisor } from "./lib/start-supervisor";
 
 export class HostOne {
     private socketName: string;
@@ -45,7 +45,7 @@ export class HostOne {
     async main(): Promise<void> {
         await this.hookupMonitorStream();
         await this.createNetServer();
-        await this.startSupervisor();
+        await startSupervisor(this.socketName);
         //await this.createApiServer();
     }
 
@@ -98,16 +98,6 @@ export class HostOne {
 
     async createApiServer(): Promise<void> {
         throw new Error(this.errors.noImplement);
-    }
-
-    async startSupervisor(): Promise<void> {
-        const execPath = path.join(__dirname, "../../dist/supervisor/bin/supervisor");
-
-        exec("node " + execPath + " " + this.socketName, (err) => {
-            if (err) {
-                throw new Error(err.message);
-            }
-        });
     }
 
     async hookupMonitorStream() {
