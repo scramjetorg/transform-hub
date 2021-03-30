@@ -3,21 +3,21 @@ import { promisify } from "util";
 import { strict as assert } from "assert";
 import { exec } from "child_process";
 import * as fs from "fs";
-
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
-const supervisorExecutableFilePath = "../dist/supervisor/bin/supervisor.js";
+const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
 const packagePath = "../packages/pre-runner/sample-package/package.tar.gz";
+const packageJson = "../package.json";
+const packageData = "/package/data.json";
+const outputFile = "output.txt";
 
 Given("input file containing data {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
 When("scramjet server porcesses input file as a stream", async () => {
-    process.env.SEQUENCE_PATH = packagePath;
-
     await new Promise(async (resolve) => {
-        exec(`node ${supervisorExecutableFilePath} > dataOut.txt`, { timeout: 2000 }, (error) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} ${outputFile} > dataOut.txt`, { timeout: 2000 }, (error) => {
             if (error) {
                 //kill sequence workaround to delete in the future
                 resolve(1);
@@ -40,7 +40,8 @@ Then("file {string} in each line contains {string} followed by name from file {s
     let line2;
     let i = 0;
 
-    output.next();//skipp first line
+    output.next();//skipp first line with "Checking data"
+    output.next();//skipp second line with "[HostOne][Server] Started at /tmp/2903117"
     for (i = 0; i < input.length && (line2 = output.next()); i++) {
         line1 = input[i].name;
         assert.deepEqual(greeting + line1 + suffix, "" + line2);

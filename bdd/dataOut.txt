@@ -1,4 +1,5 @@
-sequence: [10D[10C[from monitoring] [ 4000, {} ]
+Checking data
+[HostOne][Server] Started at /tmp/2905823
 Hello Alice!
 Hello Ada!
 Hello Aga!
