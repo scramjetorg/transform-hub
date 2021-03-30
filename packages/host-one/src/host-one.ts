@@ -1,5 +1,5 @@
 import { HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage } from "@scramjet/types";
+import { AppConfig, EncodedMonitoringMessage, DownstreamStreamsConfig } from "@scramjet/types";
 import { ReadStream, unlink } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
@@ -20,13 +20,16 @@ export class HostOne {
     // @ts-ignore
     private controlStream: PassThrough;
     // @ts-ignore
+    private packageStream?: ReadStream;
+    // @ts-ignore
+    private streams: DownstreamStreamsConfig;
+
+    // @ts-ignore
     private controlDataStream: DataStream;
     // @ts-ignore
     private configPath: string;
     // @ts-ignore
     private vorpal: any;
-    // @ts-ignore
-    private packageStream?: ReadStream;
 
     errors = {
         noParams: "No params provided. Type help to know more.",
@@ -60,6 +63,18 @@ export class HostOne {
             .pipe(this.controlStream);
 
         this.monitorStream = new PassThrough();
+
+        this.streams = [
+            process.stdin,
+            process.stdout,
+            process.stderr,
+            this.controlStream,
+            this.monitorStream,
+            new PassThrough(),
+            new PassThrough(),
+            this.packageStream
+        ];
+
         this.vorpal = new vorpal();
     }
 
@@ -70,17 +85,7 @@ export class HostOne {
     async createNetServer(): Promise<void> {
         this.netServer = new SocketServer(this.socketName);
 
-        const streams: DownstreamStreamsConfig = [
-            process.stdin,
-            process.stdout,
-            process.stderr,
-            this.controlStream,
-            this.monitorStream,
-            new PassThrough(),
-            this.packageStream
-        ];
-
-        this.netServer.attachStreams(streams);
+        this.netServer.attachStreams(this.streams);
         this.netServer.start();
 
         process.on("beforeExit", () => {

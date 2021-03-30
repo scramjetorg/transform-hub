@@ -39,7 +39,7 @@ class CSHClient implements CSHConnector {
             mux.multiplex({ channel: 0 }).pipe(this.streams[0]); // stdin
             mux.multiplex({ channel: 3 }).pipe(this.streams[3]); // control
             mux.multiplex({ channel: 5 }).pipe(new PassThrough()); // ?
-            mux.multiplex({ channel: 6 }).pipe(this.packageStream); // package
+            mux.multiplex({ channel: 7 }).pipe(this.packageStream); // package
 
             // to host-onet
             this.streams[1].pipe(mux.multiplex({ channel: 1 })); // stdout

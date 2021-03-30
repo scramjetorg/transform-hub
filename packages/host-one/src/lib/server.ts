@@ -1,4 +1,5 @@
-import { DownstreamStreamsConfig, UpstreamStreamsConfig } from "@scramjet/types";
+import { SocketChannel, BPMuxChannel } from "@scramjet/model";
+import { DownstreamStreamsConfig } from "@scramjet/types";
 import { PathLike } from "fs";
 import * as net from "net";
 import { PassThrough } from "stream";
@@ -11,41 +12,57 @@ export class SocketServer {
     address: PathLike;
     streams?: DownstreamStreamsConfig;
 
+    // eslint-disable-next-line complexity
+    private handleStream(stream: BPMuxChannel) {
+        if (this.streams) {
+            switch (parseInt(stream._chan, 10)) {
+            case SocketChannel.STDIN:
+                this.streams[0].pipe(stream);
+                break;
+            case SocketChannel.STDOUT:
+                stream.pipe(process.stdout);
+                break;
+            case SocketChannel.STDERR:
+                stream.pipe(process.stderr);
+                break;
+            case SocketChannel.CONTROL:
+                // eslint-disable-next-line no-extra-parens
+                (this.streams[3] as PassThrough).pipe(stream);
+                break;
+            case SocketChannel.MONITORING:
+                stream.pipe(this.streams[4] as PassThrough);
+                break;
+            case SocketChannel.TO_SEQ:
+            case SocketChannel.FROM_SEQ:
+                break;
+            case SocketChannel.PACKAGE:
+                // @ts-ignore: Object is possibly 'null'.
+                this.streams[7].pipe(stream);
+                break;
+            default:
+                throw new Error("Unknown channel");
+            }
+        } else {
+            throw new Error("Streams not attached");
+        }
+    }
+
     start() {
         let connected = false;
 
         this.server = net.createServer(c => {
             if (connected) {
                 c.end();
-                return;
+                throw new Error("Connection not allowed");
             }
 
             connected = true;
 
             let mux = new BPMux(c);
 
-            mux.on("handshake", (stream: any) => {
-                if (this.streams) {
-                    let hash: any = {
-                        0: () => new PassThrough().pipe(stream), // stdin
-                        1: () => stream.pipe(process.stdout), // stdout
-                        2: () => stream.pipe(process.stderr), // stderr
-                        // @ts-ignore: Object is possibly 'null'.
-                        3: () => this.streams[3].pipe(stream),
-                        // @ts-ignore: Object is possibly 'null'.
-                        4: () => stream.pipe(this.streams[4]),
-                        //4: () => stream.pipe(process.stdout),
-                        5: () => stream.pipe(new PassThrough()),
-                        // @ts-ignore: Object is possibly 'null'.
-                        6: () => this.streams[6].pipe(stream),
-                    };
-
-                    if (hash[stream._chan.toString()]) {
-                        hash[stream._chan.toString()]();
-                    }
-                }
+            mux.on("handshake", (stream: BPMuxChannel) => {
+                this.handleStream(stream);
             });
-
         })
             .listen(this.address, () => {
                 console.log("[HostOne][Server] Started at", this.server?.address());
@@ -56,7 +73,7 @@ export class SocketServer {
         this.address = address;
     }
 
-    attachStreams(streams: UpstreamStreamsConfig | any) {
+    attachStreams(streams: DownstreamStreamsConfig | any) {
         this.streams = streams;
     }
 }

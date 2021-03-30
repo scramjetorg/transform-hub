@@ -93,5 +93,6 @@ export type DownstreamStreamsConfig = [
     control: WritableStream<EncodedSerializedControlMessage>,
     monitor: ReadableStream<EncodedSerializedMonitoringMessage>,
     input?: WritableStream<any>,
-    output?: ReadableStream<any> // optional output stream piped to runner - if none passed, `this.stdout` will be used
+    output?: ReadableStream<any>, // optional output stream piped to runner - if none passed, `this.stdout` will be used
+    pkg?: Readable
 ];
