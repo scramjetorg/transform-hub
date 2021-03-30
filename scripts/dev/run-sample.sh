@@ -13,8 +13,6 @@ yarn prepare-sample-tar
 # copy to dist
 lerna run prepack
 
-# start supervisor
+# start hostOne - package.json simulates config file
 cd $(git rev-parse --show-toplevel)
-cd dist/supervisor/bin
-
-SEQUENCE_PATH=../../../packages/pre-runner/sample-package/package.tar.gz node supervisor
+node dist/host-one/bin/start-host-one.js packages/pre-runner/sample-package/package.tar.gz package.json /package/data.json output.txt
