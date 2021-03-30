@@ -6,9 +6,9 @@ export enum SocketChannel {
     STDERR,
     CONTROL,
     MONITORING,
+    PACKAGE,
     TO_SEQ,
-    FROM_SEQ,
-    PACKAGE
+    FROM_SEQ
 }
 
 export type BPMuxChannel = Socket & { _chan: string }

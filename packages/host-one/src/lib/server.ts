@@ -31,12 +31,12 @@ export class SocketServer {
             case SocketChannel.MONITORING:
                 stream.pipe(this.streams[4] as PassThrough);
                 break;
-            case SocketChannel.TO_SEQ:
-            case SocketChannel.FROM_SEQ:
-                break;
             case SocketChannel.PACKAGE:
                 // @ts-ignore: Object is possibly 'null'.
-                this.streams[7].pipe(stream);
+                this.streams[5].pipe(stream);
+                break;
+            case SocketChannel.TO_SEQ:
+            case SocketChannel.FROM_SEQ:
                 break;
             default:
                 throw new Error("Unknown channel");

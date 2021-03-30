@@ -70,9 +70,9 @@ export class HostOne {
             process.stderr,
             this.controlStream,
             this.monitorStream,
+            this.packageStream,
             new PassThrough(),
-            new PassThrough(),
-            this.packageStream
+            new PassThrough()
         ];
 
         this.vorpal = new vorpal();

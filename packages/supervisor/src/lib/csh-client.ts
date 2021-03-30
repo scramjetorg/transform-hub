@@ -21,9 +21,9 @@ class CSHClient implements CSHConnector {
             new PassThrough(),
             new PassThrough(),
             new PassThrough(),
+            this.packageStream,
             new PassThrough(),
             new PassThrough(),
-            this.packageStream
         ];
     }
 
@@ -40,14 +40,14 @@ class CSHClient implements CSHConnector {
             // from host-one
             mux.multiplex({ channel: SocketChannel.STDIN }).pipe(this.connectionStreams[0]); // stdin
             mux.multiplex({ channel: SocketChannel.CONTROL }).pipe(this.connectionStreams[3]); // control
-            mux.multiplex({ channel: SocketChannel.TO_SEQ }).pipe(this.connectionStreams[5]); // sequence input
             mux.multiplex({ channel: SocketChannel.PACKAGE }).pipe(this.packageStream); // package
+            mux.multiplex({ channel: SocketChannel.TO_SEQ }).pipe(this.connectionStreams[6]); // sequence input
 
             // to host-onet
             this.connectionStreams[1].pipe(mux.multiplex({ channel: SocketChannel.STDOUT })); // stdout
             this.connectionStreams[2].pipe(mux.multiplex({ channel: SocketChannel.STDERR })); // stderr
             this.connectionStreams[4].pipe(mux.multiplex({ channel: SocketChannel.MONITORING })); // monitor
-            this.connectionStreams[6]?.pipe(mux.multiplex({ channel: SocketChannel.FROM_SEQ })); // sequence output
+            this.connectionStreams[7]?.pipe(mux.multiplex({ channel: SocketChannel.FROM_SEQ })); // sequence output
 
             resolve();
         });
