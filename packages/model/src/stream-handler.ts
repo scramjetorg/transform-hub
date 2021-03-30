@@ -162,7 +162,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
-    private areStreamsHooked() {
+    areStreamsHooked() {
         return this.upstreams &&
             this.downstreams &&
             this.controlDownstream &&
