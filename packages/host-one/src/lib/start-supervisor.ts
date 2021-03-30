@@ -8,9 +8,20 @@ async function startSupervisor(socketPath: string) {
     }
 
     // TODO: is it possible to rewrite this in such a way that it works with ts-node as well?
-    const path = resolve(__dirname, "../../../../dist/supervisor/bin/supervisor.js");
+    // eslint-disable-next-line no-extra-parens
+    const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
+
+    let supervisorPath = "../../../dist/supervisor/bin/supervisor.js";
+    let executable = process.execPath;
+
+    if (isTSNode) {
+        supervisorPath = "../../../supervisor/src/bin/supervisor.ts";
+        executable = "ts-node";
+    }
+
+    const path = resolve(__dirname, supervisorPath);
     const command: string[] = [path, socketPath];
-    const supervisor = spawn(process.execPath, command);
+    const supervisor = spawn(executable, command);
 
     supervisor.on("error", function(err) {
         // What do we want to do if a Supervisor child process emits error event?
