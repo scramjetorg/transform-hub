@@ -106,7 +106,7 @@ export class Runner {
     }
 
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
-        this.context?.stopHandler?.call(this.context,
+        await this.context?.stopHandler?.call(this.context,
             data.timeout,
             data.canCallKeepalive
         );
@@ -116,7 +116,7 @@ export class Runner {
 
     writeMessageOnStream([code, data]: EncodedMonitoringMessage, streamToWrite?: WritableStream<any>){
         if (streamToWrite === undefined) {
-            throw new Error("Monitor Stream is not defined.");
+            throw new Error("The Stream is not defined.");
         }
 
         streamToWrite.write(JSON.stringify([code, data]) + "\r\n");
