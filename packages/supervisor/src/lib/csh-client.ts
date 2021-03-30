@@ -1,5 +1,5 @@
 /* eslint-disable dot-notation */
-import { CommunicationHandler } from "@scramjet/model";
+import { CommunicationHandler, SocketChannel } from "@scramjet/model";
 import { CSHConnector, DownstreamStreamsConfig, UpstreamStreamsConfig } from "@scramjet/types";
 import * as net from "net";
 import { PassThrough, Readable } from "stream";
@@ -9,13 +9,15 @@ const { BPMux } = require("bpmux");
 class CSHClient implements CSHConnector {
     private socketPath: string;
     private packageStream: PassThrough;
-    private streams: DownstreamStreamsConfig;
+    private connectionStreams: DownstreamStreamsConfig;
 
     constructor(socketPath: string) {
         this.socketPath = socketPath;
         this.packageStream = new PassThrough();
 
-        this.streams = [
+        this.connectionStreams = [
+            new PassThrough(),
+            new PassThrough(),
             new PassThrough(),
             new PassThrough(),
             new PassThrough(),
@@ -36,22 +38,23 @@ class CSHClient implements CSHConnector {
             }));
 
             // from host-one
-            mux.multiplex({ channel: 0 }).pipe(this.streams[0]); // stdin
-            mux.multiplex({ channel: 3 }).pipe(this.streams[3]); // control
-            mux.multiplex({ channel: 5 }).pipe(new PassThrough()); // ?
-            mux.multiplex({ channel: 7 }).pipe(this.packageStream); // package
+            mux.multiplex({ channel: SocketChannel.STDIN }).pipe(this.connectionStreams[0]); // stdin
+            mux.multiplex({ channel: SocketChannel.CONTROL }).pipe(this.connectionStreams[3]); // control
+            mux.multiplex({ channel: SocketChannel.TO_SEQ }).pipe(this.connectionStreams[5]); // sequence input
+            mux.multiplex({ channel: SocketChannel.PACKAGE }).pipe(this.packageStream); // package
 
             // to host-onet
-            this.streams[1].pipe(mux.multiplex({ channel: 1 })); // stdout
-            this.streams[2].pipe(mux.multiplex({ channel: 2 })); // stderr
-            this.streams[4].pipe(mux.multiplex({ channel: 4 })); // monitor
+            this.connectionStreams[1].pipe(mux.multiplex({ channel: SocketChannel.STDOUT })); // stdout
+            this.connectionStreams[2].pipe(mux.multiplex({ channel: SocketChannel.STDERR })); // stderr
+            this.connectionStreams[4].pipe(mux.multiplex({ channel: SocketChannel.MONITORING })); // monitor
+            this.connectionStreams[6]?.pipe(mux.multiplex({ channel: SocketChannel.FROM_SEQ })); // sequence output
 
             resolve();
         });
     }
 
     upstreamStreamsConfig() {
-        return this.streams as unknown as UpstreamStreamsConfig;
+        return this.connectionStreams as unknown as UpstreamStreamsConfig;
     }
 
     getPackage(): Readable {
@@ -65,7 +68,6 @@ class CSHClient implements CSHConnector {
 
         communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
     }
-
 }
 
 export { CSHClient };
