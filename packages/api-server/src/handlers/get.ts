@@ -10,6 +10,13 @@ export function createGetterHandler(router: SequentialCeroRouter) {
     };
     const output = (data: object, req: IncomingMessage, res: ServerResponse, next: NextCallback) => {
         try {
+            if (data === null) {
+                res.writeHead(204, "No content", {
+                    "content-type": "application/json"
+                });
+                return res.end();
+            }
+
             const out = JSON.stringify(data);
 
             res.writeHead(200, "OK", {

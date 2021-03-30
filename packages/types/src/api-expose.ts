@@ -80,7 +80,7 @@ export interface APIExpose {
     upstream(
         path: string|RegExp,
         stream: StreamInput,
-        config: StreamConfig
+        config?: StreamConfig
     ): void;
     /**
      * A method that allows to consume incoming stream from the specified path on the API server
@@ -92,6 +92,6 @@ export interface APIExpose {
      downstream(
         path: string|RegExp,
         stream: StreamOutput,
-        config: StreamConfig
+        config?: StreamConfig
     ): void;
 }

@@ -168,7 +168,9 @@ export class CommunicationHandler implements ICommunicationHandler {
             this.controlDownstream &&
             this.controlUpstream &&
             this.monitoringDownstream &&
-            this.monitoringUpstream
+            this.monitoringUpstream &&
+            true ||
+            false
         ;
     }
 
@@ -200,7 +202,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
-    async sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: EncodedMessage<T>): Promise<void> {
+    async sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: MessageDataType<T>): Promise<void> {
         const encoded: EncodedMonitoringMessage = [code, msg];
 
         if (this.monitoringUpstream)

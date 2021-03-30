@@ -1,20 +1,50 @@
 import EventEmitter = require("events");
 import { RequestListener, Server, IncomingMessage, ServerResponse } from "http";
-import { Socket } from "node:net";
-import { Readable } from "node:stream";
+import { Socket } from "net";
+import { StringDecoder } from "string_decoder";
 import { SinonSandbox } from "sinon";
 import { HTTPMethod } from "trouter";
+import { Readable, PassThrough } from "stream";
 
-type AnyHandler = (...z: any[]) => void;
+export type AnyHandler = (...z: any[]) => void;
 
-interface PlayMethods {
-    request: RequestListener
+export interface PlayMethods {
+    request: (req: IncomingMessage, res: ServerResponse) => void;
 }
 
-export function mockRequestResponse(method: HTTPMethod, url: string, body: Readable) {
+export type MockedResponse = ServerResponse & {
+    fullBody?: Promise<string>
+};
+
+export type ServerWithPlayMethods = Server & PlayMethods;
+
+export function mockRequestResponse(method: HTTPMethod, url: string, _body?: Readable) {
+    const body = _body || Readable.from([]);
     const sockerOverride = Object.assign(body, new Socket(), { ...body });
     const request = new IncomingMessage(sockerOverride);
-    const response = new ServerResponse(request);
+    const response: MockedResponse = new ServerResponse(request);
+    const reader = new StringDecoder();
+    const pt = new PassThrough() as unknown as Socket;
+
+    response.assignSocket(pt);
+    const orgEnd = response.end;
+
+    response.end = (...args: [any?, any?]) => {
+        console.log("pt end", args);
+        pt.end(...args);
+        return orgEnd.call(response, ...args);
+    };
+
+    response.fullBody = new Promise(res => {
+
+        pt.on("data", data => {
+            console.log("data");
+            reader.write(data);
+        });
+        pt.on("end", () => {
+            res(reader.end());
+        });
+    });
 
     request.method = method;
     request.url = url;
@@ -26,7 +56,7 @@ export function mockServer(sandbox: SinonSandbox): Server & PlayMethods {
     const requestListeners: RequestListener[] = [];
 
     return Object.assign(new EventEmitter(), {
-        request(req: IncomingMessage, res: ServerResponse) {
+        async request(req: IncomingMessage, res: ServerResponse) {
             requestListeners.forEach(listener => listener(req, res));
         },
 

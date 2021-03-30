@@ -62,7 +62,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     const upstream = (
         path: string|RegExp,
         stream: StreamInput,
-        { json = false, text = false, encoding = "utf-8" }: StreamConfig
+        { json = false, text = false, encoding = "utf-8" }: StreamConfig = {}
     ): void => {
         router.get(path, async (req, res, next) => {
             try {
@@ -79,7 +79,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     const downstream = (
         path: string|RegExp,
         stream: StreamOutput,
-        { json = false, text = false, end = false, encoding }: StreamConfig
+        { json = false, text = false, end = false, encoding = "utf-8" }: StreamConfig = {}
     ): void => {
         router.get(path, async (req, res, next) => {
             try {

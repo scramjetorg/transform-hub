@@ -4,7 +4,7 @@ import {
     EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage,
     EncodedControlMessage, EncodedMonitoringMessage
 } from "@scramjet/types";
-import { Readable, Writable } from "node:stream";
+import { Readable, Writable } from "stream";
 import { DataStream } from "scramjet";
 
 export function getCommunicationHandler() {
@@ -30,6 +30,7 @@ export function getCommunicationHandler() {
         monitoringUp as unknown as WritableStream<EncodedMonitoringMessage>
     ]);
 
-    comm.pipeDataStreams();
-    return comm;
+    comm.pipeMessageStreams();
+
+    return { comm, controlDown, monitoringDown, controlUp, monitoringUp };
 }

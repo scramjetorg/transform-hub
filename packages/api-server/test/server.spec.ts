@@ -1,9 +1,13 @@
+import { RunnerMessageCode } from "@scramjet/model";
 import test, { after, beforeEach } from "ava";
+import { Writable } from "stream";
+import { DataStream } from "scramjet";
 import * as sinon from "sinon";
 import { createServer } from "..";
 import { getCommunicationHandler } from "./lib/get-communcation-handler";
-import { serverMock } from "./lib/server-mock";
+import { mockServer } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";
+import { Readable } from "stream";
 
 export const sandbox = sinon.createSandbox();
 
@@ -19,15 +23,19 @@ test("Creates an API by default and exports methods", (t) => {
     // t.is(api.server, server, "Exposes passed server");
 });
 
-test("Methods work", async t => {
-    const server = serverMock(sandbox);
+test("Methods don't throw", async t => {
+    const server = mockServer(sandbox);
     const router = routerMock(sandbox);
     const api = createServer({ server, router });
-    const comm = getCommunicationHandler();
+    const { comm } = getCommunicationHandler();
 
     t.is(api.server, server, "Exposes passed server");
     t.true(comm.areStreamsHooked(), "Streams hook up well");
 
+    api.get("/api/get", RunnerMessageCode.MONITORING, comm);
+    api.op("/api/kill", RunnerMessageCode.KILL, comm);
+    api.downstream("/api/send", new DataStream() as unknown as Writable);
+    api.upstream("/api/send", new DataStream() as unknown as Readable);
 });
 
 after(() => sandbox.restore());
