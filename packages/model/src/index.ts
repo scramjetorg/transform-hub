@@ -19,6 +19,5 @@ export { MonitoringMessage, MonitoringMessageData } from "./messages/monitoring"
 export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./messages/snapshot-response";
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
 export * from "./runner-message";
-export { SocketChannel, BPMuxChannel } from "./socket-channel";
 export * from "./stream-handler";
 

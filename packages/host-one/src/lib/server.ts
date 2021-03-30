@@ -1,5 +1,4 @@
-import { SocketChannel, BPMuxChannel } from "@scramjet/model";
-import { DownstreamStreamsConfig } from "@scramjet/types";
+import { DownstreamStreamsConfig, SocketChannel, BPMuxChannel } from "@scramjet/types";
 import { PathLike } from "fs";
 import * as net from "net";
 import { PassThrough } from "stream";

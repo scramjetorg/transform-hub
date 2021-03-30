@@ -10,3 +10,4 @@ export * from "./message-streams";
 export * from "./runner";
 export * from "./sequence";
 export * from "./utils";
+export * from "./socket-channel";

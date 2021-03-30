@@ -1,6 +1,6 @@
 /* eslint-disable dot-notation */
-import { CommunicationHandler, SocketChannel } from "@scramjet/model";
-import { CSHConnector, DownstreamStreamsConfig, UpstreamStreamsConfig } from "@scramjet/types";
+import { CommunicationHandler } from "@scramjet/model";
+import { CSHConnector, DownstreamStreamsConfig, SocketChannel, UpstreamStreamsConfig } from "@scramjet/types";
 import * as net from "net";
 import { PassThrough, Readable } from "stream";
 
