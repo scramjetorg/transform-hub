@@ -6,7 +6,7 @@ import { mimeAccepts } from "../lib/mime";
 import { StringDecoder } from "string_decoder";
 
 export function createOperationHandler(router: SequentialCeroRouter) {
-    const getData = async (req: IncomingMessage): Promise<object> => {
+    const getData = async (req: IncomingMessage): Promise<object|undefined> => {
         if (!req.headers["content-type"])
             throw new CeroError("ERR_INVALID_CONTENT_TYPE");
 
@@ -17,6 +17,9 @@ export function createOperationHandler(router: SequentialCeroRouter) {
 
         if (encoding !== "utf-8") throw new CeroError("ERR_UNSUPPORTED_ENCODING");
 
+        if (req.headers["content-length"] === "0")
+            return undefined;
+
         const out = new StringDecoder();
 
         for await (const chunk of req) {
@@ -24,7 +27,10 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         }
 
         try {
-            return JSON.parse(out.end());
+            const json = out.end();
+
+            if (!json) return undefined;
+            return JSON.parse(json);
         } catch (e) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
