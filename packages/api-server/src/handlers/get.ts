@@ -38,7 +38,6 @@ export function createGetterHandler(router: SequentialCeroRouter) {
         router.get(path, async (req, res, next) => {
             try {
                 check(req);
-
                 return output(lastItem as object, req, res, next);
             } catch (e) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));

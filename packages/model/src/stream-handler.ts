@@ -43,17 +43,6 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.PONG]: ControlMessageHandler<RunnerMessageCode.PONG>[];
 };
 
-
-async function whenWrote<T extends any>(encoded: T, target: WritableStream<T>) {
-    return new Promise<void>(res => {
-        if (target.write(encoded)) {
-            res();
-        } else {
-            target.once("drained", res);
-        }
-    });
-}
-
 export class CommunicationHandler implements ICommunicationHandler {
     private stdInUpstream?: Readable;
     private stdInDownstream?: Writable;
@@ -68,6 +57,11 @@ export class CommunicationHandler implements ICommunicationHandler {
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
 
+    private controlPassThrough: DataStream;
+    private monitoringPassThrough: DataStream;
+
+    private _piped?: boolean;
+
     // private monitoringHandlers: MonitoringMessageHandler<MonitoringMessageCode>[] = [];
     // private controlHandlers: ControlMessageHandler<ControlMessageCode>[] = [];
 
@@ -75,6 +69,8 @@ export class CommunicationHandler implements ICommunicationHandler {
     private controlHandlerHash: ControlMessageHandlerList;
 
     constructor() {
+        this.controlPassThrough = new DataStream();
+        this.monitoringPassThrough = new DataStream();
         this.controlHandlerHash = {
             [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: [],
             [RunnerMessageCode.KILL]: [],
@@ -119,10 +115,16 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     pipeMessageStreams() {
+        if (this._piped)
+            throw new Error("pipeMessageStreams called twice");
+        this._piped = true;
+
         if (this.areStreamsHooked()) {
             StringStream.from(this.monitoringDownstream as Readable)
                 .JSONParse()
+                .pipe(this.monitoringPassThrough)
                 .map(async (message: EncodedMonitoringMessage) => {
+                    // TODO: WARN if (!this.monitoringHandlerHash[message[0]])
                     if (this.monitoringHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
 
@@ -139,7 +141,9 @@ export class CommunicationHandler implements ICommunicationHandler {
 
             StringStream.from(this.controlUpstream as Readable)
                 .JSONParse()
+                .pipe(this.controlPassThrough)
                 .map(async (message: EncodedControlMessage) => {
+                    // TODO: WARN if (!this.controlHandlerHash[message[0]])
                     if (this.controlHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
 
@@ -205,15 +209,13 @@ export class CommunicationHandler implements ICommunicationHandler {
     async sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: MessageDataType<T>): Promise<void> {
         const encoded: EncodedMonitoringMessage = [code, msg];
 
-        if (this.monitoringUpstream)
-            await whenWrote(encoded, this.monitoringUpstream);
+        await this.monitoringPassThrough.whenWrote(encoded);
     }
 
     async sendControlMessage<T extends ControlMessageCode>(code: T, msg: MessageDataType<T>): Promise<void> {
         const encoded: EncodedControlMessage = [code, msg];
 
-        if (this.controlDownstream)
-            await whenWrote(JSON.stringify(encoded), this.controlDownstream);
+        await this.controlPassThrough.whenWrote(encoded);
     }
 
 }

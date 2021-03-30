@@ -1,7 +1,6 @@
 import EventEmitter = require("events");
 import { RequestListener, Server, IncomingMessage, ServerResponse } from "http";
 import { Socket } from "net";
-import { StringDecoder } from "string_decoder";
 import { SinonSandbox } from "sinon";
 import { HTTPMethod } from "trouter";
 import { Readable, PassThrough } from "stream";
@@ -23,27 +22,22 @@ export function mockRequestResponse(method: HTTPMethod, url: string, _body?: Rea
     const sockerOverride = Object.assign(body, new Socket(), { ...body });
     const request = new IncomingMessage(sockerOverride);
     const response: MockedResponse = new ServerResponse(request);
-    const reader = new StringDecoder();
+    // const reader = new StringDecoder() as StringDecoder & {_lastWrote?: any};
     const pt = new PassThrough() as unknown as Socket;
 
     response.assignSocket(pt);
     const orgEnd = response.end;
 
     response.end = (...args: [any?, any?]) => {
-        console.log("pt end", args);
         pt.end(...args);
         return orgEnd.call(response, ...args);
     };
 
     response.fullBody = new Promise(res => {
+        const bufferList: Buffer[] = [];
 
-        pt.on("data", data => {
-            console.log("data");
-            reader.write(data);
-        });
-        pt.on("end", () => {
-            res(reader.end());
-        });
+        pt.on("data", data => bufferList.push(data));
+        pt.on("end", () => res(Buffer.concat(bufferList).toString("utf-8")));
     });
 
     request.method = method;
