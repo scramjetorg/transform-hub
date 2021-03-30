@@ -23,7 +23,7 @@ export class Runner {
         this.sequencePath = sequencePath;
     }
 
-    async controlStreamHandler([code, data]: EncodedControlMessage){
+    async controlStreamHandler([code, data]: EncodedControlMessage) {
         switch (code) {
         case RunnerMessageCode.MONITORING_RATE:
             await this.handleMonitoringRequest(data as MonitoringRateMessageData);
@@ -107,21 +107,24 @@ export class Runner {
     }
 
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
-        await this.context?.stopHandler?.call(this.context,
-            data.timeout,
-            data.canCallKeepalive
-        );
+        if (!this.context) {
+            throw new Error("Context undefined.");
+        }
 
-        await this.handleStopSequence();
-    }
+        let sequenceError: Error | undefined;
 
-    async handleStopSequence(err?: Error): Promise<void> {
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
-    }
+        try {
+            await this.context?.stopHandler?.call(this.context,
+                data.timeout,
+                data.canCallKeepalive
+            );
+        } catch (err) {
+            sequenceError = err;
+        }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    handleSave(state: any): void {
-        throw new Error("Method not implemented.");
+        const errorData = sequenceError ? { sequenceError } : {};
+
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, errorData], this.monitorStream);
     }
 
     async handleReceptionOfHandshake(data: HandshakeAcknowledgeMessageData): Promise<void> {

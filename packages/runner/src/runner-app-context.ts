@@ -19,11 +19,11 @@ implements AutoAppContext<AppConfigType, State> {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public handleSave(state: any): void {
+    private handleSave(state: any): void {
         throw new Error("Method not implemented.");
     }
 
-    public async handleStopSequence(err?: Error): Promise<void> {
+    private async handleStopSequence(err?: Error): Promise<void> {
         MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
     }
     // monitor?: ((resp?: MonitoringMessage | undefined) => MaybePromise<MonitoringMessage>) | undefined;

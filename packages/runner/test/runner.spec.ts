@@ -4,19 +4,24 @@ import * as proxyquire from "proxyquire";
 import { PassThrough } from "stream";
 import { ReadStream, WriteStream } from "fs";
 import { RunnerMessageCode } from "../../types/node_modules/@scramjet/model/src";
-import { MessageUtils } from "../src/message-utils";
 
+const test = require("ava");
 const controlMockStream = new PassThrough() as unknown as ReadStream;
 const monitorMockStream = new PassThrough() as unknown as WriteStream;
 const createReadStreamStub = () => controlMockStream;
 const createWriteStreamStub = () => monitorMockStream;
+const writeMessageOnStreamMock = sinon.stub();
 const { Runner } = proxyquire("../dist/runner.js", {
     fs: {
         createReadStream: createReadStreamStub,
         createWriteStream: createWriteStreamStub,
+    },
+    "./message-utils": {
+        MessageUtils: {
+            writeMessageOnStream: writeMessageOnStreamMock
+        }
     }
 });
-const test = require("ava");
 
 test("Runner new instance", (t: any) => {
     const runner = new Runner("sequencePath", ".");
@@ -48,14 +53,18 @@ test("Kill runner", async (t: any) => {
 
 test("Stop sequence", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
-    const writeMessageOnStreamMock = sinon.stub(MessageUtils, "writeMessageOnStream");
 
-    let err;
+    sinon.stub(runner, "sendHandshakeMessage");
 
+    runner.main();
+    runner.initAppContext({ configKey: "configKeyValue" });
     runner.controlStreamHandler([RunnerMessageCode.STOP, {}]);
 
+    await setTimeout(() => {
+    }, 200);
+
     t.true(
-        writeMessageOnStreamMock.calledOnceWith([RunnerMessageCode.SEQUENCE_STOPPED, { err }], runner.monitorStream)
+        writeMessageOnStreamMock.calledOnceWith([RunnerMessageCode.SEQUENCE_STOPPED, {}], runner.monitorStream)
     );
 });
 
