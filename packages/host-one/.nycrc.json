@@ -1,8 +1,7 @@
 {
     "all": true,
-    "exclude": [
-        "**/*.spec.ts",
-        ".src",
-        "**/*.ts"
-    ]
+    "include": [
+        "dist/**/*"
+    ],
+    "reporter": ["lcovonly", "text"]
 }

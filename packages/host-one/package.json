@@ -9,7 +9,7 @@
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
     "test": "yarn build && ava --",
-    "test-coverage": "yarn build && nyc ava",
+    "test:coverage": "yarn build && nyc ava",
     "clean": "rimraf -rf ./dist",
     "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
   },

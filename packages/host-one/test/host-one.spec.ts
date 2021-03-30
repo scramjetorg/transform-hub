@@ -2,7 +2,7 @@ import test from "ava";
 import { ReadStream } from "fs";
 import * as sinon from "sinon";
 import { PassThrough } from "stream";
-import { HostOne } from "../src/host-one";
+import { HostOne } from "../dist/host-one";
 
 const appConfig = {
     configKey: "configValue"
