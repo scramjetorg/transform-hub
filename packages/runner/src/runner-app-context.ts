@@ -1,12 +1,11 @@
 import { RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, AppError, AppErrorConstructor, AutoAppContext, WritableStream } from "@scramjet/types";
+import { AppConfig, AppError, AppErrorConstructor, AutoAppContext, EncodedMonitoringMessage, WritableStream } from "@scramjet/types";
 import { EventEmitter } from "events";
 import { MessageUtils } from "./message-utils";
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
 implements AutoAppContext<AppConfigType, State> {
 
-    // definition?: FunctionDefinition[] | undefined;
     config: AppConfigType;
     AppError!: AppErrorConstructor;
     monitorStream: WritableStream<any>;;
@@ -23,27 +22,28 @@ implements AutoAppContext<AppConfigType, State> {
         throw new Error("Method not implemented.");
     }
 
-    private async handleStopSequence(err?: Error): Promise<void> {
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
+    private notifyInstanceAboutStopping(err?: Error) {
+        this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]);
     }
-    // monitor?: ((resp?: MonitoringMessage | undefined) => MaybePromise<MonitoringMessage>) | undefined;
-    // stopHandler?: ((timeout: number, canCallKeepalive: boolean) => MaybePromise<void>) | undefined;
-    // killHandler?: (() => void) | undefined;
+
+    private async writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage){
+        MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
+    }
+
     keepAlive(milliseconds?: number): this {
-        MessageUtils.writeMessageOnStream([
+        this.writeMonitoringMessage([
             RunnerMessageCode.ALIVE, { keepAlive: milliseconds || 0 }
         ]);
         return this;
     }
 
     end() {
-        //shoul d this method notify instance that the pocess is stopped?
-        this.handleStopSequence();
+        this.notifyInstanceAboutStopping();
         return this;
     }
 
     destroy(error?: AppError): this {
-        this.handleStopSequence(error);
+        this.notifyInstanceAboutStopping(error);
         return this;
     }
 
@@ -52,17 +52,13 @@ implements AutoAppContext<AppConfigType, State> {
         return this;
     }
 
-    // initialState?: (State extends any ? any : any) | undefined;
-    // on(ev: string, handler: (message?: any) => void): this;
-    // on(ev: "error", handler: (message: Error) => void): this;
     on(eventName: string, handler: (message?: any) => void) {
         this.emitter.on(eventName, handler);
         return this;
     }
-    // emit(ev: string, message?: any): this;
 
     emit(eventName: string, message: any) {
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.EVENT, { eventName, message }]);
+        this.writeMonitoringMessage([RunnerMessageCode.EVENT, { eventName, message }]);
         return this;
     }
 }
