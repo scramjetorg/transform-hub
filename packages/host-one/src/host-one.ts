@@ -19,7 +19,6 @@ export class HostOne {
     private monitorStream: ReadableStream<string>;
     // @ts-ignore
     private controlStream: PassThrough;
-
     // @ts-ignore
     private controlDataStream: DataStream;
     // @ts-ignore
@@ -150,20 +149,19 @@ export class HostOne {
 
         this.vorpal
             .command("kill", "Kill forcefully sequence")
-            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.KILL, {}]));
+            .action(() => this.kill());
 
         this.vorpal
-            .command("stop", "Stop gracefully sequence")
-            /*
-            * @feature/analysis-stop-kill-invocation
-            * Stop message must include two properties:
-            * timeout: number - the Sequence will be stopped after the provided timeout (miliseconds)
-            * canCallKeepalive: boolean - indicates whether Sequence can prolong operation to complete the task
-            * required for AppContext's:
-            * stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
-            * once the promise is resolved the Runner assumes it is safe to stop the Sequence
-            */
-            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.STOP, {}]));
+            .command("stop [TIMEOUT_NUMBER] [ALIVE_BOOLEAN]", "Stop gracefully sequence in provided timeout and prolong operations or not for task completion")
+            .action((args: any) => {
+                let timeout = parseInt(args.TIMEOUT_NUMBER, 10);
+                let alive = args.ALIVE_BOOLEAN;
+                let canCallKeepalive = alive === undefined ? alive : alive === "true";
+
+                return isNaN(timeout)
+                    ? this.vorpal.log(this.errors.noParams)
+                    : this.stop(timeout, canCallKeepalive);
+            });
 
         this.vorpal
             .command("event [EVENT_NAME] [ANY]", "Send event and any object, arry, function to the sequence")
@@ -193,6 +191,14 @@ export class HostOne {
             .delimiter("sequence:")
             .show()
             .parse(process.argv);
+    }
+
+    async stop(timeout: number, canCallKeepalive: boolean) {
+        await this.controlDataStream.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
+    }
+
+    async kill() {
+        await this.controlDataStream.whenWrote([RunnerMessageCode.KILL, {}]);
     }
 
     // For testing puspose only

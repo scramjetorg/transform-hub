@@ -36,7 +36,11 @@ export interface LifeCycle {
 
     monitorRate(rps: number): this;
 
-    stop(): MaybePromise<void>;
+    /**
+     * @param timeout number
+     * @param canCallKeepalive boolean
+     */
+    stop(timeout: number, canCallKeepalive: boolean): MaybePromise<void>;
     kill(): MaybePromise<void>;
 }
 

@@ -163,19 +163,26 @@ class LifeCycleController {
             });
 
             /*
-            * @feature/analysis-stop-kill-invocation
-            * Add handler for RunnerMessageCode.STOP, similarly to handler for RunnerMessageCode.KILL above.
-            * We must extract from message the values for properties:
-            * timeout: number - the Sequence will be stopped after the provided timeout (milliseconds)
-            * canCallKeepalive: boolean - indicates whether Sequence can prolong operation to complete the task
-            * required for AppContext's:
-            * stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
-            * Then we must call:
-            * this.lifecycleAdapter.stop()
-            * However, we must add two missing arguments to function stop() - timeout and canCallKeepalive
-            *
+            * When the stop message comes from the CSH via the control stream
+            * and the Sequence has not terminated yet, the LifeCycle Controller
+            * requests LifeCycle Adapter to stop the Sequence by executing stop with paramiters:
+            * * timeout: number - the Sequence will be stopped after the provided timeout (milliseconds)
+            * * canCallKeepalive: boolean - indicates whether Sequence can prolong operation to complete the task
             * General question: do we perform snapshot() only on error?
             */
+
+            this.communicationHandler.addControlHandler(RunnerMessageCode.STOP, message => {
+                const didTimeout = Symbol("res");
+                const timeout = message[1].timeout;
+                const canCallKeepalive = message[1].canCallKeepalive;
+
+                Promise.race([
+                    endOfSequence,
+                    new Promise(res => setTimeout(() => res(didTimeout), 1000))
+                ])
+                    .then(val => val === didTimeout ? this.lifecycleAdapter.stop(timeout, canCallKeepalive) : null);
+                return message;
+            });
 
             /**
             * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration

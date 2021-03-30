@@ -132,7 +132,7 @@ test("Vorpal should execute controlStream with proper code when command 'kill' i
     t.is(conStream.getCall(0).firstArg[0], 4002);
 });
 
-test("Vorpal should execute controlStream with proper code when command 'stop' is provided", t => {
+test("Vorpal should not execute controlStream when params in 'stop' command are not provided", t => {
     const hostOne = new HostOne();
 
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
@@ -143,7 +143,22 @@ test("Vorpal should execute controlStream with proper code when command 'stop' i
     hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("stop");
 
+    t.is(conStream.getCall(0), null);
+});
+
+test("Vorpal should execute controlStream with proper code when command 'stop' with params is provided", t => {
+    const hostOne = new HostOne();
+
+    hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
+
+    /* eslint-disable dot-notation */
+    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+
+    hostOne.controlStreamsCliHandler();
+    hostOne.vorpalExec("stop 200 true");
+
     t.is(conStream.getCall(0).firstArg[0], 4001);
+    t.deepEqual(conStream.getCall(0).firstArg[1], { timeout: 200, canCallKeepalive: true });
 });
 
 test("Vorpal should not execute controlStream when proper params in 'monitor' command are not provided", t => {
