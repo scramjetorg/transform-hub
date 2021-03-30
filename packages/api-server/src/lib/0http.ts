@@ -9,7 +9,7 @@ export const sequentialRouter: (config: CeroRouterConfig) => SequentialCeroRoute
 export const cero = <
     T extends Server = Server,
     S extends CeroRouter = CeroRouter
->(config: CeroConfig<T, S>) => {
+>(config?: CeroConfig<T, S>) => {
     return _cero(config) as {
         router: S;
         server: T;

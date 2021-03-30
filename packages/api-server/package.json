@@ -5,7 +5,7 @@
     "main": "./src/index.ts",
     "scripts": {
         "start": "ts-node ./src/index",
-        "build": "tsc -p tsconfig.json",
+        "build": "tsc -p tsconfig.build.json",
         "watch": "tsc -b --watch",
         "test": "npm run test:ava",
         "test:ava": "ava",
@@ -16,6 +16,7 @@
     "dependencies": {
         "0http": "^3.1.0",
         "@scramjet/symbols": "0.7.0-pre.1",
+        "@types/node": "^14.14.37",
         "scramjet": "^4.35.11"
     },
     "devDependencies": {

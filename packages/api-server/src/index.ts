@@ -1,11 +1,18 @@
 import { APIExpose } from "@scramjet/types";
 import { cero, sequentialRouter } from "./lib/0http";
-import { CeroRouterConfig } from "./lib/definitions";
+import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
 import { createGetterHandler } from "./handlers/get";
 import { createOperationHandler } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
+import { Server } from "http";
 
-export function createServer(conf: { verbose?: boolean }): APIExpose {
+type ServerConfig = {
+    verbose?: boolean;
+    server?: Server;
+    router?: CeroRouter;
+};
+
+export function createServer(conf: ServerConfig = {}): APIExpose {
     const config: CeroRouterConfig = {
         defaultRoute: (req, res) => {
             res.writeHead(404);
@@ -17,13 +24,13 @@ export function createServer(conf: { verbose?: boolean }): APIExpose {
             else res.end();
         }
     };
-    const { server, router } = cero({ router: sequentialRouter(config) });
+    const { server: srv, router } = cero({ server: conf.server, router: sequentialRouter(config) });
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
     const { upstream, downstream } = createStreamHandlers(router);
 
     return {
-        server,
+        server: srv,
         get,
         op,
         upstream,
