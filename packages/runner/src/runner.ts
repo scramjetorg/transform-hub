@@ -1,10 +1,11 @@
-import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { ReadableStream, WritableStream, AppConfig, Application, AutoAppContext, EncodedControlMessage, EncodedMonitoringMessage } from "@scramjet/types";
+import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
+import { ReadableStream, WritableStream, AppConfig, Application, AutoAppContext, EncodedControlMessage } from "@scramjet/types";
 import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
 import { DataStream, StringStream } from "scramjet";
-
+import { RunnerAppContext } from "./runner-app-context";
+import { MessageUtils } from "./message-utils";
 export class Runner {
     private emitter;
     private context?: AutoAppContext<any, any>;
@@ -114,16 +115,8 @@ export class Runner {
         await this.handleStopSequence();
     }
 
-    writeMessageOnStream([code, data]: EncodedMonitoringMessage, streamToWrite?: WritableStream<any>){
-        if (streamToWrite === undefined) {
-            throw new Error("The Stream is not defined.");
-        }
-
-        streamToWrite.write(JSON.stringify([code, data]) + "\r\n");
-    }
-
     async handleStopSequence(err?: Error): Promise<void> {
-        this.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -159,47 +152,11 @@ export class Runner {
             throw new Error("Monitor Stream is not defined.");
         }
 
-        const monitor = this.monitorStream;
-        // eslint-disable-next-line consistent-this
-        const that = this;
-
-        // TODO: perhaps this should be a class in a separate file, this one will get big otherwise
-        this.context = {
-            config: config,
-            AppError: AppError,
-
-            keepAlive(millis: number = 1000) {
-                that.writeMessageOnStream([
-                    RunnerMessageCode.ALIVE, { keepAlive: millis || 0 }
-                ], monitor);
-                return this;
-            },
-            emit(eventName: string, message: any) {
-                that.writeMessageOnStream([RunnerMessageCode.EVENT, { eventName, message }], monitor);
-                return this;
-            },
-            on(eventName: string, handler: (message?: any) => void) {
-                that.emitter.on(eventName, handler);
-                return this;
-            },
-            save(state) {
-                that.handleSave(state);
-                return this;
-            },
-            destroy(error?: AppError) {
-                that.handleStopSequence(error);
-                return this;
-            },
-            end() {
-                //should this method notify instance that the pocess is stopped?
-                that.handleStopSequence();
-                return this;
-            }
-        };
+        this.context = new RunnerAppContext(config, this.monitorStream, this.emitter);
     }
 
     sendHandshakeMessage() {
-        this.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
     }
 
     getSequence(): Application {

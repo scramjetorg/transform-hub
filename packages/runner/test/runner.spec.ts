@@ -4,6 +4,7 @@ import * as proxyquire from "proxyquire";
 import { PassThrough } from "stream";
 import { ReadStream, WriteStream } from "fs";
 import { RunnerMessageCode } from "../../types/node_modules/@scramjet/model/src";
+import { MessageUtils } from "../src/message-utils";
 
 const controlMockStream = new PassThrough() as unknown as ReadStream;
 const monitorMockStream = new PassThrough() as unknown as WriteStream;
@@ -47,7 +48,7 @@ test("Kill runner", async (t: any) => {
 
 test("Stop sequence", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
-    const writeMessageOnStreamMock = sinon.stub(runner, "writeMessageOnStream");
+    const writeMessageOnStreamMock = sinon.stub(MessageUtils, "writeMessageOnStream");
 
     let err;
 
@@ -57,3 +58,4 @@ test("Stop sequence", async (t: any) => {
         writeMessageOnStreamMock.calledOnceWith([RunnerMessageCode.SEQUENCE_STOPPED, { err }], runner.monitorStream)
     );
 });
+
