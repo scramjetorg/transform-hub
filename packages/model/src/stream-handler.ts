@@ -10,6 +10,7 @@ import {
     MaybePromise,
     MessageDataType,
     MonitoringMessageCode,
+    PassThoughStream,
     ReadableStream,
     UpstreamStreamsConfig,
     WritableStream
@@ -56,6 +57,9 @@ export class CommunicationHandler implements ICommunicationHandler {
     private monitoringDownstream?: ReadableStream<EncodedSerializedMonitoringMessage>;
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
+
+    private _controlOutput?: PassThoughStream<EncodedSerializedControlMessage>;
+    private _monitoringOutput?: PassThoughStream<EncodedMonitoringMessage>;
 
     private controlPassThrough: DataStream;
     private monitoringPassThrough: DataStream;
@@ -120,7 +124,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         this._piped = true;
 
         if (this.areStreamsHooked()) {
-            StringStream.from(this.monitoringDownstream as Readable)
+            const monitoringOutput = StringStream.from(this.monitoringDownstream as Readable)
                 .JSONParse()
                 .pipe(this.monitoringPassThrough)
                 .map(async (message: EncodedMonitoringMessage) => {
@@ -136,10 +140,12 @@ export class CommunicationHandler implements ICommunicationHandler {
 
                     return message;
                 })
-                .JSONStringify()
-                .pipe(this.monitoringUpstream as unknown as Writable);
+                .JSONStringify();
 
-            StringStream.from(this.controlUpstream as Readable)
+            monitoringOutput.pipe(this.monitoringUpstream as unknown as Writable);
+            this._monitoringOutput = monitoringOutput as unknown as PassThoughStream<EncodedMonitoringMessage>;
+
+            const controlOutput = StringStream.from(this.controlUpstream as Readable)
                 .JSONParse()
                 .pipe(this.controlPassThrough)
                 .map(async (message: EncodedControlMessage) => {
@@ -155,8 +161,10 @@ export class CommunicationHandler implements ICommunicationHandler {
 
                     return message;
                 })
-                .JSONStringify()
-                .pipe(this.controlDownstream as unknown as Writable);
+                .JSONStringify();
+
+            controlOutput.pipe(this.controlDownstream as unknown as Writable);
+            this._controlOutput = controlOutput as unknown as PassThoughStream<EncodedSerializedControlMessage>;
 
         } else {
             // TODO: specifiy which streams are missing.
@@ -164,6 +172,16 @@ export class CommunicationHandler implements ICommunicationHandler {
         }
 
         return this;
+    }
+
+    get monitoringOutput(): PassThoughStream<EncodedMonitoringMessage> {
+        if (!this._monitoringOutput) throw new Error("Stream not yet hooked up");
+        return this._monitoringOutput;
+    }
+
+    get controlOutput(): PassThoughStream<EncodedSerializedControlMessage> {
+        if (!this._controlOutput) throw new Error("Stream not yet hooked up");
+        return this._controlOutput;
     }
 
     areStreamsHooked() {

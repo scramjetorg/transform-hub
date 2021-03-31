@@ -5,8 +5,13 @@ import {
     MonitoringMessageCode,
     UpstreamStreamsConfig
 } from ".";
+import { EncodedMonitoringMessage, EncodedSerializedControlMessage, MessageDataType } from "./message-streams";
+import { PassThoughStream } from "./utils";
 
 export interface ICommunicationHandler {
+    monitoringOutput: PassThoughStream<EncodedMonitoringMessage>
+    controlOutput: PassThoughStream<EncodedSerializedControlMessage>
+
     hookClientStreams(str: UpstreamStreamsConfig): this;
     hookLifecycleStreams(str: DownstreamStreamsConfig): this;
 
@@ -16,4 +21,7 @@ export interface ICommunicationHandler {
     pipeMessageStreams(): this;
     pipeStdio(): this;
     pipeDataStreams(): this;
+
+    sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
+    sendControlMessage<T extends ControlMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
 }
