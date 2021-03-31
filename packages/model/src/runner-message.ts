@@ -5,6 +5,7 @@ export enum RunnerMessageCode {
     ERROR = 3003,
     SNAPSHOT_RESPONSE = 3005,
     SEQUENCE_STOPPED = 3006,
+    STATUS = 3007, // temporary message code seq.status
     ALIVE = 3010, // temporary message code
     ACKNOWLEDGE = 3004,
     PING = 4000,

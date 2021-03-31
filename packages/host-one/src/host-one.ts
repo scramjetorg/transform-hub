@@ -1,5 +1,5 @@
-import { HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, EncodedMonitoringMessage, DownstreamStreamsConfig } from "@scramjet/types";
+import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
+import { AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage } from "@scramjet/types";
 import { ReadStream } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
@@ -8,7 +8,7 @@ import { DataStream, StringStream } from "scramjet";
 import { PassThrough } from "stream";
 import * as vorpal from "vorpal";
 import { SocketServer } from "./lib/server";
-import { startSupervisor } from "./lib/start-supervisor";
+import { createServer } from "@scramjet/api-server";
 
 export class HostOne {
     private socketName: string;
@@ -20,16 +20,19 @@ export class HostOne {
     // @ts-ignore
     private controlStream: PassThrough;
     // @ts-ignore
-    private packageStream?: ReadStream;
-    // @ts-ignore
     private streams: DownstreamStreamsConfig;
-
     // @ts-ignore
     private controlDataStream: DataStream;
     // @ts-ignore
     private configPath: string;
     // @ts-ignore
     private vorpal: any;
+    // @ts-ignore
+    private packageStream?: ReadStream;
+    // @ts-ignore
+    private api: APIExpose;
+    // @ts-ignore
+    private communicationHandler: any;
 
     errors = {
         noParams: "No params provided. Type help to know more.",
@@ -48,20 +51,19 @@ export class HostOne {
         await this.hookupMonitorStream();
         await this.createNetServer();
         await startSupervisor(this.socketName);
-        //await this.createApiServer();
+        await this.createApiServer();
     }
 
     async init(packageStream: ReadStream, appConfig: AppConfig, sequenceArgs?: any[]) {
         this.packageStream = packageStream;
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
-
+        this.communicationHandler = new CommunicationHandler();
+        this.communicationHandler.monitoringOutput.pipe(process.stdout);
         this.controlStream = new PassThrough();
         this.controlDataStream = new DataStream();
-
         this.controlDataStream.JSONStringify()
             .pipe(this.controlStream);
-
         this.monitorStream = new PassThrough();
 
         this.streams = [
@@ -96,7 +98,34 @@ export class HostOne {
     }
 
     async createApiServer(): Promise<void> {
-        throw new Error(this.errors.noImplement);
+        const conf = {};
+        const apiBase = "/api/v1";
+
+        this.api = createServer(conf);
+
+        /**
+         * ToDo: GET
+         * * /api/v1/stream/stdout/
+         * * /api/v1/stream/stderr/
+         */
+        // this.api.upstream(`${apiBase}/stream/stdout`, {stream}, {commHandler})
+
+        /**
+         * ToDo: GET
+         * * /api/v1/bash/log/
+         */
+
+        /**
+         * ToDo: POST 
+         * * /api/v1/stream/stdin/
+         */
+        // this.api.downstream(`${apiBase}/stream/stdin`, {stream}, {commHandler})
+
+        this.api.get(`${apiBase}/sequence/health`, RunnerMessageCode.DESCRIBE_SEQUENCE, this.communicationHandler);
+        this.api.get(`${apiBase}/sequence/status`, RunnerMessageCode.STATUS, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_stop/`, RunnerMessageCode.STOP, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_kill/`, RunnerMessageCode.KILL, this.communicationHandler);
     }
 
     async hookupMonitorStream() {
@@ -145,7 +174,7 @@ export class HostOne {
     controlStreamsCliHandler() {
         this.vorpal
             .command("alive", "Confirm that sequence is alive when it is not responding")
-            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.ALIVE, {}]));
+            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.FORCE_CONFIRM_ALIVE, {}])); // ToDo: test fix
 
         this.vorpal
             .command("kill", "Kill forcefully sequence")
