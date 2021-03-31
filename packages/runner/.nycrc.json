@@ -4,5 +4,9 @@
         "**/*.spec.ts",
         ".src",
         "**/*.ts"
+    ],
+    "reporter": [
+        "lcovonly",
+        "text"
     ]
 }

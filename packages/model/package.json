@@ -8,7 +8,7 @@
         "build": "tsc -p tsconfig.json",
         "watch": "tsc -b --watch",
         "test": "yarn test:coverage",
-        "test:coverage": "yarn build && nyc --reporter=lcov --reporter=text ava",
+        "test:coverage": "nyc ava",
         "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
     },
     "author": "Scramjet <open-source@scramjet.org>",
