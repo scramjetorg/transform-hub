@@ -60,8 +60,7 @@ test("Stop sequence", async (t: any) => {
     runner.initAppContext({ configKey: "configKeyValue" });
     runner.controlStreamHandler([RunnerMessageCode.STOP, {}]);
 
-    await setTimeout(() => {
-    }, 200);
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     t.true(
         writeMessageOnStreamMock.calledOnceWith([RunnerMessageCode.SEQUENCE_STOPPED, {}], runner.monitorStream)
