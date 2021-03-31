@@ -7,8 +7,7 @@
         "start": "ts-node ./src/index",
         "build": "tsc -p tsconfig.json",
         "watch": "tsc -b --watch",
-        "test": "yarn test:coverage",
-        "test:coverage": "nyc ava",
+        "test": "nyc ava",
         "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
     },
     "author": "Scramjet <open-source@scramjet.org>",
