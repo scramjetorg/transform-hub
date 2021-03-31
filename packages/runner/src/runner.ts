@@ -14,10 +14,22 @@ export class Runner {
     private controlStream?: any; //TODO change type ReadableStream<EncodedControlMessage>;
     private monitorFifoPath: string;
     private controlFifoPath: string;
+    /**
+     * @analyze-how-to-pass-in-out-streams
+     * Additional two fifo path variables need to be created:
+     * inputFifoPath- input stream to the Sequence
+     * outputFifoPath - output stream for a Sequence
+     */
     private sequencePath: string;
 
     constructor(sequencePath: string, fifosPath: string) {
         this.emitter = new EventEmitter();
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * Additional two fifo paths need to be assigned here
+         * input.fifo - input stream to the Sequence
+         * output.fifo - output stream for a Sequence
+         */
         this.controlFifoPath = `${fifosPath}/control.fifo`;
         this.monitorFifoPath = `${fifosPath}/monitor.fifo`;
         this.sequencePath = sequencePath;
@@ -30,8 +42,18 @@ export class Runner {
             break;
         case RunnerMessageCode.KILL:
             await this.handleKillRequest();
+            /**
+            * @analyze-how-to-pass-in-out-streams
+            * Input and output streams to the Sequence
+            * need to be closed.
+            */
             break;
         case RunnerMessageCode.STOP:
+            /**
+             * @analyze-how-to-pass-in-out-streams
+             * Input and output streams to the Sequence
+             * need to be closed.
+             */
             await this.handleStopRequest(data as StopSequenceMessageData);
             break;
         case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
@@ -177,12 +199,24 @@ export class Runner {
         if (Array.isArray(args) && args.length) {
             await sequence.call(
                 this.context,
+                /**
+                 * @analyze-how-to-pass-in-out-streams
+                 * Input stream will be passes as argument here
+                 * instead of
+                 * new DataStream() as unknown as ReadableStream<never>
+                 */
                 new DataStream() as unknown as ReadableStream<never>,
                 ...args
             );
         } else {
             await sequence.call(
                 this.context,
+                /**
+                 * @analyze-how-to-pass-in-out-streams
+                 * Input stream will be passes as argument here
+                 * instead of
+                 * new DataStream() as unknown as ReadableStream<never>
+                 */
                 new DataStream() as unknown as ReadableStream<never>
             );
         }

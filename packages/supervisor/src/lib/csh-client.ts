@@ -59,6 +59,15 @@ class CSHClient implements CSHConnector {
                 channel.on("error", () => {});
             });
 
+            /**
+             * @analyze-how-to-pass-in-out-streams
+             * In DownstreamStreamsConfig streams:
+             * input?: WritableStream<any> - an input stream transporting data for processing to the Sequence
+             * output?: ReadableStream<any> - an output stream transporting data processed by the Sequence 
+             * Additional stream should be added to transport the package.
+             * This stream should be closed when package is received.
+             */
+
             // from host-one
             this.connectionChannels[0].pipe(this.streams[0]); // stdin
             this.connectionChannels[3].pipe(this.streams[3]); // control

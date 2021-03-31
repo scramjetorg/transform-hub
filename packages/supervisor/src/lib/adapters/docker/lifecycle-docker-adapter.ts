@@ -40,6 +40,12 @@ class LifecycleDockerAdapter implements LifeCycle {
     private runnerStderr: PassThrough;
     private monitorStream: DelayedStream;
     private controlStream: DelayedStream;
+    /**
+     * @analyze-how-to-pass-in-out-streams
+     * Additional two streams need to be created:
+     * inputStream - input stream to the Sequence
+     * outputStream - output stream for a Sequence
+     */
 
     private resources: DockerAdapterResources = {};
 
@@ -50,6 +56,12 @@ class LifecycleDockerAdapter implements LifeCycle {
         this.dockerHelper = new DockerodeDockerHelper();
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * Initiate two streams with as DelayedStream():
+         * inputStream - input stream to the Sequence
+         * outputStream - output stream for a Sequence
+         */
     }
 
     async init(): Promise<void> {
@@ -72,7 +84,13 @@ class LifecycleDockerAdapter implements LifeCycle {
             });
         });
     }
-
+    // eslint-disable-next-line valid-jsdoc
+    /**
+     * @analyze-how-to-pass-in-out-streams
+     * Additional two fifo files need to be be created:
+     * input.fifo - input stream to the Sequence
+     * output.fifo - output stream for a Sequence
+     */
     private async createFifoStreams(controlFifo: string, monitorFifo: string): Promise<string> {
         return new Promise(async (resolve, reject) => {
             const dirPrefix: string = "fifos";
