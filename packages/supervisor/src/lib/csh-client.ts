@@ -61,11 +61,12 @@ class CSHClient implements CSHConnector {
 
             /**
              * @analyze-how-to-pass-in-out-streams
-             * In DownstreamStreamsConfig streams:
-             * input?: WritableStream<any> - an input stream transporting data for processing to the Sequence
-             * output?: ReadableStream<any> - an output stream transporting data processed by the Sequence 
-             * Additional stream should be added to transport the package.
-             * This stream should be closed when package is received.
+             * In UpstreamStreamsConfig streams:
+             * input?: WritableStream - an input stream transporting data for processing to the Sequence
+             * output?: ReadableStream - an output stream transporting data processed by the Sequence 
+             * Both of these steams must be piped here to the corresponding socket channels.
+             * Additional stream is added to transport the package.
+             * This stream should be closed when the package is received.
              */
 
             // from host-one

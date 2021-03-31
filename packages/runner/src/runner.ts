@@ -16,9 +16,13 @@ export class Runner {
     private controlFifoPath: string;
     /**
      * @analyze-how-to-pass-in-out-streams
-     * Additional two fifo path variables need to be created:
+     * Similarly to monitor and control streams, 
+     * two additional fifo path properties need to be created:
      * inputFifoPath- input stream to the Sequence
      * outputFifoPath - output stream for a Sequence
+     * and corresponding two properties for input and output stream references:
+     * inputStream?: ReadableStream
+     * outputStream?: WritableStream
      */
     private sequencePath: string;
 
@@ -150,6 +154,14 @@ export class Runner {
     }
 
     async handleReceptionOfHandshake(data: HandshakeAcknowledgeMessageData): Promise<void> {
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * Before we start a Sequence we should create readable and writable streams
+         * to input and output.
+         * In a fashion similar to how we create monitor and control streams, 
+         * but after the acknowledge message comes (PONG) and
+         * before we start a Sequence.
+         */
         await this.initAppContext(data.appConfig);
         // TODO: this needs to somehow error handled
         this.runSequence(data.arguments);
@@ -164,6 +176,7 @@ export class Runner {
     async main() {
         await this.hookupFifoStreams();
         this.sendHandshakeMessage();
+
     }
 
     /**
@@ -197,11 +210,18 @@ export class Runner {
         const sequence: any = this.getSequence();
 
         if (Array.isArray(args) && args.length) {
+            /**
+            * @analyze-how-to-pass-in-out-streams
+            * Output stream will be returned from the Sequence:
+            * await const outputStream = sequence.call(..);
+            * This outputStreams needs to be piped to the
+            * local Runner property outputStream (named fifo pipe).
+            */
             await sequence.call(
                 this.context,
                 /**
                  * @analyze-how-to-pass-in-out-streams
-                 * Input stream will be passes as argument here
+                 * Input stream to the Sequence will be passed as an argument
                  * instead of
                  * new DataStream() as unknown as ReadableStream<never>
                  */

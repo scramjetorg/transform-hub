@@ -58,6 +58,15 @@ export class CommunicationHandler implements ICommunicationHandler {
     private monitoringDownstream?: ReadableStream<EncodedSerializedMonitoringMessage>;
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
+    /**
+     * @analyze-how-to-pass-in-out-streams
+     * Input stream to a Sequence and output stream from a Sequence need to be added as properties
+     * (for both upstream and downstream arrays):
+     * inputUpstream
+     * inputDownstream
+     * outputUpstream
+     * outputDownstream
+     */
 
     private _controlOutput?: PassThoughStream<EncodedSerializedControlMessage>;
     private _monitoringOutput?: PassThoughStream<EncodedMonitoringMessage>;
@@ -105,7 +114,12 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlUpstream = streams[3];
         this.monitoringUpstream = streams[4];
         this.upstreams = streams;
-
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * Input stream to a Sequence and
+         * output stream from a Sequence assignment 
+         * needs to be added.
+         */
         return this;
     }
 
@@ -116,7 +130,12 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.controlDownstream = streams[3];
         this.monitoringDownstream = streams[4];
         this.downstreams = streams;
-
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * Input stream to a Sequence and
+         * output stream from a Sequence assignment
+         * needs to be added.
+         */
         return this;
     }
 
@@ -188,6 +207,12 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     areStreamsHooked() {
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * In return statement add boolean check for 
+         * this.inputUpstream, this.inputDownstream,
+         * this.outputUpstream, this.outputDownstream.
+         */
         return this.upstreams &&
             this.downstreams &&
             this.controlDownstream &&
@@ -214,6 +239,11 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     pipeDataStreams(): this {
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * Pipe upstream input stream to a Sequence to downstream input stream.
+         * Pipe downstream output stream from a Sequence to upstream output stream.
+         */
         throw new Error("Not yet implemented");
     }
 
