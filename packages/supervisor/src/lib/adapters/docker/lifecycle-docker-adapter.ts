@@ -161,6 +161,12 @@ class LifecycleDockerAdapter implements LifeCycle {
                 this.runnerStderr,
                 this.controlStream.getStream(),
                 this.monitorStream.getStream()
+                /**
+                 * @analyze-how-to-pass-in-out-streams
+                 * Input and output streams need to be 
+                 * added to this table a similar way to control and
+                 * monitor stream.
+                 */
             ];
 
         communicationHandler.hookLifecycleStreams(downstreamStreamsConfig);

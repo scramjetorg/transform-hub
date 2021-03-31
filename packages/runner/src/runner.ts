@@ -48,17 +48,17 @@ export class Runner {
             await this.handleKillRequest();
             /**
             * @analyze-how-to-pass-in-out-streams
-            * Input and output streams to the Sequence
-            * need to be closed.
+            * We need to make sure we close
+            * input and output streams.
             */
             break;
         case RunnerMessageCode.STOP:
+            await this.handleStopRequest(data as StopSequenceMessageData);
             /**
              * @analyze-how-to-pass-in-out-streams
-             * Input and output streams to the Sequence
-             * need to be closed.
+             * We need to make sure we close
+             * input and output streams.
              */
-            await this.handleStopRequest(data as StopSequenceMessageData);
             break;
         case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
             await this.handleForceConfirmAliveRequest();
@@ -240,7 +240,11 @@ export class Runner {
                 new DataStream() as unknown as ReadableStream<never>
             );
         }
-
+        /**
+         * @analyze-how-to-pass-in-out-streams
+         * We need to make sure to close input and output streams
+         * after Sequence terminates.
+         */
         await this.cleanupControlStream();
     }
 }
