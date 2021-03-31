@@ -49,20 +49,37 @@ export class SocketServer {
     start() {
         let connected = false;
 
-        this.server = net.createServer(c => {
-            if (connected) {
-                c.end();
-                throw new Error("Connection not allowed");
-            }
+        this.server = net.createServer();
+        this.server
+            .on("connection", connection => {
+                if (connected) {
+                    connection.end();
+                    throw new Error("Connection not allowed");
+                }
 
-            connected = true;
+                connected = true;
 
-            let mux = new BPMux(c);
+                connection
+                    .on("close", () => {
+                        this.close();
+                    })
+                    .on("error", () => {
+                        /* ignore */
+                    });
 
-            mux.on("handshake", (stream: BPMuxChannel) => {
-                this.handleStream(stream);
-            });
-        })
+                new BPMux(connection)
+                    .on("handshake", (stream: BPMuxChannel) => {
+                        this.handleStream(stream);
+
+                        stream.on("error", () => {
+                            /* ignore */
+                        });
+                    })
+                    .on("error", () => {
+                        /* ignore */
+                    });
+
+            })
             .listen(this.address, () => {
                 console.log("[HostOne][Server] Started at", this.server?.address());
             });
@@ -74,5 +91,13 @@ export class SocketServer {
 
     attachStreams(streams: DownstreamStreamsConfig | any) {
         this.streams = streams;
+    }
+
+    close() {
+        this.server?.close((err) => {
+            if (err) {
+                console.error(err);
+            }
+        });
     }
 }

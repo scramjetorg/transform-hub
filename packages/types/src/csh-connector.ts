@@ -3,7 +3,7 @@ import { ICommunicationHandler } from "./communication-handler";
 
 export interface CSHConnector {
     /**
-     * CSHConnector is the interface used by the LifeCycle Controller (LCC) 
+     * CSHConnector is the interface used by the LifeCycle Controller (LCC)
      * to communicate with the Cloud Server Host (CSH).
      */
 
@@ -26,5 +26,10 @@ export interface CSHConnector {
      * @returns stream with file sequence
      */
     getPackage(): ReadableStream<string>;
+
+    /**
+     * Disconnects from a host server.
+     */
+    disconnect(): void;
 
 }

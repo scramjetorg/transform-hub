@@ -24,14 +24,14 @@ class LifeCycleController {
 
     /**
     * CommunicationHandler is responsible for all operations on communication streams.
-    * CommunicationHandler pipes the multiple data and message streams 
+    * CommunicationHandler pipes the multiple data and message streams
     * and ensures the information carried by them is of a correct type.
     * @type {ICommunicationHandler}
     */
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
     /**
-    * CSHConnector handles communication with CSH using TCP via the socket path provided 
+    * CSHConnector handles communication with CSH using TCP via the socket path provided
     * when constructing CSHClient
     * @type {CSHConnector}
     */
@@ -46,7 +46,7 @@ class LifeCycleController {
     private lifecycleAdapter: LifeCycle;
 
     /**
-    * Configurations specific to a lifecycle, e.g. whether to take a snapshot 
+    * Configurations specific to a lifecycle, e.g. whether to take a snapshot
     * in case of erroneous Sequence termination.
     * @type {LifeCycleConfig}
     */
@@ -54,7 +54,7 @@ class LifeCycleController {
 
     /**
      * @param {LifeCycle} lifecycleAdapter an implementation of LifeCycle interface
-     * @param {LifeCycleConfig} lifecycleConfig configuration specific to running the Sequence on 
+     * @param {LifeCycleConfig} lifecycleConfig configuration specific to running the Sequence on
      * the particular Cloud Server Instance.
      * @param {CSHConnector} client that communicates with the CSH via TCP connection
      */
@@ -67,38 +67,38 @@ class LifeCycleController {
 
     /**
      * This main method controls logical flow of the Cloud Server Instance lifecycle.
-     * 
+     *
      * The Supervisor starts by instating the client that communicates with the CSH
      * and LifeCycle Adapter responsible for unpacking and deployment of the Sequence.
-     * 
+     *
      * When the client is ready the LifeCycle Controller requests from it the stream
      * with the compressed Sequence to be deployed.
-     * 
+     *
      * Once the client receives the stream on which the Sequence is transported it passes
      * it to LifeCycle Adapter for unpacking and inspection.
-     * 
+     *
      * The Sequence is now unpacked and ready to be executed. However, before the Sequence is
      * executed the LifeCycle Adapter needs to connect the message and data streams between the client
      * and the LifeCycle Adapter so that there are communication channels with the Sequence.
-     * 
+     *
      * LifeCycle Controller than requests LifeCycle Adapter to run the Sequence.
-     * 
+     *
      * The Sequence runs until it has not terminated, either by itself or by a command sent from the CSH.
-     * 
+     *
      * After the Sequence terminates it is possible to perform a snapshot of the container in which it was run.
-     * 
+     *
      * When the Sequence terminates and (optionally) the snapshot is created, the LifeCycle Controller
      * requests the LifeCycle Adapter to perform the cleanup (e.g. removing unused volumes and containers).
-     * 
-     * @returns {Promise} resolves when Supervisor completed lifecycle without errors. 
+     *
+     * @returns {Promise} resolves when Supervisor completed lifecycle without errors.
      */
     async main(): Promise<void> {
 
         try {
 
-            /** 
+            /**
              * The client that communicates with the CSH and
-             * the LifeCycle Adapter are initiated. 
+             * the LifeCycle Adapter are initiated.
              */
             await Promise.all([
                 this.lifecycleAdapter.init(),
@@ -109,14 +109,14 @@ class LifeCycleController {
             // TODO: we need to align stream types here
 
             /**
-            * Request from the client to retrieve a readable stream 
+            * Request from the client to retrieve a readable stream
             * that transports the compressed Sequence and its configuration file.
             */
             const packageStream = this.client.getPackage();
             /**
             * LifeCycle Adapter calls identify method to unpack the compressed file
             * and inspect the attached configuration file to prepare the Sequence
-            * deployment environed. 
+            * deployment environed.
             */
             const config = await this.lifecycleAdapter.identify(packageStream as Readable);
 
@@ -131,7 +131,7 @@ class LifeCycleController {
 
             /**
              * Once the LifeCycle Adapter and the client hooked their streams
-             * using the CommunicationHandler class the streams are ready to 
+             * using the CommunicationHandler class the streams are ready to
              * be piped (connected and ready for data transfer).
             */
             this.communicationHandler.pipeMessageStreams();
@@ -146,7 +146,7 @@ class LifeCycleController {
             /**
              * When the kill message comes from the CSH via the control stream
              * and the Sequence has not terminated yet, the LifeCycle Controller
-             * requests LifeCycle Adapter to kill the Sequence by executing kill 
+             * requests LifeCycle Adapter to kill the Sequence by executing kill
              * method on its interface.
              */
             this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, message => {
@@ -189,6 +189,7 @@ class LifeCycleController {
             */
             await endOfSequence;
 
+            this.client.disconnect();
         } catch (error) {
 
             /**

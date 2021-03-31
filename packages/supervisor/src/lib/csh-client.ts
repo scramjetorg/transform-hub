@@ -1,7 +1,8 @@
 /* eslint-disable dot-notation */
 import { CommunicationHandler } from "@scramjet/model";
-import { CSHConnector, DownstreamStreamsConfig, SocketChannel, UpstreamStreamsConfig } from "@scramjet/types";
+import { CSHConnector, SocketChannel, UpstreamStreamsConfig } from "@scramjet/types";
 import * as net from "net";
+import { Duplex } from "node:stream";
 import { PassThrough, Readable } from "stream";
 
 const { BPMux } = require("bpmux");
@@ -9,13 +10,17 @@ const { BPMux } = require("bpmux");
 class CSHClient implements CSHConnector {
     private socketPath: string;
     private packageStream: PassThrough;
-    private connectionStreams: DownstreamStreamsConfig;
+    private streams: UpstreamStreamsConfig;
+    private connectionChannels?: any[];
+    private connection?: net.Socket;
+
+    private mux: any;
 
     constructor(socketPath: string) {
         this.socketPath = socketPath;
         this.packageStream = new PassThrough();
 
-        this.connectionStreams = [
+        this.streams = [
             new PassThrough(),
             new PassThrough(),
             new PassThrough(),
@@ -33,28 +38,51 @@ class CSHClient implements CSHConnector {
 
     connect(): Promise<void> {
         return new Promise((resolve) => {
-            let mux = new BPMux(net.createConnection({
+            this.connection = net.createConnection({
                 path: this.socketPath
-            }));
+            });
+
+            this.mux = new BPMux(this.connection);
+
+            this.connectionChannels = [
+                this.mux.multiplex({ channel: SocketChannel.STDIN }),
+                this.mux.multiplex({ channel: SocketChannel.STDOUT }),
+                this.mux.multiplex({ channel: SocketChannel.STDERR }),
+                this.mux.multiplex({ channel: SocketChannel.CONTROL }),
+                this.mux.multiplex({ channel: SocketChannel.MONITORING }),
+                this.mux.multiplex({ channel: SocketChannel.PACKAGE }),
+                this.mux.multiplex({ channel: SocketChannel.TO_SEQ }),
+                this.mux.multiplex({ channel: SocketChannel.FROM_SEQ })
+            ];
+
+            this.connectionChannels.forEach((channel: Duplex) => {
+                channel.on("error", () => {});
+            });
 
             // from host-one
-            mux.multiplex({ channel: SocketChannel.STDIN }).pipe(this.connectionStreams[0]); // stdin
-            mux.multiplex({ channel: SocketChannel.CONTROL }).pipe(this.connectionStreams[3]); // control
-            mux.multiplex({ channel: SocketChannel.PACKAGE }).pipe(this.packageStream); // package
-            mux.multiplex({ channel: SocketChannel.TO_SEQ }).pipe(this.connectionStreams[6]); // sequence input
+            this.connectionChannels[0].pipe(this.streams[0]); // stdin
+            this.connectionChannels[3].pipe(this.streams[3]); // control
+            this.connectionChannels[5].pipe(this.packageStream); // package
+            this.connectionChannels[6].pipe(this.streams[6]); // sequence input
 
-            // to host-onet
-            this.connectionStreams[1].pipe(mux.multiplex({ channel: SocketChannel.STDOUT })); // stdout
-            this.connectionStreams[2].pipe(mux.multiplex({ channel: SocketChannel.STDERR })); // stderr
-            this.connectionStreams[4].pipe(mux.multiplex({ channel: SocketChannel.MONITORING })); // monitor
-            this.connectionStreams[7]?.pipe(mux.multiplex({ channel: SocketChannel.FROM_SEQ })); // sequence output
+            // to host-one
+            this.streams[1].pipe(this.connectionChannels[1]); // stdout
+            this.streams[2].pipe(this.connectionChannels[2]); // stderr
+            // eslint-disable-next-line no-extra-parens
+            (this.streams[4] as unknown as Readable).pipe(this.connectionChannels[4]); // monitor
+            // eslint-disable-next-line no-extra-parens
+            (this.streams[7] as unknown as Readable).pipe(this.connectionChannels[7]); // sequence output
 
             resolve();
         });
     }
 
+    disconnect() {
+        this.connection?.end();
+    }
+
     upstreamStreamsConfig() {
-        return this.connectionStreams as unknown as UpstreamStreamsConfig;
+        return this.streams as unknown as UpstreamStreamsConfig;
     }
 
     getPackage(): Readable {

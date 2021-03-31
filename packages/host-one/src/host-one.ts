@@ -1,6 +1,6 @@
 import { HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
 import { AppConfig, EncodedMonitoringMessage, DownstreamStreamsConfig } from "@scramjet/types";
-import { ReadStream, unlink } from "fs";
+import { ReadStream } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
 import * as path from "path";
@@ -89,12 +89,7 @@ export class HostOne {
         this.netServer.start();
 
         process.on("beforeExit", () => {
-            // TODO: check if this works for process.on("SIGINT"
-            unlink(this.socketName, (err) => {
-                if (err) {
-                    throw new Error("Can't remove socket file");
-                }
-            });
+            //this.log.warn("beforeExit");
         });
 
         return Promise.resolve();
