@@ -99,7 +99,7 @@ export class HostOne {
         this.communicationHandler.hookClientStreams(this.downStreams)
         this.communicationHandler.hookLifecycleStreams(this.upStreams)
         this.communicationHandler.pipeMessageStreams()
-        // this.communicationHandler.monitoringOutput.pipe(process.stdout);
+        this.communicationHandler.monitoringOutput.pipe(process.stdout);
         this.vorpal = new vorpal();
     }
 
@@ -153,7 +153,7 @@ export class HostOne {
     }
 
     async hookupMonitorStream() {
-        StringStream.from(this.monitorStream)
+            this.monitorStream.pipe(new StringStream())
             .JSONParse()
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             .map(async ([code, data]: EncodedMonitoringMessage) => {
