@@ -27,6 +27,7 @@ export type ControlMessageHandler<T extends ControlMessageCode> =
 type MonitoringMessageHandlerList = {
     [RunnerMessageCode.ACKNOWLEDGE]: MonitoringMessageHandler<RunnerMessageCode.ACKNOWLEDGE>[];
     [RunnerMessageCode.DESCRIBE_SEQUENCE]: MonitoringMessageHandler<RunnerMessageCode.DESCRIBE_SEQUENCE>[];
+    [RunnerMessageCode.STATUS]: MonitoringMessageHandler<RunnerMessageCode.STATUS>[];
     [RunnerMessageCode.ALIVE]: MonitoringMessageHandler<RunnerMessageCode.ALIVE>[];
     [RunnerMessageCode.ERROR]: MonitoringMessageHandler<RunnerMessageCode.ERROR>[];
     [RunnerMessageCode.MONITORING]: MonitoringMessageHandler<RunnerMessageCode.MONITORING>[];
@@ -86,6 +87,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],
             [RunnerMessageCode.DESCRIBE_SEQUENCE]: [],
+            [RunnerMessageCode.STATUS]: [],
             [RunnerMessageCode.ALIVE]: [],
             [RunnerMessageCode.ERROR]: [],
             [RunnerMessageCode.MONITORING]: [],

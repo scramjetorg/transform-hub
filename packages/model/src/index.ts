@@ -7,6 +7,7 @@ export * from "./messages-utils";
 export * from "./messages/acknowledge";
 export { ConfirmHealthMessage } from "./messages/confirm-health";
 export { DescribeSequenceMessage, DescribeSequenceMessageData } from "./messages/describe-sequence";
+export { StatusMessageData, StatusMessage } from "./messages/status";
 export { ErrorMessage, ErrorMessageData } from "./messages/error";
 export { EventMessage, EventMessageData } from "./messages/event";
 export { HandshakeMessage } from "./messages/handshake";

@@ -23,13 +23,16 @@ import {
     HandshakeAcknowledgeMessageData,
     HandshakeAcknowledgeMessage,
     SnapshotResponseMessage,
-    SnapshotResponseMessageData
+    SnapshotResponseMessageData,
+    StatusMessage,
+    StatusMessageData
 } from "@scramjet/model";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
     T extends RunnerMessageCode.ALIVE ? KeepAliveMessage :
     T extends RunnerMessageCode.DESCRIBE_SEQUENCE ? DescribeSequenceMessage :
+    T extends RunnerMessageCode.STATUS ? StatusMessage :
     T extends RunnerMessageCode.ERROR ? ErrorMessage :
     T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? ConfirmHealthMessage :
     T extends RunnerMessageCode.KILL ? KillSequenceMessage :
@@ -46,6 +49,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessageData :
     T extends RunnerMessageCode.ALIVE ? KeepAliveMessageData :
     T extends RunnerMessageCode.DESCRIBE_SEQUENCE ? DescribeSequenceMessageData :
+    T extends RunnerMessageCode.STATUS ? StatusMessageData :
     T extends RunnerMessageCode.ERROR ? ErrorMessageData :
     T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? EmptyMessageData :
     T extends RunnerMessageCode.KILL | RunnerMessageCode.FORCE_CONFIRM_ALIVE ? EmptyMessageData :
@@ -66,7 +70,7 @@ export type ControlMessageCode =
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
-    RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE |
+    RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.SNAPSHOT_RESPONSE | RunnerMessageCode.SEQUENCE_STOPPED;
 
