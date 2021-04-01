@@ -17,6 +17,7 @@
   "dependencies": {
     "@scramjet/types": "^0.7.0-pre.1",
     "@scramjet/model": "^0.7.0-pre.1",
+    "@scramjet/api-server": "^0.7.0-pre.1",
     "bpmux": "^8.1.3",
     "vorpal": "^1.12.0"
   },
