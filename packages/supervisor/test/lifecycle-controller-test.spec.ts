@@ -4,6 +4,7 @@ import * as sinon from "sinon";
 import { CSHConnector, ICommunicationHandler, LifeCycle } from "@scramjet/types";
 import { LifeCycleController } from "../src/lib/lifecycle-controller";
 import { Readable } from "stream";
+import { PassThrough } from "stream";
 
 // let { LifeCycleController } = proxyquire("@scramjet/supervisor/src/lib/lifecycle-controller", {
 //     "@scramjet/model/src/stream-handler": {
@@ -36,6 +37,7 @@ class Client implements CSHConnector {
     hookCommunicationHandler = sinon.stub();
     getPackage = sinon.stub().returns(stream)
     kill = sinon.stub()
+    disconnect = sinon.stub();
 }
 
 const streamHandlerInstance: ICommunicationHandler = {
@@ -45,7 +47,11 @@ const streamHandlerInstance: ICommunicationHandler = {
     hookLifecycleStreams: sinon.stub(),
     addMonitoringHandler: sinon.stub(),
     addControlHandler: sinon.stub(),
-    pipeDataStreams: sinon.stub()
+    pipeDataStreams: sinon.stub(),
+    monitoringOutput: new PassThrough,
+    controlOutput: new PassThrough,
+    sendMonitoringMessage: sinon.stub(),
+    sendControlMessage: sinon.stub()
 }
 
 let lcdaInstance = new LCDA();
