@@ -34,7 +34,6 @@ async function startSupervisor(socketPath: string) {
     });
 
     supervisor.stdout.pipe(process.stdout);
-    console.log("SV", supervisor.pid);
 
     return Promise.resolve(supervisor.pid);
 }

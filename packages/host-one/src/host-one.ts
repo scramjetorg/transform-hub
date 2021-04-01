@@ -1,5 +1,5 @@
 import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage } from "@scramjet/types";
+import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage } from "@scramjet/types";
 import { ReadStream } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
@@ -102,16 +102,10 @@ export class HostOne {
 
         this.communicationHandler.hookClientStreams(this.upStreams);
         this.communicationHandler.hookLifecycleStreams(this.downStreams);
-
-        // prevents host one to exit.
         this.communicationHandler.pipeStdio();
         this.communicationHandler.pipeMessageStreams();
 
-        //this.upStreams[1].pipe(process.stdout);
-
-        console.log("H1", process.pid);
         this.upStreams[1]?.pipe(process.stdout);
-        //this.communicationHandler.monitoringOutput.pipe(process.stdout);
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
@@ -141,6 +135,7 @@ export class HostOne {
         const apiBase = "/api/v1";
 
         this.api = createServer(conf);
+        this.api.server.listen(8000); // add .unref() or server will keep process up
 
         /**
          * ToDo: GET

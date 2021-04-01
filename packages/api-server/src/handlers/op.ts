@@ -3,7 +3,7 @@ import { ControlMessageCode } from "@scramjet/types";
 import { CommunicationHandler, checkMessage, MessageDataType } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
-import { StringDecoder } from "string_decoder";
+//import { StringDecoder } from "string_decoder";
 
 export function createOperationHandler(router: SequentialCeroRouter) {
     const getData = async (req: IncomingMessage): Promise<object|undefined> => {
@@ -20,18 +20,19 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         if (req.headers["content-length"] === "0")
             return undefined;
 
-        const out = new StringDecoder();
+        // TODO: investigate StreamDecoder fail
+        let out = "";
 
         for await (const chunk of req) {
-            out.write(chunk);
+            out += chunk.toString();
         }
 
         try {
-            const json = out.end();
+            if (!out) return undefined;
 
-            if (!json) return undefined;
-            return JSON.parse(json);
+            return JSON.parse(out)[1];
         } catch (e) {
+            console.log(e);
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
     };
