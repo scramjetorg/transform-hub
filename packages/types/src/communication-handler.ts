@@ -5,11 +5,11 @@ import {
     MonitoringMessageCode,
     UpstreamStreamsConfig
 } from ".";
-import { EncodedMonitoringMessage, EncodedSerializedControlMessage, MessageDataType } from "./message-streams";
-import { PassThoughStream } from "./utils";
+import { EncodedSerializedControlMessage, MessageDataType } from "./message-streams";
+import { PassThoughStream, ReadableStream } from "./utils";
 
 export interface ICommunicationHandler {
-    monitoringOutput: PassThoughStream<EncodedMonitoringMessage>
+    monitoringOutput: ReadableStream<string>
     controlOutput: PassThoughStream<EncodedSerializedControlMessage>
 
     hookClientStreams(str: UpstreamStreamsConfig): this;

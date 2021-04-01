@@ -1,16 +1,15 @@
 import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig } from "@scramjet/types";
+import { AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage } from "@scramjet/types";
 import { ReadStream } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
 import * as path from "path";
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough } from "stream";
-import * as vorpal from "vorpal";
+//import * as vorpal from "vorpal";
 import { SocketServer } from "./lib/server";
 import { startSupervisor } from "./lib/start-supervisor";
 import { createServer } from "@scramjet/api-server";
-import { Writable, Readable } from "stream";
 
 export class HostOne {
     private socketName: string;
@@ -60,6 +59,9 @@ export class HostOne {
         await this.createNetServer();
         await startSupervisor(this.socketName);
         await this.createApiServer();
+
+        //this.vorpal = new vorpal();
+        //this.controlStreamsCliHandler();
     }
 
     async init(packageStream: ReadStream, appConfig: AppConfig, sequenceArgs?: any[]) {
@@ -69,8 +71,7 @@ export class HostOne {
         this.communicationHandler = new CommunicationHandler();
         this.controlStream = new PassThrough();
         this.controlDataStream = new DataStream();
-        this.controlDataStream.JSONStringify()
-            .pipe(this.controlStream);
+
         this.monitorStream = new PassThrough();
         this.stdin = new PassThrough();
         this.stdout = new PassThrough();
@@ -78,7 +79,7 @@ export class HostOne {
         this.downStreams = [
             this.stdin,
             this.stdout,
-            process.stderr,
+            new PassThrough(),
             this.controlStream,
             this.monitorStream,
             this.packageStream,
@@ -87,20 +88,33 @@ export class HostOne {
         ];
 
         this.upStreams = [
-            new Readable(),
-            new Writable(),
-            new Writable(),
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough(),
             new PassThrough(),
             new PassThrough(),
             new PassThrough(),
             new PassThrough()
         ];
 
-        this.communicationHandler.hookClientStreams(this.downStreams);
-        this.communicationHandler.hookLifecycleStreams(this.upStreams);
+        this.controlDataStream.JSONStringify()
+            .pipe(this.upStreams[3] as unknown as WritableStream<EncodedControlMessage>);
+
+        this.communicationHandler.hookClientStreams(this.upStreams);
+        this.communicationHandler.hookLifecycleStreams(this.downStreams);
+
+        // prevents host one to exit.
+        this.communicationHandler.pipeStdio();
         this.communicationHandler.pipeMessageStreams();
-        this.communicationHandler.monitoringOutput.pipe(process.stdout);
-        this.vorpal = new vorpal();
+
+        //this.upStreams[1].pipe(process.stdout);
+
+        console.log("H1", process.pid);
+        this.upStreams[1]?.pipe(process.stdout);
+        //this.communicationHandler.monitoringOutput.pipe(process.stdout);
+
+        //this.vorpal = new vorpal();
+        //this.controlStreamsCliHandler();
     }
 
     getAppConfig(configPath: string): AppConfig {
@@ -114,7 +128,9 @@ export class HostOne {
         this.netServer.start();
 
         process.on("beforeExit", () => {
-            //this.log.warn("beforeExit");
+            console.warn("beforeExit");
+
+
         });
 
         return Promise.resolve();
@@ -139,7 +155,7 @@ export class HostOne {
          */
 
         /**
-         * ToDo: POST 
+         * ToDo: POST
          * * /api/v1/stream/stdin/
          */
         // this.api.downstream(`${apiBase}/stream/stdin`, {stream}, {commHandler})

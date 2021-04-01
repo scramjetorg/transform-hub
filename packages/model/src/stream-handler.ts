@@ -131,6 +131,7 @@ export class CommunicationHandler implements ICommunicationHandler {
                 .pipe(this.monitoringPassThrough)
                 .map(async (message: EncodedMonitoringMessage) => {
                     // TODO: WARN if (!this.monitoringHandlerHash[message[0]])
+                    console.log(process.pid, "m0:", message[0]);
                     if (this.monitoringHandlerHash[message[0]].length) {
                         let currentMessage = message as any;
 
@@ -146,6 +147,9 @@ export class CommunicationHandler implements ICommunicationHandler {
 
             monitoringOutput.pipe(this.monitoringUpstream as unknown as Writable);
             this._monitoringOutput = monitoringOutput as unknown as PassThoughStream<EncodedMonitoringMessage>;
+
+            console.log(process.pid);
+            //monitoringOutput.pipe(process.stdout);
 
             const controlOutput = StringStream.from(this.controlUpstream as Readable)
                 .JSONParse()
@@ -176,9 +180,11 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
-    get monitoringOutput(): PassThoughStream<EncodedMonitoringMessage> {
+    get monitoringOutput(): ReadableStream<string> {
         if (!this._monitoringOutput) throw new Error("Monitoring: Stream not yet hooked up");
-        return this._monitoringOutput;
+
+        console.log(process.pid, "get monitoring");
+        return this.monitoringUpstream as unknown as ReadableStream<string>;
     }
 
     get controlOutput(): PassThoughStream<EncodedSerializedControlMessage> {

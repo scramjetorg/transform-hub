@@ -18,6 +18,8 @@ const mod: InertApp = function(input, ffrom, fto) {
         fs.createReadStream(ffrom)
             .pipe(JSONStream.parse("*"))
             .pipe(new scramjet.DataStream())
+            .setOptions({ maxParallel: 1 })
+            .do(() => new Promise(res => setTimeout(res, 2000)))
             .do(
                 (names: Person) => {
                     console.log(`Hello ${names.name}!`);
