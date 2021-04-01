@@ -1,5 +1,5 @@
 import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage } from "@scramjet/types";
+import { AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig } from "@scramjet/types";
 import { ReadStream } from "fs";
 import { Server as HttpServer } from "http";
 import * as os from "os";
@@ -8,7 +8,9 @@ import { DataStream, StringStream } from "scramjet";
 import { PassThrough } from "stream";
 import * as vorpal from "vorpal";
 import { SocketServer } from "./lib/server";
+import { startSupervisor } from "./lib/start-supervisor";
 import { createServer } from "@scramjet/api-server";
+import { Writable, Readable } from "stream";
 
 export class HostOne {
     private socketName: string;
@@ -20,7 +22,9 @@ export class HostOne {
     // @ts-ignore
     private controlStream: PassThrough;
     // @ts-ignore
-    private streams: DownstreamStreamsConfig;
+    private downStreams: DownstreamStreamsConfig;
+    // @ts-ignore
+    private upStreams: UpstreamStreamsConfig;
     // @ts-ignore
     private controlDataStream: DataStream;
     // @ts-ignore
@@ -30,9 +34,13 @@ export class HostOne {
     // @ts-ignore
     private packageStream?: ReadStream;
     // @ts-ignore
+    private stdin;
+    // @ts-ignore
+    private stdout;
+    // @ts-ignore
     private api: APIExpose;
     // @ts-ignore
-    private communicationHandler: any;
+    private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
     errors = {
         noParams: "No params provided. Type help to know more.",
@@ -59,16 +67,17 @@ export class HostOne {
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
         this.communicationHandler = new CommunicationHandler();
-        this.communicationHandler.monitoringOutput.pipe(process.stdout);
         this.controlStream = new PassThrough();
         this.controlDataStream = new DataStream();
         this.controlDataStream.JSONStringify()
             .pipe(this.controlStream);
         this.monitorStream = new PassThrough();
+        this.stdin = new PassThrough();
+        this.stdout = new PassThrough();
 
-        this.streams = [
-            process.stdin,
-            process.stdout,
+        this.downStreams = [
+            this.stdin,
+            this.stdout,
             process.stderr,
             this.controlStream,
             this.monitorStream,
@@ -77,6 +86,20 @@ export class HostOne {
             new PassThrough()
         ];
 
+        this.upStreams = [
+            new Readable(),
+            new Writable(),
+            new Writable(),
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough(),
+            new PassThrough()
+        ];
+
+        this.communicationHandler.hookClientStreams(this.downStreams)
+        this.communicationHandler.hookLifecycleStreams(this.upStreams)
+        this.communicationHandler.pipeMessageStreams()
+        // this.communicationHandler.monitoringOutput.pipe(process.stdout);
         this.vorpal = new vorpal();
     }
 
@@ -87,7 +110,7 @@ export class HostOne {
     async createNetServer(): Promise<void> {
         this.netServer = new SocketServer(this.socketName);
 
-        this.netServer.attachStreams(this.streams);
+        this.netServer.attachStreams(this.downStreams);
         this.netServer.start();
 
         process.on("beforeExit", () => {
@@ -123,6 +146,7 @@ export class HostOne {
 
         this.api.get(`${apiBase}/sequence/health`, RunnerMessageCode.DESCRIBE_SEQUENCE, this.communicationHandler);
         this.api.get(`${apiBase}/sequence/status`, RunnerMessageCode.STATUS, this.communicationHandler);
+
         this.api.op(`${apiBase}/sequence/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_stop/`, RunnerMessageCode.STOP, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_kill/`, RunnerMessageCode.KILL, this.communicationHandler);

@@ -175,12 +175,12 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     get monitoringOutput(): PassThoughStream<EncodedMonitoringMessage> {
-        if (!this._monitoringOutput) throw new Error("Stream not yet hooked up");
+        if (!this._monitoringOutput) throw new Error("Monitoring: Stream not yet hooked up");
         return this._monitoringOutput;
     }
 
     get controlOutput(): PassThoughStream<EncodedSerializedControlMessage> {
-        if (!this._controlOutput) throw new Error("Stream not yet hooked up");
+        if (!this._controlOutput) throw new Error("Control: Stream not yet hooked up");
         return this._controlOutput;
     }
 
