@@ -117,8 +117,10 @@ pipeline {
         stage("Scan HostOne") {
           steps {
             script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/host-one -Dsonar.login=$SONAR_LOGIN $SONAR_PARAMS')
+              withSonarQubeEnv('SCPSonar', envOnly: true) {
+                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/host-one -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                }
               }
             }
           }
@@ -126,8 +128,10 @@ pipeline {
         stage("Scan Model") {
           steps {
             script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model -Dsonar.login=$SONAR_LOGIN $SONAR_PARAMS')
+              withSonarQubeEnv('SCPSonar', envOnly: true) {
+                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                }
               }
             }
           }
@@ -135,8 +139,10 @@ pipeline {
         stage("Scan Pre-Runner") {
           steps {
             script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner -Dsonar.login=$SONAR_LOGIN $SONAR_PARAMS')
+              withSonarQubeEnv('SCPSonar', envOnly: true) {
+                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                }
               }
             }
           }
@@ -144,8 +150,10 @@ pipeline {
         stage("Scan Runner") {
           steps {
             script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner -Dsonar.login=$SONAR_LOGIN $SONAR_PARAMS')
+              withSonarQubeEnv('SCPSonar', envOnly: true) {
+                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                }
               }
             }
           }
@@ -153,8 +161,10 @@ pipeline {
         stage("Scan Supervisor") {
           steps {
             script {
-              docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor -Dsonar.login=$SONAR_LOGIN $SONAR_PARAMS')
+              withSonarQubeEnv('SCPSonar', envOnly: true) {
+                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor -Dsonar.login=$SONAR_LOGIN $SONAR_PARAMS')
+                }
               }
             }
           }
@@ -193,10 +203,9 @@ pipeline {
   }
 }
 def setSonarParams() {
-  def SONAR_HOST_URL = "https://sonar.int.scp.ovh"
   if (env.CHANGE_ID) {
-    return "-Dsonar.host.url=$SONAR_HOST_URL -Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}"
+    return "-Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}"
   } else {
-    return "-Dsonar.host.url=$SONAR_HOST_URL -Dsonar.branch.name=${env.BRANCH_NAME}"
+    return "-Dsonar.branch.name=${env.BRANCH_NAME}"
   }
 }
