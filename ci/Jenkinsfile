@@ -117,9 +117,9 @@ pipeline {
         stage("Scan HostOne") {
           steps {
             script {
-              withSonarQubeEnv('SCPSonar', envOnly: true) {
+              withSonarQubeEnv('SCPSonar') {
                 docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/host-one -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/host-one $SONAR_PARAMS')
                 }
               }
             }
@@ -128,9 +128,9 @@ pipeline {
         stage("Scan Model") {
           steps {
             script {
-              withSonarQubeEnv('SCPSonar', envOnly: true) {
+              withSonarQubeEnv('SCPSonar') {
                 docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model $SONAR_PARAMS')
                 }
               }
             }
@@ -139,9 +139,9 @@ pipeline {
         stage("Scan Pre-Runner") {
           steps {
             script {
-              withSonarQubeEnv('SCPSonar', envOnly: true) {
+              withSonarQubeEnv('SCPSonar') {
                 docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner $SONAR_PARAMS')
                 }
               }
             }
@@ -150,9 +150,9 @@ pipeline {
         stage("Scan Runner") {
           steps {
             script {
-              withSonarQubeEnv('SCPSonar', envOnly: true) {
+              withSonarQubeEnv('SCPSonar') {
                 docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner -Dsonar.login=$SONAR_AUTH_TOKEN $SONAR_PARAMS')
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner $SONAR_PARAMS')
                 }
               }
             }
@@ -161,9 +161,9 @@ pipeline {
         stage("Scan Supervisor") {
           steps {
             script {
-              withSonarQubeEnv('SCPSonar', envOnly: true) {
+              withSonarQubeEnv('SCPSonar') {
                 docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor -Dsonar.login=$SONAR_LOGIN $SONAR_PARAMS')
+                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor $SONAR_PARAMS')
                 }
               }
             }
