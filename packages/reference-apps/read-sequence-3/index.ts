@@ -33,9 +33,7 @@ const exp: [
     function(stream) {
         let x: number;
 
-        this.handleStop(() => {
-            this.save({ x: x });
-        });
+        this.handleStop(() => { this.save({ x }); });
         return async function* () {
             for await (let { b } of stream) {
                 x = b;
