@@ -11,7 +11,7 @@ import {
  * A Function that returns a streamable result is a read function
  */
 export type ReadFunction<Produces> =
-    (...parameters: any[]) => Streamable<Produces>;
+    (stream: ReadableStream<never>, ...parameters: any[]) => Streamable<Produces>;
 export type WriteFunction<Consumes> =
     (stream: ReadableStream<Consumes>, ...parameters: any[]) => MaybePromise<void>;
 export type TranformFunction<Consumes, Produces> = (

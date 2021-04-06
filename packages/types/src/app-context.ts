@@ -3,16 +3,33 @@ import { AppError, AppErrorConstructor } from "./app-error";
 import { AppConfig } from "./application";
 import { MonitoringMessage, FunctionDefinition } from "./runner";
 
+/**
+ * A callback that will be called when the sequence is being stopped gracefully.
+ *
+ * @param timeout the number of seconds before the operation will be killed
+ * @param canCallKeepalive informs if @{link AutoAppContext.keepAlive | keepalive} can be called
+ * to prolong the operation
+ * @returns the returned value can be a promise, once it's resolved the system will
+ *          assume that it's safe to terminate the process.
+ */
+export type StopHandler = (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
+
+export type KillHandler = () => void;
+
+/**
+ * A handler for the monitoring message.
+ *
+ * @param resp passed if the system was able to determine monitoring message by itself.
+ * @returns the monitoring information
+ */
+export type MonitoringHandler = (resp?: MonitoringMessage) => MaybePromise<MonitoringMessage>;
 
 /**
  * Object of this interface is passed to Application context and allows it to communicate
  * with the Platform to ensure that it's in operation and should be kept alive without
  * interruption.
- *
- *
  */
-
-export interface AutoAppContext<AppConfigType extends AppConfig, State extends any> {
+export interface AppContext<AppConfigType extends AppConfig, State extends any> {
     /**
      * This method should be overridden by the Sequence if auto detection of the Sequence
      * state is not precise enough.
@@ -22,11 +39,8 @@ export interface AutoAppContext<AppConfigType extends AppConfig, State extends a
      *
      * If not provided, a monitoring function will be determined based on the
      * return value from the Sequence.
-     *
-     * @param resp passed if the system was able to determine monitoring message by itself.
-     * @returns the monitoring information
      */
-    monitor?: (resp?: MonitoringMessage) => MaybePromise<MonitoringMessage>;
+    handleMonitoring(handler: MonitoringHandler): this;
 
     /**
      * This method can be overridden to handle the stop signal from the Runner and perform
@@ -40,12 +54,9 @@ export interface AutoAppContext<AppConfigType extends AppConfig, State extends a
      * The method can call @{see this.state} as many times as it likes, the valkue from the
      * last call will be made sure to be saved before the process will be terminated.
      *
-     * @param timeout the number of seconds before the operation will be killed
-     * @param canCallKeepalive informs if keepAlive can be called to prolong the operation
-     * @returns the returned value can be a promise, once it's resolved the system will
-     *          assume that it's safe to terminate the process.
+     * @param item - the handler callback
      */
-    stopHandler?: (timeout: number, canCallKeepalive: boolean) => MaybePromise<void>;
+    handleStop(item: StopHandler): this;
 
     /**
      * This method can be overridden to handle the kill signal from the Runner and perform
@@ -57,8 +68,10 @@ export interface AutoAppContext<AppConfigType extends AppConfig, State extends a
      *
      * If this methods fails to exit within `100 ms` the process will be forcefully terminated
      * and the data will be lost.
+     *
+     * @param handler - the handler callback
      */
-    killHandler?: () => void;
+    handleKill(handler: KillHandler): this;
 
     /**
      * The Sequence may call this process in order to confirm continued operation and provide
@@ -71,6 +84,11 @@ export interface AutoAppContext<AppConfigType extends AppConfig, State extends a
      * stop it.
      *
      * @param milliseconds provides information on how long the process should wait before
+     * assuming that the sequence is stale and attempt to kill it.
+     *
+     * If the method is called after {@link AutoAppContext.handleStop | stop has been issued} this
+     * parameter value should not exceed the given timeout and another stop command will be called
+     * again when the lower
      */
     keepAlive(milliseconds?: number): this;
 
@@ -85,6 +103,7 @@ export interface AutoAppContext<AppConfigType extends AppConfig, State extends a
      * This method will be called automatically when the readable side of the sequence ends.
      */
     end(): this;
+
     /**
      * Calling this method will inform the Instance that the Sequence has enountered a fatal
      * exception and should not be kept alive.
@@ -138,47 +157,17 @@ export interface AutoAppContext<AppConfigType extends AppConfig, State extends a
     emit(ev: "error", message: AppError): this;
 
     /**
-     * Provides automated definition as understood by
+     * Provides automated definition as understood by the system
      */
-    definition?: FunctionDefinition[];
+    definition: FunctionDefinition;
+
+    /**
+     * Allows overriding the function definition from within the code
+     *
+     * @param definition - the actual definition
+     */
+    describe(definition: FunctionDefinition): this;
 
     readonly config: AppConfigType;
     readonly AppError: AppErrorConstructor;
 }
-/**
- * Object of this interface is passed to Application context and allows it to communicate
- * with the Platform to ensure that it's in operation and should be kept alive without
- * interruption.
- */
-interface FullAppContext<
-    AppConfigType extends AppConfig,
-    State extends any
-    > extends AutoAppContext<AppConfigType, State> {
-    /**
-     * This method must be overridden by the Sequence if definition is not
-     * providing the correct outcome.
-     *
-     * The Runner will call this message periodically to obtain information on the
-     * condition of the Sequence.
-     *
-     * If not provided, a monitoring function will be determined based on the
-     * return value from the Sequence.
-     *
-     * @param resp passed if the system was able to determine monitoring message by itself.
-     * @returns the monitoring information
-     */
-    monitor: (resp?: MonitoringMessage) => MaybePromise<MonitoringMessage>;
-    /**
-     * This method should be overridden by the sequence if auto detection of the Sequence
-     * definition is not providing the correct outcome.
-     */
-    describe: () => FunctionDefinition[];
-}
-/**
- * Application context
- *
- * @interface
- */
-
-export type AppContext<AppConfigType extends AppConfig, State extends any> =
-    AutoAppContext<AppConfigType, State> | FullAppContext<AppConfigType, State>;

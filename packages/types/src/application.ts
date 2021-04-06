@@ -3,9 +3,8 @@ import {
     MaybePromise,
     ReadableStream
 } from ".";
-import { AutoAppContext } from "./app-context";
-import { WFunction, RFunction } from "./functions";
-import { TransformAppAcceptableSequence, ReadSequence, WriteSequence } from "./sequence";
+import { AppContext } from "./app-context";
+import { Streamable } from "./utils";
 
 /**
  * App configuration primitive.
@@ -28,10 +27,10 @@ export type TransformApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > = (
-        this: AutoAppContext<AppConfigType, S>,
+        this: AppContext<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
-    ) => MaybePromise<TransformAppAcceptableSequence<Consumes, Produces>>;
+    ) => Streamable<Produces>;
 /**
  * A Readable App is an app that obtains the data by it's own means and preforms
  * 0 to any number of transforms on that data before returning it.
@@ -45,10 +44,10 @@ export type ReadableApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > = (
-        this: AutoAppContext<AppConfigType, S>,
+        this: AppContext<AppConfigType, S>,
         source: ReadableStream<never>,
         ...args: Z
-    ) => MaybePromise<RFunction<Produces> | ReadSequence<Produces>>;
+    ) => MaybePromise<Streamable<Produces>>;
 /**
  * A Writable App is an app that accepts the data from the platform, performs any number
  * of transforms and then saves it to the data destination by it's own means.
@@ -62,10 +61,10 @@ export type WritableApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > = (
-        this: AutoAppContext<AppConfigType, S>,
+        this: AppContext<AppConfigType, S>,
         source: ReadableStream<Consumes>,
         ...args: Z
-    ) => MaybePromise<WFunction<Consumes> | WriteSequence<Consumes> | void>;
+    ) => MaybePromise<void>;
 /**
  * An Inert App is an app that doesn't accept data from the platform and doesn't output it.
  *
@@ -77,10 +76,10 @@ export type InertApp<
     S extends any = any,
     AppConfigType extends AppConfig = AppConfig
     > = (
-        this: AutoAppContext<AppConfigType, S>,
+        this: AppContext<AppConfigType, S>,
         source: ReadableStream<void>,
         ...args: Z
-    ) => MaybePromise<WFunction<void> | WriteSequence<void> | void>;
+    ) => MaybePromise<void>;
 
 export type ApplicationExpose<
     Consumes = any,
