@@ -1,4 +1,4 @@
-const exposeSequenceSymbol = Symbol("exposeSequence");
+const exposeSequenceSymbol = Symbol.for("org.scramjet.platform.exposeSequence");
 
 export {
     exposeSequenceSymbol
