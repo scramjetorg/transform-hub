@@ -1,12 +1,14 @@
-import { MonitoringMessageData, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition, KillHandler, StopHandler } from "@scramjet/types";
+import { MonitoringMessageFromRunnerData, RunnerMessageCode } from "@scramjet/model";
+import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition, KillHandler, StopHandler, MonitoringHandler } from "@scramjet/types";
 import { EventEmitter } from "events";
 import { MessageUtils } from "./message-utils";
 
-function assertFunction(handler: StopHandler) {
+function assertFunction(handler: any | Function): handler is Function {
     if (typeof handler !== "function") {
         throw new Error("Handler must be a function");
     }
+
+    return handler;
 }
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
@@ -42,6 +44,8 @@ implements AppContext<AppConfigType, State> {
     }
 
     handleKill(handler: KillHandler): this {
+        assertFunction(handler);
+
         // TODO: should this handler be executed more than once if passed more than once?
         this._killHandlers.push(handler);
         return this;
@@ -63,12 +67,24 @@ implements AppContext<AppConfigType, State> {
         return this;
     }
 
-    monitor(_message: MonitoringMessageData) {
-        throw new Error("Method not implemented.");
+    private _monitoringHandlers: MonitoringHandler[] = [];
+
+    async monitor(initialMessage: MonitoringMessageFromRunnerData = { healthy: true }) {
+        let message = initialMessage;
+
+        for (let handler of this._monitoringHandlers) {
+            // TODO: what should happen if an error occurs here?
+            const { healthy, sequences } = await handler(message);
+
+            message = { healthy: message.healthy && healthy, sequences };
+        }
     }
 
-    handleMonitoring(): this {
-        throw new Error("Not yet implemented");
+    handleMonitoring(handler: MonitoringHandler): this {
+        assertFunction(handler);
+
+        this._monitoringHandlers.push(handler);
+        return this;
     }
 
     private _definition: FunctionDefinition = {

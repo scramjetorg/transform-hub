@@ -16,7 +16,7 @@ export { KeepAliveMessage, KeepAliveMessageData } from "./messages/keep-alive";
 export { KillSequenceMessage } from "./messages/kill-sequence";
 export { EmptyMessageData, Message } from "./messages/message";
 export { MonitoringRateMessage, MonitoringRateMessageData } from "./messages/monitor-rate";
-export { MonitoringMessage, MonitoringMessageData } from "./messages/monitoring";
+export { MonitoringMessage, MonitoringMessageData, MonitoringMessageFromRunnerData } from "./messages/monitoring";
 export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./messages/snapshot-response";
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
 export * from "./runner-message";

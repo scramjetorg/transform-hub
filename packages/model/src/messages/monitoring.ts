@@ -1,13 +1,16 @@
 import { FunctionStatus } from "@scramjet/types";
 import { RunnerMessageCode } from "../.";
 
-export type MonitoringMessageData = {
+export type MonitoringMessageFromRunnerData = {
 
     /** How many items are processed by the Sequence per second. */
     sequences?: FunctionStatus[];
 
     /** Calculated backpressure: processing * throughput / buffer. */
     healthy: boolean;
+}
+
+export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
 
     /** CPU usage */
     cpu?: number;

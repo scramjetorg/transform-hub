@@ -1,7 +1,8 @@
 import { MaybePromise } from "./utils";
 import { AppError, AppErrorConstructor } from "./app-error";
 import { AppConfig } from "./application";
-import { MonitoringMessage, FunctionDefinition } from "./runner";
+import { FunctionDefinition } from "./runner";
+import { MonitoringMessageFromRunnerData } from "@scramjet/model";
 
 /**
  * A callback that will be called when the sequence is being stopped gracefully.
@@ -22,7 +23,8 @@ export type KillHandler = () => void;
  * @param resp passed if the system was able to determine monitoring message by itself.
  * @returns the monitoring information
  */
-export type MonitoringHandler = (resp?: MonitoringMessage) => MaybePromise<MonitoringMessage>;
+export type MonitoringHandler =
+    (resp: MonitoringMessageFromRunnerData) => MaybePromise<MonitoringMessageFromRunnerData>;
 
 /**
  * Object of this interface is passed to Application context and allows it to communicate
