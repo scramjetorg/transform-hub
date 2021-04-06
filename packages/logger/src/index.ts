@@ -44,6 +44,16 @@ class Logger extends Console {
     groupCollapsed = this.group;
 }
 
+/**
+ * Creates a Console compatible logger with basic decorations
+ *
+ * @param reference - a reference object to get the name from
+ * @param options - the logger options
+ * @param options.out - the "standard output" stream used for `log`, `debug` and `info` methods
+ * @param options.err - the "standard error" stream used for `error`, `warn` and `trace` methods
+ *
+ * @returns a Console compatible logger
+ */
 export function getLogger(
     reference: any,
     options: LoggerOptions = { out: process.stdout, err: process.stderr }
