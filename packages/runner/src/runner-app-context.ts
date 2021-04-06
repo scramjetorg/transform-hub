@@ -1,10 +1,10 @@
 import { RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, AppError, AppErrorConstructor, AutoAppContext, EncodedMonitoringMessage, WritableStream } from "@scramjet/types";
+import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition } from "@scramjet/types";
 import { EventEmitter } from "events";
 import { MessageUtils } from "./message-utils";
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
-implements AutoAppContext<AppConfigType, State> {
+implements AppContext<AppConfigType, State> {
 
     config: AppConfigType;
     AppError!: AppErrorConstructor;
@@ -28,6 +28,26 @@ implements AutoAppContext<AppConfigType, State> {
 
     private async writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage){
         MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
+    }
+
+    handleKill(): this {
+        throw new Error("Not yet implemented");
+    }
+
+    handleStop(): this {
+        throw new Error("Not yet implemented");
+    }
+
+    handleMonitoring(): this {
+        throw new Error("Not yet implemented");
+    }
+
+    get definition(): FunctionDefinition {
+        throw new Error("Not yet implemented");
+    }
+
+    describe(): this {
+        throw new Error("Not yet implemented");
     }
 
     keepAlive(milliseconds?: number): this {
