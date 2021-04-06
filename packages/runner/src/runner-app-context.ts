@@ -1,11 +1,16 @@
-import { RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition } from "@scramjet/types";
+import { MonitoringMessageData, RunnerMessageCode } from "@scramjet/model";
+import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition, KillHandler, StopHandler } from "@scramjet/types";
 import { EventEmitter } from "events";
 import { MessageUtils } from "./message-utils";
 
+function assertFunction(handler: StopHandler) {
+    if (typeof handler !== "function") {
+        throw new Error("Handler must be a function");
+    }
+}
+
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
 implements AppContext<AppConfigType, State> {
-
     config: AppConfigType;
     AppError!: AppErrorConstructor;
     monitorStream: WritableStream<any>;;
@@ -30,24 +35,54 @@ implements AppContext<AppConfigType, State> {
         MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
     }
 
-    handleKill(): this {
-        throw new Error("Not yet implemented");
+    private _killHandlers: KillHandler[] = [];
+
+    killHandler() {
+        for (let handler of this._killHandlers) handler();
     }
 
-    handleStop(): this {
-        throw new Error("Not yet implemented");
+    handleKill(handler: KillHandler): this {
+        // TODO: should this handler be executed more than once if passed more than once?
+        this._killHandlers.push(handler);
+        return this;
+    }
+
+    private _stopHandlers: StopHandler[] = [];
+
+    async stopHandler(timeout: number, canCallKeepalive: boolean) {
+        for (let handler of this._stopHandlers) {
+            // TODO: what should happen if an error occurs here?
+            await handler(timeout, canCallKeepalive);
+        }
+    }
+
+    handleStop(handler: StopHandler): this {
+        assertFunction(handler);
+
+        this._stopHandlers.push(handler);
+        return this;
+    }
+
+    monitor(_message: MonitoringMessageData) {
+        throw new Error("Method not implemented.");
     }
 
     handleMonitoring(): this {
         throw new Error("Not yet implemented");
     }
 
+    private _definition: FunctionDefinition = {
+        mode: "buffer",
+        name: "anonymous function"
+    };
+
     get definition(): FunctionDefinition {
-        throw new Error("Not yet implemented");
+        return this._definition;
     }
 
-    describe(): this {
-        throw new Error("Not yet implemented");
+    describe(definition: FunctionDefinition): this {
+        Object.assign(this.definition, definition);
+        return this;
     }
 
     keepAlive(milliseconds?: number): this {

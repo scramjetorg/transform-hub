@@ -1,5 +1,5 @@
 import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { ReadableStream, WritableStream, AppConfig, Application, AutoAppContext, EncodedControlMessage } from "@scramjet/types";
+import { ReadableStream, WritableStream, AppConfig, Application, EncodedControlMessage } from "@scramjet/types";
 import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
@@ -8,7 +8,7 @@ import { RunnerAppContext } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
 export class Runner {
     private emitter;
-    private context?: AutoAppContext<any, any>;
+    private context?: RunnerAppContext<any, any>;
     private monitoringInterval?: NodeJS.Timeout;
     private monitorStream?: WritableStream<any>; //TODO change any to EncodedMonitoringMessage
     private controlStream?: any; //TODO change type ReadableStream<EncodedControlMessage>;
@@ -126,7 +126,7 @@ export class Runner {
     }
 
     async handleKillRequest(): Promise<void> {
-        this.context?.killHandler?.call(this.context);
+        this.context?.killHandler();
         this.cleanupControlStream();
 
         process.exit(137);
@@ -140,7 +140,7 @@ export class Runner {
         let sequenceError: Error | undefined;
 
         try {
-            await this.context?.stopHandler?.call(this.context,
+            await this.context?.stopHandler(
                 data.timeout,
                 data.canCallKeepalive
             );
