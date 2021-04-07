@@ -229,10 +229,12 @@ export class HostOne {
         this.vorpal
             .command("event [EVENT_NAME] [ANY]", "Send event and any object, arry, function to the sequence")
             .action((args: any) => {
-                let eventName = args.EVENT_NAME;
-                let argAny = args.ANY;
+                const eventName = args.EVENT_NAME;
+                const argAny = args.ANY;
                 // TODO: eval needs removal... think about diff solution for all cases func, arr, string, num
-                let message = eval(argAny) === null || eval(argAny) === undefined ? argAny : eval(argAny);
+                // eslint-disable-next-line no-eval
+                const evalled = eval(argAny);
+                const message = evalled === null || evalled === undefined ? argAny : evalled;
 
                 return eventName === undefined && message === undefined
                     ? this.vorpal.log(this.errors.noParams)
