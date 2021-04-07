@@ -3,7 +3,6 @@ import { ControlMessageCode } from "@scramjet/types";
 import { CommunicationHandler, checkMessage, MessageDataType } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
-//import { StringDecoder } from "string_decoder";
 
 export function createOperationHandler(router: SequentialCeroRouter) {
     const getData = async (req: IncomingMessage): Promise<object|undefined> => {
@@ -15,24 +14,27 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         const encodings = req.headers["content-type"].match(/charset=([-\w\d]+)/);
         const encoding = encodings ? encodings[1] : "utf-8";
 
-        if (encoding !== "utf-8") throw new CeroError("ERR_UNSUPPORTED_ENCODING");
+        if (encoding !== "utf-8") {
+            throw new CeroError("ERR_UNSUPPORTED_ENCODING");
+        }
 
-        if (req.headers["content-length"] === "0")
+        if (req.headers["content-length"] === "0") {
             return undefined;
+        }
 
-        // TODO: investigate StreamDecoder fail
         let out = "";
 
         for await (const chunk of req) {
-            out += chunk.toString();
+            out += chunk.toString(); // TODO: Back to StringDecoder?
         }
 
         try {
-            if (!out) return undefined;
+            if (!out) {
+                return undefined;
+            }
 
             return JSON.parse(out)[1];
         } catch (e) {
-            console.log(e);
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
     };

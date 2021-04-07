@@ -33,9 +33,9 @@ export class HostOne {
     // @ts-ignore
     private packageStream?: ReadStream;
     // @ts-ignore
-    private stdin;
+    private stdin: Stream;
     // @ts-ignore
-    private stdout;
+    private stdout: Stream;
     // @ts-ignore
     private api: APIExpose;
     // @ts-ignore
