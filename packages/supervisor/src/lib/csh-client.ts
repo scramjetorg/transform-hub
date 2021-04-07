@@ -2,7 +2,7 @@
 import { CommunicationHandler } from "@scramjet/model";
 import { CSHConnector, SocketChannel, UpstreamStreamsConfig } from "@scramjet/types";
 import * as net from "net";
-import { Duplex } from "node:stream";
+import { Duplex } from "stream";
 import { PassThrough, Readable } from "stream";
 
 const { BPMux } = require("bpmux");
@@ -63,7 +63,7 @@ class CSHClient implements CSHConnector {
              * @analyze-how-to-pass-in-out-streams
              * In UpstreamStreamsConfig streams:
              * input?: WritableStream - an input stream transporting data for processing to the Sequence
-             * output?: ReadableStream - an output stream transporting data processed by the Sequence 
+             * output?: ReadableStream - an output stream transporting data processed by the Sequence
              * Both of these steams must be piped here to the corresponding socket channels.
              * Additional stream is added to transport the package.
              * This stream should be closed when the package is received.
