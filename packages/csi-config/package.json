@@ -16,11 +16,13 @@
   },
   "ava": {
     "extensions": [
-      "ts",
-      "js"
+        "ts"
+    ],
+    "files": [
+        "**/*.spec.ts"
     ],
     "require": [
-      "ts-node/register"
+        "ts-node/register"
     ]
   },
   "publishConfig": {

@@ -1,5 +1,5 @@
 import test from "ava";
-import * as config from "../";
+import * as config from "@scramjet/csi-config";
 
 // const has: (o: object, k: string) => boolean =
 //     Object.prototype.hasOwnProperty.call.bind(Object.prototype.hasOwnProperty);
