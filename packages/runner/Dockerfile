@@ -16,6 +16,10 @@ WORKDIR /app/packages/model
 RUN    yarn build \
     && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
+WORKDIR /app/packages/logger
+RUN yarn build \
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+
 WORKDIR /app/packages/runner
 RUN    yarn build \
     && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js

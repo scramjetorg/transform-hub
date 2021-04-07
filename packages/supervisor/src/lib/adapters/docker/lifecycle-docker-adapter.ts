@@ -30,6 +30,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
 
     private monitorFifoPath?: string;
     private controlFifoPath?: string;
+    private loggerFifoPath?: string;
 
     private imageConfig: {
         runner?: string,
@@ -41,6 +42,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
     private runnerStderr: PassThrough;
     private monitorStream: DelayedStream;
     private controlStream: DelayedStream;
+    private loggerStream: DelayedStream;
     /**
      * @analyze-how-to-pass-in-out-streams
      * Additional two streams need to be created:
@@ -57,6 +59,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
         this.dockerHelper = new DockerodeDockerHelper();
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
+        this.loggerStream = new DelayedStream();
         /**
          * @analyze-how-to-pass-in-out-streams
          * Initiate two streams with as DelayedStream():
@@ -92,7 +95,9 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
      * input.fifo - input stream to the Sequence
      * output.fifo - output stream for a Sequence
      */
-    private async createFifoStreams(controlFifo: string, monitorFifo: string): Promise<string> {
+    private async createFifoStreams(
+        controlFifo: string, monitorFifo: string, loggerFifo: string
+    ): Promise<string> {
         return new Promise(async (resolve, reject) => {
             const dirPrefix: string = "fifos";
 
@@ -103,9 +108,15 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
 
                 //TODO: TBD how to allow docker user "runner" to access this directory.
 
-                [this.controlFifoPath, this.monitorFifoPath] = await Promise.all([
+                [
+                    this.controlFifoPath,
+                    this.monitorFifoPath,
+                    this.loggerFifoPath
+                ] = await Promise.all([
                     this.createFifo(createdDir, controlFifo),
-                    this.createFifo(createdDir, monitorFifo)]);
+                    this.createFifo(createdDir, monitorFifo),
+                    this.createFifo(createdDir, loggerFifo)
+                ]);
 
                 await chmod(createdDir, 0o750);
 
@@ -161,30 +172,36 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
                 this.runnerStdout,
                 this.runnerStderr,
                 this.controlStream.getStream(),
-                this.monitorStream.getStream()
+                this.monitorStream.getStream(),
+                undefined,
                 /**
                  * @analyze-how-to-pass-in-out-streams
-                 * Input and output streams need to be 
+                 * Input and output streams need to be
                  * added to this table a similar way to control and
                  * monitor stream.
                  */
+                undefined,
+                undefined,
+                this.loggerStream.getStream()
             ];
 
         communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);
     }
 
     async run(config: RunnerConfig): Promise<ExitCode> {
-        this.resources.fifosDir = await this.createFifoStreams("control.fifo", "monitor.fifo");
+        this.resources.fifosDir = await this.createFifoStreams("control.fifo", "monitor.fifo", "logger.fifo");
 
         if (
             typeof this.monitorFifoPath === "undefined" ||
-            typeof this.controlFifoPath === "undefined"
+            typeof this.controlFifoPath === "undefined" ||
+            typeof this.loggerFifoPath === "undefined"
         ) {
             throw new AppError("SEQUENCE_RUN_BEFORE_INIT");
         }
 
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));
+        this.loggerStream.run(createReadStream(this.loggerFifoPath));
 
         return new Promise(async (resolve, reject) => {
             const { streams, containerId } = await this.dockerHelper.run({

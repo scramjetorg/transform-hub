@@ -19,7 +19,7 @@ yarn install
 # build example to dist
 lerna run build
 
-if ["$DOCKER" = true] ; then
+if [ "$DOCKER" = true ] ; then
     lerna run build:docker
 fi
 

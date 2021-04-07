@@ -6,17 +6,21 @@ import { createReadStream, createWriteStream } from "fs";
 import { DataStream, StringStream } from "scramjet";
 import { RunnerAppContext } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
+import { getLogger } from "@scramjet/logger";
+
 export class Runner {
     private emitter;
     private context?: RunnerAppContext<any, any>;
     private monitoringInterval?: NodeJS.Timeout;
     private monitorStream?: WritableStream<any>; //TODO change any to EncodedMonitoringMessage
+    private loggerStream?: WritableStream<string>;
     private controlStream?: any; //TODO change type ReadableStream<EncodedControlMessage>;
     private monitorFifoPath: string;
     private controlFifoPath: string;
+    private loggerFifoPath: string;
     /**
      * @analyze-how-to-pass-in-out-streams
-     * Similarly to monitor and control streams, 
+     * Similarly to monitor and control streams,
      * two additional fifo path properties need to be created:
      * inputFifoPath- input stream to the Sequence
      * outputFifoPath - output stream for a Sequence
@@ -26,6 +30,7 @@ export class Runner {
      */
     private sequencePath: string;
     private keepAliveRequested?: boolean;
+    private logger?: Console;
 
     constructor(sequencePath: string, fifosPath: string) {
         this.emitter = new EventEmitter();
@@ -37,6 +42,8 @@ export class Runner {
          */
         this.controlFifoPath = `${fifosPath}/control.fifo`;
         this.monitorFifoPath = `${fifosPath}/monitor.fifo`;
+        this.loggerFifoPath = `${fifosPath}/logger.fifo`;
+
         this.sequencePath = sequencePath;
     }
 
@@ -99,11 +106,29 @@ export class Runner {
         this.monitorStream = createWriteStream(this.monitorFifoPath);
     }
 
+    async hookupLoggerStream() {
+        this.loggerStream = createWriteStream(this.loggerFifoPath);
+    }
+
     async hookupFifoStreams() {
         return Promise.all([
+            this.hookupLoggerStream(),
             this.hookupControlStream(),
             this.hookupMonitorStream()
         ]);
+    }
+
+    async initializeLogger() {
+        if (this.loggerStream) {
+            this.logger = getLogger(
+                "Runner",
+                { out: this.loggerStream, err: this.loggerStream }
+            );
+        } else {
+            throw new Error("Logger streams not initialized");
+        }
+
+        this.logger.log("Logger initialized!");
     }
 
     handleForceConfirmAliveRequest() {
@@ -151,7 +176,7 @@ export class Runner {
             sequenceError = err;
             console.error("Following error ocurred during stopping sequence: ", err);
         }
-   
+
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream);
             //TODO add save, cleaning etc when implemented
@@ -167,7 +192,7 @@ export class Runner {
          * @analyze-how-to-pass-in-out-streams
          * Before we start a Sequence we should create readable and writable streams
          * to input and output.
-         * In a fashion similar to how we create monitor and control streams, 
+         * In a fashion similar to how we create monitor and control streams,
          * but after the acknowledge message comes (PONG) and
          * before we start a Sequence.
          */
@@ -184,6 +209,7 @@ export class Runner {
      */
     async main() {
         await this.hookupFifoStreams();
+        this.initializeLogger();
         this.sendHandshakeMessage();
 
     }

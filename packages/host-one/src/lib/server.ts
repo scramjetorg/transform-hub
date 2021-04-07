@@ -38,6 +38,9 @@ export class SocketServer {
             case SocketChannel.TO_SEQ:
             case SocketChannel.FROM_SEQ:
                 break;
+            case SocketChannel.LOG:
+                stream.pipe(this.streams[8] as PassThrough);
+                break;
             default:
                 throw new Error("Unknown channel");
             }

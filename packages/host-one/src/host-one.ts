@@ -84,10 +84,13 @@ export class HostOne {
             this.monitorStream,
             this.packageStream,
             new PassThrough(),
+            new PassThrough(),
             new PassThrough()
         ];
 
         this.upStreams = [
+            new PassThrough(),
+            new PassThrough(),
             new PassThrough(),
             new PassThrough(),
             new PassThrough(),
@@ -106,7 +109,8 @@ export class HostOne {
         this.communicationHandler.pipeMessageStreams();
 
         this.upStreams[1]?.pipe(process.stdout);
-
+        // eslint-disable-next-line no-extra-parens
+        (this.upStreams[8] as unknown as ReadableStream<string>).pipe(process.stdout);
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
     }

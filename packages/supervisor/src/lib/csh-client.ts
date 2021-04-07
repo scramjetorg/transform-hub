@@ -29,6 +29,7 @@ class CSHClient implements ICSHClient {
             this.packageStream,
             new PassThrough(),
             new PassThrough(),
+            new PassThrough()
         ];
     }
 
@@ -52,7 +53,8 @@ class CSHClient implements ICSHClient {
                 this.mux.multiplex({ channel: SocketChannel.MONITORING }),
                 this.mux.multiplex({ channel: SocketChannel.PACKAGE }),
                 this.mux.multiplex({ channel: SocketChannel.TO_SEQ }),
-                this.mux.multiplex({ channel: SocketChannel.FROM_SEQ })
+                this.mux.multiplex({ channel: SocketChannel.FROM_SEQ }),
+                this.mux.multiplex({ channel: SocketChannel.LOG })
             ];
 
             this.connectionChannels.forEach((channel: Duplex) => {
@@ -82,6 +84,8 @@ class CSHClient implements ICSHClient {
             (this.streams[4] as unknown as Readable).pipe(this.connectionChannels[4]); // monitor
             // eslint-disable-next-line no-extra-parens
             (this.streams[7] as unknown as Readable).pipe(this.connectionChannels[7]); // sequence output
+            // eslint-disable-next-line no-extra-parens
+            (this.streams[8] as unknown as Readable).pipe(this.connectionChannels[8]); // log
 
             resolve();
         });

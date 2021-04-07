@@ -88,7 +88,8 @@ export type UpstreamStreamsConfig = [
     monitor: WritableStream<EncodedMonitoringMessage>,
     pkg?: Readable,
     input?: ReadableStream<any>,
-    output?: WritableStream<any> // optional output stream piped to runner - if none passed, `this.stdout` will be used
+    output?: WritableStream<any>, // optional output stream piped to runner - if none passed, `this.stdout` will be used
+    log?: WritableStream<string>
 ];
 
 export type DownstreamStreamsConfig = [
@@ -99,5 +100,6 @@ export type DownstreamStreamsConfig = [
     monitor: ReadableStream<EncodedSerializedMonitoringMessage>,
     pkg?: Readable,
     input?: WritableStream<any>,
-    output?: ReadableStream<any> // optional output stream piped to runner - if none passed, `this.stdout` will be used
+    output?: ReadableStream<any>, // optional output stream piped to runner - if none passed, `this.stdout` will be used
+    log?: ReadableStream<string>
 ];

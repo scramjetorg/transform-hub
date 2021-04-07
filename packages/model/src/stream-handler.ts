@@ -56,6 +56,8 @@ export class CommunicationHandler implements ICommunicationHandler {
     private controlDownstream?: WritableStream<EncodedSerializedControlMessage>;
     private monitoringUpstream?: WritableStream<EncodedMonitoringMessage>;
     private monitoringDownstream?: ReadableStream<EncodedSerializedMonitoringMessage>;
+    private loggerDownstream?: ReadableStream<string>;
+    private loggerUpstream?: WritableStream<string>;
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
     /**
@@ -113,6 +115,8 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.stdErrUpstream = streams[2];
         this.controlUpstream = streams[3];
         this.monitoringUpstream = streams[4];
+
+        this.loggerUpstream = streams[8];
         this.upstreams = streams;
         /**
          * @analyze-how-to-pass-in-out-streams
@@ -129,6 +133,9 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.stdErrDownstream = streams[2];
         this.controlDownstream = streams[3];
         this.monitoringDownstream = streams[4];
+
+        this.loggerDownstream = streams[8];
+
         this.downstreams = streams;
         /**
          * @analyze-how-to-pass-in-out-streams
@@ -187,6 +194,9 @@ export class CommunicationHandler implements ICommunicationHandler {
             controlOutput.pipe(this.controlDownstream as unknown as Writable);
             this._controlOutput = controlOutput as unknown as PassThoughStream<EncodedSerializedControlMessage>;
 
+            if (this.loggerUpstream) {
+                this.loggerDownstream?.pipe(this.loggerUpstream);
+            }
         } else {
             // TODO: specifiy which streams are missing.
             throw new Error("Cannot pipe stream, some streams missing");
@@ -219,9 +229,8 @@ export class CommunicationHandler implements ICommunicationHandler {
             this.controlUpstream &&
             this.monitoringDownstream &&
             this.monitoringUpstream &&
-            true ||
-            false
-        ;
+            this.loggerDownstream &&
+            this.loggerUpstream;
     }
 
     pipeStdio(): this {
