@@ -81,7 +81,6 @@ export class HostOne {
             this.stdout,
             new PassThrough(),
             this.controlStream,
-            // this.stdout,
             this.monitorStream,
             this.packageStream,
             new PassThrough(),
@@ -263,7 +262,6 @@ export class HostOne {
     }
 
     async stop(timeout: number, canCallKeepalive: boolean) {
-        console.log("stop w host one wysyłam do runnera");
         await this.controlDataStream.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
     }
 
