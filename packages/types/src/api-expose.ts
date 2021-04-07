@@ -1,7 +1,7 @@
-import { CommunicationHandler } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { Server } from "http";
 import { Readable, Writable } from "stream";
+import { ICommunicationHandler } from ".";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";
 
@@ -61,7 +61,7 @@ export interface APIExpose {
      * @param message which operation to expose
      * @param conn the communication handler to use
      */
-    op<T extends ControlMessageCode>(path: string|RegExp, message: T, conn: CommunicationHandler): void;
+    op<T extends ControlMessageCode>(path: string|RegExp, message: T, conn: ICommunicationHandler): void;
     /**
      * Simple GET request hook for static data in monitoring stream.
      *
@@ -69,7 +69,7 @@ export interface APIExpose {
      * @param op which operation
      * @param conn the communication handler to use
      */
-    get<T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: CommunicationHandler): void;
+    get<T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: ICommunicationHandler): void;
     /**
      * A method that allows to pass a stream to the specified path on the API server
      *

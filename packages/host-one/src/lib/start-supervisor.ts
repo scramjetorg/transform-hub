@@ -33,6 +33,7 @@ async function startSupervisor(socketPath: string) {
         console.log("Supervisor process exited with code: " + code + ", signal: " + signal);
     });
 
+    // TODO: remove
     supervisor.stdout.pipe(process.stdout);
 
     return Promise.resolve(supervisor.pid);

@@ -1,45 +1,46 @@
 import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage } from "@scramjet/types";
+import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler } from "@scramjet/types";
 import { ReadStream } from "fs";
-import { Server as HttpServer } from "http";
 import * as os from "os";
 import * as path from "path";
 import { DataStream, StringStream } from "scramjet";
-import { PassThrough } from "stream";
-//import * as vorpal from "vorpal";
+import { PassThrough, Readable, Writable } from "stream";
 import { SocketServer } from "./lib/server";
 import { startSupervisor } from "./lib/start-supervisor";
 import { createServer } from "@scramjet/api-server";
 
+//import * as vorpal from "vorpal";
+
 export class HostOne {
     private socketName: string;
+
     private netServer?: SocketServer;
-    // @ts-ignore
-    private httpApiServer: HttpServer;
-    // @ts-ignore
-    private monitorStream: ReadableStream<string>;
-    // @ts-ignore
-    private controlStream: PassThrough;
-    // @ts-ignore
-    private downStreams: DownstreamStreamsConfig;
-    // @ts-ignore
-    private upStreams: UpstreamStreamsConfig;
-    // @ts-ignore
-    private controlDataStream: DataStream;
+
+    private monitorDownStream?: ReadableStream<string>;
+
+    private controlDownstream?: PassThrough;
+
+    private downStreams?: DownstreamStreamsConfig;
+
+    private upStreams?: UpstreamStreamsConfig;
+
+    private controlDataStream?: DataStream;
     // @ts-ignore
     private configPath: string;
     // @ts-ignore
     private vorpal: any;
-    // @ts-ignore
-    private packageStream?: ReadStream;
-    // @ts-ignore
-    private stdin: Stream;
-    // @ts-ignore
-    private stdout: Stream;
-    // @ts-ignore
-    private api: APIExpose;
-    // @ts-ignore
+
+    private packageDownStream?: ReadStream;
+
+    private stdInDownstream?: Writable;
+
+    private stdOutDownstream?: Readable;
+
+    private api?: APIExpose;
+
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
+
+    private logHistory?: DataStream;
 
     errors = {
         noParams: "No params provided. Type help to know more.",
@@ -65,24 +66,24 @@ export class HostOne {
     }
 
     async init(packageStream: ReadStream, appConfig: AppConfig, sequenceArgs?: any[]) {
-        this.packageStream = packageStream;
+        this.packageDownStream = packageStream;
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
         this.communicationHandler = new CommunicationHandler();
-        this.controlStream = new PassThrough();
+        this.controlDownstream = new PassThrough();
         this.controlDataStream = new DataStream();
 
-        this.monitorStream = new PassThrough();
-        this.stdin = new PassThrough();
-        this.stdout = new PassThrough();
+        this.monitorDownStream = new PassThrough();
+        this.stdInDownstream = new PassThrough();
+        this.stdOutDownstream = new PassThrough();
 
         this.downStreams = [
-            this.stdin,
-            this.stdout,
+            this.stdInDownstream,
+            this.stdOutDownstream,
             new PassThrough(),
-            this.controlStream,
-            this.monitorStream,
-            this.packageStream,
+            this.controlDownstream,
+            this.monitorDownStream,
+            this.packageDownStream,
             new PassThrough(),
             new PassThrough(),
             new PassThrough()
@@ -108,11 +109,23 @@ export class HostOne {
         this.communicationHandler.pipeStdio();
         this.communicationHandler.pipeMessageStreams();
 
-        this.upStreams[1]?.pipe(process.stdout);
-        // eslint-disable-next-line no-extra-parens
-        (this.upStreams[8] as unknown as ReadableStream<string>).pipe(process.stdout);
+        this.hookLogStream();
+
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
+    }
+
+    hookLogStream() {
+        if (this.upStreams && this.upStreams[8]) {
+            this.logHistory = StringStream
+                .from(this.upStreams[8] as unknown as Readable)
+                .lines()
+                .keep(1000); // TODO: config
+
+            this.logHistory?.pipe(process.stdout);
+        } else {
+            throw new Error("Log stream not initialized");
+        }
     }
 
     getAppConfig(configPath: string): AppConfig {
@@ -127,8 +140,6 @@ export class HostOne {
 
         process.on("beforeExit", () => {
             console.warn("beforeExit");
-
-
         });
 
         return Promise.resolve();
@@ -167,7 +178,11 @@ export class HostOne {
     }
 
     async hookupMonitorStream() {
-        this.monitorStream.pipe(new StringStream())
+        if (!this.monitorDownStream) {
+            throw new Error("Monitor stream not initialized");
+        }
+
+        this.monitorDownStream.pipe(new StringStream())
             .JSONParse()
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             .map(async ([code, data]: EncodedMonitoringMessage) => {
@@ -200,19 +215,23 @@ export class HostOne {
     }
 
     async handleHandshake() {
-        const pongMsg: HandshakeAcknowledgeMessage = {
-            msgCode: RunnerMessageCode.PONG,
-            appConfig: this.appConfig,
-            arguments: this.sequenceArgs
-        };
+        if (this.controlDataStream) {
+            const pongMsg: HandshakeAcknowledgeMessage = {
+                msgCode: RunnerMessageCode.PONG,
+                appConfig: this.appConfig,
+                arguments: this.sequenceArgs
+            };
 
-        await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
+            await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
+        } else {
+            throw new Error("Control stream not initialized");
+        }
     }
 
     controlStreamsCliHandler() {
         this.vorpal
             .command("alive", "Confirm that sequence is alive when it is not responding")
-            .action(() => this.controlDataStream.whenWrote([RunnerMessageCode.FORCE_CONFIRM_ALIVE, {}])); // ToDo: test fix
+            .action(() => this.controlDataStream?.whenWrote([RunnerMessageCode.FORCE_CONFIRM_ALIVE, {}])); // ToDo: test fix
 
         this.vorpal
             .command("kill", "Kill forcefully sequence")
@@ -242,7 +261,7 @@ export class HostOne {
 
                 return eventName === undefined && message === undefined
                     ? this.vorpal.log(this.errors.noParams)
-                    : this.controlDataStream.whenWrote([RunnerMessageCode.EVENT, { eventName, message }]);
+                    : this.controlDataStream?.whenWrote([RunnerMessageCode.EVENT, { eventName, message }]);
             });
 
         this.vorpal
@@ -253,7 +272,7 @@ export class HostOne {
 
                 return isNaN(monitoringRate)
                     ? this.vorpal.log(this.errors.noParams)
-                    : this.controlDataStream.whenWrote([RunnerMessageCode.MONITORING_RATE, { monitoringRate }]);
+                    : this.controlDataStream?.whenWrote([RunnerMessageCode.MONITORING_RATE, { monitoringRate }]);
             });
 
         this.vorpal
@@ -263,11 +282,11 @@ export class HostOne {
     }
 
     async stop(timeout: number, canCallKeepalive: boolean) {
-        await this.controlDataStream.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
+        await this.controlDataStream?.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
     }
 
     async kill() {
-        await this.controlDataStream.whenWrote([RunnerMessageCode.KILL, {}]);
+        await this.controlDataStream?.whenWrote([RunnerMessageCode.KILL, {}]);
     }
 
     // For testing puspose only
