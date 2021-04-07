@@ -1,12 +1,12 @@
 import { APIError } from "@scramjet/types";
 import { Server, IncomingMessage, ServerResponse } from "http";
-import * as Trouter from "trouter";
+import TRouter from "trouter";
 
 export type NextCallback = (e: Error) => void;
 export type CeroMiddleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
 export type CeroDefaultRoute = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
 
-export interface CeroRouter extends Trouter<CeroMiddleware> {
+export interface CeroRouter extends TRouter<CeroMiddleware> {
     use(path: string|RegExp, ...middlewares: CeroMiddleware[]): this;
     lookup(req: IncomingMessage, res: ServerResponse): void;
 }
