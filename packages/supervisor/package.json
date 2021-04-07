@@ -5,13 +5,13 @@
   "main": "./src/index.ts",
   "scripts": {
     "test": "nyc ava",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",
     "stop": "./stop-superviosor.sh",
     "watch": "tsc -b --watch",
     "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
-    "clean": "rimraf -rf ./dist"
+    "clean": "rm -rf ./dist"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

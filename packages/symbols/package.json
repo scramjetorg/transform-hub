@@ -4,10 +4,10 @@
   "description": "Important symbols of the scramjet platform",
   "main": "./src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "clean": "rimraf -rf ./dist",
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf ./dist",
     "watch": "tsc -b --watch",
-    "compile": "tsc -p tsconfig.build.json",
+    "compile": "tsc -p tsconfig.json",
     "prepublishOnly": "yarn run build",
     "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
     "test": "tsc --noEmit"

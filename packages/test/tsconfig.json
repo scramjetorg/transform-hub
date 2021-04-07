@@ -4,8 +4,7 @@
     },
     "extends": "../../tsconfig.base.json",
     "include": [
-      "./src",
-      "./test"
+      "./*.ts"
     ],
     "exclude": [
         "node_modules"

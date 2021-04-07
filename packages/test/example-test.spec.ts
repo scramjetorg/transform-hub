@@ -1,15 +1,19 @@
-const test = require("ava");
+import test from "ava";
 
-test.before(async t => {
-    t.context.letter = "g";
+test.before(async (t) => {
+    const ctx = t.context as any;
+
+    ctx.letter = "g";
 });
 
 test("passing test", t => {
     t.pass();
 });
 
-test("context test", t => {
-    t.is(t.context.letter, "g");
+test("context test", (t) => {
+    const ctx = t.context as any;
+
+    t.is(ctx.letter, "g");
 });
 
 test("async test", async t => {

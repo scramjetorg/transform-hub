@@ -2,11 +2,13 @@
     "compilerOptions": {
         "outDir": "./dist"
     },
-    "extends": "./tsconfig.build.json",
-    "include": ["./src"],
+    "extends": "../../tsconfig.base.json",
+    "include": [
+      "./src",
+      "./test"
+    ],
     "exclude": [
-        "node_modules",
-        "**/*.spec.ts"
+        "node_modules"
     ],
     "typedocOptions": {
         "entryPoints": ["index.ts"],

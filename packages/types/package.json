@@ -4,11 +4,11 @@
   "description": "types.",
   "main": "./src/index.ts",
   "scripts": {
-    "clean": "rimraf -rf ./dist",
-    "compile": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf ./dist",
+    "compile": "tsc -p tsconfig.json",
     "prepublishOnly": "npm run build",
     "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
-    "build": "tsc -p tsconfig.json && npm run test:expose",
+    "build": "tsc -p tsconfig.build.json && npm run test:expose",
     "watch": "tsc -b --watch",
     "test:expose": "scripts/generate.js",
     "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit"
