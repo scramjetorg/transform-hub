@@ -103,6 +103,12 @@ Run script only in one package
 lerna run --scope @scramjet/<package_name> <script-name>
 ```
 
+Run script to check if there are packages to deduplicate:
+
+```bash
+yarn lint:dedupe
+```
+
 <!--
 - `npm run build` - build all services, samples etc.,
 - `npm run build:supervisor` - build only supervisor,
