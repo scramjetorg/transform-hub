@@ -1,5 +1,6 @@
-import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage } from "@scramjet/types";
+import { CommunicationChannel } from "@scramjet/model";
+import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
+import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler } from "@scramjet/types";
 import { ReadStream } from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -38,7 +39,7 @@ export class HostOne {
 
     private api?: APIExpose;
 
-    private communicationHandler: CommunicationHandler = new CommunicationHandler();
+    private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
     private logHistory?: DataStream;
 
@@ -69,7 +70,6 @@ export class HostOne {
         this.packageDownStream = packageStream;
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
-        this.communicationHandler = new CommunicationHandler();
         this.controlDownstream = new PassThrough();
         this.controlDataStream = new DataStream();
 
@@ -151,6 +151,11 @@ export class HostOne {
     async createApiServer(): Promise<void> {
         const conf = {};
         const apiBase = "/api/v1";
+        const {
+            stdin,
+            stderr,
+            stdout
+        } = this.communicationHandler.getStdio();
 
         this.api = createServer(conf);
         this.api.server.listen(8000).unref(); // add .unref() or server will keep process up
@@ -160,7 +165,9 @@ export class HostOne {
          * * /api/v1/stream/stdout/
          * * /api/v1/stream/stderr/
          */
-        // this.api.upstream(`${apiBase}/stream/stdout`, {stream}, {commHandler})
+        this.api.upstream(`${apiBase}/stream/stdout`, stdout);
+        this.api.upstream(`${apiBase}/stream/stderr`, stderr);
+        this.api.downstream(`${apiBase}/stream/stdin`, stdin);
 
         /**
          * ToDo: GET

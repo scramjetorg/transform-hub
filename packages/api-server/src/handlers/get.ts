@@ -1,6 +1,6 @@
 import { CeroError, NextCallback, SequentialCeroRouter } from "../lib/definitions";
-import { MonitoringMessageCode } from "@scramjet/types";
-import { CommunicationHandler, MessageDataType } from "@scramjet/model";
+import { ICommunicationHandler, MonitoringMessageCode } from "@scramjet/types";
+import { MessageDataType } from "@scramjet/model";
 import { IncomingMessage, ServerResponse } from "http";
 import { mimeAccepts } from "../lib/mime";
 
@@ -27,7 +27,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
         }
     };
-    const get = <T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: CommunicationHandler): void => {
+    const get = <T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: ICommunicationHandler): void => {
         let lastItem: MessageDataType<T>|null = null;
 
         conn.addMonitoringHandler(op, (data) => {

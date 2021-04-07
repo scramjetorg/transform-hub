@@ -109,6 +109,18 @@ export class CommunicationHandler implements ICommunicationHandler {
         };
     }
 
+    getStdio(): { stdin: Writable; stdout: Readable; stderr: Readable; } {
+        if (!this.stdInDownstream || !this.stdOutDownstream || !this.stdErrDownstream) {
+            throw new Error("Streams not attached");
+        }
+
+        return {
+            stdin: this.stdInDownstream,
+            stdout: this.stdOutDownstream,
+            stderr: this.stdErrDownstream
+        };
+    }
+
     hookUpstreamStreams(streams: UpstreamStreamsConfig): this {
         this.stdInUpstream = streams[CommunicationChannel.STDIN];
         this.stdOutUpstream = streams[CommunicationChannel.STDOUT];

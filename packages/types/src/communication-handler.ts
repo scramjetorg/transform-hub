@@ -1,4 +1,5 @@
 import { MonitoringMessageHandler, ControlMessageHandler } from "@scramjet/model";
+import { Readable, Writable } from "node:stream";
 import {
     ControlMessageCode,
     DownstreamStreamsConfig,
@@ -24,4 +25,10 @@ export interface ICommunicationHandler {
 
     sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
     sendControlMessage<T extends ControlMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
+
+    getStdio(): {
+        stdin: Writable,
+        stdout: Readable,
+        stderr: Readable
+    };
 }

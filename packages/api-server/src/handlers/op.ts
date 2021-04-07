@@ -1,6 +1,6 @@
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import { ControlMessageCode } from "@scramjet/types";
-import { CommunicationHandler, checkMessage, MessageDataType } from "@scramjet/model";
+import { ControlMessageCode, ICommunicationHandler } from "@scramjet/types";
+import { checkMessage, MessageDataType } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
 
@@ -45,7 +45,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
      * @param message which operation
      * @param conn the communication handler to use
      */
-    const op = <T extends ControlMessageCode>(path: string|RegExp, message: T, conn: CommunicationHandler): void => {
+    const op = <T extends ControlMessageCode>(path: string|RegExp, message: T, conn: ICommunicationHandler): void => {
         router.post(path, async (req, res, next) => {
             try {
                 const obj = await getData(req) as MessageDataType<T>;
