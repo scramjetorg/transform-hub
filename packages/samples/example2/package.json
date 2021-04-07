@@ -29,7 +29,7 @@
     "typescript": "4.1.4"
   },
   "dependencies": {
-    "scramjet": "4.35.12"
+    "scramjet": "^4.35.15"
   },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",

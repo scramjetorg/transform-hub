@@ -19,7 +19,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/model": "^0.7.0-pre.1",
-    "scramjet": "4.35.12"
+    "scramjet": "^4.35.15"
   },
   "devDependencies": {
     "@scramjet/types": "^0.7.0-pre.1",

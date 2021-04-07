@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "JSONStream": "^1.3.5",
-    "scramjet": "4.35.12"
+    "scramjet": "^4.35.15"
   },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",

@@ -56,5 +56,8 @@
     "hooks": {
       "pre-push": "yarn lint"
     }
+  },
+  "dependencies": {
+    "scramjet": "^4.35.15"
   }
 }
