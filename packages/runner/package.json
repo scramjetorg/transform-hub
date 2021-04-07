@@ -19,18 +19,18 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/model": "^0.7.0-pre.1",
-    "scramjet": "^4.35.11"
+    "scramjet": "4.35.12"
   },
   "devDependencies": {
     "@scramjet/types": "^0.7.0-pre.1",
-    "@types/node": "^14.14.22",
+    "@types/node": "14.14.33",
     "@types/sinon": "^9.0.10",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",
     "proxyquire": "^2.1.3",
     "sinon": "^9.2.4",
     "ts-node": "^9.1.1",
-    "typescript": "^4.1.3"
+    "typescript": "4.1.4"
   },
   "ava": {
     "extensions": [
