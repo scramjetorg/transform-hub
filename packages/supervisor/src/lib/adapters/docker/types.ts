@@ -134,7 +134,7 @@ export type DockerAdapterRunResponse = {
     containerId: DockerContainer
 };
 
-export interface DockerHelper {
+export interface IDockerHelper {
     /**
      * Converts pairs of mount path and volume name to DockerHelper specific volume configuration.
      *

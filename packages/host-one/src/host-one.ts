@@ -100,8 +100,8 @@ export class HostOne {
         this.controlDataStream.JSONStringify()
             .pipe(this.upStreams[3] as unknown as WritableStream<EncodedControlMessage>);
 
-        this.communicationHandler.hookClientStreams(this.upStreams);
-        this.communicationHandler.hookLifecycleStreams(this.downStreams);
+        this.communicationHandler.hookUpstreamStreams(this.upStreams);
+        this.communicationHandler.hookDownstreamStreams(this.downStreams);
         this.communicationHandler.pipeStdio();
         this.communicationHandler.pipeMessageStreams();
 

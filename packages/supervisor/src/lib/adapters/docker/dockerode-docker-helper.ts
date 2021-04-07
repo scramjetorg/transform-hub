@@ -6,7 +6,7 @@ import {
     DockerAdapterStreams, DockerAdapterVolumeConfig,
     DockerAdapterWaitOptions,
     DockerContainer,
-    DockerHelper, DockerImage, DockerVolume, ExitData
+    IDockerHelper, DockerImage, DockerVolume, ExitData
 } from "./types";
 
 type DockerodeVolumeMountConfig = {
@@ -16,7 +16,7 @@ type DockerodeVolumeMountConfig = {
     ReadOnly: boolean
 }
 
-export class DockerodeDockerHelper implements DockerHelper {
+export class DockerodeDockerHelper implements IDockerHelper {
     dockerode: Dockerode;
 
     constructor() {

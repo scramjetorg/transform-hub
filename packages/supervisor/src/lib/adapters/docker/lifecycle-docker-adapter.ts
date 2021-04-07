@@ -1,10 +1,11 @@
 import { imageConfig } from "@scramjet/csi-config";
-import { AppError, CommunicationHandler } from "@scramjet/model";
+import { AppError } from "@scramjet/model";
+import { ICommunicationHandler } from "@scramjet/types";
 import {
     DelayedStream,
     DownstreamStreamsConfig,
     ExitCode,
-    LifeCycle,
+    ILifeCycleAdapter,
     MaybePromise,
     RunnerConfig
 } from "@scramjet/types";
@@ -16,10 +17,10 @@ import * as path from "path";
 import * as shellescape from "shell-escape";
 import { PassThrough, Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerHelper } from "./types";
+import { DockerAdapterResources, IDockerHelper } from "./types";
 
-class LifecycleDockerAdapter implements LifeCycle {
-    private dockerHelper: DockerHelper;
+class LifecycleDockerAdapter implements ILifeCycleAdapter {
+    private dockerHelper: IDockerHelper;
 
     // TODO: why these ignores?
     // @ts-ignore
@@ -153,7 +154,7 @@ class LifecycleDockerAdapter implements LifeCycle {
         });
     }
 
-    hookCommunicationHandler(communicationHandler: CommunicationHandler): void {
+    hookCommunicationHandler(communicationHandler: ICommunicationHandler): void {
         const downstreamStreamsConfig: DownstreamStreamsConfig =
             [
                 this.runnerStdin,
@@ -169,7 +170,7 @@ class LifecycleDockerAdapter implements LifeCycle {
                  */
             ];
 
-        communicationHandler.hookLifecycleStreams(downstreamStreamsConfig);
+        communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);
     }
 
     async run(config: RunnerConfig): Promise<ExitCode> {

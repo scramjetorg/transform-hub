@@ -1,9 +1,9 @@
 import { ReadableStream, MaybePromise } from "./utils";
 import { ICommunicationHandler } from "./communication-handler";
 
-export interface CSHConnector {
+export interface ICSHClient {
     /**
-     * CSHConnector is the interface used by the LifeCycle Controller (LCC)
+     * ICSHClient is the interface used by the LifeCycle Controller (LCC)
      * to communicate with the Cloud Server Host (CSH).
      */
 

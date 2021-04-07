@@ -1,5 +1,5 @@
 import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
-import { CSHConnector, ICommunicationHandler, LifeCycle, LifeCycleConfig } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig } from "@scramjet/types";
 import { Readable } from "stream";
 
 /**
@@ -31,19 +31,19 @@ class LifeCycleController {
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
     /**
-    * CSHConnector handles communication with CSH using TCP via the socket path provided
+    * ICSHClient handles communication with CSH using TCP via the socket path provided
     * when constructing CSHClient
-    * @type {CSHConnector}
+    * @type {ICSHClient}
     */
-    private client: CSHConnector;
+    private client: ICSHClient;
 
     /**
     * Interface specifying methods that can be performed during Supervisor's lifecycle.
     * This interface is used by the LifeCycle Controller to invoke Lifecycle Adapter methods
     * that handle all operations related to unpacking and executing the Sequence.
-    * @type {LifeCycle}
+    * @type {ILifeCycleAdapter}
     */
-    private lifecycleAdapter: LifeCycle;
+    private lifecycleAdapter: ILifeCycleAdapter;
 
     /**
     * Configurations specific to a lifecycle, e.g. whether to take a snapshot
@@ -53,12 +53,12 @@ class LifeCycleController {
     private lifecycleConfig: LifeCycleConfig;
 
     /**
-     * @param {LifeCycle} lifecycleAdapter an implementation of LifeCycle interface
+     * @param {ILifeCycleAdapter} lifecycleAdapter an implementation of LifeCycle interface
      * @param {LifeCycleConfig} lifecycleConfig configuration specific to running the Sequence on
      * the particular Cloud Server Instance.
-     * @param {CSHConnector} client that communicates with the CSH via TCP connection
+     * @param {ICSHClient} client that communicates with the CSH via TCP connection
      */
-    constructor(lifecycleAdapter: LifeCycle, lifecycleConfig: LifeCycleConfig, client: CSHConnector) {
+    constructor(lifecycleAdapter: ILifeCycleAdapter, lifecycleConfig: LifeCycleConfig, client: ICSHClient) {
         this.lifecycleAdapter = lifecycleAdapter;
         this.lifecycleConfig = lifecycleConfig;
         this.client = client;

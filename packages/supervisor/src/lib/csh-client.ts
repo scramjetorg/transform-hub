@@ -1,13 +1,13 @@
 /* eslint-disable dot-notation */
-import { CommunicationHandler } from "@scramjet/model";
-import { CSHConnector, SocketChannel, UpstreamStreamsConfig } from "@scramjet/types";
+import { ICommunicationHandler } from "@scramjet/types";
+import { ICSHClient, SocketChannel, UpstreamStreamsConfig } from "@scramjet/types";
 import * as net from "net";
 import { Duplex } from "stream";
 import { PassThrough, Readable } from "stream";
 
 const { BPMux } = require("bpmux");
 
-class CSHClient implements CSHConnector {
+class CSHClient implements ICSHClient {
     private socketPath: string;
     private packageStream: PassThrough;
     private streams: UpstreamStreamsConfig;
@@ -99,12 +99,12 @@ class CSHClient implements CSHConnector {
         return this.packageStream;
     }
 
-    hookCommunicationHandler(communicationHandler: CommunicationHandler) {
+    hookCommunicationHandler(communicationHandler: ICommunicationHandler) {
         if (typeof this.upstreamStreamsConfig === "undefined") {
             throw new Error("Upstreams not initated.");
         }
 
-        communicationHandler.hookClientStreams(this.upstreamStreamsConfig());
+        communicationHandler.hookUpstreamStreams(this.upstreamStreamsConfig());
     }
 }
 

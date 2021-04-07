@@ -107,7 +107,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         };
     }
 
-    hookClientStreams(streams: UpstreamStreamsConfig): this {
+    hookUpstreamStreams(streams: UpstreamStreamsConfig): this {
         this.stdInUpstream = streams[0];
         this.stdOutUpstream = streams[1];
         this.stdErrUpstream = streams[2];
@@ -123,7 +123,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
-    hookLifecycleStreams(streams: DownstreamStreamsConfig): this {
+    hookDownstreamStreams(streams: DownstreamStreamsConfig): this {
         this.stdInDownstream = streams[0];
         this.stdOutDownstream = streams[1];
         this.stdErrDownstream = streams[2];

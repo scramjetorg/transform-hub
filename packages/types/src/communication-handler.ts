@@ -12,8 +12,8 @@ export interface ICommunicationHandler {
     monitoringOutput: ReadableStream<string>
     controlOutput: PassThoughStream<EncodedSerializedControlMessage>
 
-    hookClientStreams(str: UpstreamStreamsConfig): this;
-    hookLifecycleStreams(str: DownstreamStreamsConfig): this;
+    hookUpstreamStreams(str: UpstreamStreamsConfig): this;
+    hookDownstreamStreams(str: DownstreamStreamsConfig): this;
 
     addMonitoringHandler<T extends MonitoringMessageCode>(code: T, handler: MonitoringMessageHandler<T>): this;
     addControlHandler<T extends ControlMessageCode>(code: T, handler: ControlMessageHandler<T>): this;
