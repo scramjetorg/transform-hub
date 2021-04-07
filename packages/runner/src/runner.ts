@@ -73,7 +73,7 @@ export class Runner {
             break;
         default:
             break;
-        }
+    }
     }
 
     async hookupControlStream() {
@@ -150,7 +150,12 @@ export class Runner {
 
         const errorData = sequenceError ? { sequenceError } : {};
 
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, errorData], this.monitorStream);
+        await new Promise(async (resolve) => {
+            setTimeout(() => {
+                MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, errorData], this.monitorStream);
+                resolve(0);
+            }, data.timeout);
+        });
     }
 
     async handleReceptionOfHandshake(data: HandshakeAcknowledgeMessageData): Promise<void> {

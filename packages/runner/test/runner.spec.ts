@@ -66,4 +66,3 @@ test("Stop sequence", async (t: any) => {
         writeMessageOnStreamMock.calledOnceWith([RunnerMessageCode.SEQUENCE_STOPPED, {}], runner.monitorStream)
     );
 });
-

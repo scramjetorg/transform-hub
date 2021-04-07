@@ -81,6 +81,7 @@ export class HostOne {
             this.stdout,
             new PassThrough(),
             this.controlStream,
+            // this.stdout,
             this.monitorStream,
             this.packageStream,
             new PassThrough(),
@@ -135,7 +136,7 @@ export class HostOne {
         const apiBase = "/api/v1";
 
         this.api = createServer(conf);
-        this.api.server.listen(8000); // add .unref() or server will keep process up
+        this.api.server.listen(8000).unref(); // add .unref() or server will keep process up
 
         /**
          * ToDo: GET
@@ -165,7 +166,6 @@ export class HostOne {
     async hookupMonitorStream() {
         this.monitorStream.pipe(new StringStream())
             .JSONParse()
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             .map(async ([code, data]: EncodedMonitoringMessage) => {
                 switch (code) {
                 case RunnerMessageCode.ACKNOWLEDGE:
@@ -184,6 +184,10 @@ export class HostOne {
                     this.handleHandshake();
                     break;
                 case RunnerMessageCode.SNAPSHOT_RESPONSE:
+                    break;                
+                case RunnerMessageCode.SEQUENCE_STOPPED:
+                    if (data) console.error("Following error ocurred during stopping sequence: ", data);
+                    this.kill();
                     break;
                 default:
                     break;
@@ -259,6 +263,7 @@ export class HostOne {
     }
 
     async stop(timeout: number, canCallKeepalive: boolean) {
+        console.log("stop w host one wysyłam do runnera");
         await this.controlDataStream.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
     }
 
