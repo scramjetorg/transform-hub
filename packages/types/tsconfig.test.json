@@ -4,6 +4,6 @@
     "outDir": "./dist"
   },
   "include": [
-    "test/.work/*.ts"
+    "src/**/*"
   ]
 }

@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json && npm run test:expose",
     "watch": "tsc -b --watch",
     "test:expose": "scripts/generate.js",
-    "test": "yarn run test:expose && npx tsc --noEmit test/.work/*.ts"
+    "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

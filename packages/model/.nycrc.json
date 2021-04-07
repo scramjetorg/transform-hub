@@ -1,6 +1,7 @@
 {
-    "reporter": [
-        "lcovonly",
-        "text"
-    ]
+  "all": true,
+  "include": [
+      "src/**/*"
+  ],
+  "reporter": ["lcovonly", "text"]
 }

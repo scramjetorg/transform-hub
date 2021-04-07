@@ -5,7 +5,7 @@ import { PassThrough, Readable, Writable } from "stream";
  * This is a polyfill to TypeScripts rather poor expression of `function*`
  * @ignore
  */
-export type Gen<W, R, C extends any[] = any[]> = (...config: C) => Generator<R, void, W>;
+export type Gen<W, R, C extends any[] = any[]> = (...config: C) => Generator<R|undefined, void, W|undefined>;
 /**
  * This is a polyfill to TypeScripts rather poor expression of `async function*`
  * @ignore
