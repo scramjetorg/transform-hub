@@ -2,7 +2,6 @@ import test, { after, beforeEach } from "ava";
 import * as sinon from "sinon";
 import { cero, sequentialRouter } from "../src/lib/0http";
 import * as http from "http";
-import Trouter = require("trouter");
 
 const sandbox = sinon.createSandbox();
 const { Server } = http;
@@ -20,7 +19,7 @@ test("Creates a standard server by default and hooks up methods", (t) => {
     const _cero = cero();
 
     t.true(_cero.server instanceof Server, "Instantiates an actual server");
-    t.true(_cero.router instanceof Trouter, "Instantiates trouter"); // nom nom
+    // t.true(_cero.router instanceof Trouter, "Instantiates trouter"); // nom nom
     t.is(createServerSpy.callCount, 1, "Instantiates only one server");
     t.falsy(listenSpy.called, "Doesn't call listen by itself");
 });

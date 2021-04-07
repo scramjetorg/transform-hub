@@ -2,7 +2,7 @@ import EventEmitter = require("events");
 import { RequestListener, Server, IncomingMessage, ServerResponse } from "http";
 import { Socket } from "net";
 import { SinonSandbox } from "sinon";
-import { HTTPMethod } from "trouter";
+import { Methods as HTTPMethod } from "trouter";
 import { Readable, PassThrough } from "stream";
 
 export type AnyHandler = (...z: any[]) => void;
@@ -12,38 +12,51 @@ export interface PlayMethods {
 }
 
 export type MockedResponse = ServerResponse & {
-    fullBody?: Promise<string>
+    fullBody?: Promise<string>;
+    writeHeadArgs?: any[]
 };
+
+export type MockedRequest = IncomingMessage;
 
 export type ServerWithPlayMethods = Server & PlayMethods;
 
 export function mockRequestResponse(method: HTTPMethod, url: string, _body?: Readable) {
     const body = _body || Readable.from([]);
-    const sockerOverride = Object.assign(body, new Socket(), { ...body });
-    const request = new IncomingMessage(sockerOverride);
-    const response: MockedResponse = new ServerResponse(request);
+    const socketOverride = Object.assign(body, new Socket(), { ...body });
+    const message: MockedRequest = Object.assign(new IncomingMessage(socketOverride), { url });
+    const response: MockedResponse = Object.assign(new ServerResponse(message), { statusCode: 0 });
     // const reader = new StringDecoder() as StringDecoder & {_lastWrote?: any};
     const pt = new PassThrough() as unknown as Socket;
-
-    response.assignSocket(pt);
     const orgEnd = response.end;
+    const orgWrite = response.write;
 
+    body.on("end", () => message.push(null));
+
+    response.write = (chunk: any, cb: any) => {
+        if (!chunk) return true;
+
+        pt.write(chunk);
+        return orgWrite.call(response, chunk, cb);
+    };
     response.end = (...args: [any?, any?]) => {
         pt.end(...args);
         return orgEnd.call(response, ...args);
     };
-
     response.fullBody = new Promise(res => {
         const bufferList: Buffer[] = [];
 
-        pt.on("data", data => bufferList.push(data));
-        pt.on("end", () => res(Buffer.concat(bufferList).toString("utf-8")));
+        pt.on("data", data => {
+            bufferList.push(data);
+        });
+        pt.on("end", () => {
+            res(Buffer.concat(bufferList).toString("utf-8"));
+        });
     });
 
-    request.method = method;
-    request.url = url;
+    message.method = method;
+    message.url = url;
 
-    return { request, response };
+    return { request: message, response };
 }
 
 export function mockServer(sandbox: SinonSandbox): Server & PlayMethods {

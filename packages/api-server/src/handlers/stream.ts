@@ -41,10 +41,11 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             //     }));
             // }
             out.setEncoding(encoding);
-            res.writeHead(200, "OK", {
-                "content-type": cType,
-                "transfer-encoding": "chunked"
-            });
+
+            res.setHeader("content-type", cType);
+            res.setHeader("transfer-encoding", "chunked");
+
+            res.writeHead(200);
 
             // Error handling on disconnect!
             const disconnect = () => out.unpipe(res);
@@ -81,7 +82,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         stream: StreamOutput,
         { json = false, text = false, end = false, encoding = "utf-8" }: StreamConfig = {}
     ): void => {
-        router.get(path, async (req, res, next) => {
+        router.post(path, async (req, res, next) => {
             try {
                 checkAccepts(req.headers["content-type"], text, json);
 
