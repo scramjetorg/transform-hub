@@ -4,7 +4,7 @@ import {
     EncodedSerializedControlMessage, EncodedSerializedMonitoringMessage,
     EncodedControlMessage, EncodedMonitoringMessage
 } from "@scramjet/types";
-import { Readable, Writable } from "stream";
+import { PassThrough, Readable, Writable } from "stream";
 import { DataStream } from "scramjet";
 
 export function getCommunicationHandler() {
@@ -19,7 +19,12 @@ export function getCommunicationHandler() {
         new Readable(),
         new Readable(),
         controlDown as WritableStream<EncodedSerializedControlMessage>,
-        monitoringDown as unknown as ReadableStream<EncodedSerializedMonitoringMessage>
+        monitoringDown as unknown as ReadableStream<EncodedSerializedMonitoringMessage>,
+        new Readable(),
+        new Writable(),
+        new Readable(),
+        new PassThrough()
+
     ]);
 
     comm.hookClientStreams([
@@ -27,7 +32,11 @@ export function getCommunicationHandler() {
         new Writable(),
         new Writable(),
         controlUp as unknown as ReadableStream<EncodedControlMessage>,
-        monitoringUp as unknown as WritableStream<EncodedMonitoringMessage>
+        monitoringUp as unknown as WritableStream<EncodedMonitoringMessage>,
+        new Readable(),
+        new Readable(),
+        new Writable(),
+        new PassThrough()
     ]);
 
     comm.pipeMessageStreams();

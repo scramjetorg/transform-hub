@@ -4,6 +4,7 @@ import * as sinon from "sinon";
 import { PassThrough } from "stream";
 import { HostOne } from "@scramjet/host-one";
 import * as vorpal from "vorpal";
+import { DataStream } from "scramjet";
 
 const appConfig = {
     configKey: "configValue"
@@ -33,7 +34,7 @@ test("Vorpal should not execute controlStream when params in 'event' command are
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -50,7 +51,7 @@ test("Vorpal should execute a controlStream with proper format, when user enter 
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -80,7 +81,7 @@ test("when command 'event' with event name and message as a number is provided, 
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -97,7 +98,7 @@ test("when command 'event' with event name and message as an array is provided, 
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -114,7 +115,7 @@ test("when command 'event' with event name and message as an obj is provided, Vo
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -131,7 +132,7 @@ test("Vorpal should execute controlStream with proper code when command 'kill' i
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -146,7 +147,7 @@ test("Vorpal should not execute controlStream when params in 'stop' command are 
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -161,7 +162,7 @@ test("Vorpal should execute controlStream with proper code when command 'stop' w
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
@@ -177,7 +178,7 @@ test("Vorpal should not execute controlStream when proper params in 'monitor' co
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
     hostOne["vorpal"] = new vorpal();
@@ -192,7 +193,7 @@ test("Vorpal should execute controlStream when command monitor is provided", t =
     hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
 
     /* eslint-disable dot-notation */
-    const conStream = sinon.spy(hostOne["controlDataStream"], "whenWrote");
+    const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();

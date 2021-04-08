@@ -117,11 +117,12 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.monitoringUpstream = streams[4];
 
         this.loggerUpstream = streams[8];
+
         this.upstreams = streams;
         /**
          * @analyze-how-to-pass-in-out-streams
          * Input stream to a Sequence and
-         * output stream from a Sequence assignment 
+         * output stream from a Sequence assignment
          * needs to be added.
          */
         return this;
@@ -219,18 +220,19 @@ export class CommunicationHandler implements ICommunicationHandler {
     areStreamsHooked() {
         /**
          * @analyze-how-to-pass-in-out-streams
-         * In return statement add boolean check for 
+         * In return statement add boolean check for
          * this.inputUpstream, this.inputDownstream,
          * this.outputUpstream, this.outputDownstream.
          */
-        return this.upstreams &&
+
+        return !!(this.upstreams &&
             this.downstreams &&
             this.controlDownstream &&
             this.controlUpstream &&
             this.monitoringDownstream &&
             this.monitoringUpstream &&
             this.loggerDownstream &&
-            this.loggerUpstream;
+            this.loggerUpstream);
     }
 
     pipeStdio(): this {
