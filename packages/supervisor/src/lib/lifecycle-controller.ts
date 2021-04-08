@@ -149,16 +149,22 @@ class LifeCycleController {
              * requests LifeCycle Adapter to kill the Sequence by executing kill
              * method on its interface.
              */
-            this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, message => {
+            this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, async message => {
                 const didTimeout = Symbol("res");
 
                 // wait for this before cleanups
                 // handle errors there
-                Promise.race([
+                await Promise.race([
                     endOfSequence,
                     new Promise(res => setTimeout(() => res(didTimeout), 1000)) // where to config this?
                 ])
                     .then(val => val === didTimeout ? this.lifecycleAdapter.kill() : null);
+                return message;
+            });
+
+            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.SEQUENCE_STOPPED, async message => {
+                await this.lifecycleAdapter.kill();
+
                 return message;
             });
 
@@ -171,12 +177,12 @@ class LifeCycleController {
             * General question: do we perform snapshot() only on error?
             */
 
-            this.communicationHandler.addControlHandler(RunnerMessageCode.STOP, message => {
+            this.communicationHandler.addControlHandler(RunnerMessageCode.STOP, async message => {
                 const didTimeout = Symbol("res");
                 const timeout = message[1].timeout;
                 const canCallKeepalive = message[1].canCallKeepalive;
 
-                Promise.race([
+                await Promise.race([
                     endOfSequence,
                     new Promise(res => setTimeout(() => res(didTimeout), 1000))
                 ])

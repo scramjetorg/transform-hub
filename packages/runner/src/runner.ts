@@ -25,6 +25,7 @@ export class Runner {
      * outputStream?: WritableStream
      */
     private sequencePath: string;
+    private keepAliveRequested?: boolean;
 
     constructor(sequencePath: string, fifosPath: string) {
         this.emitter = new EventEmitter();
@@ -73,7 +74,7 @@ export class Runner {
             break;
         default:
             break;
-    }
+        }
     }
 
     async hookupControlStream() {
@@ -136,26 +137,28 @@ export class Runner {
         if (!this.context) {
             throw new Error("Context undefined.");
         }
-
-        let sequenceError: Error | undefined;
+        this.keepAliveRequested = false;
 
         try {
-            await this.context?.stopHandler(
+            //todo input stream close when input stream implemented
+            // if(this.context.stopHandler?) 
+            await this.context?.stopHandler?.call(this.context,
                 data.timeout,
                 data.canCallKeepalive
             );
         } catch (err) {
-            sequenceError = err;
+            console.error("Following error ocurred during stopping sequence: ", err);
         }
 
-        const errorData = sequenceError ? { sequenceError } : {};
+        if (!this.keepAliveRequested){
+            MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
+            //todo add save, cleaning etc
+            process.exit();
+        }
+    }
 
-        await new Promise(async (resolve) => {
-            setTimeout(() => {
-                MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, errorData], this.monitorStream);
-                resolve(0);
-            }, data.timeout);
-        });
+    keepAliveIssued(): void {
+        this.keepAliveRequested = true;
     }
 
     async handleReceptionOfHandshake(data: HandshakeAcknowledgeMessageData): Promise<void> {
@@ -195,7 +198,14 @@ export class Runner {
             throw new Error("Monitor Stream is not defined.");
         }
 
-        this.context = new RunnerAppContext(config, this.monitorStream, this.emitter);
+        let runnerInstance = this;
+        let runner = {
+            keepAliveIssued() {
+                runnerInstance.keepAliveIssued();
+            }
+        };
+
+        this.context = new RunnerAppContext(config, this.monitorStream, this.emitter, runner);
     }
 
     sendHandshakeMessage() {

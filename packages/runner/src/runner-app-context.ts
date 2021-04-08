@@ -17,13 +17,17 @@ implements AppContext<AppConfigType, State> {
     AppError!: AppErrorConstructor;
     monitorStream: WritableStream<any>;;
     emitter: EventEmitter;
+    private runner;
 
-    constructor(config: AppConfigType, monitorStream: WritableStream<any>, emitter: EventEmitter) {
+    constructor(config: AppConfigType, monitorStream: WritableStream<any>, 
+        emitter: EventEmitter, runner: { keepAliveIssued(): void; }) {
+            
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
+        this.runner = runner;
     }
-
+    
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private handleSave(state: any): void {
         throw new Error("Method not implemented.");
@@ -102,6 +106,7 @@ implements AppContext<AppConfigType, State> {
     }
 
     keepAlive(milliseconds?: number): this {
+        this.runner.keepAliveIssued();
         this.writeMonitoringMessage([
             RunnerMessageCode.ALIVE, { keepAlive: milliseconds || 0 }
         ]);
