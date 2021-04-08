@@ -139,21 +139,20 @@ export class Runner {
         }
         this.keepAliveRequested = false;
 
+        let sequenceError;
+
         try {
-            //todo input stream close when input stream implemented
-            // if(this.context.stopHandler?) 
-            await this.context?.stopHandler?.call(this.context,
+             await this.context?.stopHandler?.call(this.context,
                 data.timeout,
                 data.canCallKeepalive
             );
         } catch (err) {
+            sequenceError = err;
             console.error("Following error ocurred during stopping sequence: ", err);
         }
-
-        if (!this.keepAliveRequested){
-            MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { err }], this.monitorStream);
-            //todo add save, cleaning etc
-            process.exit();
+        if (!data.canCallKeepalive || !this.keepAliveRequested) {
+            MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream);
+            //TODO add save, cleaning etc when implemented
         }
     }
 

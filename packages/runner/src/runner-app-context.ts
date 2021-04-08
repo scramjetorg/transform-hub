@@ -19,15 +19,15 @@ implements AppContext<AppConfigType, State> {
     emitter: EventEmitter;
     private runner;
 
-    constructor(config: AppConfigType, monitorStream: WritableStream<any>, 
+    constructor(config: AppConfigType, monitorStream: WritableStream<any>,
         emitter: EventEmitter, runner: { keepAliveIssued(): void; }) {
-            
+
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
     }
-    
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private handleSave(state: any): void {
         throw new Error("Method not implemented.");

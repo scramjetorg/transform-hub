@@ -187,9 +187,6 @@ export class HostOne {
                     break;
                 case RunnerMessageCode.SNAPSHOT_RESPONSE:
                     break;
-                case RunnerMessageCode.SEQUENCE_STOPPED:
-                    this.kill();
-                    break;
                 default:
                     break;
                 }
@@ -263,6 +260,7 @@ export class HostOne {
             .parse(process.argv);
     }
 
+    //TODELETE?
     async stop(timeout: number, canCallKeepalive: boolean) {
         await this.controlDataStream.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
         //if keep alive then postpone stopping/killing

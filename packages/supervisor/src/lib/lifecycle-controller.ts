@@ -65,6 +65,8 @@ class LifeCycleController {
         this.communicationHandler = new CommunicationHandler();
     }
 
+    private keepAliveRequested?: boolean;
+
     /**
      * This main method controls logical flow of the Cloud Server Instance lifecycle.
      *
@@ -162,6 +164,12 @@ class LifeCycleController {
                 return message;
             });
 
+            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.ALIVE, async message => {
+                this.keepAliveRequested = true;
+
+                return message;
+            });
+
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.SEQUENCE_STOPPED, async message => {
                 await this.lifecycleAdapter.kill();
 
@@ -182,6 +190,7 @@ class LifeCycleController {
                 const timeout = message[1].timeout;
                 const canCallKeepalive = message[1].canCallKeepalive;
 
+                await this.handleStop(timeout, canCallKeepalive);
                 await Promise.race([
                     endOfSequence,
                     new Promise(res => setTimeout(() => res(didTimeout), 1000))
@@ -224,6 +233,25 @@ class LifeCycleController {
         * They can include, for example, the removal of the created volume, directory, and container.
         */
         return this.lifecycleAdapter.cleanup();
+    }
+
+    private async kill() {
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+    }
+
+    private async handleStop(timeout: number, canCallKeepalive: boolean) {
+        await new Promise(async (resolve) => {
+            setTimeout(async () => {
+
+                if (this.keepAliveRequested) {
+                    await this.handleStop(timeout, canCallKeepalive);
+                } else {
+                    await this.kill;
+                }
+
+                resolve(0);
+            }, timeout);
+        });
     }
 }
 
