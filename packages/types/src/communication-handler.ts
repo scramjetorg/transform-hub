@@ -1,5 +1,5 @@
 import { MonitoringMessageHandler, ControlMessageHandler } from "@scramjet/model";
-import { Readable, Writable } from "node:stream";
+import { Readable, Writable } from "stream";
 import {
     ControlMessageCode,
     DownstreamStreamsConfig,
