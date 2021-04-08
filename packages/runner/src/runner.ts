@@ -137,12 +137,13 @@ export class Runner {
         if (!this.context) {
             throw new Error("Context undefined.");
         }
+
         this.keepAliveRequested = false;
 
         let sequenceError;
 
         try {
-             await this.context?.stopHandler?.call(this.context,
+            await this.context?.stopHandler?.call(this.context,
                 data.timeout,
                 data.canCallKeepalive
             );
@@ -150,6 +151,7 @@ export class Runner {
             sequenceError = err;
             console.error("Following error ocurred during stopping sequence: ", err);
         }
+   
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream);
             //TODO add save, cleaning etc when implemented

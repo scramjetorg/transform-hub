@@ -158,7 +158,7 @@ class LifeCycleController {
                 // handle errors there
                 await Promise.race([
                     endOfSequence,
-                    new Promise(res => setTimeout(() => res(didTimeout), 1000)) // where to config this?
+                    new Promise(res => setTimeout(() => res(didTimeout), 2000)) // where to config this?
                 ])
                     .then(val => val === didTimeout ? this.lifecycleAdapter.kill() : null);
                 return message;
@@ -189,7 +189,7 @@ class LifeCycleController {
                 const didTimeout = Symbol("res");
                 const timeout = message[1].timeout;
                 const canCallKeepalive = message[1].canCallKeepalive;
-
+                
                 await this.handleStop(timeout, canCallKeepalive);
                 await Promise.race([
                     endOfSequence,
@@ -246,7 +246,7 @@ class LifeCycleController {
                 if (this.keepAliveRequested) {
                     await this.handleStop(timeout, canCallKeepalive);
                 } else {
-                    await this.kill;
+                    await this.kill();
                 }
 
                 resolve(0);

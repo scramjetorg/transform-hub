@@ -40,7 +40,6 @@ export class HostOne {
     private api: APIExpose;
     // @ts-ignore
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
-    private keepAliveRequested?: boolean;
 
     errors = {
         noParams: "No params provided. Type help to know more.",
@@ -174,7 +173,6 @@ export class HostOne {
                 case RunnerMessageCode.DESCRIBE_SEQUENCE:
                     break;
                 case RunnerMessageCode.ALIVE:
-                    this.keepAliveRequested = true;
                     break;
                 case RunnerMessageCode.ERROR:
                     break;
@@ -260,19 +258,8 @@ export class HostOne {
             .parse(process.argv);
     }
 
-    //TODELETE?
     async stop(timeout: number, canCallKeepalive: boolean) {
         await this.controlDataStream.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
-        //if keep alive then postpone stopping/killing
-        await new Promise(async (resolve) => {
-            setTimeout(async () => {
-                if (this.keepAliveRequested)
-                    await this.stop(timeout, canCallKeepalive);
-                else
-                    this.kill();
-                resolve(0);
-            }, timeout);
-        });
     }
 
     async kill() {
