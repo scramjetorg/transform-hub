@@ -21,4 +21,4 @@ export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./messages
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
 export * from "./runner-message";
 export * from "./stream-handler";
-
+export { CommunicationChannel } from "./communication-channel";

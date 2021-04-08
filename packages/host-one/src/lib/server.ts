@@ -1,9 +1,13 @@
-import { DownstreamStreamsConfig, SocketChannel, BPMuxChannel } from "@scramjet/types";
+import { DownstreamStreamsConfig } from "@scramjet/types";
+import { CommunicationChannel } from "@scramjet/model";
 import { PathLike } from "fs";
 import * as net from "net";
-import { PassThrough } from "stream";
+import { PassThrough, Writable } from "stream";
+import { Socket } from "net";
 
 const BPMux = require("bpmux").BPMux;
+
+type IdentifiedSocket = Socket & { _chan: string };
 
 // TODO probably to change to net server, to verify
 export class SocketServer {
@@ -12,34 +16,34 @@ export class SocketServer {
     streams?: DownstreamStreamsConfig;
 
     // eslint-disable-next-line complexity
-    private handleStream(stream: BPMuxChannel) {
+    private handleStream(stream: IdentifiedSocket) {
         if (this.streams) {
             switch (parseInt(stream._chan, 10)) {
-            case SocketChannel.STDIN:
-                this.streams[0].pipe(stream);
+            case CommunicationChannel.STDIN:
+                this.streams[CommunicationChannel.STDIN].pipe(stream);
                 break;
-            case SocketChannel.STDOUT:
-                stream.pipe(process.stdout);
+            case CommunicationChannel.STDOUT:
+                stream.pipe(this.streams[CommunicationChannel.STDOUT] as unknown as Writable);
                 break;
-            case SocketChannel.STDERR:
-                stream.pipe(process.stderr);
+            case CommunicationChannel.STDERR:
+                stream.pipe(this.streams[CommunicationChannel.STDERR] as unknown as Writable);
                 break;
-            case SocketChannel.CONTROL:
+            case CommunicationChannel.CONTROL:
                 // eslint-disable-next-line no-extra-parens
-                (this.streams[3] as PassThrough).pipe(stream);
+                (this.streams[CommunicationChannel.CONTROL] as PassThrough).pipe(stream);
                 break;
-            case SocketChannel.MONITORING:
-                stream.pipe(this.streams[4] as PassThrough);
+            case CommunicationChannel.MONITORING:
+                stream.pipe(this.streams[CommunicationChannel.MONITORING] as PassThrough);
                 break;
-            case SocketChannel.PACKAGE:
+            case CommunicationChannel.PACKAGE:
                 // @ts-ignore: Object is possibly 'null'.
-                this.streams[5].pipe(stream);
+                this.streams[CommunicationChannel.PACKAGE].pipe(stream);
                 break;
-            case SocketChannel.TO_SEQ:
-            case SocketChannel.FROM_SEQ:
+            case CommunicationChannel.TO_SEQ:
+            case CommunicationChannel.FROM_SEQ:
                 break;
-            case SocketChannel.LOG:
-                stream.pipe(this.streams[8] as PassThrough);
+            case CommunicationChannel.LOG:
+                stream.pipe(this.streams[CommunicationChannel.LOG] as PassThrough);
                 break;
             default:
                 throw new Error("Unknown channel");
@@ -71,7 +75,7 @@ export class SocketServer {
                     });
 
                 new BPMux(connection)
-                    .on("handshake", (stream: BPMuxChannel) => {
+                    .on("handshake", (stream: IdentifiedSocket) => {
                         this.handleStream(stream);
 
                         stream.on("error", () => {

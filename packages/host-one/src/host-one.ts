@@ -1,5 +1,5 @@
-import { CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler } from "@scramjet/types";
+import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
+import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage } from "@scramjet/types";
 import { ReadStream } from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -38,7 +38,7 @@ export class HostOne {
 
     private api?: APIExpose;
 
-    private communicationHandler: ICommunicationHandler = new CommunicationHandler();
+    private communicationHandler: CommunicationHandler = new CommunicationHandler();
 
     private logHistory?: DataStream;
 
@@ -113,12 +113,15 @@ export class HostOne {
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
+
+        // TODO: pipe to api stream.
+        this.upStreams[1].pipe(process.stdout);
     }
 
     hookLogStream() {
-        if (this.upStreams && this.upStreams[8]) {
+        if (this.upStreams && this.upStreams[CommunicationChannel.LOG]) {
             this.logHistory = StringStream
-                .from(this.upStreams[8] as unknown as Readable)
+                .from(this.upStreams[CommunicationChannel.LOG] as unknown as Readable)
                 .lines()
                 .keep(1000); // TODO: config
 

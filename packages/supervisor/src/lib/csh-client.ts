@@ -1,9 +1,8 @@
 /* eslint-disable dot-notation */
-import { ICommunicationHandler } from "@scramjet/types";
-import { ICSHClient, SocketChannel, UpstreamStreamsConfig } from "@scramjet/types";
+import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig } from "@scramjet/types";
+import { CommunicationChannel } from "@scramjet/model";
 import * as net from "net";
-import { Duplex } from "stream";
-import { PassThrough, Readable } from "stream";
+import { Duplex, PassThrough, Readable } from "stream";
 
 const { BPMux } = require("bpmux");
 
@@ -46,15 +45,15 @@ class CSHClient implements ICSHClient {
             this.mux = new BPMux(this.connection);
 
             this.connectionChannels = [
-                this.mux.multiplex({ channel: SocketChannel.STDIN }),
-                this.mux.multiplex({ channel: SocketChannel.STDOUT }),
-                this.mux.multiplex({ channel: SocketChannel.STDERR }),
-                this.mux.multiplex({ channel: SocketChannel.CONTROL }),
-                this.mux.multiplex({ channel: SocketChannel.MONITORING }),
-                this.mux.multiplex({ channel: SocketChannel.PACKAGE }),
-                this.mux.multiplex({ channel: SocketChannel.TO_SEQ }),
-                this.mux.multiplex({ channel: SocketChannel.FROM_SEQ }),
-                this.mux.multiplex({ channel: SocketChannel.LOG })
+                this.mux.multiplex({ channel: CommunicationChannel.STDIN }),
+                this.mux.multiplex({ channel: CommunicationChannel.STDOUT }),
+                this.mux.multiplex({ channel: CommunicationChannel.STDERR }),
+                this.mux.multiplex({ channel: CommunicationChannel.CONTROL }),
+                this.mux.multiplex({ channel: CommunicationChannel.MONITORING }),
+                this.mux.multiplex({ channel: CommunicationChannel.PACKAGE }),
+                this.mux.multiplex({ channel: CommunicationChannel.TO_SEQ }),
+                this.mux.multiplex({ channel: CommunicationChannel.FROM_SEQ }),
+                this.mux.multiplex({ channel: CommunicationChannel.LOG })
             ];
 
             this.connectionChannels.forEach((channel: Duplex) => {
@@ -71,21 +70,22 @@ class CSHClient implements ICSHClient {
              * This stream should be closed when the package is received.
              */
 
-            // from host-one
-            this.connectionChannels[0].pipe(this.streams[0]); // stdin
-            this.connectionChannels[3].pipe(this.streams[3]); // control
-            this.connectionChannels[5].pipe(this.packageStream); // package
-            this.connectionChannels[6].pipe(this.streams[6]); // sequence input
+            this.connectionChannels[CommunicationChannel.STDIN].pipe(this.streams[CommunicationChannel.STDIN]);
+            this.connectionChannels[CommunicationChannel.CONTROL].pipe(this.streams[CommunicationChannel.CONTROL]);
+            this.connectionChannels[CommunicationChannel.PACKAGE].pipe(this.packageStream);
+            this.connectionChannels[CommunicationChannel.TO_SEQ].pipe(this.streams[CommunicationChannel.TO_SEQ]);
 
-            // to host-one
-            this.streams[1].pipe(this.connectionChannels[1]); // stdout
-            this.streams[2].pipe(this.connectionChannels[2]); // stderr
+            this.streams[CommunicationChannel.STDOUT].pipe(this.connectionChannels[CommunicationChannel.STDOUT]);
+            this.streams[CommunicationChannel.STDERR].pipe(this.connectionChannels[CommunicationChannel.STDERR]);
             // eslint-disable-next-line no-extra-parens
-            (this.streams[4] as unknown as Readable).pipe(this.connectionChannels[4]); // monitor
+            (this.streams[CommunicationChannel.MONITORING] as unknown as Readable)
+                .pipe(this.connectionChannels[CommunicationChannel.MONITORING]);
             // eslint-disable-next-line no-extra-parens
-            (this.streams[7] as unknown as Readable).pipe(this.connectionChannels[7]); // sequence output
+            (this.streams[CommunicationChannel.FROM_SEQ] as unknown as Readable)
+                .pipe(this.connectionChannels[CommunicationChannel.FROM_SEQ]);
             // eslint-disable-next-line no-extra-parens
-            (this.streams[8] as unknown as Readable).pipe(this.connectionChannels[8]); // log
+            (this.streams[CommunicationChannel.LOG] as unknown as Readable)
+                .pipe(this.connectionChannels[CommunicationChannel.LOG]);
 
             resolve();
         });
