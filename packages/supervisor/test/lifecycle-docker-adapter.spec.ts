@@ -77,7 +77,7 @@ test("Init should reject on read file error.", async (t) => {
     await t.throwsAsync(lcda.init());
 });
 
-test("CreateFifoStreams should create monitor and control streams.", async (t) => {
+test("CreateFifoStreams should create monitor, control and logger streams.", async (t) => {
     configStub.resolves();
 
     const lcda = new LifecycleDockerAdapter();
@@ -85,13 +85,15 @@ test("CreateFifoStreams should create monitor and control streams.", async (t) =
     lcda.createFifo = sandbox.stub().resolves();
 
     mkdtempStub.returns("uniqDir");
-    await lcda.createFifoStreams("testMonitor.fifo", "testControl.fifo");
+    await lcda.createFifoStreams("testMonitor.fifo", "testControl.fifo", "testLogger.fifo");
 
-    t.is(lcda.createFifo.callCount, 2);
+    t.is(lcda.createFifo.callCount, 3);
     t.is(lcda.createFifo.getCall(0).args[0], "uniqDir");
     t.is(lcda.createFifo.getCall(0).args[1], "testMonitor.fifo");
     t.is(lcda.createFifo.getCall(1).args[0], "uniqDir");
     t.is(lcda.createFifo.getCall(1).args[1], "testControl.fifo");
+    t.is(lcda.createFifo.getCall(2).args[0], "uniqDir");
+    t.is(lcda.createFifo.getCall(2).args[1], "testLogger.fifo");
 });
 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
@@ -128,12 +130,17 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         wait: sinon.stub().resolves()
     });
 
-    lcda.createFifoStreams = sandbox.stub().resolves();
+    let createFifoStreams = sandbox.stub(lcda, "createFifoStreams").resolves();
 
     await lcda.init();
+
+    lcda.monitorFifoPath = "path1";
+    lcda.controlFifoPath = "path2";
+    lcda.loggerFifoPath = "path3";
+
     await lcda.run(config);
 
-    t.true(lcda.createFifoStreams.calledOnceWith("control.fifo", "monitor.fifo"));
+    t.true(createFifoStreams.calledOnceWith("control.fifo", "monitor.fifo", "logger.fifo"));
 });
 
 test("Identify should return parsed response from stream.", async (t) => {

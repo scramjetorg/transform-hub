@@ -1,7 +1,7 @@
 /* tslint:disable */
 import * as sinon from "sinon";
 import * as proxyquire from "proxyquire";
-import { PassThrough } from "stream";
+import { PassThrough, Writable } from "stream";
 import { ReadStream, WriteStream } from "fs";
 import { RunnerMessageCode } from "../../types/node_modules/@scramjet/model/src";
 
@@ -31,7 +31,9 @@ test("Runner new instance", (t: any) => {
 
 test("Run main", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
-    const hookupFifoStreams = sinon.stub(runner, "hookupFifoStreams");
+    const hookupFifoStreams = sinon.stub(runner, "hookupFifoStreams").callsFake(() => {
+        runner.loggerStream = new Writable();
+    });
     const sendHandshakeMessage = sinon.stub(runner, "sendHandshakeMessage");
 
     await runner.main();
