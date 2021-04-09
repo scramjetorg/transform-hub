@@ -180,7 +180,8 @@ export class Runner {
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream
+                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }],
+                this.monitorStream
             );
             //TODO add save, cleaning etc when implemented
         }
@@ -228,11 +229,8 @@ export class Runner {
             throw new Error("Monitor Stream is not defined.");
         }
 
-        let runnerInstance = this;
         let runner = {
-            keepAliveIssued() {
-                runnerInstance.keepAliveIssued();
-            }
+            keepAliveIssued: () => this.keepAliveIssued()
         };
 
         this.context = new RunnerAppContext(config, this.monitorStream, this.emitter, runner);
