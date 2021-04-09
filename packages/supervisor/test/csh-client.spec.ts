@@ -22,12 +22,16 @@ test("Should create instance.", t => {
 });
 
 test("createUpstream should return an array", t => {
+    cshClient.init();
     upstream = cshClient.upstreamStreamsConfig();
 
     t.is(Array.isArray(upstream), true);
 });
 
 test("createUpstream should return proper streams in array", t => {
+    cshClient.init();
+    upstream = cshClient.upstreamStreamsConfig();
+
     t.is(upstream[0].readable, true);
     t.is(upstream[1].writable, true);
     t.is(upstream[2].writable, true);

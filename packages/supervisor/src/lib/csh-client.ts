@@ -9,7 +9,7 @@ const { BPMux } = require("bpmux");
 class CSHClient implements ICSHClient {
     private socketPath: string;
     private packageStream: PassThrough;
-    private streams: UpstreamStreamsConfig;
+    private streams?: UpstreamStreamsConfig;
     private connectionChannels?: any[];
     private connection?: net.Socket;
 
@@ -18,7 +18,9 @@ class CSHClient implements ICSHClient {
     constructor(socketPath: string) {
         this.socketPath = socketPath;
         this.packageStream = new PassThrough();
+    }
 
+    async init(): Promise<void> {
         this.streams = [
             new PassThrough(),
             new PassThrough(),
@@ -30,14 +32,16 @@ class CSHClient implements ICSHClient {
             new PassThrough(),
             new PassThrough()
         ];
-    }
 
-    async init(): Promise<void> {
         await this.connect();
     }
 
     connect(): Promise<void> {
         return new Promise((resolve) => {
+            if (!this.streams) {
+                throw new Error("Upstreams not initated.");
+            }
+
             this.connection = net.createConnection({
                 path: this.socketPath
             });
@@ -104,7 +108,7 @@ class CSHClient implements ICSHClient {
     }
 
     hookCommunicationHandler(communicationHandler: ICommunicationHandler) {
-        if (typeof this.upstreamStreamsConfig === "undefined") {
+        if (typeof this.upstreamStreamsConfig() === "undefined") {
             throw new Error("Upstreams not initated.");
         }
 
