@@ -14,7 +14,7 @@ export function getCommunicationHandler() {
     const controlUp = new DataStream();
     const monitoringUp = new DataStream();
 
-    comm.hookLifecycleStreams([
+    comm.hookDownstreamStreams([
         new Writable(),
         new Readable(),
         new Readable(),
@@ -27,7 +27,7 @@ export function getCommunicationHandler() {
 
     ]);
 
-    comm.hookClientStreams([
+    comm.hookUpstreamStreams([
         new Readable(),
         new Writable(),
         new Writable(),
