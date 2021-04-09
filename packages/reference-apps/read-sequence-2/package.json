@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js",
     "build": "tsc -p tsconfig.json"
   },
   "author": "",

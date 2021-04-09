@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "mkdir -p dist/ && cp index.js dist/"
+    "build": "mkdir -p dist/ && cp index.js dist/",
+    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js"
   },
   "author": "",
   "license": "ISC",
