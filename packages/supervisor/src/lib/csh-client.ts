@@ -60,8 +60,6 @@ class CSHClient implements ICSHClient {
                 this.mux.multiplex({ channel: CommunicationChannel.CONTROL }),
                 this.mux.multiplex({ channel: CommunicationChannel.MONITORING }),
                 this.mux.multiplex({ channel: CommunicationChannel.PACKAGE }),
-                this.mux.multiplex({ channel: CommunicationChannel.TO_SEQ }),
-                this.mux.multiplex({ channel: CommunicationChannel.FROM_SEQ }),
                 this.mux.multiplex({ channel: CommunicationChannel.LOG })
             ];
 
@@ -82,7 +80,8 @@ class CSHClient implements ICSHClient {
             this.connectionChannels[CommunicationChannel.STDIN].pipe(this.streams[CommunicationChannel.STDIN]);
             this.connectionChannels[CommunicationChannel.CONTROL].pipe(this.streams[CommunicationChannel.CONTROL]);
             this.connectionChannels[CommunicationChannel.PACKAGE].pipe(this.packageStream);
-            this.connectionChannels[CommunicationChannel.TO_SEQ].pipe(this.streams[CommunicationChannel.TO_SEQ]);
+            this.connectionChannels[CommunicationChannel.IN_DOWN_STR]
+                .pipe(this.streams[CommunicationChannel.IN_DOWN_STR]);
 
             this.streams[CommunicationChannel.STDOUT].pipe(this.connectionChannels[CommunicationChannel.STDOUT]);
             this.streams[CommunicationChannel.STDERR].pipe(this.connectionChannels[CommunicationChannel.STDERR]);
@@ -90,11 +89,11 @@ class CSHClient implements ICSHClient {
             (this.streams[CommunicationChannel.MONITORING] as unknown as Readable)
                 .pipe(this.connectionChannels[CommunicationChannel.MONITORING]);
             // eslint-disable-next-line no-extra-parens
-            (this.streams[CommunicationChannel.FROM_SEQ] as unknown as Readable)
-                .pipe(this.connectionChannels[CommunicationChannel.FROM_SEQ]);
-            // eslint-disable-next-line no-extra-parens
             (this.streams[CommunicationChannel.LOG] as unknown as Readable)
                 .pipe(this.connectionChannels[CommunicationChannel.LOG]);
+            // eslint-disable-next-line no-extra-parens
+            (this.streams[CommunicationChannel.OUT_DOWN_STR] as unknown as Readable)
+                .pipe(this.connectionChannels[CommunicationChannel.OUT_DOWN_STR]);
 
             resolve();
         });

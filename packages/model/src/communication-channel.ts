@@ -4,8 +4,8 @@ export enum CommunicationChannel {
     STDERR,
     CONTROL,
     MONITORING,
+    OUT_DOWN_STR,
+    IN_DOWN_STR,
     PACKAGE,
-    TO_SEQ,
-    FROM_SEQ,
     LOG
 }

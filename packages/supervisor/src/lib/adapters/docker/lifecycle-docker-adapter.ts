@@ -35,6 +35,9 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     private controlFifoPath?: string;
     private loggerFifoPath?: string;
 
+    private inputFifoPath?: string;
+    private outputFifoPath?: string;
+
     private imageConfig: {
         runner?: string,
         prerunner?: string
@@ -46,27 +49,22 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     private monitorStream: DelayedStream;
     private controlStream: DelayedStream;
     private loggerStream: DelayedStream;
-    /**
-     * @analyze-how-to-pass-in-out-streams
-     * Additional two streams need to be created:
-     * inputStream - input stream to the Sequence
-     * outputStream - output stream for a Sequence
-     */
+    private inputStream: DelayedStream;
+    private outputStream: DelayedStream;
 
     private resources: DockerAdapterResources = {};
 
     logger: Logger;
 
     constructor() {
+        this.dockerHelper = new DockerodeDockerHelper();
+
         this.runnerStdin = new PassThrough();
         this.runnerStdout = new PassThrough();
         this.runnerStderr = new PassThrough();
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
         this.loggerStream = new DelayedStream();
-
-        this.dockerHelper = new DockerodeDockerHelper();
-
         /**
          * @analyze-how-to-pass-in-out-streams
          * Initiate two streams with as DelayedStream():
@@ -74,6 +72,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
          * outputStream - output stream for a Sequence
          */
         this.logger = getLogger(this);
+        this.inputStream = new DelayedStream();
+        this.outputStream = new DelayedStream();
     }
 
     async init(): Promise<void> {
@@ -104,7 +104,11 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
      * output.fifo - output stream for a Sequence
      */
     private async createFifoStreams(
-        controlFifo: string, monitorFifo: string, loggerFifo: string
+        controlFifo: string,
+        monitorFifo: string,
+        loggerFifo: string,
+        inputFifo: string,
+        outputFifo: string
     ): Promise<string> {
         return new Promise(async (resolve, reject) => {
             const dirPrefix: string = "fifos";
@@ -113,7 +117,6 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
             try {
                 createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
-
                 //TODO: TBD how to allow docker user "runner" to access this directory.
 
                 this.logger.log("Fifo dir: ", createdDir);
@@ -121,11 +124,15 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                 [
                     this.controlFifoPath,
                     this.monitorFifoPath,
-                    this.loggerFifoPath
+                    this.loggerFifoPath,
+                    this.inputFifoPath,
+                    this.outputFifoPath
                 ] = await Promise.all([
                     this.createFifo(createdDir, controlFifo),
                     this.createFifo(createdDir, monitorFifo),
-                    this.createFifo(createdDir, loggerFifo)
+                    this.createFifo(createdDir, loggerFifo),
+                    this.createFifo(createdDir, inputFifo),
+                    this.createFifo(createdDir, outputFifo)
                 ]);
 
                 await chmod(createdDir, 0o750);
@@ -183,28 +190,28 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                 this.runnerStderr,
                 this.controlStream.getStream(),
                 this.monitorStream.getStream(),
-                new PassThrough(),
-                /**
-                 * @analyze-how-to-pass-in-out-streams
-                 * Input and output streams need to be
-                 * added to this table a similar way to control and
-                 * monitor stream.
-                 */
-                new PassThrough(),
-                undefined,
-                this.loggerStream.getStream()
+                this.loggerStream.getStream(),
+                this.inputStream.getStream(),
+                this.outputStream.getStream()
             ];
 
         communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);
     }
 
     async run(config: RunnerConfig): Promise<ExitCode> {
-        this.resources.fifosDir = await this.createFifoStreams("control.fifo", "monitor.fifo", "logger.fifo");
+        this.resources.fifosDir = await this.createFifoStreams(
+            "control.fifo",
+            "monitor.fifo",
+            "logger.fifo",
+            "input.fifo",
+            "output.fifo");
 
         if (
             typeof this.monitorFifoPath === "undefined" ||
             typeof this.controlFifoPath === "undefined" ||
-            typeof this.loggerFifoPath === "undefined"
+            typeof this.loggerFifoPath === "undefined" ||
+            typeof this.inputFifoPath === "undefined" ||
+            typeof this.outputFifoPath === "undefined"
         ) {
             throw new SupervisorError("SEQUENCE_RUN_BEFORE_INIT");
         }
@@ -212,6 +219,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));
         this.loggerStream.run(createReadStream(this.loggerFifoPath));
+        this.inputStream.run(createWriteStream(this.inputFifoPath));
+        this.outputStream.run(createWriteStream(this.outputFifoPath));
 
         this.logger.debug("Creating container");
 

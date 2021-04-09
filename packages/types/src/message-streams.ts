@@ -86,9 +86,9 @@ export type UpstreamStreamsConfig = [
     stderr: Writable,
     control: ReadableStream<EncodedControlMessage>,
     monitor: WritableStream<EncodedMonitoringMessage>,
+    inputUpstream: WritableStream<any>,
+    outputUpstream: ReadableStream<any>,
     pkg?: Readable,
-    input?: ReadableStream<any>,
-    output?: WritableStream<any>, // optional output stream piped to runner - if none passed, `this.stdout` will be used
     log?: WritableStream<string>
 ];
 
@@ -98,8 +98,8 @@ export type DownstreamStreamsConfig = [
     stderr: Readable,
     control: WritableStream<EncodedSerializedControlMessage>,
     monitor: ReadableStream<EncodedSerializedMonitoringMessage>,
+    inputDownstream: ReadableStream<any>,
+    outputDownstream: WritableStream<any>,
     pkg?: Readable,
-    input?: WritableStream<any>,
-    output?: ReadableStream<any>, // optional output stream piped to runner - if none passed, `this.stdout` will be used
     log?: ReadableStream<string>
 ];

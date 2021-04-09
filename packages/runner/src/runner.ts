@@ -20,19 +20,15 @@ export class Runner<X extends AppConfig> implements IComponent {
     private monitorStream?: WritableStream<any>; //TODO change any to EncodedMonitoringMessage
     private loggerStream?: WritableStream<string>;
     private controlStream?: any; //TODO change type ReadableStream<EncodedControlMessage>;
+    private inputStream?: WritableStream<string> | any; // TODO change any depend on appcontext
+    private outputStream?: ReadableStream<string> | any; // TODO change any depend on appcontext
+    private outputDataStream: DataStream = new DataStream();
+    private inputDataStream?: DataStream;
     private monitorFifoPath: string;
     private controlFifoPath: string;
     private loggerFifoPath: string;
-    /**
-     * @analyze-how-to-pass-in-out-streams
-     * Similarly to monitor and control streams,
-     * two additional fifo path properties need to be created:
-     * inputFifoPath- input stream to the Sequence
-     * outputFifoPath - output stream for a Sequence
-     * and corresponding two properties for input and output stream references:
-     * inputStream?: ReadableStream
-     * outputStream?: WritableStream
-     */
+    private inputFifoPath: string;
+    private outputFifoPath: string;
     private sequencePath: string;
     private keepAliveRequested?: boolean;
 
@@ -40,17 +36,13 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     constructor(sequencePath: string, fifosPath: string) {
         this.emitter = new EventEmitter();
-        /**
-         * @analyze-how-to-pass-in-out-streams
-         * Additional two fifo paths need to be assigned here
-         * input.fifo - input stream to the Sequence
-         * output.fifo - output stream for a Sequence
-         */
+        this.logger = getLogger(this);
+
         this.controlFifoPath = `${fifosPath}/control.fifo`;
         this.monitorFifoPath = `${fifosPath}/monitor.fifo`;
         this.loggerFifoPath = `${fifosPath}/logger.fifo`;
-        this.logger = getLogger(this);
-
+        this.inputFifoPath = `${fifosPath}/input.fifo`;
+        this.outputFifoPath = `${fifosPath}/output.fifo`;
         this.sequencePath = sequencePath;
     }
 
@@ -63,11 +55,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             break;
         case RunnerMessageCode.KILL:
             await this.handleKillRequest();
-            /**
-            * @analyze-how-to-pass-in-out-streams
-            * We need to make sure we close
-            * input and output streams.
-            */
             break;
         case RunnerMessageCode.STOP:
             await this.addStopHandlerRequest(data as StopSequenceMessageData);
@@ -129,6 +116,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         exec(`echo "\r\n" > ${this.controlFifoPath}`); // TODO: Shell escape
     }
 
+    async cleanupOutputStream() {
+        this.outputStream.destroy();
+        exec(`echo "\r\n" > ${this.outputFifoPath}`);
+    }
+
     async hookupMonitorStream() {
         this.monitorStream = createWriteStream(this.monitorFifoPath);
     }
@@ -137,11 +129,34 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.loggerStream = createWriteStream(this.loggerFifoPath);
     }
 
+    async hookupInputStream() {
+        this.inputStream = createWriteStream(this.inputFifoPath);
+        this.inputDataStream = StringStream
+            .from(this.inputStream)
+            .JSONParse()
+        ;
+    }
+
+    async cleanupInputStream() {
+        this.outputStream.destroy();
+        exec(`echo "\r\n" > ${this.inputFifoPath}`);
+    }
+
+    async hookupOutputStream() {
+        this.outputStream = createReadStream(this.outputFifoPath);
+        this.outputDataStream
+            .JSONStringify()
+            .pipe(this.outputStream)
+        ;
+    }
+
     async hookupFifoStreams() {
         return Promise.all([
             this.hookupLoggerStream(),
             this.hookupControlStream(),
-            this.hookupMonitorStream()
+            this.hookupMonitorStream(),
+            this.hookupInputStream(),
+            this.hookupOutputStream()
         ]);
     }
 
@@ -184,14 +199,12 @@ export class Runner<X extends AppConfig> implements IComponent {
     async handleKillRequest(): Promise<void> {
         this.logger.log("Kill request handled.");
         this.context?.killHandler();
-        //letting time for "on kill" actions
-        //TODO cosult with Michał Cz.
-        await new Promise(res => setTimeout(res, 1000));
-        console.log("-----kill 2000 ms after");
-        await this.cleanupControlStream();
-
+        await Promise.all([
+            this.cleanupControlStream(),
+            this.cleanupInputStream(),
+            this.cleanupOutputStream()
+        ]);
         this.logger.log("Kill request handled, exiting...");
-
         process.exit(137);
     }
 
@@ -210,6 +223,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                 data.timeout,
                 data.canCallKeepalive
             );
+            // await this.outputStream.stopHandler.call(data.timeout, data.canCallKeepalive); (???)
+            // await this.inputStream.stopHandler.call(data.timeout, data.canCallKeepalive); (???)
         } catch (err) {
             sequenceError = err;
             this.logger.error("Following error ocurred during stopping sequence: ", err);
@@ -217,8 +232,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream
-            );
+                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream);
             //TODO add save, cleaning etc when implemented
         }
     }
@@ -343,7 +357,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream = new DataStream() as unknown as ReadableStream<any>;
+        let stream: DataStream = this.inputDataStream || DataStream.from([]);
         let itemsLeftInSequence = sequence.length;
 
         for (const func of sequence) {
@@ -361,7 +375,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                      * instead of
                      * new DataStream() as unknown as ReadableStream<never>
                      */
-                    stream,
+                    stream as unknown as ReadableStream<any>,
                     ...args
                 );
                 this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
@@ -379,10 +393,10 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.logger.log("Sequence does not output data");
                 }
             } else if (typeof out === "object" && out instanceof DataStream) {
-                stream = scramjetStreamFrom(out) as unknown as ReadableStream<any>;
+                stream = scramjetStreamFrom(out);
             } else {
                 // TODO: what if this is not a DataStream, but BufferStream stream
-                stream = DataStream.from(out as Readable) as unknown as ReadableStream<any>;
+                stream = DataStream.from(out as Readable);
             }
         }
 

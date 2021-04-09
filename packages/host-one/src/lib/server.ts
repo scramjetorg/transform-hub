@@ -41,8 +41,8 @@ export class SocketServer implements IComponent {
                 // @ts-ignore: Object is possibly 'null'.
                 this.streams[CommunicationChannel.PACKAGE].pipe(stream);
                 break;
-            case CommunicationChannel.TO_SEQ:
-            case CommunicationChannel.FROM_SEQ:
+            case CommunicationChannel.IN_DOWN_STR:
+            case CommunicationChannel.OUT_DOWN_STR:
                 break;
             case CommunicationChannel.LOG:
                 stream.pipe(this.streams[CommunicationChannel.LOG] as PassThrough);

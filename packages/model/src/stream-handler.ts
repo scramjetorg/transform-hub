@@ -59,17 +59,12 @@ export class CommunicationHandler implements ICommunicationHandler {
     private monitoringDownstream?: ReadableStream<EncodedSerializedMonitoringMessage>;
     private loggerDownstream?: ReadableStream<string>;
     private loggerUpstream?: WritableStream<string>;
+    private inputUpstream?: ReadableStream<string>;
+    private outputUpstream?: WritableStream<string>;
+    private inputDownstream?: WritableStream<string>;
+    private outputDownstream?: ReadableStream<string>;
     private upstreams?: UpstreamStreamsConfig;
     private downstreams?: DownstreamStreamsConfig;
-    /**
-     * @analyze-how-to-pass-in-out-streams
-     * Input stream to a Sequence and output stream from a Sequence need to be added as properties
-     * (for both upstream and downstream arrays):
-     * inputUpstream
-     * inputDownstream
-     * outputUpstream
-     * outputDownstream
-     */
 
     private _controlOutput?: PassThoughStream<EncodedSerializedControlMessage>;
     private _monitoringOutput?: PassThoughStream<EncodedMonitoringMessage>;
@@ -135,13 +130,10 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         this.loggerUpstream = streams[CommunicationChannel.LOG];
 
+        this.inputUpstream = streams[CommunicationChannel.IN_DOWN_STR];
+        this.outputUpstream = streams[CommunicationChannel.OUT_DOWN_STR];
         this.upstreams = streams;
-        /**
-         * @analyze-how-to-pass-in-out-streams
-         * Input stream to a Sequence and
-         * output stream from a Sequence assignment
-         * needs to be added.
-         */
+
         return this;
     }
 
@@ -154,13 +146,10 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         this.loggerDownstream = streams[CommunicationChannel.LOG];
 
+        this.inputDownstream = streams[CommunicationChannel.IN_DOWN_STR];
+        this.outputDownstream = streams[CommunicationChannel.OUT_DOWN_STR];
         this.downstreams = streams;
-        /**
-         * @analyze-how-to-pass-in-out-streams
-         * Input stream to a Sequence and
-         * output stream from a Sequence assignment
-         * needs to be added.
-         */
+
         return this;
     }
 
@@ -235,13 +224,6 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     areStreamsHooked() {
-        /**
-         * @analyze-how-to-pass-in-out-streams
-         * In return statement add boolean check for
-         * this.inputUpstream, this.inputDownstream,
-         * this.outputUpstream, this.outputDownstream.
-         */
-
         return !!(this.upstreams &&
             this.downstreams &&
             this.controlDownstream &&
@@ -249,7 +231,11 @@ export class CommunicationHandler implements ICommunicationHandler {
             this.monitoringDownstream &&
             this.monitoringUpstream &&
             this.loggerDownstream &&
-            this.loggerUpstream);
+            this.loggerUpstream &&
+            this.inputUpstream &&
+            this.outputUpstream &&
+            this.outputDownstream &&
+            this.inputDownstream);
     }
 
     getLogOutput(): LoggerOutput {
