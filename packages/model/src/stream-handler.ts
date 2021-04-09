@@ -17,7 +17,7 @@ import {
 } from "@scramjet/types";
 import { DataStream, StringStream } from "scramjet";
 import { Readable, Writable } from "stream";
-import { RunnerMessageCode } from ".";
+import { RunnerMessageCode, CommunicationChannel } from ".";
 
 export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T>>;
@@ -110,13 +110,13 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     hookUpstreamStreams(streams: UpstreamStreamsConfig): this {
-        this.stdInUpstream = streams[0];
-        this.stdOutUpstream = streams[1];
-        this.stdErrUpstream = streams[2];
-        this.controlUpstream = streams[3];
-        this.monitoringUpstream = streams[4];
+        this.stdInUpstream = streams[CommunicationChannel.STDIN];
+        this.stdOutUpstream = streams[CommunicationChannel.STDOUT];
+        this.stdErrUpstream = streams[CommunicationChannel.STDERR];
+        this.controlUpstream = streams[CommunicationChannel.CONTROL];
+        this.monitoringUpstream = streams[CommunicationChannel.MONITORING];
 
-        this.loggerUpstream = streams[8];
+        this.loggerUpstream = streams[CommunicationChannel.LOG];
 
         this.upstreams = streams;
         /**
@@ -129,13 +129,13 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     hookDownstreamStreams(streams: DownstreamStreamsConfig): this {
-        this.stdInDownstream = streams[0];
-        this.stdOutDownstream = streams[1];
-        this.stdErrDownstream = streams[2];
-        this.controlDownstream = streams[3];
-        this.monitoringDownstream = streams[4];
+        this.stdInDownstream = streams[CommunicationChannel.STDIN];
+        this.stdOutDownstream = streams[CommunicationChannel.STDOUT];
+        this.stdErrDownstream = streams[CommunicationChannel.STDERR];
+        this.controlDownstream = streams[CommunicationChannel.CONTROL];
+        this.monitoringDownstream = streams[CommunicationChannel.MONITORING];
 
-        this.loggerDownstream = streams[8];
+        this.loggerDownstream = streams[CommunicationChannel.LOG];
 
         this.downstreams = streams;
         /**
