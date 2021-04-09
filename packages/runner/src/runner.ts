@@ -1,3 +1,4 @@
+
 import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
 import { ReadableStream, WritableStream, AppConfig, Application, EncodedControlMessage } from "@scramjet/types";
 import { exec } from "child_process";
@@ -250,40 +251,28 @@ export class Runner {
      *
      * @param args {any[]} arguments that the app will be called with
      */
-    async runSequence(args?: any[]) {
+    async runSequence(args: any[] = []) {
         const sequence: any = this.getSequence();
 
-        if (Array.isArray(args) && args.length) {
+        /**
+        * @analyze-how-to-pass-in-out-streams
+        * Output stream will be returned from the Sequence:
+        * await const outputStream = sequence.call(..);
+        * This outputStreams needs to be piped to the
+        * local Runner property outputStream (named fifo pipe).
+        */
+        await sequence.call(
+            this.context,
             /**
-            * @analyze-how-to-pass-in-out-streams
-            * Output stream will be returned from the Sequence:
-            * await const outputStream = sequence.call(..);
-            * This outputStreams needs to be piped to the
-            * local Runner property outputStream (named fifo pipe).
-            */
-            await sequence.call(
-                this.context,
-                /**
-                 * @analyze-how-to-pass-in-out-streams
-                 * Input stream to the Sequence will be passed as an argument
-                 * instead of
-                 * new DataStream() as unknown as ReadableStream<never>
-                 */
-                new DataStream() as unknown as ReadableStream<never>,
-                ...args
-            );
-        } else {
-            await sequence.call(
-                this.context,
-                /**
-                 * @analyze-how-to-pass-in-out-streams
-                 * Input stream will be passes as argument here
-                 * instead of
-                 * new DataStream() as unknown as ReadableStream<never>
-                 */
-                new DataStream() as unknown as ReadableStream<never>
-            );
-        }
+             * @analyze-how-to-pass-in-out-streams
+             * Input stream to the Sequence will be passed as an argument
+             * instead of
+             * new DataStream() as unknown as ReadableStream<never>
+             */
+            new DataStream() as unknown as ReadableStream<never>,
+            ...args
+        );
+
         /**
          * @analyze-how-to-pass-in-out-streams
          * We need to make sure to close input and output streams

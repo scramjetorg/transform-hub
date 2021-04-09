@@ -3,7 +3,7 @@ import * as sinon from "sinon";
 import * as proxyquire from "proxyquire";
 import { PassThrough, Writable } from "stream";
 import { ReadStream, WriteStream } from "fs";
-import { RunnerMessageCode } from "../../types/node_modules/@scramjet/model/src";
+import { RunnerMessageCode } from "@scramjet/model";
 
 const test = require("ava");
 const controlMockStream = new PassThrough() as unknown as ReadStream;
