@@ -1,17 +1,19 @@
 
-import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { ReadableStream, WritableStream, AppConfig, Application, EncodedControlMessage } from "@scramjet/types";
+import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
+import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, PipeableStream } from "@scramjet/types";
 import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
-import { DataStream, StringStream } from "scramjet";
+import { from as scramjetStreamFrom, DataStream, PromiseTransform, StringStream } from "scramjet";
 import { RunnerAppContext } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
 import { getLogger } from "@scramjet/logger";
+import { Readable } from "stream";
 
-export class Runner {
+type MaybeArray<T> = T | T[];
+export class Runner<X extends AppConfig> {
     private emitter;
-    private context?: RunnerAppContext<any, any>;
+    private context?: RunnerAppContext<X, any>;
     private monitoringInterval?: NodeJS.Timeout;
     private monitorStream?: WritableStream<any>; //TODO change any to EncodedMonitoringMessage
     private loggerStream?: WritableStream<string>;
@@ -144,11 +146,7 @@ export class Runner {
         this.monitoringInterval = setInterval(() => {
             const message: MonitoringMessageData = { healthy: true };
 
-            if (this.context === undefined || this.context.monitor === undefined) {
-                throw new Error("Unrecognized message code: ");
-            }
-
-            this.context.monitor(message);
+            this.context?.monitor(message);
         }, data.monitoringRate);
     }
 
@@ -200,7 +198,7 @@ export class Runner {
          * but after the acknowledge message comes (PONG) and
          * before we start a Sequence.
          */
-        await this.initAppContext(data.appConfig);
+        await this.initAppContext(data.appConfig as X);
         // TODO: this needs to somehow error handled
         this.runSequence(data.arguments);
     }
@@ -224,12 +222,12 @@ export class Runner {
      *
      * @param config Configuration for App.
      */
-    initAppContext(config: AppConfig) {
+    initAppContext(config: X) {
         if (this.monitorStream === undefined) {
             throw new Error("Monitor Stream is not defined.");
         }
 
-        let runner = {
+        const runner = {
             keepAliveIssued: () => this.keepAliveIssued()
         };
 
@@ -240,8 +238,10 @@ export class Runner {
         MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
     }
 
-    getSequence(): Application {
-        return require(this.sequencePath).default;
+    getSequence(): ApplicationInterface[] {
+        const _sequence: MaybeArray<ApplicationFunction> = require(this.sequencePath).default;
+
+        return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
 
     /**
@@ -249,8 +249,11 @@ export class Runner {
      *
      * @param args {any[]} arguments that the app will be called with
      */
-    async runSequence(args: any[] = []) {
-        const sequence: any = this.getSequence();
+    async runSequence(args: any[] = []): Promise<void> {
+        if (!this.context)
+            throw new AppError("CONTEXT_NOT_INITIALIZED");
+
+        const sequence = this.getSequence();
 
         /**
         * @analyze-how-to-pass-in-out-streams
@@ -258,24 +261,52 @@ export class Runner {
         * await const outputStream = sequence.call(..);
         * This outputStreams needs to be piped to the
         * local Runner property outputStream (named fifo pipe).
+        *
+        * Pass the input stream to stream instead of creating new DataStream();
         */
-        await sequence.call(
-            this.context,
-            /**
-             * @analyze-how-to-pass-in-out-streams
-             * Input stream to the Sequence will be passed as an argument
-             * instead of
-             * new DataStream() as unknown as ReadableStream<never>
-             */
-            new DataStream() as unknown as ReadableStream<never>,
-            ...args
-        );
+        let stream = new DataStream() as unknown as ReadableStream<any>;
+        let itemsLeftInSequence = sequence.length;
+
+        for (const func of sequence) {
+            itemsLeftInSequence--;
+            const out: SynchronousStreamable<any> | void = await func.call(
+                this.context,
+                /**
+                 * @analyze-how-to-pass-in-out-streams
+                 * Input stream to the Sequence will be passed as an argument
+                 * instead of
+                 * new DataStream() as unknown as ReadableStream<never>
+                 */
+                stream,
+                ...args
+            );
+
+            if (!out) {
+                if (itemsLeftInSequence > 0) throw new AppError("SEQUENCE_ENDED_PREMATURE");
+            } else if (out instanceof PromiseTransform) {
+                stream = scramjetStreamFrom(out) as unknown as ReadableStream<any>;
+            } else {
+                // TODO: what if this is not a DataStream, but BufferStream stream
+                stream = DataStream.from(out as Readable) as unknown as ReadableStream<any>;
+            }
+        }
 
         /**
          * @analyze-how-to-pass-in-out-streams
          * We need to make sure to close input and output streams
          * after Sequence terminates.
+         *
+         * pipe the last `stream` value to output stream
+         * unless there is NO LAST STREAM
          */
         await this.cleanupControlStream();
     }
+
+    // private isPipeableStream<T extends any = any>(out: SynchronousStreamable<T>): out is PipeableStream<T> {
+    //     if (typeof out === "function")
+    //         return false;
+    //     const ref = out as PipeableStream<T>;
+
+    //     return typeof ref.pipe === "function" && typeof ref.read === "function";
+    // }
 }

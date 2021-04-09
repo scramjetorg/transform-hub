@@ -96,7 +96,7 @@ export class DelayedStream {
     }
 }
 
-type SynchronousStreamable<Produces> =
+export type SynchronousStreamable<Produces> =
     PipeableStream<Produces> | AsyncGen<Produces, Produces> |
     Gen<Produces, void> | Iterable<Produces> |
     AsyncIterable<Produces>;
