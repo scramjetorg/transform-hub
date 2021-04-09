@@ -189,7 +189,7 @@ class LifeCycleController {
                 const didTimeout = Symbol("res");
                 const timeout = message[1].timeout;
                 const canCallKeepalive = message[1].canCallKeepalive;
-                
+
                 await this.handleStop(timeout, canCallKeepalive);
                 await Promise.race([
                     endOfSequence,

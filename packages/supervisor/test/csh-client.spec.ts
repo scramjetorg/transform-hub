@@ -1,14 +1,27 @@
 /* eslint-disable dot-notation */
 import test from "ava";
+import { Socket } from "net";
+import { PassThrough } from "stream";
 import * as proxyquire from "proxyquire";
 import * as sinon from "sinon";
 
 let cshClient: any;
 let upstream: any;
 let createReadStreamStub = sinon.stub();
+let createConnectionStub = sinon.stub().returns(new Socket());
 let { CSHClient } = proxyquire("@scramjet/supervisor/src/lib/csh-client", {
     fs: {
         createReadStream: createReadStreamStub
+    },
+    net: {
+        createConnection: createConnectionStub
+    },
+    bpmux: {
+        BPMux: function() {
+            return {
+                multiplex: sinon.stub().returns(new PassThrough())
+            };
+        }
     }
 });
 

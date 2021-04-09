@@ -1,7 +1,7 @@
 /* eslint-disable */
 import test from "ava";
 import * as sinon from "sinon";
-import { CSHConnector, ICommunicationHandler, LifeCycle } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter } from "@scramjet/types";
 import { LifeCycleController } from "../src/lib/lifecycle-controller";
 import { Readable } from "stream";
 import { PassThrough } from "stream";
@@ -15,7 +15,7 @@ import { PassThrough } from "stream";
 
 let lcc: LifeCycleController;
 
-class LCDA implements LifeCycle {
+class LCDA implements ILifeCycleAdapter {
     snapshot  = sinon.stub()
     monitorRate  = sinon.stub()
     stop  = sinon.stub()
@@ -30,7 +30,7 @@ class LCDA implements LifeCycle {
 
 const stream = new Readable();
 
-class Client implements CSHConnector {
+class Client implements ICSHClient {
     PATH: string = "";
     init = sinon.stub().resolves();
     upstreamStreamsConfig = sinon.stub();
@@ -43,8 +43,8 @@ class Client implements CSHConnector {
 const streamHandlerInstance: ICommunicationHandler = {
     pipeStdio: sinon.stub(),
     pipeMessageStreams: sinon.stub(),
-    hookClientStreams: sinon.stub(),
-    hookLifecycleStreams: sinon.stub(),
+    hookUpstreamStreams: sinon.stub(),
+    hookDownstreamStreams: sinon.stub(),
     addMonitoringHandler: sinon.stub(),
     addControlHandler: sinon.stub(),
     pipeDataStreams: sinon.stub(),
