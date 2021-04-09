@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js",
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "packseq": "node ../../../scripts/packsequence.js"
   },
   "author": "",
   "license": "ISC",

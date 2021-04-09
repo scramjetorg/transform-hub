@@ -11,7 +11,8 @@
     "compile": "tsc -p tsconfig.json",
     "prepublishOnly": "yarn run build",
     "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "packseq": "node ../../../scripts/packsequence.js"
   },
   "engines": {
     "node": ">=10",

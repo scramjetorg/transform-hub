@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "mkdir -p dist/ && cp index.js dist/",
-    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js"
+    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js",
+    "packseq": "node ../../../scripts/packsequence.js"
   },
   "author": "",
   "license": "ISC",
