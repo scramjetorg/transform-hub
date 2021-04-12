@@ -1,12 +1,17 @@
 import { AppError as IAppError, AppErrorCode } from "@scramjet/types";
 
-// TODO: We need to sort out interface naming.
-export class AppError extends Error implements IAppError {
+type IAppErrorData = {
+    data?: any;
+}
 
+export class AppError extends Error implements IAppError, IAppErrorData {
     code: AppErrorCode;
+    data?: any;
 
     constructor(code: AppErrorCode) {
         super("Application Error Occured");
+
         this.code = code;
     }
 }
+

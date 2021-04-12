@@ -1,3 +1,4 @@
+import { SupervisorError } from "@scramjet/model";
 import * as Dockerode from "dockerode";
 import { PassThrough } from "stream";
 import {
@@ -130,9 +131,12 @@ export class DockerodeDockerHelper implements IDockerHelper {
     }
 
     async wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData> {
-        const { StatusCode, Error } = await this.dockerode.getContainer(container).wait(options);
+        const containerExitResult = await this.dockerode.getContainer(container).wait(options);
 
-        // TODO: why are we resolving on an error - maybe just throw?
-        return { statusCode: StatusCode, error: Error };
+        if (containerExitResult.Error) {
+            throw new SupervisorError("RUNNER_ERROR", { exitCode: containerExitResult.StatusCode });
+        }
+
+        return { statusCode: containerExitResult.StatusCode };
     }
 }

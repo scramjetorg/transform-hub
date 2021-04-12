@@ -1,4 +1,4 @@
-import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
+import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, HostError, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
 import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler } from "@scramjet/types";
 import { ReadStream } from "fs";
 import * as os from "os";
@@ -101,7 +101,7 @@ export class HostOne {
         ];
 
         this.controlDataStream.JSONStringify()
-            .pipe(this.upStreams[3] as unknown as WritableStream<EncodedControlMessage>);
+            .pipe(this.upStreams[CommunicationChannel.CONTROL] as unknown as WritableStream<EncodedControlMessage>);
 
         this.communicationHandler.hookUpstreamStreams(this.upStreams);
         this.communicationHandler.hookDownstreamStreams(this.downStreams);
@@ -125,7 +125,7 @@ export class HostOne {
 
             this.logHistory?.pipe(process.stdout);
         } else {
-            throw new Error("Log stream not initialized");
+            throw new HostError("UNINITIALIZED_STREAM", "log");
         }
     }
 
@@ -232,7 +232,7 @@ export class HostOne {
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
         } else {
-            throw new Error("Control stream not initialized");
+            throw new HostError("UNINITIALIZED_STREAM", "control");
         }
     }
 

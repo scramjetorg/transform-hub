@@ -101,7 +101,6 @@ export type DockerAdapterStreams = {
 };
 
 export type ExitData = {
-    error: Error,
     statusCode: ExitCode
 }
 

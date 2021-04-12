@@ -1,6 +1,6 @@
 /* eslint-disable dot-notation */
 import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig } from "@scramjet/types";
-import { CommunicationChannel } from "@scramjet/model";
+import { CommunicationChannel, SupervisorError } from "@scramjet/model";
 import * as net from "net";
 import { Duplex, PassThrough, Readable } from "stream";
 
@@ -39,7 +39,7 @@ class CSHClient implements ICSHClient {
     connect(): Promise<void> {
         return new Promise((resolve) => {
             if (!this.streams) {
-                throw new Error("Upstreams not initated.");
+                throw new SupervisorError("UNINITIALIZED_STREAMS");
             }
 
             this.connection = net.createConnection({
@@ -109,7 +109,7 @@ class CSHClient implements ICSHClient {
 
     hookCommunicationHandler(communicationHandler: ICommunicationHandler) {
         if (typeof this.upstreamStreamsConfig() === "undefined") {
-            throw new Error("Upstreams not initated.");
+            throw new SupervisorError("UNINITIALIZED_STREAMS", { details: "CSHClient" });
         }
 
         communicationHandler.hookUpstreamStreams(this.upstreamStreamsConfig());

@@ -1,5 +1,5 @@
 import { MaybePromise } from "./utils";
-import { AppError, AppErrorConstructor } from "./app-error";
+import { AppError, AppErrorConstructor } from "./error-codes/app-error";
 import { AppConfig } from "./application";
 import { FunctionDefinition } from "./runner";
 import { MonitoringMessageFromRunnerData } from "@scramjet/model";

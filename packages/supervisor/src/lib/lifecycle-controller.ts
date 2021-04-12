@@ -106,6 +106,7 @@ class LifeCycleController {
                 this.lifecycleAdapter.init(),
                 this.client.init()
             ]);
+
             // TODO: all other components may have init stuff, so Promise.all their inits.
 
             // TODO: we need to align stream types here
@@ -161,6 +162,7 @@ class LifeCycleController {
                     new Promise(res => setTimeout(() => res(didTimeout), 2000)) // where to config this?
                 ])
                     .then(val => val === didTimeout ? this.lifecycleAdapter.kill() : null);
+
                 return message;
             });
 
@@ -196,6 +198,7 @@ class LifeCycleController {
                     new Promise(res => setTimeout(() => res(didTimeout), 1000))
                 ])
                     .then(val => val === didTimeout ? this.lifecycleAdapter.stop(timeout, canCallKeepalive) : null);
+
                 return message;
             });
 

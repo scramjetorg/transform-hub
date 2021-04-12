@@ -1,7 +1,7 @@
 import { deserializeMessage, serializeMessage } from "./messages-utils";
 export const MessageUtilities = { serializeMessage, deserializeMessage };
 export { MessageDataType, MessageType } from "@scramjet/types";
-export { AppError } from "./app-error";
+export * from "./errors/";
 export * from "./get-message";
 export * from "./messages-utils";
 export * from "./messages/acknowledge";

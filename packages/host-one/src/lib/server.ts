@@ -1,5 +1,5 @@
 import { DownstreamStreamsConfig } from "@scramjet/types";
-import { CommunicationChannel } from "@scramjet/model";
+import { CommunicationChannel, HostError } from "@scramjet/model";
 import { PathLike } from "fs";
 import * as net from "net";
 import { PassThrough, Writable } from "stream";
@@ -46,10 +46,10 @@ export class SocketServer {
                 stream.pipe(this.streams[CommunicationChannel.LOG] as PassThrough);
                 break;
             default:
-                throw new Error("Unknown channel");
+                throw new HostError("UNKNOWN_CHANNEL");
             }
         } else {
-            throw new Error("Streams not attached");
+            throw new HostError("UNATTACHED_STREAMS");
         }
     }
 

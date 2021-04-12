@@ -1,5 +1,5 @@
 import { imageConfig } from "@scramjet/csi-config";
-import { AppError } from "@scramjet/model";
+import { SupervisorError } from "@scramjet/model";
 import { ICommunicationHandler } from "@scramjet/types";
 import {
     DelayedStream,
@@ -196,14 +196,14 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
             typeof this.controlFifoPath === "undefined" ||
             typeof this.loggerFifoPath === "undefined"
         ) {
-            throw new AppError("SEQUENCE_RUN_BEFORE_INIT");
+            throw new SupervisorError("SEQUENCE_RUN_BEFORE_INIT");
         }
 
         this.monitorStream.run(createReadStream(this.monitorFifoPath));
         this.controlStream.run(createWriteStream(this.controlFifoPath));
         this.loggerStream.run(createReadStream(this.loggerFifoPath));
 
-        return new Promise(async (resolve, reject) => {
+        return new Promise(async (resolve) => {
             const { streams, containerId } = await this.dockerHelper.run({
                 imageName: this.imageConfig.runner || "",
                 volumes: [
@@ -220,17 +220,13 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
 
-            const { error, statusCode } = await this.dockerHelper.wait(containerId, { condition: "removed" });
+            const { statusCode } = await this.dockerHelper.wait(containerId, { condition: "removed" });
 
             console.log(
                 "Runner container finished with exit code", statusCode
             );
 
-            if (error) {
-                reject(statusCode);
-            } else {
-                resolve(statusCode);
-            }
+            resolve(statusCode);
         });
     }
 

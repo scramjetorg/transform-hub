@@ -1,6 +1,6 @@
-
-import { AppError, EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
+import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerError, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
 import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable } from "@scramjet/types";
+
 import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { createReadStream, createWriteStream } from "fs";
@@ -134,7 +134,7 @@ export class Runner<X extends AppConfig> {
                 { out: this.loggerStream, err: this.loggerStream }
             );
         } else {
-            throw new Error("Logger streams not initialized");
+            throw new RunnerError("UNINITIALIZED_STREAMS");
         }
     }
 
@@ -150,7 +150,11 @@ export class Runner<X extends AppConfig> {
         this.monitoringInterval = setInterval(() => {
             const message: MonitoringMessageData = { healthy: true };
 
-            this.context?.monitor(message);
+            if (this.context === undefined || this.context.monitor === undefined) {
+                throw new RunnerError("NO_MONITORING");
+            }
+
+            this.context.monitor(message);
         }, data.monitoringRate);
     }
 
@@ -163,7 +167,7 @@ export class Runner<X extends AppConfig> {
 
     async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
         if (!this.context) {
-            throw new Error("Context undefined.");
+            throw new RunnerError("UNINITIALIZED_CONTEXT");
         }
 
         this.keepAliveRequested = false;
@@ -182,8 +186,7 @@ export class Runner<X extends AppConfig> {
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }],
-                this.monitorStream
+                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream
             );
             //TODO add save, cleaning etc when implemented
         }
@@ -228,7 +231,7 @@ export class Runner<X extends AppConfig> {
      */
     initAppContext(config: X) {
         if (this.monitorStream === undefined) {
-            throw new Error("Monitor Stream is not defined.");
+            throw new RunnerError("UNINITIALIZED_STREAMS", "Monitoring");
         }
 
         const runner = {
@@ -257,7 +260,7 @@ export class Runner<X extends AppConfig> {
      */
     async runSequence(args: any[] = []): Promise<void> {
         if (!this.context)
-            throw new AppError("CONTEXT_NOT_INITIALIZED");
+            throw new RunnerError("UNINITIALIZED_CONTEXT");
 
         const sequence = this.getSequence();
 
@@ -288,7 +291,7 @@ export class Runner<X extends AppConfig> {
             );
 
             if (!out) {
-                if (itemsLeftInSequence > 0) throw new AppError("SEQUENCE_ENDED_PREMATURE");
+                if (itemsLeftInSequence > 0) throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
             } else if (typeof out === "object" && out instanceof PromiseTransform) {
                 stream = scramjetStreamFrom(out) as unknown as ReadableStream<any>;
             } else {

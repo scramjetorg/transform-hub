@@ -1,0 +1,2 @@
+export type HostErrorCode =
+    "UNINITIALIZED_STREAM" | "UNATTACHED_STREAMS" | "UNKNOWN_CHANNEL"

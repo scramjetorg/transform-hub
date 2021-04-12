@@ -4,7 +4,7 @@ import { CSHClient } from "../lib/csh-client";
 import { LifeCycleController } from "../lib/lifecycle-controller";
 import * as path from "path";
 import * as fs from "fs";
-
+import { SupervisorError } from "@scramjet/model";
 
 /**
  *
@@ -16,9 +16,7 @@ import * as fs from "fs";
  * In the event of error, the stack trace is consoled out and the process exits.
  **/
 
-
 (async () => {
-
     // In the future it will be configurable.
     const config: LifeCycleConfig = {
         makeSnapshotOnError: false
@@ -27,15 +25,16 @@ import * as fs from "fs";
     const socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
 
     if (!fs.existsSync(socketPath)) {
-        console.error("Incorrect run argument: socket path (" + socketPath + ") does not exists. ");
-        process.exit(1);
+        throw new SupervisorError("INVALID_CONFIGURATION", { details: "Missing file " + socketPath });
     }
+
     const cshc: CSHClient = new CSHClient(socketPath);
     const lcc: LifeCycleController = new LifeCycleController(lcda, config, cshc);
 
     await lcc.main();
-
 })().catch(e => {
     console.error(e.stack);
     process.exitCode = e.exitCode || 10;
+
+    throw new SupervisorError("GENERAL_ERROR", { exitCode: e.exitCode });
 });
