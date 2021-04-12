@@ -7,7 +7,7 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
      * @param _stream - dummy input
      * @returns data
      */
-    function(_stream) {
+    async function(_stream) {
         const data = this.initialState;
 
         let x = data?.x || 0;
@@ -24,6 +24,7 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
      * @param stream - internal stream
      */
     async function(stream) {
+        console.log("func 2 stream TODELETE: ", stream);
         let x = 0;
 
         this.handleStop(() => {
@@ -33,7 +34,8 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
             x = a;
             console.log({ x });
         }
+        console.log("func 2 end");
     }
 ];
 
-export = exp;
+export default exp;

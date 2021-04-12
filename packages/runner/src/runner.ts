@@ -91,6 +91,10 @@ export class Runner<X extends AppConfig> {
 
     async hookupControlStream() {
         this.controlStream = createReadStream(this.controlFifoPath);
+        this.defineControlStream();
+    }
+
+    async defineControlStream() {
         StringStream
             .from(this.controlStream)
             .JSONParse()
@@ -239,8 +243,13 @@ export class Runner<X extends AppConfig> {
     }
 
     getSequence(): ApplicationInterface[] {
-        const _sequence: MaybeArray<ApplicationFunction> = require(this.sequencePath).default;
-
+        let _sequence: MaybeArray<ApplicationFunction> = require(this.sequencePath).default;
+        //TODO if default then default if not then has own property..
+        // let _sequence: MaybeArray<ApplicationFunction> | { default: MaybeArray<ApplicationFunction> } = require(this.sequencePath);
+        // if (_sequence.default) {
+        //     _sequence = _sequence.default;
+        // }
+     
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
 
@@ -256,18 +265,19 @@ export class Runner<X extends AppConfig> {
         const sequence = this.getSequence();
 
         /**
-        * @analyze-how-to-pass-in-out-streams
-        * Output stream will be returned from the Sequence:
-        * await const outputStream = sequence.call(..);
-        * This outputStreams needs to be piped to the
-        * local Runner property outputStream (named fifo pipe).
-        *
-        * Pass the input stream to stream instead of creating new DataStream();
-        */
+         * @analyze-how-to-pass-in-out-streams
+         * Output stream will be returned from the Sequence:
+         * await const outputStream = sequence.call(..);
+         * This outputStreams needs to be piped to the
+         * local Runner property outputStream (named fifo pipe).
+         *
+         * Pass the input stream to stream instead of creating new DataStream();
+         */
         let stream = new DataStream() as unknown as ReadableStream<any>;
         let itemsLeftInSequence = sequence.length;
 
         for (const func of sequence) {
+            console.log("func TODELETE: " + func);
             itemsLeftInSequence--;
             const out: SynchronousStreamable<any> | void = await func.call(
                 this.context,
@@ -281,9 +291,11 @@ export class Runner<X extends AppConfig> {
                 ...args
             );
 
+            console.log("out TODELETE" + out);
+
             if (!out) {
                 if (itemsLeftInSequence > 0) throw new AppError("SEQUENCE_ENDED_PREMATURE");
-            } else if (out instanceof PromiseTransform) {
+            } else if (typeof out === "object" && out instanceof PromiseTransform) {
                 stream = scramjetStreamFrom(out) as unknown as ReadableStream<any>;
             } else {
                 // TODO: what if this is not a DataStream, but BufferStream stream
