@@ -16,7 +16,7 @@
     "clean:modules": "find -name node_modules -prune -exec rm -rf {} ';' 2> /dev/null",
     "clean": "lerna run clean && yarn clean:root",
     "prepack": "lerna run prepack",
-    "packseq": "lerna run pack",
+    "packseq": "lerna run packseq",
     "lint": "eslint . --ext .ts",
     "lint:dedupe": "scripts/dedupe.js",
     "watch": "lerna run watch",

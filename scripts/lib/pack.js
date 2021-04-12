@@ -1,6 +1,6 @@
 const path = require("path");
 const tar = require("tar");
-const { createWriteStream } = require("fs");
+const { createWriteStream, readdirSync } = require("fs");
 
 class Pack {
     PACKAGES_DIR = "packages";
@@ -13,23 +13,18 @@ class Pack {
         }
 
         this.currDir = process.cwd();
-        this.rootDir = path.resolve(__dirname, "../..");
-        this.currDirDist = path.join(this.currDir, "dist");
         this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
-
     }
 
-    async pack(){
-        const outputTar = this.currDir+".tar.gz";
-        const sourceDir = this.currDirDist;
-        // tar -zcvf transform-sequence-3.tar.gz  dist/reference-apps/transform-sequence-3
-        
-        tar.c( 
+    async pack() {
+        const outputTar = this.currDir + ".tar.gz";
+
+        tar.c(
             {
-              gzip: true
-            },
-            [sourceDir]
-          ).pipe(createWriteStream(outputTar));
+                gzip: true,
+                cwd: this.rootDistPackPath
+            }, readdirSync(this.rootDistPackPath)
+        ).pipe(createWriteStream(outputTar));
     }
 }
 
