@@ -1,0 +1,41 @@
+{
+    "name": "@scramjet/template",
+    "version": "0.7.0-pre.1",
+    "description": "Package template",
+    "main": "./src/index.ts",
+    "scripts": {
+        "start": "ts-node ./src/index",
+        "build": "tsc -p tsconfig.build.json",
+        "clean": "rm -rf ./dist",
+        "watch": "tsc -b --watch",
+        "test": "npm run test:ava",
+        "test:ava": "ava",
+        "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
+    },
+    "author": "Scramjet <open-source@scramjet.org>",
+    "license": "AGPL-3.0",
+    "dependencies": {},
+    "devDependencies": {
+        "@types/node": "14.14.33",
+        "ava": "^3.15.0",
+        "ts-node": "^9.1.1",
+        "typedoc": "0.20.28",
+        "typedoc-plugin-markdown": "3.4.5",
+        "typescript": "4.1.4"
+    },
+    "ava": {
+        "extensions": [
+            "ts"
+        ],
+        "files": [
+            "**/*.spec.ts"
+        ],
+        "require": [
+            "ts-node/register"
+        ]
+    },
+    "publishConfig": {
+        "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+        "access": "restricted"
+    }
+}
