@@ -17,7 +17,7 @@ Given("input file containing data {string}", async (filename) => {
 
 When("scramjet server porcesses input file as a stream", async () => {
     await new Promise(async (resolve) => {
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} ${outputFile} > dataOut.txt`, { timeout: 2000 }, (error) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} ${outputFile} > dataOut.txt`, { timeout: 20000 }, (error) => {
             if (error) {
                 //kill sequence workaround to delete in the future
                 resolve(1);
@@ -32,7 +32,7 @@ Then("file {string} is generated", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${filename}`), true);
 });
 
-Then("file {string} in each line contains {string} followed by name from file {string} finished by {string}", (file1, greeting, file2, suffix) => {
+Then("file {string} in each line contains {string} followed by name from file {string} finished by {string}", async (file1, greeting, file2, suffix) => {
     const output = new lineByLine(`${file1}`);
 
     let input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
@@ -40,11 +40,15 @@ Then("file {string} in each line contains {string} followed by name from file {s
     let line2;
     let i = 0;
 
-    output.next();//skipp first line with "Checking data"
-    output.next();//skipp second line with "[HostOne][Server] Started at /tmp/2903117"
+    output.next();//skip first line with "Checking data"
+    output.next();//skip second line with "[HostOne][Server] Started at /tmp/2903117"
+
+    await new Promise(res => setTimeout(res, 10000));
+
     for (i = 0; i < input.length && (line2 = output.next()); i++) {
         line1 = input[i].name;
         assert.deepEqual(greeting + line1 + suffix, "" + line2);
     }
+
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
