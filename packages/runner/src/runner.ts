@@ -244,9 +244,9 @@ export class Runner<X extends AppConfig> {
 
     getSequence(): ApplicationInterface[] {
         const sequenceFromFile = require(this.sequencePath);
-        const _sequence: MaybeArray<ApplicationFunction> = 
-            sequenceFromFile.hasOwnProperty("default")?sequenceFromFile.default:sequenceFromFile;
-        
+        const _sequence: MaybeArray<ApplicationFunction> =
+            sequenceFromFile.hasOwnProperty("default") ? sequenceFromFile.default : sequenceFromFile;
+
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
 

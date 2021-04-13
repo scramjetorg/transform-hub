@@ -21,9 +21,6 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(1);
 }
 
-const sequenceAppConfig: AppConfig = process.env.APP_CONFIG?JSON.parse(process.env.APP_CONFIG):{};
-const sequenceArgs: string[] | undefined = process.env.APP_ARGUMENTS?.split(" ");
-
 /**
  * Start local runner script.
  * 
@@ -32,6 +29,8 @@ const sequenceArgs: string[] | undefined = process.env.APP_ARGUMENTS?.split(" ")
  * SEQUENCE_PATH=dist/samples/example APP_ARGUMENTS="dist/samples/example/data.json output.txt"  node dist/runner/bin/start-runner-local.js
  */
 
+const sequenceAppConfig: AppConfig = process.env.APP_CONFIG ? JSON.parse(process.env.APP_CONFIG) : {};
+const sequenceArgs: string[] | undefined = process.env.APP_ARGUMENTS?.split(" ");
 const runner: Runner<AppConfig> = new Runner(sequencePath, "fakeFifosPath");
 
 runner.hookupControlStream = async () => {
