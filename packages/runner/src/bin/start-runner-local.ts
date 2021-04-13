@@ -21,11 +21,15 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(1);
 }
 
+const sequenceAppConfig: AppConfig = process.env.APP_CONFIG?JSON.parse(process.env.APP_CONFIG):{};
+const sequenceArgs: string[] | undefined = process.env.APP_ARGUMENTS?.split(" ");
+
 /**
  * Start local runner script.
  * 
  * Usage example:
- * SEQUENCE_PATH=/dist/reference-apps/inert-sequence-2/index.js node start-runner-local.js
+ * SEQUENCE_PATH=dist/reference-apps/inert-sequence-2/index.js node start-runner-local.js
+ * SEQUENCE_PATH=dist/samples/example APP_ARGUMENTS="dist/samples/example/data.json output.txt"  node dist/runner/bin/start-runner-local.js
  */
 
 const runner: Runner<AppConfig> = new Runner(sequencePath, "fakeFifosPath");
@@ -43,7 +47,8 @@ runner.main();
 
 const pongMsg: HandshakeAcknowledgeMessage = {
     msgCode: RunnerMessageCode.PONG,
-    appConfig: {}
+    appConfig: sequenceAppConfig,
+    arguments: sequenceArgs
 };
 
 runner.handleReceptionOfHandshake(pongMsg);

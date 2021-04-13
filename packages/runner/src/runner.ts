@@ -243,13 +243,10 @@ export class Runner<X extends AppConfig> {
     }
 
     getSequence(): ApplicationInterface[] {
-        let _sequence: MaybeArray<ApplicationFunction> = require(this.sequencePath).default;
-        //TODO if default then default if not then has own property..
-        // let _sequence: MaybeArray<ApplicationFunction> | { default: MaybeArray<ApplicationFunction> } = require(this.sequencePath);
-        // if (_sequence.default) {
-        //     _sequence = _sequence.default;
-        // }
-     
+        const sequenceFromFile = require(this.sequencePath);
+        const _sequence: MaybeArray<ApplicationFunction> = 
+            sequenceFromFile.hasOwnProperty("default")?sequenceFromFile.default:sequenceFromFile;
+        
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
 
