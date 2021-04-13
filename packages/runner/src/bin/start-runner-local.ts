@@ -57,7 +57,7 @@ runner.hookupLoggerStream = async () => {
         arguments: sequenceArgs
     };
 
-    runner.handleReceptionOfHandshake(pongMsg);
+    await runner.handleReceptionOfHandshake(pongMsg);
 
     await ref;
 })()

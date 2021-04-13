@@ -24,7 +24,6 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
      * @param stream - internal stream
      */
     async function(stream) {
-        console.log("func 2 stream TODELETE: ", stream);
         let x = 0;
 
         this.handleStop(() => {
