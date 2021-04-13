@@ -1,20 +1,19 @@
 #!/usr/bin/env node
+/* eslint-disable dot-notation */
 
 import { Runner } from "../runner";
-import { AppConfig } from "@scramjet/types";
 import { stdout, stdin } from "process";
 import * as fs from "fs";
 import * as path from "path";
 import { HandshakeAcknowledgeMessage, RunnerMessageCode } from "@scramjet/model";
-
-const rootDir = path.resolve(__dirname, "../../..");
+import { AppConfig } from "@scramjet/types";
 
 if (!process.env.SEQUENCE_PATH) {
     console.error("Missing SEQUENCE_PATH!");
     process.exit(1);
 }
 
-const sequencePath: string = path.join(rootDir, process.env.SEQUENCE_PATH);
+const sequencePath: string = path.resolve(process.cwd(), process.env.SEQUENCE_PATH);
 
 if (!fs.existsSync(sequencePath)) {
     console.error("Incorrect run argument: sequence path (" + sequencePath + ") does not exists. ");
@@ -23,10 +22,14 @@ if (!fs.existsSync(sequencePath)) {
 
 /**
  * Start local runner script.
- * 
+ *
  * Usage example:
- * SEQUENCE_PATH=dist/reference-apps/inert-sequence-2/index.js node start-runner-local.js
- * SEQUENCE_PATH=dist/samples/example APP_ARGUMENTS="dist/samples/example/data.json output.txt"  node dist/runner/bin/start-runner-local.js
+ *
+ * SEQUENCE_PATH=dist/reference-apps/inert-sequence-2/index.js \
+    node dist/runner/bin/start-runner-local.js
+ *
+ * SEQUENCE_PATH=dist/samples/example APP_ARGUMENTS="dist/samples/example/data.json output.txt" \
+ *     node dist/runner/bin/start-runner-local.js
  */
 
 const sequenceAppConfig: AppConfig = process.env.APP_CONFIG ? JSON.parse(process.env.APP_CONFIG) : {};
@@ -42,12 +45,24 @@ runner.hookupMonitorStream = async () => {
     runner["monitorStream"] = stdout;
 };
 
-runner.main();
-
-const pongMsg: HandshakeAcknowledgeMessage = {
-    msgCode: RunnerMessageCode.PONG,
-    appConfig: sequenceAppConfig,
-    arguments: sequenceArgs
+runner.hookupLoggerStream = async () => {
+    runner["loggerStream"] = stdout;
 };
 
-runner.handleReceptionOfHandshake(pongMsg);
+(async () => {
+    const ref = runner.main();
+    const pongMsg: HandshakeAcknowledgeMessage = {
+        msgCode: RunnerMessageCode.PONG,
+        appConfig: sequenceAppConfig,
+        arguments: sequenceArgs
+    };
+
+    runner.handleReceptionOfHandshake(pongMsg);
+
+    await ref;
+})()
+    .catch(e => {
+        console.error(e.stack);
+        process.exitCode = 11;
+    });
+
