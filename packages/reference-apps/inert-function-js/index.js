@@ -17,7 +17,7 @@ module.exports = async function(_stream) {
 
     this.handleStop(() => this.save({ x }));
 
-    while (x++) {
+    while (++x) {
         console.log({ current: x });
         await new Promise(res => setTimeout(res, 1000));
     }

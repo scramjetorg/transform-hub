@@ -15,7 +15,7 @@ export = async function(_stream) {
         this.save({ x });
     });
 
-    while (x++) {
+    while (++x) {
         console.log({ current: x });
         await new Promise(res => setTimeout(res, 1000));
     }

@@ -16,7 +16,7 @@ const exp: [
         let x = data?.x || 0;
 
         return async function*() {
-            while (x++) {
+            while (++x) {
                 yield { a: x };
                 await new Promise(res => setTimeout(res, 1000));
             }
