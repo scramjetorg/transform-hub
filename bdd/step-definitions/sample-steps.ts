@@ -50,3 +50,7 @@ Then("file {string} in each line contains {string} followed by name from file {s
 
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
+
+When('wait {string} ms', async function (timeoutMs) {
+    await new Promise(res => setTimeout(res, timeoutMs));
+});
