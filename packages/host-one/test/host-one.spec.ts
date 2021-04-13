@@ -180,7 +180,6 @@ test("Vorpal should not execute controlStream when proper params in 'monitor' co
     /* eslint-disable dot-notation */
     const conStream = sinon.spy(hostOne["controlDataStream"] as DataStream, "whenWrote");
 
-    hostOne.init(packageStream, appConfig, ["arg1", "arg2"]);
     hostOne["vorpal"] = new vorpal();
     hostOne.controlStreamsCliHandler();
     hostOne.vorpalExec("monitor");

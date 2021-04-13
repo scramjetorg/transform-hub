@@ -65,6 +65,8 @@ test("Stop sequence", async (t: any) => {
     await new Promise(resolve => setTimeout(resolve, 200));
 
     t.true(
-        writeMessageOnStreamMock.calledOnceWith([RunnerMessageCode.SEQUENCE_STOPPED, {}], runner.monitorStream)
+        writeMessageOnStreamMock.calledOnceWith(
+            [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: undefined }], runner.monitorStream
+        )
     );
 });

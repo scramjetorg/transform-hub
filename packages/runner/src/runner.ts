@@ -30,6 +30,8 @@ export class Runner {
      */
     private sequencePath: string;
     private keepAliveRequested?: boolean;
+
+    // @ts-ignore
     private logger?: Console;
 
     constructor(sequencePath: string, fifosPath: string) {
@@ -127,8 +129,6 @@ export class Runner {
         } else {
             throw new Error("Logger streams not initialized");
         }
-
-        this.logger.log("Logger initialized!");
     }
 
     handleForceConfirmAliveRequest() {
@@ -178,7 +178,9 @@ export class Runner {
         }
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
-            MessageUtils.writeMessageOnStream([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream);
+            MessageUtils.writeMessageOnStream(
+                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream
+            );
             //TODO add save, cleaning etc when implemented
         }
     }

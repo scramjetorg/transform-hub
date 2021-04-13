@@ -51,7 +51,8 @@ const streamHandlerInstance: ICommunicationHandler = {
     monitoringOutput: new PassThrough,
     controlOutput: new PassThrough,
     sendMonitoringMessage: sinon.stub(),
-    sendControlMessage: sinon.stub()
+    sendControlMessage: sinon.stub(),
+    getStdio: sinon.stub()
 }
 
 let lcdaInstance = new LCDA();
