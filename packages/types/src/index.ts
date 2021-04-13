@@ -4,7 +4,6 @@ export * from "./app-context";
 export * from "./application";
 export * from "./communication-handler";
 export * from "./csh-connector";
-export * from "./error-codes";
 export * from "./functions";
 export * from "./lifecycle";
 export * from "./message-streams";
