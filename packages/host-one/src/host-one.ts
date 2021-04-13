@@ -121,7 +121,6 @@ export class HostOne {
         if (this.upStreams && this.upStreams[CommunicationChannel.LOG]) {
             this.logHistory = StringStream
                 .from(this.upStreams[CommunicationChannel.LOG] as unknown as Readable)
-                .lines()
                 .keep(1000); // TODO: config
 
             this.logHistory?.pipe(process.stdout);

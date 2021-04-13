@@ -125,3 +125,5 @@ bdd/*report*.html
 
 # pre-runner sample-package
 packages/pre-runner/sample-package/
+
+bdd/dataOut.txt

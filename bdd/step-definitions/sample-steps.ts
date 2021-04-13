@@ -15,12 +15,12 @@ Given("input file containing data {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
-When("scramjet server porcesses input file as a stream", async () => {
-    await new Promise(async (resolve) => {
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} ${outputFile} > dataOut.txt`, { timeout: 20000 }, (error) => {
+When("scramjet server porcesses input file as a stream", { timeout: 60000 }, async () => {
+    await new Promise(async (resolve, reject) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} ${outputFile} > dataOut.txt`, { timeout: 60000 }, (error) => {
             if (error) {
                 //kill sequence workaround to delete in the future
-                resolve(1);
+                reject(error);
                 return;
             }
             resolve(1);
@@ -42,8 +42,6 @@ Then("file {string} in each line contains {string} followed by name from file {s
 
     output.next();//skip first line with "Checking data"
     output.next();//skip second line with "[HostOne][Server] Started at /tmp/2903117"
-
-    await new Promise(res => setTimeout(res, 10000));
 
     for (i = 0; i < input.length && (line2 = output.next()); i++) {
         line1 = input[i].name;
