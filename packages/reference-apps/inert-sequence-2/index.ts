@@ -33,7 +33,6 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
             x = a;
             console.log({ x });
         }
-        console.log("func 2 end");
     }
 ];
 
