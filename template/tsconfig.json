@@ -12,6 +12,6 @@
     ],
     "typedocOptions": {
         "entryPoints": ["index.ts"],
-        "out": "../../docs/model"
+        "out": "../../docs/template"
     }
 }
