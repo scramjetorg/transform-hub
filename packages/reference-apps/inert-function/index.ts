@@ -15,8 +15,8 @@ export = async function(_stream) {
         this.save({ x });
     });
 
-    while (++x) {
-        console.log({ current: x });
+    while (++x < 5) {
+        console.log({ x: x });
         await new Promise(res => setTimeout(res, 1000));
     }
 } as InertApp<[], {x: number}>;

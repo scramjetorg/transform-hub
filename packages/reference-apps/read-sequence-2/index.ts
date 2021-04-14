@@ -16,7 +16,7 @@ const exp: [
         let x = data?.x || 0;
 
         return async function*() {
-            while (++x) {
+            while (++x < 5) {
                 yield { a: x };
                 await new Promise(res => setTimeout(res, 1000));
             }
@@ -32,6 +32,7 @@ const exp: [
             for await (let { a } of stream) {
                 yield { b: a };
                 x = a;
+                console.log({ x });
             }
         };
     }

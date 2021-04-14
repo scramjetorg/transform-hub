@@ -1,5 +1,4 @@
 let common = [
-    "features/**/*.feature",
     "--require step-definitions/**/*.ts",
     "--require-module ts-node/register",
     "--publish-quiet",

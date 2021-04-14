@@ -2,11 +2,12 @@
 /* eslint-disable dot-notation */
 
 import { Runner } from "../runner";
-import { stdout, stdin } from "process";
+import { stdout } from "process";
 import * as fs from "fs";
 import * as path from "path";
 import { HandshakeAcknowledgeMessage, RunnerMessageCode } from "@scramjet/model";
 import { AppConfig } from "@scramjet/types";
+import { PassThrough } from "stream";
 
 if (!process.env.SEQUENCE_PATH) {
     console.error("Missing SEQUENCE_PATH!");
@@ -37,12 +38,12 @@ const sequenceArgs: string[] | undefined = process.env.APP_ARGUMENTS?.split(" ")
 const runner: Runner<AppConfig> = new Runner(sequencePath, "fakeFifosPath");
 
 runner.hookupControlStream = async () => {
-    runner["controlStream"] = stdin;
+    runner["controlStream"] = new PassThrough();
     runner.defineControlStream();
 };
 
 runner.hookupMonitorStream = async () => {
-    runner["monitorStream"] = stdout;
+    runner["monitorStream"] = new PassThrough();
 };
 
 runner.hookupLoggerStream = async () => {

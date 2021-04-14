@@ -6,20 +6,19 @@ import * as fs from "fs";
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
-const packagePath = "../packages/pre-runner/sample-package/package.tar.gz";
+const packagePath = "../packages/samples/example.tar.gz";
 const packageJson = "../package.json";
 const packageData = "/package/data.json";
-const outputFile = "output.txt";
 
 Given("input file containing data {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
-When("scramjet server porcesses input file as a stream", { timeout: 60000 }, async () => {
+When("scramjet server porcesses input file as a stream", { timeout: 20000 }, async () => {
     await new Promise(async (resolve, reject) => {
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} ${outputFile} > dataOut.txt`, { timeout: 60000 }, (error) => {
+        console.log(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} > dataOut.test.result.txt`);
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} > dataOut.test.result.txt`, { timeout: 20000 }, (error) => {
             if (error) {
-                //kill sequence workaround to delete in the future
                 reject(error);
                 return;
             }
@@ -51,6 +50,6 @@ Then("file {string} in each line contains {string} followed by name from file {s
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-When("wait {string} ms", async function (timeoutMs) {
+When("wait {string} ms", async (timeoutMs) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });

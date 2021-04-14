@@ -120,10 +120,14 @@ dist
 
 # scramjet specific
 .work/
+
 # bdd
 bdd/*report*.html
+bdd/*.test.result.txt
 
 # pre-runner sample-package
 packages/pre-runner/sample-package/
 
-bdd/dataOut.txt
+# sample packages
+packages/samples/*.tar.gz
+packages/reference-apps/*.tar.gz

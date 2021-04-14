@@ -19,8 +19,9 @@ const exp: [
         });
 
         return async function*() {
-            while (++x) {
+            while (++x < 5) {
                 yield { a: x };
+                console.log({ x });
                 await new Promise(res => setTimeout(res, 1000));
             }
         };
