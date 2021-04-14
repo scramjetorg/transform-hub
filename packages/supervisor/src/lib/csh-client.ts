@@ -67,16 +67,6 @@ class CSHClient implements ICSHClient {
                 channel.on("error", (e) => this.logger.warn(e.stack));
             });
 
-            /**
-             * @analyze-how-to-pass-in-out-streams
-             * In UpstreamStreamsConfig streams:
-             * input?: WritableStream - an input stream transporting data for processing to the Sequence
-             * output?: ReadableStream - an output stream transporting data processed by the Sequence
-             * Both of these steams must be piped here to the corresponding socket channels.
-             * Additional stream is added to transport the package.
-             * This stream should be closed when the package is received.
-             */
-
             this.connectionChannels[CommunicationChannel.STDIN].pipe(this.streams[CommunicationChannel.STDIN]);
             this.connectionChannels[CommunicationChannel.CONTROL].pipe(this.streams[CommunicationChannel.CONTROL]);
             this.connectionChannels[CommunicationChannel.PACKAGE].pipe(this.packageStream);

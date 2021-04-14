@@ -60,7 +60,7 @@ test("Init should reject on read file error.", async (t) => {
     await t.throwsAsync(lcda.init());
 });
 
-test("CreateFifoStreams should create monitor, control and logger streams.", async (t) => {
+test("CreateFifoStreams should create monitor, control logger, input and output streams.", async (t) => {
     configStub.resolves();
 
     const lcda = new LifecycleDockerAdapter();
@@ -72,16 +72,27 @@ test("CreateFifoStreams should create monitor, control and logger streams.", asy
     const lcdaCreateFifo: sinon.SinonStub<any> = lcda["createFifo"] = sandbox.stub().resolves();
 
     mkdtempStub.resolves("uniqDir");
+    const xxx = Math.random().toString().substr(1);
 
-    await lcda["createFifoStreams"]("testMonitor.fifo", "testControl.fifo", "testLogger.fifo");
+    await lcda["createFifoStreams"](
+        `testMonitor${xxx}.fifo`,
+        `testControl${xxx}.fifo`,
+        `testLogger${xxx}.fifo`,
+        `testInput${xxx}.fifo`,
+        `testOutput${xxx}.fifo`
+    );
 
-    t.is(lcdaCreateFifo.callCount, 3);
+    t.is(lcdaCreateFifo.callCount, 5);
     t.is(lcdaCreateFifo.getCall(0).args[0], "uniqDir");
-    t.is(lcdaCreateFifo.getCall(0).args[1], "testMonitor.fifo");
+    t.is(lcdaCreateFifo.getCall(0).args[1], `testMonitor${xxx}.fifo`,);
     t.is(lcdaCreateFifo.getCall(1).args[0], "uniqDir");
-    t.is(lcdaCreateFifo.getCall(1).args[1], "testControl.fifo");
+    t.is(lcdaCreateFifo.getCall(1).args[1], `testControl${xxx}.fifo`,);
     t.is(lcdaCreateFifo.getCall(2).args[0], "uniqDir");
-    t.is(lcdaCreateFifo.getCall(2).args[1], "testLogger.fifo");
+    t.is(lcdaCreateFifo.getCall(2).args[1], `testLogger${xxx}.fifo`,);
+    t.is(lcdaCreateFifo.getCall(3).args[0], "uniqDir");
+    t.is(lcdaCreateFifo.getCall(3).args[1], `testInput${xxx}.fifo`,);
+    t.is(lcdaCreateFifo.getCall(4).args[0], "uniqDir");
+    t.is(lcdaCreateFifo.getCall(4).args[1], `testOutput${xxx}.fifo`);
 });
 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
@@ -126,10 +137,18 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
     lcda["monitorFifoPath"] = "path1";
     lcda["controlFifoPath"] = "path2";
     lcda["loggerFifoPath"] = "path3";
+    lcda["inputFifoPath"] = "path4";
+    lcda["outputFifoPath"] = "path5";
 
     await lcda.run(config);
 
-    t.true(createFifoStreams.calledOnceWith("control.fifo", "monitor.fifo", "logger.fifo"));
+    // ToDo: fixup - Value is not `true`:
+    t.true(createFifoStreams.calledOnceWith(
+        "control.fifo",
+        "monitor.fifo",
+        "logger.fifo",
+        "input.fifo",
+        "output.fifo"));
 });
 
 test("Identify should return parsed response from stream.", async (t) => {

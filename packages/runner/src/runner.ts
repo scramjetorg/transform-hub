@@ -118,7 +118,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async cleanupOutputStream() {
         this.outputStream.destroy();
-        exec(`echo "\r\n" > ${this.outputFifoPath}`);
+        await this.execCommand(`echo "\r\n" > ${this.outputFifoPath}`);
     }
 
     async hookupMonitorStream() {
@@ -139,7 +139,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async cleanupInputStream() {
         this.outputStream.destroy();
-        exec(`echo "\r\n" > ${this.inputFifoPath}`);
+        await this.execCommand(`echo "\r\n" > ${this.inputFifoPath}`);
     }
 
     async hookupOutputStream() {
@@ -223,8 +223,6 @@ export class Runner<X extends AppConfig> implements IComponent {
                 data.timeout,
                 data.canCallKeepalive
             );
-            // await this.outputStream.stopHandler.call(data.timeout, data.canCallKeepalive); (???)
-            // await this.inputStream.stopHandler.call(data.timeout, data.canCallKeepalive); (???)
         } catch (err) {
             sequenceError = err;
             this.logger.error("Following error ocurred during stopping sequence: ", err);
@@ -314,6 +312,18 @@ export class Runner<X extends AppConfig> implements IComponent {
             sequenceFromFile.hasOwnProperty("default") ? sequenceFromFile.default : sequenceFromFile;
 
         return Array.isArray(_sequence) ? _sequence : [_sequence];
+    }
+
+    async execCommand(cmd: string) {
+        return new Promise((resolve, reject) => {
+            exec(cmd, (error, stdout, stderr) => {
+                if (error) {
+                    this.logger?.log(error);
+                    reject(error);
+                }
+                resolve(stdout || stderr);
+            });
+        });
     }
 
     /**
