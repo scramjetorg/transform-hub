@@ -2,7 +2,7 @@
   "name": "@scramjet/runner",
   "version": "0.7.0-pre.1",
   "description": "Runner Mock",
-  "main": "./src/index.ts",
+  "main": "./src/",
   "bin": "bin/start-runner.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

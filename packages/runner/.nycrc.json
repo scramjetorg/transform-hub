@@ -1,9 +1,7 @@
 {
     "all": true,
     "exclude": [
-        "**/*.spec.ts",
-        ".src",
-        "**/*.ts"
+        "**/*.spec.ts"
     ],
     "reporter": [
         "lcovonly",

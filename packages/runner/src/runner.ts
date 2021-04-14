@@ -220,7 +220,6 @@ export class Runner<X extends AppConfig> {
         await this.hookupFifoStreams();
         this.initializeLogger();
         this.sendHandshakeMessage();
-
     }
 
     /**

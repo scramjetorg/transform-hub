@@ -1,26 +1,23 @@
-/* tslint:disable */
 import * as sinon from "sinon";
-import * as proxyquire from "proxyquire";
-import { PassThrough, Writable } from "stream";
-import { ReadStream, WriteStream } from "fs";
+import { PassThrough, Readable, Writable } from "stream";
 import { RunnerMessageCode } from "@scramjet/model";
+import { MessageUtils, Runner } from "@scramjet/runner";
+
+import * as fs from "fs";
 
 const test = require("ava");
-const controlMockStream = new PassThrough() as unknown as ReadStream;
-const monitorMockStream = new PassThrough() as unknown as WriteStream;
+const controlMockStream = new PassThrough() as unknown as fs.ReadStream;
+const monitorMockStream = new PassThrough() as unknown as fs.WriteStream;
 const createReadStreamStub = () => controlMockStream;
 const createWriteStreamStub = () => monitorMockStream;
 const writeMessageOnStreamMock = sinon.stub();
-const { Runner } = proxyquire("../dist/runner.js", {
-    fs: {
-        createReadStream: createReadStreamStub,
-        createWriteStream: createWriteStreamStub,
-    },
-    "./message-utils": {
-        MessageUtils: {
-            writeMessageOnStream: writeMessageOnStreamMock
-        }
-    }
+
+sinon.stub(fs, "createReadStream").returns(createReadStreamStub());
+sinon.stub(fs, "createWriteStream").returns(createWriteStreamStub());
+sinon.stub(MessageUtils, "writeMessageOnStream").callsFake(writeMessageOnStreamMock);
+
+test.beforeEach(() => {
+    writeMessageOnStreamMock.reset();
 });
 
 test("Runner new instance", (t: any) => {
@@ -32,7 +29,10 @@ test("Runner new instance", (t: any) => {
 test("Run main", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
     const hookupFifoStreams = sinon.stub(runner, "hookupFifoStreams").callsFake(() => {
-        runner.loggerStream = new Writable();
+        // eslint-disable-next-line dot-notation
+        runner["loggerStream"] = new Writable();
+
+        return Promise.resolve([undefined, undefined, undefined]);
     });
     const sendHandshakeMessage = sinon.stub(runner, "sendHandshakeMessage");
 
@@ -56,9 +56,21 @@ test("Kill runner", async (t: any) => {
 test("Stop sequence", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
 
+    sinon.stub(runner, "hookupFifoStreams").callsFake(async () => {
+        // eslint-disable-next-line dot-notation
+        runner["loggerStream"] = new Writable();
+        // eslint-disable-next-line dot-notation
+        runner["monitorStream"] = new Writable();
+        // eslint-disable-next-line dot-notation
+        runner["controlStream"] = new Readable();
+
+        return Promise.resolve([undefined, undefined, undefined]);
+    });
+
     sinon.stub(runner, "sendHandshakeMessage");
 
-    runner.main();
+    await runner.main();
+
     runner.initAppContext({ configKey: "configKeyValue" });
     runner.controlStreamHandler([RunnerMessageCode.STOP, {}]);
 
@@ -66,7 +78,8 @@ test("Stop sequence", async (t: any) => {
 
     t.true(
         writeMessageOnStreamMock.calledOnceWith(
-            [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: undefined }], runner.monitorStream
+            // eslint-disable-next-line dot-notation
+            [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: undefined }], runner["monitorStream"]
         )
     );
 });
