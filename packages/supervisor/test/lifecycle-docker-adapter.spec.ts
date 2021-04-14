@@ -69,7 +69,9 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
     lcda["controlFifoPath"] = "cfp";
     lcda["loggerFifoPath"] = "lfp";
 
-    const lcdaCreateFifo: sinon.SinonStub<any> = lcda["createFifo"] = sandbox.stub().resolves();
+    const lcdaCreateFifo: sinon.SinonStub<any> =
+        lcda["createFifo"] =
+        sandbox.stub().resolves();
 
     mkdtempStub.resolves("uniqDir");
     const xxx = Math.random().toString().substr(1);
@@ -84,13 +86,13 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
 
     t.is(lcdaCreateFifo.callCount, 5);
     t.is(lcdaCreateFifo.getCall(0).args[0], "uniqDir");
-    t.is(lcdaCreateFifo.getCall(0).args[1], `testMonitor${xxx}.fifo`,);
+    t.is(lcdaCreateFifo.getCall(0).args[1], `testMonitor${xxx}.fifo`);
     t.is(lcdaCreateFifo.getCall(1).args[0], "uniqDir");
-    t.is(lcdaCreateFifo.getCall(1).args[1], `testControl${xxx}.fifo`,);
+    t.is(lcdaCreateFifo.getCall(1).args[1], `testControl${xxx}.fifo`);
     t.is(lcdaCreateFifo.getCall(2).args[0], "uniqDir");
-    t.is(lcdaCreateFifo.getCall(2).args[1], `testLogger${xxx}.fifo`,);
+    t.is(lcdaCreateFifo.getCall(2).args[1], `testLogger${xxx}.fifo`);
     t.is(lcdaCreateFifo.getCall(3).args[0], "uniqDir");
-    t.is(lcdaCreateFifo.getCall(3).args[1], `testInput${xxx}.fifo`,);
+    t.is(lcdaCreateFifo.getCall(3).args[1], `testInput${xxx}.fifo`);
     t.is(lcdaCreateFifo.getCall(4).args[0], "uniqDir");
     t.is(lcdaCreateFifo.getCall(4).args[1], `testOutput${xxx}.fifo`);
 });
