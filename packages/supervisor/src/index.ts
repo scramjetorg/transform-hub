@@ -1,12 +1,2 @@
-import { promisify } from "util";
-import { access } from "fs";
-import { resolve } from "path";
-
-const supervisor = async () => {
-    console.log("aaaa");
-    console.log(
-        await promisify(access)(resolve(__dirname, "package.json"))
-    );
-};
-
-export { supervisor };
+export { LifecycleDockerAdapter } from "./lib/adapters/docker/lifecycle-docker-adapter";
+export { DockerodeDockerHelper } from "./lib/adapters/docker/dockerode-docker-helper";

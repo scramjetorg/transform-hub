@@ -1,53 +1,35 @@
-import { RunnerConfig } from "@scramjet/types/src/lifecycle";
+/* eslint-disable no-extra-parens */
+/* eslint-disable dot-notation */
 import test from "ava";
-import * as proxyquire from "proxyquire";
 import * as sinon from "sinon";
+
+import { RunnerConfig, DelayedStream } from "@scramjet/types";
+import { DockerodeDockerHelper, LifecycleDockerAdapter } from "@scramjet/supervisor";
+import * as imageConfig from "@scramjet/csi-config";
+
 import { PassThrough } from "stream";
+import * as fs from "fs";
+import * as fsPromises from "fs/promises";
 
 const sandbox = sinon.createSandbox();
-
-let mkdtempStub = sandbox.stub();
-let dockerHelperMockCreateVolumeStub = sandbox.stub();
-let dockerHelperMockRunStub = sandbox.stub();
-let dockerHelperMockWaitStub = sandbox.stub();
-
-class DockerHelperMock {
-    createVolume = dockerHelperMockCreateVolumeStub;
-    run = dockerHelperMockRunStub;
-    wait = dockerHelperMockWaitStub;
-}
-
-const chmodStub = sandbox.stub();
 const configFileContents = {
     runner: "runner-example-image",
     prerunner: "pre-runner-example-image"
 };
-const configStub = sandbox.stub();
-const createReadStreamStub = sandbox.stub();
 
-configStub.returns(Promise.resolve(configFileContents));
-// TODO: these tests seem to act directly on js files.
-//       could these refer ts files here - maybe some ts flavour of this???
-const { LifecycleDockerAdapter } = proxyquire("../dist/lib/adapters/docker/lifecycle-docker-adapter.js", {
-    fs: {
-        createReadStream: createReadStreamStub,
-        createWriteStream: sandbox.stub(),
-    },
-    "fs/promises": {
-        mkdtemp: mkdtempStub,
-        chmod: chmodStub
-    },
-    "@scramjet/csi-config": {
-        imageConfig: configStub
-    },
-    "@scramjet/types": {
-        DelayedStream: function() {
-            return { run: sandbox.stub() };
-        }
-    },
-    "./dockerode-docker-helper": { DockerodeDockerHelper: DockerHelperMock }
-});
-//let lcda: typeof LifecycleDockerAdapter;
+sinon.stub(fsPromises, "chmod").resolves();
+sinon.stub(fs, "createWriteStream");
+
+const createReadStreamStub = sinon.stub(fs, "createReadStream");
+const mkdtempStub = sinon.stub(fsPromises, "mkdtemp").resolves();
+const configStub = sinon.stub(imageConfig, "imageConfig").returns(Promise.resolve(configFileContents));
+const dockerHelperMock = {
+    createVolume: sinon.stub(DockerodeDockerHelper.prototype, "createVolume"),
+    run: sinon.stub(DockerodeDockerHelper.prototype, "run"),
+    wait: sinon.stub(DockerodeDockerHelper.prototype, "wait"),
+};
+
+sinon.stub(DelayedStream.prototype, "run");
 
 test.beforeEach(() => {
     sandbox.reset();
@@ -66,7 +48,8 @@ test("Init should call imageConfig and set results locally.", async (t) => {
 
     await lcda.init();
 
-    t.deepEqual(lcda.imageConfig, configFileContents);
+
+    t.deepEqual(lcda["imageConfig"], configFileContents);
 });
 
 test("Init should reject on read file error.", async (t) => {
@@ -82,18 +65,23 @@ test("CreateFifoStreams should create monitor, control and logger streams.", asy
 
     const lcda = new LifecycleDockerAdapter();
 
-    lcda.createFifo = sandbox.stub().resolves();
+    lcda["monitorFifoPath"] = "mfp";
+    lcda["controlFifoPath"] = "cfp";
+    lcda["loggerFifoPath"] = "lfp";
 
-    mkdtempStub.returns("uniqDir");
-    await lcda.createFifoStreams("testMonitor.fifo", "testControl.fifo", "testLogger.fifo");
+    let lcdaCreateFifo: sinon.SinonStub<any> = lcda["createFifo"] = sandbox.stub().resolves();
 
-    t.is(lcda.createFifo.callCount, 3);
-    t.is(lcda.createFifo.getCall(0).args[0], "uniqDir");
-    t.is(lcda.createFifo.getCall(0).args[1], "testMonitor.fifo");
-    t.is(lcda.createFifo.getCall(1).args[0], "uniqDir");
-    t.is(lcda.createFifo.getCall(1).args[1], "testControl.fifo");
-    t.is(lcda.createFifo.getCall(2).args[0], "uniqDir");
-    t.is(lcda.createFifo.getCall(2).args[1], "testLogger.fifo");
+    mkdtempStub.resolves("uniqDir");
+
+    await lcda["createFifoStreams"]("testMonitor.fifo", "testControl.fifo", "testLogger.fifo");
+
+    t.is(lcdaCreateFifo.callCount, 3);
+    t.is(lcdaCreateFifo.getCall(0).args[0], "uniqDir");
+    t.is(lcdaCreateFifo.getCall(0).args[1], "testMonitor.fifo");
+    t.is(lcdaCreateFifo.getCall(1).args[0], "uniqDir");
+    t.is(lcdaCreateFifo.getCall(1).args[1], "testControl.fifo");
+    t.is(lcdaCreateFifo.getCall(2).args[0], "uniqDir");
+    t.is(lcdaCreateFifo.getCall(2).args[1], "testLogger.fifo");
 });
 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
@@ -107,36 +95,37 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
     };
     const lcda = new LifecycleDockerAdapter();
 
-    lcda.monitorFifoPath = new PassThrough();
-    lcda.controlFifoPath = new PassThrough();
+    lcda["monitorFifoPath"] = "mfPath";
+    lcda["controlFifoPath"] = "cfPath";
 
     // TODO remove when removed from code
     createReadStreamStub.returns({
-        pipe: () => { }
-    });
+        pipe: () => {}
+    } as unknown as fs.ReadStream);
+
     configStub.resolves(configFileContents);
 
-    dockerHelperMockWaitStub.resolves({
-        error: false,
+    dockerHelperMock.wait.resolves({
         statusCode: 0
     });
 
-    dockerHelperMockRunStub.resolves({
+    dockerHelperMock.run.resolves({
         streams: {
             stdin: new PassThrough(),
             stdout: new PassThrough(),
             stderr: new PassThrough()
         },
+        containerId: "1",
         wait: sinon.stub().resolves()
     });
 
-    let createFifoStreams = sandbox.stub(lcda, "createFifoStreams").resolves();
+    let createFifoStreams = sandbox.stub(lcda as any, "createFifoStreams").resolves();
 
     await lcda.init();
 
-    lcda.monitorFifoPath = "path1";
-    lcda.controlFifoPath = "path2";
-    lcda.loggerFifoPath = "path3";
+    lcda["monitorFifoPath"] = "path1";
+    lcda["controlFifoPath"] = "path2";
+    lcda["loggerFifoPath"] = "path3";
 
     await lcda.run(config);
 
@@ -157,15 +146,16 @@ test("Identify should return parsed response from stream.", async (t) => {
     };
     const wait = sandbox.stub().resolves();
 
-    dockerHelperMockCreateVolumeStub.resolves(createdVolumeId);
-    dockerHelperMockRunStub.resolves({
+    dockerHelperMock.createVolume.resolves(createdVolumeId);
+    dockerHelperMock.run.resolves({
         streams,
+        containerId: "1",
         wait
     });
 
     const lcda = new LifecycleDockerAdapter();
 
-    lcda.imageConfig.runner = configFileContents.runner;
+    lcda["imageConfig"].runner = configFileContents.runner;
 
     const res = lcda.identify(streams.stdin);
 
@@ -174,13 +164,13 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     const identifyResponse = await res;
 
-    t.is(dockerHelperMockCreateVolumeStub.calledOnce, true);
+    t.is(dockerHelperMock.createVolume.calledOnce, true);
 
     const expectedResponse = {
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,
         packageVolumeId: createdVolumeId,
-        image: lcda.imageConfig.runner,
+        image: lcda["imageConfig"].runner,
         sequencePath: preRunnerResponse.main
     };
 

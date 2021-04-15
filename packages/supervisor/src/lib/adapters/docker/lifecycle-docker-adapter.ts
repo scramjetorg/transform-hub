@@ -1,10 +1,10 @@
 import { imageConfig } from "@scramjet/csi-config";
 import { SupervisorError } from "@scramjet/model";
-import { ICommunicationHandler } from "@scramjet/types";
 import {
     DelayedStream,
     DownstreamStreamsConfig,
     ExitCode,
+    ICommunicationHandler,
     ILifeCycleAdapter,
     MaybePromise,
     RunnerConfig
@@ -173,14 +173,14 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
                 this.runnerStderr,
                 this.controlStream.getStream(),
                 this.monitorStream.getStream(),
-                undefined,
+                new PassThrough(),
                 /**
                  * @analyze-how-to-pass-in-out-streams
                  * Input and output streams need to be
                  * added to this table a similar way to control and
                  * monitor stream.
                  */
-                undefined,
+                new PassThrough(),
                 undefined,
                 this.loggerStream.getStream()
             ];
