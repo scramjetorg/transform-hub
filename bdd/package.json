@@ -4,6 +4,7 @@
   "description": "",
   "main": "_cucumber.js",
   "dependencies": {
+    "axios": "^0.21.1",
     "cucumber": "^7.0.0-rc.0",
     "n-readlines": "^1.0.1",
     "scramjet": "^4.35.12"
