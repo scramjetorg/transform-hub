@@ -62,6 +62,15 @@ pipeline {
           }
         }
       }
+    }    
+    stage("Pack sequences") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn packseq")
+          }
+        }
+      }
     }
     stage("Run Tests") {
       failFast false
