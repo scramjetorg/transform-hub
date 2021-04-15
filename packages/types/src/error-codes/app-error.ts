@@ -8,7 +8,10 @@ export type AppErrorCode =
     "COMPILE_ERROR" |
     "CONTEXT_NOT_INITIALIZED" |
     "SEQUENCE_RUN_BEFORE_INIT" |
-    "SEQUENCE_MISCONFIGURED" | HostErrorCode | SupervisorErrorCode | RunnerErrorCode;
+    "SEQUENCE_MISCONFIGURED" |
+    HostErrorCode |
+    SupervisorErrorCode |
+    RunnerErrorCode;
 
 /**
  * Application error class

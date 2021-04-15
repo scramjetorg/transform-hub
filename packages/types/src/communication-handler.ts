@@ -1,4 +1,4 @@
-import { MonitoringMessageHandler, ControlMessageHandler } from "@scramjet/model";
+import { MonitoringMessageHandler, ControlMessageHandler, MessageDataType } from "@scramjet/model";
 import { DataStream } from "scramjet";
 import { Readable, Writable } from "stream";
 import {
@@ -8,12 +8,8 @@ import {
     UpstreamStreamsConfig
 } from ".";
 import { LoggerOutput } from "./logger";
-import { EncodedSerializedControlMessage, MessageDataType } from "./message-streams";
-import { PassThoughStream, ReadableStream } from "./utils";
 
 export interface ICommunicationHandler {
-    monitoringOutput: ReadableStream<string>
-    controlOutput: PassThoughStream<EncodedSerializedControlMessage>
 
     hookUpstreamStreams(str: UpstreamStreamsConfig): this;
     hookDownstreamStreams(str: DownstreamStreamsConfig): this;
@@ -46,3 +42,4 @@ export interface ICommunicationHandler {
         stderr: Readable
     };
 }
+

@@ -190,9 +190,9 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                 this.runnerStderr,
                 this.controlStream.getStream(),
                 this.monitorStream.getStream(),
-                this.loggerStream.getStream(),
                 this.inputStream.getStream(),
-                this.outputStream.getStream()
+                this.outputStream.getStream(),
+                this.loggerStream.getStream(),
             ];
 
         communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);

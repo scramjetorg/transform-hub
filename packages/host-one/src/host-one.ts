@@ -1,3 +1,4 @@
+import { CeroError, createServer } from "@scramjet/api-server";
 import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, HostError, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
 import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler, IComponent, Logger } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
@@ -5,10 +6,9 @@ import { ReadStream } from "fs";
 import * as os from "os";
 import * as path from "path";
 import { DataStream, StringStream } from "scramjet";
-import { PassThrough, Readable, Writable } from "stream";
+import { PassThrough, Readable } from "stream";
 import { SocketServer } from "./lib/server";
 import { startSupervisor } from "./lib/start-supervisor";
-import { createServer } from "@scramjet/api-server";
 
 //import * as vorpal from "vorpal";
 
@@ -21,21 +21,13 @@ export class HostOne implements IComponent {
 
     private controlDownstream?: PassThrough;
 
-    private downStreams?: DownstreamStreamsConfig;
-
     private upStreams?: UpstreamStreamsConfig;
 
     private controlDataStream?: DataStream;
-    // @ts-ignore
-    private configPath: string;
-    // @ts-ignore
-    private vorpal: any;
+
+    private vorpal?: any;
 
     private packageDownStream?: ReadStream;
-
-    private stdInDownstream?: Writable;
-
-    private stdOutDownstream?: Readable;
 
     private api?: APIExpose;
 
@@ -54,6 +46,9 @@ export class HostOne implements IComponent {
     private appConfig: AppConfig = {};
     private sequenceArgs?: string[];
 
+    private readonly input = new PassThrough();
+    private readonly output = new PassThrough();
+
     constructor() {
         this.logger = getLogger(this);
         this.socketName = path.join(os.tmpdir(), process.pid.toString());
@@ -67,7 +62,9 @@ export class HostOne implements IComponent {
         await startSupervisor(this.logger, this.socketName);
         this.logger.log("Supervisor started");
         await this.createApiServer();
-        this.logger.log("API server started");
+        this.logger.log("Creating API server");
+        await this.awaitConnection();
+        this.logger.log("Got connection");
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
@@ -80,49 +77,29 @@ export class HostOne implements IComponent {
         this.controlDownstream = new PassThrough();
         this.controlDataStream = new DataStream();
 
-        this.monitorDownStream = new PassThrough();
-        this.stdInDownstream = new PassThrough();
-        this.stdOutDownstream = new PassThrough();
-
-        this.downStreams = [
-            this.stdInDownstream,
-            this.stdOutDownstream,
-            new PassThrough(),
-            this.controlDownstream,
-            this.monitorDownStream,
-            this.packageDownStream,
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough()
-        ];
+        this.logHistory = new StringStream("utf-8")
+            .keep(1000); // TODO: config
+        this.logHistory.pipe(process.stdout);
 
         this.upStreams = [
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough()
+            process.stdin,
+            process.stdout,
+            process.stderr,
+            this.controlDownstream, //control
+            process.stdout, // monitor
+            this.input,
+            this.output,
+            this.logHistory,
+            this.packageDownStream
         ];
 
         this.controlDataStream.JSONStringify()
             .pipe(this.upStreams[CommunicationChannel.CONTROL] as unknown as WritableStream<EncodedControlMessage>);
 
         this.communicationHandler.hookUpstreamStreams(this.upStreams);
-        this.communicationHandler.hookDownstreamStreams(this.downStreams);
-        this.communicationHandler.pipeStdio();
-        this.communicationHandler.pipeMessageStreams();
-
-        this.hookLogStream();
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
-
-        // TODO: pipe to api stream.
-        this.upStreams[1].pipe(process.stdout);
     }
 
     hookLogStream() {
@@ -132,7 +109,7 @@ export class HostOne implements IComponent {
                 .lines()
                 .keep(1000); // TODO: config
 
-            this.logHistory?.pipe(process.stdout);
+            this.logHistory.pipe(process.stdout);
         } else {
             throw new HostError("UNINITIALIZED_STREAM", "log");
         }
@@ -145,7 +122,6 @@ export class HostOne implements IComponent {
     async createNetServer(): Promise<void> {
         this.netServer = new SocketServer(this.socketName);
 
-        this.netServer.attachStreams(this.downStreams);
         await this.netServer.start();
 
         process.on("beforeExit", () => {
@@ -167,35 +143,46 @@ export class HostOne implements IComponent {
         this.api = createServer(conf);
         this.api.server.listen(8000).unref(); // add .unref() or server will keep process up
 
-        /**
-         * ToDo: GET
-         * * /api/v1/stream/stdout/
-         * * /api/v1/stream/stderr/
-         */
+        // stdio
         this.api.upstream(`${apiBase}/stream/stdout`, stdout);
         this.api.upstream(`${apiBase}/stream/stderr`, stderr);
         this.api.downstream(`${apiBase}/stream/stdin`, stdin);
 
-        /**
-         * ToDo: GET
-         * * /api/v1/bash/log/
-         */
+        // log stream
+        this.api.upstream(`${apiBase}/stream/log`, () => {
+            if (this.logHistory) return this.logHistory.rewind();
 
-        /**
-         * ToDo: POST
-         * * /api/v1/stream/stdin/
-         */
-        // this.api.downstream(`${apiBase}/stream/stdin`, {stream}, {commHandler})
+            throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
+        });
+
+        // input and output
+        this.api.upstream(`${apiBase}/stream/output`, this.output); // TODO: Config
+        this.api.downstream(`${apiBase}/stream/input`, this.input); // TODO: Config
 
         // monitoring data
         this.api.get(`${apiBase}/sequence/health`, RunnerMessageCode.MONITORING, this.communicationHandler);
         this.api.get(`${apiBase}/sequence/status`, RunnerMessageCode.STATUS, this.communicationHandler);
         this.api.get(`${apiBase}/sequence/event`, RunnerMessageCode.EVENT, this.communicationHandler);
 
-        this.api.op(`${apiBase}/sequence/_event/`, RunnerMessageCode.EVENT, this.communicationHandler);
+        // operations
         this.api.op(`${apiBase}/sequence/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_event/`, RunnerMessageCode.EVENT, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_stop/`, RunnerMessageCode.STOP, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_kill/`, RunnerMessageCode.KILL, this.communicationHandler);
+    }
+
+    async awaitConnection() {
+        // TODO, timeout
+        const streams: DownstreamStreamsConfig = await new Promise((res) => {
+            if (!this.netServer) throw new Error("Server not initialized");
+            this.netServer.once("connect", res);
+        });
+
+        this.communicationHandler.hookDownstreamStreams(streams);
+        this.communicationHandler.pipeStdio();
+        this.communicationHandler.pipeMessageStreams();
+
+        this.hookLogStream();
     }
 
     async hookupMonitorStream() {
@@ -254,6 +241,15 @@ export class HostOne implements IComponent {
         }
     }
 
+    async stop(timeout: number, canCallKeepalive: boolean) {
+        await this.controlDataStream?.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
+    }
+
+    async kill() {
+        await this.controlDataStream?.whenWrote([RunnerMessageCode.KILL, {}]);
+    }
+
+
     controlStreamsCliHandler() {
         this.vorpal
             .command("alive", "Confirm that sequence is alive when it is not responding")
@@ -307,16 +303,8 @@ export class HostOne implements IComponent {
             .parse(process.argv);
     }
 
-    async stop(timeout: number, canCallKeepalive: boolean) {
-        await this.controlDataStream?.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
-    }
-
-    async kill() {
-        await this.controlDataStream?.whenWrote([RunnerMessageCode.KILL, {}]);
-    }
-
     // For testing puspose only
     async vorpalExec(command: string) {
-        await this.vorpal.execSync(command);
+        await this.vorpal?.execSync(command);
     }
 }

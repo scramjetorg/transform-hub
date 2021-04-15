@@ -24,6 +24,7 @@ export type CeroConfig<
 
 const codelist = {
     ERR_NOT_FOUND: [404, "Not found"],
+    ERR_NOT_CURRENTLY_AVAILABLE: [412, "Not currently available"],
     ERR_FAILED_FETCH_DATA: [500, "Failed to fetch data"],
     ERR_FAILED_TO_SERIALIZE: [500, "Failed to serialize data"],
     ERR_INTERNAL_ERROR: [500, "Internal error occurred"],

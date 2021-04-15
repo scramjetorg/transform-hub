@@ -1,4 +1,3 @@
-import { Readable, Writable } from "stream";
 import { ReadableStream, WritableStream } from ".";
 import {
     AcknowledgeMessage,
@@ -27,6 +26,7 @@ import {
     StatusMessage,
     StatusMessageData
 } from "@scramjet/model";
+import { PassThoughStream } from "./utils";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -78,28 +78,39 @@ export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;
 
 export type EncodedMonitoringMessage = EncodedMessage<MonitoringMessageCode>;
-// @ToDo: verify streams types
 
-export type UpstreamStreamsConfig = [
-    stdin: Readable,
-    stdout: Writable,
-    stderr: Writable,
-    control: ReadableStream<EncodedControlMessage>,
-    monitor: WritableStream<EncodedMonitoringMessage>,
-    inputUpstream: WritableStream<any>,
-    outputUpstream: ReadableStream<any>,
-    pkg?: Readable,
-    log?: WritableStream<string>
+export type DownstreamStreamsConfig<serialized extends boolean = true> = [
+    stdin: WritableStream<string>,
+    stdout: ReadableStream<string>,
+    stderr: ReadableStream<string>,
+    control: WritableStream<serialized extends true ? EncodedSerializedControlMessage : EncodedControlMessage>,
+    monitor: ReadableStream<serialized extends true ? EncodedSerializedMonitoringMessage : EncodedMonitoringMessage>,
+    input: WritableStream<any>,
+    output: ReadableStream<any>,
+    log: ReadableStream<any>,
+    pkg?: WritableStream<Buffer>,
 ];
 
-export type DownstreamStreamsConfig = [
-    stdin: Writable,
-    stdout: Readable,
-    stderr: Readable,
-    control: WritableStream<EncodedSerializedControlMessage>,
-    monitor: ReadableStream<EncodedSerializedMonitoringMessage>,
-    inputDownstream: ReadableStream<any>,
-    outputDownstream: WritableStream<any>,
-    pkg?: Readable,
-    log?: ReadableStream<string>
+export type UpstreamStreamsConfig<serialized extends boolean = true> = [
+    stdin: ReadableStream<string>,
+    stdout: WritableStream<string>,
+    stderr: WritableStream<string>,
+    control: ReadableStream<serialized extends true ? EncodedSerializedControlMessage : EncodedControlMessage>,
+    monitor: WritableStream<serialized extends true ? EncodedSerializedMonitoringMessage : EncodedMonitoringMessage>,
+    input: ReadableStream<any>,
+    output: WritableStream<any>,
+    log: WritableStream<any>,
+    pkg?: ReadableStream<Buffer>,
+];
+
+export type PassThroughStreamsConfig<serialized extends boolean = true> = [
+    stdin: PassThoughStream<string>,
+    stdout: PassThoughStream<string>,
+    stderr: PassThoughStream<string>,
+    control: PassThoughStream<serialized extends true ? EncodedSerializedControlMessage : EncodedControlMessage>,
+    monitor: PassThoughStream<serialized extends true ? EncodedSerializedMonitoringMessage : EncodedMonitoringMessage>,
+    input: PassThoughStream<any>,
+    output: PassThoughStream<any>,
+    pkg: PassThoughStream<Buffer>,
+    log: PassThoughStream<any>
 ];

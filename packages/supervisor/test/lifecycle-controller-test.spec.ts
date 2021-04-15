@@ -4,7 +4,7 @@ import * as sinon from "sinon";
 import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter } from "@scramjet/types";
 import { LifeCycleController } from "../src/lib/lifecycle-controller";
 import { Readable } from "stream";
-import { PassThrough } from "stream";
+import { PassThrough } from "node:stream";
 
 // let { LifeCycleController } = proxyquire("@scramjet/supervisor/src/lib/lifecycle-controller", {
 //     "@scramjet/model/src/stream-handler": {
@@ -51,8 +51,8 @@ const streamHandlerInstance: ICommunicationHandler = {
     addControlHandler: sinon.stub(),
     pipeDataStreams: sinon.stub(),
     getMonitorStream: sinon.stub(),
-    monitoringOutput: new PassThrough,
-    controlOutput: new PassThrough,
+    monitoringOutput: new PassThrough(),
+    controlOutput: new PassThrough(),
     sendMonitoringMessage: sinon.stub(),
     sendControlMessage: sinon.stub(),
     getStdio: sinon.stub()

@@ -51,7 +51,7 @@ default:
     console.log("Checking data"); // TODO: what does this entry mean?
 }
 
-const packageStrem: any = checkIfPathExist(2, (arg: string) => fs.createReadStream(arg));
+const packageStream: any = checkIfPathExist(2, (arg: string) => fs.createReadStream(arg));
 const appConfig: any = checkIfPathExist(3, (arg: string) => fs.readFileSync(arg, "utf8"));
 const sequenceArgs: Array<string> | undefined = process.argv[4] !== undefined ? process.argv.slice(4) : undefined;
 
@@ -71,7 +71,7 @@ const hostOne: HostOne = new HostOne();
      * @param { object } appConfig - config file
      * @param { Array<any> } sequenceArgs - other optional arguments
      */
-    await hostOne.init(packageStrem, appConfig, sequenceArgs);
+    await hostOne.init(packageStream, appConfig, sequenceArgs);
     await hostOne.main();
 })().catch(e => {
     console.error(e.stack);

@@ -1,17 +1,17 @@
 /* eslint-disable dot-notation */
-import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig } from "@scramjet/types";
-import { CommunicationChannel, SupervisorError } from "@scramjet/model";
-import * as net from "net";
-import { Duplex, PassThrough, Readable } from "stream";
+import { CommunicationChannel as CC, SupervisorError } from "@scramjet/model";
+import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig, PassThoughStream, DuplexStream, ReadableStream } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
+import * as net from "net";
 
 const { BPMux } = require("bpmux");
 
 class CSHClient implements ICSHClient {
     private socketPath: string;
-    private packageStream: PassThrough;
+
     private streams?: UpstreamStreamsConfig;
-    private connectionChannels?: any[];
+
+    // private connectionChannels?: DuplexStream<string, string>[];
     private connection?: net.Socket;
 
     private mux: any;
@@ -21,26 +21,9 @@ class CSHClient implements ICSHClient {
     constructor(socketPath: string) {
         this.socketPath = socketPath;
         this.logger = getLogger(this);
-        this.packageStream = new PassThrough();
     }
 
     async init(): Promise<void> {
-        this.streams = [
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough(),
-            this.packageStream,
-            new PassThrough(),
-            new PassThrough(),
-            new PassThrough()
-        ];
-
-        await this.connect();
-    }
-
-    connect(): Promise<void> {
         return new Promise((resolve) => {
             if (!this.streams) {
                 throw new SupervisorError("UNINITIALIZED_STREAMS");
@@ -53,37 +36,33 @@ class CSHClient implements ICSHClient {
 
             this.mux = new BPMux(this.connection);
 
-            this.connectionChannels = [
-                this.mux.multiplex({ channel: CommunicationChannel.STDIN }),
-                this.mux.multiplex({ channel: CommunicationChannel.STDOUT }),
-                this.mux.multiplex({ channel: CommunicationChannel.STDERR }),
-                this.mux.multiplex({ channel: CommunicationChannel.CONTROL }),
-                this.mux.multiplex({ channel: CommunicationChannel.MONITORING }),
-                this.mux.multiplex({ channel: CommunicationChannel.PACKAGE }),
-                this.mux.multiplex({ channel: CommunicationChannel.LOG })
+            const connectionChannels: DuplexStream<string, string>[] = [
+                this.mux.multiplex({ channel: CC.STDIN }),
+                this.mux.multiplex({ channel: CC.STDOUT }),
+                this.mux.multiplex({ channel: CC.STDERR }),
+                this.mux.multiplex({ channel: CC.CONTROL }),
+                this.mux.multiplex({ channel: CC.MONITORING }),
+                this.mux.multiplex({ channel: CC.IN }),
+                this.mux.multiplex({ channel: CC.OUT }),
+                this.mux.multiplex({ channel: CC.PACKAGE }),
+                this.mux.multiplex({ channel: CC.LOG })
             ];
 
-            this.connectionChannels.forEach((channel: Duplex) => {
-                channel.on("error", (e) => this.logger.warn(e.stack));
-            });
+            connectionChannels.forEach((channel) => channel.on("error", (/*e*/) => {
+                // TODO: this.logger.warn(e);
+            }));
 
-            this.connectionChannels[CommunicationChannel.STDIN].pipe(this.streams[CommunicationChannel.STDIN]);
-            this.connectionChannels[CommunicationChannel.CONTROL].pipe(this.streams[CommunicationChannel.CONTROL]);
-            this.connectionChannels[CommunicationChannel.PACKAGE].pipe(this.packageStream);
-            this.connectionChannels[CommunicationChannel.IN_DOWN_STR]
-                .pipe(this.streams[CommunicationChannel.IN_DOWN_STR]);
-
-            this.streams[CommunicationChannel.STDOUT].pipe(this.connectionChannels[CommunicationChannel.STDOUT]);
-            this.streams[CommunicationChannel.STDERR].pipe(this.connectionChannels[CommunicationChannel.STDERR]);
-            // eslint-disable-next-line no-extra-parens
-            (this.streams[CommunicationChannel.MONITORING] as unknown as Readable)
-                .pipe(this.connectionChannels[CommunicationChannel.MONITORING]);
-            // eslint-disable-next-line no-extra-parens
-            (this.streams[CommunicationChannel.LOG] as unknown as Readable)
-                .pipe(this.connectionChannels[CommunicationChannel.LOG]);
-            // eslint-disable-next-line no-extra-parens
-            (this.streams[CommunicationChannel.OUT_DOWN_STR] as unknown as Readable)
-                .pipe(this.connectionChannels[CommunicationChannel.OUT_DOWN_STR]);
+            this.streams = [
+                connectionChannels[CC.STDIN],
+                connectionChannels[CC.STDOUT],
+                connectionChannels[CC.STDERR],
+                connectionChannels[CC.CONTROL],
+                connectionChannels[CC.MONITORING],
+                connectionChannels[CC.IN],
+                connectionChannels[CC.OUT],
+                connectionChannels[CC.LOG],
+                connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer> // this was checked.
+            ];
 
             resolve();
         });
@@ -93,23 +72,20 @@ class CSHClient implements ICSHClient {
         this.connection?.end();
     }
 
-    upstreamStreamsConfig() {
-        return this.streams as unknown as UpstreamStreamsConfig;
-    }
+    getPackage() {
+        if (typeof this.streams === "undefined" || typeof this.streams[CC.PACKAGE] === "undefined") {
+            throw new SupervisorError("UNINITIALIZED_STREAMS", { details: "CSHClient" });
+        }
 
-    getPackage(): Readable {
-        return this.packageStream;
+        return this.streams[CC.PACKAGE] as ReadableStream<Buffer>;
     }
 
     hookCommunicationHandler(communicationHandler: ICommunicationHandler) {
-        if (typeof this.upstreamStreamsConfig() === "undefined") {
+        if (typeof this.streams === "undefined") {
             throw new SupervisorError("UNINITIALIZED_STREAMS", { details: "CSHClient" });
         }
-        communicationHandler.hookUpstreamStreams(this.upstreamStreamsConfig());
 
-        //const { out, err } = communicationHandler.getLogOutput();
-
-        //addLoggerOutput(out, err);
+        communicationHandler.hookUpstreamStreams(this.streams as unknown as UpstreamStreamsConfig<true>);
     }
 }
 

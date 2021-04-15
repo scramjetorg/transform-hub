@@ -26,7 +26,7 @@ export interface ICSHClient extends IComponent {
      *
      * @returns stream with file sequence
      */
-    getPackage(): ReadableStream<string>;
+    getPackage(): ReadableStream<Buffer>;
 
     /**
      * Disconnects from a host server.
