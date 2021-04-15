@@ -16,8 +16,7 @@ Given("input file containing data {string}", async (filename) => {
 
 When("scramjet server porcesses input file as a stream", { timeout: 20000 }, async () => {
     await new Promise(async (resolve, reject) => {
-        console.log(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} > dataOut.test.result.txt`);
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} > dataOut.test.result.txt`, { timeout: 20000 }, (error) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} output.txt > dataOut.test.result.txt`, { timeout: 20000 }, (error) => {
             if (error) {
                 reject(error);
                 return;
