@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation */
 import * as sinon from "sinon";
 import { PassThrough, Readable, Writable } from "stream";
 import { RunnerMessageCode } from "@scramjet/model";
@@ -33,7 +34,7 @@ test("Run main", async (t: any) => {
         // eslint-disable-next-line dot-notation
         runner["loggerStream"] = new DataStream().each(console.log);
 
-        return Promise.resolve([undefined, undefined, undefined]);
+        return Promise.resolve([undefined, undefined, undefined, undefined, undefined]);
     });
     const sendHandshakeMessage = sinon.stub(runner, "sendHandshakeMessage");
 
@@ -47,10 +48,14 @@ test("Kill runner", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
     const processExit = sinon.stub(process, "exit");
     const cleanupControlStreamMock = sinon.stub(runner, "cleanupControlStream");
+    const cleanupOutputStreamMock = sinon.stub(runner, "cleanupOutputStream");
+    const cleanupInputStreamMock = sinon.stub(runner, "cleanupInputStream");
 
     await runner.controlStreamHandler([RunnerMessageCode.KILL, {}]);
 
     t.is(cleanupControlStreamMock.callCount, 1);
+    t.is(cleanupOutputStreamMock.callCount, 1);
+    t.is(cleanupInputStreamMock.callCount, 1);
     t.is(processExit.callCount, 1);
 });
 
@@ -62,10 +67,12 @@ test("Stop sequence", async (t: any) => {
         runner["loggerStream"] = new DataStream().each(console.log);
         // eslint-disable-next-line dot-notation
         runner["monitorStream"] = new Writable();
-        // eslint-disable-next-line dot-notation
         runner["controlStream"] = new Readable();
 
-        return Promise.resolve([undefined, undefined, undefined]);
+        runner["inputStream"] = new Writable();
+        runner["outputStream"] = new Readable();
+
+        return Promise.resolve([undefined, undefined, undefined, undefined, undefined]);
     });
 
     sinon.stub(runner, "sendHandshakeMessage");

@@ -112,13 +112,17 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async cleanupControlStream() {
         this.controlStream.destroy();
-        // TODO: needs error handling and a callback?
-        exec(`echo "\r\n" > ${this.controlFifoPath}`); // TODO: Shell escape
+        await this.execCommand(`echo "\r\n" > ${this.controlFifoPath}`); // TODO: Shell escape
     }
 
     async cleanupOutputStream() {
         this.outputStream.destroy();
         await this.execCommand(`echo "\r\n" > ${this.outputFifoPath}`);
+    }
+
+    async cleanupInputStream() {
+        this.outputStream.destroy();
+        await this.execCommand(`echo "\r\n" > ${this.inputFifoPath}`);
     }
 
     async hookupMonitorStream() {
@@ -135,11 +139,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             .from(this.inputStream)
             .JSONParse()
         ;
-    }
-
-    async cleanupInputStream() {
-        this.outputStream.destroy();
-        await this.execCommand(`echo "\r\n" > ${this.inputFifoPath}`);
     }
 
     async hookupOutputStream() {
