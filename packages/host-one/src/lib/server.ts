@@ -18,6 +18,7 @@ export class SocketServer extends EventEmitter, implements IComponent {
     streams?: DownstreamStreamsConfig;
     logger: Logger;
 
+    // eslint-disable-next-line complexity
     private handleStream(streams: UpstreamStreamsConfig, stream: IdentifiedSocket) {
         const channel = parseInt(stream._chan, 10);
 

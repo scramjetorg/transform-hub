@@ -12,7 +12,7 @@ import {
     PassThoughStream,
     UpstreamStreamsConfig
 } from "@scramjet/types";
-import { PassThrough } from "node:stream";
+import { PassThrough } from "stream";
 import { DataStream, StringStream } from "scramjet";
 import { Readable, Writable } from "stream";
 import { RunnerMessageCode, CommunicationChannel as CC } from ".";
@@ -165,6 +165,10 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
+    areStreamsHooked() {
+        return typeof this.upstreams !== "undefined" && typeof this.downstreams !== "undefined";
+    }
+
     getLogOutput(): LoggerOutput {
         return { out: this.loggerPassthough, err: this.loggerPassthough };
     }
@@ -191,10 +195,10 @@ export class CommunicationHandler implements ICommunicationHandler {
          * Pipe upstream input stream to a Sequence to downstream input stream.
          * Pipe downstream output stream from a Sequence to upstream output stream.
          */
-         this.upstreams[CC.IN].pipe(this.downstreams[CC.IN]);
-         this.downstreams[CC.OUT].pipe(this.upstreams[CC.OUT]);
+        this.upstreams[CC.IN].pipe(this.downstreams[CC.IN]);
+        this.downstreams[CC.OUT].pipe(this.upstreams[CC.OUT]);
 
-         return this;
+        return this;
     }
 
     addMonitoringHandler<T extends MonitoringMessageCode>(_code: T, handler: MonitoringMessageHandler<T>): this {
