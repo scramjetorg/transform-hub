@@ -44,6 +44,7 @@ export interface PipeableStream<Produces> extends EventEmitter {
 
 export interface ReadableStream<Produces> extends PipeableStream<Produces> {
     [Symbol.asyncIterator](): AsyncIterableIterator<Produces>;
+    destroy(): void;
 }
 /**
  * Writable stream representation with generic chunks.
@@ -54,6 +55,7 @@ export interface ReadableStream<Produces> extends PipeableStream<Produces> {
 export interface WritableStream<Consumes> extends EventEmitter {
     objectMode?: true;
     writable: boolean;
+    destroy(): void;
     write(item: Consumes, cb?: (err?: Error | null) => void): boolean;
     write(str: never, encoding: never, cb?: (err?: Error | null) => void): boolean;
     end(cb?: () => void): void;

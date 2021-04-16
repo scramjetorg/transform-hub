@@ -19,9 +19,9 @@ export class Runner<X extends AppConfig> implements IComponent {
     private monitoringInterval?: NodeJS.Timeout;
     private monitorStream?: WritableStream<any>; //TODO change any to EncodedMonitoringMessage
     private loggerStream?: WritableStream<string>;
-    private controlStream?: any; //TODO change type ReadableStream<EncodedControlMessage>;
-    private inputStream?: WritableStream<string> | any; // TODO change any depend on appcontext
-    private outputStream?: ReadableStream<string> | any; // TODO change any depend on appcontext
+    private controlStream?: ReadableStream<EncodedControlMessage>;
+    private inputStream?: ReadableStream<string>; // TODO change any depend on appcontext
+    private outputStream?: WritableStream<string>; // TODO change any depend on appcontext
     private outputDataStream: DataStream = new DataStream();
     private inputDataStream?: DataStream;
     private monitorFifoPath: string;
@@ -87,7 +87,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async defineControlStream() {
         StringStream
-            .from(this.controlStream)
+            .from(this.controlStream as Readable)
             .JSONParse()
             .map(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
             .run()
@@ -96,33 +96,19 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
     }
 
-    async cleanup() {
-        this.logger.info("Cleaning up...");
-        if (this.monitoringInterval) {
-            clearInterval(this.monitoringInterval);
-        }
-
-        try {
-            await this.cleanupControlStream();
-            this.logger.info("Clean!");
-        } catch (e) {
-            this.logger.error("Not clear, error", e);
-        }
+    async cleanupStreams(): Promise<any> {
+        return Promise.all([
+            this.cleanupStream(this.controlStream, this.controlFifoPath),
+            this.cleanupStream(this.monitorStream, this.monitorFifoPath),
+            this.cleanupStream(this.loggerStream, this.loggerFifoPath),
+            this.cleanupStream(this.inputStream, this.inputFifoPath),
+            this.cleanupStream(this.outputStream, this.outputFifoPath)
+        ]);
     }
 
-    async cleanupControlStream() {
-        this.controlStream.destroy();
-        await this.execCommand(`echo "\r\n" > ${this.controlFifoPath}`); // TODO: Shell escape
-    }
-
-    async cleanupOutputStream() {
-        this.outputStream.destroy();
-        await this.execCommand(`echo "\r\n" > ${this.outputFifoPath}`);
-    }
-
-    async cleanupInputStream() {
-        this.outputStream.destroy();
-        await this.execCommand(`echo "\r\n" > ${this.inputFifoPath}`);
+    private async cleanupStream(stream: ReadableStream<any> | WritableStream<any> | undefined, fifo: string) {
+        if (stream) stream.destroy();
+        await this.execCommand(`echo "\r\n" > "${fifo}"`); // TODO: Shell escape
     }
 
     async hookupMonitorStream() {
@@ -134,15 +120,15 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async hookupInputStream() {
-        this.inputStream = createWriteStream(this.inputFifoPath);
+        this.inputStream = createReadStream(this.inputFifoPath);
         this.inputDataStream = StringStream
-            .from(this.inputStream)
+            .from(this.inputStream as Readable)
             .JSONParse()
         ;
     }
 
     async hookupOutputStream() {
-        this.outputStream = createReadStream(this.outputFifoPath);
+        this.outputStream = createWriteStream(this.outputFifoPath);
         this.outputDataStream
             .JSONStringify()
             .pipe(this.outputStream)
@@ -198,12 +184,9 @@ export class Runner<X extends AppConfig> implements IComponent {
     async handleKillRequest(): Promise<void> {
         this.logger.log("Kill request handled.");
         this.context?.killHandler();
-        await Promise.all([
-            this.cleanupControlStream(),
-            this.cleanupInputStream(),
-            this.cleanupOutputStream()
-        ]);
+        await this.cleanupStreams();
         this.logger.log("Kill request handled, exiting...");
+
         process.exit(137);
     }
 
@@ -257,7 +240,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.log("Sequence completed.");
         } catch (error) {
             this.logger.error("Error occured during sequence execution: ", error.stack);
-            await this.cleanupControlStream();
+            await this.cleanupStreams();
             process.exit(22);
         }
     }
@@ -313,11 +296,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
 
-    async execCommand(cmd: string) {
+    private async execCommand(cmd: string) {
         return new Promise((resolve, reject) => {
             exec(cmd, (error, stdout, stderr) => {
                 if (error) {
-                    this.logger?.log(error);
+                    this.logger?.error(error);
                     reject(error);
                 }
                 resolve(stdout || stderr);
@@ -351,7 +334,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("Sequence error:", error.message);
             }
 
-            await this.cleanupControlStream();
+            await this.cleanupStreams();
             process.exit(21);
         }
 
@@ -417,9 +400,13 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        // TODO: do not clean up immediately.
+        if (this.outputStream)
+            stream?.pipe(this.outputStream);
+
+        // TODO: await until it's done?
         this.logger.info("Cleaning after sequence end.");
-        await this.cleanup();
+
+        await this.cleanupStreams();
         this.logger.info("End.");
     }
 

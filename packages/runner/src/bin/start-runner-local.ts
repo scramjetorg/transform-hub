@@ -6,8 +6,11 @@ import { stdout } from "process";
 import * as fs from "fs";
 import * as path from "path";
 import { HandshakeAcknowledgeMessage, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig } from "@scramjet/types";
+import { AppConfig, ReadableStream } from "@scramjet/types";
 import { PassThrough } from "stream";
+import { StringStream } from "scramjet";
+import { createReadStream, createWriteStream } from "fs";
+import { Readable } from "node:stream";
 
 if (!process.env.SEQUENCE_PATH) {
     console.error("Missing SEQUENCE_PATH!");
@@ -31,6 +34,8 @@ if (!fs.existsSync(sequencePath)) {
  *
  * SEQUENCE_PATH=dist/samples/example APP_ARGUMENTS="dist/samples/example/data.json output.txt" \
  *     node dist/runner/bin/start-runner-local.js
+ *
+ * INPUT_PATH=.work/input.txt OUTPUT_PATH=.work/output.txt
  */
 
 const sequenceAppConfig: AppConfig = process.env.APP_CONFIG ? JSON.parse(process.env.APP_CONFIG) : {};
@@ -48,6 +53,39 @@ runner.hookupMonitorStream = async () => {
 
 runner.hookupLoggerStream = async () => {
     runner["loggerStream"] = stdout;
+};
+
+runner.hookupInputStream = async () => {
+    if (process.env.INPUT_PATH) {
+        runner["inputStream"] = createReadStream(process.env.INPUT_PATH);
+        runner["inputDataStream"] = StringStream
+            .from(runner["inputStream"] as Readable)
+            .JSONParse() // TODO: what if the app consumes buffer/string data
+        ;
+    } else {
+        const stream = StringStream.from([]);
+
+        runner["inputStream"] = stream as unknown as ReadableStream<string>;
+        // TODO: what if the app consumes buffer/string data
+        runner["inputDataStream"] = stream.JSONParse();
+    }
+};
+
+runner.hookupOutputStream = async () => {
+    if (process.env.OUTPUT_PATH) {
+        runner["outputStream"] = createWriteStream(process.env.OUTPUT_PATH);
+    } else {
+        runner["outputStream"] = process.stdout;
+    }
+    // TODO: what if the app outputs buffer/string data
+    runner["outputDataStream"]
+        .JSONStringify()
+        .prepend("[output]: ")
+        .pipe(runner["outputStream"]);
+};
+
+runner.cleanupStreams = async () => {
+    console.log("cleanup");
 };
 
 (async () => {

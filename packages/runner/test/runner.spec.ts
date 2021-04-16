@@ -47,15 +47,11 @@ test("Run main", async (t: any) => {
 test("Kill runner", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
     const processExit = sinon.stub(process, "exit");
-    const cleanupControlStreamMock = sinon.stub(runner, "cleanupControlStream");
-    const cleanupOutputStreamMock = sinon.stub(runner, "cleanupOutputStream");
-    const cleanupInputStreamMock = sinon.stub(runner, "cleanupInputStream");
+    const cleanupStreams = sinon.stub(runner, "cleanupStreams");
 
     await runner.controlStreamHandler([RunnerMessageCode.KILL, {}]);
 
-    t.is(cleanupControlStreamMock.callCount, 1);
-    t.is(cleanupOutputStreamMock.callCount, 1);
-    t.is(cleanupInputStreamMock.callCount, 1);
+    t.is(cleanupStreams.callCount, 1);
     t.is(processExit.callCount, 1);
 });
 
@@ -69,8 +65,8 @@ test("Stop sequence", async (t: any) => {
         runner["monitorStream"] = new Writable();
         runner["controlStream"] = new Readable();
 
-        runner["inputStream"] = new Writable();
-        runner["outputStream"] = new Readable();
+        runner["inputStream"] = new Readable();
+        runner["outputStream"] = new Writable();
 
         return Promise.resolve([undefined, undefined, undefined, undefined, undefined]);
     });
