@@ -89,7 +89,7 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
     t.is(lcdaCreateFifo.getCall(0).args[1], `testMonitor${xxx}.fifo`);
     t.is(lcdaCreateFifo.getCall(1).args[0], "uniqDir");
     t.is(lcdaCreateFifo.getCall(1).args[1], `testControl${xxx}.fifo`);
-    t.is(lcdaCreateFifo.getCall(2).args[0], "uniqDir");
+    t.is(lcdaCreateFifo.getCall(2).args[0], "uniqDir"); // err: Cannot read property args of null
     t.is(lcdaCreateFifo.getCall(2).args[1], `testLogger${xxx}.fifo`);
     t.is(lcdaCreateFifo.getCall(3).args[0], "uniqDir");
     t.is(lcdaCreateFifo.getCall(3).args[1], `testInput${xxx}.fifo`);
