@@ -4,7 +4,7 @@ const common = [
     "--publish-quiet",
     "--exit",
     "--tags \"not @ignore\"",
-    "--format html:" + new Date().toISOString().replace(new RegExp(/[:\\.]/g), "_") + "_report.html"
+    "--format html:reports/" + new Date().toISOString().replace(new RegExp(/[:\\.]/g), "_") + "_report.html"
 ].join(" ");
 
 module.exports = {

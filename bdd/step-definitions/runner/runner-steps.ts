@@ -1,4 +1,4 @@
-import { Given, Then } from "cucumber";
+import { Given, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { exec } from "child_process";
 import * as fs from "fs";

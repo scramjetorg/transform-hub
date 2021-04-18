@@ -1,4 +1,4 @@
-const { setWorldConstructor } = require("cucumber");
+const { setWorldConstructor } = require("@cucumber/cucumber");
 
 class CustomWorld {
     // child;

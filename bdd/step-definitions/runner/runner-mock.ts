@@ -1,4 +1,4 @@
-import { Given, When, Then, After } from "cucumber";
+import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { spawn } from "child_process";
 import { StringStream } from "scramjet";

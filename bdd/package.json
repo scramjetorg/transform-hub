@@ -5,7 +5,6 @@
   "main": "_cucumber.js",
   "dependencies": {
     "axios": "^0.21.1",
-    "cucumber": "^7.0.0-rc.0",
     "n-readlines": "^1.0.1",
     "scramjet": "^4.35.12"
   },
@@ -15,5 +14,8 @@
   "private": true,
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^7.1.0"
   }
 }

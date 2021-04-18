@@ -1,4 +1,4 @@
-import { Given, When, Then } from "cucumber";
+import { Given, When, Then } from "@cucumber/cucumber";
 import { promisify } from "util";
 import { strict as assert } from "assert";
 import { exec, spawn } from "child_process";
@@ -32,7 +32,7 @@ Given("input file containing data {string}", async (filename) => {
 
 When("host one porcesses package {string} and redirects output to {string}", { timeout: 20000 }, async (packagePath, outputFile) => {
     await new Promise(async (resolve, reject) => {
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} output.txt > ${outputFile}`, { timeout: 20000 }, (error) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} output.txt 2>&1 > ${outputFile}`, { timeout: 20000 }, (error) => {
             if (error) {
                 reject(error);
                 return;
