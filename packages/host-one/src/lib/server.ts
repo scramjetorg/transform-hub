@@ -12,11 +12,17 @@ const BPMux = require("bpmux").BPMux;
 type IdentifiedSocket = Socket & { _chan: string };
 
 // TODO probably to change to net server, to verify
-export class SocketServer extends EventEmitter, implements IComponent {
+export class SocketServer extends EventEmitter implements IComponent {
     server?: net.Server;
     address: PathLike;
     streams?: DownstreamStreamsConfig;
     logger: Logger;
+
+    constructor(address: PathLike) {
+        super();
+        this.logger = getLogger(this);
+        this.address = address;
+    }
 
     // eslint-disable-next-line complexity
     private handleStream(streams: UpstreamStreamsConfig, stream: IdentifiedSocket) {
@@ -43,7 +49,7 @@ export class SocketServer extends EventEmitter, implements IComponent {
         }
     }
 
-    start() {
+    async start(): Promise<void> {
         let connected = false;
 
         const server = this.server = net.createServer();
@@ -97,12 +103,15 @@ export class SocketServer extends EventEmitter, implements IComponent {
             .listen(this.address, () => {
                 this.logger.log("Server started at", server.address());
             });
-    }
 
-    constructor(address: PathLike) {
-        super();
-        this.address = address;
-        this.logger = getLogger(this);
+        return new Promise((res, rej) => {
+            this.server
+                ?.listen(this.address, () => {
+                    console.log("[SocketServer] Started at", this.server?.address());
+                    res();
+                })
+                .on("error", rej);
+        });
     }
 
     close() {

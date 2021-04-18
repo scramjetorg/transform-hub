@@ -102,6 +102,7 @@ runner.cleanupStreams = async () => {
 })()
     .catch(e => {
         console.error(e.stack);
-        process.exitCode = 11;
+        process.exitCode = e.errorCode || 11;
+        process.exit();
     });
 

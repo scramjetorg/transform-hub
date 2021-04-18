@@ -1,6 +1,6 @@
 import { CeroError, createServer } from "@scramjet/api-server";
 import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, HostError, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler, IComponent, Logger } from "@scramjet/types";
+import { APIExpose, AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler, IComponent, Logger } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { ReadStream } from "fs";
 import * as os from "os";
@@ -16,8 +16,6 @@ export class HostOne implements IComponent {
     private socketName: string;
 
     private netServer?: SocketServer;
-
-    private monitorDownStream?: ReadableStream<string>;
 
     private controlDownstream?: PassThrough;
 
@@ -55,16 +53,17 @@ export class HostOne implements IComponent {
     }
 
     async main(): Promise<void> {
-        await this.hookupMonitorStream();
-        this.logger.log("Monitor stream hooked up");
         await this.createNetServer();
-        this.logger.log("Created net server");
+        console.log("Created Net Server");
         await startSupervisor(this.logger, this.socketName);
-        this.logger.log("Supervisor started");
-        await this.createApiServer();
-        this.logger.log("Creating API server");
+        console.log("Started supervisor");
         await this.awaitConnection();
-        this.logger.log("Got connection");
+        console.log("Got connection");
+
+        await this.hookupMonitorStream();
+        console.log("Hooked monitor stream");
+        await this.createApiServer();
+        console.log("Api server up");
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
@@ -127,8 +126,6 @@ export class HostOne implements IComponent {
         process.on("beforeExit", () => {
             console.warn("beforeExit");
         });
-
-        return Promise.resolve();
     }
 
     async createApiServer(): Promise<void> {
@@ -139,6 +136,7 @@ export class HostOne implements IComponent {
             stderr,
             stdout
         } = this.communicationHandler.getStdio();
+
 
         this.api = createServer(conf);
         this.api.server.listen(8000).unref(); // add .unref() or server will keep process up
@@ -169,6 +167,10 @@ export class HostOne implements IComponent {
         this.api.op(`${apiBase}/sequence/_event/`, RunnerMessageCode.EVENT, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_stop/`, RunnerMessageCode.STOP, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_kill/`, RunnerMessageCode.KILL, this.communicationHandler);
+
+        await new Promise(res => {
+            this.api?.server.once("listening", res);
+        });
     }
 
     async awaitConnection() {
@@ -185,46 +187,15 @@ export class HostOne implements IComponent {
         this.hookLogStream();
     }
 
-    async hookupMonitorStream() {
-        if (!this.monitorDownStream) {
-            throw new Error("Monitor stream not initialized");
-        }
-
-        this.monitorDownStream.pipe(new StringStream())
-            .JSONParse()
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            .map(async ([code, data]: EncodedMonitoringMessage) => {
-                switch (code) {
-                case RunnerMessageCode.ACKNOWLEDGE:
-                    break;
-                case RunnerMessageCode.DESCRIBE_SEQUENCE:
-                    break;
-                case RunnerMessageCode.ALIVE:
-                    break;
-                case RunnerMessageCode.ERROR:
-                    break;
-                case RunnerMessageCode.MONITORING:
-                    break;
-                case RunnerMessageCode.EVENT:
-                    break;
-                case RunnerMessageCode.PING:
-                    await this.handleHandshake();
-                    break;
-                case RunnerMessageCode.SNAPSHOT_RESPONSE:
-                    break;
-                default:
-                    break;
-                }
-            })
-            .run()
-            .catch(async (error) => {
-                console.error(this.errors.parsingError, error.stack);
-            });
+    hookupMonitorStream() {
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async () => {
+            await this.handleHandshake();
+            return null;
+        });
 
         this.communicationHandler.getMonitorStream().stringify(([code, message]: EncodedMonitoringMessage) => {
-            this.logger.info(`Received on monitorStream: ${code}, ${JSON.stringify(message)}`);
             return `[monitor: ${code}]: ${JSON.stringify(message)}`;
-        });
+        }).pipe(process.stderr);
     }
 
     async handleHandshake() {
