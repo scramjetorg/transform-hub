@@ -62,10 +62,16 @@ sequenceArgs = process.argv[4] !== undefined ? process.argv.slice(4) : undefined
 */
 const hostOne: HostOne = new HostOne();
 
-/**
- * @param { stream } packageStrem - sequence stream
- * @param { object } appConfig - config file
- * @param { Array<any> } sequenceArgs - other optional arguments
- */
-hostOne.init(packageStrem, appConfig, sequenceArgs);
-hostOne.main();
+(async () => {
+    /**
+     * @param { stream } packageStrem - sequence stream
+     * @param { object } appConfig - config file
+     * @param { Array<any> } sequenceArgs - other optional arguments
+     */
+    await hostOne.init(packageStrem, appConfig, sequenceArgs);
+    await hostOne.main();
+})().catch(e => {
+    console.error(e.stack);
+    process.exitCode = e.exitCode || 1;
+    process.exit();
+});

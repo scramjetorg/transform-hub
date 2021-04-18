@@ -1,4 +1,3 @@
-const path = require("path");
 const tar = require("tar");
 const { createWriteStream, readdirSync } = require("fs");
 

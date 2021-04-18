@@ -37,8 +37,9 @@ implements AppContext<AppConfigType, State> {
         this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]);
     }
 
-    private async writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage){
+    private writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage){
         MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
+        // TODO: what if it fails?
     }
 
     private _killHandlers: KillHandler[] = [];
@@ -113,7 +114,7 @@ implements AppContext<AppConfigType, State> {
         return this;
     }
 
-    end() {
+    end(): this {
         this.notifyInstanceAboutStopping();
         return this;
     }

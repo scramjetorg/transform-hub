@@ -91,7 +91,7 @@ export class Runner<X extends AppConfig> {
 
     async hookupControlStream() {
         this.controlStream = createReadStream(this.controlFifoPath);
-        this.defineControlStream();
+        await this.defineControlStream();
     }
 
     async defineControlStream() {
@@ -147,20 +147,24 @@ export class Runner<X extends AppConfig> {
             clearInterval(this.monitoringInterval);
         }
 
-        this.monitoringInterval = setInterval(() => {
-            const message: MonitoringMessageData = { healthy: true };
+        let working = false;
 
-            if (this.context === undefined || this.context.monitor === undefined) {
-                throw new RunnerError("NO_MONITORING");
-            }
+        if (this.context === undefined || this.context.monitor === undefined) {
+            throw new RunnerError("NO_MONITORING");
+        }
+        this.monitoringInterval = setInterval(async () => {
+            if (working) return;
+            working = true;
+            const message: MonitoringMessageData = await this.context?.monitor({ healthy: true }) || { healthy: true };
 
-            this.context.monitor(message);
+            MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.monitorStream);
+            working = false;
         }, data.monitoringRate);
     }
 
     async handleKillRequest(): Promise<void> {
         this.context?.killHandler();
-        this.cleanupControlStream();
+        await this.cleanupControlStream();
 
         process.exit(137);
     }
@@ -207,7 +211,7 @@ export class Runner<X extends AppConfig> {
          */
         await this.initAppContext(data.appConfig as X);
         // TODO: this needs to somehow error handled
-        this.runSequence(data.arguments);
+        await this.runSequence(data.arguments);
     }
 
     // TODO: this should be the foll class logic
@@ -218,7 +222,7 @@ export class Runner<X extends AppConfig> {
      */
     async main() {
         await this.hookupFifoStreams();
-        this.initializeLogger();
+        await this.initializeLogger();
         this.sendHandshakeMessage();
     }
 

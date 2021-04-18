@@ -208,7 +208,7 @@ export class HostOne {
                 case RunnerMessageCode.EVENT:
                     break;
                 case RunnerMessageCode.PING:
-                    this.handleHandshake();
+                    await this.handleHandshake();
                     break;
                 case RunnerMessageCode.SNAPSHOT_RESPONSE:
                     break;

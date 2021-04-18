@@ -7,4 +7,8 @@ const prePack = new PrePack({
     noInstall: process.env.NO_INSTALL
 });
 
-prePack.build();
+prePack.build()
+    .catch(e => {
+        console.error(e.stack);
+        process.exitCode = e.exitCode || 10;
+    });

@@ -20,4 +20,8 @@ const { readdir } = require("fs").promises;
     }
 
     out.end();
-})();
+})()
+    .catch(e => {
+        console.error(e.stack);
+        process.exitCode = e.exitCode || 10;
+    });

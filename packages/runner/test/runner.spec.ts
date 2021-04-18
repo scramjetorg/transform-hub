@@ -47,7 +47,7 @@ test("Kill runner", async (t: any) => {
     const processExit = sinon.stub(process, "exit");
     const cleanupControlStreamMock = sinon.stub(runner, "cleanupControlStream");
 
-    runner.controlStreamHandler([RunnerMessageCode.KILL, {}]);
+    await runner.controlStreamHandler([RunnerMessageCode.KILL, {}]);
 
     t.is(cleanupControlStreamMock.callCount, 1);
     t.is(processExit.callCount, 1);
@@ -72,7 +72,7 @@ test("Stop sequence", async (t: any) => {
     await runner.main();
 
     runner.initAppContext({ configKey: "configKeyValue" });
-    runner.controlStreamHandler([RunnerMessageCode.STOP, {}]);
+    await runner.controlStreamHandler([RunnerMessageCode.STOP, {}]);
 
     await new Promise(resolve => setTimeout(resolve, 200));
 

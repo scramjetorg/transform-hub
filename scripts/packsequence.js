@@ -6,4 +6,8 @@ const pack = new Pack({
     localPkgs: process.env.LOCAL_PACKAGES,
 });
 
-pack.pack();
+pack.pack()
+    .catch(e => {
+        console.error(e.stack);
+        process.exitCode = e.exitCode || 10;
+    });

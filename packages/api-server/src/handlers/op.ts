@@ -50,7 +50,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
             try {
                 const obj = await getData(req) as MessageDataType<T>;
 
-                conn.sendControlMessage(message, checkMessage(message, obj));
+                await conn.sendControlMessage(message, checkMessage(message, obj));
 
                 res.writeHead(202, "Accepted", { "content-type": "application/json" });
                 return res.end();

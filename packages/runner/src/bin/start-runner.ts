@@ -29,4 +29,9 @@ if (!fs.existsSync(sequencePath)) {
 
 const runner: Runner<AppConfig> = new Runner(sequencePath, fifosPath);
 
-runner.main();
+runner.main()
+    .catch(e => {
+        console.error(e.stack);
+        process.exitCode = e.errorCode || 11;
+        process.exit();
+    });

@@ -93,5 +93,9 @@ new Promise((res, onRejected) => {
             console.log(`lerna ${scopes} --concurrency=1 exec -- yarn add ${parts[0]}@${newest} ${dev}`);
             console.log("");
         }
+    })
+    .catch(e => {
+        console.error(e.stack);
+        process.exitCode = e.exitCode || 10;
     });
 
