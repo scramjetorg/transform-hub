@@ -1,4 +1,1 @@
-{
-    "extends": "../../.eslintrc",
-    "ignorePatterns": ["generated_test.ts"]
-}
+{"parserOptions":{"project": "./tsconfig.json", "tsconfigRootDir":"./packages/types"}}
