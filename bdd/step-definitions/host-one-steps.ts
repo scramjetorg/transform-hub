@@ -42,9 +42,10 @@ When("host one porcesses package {string} and redirects output to {string}", { t
     });
 });
 
-When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 20000 }, async (packagePath, args, outputFile) => {
+When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 70000 }, async (packagePath, args, outputFile) => {
     await new Promise(async (resolve, reject) => {
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${args} > ${outputFile}`, { timeout: 20000 }, (error) => {
+        //TODO package.json should be optional in my opinion
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} package.json ${args} > ${outputFile}`, { timeout: 60000 }, (error) => {
             if (error) {
                 reject(error);
                 return;
