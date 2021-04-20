@@ -178,7 +178,8 @@ export class HostOne {
          */
         // this.api.downstream(`${apiBase}/stream/stdin`, {stream}, {commHandler})
 
-        this.api.get(`${apiBase}/sequence/health`, RunnerMessageCode.DESCRIBE_SEQUENCE, this.communicationHandler);
+        // monitoring data
+        this.api.get(`${apiBase}/sequence/health`, RunnerMessageCode.MONITORING, this.communicationHandler);
         this.api.get(`${apiBase}/sequence/status`, RunnerMessageCode.STATUS, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_stop/`, RunnerMessageCode.STOP, this.communicationHandler);
