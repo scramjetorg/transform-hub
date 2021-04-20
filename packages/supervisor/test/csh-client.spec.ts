@@ -7,9 +7,10 @@ import * as sinon from "sinon";
 
 let cshClient: any;
 let upstream: any;
-let createReadStreamStub = sinon.stub();
-let createConnectionStub = sinon.stub().returns(new Socket());
-let { CSHClient } = proxyquire("@scramjet/supervisor/src/lib/csh-client", {
+
+const createReadStreamStub = sinon.stub();
+const createConnectionStub = sinon.stub().returns(new Socket());
+const { CSHClient } = proxyquire("@scramjet/supervisor/src/lib/csh-client", {
     fs: {
         createReadStream: createReadStreamStub
     },

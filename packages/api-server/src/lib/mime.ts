@@ -1,7 +1,7 @@
 import { CeroError } from "./definitions";
 
 export const mimeCompare = (accepted: string[], served: string[]): (string | undefined) => {
-    for (let item of accepted) {
+    for (const item of accepted) {
         const [mime] = item.split(";");
 
         if (served.includes(mime)) return mime;

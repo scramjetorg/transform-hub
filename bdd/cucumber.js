@@ -1,4 +1,4 @@
-let common = [
+const common = [
     "--require step-definitions/**/*.ts",
     "--require-module ts-node/register",
     "--publish-quiet",

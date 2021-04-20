@@ -44,8 +44,8 @@ new Promise((res, onRejected) => {
         const deps = {};
         const Oh = Object.prototype.hasOwnProperty;
 
-        for (let package of entries) {
-            for (let result of package.deps) {
+        for (const package of entries) {
+            for (const result of package.deps) {
                 const devDependencies = package.package.devDependencies &&
                     Oh.call(package.package.devDependencies, result.name);
                 const dependencies = package.package.dependencies &&

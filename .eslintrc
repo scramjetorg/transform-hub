@@ -112,6 +112,7 @@
         "no-undef" : 0,
         "no-undefined:" : 0,
         "no-use-before-define" : 2,
+        "prefer-const": 2,
 
         /* stylistic issues */
         "array-bracket-spacing" : 1,

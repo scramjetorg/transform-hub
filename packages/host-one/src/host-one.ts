@@ -248,9 +248,9 @@ export class HostOne {
         this.vorpal
             .command("stop [TIMEOUT_NUMBER] [ALIVE_BOOLEAN]", "Stop gracefully sequence in provided timeout and prolong operations or not for task completion")
             .action((args: any) => {
-                let timeout = parseInt(args.TIMEOUT_NUMBER, 10);
-                let alive = args.ALIVE_BOOLEAN;
-                let canCallKeepalive = alive === undefined ? alive : alive === "true";
+                const timeout = parseInt(args.TIMEOUT_NUMBER, 10);
+                const alive = args.ALIVE_BOOLEAN;
+                const canCallKeepalive = alive === undefined ? alive : alive === "true";
 
                 return isNaN(timeout)
                     ? this.vorpal.log(this.errors.noParams)
@@ -276,7 +276,7 @@ export class HostOne {
             .command("monitor [NUMBER]", "Change sequence monitoring rate")
             .alias("rate")
             .action((args: any) => {
-                let monitoringRate = parseInt(args.NUMBER, 10);
+                const monitoringRate = parseInt(args.NUMBER, 10);
 
                 return isNaN(monitoringRate)
                     ? this.vorpal.log(this.errors.noParams)

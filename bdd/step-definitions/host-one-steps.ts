@@ -52,8 +52,8 @@ Then("file {string} is generated", async (filename) => {
 
 Then("file {string} in each line contains {string} followed by name from file {string} finished by {string}", async (file1, greeting, file2, suffix) => {
     const output = new lineByLine(`${file1}`);
+    const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
 
-    let input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
     let line1;
     let line2;
     let i = 0;
@@ -74,7 +74,7 @@ When("wait {string} ms", async (timeoutMs) => {
 });
 
 When("send stop message with timeout {string} and canKeepAlive {string}", async (timeout, canKeepAlive) => {
-    let resp = await sequenceApiClient.stop(parseInt(timeout, 10), canKeepAlive === "true");
+    const resp = await sequenceApiClient.stop(parseInt(timeout, 10), canKeepAlive === "true");
 
     assert.equal(resp.status, 202);
 });

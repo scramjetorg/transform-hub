@@ -29,7 +29,7 @@ const exp: [
             this.save({ x: x });
         });
         return async function* () {
-            for await (let { a } of stream) {
+            for await (const { a } of stream) {
                 yield { b: a };
                 x = a;
                 console.log({ x });

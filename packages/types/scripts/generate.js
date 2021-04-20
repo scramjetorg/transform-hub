@@ -11,7 +11,7 @@ const { readdir } = require("fs").promises;
 
     out.write("/// Generated file, do not edit!\n\n");
 
-    for (let file of list) {
+    for (const file of list) {
         if (!file.endsWith(".spec.ts")) continue;
         const importName = file.replace(/\.spec\.ts$/, "");
         const filename = file.replace(/\.ts$/, "");

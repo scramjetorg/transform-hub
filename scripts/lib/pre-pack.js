@@ -92,7 +92,7 @@ class PrePack {
         }));
 
         this.packagesMap = new Map();
-        for (let [k, v] of packages) {
+        for (const [k, v] of packages) {
             this.packagesMap.set(k, v);
         }
     }
@@ -154,7 +154,7 @@ class PrePack {
         if (this.options.localPkgs) {
             const ret = {};
 
-            for (let [dependency, version] of Object.entries(dependencies)) {
+            for (const [dependency, version] of Object.entries(dependencies)) {
                 ret[dependency] = this.packagesMap.has(dependency)
                     ? `file:../${this.packagesMap.get(dependency)}`
                     : version

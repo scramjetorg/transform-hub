@@ -11,7 +11,7 @@ const exp: [
         this.handleStop(() => {
             this.save({ x: x });
         });
-        for await (let { c } of stream) {
+        for await (const { c } of stream) {
             x = c;
             console.log({ x });
         }

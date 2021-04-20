@@ -51,9 +51,7 @@ test("Upstream works with stream", async t => {
 test("Downstream works with stream", async t => {
     const pt = new StringStream();
     const { request, response } = mockRequestResponse("POST", "/api/down", pt);
-
-    let ended = false;
-
+    const ended = false;
     const up = new StringStream();
 
     api.downstream("/api/down", up as Writable, { end: false, text: true });

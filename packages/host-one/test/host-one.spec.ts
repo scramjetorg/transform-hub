@@ -9,8 +9,7 @@ import { DataStream } from "scramjet";
 const appConfig = {
     configKey: "configValue"
 };
-
-let packageStream = new PassThrough() as unknown as ReadStream;
+const packageStream = new PassThrough() as unknown as ReadStream;
 
 test("Host one creation with sequence args", async t => {
     const hostOne = new HostOne();

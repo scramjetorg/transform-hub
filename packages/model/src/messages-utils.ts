@@ -33,8 +33,7 @@ export function deserializeMessage(msg: string): MessageType<RunnerMessageCode> 
 
         if (Array.isArray(obj) && obj.length === 2) {
             const code: RunnerMessageCode = +obj[0];
-
-            let data = obj[1];
+            const data = obj[1];
 
             if (Object.values(RunnerMessageCode).includes(code))
                 return getMessage(code, data);

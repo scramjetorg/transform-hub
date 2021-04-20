@@ -6,7 +6,7 @@ export const app: TransformApp<number, {i: number, x: number}, [], {abc: number,
         const y = async function* () {
             let i:number = +frm;
 
-            for await (let x of source) {
+            for await (const x of source) {
                 if (i-- <= 0) return;
                 yield { i, x };
             }

@@ -28,8 +28,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         res: ServerResponse
     ) => {
         try {
-            let out = data;
-
+            const out = data;
             const cType = type.startsWith("text/")
                 ? `${type}; charset=${encoding}`
                 : type;

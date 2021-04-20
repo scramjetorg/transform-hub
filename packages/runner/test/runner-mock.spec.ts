@@ -5,18 +5,14 @@ import * as sinon from "sinon";
 
 const test = require("ava");
 const proxyquire = require("proxyquire");
-
-let processExit = process.exit;
-let runnerOptions: RunnerOptions = {};
-
+const processExit = process.exit;
+const runnerOptions: RunnerOptions = {};
 const sandbox = sinon.createSandbox();
-
-let stringStreamFromStub = sandbox.stub();
-let stringStreamLinesStub = sandbox.stub();
-let stringStreamMapStub = sandbox.stub();
-let stringStreamAppendStub = sandbox.stub();
-let stringStreamPipeStub = sandbox.stub();
-
+const stringStreamFromStub = sandbox.stub();
+const stringStreamLinesStub = sandbox.stub();
+const stringStreamMapStub = sandbox.stub();
+const stringStreamAppendStub = sandbox.stub();
+const stringStreamPipeStub = sandbox.stub();
 const scramjetMock = {
     StringStream: {
         from: stringStreamFromStub,
@@ -32,9 +28,10 @@ stringStreamLinesStub.returns(scramjetMock.StringStream);
 stringStreamMapStub.returns(scramjetMock.StringStream);
 stringStreamAppendStub.returns(scramjetMock.StringStream);
 
-let { Runner } = proxyquire("../dist/mock/runner", {
+const { Runner } = proxyquire("../dist/mock/runner", {
     scramjet: scramjetMock
 });
+
 let runner: any;
 
 test.beforeEach(() => {

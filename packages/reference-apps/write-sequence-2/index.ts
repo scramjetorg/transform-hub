@@ -8,7 +8,7 @@ const exp: [
 ] = [
     (stream) => {
         return async function* () {
-            for await (let { b } of stream) {
+            for await (const { b } of stream) {
                 yield { c: b };
             }
         };
@@ -23,7 +23,7 @@ const exp: [
         this.handleStop(() => {
             this.save({ x: x });
         });
-        for await (let { c } of stream) {
+        for await (const { c } of stream) {
             x = c;
             console.log({ x });
         }

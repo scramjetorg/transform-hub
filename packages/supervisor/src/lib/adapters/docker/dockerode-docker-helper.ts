@@ -95,15 +95,14 @@ export class DockerodeDockerHelper implements IDockerHelper {
             stdout: new PassThrough(),
             stderr: new PassThrough()
         };
-
-        let container = await this.createContainer(
+        const container = await this.createContainer(
             config.imageName,
             config.volumes,
             config.binds,
             config.envs,
             config.autoRemove);
         // ------
-        let stream = await this.attach(container, {
+        const stream = await this.attach(container, {
             stream: true,
             stdin: true,
             stdout: true,

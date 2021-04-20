@@ -45,7 +45,7 @@ implements AppContext<AppConfigType, State> {
     private _killHandlers: KillHandler[] = [];
 
     killHandler() {
-        for (let handler of this._killHandlers) handler();
+        for (const handler of this._killHandlers) handler();
     }
 
     handleKill(handler: KillHandler): this {
@@ -59,7 +59,7 @@ implements AppContext<AppConfigType, State> {
     private _stopHandlers: StopHandler[] = [];
 
     async stopHandler(timeout: number, canCallKeepalive: boolean) {
-        for (let handler of this._stopHandlers) {
+        for (const handler of this._stopHandlers) {
             // TODO: what should happen if an error occurs here?
             await handler(timeout, canCallKeepalive);
         }
@@ -77,7 +77,7 @@ implements AppContext<AppConfigType, State> {
     async monitor(initialMessage: MonitoringMessageFromRunnerData = { healthy: true }) {
         let message = initialMessage;
 
-        for (let handler of this._monitoringHandlers) {
+        for (const handler of this._monitoringHandlers) {
             // TODO: what should happen if an error occurs here?
             const { healthy, sequences } = await handler(message);
 

@@ -29,7 +29,7 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
         this.handleStop(() => {
             this.save({ x: x });
         });
-        for await (let { a } of stream) {
+        for await (const { a } of stream) {
             x = a;
             console.log({ x });
         }

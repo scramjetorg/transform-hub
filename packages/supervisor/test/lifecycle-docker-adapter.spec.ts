@@ -55,7 +55,7 @@ test("Init should call imageConfig and set results locally.", async (t) => {
 test("Init should reject on read file error.", async (t) => {
     configStub.rejects(new Error("ENOENT: File not found"));
 
-    let lcda = new LifecycleDockerAdapter();
+    const lcda = new LifecycleDockerAdapter();
 
     await t.throwsAsync(lcda.init());
 });
@@ -69,7 +69,7 @@ test("CreateFifoStreams should create monitor, control and logger streams.", asy
     lcda["controlFifoPath"] = "cfp";
     lcda["loggerFifoPath"] = "lfp";
 
-    let lcdaCreateFifo: sinon.SinonStub<any> = lcda["createFifo"] = sandbox.stub().resolves();
+    const lcdaCreateFifo: sinon.SinonStub<any> = lcda["createFifo"] = sandbox.stub().resolves();
 
     mkdtempStub.resolves("uniqDir");
 
@@ -119,7 +119,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         wait: sinon.stub().resolves()
     });
 
-    let createFifoStreams = sandbox.stub(lcda as any, "createFifoStreams").resolves();
+    const createFifoStreams = sandbox.stub(lcda as any, "createFifoStreams").resolves();
 
     await lcda.init();
 

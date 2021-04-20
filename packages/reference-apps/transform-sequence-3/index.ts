@@ -11,7 +11,7 @@ const exp: [
         const lastDone = this.initialState?.x || -Infinity;
 
         return async function* () {
-            for await (let { a } of stream) {
+            for await (const { a } of stream) {
                 if (a < lastDone) continue;
                 yield { b: a };
             }
@@ -23,7 +23,7 @@ const exp: [
         this.handleStop(() => { if (x) this.save({ x }); });
 
         return async function* () {
-            for await (let { b } of stream) {
+            for await (const { b } of stream) {
                 yield { c: b };
                 x = b;
             }
@@ -35,7 +35,7 @@ const exp: [
         this.handleStop(() => { this.save({ y: x }); });
 
         return async function* () {
-            for await (let { c } of stream) {
+            for await (const { c } of stream) {
                 yield { d: c };
                 x = c;
             }
