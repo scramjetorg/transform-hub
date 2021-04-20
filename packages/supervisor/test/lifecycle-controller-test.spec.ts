@@ -5,6 +5,7 @@ import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter } from "@scramjet/
 import { LifeCycleController } from "../src/lib/lifecycle-controller";
 import { Readable } from "stream";
 import { PassThrough } from "stream";
+import { DataStream } from "scramjet";
 
 // let { LifeCycleController } = proxyquire("@scramjet/supervisor/src/lib/lifecycle-controller", {
 //     "@scramjet/model/src/stream-handler": {
@@ -42,7 +43,6 @@ class Client implements ICSHClient {
 }
 
 const streamHandlerInstance: ICommunicationHandler = {
-    getLogOutput: sinon.stub().returns({out: new PassThrough(), err: new PassThrough()}),
     pipeStdio: sinon.stub(),
     pipeMessageStreams: sinon.stub(),
     hookUpstreamStreams: sinon.stub(),
@@ -55,7 +55,9 @@ const streamHandlerInstance: ICommunicationHandler = {
     controlOutput: new PassThrough(),
     sendMonitoringMessage: sinon.stub(),
     sendControlMessage: sinon.stub(),
-    getStdio: sinon.stub()
+    getMonitorStream: sinon.stub().returns(new DataStream()),
+    getLogOutput: sinon.stub().returns({out: new PassThrough(), err: new PassThrough()}),
+    getStdio: sinon.stub().returns(new DataStream()),
 }
 
 let lcdaInstance = new LCDA();
