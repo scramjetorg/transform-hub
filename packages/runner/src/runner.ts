@@ -269,14 +269,29 @@ export class Runner<X extends AppConfig> implements IComponent {
      *
      * @param args {any[]} arguments that the app will be called with
      */
+    // eslint-disable-next-line complexity
     async runSequence(args: any[] = []): Promise<void> {
         if (!this.context){
+            this.logger?.error("Uninitialized context");
             throw new RunnerError("UNINITIALIZED_CONTEXT");
         }
 
         await this.handleMonitoringRequest({ monitoringRate:1 });
 
-        const sequence = this.getSequence();
+        let sequence;
+
+        try {
+            sequence = this.getSequence();
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                this.logger?.error("Sequence syntax error.", error.message);
+            } else {
+                this.logger?.error("Sequence error:", error.message);
+            }
+
+            await this.cleanupControlStream();
+            process.exit(21);
+        }
 
         /**
          * @analyze-how-to-pass-in-out-streams
@@ -292,20 +307,30 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         for (const func of sequence) {
             itemsLeftInSequence--;
-            const out: SynchronousStreamable<any> | void = await func.call(
-                this.context,
-                /**
-                 * @analyze-how-to-pass-in-out-streams
-                 * Input stream to the Sequence will be passed as an argument
-                 * instead of
-                 * new DataStream() as unknown as ReadableStream<never>
-                 */
-                stream,
-                ...args
-            );
+
+            let out: SynchronousStreamable<any> | void;
+
+            try {
+                out = await func.call(
+                    this.context,
+                    /**
+                     * @analyze-how-to-pass-in-out-streams
+                     * Input stream to the Sequence will be passed as an argument
+                     * instead of
+                     * new DataStream() as unknown as ReadableStream<never>
+                     */
+                    stream,
+                    ...args
+                );
+            } catch (error) {
+                this.logger?.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error);
+            }
 
             if (!out) {
-                if (itemsLeftInSequence > 0) throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
+                if (itemsLeftInSequence > 0) {
+                    this.logger?.error("Sequence ended premature");
+                    throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
+                }
             } else if (typeof out === "object" && out instanceof PromiseTransform) {
                 stream = scramjetStreamFrom(out) as unknown as ReadableStream<any>;
             } else {

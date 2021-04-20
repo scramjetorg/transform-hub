@@ -56,10 +56,12 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
         this.runnerStdin = new PassThrough();
         this.runnerStdout = new PassThrough();
         this.runnerStderr = new PassThrough();
-        this.dockerHelper = new DockerodeDockerHelper();
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
         this.loggerStream = new DelayedStream();
+
+        this.dockerHelper = new DockerodeDockerHelper();
+
         /**
          * @analyze-how-to-pass-in-out-streams
          * Initiate two streams with as DelayedStream():
@@ -203,7 +205,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
         this.controlStream.run(createWriteStream(this.controlFifoPath));
         this.loggerStream.run(createReadStream(this.loggerFifoPath));
 
-        return new Promise(async (resolve) => {
+        return new Promise(async (resolve, reject) => {
             const { streams, containerId } = await this.dockerHelper.run({
                 imageName: this.imageConfig.runner || "",
                 volumes: [
@@ -221,13 +223,15 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
 
-            const { statusCode } = await this.dockerHelper.wait(containerId, { condition: "removed" });
 
-            console.log(
-                "Runner container finished with exit code", statusCode
-            );
+            let containerExitResult;
 
-            resolve(statusCode);
+            try {
+                containerExitResult = await this.dockerHelper.wait(containerId, { condition: "removed" });
+                resolve(containerExitResult.statusCode);
+            } catch (error) {
+                reject(error);
+            }
         });
     }
 

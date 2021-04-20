@@ -36,6 +36,9 @@ async function startSupervisor(logger: Logger, socketPath: string) {
         logger.log("Supervisor process exited with code: " + code + ", signal: " + signal);
     });
 
+    supervisor.stdout.pipe(process.stdout);
+    supervisor.stderr.pipe(process.stdout);
+
     return Promise.resolve(supervisor.pid);
 }
 

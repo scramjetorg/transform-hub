@@ -33,8 +33,11 @@ import { SupervisorError } from "@scramjet/model";
 
     await lcc.main();
 })().catch(e => {
-    console.error(e.stack);
-    process.exitCode = e.exitCode || 10;
+    let exitCode = 10;
 
-    throw new SupervisorError("GENERAL_ERROR", { exitCode: e.exitCode });
+    if (e.data && e.data.exitCode) {
+        exitCode = e.data.exitCode;
+    }
+
+    process.exit(exitCode);
 });

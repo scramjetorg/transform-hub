@@ -128,14 +128,14 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return {
             streams: streams,
             containerId: container,
-            wait: () => this.wait(container, { condition: "not-running" })
+            wait: async () => this.wait(container, { condition: "not-running" })
         };
     }
 
     async wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData> {
         const containerExitResult = await this.dockerode.getContainer(container).wait(options);
 
-        if (containerExitResult.Error) {
+        if (containerExitResult.StatusCode !== 0) {
             throw new SupervisorError("RUNNER_ERROR", { exitCode: containerExitResult.StatusCode });
         }
 

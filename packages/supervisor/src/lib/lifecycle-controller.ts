@@ -219,7 +219,6 @@ class LifeCycleController implements IComponent {
 
             this.client.disconnect();
         } catch (error) {
-
             /**
             * Container snapshot is made if it was requested in LifeCycleConfig
             */
@@ -237,6 +236,7 @@ class LifeCycleController implements IComponent {
 
             }
 
+            await this.lifecycleAdapter.cleanup();
             return Promise.reject(error);
         }
 
