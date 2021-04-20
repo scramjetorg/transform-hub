@@ -42,6 +42,18 @@ When("host one porcesses package {string} and redirects output to {string}", { t
     });
 });
 
+When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 20000 }, async (packagePath, args, outputFile) => {
+    await new Promise(async (resolve, reject) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${args} > ${outputFile}`, { timeout: 20000 }, (error) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(1);
+        });
+    });
+});
+
 When("start host one and process package {string}", { timeout: 20000 }, async (packagePath) => {
     runHostOne(packagePath, packageJson, packageData, "output.txt ");
 });
