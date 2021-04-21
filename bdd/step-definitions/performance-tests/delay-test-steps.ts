@@ -1,5 +1,5 @@
 import { strict as assert, fail } from "assert";
-import { When, Then } from "cucumber";
+import { When, Then } from "@cucumber/cucumber";
 
 const lineByLine = require("n-readlines");
 
