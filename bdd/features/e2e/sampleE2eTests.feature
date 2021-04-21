@@ -2,9 +2,9 @@ Feature: Sample e2e tests
 
     Scenario: Execute example HelloAlice
         Given input file containing data "data.json"
-        When host one porcesses package "../packages/samples/example.tar.gz" and redirects output to "./reports/.work/dataOut.test.result.txt"
-        Then file "./reports/.work/dataOut.test.result.txt" is generated
-        And file "./reports/.work/dataOut.test.result.txt" in each line contains "Hello " followed by name from file "data.json" finished by "!"
+        When host one execute sequence "../packages/samples/example.tar.gz" with arguments "/package/data.json output.txt" and redirects output to "dataOut.test.result.txt"
+        Then file "dataOut.test.result.txt" is generated
+        And file "dataOut.test.result.txt" in each line contains "Hello " followed by name from file "data.json" finished by "!"
 
     Scenario: Stop sequence process after 0s
         Given input file containing data "data.json"

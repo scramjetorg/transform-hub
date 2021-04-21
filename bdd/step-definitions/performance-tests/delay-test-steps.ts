@@ -3,6 +3,8 @@ import { When, Then } from "cucumber";
 
 const lineByLine = require("n-readlines");
 
+let delayAverage: bigint;
+
 When("calculate average delay time from {string} of first {string} function calls starting {string}", async (probesFile, numberOfProbes, startFromProbe) => {
     const output = new lineByLine(`${probesFile}`);
 
@@ -10,7 +12,7 @@ When("calculate average delay time from {string} of first {string} function call
     let sum: bigint = BigInt(0);
 
     for (let i = 0; i < startFromProbe; i++) {
-        if (!(output.next())) {
+        if (!output.next()) {
             fail("not enough probes in file");
         }
     }
@@ -19,31 +21,18 @@ When("calculate average delay time from {string} of first {string} function call
         if (!(line = output.next())) {
             fail("not enough probes in file");
         }
-        sum += BigInt(line);
+
+        sum += BigInt(line.toString().replace("n", ""));
     }
 
     const average: bigint = sum / BigInt(numberOfProbes);
-    const averagbeIsOk: boolean = average < BigInt("100000n");
 
-    assert.equal(averagbeIsOk, true);
-
-    // let line1;
-    // let line2;
-    // let i = 0;
-
-    // output.next();//skip first line with "Checking data"
-    // output.next();//skip second line with "[HostOne][Server] Started at /tmp/2903117"
-
-    // for (i = 0; i < input.length; i++) {
-    //     (line2 = output.next())
-    //     line1 = input[i].name;
-    //     assert.deepEqual(greeting + line1 + suffix, "" + line2);
-    // }
-
-
+    console.log("Average: ", average);
+    delayAverage = average;
 });
 
 Then("calculated avereage delay time is lower than {string} ns", async (acceptedDelayInNs) => {
-    console.log(acceptedDelayInNs);
-    return "pending";
+    const averageIsOk: boolean = delayAverage < BigInt(acceptedDelayInNs);
+
+    assert.equal(averageIsOk, true);
 });

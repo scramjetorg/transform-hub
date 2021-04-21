@@ -15,7 +15,7 @@ const sequenceApiClient = new SequenceApiClient();
 let hostOne;
 let hostOneProcessStopped;
 
-function runHostOne(packagePath: string, ...args: any[]): void {
+function executeSequenceSpawn(packagePath: string, ...args: any[]): void {
     let command: string[] = ["node", hostOneExecutableFilePath, packagePath];
 
     command = command.concat(args);
@@ -26,13 +26,26 @@ function runHostOne(packagePath: string, ...args: any[]): void {
     });
 }
 
+async function executeSequence(packagePath: string, args: string[], outputFile: string, cmdTimeout: number) {
+    await new Promise(async (resolve, reject) => {
+        //TODO package.json is app config, so should be optional in my opinion
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ../package.json ${args} > ${outputFile}`, { timeout: cmdTimeout }, (error) => {
+            if (error) {
+                reject(error);
+                return;
+            }
+            resolve(1);
+        });
+    });
+}
+
 Given("input file containing data {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
 When("host one porcesses package {string} and redirects output to {string}", { timeout: 20000 }, async (packagePath, outputFile) => {
     await new Promise(async (resolve, reject) => {
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} output.txt 2>&1 > ${outputFile}`, { timeout: 20000 }, (error) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} output.txt > ${outputFile}`, { timeout: 20000 }, (error) => {
             if (error) {
                 reject(error);
                 return;
@@ -42,21 +55,17 @@ When("host one porcesses package {string} and redirects output to {string}", { t
     });
 });
 
-When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 70000 }, async (packagePath, args, outputFile) => {
-    await new Promise(async (resolve, reject) => {
-        //TODO package.json should be optional in my opinion
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} package.json ${args} > ${outputFile}`, { timeout: 60000 }, (error) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            resolve(1);
-        });
-    });
+When("host one execute sequence {string} with arguments {string} and redirects output to {string} long timeout", { timeout: 70000 }, async (packagePath, args, outputFile) => {
+    await executeSequence(packagePath, args, outputFile, 60000);
 });
+
+When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 10000 }, async (packagePath, args, outputFile) => {
+    await executeSequence(packagePath, args, outputFile, 9000);
+});
+
 
 When("start host one and process package {string}", { timeout: 20000 }, async (packagePath) => {
-    runHostOne(packagePath, packageJson, packageData, "output.txt ");
+    executeSequenceSpawn(packagePath, packageJson, packageData, "output.txt ");
 });
 
 Then("file {string} is generated", async (filename) => {
