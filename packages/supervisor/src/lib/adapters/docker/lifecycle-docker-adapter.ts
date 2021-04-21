@@ -213,7 +213,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
                     `${this.resources.fifosDir}:/pipes`
                 ],
                 envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
-                autoRemove: true
+                autoRemove: true,
+                maxMem: 256 * 1024 * 1024 // TODO: config
             });
 
             this.runnerStdin.pipe(streams.stdin);

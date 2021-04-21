@@ -40,7 +40,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
         volumes: DockerAdapterVolumeConfig[] = [],
         binds: string[] = [],
         envs: string[] = [],
-        autoRemove: boolean = false
+        autoRemove: boolean = false,
+        maxMem: number = 64 * 1024 * 1024
     ): Promise<DockerContainer> {
         const { id } = await this.dockerode.createContainer({
             Image: dockerImage,
@@ -54,7 +55,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             HostConfig: {
                 Binds: binds,
                 Mounts: this.translateVolumesConfig(volumes),
-                AutoRemove: autoRemove
+                AutoRemove: autoRemove,
+                Memory: maxMem
             }
         });
 
@@ -100,7 +102,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             config.volumes,
             config.binds,
             config.envs,
-            config.autoRemove);
+            config.autoRemove,
+            config.maxMem);
         // ------
         const stream = await this.attach(container, {
             stream: true,

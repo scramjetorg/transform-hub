@@ -75,9 +75,14 @@ export type DockerAdapterRunConfig = {
     envs?: string[],
 
     /**
-     * @private {boolean} autoRemove If true container will be removed after container's process exit.
+     * @property {boolean} autoRemove If true container will be removed after container's process exit.
      */
-    autoRemove?: boolean
+    autoRemove?: boolean,
+
+    /**
+     * @property {number} maxMem Maximum available memory.
+     */
+    maxMem?: number
 };
 
 /**
@@ -149,6 +154,8 @@ export interface IDockerHelper {
      * @param {DockerImage} dockerImage Docker image name.
      * @param {DockerAdapterVolumeConfig[]} volumes Volumes to be mounted to container.
      * @param {string[]} binds Directories to be mounted.
+     * @param {string[]} envs Environment variables.
+     * @param {boolean} autoRemove If true, container will be removed when finished.
      *
      * @returns {Promise} Created container.
      */
@@ -157,7 +164,8 @@ export interface IDockerHelper {
         volumes: DockerAdapterVolumeConfig[],
         binds: string[],
         envs: string[],
-        autoRemove: boolean) => Promise<DockerContainer>;
+        autoRemove: boolean,
+        maxMem: number) => Promise<DockerContainer>;
 
     /**
      * Starts container.
