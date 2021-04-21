@@ -38,16 +38,18 @@ export class CeroError extends Error implements APIError {
     code: number;
     httpMessage: string;
     cause?: Error;
+    type: CeroCode;
     private _oldStack: typeof Error.prototype.stack;
 
-    constructor(errCode: CeroCode, cause?: Error) {
+    constructor(errCode: CeroCode, cause?: Error, extraMessage?: string) {
 
-        const [code, message] = codelist[errCode] as [number, string];
+        const [code, defaultMessage] = codelist[errCode] as [number, string];
 
-        super(`${code}: ${message}`);
+        super(`${code}: ${defaultMessage}`);
 
-        this.httpMessage = message;
+        this.httpMessage = extraMessage || defaultMessage;
         this.code = code;
+        this.type = errCode;
 
         this._oldStack = this.stack;
 

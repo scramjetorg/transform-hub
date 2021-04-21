@@ -97,9 +97,14 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     req.on("end", resolve);
                 });
                 if (end) {
-                    await new Promise(resolve => data.once("finish", resolve));
+                    await new Promise((resolve, reject) => {
+                        data.once("error", reject);
+                        data.once("finish", resolve);
+                    });
+                    res.writeHead(200, "OK");
+                } else {
+                    res.writeHead(202, "Accepted");
                 }
-                res.writeHead(202, "Accepted");
                 res.end();
             } catch (e) {
                 next(new CeroError("ERR_INTERNAL_ERROR", e));

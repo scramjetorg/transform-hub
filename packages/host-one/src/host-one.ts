@@ -145,7 +145,7 @@ export class HostOne implements IComponent {
         this.netServer = new SocketServer(this.socketName);
 
         this.netServer.attachStreams(this.downStreams);
-        this.netServer.start();
+        await this.netServer.start();
 
         process.on("beforeExit", () => {
             console.warn("beforeExit");
