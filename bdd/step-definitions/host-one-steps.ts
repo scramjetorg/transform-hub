@@ -55,8 +55,8 @@ When("host one porcesses package {string} and redirects output to {string}", { t
     });
 });
 
-When("host one execute sequence {string} with arguments {string} and redirects output to {string} long timeout", { timeout: 70000 }, async (packagePath, args, outputFile) => {
-    await executeSequence(packagePath, args, outputFile, 60000);
+When("host one execute sequence {string} with arguments {string} and redirects output to {string} long timeout", { timeout: 310000 }, async (packagePath, args, outputFile) => {
+    await executeSequence(packagePath, args, outputFile, 300000);
 });
 
 When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 10000 }, async (packagePath, args, outputFile) => {

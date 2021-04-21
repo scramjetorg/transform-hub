@@ -5,7 +5,7 @@ import { ReadableApp, WritableApp } from "@scramjet/types";
 let start: bigint;
 let stop: bigint;
 
-const exp: [ReadableApp<{ a: number }, [], { x: number }>, WritableApp<{ a: number }, [], { x: number }>] = [
+const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ a: number }, [], { x: number }>] = [
     /**
      * @param _stream - dummy input
      * @returns data
@@ -24,8 +24,8 @@ const exp: [ReadableApp<{ a: number }, [], { x: number }>, WritableApp<{ a: numb
             while (++x < timesOfExecution) {
                 await new Promise(res => setTimeout(res, 10));
 
-                start = process.hrtime.bigint();
-                yield { a: x };
+                const ts = process.hrtime.bigint();
+                yield { ts };
             }
         };
     },

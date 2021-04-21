@@ -255,13 +255,13 @@ npm i
 - execute all bdd test using from the command line:
 
 ```bash
-yarn test-bdd
+yarn test:bdd
 ```
 
 - or execute a particular bdd scenario by adding the scenario title after a `--name` flag:
 
 ```bash
-yarn test-bdd --name="Execute example HelloAlice"
+yarn test:bdd --name="Execute example HelloAlice"
 ```
 
 Results of the performed test will be displayed in the console. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a bdd test, those html's are saved in `bdd` folder.
