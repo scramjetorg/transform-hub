@@ -1,6 +1,6 @@
 import { CeroError, createServer } from "@scramjet/api-server";
 import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, HostError, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { APIExpose, AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler, IComponent, Logger } from "@scramjet/types";
+import { APIExpose, AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, ICommunicationHandler, IComponent, Logger } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { ReadStream } from "fs";
 import * as os from "os";
@@ -73,6 +73,7 @@ export class HostOne implements IComponent {
         this.packageDownStream = packageStream;
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
+
         this.controlDownstream = new PassThrough();
         this.controlDataStream = new DataStream();
 
@@ -92,8 +93,9 @@ export class HostOne implements IComponent {
             this.packageDownStream
         ];
 
-        this.controlDataStream.JSONStringify()
-            .pipe(this.upStreams[CommunicationChannel.CONTROL] as unknown as WritableStream<EncodedControlMessage>);
+        this.controlDataStream
+            .JSONStringify()
+            .pipe(this.controlDownstream);
 
         this.communicationHandler.hookUpstreamStreams(this.upStreams);
 

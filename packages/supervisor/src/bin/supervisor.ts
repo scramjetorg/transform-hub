@@ -31,6 +31,8 @@ import { SupervisorError } from "@scramjet/model";
     const cshc: CSHClient = new CSHClient(socketPath);
     const lcc: LifeCycleController = new LifeCycleController(lcda, config, cshc);
 
+    console.log("Connecting to", socketPath);
+
     await lcc.main();
 })().catch(e => {
     let exitCode = 10;
