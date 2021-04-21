@@ -262,8 +262,11 @@ export class Runner<X extends AppConfig> {
      * @param args {any[]} arguments that the app will be called with
      */
     async runSequence(args: any[] = []): Promise<void> {
-        if (!this.context)
+        if (!this.context){
             throw new RunnerError("UNINITIALIZED_CONTEXT");
+        }
+
+        await this.handleMonitoringRequest({monitoringRate:1});
 
         const sequence = this.getSequence();
 

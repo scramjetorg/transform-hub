@@ -27,6 +27,12 @@ export class SequenceApiClient {
         return await this.post(monitoringMethodUrl, data);
     }
 
+    public async getHealth(): Promise<any> {
+        const gethealthUrl = `${this.apiBase}/health`;
+
+        return await this.get(gethealthUrl);
+    }
+
     private async post(url: string, data: any): Promise<any> {
         let resp;
 
@@ -46,8 +52,22 @@ export class SequenceApiClient {
         return resp;
     }
 
+    private async get(url: string): Promise<any> {
+        let resp;
+
+        try {
+            resp = await axios({
+                method: "GET",
+                url: url
+            });
+        } catch (error) {
+            console.error("Error during sending request: ", error);
+        }
+
+        return resp;
+    }
+
     //TODO
-    // this.api.get(`${apiBase}/sequence/health`, RunnerMessageCode.DESCRIBE_SEQUENCE, this.communicationHandler);
     // this.api.get(`${apiBase}/sequence/status`, RunnerMessageCode.STATUS, this.communicationHandler);
 
 }

@@ -63,9 +63,21 @@ When("host one execute sequence {string} with arguments {string} and redirects o
     await executeSequence(packagePath, args, outputFile, 9000);
 });
 
-
 When("start host one and process package {string}", { timeout: 20000 }, async (packagePath) => {
     executeSequenceSpawn(packagePath, packageJson, packageData, "output.txt ");
+});
+
+When("get sequence health", async () => {
+    const resp = await sequenceApiClient.getHealth();
+
+    console.log(resp.data);
+
+    assert.equal(resp.status, 200);
+});
+
+Then("response body is {string}", async (response) => {
+    console.log(response)
+    return 'pending';
 });
 
 Then("file {string} is generated", async (filename) => {
