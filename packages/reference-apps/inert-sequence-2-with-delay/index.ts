@@ -2,14 +2,13 @@
 
 import { ReadableApp, WritableApp } from "@scramjet/types";
 
-let start: bigint;
-let stop: bigint;
+const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ ts: bigint }, [], { x: number }>] = [
 
-const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ a: number }, [], { x: number }>] = [
     /**
      * @param _stream - dummy input
      * @returns data
      */
+
     async function(_stream: any, ...args: any[]) {
         let timesOfExecution: number;
 
@@ -25,6 +24,7 @@ const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ a: num
                 await new Promise(res => setTimeout(res, 10));
 
                 const ts = process.hrtime.bigint();
+
                 yield { ts };
             }
         };
@@ -34,10 +34,10 @@ const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ a: num
      * @param stream - internal stream
      */
     async function(stream) {
-        for await (const { } of stream) {
-            stop = process.hrtime.bigint();
+        for await (const { ts } of stream) {
+            const stop = process.hrtime.bigint();
 
-            console.log(stop - start);
+            console.log(stop - ts);
         }
     }
 ];
