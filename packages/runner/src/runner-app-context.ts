@@ -139,6 +139,7 @@ implements AppContext<AppConfigType, State> {
 
     emit(eventName: string, message: any) {
         this.writeMonitoringMessage([RunnerMessageCode.EVENT, { eventName, message }]);
+        this.emitter.emit(eventName, message);
         return this;
     }
 }
