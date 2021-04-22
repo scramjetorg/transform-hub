@@ -11,6 +11,7 @@
 import * as fs from "fs";
 import { HostOne } from "../host-one";
 import path = require("path");
+import { addLoggerOutput } from "@scramjet/logger";
 
 const errors = {
     incorrectArg: "Incorrect argument:",
@@ -53,6 +54,9 @@ default:
 const packageStrem: any = checkIfPathExist(2, (arg: string) => fs.createReadStream(arg));
 const appConfig: any = checkIfPathExist(3, (arg: string) => fs.readFileSync(arg, "utf8"));
 const sequenceArgs: Array<string> | undefined = process.argv[4] !== undefined ? process.argv.slice(4) : undefined;
+
+addLoggerOutput(process.stderr);
+
 /**
 * Start hostOne script.
 * * Creates an instance of a hostOne.

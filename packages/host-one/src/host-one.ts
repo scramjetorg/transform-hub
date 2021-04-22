@@ -1,5 +1,6 @@
 import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, HostError, MessageUtilities, RunnerMessageCode } from "@scramjet/model";
-import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler } from "@scramjet/types";
+import { APIExpose, AppConfig, ReadableStream, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, WritableStream, EncodedControlMessage, ICommunicationHandler, IComponent, Logger } from "@scramjet/types";
+import { getLogger } from "@scramjet/logger";
 import { ReadStream } from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -11,7 +12,7 @@ import { createServer } from "@scramjet/api-server";
 
 //import * as vorpal from "vorpal";
 
-export class HostOne {
+export class HostOne implements IComponent {
     private socketName: string;
 
     private netServer?: SocketServer;
@@ -42,6 +43,8 @@ export class HostOne {
 
     private logHistory?: DataStream;
 
+    logger: Logger;
+
     errors = {
         noParams: "No params provided. Type help to know more.",
         parsingError: "An error occurred during parsing monitoring message.",
@@ -52,14 +55,19 @@ export class HostOne {
     private sequenceArgs?: string[];
 
     constructor() {
+        this.logger = getLogger(this);
         this.socketName = path.join(os.tmpdir(), process.pid.toString());
     }
 
     async main(): Promise<void> {
         await this.hookupMonitorStream();
+        this.logger.log("Monitor stream hooked up");
         await this.createNetServer();
-        await startSupervisor(this.socketName);
+        this.logger.log("Creating net server");
+        await startSupervisor(this.logger, this.socketName);
+        this.logger.log("Creating net server");
         await this.createApiServer();
+        this.logger.log("Creating API server");
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
