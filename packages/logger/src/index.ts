@@ -1,6 +1,6 @@
 import { Console } from "console";
-import { PassThrough } from "stream";
-import { LoggerOptions, WritableStream } from "@scramjet/types";
+
+import { LoggerOptions, PassThoughStream, WritableStream } from "@scramjet/types";
 import { getName } from "./lib/get-name";
 import { DataStream } from "scramjet";
 import { InspectOptions } from "util";
@@ -8,8 +8,17 @@ import { InspectOptions } from "util";
 export type MessageFormatter = <Z extends any[]>(name: string, func: string, args: Z) => string;
 
 const doInspect = Symbol("doInspect");
-const loggerOut = new PassThrough({ objectMode: true });
-const loggerErr = new PassThrough({ objectMode: true });
+const loggerOutputs: {[key: string]: WritableStream<any[]>[]} = {
+    err: [],
+    out: []
+};
+const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
+    for (const logStream of loggerOutputs[streamSpec]) {
+        if (logStream.writable) {
+            logStream.write(args);
+        }
+    }
+};
 
 class Logger implements Console {
     private name: string;
@@ -55,7 +64,7 @@ class Logger implements Console {
         throw new Error("Method not implemented.");
     }
     trace(_message?: any, ..._optionalParams: any[]): void {
-        throw new Error("Method not implemented.");
+        writeLog("err", this.name, "error", _message, ..._optionalParams);
     }
     profile(_label?: string): void {
         throw new Error("Method not implemented.");
@@ -70,22 +79,28 @@ class Logger implements Console {
     exception() {}
 
     error(...args: any[]) {
-        loggerErr.write([this.name, "error", ...args]);
+        //loggerErr.write([this.name, "error", ...args]);
+        writeLog("err", this.name, "error", ...args);
     }
     log(...args: any[]): void {
-        loggerOut.write([this.name, "log", ...args]);
+        //loggerOut.write([this.name, "log", ...args]);
+        writeLog("out", this.name, "log", ...args);
     }
     dir(obj: any, options?: InspectOptions): void {
-        loggerOut.write([this.name, doInspect, obj, options]);
+        //loggerOut.write([this.name, doInspect, obj, options]);
+        writeLog("out", this.name, doInspect, obj, options);
     }
     debug(...args: any[]) {
-        loggerOut.write([this.name, "debug", ...args]);
+        //loggerOut.write([this.name, "debug", ...args]);
+        writeLog("out", this.name, "debug", ...args);
     }
     info(...args: any[]): void {
-        loggerOut.write([this.name, "info", ...args]);
+        //loggerOut.write([this.name, "info", ...args]);
+        writeLog("out", this.name, "info", ...args);
     }
     warn(...args: any[]): void {
-        loggerErr.write([this.name, "warn", ...args]);
+        //loggerErr.write([this.name, "warn", ...args]);
+        writeLog("err", this.name, "warn", ...args);
     }
 
     dirxml = this.log;
@@ -95,6 +110,22 @@ class Logger implements Console {
 const defaultFormatMessage: MessageFormatter = (name, func, ...args) => {
     return `${[new Date().toISOString(), func, `(${name})`, ...args].join(" ")}\n`;
 };
+const addLoggerStream = (stream: WritableStream<any>, dest: WritableStream<any>[]) => {
+    if (!stream.objectMode) {
+        const lout = new DataStream();
+
+        DataStream
+            .from(lout)
+            .stringify(
+                (msg: [string, string, any[]]) => defaultFormatMessage(...msg)
+            )
+            .pipe(stream);
+
+        dest.push(lout as unknown as PassThoughStream<any[]>);
+    } else {
+        dest.push(stream);
+    }
+};
 
 /**
  * Pipes log streams to the provided outputs in serialized format
@@ -103,27 +134,8 @@ const defaultFormatMessage: MessageFormatter = (name, func, ...args) => {
  * @param err - stream for stderr logging
  */
 export function addLoggerOutput(out: WritableStream<any>, err: WritableStream<any> = out) {
-    let lout = loggerOut;
-    let lerr = loggerErr;
-
-    if (!out.objectMode) {
-        lout = DataStream.from(lout).stringify(
-            (msg: [string, string, any[]]) => defaultFormatMessage(...msg)
-        ) as unknown as PassThrough;
-    }
-    if (!err.objectMode) {
-        lerr = DataStream.from(lerr).stringify(
-            (msg: [string, string, any[]]) => defaultFormatMessage(...msg)
-        ) as unknown as PassThrough;
-    }
-
-    lout.pipe(out);
-    lerr.pipe(err);
-}
-
-export function removeLoggerOutput(out: WritableStream<any>, err: WritableStream<any> = out) {
-    loggerOut.unpipe(out);
-    loggerErr.unpipe(err);
+    addLoggerStream(out, loggerOutputs.out);
+    addLoggerStream(err, loggerOutputs.err);
 }
 
 /**
