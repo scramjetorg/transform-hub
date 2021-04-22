@@ -78,11 +78,10 @@ implements AppContext<AppConfigType, State> {
         let message = initialMessage;
 
         for (const handler of this._monitoringHandlers) {
-            //TODO sequences
-            //const { healthy, sequences } = await handler(message);
+            //TODO add sequences const { healthy, sequences } = await handler(message);
             const { healthy } = await handler(message);
 
-            //if any of habdlers returns false the false
+            //if any of handlers returns false then healthy is false
             message = { healthy: message.healthy && healthy };
         }
 

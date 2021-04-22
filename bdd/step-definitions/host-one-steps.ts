@@ -75,8 +75,6 @@ When("host one execute sequence in background {string} with arguments {string}",
 When("get sequence health", async () => {
     actualResponse = await sequenceApiClient.getHealth();
 
-    // console.log("actualResponse: ",actualResponse);
-
     assert.equal(actualResponse.status, 200);
 });
 
