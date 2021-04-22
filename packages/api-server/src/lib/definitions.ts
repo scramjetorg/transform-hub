@@ -38,6 +38,7 @@ export class CeroError extends Error implements APIError {
     code: number;
     httpMessage: string;
     cause?: Error;
+    private _oldStack: typeof Error.prototype.stack;
 
     constructor(errCode: CeroCode, cause?: Error) {
 
@@ -48,12 +49,14 @@ export class CeroError extends Error implements APIError {
         this.httpMessage = message;
         this.code = code;
 
+        this._oldStack = this.stack;
+
         if (cause instanceof CeroError) return cause;
         if (cause) this.cause = cause;
     }
 
     get stack() {
-        return `${this.cause ? this.cause.stack : super.stack}`;
+        return `${this.cause ? this.cause.stack : this._oldStack}`;
     }
 }
 
