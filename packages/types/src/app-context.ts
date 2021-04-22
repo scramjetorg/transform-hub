@@ -42,7 +42,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
      * If not provided, a monitoring function will be determined based on the
      * return value from the Sequence.
      */
-    handleMonitoring(handler: MonitoringHandler): this;
+    addMonitoringHandler(handler: MonitoringHandler): this;
 
     /**
      * This method can be overridden to handle the stop signal from the Runner and perform

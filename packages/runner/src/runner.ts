@@ -105,6 +105,14 @@ export class Runner<X extends AppConfig> {
             });
     }
 
+    async cleanup() {
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
+        }
+
+        await this.cleanupControlStream();
+    }
+
     async cleanupControlStream() {
         this.controlStream.destroy();
         // TODO: needs error handling and a callback?
@@ -154,12 +162,14 @@ export class Runner<X extends AppConfig> {
         }
         this.monitoringInterval = setInterval(async () => {
             if (working) return;
+
             working = true;
-            const message: MonitoringMessageData = await this.context?.monitor({ healthy: true }) || { healthy: true };
+            const message: MonitoringMessageData = await this.context?.monitor() || { healthy: true };
 
             MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.monitorStream);
             working = false;
-        }, data.monitoringRate);
+
+        }, 1000 / data.monitoringRate).unref();
     }
 
     async handleKillRequest(): Promise<void> {
@@ -266,7 +276,7 @@ export class Runner<X extends AppConfig> {
             throw new RunnerError("UNINITIALIZED_CONTEXT");
         }
 
-        await this.handleMonitoringRequest({monitoringRate:1});
+        await this.handleMonitoringRequest({ monitoringRate:1 });
 
         const sequence = this.getSequence();
 
@@ -314,7 +324,7 @@ export class Runner<X extends AppConfig> {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        await this.cleanupControlStream();
+        await this.cleanup();
     }
 
     // private isPipeableStream<T extends any = any>(out: SynchronousStreamable<T>): out is PipeableStream<T> {

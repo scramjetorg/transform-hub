@@ -1,5 +1,4 @@
 import axios from "axios";
-import { MonitoringRateMessageData } from "../../packages/types/node_modules/@scramjet/model/src";
 
 export class SequenceApiClient {
 
@@ -8,7 +7,7 @@ export class SequenceApiClient {
 
     public async stop(timeoutInMs: number, canCallKeepalive: boolean): Promise<any> {
         const stopMethodUrl = `${this.apiBase}/_stop`;
-        const data = { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive };
+        const data = [4001, { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive }];
 
         return await this.post(stopMethodUrl, data);
     }
@@ -22,7 +21,7 @@ export class SequenceApiClient {
 
     public async monitoringRate(): Promise<any> {
         const monitoringMethodUrl = `${this.apiBase}/_monitoring_rate`;
-        const data: MonitoringRateMessageData = { monitoringRate: 1000 };//TODO implement message
+        const data = [4003, { monitoringRate: 2 }];//TODO implement message
 
         return await this.post(monitoringMethodUrl, data);
     }

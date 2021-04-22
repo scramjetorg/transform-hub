@@ -78,14 +78,18 @@ implements AppContext<AppConfigType, State> {
         let message = initialMessage;
 
         for (const handler of this._monitoringHandlers) {
-            // TODO: what should happen if an error occurs here?
-            const { healthy, sequences } = await handler(message);
+            //TODO sequences
+            //const { healthy, sequences } = await handler(message);
+            const { healthy } = await handler(message);
 
-            message = { healthy: message.healthy && healthy, sequences };
+            //if any of habdlers returns false the false
+            message = { healthy: message.healthy && healthy };
         }
+
+        return message;
     }
 
-    handleMonitoring(handler: MonitoringHandler): this {
+    addMonitoringHandler(handler: MonitoringHandler): this {
         assertFunction(handler);
 
         this._monitoringHandlers.push(handler);

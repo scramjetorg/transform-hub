@@ -11,14 +11,6 @@ export = async function(_stream) {
 
     let x = data?.x || 0;
 
-    this.addMonitoringHandler(() => {
-        return { healthy: false };
-    });
-
-    this.handleStop(() => {
-        this.save({ x });
-    });
-
     while (++x < 4) {
         console.log({ x: x });
         await new Promise(res => setTimeout(res, 1000));

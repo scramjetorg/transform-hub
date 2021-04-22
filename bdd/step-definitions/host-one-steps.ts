@@ -14,6 +14,7 @@ const sequenceApiClient = new SequenceApiClient();
 
 let hostOne;
 let hostOneProcessStopped;
+let actualResponse;
 
 function executeSequenceSpawn(packagePath: string, ...args: any[]): void {
     let command: string[] = ["node", hostOneExecutableFilePath, packagePath];
@@ -63,21 +64,24 @@ When("host one execute sequence {string} with arguments {string} and redirects o
     await executeSequence(packagePath, args, outputFile, 9000);
 });
 
-When("start host one and process package {string}", { timeout: 20000 }, async (packagePath) => {
-    executeSequenceSpawn(packagePath, packageJson, packageData, "output.txt ");
+When("host one execute sequence in background {string}", { timeout: 20000 }, async (packagePath) => {
+    executeSequenceSpawn(packagePath, packageJson);
+});
+
+When("host one execute sequence in background {string} with arguments {string}", { timeout: 20000 }, async (packagePath, args) => {
+    executeSequenceSpawn(packagePath, packageJson, args.split(" "));
 });
 
 When("get sequence health", async () => {
-    const resp = await sequenceApiClient.getHealth();
+    actualResponse = await sequenceApiClient.getHealth();
 
-    console.log(resp.data);
+    // console.log("actualResponse: ",actualResponse);
 
-    assert.equal(resp.status, 200);
+    assert.equal(actualResponse.status, 200);
 });
 
-Then("response body is {string}", async (response) => {
-    console.log(response)
-    return 'pending';
+Then("response body is {string}", async (expectedResp) => {
+    assert.deepEqual(JSON.stringify(actualResponse.data), expectedResp);
 });
 
 Then("file {string} is generated", async (filename) => {

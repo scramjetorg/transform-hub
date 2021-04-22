@@ -10,24 +10,6 @@ export type MonitoringMessageFromRunnerData = {
     healthy: boolean;
 }
 
-// {
-//     sequences : [],
-//     healthy: true,
-//     cpu?: 
-
-//         /** The amount of RAM in use. */
-//         memoryUsed?: number;
-    
-//         /** The amount of free RAM. */
-//         memoryFree?: number;
-    
-//         /** The amount of swap memory in use. */
-//         swapUsed?: number;
-    
-//         /** The amount of free swap memory. */
-//         swapFree?: number;
-// }
-
 export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
 
     /** CPU usage */
