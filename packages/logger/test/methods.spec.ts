@@ -1,27 +1,34 @@
-import { getLogger } from "@scramjet/logger";
+import { addLoggerOutput, getLogger, removeLoggerOutput } from "@scramjet/logger";
 import test from "ava";
 import { randomBytes } from "crypto";
-import { DataStream } from "scramjet";
+import { StringStream } from "scramjet";
 
 const randomId = () => randomBytes(8).toString("hex");
 
 test("error", async (t) => {
     const name = randomId();
-    const out = new DataStream();
-    const err = new DataStream();
-    const log = getLogger(name, { out, err });
+    const out = new StringStream();
+    const err = new StringStream();
+
+    addLoggerOutput(out, err);
+
+    const log = getLogger(name);
     const [whenOutEnd, whenErrEnd] = [out.toArray(), err.toArray()];
 
     log.error("a");
     log.warn("b");
     log.trace("c");
 
+    removeLoggerOutput(out, err);
+
+    log.error("d");
+
     out.end();
     err.end();
 
     const [outArr, errArr]: [string[], string[]] = await Promise.all([whenOutEnd, whenErrEnd]);
 
-    t.is(outArr.length, 0, "Does not log to out");
+    t.is(outArr.length, 0, "Does not log to out when output is removed");
     t.is(errArr.length, 3, "Logs the data");
 
     t.regex(errArr[0], /^[-\d]{10}T[:\.\d]{12}Z/, "Should have date formatted");
@@ -29,6 +36,7 @@ test("error", async (t) => {
     t.is(errArr[0].substr(25), `error (${name}) a\n`, "Should pushed the message");
     t.is(errArr[1].substr(25), `warn (${name}) b\n`, "Should pushed the message");
     t.is(errArr[2].substr(25, 40), `error (${name}) Trace: c\n    at`, "Should pushed the message");
+
 });
 
 test.skip("test derived methods", () => {
@@ -52,14 +60,20 @@ test.skip("nameid", () => {
 
 test("out", async (t) => {
     const name = randomId();
-    const out = new DataStream();
-    const err = new DataStream();
-    const log = getLogger({ name }, { out, err });
+    const out = new StringStream();
+    const err = new StringStream();
+    const log = getLogger({ name });
     const [whenOutEnd, whenErrEnd] = [out.toArray(), err.toArray()];
+
+    addLoggerOutput(out, err);
 
     log.log("a");
     log.info("b");
     log.debug("c");
+
+    removeLoggerOutput(out, err);
+
+    log.log("d");
 
     out.end();
     err.end();

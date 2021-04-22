@@ -6,6 +6,7 @@ import {
     MonitoringMessageCode,
     UpstreamStreamsConfig
 } from ".";
+import { LoggerOutput } from "./logger";
 import { EncodedSerializedControlMessage, MessageDataType } from "./message-streams";
 import { PassThoughStream, ReadableStream } from "./utils";
 
@@ -25,6 +26,8 @@ export interface ICommunicationHandler {
 
     sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
     sendControlMessage<T extends ControlMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
+
+    getLogOutput(): LoggerOutput;
 
     getStdio(): {
         stdin: Writable,

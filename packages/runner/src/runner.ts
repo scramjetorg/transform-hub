@@ -1,5 +1,5 @@
 import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerError, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable } from "@scramjet/types";
+import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Logger } from "@scramjet/types";
 
 import { exec } from "child_process";
 import { EventEmitter } from "events";
@@ -7,11 +7,12 @@ import { createReadStream, createWriteStream } from "fs";
 import { from as scramjetStreamFrom, DataStream, PromiseTransform, StringStream } from "scramjet";
 import { RunnerAppContext } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
-import { getLogger } from "@scramjet/logger";
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { Readable } from "stream";
+import { IComponent } from "@scramjet/types";
 
 type MaybeArray<T> = T | T[];
-export class Runner<X extends AppConfig> {
+export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private context?: RunnerAppContext<X, any>;
     private monitoringInterval?: NodeJS.Timeout;
@@ -34,8 +35,7 @@ export class Runner<X extends AppConfig> {
     private sequencePath: string;
     private keepAliveRequested?: boolean;
 
-    // @ts-ignore
-    private logger?: Console;
+    logger: Logger;
 
     constructor(sequencePath: string, fifosPath: string) {
         this.emitter = new EventEmitter();
@@ -48,6 +48,7 @@ export class Runner<X extends AppConfig> {
         this.controlFifoPath = `${fifosPath}/control.fifo`;
         this.monitorFifoPath = `${fifosPath}/monitor.fifo`;
         this.loggerFifoPath = `${fifosPath}/logger.fifo`;
+        this.logger = getLogger(this);
 
         this.sequencePath = sequencePath;
     }
@@ -137,10 +138,7 @@ export class Runner<X extends AppConfig> {
 
     async initializeLogger() {
         if (this.loggerStream) {
-            this.logger = getLogger(
-                "Runner",
-                { out: this.loggerStream, err: this.loggerStream }
-            );
+            addLoggerOutput(this.loggerStream);
         } else {
             throw new RunnerError("UNINITIALIZED_STREAMS");
         }

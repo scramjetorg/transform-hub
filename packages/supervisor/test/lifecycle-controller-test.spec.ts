@@ -32,6 +32,7 @@ const stream = new Readable();
 
 class Client implements ICSHClient {
     PATH: string = "";
+    logger: Console = console;
     init = sinon.stub().resolves();
     upstreamStreamsConfig = sinon.stub();
     hookCommunicationHandler = sinon.stub();
@@ -41,6 +42,7 @@ class Client implements ICSHClient {
 }
 
 const streamHandlerInstance: ICommunicationHandler = {
+    getLogOutput: sinon.stub(),
     pipeStdio: sinon.stub(),
     pipeMessageStreams: sinon.stub(),
     hookUpstreamStreams: sinon.stub(),

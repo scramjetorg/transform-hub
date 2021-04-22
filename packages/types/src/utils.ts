@@ -61,7 +61,8 @@ export interface WritableStream<Consumes> extends EventEmitter {
     end(str: never, encoding: never, cb?: () => void): void;
 }
 
-export type PassThoughStream<Passes> = WritableStream<Passes> & ReadableStream<Passes>;
+export type DuplexStream<Consumes, Produces> = WritableStream<Consumes> & ReadableStream<Produces>;
+export type PassThoughStream<Passes> = DuplexStream<Passes, Passes>;
 
 /**
  * Delayed stream - stream with lazy initialization

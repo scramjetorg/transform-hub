@@ -3,6 +3,7 @@ import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig } from "@scram
 import { CommunicationChannel, SupervisorError } from "@scramjet/model";
 import * as net from "net";
 import { Duplex, PassThrough, Readable } from "stream";
+import { getLogger } from "@scramjet/logger";
 
 const { BPMux } = require("bpmux");
 
@@ -15,8 +16,11 @@ class CSHClient implements ICSHClient {
 
     private mux: any;
 
+    logger: Console;
+
     constructor(socketPath: string) {
         this.socketPath = socketPath;
+        this.logger = getLogger(this);
         this.packageStream = new PassThrough();
     }
 

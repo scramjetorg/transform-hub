@@ -7,6 +7,7 @@ import {
     EncodedSerializedControlMessage,
     EncodedSerializedMonitoringMessage,
     ICommunicationHandler,
+    LoggerOutput,
     MaybePromise,
     MessageDataType,
     MonitoringMessageCode,
@@ -245,6 +246,14 @@ export class CommunicationHandler implements ICommunicationHandler {
             this.monitoringUpstream &&
             this.loggerDownstream &&
             this.loggerUpstream);
+    }
+
+    getLogOutput(): LoggerOutput {
+        if (!this.loggerUpstream) {
+            throw new Error("Streams not attached");
+        }
+
+        return { out: this.loggerUpstream, err: this.loggerUpstream };
     }
 
     pipeStdio(): this {

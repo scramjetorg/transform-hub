@@ -1,3 +1,4 @@
+import { addLoggerOutput } from "@scramjet/logger";
 import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
 import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig } from "@scramjet/types";
 import { Readable } from "stream";
@@ -97,6 +98,13 @@ class LifeCycleController {
     async main(): Promise<void> {
 
         try {
+
+            /**
+             * TODO: remove this from here
+             */
+            const { out, err } = this.communicationHandler.getLogOutput();
+
+            addLoggerOutput(out, err);
 
             /**
              * The client that communicates with the CSH and
