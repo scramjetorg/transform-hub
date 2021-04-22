@@ -1,6 +1,6 @@
-import { addLoggerOutput } from "@scramjet/logger";
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
-import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent } from "@scramjet/types";
 import { Readable } from "stream";
 
 /**
@@ -21,8 +21,7 @@ import { Readable } from "stream";
  * controller.start();
  * ```
  */
-class LifeCycleController {
-
+class LifeCycleController implements IComponent {
     /**
     * CommunicationHandler is responsible for all operations on communication streams.
     * CommunicationHandler pipes the multiple data and message streams
@@ -53,6 +52,8 @@ class LifeCycleController {
     */
     private lifecycleConfig: LifeCycleConfig;
 
+    logger: Console;
+
     /**
      * @param {ILifeCycleAdapter} lifecycleAdapter an implementation of LifeCycle interface
      * @param {LifeCycleConfig} lifecycleConfig configuration specific to running the Sequence on
@@ -64,6 +65,7 @@ class LifeCycleController {
         this.lifecycleConfig = lifecycleConfig;
         this.client = client;
         this.communicationHandler = new CommunicationHandler();
+        this.logger = getLogger(this);
     }
 
     private keepAliveRequested?: boolean;
@@ -96,15 +98,7 @@ class LifeCycleController {
      * @returns {Promise} resolves when Supervisor completed lifecycle without errors.
      */
     async main(): Promise<void> {
-
         try {
-
-            /**
-             * TODO: remove this from here
-             */
-            const { out, err } = this.communicationHandler.getLogOutput();
-
-            addLoggerOutput(out, err);
 
             /**
              * The client that communicates with the CSH and
@@ -139,6 +133,14 @@ class LifeCycleController {
                 this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler),
                 this.client.hookCommunicationHandler(this.communicationHandler)
             ]);
+
+            /**
+             * TODO: remove this from here
+             */
+            const { out, err } = this.communicationHandler.getLogOutput();
+
+            addLoggerOutput(out, err);
+            this.logger.log("Streams hooked.");
 
             /**
              * Once the LifeCycle Adapter and the client hooked their streams
