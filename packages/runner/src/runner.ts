@@ -355,7 +355,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             process.exit(21);
         }
 
-        this.logger.log(`Seqeunce loaded, length: ${sequence.length}.`);
+        this.logger.log(`Sequence loaded, length: ${sequence.length}.`);
 
         /**
          * @analyze-how-to-pass-in-out-streams

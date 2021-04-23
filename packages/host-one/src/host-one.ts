@@ -116,7 +116,7 @@ export class HostOne implements IComponent {
                 .lines()
                 .keep(1000); // TODO: config
 
-            this.logHistory.pipe(process.stdout);
+            this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
         } else {
             this.logger.error("Uninitialized LOG stream.");
             throw new HostError("UNINITIALIZED_STREAM", "log");
@@ -204,8 +204,9 @@ export class HostOne implements IComponent {
         });
 
         this.communicationHandler.getMonitorStream().stringify(([code, message]: EncodedMonitoringMessage) => {
+            this.logger.info(`Received on monitorStream: ${code}, ${JSON.stringify(message)}`);
             return `[monitor: ${code}]: ${JSON.stringify(message)}`;
-        }).pipe(process.stderr);
+        });
     }
 
     async handleHandshake() {
