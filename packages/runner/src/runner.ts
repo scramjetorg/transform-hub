@@ -96,6 +96,20 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
     }
 
+    async cleanup() {
+        this.logger?.info("Cleaning up...");
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
+        }
+
+        try {
+            await this.cleanupStreams();
+            this.logger?.info("Clean!");
+        } catch (e) {
+            this.logger?.error("Not clear, error", e);
+        }
+    }
+
     async cleanupStreams(): Promise<any> {
         return Promise.all([
             this.cleanupStream(this.controlStream, this.controlFifoPath),
@@ -107,7 +121,10 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async cleanupStream(stream: ReadableStream<any> | WritableStream<any> | undefined, fifo: string) {
-        if (stream) stream.destroy();
+        if (stream) {
+            stream.destroy();
+        }
+
         await this.execCommand(`echo "\r\n" > "${fifo}"`); // TODO: Shell escape
     }
 
@@ -147,7 +164,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async initializeLogger() {
         if (this.loggerStream) {
-            addLoggerOutput(this.loggerStream);
+            addLoggerOutput(this.loggerStream, this.loggerStream);
         } else {
             throw new RunnerError("UNINITIALIZED_STREAMS");
         }
@@ -184,7 +201,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     async handleKillRequest(): Promise<void> {
         this.logger.log("Kill request handled.");
         this.context?.killHandler();
-        await this.cleanupStreams();
+        await this.cleanup();
         this.logger.log("Kill request handled, exiting...");
 
         process.exit(137);
@@ -240,7 +257,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.log("Sequence completed.");
         } catch (error) {
             this.logger.error("Error occured during sequence execution: ", error.stack);
-            await this.cleanupStreams();
+            await this.cleanup();
             process.exit(22);
         }
     }
@@ -334,7 +351,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("Sequence error:", error.message);
             }
 
-            await this.cleanupStreams();
+            await this.cleanup();
             process.exit(21);
         }
 
@@ -406,7 +423,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         // TODO: await until it's done?
         this.logger.info("Cleaning after sequence end.");
 
-        await this.cleanupStreams();
+        await this.cleanup();
         this.logger.info("End.");
     }
 

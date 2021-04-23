@@ -86,6 +86,10 @@ class CSHClient implements ICSHClient {
         }
 
         communicationHandler.hookUpstreamStreams(this.streams as unknown as UpstreamStreamsConfig<true>);
+
+        //const { out, err } = communicationHandler.getLogOutput();
+
+        //addLoggerOutput(out, err);
     }
 }
 

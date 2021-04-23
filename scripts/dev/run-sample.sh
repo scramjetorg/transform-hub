@@ -34,7 +34,7 @@ if [ "$INSTALL" = true ] ; then
 fi
 
 # build example to dist
-yarn build
+yarn bic
 
 if [ "$DOCKER" = true ] ; then
     lerna run build:docker
@@ -50,12 +50,14 @@ if [ "$PREINSTALL" = true ] ; then
 fi
 
 # copy to dist
-lerna run prepack
-
-yarn prepare-sample-tar
+if [ "$INSTALL" = true ] ; then
+    lerna run prepack
+    yarn prepare-sample-tar
+fi
 
 # start hostOne - package.json simulates config file
 if [ "$TS" = true ] ; then
+
     cd $(git rev-parse --show-toplevel)/packages/host-one/src/bin
     ts-node start-host-one.ts ../../../pre-runner/sample-package/package.tar.gz ../../package.json /package/data.json output.txt
 else

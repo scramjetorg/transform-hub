@@ -54,16 +54,19 @@ export class HostOne implements IComponent {
 
     async main(): Promise<void> {
         await this.createNetServer();
-        console.log("Created Net Server");
+        this.logger.info("Created Net Server");
+
         await startSupervisor(this.logger, this.socketName);
-        console.log("Started supervisor");
+        this.logger.info("Started supervisor");
+
         await this.awaitConnection();
-        console.log("Got connection");
+        this.logger.info("Got connection");
 
         await this.hookupMonitorStream();
-        console.log("Hooked monitor stream");
+        this.logger.info("Hooked monitor stream");
+
         await this.createApiServer();
-        console.log("Api server up");
+        this.logger.info("Api server up");
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
@@ -76,12 +79,12 @@ export class HostOne implements IComponent {
 
         this.controlDownstream = new PassThrough();
         this.controlDataStream = new DataStream();
-
+        /*
         this.logHistory = new StringStream("utf-8")
             .keep(1000); // TODO: config
 
         this.logHistory.pipe(process.stdout);
-
+*/
         this.upStreams = [
             process.stdin,
             process.stdout,
@@ -90,7 +93,7 @@ export class HostOne implements IComponent {
             process.stdout, // monitor
             this.input,
             this.output,
-            this.logHistory,
+            new PassThrough(),
             this.packageDownStream
         ];
 
