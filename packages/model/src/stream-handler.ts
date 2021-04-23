@@ -10,7 +10,8 @@ import {
     MessageDataType,
     MonitoringMessageCode,
     PassThoughStream,
-    UpstreamStreamsConfig
+    UpstreamStreamsConfig,
+    WritableStream
 } from "@scramjet/types";
 import { PassThrough } from "stream";
 import { DataStream, StringStream } from "scramjet";
@@ -108,7 +109,6 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     hookDownstreamStreams(streams: DownstreamStreamsConfig): this {
         this.downstreams = streams;
-
         return this;
     }
 
@@ -197,6 +197,11 @@ export class CommunicationHandler implements ICommunicationHandler {
          */
         this.upstreams[CC.IN].pipe(this.downstreams[CC.IN]);
         this.downstreams[CC.OUT].pipe(this.upstreams[CC.OUT]);
+
+        console.log("PIPIN PKG", typeof this.upstreams[CC.PACKAGE], typeof this.downstreams[CC.PACKAGE]);
+        if (this.upstreams[CC.PACKAGE] && this.downstreams[CC.PACKAGE] !== undefined) {
+            this.upstreams[CC.PACKAGE]?.pipe(this.downstreams[CC.PACKAGE] as WritableStream<any>);
+        }
 
         return this;
     }

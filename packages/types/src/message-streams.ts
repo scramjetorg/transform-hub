@@ -100,7 +100,7 @@ export type UpstreamStreamsConfig<serialized extends boolean = true> = [
     input: ReadableStream<any>,
     output: WritableStream<any>,
     log: WritableStream<any>,
-    pkg?: ReadableStream<Buffer>,
+    pkg?: ReadableStream<Buffer>
 ];
 
 export type PassThroughStreamsConfig<serialized extends boolean = true> = [
@@ -111,6 +111,6 @@ export type PassThroughStreamsConfig<serialized extends boolean = true> = [
     monitor: PassThoughStream<serialized extends true ? EncodedSerializedMonitoringMessage : EncodedMonitoringMessage>,
     input: PassThoughStream<any>,
     output: PassThoughStream<any>,
-    pkg: PassThoughStream<Buffer>,
-    log: PassThoughStream<any>
+    log: PassThoughStream<any>,
+    pkg: PassThoughStream<Buffer>
 ];

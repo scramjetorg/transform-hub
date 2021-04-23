@@ -29,9 +29,6 @@ export class SocketServer extends EventEmitter implements IComponent {
         const channel = parseInt(stream._chan, 10);
 
         switch (channel) {
-        case CommunicationChannel.PACKAGE:
-            streams[channel]?.pipe(stream);
-            break;
         case CommunicationChannel.STDIN:
         case CommunicationChannel.IN:
         case CommunicationChannel.CONTROL:
@@ -43,6 +40,9 @@ export class SocketServer extends EventEmitter implements IComponent {
         case CommunicationChannel.LOG:
         case CommunicationChannel.OUT:
             stream.pipe(streams[channel]);
+            break;
+        case CommunicationChannel.PACKAGE:
+            streams[channel]?.pipe(stream);
             break;
         default:
             throw new HostError("UNKNOWN_CHANNEL");

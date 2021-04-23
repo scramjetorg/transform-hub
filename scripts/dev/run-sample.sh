@@ -3,7 +3,6 @@ set -e
 DOCKER=false
 TS=false
 INSTALL=false
-PREINSTALL=false
 
 for arg in "$@"
     do
@@ -25,23 +24,17 @@ for arg in "$@"
             shift
             ;;
         esac
-        case $arg in
-            -pi|--pre-install)
-            PREINSTALL=true
-            shift
-            ;;
-        esac
     done
 
 # init project
 cd $(git rev-parse --show-toplevel)
 
-if [ "$PREINSTALL" = true ] ; then
+if [ "$INSTALL" = true ] ; then
     yarn install
 fi
 
 # build example to dist
-yarn bic
+yarn build
 
 if [ "$DOCKER" = true ] ; then
     lerna run build:docker
@@ -56,9 +49,13 @@ if [ "$PREINSTALL" = true ] ; then
     yarn prepare-sample-tar
 fi
 
+# copy to dist
+lerna run prepack
+
+yarn prepare-sample-tar
+
 # start hostOne - package.json simulates config file
 if [ "$TS" = true ] ; then
-
     cd $(git rev-parse --show-toplevel)/packages/host-one/src/bin
     ts-node start-host-one.ts ../../../pre-runner/sample-package/package.tar.gz ../../package.json /package/data.json output.txt
 else

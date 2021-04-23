@@ -44,8 +44,8 @@ class CSHClient implements ICSHClient {
                 this.mux.multiplex({ channel: CC.MONITORING }),
                 this.mux.multiplex({ channel: CC.IN }),
                 this.mux.multiplex({ channel: CC.OUT }),
-                this.mux.multiplex({ channel: CC.PACKAGE }),
-                this.mux.multiplex({ channel: CC.LOG })
+                this.mux.multiplex({ channel: CC.LOG }),
+                this.mux.multiplex({ channel: CC.PACKAGE })
             ];
 
             connectionChannels.forEach((channel) => channel.on("error", (/*e*/) => {

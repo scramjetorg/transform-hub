@@ -79,6 +79,7 @@ export class HostOne implements IComponent {
 
         this.logHistory = new StringStream("utf-8")
             .keep(1000); // TODO: config
+
         this.logHistory.pipe(process.stdout);
 
         this.upStreams = [
@@ -92,6 +93,8 @@ export class HostOne implements IComponent {
             this.logHistory,
             this.packageDownStream
         ];
+
+        this.logger.log("Streams initialized.");
 
         this.controlDataStream
             .JSONStringify()
@@ -112,6 +115,7 @@ export class HostOne implements IComponent {
 
             this.logHistory.pipe(process.stdout);
         } else {
+            this.logger.error("Uninitialized LOG stream.");
             throw new HostError("UNINITIALIZED_STREAM", "log");
         }
     }
@@ -182,10 +186,11 @@ export class HostOne implements IComponent {
             this.netServer.once("connect", res);
         });
 
+        this.logger.info("Piping streams...");
         this.communicationHandler.hookDownstreamStreams(streams);
         this.communicationHandler.pipeStdio();
         this.communicationHandler.pipeMessageStreams();
-
+        this.communicationHandler.pipeDataStreams();
         this.hookLogStream();
     }
 
@@ -221,7 +226,6 @@ export class HostOne implements IComponent {
     async kill() {
         await this.controlDataStream?.whenWrote([RunnerMessageCode.KILL, {}]);
     }
-
 
     controlStreamsCliHandler() {
         this.vorpal
