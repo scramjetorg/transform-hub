@@ -55,7 +55,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async controlStreamHandler([code, data]: EncodedControlMessage) {
-        this.logger?.log("Control message received:", code, data);
+        this.logger.log("Control message received:", code, data);
+
         switch (code) {
         case RunnerMessageCode.MONITORING_RATE:
             await this.handleMonitoringRequest(data as MonitoringRateMessageData);
@@ -104,16 +105,22 @@ export class Runner<X extends AppConfig> implements IComponent {
             .map(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
             .run()
             .catch(async (error) => {
-                this.logger?.error("An error occurred during parsing control message.", error.stack);
+                this.logger.error("An error occurred during parsing control message.", error.stack);
             });
     }
 
     async cleanup() {
+        this.logger.info("Cleaning up...");
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
         }
 
-        await this.cleanupControlStream();
+        try {
+            await this.cleanupControlStream();
+            this.logger.info("Clean!");
+        } catch (e) {
+            this.logger.error("Not clear, error", e);
+        }
     }
 
     async cleanupControlStream() {
@@ -140,14 +147,14 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async initializeLogger() {
         if (this.loggerStream) {
-            addLoggerOutput(this.loggerStream);
+            addLoggerOutput(this.loggerStream, this.loggerStream);
         } else {
             throw new RunnerError("UNINITIALIZED_STREAMS");
         }
     }
 
     handleForceConfirmAliveRequest() {
-        this.logger?.error("Method not implemented.");
+        this.logger.error("Method not implemented.");
         throw new Error("Method not implemented.");
     }
 
@@ -159,7 +166,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         if (this.context === undefined || this.context.monitor === undefined) {
-            this.logger?.error("No monitoring stream.");
+            this.logger.error("No monitoring stream.");
             throw new RunnerError("NO_MONITORING");
         }
         this.monitoringInterval = setInterval(async () => {
@@ -187,7 +194,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
         if (!this.context) {
-            this.logger?.error("Uninitialized context.");
+            this.logger.error("Uninitialized context.");
             throw new RunnerError("UNINITIALIZED_CONTEXT");
         }
 
@@ -202,7 +209,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             );
         } catch (err) {
             sequenceError = err;
-            this.logger?.error("Following error ocurred during stopping sequence: ", err);
+            this.logger.error("Following error ocurred during stopping sequence: ", err);
         }
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
@@ -226,7 +233,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          * but after the acknowledge message comes (PONG) and
          * before we start a Sequence.
          */
-        this.logger?.log("Handshake received.");
+        this.logger.log("Handshake received.");
 
         this.initAppContext(data.appConfig as X);
 
@@ -259,7 +266,7 @@ export class Runner<X extends AppConfig> implements IComponent {
      */
     initAppContext(config: X) {
         if (this.monitorStream === undefined) {
-            this.logger?.error("Uninitialized monitoring stream.");
+            this.logger.error("Uninitialized monitoring stream.");
             throw new RunnerError("UNINITIALIZED_STREAMS", "Monitoring");
         }
 
@@ -273,7 +280,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     sendHandshakeMessage() {
-        this.logger?.info("Sending handshake.");
+        this.logger.info("Sending handshake.");
         MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
     }
 
@@ -293,7 +300,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     // eslint-disable-next-line complexity
     async runSequence(args: any[] = []): Promise<void> {
         if (!this.context) {
-            this.logger?.error("Uninitialized context.");
+            this.logger.error("Uninitialized context.");
             throw new RunnerError("UNINITIALIZED_CONTEXT");
         }
 
@@ -305,16 +312,16 @@ export class Runner<X extends AppConfig> implements IComponent {
             sequence = this.getSequence();
         } catch (error) {
             if (error instanceof SyntaxError) {
-                this.logger?.error("Sequence syntax error.", error.message);
+                this.logger.error("Sequence syntax error.", error.message);
             } else {
-                this.logger?.error("Sequence error:", error.message);
+                this.logger.error("Sequence error:", error.message);
             }
 
             await this.cleanupControlStream();
             process.exit(21);
         }
 
-        this.logger?.log(`Seqeunce loaded, length: ${sequence.length}.`);
+        this.logger.log(`Seqeunce loaded, length: ${sequence.length}.`);
 
         /**
          * @analyze-how-to-pass-in-out-streams
@@ -334,6 +341,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             let out: SynchronousStreamable<any> | void;
 
             try {
+                this.logger.info(`Processing function on index: ${sequence.length - itemsLeftInSequence - 1}`);
                 out = await func.call(
                     this.context,
                     /**
@@ -345,14 +353,15 @@ export class Runner<X extends AppConfig> implements IComponent {
                     stream,
                     ...args
                 );
+                this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
             } catch (error) {
-                this.logger?.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error);
+                this.logger.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error);
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
             }
 
             if (!out) {
                 if (itemsLeftInSequence > 0) {
-                    this.logger?.error("Sequence ended premature");
+                    this.logger.error("Sequence ended premature");
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
                 }
             } else if (typeof out === "object" && out instanceof PromiseTransform) {
@@ -376,7 +385,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     handleSequenceEvents() {
         this.emitter.on("error", (e) => {
-            this.logger?.error(e);
+            this.logger.error(e);
         });
     }
     // private isPipeableStream<T extends any = any>(out: SynchronousStreamable<T>): out is PipeableStream<T> {

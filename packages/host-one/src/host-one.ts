@@ -63,11 +63,11 @@ export class HostOne implements IComponent {
         await this.hookupMonitorStream();
         this.logger.log("Monitor stream hooked up");
         await this.createNetServer();
-        this.logger.log("Creating net server");
+        this.logger.log("Created net server");
         await startSupervisor(this.logger, this.socketName);
-        this.logger.log("Creating net server");
+        this.logger.log("Supervisor started");
         await this.createApiServer();
-        this.logger.log("Creating API server");
+        this.logger.log("API server started");
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();

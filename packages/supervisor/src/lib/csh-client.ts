@@ -45,6 +45,7 @@ class CSHClient implements ICSHClient {
             if (!this.streams) {
                 throw new SupervisorError("UNINITIALIZED_STREAMS");
             }
+            this.logger.info("Connecting to", this.socketPath);
 
             this.connection = net.createConnection({
                 path: this.socketPath
@@ -117,6 +118,10 @@ class CSHClient implements ICSHClient {
         }
 
         communicationHandler.hookUpstreamStreams(this.upstreamStreamsConfig());
+
+        //const { out, err } = communicationHandler.getLogOutput();
+
+        //addLoggerOutput(out, err);
     }
 }
 

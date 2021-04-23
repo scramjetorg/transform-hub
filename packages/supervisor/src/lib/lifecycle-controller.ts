@@ -1,6 +1,6 @@
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
-import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent, Logger } from "@scramjet/types";
 import { Readable } from "stream";
 
 /**
@@ -52,7 +52,7 @@ class LifeCycleController implements IComponent {
     */
     private lifecycleConfig: LifeCycleConfig;
 
-    logger: Console;
+    logger: Logger;
 
     /**
      * @param {ILifeCycleAdapter} lifecycleAdapter an implementation of LifeCycle interface
