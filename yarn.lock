@@ -216,6 +216,11 @@
   dependencies:
     arrify "^1.0.1"
 
+"@cush/relative@^0.1.0":
+  version "0.1.0"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/@cush/relative/-/relative-0.1.0.tgz#19bfc2c8d46335205932f2032e3569f99fd61b40"
+  integrity sha512-pnF2c2hhHyC520CmYYKq3hGOS0kipkGBgRnp3z7wx7lDzykaUwQW3wPQmiX9YtbHUcgUu1qQtzstixmeYMwQoA==
+
 "@eslint/eslintrc@^0.4.0":
   version "0.4.0"
   resolved "https://repo.int.scp.ovh/repository/npm-all/@eslint/eslintrc/-/eslintrc-0.4.0.tgz#99cc0a0584d72f1df38b900fb062ba995f395547"
@@ -1437,6 +1442,11 @@ ajv@^8.0.1:
     require-from-string "^2.0.2"
     uri-js "^4.2.2"
 
+ansi-256-colors@^1.1.0:
+  version "1.1.0"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/ansi-256-colors/-/ansi-256-colors-1.1.0.tgz#910de50efcc7c09e3d82f2f87abd6b700c18818a"
+  integrity sha1-kQ3lDvzHwJ49gvL4er1rcAwYgYo=
+
 ansi-align@^3.0.0:
   version "3.0.0"
   resolved "https://repo.int.scp.ovh/repository/npm-all/ansi-align/-/ansi-align-3.0.0.tgz#b536b371cf687caaef236c18d3e21fe3797467cb"
@@ -1905,6 +1915,16 @@ buffer@^5.5.0:
   dependencies:
     base64-js "^1.3.1"
     ieee754 "^1.1.13"
+
+build-if-changed@^1.5.5:
+  version "1.5.5"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/build-if-changed/-/build-if-changed-1.5.5.tgz#895d63b72a7a43a4bad6f9b7b5ba94edfcbb744d"
+  integrity sha512-Ev9XU5r+HWulJYf58ZyeIIB0TYywReSiWdfxtW37FyGm7p4xHEAYza+c/Gj3IZxnMSYydrW+Xu1a7brJjs1W3A==
+  dependencies:
+    ansi-256-colors "^1.1.0"
+    has-flag "^4.0.0"
+    recrawl "^1.1.1"
+    saxon "^0.1.15"
 
 builtins@^1.0.3:
   version "1.0.3"
@@ -3731,6 +3751,11 @@ glob-parent@^5.0.0, glob-parent@^5.1.0, glob-parent@~5.1.0:
   integrity sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==
   dependencies:
     is-glob "^4.0.1"
+
+glob-regex@^0.3.0:
+  version "0.3.2"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/glob-regex/-/glob-regex-0.3.2.tgz#27348f2f60648ec32a4a53137090b9fb934f3425"
+  integrity sha512-m5blUd3/OqDTWwzBBtWBPrGlAzatRywHameHeekAZyZrskYouOGdNB8T/q6JucucvJXtOuyHIn0/Yia7iDasDw==
 
 glob-to-regexp@^0.3.0:
   version "0.3.0"
@@ -6586,6 +6611,15 @@ rechoir@^0.6.2:
   dependencies:
     resolve "^1.1.6"
 
+recrawl@^1.1.1:
+  version "1.2.3"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/recrawl/-/recrawl-1.2.3.tgz#5b35c83cd47611c4e83a321d76f9c18e83fea140"
+  integrity sha512-BJjwjefrfI4/OYPrZ+I2SEfSE3+BoIom15KpNYLabNJJ/G0zn/2niS4AILT60aRjqLR4+IucD5YU8D96z32EvQ==
+  dependencies:
+    "@cush/relative" "^0.1.0"
+    glob-regex "^0.3.0"
+    tslib "^1.9.3"
+
 redent@^1.0.0:
   version "1.0.0"
   resolved "https://repo.int.scp.ovh/repository/npm-all/redent/-/redent-1.0.0.tgz#cf916ab1fd5f1f16dfb20822dd6ec7f730c2afde"
@@ -6888,6 +6922,13 @@ safe-regex@^1.1.0:
   version "2.1.2"
   resolved "https://repo.int.scp.ovh/repository/npm-all/safer-buffer/-/safer-buffer-2.1.2.tgz#44fa161b0187b9549dd84bb91802f9bd8385cd6a"
   integrity sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==
+
+saxon@^0.1.15:
+  version "0.1.18"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/saxon/-/saxon-0.1.18.tgz#fbedb05150ae2e4f307202efc84e9e7ad48f88a1"
+  integrity sha512-JMdJjBJCSquNY7Glyl+FNMQyZhbny6wKta8KE5PWrEbU5oB2FfONbtBPHlMOXJrFc9FqUYBJ9QsavygJW1QiBg==
+  dependencies:
+    graceful-fs "^4.1.11"
 
 scramjet-core@^4.31.14:
   version "4.31.15"
@@ -7771,7 +7812,7 @@ ts-node@^9.1.1:
     source-map-support "^0.5.17"
     yn "3.1.1"
 
-tslib@^1.8.1, tslib@^1.9.0:
+tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
   version "1.14.1"
   resolved "https://repo.int.scp.ovh/repository/npm-all/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==

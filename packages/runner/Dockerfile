@@ -24,7 +24,6 @@ WORKDIR /app/packages/runner
 RUN    yarn build \
     && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
-
 FROM repo.int.scp.ovh/scramjet/nodejs:buster
 
 ENV PACKAGE_DIR=/package \
