@@ -84,7 +84,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             break;
         case RunnerMessageCode.EVENT:
             const eventData = data as EventMessageData;
-
+            
             this.emitter.emit(eventData.eventName, eventData.message);
             break;
         default:
