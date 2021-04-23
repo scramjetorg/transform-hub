@@ -138,8 +138,10 @@ implements AppContext<AppConfigType, State> {
     }
 
     emit(eventName: string, message: any) {
+        console.log("event-sequence TODELETE");
+        console.log("eventName: ",eventName,"\nmessage: ", message);
         this.writeMonitoringMessage([RunnerMessageCode.EVENT, { eventName, message }]);
-        this.emitter.emit(eventName, message);
+      
         return this;
     }
 }

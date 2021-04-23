@@ -10,10 +10,12 @@ export = async function (_stream) {
     const data = this.initialState;
 
     let x = data?.x || 0;
-    
-    this.on("test-event", () => console.log("Got test event"));
 
-    while (++x < 6) {
+    this.on("test-event", () =>
+        this.emit("test-event-response", "message from sequence")
+    );
+
+    while (++x < 8) {
         console.log({ x: x });
         await new Promise(res => setTimeout(res, 1000));
     }

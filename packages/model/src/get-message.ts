@@ -8,7 +8,7 @@ import {
     KillSequenceMessage,
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
-    StopSequenceMessage, StopSequenceMessageData, MessageDataType, MessageType, RunnerMessageCode
+    StopSequenceMessage, StopSequenceMessageData, MessageDataType, MessageType, RunnerMessageCode, EventMessageData, EventMessage
 } from ".";
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
@@ -28,6 +28,10 @@ function isMonitoringRateMessage(data: object): data is MonitoringRateMessageDat
 function isDescribeSequenceMessage(data: object): data is DescribeSequenceMessageData {
     // TODO: better checks needed
     return Array.isArray((data as DescribeSequenceMessageData).definition);
+}
+function isEventMessage(data: object): data is EventMessageData {
+    return typeof (data as EventMessageData).eventName === "string" &&
+        typeof (data as EventMessageData).message === "string";
 }
 function isErrorMessage(data: object): data is ErrorMessageData {
     if (typeof (data as ErrorMessageData).message === "string") return false;
@@ -74,6 +78,9 @@ export const checkMessage = <X extends RunnerMessageCode>(
     }
     if (msgCode === RunnerMessageCode.ACKNOWLEDGE && isAcknowledgeMessage(msgData)) {
         return msgData as MessageDataType<AcknowledgeMessage>;
+    }
+    if (msgCode === RunnerMessageCode.EVENT && isEventMessage(msgData)) {
+        return msgData as MessageDataType<EventMessage>;
     }
 
     throw new Error(`Bad message of type ${msgCode}`);
