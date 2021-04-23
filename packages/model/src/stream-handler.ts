@@ -110,6 +110,10 @@ export class CommunicationHandler implements ICommunicationHandler {
         };
     }
 
+    getMonitorStream(): DataStream {
+        return this.monitoringPassThrough.pipe(new DataStream());
+    }
+
     getStdio(): { stdin: Writable; stdout: Readable; stderr: Readable; } {
         if (!this.stdInDownstream || !this.stdOutDownstream || !this.stdErrDownstream) {
             throw new Error("Streams not attached");

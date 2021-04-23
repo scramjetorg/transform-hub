@@ -129,6 +129,7 @@ export class HostOne implements IComponent {
         if (this.upStreams && this.upStreams[CommunicationChannel.LOG]) {
             this.logHistory = StringStream
                 .from(this.upStreams[CommunicationChannel.LOG] as unknown as Readable)
+                .lines()
                 .keep(1000); // TODO: config
 
             this.logHistory?.pipe(process.stdout);
@@ -232,6 +233,11 @@ export class HostOne implements IComponent {
             .catch(async (error) => {
                 console.error(this.errors.parsingError, error.stack);
             });
+
+        this.communicationHandler.getMonitorStream().stringify(([code, message]: EncodedMonitoringMessage) => {
+            this.logger.info(`Received on monitorStream: ${code}, ${JSON.stringify(message)}`);
+            return `[monitor: ${code}]: ${JSON.stringify(message)}`;
+        });
     }
 
     async handleHandshake() {

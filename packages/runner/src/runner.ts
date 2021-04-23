@@ -310,6 +310,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             sequence = this.getSequence();
+            this.logger.log(`Seqeunce loaded, functions count: ${sequence.length}.`);
         } catch (error) {
             if (error instanceof SyntaxError) {
                 this.logger.error("Sequence syntax error.", error.message);
