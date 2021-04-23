@@ -39,3 +39,12 @@ Feature: Sample e2e tests
         Then host one process is working
         And wait "5000" ms
         And host one process is stopped
+
+    Scenario: Send test-event through API and get event emitted by sequence
+        Given host one execute sequence in background "../packages/test-sequence.tar.gz"
+        And wait "1000" ms
+        When send event "test-event" to sequence
+        And wait "2000" ms
+        Then get event "reply-event" from sequence
+        And wait "5000" ms
+        And host one process is stopped
