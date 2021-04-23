@@ -189,6 +189,9 @@ export class HostOne implements IComponent {
         // monitoring data
         this.api.get(`${apiBase}/sequence/health`, RunnerMessageCode.MONITORING, this.communicationHandler);
         this.api.get(`${apiBase}/sequence/status`, RunnerMessageCode.STATUS, this.communicationHandler);
+        this.api.get(`${apiBase}/sequence/event/`, RunnerMessageCode.EVENT, this.communicationHandler);
+        
+        this.api.op(`${apiBase}/sequence/_event/`, RunnerMessageCode.EVENT, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_stop/`, RunnerMessageCode.STOP, this.communicationHandler);
         this.api.op(`${apiBase}/sequence/_kill/`, RunnerMessageCode.KILL, this.communicationHandler);
