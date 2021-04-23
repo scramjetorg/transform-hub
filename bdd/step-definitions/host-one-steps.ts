@@ -115,6 +115,16 @@ When("send stop message with timeout {string} and canKeepAlive {string}", async 
     assert.equal(resp.status, 202);
 });
 
+When("send event {string} to sequence", async () => {
+    // Write code here that turns the phrase above into concrete actions
+    return "pending";
+});
+
+Then("get event {string} from sequence", async () => {
+    // Write code here that turns the phrase above into concrete actions
+    return "pending";
+});
+
 Then("host one process is working", async () => {
     assert.equal(hostOneProcessStopped, false);
 });
