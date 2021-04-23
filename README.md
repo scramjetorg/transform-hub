@@ -3,8 +3,8 @@
 ## Table of contents
 
 - [Installation](#installation)
-- [Publish](#publish)
 - [Commands](#commands)
+- [Publish](#publish)
 - [How to run components](#howto-run-components)
   - [Runner](#runner)
   - [HostOne](#hostone)
@@ -30,25 +30,18 @@ yarn install
 
 It'll install all dependencies at once.
 
-## Publish
-
-Create a new release of the packages that have been updated.
-Prompts for a new version and updates all the packages on git and npm.
-
-```bash
-lerna publish
-```
-
-```bash
-yarn publish
-```
-
 ## Commands
 
 Build all packages
 
 ```bash
 yarn build
+```
+
+Build only the changed components
+
+```bash
+yarn bic
 ```
 
 Remove all files in `*dist/*` directory
@@ -158,6 +151,19 @@ Run an npm script in each package that contains that script.
 
 ```bash
 lerna run [script]
+```
+
+## Publish
+
+Create a new release of the packages that have been updated.
+Prompts for a new version and updates all the packages on git and npm.
+
+```bash
+lerna publish
+```
+
+```bash
+yarn publish
 ```
 
 ## How to run components
