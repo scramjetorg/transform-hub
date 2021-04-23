@@ -115,13 +115,15 @@ When("send stop message with timeout {string} and canKeepAlive {string}", async 
     assert.equal(resp.status, 202);
 });
 
-When("send event {string} to sequence", async () => {
-    // Write code here that turns the phrase above into concrete actions
-    return "pending";
+When("send event {string} to sequence with message {string}", async (eventName, eventMessage) => {
+    const resp = await sequenceApiClient.postEvent(eventName, eventMessage);
+
+    assert.equal(resp.status, 202);
+    // curl --location --request POST 'http://localhost:8000/api/v1/sequence/_event' --header 'content-type: application/json' --data-raw '[4005,{"eventName": "test-event", "message":"event message"}]'
 });
 
 Then("get event {string} from sequence", async () => {
-    // Write code here that turns the phrase above into concrete actions
+    // curl --location --request GET 'http://localhost:8000/api/v1/sequence/get
     return "pending";
 });
 

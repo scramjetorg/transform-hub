@@ -5,6 +5,19 @@ export class SequenceApiClient {
     constructor(private apiBase: string = "http://localhost:8000/api/v1/sequence") {
     }
 
+    public async postEvent(eventName: string, postMessage: string): Promise<any> {
+        const postEventUrl = `${this.apiBase}/_event`;
+        const data = [4005, { eventName: eventName, message: postMessage }];
+
+        return await this.post(postEventUrl, data);
+    }
+
+    public async getEvent(): Promise<any> {
+        const getEventUrl = `${this.apiBase}/event`;
+
+        return await this.get(getEventUrl);
+    }
+
     public async stop(timeoutInMs: number, canCallKeepalive: boolean): Promise<any> {
         const stopMethodUrl = `${this.apiBase}/_stop`;
         const data = [4001, { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive }];

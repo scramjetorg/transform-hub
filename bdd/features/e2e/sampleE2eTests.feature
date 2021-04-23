@@ -43,8 +43,9 @@ Feature: Sample e2e tests
     Scenario: Send test-event through API and get event emitted by sequence
         Given host one execute sequence in background "../packages/test-sequence.tar.gz"
         And wait "1000" ms
-        # When send event "test-event" to sequence
+        When send event "test-event" to sequence with message "test message"
         And wait "2000" ms
-        # Then get event "reply-event" from sequence
+        Then get event from sequence
+        And response body is "obiekt eventu"
         And wait "5000" ms
         And host one process is stopped
