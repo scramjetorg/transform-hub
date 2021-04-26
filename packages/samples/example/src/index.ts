@@ -11,7 +11,7 @@ interface Person {
 }
 
 // This method needs to expose a function that will be executed by the runner.
-const mod: InertApp = function(input, ffrom, fto) {
+const mod: InertApp = function(input, ffrom) {
     this.on("test", () => console.error("Got test event"));
 
     return new Promise((resolve) => {
@@ -19,7 +19,7 @@ const mod: InertApp = function(input, ffrom, fto) {
             .pipe(JSONStream.parse("*"))
             .pipe(new scramjet.DataStream())
             .setOptions({ maxParallel: 1 })
-            .do(() => new Promise(res => setTimeout(res, 500)))
+            //.do(() => new Promise(res => setTimeout(res, 1500)))
             .do(
                 (names: Person) => {
                     console.log(`Hello ${names.name}!`);
@@ -28,9 +28,8 @@ const mod: InertApp = function(input, ffrom, fto) {
                 (names: Person) => {
                     return `Hello ${names.name}! \n`;
                 }
-            )
-            .pipe(fs.createWriteStream(fto))
-            .on("finish", () => {
+            ).on("finish", () => {
+                console.log("Sequence says: FINISH.");
                 resolve();
             });
     });

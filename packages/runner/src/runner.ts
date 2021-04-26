@@ -3,7 +3,7 @@ import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStre
 
 import { from as scramjetStreamFrom, DataStream, PromiseTransform, StringStream } from "scramjet";
 
-import { exec } from "child_process";
+//import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { Readable } from "stream";
 import { createReadStream, createWriteStream } from "fs";
@@ -11,6 +11,7 @@ import { RunnerAppContext } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { IComponent } from "@scramjet/types";
+import { exec } from "child_process";
 
 type MaybeArray<T> = T | T[];
 export class Runner<X extends AppConfig> implements IComponent {
@@ -182,6 +183,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleKillRequest(): Promise<void> {
+        this.logger.log("Kill request handled.");
         this.context?.killHandler();
         //letting time for "on kill" actions
         //TODO cosult with Michał Cz.
@@ -238,13 +240,18 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.initAppContext(data.appConfig as X);
 
         try {
+
             await this.runSequence(data.arguments);
+            this.logger.log("Sequence completed.");
         } catch (error) {
-            console.error("Error occured during sequence execution: ", error);
+            this.logger.error("Error occured during sequence execution: ", error);
             await this.cleanupControlStream();
             process.exit(22);
         }
+
+        process.exit(0);
     }
+
 
     // TODO: this should be the foll class logic
     /**
@@ -360,6 +367,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
             }
 
+            this.logger.info(`Sequence output type ${typeof out}`);
+
             if (!out) {
                 if (itemsLeftInSequence > 0) {
                     this.logger.error("Sequence ended premature");
@@ -381,7 +390,10 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
+        // TODO: do not clean up immediately.
+        this.logger.info("Cleaning after sequence end.");
         await this.cleanup();
+        this.logger.info("End.");
     }
 
     handleSequenceEvents() {
