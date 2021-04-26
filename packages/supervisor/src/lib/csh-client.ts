@@ -66,7 +66,11 @@ class CSHClient implements ICSHClient {
             ];
 
             this.connectionChannels.forEach((channel: Duplex) => {
-                channel.on("error", () => {});
+                channel.on("error", (e) => this.logger.warn(e));
+            });
+
+            this.connection.on("error", (e) => {
+                this.logger.error("Connection error: ", e);
             });
 
             /**

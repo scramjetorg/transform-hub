@@ -110,6 +110,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
 
                 //TODO: TBD how to allow docker user "runner" to access this directory.
 
+                console.log("Fifo dir: ", createdDir);
+
                 [
                     this.controlFifoPath,
                     this.monitorFifoPath,
