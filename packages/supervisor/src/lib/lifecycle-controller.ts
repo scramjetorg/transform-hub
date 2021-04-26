@@ -215,9 +215,8 @@ class LifeCycleController implements IComponent {
             await endOfSequence;
             this.logger.log("Sequence finished");
 
-            this.client.disconnect();
+            await this.client.disconnect();
             this.logger.log("Client disconnected");
-
         } catch (error) {
             this.logger.error("Error caughts", error.stack);
 

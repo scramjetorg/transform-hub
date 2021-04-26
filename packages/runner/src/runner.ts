@@ -153,13 +153,12 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.log("Executing command", cmd);
 
             exec(cmd, (error) => {
-                this.logger.log("Executed command", cmd, error);
                 if (error) {
                     this.logger.error(error);
                     reject(error);
                 }
-
-                this.logger.info(cmd, "no error");
+                
+                this.logger.log("Executed command", cmd, error);
                 resolve(0);
             });
         });
@@ -175,7 +174,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
         }
 
-        await this.execCommand(`echo -e "\r\n" > "${fifo}"`); // TODO: Shell escape
+        await this.execCommand(`echo -e "\\r\\n" > "${fifo}"`); // TODO: Shell escape
     }
 
     async hookupMonitorStream() {
@@ -447,6 +446,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             } else {
                 // TODO: what if this is not a DataStream, but BufferStream stream
                 stream = DataStream.from(out as Readable);
+                
             }
         }
 
@@ -461,7 +461,8 @@ export class Runner<X extends AppConfig> implements IComponent {
          * unless there is NO LAST STREAM
          */
         this.logger.info("Piping seq out if exist.");
-        if (this.outputStream && stream) {
+        
+        if (stream && this.outputStream) {
             this.logger.info("Piping seq!.");
             stream?.pipe(this.outputStream);
         }

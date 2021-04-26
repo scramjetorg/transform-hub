@@ -31,6 +31,6 @@ export interface ICSHClient extends IComponent {
     /**
      * Disconnects from a host server.
      */
-    disconnect(): void;
+    disconnect(): Promise<void>;
 
 }

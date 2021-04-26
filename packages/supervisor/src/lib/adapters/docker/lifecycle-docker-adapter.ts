@@ -118,6 +118,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
             try {
                 createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
                 //TODO: TBD how to allow docker user "runner" to access this directory.
+                
+                console.log("Fifo dir: ", createdDir);
 
                 this.logger.log("Fifo dir: ", createdDir);
 
@@ -220,7 +222,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
         this.controlStream.run(createWriteStream(this.controlFifoPath));
         this.loggerStream.run(createReadStream(this.loggerFifoPath));
         this.inputStream.run(createWriteStream(this.inputFifoPath));
-        this.outputStream.run(createWriteStream(this.outputFifoPath));
+        this.outputStream.run(createReadStream(this.outputFifoPath));
 
         this.logger.debug("Creating container");
 

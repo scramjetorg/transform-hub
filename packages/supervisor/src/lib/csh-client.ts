@@ -3,6 +3,7 @@ import { CommunicationChannel as CC, SupervisorError } from "@scramjet/model";
 import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig, PassThoughStream, DuplexStream, ReadableStream } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import * as net from "net";
+import { Writable } from "stream";
 
 const { BPMux } = require("bpmux");
 
@@ -48,9 +49,13 @@ class CSHClient implements ICSHClient {
                 this.mux.multiplex({ channel: CC.PACKAGE })
             ];
 
-            connectionChannels.forEach((channel) => channel.on("error", (/*e*/) => {
-                // TODO: this.logger.warn(e);
+            connectionChannels.forEach((channel) => channel.on("error", (e) => {
+                this.logger.warn(e);
             }));
+
+            this.connection.on("error", (e) => {
+                this.logger.error("Connection error: ", e);
+            });
 
             this.streams = [
                 connectionChannels[CC.STDIN],
@@ -63,13 +68,24 @@ class CSHClient implements ICSHClient {
                 connectionChannels[CC.LOG],
                 connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer> // this was checked.
             ];
-
+            
+            
             resolve();
         });
     }
 
-    disconnect() {
-        this.connection?.end();
+    async disconnect() {
+        //this.connection?.end();
+    
+        // eslint-disable-next-line no-extra-parens
+        await Promise.all([1, 2, 4, 6, 7]
+            .map(i => (this.streams as Writable[])[i] as unknown as Writable).map((s: Writable) => {
+                return new Promise((res, reject) => {
+                    s.end(res);
+                    s.on("error", reject);
+                });
+            })
+        );
     }
 
     getPackage() {
