@@ -66,11 +66,11 @@ class CSHClient implements ICSHClient {
             ];
 
             this.connectionChannels.forEach((channel: Duplex) => {
-                channel.on("error", (e) => this.logger.warn(e));
+                channel.on("error", (e) => this.logger.warn(e.stack));
             });
 
             this.connection.on("error", (e) => {
-                this.logger.error("Connection error: ", e);
+                this.logger.error("Connection error: ", e.stack);
             });
 
             /**
@@ -120,7 +120,6 @@ class CSHClient implements ICSHClient {
         if (typeof this.upstreamStreamsConfig() === "undefined") {
             throw new SupervisorError("UNINITIALIZED_STREAMS", { details: "CSHClient" });
         }
-
         communicationHandler.hookUpstreamStreams(this.upstreamStreamsConfig());
 
         //const { out, err } = communicationHandler.getLogOutput();

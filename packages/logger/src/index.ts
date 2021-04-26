@@ -15,7 +15,7 @@ const loggerOutputs: {[key: string]: WritableStream<any[]>[]} = {
 const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
     for (const logStream of loggerOutputs[streamSpec]) {
         if (logStream.writable) {
-            logStream.write(args);
+            logStream.write([new Date().toISOString(), ...args]);
         }
     }
 };
@@ -107,8 +107,8 @@ class Logger implements Console {
     groupCollapsed = this.group;
 }
 
-const defaultFormatMessage: MessageFormatter = (name, func, ...args) => {
-    return `${[new Date().toISOString(), func, `(${name})`, ...args].join(" ")}\n`;
+const defaultFormatMessage: MessageFormatter = (ts, name, func, ...args) => {
+    return `${[ts, func, `(${name})`, ...args].join(" ")}\n`;
 };
 const addLoggerStream = (stream: WritableStream<any>, dest: WritableStream<any>[]) => {
     if (!stream.objectMode) {

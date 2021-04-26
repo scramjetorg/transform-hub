@@ -115,7 +115,7 @@ export type DockerAdapterResources = {
 }
 
 export type DockerAdapterWaitOptions = {
-    condition: "not-running" | "next-exit" | "removed"
+    condition?: "not-running" | "next-exit" | "removed"
 }
 
 /**

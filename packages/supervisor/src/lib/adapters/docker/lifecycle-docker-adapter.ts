@@ -1,11 +1,14 @@
 import { imageConfig } from "@scramjet/csi-config";
+import { getLogger } from "@scramjet/logger";
 import { SupervisorError } from "@scramjet/model";
 import {
     DelayedStream,
     DownstreamStreamsConfig,
     ExitCode,
     ICommunicationHandler,
+    IComponent,
     ILifeCycleAdapter,
+    Logger,
     MaybePromise,
     RunnerConfig
 } from "@scramjet/types";
@@ -19,7 +22,7 @@ import { PassThrough, Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, IDockerHelper } from "./types";
 
-class LifecycleDockerAdapter implements ILifeCycleAdapter {
+class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     private dockerHelper: IDockerHelper;
 
     // TODO: why these ignores?
@@ -52,6 +55,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
 
     private resources: DockerAdapterResources = {};
 
+    logger: Logger;
+
     constructor() {
         this.runnerStdin = new PassThrough();
         this.runnerStdout = new PassThrough();
@@ -68,6 +73,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
          * inputStream - input stream to the Sequence
          * outputStream - output stream for a Sequence
          */
+        this.logger = getLogger(this);
     }
 
     async init(): Promise<void> {
@@ -207,6 +213,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
         this.controlStream.run(createWriteStream(this.controlFifoPath));
         this.loggerStream.run(createReadStream(this.loggerFifoPath));
 
+        this.logger.debug("Creating container");
+
         return new Promise(async (resolve, reject) => {
             const { streams, containerId } = await this.dockerHelper.run({
                 imageName: this.imageConfig.runner || "",
@@ -225,13 +233,15 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
 
-
-            let containerExitResult;
+            this.logger.debug("Container is running");
 
             try {
-                containerExitResult = await this.dockerHelper.wait(containerId, { condition: "removed" });
+                const containerExitResult = await this.dockerHelper.wait(containerId, { condition: "removed" });
+
+                this.logger.debug("Container exited");
                 resolve(containerExitResult.statusCode);
             } catch (error) {
+                this.logger.debug("Container errored", error);
                 reject(error);
             }
         });
@@ -240,13 +250,14 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter {
     cleanup(): MaybePromise<void> {
         return new Promise(async (resolve) => {
             if (this.resources.volumeId) {
+                this.logger.log("Volume will be removed");
                 await this.dockerHelper.removeVolume(this.resources.volumeId);
-                console.log("Volume removed");
+                this.logger.log("Volume removed");
             }
 
             if (this.resources.fifosDir) {
                 await rmdir(this.resources.fifosDir, { recursive: true });
-                console.log("Fifo folder removed");
+                this.logger.log("Fifo folder removed");
             }
 
             resolve();

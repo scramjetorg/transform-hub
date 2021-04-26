@@ -148,7 +148,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async initializeLogger() {
         if (this.loggerStream) {
-            addLoggerOutput(this.loggerStream, this.loggerStream);
+            addLoggerOutput(this.loggerStream);
         } else {
             throw new RunnerError("UNINITIALIZED_STREAMS");
         }

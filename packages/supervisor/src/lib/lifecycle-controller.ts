@@ -1,4 +1,4 @@
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { getLogger } from "@scramjet/logger";
 import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
 import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent, Logger } from "@scramjet/types";
 import { Readable } from "stream";
@@ -134,12 +134,6 @@ class LifeCycleController implements IComponent {
                 this.client.hookCommunicationHandler(this.communicationHandler)
             ]);
 
-            /**
-             * TODO: remove this from here
-             */
-            const { out, err } = this.communicationHandler.getLogOutput();
-
-            addLoggerOutput(out, err);
             this.logger.log("Streams hooked.");
 
             /**
