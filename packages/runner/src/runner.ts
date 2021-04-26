@@ -127,7 +127,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     async cleanupControlStream() {
         this.controlStream.destroy();
         // TODO: needs error handling and a callback?
-        exec(`echo "\r\n" > ${this.controlFifoPath}`);
+        exec(`echo "\r\n" > ${this.controlFifoPath}`); // TODO: Shell escape
     }
 
     async hookupMonitorStream() {
@@ -363,7 +363,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 );
                 this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
             } catch (error) {
-                this.logger.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error);
+                this.logger.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error.stack);
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
             }
 
