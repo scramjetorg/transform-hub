@@ -97,28 +97,70 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async cleanup() {
-        this.logger?.info("Cleaning up...");
-        if (this.monitoringInterval) {
-            clearInterval(this.monitoringInterval);
-        }
+        return new Promise(async (resolve) => {
 
-        try {
-            await this.cleanupStreams();
-            this.logger?.info("Clean!");
-        } catch (e) {
-            this.logger?.error("Not clear, error", e);
-        }
+
+            this.logger?.info("Cleaning up streams...");
+
+            if (this.monitoringInterval) {
+                clearInterval(this.monitoringInterval);
+                this.logger?.info("Monitoring interval removed.");
+            }
+
+            await new Promise(async (res) => {
+                try {
+                    this.logger?.info("CLEANUP: cleaning up streams...");
+                    await this.cleanupStreams();
+                    this.logger?.info("All streams cleaned!");
+                    res(0);
+                } catch (e) {
+                    this.logger?.error("Not clear, error", e);
+                    res(233);
+                }
+
+
+            });
+
+            //console.info("Cleaning up logger stream...");
+
+            //await this.cleanupStream(this.loggerStream, this.loggerFifoPath);
+            //console.info("Logger stream cleaned up...");
+            this.logger?.info("Clean up completed!");
+            process.exit(244);
+            resolve(1);
+
+        });
     }
 
     async cleanupStreams(): Promise<any> {
+        this.logger.info("Cleaning up streams");
+        //return Promise.resolve;
         return Promise.all([
             this.cleanupStream(this.controlStream, this.controlFifoPath),
-            this.cleanupStream(this.monitorStream, this.monitorFifoPath),
-            this.cleanupStream(this.loggerStream, this.loggerFifoPath),
+            //this.cleanupStream(this.monitorStream, this.monitorFifoPath),
             this.cleanupStream(this.inputStream, this.inputFifoPath),
-            this.cleanupStream(this.outputStream, this.outputFifoPath)
+            //this.cleanupStream(this.outputStream, this.outputFifoPath)
         ]);
     }
+
+
+    private async execCommand(cmd: string) {
+        return new Promise((resolve, reject) => {
+            this.logger.log("Executing command", cmd);
+
+            exec(cmd, (error) => {
+                this.logger.log("Executed command", cmd, error);
+                if (error) {
+                    this.logger.error(error);
+                    reject(error);
+                }
+
+                this.logger.info(cmd, "no error");
+                resolve(0);
+            });
+        });
+    }
+
 
     private async cleanupStream(stream: ReadableStream<any> | WritableStream<any> | undefined, fifo: string) {
         if (stream) {
@@ -260,6 +302,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.cleanup();
             process.exit(22);
         }
+
+        process.exit(0);
     }
 
 
@@ -313,17 +357,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
 
-    private async execCommand(cmd: string) {
-        return new Promise((resolve, reject) => {
-            exec(cmd, (error, stdout, stderr) => {
-                if (error) {
-                    this.logger?.error(error);
-                    reject(error);
-                }
-                resolve(stdout || stderr);
-            });
-        });
-    }
 
     /**
      * run sequence
@@ -409,6 +442,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
         }
 
+        this.logger.info("All sequences processed.");
+
         /**
          * @analyze-how-to-pass-in-out-streams
          * We need to make sure to close input and output streams
@@ -417,9 +452,13 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        if (this.outputStream)
+        this.logger.info("Piping seq out if exist.");
+        if (this.outputStream && stream) {
+            this.logger.info("Piping seq!.");
             stream?.pipe(this.outputStream);
+        }
 
+        this.logger.info("Ending...");
         // TODO: await until it's done?
         this.logger.info("Cleaning after sequence end.");
 

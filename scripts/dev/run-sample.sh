@@ -3,6 +3,7 @@ set -e
 DOCKER=false
 TS=false
 INSTALL=false
+PREINSTALL=false
 
 for arg in "$@"
     do
@@ -24,12 +25,18 @@ for arg in "$@"
             shift
             ;;
         esac
+        case $arg in
+            -pi|--pre-install)
+            PREINSTALL=true
+            shift
+            ;;
+        esac
     done
 
 # init project
 cd $(git rev-parse --show-toplevel)
 
-if [ "$INSTALL" = true ] ; then
+if [ "$PREINSTALL" = true ] ; then
     yarn install
 fi
 
@@ -45,12 +52,6 @@ if [ "$PREINSTALL" = true ] ; then
 # tar example
     cd $(git rev-parse --show-toplevel)
     cd packages/pre-runner
-    lerna run prepack
-    yarn prepare-sample-tar
-fi
-
-# copy to dist
-if [ "$INSTALL" = true ] ; then
     lerna run prepack
     yarn prepare-sample-tar
 fi
