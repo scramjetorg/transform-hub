@@ -3,12 +3,9 @@
 import { Runner } from "../runner";
 import * as fs from "fs";
 import { AppConfig } from "@scramjet/types";
-import { addLoggerOutput } from "@scramjet/logger";
 
 const sequencePath: string = "/package/" + process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const fifosPath: string = process.env.FIFOS_DIR || "";
-
-addLoggerOutput(process.stderr);
 
 if (!fs.existsSync(fifosPath)) {
     console.error("Incorrect run argument: fifo path (" + fifosPath + ") does not exists. ");

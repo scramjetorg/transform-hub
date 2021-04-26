@@ -16,28 +16,30 @@ import { SupervisorError } from "@scramjet/model";
  * In the event of error, the stack trace is consoled out and the process exits.
  **/
 
-(async () => {
-    // In the future it will be configurable.
-    const config: LifeCycleConfig = {
-        makeSnapshotOnError: false
-    };
-    const lcda: LifecycleDockerAdapter = new LifecycleDockerAdapter();
-    const socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
+const config: LifeCycleConfig = {
+    makeSnapshotOnError: false
+};
+const lcda: LifecycleDockerAdapter = new LifecycleDockerAdapter();
+const socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
 
-    if (!fs.existsSync(socketPath)) {
-        throw new SupervisorError("INVALID_CONFIGURATION", { details: "Missing file " + socketPath });
-    }
+if (!fs.existsSync(socketPath)) {
+    throw new SupervisorError("INVALID_CONFIGURATION", { details: "Missing file " + socketPath });
+}
 
-    const cshc: CSHClient = new CSHClient(socketPath);
-    const lcc: LifeCycleController = new LifeCycleController(lcda, config, cshc);
+const cshc: CSHClient = new CSHClient(socketPath);
+const lcc: LifeCycleController = new LifeCycleController(lcda, config, cshc);
 
-    await lcc.main();
-})().catch(e => {
-    let exitCode = 10;
+lcc.main()
+    .catch(e => {
+        let exitCode = 10;
 
-    if (e.data && e.data.exitCode) {
-        exitCode = e.data.exitCode;
-    }
+        if (e.data && e.data.exitCode) {
+            exitCode = e.data.exitCode;
+        }
 
-    process.exit(exitCode);
-});
+        process.exitCode = exitCode;
+    })
+    .finally(() => {
+        console.log("DISCONNECT!");
+        return cshc.disconnect();
+    });

@@ -121,7 +121,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             throw new Error("Streams not hooked");
         }
 
-        this.downstreams[CC.LOG].pipe(this.upstreams[CC.LOG]);
+        this.downstreams[CC.LOG].on("end", () => console.log("log end")).pipe(this.loggerPassthough, { end: false }).pipe(this.upstreams[CC.LOG]);
 
         const monitoringOutput = StringStream.from(this.downstreams[CC.MONITORING] as Readable)
             .JSONParse()
@@ -198,7 +198,7 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.upstreams[CC.IN].pipe(this.downstreams[CC.IN]);
         this.downstreams[CC.OUT].pipe(this.upstreams[CC.OUT]);
         this.downstreams[CC.OUT].resume();
-        
+
         if (this.upstreams[CC.PACKAGE] && this.downstreams[CC.PACKAGE] !== undefined) {
             this.upstreams[CC.PACKAGE]?.pipe(this.downstreams[CC.PACKAGE] as WritableStream<any>);
         }

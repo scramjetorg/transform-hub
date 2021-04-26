@@ -134,6 +134,8 @@ class LifeCycleController implements IComponent {
                 this.client.hookCommunicationHandler(this.communicationHandler)
             ]);
 
+            this.logger.log("Streams hooked.");
+
             /**
              * Once the LifeCycle Adapter and the client hooked their streams
              * using the CommunicationHandler class the streams are ready to

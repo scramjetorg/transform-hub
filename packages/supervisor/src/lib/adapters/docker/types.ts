@@ -227,5 +227,5 @@ export interface IDockerHelper {
      *
      * @returns {Promise<ExitCode>}
      */
-    wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData>;
+    wait(container: DockerContainer, options?: DockerAdapterWaitOptions): Promise<ExitData>;
 }

@@ -101,21 +101,21 @@ export class Runner<X extends AppConfig> implements IComponent {
         return new Promise(async (resolve) => {
 
 
-            this.logger?.info("Cleaning up streams...");
+            this.logger.info("Cleaning up streams...");
 
             if (this.monitoringInterval) {
                 clearInterval(this.monitoringInterval);
-                this.logger?.info("Monitoring interval removed.");
+                this.logger.info("Monitoring interval removed.");
             }
 
             await new Promise(async (res) => {
                 try {
-                    this.logger?.info("CLEANUP: cleaning up streams...");
+                    this.logger.info("CLEANUP: cleaning up streams...");
                     await this.cleanupStreams();
-                    this.logger?.info("All streams cleaned!");
+                    this.logger.info("All streams cleaned!");
                     res(0);
                 } catch (e) {
-                    this.logger?.error("Not clear, error", e);
+                    this.logger.error("Not clear, error", e);
                     res(233);
                 }
 
@@ -126,7 +126,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             //await this.cleanupStream(this.loggerStream, this.loggerFifoPath);
             //console.info("Logger stream cleaned up...");
-            this.logger?.info("Clean up completed!");
+            this.logger.info("Clean up completed!");
 
             process.on("beforeExit", () => console.log("AAA! beforeExit"));
             process.on("exit", () => console.log("AAA! exit"));
@@ -150,15 +150,15 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private async execCommand(cmd: string) {
         return new Promise((resolve, reject) => {
-            this.logger.log("Executing command", cmd);
+            this.logger.log("Command [start]", JSON.stringify(cmd));
 
             exec(cmd, (error) => {
                 if (error) {
                     this.logger.error(error);
                     reject(error);
                 }
-                
-                this.logger.log("Executed command", cmd, error);
+
+                this.logger.log("Command [ end ]", JSON.stringify(cmd), error);
                 resolve(0);
             });
         });
@@ -174,7 +174,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
         }
 
-        await this.execCommand(`echo -e "\\r\\n" > "${fifo}"`); // TODO: Shell escape
+        await this.execCommand(`echo "\n" > "${fifo}"`); // TODO: Shell escape
     }
 
     async hookupMonitorStream() {
@@ -213,7 +213,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async initializeLogger() {
         if (this.loggerStream) {
-            addLoggerOutput(this.loggerStream, this.loggerStream);
+            addLoggerOutput(this.loggerStream);
         } else {
             throw new RunnerError("UNINITIALIZED_STREAMS");
         }
@@ -386,9 +386,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.log(`Seqeunce loaded, functions count: ${sequence.length}.`);
         } catch (error) {
             if (error instanceof SyntaxError) {
-                this.logger.error("Sequence syntax error.", error.message);
+                this.logger.error("Sequence syntax error.", error.stack);
             } else {
-                this.logger.error("Sequence error:", error.message);
+                this.logger.error("Sequence error:", error.stack);
             }
 
             await this.cleanup();
@@ -446,7 +446,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             } else {
                 // TODO: what if this is not a DataStream, but BufferStream stream
                 stream = DataStream.from(out as Readable);
-                
+
             }
         }
 
@@ -461,7 +461,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          * unless there is NO LAST STREAM
          */
         this.logger.info("Piping seq out if exist.");
-        
+
         if (stream && this.outputStream) {
             this.logger.info("Piping seq!.");
             stream?.pipe(this.outputStream);

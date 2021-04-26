@@ -74,6 +74,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
         this.logger = getLogger(this);
         this.inputStream = new DelayedStream();
         this.outputStream = new DelayedStream();
+
+        this.logger = getLogger(this);
     }
 
     async init(): Promise<void> {
@@ -118,7 +120,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
             try {
                 createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
                 //TODO: TBD how to allow docker user "runner" to access this directory.
-                
+
                 console.log("Fifo dir: ", createdDir);
 
                 this.logger.log("Fifo dir: ", createdDir);
@@ -247,10 +249,10 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
             this.logger.debug("Container is running");
 
             try {
-                const containerExitResult = await this.dockerHelper.wait(containerId, { condition: "removed" });
+                const { statusCode } = await this.dockerHelper.wait(containerId);
 
                 this.logger.debug("Container exited");
-                resolve(containerExitResult.statusCode);
+                resolve(statusCode);
             } catch (error) {
                 this.logger.debug("Container errored", error);
                 reject(error);
@@ -261,7 +263,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     cleanup(): MaybePromise<void> {
         return new Promise(async (resolve) => {
             if (this.resources.volumeId) {
-                this.logger.log("Volume will be removed");
+                this.logger.log("Volume will be removed in 1 sec");
+                await new Promise(res => setTimeout(res, 1000));
                 await this.dockerHelper.removeVolume(this.resources.volumeId);
                 this.logger.log("Volume removed");
             }
