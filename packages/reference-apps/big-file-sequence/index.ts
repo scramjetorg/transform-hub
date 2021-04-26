@@ -1,6 +1,9 @@
 /* eslint-disable no-loop-func */
 
 import { ReadableApp, TransformApp, WritableApp } from "@scramjet/types";
+import { get } from "http";
+import { StringStream } from "scramjet";
+import { createGunzip } from "zlib";
 
 const exp: [
     ReadableApp<{a: number}, [], {x: number}>,
@@ -12,6 +15,19 @@ const exp: [
      * @returns data
      */
     function(_stream) {
+        //TODO pass as an argument
+        get("https://repo.int.scp.ovh/repository/scp-store/small-file.json.gz", response => {
+            const stream = response
+                .pipe(createGunzip())
+                .pipe(new StringStream("utf-8"))
+                .lines()
+                .do((data) => console.log("data: ", data));
+          
+            stream.on("finish", function() {
+              console.log("done");
+            });
+          });
+
         const data = this.initialState;
 
         let x = data?.x || 0;
