@@ -42,11 +42,11 @@ Feature: Sample e2e tests
 
     Scenario: Send test-event through API and get event emitted by sequence
         Given host one execute sequence in background "../packages/reference-apps/event-sequence.tar.gz"
-        And wait "300" ms
+        And wait "2000" ms
         And host one process is working
         When send event "test-event" to sequence with message "test message"
-        And wait "5000" ms
+        And wait "4000" ms
         Then get event from sequence
         And response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
-        And wait "5000" ms
+        And wait "3000" ms
         And host one process is stopped
