@@ -182,6 +182,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleKillRequest(): Promise<void> {
+        this.logger.log("Kill request handled.");
         this.context?.killHandler();
         //letting time for "on kill" actions
         //TODO cosult with Michał Cz.
@@ -248,6 +249,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.cleanupControlStream();
             process.exit(22);
         }
+
+        process.exit(0);
     }
 
 
