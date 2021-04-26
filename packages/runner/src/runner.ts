@@ -1,3 +1,4 @@
+/* eslint-disable no-extra-parens */
 import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerError, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
 import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Logger } from "@scramjet/types";
 
@@ -96,7 +97,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
     }
 
-    async cleanup() {
+    async cleanup(): Promise<void> {
         return new Promise(async (resolve) => {
 
 
@@ -126,9 +127,12 @@ export class Runner<X extends AppConfig> implements IComponent {
             //await this.cleanupStream(this.loggerStream, this.loggerFifoPath);
             //console.info("Logger stream cleaned up...");
             this.logger?.info("Clean up completed!");
-            process.exit(244);
-            resolve(1);
 
+            process.on("beforeExit", () => console.log("AAA! beforeExit"));
+            process.on("exit", () => console.log("AAA! exit"));
+
+            // process.exit(244);
+            resolve();
         });
     }
 
@@ -137,9 +141,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         //return Promise.resolve;
         return Promise.all([
             this.cleanupStream(this.controlStream, this.controlFifoPath),
-            //this.cleanupStream(this.monitorStream, this.monitorFifoPath),
+            this.cleanupStream(this.monitorStream, this.monitorFifoPath),
             this.cleanupStream(this.inputStream, this.inputFifoPath),
-            //this.cleanupStream(this.outputStream, this.outputFifoPath)
+            this.cleanupStream(this.outputStream, this.outputFifoPath)
         ]);
     }
 
@@ -164,10 +168,14 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private async cleanupStream(stream: ReadableStream<any> | WritableStream<any> | undefined, fifo: string) {
         if (stream) {
-            stream.destroy();
+            if ((stream as WritableStream<any>)?.writable) {
+                (stream as WritableStream<any>)?.end();
+            } else {
+                stream.destroy();
+            }
         }
 
-        await this.execCommand(`echo "\r\n" > "${fifo}"`); // TODO: Shell escape
+        await this.execCommand(`echo -e "\r\n" > "${fifo}"`); // TODO: Shell escape
     }
 
     async hookupMonitorStream() {

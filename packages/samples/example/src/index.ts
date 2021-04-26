@@ -16,26 +16,25 @@ const mod: InertApp = function(input, ffrom) {
 
     this.logger.info("Sequence started");
 
-    return new Promise((resolve) => {
-        fs.createReadStream(ffrom)
-            .pipe(JSONStream.parse("*"))
-            .pipe(new scramjet.DataStream())
-            .setOptions({ maxParallel: 1 })
-            //.do(() => new Promise(res => setTimeout(res, 1500)))
-            .do(
-                (names: Person) => {
-                    console.log(`Hello ${names.name}!`);
-                }
-            ).map(
-                (names: Person) => {
-                    return `Hello ${names.name}! \n`;
-                }
-            ).on("finish", () => {
-                this.logger.log("Sequence says: FINISH.");
-                resolve();
-            });
-    });
-
+    fs.createReadStream(ffrom)
+        .pipe(JSONStream.parse("*"))
+        .pipe(new scramjet.DataStream())
+        .setOptions({ maxParallel: 1 })
+        //.do(() => new Promise(res => setTimeout(res, 1500)))
+        .do(
+            (names: Person) => {
+                console.log(`Hello ${names.name}!`);
+            }
+        ).map(
+            (names: Person) => {
+                return `Hello ${names.name}! \n`;
+            }
+        )
+        .resume()
+        .on("finish", () => {
+            this.logger.log("Sequence says: FINISH.");
+        })
+    ;
 };
 
 export default mod;

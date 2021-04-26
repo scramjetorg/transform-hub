@@ -1,0 +1,63 @@
+FROM repo.int.scp.ovh/scramjet/nodejs:buster AS target
+
+ENV PACKAGE_DIR=/package \
+    PIPES_DIR=/pipes \
+    RUNNER_DIR=/app
+
+RUN    apt-get update \
+    && apt-get install --no-install-recommends -y gosu \
+    && apt-get clean \
+    && apt-get autoremove -y \
+    && rm -rf \
+         /var/lib/apt/* \
+         /usr/share/locale \
+         /usr/share/doc \
+    && groupadd -g 1200 runner \
+    && useradd -g 1200 -u 1200 -m -d ${RUNNER_DIR} -s /bin/bash runner \
+    && mkdir ${PACKAGE_DIR} ${PIPES_DIR} \
+    && chown runner:runner ${PACKAGE_DIR} ${PIPES_DIR} \
+    && echo OK
+
+FROM repo.int.scp.ovh/scramjet/nodejs:buster AS builder
+
+# COPY package.json yarn.lock lerna.json ./
+COPY . /app/
+WORKDIR /app/
+
+RUN ls -la
+
+WORKDIR /app/packages/symbols
+RUN    test -d ./dist \
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+
+WORKDIR /app/packages/model
+RUN    test -d ./dist \
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+
+WORKDIR /app/packages/logger
+RUN     test -d ./dist \
+    &&  NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+
+WORKDIR /app/packages/runner
+RUN    test -d ./dist \
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+
+FROM target
+
+ENV PACKAGE_DIR=/package \
+    PIPES_DIR=/pipes \
+    RUNNER_DIR=/app
+
+COPY --chown=runner:runner --from=builder /app/dist /${RUNNER_DIR}/
+
+WORKDIR /${RUNNER_DIR}/runner
+
+RUN    yarn install --frozen-lockfile --production \
+    && yarn cache clean \
+    && chmod +x ./bin/start-runner.js
+
+RUN chmod +x ./bin/start-runner.js
+
+COPY ./packages/runner/entrypoint.sh /
+ENTRYPOINT [ "/entrypoint.sh" ]
+CMD [ "start-runner" ]
