@@ -6,7 +6,7 @@ import { InertApp } from "@scramjet/types";
  *
  * @param _stream - dummy input stream
  */
-export = async function (_stream) {
+export = async function(_stream) {
     const data = this.initialState;
 
     let x = data?.x || 0;

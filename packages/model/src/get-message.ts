@@ -8,7 +8,9 @@ import {
     KillSequenceMessage,
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
-    StopSequenceMessage, StopSequenceMessageData, MessageDataType, MessageType, RunnerMessageCode, EventMessageData, EventMessage
+    StopSequenceMessage, StopSequenceMessageData,
+    MessageDataType, MessageType, RunnerMessageCode,
+    EventMessageData, EventMessage
 } from ".";
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {

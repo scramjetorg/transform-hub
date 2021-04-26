@@ -22,7 +22,8 @@ function executeSequenceSpawn(packagePath: string, ...args: any[]): void {
     command = command.concat(args);
     hostOne = spawn("/usr/bin/env", command);
     hostOneProcessStopped = false;
-    hostOne.on("exit", () => {
+    hostOne.on("exit", (code, signal) => {
+        console.log("sequence process exited with code: ", code, " and signal: ", signal);
         hostOneProcessStopped = true;
     });
 }
@@ -119,12 +120,13 @@ When("send event {string} to sequence with message {string}", async (eventName, 
     const resp = await sequenceApiClient.postEvent(eventName, eventMessage);
 
     assert.equal(resp.status, 202);
-    // curl --location --request POST 'http://localhost:8000/api/v1/sequence/_event' --header 'content-type: application/json' --data-raw '[4005,{"eventName": "test-event", "message":"event message"}]'
 });
 
-Then("get event {string} from sequence", async () => {
-    // curl --location --request GET 'http://localhost:8000/api/v1/sequence/get
-    return "pending";
+Then("get event from sequence", async () => {
+
+    actualResponse = await sequenceApiClient.getEvent();
+
+    assert.equal(actualResponse.status, 200);
 });
 
 Then("host one process is working", async () => {

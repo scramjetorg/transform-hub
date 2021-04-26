@@ -37,7 +37,7 @@ implements AppContext<AppConfigType, State> {
         this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]);
     }
 
-    private writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage){
+    private writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage) {
         MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
         // TODO: what if it fails?
     }
@@ -139,9 +139,9 @@ implements AppContext<AppConfigType, State> {
 
     emit(eventName: string, message: any) {
         console.log("event-sequence TODELETE");
-        console.log("eventName: ",eventName,"\nmessage: ", message);
+        console.log("eventName: ", eventName, "\nmessage: ", message);
         this.writeMonitoringMessage([RunnerMessageCode.EVENT, { eventName, message }]);
-      
+
         return this;
     }
 }
