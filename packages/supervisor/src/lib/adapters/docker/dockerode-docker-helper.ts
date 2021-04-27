@@ -12,7 +12,7 @@ import {
 type DockerodeVolumeMountConfig = {
     Target: string,
     Source: string,
-    Type: "volume",
+    Type: "volume" | "bind",
     ReadOnly: boolean
 }
 
@@ -25,6 +25,13 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     translateVolumesConfig(volumeConfigs: DockerAdapterVolumeConfig[]): DockerodeVolumeMountConfig[] {
         return volumeConfigs.map(cfg => {
+            if ("bind" in cfg)
+                return {
+                    Target: cfg.mountPoint,
+                    Source: cfg.bind,
+                    Type: "bind",
+                    ReadOnly: false
+                };
             return {
                 Target: cfg.mountPoint,
                 Source: cfg.volume,

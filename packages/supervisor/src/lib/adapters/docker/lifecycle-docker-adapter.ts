@@ -1,4 +1,4 @@
-import { imageConfig } from "@scramjet/csi-config";
+import { development, imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
 import { SupervisorError } from "@scramjet/model";
 import {
@@ -150,12 +150,23 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
     identify(stream: Readable): MaybePromise<RunnerConfig> {
         return new Promise(async (resolve) => {
-            this.resources.volumeId = await this.dockerHelper.createVolume();
+            const volumes = [];
 
+            if (development() && process.env.HOT_VOLUME) {
+                volumes.push(
+                    ...process.env.HOT_VOLUME
+                        .split(",")
+                        .map((volume) => volume.split(":"))
+                        .map(([mountPoint, bind]) => ({ mountPoint, bind }))
+                );
+            }
+
+            this.resources.volumeId = await this.dockerHelper.createVolume();
             const { streams, wait } = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
                 volumes: [
-                    { mountPoint: "/package", volume: this.resources.volumeId }
+                    { mountPoint: "/package", volume: this.resources.volumeId },
+                    ...volumes
                 ],
                 autoRemove: true
             });

@@ -29,16 +29,15 @@ export type DockerVolume = string;
  * @typedef {object} DockerAdapterVolumeConfig
  */
 export type DockerAdapterVolumeConfig = {
-    /**
-     * @property {string} mountPoint Mount point.
-     */
-    mountPoint: string,
-
-    /**
-     * @property {DockerVolume} volume Volume.
-     */
-    volume: DockerVolume
-};
+    /** @property {string} mountPoint Mount point. */ mountPoint: string
+} &
+(
+    {
+        /** @property {DockerVolume} volume Volume. */ volume: DockerVolume
+    } | {
+        /** @property {DockerVolume} volume Volume. */ bind: string
+    }
+);
 
 /**
  * Configuration used to run command in container.
