@@ -1,6 +1,9 @@
 set -e
 
 DOCKER=false
+TS=false
+INSTALL=false
+PREINSTALL=false
 
 for arg in "$@"
     do
@@ -10,11 +13,32 @@ for arg in "$@"
             shift
             ;;
         esac
+        case $arg in
+            -t|--typescript)
+            TS=true
+            shift
+            ;;
+        esac
+        case $arg in
+            -i|--install)
+            INSTALL=true
+            shift
+            ;;
+        esac
+        case $arg in
+            -pi|--pre-install)
+            PREINSTALL=true
+            shift
+            ;;
+        esac
     done
 
 # init project
 cd $(git rev-parse --show-toplevel)
-yarn install
+
+if [ "$PREINSTALL" = true ] ; then
+    yarn install
+fi
 
 # build example to dist
 yarn bic
@@ -23,14 +47,11 @@ if [ "$DOCKER" = true ] ; then
     lerna run build:docker
 fi
 
-# tar example
-cd $(git rev-parse --show-toplevel)
-cd packages/pre-runner
-
-yarn prepare-sample-tar
-
 # copy to dist
-if [ "$INSTALL" = true ] ; then
+if [ "$PREINSTALL" = true ] ; then
+# tar example
+    cd $(git rev-parse --show-toplevel)
+    cd packages/pre-runner
     lerna run prepack
     yarn prepare-sample-tar
 fi
