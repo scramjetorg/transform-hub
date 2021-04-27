@@ -48,7 +48,7 @@ case process.argv[3] === undefined:
     console.error(errors.missing + "config.");
     process.exit(1);
 default:
-    console.log("Checking data");
+    console.log("Checking data"); // TODO: what does this entry mean?
 }
 
 const packageStrem: any = checkIfPathExist(2, (arg: string) => fs.createReadStream(arg));

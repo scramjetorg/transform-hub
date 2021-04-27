@@ -1,19 +1,21 @@
-import { DownstreamStreamsConfig } from "@scramjet/types";
+import { DownstreamStreamsConfig, IComponent, Logger } from "@scramjet/types";
 import { CommunicationChannel, HostError } from "@scramjet/model";
 import { PathLike } from "fs";
 import * as net from "net";
 import { PassThrough, Writable } from "stream";
 import { Socket } from "net";
+import { getLogger } from "@scramjet/logger";
 
 const BPMux = require("bpmux").BPMux;
 
 type IdentifiedSocket = Socket & { _chan: string };
 
 // TODO probably to change to net server, to verify
-export class SocketServer {
+export class SocketServer implements IComponent {
     server?: net.Server;
     address: PathLike;
     streams?: DownstreamStreamsConfig;
+    logger: Logger;
 
     // eslint-disable-next-line complexity
     private handleStream(stream: IdentifiedSocket) {
@@ -88,12 +90,13 @@ export class SocketServer {
 
             })
             .listen(this.address, () => {
-                console.log("[HostOne][Server] Started at", this.server?.address());
+                this.logger.log("Server started at", this.server?.address());
             });
     }
 
     constructor(address: PathLike) {
         this.address = address;
+        this.logger = getLogger(this);
     }
 
     attachStreams(streams: DownstreamStreamsConfig | any) {
