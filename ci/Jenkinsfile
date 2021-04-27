@@ -62,7 +62,7 @@ pipeline {
           }
         }
       }
-    }    
+    }
     stage("Pack sequences") {
       steps {
         script {

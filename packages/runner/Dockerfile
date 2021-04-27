@@ -17,16 +17,15 @@ FROM repo.int.scp.ovh/scramjet/nodejs:buster AS builder
 
 WORKDIR /app/
 
-
-ADD packages/types ./packages/types
-ADD packages/symbols ./packages/symbols
-ADD packages/model ./packages/model
-ADD packages/logger ./packages/logger
-ADD packages/runner ./packages/runner
-ADD scripts ./scripts
-ADD bin ./bin
-ADD conf ./conf
-ADD LICENSE package.json yarn.lock lerna.json tsconfig.base.json ./
+COPY packages/types ./packages/types
+COPY packages/symbols ./packages/symbols
+COPY packages/model ./packages/model
+COPY packages/logger ./packages/logger
+COPY packages/runner ./packages/runner
+COPY scripts ./scripts
+COPY bin ./bin
+COPY conf ./conf
+COPY LICENSE package.json yarn.lock lerna.json tsconfig.base.json ./
 
 RUN yarn install --frozen-lockfile
 

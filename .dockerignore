@@ -1,5 +1,7 @@
-#-- **/node_modules/
-#-- **/dist/
+# The following lines are toggled at compilation time
+**/node_modules/
+**/.bic_cach
+**/dist/
 **/.git/
 **/.github/
 **/Dockerfile*
