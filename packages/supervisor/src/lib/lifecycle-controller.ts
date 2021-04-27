@@ -177,6 +177,7 @@ class LifeCycleController implements IComponent {
             });
 
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.SEQUENCE_STOPPED, async message => {
+                this.logger.warn("Sequence unresponsive, killing container...");
                 await this.lifecycleAdapter.kill();
 
                 return message;
