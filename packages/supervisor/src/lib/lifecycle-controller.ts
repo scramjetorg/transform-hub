@@ -134,8 +134,6 @@ class LifeCycleController implements IComponent {
                 this.client.hookCommunicationHandler(this.communicationHandler)
             ]);
 
-            this.logger.log("Streams hooked.");
-
             /**
              * Once the LifeCycle Adapter and the client hooked their streams
              * using the CommunicationHandler class the streams are ready to
@@ -215,6 +213,8 @@ class LifeCycleController implements IComponent {
             * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration
             */
             await endOfSequence;
+            this.logger.log("Sequence finished");
+
             this.logger.log("Sequence finished");
 
             await this.client.disconnect();

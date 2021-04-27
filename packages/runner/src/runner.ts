@@ -129,7 +129,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.info("Clean up completed!");
 
             process.on("beforeExit", () => console.log("AAA! beforeExit"));
-            process.on("exit", () => console.log("AAA! exit"));
+            process.on("exit", (arg) => console.log("AAA! exit", arg));
 
             // process.exit(244);
             resolve();
@@ -309,8 +309,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.cleanup();
             process.exit(22);
         }
-
-        process.exit(0);
     }
 
 
@@ -418,12 +416,6 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.info(`Processing function on index: ${sequence.length - itemsLeftInSequence - 1}`);
                 out = await func.call(
                     this.context,
-                    /**
-                     * @analyze-how-to-pass-in-out-streams
-                     * Input stream to the Sequence will be passed as an argument
-                     * instead of
-                     * new DataStream() as unknown as ReadableStream<never>
-                     */
                     stream as unknown as ReadableStream<any>,
                     ...args
                 );
@@ -444,9 +436,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             } else if (typeof out === "object" && out instanceof DataStream) {
                 stream = scramjetStreamFrom(out);
             } else {
-                // TODO: what if this is not a DataStream, but BufferStream stream
+                // TODO: what if this is not a DataStream, but BufferStream stream!!!
                 stream = DataStream.from(out as Readable);
-
             }
         }
 
@@ -464,15 +455,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (stream && this.outputStream) {
             this.logger.info("Piping seq!.");
-            stream?.pipe(this.outputStream);
+            stream.pipe(this.outputStream);
         }
-
-        this.logger.info("Ending...");
-        // TODO: await until it's done?
-        this.logger.info("Cleaning after sequence end.");
-
-        await this.cleanup();
-        this.logger.info("End.");
     }
 
     handleSequenceEvents() {

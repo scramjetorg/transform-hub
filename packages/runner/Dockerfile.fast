@@ -25,17 +25,17 @@ FROM repo.int.scp.ovh/scramjet/nodejs:buster AS builder
 
 ARG RUNNER_DIR
 
-COPY node_modules ${RUNNER_DIR}/node_modules
-COPY dist ${RUNNER_DIR}/dist
-COPY packages/types ${RUNNER_DIR}/packages/types
-COPY packages/symbols ${RUNNER_DIR}/packages/symbols
-COPY packages/model ${RUNNER_DIR}/packages/model
-COPY packages/logger ${RUNNER_DIR}/packages/logger
-COPY packages/runner ${RUNNER_DIR}/packages/runner
-COPY scripts ${RUNNER_DIR}/scripts
-COPY bin ${RUNNER_DIR}/bin
-COPY conf ${RUNNER_DIR}/conf
-COPY LICENSE package.json yarn.lock lerna.json tsconfig.base.json $RUNNER_DIR/
+ADD node_modules ${RUNNER_DIR}/node_modules
+ADD dist ${RUNNER_DIR}/dist
+ADD packages/types ${RUNNER_DIR}/packages/types
+ADD packages/symbols ${RUNNER_DIR}/packages/symbols
+ADD packages/model ${RUNNER_DIR}/packages/model
+ADD packages/logger ${RUNNER_DIR}/packages/logger
+ADD packages/runner ${RUNNER_DIR}/packages/runner
+ADD scripts ${RUNNER_DIR}/scripts
+ADD bin ${RUNNER_DIR}/bin
+ADD conf ${RUNNER_DIR}/conf
+ADD LICENSE package.json yarn.lock lerna.json tsconfig.base.json $RUNNER_DIR/
 
 WORKDIR $RUNNER_DIR/
 
@@ -46,13 +46,13 @@ WORKDIR $RUNNER_DIR/packages/symbols
 RUN    test -d ./dist \
     && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
-WORKDIR $RUNNER_DIR/packages/model
-RUN    test -d ./dist \
-    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
-
 WORKDIR $RUNNER_DIR/packages/logger
 RUN     test -d ./dist \
     &&  NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
+
+WORKDIR $RUNNER_DIR/packages/model
+RUN    test -d ./dist \
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
 WORKDIR $RUNNER_DIR/packages/runner
 RUN    test -d ./dist \
