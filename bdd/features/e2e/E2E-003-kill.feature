@@ -7,7 +7,7 @@ Feature: Kill e2e tests
         When send kill
         Then host one process is stopped
 
-    Scenario: E2E-003 TC-003 Kill sequence - kill handler should emit event when executed
+    Scenario: E2E-003 TC-002 Kill sequence - kill handler should emit event when executed
         Given host one execute sequence in background "../packages/reference-apps/sequence-20s-kill-handler.tar.gz"
         And host one process is working
         And wait "3000" ms
