@@ -2,7 +2,7 @@
 
 import { ReadableApp, WritableApp } from "@scramjet/types";
 
-const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, [], {x: number}>] = [
+const exp: [ReadableApp<{ a: number }, [], { x: number }>, WritableApp<{ a: number }, [], { x: number }>] = [
     /**
      * @param _stream - dummy input
      * @returns data
@@ -12,8 +12,8 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
 
         let x = data?.x || 0;
 
-        return async function*() {
-            while (++x < 5) {
+        return async function* () {
+            while (x++ < 20) {
                 yield { a: x };
                 await new Promise(res => setTimeout(res, 1000));
             }
@@ -26,9 +26,10 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
     async function(stream) {
         let x = 0;
 
-        this.addStopHandler(() => {
-            this.save({ x: x });
+        this.addKillHandler(() => {
+            this.emit("kill-handler-called", "");
         });
+
         for await (const { a } of stream) {
             x = a;
             console.log({ x });

@@ -25,7 +25,7 @@ const exp: [
     function(stream) {
         let x: number;
 
-        this.handleStop(() => {
+        this.addStopHandler(() => {
             this.save({ x: x });
         });
         return async function* () {

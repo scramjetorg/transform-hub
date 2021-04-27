@@ -15,7 +15,7 @@ export = async function(_stream) {
         return { healthy: false };
     });
 
-    this.handleStop(() => {
+    this.addStopHandler(() => {
         this.save({ x });
     });
 

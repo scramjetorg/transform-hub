@@ -48,7 +48,7 @@ implements AppContext<AppConfigType, State> {
         for (const handler of this._killHandlers) handler();
     }
 
-    handleKill(handler: KillHandler): this {
+    addKillHandler(handler: KillHandler): this {
         assertFunction(handler);
 
         // TODO: should this handler be executed more than once if passed more than once?
@@ -65,7 +65,7 @@ implements AppContext<AppConfigType, State> {
         }
     }
 
-    handleStop(handler: StopHandler): this {
+    addStopHandler(handler: StopHandler): this {
         assertFunction(handler);
 
         this._stopHandlers.push(handler);
@@ -139,7 +139,7 @@ implements AppContext<AppConfigType, State> {
 
     emit(eventName: string, message: any) {
         this.writeMonitoringMessage([RunnerMessageCode.EVENT, { eventName, message }]);
-
+    
         return this;
     }
 }

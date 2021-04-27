@@ -33,7 +33,7 @@ const exp: [
     function(stream) {
         let x: number;
 
-        this.handleStop(() => { this.save({ x }); });
+        this.addStopHandler(() => { this.save({ x }); });
         return async function* () {
             for await (const { b } of stream) {
                 x = b;

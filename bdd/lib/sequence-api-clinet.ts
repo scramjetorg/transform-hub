@@ -18,21 +18,21 @@ export class SequenceApiClient {
         return await this.get(getEventUrl);
     }
 
-    public async stop(timeoutInMs: number, canCallKeepalive: boolean): Promise<any> {
+    public async postStop(timeoutInMs: number, canCallKeepalive: boolean): Promise<any> {
         const stopMethodUrl = `${this.apiBase}/_stop`;
         const data = [4001, { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive }];
 
         return await this.post(stopMethodUrl, data);
     }
 
-    public async kill(): Promise<any> {
+    public async postKill(): Promise<any> {
         const killMethodUrl = `${this.apiBase}/_kill`;
-        const data = {};
+        const data = [4002, {}];
 
         return await this.post(killMethodUrl, data);
     }
 
-    public async monitoringRate(): Promise<any> {
+    public async postMonitoringRate(): Promise<any> {
         const monitoringMethodUrl = `${this.apiBase}/_monitoring_rate`;
         const data = [4003, { monitoringRate: 2 }];//TODO implement message
 
@@ -58,7 +58,7 @@ export class SequenceApiClient {
                 }
             });
         } catch (error) {
-            console.error("Error during sending request: ", error);
+            console.error("Error during sending request: ", error.message);
         }
 
         return resp;
@@ -73,7 +73,7 @@ export class SequenceApiClient {
                 url: url
             });
         } catch (error) {
-            console.error("Error during sending request: ", error);
+            console.error("Error during sending request: ", error.message);
         }
 
         return resp;

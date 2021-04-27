@@ -1,3 +1,4 @@
+/* eslint-disable no-loop-func */
 import { Given, When, Then } from "@cucumber/cucumber";
 import { promisify } from "util";
 import { strict as assert } from "assert";
@@ -11,15 +12,16 @@ const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
 const packageJson = "../package.json";
 const packageData = "/package/data.json";
 const sequenceApiClient = new SequenceApiClient();
+const timeoutShortMs = 100;
+const timeoutLongMs = 300;
 
 let hostOne;
 let hostOneProcessStopped;
 let actualResponse;
 
 function executeSequenceSpawn(packagePath: string, ...args: any[]): void {
-    let command: string[] = ["node", hostOneExecutableFilePath, packagePath];
+    const command: string[] = ["node", hostOneExecutableFilePath, packagePath, ...args];
 
-    command = command.concat(args);
     hostOne = spawn("/usr/bin/env", command);
     hostOneProcessStopped = false;
     hostOne.on("exit", (code, signal) => {
@@ -65,6 +67,12 @@ When("host one execute sequence {string} with arguments {string} and redirects o
     await executeSequence(packagePath, args, outputFile, 9000);
 });
 
+When("send kill", async () => {
+    const resp = await sequenceApiClient.postKill();
+
+    assert.equal(resp.status, 202);
+});
+
 When("host one execute sequence in background {string}", { timeout: 20000 }, async (packagePath) => {
     executeSequenceSpawn(packagePath, packageJson);
 });
@@ -106,12 +114,12 @@ Then("file {string} in each line contains {string} followed by name from file {s
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-When("wait {string} ms", async (timeoutMs) => {
+When("wait {string} ms", { timeout: 10000 }, async (timeoutMs) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
 When("send stop message with timeout {string} and canKeepAlive {string}", async (timeout, canKeepAlive) => {
-    const resp = await sequenceApiClient.stop(parseInt(timeout, 10), canKeepAlive === "true");
+    const resp = await sequenceApiClient.postStop(parseInt(timeout, 10), canKeepAlive === "true");
 
     assert.equal(resp.status, 202);
 });
@@ -122,17 +130,35 @@ When("send event {string} to sequence with message {string}", async (eventName, 
     assert.equal(resp.status, 202);
 });
 
-Then("get event from sequence", async () => {
+Then("get event from sequence", { timeout: 11000 }, async () => {
+    const expectedHttpCode = 200;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
 
-    actualResponse = await sequenceApiClient.getEvent();
+    do {
+        actualResponse = await sequenceApiClient.getEvent();
+        await new Promise(res => setTimeout(res, timeout));
+    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
 
-    assert.equal(actualResponse.status, 200);
+    assert.equal(actualResponse.status, expectedHttpCode);
 });
 
 Then("host one process is working", async () => {
+    const startTime: number = Date.now();
+
+    while (hostOneProcessStopped && Date.now() - startTime < 4000) {
+        await new Promise(res => setTimeout(res, timeoutShortMs));
+    }
+
     assert.equal(hostOneProcessStopped, false);
 });
 
-Then("host one process is stopped", async () => {
+Then("host one process is stopped", { timeout: 10000 }, async () => {
+    const startTime: number = Date.now();
+
+    while (!hostOneProcessStopped && Date.now() - startTime < 6000) {
+        await new Promise(res => setTimeout(res, timeoutShortMs));
+    }
+
     assert.equal(hostOneProcessStopped, true);
 });

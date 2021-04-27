@@ -69,7 +69,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             */
             break;
         case RunnerMessageCode.STOP:
-            await this.handleStopRequest(data as StopSequenceMessageData);
+            await this.addStopHandlerRequest(data as StopSequenceMessageData);
             /**
              * @analyze-how-to-pass-in-out-streams
              * We need to make sure we close
@@ -176,12 +176,16 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async handleKillRequest(): Promise<void> {
         this.context?.killHandler();
+        //letting time for "on kill" actions
+        //TODO cosult with Michał Cz.
+        await new Promise(res => setTimeout(res, 1000));
+        console.log("-----kill 2000 ms after");
         await this.cleanupControlStream();
 
         process.exit(137);
     }
 
-    async handleStopRequest(data: StopSequenceMessageData): Promise<void> {
+    async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
         if (!this.context) {
             this.logger?.error("Uninitialized context.");
             throw new RunnerError("UNINITIALIZED_CONTEXT");
@@ -229,6 +233,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             await this.runSequence(data.arguments);
         } catch (error) {
+            console.error("Error occured during sequence execution: ", error);
             await this.cleanupControlStream();
             process.exit(22);
         }

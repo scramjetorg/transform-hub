@@ -11,7 +11,7 @@ export = async function(_stream) {
 
     let x = data?.x || 0;
 
-    this.handleStop(() => {
+    this.addStopHandler(() => {
         this.save({ x });
     });
 

@@ -14,7 +14,7 @@ const exp: [
 
         let x = data?.x || 0;
 
-        this.handleStop(() => {
+        this.addStopHandler(() => {
             this.save({ x: x });
         });
 

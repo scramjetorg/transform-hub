@@ -15,7 +15,7 @@ module.exports = async function(_stream) {
 
     let x = data && data.x || 0;
 
-    this.handleStop(() => this.save({ x }));
+    this.addStopHandler(() => this.save({ x }));
 
     while (++x < 5) {
         console.log({ x: x });

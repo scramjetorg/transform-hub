@@ -1,32 +1,21 @@
 /* eslint-disable no-loop-func */
 
-import { ReadableApp, TransformApp, WritableApp } from "@scramjet/types";
+import { ReadableApp, WritableApp } from "@scramjet/types";
 
-const exp: [
-    ReadableApp<{a: number}, [], {x: number}>,
-    TransformApp<{a: number}, {b: number}, [], {x: number}>,
-    WritableApp<{b: number}, [], {x: number}>
-] = [
+const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, [], {x: number}>] = [
     /**
      * @param _stream - dummy input
      * @returns data
      */
-    function(_stream) {
+    async function(_stream) {
         const data = this.initialState;
 
         let x = data?.x || 0;
 
         return async function*() {
-            while (++x < 5) {
+            while (x++ < 20) {
                 yield { a: x };
                 await new Promise(res => setTimeout(res, 1000));
-            }
-        };
-    },
-    (stream) => {
-        return async function* () {
-            for await (const { a } of stream) {
-                yield { b: a };
             }
         };
     },
@@ -40,11 +29,11 @@ const exp: [
         this.addStopHandler(() => {
             this.save({ x: x });
         });
-        for await (const { b } of stream) {
-            x = b;
+        for await (const { a } of stream) {
+            x = a;
             console.log({ x });
         }
     }
 ];
 
-export = exp;
+export default exp;

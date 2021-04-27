@@ -20,7 +20,7 @@ const exp: [
     async function(stream) {
         let x = 0;
 
-        this.handleStop(() => {
+        this.addStopHandler(() => {
             this.save({ x: x });
         });
         for await (const { c } of stream) {

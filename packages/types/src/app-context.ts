@@ -58,7 +58,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
      *
      * @param item - the handler callback
      */
-    handleStop(item: StopHandler): this;
+    addStopHandler(item: StopHandler): this;
 
     /**
      * This method can be overridden to handle the kill signal from the Runner and perform
@@ -73,7 +73,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
      *
      * @param handler - the handler callback
      */
-    handleKill(handler: KillHandler): this;
+    addKillHandler(handler: KillHandler): this;
 
     /**
      * The Sequence may call this process in order to confirm continued operation and provide
@@ -88,7 +88,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
      * @param milliseconds provides information on how long the process should wait before
      * assuming that the sequence is stale and attempt to kill it.
      *
-     * If the method is called after {@link AutoAppContext.handleStop | stop has been issued} this
+     * If the method is called after {@link AutoAppContext.addStopHandler | stop has been issued} this
      * parameter value should not exceed the given timeout and another stop command will be called
      * again when the lower
      */
