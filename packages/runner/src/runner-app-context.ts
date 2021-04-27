@@ -139,7 +139,7 @@ implements AppContext<AppConfigType, State> {
 
     emit(eventName: string, message: any) {
         this.writeMonitoringMessage([RunnerMessageCode.EVENT, { eventName, message }]);
-    
+
         return this;
     }
 }
