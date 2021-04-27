@@ -1,0 +1,6 @@
+**/.git/
+**/.github/
+**/Dockerfile*
+**/Jenkinsfile*
+**/docs/
+**/sonar-project.properties*

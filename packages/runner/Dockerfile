@@ -4,14 +4,10 @@ ENV PACKAGE_DIR=/package \
     PIPES_DIR=/pipes \
     RUNNER_DIR=/app
 
-RUN    apt-get update \
-    && apt-get install --no-install-recommends -y gosu \
-    && apt-get clean \
-    && apt-get autoremove -y \
-    && rm -rf \
-         /var/lib/apt/* \
-         /usr/share/locale \
-         /usr/share/doc \
+ADD https://repo.int.scp.ovh/repository/storage/bin/gosu/1.12/gosu-amd64 /usr/local/bin/gosu
+
+RUN    set -x \
+    && chmod +x /usr/local/bin/gosu \
     && groupadd -g 1200 runner \
     && useradd -g 1200 -u 1200 -m -d ${RUNNER_DIR} -s /bin/bash runner \
     && mkdir ${PACKAGE_DIR} ${PIPES_DIR} \
@@ -21,7 +17,17 @@ FROM repo.int.scp.ovh/scramjet/nodejs:buster AS builder
 
 WORKDIR /app/
 
-COPY . ./
+
+ADD packages/types ./packages/types
+ADD packages/symbols ./packages/symbols
+ADD packages/model ./packages/model
+ADD packages/logger ./packages/logger
+ADD packages/runner ./packages/runner
+ADD scripts ./scripts
+ADD bin ./bin
+ADD conf ./conf
+ADD LICENSE package.json yarn.lock lerna.json tsconfig.base.json ./
+
 RUN yarn install --frozen-lockfile
 
 WORKDIR /app/packages/symbols
