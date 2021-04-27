@@ -134,8 +134,6 @@ class LifeCycleController implements IComponent {
                 this.client.hookCommunicationHandler(this.communicationHandler)
             ]);
 
-            this.logger.log("Streams hooked.");
-
             /**
              * Once the LifeCycle Adapter and the client hooked their streams
              * using the CommunicationHandler class the streams are ready to
@@ -143,6 +141,8 @@ class LifeCycleController implements IComponent {
             */
             this.communicationHandler.pipeMessageStreams();
             this.communicationHandler.pipeStdio();
+
+            this.logger.log("Streams hooked and routed");
 
             /**
              * When the client and LifeCycle Adapter streams are piped
@@ -206,13 +206,20 @@ class LifeCycleController implements IComponent {
                 return message;
             });
 
+            this.logger.log("Sequence initialized");
+
             /**
             * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration
             */
             await endOfSequence;
+            this.logger.log("Sequence finished");
 
             this.client.disconnect();
+            this.logger.log("Client disconnected");
+
         } catch (error) {
+            this.logger.error("Error caughts", error.stack);
+
             /**
             * Container snapshot is made if it was requested in LifeCycleConfig
             */
@@ -231,7 +238,10 @@ class LifeCycleController implements IComponent {
             }
 
             await this.lifecycleAdapter.cleanup();
-            return Promise.reject(error);
+
+            this.logger.error("Cleanup done (post error)");
+
+            throw error;
         }
 
         /**
@@ -239,7 +249,9 @@ class LifeCycleController implements IComponent {
         * The cleanup operations depend on the LifeCycle interface implementation.
         * They can include, for example, the removal of the created volume, directory, and container.
         */
-        return this.lifecycleAdapter.cleanup();
+        await this.lifecycleAdapter.cleanup();
+
+        this.logger.error("Cleanup done (normal execution)");
     }
 
     private async kill() {

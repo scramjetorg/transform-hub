@@ -1,7 +1,7 @@
 import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerError, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
 import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Logger } from "@scramjet/types";
 
-import { from as scramjetStreamFrom, DataStream, PromiseTransform, StringStream } from "scramjet";
+import { from as scramjetStreamFrom, DataStream, StringStream } from "scramjet";
 
 //import { exec } from "child_process";
 import { EventEmitter } from "events";
@@ -244,12 +244,10 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.runSequence(data.arguments);
             this.logger.log("Sequence completed.");
         } catch (error) {
-            this.logger.error("Error occured during sequence execution: ", error);
+            this.logger.error("Error occured during sequence execution: ", error.stack);
             await this.cleanupControlStream();
             process.exit(22);
         }
-
-        process.exit(0);
     }
 
 
@@ -263,6 +261,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         await this.hookupFifoStreams();
         await this.initializeLogger();
         this.sendHandshakeMessage();
+        // await this.handshakeReceived();
+        // await runSequence();
     }
 
     /**
@@ -374,7 +374,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.logger.error("Sequence ended premature");
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
                 }
-            } else if (typeof out === "object" && out instanceof PromiseTransform) {
+            } else if (typeof out === "object" && out instanceof DataStream) {
                 stream = scramjetStreamFrom(out) as unknown as ReadableStream<any>;
             } else {
                 // TODO: what if this is not a DataStream, but BufferStream stream

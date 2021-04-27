@@ -1,5 +1,6 @@
+import { getLogger } from "@scramjet/logger";
 import { MonitoringMessageFromRunnerData, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition, KillHandler, StopHandler, MonitoringHandler } from "@scramjet/types";
+import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, Logger } from "@scramjet/types";
 import { EventEmitter } from "events";
 import { MessageUtils } from "./message-utils";
 
@@ -18,6 +19,8 @@ implements AppContext<AppConfigType, State> {
     monitorStream: WritableStream<any>;;
     emitter: EventEmitter;
     private runner;
+    logger: Logger;
+    initialState?: State | undefined;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
         emitter: EventEmitter, runner: { keepAliveIssued(): void; }) {
@@ -26,6 +29,7 @@ implements AppContext<AppConfigType, State> {
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
+        this.logger = getLogger("Sequence");
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -3,6 +3,7 @@ import { AppError, AppErrorConstructor } from "./error-codes/app-error";
 import { AppConfig } from "./application";
 import { FunctionDefinition } from "./runner";
 import { MonitoringMessageFromRunnerData } from "@scramjet/model";
+import { Logger } from "./logger";
 
 /**
  * A callback that will be called when the sequence is being stopped gracefully.
@@ -32,6 +33,8 @@ export type MonitoringHandler =
  * interruption.
  */
 export interface AppContext<AppConfigType extends AppConfig, State extends any> {
+
+    logger: Logger;
     /**
      * This method should be overridden by the Sequence if auto detection of the Sequence
      * state is not precise enough.

@@ -14,6 +14,8 @@ interface Person {
 const mod: InertApp = function(input, ffrom) {
     this.on("test", () => console.error("Got test event"));
 
+    this.logger.info("Sequence started");
+
     return new Promise((resolve) => {
         fs.createReadStream(ffrom)
             .pipe(JSONStream.parse("*"))
@@ -29,7 +31,7 @@ const mod: InertApp = function(input, ffrom) {
                     return `Hello ${names.name}! \n`;
                 }
             ).on("finish", () => {
-                console.log("Sequence says: FINISH.");
+                this.logger.log("Sequence says: FINISH.");
                 resolve();
             });
     });
