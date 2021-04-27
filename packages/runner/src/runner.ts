@@ -249,8 +249,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.cleanupControlStream();
             process.exit(22);
         }
-
-        process.exit(0);
     }
 
 
