@@ -242,6 +242,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                 maxMem: 256 * 1024 * 1024 // TODO: config
             });
 
+            this.resources.containerId = containerId;
             this.runnerStdin.pipe(streams.stdin);
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
@@ -308,7 +309,12 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    kill(): MaybePromise<void> {
+    async kill() {
+        if (this.resources.containerId) {
+            this.logger.info("Forcefully stopping containter", this.resources.containerId);
+            await this.dockerHelper.stopContainer(this.resources.containerId);
+            this.logger.info("Container removed");
+        }
         /*
         * @feature/analysis-stop-kill-invocation
         * This method is called by the LifeCycle Controller instance when it receives the kill message.

@@ -110,6 +110,7 @@ export type ExitData = {
 }
 
 export type DockerAdapterResources = {
+    containerId?: DockerContainer;
     volumeId?: DockerVolume,
     fifosDir?: PathLike
 }

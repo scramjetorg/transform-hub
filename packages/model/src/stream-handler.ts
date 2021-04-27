@@ -125,7 +125,6 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         const monitoringOutput = StringStream.from(this.downstreams[CC.MONITORING] as Readable)
             .JSONParse()
-            .pipe(this.monitoringPassThrough)
             .map(async (message: EncodedMonitoringMessage) => {
                 // TODO: WARN if (!this.monitoringHandlerHash[message[0]])
                 if (this.monitoringHandlerHash[message[0]].length) {
@@ -139,13 +138,13 @@ export class CommunicationHandler implements ICommunicationHandler {
 
                 return message;
             })
+            .pipe(this.monitoringPassThrough)
             .JSONStringify();
 
         monitoringOutput.pipe(this.upstreams[CC.MONITORING]);
 
         StringStream.from(this.upstreams[CC.CONTROL] as Readable)
             .JSONParse()
-            .pipe(this.controlPassThrough)
             .map(async (message: EncodedControlMessage) => {
                 // TODO: WARN if (!this.controlHandlerHash[message[0]])
                 if (this.controlHandlerHash[message[0]].length) {
@@ -159,6 +158,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
                 return message;
             })
+            .pipe(this.controlPassThrough)
             .JSONStringify()
             .pipe(this.downstreams[CC.CONTROL]);
 
