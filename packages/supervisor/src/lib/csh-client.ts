@@ -69,10 +69,6 @@ class CSHClient implements ICSHClient {
                 channel.on("error", (e) => this.logger.warn(e.stack));
             });
 
-            this.connection.on("error", (e) => {
-                this.logger.error("Connection error: ", e.stack);
-            });
-
             /**
              * @analyze-how-to-pass-in-out-streams
              * In UpstreamStreamsConfig streams:

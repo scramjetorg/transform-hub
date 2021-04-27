@@ -50,6 +50,7 @@ const streamHandlerInstance: ICommunicationHandler = {
     addMonitoringHandler: sinon.stub(),
     addControlHandler: sinon.stub(),
     pipeDataStreams: sinon.stub(),
+    getMonitorStream: sinon.stub(),
     monitoringOutput: new PassThrough,
     controlOutput: new PassThrough,
     sendMonitoringMessage: sinon.stub(),
