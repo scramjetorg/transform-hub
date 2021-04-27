@@ -85,7 +85,7 @@ runner.hookupOutputStream = async () => {
 };
 
 runner.cleanupStreams = async () => {
-    console.log("cleanup");
+    runner.logger.log("cleanup");
 };
 
 (async () => {

@@ -40,6 +40,5 @@ lcc.main()
         process.exitCode = exitCode;
     })
     .finally(() => {
-        console.log("DISCONNECT!");
         return cshc.disconnect();
     });

@@ -133,3 +133,4 @@ packages/samples/*.tar.gz
 packages/reference-apps/*.tar.gz
 
 .bic_cache
+.dockerignores

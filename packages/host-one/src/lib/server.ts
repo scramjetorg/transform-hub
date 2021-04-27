@@ -1,11 +1,11 @@
-import { DownstreamStreamsConfig, IComponent, Logger, UpstreamStreamsConfig, PassThroughStreamsConfig } from "@scramjet/types";
+import { UpstreamStreamsConfig, PassThroughStreamsConfig, IComponent, Logger } from "@scramjet/types";
 import { CommunicationChannel, HostError } from "@scramjet/model";
 import { PathLike } from "fs";
 import * as net from "net";
 import { Socket } from "net";
-import { getLogger } from "@scramjet/logger";
 import EventEmitter = require("events");
 import { PassThrough } from "stream";
+import { getLogger } from "@scramjet/logger";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -15,7 +15,6 @@ type IdentifiedSocket = Socket & { _chan: string };
 export class SocketServer extends EventEmitter implements IComponent {
     server?: net.Server;
     address: PathLike;
-    streams?: DownstreamStreamsConfig;
     logger: Logger;
 
     constructor(address: PathLike) {
@@ -107,7 +106,7 @@ export class SocketServer extends EventEmitter implements IComponent {
         return new Promise((res, rej) => {
             this.server
                 ?.listen(this.address, () => {
-                    console.log("[SocketServer] Started at", this.server?.address());
+                    this.logger.log("[SocketServer] Started at", this.server?.address());
                     res();
                 })
                 .on("error", rej);

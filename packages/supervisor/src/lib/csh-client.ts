@@ -77,15 +77,16 @@ class CSHClient implements ICSHClient {
         //this.connection?.end();
 
         // eslint-disable-next-line no-extra-parens
-        await Promise.all([1, 2, 4, 6, 7]
-            // eslint-disable-next-line no-extra-parens
-            .map(i => (this.streams as Writable[])[i] as unknown as Writable).map((s: Writable) => {
-                return new Promise((res, reject) => {
-                    s.end(res);
-                    s.on("error", reject);
-                });
-            })
-        );
+        if (this.streams) {
+            const streams = this.streams;
+
+            await Promise.all(
+                // eslint-disable-next-line no-extra-parens
+                [1, 2, 4, 6, 7]
+                    .map(i => streams[i] as unknown as Writable)
+                    .map((s: Writable) => new Promise((res, rej) => s.on("error", rej).end(res)))
+            );
+        }
     }
 
     getPackage() {
