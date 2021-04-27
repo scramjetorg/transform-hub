@@ -13,3 +13,5 @@ Feature: Verify delay
         When file "delay.test.result.txt" is generated
         And calculate average delay time from "delay.test.result.txt" of first "10000" function calls starting "2000"
         Then calculated avereage delay time is lower than "100000" ns
+
+    
