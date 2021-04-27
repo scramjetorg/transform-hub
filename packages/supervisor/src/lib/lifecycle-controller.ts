@@ -1,10 +1,19 @@
 import { getLogger } from "@scramjet/logger";
-import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
-import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent, Logger } from "@scramjet/types";
+import { CommunicationHandler, RunnerMessageCode, SupervisorError } from "@scramjet/model";
+import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent, Logger, EncodedMessage } from "@scramjet/types";
 import { Readable } from "stream";
 
-const didTimeout = Symbol("did-timeout");
+const didTimeout = Symbol.for("supervisor:did-timeout");
 const stopTimeout = 2000; // where to config this?
+const noop = () => undefined;
+const defer = (timeout: number): Promise<typeof didTimeout> =>
+    new Promise(res => setTimeout(() => res(didTimeout), timeout));
+const promiseTimeout = (endOfSequence: Promise<any>, timeout: number): Promise<any> => Promise.race([
+    endOfSequence
+        .then(noop, noop), // TODO: potentially awful thing
+    defer(timeout)
+        .then(() => Promise.reject(didTimeout))
+]);
 
 /**
  * LifeCycleController is a main component of Supervisor.
@@ -56,6 +65,16 @@ class LifeCycleController implements IComponent {
     private lifecycleConfig: LifeCycleConfig;
 
     logger: Logger;
+    _endOfSequence?: Promise<number>;
+
+    get endOfSequence(): Promise<number> {
+        if (!this._endOfSequence) throw new SupervisorError("RUNNER_NOT_STARTED");
+        return this._endOfSequence;
+    }
+
+    set endOfSequence(prm: Promise<number>) {
+        this._endOfSequence = prm;
+    }
 
     /**
      * @param {ILifeCycleAdapter} lifecycleAdapter an implementation of LifeCycle interface
@@ -144,14 +163,16 @@ class LifeCycleController implements IComponent {
             */
             this.communicationHandler.pipeMessageStreams();
             this.communicationHandler.pipeStdio();
+            this.communicationHandler.pipeDataStreams();
 
             this.logger.log("Streams hooked and routed");
 
+            // const acceptableExitCodes = [0];
             /**
              * When the client and LifeCycle Adapter streams are piped
              * the Sequence deployment and execution is started.
             */
-            const endOfSequence = this.lifecycleAdapter.run(config);
+            this.endOfSequence = this.lifecycleAdapter.run(config);
 
             /**
              * When the kill message comes from the CSH via the control stream
@@ -159,56 +180,20 @@ class LifeCycleController implements IComponent {
              * requests LifeCycle Adapter to kill the Sequence by executing kill
              * method on its interface.
              */
-            this.communicationHandler.addControlHandler(RunnerMessageCode.KILL, async message => {
+            this.communicationHandler.addControlHandler(
+                RunnerMessageCode.KILL,
+                (message) => this.handleKillCommand(message)
+            );
 
-                // wait for this before cleanups
-                // handle errors there
-                await Promise.race([
-                    endOfSequence,
-                    new Promise(res => setTimeout(() => res(didTimeout), stopTimeout))
-                ])
-                    .then(val => val === didTimeout ? this.lifecycleAdapter.kill() : null);
+            this.communicationHandler.addMonitoringHandler(
+                RunnerMessageCode.ALIVE,
+                (message) => this.handleKeepAliveCommand(message)
+            );
 
-                return message;
-            });
-
-            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.ALIVE, async message => {
-                this.logger.log("Got keep-alive message from sequence");
-                this.keepAliveRequested = true;
-
-                return message;
-            });
-
-            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.SEQUENCE_STOPPED, async message => {
-                this.logger.log("Got sequence end message, sending kill");
-
-                const first = await Promise.race([
-                    endOfSequence,
-                    new Promise(res => setTimeout(() => res(didTimeout), stopTimeout))
-                ]);
-
-                if (first !== didTimeout) {
-                    this.logger.log("Sequence terminated itself");
-                    return message;
-                }
-
-                this.logger.log("Sequence failed to terminate within timeout, sending kill...");
-                await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
-
-                const second = await Promise.race([
-                    endOfSequence,
-                    new Promise(res => setTimeout(() => res(didTimeout), stopTimeout))
-                ]);
-
-                if (second !== didTimeout) {
-                    this.logger.log("Terminated with kill.");
-                    return message;
-                }
-
-                this.logger.warn("Sequence unresponsive, killing container...");
-                await this.lifecycleAdapter.kill();
-                return message;
-            });
+            this.communicationHandler.addMonitoringHandler(
+                RunnerMessageCode.SEQUENCE_STOPPED,
+                message => this.handleSequenceStopped(message)
+            );
 
             /*
             * When the stop message comes from the CSH via the control stream
@@ -219,29 +204,20 @@ class LifeCycleController implements IComponent {
             * General question: do we perform snapshot() only on error?
             */
 
-            this.communicationHandler.addControlHandler(RunnerMessageCode.STOP, async message => {
-                const timeout = message[1].timeout;
-                const canCallKeepalive = message[1].canCallKeepalive;
-
-                await this.handleStop(timeout, canCallKeepalive);
-                await Promise.race([
-                    endOfSequence,
-                    new Promise(res => setTimeout(() => res(didTimeout), stopTimeout))
-                ])
-                    .then(val => val === didTimeout ? this.lifecycleAdapter.stop(timeout, canCallKeepalive) : null);
-
-                return message;
-            });
+            this.communicationHandler.addControlHandler(
+                RunnerMessageCode.STOP,
+                async message => this.handleStop(message)
+            );
 
             this.logger.log("Sequence initialized");
 
             /**
             * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration
             */
-            await endOfSequence;
-            this.logger.log("Sequence finished");
+            const exitcode = await this.endOfSequence;
 
-            this.logger.log("Sequence finished");
+            // TODO: if we have a non-zero exit code is this expected?
+            this.logger.log(`Sequence finished with ${exitcode} status`);
 
             await this.client.disconnect();
             this.logger.log("Client disconnected");
@@ -282,24 +258,65 @@ class LifeCycleController implements IComponent {
         this.logger.info("Cleanup done (normal execution)");
     }
 
+    async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {
+        this.logger.log("Got sequence end message, sending kill");
+
+        try {
+            await promiseTimeout(this.endOfSequence, stopTimeout);
+            this.logger.log("Sequence terminated itself.");
+        } catch {
+            this.logger.warn("Sequence failed to terminate within timeout, sending kill...");
+            await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+            try {
+                await promiseTimeout(this.endOfSequence, stopTimeout);
+                this.logger.log("Terminated with kill.");
+            } catch {
+                this.logger.error("Sequence unresponsive, killing container...");
+                await this.lifecycleAdapter.remove();
+            }
+        }
+
+        return message;
+    }
+
+    handleKeepAliveCommand(message: EncodedMessage<RunnerMessageCode.ALIVE>) {
+        this.logger.log("Got keep-alive message from sequence");
+        this.keepAliveRequested = true;
+
+        return message;
+    }
+
     private async kill() {
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
     }
 
-    private async handleStop(timeout: number, canCallKeepalive: boolean) {
-        await new Promise(async (resolve) => {
-            setTimeout(async () => {
+    private async handleKillCommand(message: EncodedMessage<RunnerMessageCode.KILL>) {
+        // wait for this before cleanups
+        // handle errors there
+        await promiseTimeout(this.endOfSequence, stopTimeout)
+            .catch(() => this.lifecycleAdapter.remove());
 
-                if (this.keepAliveRequested) {
-                    await this.handleStop(timeout, canCallKeepalive);
-                } else {
+        return message;
+    }
+
+    // TODO: if we can keep alive we should not hold this promise unresolved
+    private async handleStop(message: EncodedMessage<RunnerMessageCode.STOP>):
+        Promise<EncodedMessage<RunnerMessageCode.STOP>> {
+        const [, { timeout }] = message;
+
+        return new Promise(async (resolve) => {
+            this.keepAliveRequested = false;
+            setTimeout(async () => {
+                if (!this.keepAliveRequested) {
                     await this.kill();
                 }
 
-                resolve(0);
+                resolve(message);
             }, timeout);
         });
     }
 }
 
 export { LifeCycleController };
+
+

@@ -44,7 +44,7 @@ const runner: Runner<AppConfig> = new Runner(sequencePath, "fakeFifosPath");
 
 runner.hookupControlStream = async () => {
     runner["controlStream"] = new PassThrough();
-    await runner.defineControlStream();
+    runner.defineControlStream();
 };
 
 runner.hookupMonitorStream = async () => {

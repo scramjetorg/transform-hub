@@ -36,12 +36,7 @@ export interface ILifeCycleAdapter {
 
     monitorRate(rps: number): this;
 
-    /**
-     * @param timeout number
-     * @param canCallKeepalive boolean
-     */
-    stop(timeout: number, canCallKeepalive: boolean): MaybePromise<void>;
-    kill(): MaybePromise<void>;
+    remove(): MaybePromise<void>;
 }
 
 export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});

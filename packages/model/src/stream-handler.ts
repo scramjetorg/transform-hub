@@ -22,26 +22,34 @@ export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
 export type ControlMessageHandler<T extends ControlMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
+export type ConfiguredMessageHandler<T extends RunnerMessageCode> = {
+    handler: MonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
+    blocking: boolean
+} | {
+    handler: ControlMessageHandler<T extends ControlMessageCode ? T : never>
+    blocking: boolean
+};
 
 type MonitoringMessageHandlerList = {
-    [RunnerMessageCode.ACKNOWLEDGE]: MonitoringMessageHandler<RunnerMessageCode.ACKNOWLEDGE>[];
-    [RunnerMessageCode.DESCRIBE_SEQUENCE]: MonitoringMessageHandler<RunnerMessageCode.DESCRIBE_SEQUENCE>[];
-    [RunnerMessageCode.STATUS]: MonitoringMessageHandler<RunnerMessageCode.STATUS>[];
-    [RunnerMessageCode.ALIVE]: MonitoringMessageHandler<RunnerMessageCode.ALIVE>[];
-    [RunnerMessageCode.ERROR]: MonitoringMessageHandler<RunnerMessageCode.ERROR>[];
-    [RunnerMessageCode.MONITORING]: MonitoringMessageHandler<RunnerMessageCode.MONITORING>[];
-    [RunnerMessageCode.EVENT]: MonitoringMessageHandler<RunnerMessageCode.EVENT>[];
-    [RunnerMessageCode.PING]: MonitoringMessageHandler<RunnerMessageCode.PING>[];
-    [RunnerMessageCode.SNAPSHOT_RESPONSE]: MonitoringMessageHandler<RunnerMessageCode.SNAPSHOT_RESPONSE>[];
-    [RunnerMessageCode.SEQUENCE_STOPPED]: MonitoringMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
+    [RunnerMessageCode.ACKNOWLEDGE]: ConfiguredMessageHandler<RunnerMessageCode.ACKNOWLEDGE>[];
+    [RunnerMessageCode.DESCRIBE_SEQUENCE]: ConfiguredMessageHandler<RunnerMessageCode.DESCRIBE_SEQUENCE>[];
+    [RunnerMessageCode.STATUS]: ConfiguredMessageHandler<RunnerMessageCode.STATUS>[];
+    [RunnerMessageCode.ALIVE]: ConfiguredMessageHandler<RunnerMessageCode.ALIVE>[];
+    [RunnerMessageCode.ERROR]: ConfiguredMessageHandler<RunnerMessageCode.ERROR>[];
+    [RunnerMessageCode.MONITORING]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING>[];
+    [RunnerMessageCode.PING]: ConfiguredMessageHandler<RunnerMessageCode.PING>[];
+    [RunnerMessageCode.SNAPSHOT_RESPONSE]: ConfiguredMessageHandler<RunnerMessageCode.SNAPSHOT_RESPONSE>[];
+    [RunnerMessageCode.SEQUENCE_STOPPED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
+    [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
 };
+
 type ControlMessageHandlerList = {
-    [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: ControlMessageHandler<RunnerMessageCode.FORCE_CONFIRM_ALIVE>[];
-    [RunnerMessageCode.KILL]: ControlMessageHandler<RunnerMessageCode.KILL>[];
-    [RunnerMessageCode.MONITORING_RATE]: ControlMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
-    [RunnerMessageCode.STOP]: ControlMessageHandler<RunnerMessageCode.STOP>[];
-    [RunnerMessageCode.EVENT]: ControlMessageHandler<RunnerMessageCode.EVENT>[];
-    [RunnerMessageCode.PONG]: ControlMessageHandler<RunnerMessageCode.PONG>[];
+    [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: ConfiguredMessageHandler<RunnerMessageCode.FORCE_CONFIRM_ALIVE>[];
+    [RunnerMessageCode.KILL]: ConfiguredMessageHandler<RunnerMessageCode.KILL>[];
+    [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
+    [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
+    [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
+    [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -84,6 +92,12 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.SNAPSHOT_RESPONSE]: [],
             [RunnerMessageCode.SEQUENCE_STOPPED]: []
         };
+    }
+
+    safeHandle(promisePotentiallyRejects: MaybePromise<any>): void {
+        Promise.resolve(promisePotentiallyRejects).catch(
+            (e: any) => console.error(e?.stack || e) // TODO: push this to log file
+        );
     }
 
     getMonitorStream(): DataStream {
@@ -130,8 +144,12 @@ export class CommunicationHandler implements ICommunicationHandler {
                 if (this.monitoringHandlerHash[message[0]].length) {
                     let currentMessage = message as any;
 
-                    for (const handler of this.monitoringHandlerHash[message[0]]) {
-                        currentMessage = await handler(currentMessage);
+                    for (const item of this.monitoringHandlerHash[message[0]]) {
+                        const { handler, blocking } = item;
+                        const result = handler(currentMessage);
+
+                        if (blocking) currentMessage = await result;
+                        else this.safeHandle(result);
                     }
                     return currentMessage as EncodedMonitoringMessage;
                 }
@@ -150,8 +168,12 @@ export class CommunicationHandler implements ICommunicationHandler {
                 if (this.controlHandlerHash[message[0]].length) {
                     let currentMessage = message as any;
 
-                    for (const handler of this.controlHandlerHash[message[0]]) {
-                        currentMessage = await handler(currentMessage);
+                    for (const item of this.controlHandlerHash[message[0]]) {
+                        const { handler, blocking } = item;
+                        const result = handler(currentMessage);
+
+                        if (blocking) currentMessage = await result;
+                        else this.safeHandle(result);
                     }
                     return currentMessage as EncodedMonitoringMessage;
                 }
@@ -206,13 +228,27 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
-    addMonitoringHandler<T extends MonitoringMessageCode>(_code: T, handler: MonitoringMessageHandler<T>): this {
-        this.monitoringHandlerHash[_code].push(handler as any);
+    addMonitoringHandler<T extends MonitoringMessageCode>(
+        _code: T,
+        handler: MonitoringMessageHandler<T>,
+        blocking: boolean = false
+    ): this {
+        this.monitoringHandlerHash[_code].push({
+            handler,
+            blocking
+        } as any);
         return this;
     }
 
-    addControlHandler<T extends ControlMessageCode>(_code: T, handler: ControlMessageHandler<T>): this {
-        this.controlHandlerHash[_code].push(handler as any);
+    addControlHandler<T extends ControlMessageCode>(
+        _code: T,
+        handler: ControlMessageHandler<T>,
+        blocking: boolean = false
+    ): this {
+        this.controlHandlerHash[_code].push({
+            handler,
+            blocking
+        } as any);
         return this;
     }
 

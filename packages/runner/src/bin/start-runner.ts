@@ -29,7 +29,7 @@ if (!fs.existsSync(sequencePath)) {
 
 const runner: Runner<AppConfig> = new Runner(sequencePath, fifosPath);
 
-console.log("TEst");
+console.log(new Date().toISOString(), "TEst");
 
 runner.main()
     .catch(e => {

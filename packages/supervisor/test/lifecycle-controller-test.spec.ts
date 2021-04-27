@@ -20,7 +20,7 @@ class LCDA implements ILifeCycleAdapter {
     snapshot  = sinon.stub()
     monitorRate  = sinon.stub()
     stop  = sinon.stub()
-    kill  = sinon.stub()
+    remove  = sinon.stub()
 
     init = sinon.stub()
     identify = sinon.stub()

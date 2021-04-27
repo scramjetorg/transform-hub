@@ -14,6 +14,24 @@ import { IComponent } from "@scramjet/types";
 import { exec } from "child_process";
 
 type MaybeArray<T> = T | T[];
+
+// const unrefStream = (stream: Readable, _opts?: TransformOptions) => {
+//     const out = stream.pipe(new PassThrough(_opts));
+
+//     setInterval(() => {
+//         stream.unpipe(out);
+//         console.error(new Date().toISOString(), "Unpiped");
+//         setTimeout(() => {
+//             console.error(new Date().toISOString(), "Repiped");
+//             stream.pipe(out);
+//         }, 1)
+//             .unref();
+//     }, 500) // todo configure interval?
+//         .unref();
+//     return out;
+//     // return stream;
+// };
+
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private context?: RunnerAppContext<X, any>;
@@ -83,10 +101,10 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async hookupControlStream() {
         this.controlStream = createReadStream(this.controlFifoPath);
-        await this.defineControlStream();
+        this.defineControlStream();
     }
 
-    async defineControlStream() {
+    defineControlStream() {
         StringStream
             .from(this.controlStream as Readable)
             .JSONParse()
@@ -118,8 +136,6 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.logger.error("Not clear, error", e);
                     res(233);
                 }
-
-
             });
 
             //console.info("Cleaning up logger stream...");
@@ -128,8 +144,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             //console.info("Logger stream cleaned up...");
             this.logger.info("Clean up completed!");
 
-            process.on("beforeExit", () => console.log("AAA! beforeExit"));
-            process.on("exit", (arg) => console.log("AAA! exit", arg));
+            process.on("beforeExit", () => console.error(new Date().toISOString(), "AAA! beforeExit", process.exitCode));
+            process.on("exit", (arg) => console.error(new Date().toISOString(), "AAA! exit", arg));
 
             // process.exit(244);
             resolve();
@@ -248,9 +264,10 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleKillRequest(): Promise<void> {
-        this.logger.log("Kill request handled.");
         this.context?.killHandler();
         await this.cleanup();
+        this.logger.log("Kill request handled, exiting...");
+
         this.logger.log("Kill request handled, exiting...");
 
         process.exit(137);
@@ -454,7 +471,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.info("Piping seq out if exist.");
 
         if (stream && this.outputStream) {
-            this.logger.info("Piping seq!.");
+            this.logger.info("Piping seq!");
             stream.pipe(this.outputStream);
         }
     }

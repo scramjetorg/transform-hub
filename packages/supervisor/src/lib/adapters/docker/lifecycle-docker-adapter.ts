@@ -255,8 +255,13 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                 this.logger.debug("Container exited");
                 resolve(statusCode);
             } catch (error) {
-                this.logger.debug("Container errored", error);
-                reject(error);
+                if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
+                    this.logger.debug("Container retunrned non-zero status code", error.data.statusCode);
+                    resolve(error.data.statusCode);
+                } else {
+                    this.logger.debug("Container errored", error);
+                    reject(error);
+                }
             }
         });
     }
@@ -309,7 +314,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async kill() {
+    async remove() {
         if (this.resources.containerId) {
             this.logger.info("Forcefully stopping containter", this.resources.containerId);
             await this.dockerHelper.stopContainer(this.resources.containerId);

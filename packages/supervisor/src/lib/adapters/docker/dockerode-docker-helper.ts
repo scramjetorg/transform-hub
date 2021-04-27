@@ -1,4 +1,3 @@
-import { SupervisorError } from "@scramjet/model";
 import * as Dockerode from "dockerode";
 import { PassThrough } from "stream";
 import {
@@ -134,10 +133,6 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     async wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData> {
         const containerExitResult = await this.dockerode.getContainer(container).wait(options);
-
-        if (containerExitResult.StatusCode !== 0) {
-            throw new SupervisorError("RUNNER_ERROR", { exitCode: containerExitResult.StatusCode });
-        }
 
         return { statusCode: containerExitResult.StatusCode };
     }

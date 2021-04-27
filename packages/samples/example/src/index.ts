@@ -17,6 +17,7 @@ const mod: InertApp = function(input, ffrom) {
     this.logger.info("Sequence started");
 
     fs.createReadStream(ffrom)
+        .on("end", () => this.logger.info("File read end"))
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())
         .setOptions({ maxParallel: 1 })
@@ -27,6 +28,7 @@ const mod: InertApp = function(input, ffrom) {
             }
         )
         .do(console.log)
+        .on("end", () => this.logger.info("Mapper end"))
         .run()
         .then(() => this.end())
     ;
