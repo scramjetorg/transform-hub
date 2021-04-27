@@ -37,7 +37,7 @@ async function startSupervisor(logger: Logger, socketPath: string) {
     });
 
     supervisor.stdout.pipe(process.stdout);
-    supervisor.stderr.pipe(process.stdout);
+    supervisor.stderr.pipe(process.stderr);
 
     return Promise.resolve(supervisor.pid);
 }

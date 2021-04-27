@@ -183,13 +183,14 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleKillRequest(): Promise<void> {
-        this.logger.log("Kill request handled.");
         this.context?.killHandler();
         //letting time for "on kill" actions
         //TODO cosult with Michał Cz.
         await new Promise(res => setTimeout(res, 1000));
         console.log("-----kill 2000 ms after");
         await this.cleanupControlStream();
+
+        this.logger.log("Kill request handled, exiting...");
 
         process.exit(137);
     }
@@ -258,8 +259,10 @@ export class Runner<X extends AppConfig> implements IComponent {
      * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)
      */
     async main() {
+        this.logger.log("Runner main executed"); // TODO: this is not working!
         await this.hookupFifoStreams();
         await this.initializeLogger();
+        this.logger.log("Fifo and logger initialized, sending handshake...");
         this.sendHandshakeMessage();
         // await this.handshakeReceived();
         // await runSequence();
@@ -367,12 +370,13 @@ export class Runner<X extends AppConfig> implements IComponent {
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
             }
 
-            this.logger.info(`Sequence output type ${typeof out}`);
-
+            this.logger.info(`Sequence at ${sequence.length - itemsLeftInSequence - 1} output type ${typeof out}`);
             if (!out) {
                 if (itemsLeftInSequence > 0) {
                     this.logger.error("Sequence ended premature");
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
+                } else {
+                    this.logger.log("Sequence does not output data");
                 }
             } else if (typeof out === "object" && out instanceof DataStream) {
                 stream = scramjetStreamFrom(out) as unknown as ReadableStream<any>;
