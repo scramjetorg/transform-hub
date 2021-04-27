@@ -28,9 +28,10 @@ const mod: InertApp = function(input, ffrom) {
             }
         )
         .do(console.log)
-        .on("end", () => this.logger.info("Mapper end"))
-        .run()
-        .then(() => this.end())
+        .on("end", () => {
+            this.logger.info("Mapper end");
+            this.end();
+        })
     ;
 };
 

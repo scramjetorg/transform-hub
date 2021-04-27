@@ -157,8 +157,11 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                     ...process.env.HOT_VOLUME
                         .split(",")
                         .map((volume) => volume.split(":"))
-                        .map(([mountPoint, bind]) => ({ mountPoint, bind }))
+                        .map(([bind, mountPoint]) => ({ mountPoint, bind }))
                 );
+                console.warn("Using hot volume configuration", volumes);
+            } else {
+                console.info("No hacks", development(), process.env.HOT_VOLUME);
             }
 
             this.resources.volumeId = await this.dockerHelper.createVolume();

@@ -3,20 +3,23 @@ import { Console } from "console";
 import { LoggerOptions, PassThoughStream, WritableStream } from "@scramjet/types";
 import { getName } from "./lib/get-name";
 import { DataStream } from "scramjet";
-import { InspectOptions } from "util";
+import { inspect, InspectOptions } from "util";
 
 export type MessageFormatter = <Z extends any[]>(name: string, func: string, args: Z) => string;
 
-const doInspect = Symbol("doInspect");
 const loggerOutputs: {[key: string]: WritableStream<any[]>[]} = {
     err: [],
     out: []
 };
 const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
     for (const logStream of loggerOutputs[streamSpec]) {
-        if (logStream.writable) {
-            logStream.write([new Date().toISOString(), ...args]);
-        }
+        const inspectedArgs = args.map(x => {
+            if (typeof x === "object" || typeof x === "function")
+                return inspect(x);
+            return x;
+        });
+
+        logStream.write([new Date().toISOString(), ...inspectedArgs]);
     }
 };
 
@@ -79,27 +82,21 @@ class Logger implements Console {
     exception() {}
 
     error(...args: any[]) {
-        //loggerErr.write([this.name, "error", ...args]);
         writeLog("err", this.name, "error", ...args);
     }
     log(...args: any[]): void {
-        //loggerOut.write([this.name, "log", ...args]);
         writeLog("out", this.name, "log", ...args);
     }
     dir(obj: any, options?: InspectOptions): void {
-        //loggerOut.write([this.name, doInspect, obj, options]);
-        writeLog("out", this.name, doInspect, obj, options);
+        writeLog("out", this.name, obj, options);
     }
     debug(...args: any[]) {
-        //loggerOut.write([this.name, "debug", ...args]);
         writeLog("out", this.name, "debug", ...args);
     }
     info(...args: any[]): void {
-        //loggerOut.write([this.name, "info", ...args]);
         writeLog("out", this.name, "info", ...args);
     }
     warn(...args: any[]): void {
-        //loggerErr.write([this.name, "warn", ...args]);
         writeLog("err", this.name, "warn", ...args);
     }
 
