@@ -200,6 +200,12 @@ class LifeCycleController implements IComponent {
                 message => this.handleSequenceCompleted(message)
             );
 
+            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
+                message[1] = await this.lifecycleAdapter.stats(message[1]);
+
+                return message;
+            });
+
             /*
             * When the stop message comes from the CSH via the control stream
             * and the Sequence has not terminated yet, the LifeCycle Controller

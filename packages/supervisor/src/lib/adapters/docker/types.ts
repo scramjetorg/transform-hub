@@ -1,4 +1,5 @@
 import { ExitCode } from "@scramjet/types";
+import { ContainerStats } from "dockerode";
 import { PathLike } from "fs";
 import { Stream, Writable } from "stream";
 
@@ -185,6 +186,7 @@ export interface IDockerHelper {
      */
     stopContainer: (containerId: DockerContainer) => Promise<void>;
 
+    stats: (containerId: DockerContainer) => Promise<ContainerStats>;
     /**
      * Removes container.
      *

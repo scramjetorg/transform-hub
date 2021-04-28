@@ -1,6 +1,6 @@
 import { development, imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
-import { SupervisorError } from "@scramjet/model";
+import { MonitoringMessageData, SupervisorError } from "@scramjet/model";
 import {
     DelayedStream,
     DownstreamStreamsConfig,
@@ -37,6 +37,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
     private inputFifoPath?: string;
     private outputFifoPath?: string;
+    private runnerContainerId?: string;
 
     private imageConfig: {
         runner?: string,
@@ -146,6 +147,26 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                 reject(err);
             }
         });
+    }
+
+    async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
+
+        if (this.runnerContainerId) {
+            const stats = await this.dockerHelper.stats(this.runnerContainerId);
+
+            if (stats.cpu_stats && stats.cpu_stats.cpu_usage) {
+                msg.cpu = stats.cpu_stats.cpu_usage.total_usage;
+            }
+
+            if (stats.memory_stats) {
+                msg.memoryUsed = stats.memory_stats.usage;
+            }
+
+            if (stats.networks) {
+                //TODO: modify message properties
+            }
+        }
+        return msg;
     }
 
     identify(stream: Readable): MaybePromise<RunnerConfig> {
@@ -263,6 +284,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
             streams.stderr.pipe(this.runnerStderr);
 
             this.logger.debug("Container is running");
+            this.runnerContainerId = containerId;
 
             try {
                 const { statusCode } = await this.dockerHelper.wait(containerId);

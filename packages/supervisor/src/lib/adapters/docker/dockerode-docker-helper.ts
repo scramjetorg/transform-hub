@@ -81,6 +81,10 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).remove();
     }
 
+    stats(containerId: DockerContainer): Promise<Dockerode.ContainerStats> {
+        return this.dockerode.getContainer(containerId).stats({ stream: false });
+    }
+
     async createVolume(name: string = ""): Promise<DockerVolume> {
         return this.dockerode.createVolume({
             Name: name,
