@@ -157,7 +157,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         //return Promise.resolve;
         return Promise.all([
             this.cleanupStream(this.controlStream, this.controlFifoPath),
-           // this.cleanupStream(this.monitorStream, this.monitorFifoPath),
+            // this.cleanupStream(this.monitorStream, this.monitorFifoPath),
             this.cleanupStream(this.inputStream, this.inputFifoPath)
             //this.cleanupStream(this.outputStream, this.outputFifoPath)
         ]);
@@ -205,7 +205,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.inputStream = createReadStream(this.inputFifoPath);
         this.inputDataStream = StringStream
             .from(this.inputStream as Readable)
-           // .JSONParse()
+        // .JSONParse()
             .do(inputMsg => {
                 this.logger.log("input message", inputMsg);
             })

@@ -98,17 +98,13 @@ export class SocketServer extends EventEmitter implements IComponent {
                     });
 
                 this.emit("connect", streams);
-            })
-            .listen(this.address, () => {
-                this.logger.log("Server started at", server.address());
             });
 
         return new Promise((res, rej) => {
-            this.server
-                ?.listen(this.address, () => {
-                    this.logger.log("[SocketServer] Started at", this.server?.address());
-                    res();
-                })
+            server.listen(this.address, () => {
+                this.logger.log("[SocketServer] Started at", server.address());
+                res();
+            })
                 .on("error", rej);
         });
     }

@@ -257,7 +257,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
             });
 
             this.resources.containerId = containerId;
-            
+
             this.runnerStdin.pipe(streams.stdin);
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
