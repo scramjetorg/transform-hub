@@ -27,9 +27,10 @@ const exp = [
     },
 
     async function(stream: any) {
-        for await (const y of stream) {
-            console.log(y);
-        }
+        // for await (const y of stream) {
+        //     console.log(y);
+        // }
+        return stream;
     }
 ];
 
