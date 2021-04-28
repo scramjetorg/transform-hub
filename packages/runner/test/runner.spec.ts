@@ -4,6 +4,7 @@ import { RunnerMessageCode } from "@scramjet/model";
 import { MessageUtils, Runner } from "@scramjet/runner";
 
 import * as fs from "fs";
+import { DataStream } from "scramjet";
 
 const test = require("ava");
 const controlMockStream = new PassThrough() as unknown as fs.ReadStream;
@@ -30,7 +31,7 @@ test("Run main", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
     const hookupFifoStreams = sinon.stub(runner, "hookupFifoStreams").callsFake(() => {
         // eslint-disable-next-line dot-notation
-        runner["loggerStream"] = new Writable();
+        runner["loggerStream"] = new DataStream().each(console.log);
 
         return Promise.resolve([undefined, undefined, undefined]);
     });
@@ -58,7 +59,7 @@ test("Stop sequence", async (t: any) => {
 
     sinon.stub(runner, "hookupFifoStreams").callsFake(async () => {
         // eslint-disable-next-line dot-notation
-        runner["loggerStream"] = new Writable();
+        runner["loggerStream"] = new DataStream().each(console.log);
         // eslint-disable-next-line dot-notation
         runner["monitorStream"] = new Writable();
         // eslint-disable-next-line dot-notation

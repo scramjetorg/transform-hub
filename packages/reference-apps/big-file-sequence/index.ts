@@ -6,7 +6,7 @@ import { createGunzip } from "zlib";
 const exp = [
     /**
      * @param _stream - dummy input
-     * @param _url - url of file to get
+     * @param url - url of file to get
      * @returns data
      */
     function(_stream: any, url: string) {
