@@ -125,8 +125,8 @@ export class HostOne implements IComponent {
                 .lines()
                 .keep(1000); // TODO: config
 
-            //this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
-            //this.upStreams[CommunicationChannel.OUT].pipe(process.stdout);
+            this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
+            this.upStreams[CommunicationChannel.OUT].pipe(process.stdout);
         } else {
             this.logger.error("Uninitialized LOG stream.");
             throw new HostError("UNINITIALIZED_STREAM", "log");
