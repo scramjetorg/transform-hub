@@ -3,7 +3,6 @@ import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStre
 
 import { from as scramjetStreamFrom, DataStream, StringStream } from "scramjet";
 
-//import { exec } from "child_process";
 import { EventEmitter } from "events";
 import { Readable } from "stream";
 import { createReadStream, createWriteStream } from "fs";

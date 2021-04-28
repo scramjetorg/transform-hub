@@ -28,9 +28,18 @@ export interface ICommunicationHandler {
     sendMonitoringMessage<T extends MonitoringMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
     sendControlMessage<T extends ControlMessageCode>(code: T, msg: MessageDataType<T>): Promise<void>;
 
+    /**
+     * Returns a copy of monitor stream for reading - does not interact with the fifo stream itself
+     */
     getMonitorStream(): DataStream;
+    /**
+     * Returns a copy of log stream for reading - does not interact with the fifo stream itself
+     */
     getLogOutput(): LoggerOutput;
 
+    /**
+     * Gets stdio streams for full interaction
+     */
     getStdio(): {
         stdin: Writable,
         stdout: Readable,

@@ -252,7 +252,7 @@ class LifeCycleController implements IComponent {
         */
         await this.lifecycleAdapter.cleanup();
 
-        this.logger.error("Cleanup done (normal execution)");
+        this.logger.info("Cleanup done (normal execution)");
     }
 
     private async kill() {
