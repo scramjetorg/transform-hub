@@ -19,6 +19,8 @@ export { MonitoringRateMessage, MonitoringRateMessageData } from "./messages/mon
 export { MonitoringMessage, MonitoringMessageData, MonitoringMessageFromRunnerData } from "./messages/monitoring";
 export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./messages/snapshot-response";
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
+export { SequenceEndMessage, SequenceEndMessageData } from "./messages/sequence-end";
+export { SequenceCompleteMessage } from "./messages/sequence-complete";
 export * from "./runner-message";
 export * from "./stream-handler";
 export { CommunicationChannel } from "./communication-channel";

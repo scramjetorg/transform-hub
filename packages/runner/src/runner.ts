@@ -1,13 +1,13 @@
 /* eslint-disable no-extra-parens */
 import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerError, RunnerMessageCode, StopSequenceMessageData } from "@scramjet/model";
-import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Logger } from "@scramjet/types";
+import { ApplicationFunction, ApplicationInterface, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Streamable, Logger, EncodedMonitoringMessage, MaybePromise } from "@scramjet/types";
 
 import { from as scramjetStreamFrom, DataStream, StringStream } from "scramjet";
 
 import { EventEmitter } from "events";
 import { Readable } from "stream";
 import { createReadStream, createWriteStream } from "fs";
-import { RunnerAppContext } from "./runner-app-context";
+import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { IComponent } from "@scramjet/types";
@@ -364,13 +364,21 @@ export class Runner<X extends AppConfig> implements IComponent {
             throw new RunnerError("UNINITIALIZED_STREAMS", "Monitoring");
         }
 
-        const runner = {
-            keepAliveIssued: () => this.keepAliveIssued()
+        const runner: RunnerProxy = {
+            keepAliveIssued: () => this.keepAliveIssued(),
+            sendStop: (err?: Error) => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]),
+            sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
+            sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])
         };
 
         this.context = new RunnerAppContext(config, this.monitorStream, this.emitter, runner);
 
         this.handleSequenceEvents();
+    }
+
+    private writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage) {
+        MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
+        // TODO: what if it fails?
     }
 
     sendHandshakeMessage() {
@@ -428,19 +436,20 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream: DataStream = this.inputDataStream || DataStream.from([]);
+        let stream: DataStream | void = this.inputDataStream || DataStream.from([]);
         let itemsLeftInSequence = sequence.length;
 
         for (const func of sequence) {
             itemsLeftInSequence--;
 
-            let out: SynchronousStreamable<any> | void;
+            let _in: SynchronousStreamable<any> | void = stream;
+            let out: MaybePromise<Streamable<any> | void>;
 
             try {
                 this.logger.info(`Processing function on index: ${sequence.length - itemsLeftInSequence - 1}`);
-                out = await func.call(
+                out = func.call(
                     this.context,
-                    stream as unknown as ReadableStream<any>,
+                    _in as unknown as ReadableStream<any>,
                     ...args
                 );
                 this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
@@ -449,23 +458,25 @@ export class Runner<X extends AppConfig> implements IComponent {
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
             }
 
-            this.logger.info(`Sequence at ${sequence.length - itemsLeftInSequence - 1} output type ${typeof out}`);
-            if (!out) {
-                if (itemsLeftInSequence > 0) {
+            if (itemsLeftInSequence > 0) {
+                _in = await out;
+                this.logger.info(`Sequence at ${sequence.length - itemsLeftInSequence - 1} output type ${typeof out}`);
+                if (!_in) {
                     this.logger.error("Sequence ended premature");
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
+                } else if (typeof _in === "object" && _in instanceof DataStream) {
+                    stream = scramjetStreamFrom(_in);
                 } else {
-                    this.logger.log("Sequence does not output data");
+                    // TODO: what if this is not a DataStream, but BufferStream stream!!!!
+                    stream = DataStream.from(_in as Readable);
                 }
-            } else if (typeof out === "object" && out instanceof DataStream) {
-                stream = scramjetStreamFrom(out);
             } else {
-                // TODO: what if this is not a DataStream, but BufferStream stream!!!
-                stream = DataStream.from(out as Readable);
+                this.logger.info("All sequences processed.");
+                _in = await out;
+                if (_in) stream = DataStream.from(_in as Readable);
+                else stream = undefined;
             }
         }
-
-        this.logger.info("All sequences processed.");
 
         /**
          * @analyze-how-to-pass-in-out-streams
@@ -479,8 +490,14 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (stream && this.outputStream) {
             this.logger.info(`Piping sequence output (type ${typeof stream})`);
-            stream.pipe(this.outputStream);
+            stream
+                .pipe(this.outputStream)
+                .once("end", () => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]))
+            ;
+        } else {
+            this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
         }
+
     }
 
     handleSequenceEvents() {

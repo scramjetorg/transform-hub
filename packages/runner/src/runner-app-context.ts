@@ -1,8 +1,7 @@
 import { getLogger } from "@scramjet/logger";
-import { MonitoringMessageFromRunnerData, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, AppError, AppErrorConstructor, AppContext, EncodedMonitoringMessage, WritableStream, FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, Logger } from "@scramjet/types";
+import { EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData } from "@scramjet/model";
+import { AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream, FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, Logger } from "@scramjet/types";
 import { EventEmitter } from "events";
-import { MessageUtils } from "./message-utils";
 
 function assertFunction(handler: any | Function): handler is Function {
     if (typeof handler !== "function") {
@@ -12,18 +11,25 @@ function assertFunction(handler: any | Function): handler is Function {
     return handler;
 }
 
+export interface RunnerProxy {
+    sendKeepAlive(data: KeepAliveMessageData): void;
+    sendStop(error?: AppError | Error): void;
+    sendEvent(ev: EventMessageData): void;
+    keepAliveIssued(): void;
+}
+
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
 implements AppContext<AppConfigType, State> {
     config: AppConfigType;
     AppError!: AppErrorConstructor;
-    monitorStream: WritableStream<any>;;
+    monitorStream: WritableStream<any>;
     emitter: EventEmitter;
     private runner;
     logger: Logger;
     initialState?: State | undefined;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
-        emitter: EventEmitter, runner: { keepAliveIssued(): void; }) {
+        emitter: EventEmitter, runner: RunnerProxy) {
 
         this.config = config;
         this.monitorStream = monitorStream;
@@ -35,15 +41,6 @@ implements AppContext<AppConfigType, State> {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     private handleSave(state: any): void {
         throw new Error("Method not implemented.");
-    }
-
-    private notifyInstanceAboutStopping(err?: Error) {
-        this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]);
-    }
-
-    private writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage) {
-        MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
-        // TODO: what if it fails?
     }
 
     private _killHandlers: KillHandler[] = [];
@@ -114,20 +111,17 @@ implements AppContext<AppConfigType, State> {
     }
 
     keepAlive(milliseconds?: number): this {
-        this.runner.keepAliveIssued();
-        this.writeMonitoringMessage([
-            RunnerMessageCode.ALIVE, { keepAlive: milliseconds || 0 }
-        ]);
+        this.runner.sendKeepAlive({ keepAlive: milliseconds || 0 });
         return this;
     }
 
     end(): this {
-        this.notifyInstanceAboutStopping();
+        this.runner.sendStop();
         return this;
     }
 
     destroy(error?: AppError): this {
-        this.notifyInstanceAboutStopping(error);
+        this.runner.sendStop(error);
         return this;
     }
 
@@ -142,7 +136,7 @@ implements AppContext<AppConfigType, State> {
     }
 
     emit(eventName: string, message: any) {
-        this.writeMonitoringMessage([RunnerMessageCode.EVENT, { eventName, message }]);
+        this.runner.sendEvent({ eventName, message });
 
         return this;
     }

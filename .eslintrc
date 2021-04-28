@@ -7,8 +7,10 @@
     "plugins": [
         "@typescript-eslint"
     ],
-    "ignorePatterns": ["dist/"],
-    "extends": [],
+    "ignorePatterns": [
+        "dist/",
+        "node_modules"
+    ],
     "rules": {
         /* possible errors */
         "no-cond-assign" : 2,

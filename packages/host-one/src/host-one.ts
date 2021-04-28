@@ -31,7 +31,7 @@ export class HostOne implements IComponent {
 
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
-    private logHistory?: DataStream;
+    private logHistory?: StringStream;
 
     logger: Logger;
 

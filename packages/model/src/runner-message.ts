@@ -8,6 +8,7 @@ export enum RunnerMessageCode {
     STATUS = 3007, // temporary message code seq.status
     ALIVE = 3010, // temporary message code
     ACKNOWLEDGE = 3004,
+    SEQUENCE_COMPLETED = 3011,
 
     PONG = 4000,
     STOP = 4001,
