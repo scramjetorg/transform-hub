@@ -1,5 +1,6 @@
 import { InertApp } from "@scramjet/types";
 
+
 const scramjet = require("scramjet");
 const JSONStream = require("JSONStream");
 const fs = require("fs");
@@ -16,7 +17,7 @@ const mod: InertApp = function(input, ffrom) {
 
     this.logger.info("Sequence started");
 
-    fs.createReadStream(ffrom)
+    return fs.createReadStream(ffrom)
         .on("end", () => this.logger.info("File read end"))
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())
@@ -31,8 +32,8 @@ const mod: InertApp = function(input, ffrom) {
         .on("end", () => {
             this.logger.info("Mapper end");
             this.end();
-        })
-    ;
+        });
+
 };
 
 export default mod;

@@ -157,9 +157,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         //return Promise.resolve;
         return Promise.all([
             this.cleanupStream(this.controlStream, this.controlFifoPath),
-            this.cleanupStream(this.monitorStream, this.monitorFifoPath),
-            this.cleanupStream(this.inputStream, this.inputFifoPath),
-            this.cleanupStream(this.outputStream, this.outputFifoPath)
+           // this.cleanupStream(this.monitorStream, this.monitorFifoPath),
+            this.cleanupStream(this.inputStream, this.inputFifoPath)
+            //this.cleanupStream(this.outputStream, this.outputFifoPath)
         ]);
     }
 
@@ -205,8 +205,17 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.inputStream = createReadStream(this.inputFifoPath);
         this.inputDataStream = StringStream
             .from(this.inputStream as Readable)
-            .JSONParse()
+           // .JSONParse()
+            .do(inputMsg => {
+                this.logger.log("input message", inputMsg);
+            })
         ;
+
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        this.inputDataStream.run();
+        //this.logger.log("await for input data stream");
+        //await this.inputDataStream.run();
+        //this.logger.log(" input data stream awaited");
     }
 
     async hookupOutputStream() {
@@ -471,7 +480,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.info("Piping seq out if exist.");
 
         if (stream && this.outputStream) {
-            this.logger.info("Piping seq!");
+            this.logger.info(`Piping sequence output (type ${typeof stream})`);
             stream.pipe(this.outputStream);
         }
     }

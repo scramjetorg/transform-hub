@@ -4,7 +4,7 @@ import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, 
 import { Readable } from "stream";
 
 const didTimeout = Symbol.for("supervisor:did-timeout");
-const stopTimeout = 2000; // where to config this?
+const stopTimeout = 5000; // where to config this?
 const noop = () => undefined;
 const defer = (timeout: number): Promise<typeof didTimeout> =>
     new Promise(res => setTimeout(() => res(didTimeout), timeout));
@@ -276,6 +276,7 @@ class LifeCycleController implements IComponent {
             }
         }
 
+        process.exit(-2);
         return message;
     }
 

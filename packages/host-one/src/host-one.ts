@@ -68,6 +68,13 @@ export class HostOne implements IComponent {
         await this.createApiServer();
         this.logger.info("Api server up");
 
+        StringStream.from(this.output)
+            .lines()
+            .do((m) => this.logger.log("Received data on OUTPUT stream:", m));
+
+        this.logger.log("Sending test data on input stream...");
+        this.input.write("------------- TEST INPUT DATA");
+
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();
     }
@@ -116,8 +123,8 @@ export class HostOne implements IComponent {
                 .lines()
                 .keep(1000); // TODO: config
 
-            this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
-            this.upStreams[CommunicationChannel.OUT].pipe(process.stdout);
+            //this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
+            //this.upStreams[CommunicationChannel.OUT].pipe(process.stdout);
         } else {
             this.logger.error("Uninitialized LOG stream.");
             throw new HostError("UNINITIALIZED_STREAM", "log");

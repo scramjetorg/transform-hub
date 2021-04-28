@@ -68,7 +68,8 @@ class CSHClient implements ICSHClient {
                 connectionChannels[CC.LOG],
                 connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer> // this was checked.
             ];
-
+            
+            
             resolve();
         });
     }
