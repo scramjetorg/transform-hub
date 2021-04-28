@@ -5,6 +5,17 @@ TS=false
 INSTALL=false
 PREINSTALL=false
 
+show_help () {
+    printf \
+"
+-t, --typescript            use ts-node
+-i, --install               yarn install
+-d, --docker                builds images: lerna run build:docker
+-pi, --pre-install          lerna run prepack, lerna run prepare-sample-tar
+"
+    exit 0
+}
+
 for arg in "$@"
     do
         case $arg in
@@ -31,12 +42,18 @@ for arg in "$@"
             shift
             ;;
         esac
+        case $arg in
+            -h|--help)
+            show_help
+            shift
+            ;;
+        esac
     done
 
 # init project
 cd $(git rev-parse --show-toplevel)
 
-if [ "$PREINSTALL" = true ] ; then
+if [ "$INSTALL" = true ] ; then
     yarn install
 fi
 
