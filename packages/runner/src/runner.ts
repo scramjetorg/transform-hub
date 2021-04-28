@@ -367,6 +367,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
             sendStop: (err?: Error) => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]),
+            sendComplete: (err?: Error) => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, { err }]),
             sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
             sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])
         };

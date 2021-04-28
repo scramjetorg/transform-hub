@@ -18,21 +18,22 @@ const mod: InertApp = function(input, ffrom) {
     this.logger.info("Sequence started");
 
     return fs.createReadStream(ffrom)
-        .on("end", () => this.logger.info("File read end"))
+        .on("end", () => {
+            this.logger.info("File read end");
+            this.logger.info("Mapper end");
+            this.end();
+        })
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())
         .setOptions({ maxParallel: 1 })
         //.do(() => new Promise(res => setTimeout(res, 1500)))
         .map(
             (names: Person) => {
-                return `Hello ${names.name}! \n`;
+                return `Hello... ${names.name}! \n`;
             }
         )
-        .do(console.log)
-        .on("end", () => {
-            this.logger.info("Mapper end");
-            this.end();
-        });
+        .do(console.log);
+
 
 };
 

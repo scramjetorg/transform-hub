@@ -4,7 +4,7 @@ import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, 
 import { Readable } from "stream";
 
 const didTimeout = Symbol.for("supervisor:did-timeout");
-const stopTimeout = 5000; // where to config this?
+const stopTimeout = 15000; // where to config this?
 const noop = () => undefined;
 const defer = (timeout: number): Promise<typeof didTimeout> =>
     new Promise(res => setTimeout(() => res(didTimeout), timeout));
@@ -195,6 +195,11 @@ class LifeCycleController implements IComponent {
                 message => this.handleSequenceStopped(message)
             );
 
+            this.communicationHandler.addMonitoringHandler(
+                RunnerMessageCode.SEQUENCE_COMPLETED,
+                message => this.handleSequenceCompleted(message)
+            );
+
             /*
             * When the stop message comes from the CSH via the control stream
             * and the Sequence has not terminated yet, the LifeCycle Controller
@@ -256,6 +261,17 @@ class LifeCycleController implements IComponent {
         await this.lifecycleAdapter.cleanup();
 
         this.logger.info("Cleanup done (normal execution)");
+    }
+
+    // TODO: move to HostOne
+    async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
+        this.logger.log("Got sequence end message. Sequence Completed.");
+
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+        await this.lifecycleAdapter.remove();
+        process.exit(-2);
+
+        return message;
     }
 
     async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {

@@ -14,6 +14,7 @@ function assertFunction(handler: any | Function): handler is Function {
 export interface RunnerProxy {
     sendKeepAlive(data: KeepAliveMessageData): void;
     sendStop(error?: AppError | Error): void;
+    sendComplete(error?: AppError | Error): void;
     sendEvent(ev: EventMessageData): void;
     keepAliveIssued(): void;
 }
@@ -116,7 +117,7 @@ implements AppContext<AppConfigType, State> {
     }
 
     end(): this {
-        this.runner.sendStop();
+        this.runner.sendComplete();
         return this;
     }
 
