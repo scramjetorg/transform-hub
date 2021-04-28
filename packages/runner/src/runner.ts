@@ -117,8 +117,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async cleanup(): Promise<void> {
         return new Promise(async (resolve) => {
-
-
             this.logger.info("Cleaning up streams...");
 
             if (this.monitoringInterval) {

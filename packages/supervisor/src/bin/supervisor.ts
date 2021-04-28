@@ -31,13 +31,15 @@ const lcc: LifeCycleController = new LifeCycleController(lcda, config, cshc);
 
 lcc.main()
     .catch(e => {
-        let exitCode = 10;
+        setTimeout(() => {
+            let exitCode = 10;
 
-        if (e.data && e.data.exitCode) {
-            exitCode = e.data.exitCode;
-        }
-
-        process.exitCode = exitCode;
+            if (e.data && e.data.exitCode) {
+                exitCode = e.data.exitCode;
+            }
+            console.log(e.stack);
+            process.exitCode = exitCode;
+        }, 100);
     })
     .finally(() => {
         return cshc.disconnect();

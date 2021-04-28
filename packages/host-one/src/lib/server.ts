@@ -51,7 +51,7 @@ export class SocketServer extends EventEmitter implements IComponent {
     async start(): Promise<void> {
         let connected = false;
 
-        const server = this.server = net.createServer();
+        this.server = net.createServer();
 
         this.server
             .on("connection", connection => {
@@ -100,9 +100,10 @@ export class SocketServer extends EventEmitter implements IComponent {
                 this.emit("connect", streams);
             });
 
+
         return new Promise((res, rej) => {
-            server.listen(this.address, () => {
-                this.logger.log("[SocketServer] Started at", server.address());
+            this.server?.listen(this.address, () => {
+                this.logger.log("[SocketServer] Started at", this.server?.address());
                 res();
             })
                 .on("error", rej);

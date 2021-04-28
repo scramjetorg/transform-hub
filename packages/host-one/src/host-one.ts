@@ -53,6 +53,8 @@ export class HostOne implements IComponent {
     }
 
     async main(): Promise<void> {
+        this.logger.info("Main");
+
         await this.createNetServer();
         this.logger.info("Created Net Server");
 

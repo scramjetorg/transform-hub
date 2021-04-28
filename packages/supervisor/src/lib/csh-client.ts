@@ -26,9 +26,6 @@ class CSHClient implements ICSHClient {
 
     async init(): Promise<void> {
         return new Promise((resolve) => {
-            if (!this.streams) {
-                throw new SupervisorError("UNINITIALIZED_STREAMS");
-            }
             this.logger.info("Connecting to", this.socketPath);
 
             this.connection = net.createConnection({
@@ -68,7 +65,6 @@ class CSHClient implements ICSHClient {
                 connectionChannels[CC.LOG],
                 connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer> // this was checked.
             ];
-
 
             resolve();
         });

@@ -34,7 +34,9 @@ async function startSupervisor(logger: Logger, socketPath: string) {
     supervisor.on("exit", function(code: any, signal: any) {
         // Do we want to handle the Supervisor exit event and if so, how?
         logger.log("Supervisor process exited with code: " + code + ", signal: " + signal);
-        process.exit(code);
+        setTimeout(() => {
+            process.exit(code);
+        }, 10);
     });
 
     supervisor.stdout.pipe(process.stdout);
