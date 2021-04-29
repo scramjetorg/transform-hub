@@ -13,19 +13,22 @@ export type MonitoringMessageFromRunnerData = {
 export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
 
     /** CPU usage */
-    cpu?: number;
+    cpuTotalUsage?: number;
 
     /** The amount of RAM in use. */
-    memoryUsed?: number;
+    memoryUsage?: number;
 
-    /** The amount of free RAM. */
-    memoryFree?: number;
+    /** The maximum amount of RAM used. */
+    memoryMaxUsage?: number;
 
-    /** The amount of swap memory in use. */
-    swapUsed?: number;
+    /** The set RAM memory limit. */
+    limit?: number;
 
-    /** The amount of free swap memory. */
-    swapFree?: number;
+    /** The number of received bytes. */
+    networkRx?: number;
+
+    /** The number of transmitted bytes. */
+    networkTx?: number;
 }
 
 /**

@@ -154,16 +154,22 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
         if (this.runnerContainerId) {
             const stats = await this.dockerHelper.stats(this.runnerContainerId);
 
+            if (!stats)
+                return msg;
+
             if (stats.cpu_stats && stats.cpu_stats.cpu_usage) {
-                msg.cpu = stats.cpu_stats.cpu_usage.total_usage;
+                msg.cpuTotalUsage = stats.cpu_stats.cpu_usage.total_usage;
             }
 
             if (stats.memory_stats) {
-                msg.memoryUsed = stats.memory_stats.usage;
+                msg.memoryUsage = stats.memory_stats.usage;
+                msg.memoryMaxUsage = stats.memory_stats.max_usage;
+                msg.limit = stats.memory_stats.limit;
             }
 
-            if (stats.networks) {
-                //TODO: modify message properties
+            if (stats.networks && stats.networks.eth0) {
+                msg.networkRx = stats.networks.eth0.rx_bytes;
+                msg.networkTx = stats.networks.eth0.tx_bytes;
             }
         }
         return msg;
