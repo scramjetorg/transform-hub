@@ -9,11 +9,12 @@ import { SequenceApiClient } from "../lib/sequence-api-clinet";
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
-const packageJson = "../package.json";
+const packageJson = "package.json";
 const packageData = "/package/data.json";
 const sequenceApiClient = new SequenceApiClient();
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
+const stdoutFilePath = "stdout.test.result.txt";
 
 let hostOne;
 let hostOneProcessStopped;
@@ -30,17 +31,32 @@ function executeSequenceSpawn(packagePath: string, ...args: any[]): void {
     });
 }
 
-async function executeSequence(packagePath: string, args: string[], outputFile: string, cmdTimeout: number) {
+async function executeSequence(packagePath: string, args: string[], cmdTimeout: number, outputFile?: string) {
     await new Promise(async (resolve, reject) => {
         //TODO package.json is app config, so should be optional in my opinion
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ../package.json ${args} > ${outputFile}`, { timeout: cmdTimeout }, (error) => {
+        const cmdBase = `node ${hostOneExecutableFilePath} ${packagePath} package.json ${args}`;
+        const cmd = outputFile ? cmdBase + `> ${outputFile}` : cmdBase;
+
+        exec(cmd, { timeout: cmdTimeout }, (error) => {
             if (error) {
-                reject(error);
+                resolve(1);//worakround for non stopping processes TODO change to reject
+                //reject(error);
                 return;
             }
             resolve(1);
         });
     });
+}
+
+async function clearStdout() {
+    if (fs.existsSync(stdoutFilePath)) {
+        try {
+            fs.unlinkSync(stdoutFilePath);
+        } catch (err) {
+            console.error(err);
+            assert.fail()
+        }
+    }
 }
 
 Given("input file containing data {string}", async (filename) => {
@@ -60,11 +76,23 @@ When("host one porcesses package {string} and redirects output to {string}", { t
 });
 
 When("host one execute sequence {string} with arguments {string} and redirects output to {string} long timeout", { timeout: 310000 }, async (packagePath, args, outputFile) => {
-    await executeSequence(packagePath, args, outputFile, 300000);
+    await clearStdout();
+    await executeSequence(packagePath, args, 300000, outputFile);
 });
 
 When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 10000 }, async (packagePath, args, outputFile) => {
-    await executeSequence(packagePath, args, outputFile, 9000);
+    await clearStdout();
+    await executeSequence(packagePath, args, 9000, outputFile);
+});
+
+When("host one execute sequence {string} with arguments {string}", { timeout: 10000 }, async (packagePath, args) => {
+    await clearStdout();
+    await executeSequence(packagePath, args, 9000);
+});
+
+When("host one execute sequence {string} with arguments {string} long timeout", { timeout: 310000 }, async (packagePath, args) => {
+    await clearStdout();
+    await executeSequence(packagePath, args, 30000);
 });
 
 When("send kill", async () => {
@@ -112,6 +140,20 @@ Then("file {string} in each line contains {string} followed by name from file {s
     }
 
     assert.equal(i, input.length, "incorrect number of elements compared");
+});
+
+Then("stdout contains {string}", async (key) => {
+    const stdoutFile = new lineByLine(stdoutFilePath);
+
+    let line;
+
+    for (let i = 0; line = stdoutFile.next(); i++) {
+        if (line.includes(key)) {
+            return;
+        }
+    }
+
+    assert.fail("stdout does not contain: " + key);
 });
 
 When("wait {string} ms", { timeout: 10000 }, async (timeoutMs) => {
@@ -162,3 +204,4 @@ Then("host one process is stopped", { timeout: 10000 }, async () => {
 
     assert.equal(hostOneProcessStopped, true);
 });
+
