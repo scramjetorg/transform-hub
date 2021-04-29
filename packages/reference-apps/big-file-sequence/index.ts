@@ -5,22 +5,20 @@ import { createGunzip } from "zlib";
 
 const exp = [
     /**
-     * @param _stream - dummy input
-     * @param url - url of file to get
+     * @param _stream - input
+     * @param _url - url of file to get
      * @returns data
      */
-    function(_stream: any, url: string) {
-        //https://repo.int.scp.ovh/repository/scp-store/small-file.json.gz
-        console.log("--------sequence url TODELETE: ", url);
-
-        return new Promise((resolve) => get(url, response => {
+    function(_stream: any, _url: string) {
+        return new Promise((resolve) => get(_url, response => {
             const stream = response
                 .pipe(createGunzip())
                 .pipe(new StringStream("utf-8"))
                 .lines();
 
             resolve(stream);
-            stream.on("finish", function () {
+
+            stream.on("finish", function() {
                 console.log("done");
             });
         }));
@@ -31,7 +29,7 @@ const exp = [
 
         for await (const str of stream) {
             for (let i = 0; i < str.length; i++) {
-                if (str.charAt(i) == "a") {
+                if (str.charAt(i) === "a") {
                     letterCount += 1;
                 }
             }
