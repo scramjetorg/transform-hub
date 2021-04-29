@@ -20,17 +20,24 @@ const exp = [
                 .lines();
 
             resolve(stream);
-            stream.on("finish", function() {
+            stream.on("finish", function () {
                 console.log("done");
             });
         }));
     },
 
     async function(stream: any) {
-        // for await (const y of stream) {
-        //     console.log(y);
-        // }
-        return stream;
+        let letterCount = 0;
+
+        for await (const str of stream) {
+            for (let i = 0; i < str.length; i++) {
+                if (str.charAt(i) == "a") {
+                    letterCount += 1;
+                }
+            }
+        }
+
+        return StringStream.from(letterCount.toString());
     }
 ];
 
