@@ -8,7 +8,7 @@ Feature: Monitoring e2e tests
         Then response body is "{\"healthy\":true}"
         And host one process is stopped
 
-    Scenario: E2E-003 TC-002 Get monitoring from sequence where new handler method is added and returning: healthy false
+    Scenario: E2E-005 TC-002 Get monitoring from sequence where new handler method is added and returning: healthy false
         Given host one execute sequence in background "../packages/reference-apps/unhealthy-sequence.tar.gz"
         And host one process is working
         And wait "3000" ms

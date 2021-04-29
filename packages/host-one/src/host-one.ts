@@ -162,7 +162,8 @@ export class HostOne implements IComponent {
 
         // log stream
         this.api.upstream(`${apiBase}/stream/log`, () => {
-            if (this.logHistory) return this.logHistory.rewind();
+            if (this.logHistory) return this.logHistory;
+            // if (this.logHistory) return this.logHistory.rewind();
 
             throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
         });

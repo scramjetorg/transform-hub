@@ -24,7 +24,7 @@ const exp = [
         }));
     },
 
-    async function(stream: any) {
+    async (stream: any) => {
         let letterCount = 0;
 
         for await (const str of stream) {
@@ -35,7 +35,7 @@ const exp = [
             }
         }
 
-        return StringStream.from(letterCount.toString());
+        return letterCount.toString();
     }
 ];
 

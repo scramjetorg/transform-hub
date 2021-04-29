@@ -66,7 +66,6 @@ async function clearStdout() {
     }
 }
 
-
 async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
     const output = new lineByLine(`${file1}`);
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
@@ -84,6 +83,19 @@ async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
     }
 
     assert.equal(i, input.length, "incorrect number of elements compared");
+}
+
+async function getStdout() {
+    const expectedHttpCode = 200;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
+
+    do {
+        actualResponse = await sequenceApiClient.getStdout();
+        await new Promise(res => setTimeout(res, timeout));
+    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
+
+    assert.equal(actualResponse.status, expectedHttpCode);
 }
 
 Given("input file containing data {string}", async (filename) => {
@@ -112,6 +124,12 @@ When("host one execute sequence {string} with arguments {string} and redirects o
     await executeSequence(packagePath, args, 9000, outputFile);
 });
 
+When("save response data to file {string}", { timeout: 10000 }, async (outputFile) => {
+    await fs.writeFile(outputFile, actualResponse.data, function(err) {
+        if (err) return console.log(err);
+    });
+});
+
 When("host one execute sequence {string} with arguments {string}", { timeout: 10000 }, async (packagePath, args) => {
     await clearStdout();
     await executeSequence(packagePath, args, 9000);
@@ -136,17 +154,12 @@ When("host one execute sequence in background {string} with arguments {string}",
     executeSequenceSpawn(packagePath, [configJson].concat(args.split(" ")));
 });
 
+When("get stdout stream long timeout", { timeout: 60000 }, async () => {
+    await getStdout();
+});
+
 When("get stdout stream", { timeout: 30000 }, async () => {
-    const expectedHttpCode = 200;
-    const startTime: number = Date.now();
-    const timeout: number = timeoutLongMs;
-
-    do {
-        actualResponse = await sequenceApiClient.getStdout();
-        await new Promise(res => setTimeout(res, timeout));
-    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
-
-    assert.equal(actualResponse.status, expectedHttpCode);
+    await getStdout();
 });
 
 When("get sequence health", async () => {
@@ -169,12 +182,12 @@ Then("file {string} in each line contains {string} followed by name from file {s
 
 Then("response in each line contains {string} followed by name from file {string} finished by {string}", async (greeting, file2, suffix) => {
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
-    const lines:string[] = actualResponse.data.split("\n");
+    const lines: string[] = actualResponse.data.split("\n");
 
     let i;
 
     for (i = 0; i < input.length; i++) {
-        const line1:string = input[i].name;
+        const line1: string = input[i].name;
 
         assert.deepEqual(greeting + line1 + suffix, lines[i]);
     }
@@ -244,4 +257,3 @@ Then("host one process is stopped", { timeout: 10000 }, async () => {
 
     assert.equal(hostOneProcessStopped, true);
 });
-
