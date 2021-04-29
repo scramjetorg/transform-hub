@@ -275,8 +275,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         await this.cleanup();
         this.logger.log("Kill request handled, exiting...");
 
-        this.logger.log("Kill request handled, exiting...");
-
         process.exit(137);
     }
 
