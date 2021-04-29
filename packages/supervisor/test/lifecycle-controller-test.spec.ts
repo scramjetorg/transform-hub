@@ -27,6 +27,7 @@ class LCDA implements ILifeCycleAdapter {
     run = sinon.stub()
     cleanup = sinon.stub()
     hookCommunicationHandler = sinon.stub()
+    stats = sinon.stub()
 }
 
 const stream = new Readable();
