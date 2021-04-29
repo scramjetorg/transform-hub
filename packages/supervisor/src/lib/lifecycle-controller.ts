@@ -260,7 +260,12 @@ class LifeCycleController implements IComponent {
         */
         await this.lifecycleAdapter.cleanup();
 
-        this.logger.info("Cleanup done (normal execution)");
+        console.info("Cleanup done (normal execution)");
+
+        // TODO: investigate why process does not exits without above.
+        setTimeout(() => {
+            process.exit(0);
+        }, 100).unref();
     }
 
     // TODO: move to HostOne

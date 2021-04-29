@@ -74,8 +74,8 @@ export class HostOne implements IComponent {
             .lines()
             .do((m) => this.logger.log("Received data on OUTPUT stream:", m));
 
-        this.logger.log("Sending test data on input stream...");
-        this.input.write("------------- TEST INPUT DATA");
+        //this.logger.log("Sending test data on input stream...");
+        //this.input.write("------------- TEST INPUT DATA");
 
         //this.vorpal = new vorpal();
         //this.controlStreamsCliHandler();

@@ -268,7 +268,9 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                 const { statusCode } = await this.dockerHelper.wait(containerId);
 
                 this.logger.debug("Container exited");
-                resolve(statusCode);
+                setTimeout(() => {
+                    resolve(statusCode);
+                }, 100);
             } catch (error) {
                 if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
                     this.logger.debug("Container retunrned non-zero status code", error.data.statusCode);
