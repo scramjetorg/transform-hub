@@ -7,6 +7,9 @@ import { AppConfig } from "@scramjet/types";
 const sequencePath: string = "/package/" + process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const fifosPath: string = process.env.FIFOS_DIR || "";
 
+process.on("beforeExit", () => console.error(new Date().toISOString(), "AAA! beforeExit", process.exitCode));
+process.on("exit", (arg) => console.error(new Date().toISOString(), "AAA! exit", arg));
+
 if (!fs.existsSync(fifosPath)) {
     console.error("Incorrect run argument: fifo path (" + fifosPath + ") does not exists. ");
     process.exit(1);

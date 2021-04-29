@@ -4,7 +4,7 @@ import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, 
 import { Readable } from "stream";
 
 const didTimeout = Symbol.for("supervisor:did-timeout");
-const stopTimeout = 15000; // where to config this?
+const stopTimeout = 7000; // where to config this?
 const noop = () => undefined;
 const defer = (timeout: number): Promise<typeof didTimeout> =>
     new Promise(res => setTimeout(() => res(didTimeout), timeout));
@@ -265,11 +265,29 @@ class LifeCycleController implements IComponent {
 
     // TODO: move to HostOne
     async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
-        this.logger.log("Got sequence end message. Sequence Completed.");
+        this.logger.log("Got message: SEQUENCE_COMPLETED.");
 
+        //await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+        //await this.lifecycleAdapter.remove();
+
+        setTimeout(() => {
+            // /process.exit(0);
+        }, 5);
+
+
+        // TODO: we are ready to ask Runner to exit.
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
-        await this.lifecycleAdapter.remove();
-        process.exit(-2);
+
+        try {
+            await promiseTimeout(this.endOfSequence, stopTimeout);
+            this.logger.log("Sequence terminated itself.");
+        } catch {
+            await this.lifecycleAdapter.remove();
+        }
+
+        setTimeout(() => {
+            process.exit();
+        }, 50);
 
         return message;
     }
@@ -292,7 +310,9 @@ class LifeCycleController implements IComponent {
             }
         }
 
-        process.exit(-2);
+        setTimeout(() => {
+            process.exit(253);
+        }, 100);
         return message;
     }
 

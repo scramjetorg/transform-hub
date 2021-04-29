@@ -117,7 +117,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async cleanup(): Promise<void> {
         return new Promise(async (resolve) => {
-            this.logger.info("Cleaning up streams...");
+            this.logger.info("Cleaning up...");
 
             if (this.monitoringInterval) {
                 clearInterval(this.monitoringInterval);
@@ -126,9 +126,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             await new Promise(async (res) => {
                 try {
-                    this.logger.info("CLEANUP: cleaning up streams...");
+                    this.logger.info("Cleaning up streams...");
                     await this.cleanupStreams();
-                    this.logger.info("All streams cleaned!");
+                    this.logger.info("Streams clear.");
                     res(0);
                 } catch (e) {
                     this.logger.error("Not clear, error", e);
@@ -141,9 +141,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             //await this.cleanupStream(this.loggerStream, this.loggerFifoPath);
             //console.info("Logger stream cleaned up...");
             this.logger.info("Clean up completed!");
-
-            process.on("beforeExit", () => console.error(new Date().toISOString(), "AAA! beforeExit", process.exitCode));
-            process.on("exit", (arg) => console.error(new Date().toISOString(), "AAA! exit", arg));
 
             // process.exit(244);
             resolve();
@@ -271,11 +268,15 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async handleKillRequest(): Promise<void> {
+        this.logger.log("Handling KILL request...");
+
         this.context?.killHandler();
         await this.cleanup();
-        this.logger.log("Kill request handled, exiting...");
 
-        process.exit(137);
+        this.logger.log("Exiting ...");
+        setTimeout(() => {
+            process.exit(137);
+        }, 10);
     }
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
@@ -424,8 +425,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             process.exit(21);
         }
 
-        this.logger.log(`Sequence loaded, length: ${sequence.length}.`);
-
         /**
          * @analyze-how-to-pass-in-out-streams
          * Output stream will be returned from the Sequence:
@@ -485,18 +484,20 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        this.logger.info("Piping seq out if exist.");
-
         if (stream && this.outputStream) {
             this.logger.info(`Piping sequence output (type ${typeof stream})`);
             stream
+                .once("end", () => {
+                    this.logger.info("Seqeuence stream ended");
+                    this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
+
+                })
                 .pipe(this.outputStream)
-                .once("end", () => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]))
+
             ;
         } else {
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
         }
-
     }
 
     handleSequenceEvents() {

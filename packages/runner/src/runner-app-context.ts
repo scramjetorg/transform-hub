@@ -117,7 +117,7 @@ implements AppContext<AppConfigType, State> {
     }
 
     end(): this {
-        this.runner.sendComplete();
+        this.runner.sendStop();
         return this;
     }
 
