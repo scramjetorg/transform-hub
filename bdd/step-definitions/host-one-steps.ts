@@ -6,11 +6,13 @@ import { strict as assert } from "assert";
 import { exec, spawn } from "child_process";
 import * as fs from "fs";
 import { SequenceApiClient } from "../lib/sequence-api-clinet";
+import { StringStream } from "scramjet";
+import { stdout } from "process";
 
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
-const packageJson = "package.json";
+const configJson = "../package.json";
 const packageData = "/package/data.json";
 const sequenceApiClient = new SequenceApiClient();
 const timeoutShortMs = 100;
@@ -21,11 +23,15 @@ let hostOne;
 let hostOneProcessStopped;
 let actualResponse;
 
-function executeSequenceSpawn(packagePath: string, ...args: any[]): void {
-    const command: string[] = ["node", hostOneExecutableFilePath, packagePath, ...args];
+function executeSequenceSpawn(packagePath: string, args?: string[]): void {
+    let command: string[] = ["node", hostOneExecutableFilePath, packagePath];
+
+    command = command.concat(args);
 
     hostOne = spawn("/usr/bin/env", command);
     hostOneProcessStopped = false;
+    StringStream.from(hostOne.stdout).pipe(stdout);
+
     hostOne.on("exit", (code, signal) => {
         console.log("sequence process exited with code: ", code, " and signal: ", signal);
         hostOneProcessStopped = true;
@@ -60,13 +66,33 @@ async function clearStdout() {
     }
 }
 
+
+async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
+    const output = new lineByLine(`${file1}`);
+    const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
+
+    let line1;
+    let line2;
+    let i = 0;
+
+    // output.next();//skip first line with "Checking data"
+    // output.next();//skip second line with "[HostOne][Server] Started at /tmp/2903117"
+
+    for (i = 0; i < input.length && (line2 = output.next()); i++) {
+        line1 = input[i].name;
+        assert.deepEqual(greeting + line1 + suffix, "" + line2);
+    }
+
+    assert.equal(i, input.length, "incorrect number of elements compared");
+}
+
 Given("input file containing data {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
 });
 
 When("host one porcesses package {string} and redirects output to {string}", { timeout: 20000 }, async (packagePath, outputFile) => {
     await new Promise(async (resolve, reject) => {
-        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${packageJson} ${packageData} output.txt > ${outputFile}`, { timeout: 20000 }, (error) => {
+        exec(`node ${hostOneExecutableFilePath} ${packagePath} ${configJson} ${packageData} output.txt > ${outputFile}`, { timeout: 20000 }, (error) => {
             if (error) {
                 reject(error);
                 return;
@@ -103,11 +129,24 @@ When("send kill", async () => {
 });
 
 When("host one execute sequence in background {string}", { timeout: 20000 }, async (packagePath) => {
-    executeSequenceSpawn(packagePath, packageJson);
+    executeSequenceSpawn(packagePath, [configJson]);
 });
 
 When("host one execute sequence in background {string} with arguments {string}", { timeout: 20000 }, async (packagePath, args) => {
-    executeSequenceSpawn(packagePath, packageJson, args.split(" "));
+    executeSequenceSpawn(packagePath, [configJson].concat(args.split(" ")));
+});
+
+When("get stdout stream", { timeout: 30000 }, async () => {
+    const expectedHttpCode = 200;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
+
+    do {
+        actualResponse = await sequenceApiClient.getStdout();
+        await new Promise(res => setTimeout(res, timeout));
+    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
+
+    assert.equal(actualResponse.status, expectedHttpCode);
 });
 
 When("get sequence health", async () => {
@@ -125,19 +164,19 @@ Then("file {string} is generated", async (filename) => {
 });
 
 Then("file {string} in each line contains {string} followed by name from file {string} finished by {string}", async (file1, greeting, file2, suffix) => {
-    const output = new lineByLine(`${file1}`);
+    await file1ContainsLinesFromFile2(file1, greeting, file2, suffix);
+});
+
+Then("response in each line contains {string} followed by name from file {string} finished by {string}", async (greeting, file2, suffix) => {
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
+    const lines:string[] = actualResponse.data.split("\n");
 
-    let line1;
-    let line2;
-    let i = 0;
+    let i;
 
-    output.next();//skip first line with "Checking data"
-    output.next();//skip second line with "[HostOne][Server] Started at /tmp/2903117"
+    for (i = 0; i < input.length; i++) {
+        const line1:string = input[i].name;
 
-    for (i = 0; i < input.length && (line2 = output.next()); i++) {
-        line1 = input[i].name;
-        assert.deepEqual(greeting + line1 + suffix, "" + line2);
+        assert.deepEqual(greeting + line1 + suffix, lines[i]);
     }
 
     assert.equal(i, input.length, "incorrect number of elements compared");
@@ -157,7 +196,7 @@ Then("stdout contains {string}", async (key) => {
     assert.fail("stdout does not contain: " + key);
 });
 
-When("wait {string} ms", { timeout: 10000 }, async (timeoutMs) => {
+When("wait {string} ms", { timeout: 20000 }, async (timeoutMs) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
