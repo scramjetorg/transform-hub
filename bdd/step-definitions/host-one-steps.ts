@@ -1,4 +1,5 @@
 /* eslint-disable no-loop-func */
+/* eslint-disable no-cond-assign  */
 import { Given, When, Then } from "@cucumber/cucumber";
 import { promisify } from "util";
 import { strict as assert } from "assert";
@@ -32,7 +33,7 @@ function executeSequenceSpawn(packagePath: string, ...args: any[]): void {
 }
 
 async function executeSequence(packagePath: string, args: string[], cmdTimeout: number, outputFile?: string) {
-    await new Promise(async (resolve, reject) => {
+    await new Promise(async (resolve) => {
         //TODO package.json is app config, so should be optional in my opinion
         const cmdBase = `node ${hostOneExecutableFilePath} ${packagePath} package.json ${args}`;
         const cmd = outputFile ? cmdBase + `> ${outputFile}` : cmdBase;
@@ -54,7 +55,7 @@ async function clearStdout() {
             fs.unlinkSync(stdoutFilePath);
         } catch (err) {
             console.error(err);
-            assert.fail()
+            assert.fail();
         }
     }
 }
@@ -147,7 +148,7 @@ Then("stdout contains {string}", async (key) => {
 
     let line;
 
-    for (let i = 0; line = stdoutFile.next(); i++) {
+    while (line = stdoutFile.next()) {
         if (line.includes(key)) {
             return;
         }
