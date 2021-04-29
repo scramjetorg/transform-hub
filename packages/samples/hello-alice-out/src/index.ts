@@ -1,6 +1,5 @@
 import { InertApp } from "@scramjet/types";
 
-
 const scramjet = require("scramjet");
 const JSONStream = require("JSONStream");
 const fs = require("fs");
@@ -25,7 +24,7 @@ const mod: InertApp = function(input, ffrom) {
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())
         .setOptions({ maxParallel: 1 })
-        //.do(() => new Promise(res => setTimeout(res, 1500)))
+        .do(() => new Promise(res => setTimeout(res, 1500)))
         .map(
             (names: Person) => {
                 return `Hello ${names.name}! \n`;

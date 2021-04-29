@@ -131,33 +131,23 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.logger.info("Streams clear.");
                     res(0);
                 } catch (e) {
-                    this.logger.error("Not clear, error", e);
+                    this.logger.error("Streams not clear, error", e);
                     res(233);
                 }
             });
 
-            //console.info("Cleaning up logger stream...");
-
-            //await this.cleanupStream(this.loggerStream, this.loggerFifoPath);
-            //console.info("Logger stream cleaned up...");
             this.logger.info("Clean up completed!");
 
-            // process.exit(244);
             resolve();
         });
     }
 
     async cleanupStreams(): Promise<any> {
-        this.logger.info("Cleaning up streams");
-        //return Promise.resolve;
         return Promise.all([
             this.cleanupStream(this.controlStream, this.controlFifoPath),
-            // this.cleanupStream(this.monitorStream, this.monitorFifoPath),
             this.cleanupStream(this.inputStream, this.inputFifoPath)
-            //this.cleanupStream(this.outputStream, this.outputFifoPath)
         ]);
     }
-
 
     private async execCommand(cmd: string) {
         return new Promise((resolve, reject) => {
@@ -174,7 +164,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
         });
     }
-
 
     private async cleanupStream(stream: ReadableStream<any> | WritableStream<any> | undefined, fifo: string) {
         if (stream) {
@@ -334,7 +323,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
     }
 
-
     // TODO: this should be the foll class logic
     /**
      * Initialization of runner class.
@@ -393,7 +381,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
-
 
     /**
      * run sequence
@@ -502,7 +489,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     handleSequenceEvents() {
         this.emitter.on("error", (e) => {
-            this.logger.error(e);
+            this.logger.error("Sequence emitted an error event", e);
         });
     }
     // private isPipeableStream<T extends any = any>(out: SynchronousStreamable<T>): out is PipeableStream<T> {

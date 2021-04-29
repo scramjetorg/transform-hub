@@ -73,6 +73,7 @@ const hostOne: HostOne = new HostOne();
      */
     await hostOne.init(packageStream, appConfig, sequenceArgs);
     await hostOne.main();
+
 })().catch(e => {
     console.error(e.stack);
     process.exitCode = e.exitCode || 1;
