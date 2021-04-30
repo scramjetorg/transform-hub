@@ -36,6 +36,7 @@ export interface ILifeCycleAdapter {
 
     monitorRate(rps: number): this;
 
+    // THIS is forefull removal - let's think about refactor.
     remove(): MaybePromise<void>;
 }
 

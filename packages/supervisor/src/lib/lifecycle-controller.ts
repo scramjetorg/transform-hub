@@ -272,15 +272,9 @@ class LifeCycleController implements IComponent {
     async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
         this.logger.log("Got message: SEQUENCE_COMPLETED.");
 
-        //await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
-        //await this.lifecycleAdapter.remove();
-
-        setTimeout(() => {
-            // /process.exit(0);
-        }, 5);
-
-
         // TODO: we are ready to ask Runner to exit.
+        // TODO: this needs to send a STOP request with canKeepAlive and timeout.
+        //       host would get those in `create` request.
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
 
         try {
@@ -291,12 +285,14 @@ class LifeCycleController implements IComponent {
         }
 
         setTimeout(() => {
+            // TODO: this should not exit, but instread allow LCC::main to continue.
             process.exit();
         }, 50);
 
         return message;
     }
 
+    // TODO: move this to Host like handleSequenceCompleted.
     async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {
         this.logger.log("Got sequence end message, sending kill");
 
@@ -321,6 +317,7 @@ class LifeCycleController implements IComponent {
         return message;
     }
 
+    // TODO: move this to host (it's needed for both Stop and Complete signals)
     handleKeepAliveCommand(message: EncodedMessage<RunnerMessageCode.ALIVE>) {
         this.logger.log("Got keep-alive message from sequence");
         this.keepAliveRequested = true;
@@ -342,6 +339,8 @@ class LifeCycleController implements IComponent {
     }
 
     // TODO: if we can keep alive we should not hold this promise unresolved
+    // TODO: we need some safeExec method for asynchronous handling of such cases
+    //       an error here should send an "error" event, but not block the channel
     private async handleStop(message: EncodedMessage<RunnerMessageCode.STOP>):
         Promise<EncodedMessage<RunnerMessageCode.STOP>> {
         const [, { timeout }] = message;

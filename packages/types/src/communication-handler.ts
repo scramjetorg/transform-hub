@@ -15,6 +15,7 @@ export interface ICommunicationHandler {
     hookDownstreamStreams(str: DownstreamStreamsConfig): this;
 
     addMonitoringHandler<T extends MonitoringMessageCode>(code: T, handler: MonitoringMessageHandler<T>): this;
+    // TODO: we need non-mutating handlers (addControlListener)
     addControlHandler<T extends ControlMessageCode>(code: T, handler: ControlMessageHandler<T>): this;
 
     pipeMessageStreams(): this;

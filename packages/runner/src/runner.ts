@@ -153,8 +153,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private async cleanupStream(stream: ReadableStream<any> | WritableStream<any> | undefined, fifo: string) {
         if (stream) {
-            if ((stream as WritableStream<any>)?.writable) {
-                (stream as WritableStream<any>)?.end();
+            if ("writable" in stream) {
+                stream.end();
             } else {
                 stream.destroy();
             }
