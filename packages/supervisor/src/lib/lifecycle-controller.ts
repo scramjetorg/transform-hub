@@ -263,9 +263,7 @@ class LifeCycleController implements IComponent {
         console.info("Cleanup done (normal execution)");
 
         // TODO: investigate why process does not exits without above.
-        setTimeout(() => {
-            process.exit(0);
-        }, 100).unref();
+        this.scheduleExit(0, 50);
     }
 
     // TODO: move to HostOne
@@ -284,12 +282,20 @@ class LifeCycleController implements IComponent {
             await this.lifecycleAdapter.remove();
         }
 
-        setTimeout(() => {
-            // TODO: this should not exit, but instread allow LCC::main to continue.
-            process.exit();
-        }, 50);
+        this.scheduleExit(252);
 
         return message;
+    }
+
+    // WARNING: running this method is final - fire and forget... I hope you know what you're doing.
+    scheduleExit(exitCode?: number, timeout: number = 100) {
+        // TODO: consider if this needs to be done multple times
+        setTimeout(() => {
+            // TODO: this should not exit, but instead allow LCC::main to continue.
+            // This should not be treated as a "good" outcome.
+            if (typeof exitCode !== "undefined") process.exitCode = exitCode;
+            process.exit();
+        }, timeout).unref(); // Q: should this be configurable?
     }
 
     // TODO: move this to Host like handleSequenceCompleted.
@@ -311,9 +317,7 @@ class LifeCycleController implements IComponent {
             }
         }
 
-        setTimeout(() => {
-            process.exit(253);
-        }, 100);
+        this.scheduleExit(253);
         return message;
     }
 
