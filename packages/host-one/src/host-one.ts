@@ -88,21 +88,19 @@ export class HostOne implements IComponent {
 
         this.controlDownstream = new PassThrough();
         this.controlDataStream = new DataStream();
-        /*
-        this.logHistory = new StringStream("utf-8")
-            .keep(1000); // TODO: config
 
-        this.logHistory.pipe(process.stdout);
-*/
+        // TODO: multihost would send stdio only to API
+        // TODO: log stream should not pass the sequence logs to stderr here, but only to API
+        //       however the rest should go there.
         this.upStreams = [
-            process.stdin,
-            process.stdout,
-            process.stderr,
-            this.controlDownstream, //control
+            process.stdin, // this should be e2e encrypted
+            process.stdout, // this should be e2e encrypted
+            process.stderr, // this should be e2e encrypted
+            this.controlDownstream, // control
             process.stdout, // monitor
-            this.input,
-            this.output,
-            new PassThrough(),
+            this.input, // this should be e2e encrypted
+            this.output, // this should be e2e encrypted
+            new PassThrough(), // this should be e2e encrypted (LOG FILE)
             this.packageDownStream
         ];
 
@@ -113,9 +111,6 @@ export class HostOne implements IComponent {
             .pipe(this.controlDownstream);
 
         this.communicationHandler.hookUpstreamStreams(this.upStreams);
-
-        //this.vorpal = new vorpal();
-        //this.controlStreamsCliHandler();
     }
 
     hookLogStream() {
@@ -172,6 +167,7 @@ export class HostOne implements IComponent {
             throw new CeroError("ERR_NOT_CURRENTLY_AVAILABLE");
         });
 
+        // TODO: these streams should be accessible as merged (${apibase}/stream/input+output)
         // input and output
         this.api.upstream(`${apiBase}/stream/output`, this.output); // TODO: Config
         this.api.downstream(`${apiBase}/stream/input`, this.input); // TODO: Config
@@ -193,7 +189,7 @@ export class HostOne implements IComponent {
     }
 
     async awaitConnection() {
-        // TODO, timeout
+        // TODO: We should wait some time, but when runner doesn't connect we need to alert
         const streams: DownstreamStreamsConfig = await new Promise((res) => {
             if (!this.netServer) throw new Error("Server not initialized");
             this.netServer.once("connect", res);
@@ -234,6 +230,7 @@ export class HostOne implements IComponent {
     }
 
     async stop(timeout: number, canCallKeepalive: boolean) {
+        // TODO: we need to get rid of those question marks
         await this.controlDataStream?.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
     }
 
@@ -241,6 +238,7 @@ export class HostOne implements IComponent {
         await this.controlDataStream?.whenWrote([RunnerMessageCode.KILL, {}]);
     }
 
+    // TODO: move this to tests or however we see it...
     controlStreamsCliHandler() {
         this.vorpal
             .command("alive", "Confirm that sequence is alive when it is not responding")

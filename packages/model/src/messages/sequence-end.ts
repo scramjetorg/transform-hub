@@ -6,7 +6,8 @@ export type SequenceEndMessageData = {
 }
 
 /**
- * Message from the Runner indicating that the sequence has completed sending it's data
- * and now can be asked to exit with high probability of accepting the exit gracefully.
+ * Message from the Runner indicating that the sequence has called the end method
+ * on context and it should be safe to terminate it without additional waiting,
+ * unless it exits correctly itself.
  */
 export type SequenceEndMessage = { msgCode: RunnerMessageCode.SEQUENCE_COMPLETED } & SequenceEndMessageData;

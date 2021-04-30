@@ -42,21 +42,22 @@ test("Get works on empty response", async t => {
     t.is(response.statusCode, 204, "No content");
 });
 
-test("Get works on when we have content", async t => {
-    api.get("/api/get", RunnerMessageCode.MONITORING, comm);
-
+// TODO: this test fails.
+test("Get works when we have content", async t => {
     const { request, response } = mockRequestResponse("GET", "/api/get");
 
+    api.get("/api/get", RunnerMessageCode.MONITORING, comm);
+
     await Promise.all([
-        new Promise(process.nextTick), // TODO: why this is needed?
+        new Promise(res => setTimeout(res, 100)),
         comm.sendMonitoringMessage(RunnerMessageCode.MONITORING, { healthy: true })
     ]);
     server.request(request, response);
 
     const fullBody = await response.fullBody;
 
-    t.is(fullBody, "{\"healthy\":true}", "Data retrieved");
     t.is(response.statusCode, 200, "Has content");
+    t.is(fullBody, "{\"healthy\":true}", "Data retrieved");
 });
 
 test("Op fails with bad and works with good content type", async t => {
