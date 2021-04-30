@@ -227,7 +227,7 @@ class LifeCycleController implements IComponent {
             await this.client.disconnect();
             this.logger.log("Client disconnected");
         } catch (error) {
-            this.logger.error("Error caughts", error.stack);
+            this.logger.error("Error caught", error.stack);
 
             /**
             * Container snapshot is made if it was requested in LifeCycleConfig
@@ -250,7 +250,10 @@ class LifeCycleController implements IComponent {
 
             this.logger.error("Cleanup done (post error)");
 
-            throw error;
+            await this.client.disconnect();
+
+            this.scheduleExit(251, 50);
+            return;
         }
 
         /**
@@ -263,7 +266,7 @@ class LifeCycleController implements IComponent {
         this.logger.info("Cleanup done (normal execution)");
 
         // TODO: investigate why process does not exits without above.
-        this.scheduleExit(0, 50);
+        this.scheduleExit(undefined, 50);
     }
 
     // TODO: move to HostOne
@@ -280,9 +283,9 @@ class LifeCycleController implements IComponent {
             this.logger.log("Sequence terminated itself.");
         } catch {
             await this.lifecycleAdapter.remove();
+            process.exitCode = 252;
         }
 
-        this.scheduleExit(252);
 
         return message;
     }
@@ -314,10 +317,10 @@ class LifeCycleController implements IComponent {
             } catch {
                 this.logger.error("Sequence unresponsive, killing container...");
                 await this.lifecycleAdapter.remove();
+                process.exitCode = 253;
             }
         }
 
-        this.scheduleExit(253);
         return message;
     }
 

@@ -269,7 +269,10 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
                 this.logger.debug("Container exited");
                 setTimeout(() => {
-                    resolve(statusCode);
+                    if (statusCode > 0)
+                        reject(new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode }));
+                    else
+                        resolve(0);
                 }, 100);
             } catch (error) {
                 if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {

@@ -32,6 +32,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     private sequencePath: string;
     private keepAliveRequested?: boolean;
 
+    private stopExpected: boolean = false;
+
     logger: Logger;
 
     constructor(sequencePath: string, fifosPath: string) {
@@ -249,7 +251,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         //TODO: investigate why we need to wait (process.tick - no all logs)
         setTimeout(() => {
-            process.exit(137);
+            if (!this.stopExpected) process.exitCode = 137;
+            process.exit();
         }, 0);
     }
 
@@ -348,7 +351,10 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
-            sendStop: (err?: Error) => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]),
+            sendStop: (err?: Error) => {
+                this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]);
+                this.stopExpected = true;
+            },
             sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
             sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])
         };
@@ -502,12 +508,14 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.logger.info("Seqeuence stream ended");
 
                     this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
+                    this.stopExpected = true;
 
                 })
                 .pipe(this.outputStream);
         } else {
             //TODO: for sure?
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
+            this.stopExpected = true;
         }
     }
 
