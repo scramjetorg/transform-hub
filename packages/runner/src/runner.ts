@@ -15,23 +15,6 @@ import { exec } from "child_process";
 
 type MaybeArray<T> = T | T[];
 
-// const unrefStream = (stream: Readable, _opts?: TransformOptions) => {
-//     const out = stream.pipe(new PassThrough(_opts));
-
-//     setInterval(() => {
-//         stream.unpipe(out);
-//         console.error(new Date().toISOString(), "Unpiped");
-//         setTimeout(() => {
-//             console.error(new Date().toISOString(), "Repiped");
-//             stream.pipe(out);
-//         }, 1)
-//             .unref();
-//     }, 500) // todo configure interval?
-//         .unref();
-//     return out;
-//     // return stream;
-// };
-
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private context?: RunnerAppContext<X, any>;
@@ -131,7 +114,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.logger.info("Streams clear.");
                     res(0);
                 } catch (e) {
-                    this.logger.error("Streams not clear, error", e);
+                    this.logger.error("Streams not clear, error.", e);
                     res(233);
                 }
             });
@@ -151,7 +134,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private async execCommand(cmd: string) {
         return new Promise((resolve, reject) => {
-            this.logger.log("Command [start]", JSON.stringify(cmd));
+            this.logger.log("Command [ start ]", JSON.stringify(cmd));
 
             exec(cmd, (error) => {
                 if (error) {
@@ -174,7 +157,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
         }
 
-        await this.execCommand(`echo "\n" > "${fifo}"`); // TODO: Shell escape
+        await this.execCommand(`echo "" > "${fifo}"`); // TODO: Shell escape
     }
 
     async hookupMonitorStream() {
@@ -187,19 +170,14 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async hookupInputStream() {
         this.inputStream = createReadStream(this.inputFifoPath);
-        this.inputDataStream = StringStream
+        this.inputDataStream = DataStream
             .from(this.inputStream as Readable)
-        // .JSONParse()
             .do(inputMsg => {
-                this.logger.log("input message", inputMsg);
-            })
-        ;
+                this.logger.log("Input message", inputMsg);
+            });
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.inputDataStream.run();
-        //this.logger.log("await for input data stream");
-        //await this.inputDataStream.run();
-        //this.logger.log(" input data stream awaited");
     }
 
     async hookupOutputStream() {
@@ -244,6 +222,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.error("No monitoring stream.");
             throw new RunnerError("NO_MONITORING");
         }
+
         this.monitoringInterval = setInterval(async () => {
             if (working) return;
 
@@ -252,7 +231,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.monitorStream);
             working = false;
-
         }, 1000 / data.monitoringRate).unref();
     }
 
@@ -263,9 +241,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         await this.cleanup();
 
         this.logger.log("Exiting ...");
+
+        //TODO: investigate why we need to wait (process.tick - no all logs)
         setTimeout(() => {
             process.exit(137);
-        }, 10);
+        }, 0);
     }
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
@@ -291,6 +271,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             MessageUtils.writeMessageOnStream(
                 [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream);
+
             //TODO add save, cleaning etc when implemented
         }
     }
@@ -313,13 +294,16 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.initAppContext(data.appConfig as X);
 
         try {
-
             await this.runSequence(data.arguments);
             this.logger.log("Sequence completed.");
         } catch (error) {
             this.logger.error("Error occured during sequence execution: ", error.stack);
             await this.cleanup();
-            process.exit(22);
+
+            //TODO: investigate why we need to wait
+            setTimeout(() => {
+                process.exit(20);
+            }, 0);
         }
     }
 
@@ -330,13 +314,13 @@ export class Runner<X extends AppConfig> implements IComponent {
      * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)
      */
     async main() {
-        this.logger.log("Runner main executed"); // TODO: this is not working!
+        this.logger.log("Executing main..."); // TODO: this is not working (no logger yet)
+
         await this.hookupFifoStreams();
         await this.initializeLogger();
+
         this.logger.log("Fifo and logger initialized, sending handshake...");
         this.sendHandshakeMessage();
-        // await this.handshakeReceived();
-        // await runSequence();
     }
 
     /**
@@ -354,7 +338,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
             sendStop: (err?: Error) => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]),
-            sendComplete: (err?: Error) => this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, { err }]),
             sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
             sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])
         };
@@ -396,7 +379,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         await this.handleMonitoringRequest({ monitoringRate:1 });
 
-        let sequence;
+        let sequence: any[] = [];
 
         try {
             sequence = this.getSequence();
@@ -408,8 +391,23 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("Sequence error:", error.stack);
             }
 
+            //TODO: investigate why we need to wait
             await this.cleanup();
-            process.exit(21);
+            setTimeout(() => {
+                process.exit(21);
+            }, 0);
+        }
+
+        if (!sequence.length) {
+            await this.cleanup();
+            this.logger.error("Empty sequence.");
+
+            //TODO: investigate why we need to wait
+            setTimeout(() => {
+                process.exit(22);
+            }, 0);
+
+            return;
         }
 
         /**
@@ -479,9 +477,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
 
                 })
-                .pipe(this.outputStream)
-
-            ;
+                .pipe(this.outputStream);
         } else {
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
         }
