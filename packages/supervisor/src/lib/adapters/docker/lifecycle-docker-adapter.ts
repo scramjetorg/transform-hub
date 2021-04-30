@@ -159,8 +159,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
             const cpuTotalUsage = stats.cpu_stats?.cpu_usage?.total_usage;
             const memoryUsage = stats.memory_stats?.usage;
-            const memoryMaxUsage = stats.memory_stats.max_usage;
-            const limit = stats.memory_stats.limit;
+            const memoryMaxUsage = stats.memory_stats?.max_usage;
+            const limit = stats.memory_stats?.limit;
             const networkRx = stats.networks?.eth0?.rx_bytes;
             const networkTx = stats.networks?.eth0?.tx_bytes;
             const healthy = msg.healthy;
