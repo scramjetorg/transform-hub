@@ -260,7 +260,7 @@ class LifeCycleController implements IComponent {
         */
         await this.lifecycleAdapter.cleanup();
 
-        console.info("Cleanup done (normal execution)");
+        this.logger.info("Cleanup done (normal execution)");
 
         // TODO: investigate why process does not exits without above.
         this.scheduleExit(0, 50);
