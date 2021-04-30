@@ -46,13 +46,11 @@ test("Run main", async (t: any) => {
 
 test("Kill runner", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
-    const processExit = sinon.stub(process, "exit");
     const cleanupStreams = sinon.stub(runner, "cleanupStreams");
 
     await runner.controlStreamHandler([RunnerMessageCode.KILL, {}]);
 
     t.is(cleanupStreams.callCount, 1);
-    t.is(processExit.callCount, 1);
 });
 
 test("Stop sequence", async (t: any) => {
