@@ -75,7 +75,7 @@ async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
     assert.equal(i, input.length, "incorrect number of elements compared");
 }
 
-const waitForValueTillTrue = async (valueToCheck:boolean, timeoutMs = 4000) => {
+const waitForValueTillTrue = async (valueToCheck: boolean, timeoutMs = 4000) => {
     const startTime: number = Date.now();
 
     while (valueToCheck && Date.now() - startTime < timeoutMs) {
@@ -118,12 +118,10 @@ When("host one porcesses package {string} and redirects output to {string}", { t
 });
 
 When("host one execute sequence {string} with arguments {string} and redirects output to {string} long timeout", { timeout: 310000 }, async (packagePath, args, outputFile) => {
-    await clearStdout();
     await executeSequence(packagePath, args, 300000, outputFile);
 });
 
 When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 10000 }, async (packagePath, args, outputFile) => {
-    await clearStdout();
     await executeSequence(packagePath, args, 9000, outputFile);
 });
 
@@ -134,12 +132,10 @@ When("save response data to file {string}", { timeout: 10000 }, async (outputFil
 });
 
 When("host one execute sequence {string} with arguments {string}", { timeout: 10000 }, async (packagePath, args) => {
-    await clearStdout();
     await executeSequence(packagePath, args, 9000);
 });
 
 When("host one execute sequence {string} with arguments {string} long timeout", { timeout: 310000 }, async (packagePath, args) => {
-    await clearStdout();
     await executeSequence(packagePath, args, 30000);
 });
 
@@ -198,10 +194,6 @@ Then("response in each line contains {string} followed by name from file {string
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-When("get output stream", async () => {
-    await getOutput();
-});
-
 When("get output stream long timeout", { timeout: 60000 }, async () => {
     await getOutput();
 });
@@ -243,16 +235,7 @@ When("send event {string} to sequence with message {string}", async (eventName, 
 });
 
 Then("get event from sequence", { timeout: 11000 }, async () => {
-    const expectedHttpCode = 200;
-    const startTime: number = Date.now();
-    const timeout: number = timeoutLongMs;
-
-    do {
-        actualResponse = await sequenceApiClient.getEvent();
-        await new Promise(res => setTimeout(res, timeout));
-    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
-
-    assert.equal(actualResponse.status, expectedHttpCode);
+    await callInLoopTillExpectedCode(sequenceApiClient.getEvent);
 });
 
 Then("host one process is working", async () => {
@@ -266,5 +249,3 @@ Then("host one process is stopped", { timeout: 10000 }, async () => {
 
     assert.equal(hostOneProcessStopped, true);
 });
-
-
