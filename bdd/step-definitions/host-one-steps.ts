@@ -41,31 +41,19 @@ function executeSequenceSpawn(packagePath: string, args?: string[]): void {
 }
 
 async function executeSequence(packagePath: string, args: string[], cmdTimeout: number, outputFile?: string) {
-    await new Promise(async (resolve) => {
+    await new Promise(async (resolve, reject) => {
         //TODO package.json is app config, so should be optional in my opinion
         const cmdBase = `node ${hostOneExecutableFilePath} ${packagePath} package.json ${args}`;
         const cmd = outputFile ? cmdBase + `> ${outputFile}` : cmdBase;
 
         exec(cmd, { timeout: cmdTimeout }, (error) => {
             if (error) {
-                resolve(1);//worakround for non stopping processes TODO change to reject
-                //reject(error);
+                reject(error);
                 return;
             }
             resolve(1);
         });
     });
-}
-
-async function clearStdout() {
-    if (fs.existsSync(stdoutFilePath)) {
-        try {
-            fs.unlinkSync(stdoutFilePath);
-        } catch (err) {
-            console.error(err);
-            assert.fail();
-        }
-    }
 }
 
 async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
@@ -87,33 +75,31 @@ async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
     assert.equal(i, input.length, "incorrect number of elements compared");
 }
 
-async function getStdout() {
-    const expectedHttpCode = 200;
+const waitForValueTillTrue = async (valueToCheck:boolean, timeoutMs = 4000) => {
+    const startTime: number = Date.now();
+
+    while (valueToCheck && Date.now() - startTime < timeoutMs) {
+        await new Promise(res => setTimeout(res, timeoutShortMs));
+    }
+};
+const callInLoopTillExpectedCode = async (fnToCall, expectedHttpCode: number = 200) => {
     const startTime: number = Date.now();
     const timeout: number = timeoutLongMs;
 
     do {
-        actualResponse = await sequenceApiClient.getStdout();
+        actualResponse = await fnToCall.call(sequenceApiClient);
         await new Promise(res => setTimeout(res, timeout));
     } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
 
     console.log("actualResponse: ", actualResponse);
     assert.equal(actualResponse.status, expectedHttpCode);
-}
-
-async function getOutput() {
-    const expectedHttpCode = 200;
-    const startTime: number = Date.now();
-    const timeout: number = timeoutLongMs;
-
-    do {
-        actualResponse = await sequenceApiClient.getOutput();
-        await new Promise(res => setTimeout(res, timeout));
-    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
-
-    console.log("actualResponse: ", actualResponse);
-    assert.equal(actualResponse.status, expectedHttpCode);
-}
+};
+const getStdout = async () => {
+    await callInLoopTillExpectedCode(sequenceApiClient.getStdout);
+};
+const getOutput = async () => {
+    await callInLoopTillExpectedCode(sequenceApiClient.getOutput);
+};
 
 Given("input file containing data {string}", async (filename) => {
     assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
@@ -270,21 +256,13 @@ Then("get event from sequence", { timeout: 11000 }, async () => {
 });
 
 Then("host one process is working", async () => {
-    const startTime: number = Date.now();
-
-    while (hostOneProcessStopped && Date.now() - startTime < 4000) {
-        await new Promise(res => setTimeout(res, timeoutShortMs));
-    }
+    await waitForValueTillTrue(hostOneProcessStopped);
 
     assert.equal(hostOneProcessStopped, false);
 });
 
 Then("host one process is stopped", { timeout: 10000 }, async () => {
-    const startTime: number = Date.now();
-
-    while (!hostOneProcessStopped && Date.now() - startTime < 6000) {
-        await new Promise(res => setTimeout(res, timeoutShortMs));
-    }
+    await waitForValueTillTrue(!hostOneProcessStopped);
 
     assert.equal(hostOneProcessStopped, true);
 });
