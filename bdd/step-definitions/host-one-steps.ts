@@ -8,7 +8,6 @@ import * as fs from "fs";
 import { SequenceApiClient } from "../lib/sequence-api-clinet";
 import { StringStream } from "scramjet";
 import { stdout } from "process";
-
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
@@ -172,7 +171,7 @@ When("host one execute sequence in background {string} with arguments {string}",
     executeSequenceSpawn(packagePath, [configJson].concat(args.split(" ")));
 });
 
-When("get stdout stream long timeout", { timeout: 60000 }, async () => {
+When("get stdout stream long timeout", { timeout: 320000 }, async () => {
     await getStdout();
 });
 
