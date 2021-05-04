@@ -1,6 +1,7 @@
 import { Readable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
+import { MonitoringMessageData } from "@scramjet/model";
 
 export type RunnerConfig = {
     image: string;
@@ -38,6 +39,8 @@ export interface ILifeCycleAdapter {
 
     // THIS is forefull removal - let's think about refactor.
     remove(): MaybePromise<void>;
+
+    stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
 }
 
 export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});
