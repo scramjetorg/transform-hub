@@ -32,8 +32,6 @@ if (!fs.existsSync(sequencePath)) {
 
 const runner: Runner<AppConfig> = new Runner(sequencePath, fifosPath);
 
-console.log("Starting Runner....");
-
 runner.main()
     .catch(e => {
         console.error(e.stack);

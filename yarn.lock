@@ -6758,7 +6758,7 @@ require-main-filename@^2.0.0:
   resolved "https://repo.int.scp.ovh/repository/npm-all/require-main-filename/-/require-main-filename-2.0.0.tgz#d0b329ecc7cc0f61649f62215be69af54aa8989b"
   integrity sha512-NKN5kMDylKuldxYLSUfrbo5Tuzh4hd+2E8NPPX02mZtn1VuREQToYe/ZdlJy+J3uCpfaiGF05e7B8W0iXbQHmg==
 
-rereadable-stream@^1.4.8:
+rereadable-stream@^1.4.8, rereadable-stream@^1.4.9:
   version "1.4.9"
   resolved "https://repo.int.scp.ovh/repository/npm-all/rereadable-stream/-/rereadable-stream-1.4.9.tgz#f834a78579f12f058c8e66ad692423f0a1a4f472"
   integrity sha512-t0Y+h1k72i8UkZyva7Iu0S3et7oEHJ0Bdip3N/A1c9dgzbW9P6f0tc+iGNIPP0WH+9In74kvB/ze8gyd+Lj7Kg==
@@ -6937,6 +6937,11 @@ scramjet-core@^4.31.14:
   resolved "https://repo.int.scp.ovh/repository/npm-all/scramjet-core/-/scramjet-core-4.31.15.tgz#7babd61ccff64d198a1f6be63d11d03858e36210"
   integrity sha512-aol6c7r/CG5BO+8b/d9N0KMwS0ccT7Rjida7ty6/lDoGdwRVm6YMYHqMCzYZxf5nvxusKLalILwq1V+yuxjh1Q==
 
+scramjet-core@^4.31.16:
+  version "4.31.16"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/scramjet-core/-/scramjet-core-4.31.16.tgz#e2fa2058e1d05489d85e6e938ee06a43dea10f65"
+  integrity sha512-qD3VoFhr64W1u7yhtHb6QfgvKs5qIxL1lzB0K++wqzQ9GjNsdFagknEEz+Lg5CnvZ1d8e+yZ9PCMnYl+s0aIaQ==
+
 scramjet@4.35.15, scramjet@^4.35.15:
   version "4.35.15"
   resolved "https://repo.int.scp.ovh/repository/npm-all/scramjet/-/scramjet-4.35.15.tgz#38f8594c214363de88fe8839afa70ea8e7594fea"
@@ -6945,6 +6950,15 @@ scramjet@4.35.15, scramjet@^4.35.15:
     papaparse "^5.3.0"
     rereadable-stream "^1.4.8"
     scramjet-core "^4.31.14"
+
+scramjet@^4.35.12:
+  version "4.35.16"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/scramjet/-/scramjet-4.35.16.tgz#154cc6b9d9bae23a0cdbea94c12bc0b831bfc034"
+  integrity sha512-jpcsbhjUmV1sWZHkQ0XVsTv8FMGxMBWJLYAYjG7s8CW7CAWRtZnMcyVv4MFhC8CkxH5yZM8OK8ieMO8hq/EJZA==
+  dependencies:
+    papaparse "^5.3.0"
+    rereadable-stream "^1.4.9"
+    scramjet-core "^4.31.16"
 
 semver-compare@^1.0.0:
   version "1.0.0"

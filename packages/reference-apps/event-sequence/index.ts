@@ -7,7 +7,7 @@ import { InertApp } from "@scramjet/types";
  * @param _stream - dummy input stream
  * @param count - how many items to produce
  */
-export = async function(_stream, count = 8) {
+export = async function(_stream, count = 5) {
     const data = this.initialState;
 
     this.logger.log({ count });
