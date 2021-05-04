@@ -20,7 +20,7 @@ const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ ts: bi
         let x = data?.x || 0;
 
         return async function* () {
-            while (++x < timesOfExecution) {
+            while (++x <= timesOfExecution) {
                 await new Promise(res => setTimeout(res, 10));
 
                 const ts = process.hrtime.bigint();

@@ -30,7 +30,7 @@ function executeSequenceSpawn(packagePath: string, args?: string[]): void {
 
     hostOne = spawn("/usr/bin/env", command);
     hostOneProcessStopped = false;
-    StringStream.from(hostOne.stdout).pipe(stdout);
+    // StringStream.from(hostOne.stdout).pipe(stdout);
 
     hostOne.on("exit", (code, signal) => {
         console.log("sequence process exited with code: ", code, " and signal: ", signal);

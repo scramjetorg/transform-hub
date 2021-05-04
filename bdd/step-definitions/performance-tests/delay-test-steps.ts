@@ -13,13 +13,13 @@ When("calculate average delay time from {string} of first {string} function call
 
     for (let i = 0; i < startFromProbe; i++) {
         if (!output.next()) {
-            fail("not enough probes in file");
+            fail("not enough probes in file (" + i + ")");
         }
     }
 
     for (let j = 0; j < numberOfProbes; j++) {
         if (!(line = output.next())) {
-            fail("not enough probes in file");
+            fail("not enough probes in file (" + j + ")");
         }
 
         sum += BigInt(line.toString().replace("n", ""));
@@ -34,5 +34,5 @@ When("calculate average delay time from {string} of first {string} function call
 Then("calculated avereage delay time is lower than {string} ns", async (acceptedDelayInNs) => {
     const averageIsOk: boolean = delayAverage < BigInt(acceptedDelayInNs);
 
-    assert.equal(averageIsOk, true);
+    assert.equal(averageIsOk, true, "Average time is: " + delayAverage);
 });
