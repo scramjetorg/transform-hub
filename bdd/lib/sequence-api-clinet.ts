@@ -71,6 +71,7 @@ export class SequenceApiClient {
             });
         } catch (error) {
             console.error("Error during sending request: ", error.message);
+            console.error(error);
         }
 
         return resp;

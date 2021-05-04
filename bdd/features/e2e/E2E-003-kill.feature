@@ -3,7 +3,7 @@ Feature: Kill e2e tests
     Scenario: E2E-003 TC-001 Kill sequence
         Given host one execute sequence in background "../packages/reference-apps/sequence-20s.tar.gz"
         And host one process is working
-        And wait "200" ms
+        And wait "1000" ms
         When send kill
         Then host one process is stopped
 

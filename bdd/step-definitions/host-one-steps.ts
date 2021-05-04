@@ -34,7 +34,7 @@ function executeSequenceSpawn(packagePath: string, args?: string[]): void {
     hostOne.on("exit", (code, signal) => {
         console.log("sequence process exited with code: ", code, " and signal: ", signal);
         hostOneProcessStopped = true;
-        if (code === 1) {
+        if (code === 1) { //this is failing tests E2E-001 TC-002
             assert.fail();
         }
     });
@@ -245,7 +245,7 @@ Then("host one process is working", async () => {
 });
 
 Then("host one process is stopped", { timeout: 10000 }, async () => {
-    await waitForValueTillTrue(!hostOneProcessStopped);
+    await waitForValueTillTrue(!hostOneProcessStopped, 6000);
 
     assert.equal(hostOneProcessStopped, true);
 });
