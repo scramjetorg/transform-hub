@@ -9,6 +9,7 @@ Feature: Stop e2e tests
         And wait "4000" ms
         Then host one process is stopped
 
+    #sequence process exited with code:  1  and signal:  null
     Scenario: E2E-002 TC-002 Stop sequence after 4s
         Given input file containing data "data.json"
         When host one execute sequence in background "../packages/samples/example.tar.gz" with arguments "/package/data.json output.txt"
