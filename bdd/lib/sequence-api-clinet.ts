@@ -51,6 +51,12 @@ export class SequenceApiClient {
         return await this.get(getStdoutUrl);
     }
 
+    public async getOutput(): Promise<any> {
+        const getOutputUrl = `${this.apiBase}/stream/output`;
+
+        return await this.get(getOutputUrl);
+    }
+
     private async post(url: string, data: any): Promise<any> {
         let resp;
 

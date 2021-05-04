@@ -23,8 +23,8 @@ const mod: InertApp = function(input, ffrom, fto) {
             .do(
                 (names: Person) => {
                     console.log(`Hello ${names.name}!`);
-                }
-            ).map(
+                })
+            .map(
                 (names: Person) => {
                     return `Hello ${names.name}! \n`;
                 }

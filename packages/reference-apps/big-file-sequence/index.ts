@@ -17,10 +17,6 @@ const exp = [
                 .lines();
 
             resolve(stream);
-
-            stream.on("finish", function() {
-                console.log("done");
-            });
         }));
     },
 

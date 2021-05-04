@@ -30,11 +30,14 @@ function executeSequenceSpawn(packagePath: string, args?: string[]): void {
 
     hostOne = spawn("/usr/bin/env", command);
     hostOneProcessStopped = false;
-    // StringStream.from(hostOne.stdout).pipe(stdout);
+    StringStream.from(hostOne.stdout).pipe(stdout);
 
     hostOne.on("exit", (code, signal) => {
         console.log("sequence process exited with code: ", code, " and signal: ", signal);
         hostOneProcessStopped = true;
+        if (code === 1) {
+            assert.fail();
+        }
     });
 }
 
@@ -95,6 +98,21 @@ async function getStdout() {
         await new Promise(res => setTimeout(res, timeout));
     } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
 
+    console.log("actualResponse: ", actualResponse);
+    assert.equal(actualResponse.status, expectedHttpCode);
+}
+
+async function getOutput() {
+    const expectedHttpCode = 200;
+    const startTime: number = Date.now();
+    const timeout: number = timeoutLongMs;
+
+    do {
+        actualResponse = await sequenceApiClient.getOutput();
+        await new Promise(res => setTimeout(res, timeout));
+    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
+
+    console.log("actualResponse: ", actualResponse);
     assert.equal(actualResponse.status, expectedHttpCode);
 }
 
@@ -195,6 +213,10 @@ Then("response in each line contains {string} followed by name from file {string
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
+When("get output stream long timeout", { timeout: 60000 }, async () => {
+    await getOutput();
+});
+
 Then("stdout contains {string}", async (key) => {
     const stdoutFile = new lineByLine(stdoutFilePath);
 
@@ -207,6 +229,12 @@ Then("stdout contains {string}", async (key) => {
     }
 
     assert.fail("stdout does not contain: " + key);
+});
+
+Then("response is equal {string}", async (respNumber) => {
+    const resp = actualResponse.data.toString();
+
+    assert.equal(resp, respNumber);
 });
 
 When("wait {string} ms", { timeout: 20000 }, async (timeoutMs) => {
@@ -257,3 +285,5 @@ Then("host one process is stopped", { timeout: 10000 }, async () => {
 
     assert.equal(hostOneProcessStopped, true);
 });
+
+
