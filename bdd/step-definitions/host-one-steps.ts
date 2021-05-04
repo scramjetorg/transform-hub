@@ -212,6 +212,10 @@ Then("response in each line contains {string} followed by name from file {string
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
+When("get output stream", async () => {
+    await getOutput();
+});
+
 When("get output stream long timeout", { timeout: 60000 }, async () => {
     await getOutput();
 });

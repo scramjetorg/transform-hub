@@ -27,7 +27,7 @@ const mod: InertApp = function(input, ffrom) {
         .do(() => new Promise(res => setTimeout(res, 1500)))
         .map(
             (names: Person) => {
-                return `Hello ${names.name}! \n`;
+                return `Hello ${names.name}!\n`;
             }
         )
         .do(console.log);
