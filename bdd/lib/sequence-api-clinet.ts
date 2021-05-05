@@ -4,6 +4,13 @@ export class SequenceApiClient {
 
     constructor(private apiBase: string = "http://localhost:8000/api/v1") {
     }
+    // curl --location --request GET 'http://localhost:8000/api/v1/stream/log'
+
+    public async getLog(): Promise<any> {
+        const getLogUrl = `${this.apiBase}/stream/log`;
+
+        return await this.get(getLogUrl);
+    }
 
     public async postEvent(eventName: string, postMessage: string): Promise<any> {
         const postEventUrl = `${this.apiBase}/sequence/_event`;

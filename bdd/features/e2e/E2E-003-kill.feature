@@ -5,7 +5,10 @@ Feature: Kill e2e tests
         And host one process is working
         And wait "1000" ms
         When send kill
+        And get logs
+        And get from response containerId
         Then host one process is stopped
+        And container is stopped
 
     Scenario: E2E-003 TC-002 Kill sequence - kill handler should emit event when executed
         Given host one execute sequence in background "../packages/reference-apps/sequence-20s-kill-handler.tar.gz"

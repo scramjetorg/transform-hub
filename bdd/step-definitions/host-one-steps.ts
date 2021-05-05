@@ -238,6 +238,18 @@ Then("get event from sequence", { timeout: 11000 }, async () => {
     await callInLoopTillExpectedCode(sequenceApiClient.getEvent);
 });
 
+When("get logs", { timeout: 11000 }, async () => {
+    await callInLoopTillExpectedCode(sequenceApiClient.getLog);
+});
+
+When("get from response containerId", async () => {
+    // TODO
+});
+
+When("container is stopped", async () => {
+    // TODO
+});
+
 Then("host one process is working", async () => {
     await waitForValueTillTrue(hostOneProcessStopped);
 
