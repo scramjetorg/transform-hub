@@ -22,7 +22,7 @@ const errors = {
 };
 //
 const extensions = {
-    package: ["tar", "zip", "rar", "gz"], // TODO: only tar.gz is now supported
+    package: ["tar", "zip", "rar", "tar.gz"], // TODO: only tar is now supported
     config: ["json", "txt", "js"]
 };
 //

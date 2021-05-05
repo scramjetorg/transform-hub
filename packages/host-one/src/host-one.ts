@@ -15,26 +15,61 @@ import { startSupervisor } from "./lib/start-supervisor";
 //import * as vorpal from "vorpal";
 
 export class HostOne implements IComponent {
-    private socketName: string;
-
+    /**
+     * SocketServer instance.
+     */
     private socketServer?: SocketServer;
 
+    /**
+     * SocketServer path (address).
+     * Supervisor connects to this path.
+     */
+    private socketServerPath: string;
+
+    /**
+     * Control stream.
+     * Stream to send commands down via SocketServer.
+     */
     private controlDownstream: PassThrough;
 
+    /**
+     * Streams connected do API.
+     */
     private upStreams?: UpstreamStreamsConfig;
+
+    /**
+     * Streams connected do SocketServer.
+     */
+    private downStreams?: DownstreamStreamsConfig;
 
     private controlDataStream: DataStream;
 
     private vorpal?: any;
 
+    /**
+     * Stream with package containing sequence.
+     */
     private packageDownStream?: ReadStream;
 
+    /**
+     * API server.
+     */
     private api?: APIExpose;
 
+    /**
+     * CommunicationHelper instance.
+     * Used to pipe upstreams with downstreams.
+     */
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
+    /**
+     * StringStream from log stream.
+     */
     private logHistory?: StringStream;
 
+    /**
+     * Logger.
+     */
     logger: Logger;
 
     errors = {
@@ -43,15 +78,29 @@ export class HostOne implements IComponent {
         noImplement: "Method not implemented."
     }
 
+    /**
+     * Sequence configuration passed via run parameters.
+     */
     private appConfig: AppConfig = {};
+
+    /**
+     * Sequence arguments passed via script parameters.
+     */
     private sequenceArgs?: string[];
 
+    /**
+     * Sequence input stream.
+     */
     private readonly input = new PassThrough();
+
+    /**
+     * Sequence output stream.
+     */
     private readonly output = new PassThrough();
 
     constructor() {
         this.logger = getLogger(this);
-        this.socketName = path.join(os.tmpdir(), process.pid.toString());
+        this.socketServerPath = path.join(os.tmpdir(), process.pid.toString());
         this.controlDownstream = new PassThrough();
         this.controlDataStream = new DataStream();
     }
@@ -65,14 +114,17 @@ export class HostOne implements IComponent {
         await this.createNetServer();
         this.logger.info("Created Net Server");
 
-        await startSupervisor(this.logger, this.socketName);
+        await startSupervisor(this.logger, this.socketServerPath);
         this.logger.info("Started supervisor");
 
         await this.awaitConnection();
         this.logger.info("Got connection");
 
+        this.hookupStreams();
+        this.logger.info("Downstream hooked.");
+
         this.hookupMonitorStream();
-        this.logger.info("Hooked monitor stream");
+        this.logger.info("Monitor stream hooked.");
 
         await this.createApiServer();
         this.logger.info("Api server up");
@@ -121,6 +173,9 @@ export class HostOne implements IComponent {
         this.logger.log("Streams initialized.");
     }
 
+    /**
+     * Creates StringStream from log stream.
+     */
     hookLogStream() {
         if (this.upStreams && this.upStreams[CommunicationChannel.LOG]) {
             this.logHistory = StringStream
@@ -128,7 +183,7 @@ export class HostOne implements IComponent {
                 .lines()
                 .keep(1000); // TODO: config
 
-            // TODO: remove, its for development purposes only.
+            // TODO: Remove, its used to show logs on output (for development purposes only).
             this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
             this.upStreams[CommunicationChannel.OUT].pipe(process.stdout);
         } else {
@@ -141,12 +196,14 @@ export class HostOne implements IComponent {
      * Starts socket server.
      */
     async createNetServer(): Promise<void> {
-        this.socketServer = new SocketServer(this.socketName);
+        this.socketServer = new SocketServer(this.socketServerPath);
 
         await this.socketServer.start();
     }
 
-    // TODO: refactor - extract to separate file and pass needed data
+    /**
+     * Creates API Server and defines it's endpoints.
+     */
     async createApiServer(): Promise<void> {
         const conf = {};
         const apiBase = "/api/v1";
@@ -197,17 +254,24 @@ export class HostOne implements IComponent {
     // TODO: refactor - rename or split, it is more than waiting for connection.
     async awaitConnection() {
         // TODO: We should wait some time, but when runner doesn't connect we need to alert
-        const streams: DownstreamStreamsConfig = await new Promise((res) => {
+        this.downStreams = await new Promise((res) => {
             if (!this.socketServer) {
                 throw new Error("Server not initialized");
             }
 
             this.socketServer.once("connect", res);
         });
+    }
 
-        this.logger.info("Piping streams...");
+    /**
+     * Connects upstreams with downstreams.
+     */
+    hookupStreams() {
+        if (!this.downStreams) {
+            throw new HostError("UNINITIALIZED_STREAM", "downStreams");
+        }
 
-        this.communicationHandler.hookDownstreamStreams(streams);
+        this.communicationHandler.hookDownstreamStreams(this.downStreams);
         this.communicationHandler.pipeStdio();
         this.communicationHandler.pipeMessageStreams();
         this.communicationHandler.pipeDataStreams();
@@ -215,6 +279,9 @@ export class HostOne implements IComponent {
         this.hookLogStream();
     }
 
+    /**
+     * Adds handshake listener to monitor stream.
+     */
     hookupMonitorStream() {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async () => {
             await this.handleHandshake();
@@ -222,6 +289,7 @@ export class HostOne implements IComponent {
             return null;
         });
 
+        // TODO: To remove. It is used to log monitoring stream.
         this.communicationHandler.getMonitorStream().stringify(([code, message]: EncodedMonitoringMessage) => {
             this.logger.info(`Received on monitorStream: ${code}, ${JSON.stringify(message)}`);
 
@@ -229,6 +297,10 @@ export class HostOne implements IComponent {
         });
     }
 
+    /**
+     * Sends handshake response via control stream.
+     * Response contains sequence configuration and arguments.
+     */
     async handleHandshake() {
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
@@ -243,10 +315,19 @@ export class HostOne implements IComponent {
         }
     }
 
+    /**
+     * Sends stop command via control stream.
+     *
+     * @param timeout The time the sequence has to respond.
+     * @param canCallKeepalive When true, sequence can ask to be allowed to run for additional period of time.
+     */
     async stop(timeout: number, canCallKeepalive: boolean) {
         await this.controlDataStream.whenWrote([RunnerMessageCode.STOP, { timeout, canCallKeepalive }]);
     }
 
+    /**
+     * Sends kill command via control stream.
+     */
     async kill() {
         await this.controlDataStream.whenWrote([RunnerMessageCode.KILL, {}]);
     }
