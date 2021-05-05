@@ -21,6 +21,8 @@ const stdoutFilePath = "stdout.test.result.txt";
 let hostOne;
 let hostOneProcessStopped;
 let actualResponse;
+let actualLogResponse;
+let containerId;
 
 function executeSequenceSpawn(packagePath: string, args?: string[]): void {
     let command: string[] = ["node", hostOneExecutableFilePath, packagePath];
@@ -37,6 +39,20 @@ function executeSequenceSpawn(packagePath: string, args?: string[]): void {
         if (code === 1) { //this is failing tests E2E-001 TC-002
             assert.fail();
         }
+    });
+}
+
+const chunks = [];
+
+function streamToString(stream): Promise<string> {
+
+    return new Promise((resolve, reject) => {
+        stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+        stream.on("error", (err) => { reject(err); });
+        stream.on("end", () =>{
+            console.log("|||||||||||||||||||| before resolved");
+            resolve(Buffer.concat(chunks).toString("utf8"));
+        });
     });
 }
 
@@ -238,12 +254,28 @@ Then("get event from sequence", { timeout: 11000 }, async () => {
     await callInLoopTillExpectedCode(sequenceApiClient.getEvent);
 });
 
-When("get logs", { timeout: 11000 }, async () => {
-    await callInLoopTillExpectedCode(sequenceApiClient.getLog);
+When("get logs in background", { timeout: 35000 }, async () => {
+    actualResponse = await sequenceApiClient.getLog();
+
+    console.log("---- get log code", actualResponse.status);
+
+    actualLogResponse = streamToString(actualResponse.data);
+
+    console.log("xxxxxxxxxxxxxxxxxxx", actualResponse);
+    // console.log("xxxxxxxxxxxxxxxxxxx", actualLogResponse);
 });
 
-When("get from response containerId", async () => {
-    // TODO
+When("get from response containerId", { timeout: 31000 }, async () => {
+
+    console.log("---ACTUAL RESPONSE: ", await actualLogResponse);
+
+    const rx = /[\n\r].*Container id:\s*([^\n\r]*)/g;
+    const arr = actualLogResponse.match(rx);
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    containerId = arr[1];
+    console.log("---containerId: ", containerId);
+
 });
 
 When("container is stopped", async () => {

@@ -4,6 +4,7 @@ import { LoggerOptions, PassThoughStream, WritableStream } from "@scramjet/types
 import { getName } from "./lib/get-name";
 import { DataStream } from "scramjet";
 import { inspect, InspectOptions } from "util";
+import { Writable } from "stream";
 
 export type MessageFormatter = <Z extends any[]>(name: string, func: string, args: Z) => string;
 
@@ -122,6 +123,10 @@ const addLoggerStream = (stream: WritableStream<any>, dest: WritableStream<any>[
     } else {
         dest.push(stream);
     }
+};
+
+export const close = () => {
+    loggerOutputs.out.forEach((stream: Writable) => { stream.end(); });
 };
 
 /**

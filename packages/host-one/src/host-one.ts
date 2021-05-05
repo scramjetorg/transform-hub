@@ -214,8 +214,11 @@ export class HostOne implements IComponent {
         } = this.communicationHandler.getStdio();
 
         this.api = createServer(conf);
-        this.api.server.listen(8000).unref(); // add .unref() or server will keep process up
-
+        this.api.server.listen(8000); // add .unref() or server will keep process up
+        process.on("beforeExit", () => {
+            console.log("YYYYYYYYYYYYYYYY beforeExit TODELETE");
+            this.api?.server?.close();
+        });
         // stdio
         this.api.upstream(`${apiBase}/stream/stdout`, stdout);
         this.api.upstream(`${apiBase}/stream/stderr`, stderr);

@@ -6,12 +6,6 @@ export class SequenceApiClient {
     }
     // curl --location --request GET 'http://localhost:8000/api/v1/stream/log'
 
-    public async getLog(): Promise<any> {
-        const getLogUrl = `${this.apiBase}/stream/log`;
-
-        return await this.get(getLogUrl);
-    }
-
     public async postEvent(eventName: string, postMessage: string): Promise<any> {
         const postEventUrl = `${this.apiBase}/sequence/_event`;
         const data = [4005, { eventName: eventName, message: postMessage }];
@@ -50,6 +44,12 @@ export class SequenceApiClient {
         const gethealthUrl = `${this.apiBase}/sequence/health`;
 
         return await this.get(gethealthUrl);
+    }
+
+    public async getLog(): Promise<any> {
+        const getLogUrl = `${this.apiBase}/stream/log`;
+
+        return await this.get(getLogUrl);
     }
 
     public async getStdout(): Promise<any> {
@@ -93,7 +93,8 @@ export class SequenceApiClient {
                 url: url,
                 headers: {
                     Accept: "*/*"
-                }
+                },
+                responseType: "stream"
             });
         } catch (error) {
             console.error("Error during sending request: ", error.message);
