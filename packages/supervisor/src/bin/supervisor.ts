@@ -1,13 +1,12 @@
 import { LifeCycleConfig } from "@scramjet/types";
+import { SupervisorError } from "@scramjet/model";
 import { LifecycleDockerAdapter } from "../lib/adapters/docker/lifecycle-docker-adapter";
 import { CSHClient } from "../lib/csh-client";
 import { LifeCycleController } from "../lib/lifecycle-controller";
 import * as path from "path";
 import * as fs from "fs";
-import { SupervisorError } from "@scramjet/model";
 
 /**
- *
  * This script runs the main component of the CSI - the Supervisor.
  * It creates an instance of LifeCycle Adapter and LifeCycle configuration file
  * which are both required by the LifeCycle Controller.
@@ -37,6 +36,7 @@ lcc.main()
             if (e.data && e.data.exitCode) {
                 exitCode = e.data.exitCode;
             }
+
             console.log(e.stack);
             process.exitCode = exitCode;
         }, 100);

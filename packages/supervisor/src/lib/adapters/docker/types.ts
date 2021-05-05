@@ -129,7 +129,7 @@ export type DockerAdapterRunResponse = {
     streams: DockerAdapterStreams,
 
     /**
-     * @type {Function} Waits till container stop.
+     * @type {Function} Function which return promise resolving when container status changed. Used to wait for container end.
      */
     wait: Function
 
@@ -138,7 +138,6 @@ export type DockerAdapterRunResponse = {
      */
     containerId: DockerContainer
 };
-
 export interface IDockerHelper {
     /**
      * Converts pairs of mount path and volume name to DockerHelper specific volume configuration.

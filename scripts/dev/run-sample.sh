@@ -58,7 +58,9 @@ if [ "$INSTALL" = true ] ; then
 fi
 
 # build example to dist
-yarn bic
+if [ "$TS" = false ] ; then
+    yarn bic
+fi
 
 if [ "$DOCKER" = true ] ; then
     lerna run build:docker

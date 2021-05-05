@@ -20,24 +20,16 @@ import * as path from "path";
 import * as shellescape from "shell-escape";
 import { PassThrough, Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, IDockerHelper } from "./types";
+import { DockerAdapterResources, DockerAdapterRunResponse, IDockerHelper } from "./types";
 
 class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     private dockerHelper: IDockerHelper;
 
-    // TODO: why these ignores?
-    // @ts-ignore
-    private runnerConfig?: string;
-    // @ts-ignore
-    private prerunnerConfig?: string;
-
     private monitorFifoPath?: string;
     private controlFifoPath?: string;
-    private loggerFifoPath?: string;
-
     private inputFifoPath?: string;
     private outputFifoPath?: string;
-    private runnerContainerId?: string;
+    private loggerFifoPath?: string;
 
     private imageConfig: {
         runner?: string,
@@ -66,13 +58,6 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
         this.monitorStream = new DelayedStream();
         this.controlStream = new DelayedStream();
         this.loggerStream = new DelayedStream();
-        /**
-         * @analyze-how-to-pass-in-out-streams
-         * Initiate two streams with as DelayedStream():
-         * inputStream - input stream to the Sequence
-         * outputStream - output stream for a Sequence
-         */
-        this.logger = getLogger(this);
         this.inputStream = new DelayedStream();
         this.outputStream = new DelayedStream();
 
@@ -120,11 +105,8 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
             try {
                 createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
-                //TODO: TBD how to allow docker user "runner" to access this directory.
 
-                this.logger.log("Fifo dir: ", createdDir);
-
-                this.logger.log("Fifo dir: ", createdDir);
+                this.logger.log("Directory for FiFo files created: ", createdDir);
 
                 [
                     this.controlFifoPath,
@@ -150,23 +132,22 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     }
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
+        if (this.resources.containerId) {
+            const stats = await this.dockerHelper.stats(this.resources.containerId);
 
-        if (this.runnerContainerId) {
-            const stats = await this.dockerHelper.stats(this.runnerContainerId);
-
-            if (!stats)
-                return msg;
-
-            const cpuTotalUsage = stats.cpu_stats?.cpu_usage?.total_usage;
-            const memoryUsage = stats.memory_stats?.usage;
-            const memoryMaxUsage = stats.memory_stats?.max_usage;
-            const limit = stats.memory_stats?.limit;
-            const networkRx = stats.networks?.eth0?.rx_bytes;
-            const networkTx = stats.networks?.eth0?.tx_bytes;
-            const healthy = msg.healthy;
-
-            return { healthy, cpuTotalUsage, memoryUsage, memoryMaxUsage, limit, networkRx, networkTx };
+            if (stats) {
+                return {
+                    cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
+                    healthy: msg.healthy,
+                    limit: stats.memory_stats?.limit,
+                    memoryMaxUsage: stats.memory_stats?.max_usage,
+                    memoryUsage: stats.memory_stats?.usage,
+                    networkRx: stats.networks?.eth0?.rx_bytes,
+                    networkTx: stats.networks?.eth0?.tx_bytes
+                };
+            }
         }
+
         return msg;
     }
 
@@ -181,31 +162,50 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
                         .map((volume) => volume.split(":"))
                         .map(([bind, mountPoint]) => ({ mountPoint, bind }))
                 );
-                console.warn("Using hot volume configuration", volumes);
+
+                this.logger.warn("Using hot volume configuration", volumes);
             } else {
-                console.info("No hacks", development(), process.env.HOT_VOLUME);
+                this.logger.info("No hacks", development(), process.env.HOT_VOLUME);
             }
 
-            this.resources.volumeId = await this.dockerHelper.createVolume();
-            const { streams, wait } = await this.dockerHelper.run({
-                imageName: this.imageConfig.prerunner || "",
-                volumes: [
-                    { mountPoint: "/package", volume: this.resources.volumeId },
-                    ...volumes
-                ],
-                autoRemove: true
-            });
+            try {
+                this.resources.volumeId = await this.dockerHelper.createVolume();
+
+                this.logger.log("Volume created. Id: ", this.resources.volumeId);
+            } catch (error) {
+                throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
+            }
+
+            let runResult: DockerAdapterRunResponse;
+
+            try {
+                runResult = await this.dockerHelper.run({
+                    imageName: this.imageConfig.prerunner || "",
+                    volumes: [
+                        { mountPoint: "/package", volume: this.resources.volumeId },
+                        ...volumes
+                    ],
+                    autoRemove: true
+                });
+            } catch {
+                throw new SupervisorError("DOCKER_ERROR");
+            }
+
+            const { streams, wait } = runResult;
 
             stream.pipe(streams.stdin);
 
-            let preRunnerResponse = "";
+            const preRunnerResponseChunks: Uint8Array[] = [];
 
             streams.stdout
                 .on("data", (chunk) => {
-                    preRunnerResponse += chunk.toString();
+                    preRunnerResponseChunks.push(Buffer.from(chunk));
+                })
+                .on("error", () => {
+                    throw new SupervisorError("PRERUNNER_ERROR");
                 })
                 .on("end", async () => {
-                    const res = JSON.parse(preRunnerResponse);
+                    const res = JSON.parse(Buffer.concat(preRunnerResponseChunks).toString("utf8"));
 
                     resolve({
                         image: this.imageConfig.runner || "",
@@ -223,17 +223,16 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     }
 
     hookCommunicationHandler(communicationHandler: ICommunicationHandler): void {
-        const downstreamStreamsConfig: DownstreamStreamsConfig =
-            [
-                this.runnerStdin,
-                this.runnerStdout,
-                this.runnerStderr,
-                this.controlStream.getStream(),
-                this.monitorStream.getStream(),
-                this.inputStream.getStream(),
-                this.outputStream.getStream(),
-                this.loggerStream.getStream(),
-            ];
+        const downstreamStreamsConfig: DownstreamStreamsConfig = [
+            this.runnerStdin,
+            this.runnerStdout,
+            this.runnerStderr,
+            this.controlStream.getStream(),
+            this.monitorStream.getStream(),
+            this.inputStream.getStream(),
+            this.outputStream.getStream(),
+            this.loggerStream.getStream(),
+        ];
 
         communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);
     }
@@ -284,13 +283,13 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
             streams.stdout.pipe(this.runnerStdout);
             streams.stderr.pipe(this.runnerStderr);
 
-            this.logger.debug("Container is running");
-            this.runnerContainerId = containerId;
+            this.logger.debug(`Container is running (${containerId})`);
 
             try {
                 const { statusCode } = await this.dockerHelper.wait(containerId);
 
                 this.logger.debug("Container exited");
+
                 setTimeout(() => {
                     if (statusCode > 0)
                         reject(new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode }));
@@ -300,6 +299,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
             } catch (error) {
                 if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
                     this.logger.debug("Container retunrned non-zero status code", error.data.statusCode);
+
                     resolve(error.data.statusCode);
                 } else {
                     this.logger.debug("Container errored", error);
@@ -322,6 +322,7 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
 
             if (this.resources.fifosDir) {
                 await rmdir(this.resources.fifosDir, { recursive: true });
+
                 this.logger.log("Fifo folder removed");
             }
 
@@ -362,9 +363,12 @@ class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
     async remove() {
         if (this.resources.containerId) {
             this.logger.info("Forcefully stopping containter", this.resources.containerId);
+
             await this.dockerHelper.stopContainer(this.resources.containerId);
+
             this.logger.info("Container removed");
         }
+
         /*
         * @feature/analysis-stop-kill-invocation
         * This method is called by the LifeCycle Controller instance when it receives the kill message.

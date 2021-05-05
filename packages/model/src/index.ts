@@ -1,11 +1,13 @@
 import { deserializeMessage, serializeMessage } from "./messages-utils";
-export const MessageUtilities = { serializeMessage, deserializeMessage };
 
 export * from "./errors/";
 export * from "./get-message";
 export * from "./messages-utils";
 export * from "./messages/acknowledge";
 export * from "./stream-handler";
+export * from "./stream-handler";
+
+export { promiseTimeout } from "./utils/promiseTimout";
 export { ConfirmHealthMessage } from "./messages/confirm-health";
 export { DescribeSequenceMessage, DescribeSequenceMessageData } from "./messages/describe-sequence";
 export { StatusMessageData, StatusMessage } from "./messages/status";
@@ -22,4 +24,4 @@ export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./messages
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
 export { SequenceEndMessage, SequenceEndMessageData } from "./messages/sequence-end";
 export { SequenceCompleteMessage } from "./messages/sequence-complete";
-
+export const MessageUtilities = { serializeMessage, deserializeMessage };

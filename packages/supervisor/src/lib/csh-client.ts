@@ -13,9 +13,11 @@ class CSHClient implements ICSHClient {
 
     private streams?: UpstreamStreamsConfig;
 
-    // private connectionChannels?: DuplexStream<string, string>[];
     private connection?: net.Socket;
 
+    /**
+     * BPMux instance.
+     */
     private mux: any;
 
     logger: Console;
@@ -64,7 +66,7 @@ class CSHClient implements ICSHClient {
                 connectionChannels[CC.IN],
                 connectionChannels[CC.OUT],
                 connectionChannels[CC.LOG],
-                connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer> // this was checked.
+                connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer>
             ];
 
             resolve();
@@ -72,17 +74,24 @@ class CSHClient implements ICSHClient {
     }
 
     async disconnect() {
-        //this.connection?.end();
-
-        // eslint-disable-next-line no-extra-parens
         if (this.streams) {
             const streams = this.streams;
 
-            await Promise.all(
-                // eslint-disable-next-line no-extra-parens
-                [1, 2, 4, 6, 7]
-                    .map(i => streams[i] as unknown as Writable)
-                    .map((s: Writable) => new Promise((res, rej) => s.on("error", rej).end(res)))
+            await Promise.all([
+                CC.STDOUT,
+                CC.STDERR,
+                CC.MONITORING,
+                CC.OUT,
+                CC.LOG
+            ]
+                .map(streamIndex => streams[streamIndex] as unknown as Writable)
+                .map(
+                    (stream: Writable) => new Promise(
+                        (res, rej) => stream
+                            .on("error", rej)
+                            .end(res)
+                    )
+                )
             );
         }
     }
@@ -99,11 +108,13 @@ class CSHClient implements ICSHClient {
         if (typeof this.streams === "undefined") {
             throw new SupervisorError("UNINITIALIZED_STREAMS", { details: "CSHClient" });
         }
+
         const { out, err } = communicationHandler.getLogOutput();
 
         communicationHandler.hookUpstreamStreams(this.streams);
         addLoggerOutput(out, err);
-        this.logger.log("Log hooked up");
+
+        this.logger.log("Log hooked up.");
     }
 }
 

@@ -2,7 +2,7 @@
   "name": "@scramjet/supervisor",
   "version": "0.7.0-pre.1",
   "description": "The supervisor application for the underlying container and program wrapper executed within it.",
-  "main": "./src/index.ts",
+  "main": "./src/bin/start-supervisor.ts",
   "scripts": {
     "test": "nyc ava",
     "build": "tsc -p tsconfig.build.json",

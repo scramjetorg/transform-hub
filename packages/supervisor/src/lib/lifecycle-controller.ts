@@ -1,21 +1,11 @@
 import { getLogger } from "@scramjet/logger";
-import { CommunicationHandler, SupervisorError } from "@scramjet/model";
+import { CommunicationHandler, promiseTimeout, SupervisorError } from "@scramjet/model";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent, Logger, EncodedMessage } from "@scramjet/types";
 
 import { Readable } from "stream";
 
-const didTimeout = Symbol.for("supervisor:did-timeout");
 const stopTimeout = 7000; // where to config this?
-const noop = () => undefined;
-const defer = (timeout: number): Promise<typeof didTimeout> =>
-    new Promise(res => setTimeout(() => res(didTimeout), timeout));
-const promiseTimeout = (endOfSequence: Promise<any>, timeout: number): Promise<any> => Promise.race([
-    endOfSequence
-        .then(noop, noop), // TODO: potentially awful thing
-    defer(timeout)
-        .then(() => Promise.reject(didTimeout))
-]);
 
 /**
  * LifeCycleController is a main component of Supervisor.
@@ -67,10 +57,14 @@ class LifeCycleController implements IComponent {
     private lifecycleConfig: LifeCycleConfig;
 
     logger: Logger;
+
     _endOfSequence?: Promise<number>;
 
     get endOfSequence(): Promise<number> {
-        if (!this._endOfSequence) throw new SupervisorError("RUNNER_NOT_STARTED");
+        if (!this._endOfSequence) {
+            throw new SupervisorError("RUNNER_NOT_STARTED");
+        }
+
         return this._endOfSequence;
     }
 
