@@ -8,6 +8,8 @@ import * as fs from "fs";
 import { SequenceApiClient } from "../lib/sequence-api-clinet";
 import { StringStream } from "scramjet";
 import { stdout } from "process";
+import * as Dockerode from "dockerode";
+
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
@@ -17,6 +19,7 @@ const sequenceApiClient = new SequenceApiClient();
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 const stdoutFilePath = "stdout.test.result.txt";
+const dockerode = new Dockerode();
 
 let hostOne;
 let hostOneProcessStopped;
@@ -49,7 +52,7 @@ function streamToString(stream): Promise<string> {
     return new Promise((resolve, reject) => {
         stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
         stream.on("error", (err) => { reject(err); });
-        stream.on("end", () =>{
+        stream.on("end", () => {
             console.log("|||||||||||||||||||| before resolved");
             resolve(Buffer.concat(chunks).toString("utf8"));
         });
@@ -85,7 +88,7 @@ async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
 
     for (i = 0; i < input.length && (line2 = output.next()); i++) {
         line1 = input[i].name;
-        assert.deepEqual(greeting + line1 + suffix, "" + line2);
+        assert.equal(greeting + line1 + suffix, "" + line2);
     }
 
     assert.equal(i, input.length, "incorrect number of elements compared");
@@ -118,7 +121,7 @@ const getOutput = async () => {
 };
 
 Given("input file containing data {string}", async (filename) => {
-    assert.equal(await promisify(fs.exists)(`${testPath}${filename}`), true);
+    assert.ok(await promisify(fs.exists)(`${testPath}${filename}`));
 });
 
 When("host one porcesses package {string} and redirects output to {string}", { timeout: 20000 }, async (packagePath, outputFile) => {
@@ -184,11 +187,12 @@ When("get sequence health", async () => {
 });
 
 Then("response body is {string}", async (expectedResp) => {
-    assert.deepEqual(JSON.stringify(actualResponse.data), expectedResp);
+    assert.ok(typeof actualResponse !== "undefined", "actualResponse is undefined");
+    assert.equal(JSON.stringify(actualResponse.data), expectedResp);
 });
 
 Then("file {string} is generated", async (filename) => {
-    assert.equal(await promisify(fs.exists)(`${filename}`), true);
+    assert.ok(await promisify(fs.exists)(`${filename}`));
 });
 
 Then("file {string} in each line contains {string} followed by name from file {string} finished by {string}", async (file1, greeting, file2, suffix) => {
@@ -279,7 +283,11 @@ When("get from response containerId", { timeout: 31000 }, async () => {
 });
 
 When("container is stopped", async () => {
-    // TODO
+    if (containerId && containerId.length() > 0) {
+        assert.equal(typeof dockerode.getContainer(containerId), "undefined");
+    } else {
+        assert.fail("Varibale containerId is empty. Cannot verify if container is running. ");
+    }
 });
 
 Then("host one process is working", async () => {
@@ -291,5 +299,5 @@ Then("host one process is working", async () => {
 Then("host one process is stopped", { timeout: 10000 }, async () => {
     await waitForValueTillTrue(!hostOneProcessStopped, 6000);
 
-    assert.equal(hostOneProcessStopped, true);
+    assert.ok(hostOneProcessStopped);
 });
