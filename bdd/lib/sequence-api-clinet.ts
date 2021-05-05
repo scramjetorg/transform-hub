@@ -49,7 +49,7 @@ export class SequenceApiClient {
     public async getLog(): Promise<any> {
         const getLogUrl = `${this.apiBase}/stream/log`;
 
-        return await this.get(getLogUrl);
+        return await this.getStream(getLogUrl);
     }
 
     public async getStdout(): Promise<any> {
@@ -85,6 +85,25 @@ export class SequenceApiClient {
     }
 
     private async get(url: string): Promise<any> {
+        let resp;
+
+        try {
+            resp = await axios({
+                method: "GET",
+                url: url,
+                headers: {
+                    Accept: "*/*"
+                }
+            });
+        } catch (error) {
+            console.error("Error during sending request: ", error.message);
+            console.error(error);
+        }
+
+        return resp;
+    }
+
+    private async getStream(url: string): Promise<any> {
         let resp;
 
         try {
