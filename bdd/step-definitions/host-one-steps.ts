@@ -45,16 +45,16 @@ function executeSequenceSpawn(packagePath: string, args?: string[]): void {
     });
 }
 
-const chunks = [];
+let chunks = "";
 
 function streamToString(stream): Promise<string> {
 
     return new Promise((resolve, reject) => {
-        stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+        stream.on("data", (chunk) => { chunks += chunk.toString() + "\n\r"; });
         stream.on("error", (err) => { reject(err); });
         stream.on("end", () => {
             console.log("|||||||||||||||||||| before resolved");
-            resolve(Buffer.concat(chunks).toString("utf8"));
+            resolve(chunks);
         });
     });
 }
@@ -271,14 +271,16 @@ When("get logs in background", { timeout: 35000 }, async () => {
 
 When("get from response containerId", { timeout: 31000 }, async () => {
 
-    console.log("---ACTUAL RESPONSE: ", await actualLogResponse);
-
-    const rx = /[\n\r].*Container id:\s*([^\n\r]*)/g;
-    const arr = actualLogResponse.match(rx);
+    const res = await actualLogResponse;
+    //
+    //console.log("---ACTUAL RESPONSE: ", res);
+    //
+    const rx = /Container id: ([^\n\r]*)/g;
+    const arr = res.match(rx);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    containerId = arr[1];
-    console.log("---containerId: ", containerId);
+    containerId = arr[0];
+    console.log("---containerId: ", containerId.replace("Container id: ", ""));
 
 });
 

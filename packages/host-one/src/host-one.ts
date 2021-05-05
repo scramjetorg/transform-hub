@@ -8,9 +8,10 @@ import { ReadStream } from "fs";
 import * as os from "os";
 import * as path from "path";
 import { DataStream, StringStream } from "scramjet";
-import { PassThrough, Readable } from "stream";
+import { PassThrough, Readable, Writable } from "stream";
 import { SocketServer } from "./lib/server";
 import { startSupervisor } from "./lib/start-supervisor";
+
 
 //import * as vorpal from "vorpal";
 
@@ -114,7 +115,7 @@ export class HostOne implements IComponent {
         await this.createNetServer();
         this.logger.info("Created Net Server");
 
-        await startSupervisor(this.logger, this.socketServerPath);
+        await startSupervisor(this.logger, this.socketServerPath, this.onSupervisorExit.bind(this));
         this.logger.info("Started supervisor");
 
         await this.awaitConnection();
@@ -390,5 +391,30 @@ export class HostOne implements IComponent {
     // For testing puspose only
     async vorpalExec(command: string) {
         await this.vorpal?.execSync(command);
+    }
+
+    cleanup() {
+        return new Promise(resolve => {
+            if (this.upStreams) {
+                // eslint-disable-next-line no-extra-parens
+                (this.upStreams[6] as Writable).end();
+                // eslint-disable-next-line no-extra-parens
+                (this.upStreams[7] as Writable).end();
+            }
+
+            this.api?.server.close(resolve);
+        });
+    }
+
+    async onSupervisorExit(code: any, signal: any) {
+        this.logger.log("Supervisor process exited with code: " + code + ", signal: " + signal);
+
+        await this.cleanup();
+
+        this.logger.log("Exiting...");
+
+        setTimeout(() => {
+            process.exit(code);
+        }, 10);
     }
 }

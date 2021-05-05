@@ -1,10 +1,8 @@
 import { Logger } from "@scramjet/types";
 import { spawn } from "child_process";
 import { resolve } from "path";
-import { close } from "@scramjet/logger";
 
-async function startSupervisor(logger: Logger, socketPath: string) {
-
+export const startSupervisor = async (logger: Logger, socketPath: string, onExit: Function) => {
     if (!socketPath) {
         return Promise.reject(new Error("The path to socket is incorrect: " + socketPath));
     }
@@ -32,19 +30,12 @@ async function startSupervisor(logger: Logger, socketPath: string) {
         logger.error("Supervisor process " + supervisor.pid + " threw an error: " + err);
     });
 
-    supervisor.on("exit", function(code: any, signal: any) {
-        // Do we want to handle the Supervisor exit event and if so, how?
-        logger.log("Supervisor process exited with code: " + code + ", signal: " + signal);
-        close();
-        setTimeout(() => {
-            process.exit(code);
-        }, 10);
+    supervisor.on("exit", (code: any, signal: any) => {
+        onExit(code, signal);
     });
 
     supervisor.stdout.pipe(process.stdout);
     supervisor.stderr.pipe(process.stderr);
 
-    return Promise.resolve(supervisor.pid);
-}
-
-export { startSupervisor };
+    return supervisor.pid;
+};
