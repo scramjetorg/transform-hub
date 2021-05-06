@@ -1,11 +1,13 @@
 import { UpstreamStreamsConfig, PassThroughStreamsConfig, IComponent, Logger } from "@scramjet/types";
-import { CommunicationChannel, HostError } from "@scramjet/model";
+
+import { HostError } from "@scramjet/model";
 import { PathLike } from "fs";
 import * as net from "net";
 import { Socket } from "net";
 import EventEmitter = require("events");
 import { PassThrough } from "stream";
 import { getLogger } from "@scramjet/logger";
+import { CommunicationChannel } from "@scramjet/symbols";
 
 const BPMux = require("bpmux").BPMux;
 

@@ -1,7 +1,8 @@
 /* eslint-disable dot-notation */
-import { CommunicationChannel as CC, SupervisorError } from "@scramjet/model";
+import { SupervisorError } from "@scramjet/model";
 import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig, PassThoughStream, DuplexStream, ReadableStream } from "@scramjet/types";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { CommunicationChannel as CC } from "@scramjet/symbols";
 import * as net from "net";
 import { Writable } from "stream";
 

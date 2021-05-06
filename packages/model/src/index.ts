@@ -22,4 +22,4 @@ export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./messages
 export { StopSequenceMessage, StopSequenceMessageData } from "./messages/stop-sequence";
 export { SequenceEndMessage, SequenceEndMessageData } from "./messages/sequence-end";
 export { SequenceCompleteMessage } from "./messages/sequence-complete";
-export { CommunicationChannel } from "./communication-channel";
+

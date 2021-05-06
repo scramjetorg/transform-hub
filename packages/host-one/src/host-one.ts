@@ -1,7 +1,7 @@
 import { CeroError, createServer } from "@scramjet/api-server";
-import { CommunicationChannel, CommunicationHandler, HandshakeAcknowledgeMessage, HostError, MessageUtilities } from "@scramjet/model";
+import { CommunicationHandler, HandshakeAcknowledgeMessage, HostError, MessageUtilities } from "@scramjet/model";
 import { APIExpose, AppConfig, DownstreamStreamsConfig, EncodedMonitoringMessage, UpstreamStreamsConfig, ICommunicationHandler, IComponent, Logger } from "@scramjet/types";
-import { RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel, RunnerMessageCode } from "@scramjet/symbols";
 
 import { getLogger } from "@scramjet/logger";
 import { ReadStream } from "fs";

@@ -1,3 +1,4 @@
+import { CommunicationChannel as CC, RunnerMessageCode } from "@scramjet/symbols";
 import {
     ControlMessageCode,
     DownstreamStreamsConfig,
@@ -13,12 +14,9 @@ import {
     UpstreamStreamsConfig,
     WritableStream
 } from "@scramjet/types";
-import { RunnerMessageCode } from "@scramjet/symbols";
 
-import { PassThrough } from "stream";
 import { DataStream, StringStream } from "scramjet";
-import { Readable, Writable } from "stream";
-import { CommunicationChannel as CC } from ".";
+import { PassThrough, Readable, Writable } from "stream";
 
 export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;

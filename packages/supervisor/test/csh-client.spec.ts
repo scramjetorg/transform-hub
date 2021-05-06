@@ -5,7 +5,7 @@ import { Socket } from "net";
 import { PassThrough } from "stream";
 import * as proxyquire from "proxyquire";
 import * as sinon from "sinon";
-// import { CommunicationChannel } from "@scramjet/model";
+// import { CommunicationChannel } from "@scramjet/symbols";
 
 let cshClient: any;
 // let upstream: any;
