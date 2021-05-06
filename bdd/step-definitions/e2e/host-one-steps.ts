@@ -6,10 +6,10 @@ import { promisify } from "util";
 import { strict as assert } from "assert";
 import { exec } from "child_process";
 import * as fs from "fs";
-import { SequenceApiClient } from "../lib/sequence-api-client";
+import { SequenceApiClient } from "../../lib/sequence-api-client";
 import * as Dockerode from "dockerode";
-import { file1ContainsLinesFromFile2, waitForValueTillTrue, callInLoopTillExpectedCode } from "../lib/utils";
-import { HostOneUtils } from "../lib/host-one-utils";
+import { file1ContainsLinesFromFile2, waitForValueTillTrue, callInLoopTillExpectedCode } from "../../lib/utils";
+import { HostOneUtils } from "../../lib/host-one-utils";
 
 const testPath = "../dist/samples/example/";
 const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
@@ -46,7 +46,7 @@ const getOutput = async () => {
     assert.equal(actualResponse.status, expectedHttpCode);
 };
 
-Given("input file containing data {string}", async (filename) => {
+Given("file {string} exists on hard drive", async (filename) => {
     assert.ok(await promisify(fs.exists)(`${testPath}${filename}`));
 });
 
@@ -181,7 +181,7 @@ When("get logs in background", { timeout: 35000 }, async () => {
     actualLogResponse = streamToString(actualResponse.data);
 });
 
-When("get from response containerId", { timeout: 31000 }, async () => {
+When("get from log response containerId", { timeout: 31000 }, async () => {
     const res = await actualLogResponse;
     const rx = /Container id: ([^\n\r]*)/g;
     const arr = res.match(rx);

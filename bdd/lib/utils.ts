@@ -1,6 +1,7 @@
 /* eslint-disable no-loop-func */
 import * as fs from "fs";
 import { strict as assert } from "assert";
+import { promisify } from "util";
 
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";

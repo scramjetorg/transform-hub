@@ -5,7 +5,6 @@ export class SequenceApiClient {
     constructor(private apiBase: string = "http://localhost:8000/api/v1") {
     }
 
-
     public async postEvent(eventName: string, postMessage: string): Promise<any> {
         const postEventUrl = `${this.apiBase}/sequence/_event`;
         const data = [4005, { eventName: eventName, message: postMessage }];
