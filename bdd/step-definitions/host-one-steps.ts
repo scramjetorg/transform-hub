@@ -6,7 +6,7 @@ import { promisify } from "util";
 import { strict as assert } from "assert";
 import { exec } from "child_process";
 import * as fs from "fs";
-import { SequenceApiClient } from "../lib/sequence-api-clinet";
+import { SequenceApiClient } from "../lib/sequence-api-client";
 import * as Dockerode from "dockerode";
 import { file1ContainsLinesFromFile2, waitForValueTillTrue, callInLoopTillExpectedCode } from "../lib/utils";
 import { HostOneUtils } from "../lib/host-one-utils";
