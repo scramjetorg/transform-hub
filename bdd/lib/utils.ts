@@ -9,7 +9,7 @@ const timeoutLongMs = 300;
 
 export async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
     const output = new lineByLine(`${file1}`);
-    const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
+    const input = JSON.parse(await promisify(fs.readFile)(`${testPath}${file2}`, "utf8"));
 
     let line1;
     let line2;
