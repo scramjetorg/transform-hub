@@ -46,6 +46,7 @@ const validatePath: any = (filepath: string, allowedExtensions: string[] = [], c
     return cb(pathToFile);
 };
 
+// TODO: we should consider using some sensible arg parser
 if (process.argv[2] === undefined) {
     console.error(errors.missing + "sequence.");
     process.exit(1);
