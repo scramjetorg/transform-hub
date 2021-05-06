@@ -1,50 +1,26 @@
-/* eslint-disable no-loop-func */
+
 /* eslint-disable no-cond-assign  */
+/* eslint-disable no-loop-func */
 import { Given, When, Then } from "@cucumber/cucumber";
 import { promisify } from "util";
 import { strict as assert } from "assert";
-import { exec, spawn } from "child_process";
+import { exec } from "child_process";
 import * as fs from "fs";
 import { SequenceApiClient } from "../lib/sequence-api-clinet";
-import { StringStream } from "scramjet";
-import { stdout } from "process";
 import * as Dockerode from "dockerode";
+import { file1ContainsLinesFromFile2, waitForValueTillTrue, callInLoopTillExpectedCode } from "../lib/utils";
+import { HostOneUtils } from "../lib/host-one-utils";
 
-const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const hostOneExecutableFilePath = "../dist/host-one/bin/start-host-one.js";
 const configJson = "../package.json";
-const packageData = "/package/data.json";
 const sequenceApiClient = new SequenceApiClient();
-const timeoutShortMs = 100;
-const timeoutLongMs = 300;
-const stdoutFilePath = "stdout.test.result.txt";
 const dockerode = new Dockerode();
+const hostOneUtils = new HostOneUtils();
 
-let hostOne;
-let hostOneProcessStopped;
 let actualResponse;
 let actualLogResponse;
 let containerId;
-
-function executeSequenceSpawn(packagePath: string, args?: string[]): void {
-    let command: string[] = ["node", hostOneExecutableFilePath, packagePath];
-
-    command = command.concat(args);
-
-    hostOne = spawn("/usr/bin/env", command);
-    hostOneProcessStopped = false;
-    StringStream.from(hostOne.stdout).pipe(stdout);
-
-    hostOne.on("exit", (code, signal) => {
-        console.log("sequence process exited with code: ", code, " and signal: ", signal);
-        hostOneProcessStopped = true;
-        if (code === 1) { //this is failing tests E2E-001 TC-002
-            assert.fail();
-        }
-    });
-}
-
 let chunks = "";
 
 function streamToString(stream): Promise<string> {
@@ -57,69 +33,27 @@ function streamToString(stream): Promise<string> {
     });
 }
 
-async function executeSequence(packagePath: string, args: string[], cmdTimeout: number, outputFile?: string) {
-    await new Promise(async (resolve, reject) => {
-        //TODO package.json is app config, so should be optional in my opinion
-        const cmdBase = `node ${hostOneExecutableFilePath} ${packagePath} package.json ${args}`;
-        const cmd = outputFile ? cmdBase + `> ${outputFile}` : cmdBase;
+const getStdout = async () => {
+    const expectedHttpCode = 200;
 
-        exec(cmd, { timeout: cmdTimeout }, (error) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            resolve(1);
-        });
-    });
-}
-
-async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
-    const output = new lineByLine(`${file1}`);
-    const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
-
-    let line1;
-    let line2;
-    let i = 0;
-
-    for (i = 0; i < input.length && (line2 = output.next()); i++) {
-        line1 = input[i].name;
-        assert.equal(greeting + line1 + suffix, "" + line2);
-    }
-
-    assert.equal(i, input.length, "incorrect number of elements compared");
-}
-
-const waitForValueTillTrue = async (valueToCheck: boolean, timeoutMs = 4000) => {
-    const startTime: number = Date.now();
-
-    while (valueToCheck && Date.now() - startTime < timeoutMs) {
-        await new Promise(res => setTimeout(res, timeoutShortMs));
-    }
-};
-const callInLoopTillExpectedCode = async (fnToCall, expectedHttpCode: number = 200) => {
-    const startTime: number = Date.now();
-    const timeout: number = timeoutLongMs;
-
-    do {
-        actualResponse = await fnToCall.call(sequenceApiClient);
-        await new Promise(res => setTimeout(res, timeout));
-    } while (actualResponse?.status !== expectedHttpCode && Date.now() - startTime < 10000);
-
-    console.log("actualResponse: ", actualResponse);
+    actualResponse = await callInLoopTillExpectedCode(sequenceApiClient.getStdout, sequenceApiClient, expectedHttpCode);
     assert.equal(actualResponse.status, expectedHttpCode);
 };
-const getStdout = async () => {
-    await callInLoopTillExpectedCode(sequenceApiClient.getStdout);
-};
 const getOutput = async () => {
-    await callInLoopTillExpectedCode(sequenceApiClient.getOutput);
+    const expectedHttpCode = 200;
+
+    actualResponse = await callInLoopTillExpectedCode(sequenceApiClient.getOutput, sequenceApiClient, expectedHttpCode);
+    assert.equal(actualResponse.status, expectedHttpCode);
 };
 
 Given("input file containing data {string}", async (filename) => {
     assert.ok(await promisify(fs.exists)(`${testPath}${filename}`));
 });
 
+//PROBABLY TO DELETE after fixing REFERNECE APPS
 When("host one porcesses package {string} and redirects output to {string}", { timeout: 20000 }, async (packagePath, outputFile) => {
+    const packageData = "/package/data.json";
+
     await new Promise(async (resolve, reject) => {
         exec(`node ${hostOneExecutableFilePath} ${packagePath} ${configJson} ${packageData} output.txt > ${outputFile}`, { timeout: 20000 }, (error) => {
             if (error) {
@@ -132,11 +66,11 @@ When("host one porcesses package {string} and redirects output to {string}", { t
 });
 
 When("host one execute sequence {string} with arguments {string} and redirects output to {string} long timeout", { timeout: 310000 }, async (packagePath, args, outputFile) => {
-    await executeSequence(packagePath, args, 300000, outputFile);
+    await hostOneUtils.executeSequence(packagePath, args, 300000, outputFile);
 });
 
 When("host one execute sequence {string} with arguments {string} and redirects output to {string}", { timeout: 10000 }, async (packagePath, args, outputFile) => {
-    await executeSequence(packagePath, args, 9000, outputFile);
+    await hostOneUtils.executeSequence(packagePath, args, 9000, outputFile);
 });
 
 When("save response data to file {string}", { timeout: 10000 }, async (outputFile) => {
@@ -146,11 +80,11 @@ When("save response data to file {string}", { timeout: 10000 }, async (outputFil
 });
 
 When("host one execute sequence {string} with arguments {string}", { timeout: 10000 }, async (packagePath, args) => {
-    await executeSequence(packagePath, args, 9000);
+    await hostOneUtils.executeSequence(packagePath, args, 9000);
 });
 
 When("host one execute sequence {string} with arguments {string} long timeout", { timeout: 310000 }, async (packagePath, args) => {
-    await executeSequence(packagePath, args, 30000);
+    await hostOneUtils.executeSequence(packagePath, args, 30000);
 });
 
 When("send kill", async () => {
@@ -160,11 +94,11 @@ When("send kill", async () => {
 });
 
 When("host one execute sequence in background {string}", { timeout: 20000 }, async (packagePath) => {
-    executeSequenceSpawn(packagePath, [configJson]);
+    hostOneUtils.executeSequenceSpawn(packagePath, [configJson]);
 });
 
 When("host one execute sequence in background {string} with arguments {string}", { timeout: 20000 }, async (packagePath, args) => {
-    executeSequenceSpawn(packagePath, [configJson].concat(args.split(" ")));
+    hostOneUtils.executeSequenceSpawn(packagePath, [configJson].concat(args.split(" ")));
 });
 
 When("get stdout stream long timeout", { timeout: 320000 }, async () => {
@@ -213,20 +147,6 @@ When("get output stream long timeout", { timeout: 60000 }, async () => {
     await getOutput();
 });
 
-Then("stdout contains {string}", async (key) => {
-    const stdoutFile = new lineByLine(stdoutFilePath);
-
-    let line;
-
-    while (line = stdoutFile.next()) {
-        if (line.includes(key)) {
-            return;
-        }
-    }
-
-    assert.fail("stdout does not contain: " + key);
-});
-
 Then("response is equal {string}", async (respNumber) => {
     const resp = actualResponse.data.toString();
 
@@ -250,7 +170,10 @@ When("send event {string} to sequence with message {string}", async (eventName, 
 });
 
 Then("get event from sequence", { timeout: 11000 }, async () => {
-    await callInLoopTillExpectedCode(sequenceApiClient.getEvent);
+    const expectedHttpCode = 200;
+
+    actualResponse = await callInLoopTillExpectedCode(sequenceApiClient.getEvent, sequenceApiClient, expectedHttpCode);
+    assert.equal(actualResponse.status, expectedHttpCode);
 });
 
 When("get logs in background", { timeout: 35000 }, async () => {
@@ -275,13 +198,13 @@ When("container is stopped", async () => {
 });
 
 Then("host one process is working", async () => {
-    await waitForValueTillTrue(hostOneProcessStopped);
+    await waitForValueTillTrue(hostOneUtils.hostOneProcessStopped);
 
-    assert.equal(hostOneProcessStopped, false);
+    assert.equal(hostOneUtils.hostOneProcessStopped, false);
 });
 
 Then("host one process is stopped", { timeout: 10000 }, async () => {
-    await waitForValueTillTrue(!hostOneProcessStopped, 6000);
+    await waitForValueTillTrue(!hostOneUtils.hostOneProcessStopped, 6000);
 
-    assert.ok(hostOneProcessStopped);
+    assert.ok(hostOneUtils.hostOneProcessStopped);
 });
