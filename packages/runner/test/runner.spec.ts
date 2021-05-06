@@ -47,10 +47,13 @@ test("Run main", async (t: any) => {
 test("Kill runner", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
     const cleanup = sinon.stub(runner, "cleanup");
+    const exit = runner["exit"] = sinon.stub();
 
     await runner.controlStreamHandler([RunnerMessageCode.KILL, {}]);
 
     t.is(cleanup.callCount, 1);
+    t.is(exit.callCount, 1);
+    t.is(exit.getCalls()[0].args[0], 137);
 });
 
 test("Stop sequence", async (t: any) => {

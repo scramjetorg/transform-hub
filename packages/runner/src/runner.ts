@@ -251,10 +251,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.log("Exiting ...");
 
         //TODO: investigate why we need to wait (process.tick - no all logs)
-        setTimeout(() => {
-            if (!this.stopExpected) process.exitCode = 137;
-            process.exit();
-        }, 0);
+        if (!this.stopExpected) {
+            this.exit(137);
+        } else {
+            this.exit();
+        }
     }
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
@@ -313,11 +314,14 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             await this.cleanup();
 
-            //TODO: investigate why we need to wait
-            setTimeout(() => {
-                process.exit(20);
-            }, 0);
+            this.exit(20);
         }
+    }
+
+    private exit(exitCode?: number) {
+        if (typeof exitCode !== undefined) process.exitCode = exitCode;
+        // TODO: why we need this?
+        setTimeout(() => process.exit());
     }
 
     // TODO: this should be the foll class logic
@@ -414,9 +418,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             //TODO: investigate why we need to wait
             await this.cleanup();
-            setTimeout(() => {
-                process.exit(21);
-            }, 0);
+            this.exit(21);
         }
 
         if (!sequence.length) {
@@ -424,9 +426,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.error("Empty sequence.");
 
             //TODO: investigate why we need to wait
-            setTimeout(() => {
-                process.exit(22);
-            }, 0);
+            this.exit(22);
 
             return;
         }
