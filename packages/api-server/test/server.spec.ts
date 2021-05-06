@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "@scramjet/model";
+import { RunnerMessageCode } from "@scramjet/symbols";
 import test, { after, beforeEach } from "ava";
 import { Writable } from "stream";
 import { DataStream } from "scramjet";

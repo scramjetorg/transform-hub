@@ -1,5 +1,7 @@
-import { CommunicationHandler, RunnerMessageCode } from "@scramjet/model";
+import { CommunicationHandler } from "@scramjet/model";
 import { APIExpose } from "@scramjet/types";
+import { RunnerMessageCode } from "@scramjet/symbols";
+
 import test, { after, before, beforeEach } from "ava";
 import * as sinon from "sinon";
 import { CeroRouter, createServer } from "../src";
