@@ -38,7 +38,8 @@ export class HostOneUtils {
         hostOne.on("exit", (code, signal) => {
             console.log("sequence process exited with code: ", code, " and signal: ", signal);
             this.hostOneProcessStopped = true;
-            if (code === 1) { //this is failing tests E2E-001 TC-002
+
+            if (code === 1) {
                 assert.fail();
             }
         });
