@@ -1,7 +1,7 @@
 /* eslint-disable dot-notation */
 import * as sinon from "sinon";
 import { PassThrough, Readable, Writable } from "stream";
-import { RunnerMessageCode } from "@scramjet/model";
+import { RunnerMessageCode } from "@scramjet/symbols";
 import { MessageUtils, Runner } from "@scramjet/runner";
 
 import * as fs from "fs";

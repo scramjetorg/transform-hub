@@ -1,6 +1,8 @@
 import { getLogger } from "@scramjet/logger";
-import { CommunicationHandler, RunnerMessageCode, SupervisorError } from "@scramjet/model";
+import { CommunicationHandler, SupervisorError } from "@scramjet/model";
+import { RunnerMessageCode } from "@scramjet/symbols";
 import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent, Logger, EncodedMessage } from "@scramjet/types";
+
 import { Readable } from "stream";
 
 const didTimeout = Symbol.for("supervisor:did-timeout");

@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 /* eslint-disable dot-notation */
 
+import { HandshakeAcknowledgeMessage } from "@scramjet/model";
+import { RunnerMessageCode } from "@scramjet/symbols";
+import { AppConfig, ReadableStream } from "@scramjet/types";
+
 import { Runner } from "../runner";
 import { stdout } from "process";
 import * as fs from "fs";
 import * as path from "path";
-import { HandshakeAcknowledgeMessage, RunnerMessageCode } from "@scramjet/model";
-import { AppConfig, ReadableStream } from "@scramjet/types";
-import { PassThrough } from "stream";
+import { PassThrough, Readable } from "stream";
 import { StringStream } from "scramjet";
 import { createReadStream, createWriteStream } from "fs";
-import { Readable } from "node:stream";
 
 if (!process.env.SEQUENCE_PATH) {
     console.error("Missing SEQUENCE_PATH!");

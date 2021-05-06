@@ -1,5 +1,5 @@
 
-import { RunnerMessageCode } from "../.";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 /**
  * Message indicating whether the command message (e.g. stop or kill) was received.

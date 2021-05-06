@@ -1,4 +1,6 @@
 /* eslint-disable no-extra-parens */
+import { MessageDataType, MessageType } from "@scramjet/types";
+import { RunnerMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
     ConfirmHealthMessage,
@@ -9,9 +11,9 @@ import {
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
     StopSequenceMessage, StopSequenceMessageData,
-    MessageDataType, MessageType, RunnerMessageCode,
     EventMessageData, EventMessage
 } from ".";
+
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
     if (typeof (data as StopSequenceMessageData).timeout !== "number") return false;

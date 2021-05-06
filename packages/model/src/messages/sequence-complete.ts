@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "..";
+import { RunnerMessageCode } from "@scramjet/symbols";
 import { EmptyMessageData } from "./message";
 
 /**

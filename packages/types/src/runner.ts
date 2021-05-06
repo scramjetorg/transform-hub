@@ -1,3 +1,5 @@
+import { RunnerMessageCode } from "@scramjet/symbols";
+
 /**
  * Defines scalability options for writable or readable side of the Function:
  *
@@ -101,3 +103,8 @@ export type MessageCode = MessageCodes.ANY;
 export type RunnerOptions = {
     monitoringInterval?: number
 };
+
+export type RunnerMessage = [
+    RunnerMessageCode,
+    object
+];

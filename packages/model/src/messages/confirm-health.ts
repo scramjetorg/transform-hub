@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "../.";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 /**
  * Message forcing Runner to emit a keep alive message.

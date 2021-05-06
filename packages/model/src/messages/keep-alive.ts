@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "../.";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 export type KeepAliveMessageData = {
 

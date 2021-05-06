@@ -15,7 +15,6 @@ import {
     MonitoringMessageData,
     MonitoringRateMessage,
     MonitoringRateMessageData,
-    RunnerMessageCode,
     StopSequenceMessage,
     StopSequenceMessageData,
     HandshakeMessage,
@@ -27,6 +26,7 @@ import {
     StatusMessageData
 } from "@scramjet/model";
 import { PassThoughStream } from "./utils";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :

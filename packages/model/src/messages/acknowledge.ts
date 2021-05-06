@@ -1,5 +1,5 @@
 import { ErrorMessage } from "./error";
-import { RunnerMessageCode } from "../.";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 export type AcknowledgeMessageData = {
 

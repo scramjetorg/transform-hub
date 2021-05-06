@@ -1,6 +1,6 @@
 /* tslint:disable */
 import { RunnerOptions } from "@scramjet/types";
-import { RunnerMessageCode } from "@scramjet/model";
+import { RunnerMessageCode } from "@scramjet/symbols";
 import * as sinon from "sinon";
 
 const test = require("ava");

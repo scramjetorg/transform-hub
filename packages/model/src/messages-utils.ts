@@ -1,9 +1,6 @@
-import {
-    getMessage,
-    MessageType,
-    RunnerMessage,
-    RunnerMessageCode
-} from ".";
+import { RunnerMessageCode } from "@scramjet/symbols";
+import { MessageType, RunnerMessage } from "@scramjet/types";
+import { getMessage } from ".";
 
 // TODO: this serializes the message to array and deserializeMessage from string.
 /**

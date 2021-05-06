@@ -1,6 +1,6 @@
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import { ControlMessageCode, ICommunicationHandler } from "@scramjet/types";
-import { checkMessage, MessageDataType } from "@scramjet/model";
+import { ControlMessageCode, ICommunicationHandler, MessageDataType } from "@scramjet/types";
+import { checkMessage } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
 

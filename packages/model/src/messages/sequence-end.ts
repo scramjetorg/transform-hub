@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "..";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 export type SequenceEndMessageData = {
     /** The url of container snapshot created. */
