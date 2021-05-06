@@ -48,12 +48,10 @@ function executeSequenceSpawn(packagePath: string, args?: string[]): void {
 let chunks = "";
 
 function streamToString(stream): Promise<string> {
-
     return new Promise((resolve, reject) => {
         stream.on("data", (chunk) => { chunks += chunk.toString() + "\n\r"; });
         stream.on("error", (err) => { reject(err); });
         stream.on("end", () => {
-            console.log("|||||||||||||||||||| before resolved");
             resolve(chunks);
         });
     });
@@ -82,9 +80,6 @@ async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
     let line1;
     let line2;
     let i = 0;
-
-    // output.next();//skip first line with "Checking data"
-    // output.next();//skip second line with "[HostOne][Server] Started at /tmp/2903117"
 
     for (i = 0; i < input.length && (line2 = output.next()); i++) {
         line1 = input[i].name;
@@ -260,33 +255,20 @@ Then("get event from sequence", { timeout: 11000 }, async () => {
 
 When("get logs in background", { timeout: 35000 }, async () => {
     actualResponse = await sequenceApiClient.getLog();
-
-    console.log("---- get log code", actualResponse.status);
-
     actualLogResponse = streamToString(actualResponse.data);
-
-    console.log("xxxxxxxxxxxxxxxxxxx", actualResponse);
-    // console.log("xxxxxxxxxxxxxxxxxxx", actualLogResponse);
 });
 
 When("get from response containerId", { timeout: 31000 }, async () => {
-
     const res = await actualLogResponse;
-    //
-    //console.log("---ACTUAL RESPONSE: ", res);
-    //
     const rx = /Container id: ([^\n\r]*)/g;
     const arr = res.match(rx);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     containerId = arr[0];
-    console.log("---containerId: ", containerId.replace("Container id: ", ""));
-
 });
 
 When("container is stopped", async () => {
-    if (containerId && containerId.length() > 0) {
-        assert.equal(typeof dockerode.getContainer(containerId), "undefined");
+    if (containerId && containerId.length > 0) {
+        assert.equal(typeof dockerode.getContainer(containerId), "object");
     } else {
         assert.fail("Varibale containerId is empty. Cannot verify if container is running. ");
     }
