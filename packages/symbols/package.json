@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/symbols",
-  "version": "0.7.0-pre.1",
+  "version": "0.7.0",
   "description": "Important symbols of the scramjet platform",
   "main": "./src/index.ts",
   "scripts": {
