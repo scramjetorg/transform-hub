@@ -1,6 +1,6 @@
 {
     "name": "@scramjet/template",
-    "version": "0.7.0",
+    "version": "0.10.0-pre.1",
     "description": "Package template",
     "---remove-next-line": "",
     "bic": false,
