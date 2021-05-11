@@ -129,7 +129,8 @@ export type DockerAdapterRunResponse = {
     streams: DockerAdapterStreams,
 
     /**
-     * @type {Function} Function which return promise resolving when container status changed. Used to wait for container end.
+     * @type {Function} Function which return promise resolving when container status changed.
+     *                  Used to wait for container end.
      */
     wait: Function
 
