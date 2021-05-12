@@ -1,9 +1,6 @@
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
-import { createServer } from "@scramjet/api-server";
 import { Readable } from "stream";
-import * as os from "os";
-import * as path from "path";
 
 /**
  * 
@@ -64,63 +61,36 @@ export class Host implements IComponent {
 
     sequenceStore: SequenceStore = new SequenceStore();
 
-    /**
-     * SocketServer instance.
-     */
-    //    private socketServer?: SocketServer;
-
-    /**
-     * SocketServer path (address).
-     * Supervisor connects to this path.
-     */
-   private socketServerPath: string;
+    //    private socketServer: SocketServer;
 
     logger: Logger;
 
-    constructor(apiServer: APIExpose) {
+    constructor(apiServer: APIExpose/*, socketServer: SocketServer*/) {
         this.logger = getLogger(this);
-        this.socketServerPath = path.join(os.tmpdir(), process.pid.toString());
+        //        this.socketServer = socketServer;
         this.apiServer = apiServer;
     }
 
     async main(): Promise<void> {
 
-        this.logger.info("Main");
+        this.logger.info("Host main called");
 
-        await this.createNetServer();
-
-        this.logger.info("Created Net Server");
+        this.attachHostAPIs();
 
     }
 
     /**
-     * Starts socket server.
+     * Setting up handlers for general Host API endpoints:
+     * - listing all instances running on the CSH
+     * - listing all sequences saved on the CSH
+     * - creating Sequence (passing stream with the compressed package)
+     * - starting Instance (based on a given Sequence ID passed in the HTTP request body)
      */
-    async createNetServer(): Promise<void> {
-    //   this.socketServer = new SocketServer(this.socketServerPath);
+    attachHostAPIs() {
 
-    //    await this.socketServer.start();
-    }
+        //        this.apiServer.get(`${apiBase}/instances`, );
+        //        this.apiServer.get(`${apiBase}/sequences`, );
 
-    /**
-     * Creates API Server and defines it's endpoints.
-     */
-    async createApiServer(): Promise<void> {
-        const conf = {};
-        //        const apiBase = "/api/v1";
-
-        this.apiServer = createServer(conf);
-        this.apiServer.server.listen(8000); // add .unref() or server will keep process up
-        process.on("beforeExit", () => {
-            this.apiServer?.server?.close();
-        });
-        // Question: how to connect the general Host-related API endpoints? Do they require modifications in API server?
-        //        this.apiServer.get(`${apiBase}/instances`, RunnerMessageCode.MONITORING, this.communicationHandler);
-        //        this.apiServer.get(`${apiBase}/sequences`, RunnerMessageCode.MONITORING, this.communicationHandler);
-
-        await new Promise(res => {
-            this.apiServer?.server.once("listening", res);
-        });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
