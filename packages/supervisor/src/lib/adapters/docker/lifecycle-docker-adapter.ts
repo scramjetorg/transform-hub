@@ -7,9 +7,7 @@ import {
     ExitCode,
     ICommunicationHandler,
     IComponent,
-    ILifeCycleAdapterParent,
-    ILifeCycleAdapterIdentify,
-    ILifeCycleAdapterRun,
+    ILifeCycleAdapter,
     Logger,
     MaybePromise,
     RunnerConfig
@@ -25,9 +23,7 @@ import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, IDockerHelper } from "./types";
 
 class LifecycleDockerAdapter implements
-ILifeCycleAdapterParent,
-ILifeCycleAdapterIdentify,
-ILifeCycleAdapterRun,
+ILifeCycleAdapter,
 IComponent {
     private dockerHelper: IDockerHelper;
 
