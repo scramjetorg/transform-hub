@@ -27,7 +27,7 @@ export type Sequence = {
 
 /**
  * 
- * An utility class for manipulates the
+ * An utility class for manipulation of the
  * Sequences stored on the CSH.
  * 
  * Question: Patryk raised an issue that we should think of
