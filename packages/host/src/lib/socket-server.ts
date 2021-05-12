@@ -1,13 +1,13 @@
 import { UpstreamStreamsConfig, PassThroughStreamsConfig, IComponent, Logger } from "@scramjet/types";
-
+import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
+import { CommunicationChannel } from "@scramjet/symbols";
+
 import { PathLike } from "fs";
 import * as net from "net";
 import { Socket } from "net";
 import EventEmitter = require("events");
 import { PassThrough } from "stream";
-import { getLogger } from "@scramjet/logger";
-import { CommunicationChannel } from "@scramjet/symbols";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -21,6 +21,7 @@ export class SocketServer extends EventEmitter implements IComponent {
 
     constructor(address: PathLike) {
         super();
+
         this.logger = getLogger(this);
         this.address = address;
     }

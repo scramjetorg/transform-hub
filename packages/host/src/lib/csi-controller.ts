@@ -108,10 +108,4 @@ export class CSIController extends EventEmitter {
     handleSupervisorConnect(streams: DownstreamStreamsConfig) {
         this.hookupStreams(streams);
     }
-
-    async handleRunnerStart() {
-
-    }
-
-
 }

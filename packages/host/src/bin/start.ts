@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { createServer } from "@scramjet/api-server";
-import { Host } from "@scramjet/host";
+import { Host } from "../lib/host";
 
 import { SocketServer } from "../lib/socket-server";
 
