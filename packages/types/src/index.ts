@@ -8,7 +8,7 @@ export * from "./csh-connector";
 export * from "./functions";
 export * from "./logger";
 export * from "./lifecycle";
-export * from "./lifecycle-new";
+export * from "./lifecycle-adapters";
 export * from "./message-streams";
 export * from "./runner";
 export * from "./sequence";
