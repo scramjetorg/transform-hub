@@ -7,7 +7,9 @@ import {
     ExitCode,
     ICommunicationHandler,
     IComponent,
-    ILifeCycleAdapter,
+    ILifeCycleAdapterParent,
+    ILifeCycleAdapterIdentify,
+    ILifeCycleAdapterRun,
     Logger,
     MaybePromise,
     RunnerConfig
@@ -22,7 +24,11 @@ import { PassThrough, Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, IDockerHelper } from "./types";
 
-class LifecycleDockerAdapter implements ILifeCycleAdapter, IComponent {
+class LifecycleDockerAdapter implements
+ILifeCycleAdapterParent,
+ILifeCycleAdapterIdentify,
+ILifeCycleAdapterRun,
+IComponent {
     private dockerHelper: IDockerHelper;
 
     private monitorFifoPath?: string;
