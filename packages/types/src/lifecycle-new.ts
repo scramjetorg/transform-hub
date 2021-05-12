@@ -25,7 +25,7 @@ export type DockerRunnerConfig = RunnerConfig & {
 
 export type ExitCode = number;
 
-export interface ILifeCycleAdapterParent {
+export interface ILifeCycleAdapterMain {
     /**
      * Initializes Lifecycle adapter.
      */
@@ -41,7 +41,7 @@ export interface ILifeCycleAdapterParent {
 
 }
 
-export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterParent {
+export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterMain {
     /**
      * Passes stream to PreRunner and resolves with PreRunner's results.
      *
@@ -51,7 +51,7 @@ export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterParent {
     identify(stream: Readable): MaybePromise<RunnerConfig>;
 }
 
-export interface ILifeCycleAdapterRun extends ILifeCycleAdapterParent {
+export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     /**
       * Starts Runner.
       *

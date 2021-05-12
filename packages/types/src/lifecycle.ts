@@ -2,29 +2,9 @@ import { Readable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
 import { MonitoringMessageData } from "@scramjet/model";
+import { RunnerConfig, ExitCode } from "./lifecycle-new";
 
 // TODO: Rename. it is not a runner config but response from Pre-runner.
-export type RunnerConfig = {
-    image: string;
-    version: string;
-    engines: {
-        [key: string]: string
-    };
-    config?: any;
-    sequencePath: string,
-    packageVolumeId?: string;
-}
-
-export type LifeCycleConfig = {
-    makeSnapshotOnError: boolean;
-}
-
-export type DockerRunnerConfig = RunnerConfig & {
-    config: { volumesFrom: string };
-}
-
-export type ExitCode = number;
-
 export interface ILifeCycleAdapter {
     /**
      * Initializes Lifecycle adapter.
@@ -73,5 +53,3 @@ export interface ILifeCycleAdapter {
 
     stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
 }
-
-export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});

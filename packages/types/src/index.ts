@@ -7,7 +7,7 @@ export * from "./component";
 export * from "./csh-connector";
 export * from "./functions";
 export * from "./logger";
-// export * from "./lifecycle";
+export * from "./lifecycle";
 export * from "./lifecycle-new";
 export * from "./message-streams";
 export * from "./runner";

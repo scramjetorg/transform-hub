@@ -1,4 +1,4 @@
-import { development, imageConfig } from "@scramjet/csi-config";
+import { imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
 import { MonitoringMessageData, SupervisorError } from "@scramjet/model";
 import {
@@ -7,8 +7,7 @@ import {
     ExitCode,
     ICommunicationHandler,
     IComponent,
-    ILifeCycleAdapterParent,
-    ILifeCycleAdapterIdentify,
+    ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
     Logger,
     MaybePromise,
@@ -20,13 +19,12 @@ import { chmod, mkdtemp, rmdir } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
 import * as shellescape from "shell-escape";
-import { PassThrough, Readable } from "stream";
+import { PassThrough } from "stream";
 import { DockerodeDockerHelper } from ".";
-import { DockerAdapterResources, DockerAdapterRunResponse, IDockerHelper } from ".";
+import { DockerAdapterResources, IDockerHelper } from ".";
 
-class LifecycleDockerAdapter implements
-ILifeCycleAdapterParent,
-ILifeCycleAdapterIdentify,
+class LifecycleDockerAdapterInstance implements
+ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
     private dockerHelper: IDockerHelper;
@@ -91,12 +89,6 @@ IComponent {
         });
     }
     // eslint-disable-next-line valid-jsdoc
-    /**
-     * @analyze-how-to-pass-in-out-streams
-     * Additional two fifo files need to be be created:
-     * input.fifo - input stream to the Sequence
-     * output.fifo - output stream for a Sequence
-     */
     private async createFifoStreams(
         controlFifo: string,
         monitorFifo: string,
@@ -157,76 +149,6 @@ IComponent {
         return msg;
     }
 
-    identify(stream: Readable): MaybePromise<RunnerConfig> {
-        return new Promise(async (resolve) => {
-            const volumes = [];
-
-            if (development() && process.env.HOT_VOLUME) {
-                volumes.push(
-                    ...process.env.HOT_VOLUME
-                        .split(",")
-                        .map((volume) => volume.split(":"))
-                        .map(([bind, mountPoint]) => ({ mountPoint, bind }))
-                );
-
-                this.logger.warn("Using hot volume configuration", volumes);
-            } else {
-                this.logger.info("No hacks", development(), process.env.HOT_VOLUME);
-            }
-
-            try {
-                this.resources.volumeId = await this.dockerHelper.createVolume();
-
-                this.logger.log("Volume created. Id: ", this.resources.volumeId);
-            } catch (error) {
-                throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
-            }
-
-            let runResult: DockerAdapterRunResponse;
-
-            try {
-                runResult = await this.dockerHelper.run({
-                    imageName: this.imageConfig.prerunner || "",
-                    volumes: [
-                        { mountPoint: "/package", volume: this.resources.volumeId },
-                        ...volumes
-                    ],
-                    autoRemove: true
-                });
-            } catch {
-                throw new SupervisorError("DOCKER_ERROR");
-            }
-
-            const { streams, wait } = runResult;
-
-            stream.pipe(streams.stdin);
-
-            const preRunnerResponseChunks: Uint8Array[] = [];
-
-            streams.stdout
-                .on("data", (chunk) => {
-                    preRunnerResponseChunks.push(Buffer.from(chunk));
-                })
-                .on("error", () => {
-                    throw new SupervisorError("PRERUNNER_ERROR");
-                })
-                .on("end", async () => {
-                    const res = JSON.parse(Buffer.concat(preRunnerResponseChunks).toString("utf8"));
-
-                    resolve({
-                        image: this.imageConfig.runner || "",
-                        version: res.version || "",
-                        engines: {
-                            ...res.engines
-                        },
-                        sequencePath: res.main,
-                        packageVolumeId: this.resources.volumeId
-                    });
-                });
-
-            await wait();
-        });
-    }
 
     hookCommunicationHandler(communicationHandler: ICommunicationHandler): void {
         const downstreamStreamsConfig: DownstreamStreamsConfig = [
@@ -347,23 +269,6 @@ IComponent {
     monitorRate(rps: number): this {
     }
 
-
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    stop(): MaybePromise<void> {
-        /*
-        * @feature/analysis-stop-kill-invocation
-        * This method is called by the LifeCycle Controller instance when it receives the stop message.
-        * The method requires two arguments:
-        * timeout: number
-        * canCallKeepalive: boolean
-        * that must be added to the LifeCycle interface.
-        * We must create a stop message and sent it using the control stream.
-        * The Runner should send us back the response with the Sequence's status (not completed yet),
-        *  and (optionally) exit code and error (if the Sequence stopped but threw errors).
-        */
-    }
-
     // @ts-ignore
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async remove() {
@@ -374,14 +279,7 @@ IComponent {
 
             this.logger.info("Container removed");
         }
-
-        /*
-        * @feature/analysis-stop-kill-invocation
-        * This method is called by the LifeCycle Controller instance when it receives the kill message.
-        * We must creates the kill message and sent it using the control stream.
-        * The Runner should send us the response with exit code using the monitoring stream.
-        */
     }
 }
 
-export { LifecycleDockerAdapter };
+export { LifecycleDockerAdapterInstance };
