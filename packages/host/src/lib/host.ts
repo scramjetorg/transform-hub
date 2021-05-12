@@ -1,12 +1,12 @@
-import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
-import { getLogger } from "@scramjet/logger";
-
-import { Readable } from "stream";
-import { SocketServer } from "./socket-server";
-import { CSIController } from "./csi-controller";
-import { CommunicationHandler } from "@scramjet/model";
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
+import { getLogger } from "@scramjet/logger";
+import { CommunicationHandler } from "@scramjet/model";
+import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
 import * as Crypto from "crypto";
+import { Readable } from "stream";
+import { CSIController } from "./csi-controller";
+import { SocketServer } from "./socket-server";
+
 
 /**
  *
@@ -44,8 +44,9 @@ export class SequenceStore {
     }
 
     addSequence(sequence: Sequence) {
-        if (sequence)
+        if (sequence) {
             this.sequences[sequence.id] = sequence;
+        }
     }
 
     deleteSequence(id: string) {
@@ -53,8 +54,9 @@ export class SequenceStore {
          * TODO: Here we also need to check if there aren't any Instances running
          * that use this Sequence.
          */
-        if (id)
+        if (id) {
             delete this.sequences[id];
+        }
     }
 }
 
@@ -110,24 +112,22 @@ export class Host implements IComponent {
         const apiBase = "/api/v1";
 
         this.api.downstream(`${apiBase}/sequence`, async (stream) => {
-            //stream.pipe(process.stdout);
+            return new Promise(async (resolve) => {
+                const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
+                const id = this.hash();
 
-            console.log("stream received");
+                this.sequenceStore.addSequence({
+                    id,
+                    config: preRunnerResponse
+                });
 
-            const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
+                console.log(preRunnerResponse);
 
-            console.log(preRunnerResponse);
+                await this.startCSIController(preRunnerResponse, {});
 
-            const id = this.hash();
-
-            this.sequenceStore.addSequence({
-                id,
-                config: preRunnerResponse
+                resolve();
             });
 
-            console.log(preRunnerResponse);
-
-            await this.startCSIController(preRunnerResponse, {});
         });
 
         //        this.apiServer.get(`${apiBase}/instances`, );
@@ -149,11 +149,12 @@ export class Host implements IComponent {
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async startCSIController(config: RunnerConfig, appConfig: AppConfig, sequenceArgs?: any[]) {
-        //throw new Error("Method not yet supported");
         const communicationHandler = new CommunicationHandler();
         const id = this.hash();
+        const csic = new CSIController(id, appConfig, sequenceArgs, communicationHandler, this.logger);
 
-        this.csiControllers[id] = new CSIController(id, appConfig, sequenceArgs, communicationHandler, this.logger);
+        await csic.main();
+        this.csiControllers[id] = csic;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

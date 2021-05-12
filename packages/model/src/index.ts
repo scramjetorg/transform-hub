@@ -8,6 +8,7 @@ export * from "./stream-handler";
 export * from "./stream-handler";
 
 export { promiseTimeout } from "./utils/promiseTimout";
+export { DelayedStream } from "./utils/delayed-stream";
 export { ConfirmHealthMessage } from "./messages/confirm-health";
 export { DescribeSequenceMessage, DescribeSequenceMessageData } from "./messages/describe-sequence";
 export { StatusMessageData, StatusMessage } from "./messages/status";

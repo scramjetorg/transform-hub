@@ -1,15 +1,14 @@
 /* eslint-disable no-extra-parens */
 /* eslint-disable dot-notation */
-import test from "ava";
-import * as sinon from "sinon";
-
-import { RunnerConfig, DelayedStream } from "@scramjet/types";
-import { DockerodeDockerHelper, LifecycleDockerAdapter } from "@scramjet/supervisor";
 import * as imageConfig from "@scramjet/csi-config";
-
-import { PassThrough } from "stream";
+import { DelayedStream } from "@scramjet/model";
+import { DockerodeDockerHelper, LifecycleDockerAdapter } from "@scramjet/supervisor";
+import { RunnerConfig } from "@scramjet/types";
+import test from "ava";
 import * as fs from "fs";
 import * as fsPromises from "fs/promises";
+import * as sinon from "sinon";
+import { PassThrough } from "stream";
 
 const sandbox = sinon.createSandbox();
 const configFileContents = {

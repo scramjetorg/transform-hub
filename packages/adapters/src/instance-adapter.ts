@@ -1,8 +1,7 @@
 import { imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
-import { MonitoringMessageData, SupervisorError } from "@scramjet/model";
+import { DelayedStream, MonitoringMessageData, SupervisorError } from "@scramjet/model";
 import {
-    DelayedStream,
     DownstreamStreamsConfig,
     ExitCode,
     ICommunicationHandler,
@@ -20,8 +19,7 @@ import { tmpdir } from "os";
 import * as path from "path";
 import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
-import { DockerodeDockerHelper } from ".";
-import { DockerAdapterResources, IDockerHelper } from ".";
+import { DockerAdapterResources, DockerodeDockerHelper, IDockerHelper } from ".";
 
 class LifecycleDockerAdapterInstance implements
 ILifeCycleAdapterMain,

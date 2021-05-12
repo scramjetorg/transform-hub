@@ -66,8 +66,6 @@ IComponent {
 
             let runResult: DockerAdapterRunResponse;
 
-            console.log(this.imageConfig.prerunner, this.resources.volumeId, volumes);
-
             try {
                 runResult = await this.dockerHelper.run({
                     imageName: this.imageConfig.prerunner || "",

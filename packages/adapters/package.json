@@ -14,6 +14,9 @@
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
     "dependencies": {
+        "@scramjet/csi-config": "^0.10.0-pre.1",
+        "@scramjet/logger": "^0.10.0-pre.1",
+        "@scramjet/model": "^0.10.0-pre.1",
         "@scramjet/symbols": "^0.10.0-pre.1",
         "scramjet": "^4.35.15"
     },

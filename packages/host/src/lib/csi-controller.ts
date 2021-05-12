@@ -36,8 +36,10 @@ export class CSIController extends EventEmitter {
 
     async main() {
         await this.startSupervisor();
+        this.logger.log("Supervisor started");
 
         await this.supervisorStopped();
+        this.logger.log("Supervisor stopped");
     }
 
     async startSupervisor() {

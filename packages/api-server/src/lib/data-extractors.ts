@@ -13,7 +13,11 @@ export async function getObject(object: any, req: IncomingMessage): Promise<any>
 
 export async function getWritable(object: any, req: IncomingMessage): Promise<Writable> {
     if (typeof object === "function") {
-        return await object(req);
+        try {
+            return await object(req);
+        } catch (e) {
+            console.log(e);
+        }
     }
 
     return object;

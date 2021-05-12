@@ -1,8 +1,7 @@
 import { development, imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
-import { MonitoringMessageData, SupervisorError } from "@scramjet/model";
+import { DelayedStream, MonitoringMessageData, SupervisorError } from "@scramjet/model";
 import {
-    DelayedStream,
     DownstreamStreamsConfig,
     ExitCode,
     ICommunicationHandler,
