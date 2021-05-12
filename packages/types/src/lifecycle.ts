@@ -4,7 +4,6 @@ import { MaybePromise } from "./utils";
 import { MonitoringMessageData } from "@scramjet/model";
 import { RunnerConfig, ExitCode } from "./lifecycle-new";
 
-// TODO: Rename. it is not a runner config but response from Pre-runner.
 export interface ILifeCycleAdapter {
     /**
      * Initializes Lifecycle adapter.
