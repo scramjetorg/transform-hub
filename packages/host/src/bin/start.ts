@@ -7,7 +7,7 @@ import { SocketServer } from "../lib/socket-server";
 
 const apiServerConfig = {};
 const apiServer = createServer(apiServerConfig);
-const tcpServer = new SocketServer("./socket-server-path");
+const tcpServer = new SocketServer("/tmp/socket-server-path");
 //
 const host = new Host(apiServer, tcpServer);
 

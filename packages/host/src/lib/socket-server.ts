@@ -56,10 +56,14 @@ export class SocketServer extends EventEmitter implements IComponent {
 
         this.server
             .on("connection", connection => {
-                const id = connection.read(32);
+                console.log("SV connected!");
+
+                //connection.pipe(process.stdout);
+
+                const id = connection.read(2);
 
                 if (!id) {
-                    throw new Error("Can't read supervisor id");
+                    //throw new Error("Can't read supervisor id");
                 }
 
                 console.log("Received: ", id);

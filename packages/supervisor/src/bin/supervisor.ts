@@ -18,7 +18,7 @@ const config: LifeCycleConfig = {
 };
 const lcda: LifecycleDockerAdapter = new LifecycleDockerAdapter();
 const id: string = process.argv[2];
-const cshc: CSHClient = new CSHClient("./socket-server-path");
+const cshc: CSHClient = new CSHClient("/tmp/socket-server-path");
 const lcc: LifeCycleController = new LifeCycleController(id, lcda, config, cshc);
 
 lcc.main()

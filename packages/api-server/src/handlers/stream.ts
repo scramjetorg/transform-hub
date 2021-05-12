@@ -91,14 +91,18 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
                 const data = await getWritable(stream, req);
 
-                await new Promise((resolve, reject) => {
-                    console.log(data);
+                await new Promise<void>((resolve, reject) => {
                     if (encoding) {
                         req.setEncoding(encoding);
                     }
 
-                    req.pipe(data, { end });
-                    data.once("error", reject);
+                    if (data) {
+                        req.pipe(data, { end });
+                        data.once("error", reject);
+                    } else {
+                        resolve();
+                    }
+
                     req.once("end", resolve);
                 });
 

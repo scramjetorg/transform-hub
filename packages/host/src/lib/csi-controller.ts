@@ -35,14 +35,18 @@ export class CSIController extends EventEmitter {
     }
 
     async main() {
-        await this.startSupervisor();
+        this.startSupervisor();
         this.logger.log("Supervisor started");
 
-        await this.supervisorStopped();
-        this.logger.log("Supervisor stopped");
+        try {
+            await this.supervisorStopped();
+            this.logger.log("Supervisor stopped");
+        } catch (e) {
+            this.logger.error(e);
+        }
     }
 
-    async startSupervisor() {
+    startSupervisor() {
         // eslint-disable-next-line no-extra-parens
         const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 
@@ -58,6 +62,9 @@ export class CSIController extends EventEmitter {
         const command: string[] = [path, this.id];
 
         this.superVisorProcess = spawn(executable, command);
+
+        this.superVisorProcess.stdout?.pipe(process.stdout);
+        this.superVisorProcess.stderr?.pipe(process.stderr);
     }
 
     supervisorStopped(): Promise<ExitCode> {

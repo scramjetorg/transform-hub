@@ -1,8 +1,9 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
-import { getLogger } from "@scramjet/logger";
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler } from "@scramjet/model";
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
 import * as Crypto from "crypto";
+import { unlink } from "fs/promises";
 import { Readable } from "stream";
 import { CSIController } from "./csi-controller";
 import { SocketServer } from "./socket-server";
@@ -72,8 +73,9 @@ export class Host implements IComponent {
     logger: Logger;
 
     private attachListeners() {
-        this.socketServer.on("connect", ({ id, streams }) => {
-            this.csiControllers[id].handleSupervisorConnect(streams);
+        this.socketServer.on("connect", ({ id }) => {
+            console.log("supervisor connected", id);
+            //this.csiControllers[id].handleSupervisorConnect(streams);
         });
     }
 
@@ -88,8 +90,12 @@ export class Host implements IComponent {
     }
 
     async main() {
+        addLoggerOutput(process.stdout);
+
         console.info("Host main called");
 
+        await unlink("/tmp/socket-server-path");
+        await this.socketServer.start();
         this.api.server.listen(8000);
 
         await new Promise(res => {
@@ -112,23 +118,18 @@ export class Host implements IComponent {
         const apiBase = "/api/v1";
 
         this.api.downstream(`${apiBase}/sequence`, async (stream) => {
-            return new Promise(async (resolve) => {
-                const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
-                const id = this.hash();
+            const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
+            const id = this.hash();
 
-                this.sequenceStore.addSequence({
-                    id,
-                    config: preRunnerResponse
-                });
-
-                console.log(preRunnerResponse);
-
-                await this.startCSIController(preRunnerResponse, {});
-
-                resolve();
+            this.sequenceStore.addSequence({
+                id,
+                config: preRunnerResponse
             });
 
-        });
+            console.log(preRunnerResponse);
+
+            await this.startCSIController(preRunnerResponse, {});
+        }, { end: true });
 
         //        this.apiServer.get(`${apiBase}/instances`, );
         //        this.apiServer.get(`${apiBase}/sequences`, );
@@ -154,6 +155,7 @@ export class Host implements IComponent {
         const csic = new CSIController(id, appConfig, sequenceArgs, communicationHandler, this.logger);
 
         await csic.main();
+
         this.csiControllers[id] = csic;
     }
 

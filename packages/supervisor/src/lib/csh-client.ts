@@ -25,6 +25,7 @@ class CSHClient implements ICSHClient {
     constructor(socketPath: string) {
         this.socketPath = socketPath;
         this.logger = getLogger(this);
+        addLoggerOutput(process.stdout, process.stderr);
     }
 
     async init(id: string): Promise<void> {
@@ -35,45 +36,48 @@ class CSHClient implements ICSHClient {
                 path: this.socketPath
             });
 
-            console.log("Sending id: ", id);
+            this.connection.once("connect", () => {
+                console.log("Sending id: ", id);
 
-            this.connection.write(id);
+                this.connection?.write(id);
 
-            this.mux = new BPMux(this.connection);
+                this.mux = new BPMux(this.connection);
 
-            const connectionChannels: DuplexStream<string, string>[] = [
-                this.mux.multiplex({ channel: CC.STDIN }),
-                this.mux.multiplex({ channel: CC.STDOUT }),
-                this.mux.multiplex({ channel: CC.STDERR }),
-                this.mux.multiplex({ channel: CC.CONTROL }),
-                this.mux.multiplex({ channel: CC.MONITORING }),
-                this.mux.multiplex({ channel: CC.IN }),
-                this.mux.multiplex({ channel: CC.OUT }),
-                this.mux.multiplex({ channel: CC.LOG }),
-                this.mux.multiplex({ channel: CC.PACKAGE })
-            ];
+                const connectionChannels: DuplexStream<string, string>[] = [
+                    this.mux.multiplex({ channel: CC.STDIN }),
+                    this.mux.multiplex({ channel: CC.STDOUT }),
+                    this.mux.multiplex({ channel: CC.STDERR }),
+                    this.mux.multiplex({ channel: CC.CONTROL }),
+                    this.mux.multiplex({ channel: CC.MONITORING }),
+                    this.mux.multiplex({ channel: CC.IN }),
+                    this.mux.multiplex({ channel: CC.OUT }),
+                    this.mux.multiplex({ channel: CC.LOG }),
+                    this.mux.multiplex({ channel: CC.PACKAGE })
+                ];
 
-            connectionChannels.forEach((channel) => channel.on("error", (e) => {
-                this.logger.warn(e.stack);
-            }));
+                connectionChannels.forEach((channel) => channel.on("error", (e) => {
+                    this.logger.warn(e.stack);
+                }));
 
-            this.connection.on("error", (e) => {
-                this.logger.error("Connection error: ", e.stack);
-            });
+                this.connection?.on("error", (e) => {
+                    this.logger.error("Connection error: ", e.stack);
+                });
 
-            this.streams = [
-                connectionChannels[CC.STDIN],
-                connectionChannels[CC.STDOUT],
-                connectionChannels[CC.STDERR],
-                connectionChannels[CC.CONTROL],
-                connectionChannels[CC.MONITORING],
-                connectionChannels[CC.IN],
-                connectionChannels[CC.OUT],
-                connectionChannels[CC.LOG],
+                this.streams = [
+                    connectionChannels[CC.STDIN],
+                    connectionChannels[CC.STDOUT],
+                    connectionChannels[CC.STDERR],
+                    connectionChannels[CC.CONTROL],
+                    connectionChannels[CC.MONITORING],
+                    connectionChannels[CC.IN],
+                    connectionChannels[CC.OUT],
+                    connectionChannels[CC.LOG],
                 connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer>
-            ];
+                ];
 
-            resolve();
+                resolve();
+
+            });
         });
     }
 
