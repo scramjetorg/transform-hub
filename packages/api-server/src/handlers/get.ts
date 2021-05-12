@@ -1,13 +1,15 @@
 import { CeroError, NextCallback, SequentialCeroRouter } from "../lib/definitions";
-import { ICommunicationHandler, MessageDataType, MonitoringMessageCode } from "@scramjet/types";
+import { ICommunicationHandler, MaybePromise, MessageDataType, MonitoringMessageCode } from "@scramjet/types";
 import { IncomingMessage, ServerResponse } from "http";
 import { mimeAccepts } from "../lib/mime";
+
+type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
 
 export function createGetterHandler(router: SequentialCeroRouter) {
     const check = (req: IncomingMessage): void => {
         if (req.headers.accept) mimeAccepts(req.headers.accept, ["application/json", "text/json"]);
     };
-    const output = (data: object, req: IncomingMessage, res: ServerResponse, next: NextCallback) => {
+    const output = (data: object, res: ServerResponse, next: NextCallback) => {
         try {
             if (data === null) {
                 res.writeHead(204, "No content", {
@@ -26,7 +28,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
         }
     };
-    const get = <T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: ICommunicationHandler): void => {
+    const get1 = <T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: ICommunicationHandler): void => {
         let lastItem: MessageDataType<T>|null = null;
 
         conn.addMonitoringHandler(op, (data) => {
@@ -37,12 +39,31 @@ export function createGetterHandler(router: SequentialCeroRouter) {
         router.get(path, async (req, res, next) => {
             try {
                 check(req);
-                return output(lastItem as object, req, res, next);
+                return output(lastItem as object, res, next);
+            } catch (e) {
+                return next(new CeroError("ERR_INTERNAL_ERROR", e));
+            }
+        });
+    };
+    const get2 = (path: string|RegExp, callback: GetResolver): void => {
+        router.get(path, async (req, res, next) => {
+            try {
+                check(req);
+                return output(await callback(req), res, next);
             } catch (e) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
         });
     };
 
-    return get;
+    return <T extends MonitoringMessageCode>(
+        path: string|RegExp, arg1: GetResolver | T, arg2?: ICommunicationHandler
+    ) => {
+        if (typeof arg1 === "function") {
+            return get2(path, arg1);
+        }
+        if (!arg2) throw new Error("Communication handler not passed");
+
+        return get1(path, arg1, arg2);
+    };
 }

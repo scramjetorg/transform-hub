@@ -3,6 +3,7 @@ import { ControlMessageCode, ICommunicationHandler, MessageDataType } from "@scr
 import { checkMessage } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
+import { StringDecoder } from "string_decoder";
 
 export function createOperationHandler(router: SequentialCeroRouter) {
     const getData = async (req: IncomingMessage): Promise<object|undefined> => {
@@ -22,11 +23,14 @@ export function createOperationHandler(router: SequentialCeroRouter) {
             return undefined;
         }
 
+        const decoder = new StringDecoder(encoding);
+
         let out = "";
 
         for await (const chunk of req) {
-            out += chunk.toString(); // TODO: Back to StringDecoder?
+            out += decoder.write(chunk);
         }
+        out += decoder.end();
 
         try {
             if (!out) {
