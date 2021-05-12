@@ -26,6 +26,8 @@ const stopTimeout = 7000; // where to config this?
  * ```
  */
 class LifeCycleController implements IComponent {
+    id: string;
+
     /**
     * CommunicationHandler is responsible for all operations on communication streams.
     * CommunicationHandler pipes the multiple data and message streams
@@ -73,12 +75,14 @@ class LifeCycleController implements IComponent {
     }
 
     /**
+     * @param {string} id supervisor id
      * @param {ILifeCycleAdapter} lifecycleAdapter an implementation of LifeCycle interface
      * @param {LifeCycleConfig} lifecycleConfig configuration specific to running the Sequence on
      * the particular Cloud Server Instance.
      * @param {ICSHClient} client that communicates with the CSH via TCP connection
      */
-    constructor(lifecycleAdapter: ILifeCycleAdapter, lifecycleConfig: LifeCycleConfig, client: ICSHClient) {
+    constructor(id: string, lifecycleAdapter: ILifeCycleAdapter, lifecycleConfig: LifeCycleConfig, client: ICSHClient) {
+        this.id = id;
         this.lifecycleAdapter = lifecycleAdapter;
         this.lifecycleConfig = lifecycleConfig;
         this.client = client;
@@ -124,7 +128,7 @@ class LifeCycleController implements IComponent {
              */
             await Promise.all([
                 this.lifecycleAdapter.init(),
-                this.client.init()
+                this.client.init(this.id)
             ]);
 
             // TODO: all other components may have init stuff, so Promise.all their inits.

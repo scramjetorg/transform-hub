@@ -22,7 +22,7 @@ export class CSIController extends EventEmitter {
     constructor(
         id: string,
         appConfig: AppConfig,
-        args: any[],
+        args: any[] | undefined,
         communicationHandler: CommunicationHandler,
         logger: Logger
     ) {
@@ -36,6 +36,7 @@ export class CSIController extends EventEmitter {
 
     async main() {
         await this.startSupervisor();
+
         await this.supervisorStopped();
     }
 

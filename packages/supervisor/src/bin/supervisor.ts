@@ -1,10 +1,8 @@
 import { LifeCycleConfig } from "@scramjet/types";
-import { SupervisorError } from "@scramjet/model";
+
 import { LifecycleDockerAdapter } from "../lib/adapters/docker/lifecycle-docker-adapter";
 import { CSHClient } from "../lib/csh-client";
 import { LifeCycleController } from "../lib/lifecycle-controller";
-import * as path from "path";
-import * as fs from "fs";
 
 /**
  * This script runs the main component of the CSI - the Supervisor.
@@ -19,14 +17,9 @@ const config: LifeCycleConfig = {
     makeSnapshotOnError: false
 };
 const lcda: LifecycleDockerAdapter = new LifecycleDockerAdapter();
-const socketPath: string = path.resolve(process.cwd(), process.argv[2]) || "";
-
-if (!fs.existsSync(socketPath)) {
-    throw new SupervisorError("INVALID_CONFIGURATION", { details: "Missing file " + socketPath });
-}
-
-const cshc: CSHClient = new CSHClient(socketPath);
-const lcc: LifeCycleController = new LifeCycleController(lcda, config, cshc);
+const id: string = process.argv[2];
+const cshc: CSHClient = new CSHClient("./socket-server-path");
+const lcc: LifeCycleController = new LifeCycleController(id, lcda, config, cshc);
 
 lcc.main()
     .catch(e => {

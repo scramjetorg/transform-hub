@@ -11,7 +11,7 @@ export interface ICSHClient extends IComponent {
     /**
      * Initializes the client
      */
-    init(): MaybePromise<void>;
+    init(id: string): MaybePromise<void>;
 
     /**
      * Create array of streams on LCC demand than hook streams.

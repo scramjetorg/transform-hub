@@ -27,13 +27,17 @@ class CSHClient implements ICSHClient {
         this.logger = getLogger(this);
     }
 
-    async init(): Promise<void> {
+    async init(id: string): Promise<void> {
         return new Promise((resolve) => {
             this.logger.info("Connecting to", this.socketPath);
 
             this.connection = net.createConnection({
                 path: this.socketPath
             });
+
+            console.log("Sending id: ", id);
+
+            this.connection.write(id);
 
             this.mux = new BPMux(this.connection);
 

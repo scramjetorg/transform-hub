@@ -11,4 +11,10 @@ const tcpServer = new SocketServer("./socket-server-path");
 //
 const host = new Host(apiServer, tcpServer);
 
-host.main();
+(async () => {
+    await host.main();
+})().catch(e => {
+    console.error(e.stack);
+    process.exitCode = e.exitCode || 1;
+    process.exit();
+});

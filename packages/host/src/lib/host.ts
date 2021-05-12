@@ -4,6 +4,9 @@ import { getLogger } from "@scramjet/logger";
 import { Readable } from "stream";
 import { SocketServer } from "./socket-server";
 import { CSIController } from "./csi-controller";
+import { CommunicationHandler } from "@scramjet/model";
+import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
+import * as Crypto from "crypto";
 
 /**
  *
@@ -56,7 +59,7 @@ export class SequenceStore {
 }
 
 export class Host implements IComponent {
-    apiServer: APIExpose;
+    api: APIExpose;
 
     socketServer: SocketServer;
 
@@ -72,16 +75,28 @@ export class Host implements IComponent {
         });
     }
 
+    private hash() {
+        return Crypto.randomBytes(32).toString("base64").slice(0, 32);
+    }
+
     constructor(apiServer: APIExpose, socketServer: SocketServer) {
         this.logger = getLogger(this);
         this.socketServer = socketServer;
-        this.apiServer = apiServer;
+        this.api = apiServer;
     }
 
-    main() {
-        this.logger.info("Host main called");
+    async main() {
+        console.info("Host main called");
+
+        this.api.server.listen(8000);
+
+        await new Promise(res => {
+            this.api?.server.once("listening", res);
+            console.info("API listening");
+        });
 
         this.attachListeners();
+        this.attachHostAPIs();
     }
 
     /**
@@ -92,20 +107,53 @@ export class Host implements IComponent {
      * - starting Instance (based on a given Sequence ID passed in the HTTP request body)
      */
     attachHostAPIs() {
+        const apiBase = "/api/v1";
+
+        this.api.downstream(`${apiBase}/sequence`, async (stream) => {
+            //stream.pipe(process.stdout);
+
+            console.log("stream received");
+
+            const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
+
+            console.log(preRunnerResponse);
+
+            const id = this.hash();
+
+            this.sequenceStore.addSequence({
+                id,
+                config: preRunnerResponse
+            });
+
+            console.log(preRunnerResponse);
+
+            await this.startCSIController(preRunnerResponse, {});
+        });
 
         //        this.apiServer.get(`${apiBase}/instances`, );
         //        this.apiServer.get(`${apiBase}/sequences`, );
-
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     identifySequence(stream: Readable): MaybePromise<RunnerConfig> {
-        throw new Error("Method not yet supported");
+        return new Promise(async (resolve, reject) => {
+            const ldas = new LifecycleDockerAdapterSequence();
+
+            try {
+                await ldas.init();
+                resolve(await ldas.identify(stream));
+            } catch {
+                reject();
+            }
+        });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    startCSIController(appConfig: AppConfig, sequenceArgs?: any[]) {
-        throw new Error("Method not yet supported");
+    async startCSIController(config: RunnerConfig, appConfig: AppConfig, sequenceArgs?: any[]) {
+        //throw new Error("Method not yet supported");
+        const communicationHandler = new CommunicationHandler();
+        const id = this.hash();
+
+        this.csiControllers[id] = new CSIController(id, appConfig, sequenceArgs, communicationHandler, this.logger);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

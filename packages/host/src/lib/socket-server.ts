@@ -62,6 +62,8 @@ export class SocketServer extends EventEmitter implements IComponent {
                     throw new Error("Can't read supervisor id");
                 }
 
+                console.log("Received: ", id);
+
                 connection
                     .on("close", () => {
                         this.close();
