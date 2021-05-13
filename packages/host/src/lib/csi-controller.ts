@@ -1,7 +1,8 @@
-import { HandshakeAcknowledgeMessage, MessageUtilities, CSIControllerError, CommunicationHandler } from "@scramjet/model";
-import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
+import { InstanceConfigMessage,
+    MessageUtilities, HandshakeAcknowledgeMessage, CSIControllerError, CommunicationHandler } from "@scramjet/model";
+import { SupervisorMessageCode, RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
 import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger, RunnerConfig } from "@scramjet/types";
-
+import { CommunicationChannel, } from "@scramjet/symbols";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
@@ -93,6 +94,13 @@ export class CSIController extends EventEmitter {
     hookupStreams(streams: DownstreamStreamsConfig) {
         this.downStreams = streams;
 
+        const controlDataStream = new DataStream();
+
+        controlDataStream
+            .JSONStringify()
+            .pipe(this.downStreams[CommunicationChannel.CONTROL]);
+
+
         this.controlDataStream = new DataStream();
         this.controlDataStream.JSONStringify()
             .pipe(this.downStreams[CC.CONTROL]);
@@ -118,7 +126,19 @@ export class CSIController extends EventEmitter {
         }
     }
 
-    handleSupervisorConnect(streams: DownstreamStreamsConfig) {
+    async sendConfig() {
+        const configMsg: InstanceConfigMessage = {
+            msgCode: SupervisorMessageCode.CONFIG,
+            config: this.config
+        };
+
+        await this.controlDataStream?.whenWrote(
+            MessageUtilities.serializeMessage<SupervisorMessageCode.CONFIG>(configMsg)
+        );
+    }
+
+    async handleSupervisorConnect(streams: DownstreamStreamsConfig) {
         this.hookupStreams(streams);
+        await this.sendConfig();
     }
 }

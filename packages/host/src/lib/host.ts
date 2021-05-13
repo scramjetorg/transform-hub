@@ -1,11 +1,10 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, InstanceConfigMessage, MessageUtilities } from "@scramjet/model";
-import { CommunicationChannel, SupervisorMessageCode } from "@scramjet/symbols";
+import { CommunicationHandler } from "@scramjet/model";
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
 import * as Crypto from "crypto";
 import { unlink } from "fs/promises";
-import { DataStream } from "scramjet";
+
 import { Readable } from "stream";
 import { CSIController } from "./csi-controller";
 import { SocketServer } from "./socket-server";
@@ -77,21 +76,7 @@ export class Host implements IComponent {
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
             this.logger.log("supervisor connected", id);
-            this.csiControllers[id].handleSupervisorConnect(streams);
-
-            const controlDataStream = new DataStream();
-
-            controlDataStream
-                .JSONStringify()
-                .pipe(streams[CommunicationChannel.CONTROL]);
-
-            const configMsg: InstanceConfigMessage = {
-                msgCode: SupervisorMessageCode.CONFIG,
-                config: this.csiControllers[id].config
-            };
-
-            await controlDataStream.whenWrote(MessageUtilities.serializeMessage<SupervisorMessageCode.CONFIG>(configMsg)
-            );
+            await this.csiControllers[id].handleSupervisorConnect(streams);
         });
     }
 

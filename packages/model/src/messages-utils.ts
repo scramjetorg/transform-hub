@@ -10,6 +10,7 @@ import { getMessage } from ".";
  * @return - a serializable message in a format [msgCode, {msgBody}]
  *           where 'msgCode' is a message type code and 'msgBody' is a message body
  **/
+
 export function serializeMessage<T extends RunnerMessageCode | SupervisorMessageCode>(
     { msgCode, ...msg }: MessageType<T>): RunnerMessage | SupervisorMessage {
     // DO TYPEGUARDS...

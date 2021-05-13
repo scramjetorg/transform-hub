@@ -1,6 +1,6 @@
 /* eslint-disable no-extra-parens */
 import { MessageDataType, MessageType } from "@scramjet/types";
-import { RunnerMessageCode } from "@scramjet/symbols";
+import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
     ConfirmHealthMessage,
@@ -11,7 +11,7 @@ import {
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
     StopSequenceMessage, StopSequenceMessageData,
-    EventMessageData, EventMessage
+    EventMessageData, EventMessage, InstanceConfigMessageData
 } from ".";
 
 
@@ -52,7 +52,7 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
 }
 
 // eslint-disable-next-line complexity
-export const checkMessage = <X extends RunnerMessageCode>(
+export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode>(
     msgCode: X,
     msgData: MessageDataType<RunnerMessageCode>
 ): MessageDataType<X> => {
@@ -85,6 +85,9 @@ export const checkMessage = <X extends RunnerMessageCode>(
     }
     if (msgCode === RunnerMessageCode.EVENT && isEventMessage(msgData)) {
         return msgData as MessageDataType<EventMessage>;
+    }
+    if (msgCode === SupervisorMessageCode.CONFIG) {
+        return msgData as MessageDataType<InstanceConfigMessageData>;
     }
 
     throw new Error(`Bad message of type ${msgCode}`);
