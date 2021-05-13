@@ -1,4 +1,4 @@
-import { RunnerMessageCode } from "@scramjet/symbols";
+import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 
 /**
  * Defines scalability options for writable or readable side of the Function:
@@ -106,5 +106,10 @@ export type RunnerOptions = {
 
 export type RunnerMessage = [
     RunnerMessageCode,
+    object
+];
+
+export type SupervisorMessage = [
+    SupervisorMessageCode,
     object
 ];

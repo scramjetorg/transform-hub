@@ -3,7 +3,7 @@ import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
 import { MonitoringMessageData } from "@scramjet/model";
 
-// TODO: Rename. it is not a runner config but response from Pre-runner.
+// TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 export type RunnerConfig = {
     image: string;
     version: string;

@@ -1,5 +1,5 @@
-import { RunnerMessageCode } from "@scramjet/symbols";
-import { MessageType, RunnerMessage } from "@scramjet/types";
+import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { MessageType, RunnerMessage, SupervisorMessage } from "@scramjet/types";
 import { getMessage } from ".";
 
 // TODO: this serializes the message to array and deserializeMessage from string.
@@ -10,7 +10,8 @@ import { getMessage } from ".";
  * @return - a serializable message in a format [msgCode, {msgBody}]
  *           where 'msgCode' is a message type code and 'msgBody' is a message body
  **/
-export function serializeMessage<T extends RunnerMessageCode>({ msgCode, ...msg }: MessageType<T>): RunnerMessage {
+export function serializeMessage<T extends RunnerMessageCode | SupervisorMessageCode>(
+    { msgCode, ...msg }: MessageType<T>): RunnerMessage | SupervisorMessage {
     // DO TYPEGUARDS...
 
     const json = JSON.parse(JSON.stringify(msg));

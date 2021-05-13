@@ -1,4 +1,4 @@
-import { CommunicationChannel as CC, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     ControlMessageCode,
     DownstreamStreamsConfig,
@@ -22,7 +22,7 @@ export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
 export type ControlMessageHandler<T extends ControlMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
-export type ConfiguredMessageHandler<T extends RunnerMessageCode> = {
+export type ConfiguredMessageHandler<T extends RunnerMessageCode | SupervisorMessageCode> = {
     handler: MonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
     blocking: boolean
 } | {
@@ -51,6 +51,7 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
+    [SupervisorMessageCode.CONFIG]: ConfiguredMessageHandler<SupervisorMessageCode.CONFIG>[];
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -79,7 +80,8 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.MONITORING_RATE]: [],
             [RunnerMessageCode.STOP]: [],
             [RunnerMessageCode.EVENT]: [],
-            [RunnerMessageCode.PONG]: []
+            [RunnerMessageCode.PONG]: [],
+            [SupervisorMessageCode.CONFIG]: []
         };
         this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],

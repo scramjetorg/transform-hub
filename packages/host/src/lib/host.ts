@@ -1,9 +1,11 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler } from "@scramjet/model";
+import { CommunicationHandler, InstanceConfigMessage, MessageUtilities } from "@scramjet/model";
+import { CommunicationChannel, SupervisorMessageCode } from "@scramjet/symbols";
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
 import * as Crypto from "crypto";
 import { unlink } from "fs/promises";
+import { DataStream } from "scramjet";
 import { Readable } from "stream";
 import { CSIController } from "./csi-controller";
 import { SocketServer } from "./socket-server";
@@ -66,16 +68,30 @@ export class Host implements IComponent {
 
     socketServer: SocketServer;
 
-    csiControllers: { [key : string]: CSIController } = {} // temp: the value type in the map will be a CSI Controller object
+    csiControllers: { [key: string]: CSIController } = {} // temp: the value type in the map will be a CSI Controller object
 
     sequenceStore: SequenceStore = new SequenceStore();
 
     logger: Logger;
 
     private attachListeners() {
-        this.socketServer.on("connect", ({ id, streams }) => {
+        this.socketServer.on("connect", async ({ id, streams }) => {
             this.logger.log("supervisor connected", id);
             this.csiControllers[id].handleSupervisorConnect(streams);
+
+            const controlDataStream = new DataStream();
+
+            controlDataStream
+                .JSONStringify()
+                .pipe(streams[CommunicationChannel.CONTROL]);
+
+            const configMsg: InstanceConfigMessage = {
+                msgCode: SupervisorMessageCode.CONFIG,
+                config: this.csiControllers[id].config
+            };
+
+            await controlDataStream.whenWrote(MessageUtilities.serializeMessage<SupervisorMessageCode.CONFIG>(configMsg)
+            );
         });
     }
 
@@ -94,7 +110,12 @@ export class Host implements IComponent {
 
         this.logger.info("Host main called");
 
-        await unlink("/tmp/socket-server-path");
+        try {
+            await unlink("/tmp/socket-server-path");
+        } catch (error) {
+            console.error(error.message);
+        }
+
         await this.socketServer.start();
         this.api.server.listen(8000);
 
@@ -152,7 +173,7 @@ export class Host implements IComponent {
     async startCSIController(config: RunnerConfig, appConfig: AppConfig, sequenceArgs?: any[]) {
         const communicationHandler = new CommunicationHandler();
         const id = this.hash();
-        const csic = new CSIController(id, appConfig, sequenceArgs, communicationHandler, this.logger);
+        const csic = new CSIController(id, config, appConfig, sequenceArgs, communicationHandler, this.logger);
 
         this.logger.log("New CSIController created: ", id);
 
@@ -165,7 +186,7 @@ export class Host implements IComponent {
         throw new Error("Method not yet supported");
     }
 
-    getCSIControllersMap(): { [key : string]: CSIController } {
+    getCSIControllersMap(): { [key: string]: CSIController } {
         return this.csiControllers;
     }
 

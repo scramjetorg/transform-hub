@@ -8,6 +8,8 @@ import {
     EmptyMessageData,
     ErrorMessage,
     ErrorMessageData,
+    InstanceConfigMessage,
+    InstanceConfigMessageData,
     KeepAliveMessage,
     KeepAliveMessageData,
     KillSequenceMessage,
@@ -26,7 +28,7 @@ import {
     StatusMessageData
 } from "@scramjet/model";
 import { PassThoughStream } from "./utils";
-import { RunnerMessageCode } from "@scramjet/symbols";
+import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -42,6 +44,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.PING ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessage :
+    T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessage :
     never
     ;
 
@@ -59,14 +62,17 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.PING ? EmptyMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
+    T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
     never
     ;
 
-export type EncodedMessage<T extends RunnerMessageCode> = [T, MessageDataType<T>];
+export type EncodedMessage<T extends RunnerMessageCode | SupervisorMessageCode> = [T, MessageDataType<T>];
 export type ControlMessageCode =
     RunnerMessageCode.FORCE_CONFIRM_ALIVE | RunnerMessageCode.KILL |
     RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PONG;
+    RunnerMessageCode.PONG |
+    SupervisorMessageCode.CONFIG;
+
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 
 export type MonitoringMessageCode =

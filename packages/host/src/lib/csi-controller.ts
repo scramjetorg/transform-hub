@@ -1,6 +1,6 @@
 import { HandshakeAcknowledgeMessage, MessageUtilities, CSIControllerError, CommunicationHandler } from "@scramjet/model";
 import { RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
-import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger } from "@scramjet/types";
+import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger, RunnerConfig } from "@scramjet/types";
 
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
@@ -9,6 +9,7 @@ import { DataStream } from "scramjet";
 
 export class CSIController extends EventEmitter {
     id: string;
+    config: RunnerConfig;
     appConfig: AppConfig;
     superVisorProcess?: ChildProcess;
     sequenceArgs: Array<string> | undefined;
@@ -21,6 +22,7 @@ export class CSIController extends EventEmitter {
 
     constructor(
         id: string,
+        config: RunnerConfig,
         appConfig: AppConfig,
         args: any[] | undefined,
         communicationHandler: CommunicationHandler,
@@ -29,6 +31,7 @@ export class CSIController extends EventEmitter {
         super();
 
         this.id = id;
+        this.config = config;
         this.appConfig = appConfig;
         this.logger = logger;
         this.communicationHandler = communicationHandler;

@@ -143,9 +143,10 @@ class LifeCycleController implements IComponent {
             /**
             * LifeCycle Adapter calls identify method to unpack the compressed file
             * and inspect the attached configuration file to prepare the Sequence
-            * deployment environed.
+            * deployment environed
             */
             const config = await this.lifecycleAdapter.identify(packageStream as Readable);
+            // config możemy przekazać po streamie (control)
 
             /**
             * Passing CommunicationHandler class instance to LifeCycle Adapter and the client so
