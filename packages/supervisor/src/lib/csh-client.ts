@@ -37,7 +37,7 @@ class CSHClient implements ICSHClient {
             });
 
             this.connection.once("connect", () => {
-                console.log("Sending id: ", id);
+                this.logger.log("Sending id: ", id);
 
                 this.connection?.write(id);
 

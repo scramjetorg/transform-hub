@@ -73,9 +73,9 @@ export class Host implements IComponent {
     logger: Logger;
 
     private attachListeners() {
-        this.socketServer.on("connect", ({ id }) => {
-            console.log("supervisor connected", id);
-            //this.csiControllers[id].handleSupervisorConnect(streams);
+        this.socketServer.on("connect", ({ id, streams }) => {
+            this.logger.log("supervisor connected", id);
+            this.csiControllers[id].handleSupervisorConnect(streams);
         });
     }
 
@@ -92,7 +92,7 @@ export class Host implements IComponent {
     async main() {
         addLoggerOutput(process.stdout);
 
-        console.info("Host main called");
+        this.logger.info("Host main called");
 
         await unlink("/tmp/socket-server-path");
         await this.socketServer.start();
@@ -100,7 +100,7 @@ export class Host implements IComponent {
 
         await new Promise(res => {
             this.api?.server.once("listening", res);
-            console.info("API listening");
+            this.logger.info("API listening");
         });
 
         this.attachListeners();
@@ -126,7 +126,7 @@ export class Host implements IComponent {
                 config: preRunnerResponse
             });
 
-            console.log(preRunnerResponse);
+            this.logger.log(preRunnerResponse);
 
             await this.startCSIController(preRunnerResponse, {});
         }, { end: true });
@@ -154,9 +154,10 @@ export class Host implements IComponent {
         const id = this.hash();
         const csic = new CSIController(id, appConfig, sequenceArgs, communicationHandler, this.logger);
 
-        await csic.main();
+        this.logger.log("New CSIController created: ", id);
 
         this.csiControllers[id] = csic;
+        await csic.main();
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
