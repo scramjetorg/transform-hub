@@ -1,16 +1,17 @@
 import { InstanceConfigMessage,
     MessageUtilities, HandshakeAcknowledgeMessage, CSIControllerError, CommunicationHandler } from "@scramjet/model";
 import { SupervisorMessageCode, RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
-import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger, RunnerConfig } from "@scramjet/types";
+import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger } from "@scramjet/types";
 import { CommunicationChannel, } from "@scramjet/symbols";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
+import { Sequence } from "./host";
 
 export class CSIController extends EventEmitter {
     id: string;
-    config: RunnerConfig;
+    sequence: Sequence;
     appConfig: AppConfig;
     superVisorProcess?: ChildProcess;
     sequenceArgs: Array<string> | undefined;
@@ -23,7 +24,7 @@ export class CSIController extends EventEmitter {
 
     constructor(
         id: string,
-        config: RunnerConfig,
+        sequence: Sequence,
         appConfig: AppConfig,
         args: any[] | undefined,
         communicationHandler: CommunicationHandler,
@@ -32,7 +33,7 @@ export class CSIController extends EventEmitter {
         super();
 
         this.id = id;
-        this.config = config;
+        this.sequence = sequence;
         this.appConfig = appConfig;
         this.logger = logger;
         this.communicationHandler = communicationHandler;
@@ -129,7 +130,7 @@ export class CSIController extends EventEmitter {
     async sendConfig() {
         const configMsg: InstanceConfigMessage = {
             msgCode: SupervisorMessageCode.CONFIG,
-            config: this.config
+            config: this.sequence.config
         };
 
         await this.controlDataStream?.whenWrote(

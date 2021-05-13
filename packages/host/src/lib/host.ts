@@ -125,16 +125,16 @@ export class Host implements IComponent {
 
         this.api.downstream(`${apiBase}/sequence`, async (stream) => {
             const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
-            const id = this.hash();
-
-            this.sequenceStore.addSequence({
-                id,
+            const sequence: Sequence = {
+                id: this.hash(),
                 config: preRunnerResponse
-            });
+            };
+
+            this.sequenceStore.addSequence(sequence);
 
             this.logger.log(preRunnerResponse);
 
-            await this.startCSIController(preRunnerResponse, {});
+            await this.startCSIController(sequence, {});
         }, { end: true });
 
         //        this.apiServer.get(`${apiBase}/instances`, );
@@ -155,10 +155,10 @@ export class Host implements IComponent {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async startCSIController(config: RunnerConfig, appConfig: AppConfig, sequenceArgs?: any[]) {
+    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]) {
         const communicationHandler = new CommunicationHandler();
         const id = this.hash();
-        const csic = new CSIController(id, config, appConfig, sequenceArgs, communicationHandler, this.logger);
+        const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler, this.logger);
 
         this.logger.log("New CSIController created: ", id);
 
