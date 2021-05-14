@@ -1,14 +1,13 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler } from "@scramjet/model";
+import { CommunicationChannel, RunnerMessageCode } from "@scramjet/symbols";
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
 import * as Crypto from "crypto";
 import { unlink } from "fs/promises";
-
 import { Readable } from "stream";
 import { CSIController } from "./csi-controller";
 import { SocketServer } from "./socket-server";
-
 
 /**
  *
@@ -64,6 +63,8 @@ export class SequenceStore {
 
 export class Host implements IComponent {
     api: APIExpose;
+
+    apiBase = "/api/v1";
 
     socketServer: SocketServer;
 
@@ -121,9 +122,7 @@ export class Host implements IComponent {
      * - starting Instance (based on a given Sequence ID passed in the HTTP request body)
      */
     attachHostAPIs() {
-        const apiBase = "/api/v1";
-
-        this.api.downstream(`${apiBase}/sequence`, async (stream) => {
+        this.api.downstream(`${this.apiBase}/sequence`, async (stream) => {
             const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
             const sequence: Sequence = {
                 id: this.hash(),
@@ -132,13 +131,46 @@ export class Host implements IComponent {
 
             this.sequenceStore.addSequence(sequence);
             this.logger.log(preRunnerResponse);
+            this.logger.log(sequence.id);
+
+            this.api.get(`${this.apiBase}/sequence/${sequence.id}`, () => {
+                console.log(this.getSequencesData(sequence.id));
+                return this.getSequencesData(sequence.id);
+            });
 
             // TODO: everything below will be executed on another request.
             await this.startCSIController(sequence, {});
         }, { end: true });
 
-        //        this.apiServer.get(`${apiBase}/instances`, );
-        //        this.apiServer.get(`${apiBase}/sequences`, );
+        this.api.get(`${this.apiBase}/sequences`, () => {
+            console.log(this.getSequencesMap());
+            return this.getSequencesMap();
+        });
+
+        this.api.get(`${this.apiBase}/instances`, () => {
+            console.log(this.getCSIControllersMap());
+            return this.getCSIControllersMap();
+        });
+    }
+
+    attachInstanceAPI(instance: CSIController) {
+        if (instance.downStreams) {
+
+            this.api.upstream(`${this.apiBase}/stream/${instance.id}/stdout`, instance.downStreams[CommunicationChannel.STDOUT]);
+            this.api.upstream(`${this.apiBase}/stream/${instance.id}/stderr`, instance.downStreams[CommunicationChannel.STDERR]);
+            this.api.downstream(`${this.apiBase}/stream/${instance.id}/stdin`, instance.downStreams[CommunicationChannel.STDIN]);
+
+            // monitoring data
+            this.api.get(`${this.apiBase}/sequence/${instance.id}/health`, RunnerMessageCode.MONITORING, instance.communicationHandler);
+            this.api.get(`${this.apiBase}/sequence/${instance.id}/status`, RunnerMessageCode.STATUS, instance.communicationHandler);
+            this.api.get(`${this.apiBase}/sequence/${instance.id}/event`, RunnerMessageCode.EVENT, instance.communicationHandler);
+
+            // operations
+            this.api.op(`${this.apiBase}/sequence/${instance.id}/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, instance.communicationHandler);
+            this.api.op(`${this.apiBase}/sequence/${instance.id}/_event/`, RunnerMessageCode.EVENT, instance.communicationHandler);
+            this.api.op(`${this.apiBase}/sequence/${instance.id}/_stop/`, RunnerMessageCode.STOP, instance.communicationHandler);
+            this.api.op(`${this.apiBase}/sequence/${instance.id}/_kill/`, RunnerMessageCode.KILL, instance.communicationHandler);
+        }
     }
 
     identifySequence(stream: Readable): MaybePromise<RunnerConfig> {
@@ -166,17 +198,16 @@ export class Host implements IComponent {
         await csic.main();
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    attachInstanceAPI(sequenceId: string) {
-        throw new Error("Method not yet supported");
-    }
-
     getCSIControllersMap(): { [key: string]: CSIController } {
+        this.logger.log("getting CSI controller map");
         return this.csiControllers;
     }
 
     getSequencesMap(): { [key: string]: Sequence } {
         return this.sequenceStore.sequences;
     }
-}
 
+    getSequencesData(sequenceId: string) {
+        return this.sequenceStore.getSequenceById(sequenceId);
+    }
+}

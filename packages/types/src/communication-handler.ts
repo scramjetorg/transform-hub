@@ -1,4 +1,4 @@
-import { MonitoringMessageHandler, ControlMessageHandler } from "@scramjet/model";
+import { ControlMessageHandler, MonitoringMessageHandler } from "@scramjet/model";
 import { MessageDataType } from "@scramjet/types";
 import { DataStream } from "scramjet";
 import { Readable, Writable } from "stream";

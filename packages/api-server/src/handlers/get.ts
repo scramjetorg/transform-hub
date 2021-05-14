@@ -26,7 +26,9 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
         }
     };
-    const get1 = <T extends MonitoringMessageCode>(path: string | RegExp, op: T, conn: ICommunicationHandler): void => {
+    const getMonitoring = <T extends MonitoringMessageCode>(
+        path: string | RegExp, op: T, conn: ICommunicationHandler
+    ): void => {
         let lastItem: MessageDataType<T> | null = null;
 
         conn.addMonitoringHandler(op, (data) => {
@@ -43,7 +45,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             }
         });
     };
-    const get2 = (path: string | RegExp, callback: GetResolver): void => {
+    const getResolver = (path: string | RegExp, callback: GetResolver): void => {
         router.get(path, async (req, res, next) => {
             try {
                 check(req);
@@ -57,11 +59,9 @@ export function createGetterHandler(router: SequentialCeroRouter) {
     return <T extends MonitoringMessageCode>(
         path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler
     ) => {
-        if (typeof msg === "function") {
-            return get2(path, msg);
-        }
+        if (typeof msg === "function") return getResolver(path, msg);
         if (!conn) throw new Error("Communication handler not passed");
 
-        return get1(path, msg, conn);
+        return getMonitoring(path, msg, conn);
     };
 }

@@ -69,7 +69,8 @@ export interface APIExpose {
      * @param op which operation
      * @param conn the communication handler to use
      */
-    get<T extends MonitoringMessageCode>(path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler): void;
+    get<T extends MonitoringMessageCode>(
+        path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler): void;
     /**
      * A method that allows to pass a stream to the specified path on the API server
      *
@@ -89,8 +90,8 @@ export interface APIExpose {
      * @param stream the output that will be piped to from request or a method to be called then
      * @param config configuration of the stream
      */
-     downstream(
-        path: string|RegExp,
+    downstream(
+        path: string | RegExp,
         stream: StreamOutput,
         config?: StreamConfig
     ): void;
