@@ -1,5 +1,4 @@
-import { IncomingMessage } from "http";
-import { Server } from "http";
+import { IncomingMessage, Server } from "http";
 import { Readable, Writable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
@@ -7,6 +6,7 @@ import { MaybePromise } from "./utils";
 
 export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
 export type StreamOutput = ((req: IncomingMessage) => MaybePromise<void>) | MaybePromise<Writable>;
+export type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
 
 /**
  * Configuration options for streaming endpoionts
@@ -61,7 +61,7 @@ export interface APIExpose {
      * @param message which operation to expose
      * @param conn the communication handler to use
      */
-    op<T extends ControlMessageCode>(path: string|RegExp, message: T, conn: ICommunicationHandler): void;
+    op<T extends ControlMessageCode>(path: string | RegExp, message: T, conn: ICommunicationHandler): void;
     /**
      * Simple GET request hook for static data in monitoring stream.
      *
@@ -69,7 +69,7 @@ export interface APIExpose {
      * @param op which operation
      * @param conn the communication handler to use
      */
-    get<T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: ICommunicationHandler): void;
+    get<T extends MonitoringMessageCode>(path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler): void;
     /**
      * A method that allows to pass a stream to the specified path on the API server
      *
@@ -78,7 +78,7 @@ export interface APIExpose {
      * @param config configuration of the stream
      */
     upstream(
-        path: string|RegExp,
+        path: string | RegExp,
         stream: StreamInput,
         config?: StreamConfig
     ): void;

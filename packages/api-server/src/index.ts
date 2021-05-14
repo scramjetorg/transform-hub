@@ -1,10 +1,10 @@
 import { APIExpose } from "@scramjet/types";
-import { cero, sequentialRouter } from "./lib/0http";
-import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
+import { Server } from "http";
 import { createGetterHandler } from "./handlers/get";
 import { createOperationHandler } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
-import { Server } from "http";
+import { cero, sequentialRouter } from "./lib/0http";
+import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
 
 type ServerConfig = {
     verbose?: boolean;

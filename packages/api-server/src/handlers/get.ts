@@ -1,9 +1,7 @@
-import { CeroError, NextCallback, SequentialCeroRouter } from "../lib/definitions";
-import { ICommunicationHandler, MaybePromise, MessageDataType, MonitoringMessageCode } from "@scramjet/types";
+import { GetResolver, ICommunicationHandler, MessageDataType, MonitoringMessageCode } from "@scramjet/types";
 import { IncomingMessage, ServerResponse } from "http";
+import { CeroError, NextCallback, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
-
-type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
 
 export function createGetterHandler(router: SequentialCeroRouter) {
     const check = (req: IncomingMessage): void => {
@@ -28,8 +26,8 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
         }
     };
-    const get1 = <T extends MonitoringMessageCode>(path: string|RegExp, op: T, conn: ICommunicationHandler): void => {
-        let lastItem: MessageDataType<T>|null = null;
+    const get1 = <T extends MonitoringMessageCode>(path: string | RegExp, op: T, conn: ICommunicationHandler): void => {
+        let lastItem: MessageDataType<T> | null = null;
 
         conn.addMonitoringHandler(op, (data) => {
             lastItem = data[1];
@@ -45,7 +43,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             }
         });
     };
-    const get2 = (path: string|RegExp, callback: GetResolver): void => {
+    const get2 = (path: string | RegExp, callback: GetResolver): void => {
         router.get(path, async (req, res, next) => {
             try {
                 check(req);
@@ -57,13 +55,13 @@ export function createGetterHandler(router: SequentialCeroRouter) {
     };
 
     return <T extends MonitoringMessageCode>(
-        path: string|RegExp, arg1: GetResolver | T, arg2?: ICommunicationHandler
+        path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler
     ) => {
-        if (typeof arg1 === "function") {
-            return get2(path, arg1);
+        if (typeof msg === "function") {
+            return get2(path, msg);
         }
-        if (!arg2) throw new Error("Communication handler not passed");
+        if (!conn) throw new Error("Communication handler not passed");
 
-        return get1(path, arg1, arg2);
+        return get1(path, msg, conn);
     };
 }
