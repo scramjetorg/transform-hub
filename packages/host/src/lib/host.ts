@@ -75,7 +75,7 @@ export class Host implements IComponent {
 
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
-            this.logger.log("supervisor connected", id);
+            this.logger.log("Supervisor connected:", id);
             await this.csiControllers[id].handleSupervisorConnect(streams);
         });
     }
@@ -131,9 +131,9 @@ export class Host implements IComponent {
             };
 
             this.sequenceStore.addSequence(sequence);
-
             this.logger.log(preRunnerResponse);
 
+            // TODO: everything below will be executed on another request.
             await this.startCSIController(sequence, {});
         }, { end: true });
 

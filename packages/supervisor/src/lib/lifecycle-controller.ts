@@ -1,7 +1,7 @@
 import { getLogger } from "@scramjet/logger";
 import { CommunicationHandler, promiseTimeout, SupervisorError } from "@scramjet/model";
 import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
-import { ICSHClient, ICommunicationHandler, LifeCycleConfig, IComponent, Logger, EncodedMessage, ILifeCycleAdapterRun } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, LifeCycleConfig, IComponent, Logger, EncodedMessage, ILifeCycleAdapterRun, RunnerConfig } from "@scramjet/types";
 
 
 const stopTimeout = 7000; // where to config this?
@@ -136,6 +136,22 @@ class LifeCycleController implements IComponent {
             // TODO: we need to align stream types here
 
             /**
+<<<<<<< HEAD
+=======
+            * Request from the client to retrieve a readable stream
+            * that transports the compressed Sequence and its configuration file.
+            */
+            //const packageStream = this.client.getPackage();
+            /**
+            * LifeCycle Adapter calls identify method to unpack the compressed file
+            * and inspect the attached configuration file to prepare the Sequence
+            * deployment environed
+            */
+            //const config = await this.lifecycleAdapter.identify(packageStream as Readable);
+            // config możemy przekazać po streamie (control)
+
+            /**
+>>>>>>> Start runner
             * Passing CommunicationHandler class instance to LifeCycle Adapter and the client so
             * that they can hook their corresponding message and data streams to it.
             */
@@ -155,17 +171,25 @@ class LifeCycleController implements IComponent {
 
             this.logger.log("Streams hooked and routed");
 
+            const config: RunnerConfig = await new Promise(resolve => {
+                this.communicationHandler.addControlHandler(
+                    SupervisorMessageCode.CONFIG,
+                    (message) => {
+                        resolve(message[1].config);
+
+                        return message;
+                    }
+                );
+            });
+
+            console.log(config);
+
             // const acceptableExitCodes = [0];
             /**
              * When the client and LifeCycle Adapter streams are piped
              * the Sequence deployment and execution is started.
             */
-            this.communicationHandler.addControlHandler(
-                SupervisorMessageCode.CONFIG,
-                async message => {
-                    await this.lifecycleAdapterRun.run(message[1].config);
-                    return message;
-                });
+            this.endOfSequence = this.lifecycleAdapterRun.run(config);
 
             /**
              * When the kill message comes from the CSH via the control stream

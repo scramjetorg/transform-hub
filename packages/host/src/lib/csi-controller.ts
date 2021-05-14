@@ -101,7 +101,6 @@ export class CSIController extends EventEmitter {
             .JSONStringify()
             .pipe(this.downStreams[CommunicationChannel.CONTROL]);
 
-
         this.controlDataStream = new DataStream();
         this.controlDataStream.JSONStringify()
             .pipe(this.downStreams[CC.CONTROL]);
