@@ -1,9 +1,8 @@
 import { getLogger } from "@scramjet/logger";
 import { CommunicationHandler, promiseTimeout, SupervisorError } from "@scramjet/model";
-import { RunnerMessageCode } from "@scramjet/symbols";
-import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, LifeCycleConfig, IComponent, Logger, EncodedMessage } from "@scramjet/types";
+import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { ICSHClient, ICommunicationHandler, LifeCycleConfig, IComponent, Logger, EncodedMessage, ILifeCycleAdapterRun } from "@scramjet/types";
 
-import { Readable } from "stream";
 
 const stopTimeout = 7000; // where to config this?
 
@@ -49,7 +48,7 @@ class LifeCycleController implements IComponent {
     * that handle all operations related to unpacking and executing the Sequence.
     * @type {ILifeCycleAdapter}
     */
-    private lifecycleAdapter: ILifeCycleAdapter;
+    private lifecycleAdapterRun: ILifeCycleAdapterRun;
 
     /**
     * Configurations specific to a lifecycle, e.g. whether to take a snapshot
@@ -76,14 +75,15 @@ class LifeCycleController implements IComponent {
 
     /**
      * @param {string} id supervisor id
-     * @param {ILifeCycleAdapter} lifecycleAdapter an implementation of LifeCycle interface
+     * @param {ILifeCycleAdapterRun} lifecycleAdapterRun an implementation of LifeCycle interface
      * @param {LifeCycleConfig} lifecycleConfig configuration specific to running the Sequence on
      * the particular Cloud Server Instance.
      * @param {ICSHClient} client that communicates with the CSH via TCP connection
      */
-    constructor(id: string, lifecycleAdapter: ILifeCycleAdapter, lifecycleConfig: LifeCycleConfig, client: ICSHClient) {
+    constructor(
+        id: string, lifecycleAdapterRun: ILifeCycleAdapterRun, lifecycleConfig: LifeCycleConfig, client: ICSHClient) {
         this.id = id;
-        this.lifecycleAdapter = lifecycleAdapter;
+        this.lifecycleAdapterRun = lifecycleAdapterRun;
         this.lifecycleConfig = lifecycleConfig;
         this.client = client;
         this.communicationHandler = new CommunicationHandler();
@@ -127,7 +127,7 @@ class LifeCycleController implements IComponent {
              * the LifeCycle Adapter are initiated.
              */
             await Promise.all([
-                this.lifecycleAdapter.init(),
+                this.lifecycleAdapterRun.init(),
                 this.client.init(this.id)
             ]);
 
@@ -136,24 +136,11 @@ class LifeCycleController implements IComponent {
             // TODO: we need to align stream types here
 
             /**
-            * Request from the client to retrieve a readable stream
-            * that transports the compressed Sequence and its configuration file.
-            */
-            const packageStream = this.client.getPackage();
-            /**
-            * LifeCycle Adapter calls identify method to unpack the compressed file
-            * and inspect the attached configuration file to prepare the Sequence
-            * deployment environed
-            */
-            const config = await this.lifecycleAdapter.identify(packageStream as Readable);
-            // config możemy przekazać po streamie (control)
-
-            /**
             * Passing CommunicationHandler class instance to LifeCycle Adapter and the client so
             * that they can hook their corresponding message and data streams to it.
             */
             await Promise.all([
-                this.lifecycleAdapter.hookCommunicationHandler(this.communicationHandler),
+                this.lifecycleAdapterRun.hookCommunicationHandler(this.communicationHandler),
                 this.client.hookCommunicationHandler(this.communicationHandler)
             ]);
 
@@ -173,7 +160,12 @@ class LifeCycleController implements IComponent {
              * When the client and LifeCycle Adapter streams are piped
              * the Sequence deployment and execution is started.
             */
-            this.endOfSequence = this.lifecycleAdapter.run(config);
+            this.communicationHandler.addControlHandler(
+                SupervisorMessageCode.CONFIG,
+                async message => {
+                    await this.lifecycleAdapterRun.run(message[1].config);
+                    return message;
+                });
 
             /**
              * When the kill message comes from the CSH via the control stream
@@ -202,7 +194,7 @@ class LifeCycleController implements IComponent {
             );
 
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
-                message[1] = await this.lifecycleAdapter.stats(message[1]);
+                message[1] = await this.lifecycleAdapterRun.stats(message[1]);
 
                 return message;
             });
@@ -210,7 +202,7 @@ class LifeCycleController implements IComponent {
             /*
             * When the stop message comes from the CSH via the control stream
             * and the Sequence has not terminated yet, the LifeCycle Controller
-            * requests LifeCycle Adapter to stop the Sequence by executing stop with paramiters:
+            * requests LifeCycle Adapter to stop the Sequence by executing stop with parameters:
             * * timeout: number - the Sequence will be stopped after the provided timeout (milliseconds)
             * * canCallKeepalive: boolean - indicates whether Sequence can prolong operation to complete the task
             * General question: do we perform snapshot() only on error?
@@ -241,7 +233,7 @@ class LifeCycleController implements IComponent {
             */
             if (this.lifecycleConfig.makeSnapshotOnError) {
 
-                const retUrl = await this.lifecycleAdapter.snapshot();
+                const retUrl = await this.lifecycleAdapterRun.snapshot();
 
                 // TODO: we should mute this in the stream from Runner -
                 //       Runner should not be able to send this (and probably other codes)
@@ -253,7 +245,7 @@ class LifeCycleController implements IComponent {
 
             }
 
-            await this.lifecycleAdapter.cleanup();
+            await this.lifecycleAdapterRun.cleanup();
 
             this.logger.error("Cleanup done (post error)");
 
@@ -268,7 +260,7 @@ class LifeCycleController implements IComponent {
         * The cleanup operations depend on the LifeCycle interface implementation.
         * They can include, for example, the removal of the created volume, directory, and container.
         */
-        await this.lifecycleAdapter.cleanup();
+        await this.lifecycleAdapterRun.cleanup();
 
         this.logger.info("Cleanup done (normal execution)");
 
@@ -289,7 +281,7 @@ class LifeCycleController implements IComponent {
             await promiseTimeout(this.endOfSequence, stopTimeout);
             this.logger.log("Sequence terminated itself.");
         } catch {
-            await this.lifecycleAdapter.remove();
+            await this.lifecycleAdapterRun.remove();
             process.exitCode = 252;
         }
 
@@ -323,7 +315,7 @@ class LifeCycleController implements IComponent {
                 this.logger.log("Terminated with kill.");
             } catch {
                 this.logger.error("Sequence unresponsive, killing container...");
-                await this.lifecycleAdapter.remove();
+                await this.lifecycleAdapterRun.remove();
                 process.exitCode = 253;
             }
         }
@@ -347,7 +339,7 @@ class LifeCycleController implements IComponent {
         // wait for this before cleanups
         // handle errors there
         await promiseTimeout(this.endOfSequence, stopTimeout)
-            .catch(() => this.lifecycleAdapter.remove());
+            .catch(() => this.lifecycleAdapterRun.remove());
 
         return message;
     }
