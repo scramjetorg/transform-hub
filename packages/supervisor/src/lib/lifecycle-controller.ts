@@ -182,7 +182,7 @@ class LifeCycleController implements IComponent {
                 );
             });
 
-            console.log(config);
+            this.logger.log(config);
 
             // const acceptableExitCodes = [0];
             /**
@@ -389,5 +389,4 @@ class LifeCycleController implements IComponent {
 }
 
 export { LifeCycleController };
-
 
