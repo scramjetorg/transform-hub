@@ -56,8 +56,7 @@ export class SocketServer extends EventEmitter implements IComponent {
 
         this.server
             .on("connection", async (connection) => {
-
-                //connection.pipe(process.stdout);
+                this.logger.info("new connection");
 
                 const id = await new Promise((resolve) => {
                     connection.once("data", (data) => resolve(data.toString()));
@@ -70,9 +69,6 @@ export class SocketServer extends EventEmitter implements IComponent {
                 this.logger.log("Supervisor connected! ID: ", id);
 
                 connection
-                    .on("close", () => {
-                        this.close();
-                    })
                     .on("error", () => {
                         /* ignore */
                         // TODO: Error handling?
