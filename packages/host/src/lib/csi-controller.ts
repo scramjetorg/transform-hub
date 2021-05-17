@@ -1,14 +1,16 @@
-import { InstanceConfigMessage,
-    MessageUtilities, HandshakeAcknowledgeMessage, CSIControllerError, CommunicationHandler } from "@scramjet/model";
-import { SupervisorMessageCode, RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
-import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger, UpstreamStreamsConfig } from "@scramjet/types";
-import { CommunicationChannel, } from "@scramjet/symbols";
+import {
+    CommunicationHandler, CSIControllerError, HandshakeAcknowledgeMessage, InstanceConfigMessage,
+    MessageUtilities
+} from "@scramjet/model";
+import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, Logger } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
-import { Sequence } from "./host";
 import { PassThrough } from "stream";
+import { Sequence } from "./host";
 
 export class CSIController extends EventEmitter {
     id: string;
@@ -16,7 +18,7 @@ export class CSIController extends EventEmitter {
     appConfig: AppConfig;
     superVisorProcess?: ChildProcess;
     sequenceArgs: Array<string> | undefined;
-
+    status?: FunctionDefinition[];
     controlDataStream?: DataStream;
     downStreams?: DownstreamStreamsConfig;
 
@@ -172,5 +174,40 @@ export class CSIController extends EventEmitter {
 
 
         await this.sendConfig();
+    }
+
+    // eslint-disable-next-line complexity
+    lookup(req: IncomingMessage, res: ServerResponse) {
+        if (this.downStreams === undefined) {
+            res.statusCode = 404;
+            res.end();
+            return;
+        }
+
+        switch (req.url) {
+        case "logs":
+            this.downStreams[CommunicationChannel.LOG].pipe(res);
+            break;
+        case "output":
+            this.downStreams[CommunicationChannel.OUT].pipe(res);
+            break;
+        case "input":
+            req.pipe(this.downStreams[CommunicationChannel.IN]);
+            break;
+        case "status":
+            res.end(this.status);
+            break;
+        case "event":
+            this.downStreams[CommunicationChannel.MONITORING].pipe(res);
+            break;
+        case "_monitoring_rate":
+        case "_event":
+        case "_stop":
+        case "_kill":
+            req.pipe(this.downStreams[CommunicationChannel.CONTROL]);
+            break;
+        default:
+            break;
+        }
     }
 }

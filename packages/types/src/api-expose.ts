@@ -1,3 +1,4 @@
+import { CeroMiddleware } from "@scramjet/api-server";
 import { IncomingMessage, Server } from "http";
 import { Readable, Writable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
@@ -95,4 +96,7 @@ export interface APIExpose {
         stream: StreamOutput,
         config?: StreamConfig
     ): void;
+
+    use(path: string | RegExp, ...middlewares: CeroMiddleware[]): void;
+
 }

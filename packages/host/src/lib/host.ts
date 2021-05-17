@@ -151,10 +151,28 @@ export class Host implements IComponent {
             console.log(this.getCSIControllersMap());
             return this.getCSIControllersMap();
         });
+
+        this.api.use(`${this.apiBase}/instance/`, (req, res) => {
+            if (!req.url) return Error();
+
+            const [id, ...urlparts] = req.url.split("/");
+
+            req.url = urlparts.join("/");
+
+            const instance = this.csiControllers[id];
+
+            this.logger.log("New connection", id, req.url);
+            if (!instance) throw Error("dupa");
+
+            instance.lookup(req, res);
+
+            return res;
+        });
     }
 
     attachInstanceAPI(instance: CSIController) {
         if (instance.downStreams) {
+
 
             this.api.upstream(`${this.apiBase}/stream/${instance.id}/stdout`, instance.downStreams[CommunicationChannel.STDOUT]);
             this.api.upstream(`${this.apiBase}/stream/${instance.id}/stderr`, instance.downStreams[CommunicationChannel.STDERR]);
@@ -211,3 +229,4 @@ export class Host implements IComponent {
         return this.sequenceStore.getSequenceById(sequenceId);
     }
 }
+
