@@ -2,7 +2,7 @@ import { APIError } from "@scramjet/types";
 import { Server, IncomingMessage, ServerResponse } from "http";
 import TRouter from "trouter";
 
-export type NextCallback = (e: Error) => void;
+export type NextCallback = (e?: Error) => void;
 export type CeroMiddleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
 export type CeroDefaultRoute = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
 

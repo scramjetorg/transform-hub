@@ -179,12 +179,14 @@ export class CSIController extends EventEmitter {
     // eslint-disable-next-line complexity
     lookup(req: IncomingMessage, res: ServerResponse) {
         if (this.downStreams === undefined) {
-            res.statusCode = 404;
+            res.statusCode = 500;
             res.end();
             return;
         }
 
-        switch (req.url) {
+        this.logger.log(`Instance ${this.id} processing request ${req.url}`);
+
+        switch (req.url?.split("/").pop()) {
         case "logs":
             this.downStreams[CommunicationChannel.LOG].pipe(res);
             break;
@@ -207,6 +209,8 @@ export class CSIController extends EventEmitter {
             req.pipe(this.downStreams[CommunicationChannel.CONTROL]);
             break;
         default:
+            res.statusCode = 404;
+            res.end();
             break;
         }
     }

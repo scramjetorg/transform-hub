@@ -35,8 +35,8 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
         op,
         upstream,
         downstream,
-        use: (path, middlewares) => {
-            router.use(path, middlewares);
+        use: (path, ...middlewares) => {
+            router.use(path, ...middlewares);
         }
     };
 }

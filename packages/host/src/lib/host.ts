@@ -82,7 +82,8 @@ export class Host implements IComponent {
     }
 
     private hash() {
-        return Crypto.randomBytes(32).toString("base64").slice(0, 32);
+        return Crypto.randomBytes(32).toString("base64")
+            .slice(0, 32).replace(/\//g, "-");
     }
 
     constructor(apiServer: APIExpose, socketServer: SocketServer) {
@@ -143,30 +144,34 @@ export class Host implements IComponent {
         }, { end: true });
 
         this.api.get(`${this.apiBase}/sequences`, () => {
-            console.log(this.getSequencesMap());
+            this.logger.log(this.getSequencesMap());
             return this.getSequencesMap();
         });
 
         this.api.get(`${this.apiBase}/instances`, () => {
-            console.log(this.getCSIControllersMap());
-            return this.getCSIControllersMap();
+            const instances = this.getCSIControllersMap();
+
+            return Object.values(instances).map(instance => {
+                return {
+                    id: instance.id,
+                    sequence: instance.sequence,
+                    status: instance.status
+                };
+            });
         });
 
-        this.api.use(`${this.apiBase}/instance/`, (req, res) => {
-            if (!req.url) return Error();
+        // eslint-disable-next-line consistent-return
+        this.api.use(`${this.apiBase}/instance/:id`, (req, res, next) => {
+            // eslint-disable-next-line no-extra-parens
+            const params = (req as any).params;
 
-            const [id, ...urlparts] = req.url.split("/");
+            if (!params || !params.id) {
+                return next(new Error("unknown id"));
+            }
 
-            req.url = urlparts.join("/");
-
-            const instance = this.csiControllers[id];
-
-            this.logger.log("New connection", id, req.url);
-            if (!instance) throw Error("dupa");
+            const instance = this.csiControllers[params.id];
 
             instance.lookup(req, res);
-
-            return res;
         });
     }
 
