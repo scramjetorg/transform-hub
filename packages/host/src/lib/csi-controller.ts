@@ -1,13 +1,14 @@
 import { InstanceConfigMessage,
     MessageUtilities, HandshakeAcknowledgeMessage, CSIControllerError, CommunicationHandler } from "@scramjet/model";
 import { SupervisorMessageCode, RunnerMessageCode, CommunicationChannel as CC } from "@scramjet/symbols";
-import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger } from "@scramjet/types";
+import { AppConfig, DownstreamStreamsConfig, ExitCode, Logger, UpstreamStreamsConfig } from "@scramjet/types";
 import { CommunicationChannel, } from "@scramjet/symbols";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
 import { Sequence } from "./host";
+import { PassThrough } from "stream";
 
 export class CSIController extends EventEmitter {
     id: string;
@@ -18,6 +19,11 @@ export class CSIController extends EventEmitter {
 
     controlDataStream?: DataStream;
     downStreams?: DownstreamStreamsConfig;
+
+    /**
+     * Streams connected do API.
+     */
+    private upStreams?: UpstreamStreamsConfig;
 
     communicationHandler: CommunicationHandler;
     logger: Logger;
@@ -93,7 +99,28 @@ export class CSIController extends EventEmitter {
     }
 
     hookupStreams(streams: DownstreamStreamsConfig) {
+        this.logger.log("Hookup streams.");
         this.downStreams = streams;
+
+        this.upStreams = [
+            process.stdin, // this should be e2e encrypted
+            process.stdout, // this should be e2e encrypted
+            process.stderr, // this should be e2e encrypted
+            new PassThrough(), // control
+            process.stdout, // monitor
+            new PassThrough(), // this should be e2e encrypted
+            process.stdout, // this should be e2e encrypted
+            new PassThrough() // this should be e2e encrypted (LOG FILE)
+
+        ];
+
+        this.communicationHandler.hookUpstreamStreams(this.upStreams);
+        this.communicationHandler.hookDownstreamStreams(this.downStreams);
+        this.communicationHandler.pipeStdio();
+        this.communicationHandler.pipeMessageStreams();
+        this.communicationHandler.pipeDataStreams();
+
+        this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
 
         const controlDataStream = new DataStream();
 
@@ -113,6 +140,9 @@ export class CSIController extends EventEmitter {
     }
 
     async handleHandshake() {
+        this.logger.log("PING RECEIVED");
+
+        this.sequenceArgs = ["/package/data.json"];
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
@@ -139,6 +169,8 @@ export class CSIController extends EventEmitter {
 
     async handleSupervisorConnect(streams: DownstreamStreamsConfig) {
         this.hookupStreams(streams);
+
+
         await this.sendConfig();
     }
 }
