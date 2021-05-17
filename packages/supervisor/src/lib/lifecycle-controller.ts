@@ -136,22 +136,6 @@ class LifeCycleController implements IComponent {
             // TODO: we need to align stream types here
 
             /**
-<<<<<<< HEAD
-=======
-            * Request from the client to retrieve a readable stream
-            * that transports the compressed Sequence and its configuration file.
-            */
-            //const packageStream = this.client.getPackage();
-            /**
-            * LifeCycle Adapter calls identify method to unpack the compressed file
-            * and inspect the attached configuration file to prepare the Sequence
-            * deployment environed
-            */
-            //const config = await this.lifecycleAdapter.identify(packageStream as Readable);
-            // config możemy przekazać po streamie (control)
-
-            /**
->>>>>>> Start runner
             * Passing CommunicationHandler class instance to LifeCycle Adapter and the client so
             * that they can hook their corresponding message and data streams to it.
             */
@@ -171,6 +155,9 @@ class LifeCycleController implements IComponent {
 
             this.logger.log("Streams hooked and routed");
 
+            /**
+             * Waiting for Runner configuration.
+             */
             const config: RunnerConfig = await new Promise(resolve => {
                 this.communicationHandler.addControlHandler(
                     SupervisorMessageCode.CONFIG,
@@ -182,9 +169,8 @@ class LifeCycleController implements IComponent {
                 );
             });
 
-            this.logger.log(config);
+            this.logger.log("Received Runner configuration:", config);
 
-            // const acceptableExitCodes = [0];
             /**
              * When the client and LifeCycle Adapter streams are piped
              * the Sequence deployment and execution is started.
@@ -231,7 +217,6 @@ class LifeCycleController implements IComponent {
             * * canCallKeepalive: boolean - indicates whether Sequence can prolong operation to complete the task
             * General question: do we perform snapshot() only on error?
             */
-
             this.communicationHandler.addControlHandler(
                 RunnerMessageCode.STOP,
                 async message => this.handleStop(message)
