@@ -12,19 +12,11 @@ const stopTimeout = 7000; // where to config this?
  * Each Supervisor is responsible for deploying and running only one Sequence.
  * When Supervisor starts it creates LifeCycleController class and
  * initiates Supervisor's lifecycle by calling its start() method.
- *
- * An example usage with LifeCycle Docker Adapter:
- * ```typescript
- *  const config: LifeCycleConfig = {
- *      makeSnapshotOnError: true
- *   };
- * const lcda = new LifecycleDockerAdapter();
- * const cshc: CSHClient = new CSHClient("socket/path");
- * const controller = new LifeCycleController(lcda, config, cshc);
- * controller.start();
- * ```
  */
 class LifeCycleController implements IComponent {
+    /**
+     * @param id Supervisor id, this id is generated in the host and passed to Supervisor at its initiation.
+     */
     id: string;
 
     /**
@@ -36,17 +28,16 @@ class LifeCycleController implements IComponent {
     private communicationHandler: ICommunicationHandler = new CommunicationHandler();
 
     /**
-    * ICSHClient handles communication with CSH using TCP via the socket path provided
-    * when constructing CSHClient
+    * ICSHClient handles communication with CSH using TCP.
     * @type {ICSHClient}
     */
     private client: ICSHClient;
 
     /**
     * Interface specifying methods that can be performed during Supervisor's lifecycle.
-    * This interface is used by the LifeCycle Controller to invoke Lifecycle Adapter methods
-    * that handle all operations related to unpacking and executing the Sequence.
-    * @type {ILifeCycleAdapter}
+    * This interface is used by the LifeCycle Controller to invoke Lifecycle Adapter Run methods
+    * that handle all operations related to execution of the Sequence.
+    * @type {ILifeCycleAdapterRun}
     */
     private lifecycleAdapterRun: ILifeCycleAdapterRun;
 
@@ -95,27 +86,20 @@ class LifeCycleController implements IComponent {
     /**
      * This main method controls logical flow of the Cloud Server Instance lifecycle.
      *
-     * The Supervisor starts by instating the client that communicates with the CSH
-     * and LifeCycle Adapter responsible for unpacking and deployment of the Sequence.
+     * The Supervisor starts by initiating the client that communicates with the CSH
+     * and LifeCycle Adapter Run responsible for deployment of the Sequence.
      *
-     * When the client is ready the LifeCycle Controller requests from it the stream
-     * with the compressed Sequence to be deployed.
+     * Before the Sequence is executed the LifeCycle Adapter Run needs to connect the message and data streams
+     * between the client and the LifeCycle Adapter Run.
      *
-     * Once the client receives the stream on which the Sequence is transported it passes
-     * it to LifeCycle Adapter for unpacking and inspection.
-     *
-     * The Sequence is now unpacked and ready to be executed. However, before the Sequence is
-     * executed the LifeCycle Adapter needs to connect the message and data streams between the client
-     * and the LifeCycle Adapter so that there are communication channels with the Sequence.
-     *
-     * LifeCycle Controller than requests LifeCycle Adapter to run the Sequence.
+     * LifeCycle Controller than requests LifeCycle Adapter Run to run the Sequence.
      *
      * The Sequence runs until it has not terminated, either by itself or by a command sent from the CSH.
      *
      * After the Sequence terminates it is possible to perform a snapshot of the container in which it was run.
      *
      * When the Sequence terminates and (optionally) the snapshot is created, the LifeCycle Controller
-     * requests the LifeCycle Adapter to perform the cleanup (e.g. removing unused volumes and containers).
+     * requests the LifeCycle Adapter Run to perform the cleanup (e.g. removing unused volumes and containers).
      *
      * @returns {Promise} resolves when Supervisor completed lifecycle without errors.
      */
@@ -124,7 +108,7 @@ class LifeCycleController implements IComponent {
 
             /**
              * The client that communicates with the CSH and
-             * the LifeCycle Adapter are initiated.
+             * the LifeCycle Adapter Run are initiated.
              */
             await Promise.all([
                 this.lifecycleAdapterRun.init(),
@@ -136,7 +120,7 @@ class LifeCycleController implements IComponent {
             // TODO: we need to align stream types here
 
             /**
-            * Passing CommunicationHandler class instance to LifeCycle Adapter and the client so
+            * Passing CommunicationHandler class instance to LifeCycle Adapter Run and the client so
             * that they can hook their corresponding message and data streams to it.
             */
             await Promise.all([
@@ -145,7 +129,7 @@ class LifeCycleController implements IComponent {
             ]);
 
             /**
-             * Once the LifeCycle Adapter and the client hooked their streams
+             * Once the LifeCycle Adapter Run and the client hooked their streams
              * using the CommunicationHandler class the streams are ready to
              * be piped (connected and ready for data transfer).
             */
@@ -172,7 +156,7 @@ class LifeCycleController implements IComponent {
             this.logger.log("Received Runner configuration:", config);
 
             /**
-             * When the client and LifeCycle Adapter streams are piped
+             * When the client and LifeCycle Adapter Run streams are piped
              * the Sequence deployment and execution is started.
             */
             this.endOfSequence = this.lifecycleAdapterRun.run(config);
@@ -180,7 +164,7 @@ class LifeCycleController implements IComponent {
             /**
              * When the kill message comes from the CSH via the control stream
              * and the Sequence has not terminated yet, the LifeCycle Controller
-             * requests LifeCycle Adapter to kill the Sequence by executing kill
+             * requests LifeCycle Adapter Run to kill the Sequence by executing kill
              * method on its interface.
              */
             this.communicationHandler.addControlHandler(
@@ -212,10 +196,9 @@ class LifeCycleController implements IComponent {
             /*
             * When the stop message comes from the CSH via the control stream
             * and the Sequence has not terminated yet, the LifeCycle Controller
-            * requests LifeCycle Adapter to stop the Sequence by executing stop with parameters:
+            * requests LifeCycle Adapter Run to stop the Sequence by executing stop with parameters:
             * * timeout: number - the Sequence will be stopped after the provided timeout (milliseconds)
             * * canCallKeepalive: boolean - indicates whether Sequence can prolong operation to complete the task
-            * General question: do we perform snapshot() only on error?
             */
             this.communicationHandler.addControlHandler(
                 RunnerMessageCode.STOP,
@@ -225,7 +208,7 @@ class LifeCycleController implements IComponent {
             this.logger.log("Sequence initialized");
 
             /**
-            * LifeCycle Adapter runs Runner and starts Sequence in the container specified by provided configuration
+            * LifeCycle Adapter Run runs Runner and starts Sequence in the container specified by provided configuration
             */
             const exitcode = await this.endOfSequence;
 
@@ -265,7 +248,7 @@ class LifeCycleController implements IComponent {
         }
 
         /**
-        * LifeCycle Adapter performs cleanup operations.
+        * LifeCycle Adapter Run performs cleanup operations.
         * The cleanup operations depend on the LifeCycle interface implementation.
         * They can include, for example, the removal of the created volume, directory, and container.
         */
