@@ -8,7 +8,6 @@ import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, Su
 import { APIRoute, AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, Logger, UpstreamStreamsConfig } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
-import { IncomingMessage, ServerResponse } from "http";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
@@ -204,45 +203,6 @@ export class CSIController extends EventEmitter {
             this.router = router;
         } else {
             throw new AppError("UNATTACHED_STREAMS");
-        }
-    }
-
-    // eslint-disable-next-line complexity
-    lookup(req: IncomingMessage, res: ServerResponse) {
-        if (this.downStreams === undefined) {
-            res.statusCode = 500;
-            res.end();
-            return;
-        }
-
-        this.logger.log(`Instance ${this.id} processing request ${req.url}`);
-
-        switch (req.url?.split("/").pop()) {
-        case "logs":
-            this.downStreams[CommunicationChannel.LOG].pipe(res);
-            break;
-        case "output":
-            this.downStreams[CommunicationChannel.OUT].pipe(res);
-            break;
-        case "input":
-            req.pipe(this.downStreams[CommunicationChannel.IN]);
-            break;
-        case "status":
-            res.end(this.status);
-            break;
-        case "event":
-            this.downStreams[CommunicationChannel.MONITORING].pipe(res);
-            break;
-        case "_monitoring_rate":
-        case "_event":
-        case "_stop":
-        case "_kill":
-            req.pipe(this.downStreams[CommunicationChannel.CONTROL]);
-            break;
-        default:
-            res.statusCode = 404;
-            res.end();
-            break;
         }
     }
 }
