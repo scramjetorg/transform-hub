@@ -142,8 +142,7 @@ export class Host implements IComponent {
             });
         }, { end: true });
 
-        this.api.use(`${this.apiBase}/sequence/:id/start`, async (req, res) => {
-            console.log("OP", req.method, req.url);
+        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req, res) => {
             // eslint-disable-next-line no-extra-parens
             const seqId = (req as any).params.id;
             const sequence = this.sequenceStore.getSequenceById(seqId);
