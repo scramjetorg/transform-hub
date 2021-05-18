@@ -87,8 +87,11 @@ export class Host implements IComponent {
 
     constructor(apiServer: APIExpose, socketServer: SocketServer) {
         this.logger = getLogger(this);
+
         this.socketServer = socketServer;
         this.api = apiServer;
+
+        if (this.apiBase.includes(":")) throw new Error("Can't expose an API on paths including a semicolon...");
     }
 
     async main() {
@@ -159,10 +162,13 @@ export class Host implements IComponent {
             });
         });
 
+        const instanceBase = `${this.apiBase}/instance`;
+
         // eslint-disable-next-line consistent-return
-        this.api.use(`${this.apiBase}/instance/:id`, (req, res, next) => {
+        this.api.use(`${instanceBase}/:id`, (req, res, next) => {
             // eslint-disable-next-line no-extra-parens
             const params = (req as any).params;
+
 
             if (!params || !params.id) {
                 return next(new Error("unknown id"));
@@ -174,7 +180,9 @@ export class Host implements IComponent {
                 return next(new Error("API not there yet..."));
             }
 
-            instance.router.lookup(req, res, next);
+            req.url = req.url?.substring(instanceBase.length + 1 + params.id.length);
+            this.logger.debug("req", { url: req.url, method: req.method });
+            return instance.router.lookup(req, res, next);
         });
     }
 
