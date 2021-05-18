@@ -1,5 +1,5 @@
-import { CeroMiddleware } from "@scramjet/api-server";
 import { IncomingMessage, Server } from "http";
+import { ServerResponse } from "node:http";
 import { Readable, Writable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
@@ -8,6 +8,9 @@ import { MaybePromise } from "./utils";
 export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
 export type StreamOutput = ((req: IncomingMessage) => MaybePromise<void>) | MaybePromise<Writable>;
 export type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
+
+export type NextCallback = (err: Error) => void;
+export type Middleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
 
 /**
  * Configuration options for streaming endpoionts
@@ -97,6 +100,6 @@ export interface APIExpose {
         config?: StreamConfig
     ): void;
 
-    use(path: string | RegExp, ...middlewares: CeroMiddleware[]): void;
+    use(path: string | RegExp, ...middlewares: Middleware[]): void;
 
 }
