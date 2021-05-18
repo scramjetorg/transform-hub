@@ -8,6 +8,7 @@ import { MaybePromise } from "./utils";
 export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
 export type StreamOutput = ((req: IncomingMessage) => MaybePromise<void>) | MaybePromise<Writable>;
 export type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
+export type OpResolver = (req: IncomingMessage, res?: ServerResponse) => MaybePromise<any>;
 
 export type NextCallback = (err?: Error) => void;
 export type Middleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
@@ -61,7 +62,8 @@ export interface APIBase {
      * @param message which operation to expose
      * @param conn the communication handler to use
      */
-    op<T extends ControlMessageCode>(path: string | RegExp, message: T, conn: ICommunicationHandler): void;
+    op<T extends ControlMessageCode>(
+        path: string | RegExp, message: OpResolver | T, conn?: ICommunicationHandler): void;
     /**
      * Simple GET request hook for static data in monitoring stream.
      *

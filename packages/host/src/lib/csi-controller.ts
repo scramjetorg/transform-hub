@@ -24,6 +24,8 @@ export class CSIController extends EventEmitter {
     downStreams?: DownstreamStreamsConfig;
     router?: APIRoute;
 
+    initResolver?: { res: Function, rej: Function };
+
     /**
      * Streams connected do API.
      */
@@ -49,8 +51,20 @@ export class CSIController extends EventEmitter {
         this.communicationHandler = communicationHandler;
     }
 
+    async start() {
+        const i = new Promise((res, rej) => {
+            this.initResolver = { res, rej };
+            this.startSupervisor();
+        });
+
+        i.then(() => this.main()).catch(e => {
+            this.emit("error", e);
+        });
+
+        return i;
+    }
+
     async main() {
-        this.startSupervisor();
         this.logger.log("Supervisor started");
 
         try {
@@ -172,10 +186,15 @@ export class CSIController extends EventEmitter {
     }
 
     async handleSupervisorConnect(streams: DownstreamStreamsConfig) {
-        this.hookupStreams(streams);
-        this.createInstanceAPIRouter();
+        try {
+            this.hookupStreams(streams);
+            this.createInstanceAPIRouter();
+            await this.sendConfig();
 
-        await this.sendConfig();
+            this.initResolver?.res();
+        } catch (e) {
+            this.initResolver?.rej(e);
+        }
     }
 
     createInstanceAPIRouter() {

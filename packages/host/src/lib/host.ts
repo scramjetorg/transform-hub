@@ -137,13 +137,29 @@ export class Host implements IComponent {
             this.logger.log(sequence.id);
 
             this.api.get(`${this.apiBase}/sequence/${sequence.id}`, () => {
-                this.logger.log(this.getSequencesData(sequence.id));
+                console.log(this.getSequencesData(sequence.id));
                 return this.getSequencesData(sequence.id);
             });
-
-            // TODO: everything below will be executed on another request.
-            await this.startCSIController(sequence, {});
         }, { end: true });
+
+        this.api.use(`${this.apiBase}/sequence/:id/start`, async (req, res) => {
+            console.log("OP", req.method, req.url);
+            // eslint-disable-next-line no-extra-parens
+            const seqId = (req as any).params.id;
+            const sequence = this.sequenceStore.getSequenceById(seqId);
+
+            console.log(sequence);
+
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            const instanceId = await this.startCSIController(sequence, {});
+
+            if (res) {
+                res.writeHead(202, { "Content-type": "application/json" });
+                res.end(JSON.stringify({
+                    id: instanceId
+                }));
+            }
+        });
 
         this.api.get(`${this.apiBase}/sequences`, () => {
             this.logger.log(this.getSequencesMap());
@@ -200,7 +216,7 @@ export class Host implements IComponent {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]) {
+    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {
         const communicationHandler = new CommunicationHandler();
         const id = this.hash();
         const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler, this.logger);
@@ -208,7 +224,10 @@ export class Host implements IComponent {
         this.logger.log("New CSIController created: ", id);
 
         this.csiControllers[id] = csic;
-        await csic.main();
+
+        await csic.start();
+
+        return id;
     }
 
     getCSIControllersMap(): { [key: string]: CSIController } {
@@ -224,3 +243,4 @@ export class Host implements IComponent {
         return this.sequenceStore.getSequenceById(sequenceId);
     }
 }
+
