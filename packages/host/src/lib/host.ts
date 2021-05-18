@@ -137,7 +137,7 @@ export class Host implements IComponent {
             this.logger.log(sequence.id);
 
             this.api.get(`${this.apiBase}/sequence/${sequence.id}`, () => {
-                console.log(this.getSequencesData(sequence.id));
+                this.logger.log(this.getSequencesData(sequence.id));
                 return this.getSequencesData(sequence.id);
             });
 
@@ -224,4 +224,3 @@ export class Host implements IComponent {
         return this.sequenceStore.getSequenceById(sequenceId);
     }
 }
-
