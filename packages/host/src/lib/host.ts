@@ -125,7 +125,7 @@ export class Host implements IComponent {
      * - starting Instance (based on a given Sequence ID passed in the HTTP request body)
      */
     attachHostAPIs() {
-        this.api.downstream(`${this.apiBase}/sequence`, async (stream) => {
+        this.api.downstream(`${this.apiBase}/sequence`, async (stream, res) => {
             const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
             const sequence: Sequence = {
                 id: this.hash(),
@@ -140,6 +140,13 @@ export class Host implements IComponent {
                 console.log(this.getSequencesData(sequence.id));
                 return this.getSequencesData(sequence.id);
             });
+
+            if (res) {
+                res.writeHead(202, { "Content-type": "application/json" });
+                res.end(JSON.stringify({
+                    id: sequence.id
+                }));
+            }
         }, { end: true });
 
         this.api.op(`${this.apiBase}/sequence/:id/start`, async (req, res) => {

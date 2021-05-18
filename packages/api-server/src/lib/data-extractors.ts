@@ -1,5 +1,6 @@
 import { StreamInput } from "@scramjet/types";
 import { IncomingMessage } from "http";
+import { ServerResponse } from "node:http";
 import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";
 
@@ -11,9 +12,9 @@ export async function getObject(object: any, req: IncomingMessage): Promise<any>
     return object;
 }
 
-export async function getWritable(object: any, req: IncomingMessage): Promise<Writable> {
+export async function getWritable(object: any, req: IncomingMessage, res: ServerResponse): Promise<Writable> {
     if (typeof object === "function") {
-        return object(req);
+        return object(req, res);
     }
 
     return object;

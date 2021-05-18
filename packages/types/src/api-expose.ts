@@ -6,7 +6,7 @@ import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";
 
 export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
-export type StreamOutput = ((req: IncomingMessage) => MaybePromise<void>) | MaybePromise<Writable>;
+export type StreamOutput = ((req: IncomingMessage, res: ServerResponse) => MaybePromise<void>) | MaybePromise<Writable>;
 export type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
 export type OpResolver = (req: IncomingMessage, res?: ServerResponse) => MaybePromise<any>;
 
