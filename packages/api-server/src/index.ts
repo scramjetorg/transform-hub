@@ -1,4 +1,4 @@
-import { APIExpose } from "@scramjet/types";
+import { APIExpose, APIRoute } from "@scramjet/types";
 import { Server } from "http";
 import { createGetterHandler } from "./handlers/get";
 import { createOperationHandler } from "./handlers/op";
@@ -11,6 +11,21 @@ type ServerConfig = {
     server?: Server;
     router?: CeroRouter;
 };
+
+export function getRouter(): APIRoute {
+    const router = sequentialRouter({});
+    const get = createGetterHandler(router);
+    const op = createOperationHandler(router);
+    const { upstream, downstream } = createStreamHandlers(router);
+
+    return {
+        lookup: (...args) => router.lookup(...args),
+        get,
+        op,
+        upstream,
+        downstream
+    };
+}
 
 export function createServer(conf: ServerConfig = {}): APIExpose {
     const config: CeroRouterConfig = {

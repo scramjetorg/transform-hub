@@ -1,12 +1,14 @@
+import { getRouter } from "@scramjet/api-server";
 import {
+    AppError,
     CommunicationHandler, CSIControllerError, HandshakeAcknowledgeMessage, InstanceConfigMessage,
     MessageUtilities
 } from "@scramjet/model";
 import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
-import { AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, Logger } from "@scramjet/types";
+import { APIRoute, AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, Logger, UpstreamStreamsConfig } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
-import { IncomingMessage, ServerResponse } from "node:http";
+import { IncomingMessage, ServerResponse } from "http";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
@@ -21,6 +23,7 @@ export class CSIController extends EventEmitter {
     status?: FunctionDefinition[];
     controlDataStream?: DataStream;
     downStreams?: DownstreamStreamsConfig;
+    router?: APIRoute;
 
     /**
      * Streams connected do API.
@@ -171,9 +174,34 @@ export class CSIController extends EventEmitter {
 
     async handleSupervisorConnect(streams: DownstreamStreamsConfig) {
         this.hookupStreams(streams);
-
+        this.createInstanceAPIRouter();
 
         await this.sendConfig();
+    }
+
+    createInstanceAPIRouter() {
+        if (this.downStreams) {
+            const router = getRouter();
+
+            router.upstream("/stdout", this.downStreams[CommunicationChannel.STDOUT]);
+            router.upstream("/stderr", this.downStreams[CommunicationChannel.STDERR]);
+            router.downstream("/stdin", this.downStreams[CommunicationChannel.STDIN]);
+
+            // monitoring data
+            router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
+            router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
+            router.get("/event", RunnerMessageCode.EVENT, this.communicationHandler);
+
+            // operations
+            router.op("/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+            router.op("/_event", RunnerMessageCode.EVENT, this.communicationHandler);
+            router.op("/_stop", RunnerMessageCode.STOP, this.communicationHandler);
+            router.op("/_kill", RunnerMessageCode.KILL, this.communicationHandler);
+
+            this.router = router;
+        } else {
+            throw new AppError("UNATTACHED_STREAMS");
+        }
     }
 
     // eslint-disable-next-line complexity

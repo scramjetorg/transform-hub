@@ -1,6 +1,6 @@
-import { GetResolver, ICommunicationHandler, MessageDataType, MonitoringMessageCode } from "@scramjet/types";
+import { GetResolver, ICommunicationHandler, MessageDataType, MonitoringMessageCode, NextCallback } from "@scramjet/types";
 import { IncomingMessage, ServerResponse } from "http";
-import { CeroError, NextCallback, SequentialCeroRouter } from "../lib/definitions";
+import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
 
 export function createGetterHandler(router: SequentialCeroRouter) {

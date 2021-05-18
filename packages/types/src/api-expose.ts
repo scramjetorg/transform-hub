@@ -9,7 +9,7 @@ export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | M
 export type StreamOutput = ((req: IncomingMessage) => MaybePromise<void>) | MaybePromise<Writable>;
 export type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
 
-export type NextCallback = (err: Error) => void;
+export type NextCallback = (err?: Error) => void;
 export type Middleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
 
 /**
@@ -49,11 +49,7 @@ export interface APIError extends Error {
     cause?: Error;
 }
 
-export interface APIExpose {
-    /**
-     * The raw HTTP server
-     */
-    server: Server
+export interface APIBase {
     // /**
     //  * The Trouter
     //  */
@@ -100,6 +96,16 @@ export interface APIExpose {
         config?: StreamConfig
     ): void;
 
-    use(path: string | RegExp, ...middlewares: Middleware[]): void;
+}
 
+export interface APIExpose extends APIBase {
+    /**
+     * The raw HTTP server
+     */
+     server: Server
+     use(path: string | RegExp, ...middlewares: Middleware[]): void;
+}
+
+export interface APIRoute extends APIBase {
+    lookup: Middleware;
 }

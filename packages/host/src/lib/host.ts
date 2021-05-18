@@ -1,7 +1,6 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler } from "@scramjet/model";
-import { CommunicationChannel, RunnerMessageCode } from "@scramjet/symbols";
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
 import * as Crypto from "crypto";
 import { unlink } from "fs/promises";
@@ -171,29 +170,12 @@ export class Host implements IComponent {
 
             const instance = this.csiControllers[params.id];
 
-            instance.lookup(req, res);
+            if (!instance.router) {
+                return next(new Error("API not there yet..."));
+            }
+
+            instance.router.lookup(req, res, next);
         });
-    }
-
-    attachInstanceAPI(instance: CSIController) {
-        if (instance.downStreams) {
-
-
-            this.api.upstream(`${this.apiBase}/stream/${instance.id}/stdout`, instance.downStreams[CommunicationChannel.STDOUT]);
-            this.api.upstream(`${this.apiBase}/stream/${instance.id}/stderr`, instance.downStreams[CommunicationChannel.STDERR]);
-            this.api.downstream(`${this.apiBase}/stream/${instance.id}/stdin`, instance.downStreams[CommunicationChannel.STDIN]);
-
-            // monitoring data
-            this.api.get(`${this.apiBase}/sequence/${instance.id}/health`, RunnerMessageCode.MONITORING, instance.communicationHandler);
-            this.api.get(`${this.apiBase}/sequence/${instance.id}/status`, RunnerMessageCode.STATUS, instance.communicationHandler);
-            this.api.get(`${this.apiBase}/sequence/${instance.id}/event`, RunnerMessageCode.EVENT, instance.communicationHandler);
-
-            // operations
-            this.api.op(`${this.apiBase}/sequence/${instance.id}/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, instance.communicationHandler);
-            this.api.op(`${this.apiBase}/sequence/${instance.id}/_event/`, RunnerMessageCode.EVENT, instance.communicationHandler);
-            this.api.op(`${this.apiBase}/sequence/${instance.id}/_stop/`, RunnerMessageCode.STOP, instance.communicationHandler);
-            this.api.op(`${this.apiBase}/sequence/${instance.id}/_kill/`, RunnerMessageCode.KILL, instance.communicationHandler);
-        }
     }
 
     identifySequence(stream: Readable): MaybePromise<RunnerConfig> {

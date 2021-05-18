@@ -3,9 +3,7 @@ import { CeroConfig, CeroRouter, CeroRouterConfig, SequentialCeroRouter } from "
 
 const _cero = require("0http");
 
-export type NextCallback = (e: Error) => void;
 export const sequentialRouter: (config: CeroRouterConfig) => SequentialCeroRouter = require("0http/lib/router/sequential");
-
 export const cero = <
     T extends Server = Server,
     S extends CeroRouter = CeroRouter
