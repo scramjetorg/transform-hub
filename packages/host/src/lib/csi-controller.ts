@@ -187,6 +187,9 @@ export class CSIController extends EventEmitter {
             router.upstream("/stderr", this.downStreams[CommunicationChannel.STDERR]);
             router.downstream("/stdin", this.downStreams[CommunicationChannel.STDIN]);
 
+            router.upstream("/output", this.downStreams[CommunicationChannel.OUT]);
+            router.downstream("/input", this.downStreams[CommunicationChannel.IN]);
+
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
             router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
