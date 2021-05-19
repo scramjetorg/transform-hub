@@ -205,7 +205,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (this.loggerStream) {
             addLoggerOutput(this.loggerStream);
         } else {
-            throw new RunnerError("UNINITIALIZED_STREAMS");
+            throw new RunnerError("UNINITIALIZED_STREAMS", "Logger");
         }
     }
 
@@ -285,7 +285,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
     }
 
-    keepAliveIssued(): void {
+    private keepAliveIssued(): void {
         this.keepAliveRequested = true;
     }
 
@@ -320,6 +320,32 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.initAppContext(handshakeData.appConfig as X);
 
+        if (!this.context) {
+            this.logger.error("Uninitialized context.");
+
+            throw new RunnerError("UNINITIALIZED_CONTEXT");
+        }
+
+        await this.handleMonitoringRequest({ monitoringRate: 1 });
+
+        let sequence: any[] = [];
+
+        try {
+            sequence = this.getSequence();
+
+            this.logger.log(`Seqeunce loaded, functions count: ${sequence.length}.`);
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                this.logger.error("Sequence syntax error.", error.stack);
+            } else {
+                this.logger.error("Sequence error:", error.stack);
+            }
+
+            //TODO: investigate why we need to wait
+            await this.cleanup();
+            this.exit(21);
+        }
+
         try {
             /**
              * @analyze-how-to-pass-in-out-streams
@@ -329,7 +355,7 @@ export class Runner<X extends AppConfig> implements IComponent {
              * but after the acknowledge message comes (PONG) and
              * before we start a Sequence.
              */
-            await this.runSequence(handshakeData.arguments);
+            await this.runSequence(sequence, handshakeData.arguments);
 
             this.logger.log("Sequence completed.");
         } catch (error) {
@@ -394,33 +420,7 @@ export class Runner<X extends AppConfig> implements IComponent {
      * @param args {any[]} arguments that the app will be called with
      */
     // eslint-disable-next-line complexity
-    async runSequence(args: any[] = []): Promise<void> {
-        if (!this.context) {
-            this.logger.error("Uninitialized context.");
-
-            throw new RunnerError("UNINITIALIZED_CONTEXT");
-        }
-
-        await this.handleMonitoringRequest({ monitoringRate: 1 });
-
-        let sequence: any[] = [];
-
-        try {
-            sequence = this.getSequence();
-
-            this.logger.log(`Seqeunce loaded, functions count: ${sequence.length}.`);
-        } catch (error) {
-            if (error instanceof SyntaxError) {
-                this.logger.error("Sequence syntax error.", error.stack);
-            } else {
-                this.logger.error("Sequence error:", error.stack);
-            }
-
-            //TODO: investigate why we need to wait
-            await this.cleanup();
-            this.exit(21);
-        }
-
+    async runSequence(sequence: any[], args: any[] = []): Promise<void> {
         if (!sequence.length) {
             await this.cleanup();
             this.logger.error("Empty sequence.");
