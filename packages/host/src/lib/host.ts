@@ -1,9 +1,10 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler } from "@scramjet/model";
-import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, RunnerConfig } from "@scramjet/types";
+import { CommunicationHandler, HostError } from "@scramjet/model";
+import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, NextCallback, RunnerConfig } from "@scramjet/types";
 import * as Crypto from "crypto";
 import { unlink } from "fs/promises";
+import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
 import { CSIController } from "./csi-controller";
 import { SocketServer } from "./socket-server";
@@ -37,7 +38,11 @@ export type Sequence = {
  * or, we could just try to reconnect instances after host restart.
  */
 export class SequenceStore {
-    sequences: { [key: string]: Sequence } = {}
+    private _sequences: { [key: string]: Sequence } = {}
+
+    public get sequences() {
+        return this._sequences;
+    }
 
     getSequenceById(key: string): Sequence {
         return this.sequences[key];
@@ -64,6 +69,7 @@ export class Host implements IComponent {
     api: APIExpose;
 
     apiBase = "/api/v1";
+    instanceBase = `${this.apiBase}/instance`;
 
     socketServer: SocketServer;
 
@@ -76,6 +82,7 @@ export class Host implements IComponent {
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
             this.logger.log("Supervisor connected:", id);
+
             await this.csiControllers[id].handleSupervisorConnect(streams);
         });
     }
@@ -91,13 +98,15 @@ export class Host implements IComponent {
         this.socketServer = socketServer;
         this.api = apiServer;
 
-        if (this.apiBase.includes(":")) throw new Error("Can't expose an API on paths including a semicolon...");
+        if (this.apiBase.includes(":")) {
+            throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
+        }
     }
 
     async main() {
         addLoggerOutput(process.stdout);
 
-        this.logger.info("Host main called");
+        this.logger.info("Host main called.");
 
         try {
             await unlink("/tmp/socket-server-path");
@@ -106,11 +115,12 @@ export class Host implements IComponent {
         }
 
         await this.socketServer.start();
+
         this.api.server.listen(8000);
 
         await new Promise(res => {
             this.api?.server.once("listening", res);
-            this.logger.info("API listening");
+            this.logger.info("API listening.");
         });
 
         this.attachListeners();
@@ -119,93 +129,83 @@ export class Host implements IComponent {
 
     /**
      * Setting up handlers for general Host API endpoints:
-     * - listing all instances running on the CSH
-     * - listing all sequences saved on the CSH
      * - creating Sequence (passing stream with the compressed package)
      * - starting Instance (based on a given Sequence ID passed in the HTTP request body)
+     * - getting sequence details
+     * - listing all instances running on the CSH
+     * - listing all sequences saved on the CSH
+     * - intance
      */
     attachHostAPIs() {
-        this.api.downstream(`${this.apiBase}/sequence`, async (stream, res) => {
-            const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
-            const sequence: Sequence = {
-                id: this.hash(),
-                config: preRunnerResponse
-            };
+        this.api.downstream(`${this.apiBase}/sequence`, async (req, res) => this.handleNewSequence(req, res), { end: true });
 
-            this.sequenceStore.addSequence(sequence);
-            this.logger.log(preRunnerResponse);
-            this.logger.log(sequence.id);
+        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req, res) => this.handleStartSequence(req, res));
 
-            this.api.get(`${this.apiBase}/sequence/${sequence.id}`, () => {
-                console.log(this.getSequencesData(sequence.id));
-                return this.getSequencesData(sequence.id);
-            });
+        // eslint-disable-next-line no-extra-parens
+        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.sequenceStore.getSequenceById((req as any).params.id));
+        this.api.get(`${this.apiBase}/sequences`, () => this.sequenceStore.sequences);
+        this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
 
-            if (res) {
-                res.writeHead(202, { "Content-type": "application/json" });
-                res.end(JSON.stringify({
-                    id: sequence.id
-                }));
-            }
-        }, { end: true });
+        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
+    }
 
-        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req, res) => {
-            // eslint-disable-next-line no-extra-parens
-            const seqId = (req as any).params.id;
-            const sequence = this.sequenceStore.getSequenceById(seqId);
+    instanceMiddleware(req: IncomingMessage, res: ServerResponse, next: NextCallback) {
+        // eslint-disable-next-line no-extra-parens
+        const params = (req as IncomingMessage & { params: any }).params;
 
-            console.log(sequence);
+        if (!params || !params.id) {
+            return next(new HostError("UNKNOWN_INSTANCE"));
+        }
 
-            // eslint-disable-next-line @typescript-eslint/no-floating-promises
-            const instanceId = await this.startCSIController(sequence, {});
+        const instance = this.csiControllers[params.id];
 
-            if (res) {
-                res.writeHead(202, { "Content-type": "application/json" });
-                res.end(JSON.stringify({
-                    id: instanceId
-                }));
-            }
-        });
+        if (!instance.router) {
+            return next(new Error("API not there yet..."));
+        }
 
-        this.api.get(`${this.apiBase}/sequences`, () => {
-            this.logger.log(this.getSequencesMap());
-            return this.getSequencesMap();
-        });
+        req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
 
-        this.api.get(`${this.apiBase}/instances`, () => {
-            const instances = this.getCSIControllersMap();
+        this.logger.debug(req.method, req.url);
 
-            return Object.values(instances).map(instance => {
-                return {
-                    id: instance.id,
-                    sequence: instance.sequence,
-                    status: instance.status
-                };
-            });
-        });
+        return instance.router.lookup(req, res, next);
+    }
 
-        const instanceBase = `${this.apiBase}/instance`;
+    async handleNewSequence(stream: IncomingMessage, res: ServerResponse) {
+        this.logger.log("New sequence incomming...");
+        const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
+        const sequence: Sequence = {
+            id: this.hash(),
+            config: preRunnerResponse
+        };
 
-        // eslint-disable-next-line consistent-return
-        this.api.use(`${instanceBase}/:id`, (req, res, next) => {
-            // eslint-disable-next-line no-extra-parens
-            const params = (req as any).params;
+        this.sequenceStore.addSequence(sequence);
+        this.logger.log("Sequence identified:", preRunnerResponse);
+        this.logger.log("Sequence stored:", sequence.id);
 
+        if (res) {
+            res.writeHead(202, { "Content-type": "application/json" });
+            res.end(JSON.stringify({
+                id: sequence.id
+            }));
+        }
+    }
 
-            if (!params || !params.id) {
-                return next(new Error("unknown id"));
-            }
+    async handleStartSequence(req: IncomingMessage, res: ServerResponse | undefined) {
+        // eslint-disable-next-line no-extra-parens
+        const seqId = (req as IncomingMessage & { params: any }).params.id;
+        const sequence = this.sequenceStore.getSequenceById(seqId);
 
-            const instance = this.csiControllers[params.id];
+        this.logger.log(sequence);
 
-            if (!instance.router) {
-                return next(new Error("API not there yet..."));
-            }
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        const instanceId = await this.startCSIController(sequence, {});
 
-            req.url = req.url?.substring(instanceBase.length + 1 + params.id.length);
-            this.logger.debug("req", { url: req.url, method: req.method });
-            return instance.router.lookup(req, res, next);
-        });
+        if (res) {
+            res.writeHead(202, { "Content-type": "application/json" });
+            res.end(JSON.stringify({
+                id: instanceId
+            }));
+        }
     }
 
     identifySequence(stream: Readable): MaybePromise<RunnerConfig> {
@@ -236,17 +236,16 @@ export class Host implements IComponent {
         return id;
     }
 
-    getCSIControllersMap(): { [key: string]: CSIController } {
-        this.logger.log("getting CSI controller map");
-        return this.csiControllers;
-    }
+    getCSIControllers() {
+        this.logger.log("List CSI controllers.");
 
-    getSequencesMap(): { [key: string]: Sequence } {
-        return this.sequenceStore.sequences;
-    }
-
-    getSequencesData(sequenceId: string) {
-        return this.sequenceStore.getSequenceById(sequenceId);
+        return Object.values(this.csiControllers).map(csiController => {
+            return {
+                id: csiController.id,
+                sequence: csiController.sequence,
+                status: csiController.status
+            };
+        });
     }
 }
 
