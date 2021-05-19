@@ -2,7 +2,7 @@
 /* eslint-disable dot-notation */
 import * as imageConfig from "@scramjet/csi-config";
 import { DelayedStream } from "@scramjet/model";
-import { DockerodeDockerHelper, LifecycleDockerAdapter } from "@scramjet/adapters";
+import { DockerodeDockerHelper, LifecycleDockerAdapter } from "@scramjet/supervisor";
 import { RunnerConfig } from "@scramjet/types";
 import test from "ava";
 import * as fs from "fs";
