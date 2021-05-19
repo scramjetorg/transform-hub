@@ -12,6 +12,8 @@
     ],
     "typedocOptions": {
         "entryPoints": ["src/index.ts"],
-        "out": "../../docs/model"
+        "out": "../../docs/model",
+        "plugin": "typedoc-plugin-markdown",
+        "readme": "none"
     }
 }

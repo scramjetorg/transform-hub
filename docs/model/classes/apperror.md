@@ -1,4 +1,4 @@
-[@scramjet/model](../README.md) / [Exports](../modules.md) / AppError
+[@scramjet/model](../README.md) / AppError
 
 # Class: AppError
 
@@ -8,9 +8,16 @@
 
   ↳ **AppError**
 
+  ↳↳ [*HostError*](hosterror.md)
+
+  ↳↳ [*RunnerError*](runnererror.md)
+
+  ↳↳ [*SupervisorError*](supervisorerror.md)
+
 ## Implements
 
 * *IAppError*
+* *IAppErrorData*
 
 ## Table of contents
 
@@ -21,6 +28,7 @@
 ### Properties
 
 - [code](apperror.md#code)
+- [data](apperror.md#data)
 - [message](apperror.md#message)
 - [name](apperror.md#name)
 - [stack](apperror.md#stack)
@@ -40,14 +48,12 @@
 #### Parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `code` | AppErrorCode |
 
 **Returns:** [*AppError*](apperror.md)
 
-Overrides: Error.constructor
-
-Defined in: [model/src/app-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/app-error.ts#L6)
+Defined in: [src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L9)
 
 ## Properties
 
@@ -55,9 +61,15 @@ Defined in: [model/src/app-error.ts:6](https://github.com/scramjet-cloud-platfor
 
 • **code**: AppErrorCode
 
-Implementation of: IAppError.code
+Defined in: [src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L8)
 
-Defined in: [model/src/app-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/app-error.ts#L6)
+___
+
+### data
+
+• `Optional` **data**: *any*
+
+Defined in: [src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L9)
 
 ___
 
@@ -65,11 +77,7 @@ ___
 
 • **message**: *string*
 
-Implementation of: IAppError.message
-
-Inherited from: Error.message
-
-Defined in: model/node_modules/typescript/lib/lib.es5.d.ts:974
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
@@ -77,52 +85,27 @@ ___
 
 • **name**: *string*
 
-Implementation of: IAppError.name
-
-Inherited from: Error.name
-
-Defined in: model/node_modules/typescript/lib/lib.es5.d.ts:973
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
 
 ___
 
 ### stack
 
-• `Optional` **stack**: *string*
+• `Optional` **stack**: *undefined* \| *string*
 
-Implementation of: IAppError.stack
-
-Inherited from: Error.stack
-
-Defined in: model/node_modules/typescript/lib/lib.es5.d.ts:975
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:975
 
 ___
 
 ### prepareStackTrace
 
-▪ `Static` `Optional` **prepareStackTrace**: (`err`: Error, `stackTraces`: CallSite[]) => *any*
+▪ `Optional` `Static` **prepareStackTrace**: *undefined* \| (`err`: Error, `stackTraces`: CallSite[]) => *any*
 
 Optional override for formatting stack traces
 
 **`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
-#### Type declaration:
-
-▸ (`err`: Error, `stackTraces`: CallSite[]): *any*
-
-#### Parameters:
-
-Name | Type |
-:------ | :------ |
-`err` | Error |
-`stackTraces` | CallSite[] |
-
-**Returns:** *any*
-
-Defined in: model/node_modules/@types/node/globals.d.ts:11
-
-Inherited from: Error.prepareStackTrace
-
-Defined in: model/node_modules/@types/node/globals.d.ts:11
+Defined in: node_modules/@types/node/globals.d.ts:11
 
 ___
 
@@ -130,9 +113,7 @@ ___
 
 ▪ `Static` **stackTraceLimit**: *number*
 
-Inherited from: Error.stackTraceLimit
-
-Defined in: model/node_modules/@types/node/globals.d.ts:13
+Defined in: node_modules/@types/node/globals.d.ts:13
 
 ## Methods
 
@@ -145,12 +126,10 @@ Create .stack property on a target object
 #### Parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `targetObject` | *object* |
 `constructorOpt?` | Function |
 
 **Returns:** *void*
 
-Inherited from: Error.captureStackTrace
-
-Defined in: model/node_modules/@types/node/globals.d.ts:4
+Defined in: node_modules/@types/node/globals.d.ts:4

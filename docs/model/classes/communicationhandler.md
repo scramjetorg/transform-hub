@@ -1,6 +1,10 @@
-[@scramjet/model](../README.md) / [Exports](../modules.md) / CommunicationHandler
+[@scramjet/model](../README.md) / CommunicationHandler
 
 # Class: CommunicationHandler
+
+## Hierarchy
+
+* **CommunicationHandler**
 
 ## Implements
 
@@ -14,41 +18,29 @@
 
 ### Properties
 
-- [\_controlOutput](communicationhandler.md#_controloutput)
-- [\_monitoringOutput](communicationhandler.md#_monitoringoutput)
 - [\_piped](communicationhandler.md#_piped)
-- [controlDownstream](communicationhandler.md#controldownstream)
 - [controlHandlerHash](communicationhandler.md#controlhandlerhash)
 - [controlPassThrough](communicationhandler.md#controlpassthrough)
-- [controlUpstream](communicationhandler.md#controlupstream)
 - [downstreams](communicationhandler.md#downstreams)
-- [monitoringDownstream](communicationhandler.md#monitoringdownstream)
+- [loggerPassthough](communicationhandler.md#loggerpassthough)
 - [monitoringHandlerHash](communicationhandler.md#monitoringhandlerhash)
 - [monitoringPassThrough](communicationhandler.md#monitoringpassthrough)
-- [monitoringUpstream](communicationhandler.md#monitoringupstream)
-- [stdErrDownstream](communicationhandler.md#stderrdownstream)
-- [stdErrUpstream](communicationhandler.md#stderrupstream)
-- [stdInDownstream](communicationhandler.md#stdindownstream)
-- [stdInUpstream](communicationhandler.md#stdinupstream)
-- [stdOutDownstream](communicationhandler.md#stdoutdownstream)
-- [stdOutUpstream](communicationhandler.md#stdoutupstream)
 - [upstreams](communicationhandler.md#upstreams)
-
-### Accessors
-
-- [controlOutput](communicationhandler.md#controloutput)
-- [monitoringOutput](communicationhandler.md#monitoringoutput)
 
 ### Methods
 
 - [addControlHandler](communicationhandler.md#addcontrolhandler)
 - [addMonitoringHandler](communicationhandler.md#addmonitoringhandler)
 - [areStreamsHooked](communicationhandler.md#arestreamshooked)
-- [hookClientStreams](communicationhandler.md#hookclientstreams)
-- [hookLifecycleStreams](communicationhandler.md#hooklifecyclestreams)
+- [getLogOutput](communicationhandler.md#getlogoutput)
+- [getMonitorStream](communicationhandler.md#getmonitorstream)
+- [getStdio](communicationhandler.md#getstdio)
+- [hookDownstreamStreams](communicationhandler.md#hookdownstreamstreams)
+- [hookUpstreamStreams](communicationhandler.md#hookupstreamstreams)
 - [pipeDataStreams](communicationhandler.md#pipedatastreams)
 - [pipeMessageStreams](communicationhandler.md#pipemessagestreams)
 - [pipeStdio](communicationhandler.md#pipestdio)
+- [safeHandle](communicationhandler.md#safehandle)
 - [sendControlMessage](communicationhandler.md#sendcontrolmessage)
 - [sendMonitoringMessage](communicationhandler.md#sendmonitoringmessage)
 
@@ -60,47 +52,15 @@
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [model/src/stream-handler.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L83)
+Defined in: [src/stream-handler.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L70)
 
 ## Properties
 
-### \_controlOutput
-
-• `Private` `Optional` **\_controlOutput**: *PassThoughStream*<string\>
-
-**`analyze-how-to-pass-in-out-streams`** 
-Input stream to a Sequence and output stream from a Sequence need to be added as properties
-(for both upstream and downstream arrays):
-inputUpstream
-inputDownstream
-outputUpstream
-outputDownstream
-
-Defined in: [model/src/stream-handler.ts:71](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L71)
-
-___
-
-### \_monitoringOutput
-
-• `Private` `Optional` **\_monitoringOutput**: *PassThoughStream*<EncodedMonitoringMessage\>
-
-Defined in: [model/src/stream-handler.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L72)
-
-___
-
 ### \_piped
 
-• `Private` `Optional` **\_piped**: *boolean*
+• `Private` `Optional` **\_piped**: *undefined* \| *boolean*
 
-Defined in: [model/src/stream-handler.ts:77](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L77)
-
-___
-
-### controlDownstream
-
-• `Private` `Optional` **controlDownstream**: *WritableStream*<string\>
-
-Defined in: [model/src/stream-handler.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L56)
+Defined in: [src/stream-handler.ts:64](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L64)
 
 ___
 
@@ -108,7 +68,7 @@ ___
 
 • `Private` **controlHandlerHash**: ControlMessageHandlerList
 
-Defined in: [model/src/stream-handler.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L83)
+Defined in: [src/stream-handler.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L70)
 
 ___
 
@@ -116,31 +76,23 @@ ___
 
 • `Private` **controlPassThrough**: *DataStream*
 
-Defined in: [model/src/stream-handler.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L74)
-
-___
-
-### controlUpstream
-
-• `Private` `Optional` **controlUpstream**: *ReadableStream*<EncodedControlMessage\>
-
-Defined in: [model/src/stream-handler.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L55)
+Defined in: [src/stream-handler.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L61)
 
 ___
 
 ### downstreams
 
-• `Private` `Optional` **downstreams**: DownstreamStreamsConfig
+• `Optional` **downstreams**: *undefined* \| *DownstreamStreamsConfig*<*true*\>
 
-Defined in: [model/src/stream-handler.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L60)
+Defined in: [src/stream-handler.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L58)
 
 ___
 
-### monitoringDownstream
+### loggerPassthough
 
-• `Private` `Optional` **monitoringDownstream**: *ReadableStream*<string\>
+• `Private` **loggerPassthough**: *DuplexStream*<*string*, *string*\>
 
-Defined in: [model/src/stream-handler.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L58)
+Defined in: [src/stream-handler.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L60)
 
 ___
 
@@ -148,7 +100,7 @@ ___
 
 • `Private` **monitoringHandlerHash**: MonitoringMessageHandlerList
 
-Defined in: [model/src/stream-handler.ts:82](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L82)
+Defined in: [src/stream-handler.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L69)
 
 ___
 
@@ -156,141 +108,63 @@ ___
 
 • `Private` **monitoringPassThrough**: *DataStream*
 
-Defined in: [model/src/stream-handler.ts:75](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L75)
-
-___
-
-### monitoringUpstream
-
-• `Private` `Optional` **monitoringUpstream**: *WritableStream*<EncodedMonitoringMessage\>
-
-Defined in: [model/src/stream-handler.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L57)
-
-___
-
-### stdErrDownstream
-
-• `Private` `Optional` **stdErrDownstream**: *Readable*
-
-Defined in: [model/src/stream-handler.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L54)
-
-___
-
-### stdErrUpstream
-
-• `Private` `Optional` **stdErrUpstream**: *Writable*
-
-Defined in: [model/src/stream-handler.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L53)
-
-___
-
-### stdInDownstream
-
-• `Private` `Optional` **stdInDownstream**: *Writable*
-
-Defined in: [model/src/stream-handler.ts:50](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L50)
-
-___
-
-### stdInUpstream
-
-• `Private` `Optional` **stdInUpstream**: *Readable*
-
-Defined in: [model/src/stream-handler.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L49)
-
-___
-
-### stdOutDownstream
-
-• `Private` `Optional` **stdOutDownstream**: *Readable*
-
-Defined in: [model/src/stream-handler.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L52)
-
-___
-
-### stdOutUpstream
-
-• `Private` `Optional` **stdOutUpstream**: *Writable*
-
-Defined in: [model/src/stream-handler.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L51)
+Defined in: [src/stream-handler.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L62)
 
 ___
 
 ### upstreams
 
-• `Private` `Optional` **upstreams**: UpstreamStreamsConfig
+• `Optional` **upstreams**: *undefined* \| *UpstreamStreamsConfig*<*true*\>
 
-Defined in: [model/src/stream-handler.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L59)
-
-## Accessors
-
-### controlOutput
-
-• get **controlOutput**(): *PassThoughStream*<string\>
-
-**Returns:** *PassThoughStream*<string\>
-
-Defined in: [model/src/stream-handler.ts:204](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L204)
-
-___
-
-### monitoringOutput
-
-• get **monitoringOutput**(): *ReadableStream*<string\>
-
-**Returns:** *ReadableStream*<string\>
-
-Defined in: [model/src/stream-handler.ts:198](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L198)
+Defined in: [src/stream-handler.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L57)
 
 ## Methods
 
 ### addControlHandler
 
-▸ **addControlHandler**<T\>(`_code`: T, `handler`: [*ControlMessageHandler*](../modules.md#controlmessagehandler)<T\>): [*CommunicationHandler*](communicationhandler.md)
+▸ **addControlHandler**<T\>(`_code`: T, `handler`: [*ControlMessageHandler*](../README.md#controlmessagehandler)<T\>, `blocking?`: *boolean*): [*CommunicationHandler*](communicationhandler.md)
 
 #### Type parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `T` | ControlMessageCode |
 
 #### Parameters:
 
-Name | Type |
-:------ | :------ |
-`_code` | T |
-`handler` | [*ControlMessageHandler*](../modules.md#controlmessagehandler)<T\> |
+Name | Type | Default value |
+------ | ------ | ------ |
+`_code` | T | - |
+`handler` | [*ControlMessageHandler*](../README.md#controlmessagehandler)<T\> | - |
+`blocking` | *boolean* | false |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Implementation of: ICommunicationHandler.addControlHandler
-
-Defined in: [model/src/stream-handler.ts:255](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L255)
+Defined in: [src/stream-handler.ts:245](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L245)
 
 ___
 
 ### addMonitoringHandler
 
-▸ **addMonitoringHandler**<T\>(`_code`: T, `handler`: [*MonitoringMessageHandler*](../modules.md#monitoringmessagehandler)<T\>): [*CommunicationHandler*](communicationhandler.md)
+▸ **addMonitoringHandler**<T\>(`_code`: T, `handler`: [*MonitoringMessageHandler*](../README.md#monitoringmessagehandler)<T\>, `blocking?`: *boolean*): [*CommunicationHandler*](communicationhandler.md)
 
 #### Type parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `T` | MonitoringMessageCode |
 
 #### Parameters:
 
-Name | Type |
-:------ | :------ |
-`_code` | T |
-`handler` | [*MonitoringMessageHandler*](../modules.md#monitoringmessagehandler)<T\> |
+Name | Type | Default value |
+------ | ------ | ------ |
+`_code` | T | - |
+`handler` | [*MonitoringMessageHandler*](../README.md#monitoringmessagehandler)<T\> | - |
+`blocking` | *boolean* | false |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Implementation of: ICommunicationHandler.addMonitoringHandler
-
-Defined in: [model/src/stream-handler.ts:250](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L250)
+Defined in: [src/stream-handler.ts:233](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L233)
 
 ___
 
@@ -300,43 +174,75 @@ ___
 
 **Returns:** *boolean*
 
-Defined in: [model/src/stream-handler.ts:209](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L209)
+Defined in: [src/stream-handler.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L192)
 
 ___
 
-### hookClientStreams
+### getLogOutput
 
-▸ **hookClientStreams**(`streams`: UpstreamStreamsConfig): [*CommunicationHandler*](communicationhandler.md)
+▸ **getLogOutput**(): LoggerOutput
+
+**Returns:** LoggerOutput
+
+Defined in: [src/stream-handler.ts:196](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L196)
+
+___
+
+### getMonitorStream
+
+▸ **getMonitorStream**(): *DataStream*
+
+**Returns:** *DataStream*
+
+Defined in: [src/stream-handler.ts:105](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L105)
+
+___
+
+### getStdio
+
+▸ **getStdio**(): *object*
+
+**Returns:** *object*
+
+Name | Type |
+------ | ------ |
+`stderr` | *Readable* |
+`stdin` | *Writable* |
+`stdout` | *Readable* |
+
+Defined in: [src/stream-handler.ts:109](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L109)
+
+___
+
+### hookDownstreamStreams
+
+▸ **hookDownstreamStreams**(`streams`: *DownstreamStreamsConfig*<*true*\>): [*CommunicationHandler*](communicationhandler.md)
 
 #### Parameters:
 
 Name | Type |
-:------ | :------ |
-`streams` | UpstreamStreamsConfig |
+------ | ------ |
+`streams` | *DownstreamStreamsConfig*<*true*\> |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Implementation of: ICommunicationHandler.hookClientStreams
-
-Defined in: [model/src/stream-handler.ts:110](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L110)
+Defined in: [src/stream-handler.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L126)
 
 ___
 
-### hookLifecycleStreams
+### hookUpstreamStreams
 
-▸ **hookLifecycleStreams**(`streams`: DownstreamStreamsConfig): [*CommunicationHandler*](communicationhandler.md)
+▸ **hookUpstreamStreams**(`streams`: *UpstreamStreamsConfig*<*true*\>): [*CommunicationHandler*](communicationhandler.md)
 
 #### Parameters:
 
 Name | Type |
-:------ | :------ |
-`streams` | DownstreamStreamsConfig |
+------ | ------ |
+`streams` | *UpstreamStreamsConfig*<*true*\> |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Implementation of: ICommunicationHandler.hookLifecycleStreams
-
-Defined in: [model/src/stream-handler.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L126)
+Defined in: [src/stream-handler.ts:121](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L121)
 
 ___
 
@@ -346,9 +252,7 @@ ___
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Implementation of: ICommunicationHandler.pipeDataStreams
-
-Defined in: [model/src/stream-handler.ts:241](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L241)
+Defined in: [src/stream-handler.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L212)
 
 ___
 
@@ -358,9 +262,7 @@ ___
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Implementation of: ICommunicationHandler.pipeMessageStreams
-
-Defined in: [model/src/stream-handler.ts:142](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L142)
+Defined in: [src/stream-handler.ts:131](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L131)
 
 ___
 
@@ -370,56 +272,66 @@ ___
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Implementation of: ICommunicationHandler.pipeStdio
+Defined in: [src/stream-handler.ts:200](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L200)
 
-Defined in: [model/src/stream-handler.ts:227](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L227)
+___
+
+### safeHandle
+
+▸ **safeHandle**(`promisePotentiallyRejects`: *any*): *void*
+
+#### Parameters:
+
+Name | Type |
+------ | ------ |
+`promisePotentiallyRejects` | *any* |
+
+**Returns:** *void*
+
+Defined in: [src/stream-handler.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L99)
 
 ___
 
 ### sendControlMessage
 
-▸ **sendControlMessage**<T\>(`code`: T, `msg`: [*MessageDataType*](../modules.md#messagedatatype)<T\>): *Promise*<void\>
+▸ **sendControlMessage**<T\>(`code`: T, `msg`: *MessageDataType*<T\>): *Promise*<*void*\>
 
 #### Type parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `T` | ControlMessageCode |
 
 #### Parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `code` | T |
-`msg` | [*MessageDataType*](../modules.md#messagedatatype)<T\> |
+`msg` | *MessageDataType*<T\> |
 
-**Returns:** *Promise*<void\>
+**Returns:** *Promise*<*void*\>
 
-Implementation of: ICommunicationHandler.sendControlMessage
-
-Defined in: [model/src/stream-handler.ts:266](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L266)
+Defined in: [src/stream-handler.ts:263](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L263)
 
 ___
 
 ### sendMonitoringMessage
 
-▸ **sendMonitoringMessage**<T\>(`code`: T, `msg`: [*MessageDataType*](../modules.md#messagedatatype)<T\>): *Promise*<void\>
+▸ **sendMonitoringMessage**<T\>(`code`: T, `msg`: *MessageDataType*<T\>): *Promise*<*void*\>
 
 #### Type parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `T` | MonitoringMessageCode |
 
 #### Parameters:
 
 Name | Type |
-:------ | :------ |
+------ | ------ |
 `code` | T |
-`msg` | [*MessageDataType*](../modules.md#messagedatatype)<T\> |
+`msg` | *MessageDataType*<T\> |
 
-**Returns:** *Promise*<void\>
+**Returns:** *Promise*<*void*\>
 
-Implementation of: ICommunicationHandler.sendMonitoringMessage
-
-Defined in: [model/src/stream-handler.ts:260](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/000f7de/packages/model/src/stream-handler.ts#L260)
+Defined in: [src/stream-handler.ts:257](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L257)
