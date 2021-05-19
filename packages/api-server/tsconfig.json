@@ -11,7 +11,10 @@
         "node_modules"
     ],
     "typedocOptions": {
-        "entryPoints": ["index.ts"],
-        "out": "../../docs/model"
-    }
+      "entryPoints": ["src/index.ts", "src/handlers", "src/lib"],
+      "out": "../../docs/api-server",
+      "plugin": "typedoc-plugin-markdown",
+      "readme": "none",
+      "excludePrivate": "true"
+  }
 }

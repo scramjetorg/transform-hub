@@ -11,7 +11,10 @@
         "node_modules"
     ],
     "typedocOptions": {
-        "entryPoints": ["index.ts"],
-        "out": "../../docs/model"
-    }
+      "entryPoints": ["src/index.ts"],
+      "out": "../../docs/symbols",
+      "plugin": "typedoc-plugin-markdown",
+      "readme": "none",
+      "excludePrivate": "true"
+  }
 }
