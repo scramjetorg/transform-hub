@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Classes
+### Modules
 
-- [DockerodeDockerHelper](classes/dockerodedockerhelper.md)
-- [LifecycleDockerAdapter](classes/lifecycledockeradapter.md)
+- [csh-client](modules/csh_client.md)
+- [lifecycle-controller](modules/lifecycle_controller.md)

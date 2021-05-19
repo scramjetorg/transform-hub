@@ -11,9 +11,10 @@
         "node_modules"
     ],
     "typedocOptions": {
-      "entryPoints": ["src/index.ts"],
+      "entryPoints": ["src/lib"],
       "out": "../../docs/supervisor",
       "plugin": "typedoc-plugin-markdown",
-      "readme": "none"
+      "readme": "none",
+      "excludePrivate": "true"
   }
 }
