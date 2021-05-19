@@ -1,11 +1,11 @@
 import { getRouter } from "@scramjet/api-server";
 import {
     AppError,
-    CommunicationHandler, CSIControllerError, HandshakeAcknowledgeMessage, InstanceConfigMessage,
+    CommunicationHandler, CSIControllerError,
     MessageUtilities
 } from "@scramjet/model";
 import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
-import { APIRoute, AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, Logger, UpstreamStreamsConfig } from "@scramjet/types";
+import { APIRoute, AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, HandshakeAcknowledgeMessage, InstanceConfigMessage, Logger, UpstreamStreamsConfig } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";

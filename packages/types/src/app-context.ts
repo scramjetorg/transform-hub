@@ -1,8 +1,9 @@
+import { MonitoringMessageFromRunnerData } from "@scramjet/types";
+
 import { MaybePromise } from "./utils";
 import { AppError, AppErrorConstructor } from "./error-codes/app-error";
 import { AppConfig } from "./application";
 import { FunctionDefinition } from "./runner";
-import { MonitoringMessageFromRunnerData } from "@scramjet/model";
 import { Logger } from "./logger";
 
 /**

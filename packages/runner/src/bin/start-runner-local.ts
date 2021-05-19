@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 /* eslint-disable dot-notation */
 
-import { HandshakeAcknowledgeMessage } from "@scramjet/model";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { AppConfig, ReadableStream } from "@scramjet/types";
+import { AppConfig, HandshakeAcknowledgeMessage, ReadableStream } from "@scramjet/types";
 
 import { Runner } from "../runner";
 import { stdout } from "process";

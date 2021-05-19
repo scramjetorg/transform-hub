@@ -1,5 +1,4 @@
 /* eslint-disable no-extra-parens */
-import { MessageDataType, MessageType } from "@scramjet/types";
 import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
@@ -8,11 +7,12 @@ import {
     ErrorMessage, ErrorMessageData,
     KeepAliveMessage, KeepAliveMessageData,
     KillSequenceMessage,
+    MessageDataType, MessageType,
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
     StopSequenceMessage, StopSequenceMessageData,
     EventMessageData, EventMessage, InstanceConfigMessageData
-} from ".";
+} from "@scramjet/types";
 
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {

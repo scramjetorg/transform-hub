@@ -1,7 +1,8 @@
 /* eslint-disable no-extra-parens */
-import { EventMessageData, HandshakeAcknowledgeMessageData, MonitoringMessageData, MonitoringRateMessageData, RunnerError, StopSequenceMessageData } from "@scramjet/model";
-import { ApplicationFunction, ApplicationInterface, IComponent, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Streamable, Logger, EncodedMonitoringMessage, MaybePromise } from "@scramjet/types";
+import { RunnerError } from "@scramjet/model";
+import { ApplicationFunction, ApplicationInterface, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Streamable, Logger, EncodedMonitoringMessage, MaybePromise, MonitoringMessageData, MonitoringRateMessageData, StopSequenceMessageData } from "@scramjet/types";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { RunnerMessageCode } from "@scramjet/symbols";
 
 import { from as scramjetStreamFrom, DataStream, StringStream } from "scramjet";
 import { EventEmitter } from "events";
@@ -10,7 +11,6 @@ import { createReadStream, createWriteStream } from "fs";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
 import { exec } from "child_process";
-import { RunnerMessageCode } from "@scramjet/symbols";
 
 type MaybeArray<T> = T | T[];
 

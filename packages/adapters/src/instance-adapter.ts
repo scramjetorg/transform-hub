@@ -1,6 +1,6 @@
 import { imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
-import { DelayedStream, MonitoringMessageData, SupervisorError } from "@scramjet/model";
+import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
     DownstreamStreamsConfig,
     ExitCode,
@@ -10,6 +10,7 @@ import {
     ILifeCycleAdapterRun,
     Logger,
     MaybePromise,
+    MonitoringMessageData,
     RunnerConfig
 } from "@scramjet/types";
 import { exec } from "child_process";

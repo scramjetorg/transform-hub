@@ -1,5 +1,5 @@
 import { getLogger } from "@scramjet/logger";
-import { EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData } from "@scramjet/model";
+import { EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData } from "@scramjet/types";
 import { AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream, FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, Logger } from "@scramjet/types";
 import { EventEmitter } from "events";
 

@@ -26,7 +26,7 @@ import {
     SnapshotResponseMessageData,
     StatusMessage,
     StatusMessageData
-} from "@scramjet/model";
+} from ".";
 import { PassThoughStream } from "./utils";
 import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 
