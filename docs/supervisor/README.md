@@ -1,3 +1,10 @@
-@scramjet/supervisor / [Exports](modules.md)
+@scramjet/supervisor
 
-# Suprvisor
+# @scramjet/supervisor
+
+## Table of contents
+
+### Classes
+
+- [DockerodeDockerHelper](classes/dockerodedockerhelper.md)
+- [LifecycleDockerAdapter](classes/lifecycledockeradapter.md)
