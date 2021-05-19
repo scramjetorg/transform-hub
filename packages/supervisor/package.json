@@ -11,7 +11,7 @@
     "stop": "./stop-superviosor.sh",
     "watch": "tsc -b --watch",
     "prepack": "node ../../scripts/publish.js",
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf ./dist .bic_cache",
     "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",

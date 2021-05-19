@@ -10,7 +10,7 @@
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
     "test": "nyc ava",
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf ./dist .bic_cache",
     "prepack": "node ../../scripts/publish.js",
     "postbuild": "yarn prepack"
   },

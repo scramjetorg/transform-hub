@@ -17,7 +17,7 @@
   "scripts": {
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js",
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf ./dist .bic_cache",
     "build:refapps": "tsc -p tsconfig.json",
     "postbuild:refapps": "yarn prepack"
   },

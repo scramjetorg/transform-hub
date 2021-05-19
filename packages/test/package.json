@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "ava",
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf ./dist .bic_cache",
     "postbuild": "yarn prepack"
   },
   "ava": {

@@ -49,7 +49,7 @@ for (const file of packages) {
             if (typeof obj2 === "object") {
                 if ((!(key in obj2) || override) && obj2[key] !== value) {
                     obj2[key] = value;
-                    writeFileSync(resolve(cwd, file), JSON.stringify(contents, null, 2), "utf-8");
+                    writeFileSync(resolve(cwd, file), `${JSON.stringify(contents, null, 2)}\n`, "utf-8");
                 }
             }
         }

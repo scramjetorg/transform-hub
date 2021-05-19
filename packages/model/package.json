@@ -7,7 +7,7 @@
     "start": "ts-node ./src/index",
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
-    "clean": "rm -rf ./dist",
+    "clean": "rm -rf ./dist .bic_cache",
     "watch": "tsc -b --watch",
     "test": "nyc ava",
     "prepack": "node ../../scripts/publish.js",
