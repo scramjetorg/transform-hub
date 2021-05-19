@@ -5,4 +5,5 @@ export type HostErrorCode =
     "LOG_NOT_AVAILABLE" |
     "UNKNOWN_SEQUENCE" |
     "UNKNOWN_INSTANCE" |
+    "CONTROLLER_ERROR" |
     "API_CONFIGURATION_ERROR"

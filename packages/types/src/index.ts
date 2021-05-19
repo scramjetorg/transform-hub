@@ -12,6 +12,7 @@ export * from "./lifecycle-adapters";
 export * from "./message-streams";
 export * from "./runner";
 export * from "./sequence";
+export * from "./sequence-store";
 export * from "./utils";
 
 export { AcknowledgeMessage, AcknowledgeMessageData } from "./messages/acknowledge";

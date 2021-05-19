@@ -11,7 +11,7 @@ import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
-import { Sequence } from "./host";
+import { Sequence } from "./sequence-store";
 
 export class CSIController extends EventEmitter {
     id: string;
@@ -92,6 +92,7 @@ export class CSIController extends EventEmitter {
 
         this.superVisorProcess = spawn(executable, command);
 
+        // TODO: remove
         this.superVisorProcess.stdout?.pipe(process.stdout);
         this.superVisorProcess.stderr?.pipe(process.stderr);
     }
@@ -118,6 +119,7 @@ export class CSIController extends EventEmitter {
 
     hookupStreams(streams: DownstreamStreamsConfig) {
         this.logger.log("Hookup streams.");
+
         this.downStreams = streams;
 
         this.upStreams = [
@@ -138,6 +140,7 @@ export class CSIController extends EventEmitter {
         this.communicationHandler.pipeMessageStreams();
         this.communicationHandler.pipeDataStreams();
 
+        // TODO: remove
         this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
 
         const controlDataStream = new DataStream();
