@@ -96,7 +96,7 @@ runner.cleanupStreams = async () => {
         arguments: sequenceArgs
     };
 
-    await runner.handleReceptionOfHandshake(pongMsg);
+    runner.handshakeResolver?.res(pongMsg);
 
     await ref;
 })()

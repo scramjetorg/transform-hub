@@ -35,6 +35,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private stopExpected: boolean = false;
 
+    handshakeResolver?: { res: Function, rej: Function };
+
     logger: Logger;
 
     constructor(sequencePath: string, fifosPath: string) {
@@ -61,17 +63,12 @@ export class Runner<X extends AppConfig> implements IComponent {
             break;
         case RunnerMessageCode.STOP:
             await this.addStopHandlerRequest(data as StopSequenceMessageData);
-            /**
-             * @analyze-how-to-pass-in-out-streams
-             * We need to make sure we close
-             * input and output streams.
-             */
             break;
         case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-            await this.handleForceConfirmAliveRequest();
+            this.handleForceConfirmAliveRequest();
             break;
         case RunnerMessageCode.PONG:
-            await this.handleReceptionOfHandshake(data as HandshakeAcknowledgeMessageData);
+            this.handshakeResolver?.res(data);
             break;
         case RunnerMessageCode.EVENT:
             const eventData = data as EventMessageData;
@@ -204,7 +201,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         ]);
     }
 
-    async initializeLogger() {
+    initializeLogger() {
         if (this.loggerStream) {
             addLoggerOutput(this.loggerStream);
         } else {
@@ -292,32 +289,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.keepAliveRequested = true;
     }
 
-    async handleReceptionOfHandshake(data: HandshakeAcknowledgeMessageData): Promise<void> {
-        /**
-         * @analyze-how-to-pass-in-out-streams
-         * Before we start a Sequence we should create readable and writable streams
-         * to input and output.
-         * In a fashion similar to how we create monitor and control streams,
-         * but after the acknowledge message comes (PONG) and
-         * before we start a Sequence.
-         */
-        this.logger.log("Handshake received.");
-
-        this.initAppContext(data.appConfig as X);
-
-        try {
-            await this.runSequence(data.arguments);
-
-            this.logger.log("Sequence completed.");
-        } catch (error) {
-            this.logger.error("Error occured during sequence execution: ", error.stack);
-
-            await this.cleanup();
-
-            this.exit(20);
-        }
-    }
-
     private exit(exitCode?: number) {
         if (typeof exitCode !== undefined) process.exitCode = exitCode;
         // TODO: why we need this?
@@ -334,11 +305,40 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.log("Executing main..."); // TODO: this is not working (no logger yet)
 
         await this.hookupFifoStreams();
-        await this.initializeLogger();
+        this.initializeLogger();
 
         this.logger.log("Fifo and logger initialized, sending handshake...");
 
         this.sendHandshakeMessage();
+
+        const handshakeData =
+            await new Promise<HandshakeAcknowledgeMessageData>((res, rej) => {
+                this.handshakeResolver = { res, rej };
+            });
+
+        this.logger.log("Handshake received.");
+
+        this.initAppContext(handshakeData.appConfig as X);
+
+        try {
+            /**
+             * @analyze-how-to-pass-in-out-streams
+             * Before we start a Sequence we should create readable and writable streams
+             * to input and output.
+             * In a fashion similar to how we create monitor and control streams,
+             * but after the acknowledge message comes (PONG) and
+             * before we start a Sequence.
+             */
+            await this.runSequence(handshakeData.arguments);
+
+            this.logger.log("Sequence completed.");
+        } catch (error) {
+            this.logger.error("Error occured during sequence execution: ", error.stack);
+
+            await this.cleanup();
+
+            this.exit(20);
+        }
     }
 
     /**
@@ -525,11 +525,4 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.error("Sequence emitted an error event", e);
         });
     }
-    // private isPipeableStream<T extends any = any>(out: SynchronousStreamable<T>): out is PipeableStream<T> {
-    //     if (typeof out === "function")
-    //         return false;
-    //     const ref = out as PipeableStream<T>;
-
-    //     return typeof ref.pipe === "function" && typeof ref.read === "function";
-    // }
 }
