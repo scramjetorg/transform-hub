@@ -161,11 +161,12 @@ export class CSIController extends EventEmitter {
         this.logger.log("PING RECEIVED");
 
         this.sequenceArgs = ["/package/data.json"];
+
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
-                arguments: this.sequenceArgs
+                args: this.sequenceArgs
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));

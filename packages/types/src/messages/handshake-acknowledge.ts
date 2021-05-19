@@ -5,7 +5,7 @@ export type HandshakeAcknowledgeMessageData = {
 
     /** Sequence configuration passed to the Sequence when it is started by the Runner. */
     appConfig: AppConfig;
-    arguments?: any[]
+    args?: any[]
 }
 
 /**

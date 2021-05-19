@@ -309,7 +309,7 @@ export class HostOne implements IComponent {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
-                arguments: this.sequenceArgs
+                args: this.sequenceArgs
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));

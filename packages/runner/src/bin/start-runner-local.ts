@@ -93,7 +93,7 @@ runner.cleanupStreams = async () => {
     const pongMsg: HandshakeAcknowledgeMessage = {
         msgCode: RunnerMessageCode.PONG,
         appConfig: sequenceAppConfig,
-        arguments: sequenceArgs
+        args: sequenceArgs
     };
 
     runner.handshakeResolver?.res(pongMsg);

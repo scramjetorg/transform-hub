@@ -311,14 +311,11 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.sendHandshakeMessage();
 
-        const handshakeData =
-            await new Promise<HandshakeAcknowledgeMessageData>((res, rej) => {
-                this.handshakeResolver = { res, rej };
-            });
+        const { appConfig, args } = await this.waitForHandshakeResponse();
 
         this.logger.log("Handshake received.");
 
-        this.initAppContext(handshakeData.appConfig as X);
+        this.initAppContext(appConfig as X);
 
         if (!this.context) {
             this.logger.error("Uninitialized context.");
@@ -355,7 +352,7 @@ export class Runner<X extends AppConfig> implements IComponent {
              * but after the acknowledge message comes (PONG) and
              * before we start a Sequence.
              */
-            await this.runSequence(sequence, handshakeData.arguments);
+            await this.runSequence(sequence, args);
 
             this.logger.log("Sequence completed.");
         } catch (error) {
@@ -404,6 +401,12 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.info("Sending handshake.");
 
         MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
+    }
+
+    async waitForHandshakeResponse(): Promise<HandshakeAcknowledgeMessageData> {
+        return new Promise<HandshakeAcknowledgeMessageData>((res, rej) => {
+            this.handshakeResolver = { res, rej };
+        });
     }
 
     getSequence(): ApplicationInterface[] {
