@@ -149,7 +149,7 @@ ___
 
 Application is an acceptable input for the runner.
 
-**`interface`** 
+**`interface`**
 
 #### Type parameters:
 
@@ -372,7 +372,7 @@ ___
 
 An Inert App is an app that doesn't accept data from the platform and doesn't output it.
 
-**`interface`** 
+**`interface`**
 
 #### Type parameters:
 
@@ -657,7 +657,7 @@ ___
 A Readable App is an app that obtains the data by it's own means and preforms
 0 to any number of transforms on that data before returning it.
 
-**`interface`** 
+**`interface`**
 
 #### Type parameters:
 
@@ -881,7 +881,7 @@ and returns the data to the platforms for further use.
 
 Has both active readable and writable sides.
 
-**`interface`** 
+**`interface`**
 
 #### Type parameters:
 
@@ -968,7 +968,7 @@ ___
 A Writable App is an app that accepts the data from the platform, performs any number
 of transforms and then saves it to the data destination by it's own means.
 
-**`interface`** 
+**`interface`**
 
 #### Type parameters:
 
