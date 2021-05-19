@@ -1,8 +1,9 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError } from "@scramjet/model";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, NextCallback, RunnerConfig } from "@scramjet/types";
-import * as Crypto from "crypto";
+
+
 import { unlink } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
@@ -87,11 +88,6 @@ export class Host implements IComponent {
         });
     }
 
-    private hash() {
-        return Crypto.randomBytes(32).toString("base64")
-            .slice(0, 32).replace(/\//g, "-");
-    }
-
     constructor(apiServer: APIExpose, socketServer: SocketServer) {
         this.logger = getLogger(this);
 
@@ -172,9 +168,10 @@ export class Host implements IComponent {
 
     async handleNewSequence(stream: IncomingMessage, res: ServerResponse) {
         this.logger.log("New sequence incomming...");
+
         const preRunnerResponse: RunnerConfig = await this.identifySequence(stream);
         const sequence: Sequence = {
-            id: this.hash(),
+            id: IDProvider.generate(),
             config: preRunnerResponse
         };
 
@@ -188,6 +185,7 @@ export class Host implements IComponent {
                 id: sequence.id
             }));
         }
+
     }
 
     async handleStartSequence(req: IncomingMessage, res: ServerResponse | undefined) {
@@ -224,7 +222,7 @@ export class Host implements IComponent {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {
         const communicationHandler = new CommunicationHandler();
-        const id = this.hash();
+        const id = IDProvider.generate();
         const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler, this.logger);
 
         this.logger.log("New CSIController created: ", id);
