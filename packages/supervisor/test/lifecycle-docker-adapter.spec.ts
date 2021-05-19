@@ -2,7 +2,7 @@
 /* eslint-disable dot-notation */
 import * as imageConfig from "@scramjet/csi-config";
 import { DelayedStream } from "@scramjet/model";
-import { DockerodeDockerHelper, LifecycleDockerAdapter } from "@scramjet/supervisor";
+import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { RunnerConfig } from "@scramjet/types";
 import test from "ava";
 import * as fs from "fs";
@@ -35,34 +35,34 @@ test.beforeEach(() => {
 });
 
 test("Constructor should create instance.", async (t: any) => {
-    const lcda = new LifecycleDockerAdapter();
+    const lcdai = new LifecycleDockerAdapterInstance(); // Main?
 
-    t.not(lcda, null);
+    t.not(lcdai, null);
 });
 
 test("Init should call imageConfig and set results locally.", async (t) => {
     configStub.resolves(configFileContents);
 
-    const lcda = new LifecycleDockerAdapter();
+    const lcdai = new LifecycleDockerAdapterInstance();
 
-    await lcda.init();
+    await lcdai.init();
 
 
-    t.deepEqual(lcda["imageConfig"], configFileContents);
+    t.deepEqual(lcdai["imageConfig"], configFileContents);
 });
 
 test("Init should reject on read file error.", async (t) => {
     configStub.rejects(new Error("ENOENT: File not found"));
 
-    const lcda = new LifecycleDockerAdapter();
+    const lcdai = new LifecycleDockerAdapterInstance();
 
-    await t.throwsAsync(lcda.init());
+    await t.throwsAsync(lcdai.init());
 });
 
 test("CreateFifoStreams should create monitor, control logger, input and output streams.", async (t) => {
     configStub.resolves();
 
-    const lcda = new LifecycleDockerAdapter();
+    const lcda = new LifecycleDockerAdapterInstance();
 
     lcda["monitorFifoPath"] = "mfp";
     lcda["controlFifoPath"] = "cfp";
@@ -105,10 +105,10 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         },
         sequencePath: "sequence.js"
     };
-    const lcda = new LifecycleDockerAdapter();
+    const lcdai = new LifecycleDockerAdapterInstance();
 
-    lcda["monitorFifoPath"] = "mfPath";
-    lcda["controlFifoPath"] = "cfPath";
+    lcdai["monitorFifoPath"] = "mfPath";
+    lcdai["controlFifoPath"] = "cfPath";
 
     // TODO remove when removed from code
     createReadStreamStub.returns({
@@ -131,17 +131,17 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         wait: sinon.stub().resolves()
     });
 
-    const createFifoStreams = sandbox.stub(lcda as any, "createFifoStreams").resolves();
+    const createFifoStreams = sandbox.stub(lcdai as any, "createFifoStreams").resolves();
 
-    await lcda.init();
+    await lcdai.init();
 
-    lcda["monitorFifoPath"] = "path1";
-    lcda["controlFifoPath"] = "path2";
-    lcda["loggerFifoPath"] = "path3";
-    lcda["inputFifoPath"] = "path4";
-    lcda["outputFifoPath"] = "path5";
+    lcdai["monitorFifoPath"] = "path1";
+    lcdai["controlFifoPath"] = "path2";
+    lcdai["loggerFifoPath"] = "path3";
+    lcdai["inputFifoPath"] = "path4";
+    lcdai["outputFifoPath"] = "path5";
 
-    await lcda.run(config);
+    await lcdai.run(config);
 
     // ToDo: fixup - Value is not `true`:
     t.true(createFifoStreams.calledOnceWith(
@@ -173,11 +173,11 @@ test("Identify should return parsed response from stream.", async (t) => {
         wait
     });
 
-    const lcda = new LifecycleDockerAdapter();
+    const lcdas = new LifecycleDockerAdapterSequence();
 
-    lcda["imageConfig"].runner = configFileContents.runner;
+    lcdas["imageConfig"].runner = configFileContents.runner;
 
-    const res = lcda.identify(streams.stdin);
+    const res = lcdas.identify(streams.stdin);
 
     streams.stdout.push(JSON.stringify(preRunnerResponse), "utf-8");
     streams.stdout.end();
@@ -190,7 +190,7 @@ test("Identify should return parsed response from stream.", async (t) => {
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,
         packageVolumeId: createdVolumeId,
-        image: lcda["imageConfig"].runner,
+        image: lcdas["imageConfig"].runner,
         sequencePath: preRunnerResponse.main
     };
 

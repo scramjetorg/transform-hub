@@ -66,7 +66,7 @@ let config = {
 }
 
 test.beforeEach(() => {
-    lcc = new LifeCycleController(lcdaInstance, config, clientIntance);
+    lcc = new LifeCycleController("test",lcdaInstance, config, clientIntance);
 })
 
     test("When an instance of LifeCycleController is constructed with correct parameters it must not be null", t => {
@@ -74,7 +74,7 @@ test.beforeEach(() => {
 });
 
 test("Should store passed parameter in internal fields", t => {
-    t.is(lcc["lifecycleAdapter"], lcdaInstance)
+    t.is(lcc["lifecycleAdapterRun"], lcdaInstance)
     t.is(lcc["lifecycleConfig"], config);
 });
 
