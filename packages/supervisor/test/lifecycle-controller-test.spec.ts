@@ -1,9 +1,8 @@
 /* eslint-disable */
 import test from "ava";
 import * as sinon from "sinon";
-import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, RunnerConfig } from "@scramjet/types";
 import { LifeCycleController } from "../src/lib/lifecycle-controller";
-import { Readable } from "stream";
 import { PassThrough } from "stream";
 import { DataStream } from "scramjet";
 
@@ -30,15 +29,12 @@ class LCDA implements ILifeCycleAdapter {
     stats = sinon.stub()
 }
 
-const stream = new Readable();
-
 class Client implements ICSHClient {
     PATH: string = "";
     logger: Console = console;
     init = sinon.stub().resolves();
     upstreamStreamsConfig = sinon.stub();
     hookCommunicationHandler = sinon.stub();
-    getPackage = sinon.stub().returns(stream)
     kill = sinon.stub()
     disconnect = sinon.stub();
 }
@@ -66,7 +62,7 @@ let config = {
 }
 
 test.beforeEach(() => {
-    lcc = new LifeCycleController("test",lcdaInstance, config, clientIntance);
+    lcc = new LifeCycleController("test", lcdaInstance, config, clientIntance);
 })
 
     test("When an instance of LifeCycleController is constructed with correct parameters it must not be null", t => {
@@ -82,15 +78,21 @@ test("LCC main method should call sub methods", async (t) => {
 
     lcc["communicationHandler"] = streamHandlerInstance;
 
-    const config = { image: "example-image" };
-    lcdaInstance.identify.resolves(config);
+    const config = { image: "example-image" } as RunnerConfig;
+
+    sinon.stub(lcc, "configMessageReceived").resolves(config);
+
+    lcdaInstance.init.resolves();
     lcdaInstance.run.resolves();
     lcdaInstance.cleanup.resolves();
+    clientIntance.init.resolves();
+    clientIntance.hookCommunicationHandler.resolves();
+    lcdaInstance.hookCommunicationHandler.resolves();
+
+    (streamHandlerInstance.addControlHandler as sinon.SinonStub).resolves()
 
     await lcc.main();
 
-    t.true(clientIntance.getPackage.calledOnceWithExactly());
-    t.true(lcdaInstance.identify.calledOnceWith(stream));
     t.true(clientIntance.hookCommunicationHandler.calledOnceWithExactly(streamHandlerInstance))
     t.true(lcdaInstance.hookCommunicationHandler.calledOnceWithExactly(streamHandlerInstance))
     t.true(lcdaInstance.run.calledOnceWithExactly(config));

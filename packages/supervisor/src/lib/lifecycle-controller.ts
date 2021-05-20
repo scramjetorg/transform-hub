@@ -142,16 +142,7 @@ class LifeCycleController implements IComponent {
             /**
              * Waiting for Runner configuration.
              */
-            const config: RunnerConfig = await new Promise(resolve => {
-                this.communicationHandler.addControlHandler(
-                    SupervisorMessageCode.CONFIG,
-                    (message) => {
-                        resolve(message[1].config);
-
-                        return message;
-                    }
-                );
-            });
+            const config: RunnerConfig = await this.configMessageReceived();
 
             this.logger.log("Received Runner configuration:", config);
 
@@ -258,6 +249,19 @@ class LifeCycleController implements IComponent {
 
         // TODO: investigate why process does not exits without above.
         this.scheduleExit(undefined, 50);
+    }
+
+    async configMessageReceived(): Promise<RunnerConfig> {
+        return new Promise(resolve => {
+            this.communicationHandler.addControlHandler(
+                SupervisorMessageCode.CONFIG,
+                (message) => {
+                    resolve(message[1].config);
+
+                    return message;
+                }
+            );
+        });
     }
 
     // TODO: move to HostOne

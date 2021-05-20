@@ -1,4 +1,4 @@
-import { ReadableStream, MaybePromise } from "./utils";
+import { MaybePromise } from "./utils";
 import { ICommunicationHandler } from "./communication-handler";
 import { IComponent } from "./component";
 
@@ -19,14 +19,6 @@ export interface ICSHClient extends IComponent {
      * Temporary log streams to the console.
      */
     hookCommunicationHandler(communicationHandler: ICommunicationHandler): MaybePromise<void>;
-
-    /**
-     * Load file with sequence (for example zipped file) from ENV and return it as a stream.
-     * Temporary the file is taken from declared path on local machine.
-     *
-     * @returns stream with file sequence
-     */
-    getPackage(): ReadableStream<Buffer>;
 
     /**
      * Disconnects from a host server.
