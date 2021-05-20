@@ -30,7 +30,7 @@ Removes resources.
 
 **Returns:** *MaybePromise*<*void*\>
 
-Defined in: [packages/types/src/lifecycle.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L33)
+Defined in: [packages/types/src/lifecycle.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L33)
 
 ___
 
@@ -48,7 +48,7 @@ Name | Type | Description |
 
 **Returns:** *MaybePromise*<*void*\>
 
-Defined in: [packages/types/src/lifecycle.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L47)
+Defined in: [packages/types/src/lifecycle.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L47)
 
 ___
 
@@ -66,7 +66,7 @@ Name | Type | Description |
 
 **Returns:** *MaybePromise*<[*RunnerConfig*](../README.md#runnerconfig)\>
 
-Defined in: [packages/types/src/lifecycle.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L20)
+Defined in: [packages/types/src/lifecycle.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L20)
 
 ___
 
@@ -78,7 +78,7 @@ Initializes Lifecycle adapter.
 
 **Returns:** *MaybePromise*<*void*\>
 
-Defined in: [packages/types/src/lifecycle.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L12)
+Defined in: [packages/types/src/lifecycle.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L12)
 
 ___
 
@@ -94,7 +94,7 @@ Name | Type |
 
 **Returns:** [*ILifeCycleAdapter*](ilifecycleadapter.md)
 
-Defined in: [packages/types/src/lifecycle.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L49)
+Defined in: [packages/types/src/lifecycle.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L49)
 
 ___
 
@@ -104,7 +104,7 @@ ___
 
 **Returns:** *MaybePromise*<*void*\>
 
-Defined in: [packages/types/src/lifecycle.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L52)
+Defined in: [packages/types/src/lifecycle.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L52)
 
 ___
 
@@ -124,7 +124,7 @@ Name | Type |
 
 Runner exit code.
 
-Defined in: [packages/types/src/lifecycle.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L28)
+Defined in: [packages/types/src/lifecycle.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L28)
 
 ___
 
@@ -138,7 +138,7 @@ Request snapshot and returns snapshot url.\
 
 snapshot url.
 
-Defined in: [packages/types/src/lifecycle.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L40)
+Defined in: [packages/types/src/lifecycle.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L40)
 
 ___
 
@@ -154,4 +154,4 @@ Name | Type |
 
 **Returns:** *Promise*<MonitoringMessageData\>
 
-Defined in: [packages/types/src/lifecycle.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle.ts#L54)
+Defined in: [packages/types/src/lifecycle.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L54)

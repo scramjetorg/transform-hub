@@ -20,4 +20,4 @@
 
 • **logger**: Console
 
-Defined in: [packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/component.ts#L2)
+Defined in: [packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/component.ts#L2)

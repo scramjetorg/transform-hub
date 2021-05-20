@@ -30,7 +30,7 @@
 
 The raw HTTP server
 
-Defined in: [packages/types/src/api-expose.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L107)
+Defined in: [packages/types/src/api-expose.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L107)
 
 ## Methods
 
@@ -52,7 +52,7 @@ Name | Type | Description |
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:95](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L95)
+Defined in: [packages/types/src/api-expose.ts:95](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L95)
 
 ___
 
@@ -80,7 +80,7 @@ Name | Type | Description |
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L74)
+Defined in: [packages/types/src/api-expose.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L74)
 
 ___
 
@@ -108,7 +108,7 @@ Name | Type | Description |
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L65)
+Defined in: [packages/types/src/api-expose.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L65)
 
 ___
 
@@ -130,7 +130,7 @@ Name | Type | Description |
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L83)
+Defined in: [packages/types/src/api-expose.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L83)
 
 ___
 
@@ -147,4 +147,4 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/api-expose.ts:108](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L108)
+Defined in: [packages/types/src/api-expose.ts:108](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L108)

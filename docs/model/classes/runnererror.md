@@ -49,7 +49,7 @@ Name | Type |
 
 Inherited from: [AppError](apperror.md)
 
-Defined in: [src/errors/runner-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/runner-error.ts#L6)
+Defined in: [packages/model/src/errors/runner-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/runner-error.ts#L6)
 
 ## Properties
 
@@ -59,7 +59,7 @@ Defined in: [src/errors/runner-error.ts:6](https://github.com/scramjet-cloud-pla
 
 Inherited from: [AppError](apperror.md).[code](apperror.md#code)
 
-Defined in: [src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L8)
+Defined in: [packages/model/src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/app-error.ts#L8)
 
 ___
 
@@ -69,7 +69,7 @@ ___
 
 Inherited from: [AppError](apperror.md).[data](apperror.md#data)
 
-Defined in: [src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L9)
+Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/app-error.ts#L9)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 Inherited from: [AppError](apperror.md).[message](apperror.md#message)
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
+Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 Inherited from: [AppError](apperror.md).[name](apperror.md#name)
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
+Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:973
 
 ___
 
@@ -101,7 +101,7 @@ Optional override for formatting stack traces
 
 **`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
-Defined in: node_modules/@types/node/globals.d.ts:11
+Defined in: packages/model/node_modules/@types/node/globals.d.ts:11
 
 ___
 
@@ -111,7 +111,7 @@ ___
 
 Inherited from: [AppError](apperror.md).[stack](apperror.md#stack)
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:975
+Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:975
 
 ___
 
@@ -119,7 +119,7 @@ ___
 
 • **stackTraceLimit**: *number*
 
-Defined in: node_modules/@types/node/globals.d.ts:13
+Defined in: packages/model/node_modules/@types/node/globals.d.ts:13
 
 ## Methods
 
@@ -138,4 +138,4 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: node_modules/@types/node/globals.d.ts:4
+Defined in: packages/model/node_modules/@types/node/globals.d.ts:4

@@ -48,7 +48,7 @@ Creates Docker container from provided image with attached volumes and local dir
 
 **`returns`** Created container.
 
-Defined in: [types.ts:163](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L163)
+Defined in: [types.ts:163](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L163)
 
 ___
 
@@ -62,7 +62,7 @@ Creates volume.
 
 **`returns`** Created volume.
 
-Defined in: [types.ts:206](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L206)
+Defined in: [types.ts:206](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L206)
 
 ___
 
@@ -76,7 +76,7 @@ Removes container.
 
 **`returns`** 
 
-Defined in: [types.ts:197](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L197)
+Defined in: [types.ts:197](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L197)
 
 ___
 
@@ -90,7 +90,7 @@ Removes volume.
 
 **`returns`** 
 
-Defined in: [types.ts:215](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L215)
+Defined in: [types.ts:215](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L215)
 
 ___
 
@@ -104,7 +104,7 @@ Executes command in container.
 
 **`returns`** 
 
-Defined in: [types.ts:224](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L224)
+Defined in: [types.ts:224](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L224)
 
 ___
 
@@ -118,7 +118,7 @@ Starts container.
 
 **`returns`** 
 
-Defined in: [types.ts:178](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L178)
+Defined in: [types.ts:178](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L178)
 
 ___
 
@@ -126,7 +126,7 @@ ___
 
 • **stats**: (`containerId`: *string*) => *Promise*<ContainerStats\>
 
-Defined in: [types.ts:189](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L189)
+Defined in: [types.ts:189](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L189)
 
 ___
 
@@ -140,7 +140,7 @@ Stops container.
 
 **`returns`** 
 
-Defined in: [types.ts:187](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L187)
+Defined in: [types.ts:187](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L187)
 
 ___
 
@@ -154,7 +154,7 @@ Converts pairs of mount path and volume name to DockerHelper specific volume con
 
 **`returns`** DockerHelper volume configuration.
 
-Defined in: [types.ts:150](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L150)
+Defined in: [types.ts:150](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L150)
 
 ## Methods
 
@@ -171,4 +171,4 @@ Name | Type | Description |
 
 **Returns:** *Promise*<[*ExitData*](../README.md#exitdata)\>
 
-Defined in: [types.ts:232](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L232)
+Defined in: [types.ts:232](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L232)

@@ -52,7 +52,7 @@
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L70)
+Defined in: [packages/model/src/stream-handler.ts:71](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L71)
 
 ## Properties
 
@@ -60,7 +60,7 @@ Defined in: [src/stream-handler.ts:70](https://github.com/scramjet-cloud-platfor
 
 • `Private` `Optional` **\_piped**: *undefined* \| *boolean*
 
-Defined in: [src/stream-handler.ts:64](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L64)
+Defined in: [packages/model/src/stream-handler.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L65)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 • `Private` **controlHandlerHash**: ControlMessageHandlerList
 
-Defined in: [src/stream-handler.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L70)
+Defined in: [packages/model/src/stream-handler.ts:71](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L71)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 • `Private` **controlPassThrough**: *DataStream*
 
-Defined in: [src/stream-handler.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L61)
+Defined in: [packages/model/src/stream-handler.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L62)
 
 ___
 
@@ -84,7 +84,7 @@ ___
 
 • `Optional` **downstreams**: *undefined* \| *DownstreamStreamsConfig*<*true*\>
 
-Defined in: [src/stream-handler.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L58)
+Defined in: [packages/model/src/stream-handler.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L59)
 
 ___
 
@@ -92,7 +92,7 @@ ___
 
 • `Private` **loggerPassthough**: *DuplexStream*<*string*, *string*\>
 
-Defined in: [src/stream-handler.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L60)
+Defined in: [packages/model/src/stream-handler.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L61)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 • `Private` **monitoringHandlerHash**: MonitoringMessageHandlerList
 
-Defined in: [src/stream-handler.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L69)
+Defined in: [packages/model/src/stream-handler.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L70)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 • `Private` **monitoringPassThrough**: *DataStream*
 
-Defined in: [src/stream-handler.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L62)
+Defined in: [packages/model/src/stream-handler.ts:63](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L63)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 • `Optional` **upstreams**: *undefined* \| *UpstreamStreamsConfig*<*true*\>
 
-Defined in: [src/stream-handler.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L57)
+Defined in: [packages/model/src/stream-handler.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L58)
 
 ## Methods
 
@@ -140,7 +140,7 @@ Name | Type | Default value |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:245](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L245)
+Defined in: [packages/model/src/stream-handler.ts:247](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L247)
 
 ___
 
@@ -164,7 +164,7 @@ Name | Type | Default value |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:233](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L233)
+Defined in: [packages/model/src/stream-handler.ts:235](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L235)
 
 ___
 
@@ -174,7 +174,7 @@ ___
 
 **Returns:** *boolean*
 
-Defined in: [src/stream-handler.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L192)
+Defined in: [packages/model/src/stream-handler.ts:194](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L194)
 
 ___
 
@@ -184,7 +184,7 @@ ___
 
 **Returns:** LoggerOutput
 
-Defined in: [src/stream-handler.ts:196](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L196)
+Defined in: [packages/model/src/stream-handler.ts:198](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L198)
 
 ___
 
@@ -194,7 +194,7 @@ ___
 
 **Returns:** *DataStream*
 
-Defined in: [src/stream-handler.ts:105](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L105)
+Defined in: [packages/model/src/stream-handler.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L107)
 
 ___
 
@@ -210,7 +210,7 @@ Name | Type |
 `stdin` | *Writable* |
 `stdout` | *Readable* |
 
-Defined in: [src/stream-handler.ts:109](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L109)
+Defined in: [packages/model/src/stream-handler.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L111)
 
 ___
 
@@ -226,7 +226,7 @@ Name | Type |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L126)
+Defined in: [packages/model/src/stream-handler.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L128)
 
 ___
 
@@ -242,7 +242,7 @@ Name | Type |
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:121](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L121)
+Defined in: [packages/model/src/stream-handler.ts:123](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L123)
 
 ___
 
@@ -252,7 +252,7 @@ ___
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L212)
+Defined in: [packages/model/src/stream-handler.ts:214](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L214)
 
 ___
 
@@ -262,7 +262,7 @@ ___
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:131](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L131)
+Defined in: [packages/model/src/stream-handler.ts:133](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L133)
 
 ___
 
@@ -272,7 +272,7 @@ ___
 
 **Returns:** [*CommunicationHandler*](communicationhandler.md)
 
-Defined in: [src/stream-handler.ts:200](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L200)
+Defined in: [packages/model/src/stream-handler.ts:202](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L202)
 
 ___
 
@@ -288,7 +288,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [src/stream-handler.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L99)
+Defined in: [packages/model/src/stream-handler.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L101)
 
 ___
 
@@ -311,7 +311,7 @@ Name | Type |
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/stream-handler.ts:263](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L263)
+Defined in: [packages/model/src/stream-handler.ts:265](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L265)
 
 ___
 
@@ -334,4 +334,4 @@ Name | Type |
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/stream-handler.ts:257](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L257)
+Defined in: [packages/model/src/stream-handler.ts:259](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L259)

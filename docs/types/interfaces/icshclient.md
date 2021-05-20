@@ -29,7 +29,7 @@
 
 Inherited from: [IComponent](icomponent.md).[logger](icomponent.md#logger)
 
-Defined in: [packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/component.ts#L2)
+Defined in: [packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/component.ts#L2)
 
 ## Methods
 
@@ -41,7 +41,7 @@ Disconnects from a host server.
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [packages/types/src/csh-connector.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/csh-connector.ts#L34)
+Defined in: [packages/types/src/csh-connector.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/csh-connector.ts#L34)
 
 ___
 
@@ -56,7 +56,7 @@ Temporary the file is taken from declared path on local machine.
 
 stream with file sequence
 
-Defined in: [packages/types/src/csh-connector.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/csh-connector.ts#L29)
+Defined in: [packages/types/src/csh-connector.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/csh-connector.ts#L29)
 
 ___
 
@@ -74,7 +74,7 @@ Name | Type | Description |
 
 **Returns:** *MaybePromise*<*void*\>
 
-Defined in: [packages/types/src/csh-connector.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/csh-connector.ts#L21)
+Defined in: [packages/types/src/csh-connector.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/csh-connector.ts#L21)
 
 ___
 
@@ -92,4 +92,4 @@ Name | Type |
 
 **Returns:** *MaybePromise*<*void*\>
 
-Defined in: [packages/types/src/csh-connector.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/csh-connector.ts#L14)
+Defined in: [packages/types/src/csh-connector.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/csh-connector.ts#L14)

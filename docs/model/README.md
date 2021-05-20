@@ -7,7 +7,9 @@
 ### Classes
 
 - [AppError](classes/apperror.md)
+- [CSIControllerError](classes/csicontrollererror.md)
 - [CommunicationHandler](classes/communicationhandler.md)
+- [DelayedStream](classes/delayedstream.md)
 - [HostError](classes/hosterror.md)
 - [RunnerError](classes/runnererror.md)
 - [SupervisorError](classes/supervisorerror.md)
@@ -29,9 +31,12 @@
 - [HandshakeAcknowledgeMessage](README.md#handshakeacknowledgemessage)
 - [HandshakeAcknowledgeMessageData](README.md#handshakeacknowledgemessagedata)
 - [HandshakeMessage](README.md#handshakemessage)
+- [ICSIControllerErrorData](README.md#icsicontrollererrordata)
 - [IHostErrorData](README.md#ihosterrordata)
 - [IRunnerErrorData](README.md#irunnererrordata)
 - [ISupervisorErrorData](README.md#isupervisorerrordata)
+- [InstanceConfigMessage](README.md#instanceconfigmessage)
+- [InstanceConfigMessageData](README.md#instanceconfigmessagedata)
 - [KeepAliveMessage](README.md#keepalivemessage)
 - [KeepAliveMessageData](README.md#keepalivemessagedata)
 - [KillSequenceMessage](README.md#killsequencemessage)
@@ -75,7 +80,7 @@ Optionally, it can indicate if the command was performed successfully, or
 (in case of issues) attach a related error description.
 This message type is sent from Runner.
 
-Defined in: [src/messages/acknowledge.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/acknowledge.ts#L22)
+Defined in: [packages/model/src/messages/acknowledge.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/acknowledge.ts#L22)
 
 ___
 
@@ -91,7 +96,7 @@ Name | Type | Description |
 `errorMsg?` | [*ErrorMessage*](README.md#errormessage) | Describes an error message if error was thrown after performing a requested operation.   |
 `status?` | *number* | Indicates status of the performed operation.   |
 
-Defined in: [src/messages/acknowledge.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/acknowledge.ts#L4)
+Defined in: [packages/model/src/messages/acknowledge.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/acknowledge.ts#L4)
 
 ___
 
@@ -103,9 +108,9 @@ ___
 
 Name | Type |
 ------ | ------ |
-`T` | RunnerMessageCode |
+`T` | RunnerMessageCode \| SupervisorMessageCode |
 
-Defined in: [src/stream-handler.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L25)
+Defined in: [packages/model/src/stream-handler.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L25)
 
 ___
 
@@ -124,7 +129,7 @@ Name | Type |
 ------ | ------ |
 `msgCode` | RunnerMessageCode.FORCE\_CONFIRM\_ALIVE |
 
-Defined in: [src/messages/confirm-health.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/confirm-health.ts#L9)
+Defined in: [packages/model/src/messages/confirm-health.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/confirm-health.ts#L9)
 
 ___
 
@@ -138,7 +143,7 @@ Name | Type |
 ------ | ------ |
 `T` | ControlMessageCode |
 
-Defined in: [src/stream-handler.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L23)
+Defined in: [packages/model/src/stream-handler.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L23)
 
 ___
 
@@ -150,7 +155,7 @@ Message providing the definition of the Sequence.
 It includes information on stream mode, name, description and scalability of each subsequence.
 This message type is sent from Runner.
 
-Defined in: [src/messages/describe-sequence.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/describe-sequence.ts#L15)
+Defined in: [packages/model/src/messages/describe-sequence.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/describe-sequence.ts#L15)
 
 ___
 
@@ -164,7 +169,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `definition?` | FunctionDefinition[] | Provides the definition of each subsequence.   |
 
-Defined in: [src/messages/describe-sequence.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/describe-sequence.ts#L4)
+Defined in: [packages/model/src/messages/describe-sequence.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/describe-sequence.ts#L4)
 
 ___
 
@@ -172,7 +177,7 @@ ___
 
 Ƭ **EmptyMessageData**: {}
 
-Defined in: [src/messages/message.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/message.ts#L16)
+Defined in: [packages/model/src/messages/message.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/message.ts#L16)
 
 ___
 
@@ -183,7 +188,7 @@ ___
 A general purpose error message.
 This message type is sent from Runner.
 
-Defined in: [src/messages/error.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/error.ts#L22)
+Defined in: [packages/model/src/messages/error.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/error.ts#L22)
 
 ___
 
@@ -200,7 +205,7 @@ Name | Type | Description |
 `message` | *string* | Error message.   |
 `stack` | *string* | Error stack trace.   |
 
-Defined in: [src/messages/error.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/error.ts#L3)
+Defined in: [packages/model/src/messages/error.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/error.ts#L3)
 
 ___
 
@@ -211,7 +216,7 @@ ___
 TODO update
 Event message emitted by sequence and handeled in the context.
 
-Defined in: [src/messages/event.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/event.ts#L16)
+Defined in: [packages/model/src/messages/event.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/event.ts#L16)
 
 ___
 
@@ -226,7 +231,7 @@ Name | Type | Description |
 `eventName` | *string* | Name of the event.   |
 `message` | *any* | TODO update Informs if keepAlive can be called to prolong the running of the Sequence.   |
 
-Defined in: [src/messages/event.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/event.ts#L3)
+Defined in: [packages/model/src/messages/event.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/event.ts#L3)
 
 ___
 
@@ -238,7 +243,7 @@ Cloud Server Host (CSH) sends handshake acknowledge message (PONG) to the Runner
 the received handshake message (PING).
 The message includes the Sequence configuration information.
 
-Defined in: [src/messages/handshake-acknowledge.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/handshake-acknowledge.ts#L16)
+Defined in: [packages/model/src/messages/handshake-acknowledge.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/handshake-acknowledge.ts#L16)
 
 ___
 
@@ -253,7 +258,7 @@ Name | Type | Description |
 `appConfig` | AppConfig | Sequence configuration passed to the Sequence when it is started by the Runner.   |
 `arguments?` | *any*[] | - |
 
-Defined in: [src/messages/handshake-acknowledge.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/handshake-acknowledge.ts#L4)
+Defined in: [packages/model/src/messages/handshake-acknowledge.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/handshake-acknowledge.ts#L4)
 
 ___
 
@@ -271,7 +276,15 @@ Name | Type |
 ------ | ------ |
 `msgCode` | RunnerMessageCode.PING |
 
-Defined in: [src/messages/handshake.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/handshake.ts#L8)
+Defined in: [packages/model/src/messages/handshake.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/handshake.ts#L8)
+
+___
+
+### ICSIControllerErrorData
+
+Ƭ **ICSIControllerErrorData**: *any*
+
+Defined in: [packages/model/src/errors/csi-controller-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/csi-controller-error.ts#L4)
 
 ___
 
@@ -279,7 +292,7 @@ ___
 
 Ƭ **IHostErrorData**: *any*
 
-Defined in: [src/errors/host-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/host-error.ts#L4)
+Defined in: [packages/model/src/errors/host-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/host-error.ts#L4)
 
 ___
 
@@ -287,7 +300,7 @@ ___
 
 Ƭ **IRunnerErrorData**: *any*
 
-Defined in: [src/errors/runner-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/runner-error.ts#L4)
+Defined in: [packages/model/src/errors/runner-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/runner-error.ts#L4)
 
 ___
 
@@ -295,7 +308,29 @@ ___
 
 Ƭ **ISupervisorErrorData**: *any*
 
-Defined in: [src/errors/supervisor-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/supervisor-error.ts#L4)
+Defined in: [packages/model/src/errors/supervisor-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/supervisor-error.ts#L4)
+
+___
+
+### InstanceConfigMessage
+
+Ƭ **InstanceConfigMessage**: { `msgCode`: SupervisorMessageCode.CONFIG  } & [*InstanceConfigMessageData*](README.md#instanceconfigmessagedata)
+
+Defined in: [packages/model/src/messages/instance-config.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/instance-config.ts#L8)
+
+___
+
+### InstanceConfigMessageData
+
+Ƭ **InstanceConfigMessageData**: { `config`: RunnerConfig  }
+
+#### Type declaration:
+
+Name | Type |
+------ | ------ |
+`config` | RunnerConfig |
+
+Defined in: [packages/model/src/messages/instance-config.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/instance-config.ts#L4)
 
 ___
 
@@ -306,7 +341,7 @@ ___
 Message instrucing how much longer to keep Sequence alive.
 This message type is sent from Runner.
 
-Defined in: [src/messages/keep-alive.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/keep-alive.ts#L13)
+Defined in: [packages/model/src/messages/keep-alive.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/keep-alive.ts#L13)
 
 ___
 
@@ -320,7 +355,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `keepAlive` | *number* | Information on how much longer the Sequence will be active (in miliseconds).   |
 
-Defined in: [src/messages/keep-alive.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/keep-alive.ts#L3)
+Defined in: [packages/model/src/messages/keep-alive.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/keep-alive.ts#L3)
 
 ___
 
@@ -338,7 +373,7 @@ Name | Type |
 ------ | ------ |
 `msgCode` | RunnerMessageCode.KILL |
 
-Defined in: [src/messages/kill-sequence.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/kill-sequence.ts#L8)
+Defined in: [packages/model/src/messages/kill-sequence.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/kill-sequence.ts#L8)
 
 ___
 
@@ -357,7 +392,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `msgCode` | RunnerMessageCode | Message type code from RunnerMessageCode enumeration.   |
 
-Defined in: [src/messages/message.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/message.ts#L10)
+Defined in: [packages/model/src/messages/message.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/message.ts#L10)
 
 ___
 
@@ -368,7 +403,7 @@ ___
 Monitoring message including detailed performance statistics.
 This message type is sent from Runner.
 
-Defined in: [src/messages/monitoring.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/monitoring.ts#L38)
+Defined in: [packages/model/src/messages/monitoring.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/monitoring.ts#L38)
 
 ___
 
@@ -376,7 +411,7 @@ ___
 
 Ƭ **MonitoringMessageData**: [*MonitoringMessageFromRunnerData*](README.md#monitoringmessagefromrunnerdata) & { `cpuTotalUsage?`: *number* ; `limit?`: *number* ; `memoryMaxUsage?`: *number* ; `memoryUsage?`: *number* ; `networkRx?`: *number* ; `networkTx?`: *number*  }
 
-Defined in: [src/messages/monitoring.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/monitoring.ts#L13)
+Defined in: [packages/model/src/messages/monitoring.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/monitoring.ts#L13)
 
 ___
 
@@ -391,7 +426,7 @@ Name | Type | Description |
 `healthy` | *boolean* | Calculated backpressure: processing * throughput / buffer.   |
 `sequences?` | FunctionStatus[] | How many items are processed by the Sequence per second.   |
 
-Defined in: [src/messages/monitoring.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/monitoring.ts#L4)
+Defined in: [packages/model/src/messages/monitoring.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/monitoring.ts#L4)
 
 ___
 
@@ -405,7 +440,7 @@ Name | Type |
 ------ | ------ |
 `T` | MonitoringMessageCode |
 
-Defined in: [src/stream-handler.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/stream-handler.ts#L21)
+Defined in: [packages/model/src/stream-handler.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/stream-handler.ts#L21)
 
 ___
 
@@ -416,7 +451,7 @@ ___
 Message instructing Runner how often to emit monitoring messages.
 This message type is sent from Supervisor.
 
-Defined in: [src/messages/monitor-rate.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/monitor-rate.ts#L13)
+Defined in: [packages/model/src/messages/monitor-rate.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/monitor-rate.ts#L13)
 
 ___
 
@@ -430,7 +465,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `monitoringRate` | *number* | Indicates how frequently should monitoring messages be emitted (in miliseconds).   |
 
-Defined in: [src/messages/monitor-rate.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/monitor-rate.ts#L3)
+Defined in: [packages/model/src/messages/monitor-rate.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/monitor-rate.ts#L3)
 
 ___
 
@@ -441,7 +476,7 @@ ___
 Message from the Runner indicating that the sequence has completed sending it's data
 and now can be asked to exit with high probability of accepting the exit gracefully.
 
-Defined in: [src/messages/sequence-complete.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/sequence-complete.ts#L8)
+Defined in: [packages/model/src/messages/sequence-complete.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/sequence-complete.ts#L8)
 
 ___
 
@@ -453,7 +488,7 @@ Message from the Runner indicating that the sequence has called the end method
 on context and it should be safe to terminate it without additional waiting,
 unless it exits correctly itself.
 
-Defined in: [src/messages/sequence-end.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/sequence-end.ts#L13)
+Defined in: [packages/model/src/messages/sequence-end.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/sequence-end.ts#L13)
 
 ___
 
@@ -467,7 +502,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `err` | Error | The url of container snapshot created.   |
 
-Defined in: [src/messages/sequence-end.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/sequence-end.ts#L3)
+Defined in: [packages/model/src/messages/sequence-end.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/sequence-end.ts#L3)
 
 ___
 
@@ -478,7 +513,7 @@ ___
 Information about the url of the container snapshot created.
 This message type is sent from the LifeCycle Controller.
 
-Defined in: [src/messages/snapshot-response.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/snapshot-response.ts#L13)
+Defined in: [packages/model/src/messages/snapshot-response.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/snapshot-response.ts#L13)
 
 ___
 
@@ -492,7 +527,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `url` | *string* | The url of container snapshot created.   |
 
-Defined in: [src/messages/snapshot-response.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/snapshot-response.ts#L3)
+Defined in: [packages/model/src/messages/snapshot-response.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/snapshot-response.ts#L3)
 
 ___
 
@@ -504,7 +539,7 @@ Message providing the definition of the Sequence.
 It includes information on stream mode, name, description and scalability of each subsequence.
 This message type is sent from Runner.
 
-Defined in: [src/messages/status.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/status.ts#L15)
+Defined in: [packages/model/src/messages/status.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/status.ts#L15)
 
 ___
 
@@ -518,7 +553,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `definition?` | FunctionDefinition[] | Provides the definition of each subsequence.   |
 
-Defined in: [src/messages/status.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/status.ts#L4)
+Defined in: [packages/model/src/messages/status.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/status.ts#L4)
 
 ___
 
@@ -530,7 +565,7 @@ Message instructing Runner to terminate Sequence gracefully after a specified pe
 It gives Sequence and Runner time to perform a cleanup.
 This message type is sent from Supervisor.
 
-Defined in: [src/messages/stop-sequence.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/stop-sequence.ts#L17)
+Defined in: [packages/model/src/messages/stop-sequence.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/stop-sequence.ts#L17)
 
 ___
 
@@ -545,7 +580,7 @@ Name | Type | Description |
 `canCallKeepalive` | *boolean* | Informs if keepAlive can be called to prolong the running of the Sequence.   |
 `timeout` | *number* | The number of milliseconds before the Sequence will be killed.   |
 
-Defined in: [src/messages/stop-sequence.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages/stop-sequence.ts#L3)
+Defined in: [packages/model/src/messages/stop-sequence.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages/stop-sequence.ts#L3)
 
 ## Variables
 
@@ -558,9 +593,9 @@ Defined in: [src/messages/stop-sequence.ts:3](https://github.com/scramjet-cloud-
 Name | Type |
 ------ | ------ |
 `deserializeMessage` | (`msg`: *string*) => *MessageType*<RunnerMessageCode\> |
-`serializeMessage` | <T\>(`\_\_namedParameters`: *MessageType*<T\>) => RunnerMessage |
+`serializeMessage` | <T\>(`\_\_namedParameters`: *MessageType*<T\>) => RunnerMessage \| SupervisorMessage |
 
-Defined in: [src/index.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/index.ts#L27)
+Defined in: [packages/model/src/index.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/index.ts#L29)
 
 ## Functions
 
@@ -572,7 +607,7 @@ Defined in: [src/index.ts:27](https://github.com/scramjet-cloud-platform/scramje
 
 Name | Type |
 ------ | ------ |
-`X` | RunnerMessageCode |
+`X` | PING \| MONITORING \| DESCRIBE\_SEQUENCE \| ERROR \| SNAPSHOT\_RESPONSE \| SEQUENCE\_STOPPED \| STATUS \| ALIVE \| ACKNOWLEDGE \| SEQUENCE\_COMPLETED \| PONG \| STOP \| KILL \| MONITORING\_RATE \| FORCE\_CONFIRM\_ALIVE \| EVENT \| CONFIG |
 
 #### Parameters:
 
@@ -583,7 +618,7 @@ Name | Type |
 
 **Returns:** *MessageDataType*<X\>
 
-Defined in: [src/get-message.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/get-message.ts#L55)
+Defined in: [packages/model/src/get-message.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/get-message.ts#L55)
 
 ___
 
@@ -603,7 +638,7 @@ Name | Type | Description |
 
 - an object of message type
 
-Defined in: [src/messages-utils.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages-utils.ts#L27)
+Defined in: [packages/model/src/messages-utils.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages-utils.ts#L29)
 
 ___
 
@@ -631,7 +666,7 @@ Name | Type | Description |
 
 - an object of message type
 
-Defined in: [src/get-message.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/get-message.ts#L99)
+Defined in: [packages/model/src/get-message.ts:102](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/get-message.ts#L102)
 
 ___
 
@@ -648,13 +683,13 @@ Name | Type |
 
 **Returns:** *Promise*<*any*\>
 
-Defined in: [src/utils/promiseTimout.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/utils/promiseTimout.ts#L4)
+Defined in: [packages/model/src/utils/promiseTimout.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/utils/promiseTimout.ts#L4)
 
 ___
 
 ### serializeMessage
 
-▸ **serializeMessage**<T\>(`__namedParameters`: *MessageType*<T\>): RunnerMessage
+▸ **serializeMessage**<T\>(`__namedParameters`: *MessageType*<T\>): RunnerMessage \| SupervisorMessage
 
 Serizalized message.
 
@@ -662,15 +697,15 @@ Serizalized message.
 
 Name | Type |
 ------ | ------ |
-`T` | RunnerMessageCode |
+`T` | PING \| MONITORING \| DESCRIBE\_SEQUENCE \| ERROR \| SNAPSHOT\_RESPONSE \| SEQUENCE\_STOPPED \| STATUS \| ALIVE \| ACKNOWLEDGE \| SEQUENCE\_COMPLETED \| PONG \| STOP \| KILL \| MONITORING\_RATE \| FORCE\_CONFIRM\_ALIVE \| EVENT \| CONFIG |
 
 #### Parameters:
 
 • **__namedParameters**: *MessageType*<T\>
 
-**Returns:** RunnerMessage
+**Returns:** RunnerMessage \| SupervisorMessage
 
 - a serializable message in a format [msgCode, {msgBody}]
           where 'msgCode' is a message type code and 'msgBody' is a message body
 
-Defined in: [src/messages-utils.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/messages-utils.ts#L13)
+Defined in: [packages/model/src/messages-utils.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/messages-utils.ts#L14)

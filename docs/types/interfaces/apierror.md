@@ -25,7 +25,7 @@
 
 • `Optional` **cause**: *undefined* \| Error
 
-Defined in: [packages/types/src/api-expose.ts:50](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L50)
+Defined in: [packages/types/src/api-expose.ts:50](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L50)
 
 ___
 
@@ -35,7 +35,7 @@ ___
 
 Http status code to be outputted
 
-Defined in: [packages/types/src/api-expose.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L42)
+Defined in: [packages/types/src/api-expose.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L42)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 The message that will be sent in reason line
 
-Defined in: [packages/types/src/api-expose.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L46)
+Defined in: [packages/types/src/api-expose.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L46)
 
 ___
 

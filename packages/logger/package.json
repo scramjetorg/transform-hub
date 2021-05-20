@@ -6,6 +6,7 @@
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "tsc -p tsconfig.build.json",
+    "build:docs": "typedoc",
     "watch": "tsc -b --watch",
     "test": "npm run test:ava",
     "test:ava": "nyc ava",

@@ -24,7 +24,7 @@ Name | Type |
 
 **Returns:** *string*
 
-Defined in: [packages/api-server/src/lib/mime.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/mime.ts#L19)
+Defined in: [packages/api-server/src/lib/mime.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/mime.ts#L19)
 
 ___
 
@@ -41,4 +41,4 @@ Name | Type |
 
 **Returns:** *undefined* \| *string*
 
-Defined in: [packages/api-server/src/lib/mime.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/mime.ts#L3)
+Defined in: [packages/api-server/src/lib/mime.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/mime.ts#L3)

@@ -1,55 +1,55 @@
-[@scramjet/model](../README.md) / HostError
+[@scramjet/model](../README.md) / CSIControllerError
 
-# Class: HostError
+# Class: CSIControllerError
 
 ## Hierarchy
 
 * [*AppError*](apperror.md)
 
-  ↳ **HostError**
+  ↳ **CSIControllerError**
 
 ## Implements
 
-* [*IHostErrorData*](../README.md#ihosterrordata)
+* [*ICSIControllerErrorData*](../README.md#icsicontrollererrordata)
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](hosterror.md#constructor)
+- [constructor](csicontrollererror.md#constructor)
 
 ### Properties
 
-- [code](hosterror.md#code)
-- [data](hosterror.md#data)
-- [message](hosterror.md#message)
-- [name](hosterror.md#name)
-- [prepareStackTrace](hosterror.md#preparestacktrace)
-- [stack](hosterror.md#stack)
-- [stackTraceLimit](hosterror.md#stacktracelimit)
+- [code](csicontrollererror.md#code)
+- [data](csicontrollererror.md#data)
+- [message](csicontrollererror.md#message)
+- [name](csicontrollererror.md#name)
+- [prepareStackTrace](csicontrollererror.md#preparestacktrace)
+- [stack](csicontrollererror.md#stack)
+- [stackTraceLimit](csicontrollererror.md#stacktracelimit)
 
 ### Methods
 
-- [captureStackTrace](hosterror.md#capturestacktrace)
+- [captureStackTrace](csicontrollererror.md#capturestacktrace)
 
 ## Constructors
 
 ### constructor
 
-\+ **new HostError**(`code`: HostErrorCode, `data?`: *any*): [*HostError*](hosterror.md)
+\+ **new CSIControllerError**(`code`: CSIControllerErrorCode, `data?`: *any*): [*CSIControllerError*](csicontrollererror.md)
 
 #### Parameters:
 
 Name | Type |
 ------ | ------ |
-`code` | HostErrorCode |
+`code` | CSIControllerErrorCode |
 `data?` | *any* |
 
-**Returns:** [*HostError*](hosterror.md)
+**Returns:** [*CSIControllerError*](csicontrollererror.md)
 
 Inherited from: [AppError](apperror.md)
 
-Defined in: [packages/model/src/errors/host-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/host-error.ts#L6)
+Defined in: [packages/model/src/errors/csi-controller-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/csi-controller-error.ts#L6)
 
 ## Properties
 

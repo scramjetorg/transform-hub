@@ -43,7 +43,7 @@ Name | Type |
 
 **Returns:** [*CSHClient*](csh_client.cshclient.md)
 
-Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/csh-client.ts#L23)
+Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L23)
 
 ## Properties
 
@@ -51,7 +51,7 @@ Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramj
 
 • **logger**: Console
 
-Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/csh-client.ts#L23)
+Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L23)
 
 ## Methods
 
@@ -61,7 +61,7 @@ Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramj
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [csh-client.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/csh-client.ts#L84)
+Defined in: [csh-client.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L84)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 **Returns:** *ReadableStream*<*Buffer*\>
 
-Defined in: [csh-client.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/csh-client.ts#L107)
+Defined in: [csh-client.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L107)
 
 ___
 
@@ -87,7 +87,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [csh-client.ts:115](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/csh-client.ts#L115)
+Defined in: [csh-client.ts:115](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L115)
 
 ___
 
@@ -103,4 +103,4 @@ Name | Type |
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [csh-client.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/csh-client.ts#L31)
+Defined in: [csh-client.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L31)

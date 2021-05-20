@@ -35,7 +35,7 @@ Name | Type |
 `router` | S |
 `server` | T |
 
-Defined in: [packages/api-server/src/lib/0http.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/0http.ts#L7)
+Defined in: [packages/api-server/src/lib/0http.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/0http.ts#L7)
 
 ___
 
@@ -51,4 +51,4 @@ Name | Type |
 
 **Returns:** [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md)
 
-Defined in: [packages/api-server/src/lib/0http.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/0http.ts#L6)
+Defined in: [packages/api-server/src/lib/0http.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/0http.ts#L6)

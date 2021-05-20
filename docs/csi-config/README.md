@@ -17,7 +17,7 @@
 
 **Returns:** *boolean*
 
-Defined in: [index.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/csi-config/src/index.ts#L4)
+Defined in: [index.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/csi-config/src/index.ts#L4)
 
 ___
 
@@ -27,4 +27,4 @@ ___
 
 **Returns:** *Promise*<any\>
 
-Defined in: [index.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/csi-config/src/index.ts#L8)
+Defined in: [index.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/csi-config/src/index.ts#L8)

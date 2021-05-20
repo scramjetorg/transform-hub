@@ -9,6 +9,7 @@
     "scripts": {
         "start": "ts-node ./src/index",
         "build": "tsc -p tsconfig.build.json",
+        "build:docs": "typedoc",
         "clean": "rm -rf ./dist",
         "watch": "tsc -b --watch",
         "test": "npm run test:ava",

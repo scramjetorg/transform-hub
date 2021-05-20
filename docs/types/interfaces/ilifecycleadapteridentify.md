@@ -29,7 +29,7 @@ Removes resources.
 
 Inherited from: [ILifeCycleAdapterMain](ilifecycleadaptermain.md)
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L37)
+Defined in: [packages/types/src/lifecycle-adapters.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L37)
 
 ___
 
@@ -47,7 +47,7 @@ Name | Type | Description |
 
 **Returns:** *MaybePromise*<[*RunnerConfig*](../README.md#runnerconfig)\>
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L51)
+Defined in: [packages/types/src/lifecycle-adapters.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L51)
 
 ___
 
@@ -61,7 +61,7 @@ Initializes Lifecycle adapter.
 
 Inherited from: [ILifeCycleAdapterMain](ilifecycleadaptermain.md)
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L32)
+Defined in: [packages/types/src/lifecycle-adapters.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L32)
 
 ___
 
@@ -73,4 +73,4 @@ ___
 
 Inherited from: [ILifeCycleAdapterMain](ilifecycleadaptermain.md)
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L40)
+Defined in: [packages/types/src/lifecycle-adapters.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L40)

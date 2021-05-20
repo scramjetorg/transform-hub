@@ -50,7 +50,7 @@ Communicates with Docker using Dockerode library.
 
 • **dockerode**: *Dockerode*
 
-Defined in: [dockerode-docker-helper.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L41)
+Defined in: [dockerode-docker-helper.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L41)
 
 ## Methods
 
@@ -71,7 +71,7 @@ Name | Type | Description |
 
 Object with container's standard I/O streams.
 
-Defined in: [dockerode-docker-helper.ts:179](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L179)
+Defined in: [dockerode-docker-helper.ts:179](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L179)
 
 ___
 
@@ -96,7 +96,7 @@ Name | Type | Default value | Description |
 
 Created container id.
 
-Defined in: [dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L80)
+Defined in: [dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L80)
 
 ___
 
@@ -116,7 +116,7 @@ Name | Type | Default value | Description |
 
 Volume name.
 
-Defined in: [dockerode-docker-helper.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L154)
+Defined in: [dockerode-docker-helper.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L154)
 
 ___
 
@@ -136,7 +136,7 @@ Name | Type | Description |
 
 Promise which resolves when container has been removed.
 
-Defined in: [dockerode-docker-helper.ts:134](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L134)
+Defined in: [dockerode-docker-helper.ts:134](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L134)
 
 ___
 
@@ -156,7 +156,7 @@ Name | Type | Description |
 
 Promise which resolves when volume has been removed.
 
-Defined in: [dockerode-docker-helper.ts:168](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L168)
+Defined in: [dockerode-docker-helper.ts:168](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L168)
 
 ___
 
@@ -176,7 +176,7 @@ Name | Type | Description |
 
 @see {DockerAdapterRunResponse}
 
-Defined in: [dockerode-docker-helper.ts:189](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L189)
+Defined in: [dockerode-docker-helper.ts:189](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L189)
 
 ___
 
@@ -196,7 +196,7 @@ Name | Type | Description |
 
 Promise resolving when container has been started.
 
-Defined in: [dockerode-docker-helper.ts:114](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L114)
+Defined in: [dockerode-docker-helper.ts:114](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L114)
 
 ___
 
@@ -216,7 +216,7 @@ Name | Type | Description |
 
 Promise which resolves with container statistics.
 
-Defined in: [dockerode-docker-helper.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L144)
+Defined in: [dockerode-docker-helper.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L144)
 
 ___
 
@@ -236,7 +236,7 @@ Name | Type | Description |
 
 Promise which resolves when the container has been stopped.
 
-Defined in: [dockerode-docker-helper.ts:124](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L124)
+Defined in: [dockerode-docker-helper.ts:124](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L124)
 
 ___
 
@@ -256,7 +256,7 @@ Name | Type | Description |
 
 Translated volumes configuration.
 
-Defined in: [dockerode-docker-helper.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L49)
+Defined in: [dockerode-docker-helper.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L49)
 
 ___
 
@@ -279,4 +279,4 @@ Container exit code.
 
 Implementation of: [IDockerHelper](../interfaces/idockerhelper.md)
 
-Defined in: [dockerode-docker-helper.ts:238](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/dockerode-docker-helper.ts#L238)
+Defined in: [dockerode-docker-helper.ts:238](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L238)

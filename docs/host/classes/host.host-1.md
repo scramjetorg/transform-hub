@@ -52,7 +52,7 @@ Name | Type |
 
 **Returns:** [*Host*](host.host-1.md)
 
-Defined in: [src/lib/host.ts:86](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L86)
+Defined in: [src/lib/host.ts:86](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L86)
 
 ## Properties
 
@@ -60,7 +60,7 @@ Defined in: [src/lib/host.ts:86](https://github.com/scramjet-cloud-platform/scra
 
 • **api**: APIExpose
 
-Defined in: [src/lib/host.ts:64](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L64)
+Defined in: [src/lib/host.ts:64](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L64)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 • **apiBase**: *string*= "/api/v1"
 
-Defined in: [src/lib/host.ts:66](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L66)
+Defined in: [src/lib/host.ts:66](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L66)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 • **csiControllers**: { [key: string]: [*CSIController*](csi_controller.csicontroller.md);  }
 
-Defined in: [src/lib/host.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L70)
+Defined in: [src/lib/host.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L70)
 
 ___
 
@@ -84,7 +84,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [src/lib/host.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L74)
+Defined in: [src/lib/host.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L74)
 
 ___
 
@@ -92,7 +92,7 @@ ___
 
 • **sequenceStore**: [*SequenceStore*](host.sequencestore.md)
 
-Defined in: [src/lib/host.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L72)
+Defined in: [src/lib/host.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L72)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 • **socketServer**: [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: [src/lib/host.ts:68](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L68)
+Defined in: [src/lib/host.ts:68](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L68)
 
 ## Methods
 
@@ -116,7 +116,7 @@ Setting up handlers for general Host API endpoints:
 
 **Returns:** *void*
 
-Defined in: [src/lib/host.ts:127](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L127)
+Defined in: [src/lib/host.ts:127](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L127)
 
 ___
 
@@ -126,7 +126,7 @@ ___
 
 **Returns:** *object*
 
-Defined in: [src/lib/host.ts:239](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L239)
+Defined in: [src/lib/host.ts:239](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L239)
 
 ___
 
@@ -142,7 +142,7 @@ Name | Type |
 
 **Returns:** [*Sequence*](../modules/host.md#sequence)
 
-Defined in: [src/lib/host.ts:248](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L248)
+Defined in: [src/lib/host.ts:248](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L248)
 
 ___
 
@@ -152,7 +152,7 @@ ___
 
 **Returns:** *object*
 
-Defined in: [src/lib/host.ts:244](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L244)
+Defined in: [src/lib/host.ts:244](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L244)
 
 ___
 
@@ -168,7 +168,7 @@ Name | Type |
 
 **Returns:** *MaybePromise*<RunnerConfig\>
 
-Defined in: [src/lib/host.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L211)
+Defined in: [src/lib/host.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L211)
 
 ___
 
@@ -178,7 +178,7 @@ ___
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/lib/host.ts:97](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L97)
+Defined in: [src/lib/host.ts:97](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L97)
 
 ___
 
@@ -196,4 +196,4 @@ Name | Type |
 
 **Returns:** *Promise*<*string*\>
 
-Defined in: [src/lib/host.ts:225](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L225)
+Defined in: [src/lib/host.ts:225](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L225)

@@ -46,7 +46,7 @@ Name | Type |
 
 • `Readonly` **AppError**: [*AppErrorConstructor*](../README.md#apperrorconstructor)
 
-Defined in: [packages/types/src/app-context.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L177)
+Defined in: [packages/types/src/app-context.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L177)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 • `Readonly` **config**: AppConfigType
 
-Defined in: [packages/types/src/app-context.ts:176](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L176)
+Defined in: [packages/types/src/app-context.ts:176](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L176)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 Provides automated definition as understood by the system
 
-Defined in: [packages/types/src/app-context.ts:167](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L167)
+Defined in: [packages/types/src/app-context.ts:167](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L167)
 
 ___
 
@@ -75,7 +75,7 @@ ___
 Holds the previous state if there was a previous process in existance and it called the
 {@link this#save}.
 
-Defined in: [packages/types/src/app-context.ts:143](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L143)
+Defined in: [packages/types/src/app-context.ts:143](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L143)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [packages/types/src/app-context.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L37)
+Defined in: [packages/types/src/app-context.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L37)
 
 ## Methods
 
@@ -109,7 +109,7 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:79](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L79)
+Defined in: [packages/types/src/app-context.ts:79](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L79)
 
 ___
 
@@ -134,7 +134,7 @@ Name | Type |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L48)
+Defined in: [packages/types/src/app-context.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L48)
 
 ___
 
@@ -161,7 +161,7 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:64](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L64)
+Defined in: [packages/types/src/app-context.ts:64](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L64)
 
 ___
 
@@ -179,7 +179,7 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L174)
+Defined in: [packages/types/src/app-context.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L174)
 
 ___
 
@@ -206,7 +206,7 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L126)
+Defined in: [packages/types/src/app-context.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L126)
 
 ___
 
@@ -225,7 +225,7 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:161](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L161)
+Defined in: [packages/types/src/app-context.ts:161](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L161)
 
 ▸ **emit**(`ev`: *error*, `message`: [*AppError*](../README.md#apperror)): [*AppContext*](appcontext.md)<AppConfigType, State\>
 
@@ -238,7 +238,7 @@ Name | Type |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L162)
+Defined in: [packages/types/src/app-context.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L162)
 
 ___
 
@@ -257,7 +257,7 @@ This method will be called automatically when the readable side of the sequence 
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:110](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L110)
+Defined in: [packages/types/src/app-context.ts:110](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L110)
 
 ___
 
@@ -282,7 +282,7 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:98](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L98)
+Defined in: [packages/types/src/app-context.ts:98](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L98)
 
 ___
 
@@ -302,7 +302,7 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:152](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L152)
+Defined in: [packages/types/src/app-context.ts:152](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L152)
 
 ▸ **on**(`ev`: *error*, `handler`: (`message`: Error) => *void*): [*AppContext*](appcontext.md)<AppConfigType, State\>
 
@@ -315,7 +315,7 @@ Name | Type |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:153](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L153)
+Defined in: [packages/types/src/app-context.ts:153](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L153)
 
 ___
 
@@ -337,4 +337,4 @@ Name | Type | Description |
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:137](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L137)
+Defined in: [packages/types/src/app-context.ts:137](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L137)

@@ -25,7 +25,7 @@ Name | Type |
 
 **Returns:** *Promise*<*any*\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/data-extractors.ts#L7)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/data-extractors.ts#L7)
 
 ___
 
@@ -42,7 +42,7 @@ Name | Type |
 
 **Returns:** *Promise*<Readable\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/data-extractors.ts#L23)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/data-extractors.ts#L23)
 
 ___
 
@@ -60,4 +60,4 @@ Name | Type |
 
 **Returns:** *Promise*<Writable\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/data-extractors.ts#L15)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/data-extractors.ts#L15)

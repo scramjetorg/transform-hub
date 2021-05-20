@@ -14,6 +14,8 @@
 
   ↳↳ [*SupervisorError*](supervisorerror.md)
 
+  ↳↳ [*CSIControllerError*](csicontrollererror.md)
+
 ## Implements
 
 * *IAppError*
@@ -53,7 +55,7 @@ Name | Type |
 
 **Returns:** [*AppError*](apperror.md)
 
-Defined in: [src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L9)
+Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/app-error.ts#L9)
 
 ## Properties
 
@@ -61,7 +63,7 @@ Defined in: [src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platfo
 
 • **code**: AppErrorCode
 
-Defined in: [src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L8)
+Defined in: [packages/model/src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/app-error.ts#L8)
 
 ___
 
@@ -69,7 +71,7 @@ ___
 
 • `Optional` **data**: *any*
 
-Defined in: [src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/01ff585/packages/model/src/errors/app-error.ts#L9)
+Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/errors/app-error.ts#L9)
 
 ___
 
@@ -77,7 +79,7 @@ ___
 
 • **message**: *string*
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
+Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
@@ -85,7 +87,7 @@ ___
 
 • **name**: *string*
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
+Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:973
 
 ___
 
@@ -93,7 +95,7 @@ ___
 
 • `Optional` **stack**: *undefined* \| *string*
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:975
+Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:975
 
 ___
 
@@ -105,7 +107,7 @@ Optional override for formatting stack traces
 
 **`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
-Defined in: node_modules/@types/node/globals.d.ts:11
+Defined in: packages/model/node_modules/@types/node/globals.d.ts:11
 
 ___
 
@@ -113,7 +115,7 @@ ___
 
 ▪ `Static` **stackTraceLimit**: *number*
 
-Defined in: node_modules/@types/node/globals.d.ts:13
+Defined in: packages/model/node_modules/@types/node/globals.d.ts:13
 
 ## Methods
 
@@ -132,4 +134,4 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: node_modules/@types/node/globals.d.ts:4
+Defined in: packages/model/node_modules/@types/node/globals.d.ts:4

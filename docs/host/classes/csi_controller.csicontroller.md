@@ -84,7 +84,7 @@ Name | Type |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L35)
+Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L35)
 
 ## Properties
 
@@ -92,7 +92,7 @@ Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-pla
 
 • **appConfig**: AppConfig
 
-Defined in: [src/lib/csi-controller.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L19)
+Defined in: [src/lib/csi-controller.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L19)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 • **communicationHandler**: *CommunicationHandler*
 
-Defined in: [src/lib/csi-controller.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L34)
+Defined in: [src/lib/csi-controller.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L34)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 • `Optional` **controlDataStream**: *undefined* \| *DataStream*
 
-Defined in: [src/lib/csi-controller.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L23)
+Defined in: [src/lib/csi-controller.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L23)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 • `Optional` **downStreams**: *undefined* \| *DownstreamStreamsConfig*<*true*\>
 
-Defined in: [src/lib/csi-controller.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L24)
+Defined in: [src/lib/csi-controller.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L24)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 • **id**: *string*
 
-Defined in: [src/lib/csi-controller.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L17)
+Defined in: [src/lib/csi-controller.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L17)
 
 ___
 
@@ -132,7 +132,7 @@ ___
 
 • `Optional` **initResolver**: *undefined* \| { `rej`: Function ; `res`: Function  }
 
-Defined in: [src/lib/csi-controller.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L27)
+Defined in: [src/lib/csi-controller.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L27)
 
 ___
 
@@ -140,7 +140,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L35)
+Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L35)
 
 ___
 
@@ -148,7 +148,7 @@ ___
 
 • `Optional` **router**: *undefined* \| APIRoute
 
-Defined in: [src/lib/csi-controller.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L25)
+Defined in: [src/lib/csi-controller.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L25)
 
 ___
 
@@ -156,7 +156,7 @@ ___
 
 • **sequence**: [*Sequence*](../modules/host.md#sequence)
 
-Defined in: [src/lib/csi-controller.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L18)
+Defined in: [src/lib/csi-controller.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L18)
 
 ___
 
@@ -164,7 +164,7 @@ ___
 
 • **sequenceArgs**: *undefined* \| *string*[]
 
-Defined in: [src/lib/csi-controller.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L21)
+Defined in: [src/lib/csi-controller.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L21)
 
 ___
 
@@ -172,7 +172,7 @@ ___
 
 • `Optional` **status**: *undefined* \| FunctionDefinition[]
 
-Defined in: [src/lib/csi-controller.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L22)
+Defined in: [src/lib/csi-controller.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L22)
 
 ___
 
@@ -180,7 +180,7 @@ ___
 
 • `Optional` **superVisorProcess**: *undefined* \| *ChildProcess*
 
-Defined in: [src/lib/csi-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L20)
+Defined in: [src/lib/csi-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L20)
 
 ___
 
@@ -249,7 +249,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/lib/csi-controller.ts:200](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L200)
+Defined in: [src/lib/csi-controller.ts:200](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L200)
 
 ___
 
@@ -296,7 +296,7 @@ ___
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/lib/csi-controller.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L160)
+Defined in: [src/lib/csi-controller.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L160)
 
 ___
 
@@ -312,7 +312,7 @@ Name | Type |
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/lib/csi-controller.ts:188](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L188)
+Defined in: [src/lib/csi-controller.ts:188](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L188)
 
 ___
 
@@ -328,7 +328,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [src/lib/csi-controller.ts:119](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L119)
+Defined in: [src/lib/csi-controller.ts:119](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L119)
 
 ___
 
@@ -370,7 +370,7 @@ ___
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/lib/csi-controller.ts:67](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L67)
+Defined in: [src/lib/csi-controller.ts:67](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L67)
 
 ___
 
@@ -514,7 +514,7 @@ ___
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/lib/csi-controller.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L177)
+Defined in: [src/lib/csi-controller.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L177)
 
 ___
 
@@ -540,7 +540,7 @@ ___
 
 **Returns:** *Promise*<*unknown*\>
 
-Defined in: [src/lib/csi-controller.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L54)
+Defined in: [src/lib/csi-controller.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L54)
 
 ___
 
@@ -550,7 +550,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/lib/csi-controller.ts:78](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L78)
+Defined in: [src/lib/csi-controller.ts:78](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L78)
 
 ___
 
@@ -560,7 +560,7 @@ ___
 
 **Returns:** *Promise*<*number*\>
 
-Defined in: [src/lib/csi-controller.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/csi-controller.ts#L99)
+Defined in: [src/lib/csi-controller.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L99)
 
 ___
 

@@ -41,7 +41,7 @@ Name | Type |
 `fifosDir?` | PathLike |
 `volumeId?` | [*DockerVolume*](README.md#dockervolume) |
 
-Defined in: [types.ts:112](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L112)
+Defined in: [types.ts:112](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L112)
 
 ___
 
@@ -63,7 +63,7 @@ Name | Type | Description |
 `maxMem?` | *number* | **`property`** {number} maxMem Maximum available memory.  |
 `volumes?` | [*DockerAdapterVolumeConfig*](README.md#dockeradaptervolumeconfig)[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration.  |
 
-Defined in: [types.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L48)
+Defined in: [types.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L48)
 
 ___
 
@@ -81,7 +81,7 @@ Name | Type |
 `streams` | [*DockerAdapterStreams*](README.md#dockeradapterstreams) |
 `wait` | Function |
 
-Defined in: [types.ts:125](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L125)
+Defined in: [types.ts:125](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L125)
 
 ___
 
@@ -99,7 +99,7 @@ Name | Type |
 `stdin` | Writable |
 `stdout` | Stream |
 
-Defined in: [types.ts:91](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L91)
+Defined in: [types.ts:91](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L91)
 
 ___
 
@@ -109,7 +109,7 @@ ___
 
 Volume mounting configuration.
 
-Defined in: [types.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L32)
+Defined in: [types.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L32)
 
 ___
 
@@ -123,7 +123,7 @@ Name | Type |
 ------ | ------ |
 `condition?` | *not-running* \| *next-exit* \| *removed* |
 
-Defined in: [types.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L118)
+Defined in: [types.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L118)
 
 ___
 
@@ -133,7 +133,7 @@ ___
 
 Docker container.
 
-Defined in: [types.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L18)
+Defined in: [types.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L18)
 
 ___
 
@@ -143,7 +143,7 @@ ___
 
 Docker image.
 
-Defined in: [types.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L11)
+Defined in: [types.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L11)
 
 ___
 
@@ -153,7 +153,7 @@ ___
 
 Docker volume.
 
-Defined in: [types.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L25)
+Defined in: [types.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L25)
 
 ___
 
@@ -167,4 +167,4 @@ Name | Type |
 ------ | ------ |
 `statusCode` | ExitCode |
 
-Defined in: [types.ts:108](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/types.ts#L108)
+Defined in: [types.ts:108](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L108)

@@ -67,7 +67,7 @@ Name | Type |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/socket-server.ts#L20)
+Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L20)
 
 ## Properties
 
@@ -75,7 +75,7 @@ Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-plat
 
 • **address**: PathLike
 
-Defined in: [src/lib/socket-server.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/socket-server.ts#L19)
+Defined in: [src/lib/socket-server.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L19)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/socket-server.ts#L20)
+Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L20)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 • `Optional` **server**: *undefined* \| *Server*
 
-Defined in: [src/lib/socket-server.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/socket-server.ts#L18)
+Defined in: [src/lib/socket-server.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L18)
 
 ___
 
@@ -160,7 +160,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/lib/socket-server.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/socket-server.ts#L118)
+Defined in: [src/lib/socket-server.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L118)
 
 ___
 
@@ -389,7 +389,7 @@ ___
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [src/lib/socket-server.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/socket-server.ts#L54)
+Defined in: [src/lib/socket-server.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L54)
 
 ___
 

@@ -22,4 +22,4 @@ Name | Type |
 
 **Returns:** *function*
 
-Defined in: [packages/api-server/src/handlers/op.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/handlers/op.ts#L8)
+Defined in: [packages/api-server/src/handlers/op.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/handlers/op.ts#L8)

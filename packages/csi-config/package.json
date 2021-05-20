@@ -8,6 +8,7 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && npm run copy:configs",
+    "build:docs": "typedoc",
     "clean": "rm -rf ./dist",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
     "test": "npm run test:ava",

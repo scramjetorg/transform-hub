@@ -9,6 +9,7 @@
     "prepublishOnly": "npm run build",
     "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
     "build": "tsc -p tsconfig.build.json && npm run test:expose",
+    "build:docs": "typedoc",
     "watch": "tsc -b --watch",
     "test:expose": "scripts/generate.js",
     "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit"

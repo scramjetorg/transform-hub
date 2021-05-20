@@ -46,7 +46,7 @@ or, we could just try to reconnect instances after host restart.
 
 • **sequences**: { [key: string]: [*Sequence*](../modules/host.md#sequence);  }
 
-Defined in: [src/lib/host.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L40)
+Defined in: [src/lib/host.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L40)
 
 ## Methods
 
@@ -62,7 +62,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [src/lib/host.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L46)
+Defined in: [src/lib/host.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L46)
 
 ___
 
@@ -78,7 +78,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [src/lib/host.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L52)
+Defined in: [src/lib/host.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L52)
 
 ___
 
@@ -94,4 +94,4 @@ Name | Type |
 
 **Returns:** [*Sequence*](../modules/host.md#sequence)
 
-Defined in: [src/lib/host.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L42)
+Defined in: [src/lib/host.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L42)

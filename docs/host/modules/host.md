@@ -36,4 +36,4 @@ Name | Type |
 `config` | RunnerConfig |
 `id` | *string* |
 
-Defined in: [src/lib/host.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/host/src/lib/host.ts#L24)
+Defined in: [src/lib/host.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L24)

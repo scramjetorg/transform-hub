@@ -75,7 +75,7 @@ ___
 
 • `Optional` **objectMode**: *undefined* \| *true*
 
-Defined in: [packages/types/src/utils.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L55)
+Defined in: [packages/types/src/utils.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L55)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 • **writable**: *boolean*
 
-Defined in: [packages/types/src/utils.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L56)
+Defined in: [packages/types/src/utils.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L56)
 
 ___
 
@@ -323,7 +323,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/utils.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L57)
+Defined in: [packages/types/src/utils.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L57)
 
 ___
 
@@ -431,7 +431,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/utils.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L60)
+Defined in: [packages/types/src/utils.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L60)
 
 ▸ **end**(`data`: Consumes, `cb?`: () => *void*): *void*
 
@@ -444,7 +444,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/utils.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L61)
+Defined in: [packages/types/src/utils.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L61)
 
 ▸ **end**(`str`: *never*, `encoding`: *never*, `cb?`: () => *void*): *void*
 
@@ -458,7 +458,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/utils.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L62)
+Defined in: [packages/types/src/utils.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L62)
 
 ___
 
@@ -1116,7 +1116,7 @@ Name | Type |
 
 **Returns:** *boolean*
 
-Defined in: [packages/types/src/utils.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L58)
+Defined in: [packages/types/src/utils.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L58)
 
 ▸ **write**(`str`: *never*, `encoding`: *never*, `cb?`: (`err?`: *null* \| Error) => *void*): *boolean*
 
@@ -1130,4 +1130,4 @@ Name | Type |
 
 **Returns:** *boolean*
 
-Defined in: [packages/types/src/utils.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L59)
+Defined in: [packages/types/src/utils.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L59)

@@ -6,6 +6,7 @@
   "bin": "bin/start-host-one.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json && chmod +x ./dist/bin/start-host-one.js",
+    "build:docs": "typedoc",
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",
     "test": "nyc ava",

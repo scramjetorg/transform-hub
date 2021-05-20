@@ -174,7 +174,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/definitions.ts#L10)
+Defined in: [packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L10)
 
 ___
 
@@ -276,4 +276,4 @@ Name | Type |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/api-server/src/lib/definitions.ts#L9)
+Defined in: [packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L9)

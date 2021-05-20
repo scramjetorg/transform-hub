@@ -21,6 +21,7 @@
     "build:packages": "lerna exec bic --parallel",
     "build:all-packages": "lerna run build",
     "build:docker": "lerna run build:docker",
+    "build:docs": "lerna run build:docs",
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -prune -exec rm -rf {} ';' 2> /dev/null",
     "clean": "lerna run clean && yarn clean:root",

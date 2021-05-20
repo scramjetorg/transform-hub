@@ -5,6 +5,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:docs": "typedoc",
     "clean": "rm -rf ./dist",
     "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.json",

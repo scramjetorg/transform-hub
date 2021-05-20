@@ -20,4 +20,4 @@
 
 • `Const` **exposeSequenceSymbol**: *typeof* [*exposeSequenceSymbol*](README.md#exposesequencesymbol)
 
-Defined in: [symbols.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/symbols/src/symbols.ts#L1)
+Defined in: [symbols.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/symbols/src/symbols.ts#L1)

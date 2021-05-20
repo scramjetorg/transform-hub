@@ -59,7 +59,7 @@ Name | Type | Description |
 
 **Returns:** [*LifeCycleController*](lifecycle_controller.lifecyclecontroller.md)
 
-Defined in: [lifecycle-controller.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L69)
+Defined in: [lifecycle-controller.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L65)
 
 ## Properties
 
@@ -67,7 +67,7 @@ Defined in: [lifecycle-controller.ts:69](https://github.com/scramjet-cloud-platf
 
 • `Optional` **\_endOfSequence**: *undefined* \| *Promise*<*number*\>
 
-Defined in: [lifecycle-controller.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L57)
+Defined in: [lifecycle-controller.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L53)
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 **`param`** Supervisor id, this id is generated in the host and passed to Supervisor at its initiation.
 
-Defined in: [lifecycle-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L20)
+Defined in: [lifecycle-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L20)
 
 ___
 
@@ -85,7 +85,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [lifecycle-controller.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L55)
+Defined in: [lifecycle-controller.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L51)
 
 ## Accessors
 
@@ -95,7 +95,7 @@ Defined in: [lifecycle-controller.ts:55](https://github.com/scramjet-cloud-platf
 
 **Returns:** *Promise*<*number*\>
 
-Defined in: [lifecycle-controller.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L59)
+Defined in: [lifecycle-controller.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L55)
 
 • **endOfSequence**(`prm`: *Promise*<*number*\>): *void*
 
@@ -107,7 +107,7 @@ Name | Type |
 
 **Returns:** *void*
 
-Defined in: [lifecycle-controller.ts:67](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L67)
+Defined in: [lifecycle-controller.ts:63](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L63)
 
 ## Methods
 
@@ -123,7 +123,7 @@ Name | Type |
 
 **Returns:** *EncodedMessage*<ALIVE\>
 
-Defined in: [lifecycle-controller.ts:326](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L326)
+Defined in: [lifecycle-controller.ts:319](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L319)
 
 ___
 
@@ -139,7 +139,7 @@ Name | Type |
 
 **Returns:** *Promise*<*EncodedMessage*<SEQUENCE\_COMPLETED\>\>
 
-Defined in: [lifecycle-controller.ts:271](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L271)
+Defined in: [lifecycle-controller.ts:264](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L264)
 
 ___
 
@@ -155,7 +155,7 @@ Name | Type |
 
 **Returns:** *Promise*<*EncodedMessage*<SEQUENCE\_STOPPED\>\>
 
-Defined in: [lifecycle-controller.ts:303](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L303)
+Defined in: [lifecycle-controller.ts:296](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L296)
 
 ___
 
@@ -184,7 +184,7 @@ requests the LifeCycle Adapter Run to perform the cleanup (e.g. removing unused 
 
 resolves when Supervisor completed lifecycle without errors.
 
-Defined in: [lifecycle-controller.ts:113](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L113)
+Defined in: [lifecycle-controller.ts:106](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L106)
 
 ___
 
@@ -201,4 +201,4 @@ Name | Type | Default value |
 
 **Returns:** *void*
 
-Defined in: [lifecycle-controller.ts:292](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/95cfb9f/packages/supervisor/src/lib/lifecycle-controller.ts#L292)
+Defined in: [lifecycle-controller.ts:285](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L285)

@@ -40,7 +40,7 @@
 
 **Returns:** [*LifecycleDockerAdapterSequence*](lifecycledockeradaptersequence.md)
 
-Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L30)
+Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L30)
 
 ## Properties
 
@@ -48,7 +48,7 @@ Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/
 
 • `Private` **dockerHelper**: [*IDockerHelper*](../interfaces/idockerhelper.md)
 
-Defined in: [sequence-adapter.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L21)
+Defined in: [sequence-adapter.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L21)
 
 ___
 
@@ -63,7 +63,7 @@ Name | Type |
 `prerunner?` | *undefined* \| *string* |
 `runner?` | *undefined* \| *string* |
 
-Defined in: [sequence-adapter.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L23)
+Defined in: [sequence-adapter.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L23)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L30)
+Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L30)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 • `Private` **resources**: [*DockerAdapterResources*](../README.md#dockeradapterresources)
 
-Defined in: [sequence-adapter.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L28)
+Defined in: [sequence-adapter.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L28)
 
 ## Methods
 
@@ -89,7 +89,7 @@ Defined in: [sequence-adapter.ts:28](https://github.com/scramjet-cloud-platform/
 
 **Returns:** *MaybePromise*<*void*\>
 
-Defined in: [sequence-adapter.ts:113](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L113)
+Defined in: [sequence-adapter.ts:113](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L113)
 
 ___
 
@@ -105,7 +105,7 @@ Name | Type |
 
 **Returns:** *MaybePromise*<RunnerConfig\>
 
-Defined in: [sequence-adapter.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L42)
+Defined in: [sequence-adapter.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L42)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [sequence-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L38)
+Defined in: [sequence-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L38)
 
 ___
 
@@ -125,4 +125,4 @@ ___
 
 **Returns:** *Promise*<*void*\>
 
-Defined in: [sequence-adapter.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/adapters/src/sequence-adapter.ts#L136)
+Defined in: [sequence-adapter.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/sequence-adapter.ts#L136)

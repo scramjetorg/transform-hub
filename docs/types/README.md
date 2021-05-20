@@ -105,7 +105,7 @@
 
 App configuration primitive.
 
-Defined in: [packages/types/src/application.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L12)
+Defined in: [packages/types/src/application.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L12)
 
 ___
 
@@ -115,7 +115,7 @@ ___
 
 Application error class
 
-Defined in: [packages/types/src/error-codes/app-error.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/error-codes/app-error.ts#L19)
+Defined in: [packages/types/src/error-codes/app-error.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/error-codes/app-error.ts#L19)
 
 ___
 
@@ -125,7 +125,7 @@ ___
 
 Acceptable error codes
 
-Defined in: [packages/types/src/error-codes/app-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/error-codes/app-error.ts#L6)
+Defined in: [packages/types/src/error-codes/app-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/error-codes/app-error.ts#L6)
 
 ___
 
@@ -139,7 +139,7 @@ Constructs an AppError
 
 **`param`** Optional additional explanatory message
 
-Defined in: [packages/types/src/error-codes/app-error.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/error-codes/app-error.ts#L30)
+Defined in: [packages/types/src/error-codes/app-error.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/error-codes/app-error.ts#L30)
 
 ___
 
@@ -149,7 +149,7 @@ ___
 
 Application is an acceptable input for the runner.
 
-**`interface`**
+**`interface`** 
 
 #### Type parameters:
 
@@ -161,7 +161,7 @@ Name | Type | Default |
 `S` | *any* | *any* |
 `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 
-Defined in: [packages/types/src/application.ts:98](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L98)
+Defined in: [packages/types/src/application.ts:98](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L98)
 
 ___
 
@@ -185,7 +185,7 @@ Name | Type |
 ------ | ------ |
 `[exposeSequenceSymbol]` | [*Application*](README.md#application)<Consumes, Produces, Z, S, AppConfigType\> |
 
-Defined in: [packages/types/src/application.ts:81](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L81)
+Defined in: [packages/types/src/application.ts:81](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L81)
 
 ___
 
@@ -193,7 +193,7 @@ ___
 
 Ƭ **ApplicationFunction**: [*ReadableApp*](README.md#readableapp) \| [*WritableApp*](README.md#writableapp) \| [*TransformApp*](README.md#transformapp) \| [*InertApp*](README.md#inertapp)
 
-Defined in: [packages/types/src/application.ts:79](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L79)
+Defined in: [packages/types/src/application.ts:79](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L79)
 
 ___
 
@@ -201,7 +201,7 @@ ___
 
 Ƭ **ApplicationInterface**: (`this`: [*AppContext*](interfaces/appcontext.md)<[*AppConfig*](README.md#appconfig), *any*\>, `source`: [*ReadableStream*](interfaces/readablestream.md)<*any*\>, ...`argv`: *any*[]) => *MaybePromise*<[*Streamable*](README.md#streamable)<*any*\> \| *void*\>
 
-Defined in: [packages/types/src/application.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L14)
+Defined in: [packages/types/src/application.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L14)
 
 ___
 
@@ -209,7 +209,7 @@ ___
 
 Ƭ **CSIControllerErrorCode**: *UNINITIALIZED_STREAM* \| *UNATTACHED_STREAMS*
 
-Defined in: [packages/types/src/error-codes/csi-controller-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/error-codes/csi-controller-error.ts#L1)
+Defined in: [packages/types/src/error-codes/csi-controller-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/error-codes/csi-controller-error.ts#L1)
 
 ___
 
@@ -217,7 +217,7 @@ ___
 
 Ƭ **ControlMessageCode**: RunnerMessageCode.FORCE\_CONFIRM\_ALIVE \| RunnerMessageCode.KILL \| RunnerMessageCode.MONITORING\_RATE \| RunnerMessageCode.STOP \| RunnerMessageCode.EVENT \| RunnerMessageCode.PONG \| SupervisorMessageCode.CONFIG
 
-Defined in: [packages/types/src/message-streams.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L70)
+Defined in: [packages/types/src/message-streams.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L70)
 
 ___
 
@@ -225,7 +225,7 @@ ___
 
 Ƭ **DockerRunnerConfig**: [*RunnerConfig*](README.md#runnerconfig) & { `config`: { `volumesFrom`: *string*  }  }
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L22)
+Defined in: [packages/types/src/lifecycle-adapters.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L22)
 
 ___
 
@@ -239,7 +239,7 @@ Name | Type | Default |
 ------ | ------ | ------ |
 `serialized` | *boolean* | *true* |
 
-Defined in: [packages/types/src/message-streams.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L89)
+Defined in: [packages/types/src/message-streams.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L89)
 
 ___
 
@@ -254,7 +254,7 @@ Name |
 `Consumes` |
 `Produces` |
 
-Defined in: [packages/types/src/utils.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L65)
+Defined in: [packages/types/src/utils.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L65)
 
 ___
 
@@ -262,7 +262,7 @@ ___
 
 Ƭ **EncodedControlMessage**: [*EncodedMessage*](README.md#encodedmessage)<[*ControlMessageCode*](README.md#controlmessagecode)\>
 
-Defined in: [packages/types/src/message-streams.ts:76](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L76)
+Defined in: [packages/types/src/message-streams.ts:76](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L76)
 
 ___
 
@@ -276,7 +276,7 @@ Name | Type |
 ------ | ------ |
 `T` | RunnerMessageCode \| SupervisorMessageCode |
 
-Defined in: [packages/types/src/message-streams.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L69)
+Defined in: [packages/types/src/message-streams.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L69)
 
 ___
 
@@ -284,7 +284,7 @@ ___
 
 Ƭ **EncodedMonitoringMessage**: [*EncodedMessage*](README.md#encodedmessage)<[*MonitoringMessageCode*](README.md#monitoringmessagecode)\>
 
-Defined in: [packages/types/src/message-streams.ts:87](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L87)
+Defined in: [packages/types/src/message-streams.ts:87](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L87)
 
 ___
 
@@ -292,7 +292,7 @@ ___
 
 Ƭ **EncodedSerializedControlMessage**: *string*
 
-Defined in: [packages/types/src/message-streams.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L84)
+Defined in: [packages/types/src/message-streams.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L84)
 
 ___
 
@@ -300,7 +300,7 @@ ___
 
 Ƭ **EncodedSerializedMonitoringMessage**: *string*
 
-Defined in: [packages/types/src/message-streams.ts:85](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L85)
+Defined in: [packages/types/src/message-streams.ts:85](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L85)
 
 ___
 
@@ -308,7 +308,7 @@ ___
 
 Ƭ **ExitCode**: *number*
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L26)
+Defined in: [packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L26)
 
 ___
 
@@ -327,7 +327,7 @@ Name | Type | Description |
 `name?` | *string* | Optional name for the function (which will be shown in UI/CLI)   |
 `scalability?` | { `head?`: ScalabilityOptions ; `tail?`: ScalabilityOptions  } | Describes how head (readable side) and tail (writable side) of this Function can be scaled to other machines.   |
 
-Defined in: [packages/types/src/runner.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/runner.ts#L16)
+Defined in: [packages/types/src/runner.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L16)
 
 ___
 
@@ -346,7 +346,7 @@ Name | Type | Description |
 `processing` | *number* | The number of stream entries currently being processed.   |
 `throughput` | *number* | Average number of stream entries passing that specific function over the duration of 1 second during the last 10 seconds.   |
 
-Defined in: [packages/types/src/runner.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/runner.ts#L52)
+Defined in: [packages/types/src/runner.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L52)
 
 ___
 
@@ -354,7 +354,7 @@ ___
 
 Ƭ **GetResolver**: (`req`: IncomingMessage) => *MaybePromise*<*any*\>
 
-Defined in: [packages/types/src/api-expose.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L10)
+Defined in: [packages/types/src/api-expose.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L10)
 
 ___
 
@@ -362,7 +362,7 @@ ___
 
 Ƭ **HostErrorCode**: *UNINITIALIZED_STREAM* \| *UNATTACHED_STREAMS* \| *UNKNOWN_CHANNEL* \| *LOG_NOT_AVAILABLE*
 
-Defined in: [packages/types/src/error-codes/host-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/error-codes/host-error.ts#L1)
+Defined in: [packages/types/src/error-codes/host-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/error-codes/host-error.ts#L1)
 
 ___
 
@@ -372,7 +372,7 @@ ___
 
 An Inert App is an app that doesn't accept data from the platform and doesn't output it.
 
-**`interface`**
+**`interface`** 
 
 #### Type parameters:
 
@@ -383,7 +383,7 @@ Name | Type | Default |
 `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 `VoidType` | - | *void* |
 
-Defined in: [packages/types/src/application.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L72)
+Defined in: [packages/types/src/application.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L72)
 
 ___
 
@@ -403,7 +403,7 @@ Name | Type | Default |
 `Y` | - | *any* |
 `X` | *any*[] | *any*[] |
 
-Defined in: [packages/types/src/sequence.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/sequence.ts#L9)
+Defined in: [packages/types/src/sequence.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/sequence.ts#L9)
 
 ___
 
@@ -411,7 +411,7 @@ ___
 
 Ƭ **KillHandler**: () => *void*
 
-Defined in: [packages/types/src/app-context.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L19)
+Defined in: [packages/types/src/app-context.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L19)
 
 ___
 
@@ -425,7 +425,7 @@ Name | Type |
 ------ | ------ |
 `makeSnapshotOnError` | *boolean* |
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L18)
+Defined in: [packages/types/src/lifecycle-adapters.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L18)
 
 ___
 
@@ -433,7 +433,7 @@ ___
 
 Ƭ **LifeCycleError**: *any* \| Error & { `errorMessage?`: *string* ; `exitCode?`: *number*  }
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:82](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L82)
+Defined in: [packages/types/src/lifecycle-adapters.ts:82](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L82)
 
 ___
 
@@ -441,7 +441,7 @@ ___
 
 Ƭ **Logger**: Console
 
-Defined in: [packages/types/src/logger.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/logger.ts#L15)
+Defined in: [packages/types/src/logger.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/logger.ts#L15)
 
 ___
 
@@ -455,7 +455,7 @@ Name | Type | Description |
 ------ | ------ | ------ |
 `useCallsite?` | *boolean* | Should we show callsites to show originating line   |
 
-Defined in: [packages/types/src/logger.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/logger.ts#L10)
+Defined in: [packages/types/src/logger.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/logger.ts#L10)
 
 ___
 
@@ -470,7 +470,7 @@ Name | Type | Description |
 `err?` | [*WritableStream*](interfaces/writablestream.md)<*any*\> | Errror stream   |
 `out` | [*WritableStream*](interfaces/writablestream.md)<*any*\> | Output stream   |
 
-Defined in: [packages/types/src/logger.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/logger.ts#L3)
+Defined in: [packages/types/src/logger.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/logger.ts#L3)
 
 ___
 
@@ -478,7 +478,7 @@ ___
 
 Ƭ **MessageCode**: [*ANY*](modules/messagecodes.md#any)
 
-Defined in: [packages/types/src/runner.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/runner.ts#L101)
+Defined in: [packages/types/src/runner.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L101)
 
 ___
 
@@ -492,7 +492,7 @@ Name |
 ------ |
 `T` |
 
-Defined in: [packages/types/src/message-streams.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L51)
+Defined in: [packages/types/src/message-streams.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L51)
 
 ___
 
@@ -506,7 +506,7 @@ Name |
 ------ |
 `T` |
 
-Defined in: [packages/types/src/message-streams.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L33)
+Defined in: [packages/types/src/message-streams.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L33)
 
 ___
 
@@ -514,7 +514,7 @@ ___
 
 Ƭ **Middleware**: (`req`: IncomingMessage, `res`: ServerResponse, `next`: [*NextCallback*](README.md#nextcallback)) => *void*
 
-Defined in: [packages/types/src/api-expose.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L14)
+Defined in: [packages/types/src/api-expose.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L14)
 
 ___
 
@@ -528,7 +528,7 @@ A handler for the monitoring message.
 
 **`returns`** the monitoring information
 
-Defined in: [packages/types/src/app-context.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L27)
+Defined in: [packages/types/src/app-context.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L27)
 
 ___
 
@@ -545,7 +545,7 @@ Name | Type |
 `healthy?` | *boolean* |
 `sequences?` | [*FunctionStatus*](README.md#functionstatus)[] |
 
-Defined in: [packages/types/src/runner.ts:76](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/runner.ts#L76)
+Defined in: [packages/types/src/runner.ts:76](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L76)
 
 ___
 
@@ -553,7 +553,7 @@ ___
 
 Ƭ **MonitoringMessageCode**: RunnerMessageCode.ACKNOWLEDGE \| RunnerMessageCode.DESCRIBE\_SEQUENCE \| RunnerMessageCode.STATUS \| RunnerMessageCode.ALIVE \| RunnerMessageCode.ERROR \| RunnerMessageCode.MONITORING \| RunnerMessageCode.EVENT \| RunnerMessageCode.PING \| RunnerMessageCode.SNAPSHOT\_RESPONSE \| RunnerMessageCode.SEQUENCE\_STOPPED \| RunnerMessageCode.SEQUENCE\_COMPLETED
 
-Defined in: [packages/types/src/message-streams.ts:78](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L78)
+Defined in: [packages/types/src/message-streams.ts:78](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L78)
 
 ___
 
@@ -561,7 +561,7 @@ ___
 
 Ƭ **NextCallback**: (`err?`: Error) => *void*
 
-Defined in: [packages/types/src/api-expose.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L13)
+Defined in: [packages/types/src/api-expose.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L13)
 
 ___
 
@@ -569,7 +569,7 @@ ___
 
 Ƭ **OpResolver**: (`req`: IncomingMessage, `res?`: ServerResponse) => *MaybePromise*<*any*\>
 
-Defined in: [packages/types/src/api-expose.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L11)
+Defined in: [packages/types/src/api-expose.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L11)
 
 ___
 
@@ -583,7 +583,7 @@ Name |
 ------ |
 `Passes` |
 
-Defined in: [packages/types/src/utils.ts:66](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L66)
+Defined in: [packages/types/src/utils.ts:66](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L66)
 
 ___
 
@@ -597,7 +597,7 @@ Name | Type | Default |
 ------ | ------ | ------ |
 `serialized` | *boolean* | *true* |
 
-Defined in: [packages/types/src/message-streams.ts:113](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L113)
+Defined in: [packages/types/src/message-streams.ts:113](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L113)
 
 ___
 
@@ -611,7 +611,7 @@ Name |
 ------ |
 `Produces` |
 
-Defined in: [packages/types/src/functions.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/functions.ts#L22)
+Defined in: [packages/types/src/functions.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/functions.ts#L22)
 
 ___
 
@@ -627,7 +627,7 @@ Name |
 ------ |
 `Produces` |
 
-Defined in: [packages/types/src/functions.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/functions.ts#L13)
+Defined in: [packages/types/src/functions.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/functions.ts#L13)
 
 ___
 
@@ -646,7 +646,7 @@ Name | Type | Default |
 `Y` | *any*[] | *any*[] |
 `Z` | - | *any* |
 
-Defined in: [packages/types/src/sequence.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/sequence.ts#L23)
+Defined in: [packages/types/src/sequence.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/sequence.ts#L23)
 
 ___
 
@@ -657,7 +657,7 @@ ___
 A Readable App is an app that obtains the data by it's own means and preforms
 0 to any number of transforms on that data before returning it.
 
-**`interface`**
+**`interface`** 
 
 #### Type parameters:
 
@@ -669,7 +669,7 @@ Name | Type | Default |
 `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 `VoidType` | - | *void* |
 
-Defined in: [packages/types/src/application.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L45)
+Defined in: [packages/types/src/application.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L45)
 
 ___
 
@@ -688,7 +688,7 @@ Name | Type |
 `sequencePath` | *string* |
 `version` | *string* |
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/lifecycle-adapters.ts#L7)
+Defined in: [packages/types/src/lifecycle-adapters.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle-adapters.ts#L7)
 
 ___
 
@@ -696,7 +696,7 @@ ___
 
 Ƭ **RunnerErrorCode**: *SEQUENCE_ENDED_PREMATURE* \| *SEQUENCE_RUNTIME_ERROR* \| *UNINITIALIZED_STREAMS* \| *UNKNOWN_MESSAGE_CODE* \| *NO_MONITORING* \| *UNINITIALIZED_CONTEXT*
 
-Defined in: [packages/types/src/error-codes/runner-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/error-codes/runner-error.ts#L1)
+Defined in: [packages/types/src/error-codes/runner-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/error-codes/runner-error.ts#L1)
 
 ___
 
@@ -704,7 +704,7 @@ ___
 
 Ƭ **RunnerMessage**: [RunnerMessageCode, *object*]
 
-Defined in: [packages/types/src/runner.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/runner.ts#L107)
+Defined in: [packages/types/src/runner.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L107)
 
 ___
 
@@ -718,7 +718,7 @@ Name | Type |
 ------ | ------ |
 `monitoringInterval?` | *number* |
 
-Defined in: [packages/types/src/runner.ts:103](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/runner.ts#L103)
+Defined in: [packages/types/src/runner.ts:103](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L103)
 
 ___
 
@@ -736,7 +736,7 @@ to prolong the operation
 **`returns`** the returned value can be a promise, once it's resolved the system will
          assume that it's safe to terminate the process.
 
-Defined in: [packages/types/src/app-context.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/app-context.ts#L17)
+Defined in: [packages/types/src/app-context.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/app-context.ts#L17)
 
 ___
 
@@ -755,7 +755,7 @@ Name | Type | Description |
 `json?` | *boolean* | Is the stream a JSON stream?   |
 `text?` | *boolean* | Is the stream a text stream?   |
 
-Defined in: [packages/types/src/api-expose.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L19)
+Defined in: [packages/types/src/api-expose.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L19)
 
 ___
 
@@ -763,7 +763,7 @@ ___
 
 Ƭ **StreamInput**: (`req`: IncomingMessage) => *MaybePromise*<Readable\> \| *MaybePromise*<Readable\>
 
-Defined in: [packages/types/src/api-expose.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L8)
+Defined in: [packages/types/src/api-expose.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L8)
 
 ___
 
@@ -771,7 +771,7 @@ ___
 
 Ƭ **StreamOutput**: (`req`: IncomingMessage, `res`: ServerResponse) => *MaybePromise*<*void*\> \| *MaybePromise*<Writable\>
 
-Defined in: [packages/types/src/api-expose.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/api-expose.ts#L9)
+Defined in: [packages/types/src/api-expose.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L9)
 
 ___
 
@@ -788,7 +788,7 @@ Name |
 ------ |
 `Produces` |
 
-Defined in: [packages/types/src/utils.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L83)
+Defined in: [packages/types/src/utils.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L83)
 
 ___
 
@@ -796,7 +796,7 @@ ___
 
 Ƭ **SupervisorErrorCode**: *INVALID_CONFIGURATION* \| *UNINITIALIZED_STREAMS* \| *GENERAL_ERROR* \| *SEQUENCE_RUN_BEFORE_INIT* \| *RUNNER_ERROR* \| *RUNNER_NON_ZERO_EXITCODE* \| *RUNNER_NOT_STARTED* \| *DOCKER_ERROR* \| *PRERUNNER_ERROR*
 
-Defined in: [packages/types/src/error-codes/supervisor-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/error-codes/supervisor-error.ts#L1)
+Defined in: [packages/types/src/error-codes/supervisor-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/error-codes/supervisor-error.ts#L1)
 
 ___
 
@@ -804,7 +804,7 @@ ___
 
 Ƭ **SupervisorMessage**: [SupervisorMessageCode, *object*]
 
-Defined in: [packages/types/src/runner.ts:112](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/runner.ts#L112)
+Defined in: [packages/types/src/runner.ts:112](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L112)
 
 ___
 
@@ -822,7 +822,7 @@ Name |
 ------ |
 `Produces` |
 
-Defined in: [packages/types/src/utils.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/utils.ts#L74)
+Defined in: [packages/types/src/utils.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L74)
 
 ___
 
@@ -837,7 +837,7 @@ Name |
 `Consumes` |
 `Produces` |
 
-Defined in: [packages/types/src/functions.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/functions.ts#L23)
+Defined in: [packages/types/src/functions.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/functions.ts#L23)
 
 ___
 
@@ -853,7 +853,7 @@ Name | Type |
 `Produces` | - |
 `Z` | *any*[] |
 
-Defined in: [packages/types/src/functions.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/functions.ts#L43)
+Defined in: [packages/types/src/functions.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/functions.ts#L43)
 
 ___
 
@@ -868,7 +868,7 @@ Name |
 `Consumes` |
 `Produces` |
 
-Defined in: [packages/types/src/functions.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/functions.ts#L17)
+Defined in: [packages/types/src/functions.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/functions.ts#L17)
 
 ___
 
@@ -881,7 +881,7 @@ and returns the data to the platforms for further use.
 
 Has both active readable and writable sides.
 
-**`interface`**
+**`interface`** 
 
 #### Type parameters:
 
@@ -894,7 +894,7 @@ Name | Type | Default |
 `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 `ReturnType` | - | [*Streamable*](README.md#streamable)<Produces\> |
 
-Defined in: [packages/types/src/application.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L26)
+Defined in: [packages/types/src/application.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L26)
 
 ___
 
@@ -909,7 +909,7 @@ Name |
 `Consumes` |
 `Produces` |
 
-Defined in: [packages/types/src/sequence.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/sequence.ts#L35)
+Defined in: [packages/types/src/sequence.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/sequence.ts#L35)
 
 ___
 
@@ -929,7 +929,7 @@ Name | Type | Default |
 `Z` | - | *any* |
 `X` | *any*[] | *any*[] |
 
-Defined in: [packages/types/src/sequence.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/sequence.ts#L31)
+Defined in: [packages/types/src/sequence.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/sequence.ts#L31)
 
 ___
 
@@ -943,7 +943,7 @@ Name | Type | Default |
 ------ | ------ | ------ |
 `serialized` | *boolean* | *true* |
 
-Defined in: [packages/types/src/message-streams.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/message-streams.ts#L101)
+Defined in: [packages/types/src/message-streams.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/message-streams.ts#L101)
 
 ___
 
@@ -957,7 +957,7 @@ Name |
 ------ |
 `Consumes` |
 
-Defined in: [packages/types/src/functions.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/functions.ts#L27)
+Defined in: [packages/types/src/functions.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/functions.ts#L27)
 
 ___
 
@@ -968,7 +968,7 @@ ___
 A Writable App is an app that accepts the data from the platform, performs any number
 of transforms and then saves it to the data destination by it's own means.
 
-**`interface`**
+**`interface`** 
 
 #### Type parameters:
 
@@ -980,7 +980,7 @@ Name | Type | Default |
 `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 `VoidType` | - | *void* |
 
-Defined in: [packages/types/src/application.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/application.ts#L59)
+Defined in: [packages/types/src/application.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/application.ts#L59)
 
 ___
 
@@ -994,7 +994,7 @@ Name |
 ------ |
 `Consumes` |
 
-Defined in: [packages/types/src/functions.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/functions.ts#L15)
+Defined in: [packages/types/src/functions.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/functions.ts#L15)
 
 ___
 
@@ -1013,4 +1013,4 @@ Name | Type | Default |
 `Y` | *any*[] | *any*[] |
 `Z` | - | *any* |
 
-Defined in: [packages/types/src/sequence.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/966a05e/packages/types/src/sequence.ts#L15)
+Defined in: [packages/types/src/sequence.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/sequence.ts#L15)
