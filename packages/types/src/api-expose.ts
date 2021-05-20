@@ -5,13 +5,16 @@ import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";
 
+export type ParsedMessage = IncomingMessage & { body?: any, params: { [key: string]: any} | undefined};
+
 export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
 export type StreamOutput = ((req: IncomingMessage, res: ServerResponse) => MaybePromise<void>) | MaybePromise<Writable>;
-export type GetResolver = (req: IncomingMessage) => MaybePromise<any>;
-export type OpResolver = (req: IncomingMessage, res?: ServerResponse) => MaybePromise<any>;
+export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
+export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
 
 export type NextCallback = (err?: Error) => void;
 export type Middleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
+
 
 /**
  * Configuration options for streaming endpoionts
@@ -104,8 +107,8 @@ export interface APIExpose extends APIBase {
     /**
      * The raw HTTP server
      */
-     server: Server
-     use(path: string | RegExp, ...middlewares: Middleware[]): void;
+    server: Server
+    use(path: string | RegExp, ...middlewares: Middleware[]): void;
 }
 
 export interface APIRoute extends APIBase {

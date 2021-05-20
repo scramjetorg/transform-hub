@@ -21,17 +21,17 @@ export class Sequence implements ISequence {
  * or, we could just try to reconnect instances after host restart.
  */
 export class SequenceStore implements ISequenceStore {
-    private _sequences: { [key: string]: Sequence } = {}
+    private sequences: { [key: string]: Sequence } = {}
 
-    public get sequences() {
-        return this._sequences;
+    getSequences(): ISequence[] {
+        return Object.values(this.sequences);
     }
 
-    getById(key: string): Sequence {
+    getById(key: string): ISequence {
         return this.sequences[key];
     }
 
-    add(sequence: Sequence) {
+    add(sequence: ISequence) {
         if (sequence) {
             this.sequences[sequence.id] = sequence;
         }

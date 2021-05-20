@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, NextCallback, RunnerConfig } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { Sequence, SequenceStore } from "./sequence-store";
@@ -82,21 +82,20 @@ export class Host implements IComponent {
             async (req, res) => this.handleNewSequence(req, res), { end: true }
         );
 
-        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req, res) => this.handleStartSequence(req, res));
+        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req, res) => this.handleStartSequence(req as ParsedMessage, res));
 
         this.api.get(`${this.apiBase}/sequence/:id`,
-            // eslint-disable-next-line no-extra-parens
-            (req) => this.sequencesStore.getById((req as any).params.id));
+            (req) => this.getSequence(req.params?.id));
 
-        this.api.get(`${this.apiBase}/sequences`, () => this.sequencesStore.sequences);
+        this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
+
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
-
-        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
+        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
     }
 
-    instanceMiddleware(req: IncomingMessage, res: ServerResponse, next: NextCallback) {
+    instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
         // eslint-disable-next-line no-extra-parens
-        const params = (req as IncomingMessage & { params: any }).params;
+        const params = req.params;
 
         if (!params || !params.id) {
             return next(new HostError("UNKNOWN_INSTANCE"));
@@ -137,15 +136,16 @@ export class Host implements IComponent {
         }
     }
 
-    async handleStartSequence(req: IncomingMessage, res: ServerResponse | undefined) {
+    async handleStartSequence(req: ParsedMessage, res: ServerResponse | undefined) {
         // eslint-disable-next-line no-extra-parens
-        const seqId = (req as IncomingMessage & { params: any }).params.id;
+        const seqId = req.params?.id;
+        const payload = req.body || {};
         const sequence = this.sequencesStore.getById(seqId);
 
         if (sequence) {
             this.logger.log("Starting sequence", sequence.id);
 
-            const instanceId = await this.startCSIController(sequence, {});
+            const instanceId = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
             if (res) {
                 res.writeHead(202, { "Content-type": "application/json" });
@@ -172,7 +172,6 @@ export class Host implements IComponent {
         });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
@@ -197,6 +196,14 @@ export class Host implements IComponent {
                 status: csiController.status
             };
         });
+    }
+
+    getSequence(id: string) {
+        return this.sequencesStore.getById(id);
+    }
+
+    getSequences(): any {
+        return this.sequencesStore.getSequences();
     }
 }
 

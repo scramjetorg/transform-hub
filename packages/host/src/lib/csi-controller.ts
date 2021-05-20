@@ -18,7 +18,7 @@ export class CSIController extends EventEmitter {
     sequence: Sequence;
     appConfig: AppConfig;
     superVisorProcess?: ChildProcess;
-    sequenceArgs: Array<string> | undefined;
+    sequenceArgs: Array<any> | undefined;
     status?: FunctionDefinition[];
     controlDataStream?: DataStream;
     downStreams?: DownstreamStreamsConfig;
@@ -38,7 +38,7 @@ export class CSIController extends EventEmitter {
         id: string,
         sequence: Sequence,
         appConfig: AppConfig,
-        args: any[] | undefined,
+        sequenceArgs: any[] | undefined,
         communicationHandler: CommunicationHandler,
         logger: Logger
     ) {
@@ -47,6 +47,7 @@ export class CSIController extends EventEmitter {
         this.id = id;
         this.sequence = sequence;
         this.appConfig = appConfig;
+        this.sequenceArgs = sequenceArgs;
         this.logger = logger;
         this.communicationHandler = communicationHandler;
     }
@@ -162,8 +163,6 @@ export class CSIController extends EventEmitter {
 
     async handleHandshake() {
         this.logger.log("PING RECEIVED");
-
-        this.sequenceArgs = ["/package/data.json"];
 
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {

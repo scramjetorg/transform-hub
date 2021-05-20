@@ -1,5 +1,5 @@
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import { ControlMessageCode, ICommunicationHandler, MessageDataType, OpResolver } from "@scramjet/types";
+import { ControlMessageCode, ICommunicationHandler, MessageDataType, OpResolver, ParsedMessage } from "@scramjet/types";
 import { checkMessage } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
@@ -37,7 +37,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
                 return undefined;
             }
 
-            return JSON.parse(out)[1];
+            return JSON.parse(out);
         } catch (e) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
@@ -53,9 +53,18 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         path: string|RegExp, message: T | OpResolver, conn: ICommunicationHandler): void => {
         router.post(path, async (req, res, next) => {
             try {
-                if (typeof message === "function") return message(req, res);
+                if (typeof message === "function") {
+                    // eslint-disable-next-line no-extra-parens
+                    const parsedReq = req as ParsedMessage;
 
-                const obj = await getData(req) as MessageDataType<T>;
+                    parsedReq.body = await getData(req);
+
+                    return message(
+                        parsedReq,
+                        res);
+                }
+
+                const obj = await getData(req) as Array<any>[1] as MessageDataType<T>;
 
                 await conn.sendControlMessage(message, checkMessage(message, obj));
 

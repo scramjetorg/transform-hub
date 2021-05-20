@@ -20,7 +20,7 @@ export interface ISequence {
 }
 
 export interface ISequenceStore {
-    sequences: { [key: string]: ISequence };
+    getSequences(): ISequence[];
     getById(id: string): ISequence;
     add(sequence: ISequence): void;
     remove(id: string): void;
