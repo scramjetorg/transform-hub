@@ -30,6 +30,8 @@ MultiHost starts and loads the file `image-config.json`. Then, the request comes
 
 ## Usage
 
+[comment]: <I am not sure if the usage below is OK, please correct if not, thank you form the mountain! ;)>
+
 ```js
 import { imageConfig } from "@scramjet/csi-config";
 
