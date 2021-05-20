@@ -59,9 +59,18 @@ export function createOperationHandler(router: SequentialCeroRouter) {
 
                     parsedReq.body = await getData(req);
 
-                    return message(
-                        parsedReq,
-                        res);
+                    const result = await message(parsedReq, res);
+
+                    let response = "";
+
+                    if (result) {
+                        res.writeHead(202, "Accepted", { "content-type": "application/json" });
+                        response = JSON.stringify(result);
+                    } else {
+                        res.writeHead(404, "Not Found", { "content-type": "application/json" });
+                    }
+
+                    return res.end(response);
                 }
 
                 const obj = await getData(req) as Array<any>[1] as MessageDataType<T>;

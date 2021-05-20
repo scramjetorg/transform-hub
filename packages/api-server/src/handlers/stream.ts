@@ -1,5 +1,6 @@
 import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 import { ServerResponse } from "http";
+import { Writable } from "node:stream";
 import { Readable } from "stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
@@ -91,20 +92,28 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
                 const data = await getWritable(stream, req, res);
 
-                await new Promise<void>((resolve, reject) => {
-                    if (encoding) {
-                        req.setEncoding(encoding);
-                    }
+                // eslint-disable-next-line no-extra-parens
+                if ((data as Writable).writable) {
+                    await new Promise<void>((resolve, reject) => {
+                        if (encoding) {
+                            req.setEncoding(encoding);
+                        }
 
-                    if (data) {
-                        req.pipe(data, { end });
-                        data.once("error", reject);
-                    } else {
-                        resolve();
-                    }
+                        if (data) {
+                            req.pipe(data as Writable, { end });
+                            // eslint-disable-next-line no-extra-parens
+                            (data as Writable).once("error", reject);
+                        } else {
+                            resolve();
+                        }
 
-                    req.once("end", resolve);
-                });
+                        req.once("end", resolve);
+                    });
+                } else {
+                    res.writeHead(202, { "Content-type": "application/json" });
+                    res.end(JSON.stringify(data));
+                    return;
+                }
 
                 if (end) {
                     res.writeHead(200, "OK");
@@ -114,6 +123,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
                 res.end();
             } catch (e) {
+                console.error(e);
                 next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
         });

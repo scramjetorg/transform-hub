@@ -8,7 +8,7 @@ import { MaybePromise } from "./utils";
 export type ParsedMessage = IncomingMessage & { body?: any, params: { [key: string]: any} | undefined};
 
 export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
-export type StreamOutput = ((req: IncomingMessage, res: ServerResponse) => MaybePromise<void>) | MaybePromise<Writable>;
+export type StreamOutput = ((req: IncomingMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
 export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
 

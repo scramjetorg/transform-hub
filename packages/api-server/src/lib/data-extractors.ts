@@ -12,7 +12,7 @@ export async function getObject(object: any, req: IncomingMessage): Promise<any>
     return object;
 }
 
-export async function getWritable(object: any, req: IncomingMessage, res: ServerResponse): Promise<Writable> {
+export async function getWritable(object: any, req: IncomingMessage, res: ServerResponse): Promise<Writable | Object> {
     if (typeof object === "function") {
         return object(req, res);
     }

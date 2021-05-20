@@ -79,10 +79,10 @@ export class Host implements IComponent {
      */
     attachHostAPIs() {
         this.api.downstream(`${this.apiBase}/sequence`,
-            async (req, res) => this.handleNewSequence(req, res), { end: true }
+            async (req) => this.handleNewSequence(req), { end: true }
         );
 
-        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req, res) => this.handleStartSequence(req as ParsedMessage, res));
+        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req as ParsedMessage));
 
         this.api.get(`${this.apiBase}/sequence/:id`,
             (req) => this.getSequence(req.params?.id));
@@ -114,7 +114,7 @@ export class Host implements IComponent {
         return instance.router.lookup(req, res, next);
     }
 
-    async handleNewSequence(stream: IncomingMessage, res: ServerResponse) {
+    async handleNewSequence(stream: IncomingMessage) {
         this.logger.log("New sequence incomming...");
 
         const sequenceConfig: RunnerConfig = await this.identifySequence(stream);
@@ -128,15 +128,12 @@ export class Host implements IComponent {
         this.logger.log("Sequence identified:", sequence.config);
         this.logger.log("Sequence stored:", sequence.id);
 
-        if (res) {
-            res.writeHead(202, { "Content-type": "application/json" });
-            res.end(JSON.stringify({
-                id: sequence.id
-            }));
-        }
+        return {
+            id: sequence.id
+        } as Object;
     }
 
-    async handleStartSequence(req: ParsedMessage, res: ServerResponse | undefined) {
+    async handleStartSequence(req: ParsedMessage) {
         // eslint-disable-next-line no-extra-parens
         const seqId = req.params?.id;
         const payload = req.body || {};
@@ -147,16 +144,12 @@ export class Host implements IComponent {
 
             const instanceId = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
-            if (res) {
-                res.writeHead(202, { "Content-type": "application/json" });
-                res.end(JSON.stringify({
-                    id: instanceId
-                }));
-            }
-        } else if (res) {
-            res.writeHead(404, { "Content-type": "application/json" });
-            res.end();
+            return {
+                id: instanceId
+            };
         }
+
+        return undefined;
     }
 
     identifySequence(stream: Readable): MaybePromise<RunnerConfig> {
