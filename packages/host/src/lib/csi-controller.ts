@@ -66,11 +66,13 @@ export class CSIController extends EventEmitter {
     }
 
     async main() {
-        this.logger.log("Supervisor started");
+        this.logger.log("Supervisor started.");
 
         try {
-            await this.supervisorStopped();
-            this.logger.log("Supervisor stopped");
+            const code = await this.supervisorStopped();
+
+            this.logger.log("Supervisor stopped.");
+            this.emit("end", code);
         } catch (e) {
             this.logger.error(e);
         }
@@ -217,10 +219,10 @@ export class CSIController extends EventEmitter {
             router.get("/event", RunnerMessageCode.EVENT, this.communicationHandler);
 
             // operations
-            router.op("/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
-            router.op("/_event", RunnerMessageCode.EVENT, this.communicationHandler);
-            router.op("/_stop", RunnerMessageCode.STOP, this.communicationHandler);
-            router.op("/_kill", RunnerMessageCode.KILL, this.communicationHandler);
+            router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+            router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
+            router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
+            router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
 
             this.router = router;
         } else {

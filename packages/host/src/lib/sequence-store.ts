@@ -1,5 +1,7 @@
+import { DockerodeDockerHelper } from "@scramjet/adapters";
 import { ISequence, ISequenceStore, RunnerConfig } from "@scramjet/types";
-
+import { CSIController } from "./csi-controller";
+import { InstanceStore } from "./instance-store";
 export class Sequence implements ISequence {
     id: string;
     config: RunnerConfig;
@@ -21,6 +23,10 @@ export class Sequence implements ISequence {
  * or, we could just try to reconnect instances after host restart.
  */
 export class SequenceStore implements ISequenceStore {
+    dockerHelper: DockerodeDockerHelper = new DockerodeDockerHelper();
+
+    instancesStore = InstanceStore;
+
     private sequences: { [key: string]: Sequence } = {}
 
     getSequences(): ISequence[] {
@@ -37,13 +43,49 @@ export class SequenceStore implements ISequenceStore {
         }
     }
 
-    remove(id: string) {
+    async remove(id: string) {
+        if (!id) {
+            return false;
+        }
+
+        const sequence = this.getById(id);
+
+        if (!sequence) {
+            return false;
+        }
+
+        const isRunning = !!Object.values(this.instancesStore)
+            .find((instance: CSIController) => instance.sequence === sequence);
+
+        if (isRunning) {
+            return {
+                status: 409
+            };
+        }
+
         /**
          * TODO: Here we also need to check if there aren't any Instances running
          * that use this Sequence.
          */
-        if (id) {
+
+        const volumeId = this.sequences[id].config.packageVolumeId as string;
+
+        try {
+            await this.dockerHelper.removeVolume(volumeId);
+
             delete this.sequences[id];
+
+            return true;
+        } catch (error) {
+            return false;
         }
+    }
+
+    close() {
+        return Promise.all(
+            Object.values(this.sequences).map(seq => {
+                return this.remove(seq.id);
+            })
+        );
     }
 }

@@ -15,7 +15,6 @@ export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybeProm
 export type NextCallback = (err?: Error) => void;
 export type Middleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
 
-
 /**
  * Configuration options for streaming endpoionts
  */
@@ -66,7 +65,7 @@ export interface APIBase {
      * @param conn the communication handler to use
      */
     op<T extends ControlMessageCode>(
-        path: string | RegExp, message: OpResolver | T, conn?: ICommunicationHandler): void;
+        method: string, path: string | RegExp, message: OpResolver | T, conn?: ICommunicationHandler): void;
     /**
      * Simple GET request hook for static data in monitoring stream.
      *

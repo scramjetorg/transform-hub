@@ -10,6 +10,7 @@ import { SocketServer } from "./socket-server";
 import { unlink } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
+import { InstanceStore } from "./instance-store";
 
 export class Host implements IComponent {
     api: APIExpose;
@@ -19,7 +20,7 @@ export class Host implements IComponent {
 
     socketServer: SocketServer;
 
-    csiControllers: { [key: string]: CSIController } = {}
+    instancesStore = InstanceStore;
 
     sequencesStore: SequenceStore = new SequenceStore();
 
@@ -29,7 +30,7 @@ export class Host implements IComponent {
         this.socketServer.on("connect", async ({ id, streams }) => {
             this.logger.log("Supervisor connected:", id);
 
-            await this.csiControllers[id].handleSupervisorConnect(streams);
+            await this.instancesStore[id].handleSupervisorConnect(streams);
         });
     }
 
@@ -82,10 +83,14 @@ export class Host implements IComponent {
             async (req) => this.handleNewSequence(req), { end: true }
         );
 
-        this.api.op(`${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req as ParsedMessage));
+        this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req as ParsedMessage));
 
         this.api.get(`${this.apiBase}/sequence/:id`,
             (req) => this.getSequence(req.params?.id));
+
+        // eslint-disable-next-line no-extra-parens
+        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req as ParsedMessage));
+
 
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
 
@@ -101,7 +106,7 @@ export class Host implements IComponent {
             return next(new HostError("UNKNOWN_INSTANCE"));
         }
 
-        const instance = this.csiControllers[params.id];
+        const instance = this.instancesStore[params.id];
 
         if (!instance.router) {
             return next(new HostError("CONTROLLER_ERROR", "Instance controller doesn't provide API."));
@@ -112,6 +117,14 @@ export class Host implements IComponent {
         this.logger.debug(req.method, req.url);
 
         return instance.router.lookup(req, res, next);
+    }
+
+    async handleDeleteSequence(req: ParsedMessage) {
+        this.logger.log("DELETE", req.params?.id);
+
+        const id = req.params?.id;
+
+        return this.sequencesStore.remove(id);
     }
 
     async handleNewSequence(stream: IncomingMessage) {
@@ -172,9 +185,15 @@ export class Host implements IComponent {
 
         this.logger.log("New CSIController created: ", id);
 
-        this.csiControllers[id] = csic;
+        this.instancesStore[id] = csic;
 
         await csic.start();
+
+        this.logger.log("CSIController started:", id);
+        csic.on("end", (code) => {
+            this.logger.log("CSIControlled ended, code:", code);
+            delete InstanceStore[csic.id];
+        });
 
         return id;
     }
@@ -182,7 +201,7 @@ export class Host implements IComponent {
     getCSIControllers() {
         this.logger.log("List CSI controllers.");
 
-        return Object.values(this.csiControllers).map(csiController => {
+        return Object.values(this.instancesStore).map(csiController => {
             return {
                 id: csiController.id,
                 sequence: csiController.sequence,

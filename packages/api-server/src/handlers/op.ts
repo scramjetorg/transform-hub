@@ -1,5 +1,5 @@
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import { ControlMessageCode, ICommunicationHandler, MessageDataType, OpResolver, ParsedMessage } from "@scramjet/types";
+import { ControlMessageCode, ICommunicationHandler, MessageDataType, Middleware, OpResolver, ParsedMessage } from "@scramjet/types";
 import { checkMessage } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
@@ -45,13 +45,15 @@ export function createOperationHandler(router: SequentialCeroRouter) {
     /**
      * Simple POST request hook for static data in monitoring stream.
      *
+     * @param method request method
      * @param path the request path as string or regex
      * @param message which operation
      * @param conn the communication handler to use
      */
     const op = <T extends ControlMessageCode>(
+        method: string = "post",
         path: string|RegExp, message: T | OpResolver, conn: ICommunicationHandler): void => {
-        router.post(path, async (req, res, next) => {
+        const handler: Middleware = async (req, res, next) => {
             try {
                 if (typeof message === "function") {
                     // eslint-disable-next-line no-extra-parens
@@ -64,7 +66,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
                     let response = "";
 
                     if (result) {
-                        res.writeHead(202, "Accepted", { "content-type": "application/json" });
+                        res.writeHead(result.status || 202, result.status === 202 ? "Accepted" : undefined, { "content-type": "application/json" });
                         response = JSON.stringify(result);
                     } else {
                         res.writeHead(404, "Not Found", { "content-type": "application/json" });
@@ -82,7 +84,15 @@ export function createOperationHandler(router: SequentialCeroRouter) {
             } catch (e) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
-        });
+        };
+
+        switch (method) {
+        case "delete":
+            router.delete(path, handler);
+            break;
+        default:
+            router.post(path, handler);
+        }
     };
 
     return op;
