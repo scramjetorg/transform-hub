@@ -12,6 +12,8 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
 import { InstanceStore } from "./instance-store";
 
+import { fakeLoadCheck } from "./fake-load-check";
+import { ReasonPhrases } from "http-status-codes";
 export class Host implements IComponent {
     api: APIExpose;
 
@@ -146,6 +148,12 @@ export class Host implements IComponent {
     }
 
     async handleStartSequence(req: ParsedMessage) {
+        if (await fakeLoadCheck.overloaded()) {
+            return {
+                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
+            };
+        }
+
         // eslint-disable-next-line no-extra-parens
         const seqId = req.params?.id;
         const payload = req.body || {};

@@ -7570,6 +7570,11 @@ supports-color@^7.1.0:
   dependencies:
     has-flag "^4.0.0"
 
+systeminformation@5.7.2:
+  version "5.7.2"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/systeminformation/-/systeminformation-5.7.2.tgz#750def331aa5db46aab1917982004801d427d6fa"
+  integrity sha512-pVYb3P2X2jmEQu0AAOZhlH8K8bfZf96dtpAsIGna7fNJ/fVh/pdq6tmuwgT9Oc5nlwDDN8/6yapr+rIphX3L7A==
+
 table@^6.0.4:
   version "6.6.0"
   resolved "https://repo.int.scp.ovh/repository/npm-all/table/-/table-6.6.0.tgz#905654b79df98d9e9a973de1dd58682532c40e8e"
