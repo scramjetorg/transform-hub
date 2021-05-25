@@ -1,7 +1,11 @@
 import { DockerodeDockerHelper } from "@scramjet/adapters";
+import { getLogger } from "@scramjet/logger";
+import { HostError } from "@scramjet/model";
 import { ISequence, ISequenceStore, RunnerConfig } from "@scramjet/types";
 import { CSIController } from "./csi-controller";
 import { InstanceStore } from "./instance-store";
+import { ReasonPhrases } from "http-status-codes";
+
 export class Sequence implements ISequence {
     id: string;
     config: RunnerConfig;
@@ -27,6 +31,7 @@ export class SequenceStore implements ISequenceStore {
 
     instancesStore = InstanceStore;
 
+    private logger = getLogger(this);
     private sequences: { [key: string]: Sequence } = {}
 
     getSequences(): ISequence[] {
@@ -41,26 +46,28 @@ export class SequenceStore implements ISequenceStore {
         if (sequence) {
             this.sequences[sequence.id] = sequence;
         }
+
+        this.logger.log("New sequence added:", sequence.id);
     }
 
-    async remove(id: string) {
+    async delete(id: string): Promise<ReasonPhrases> {
         if (!id) {
-            return false;
+            return ReasonPhrases.BAD_REQUEST;
         }
 
         const sequence = this.getById(id);
 
         if (!sequence) {
-            return false;
+            return ReasonPhrases.NOT_FOUND;
         }
 
         const isRunning = !!Object.values(this.instancesStore)
             .find((instance: CSIController) => instance.sequence === sequence);
 
         if (isRunning) {
-            return {
-                status: 409
-            };
+            this.logger.log("Can't remove sequence in use:", id);
+
+            return ReasonPhrases.CONFLICT;
         }
 
         /**
@@ -71,20 +78,24 @@ export class SequenceStore implements ISequenceStore {
         const volumeId = this.sequences[id].config.packageVolumeId as string;
 
         try {
+            this.logger.log("Removing volume...", volumeId);
             await this.dockerHelper.removeVolume(volumeId);
 
             delete this.sequences[id];
 
-            return true;
+            this.logger.log("Volume removed:", volumeId);
+
+            return ReasonPhrases.OK;
         } catch (error) {
-            return false;
+            this.logger.error("Error removing sequence!");
+            throw new HostError("CONTROLLER_ERROR");
         }
     }
 
     close() {
         return Promise.all(
             Object.values(this.sequences).map(seq => {
-                return this.remove(seq.id);
+                return this.delete(seq.id);
             })
         );
     }

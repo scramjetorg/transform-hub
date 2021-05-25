@@ -23,5 +23,5 @@ export interface ISequenceStore {
     getSequences(): ISequence[];
     getById(id: string): ISequence;
     add(sequence: ISequence): void;
-    remove(id: string): void;
+    delete(id: string): void;
 }

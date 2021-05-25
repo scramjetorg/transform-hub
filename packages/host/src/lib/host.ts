@@ -120,11 +120,11 @@ export class Host implements IComponent {
     }
 
     async handleDeleteSequence(req: ParsedMessage) {
-        this.logger.log("DELETE", req.params?.id);
-
         const id = req.params?.id;
 
-        return this.sequencesStore.remove(id);
+        return {
+            opStatus: await this.sequencesStore.delete(id)
+        };
     }
 
     async handleNewSequence(stream: IncomingMessage) {
@@ -139,11 +139,10 @@ export class Host implements IComponent {
         this.sequencesStore.add(sequence);
 
         this.logger.log("Sequence identified:", sequence.config);
-        this.logger.log("Sequence stored:", sequence.id);
 
         return {
             id: sequence.id
-        } as Object;
+        };
     }
 
     async handleStartSequence(req: ParsedMessage) {
@@ -190,6 +189,7 @@ export class Host implements IComponent {
         await csic.start();
 
         this.logger.log("CSIController started:", id);
+
         csic.on("end", (code) => {
             this.logger.log("CSIControlled ended, code:", code);
             delete InstanceStore[csic.id];

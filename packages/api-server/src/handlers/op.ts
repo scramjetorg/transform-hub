@@ -4,6 +4,10 @@ import { checkMessage } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
 import { StringDecoder } from "string_decoder";
+import { getStatusCode, ReasonPhrases, StatusCodes } from "http-status-codes";
+import { getLogger } from "@scramjet/logger";
+
+const logger = getLogger("API");
 
 export function createOperationHandler(router: SequentialCeroRouter) {
     const getData = async (req: IncomingMessage): Promise<object|undefined> => {
@@ -54,6 +58,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         method: string = "post",
         path: string|RegExp, message: T | OpResolver, conn: ICommunicationHandler): void => {
         const handler: Middleware = async (req, res, next) => {
+            logger.log(req.method, req.url);
             try {
                 if (typeof message === "function") {
                     // eslint-disable-next-line no-extra-parens
@@ -66,10 +71,24 @@ export function createOperationHandler(router: SequentialCeroRouter) {
                     let response = "";
 
                     if (result) {
-                        res.writeHead(result.status || 202, result.status === 202 ? "Accepted" : undefined, { "content-type": "application/json" });
-                        response = JSON.stringify(result);
+                        result.opStatus = result.opStatus || ReasonPhrases.OK;
+
+                        const statusCode = getStatusCode(result.opStatus);
+                        const reason = result.opStatus;
+
+                        res.writeHead(
+                            statusCode,
+                            reason,
+                            { "content-type": "application/json" }
+                        );
+
+                        delete result.opStatus;
+
+                        if (Object.keys(result).length) {
+                            response = JSON.stringify(result);
+                        }
                     } else {
-                        res.writeHead(404, "Not Found", { "content-type": "application/json" });
+                        res.writeHead(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND, { "content-type": "application/json" });
                     }
 
                     return res.end(response);
@@ -79,7 +98,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
 
                 await conn.sendControlMessage(message, checkMessage(message, obj));
 
-                res.writeHead(202, "Accepted", { "content-type": "application/json" });
+                res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
                 return res.end();
             } catch (e) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));
