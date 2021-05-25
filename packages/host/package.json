@@ -24,7 +24,8 @@
         "@scramjet/logger": "^0.10.0-pre.1",
         "@scramjet/model": "^0.10.0-pre.1",
         "@scramjet/symbols": "^0.10.0-pre.1",
-        "http-status-codes": "^2.1.4"
+        "http-status-codes": "^2.1.4",
+        "systeminformation": "5.7.2"
     },
     "devDependencies": {
         "@scramjet/types": "^0.10.0-pre.1",
