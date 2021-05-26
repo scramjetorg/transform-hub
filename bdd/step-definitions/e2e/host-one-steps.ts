@@ -1,4 +1,3 @@
-
 /* eslint-disable no-cond-assign, no-loop-func */
 import { Given, When, Then } from "@cucumber/cucumber";
 import { promisify } from "util";
@@ -36,6 +35,7 @@ const getStdout = async () => {
     const expectedHttpCode = 200;
 
     actualResponse = await callInLoopTillExpectedCode(sequenceApiClient.getStdout, sequenceApiClient, expectedHttpCode);
+
     assert.equal(actualResponse.status, expectedHttpCode);
 };
 const getOutput = async () => {
@@ -73,7 +73,7 @@ When("host one execute sequence {string} with arguments {string} and redirects o
 });
 
 When("save response data to file {string}", { timeout: 10000 }, async (outputFile) => {
-    fs.writeFile(outputFile, actualResponse.data, function(err) {
+    fs.writeFile(outputFile, actualResponse.data, function (err) {
         if (err) { console.log(err); }
     });
 });

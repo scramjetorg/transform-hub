@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export class SequenceApiClient {
+export class ApiClient {
 
     constructor(private apiBase: string = "http://localhost:8000/api/v1") {
     }
@@ -44,31 +44,6 @@ export class SequenceApiClient {
 
         return await this.get(gethealthUrl);
     }
-
-    public async getLog(): Promise<any> {
-        const getLogUrl = `${this.apiBase}/stream/log`;
-
-        return await this.getStream(getLogUrl);
-    }
-
-    public async getInstanceOutput(id: string): Promise<any> {
-        const getLogUrl = `${this.apiBase}/instance/${id}/stdout`;
-
-        return await this.getStream(getLogUrl);
-    }
-
-    public async getStdout(id: string): Promise<any> {
-        const getStdoutUrl = `${this.apiBase}/instance/${id}/stdout`;
-
-        return await this.get(getStdoutUrl);
-    }
-
-    public async getOutput(): Promise<any> {
-        const getOutputUrl = `${this.apiBase}/stream/output`;
-
-        return await this.get(getOutputUrl);
-    }
-
 
     public async post(url: string, data: any): Promise<any> {
         let resp;
@@ -130,29 +105,28 @@ export class SequenceApiClient {
     }
 
     private async getStream(url: string): Promise<any> {
-        let resp;
+        console.log("--XXX------url: ", url);
 
-        try {
-            resp = await axios({
-                method: "GET",
-                url: url,
-                headers: {
-                    Accept: "*/*"
-                },
-                responseType: "stream"
-            });
-        } catch (error) {
-            console.error("Error during sending request: ", error.message);
-            console.error(error);
-        }
+        const resp = await axios.get(url, {
+            headers: {
+                Accept: "*/*"
+            },
+            responseType: "stream"
+        }).then((r) => {
+            console.log(r.data);
+            return r;
+        });
 
-        return resp;
+        console.log("----- axios resolves with:", resp);
+
+        console.log("--------resp.data: ", resp.data);
+        return resp.data;
     }
 
-    public async getStreamByInstanceId(id: string, url: string): Promise<any> {
+    public getStreamByInstanceId(id: string, url: string) {
         const getLogUrl = `${this.apiBase}/instance/${id}/${url}`;
 
-        return await this.getStream(getLogUrl);
+        return this.getStream(getLogUrl);
     }
 }
 

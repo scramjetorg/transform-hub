@@ -15,3 +15,16 @@ Feature: Sample e2e tests
         Then get output stream long timeout
         And host one process is stopped
         And response in each line contains "Hello " followed by name from file "data.json" finished by "!"
+
+    Scenario: E2E-001 TC-003 Execute example for host
+        Given host started
+        And wait for "1000" ms
+        And host process is working
+        When sequence loaded
+        And wait for "4000" ms
+        And instance started
+        And wait for "8000" ms
+        And get logs in background with instanceId
+        Then get stream stdout stream
+        # And host process is stopped
+        # And response in each line contains "Hello " followed by name from file "data.json" finished by "!"
