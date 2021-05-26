@@ -1,5 +1,4 @@
-/* eslint-disable no-extra-parens */
-/* eslint-disable dot-notation */
+/* eslint-disable import/no-named-as-default-member, no-extra-parens, dot-notation */
 import * as imageConfig from "@scramjet/csi-config";
 import { DelayedStream } from "@scramjet/model";
 import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";

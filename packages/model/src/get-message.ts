@@ -9,7 +9,7 @@ import {
     KillSequenceMessage,
     MessageDataType, MessageType,
     MonitoringRateMessage, MonitoringRateMessageData,
-    MonitoringMessage, MonitoringMessageData,
+    MonitoringMessageResponse, MonitoringMessageData,
     StopSequenceMessage, StopSequenceMessageData,
     EventMessageData, EventMessage, InstanceConfigMessageData
 } from "@scramjet/types";
@@ -78,7 +78,7 @@ export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode
         return msgData as MessageDataType<ErrorMessage>;
     }
     if (msgCode === RunnerMessageCode.MONITORING && isMonitoringMessage(msgData)) {
-        return msgData as MessageDataType<MonitoringMessage>;
+        return msgData as MessageDataType<MonitoringMessageResponse>;
     }
     if (msgCode === RunnerMessageCode.ACKNOWLEDGE && isAcknowledgeMessage(msgData)) {
         return msgData as MessageDataType<AcknowledgeMessage>;

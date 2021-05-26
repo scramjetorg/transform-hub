@@ -1,13 +1,12 @@
 import { RunnerMessageCode } from "@scramjet/symbols";
 import test, { after, beforeEach } from "ava";
-import { Writable } from "stream";
+import { Writable, Readable } from "stream";
 import { DataStream } from "scramjet";
 import * as sinon from "sinon";
 import { createServer } from "..";
 import { getCommunicationHandler } from "./lib/get-communcation-handler";
 import { mockServer } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";
-import { Readable } from "stream";
 
 export const sandbox = sinon.createSandbox();
 
@@ -33,7 +32,7 @@ test("Methods don't throw", async t => {
     t.true(comm.areStreamsHooked(), "Streams hook up well");
 
     api.get("/api/get", RunnerMessageCode.MONITORING, comm);
-    api.op("/api/kill", RunnerMessageCode.KILL, comm);
+    api.op("post", "/api/kill", RunnerMessageCode.KILL, comm);
     api.downstream("/api/send", new DataStream() as unknown as Writable);
     api.upstream("/api/send", new DataStream() as unknown as Readable);
 

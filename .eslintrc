@@ -11,6 +11,10 @@
         "dist/",
         "node_modules"
     ],
+    "extends": [
+        "plugin:import/recommended",
+        "plugin:import/typescript"
+    ],
     "rules": {
         /* possible errors */
         "no-cond-assign" : 2,

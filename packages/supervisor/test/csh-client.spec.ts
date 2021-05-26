@@ -1,4 +1,4 @@
-/* eslint-disable dot-notation */
+/* eslint-disable import/no-named-as-default-member, dot-notation */
 
 import test from "ava";
 import { Socket } from "net";

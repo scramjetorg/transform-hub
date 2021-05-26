@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default-member */
 import test from "ava";
 
 test.before(async (t) => {

@@ -1,6 +1,5 @@
 import { StreamInput } from "@scramjet/types";
-import { IncomingMessage } from "http";
-import { ServerResponse } from "node:http";
+import { ServerResponse, IncomingMessage } from "http";
 import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";
 

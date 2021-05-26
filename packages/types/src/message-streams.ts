@@ -1,5 +1,6 @@
-import { ReadableStream, WritableStream } from ".";
 import {
+    ReadableStream,
+    WritableStream,
     AcknowledgeMessage,
     AcknowledgeMessageData,
     ConfirmHealthMessage,
@@ -13,7 +14,7 @@ import {
     KeepAliveMessage,
     KeepAliveMessageData,
     KillSequenceMessage,
-    MonitoringMessage,
+    MonitoringMessageResponse,
     MonitoringMessageData,
     MonitoringRateMessage,
     MonitoringRateMessageData,
@@ -38,7 +39,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.ERROR ? ErrorMessage :
     T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? ConfirmHealthMessage :
     T extends RunnerMessageCode.KILL ? KillSequenceMessage :
-    T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
+    T extends RunnerMessageCode.MONITORING ? MonitoringMessageResponse :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :

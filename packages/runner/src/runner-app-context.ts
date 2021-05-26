@@ -1,6 +1,9 @@
 import { getLogger } from "@scramjet/logger";
-import { EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData } from "@scramjet/types";
-import { AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream, FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, Logger } from "@scramjet/types";
+import {
+    EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData,
+    AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream,
+    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, Logger
+} from "@scramjet/types";
 import { EventEmitter } from "events";
 
 function assertFunction(handler: any | Function): handler is Function {

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-named-as-default-member */
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import test from "ava";
 import { randomBytes } from "crypto";

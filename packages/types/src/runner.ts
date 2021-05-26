@@ -73,7 +73,7 @@ export type FunctionStatus = {
 /**
  * The response an Sequence sends as monitoring responses
  */
-export type MonitoringMessage = {
+export type MonitoringMessageResponse = {
     /**
      *
      */

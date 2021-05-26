@@ -1,7 +1,6 @@
 import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 import { ServerResponse } from "http";
-import { Writable } from "stream";
-import { Readable } from "stream";
+import { Writable, Readable } from "stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";

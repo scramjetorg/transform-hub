@@ -1,5 +1,4 @@
-import { IncomingMessage, Server } from "http";
-import { ServerResponse } from "node:http";
+import { IncomingMessage, Server, ServerResponse } from "http";
 import { Readable, Writable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
