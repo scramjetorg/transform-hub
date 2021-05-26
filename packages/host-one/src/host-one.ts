@@ -244,10 +244,10 @@ export class HostOne implements IComponent {
         this.api.get(`${apiBase}/sequence/event`, RunnerMessageCode.EVENT, this.communicationHandler);
 
         // operations
-        this.api.op(`${apiBase}/sequence/_monitoring_rate/`, RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
-        this.api.op(`${apiBase}/sequence/_event/`, RunnerMessageCode.EVENT, this.communicationHandler);
-        this.api.op(`${apiBase}/sequence/_stop/`, RunnerMessageCode.STOP, this.communicationHandler);
-        this.api.op(`${apiBase}/sequence/_kill/`, RunnerMessageCode.KILL, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_monitoring_rate/`, "post", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_event/`, "post", RunnerMessageCode.EVENT, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_stop/`, "post", RunnerMessageCode.STOP, this.communicationHandler);
+        this.api.op(`${apiBase}/sequence/_kill/`, "post", RunnerMessageCode.KILL, this.communicationHandler);
 
         await new Promise(res => {
             this.api?.server.once("listening", res);
