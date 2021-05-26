@@ -73,7 +73,7 @@ When("host one execute sequence {string} with arguments {string} and redirects o
 });
 
 When("save response data to file {string}", { timeout: 10000 }, async (outputFile) => {
-    fs.writeFile(outputFile, actualResponse.data, function(err) {
+    fs.writeFile(outputFile, actualResponse.data, function (err) {
         if (err) { console.log(err); }
     });
 });
