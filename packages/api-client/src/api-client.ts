@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Transform } from "stream";
 
 export class ApiClient {
 
@@ -104,29 +105,34 @@ export class ApiClient {
         return resp;
     }
 
-    private async getStream(url: string): Promise<any> {
-        console.log("--XXX------url: ", url);
-
-        const resp = await axios.get(url, {
-            headers: {
-                Accept: "*/*"
+    streamFromAxios(url: string) {
+        const inoutStream = new Transform({
+            transform(chunk, encoding, callback) {
+                this.push(chunk);
+                callback();
             },
-            responseType: "stream"
-        }).then((r) => {
-            console.log(r.data);
-            return r;
         });
 
-        console.log("----- axios resolves with:", resp);
+        axios({
+            method: "get",
+            url,
+            responseType: "stream",
+            headers: {
+                Accept: "*/*"
+            }
+        }).then((res) => {
+            res.data.pipe(inoutStream);
+        }).catch((err) => {
+            console.log(err);
+        });
 
-        console.log("--------resp.data: ", resp.data);
-        return resp.data;
+        return inoutStream;
     }
 
-    public getStreamByInstanceId(id: string, url: string) {
+    public getStreamByInstanceId(id: string, url: string): Transform {
         const getLogUrl = `${this.apiBase}/instance/${id}/${url}`;
 
-        return this.getStream(getLogUrl);
+        return this.streamFromAxios(getLogUrl);
     }
 }
 

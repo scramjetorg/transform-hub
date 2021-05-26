@@ -2,11 +2,12 @@ import { Given, When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
-import { ApiClient } from "../../lib/api-client";
+import { ApiClient } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 
 const apiClient = new ApiClient();
 const hostUtils = new HostUtils();
+const testPath = "../dist/samples/hello-alice-out/";
 
 let actualResponse: any;
 let actualLogResponse: any;
@@ -27,7 +28,7 @@ const createSequence = async () => {
 
 function streamToString(stream): Promise<string> {
     return new Promise((resolve, reject) => {
-        stream.on("data", (chunk) => { chunks += chunk.toString() + "\n\r"; });
+        stream.on("data", (chunk) => { chunks += chunk.toString(); });
         stream.on("error", (err) => { reject(err); });
         stream.on("end", () => {
             resolve(chunks);
@@ -39,7 +40,7 @@ Given("host started", async () => {
     await hostUtils.spawnHost();
 });
 
-When("wait for {string} ms", { timeout: 20000 }, async (timeoutMs) => {
+When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
@@ -72,7 +73,18 @@ When("get logs in background with instanceId", { timeout: 35000 }, async () => {
 
 });
 
-Then("get stream stdout stream", async () => {
+Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting, file2, suffix) => {
+    const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
+    const lines: string[] = actualLogResponse.split("\n");
 
+    let i;
+
+    for (i = 0; i < input.length; i++) {
+        const line1: string = input[i].name;
+
+        assert.deepEqual(greeting + line1 + suffix, lines[i]);
+    }
+
+    assert.equal(i, input.length, "incorrect number of elements compared");
 });
 

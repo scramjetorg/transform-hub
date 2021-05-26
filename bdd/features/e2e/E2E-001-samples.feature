@@ -23,8 +23,6 @@ Feature: Sample e2e tests
         When sequence loaded
         And wait for "4000" ms
         And instance started
-        And wait for "8000" ms
+        And wait for "2000" ms
         And get logs in background with instanceId
-        Then get stream stdout stream
-        # And host process is stopped
-        # And response in each line contains "Hello " followed by name from file "data.json" finished by "!"
+        And response in every line contains "Hello " followed by name from file "data.json" finished by "!"
