@@ -1,6 +1,6 @@
 import { deserializeMessage, serializeMessage } from "./messages-utils";
 
-export * from "./errors/";
+export * from "./errors";
 export * from "./get-message";
 export * from "./messages-utils";
 export * from "./stream-handler";

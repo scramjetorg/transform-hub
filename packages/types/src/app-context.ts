@@ -1,10 +1,10 @@
-import { MonitoringMessageFromRunnerData } from "@scramjet/types";
+import { MonitoringMessageFromRunnerData } from "./messages";
 
 import { MaybePromise } from "./utils";
 import { AppError, AppErrorConstructor } from "./error-codes/app-error";
-import { AppConfig } from "./application";
-import { FunctionDefinition } from "./runner";
+import { AppConfig } from "./app-config";
 import { Logger } from "./logger";
+import { FunctionDefinition } from "./messages/describe-sequence";
 
 /**
  * A callback that will be called when the sequence is being stopped gracefully.

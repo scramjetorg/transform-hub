@@ -1,8 +1,10 @@
 /* eslint-disable import/no-named-as-default-member */
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import test from "ava";
 import { randomBytes } from "crypto";
 import { StringStream } from "scramjet";
+
+/* eslint-disable-next-line import/no-extraneous-dependencies */
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
 
 const randomId = () => randomBytes(8).toString("hex");
 

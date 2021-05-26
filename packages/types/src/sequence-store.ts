@@ -1,4 +1,4 @@
-import { RunnerConfig } from ".";
+import { RunnerConfig } from "./runner-config";
 
 /**
  *
@@ -13,7 +13,6 @@ import { RunnerConfig } from ".";
  * Question: this should probably moved to @scramjet/model, right?
  *
  */
-
 export interface ISequence {
     id: string,
     config: RunnerConfig

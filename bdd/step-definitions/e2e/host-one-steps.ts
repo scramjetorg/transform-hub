@@ -1,6 +1,5 @@
 
-/* eslint-disable no-cond-assign  */
-/* eslint-disable no-loop-func */
+/* eslint-disable no-cond-assign, no-loop-func */
 import { Given, When, Then } from "@cucumber/cucumber";
 import { promisify } from "util";
 import { strict as assert } from "assert";

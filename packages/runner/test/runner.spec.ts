@@ -1,11 +1,12 @@
 /* eslint-disable dot-notation */
 import * as sinon from "sinon";
-import { PassThrough, Readable, Writable } from "stream";
-import { RunnerMessageCode } from "@scramjet/symbols";
-import { MessageUtils, Runner } from "@scramjet/runner";
-
 import * as fs from "fs";
+import { PassThrough, Readable, Writable } from "stream";
 import { DataStream } from "scramjet";
+import { RunnerMessageCode } from "@scramjet/symbols";
+
+/* eslint-disable-next-line import/no-extraneous-dependencies */
+import { MessageUtils, Runner } from "@scramjet/runner";
 
 const test = require("ava");
 const controlMockStream = new PassThrough() as unknown as fs.ReadStream;

@@ -1,15 +1,16 @@
 import { CommunicationChannel as CC, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     ControlMessageCode,
+    ControlMessageHandler,
     DownstreamStreamsConfig,
     EncodedControlMessage,
-    EncodedMessage,
     EncodedMonitoringMessage,
     ICommunicationHandler,
     LoggerOutput,
     MaybePromise,
     MessageDataType,
     MonitoringMessageCode,
+    MonitoringMessageHandler,
     PassThoughStream,
     UpstreamStreamsConfig,
     WritableStream
@@ -18,10 +19,6 @@ import {
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
 
-export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
-    (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
-export type ControlMessageHandler<T extends ControlMessageCode> =
-    (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
 export type ConfiguredMessageHandler<T extends RunnerMessageCode | SupervisorMessageCode> = {
     handler: MonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
     blocking: boolean

@@ -1,15 +1,8 @@
 import { exposeSequenceSymbol } from "@scramjet/symbols";
-import {
-    MaybePromise,
-    ReadableStream
-} from ".";
+import { MaybePromise, ReadableStream, Streamable } from "./utils";
 import { AppContext } from "./app-context";
-import { Streamable } from "./utils";
+import { AppConfig } from "./app-config";
 
-/**
- * App configuration primitive.
- */
-export type AppConfig = { [key: string]: null | string | number | boolean | AppConfig };
 
 export type ApplicationInterface =
     (this: AppContext<AppConfig, any>, source: ReadableStream<any>, ...argv: any[])

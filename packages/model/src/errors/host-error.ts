@@ -1,5 +1,5 @@
 import { HostErrorCode } from "@scramjet/types";
-import { AppError } from ".";
+import { AppError } from "./app-error";
 
 export type IHostErrorData = any;
 

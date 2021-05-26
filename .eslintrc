@@ -190,6 +190,18 @@
         "@typescript-eslint/no-useless-constructor": "error",
         "@typescript-eslint/no-shadow": ["error"],
 
+        "import/no-absolute-path": 2, // Forbid import of modules using absolute paths ()
+        "import/no-dynamic-require": 2, // Forbid require() calls with expressions ()
+        "import/no-self-import": 2, // Forbid a module from importing itself ()
+        "import/no-cycle": 2, // Forbid a module from importing a module with a dependency path back to itself ()
+        "import/no-useless-path-segments": 2, // Prevent unnecessary path segments in import and require statements ()
+        "import/no-relative-packages": 2, // Prevent importing packages through relative paths ()
+
+        "import/no-deprecated": 1, // Report imported names marked with @deprecated documentation tag ()
+        "import/no-extraneous-dependencies": 1, // Forbid the use of extraneous packages ()
+        "import/no-mutable-exports": 1, // Forbid the use of mutable exports with var or let. ()
+        "import/no-unused-modules": 1, // Report modules without exports, or exports without matching import in another module ()
+
         "max-len": [
             "warn",
             {

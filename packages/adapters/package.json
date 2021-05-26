@@ -19,7 +19,9 @@
         "@scramjet/logger": "^0.10.0-pre.1",
         "@scramjet/model": "^0.10.0-pre.1",
         "@scramjet/symbols": "^0.10.0-pre.1",
-        "scramjet": "^4.35.15"
+        "dockerode": "^3.3.0",
+        "scramjet": "^4.35.15",
+        "shell-escape": "^0.2.0"
     },
     "devDependencies": {
         "@scramjet/types": "^0.10.0-pre.1",

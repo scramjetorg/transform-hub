@@ -1,4 +1,6 @@
-import { HostErrorCode, RunnerErrorCode, SupervisorErrorCode } from ".";
+import { HostErrorCode } from "./host-error";
+import { RunnerErrorCode } from "./runner-error";
+import { SupervisorErrorCode } from "./supervisor-error";
 
 /**
  * Acceptable error codes

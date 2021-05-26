@@ -1,5 +1,5 @@
-import { FunctionDefinition } from "@scramjet/types";
 import { RunnerMessageCode } from "@scramjet/symbols";
+import { FunctionDefinition } from "./describe-sequence";
 
 export type StatusMessageData = {
 

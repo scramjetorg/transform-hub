@@ -1,5 +1,5 @@
 import { RunnerErrorCode } from "@scramjet/types";
-import { AppError } from ".";
+import { AppError } from "./app-error";
 
 export type IRunnerErrorData = any;
 

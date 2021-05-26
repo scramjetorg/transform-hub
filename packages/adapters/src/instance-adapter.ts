@@ -20,7 +20,8 @@ import { tmpdir } from "os";
 import * as path from "path";
 import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
-import { DockerAdapterResources, DockerodeDockerHelper, IDockerHelper } from ".";
+import { DockerodeDockerHelper } from "./dockerode-docker-helper";
+import { DockerAdapterResources, IDockerHelper } from "./types";
 
 class LifecycleDockerAdapterInstance implements
 ILifeCycleAdapterMain,

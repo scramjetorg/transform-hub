@@ -4,7 +4,8 @@ import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
-import { Sequence, SequenceStore } from "./sequence-store";
+import { SequenceStore } from "./sequence-store";
+import { Sequence } from "./sequence";
 import { SocketServer } from "./socket-server";
 
 import { unlink } from "fs/promises";

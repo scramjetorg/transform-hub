@@ -1,5 +1,5 @@
-import { FunctionStatus } from "@scramjet/types";
 import { RunnerMessageCode } from "@scramjet/symbols";
+import { FunctionStatus } from "../runner";
 
 export type MonitoringMessageFromRunnerData = {
 

@@ -410,6 +410,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     getSequence(): ApplicationInterface[] {
+        /* eslint-disable-next-line import/no-dynamic-require */
         const sequenceFromFile = require(this.sequencePath);
         const _sequence: MaybeArray<ApplicationFunction> =
             sequenceFromFile.hasOwnProperty("default") ? sequenceFromFile.default : sequenceFromFile;

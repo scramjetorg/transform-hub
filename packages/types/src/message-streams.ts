@@ -1,6 +1,11 @@
 import {
     ReadableStream,
     WritableStream,
+    PassThoughStream } from "./utils";
+
+import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+
+import {
     AcknowledgeMessage,
     AcknowledgeMessageData,
     ConfirmHealthMessage,
@@ -14,7 +19,6 @@ import {
     KeepAliveMessage,
     KeepAliveMessageData,
     KillSequenceMessage,
-    MonitoringMessageResponse,
     MonitoringMessageData,
     MonitoringRateMessage,
     MonitoringRateMessageData,
@@ -26,10 +30,9 @@ import {
     SnapshotResponseMessage,
     SnapshotResponseMessageData,
     StatusMessage,
-    StatusMessageData
-} from ".";
-import { PassThoughStream } from "./utils";
-import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+    StatusMessageData,
+    MonitoringMessage
+} from "./messages";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -39,7 +42,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.ERROR ? ErrorMessage :
     T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? ConfirmHealthMessage :
     T extends RunnerMessageCode.KILL ? KillSequenceMessage :
-    T extends RunnerMessageCode.MONITORING ? MonitoringMessageResponse :
+    T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :

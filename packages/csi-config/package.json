@@ -36,5 +36,8 @@
   },
   "bugs": {
     "url": "https://github.com/scramjet-cloud-platform/scramjet-csi-dev/issues"
+  },
+  "devDependencies": {
+    "ava": "^3.15.0"
   }
 }

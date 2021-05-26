@@ -2,9 +2,11 @@ import test from "ava";
 import { ReadStream } from "fs";
 import * as sinon from "sinon";
 import { PassThrough } from "stream";
-import { HostOne } from "@scramjet/host-one";
 import * as vorpal from "vorpal";
 import { DataStream } from "scramjet";
+
+/* eslint-disable-next-line import/no-extraneous-dependencies */
+import { HostOne } from "@scramjet/host-one";
 
 const appConfig = {
     configKey: "configValue"

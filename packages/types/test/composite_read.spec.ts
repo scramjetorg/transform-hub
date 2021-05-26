@@ -1,4 +1,4 @@
-import { ReadableApp } from "../src/";
+import { ReadableApp } from "../src";
 import transform from "./lib/transform";
 
 export const app: ReadableApp<any, [{ test: number }], { start: number }> =

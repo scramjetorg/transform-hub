@@ -1,5 +1,5 @@
 import { SupervisorErrorCode } from "@scramjet/types";
-import { AppError } from ".";
+import { AppError } from "./app-error";
 
 export type ISupervisorErrorData = any;
 

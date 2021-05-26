@@ -5,7 +5,7 @@ import {
     MaybePromise,
     Streamable,
     ReadableStream
-} from ".";
+} from "./utils";
 
 /**
  * A Function that returns a streamable result is a read function

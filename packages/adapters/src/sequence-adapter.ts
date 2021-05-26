@@ -11,7 +11,8 @@ import {
 } from "@scramjet/types";
 import { rmdir } from "fs/promises";
 import { Readable } from "stream";
-import { DockerodeDockerHelper, DockerAdapterResources, DockerAdapterRunResponse, IDockerHelper } from ".";
+import { DockerodeDockerHelper } from "./dockerode-docker-helper";
+import { DockerAdapterResources, DockerAdapterRunResponse, IDockerHelper } from "./types";
 
 class LifecycleDockerAdapterSequence implements
 ILifeCycleAdapterMain,

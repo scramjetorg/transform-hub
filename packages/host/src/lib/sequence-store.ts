@@ -1,20 +1,11 @@
 import { DockerodeDockerHelper } from "@scramjet/adapters";
 import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
-import { ISequence, ISequenceStore, RunnerConfig } from "@scramjet/types";
+import { ISequence, ISequenceStore } from "@scramjet/types";
 import { CSIController } from "./csi-controller";
-import { InstanceStore } from "./instance-store";
 import { ReasonPhrases } from "http-status-codes";
-
-export class Sequence implements ISequence {
-    id: string;
-    config: RunnerConfig;
-
-    constructor(id: string, config: RunnerConfig) {
-        this.id = id;
-        this.config = config;
-    }
-}
+import { Sequence } from "./sequence";
+import { InstanceStore } from "./instance-store";
 
 /**
  *

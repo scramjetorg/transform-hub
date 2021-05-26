@@ -1,4 +1,6 @@
 import test from "ava";
+
+/* eslint-disable-next-line import/no-extraneous-dependencies */
 import * as config from "@scramjet/csi-config";
 
 // const has: (o: object, k: string) => boolean =

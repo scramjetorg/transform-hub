@@ -7,7 +7,7 @@ import {
     DockerAdapterWaitOptions,
     DockerContainer,
     IDockerHelper, DockerImage, DockerVolume, ExitData
-} from ".";
+} from "./types";
 
 /**
  * Configuration for volumes to be mounted to container.

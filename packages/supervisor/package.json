@@ -44,6 +44,7 @@
     "@scramjet/csi-config": "^0.10.0-pre.1",
     "@scramjet/logger": "^0.10.0-pre.1",
     "@scramjet/model": "^0.10.0-pre.1",
+    "@scramjet/adapters": "^0.10.0-pre.1",
     "@scramjet/symbols": "^0.10.0-pre.1",
     "@scramjet/types": "^0.10.0-pre.1",
     "bpmux": "^8.1.3",

@@ -1,5 +1,5 @@
-import { AppConfig } from "@scramjet/types";
 import { RunnerMessageCode } from "@scramjet/symbols";
+import { AppConfig } from "../app-config";
 
 export type HandshakeAcknowledgeMessageData = {
 

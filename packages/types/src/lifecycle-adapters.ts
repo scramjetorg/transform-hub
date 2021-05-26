@@ -1,20 +1,8 @@
-import { MonitoringMessageData } from "@scramjet/types";
-
+import { MonitoringMessageData } from "./messages";
 import { Readable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
-
-// TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
-export type RunnerConfig = {
-    image: string;
-    version: string;
-    engines: {
-        [key: string]: string
-    };
-    config?: any;
-    sequencePath: string,
-    packageVolumeId?: string;
-}
+import { RunnerConfig } from "./runner-config";
 
 export type LifeCycleConfig = {
     makeSnapshotOnError: boolean;

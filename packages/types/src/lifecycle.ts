@@ -1,9 +1,10 @@
-import { MonitoringMessageData } from "@scramjet/types";
+import { MonitoringMessageData } from "./messages";
 
 import { Readable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
-import { RunnerConfig, ExitCode } from "./lifecycle-adapters";
+import { ExitCode } from "./lifecycle-adapters";
+import { RunnerConfig } from "./runner-config";
 
 // TODO: Rename. it is not a runner config but response from Pre-runner.
 export interface ILifeCycleAdapter {
