@@ -31,11 +31,11 @@
     "lint:dedupe": "scripts/dedupe.js",
     "watch": "lerna run watch",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
-    "postinstall": "lerna exec yarn && lerna link",
+    "postinstall": "lerna exec yarn && lerna link && yarn --cwd=./bdd install",
     "test": "yarn test:parallel && yarn test:bdd",
     "test:packages": "lerna run test",
     "test:parallel": "lerna run test --parallel",
-    "test:bdd": "cd bdd && yarn install && yarn run test:bdd"
+    "test:bdd": "yarn --cwd=./bdd run test:bdd"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
