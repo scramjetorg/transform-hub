@@ -98,6 +98,9 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
+        this.api.get(`${this.apiBase}/load-check`, async () => {
+            return await fakeLoadCheck.getLoadCheck();
+        });
     }
 
     instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
