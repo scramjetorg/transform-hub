@@ -193,12 +193,12 @@ class PrePack {
             man, directories, config, peerDependencies,
             peerDependenciesMeta, bundledDependencies, optionalDependencies
         } = content;
-        const srcRe = str => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, "");
+        const srcRe = str => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, ".js");
         const main = srcRe(_main);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)
             : Object.entries(_bin)
-                .map()
+                .map(([k, v]) => [k, srcRe(v)])
                 // eslint-disable-next-line no-return-assign,no-sequences
                 .reduce((acc, [k, v]) => (acc[k] = srcRe(v), acc), {})
         );

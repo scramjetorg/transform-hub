@@ -5,7 +5,9 @@
     "---remove-next-line": "",
     "bic": false,
     "main": "./src/index.ts",
-    "bin": "bin/start-host.js",
+    "bin": {
+      "scramjet-host": "bin/start.ts"
+    },
     "scripts": {
         "start": "ts-node ./src/index",
         "build": "tsc -p tsconfig.build.json",
