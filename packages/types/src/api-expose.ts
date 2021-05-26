@@ -6,6 +6,7 @@ import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";
 
 export type ParsedMessage = IncomingMessage & { body?: any, params: { [key: string]: any} | undefined};
+export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
 export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
 export type StreamOutput = ((req: IncomingMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
@@ -65,7 +66,7 @@ export interface APIBase {
      * @param conn the communication handler to use
      */
     op<T extends ControlMessageCode>(
-        method: string, path: string | RegExp, message: OpResolver | T, conn?: ICommunicationHandler): void;
+        method: HttpMethod, path: string | RegExp, message: OpResolver | T, conn?: ICommunicationHandler): void;
     /**
      * Simple GET request hook for static data in monitoring stream.
      *
