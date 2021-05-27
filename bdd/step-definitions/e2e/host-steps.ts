@@ -59,7 +59,7 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
-When("wait for {int} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs) => {
+When("wait for {float} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs) => {
     await new Promise(res => setTimeout(res, timeoutHrs * 3600 * 1000));
 });
 
@@ -131,7 +131,9 @@ Then("response data is equal {string}", async (respNumber) => {
     assert.equal(actualLogResponse, respNumber);
 });
 
-When("starts multiple sequences {string}", { timeout: 3600 * 48 * 1000 }, async (sequence: string) => {
+const instanceIds = [];
+
+When("starts multiple sequences {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (sequence: string, hrs: number) => {
     // eslint-disable-next-line no-extra-parens
     const hostLoad = (await apiClient.getHostLoadCheck() as any).data;
     const sequenceId = (await createSequence(sequence)).id;
@@ -140,13 +142,10 @@ When("starts multiple sequences {string}", { timeout: 3600 * 48 * 1000 }, async 
 
     const data = {
         appConfig: {},
-        args: [60, 400, ["http://172.20.10.108:9000/file1.bin", "http://172.20.10.108:9000/file2.bin", "http://172.20.10.108:9000/file3.bin"]]
+        args: [hrs * 3600, 400, ["http://172.20.10.108:9000/file1.bin", "http://172.20.10.108:9000/file2.bin", "http://172.20.10.108:9000/file3.bin"]]
     };
 
     let accepted = false;
-
-    const sequnecesId = [];
-
     let i = 0;
 
     do {
@@ -169,11 +168,23 @@ When("starts multiple sequences {string}", { timeout: 3600 * 48 * 1000 }, async 
 
         if (accepted) {
             console.log("______________________________________INSTANCE ID", startSeqResponse.data.id);
-            sequnecesId.push(startSeqResponse.data.id);
-            console.log("______________________________________TOTAL sequences started: ", sequnecesId.length);
+            instanceIds.push(startSeqResponse.data.id);
+            console.log("______________________________________TOTAL sequences started: ", instanceIds.length);
             i++;
         } else {
             console.log("______________________________________not accepted");
         }
-    } while (accepted && i < 20);
+    } while (accepted && i < 5);
+});
+
+Then("check if instances respond", async () => {
+    assert.equal(
+        (await Promise.all(instanceIds.map(id =>
+            new Promise(resolve => {
+                apiClient.getStreamByInstanceId(id, "stdout")
+                    .on("data", resolve);
+            })
+        ))).length,
+        instanceIds.length
+    );
 });
