@@ -8,7 +8,8 @@
     "dockerode": "^3.3.0",
     "n-readlines": "^1.0.1",
     "@scramjet/api-client":"^0.10.0-pre.1",
-    "scramjet": "^4.35.12"
+    "scramjet": "^4.35.12",
+    "@cucumber/cucumber": "^7.1.0"
   },
   "scripts": {
     "test:bdd": "cucumber-js"
@@ -16,8 +17,5 @@
   "private": true,
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
-  },
-  "devDependencies": {
-    "@cucumber/cucumber": "^7.1.0"
   }
 }
