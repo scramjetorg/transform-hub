@@ -1,9 +1,10 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { callInLoopTillExpectedCodeNew, waitForValueTillTrue } from "../../lib/utils";
+import { callInLoopTillExpectedStatusCode, waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
 import { ApiClient } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
+import { PassThrough } from "stream";
 
 const apiClient = new ApiClient();
 const hostUtils = new HostUtils();
@@ -11,7 +12,6 @@ const testPath = "../dist/samples/hello-alice-out/";
 
 let actualResponse: any;
 let actualLogResponse: any;
-let actualOutputResponse: any;
 let instanceId: any;
 let chunks = "";
 
@@ -42,9 +42,14 @@ function streamToString(stream): Promise<string> {
 
 const getOutput = async () => {
     const expectedHttpCode = 200;
-    const response = await callInLoopTillExpectedCodeNew(apiClient.getResponseByInstanceId, apiClient, expectedHttpCode, instanceId, "output");
+    const response = await callInLoopTillExpectedStatusCode(apiClient.getIncomingMessageByInstanceId, apiClient, expectedHttpCode, instanceId, "output");
+    const stream = new PassThrough();
 
-    assert.equal(response.status, expectedHttpCode);
+    response.pipe(stream);
+
+    actualLogResponse = await streamToString(stream);
+
+    assert.equal(response.statusCode, expectedHttpCode);
 };
 
 Given("host started", async () => {
@@ -71,7 +76,6 @@ When("instance started", async () => {
         appConfig: {},
         args: ["/package/data.json"]
     }) as any).data.id;
-    console.log(instanceId);
 });
 
 When("instance started with arguments {string}", async (instanceArg: string) => {
@@ -80,7 +84,6 @@ When("instance started with arguments {string}", async (instanceArg: string) => 
         appConfig: {},
         args: instanceArg.split(" ")
     }) as any).data.id;
-    console.log(instanceId);
 });
 
 When("get logs in background with instanceId", { timeout: 35000 }, async () => {
@@ -119,7 +122,7 @@ When("get output stream with long timeout", { timeout: 60000 }, async () => {
 });
 
 Then("response data is equal {string}", async (respNumber) => {
-    const data = await streamToString(actualOutputResponse);
-
-    assert.equal(data, respNumber);
+    assert.equal(actualLogResponse, respNumber);
 });
+
+

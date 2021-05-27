@@ -1,5 +1,7 @@
 import axios from "axios";
+import { IncomingMessage } from "http";
 import { Transform } from "stream";
+import * as http from "http";
 
 export class ApiClient {
 
@@ -132,54 +134,15 @@ export class ApiClient {
         return inoutStream;
     }
 
-    getResponseAndStreamFromAxios(url: string) {
-
-        const inoutStream = new Transform({
-            transform(chunk, encoding, callback) {
-                this.push(chunk);
-                callback();
-            },
+    private getIncomingMessage(url: string): Promise<IncomingMessage> {
+        return new Promise((resolve, reject) => {
+            http.get(url, (response: IncomingMessage) => {
+                if (response.statusCode !== 200) {
+                    reject();
+                }
+                resolve(response);
+            });
         });
-        const response = axios({
-            method: "get",
-            url,
-            responseType: "stream",
-            headers: {
-                Accept: "*/*"
-            }
-        }).then((res) => {
-            res.data.pipe(inoutStream);
-            return res;
-        }).catch((err) => {
-            console.log(err);
-        });
-
-        return { response, inoutStream };
-    }
-
-    responseFromAxios(url: string) {
-
-        const inoutStream = new Transform({
-            transform(chunk, encoding, callback) {
-                this.push(chunk);
-                callback();
-            },
-        });
-        const response = axios({
-            method: "get",
-            url,
-            responseType: "stream",
-            headers: {
-                Accept: "*/*"
-            }
-        }).then((res) => {
-            res.data.pipe(inoutStream);
-            return res;
-        }).catch((err) => {
-            console.log(err);
-        });
-
-        return response;
     }
 
     public getStreamByInstanceId(id: string, url: string): Transform {
@@ -188,9 +151,9 @@ export class ApiClient {
         return this.streamFromAxios(getLogUrl);
     }
 
-    public getResponseByInstanceId(id: string, url: string) {
-        const getLogUrl = `${this.apiBase}/instance/${id}/${url}`;
+    public getIncomingMessageByInstanceId(id: string, url: string): Promise<IncomingMessage> {
+        const absoluteUrl = `${this.apiBase}/instance/${id}/${url}`;
 
-        return this.responseFromAxios(getLogUrl);
+        return this.getIncomingMessage(absoluteUrl);
     }
 }

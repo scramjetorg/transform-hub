@@ -61,7 +61,7 @@ export function fileContains(filename, key) {
     assert.fail("stdout does not contain: " + key);
 }
 
-export const callInLoopTillExpectedCodeNew = async (fnToCall, that, expectedHttpCode: number = 200, ...args) => {
+export const callInLoopTillExpectedStatusCode = async (fnToCall, that, expectedHttpCode: number = 200, ...args) => {
     let response;
 
     const startTime: number = Date.now();
@@ -70,7 +70,7 @@ export const callInLoopTillExpectedCodeNew = async (fnToCall, that, expectedHttp
     do {
         response = await fnToCall.call(that, ...args);
         await new Promise(res => setTimeout(res, timeout));
-    } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
+    } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
 
     return response;
 };
