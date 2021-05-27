@@ -7,7 +7,7 @@
     "clean": "rm -rf ./dist",
     "compile": "tsc -p tsconfig.json",
     "prepublishOnly": "npm run build",
-    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
+    "prepack": "node ../../scripts/publish.js",
     "build": "tsc -p tsconfig.build.json && npm run test:expose",
     "build:docs": "typedoc",
     "watch": "tsc -b --watch",

@@ -15,10 +15,14 @@ class PrePack {
             throw new Error("No output folder specified");
         }
 
+        console.log(...Object.entries(options).map(([k, v]) => `${k}=${v}`));
+
         this.currDir = process.cwd();
         this.rootDir = path.resolve(__dirname, "../..");
         this.currDirDist = path.join(this.currDir, "dist");
-        this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
+        this.rootDistPackPath = !this.options.localCopy
+            ? this.currDir.replace(this.PACKAGES_DIR, this.options.outDir)
+            : this.currDirDist;
 
         this.rootPackageJson = null;
         this.currPackageJson = null;
@@ -30,7 +34,11 @@ class PrePack {
             await this.readPackageJson();
             await this.readRootPackage();
             await this.makePackagesMap();
-            await this.copyFiles();
+
+            if (!this.options.localCopy) {
+                await this.copyFiles();
+            }
+
             await this.copyAssets();
 
             await this.saveJson(await this.transformPackageJson());

@@ -37,6 +37,7 @@ new Promise((res, onRejected) => {
                 location: value.location,
                 deps: Array.from(value.externalDependencies.entries())
                     .map(([, x]) => x),
+                // eslint-disable-next-line import/no-dynamic-require
                 package: require(join(value.location, "package.json"))
             }));
     })

@@ -10,7 +10,7 @@
     "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.json",
     "prepublishOnly": "yarn run build",
-    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js",
+    "prepack": "node ../../scripts/publish.js",
     "test": "tsc --noEmit"
   },
   "author": "Scramjet <open-source@scramjet.org>",

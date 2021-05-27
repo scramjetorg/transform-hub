@@ -10,7 +10,8 @@
     "watch": "tsc -b --watch",
     "test": "npm run test:ava",
     "test:ava": "nyc ava",
-    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
+    "clean": "rm -rf ./dist",
+    "prepack": "node ../../scripts/publish.js"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

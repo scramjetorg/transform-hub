@@ -15,7 +15,7 @@
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjet/runner:$npm_package_version",
     "clean": "rm -rf ./dist",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
-    "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
+    "prepack": "node ../../scripts/publish.js"
   },
   "author": "",
   "license": "AGPL-3.0",

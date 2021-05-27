@@ -12,7 +12,7 @@
         "watch": "tsc -b --watch",
         "test": "npm run test:ava",
         "test:ava": "ava",
-        "prepack": "LOCAL_PACKAGES=true node ../../scripts/publish.js"
+        "prepack": "node ../../scripts/publish.js"
     },
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
