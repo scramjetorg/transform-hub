@@ -7,6 +7,7 @@ const downloadFile = (url: string): Promise<IncomingMessage> => {
     return new Promise((resolve, reject) => {
         http.get(url, (response: IncomingMessage) => {
             if (response.statusCode !== 200) {
+                console.log("ERRRRRRRRRRRRRRRRRRRRRRRRR");
                 reject();
             }
             console.log("file downloaded:", response.statusCode, response.headers["content-length"]);
@@ -26,7 +27,8 @@ const exp = [
     (_stream: any, ...args: any) => {
         const allocMemSize = args[1];
 
-        allocatedMem = Buffer.alloc(allocMemSize << 20);
+        allocatedMem = Buffer.allocUnsafe(allocMemSize << 20);
+        allocatedMem.forEach(b => b + ~~(Math.random() * 255));
 
         const stream = new PassThrough();
         const durationMs = args[0] * 1000;
@@ -41,7 +43,7 @@ const exp = [
                     files.map(downloadFile)
                 ) as IncomingMessage[]).map((file: IncomingMessage) => {
                     file.on("data", (chunk: Buffer) => {
-                        chunk.copy(allocatedMem, Math.random() * (allocMemSize << 20 - chunk.length));
+                        chunk.copy(allocatedMem, ~~(Math.random() * (allocatedMem.length - chunk.length)));
                     });
                 });
             } catch (err) {

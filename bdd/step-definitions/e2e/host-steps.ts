@@ -4,7 +4,7 @@ import { callInLoopTillExpectedStatusCode, waitForValueTillTrue } from "../../li
 import * as fs from "fs";
 import { ApiClient } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
-import { PassThrough } from "stream";
+import { PassThrough, Stream } from "stream";
 
 const apiClient = new ApiClient();
 const hostUtils = new HostUtils();
@@ -15,7 +15,7 @@ let actualLogResponse: any;
 let instanceId: any;
 let chunks = "";
 
-const createSequence = async (packagePath: string) => {
+const createSequence = async (packagePath: string): Promise<{ id: string }> => {
     // const expectedHttpCode = 200;
     const sequence = fs.readFileSync(packagePath);
 
@@ -24,10 +24,10 @@ const createSequence = async (packagePath: string) => {
 
     console.log("actualResponse: ", actualResponse);
 
+    return actualResponse;
     // assert.equal(actualResponse.status, expectedHttpCode);
 };
-
-function streamToString(stream): Promise<string> {
+const streamToString = (stream: Stream): Promise<string> => {
     return new Promise((resolve, reject) => {
         stream.on("data", (chunk) => {
             chunks += chunk.toString();
@@ -38,8 +38,7 @@ function streamToString(stream): Promise<string> {
             resolve(chunks);
         });
     });
-}
-
+};
 const getOutput = async () => {
     const expectedHttpCode = 200;
     const response = await callInLoopTillExpectedStatusCode(apiClient.getInstanceStream, apiClient, expectedHttpCode, instanceId, "output");
@@ -58,6 +57,10 @@ Given("host started", async () => {
 
 When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs) => {
     await new Promise(res => setTimeout(res, timeoutMs));
+});
+
+When("wait for {int} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs) => {
+    await new Promise(res => setTimeout(res, timeoutHrs * 3600 * 1000));
 });
 
 Then("host process is working", async () => {
@@ -126,4 +129,51 @@ When("get output stream with long timeout", { timeout: 60000 }, async () => {
 
 Then("response data is equal {string}", async (respNumber) => {
     assert.equal(actualLogResponse, respNumber);
+});
+
+When("starts multiple sequences {string}", { timeout: 3600 * 48 * 1000 }, async (sequence: string) => {
+    // eslint-disable-next-line no-extra-parens
+    const hostLoad = (await apiClient.getHostLoadCheck() as any).data;
+    const sequenceId = (await createSequence(sequence)).id;
+
+    console.log("_________SEQ ID", sequenceId, hostLoad);
+
+    const data = {
+        appConfig: {},
+        args: [60, 400, ["http://172.20.10.108:9000/file1.bin", "http://172.20.10.108:9000/file2.bin", "http://172.20.10.108:9000/file3.bin"]]
+    };
+
+    let accepted = false;
+
+    const sequnecesId = [];
+
+    let i = 0;
+
+    do {
+        // eslint-disable-next-line no-loop-func
+        await new Promise(res => { setTimeout(res, 5000); });
+        accepted = false;
+        const loadCheck = await apiClient.getHostLoadCheck();
+
+        // eslint-disable-next-line no-extra-parens
+        if ((loadCheck as any).status !== 200 || loadCheck.data.memFree < 512 << 20) {
+            console.error("______________________________________HELL CHECK!", loadCheck.statusCode);
+            accepted = true;
+            continue;
+        }
+
+        const startSeqResponse = await apiClient.startSequence(sequenceId, data) as any;
+
+        accepted = startSeqResponse && startSeqResponse.data && startSeqResponse.data.id;
+
+
+        if (accepted) {
+            console.log("______________________________________INSTANCE ID", startSeqResponse.data.id);
+            sequnecesId.push(startSeqResponse.data.id);
+            console.log("______________________________________TOTAL sequences started: ", sequnecesId.length);
+            i++;
+        } else {
+            console.log("______________________________________not accepted");
+        }
+    } while (accepted && i < 20);
 });

@@ -91,13 +91,15 @@ export class ApiClient {
         return resp;
     }
 
+    public async startSequence(sequenceId: string, sequenceArgs: Object) {
+        return this.post(`sequence/${sequenceId}/start`, sequenceArgs);
+    }
+
     private async get(url: string): Promise<any> {
         let resp;
 
         try {
-            resp = await axios({
-                method: "GET",
-                url: url,
+            resp = await axios.get(url, {
                 headers: {
                     Accept: "*/*"
                 }
@@ -155,5 +157,9 @@ export class ApiClient {
         const absoluteUrl = `${this.apiBase}/instance/${id}/${url}`;
 
         return this.getRemoteStream(absoluteUrl);
+    }
+
+    public async getHostLoadCheck(): Promise<any> {
+        return this.get(`${this.apiBase}/load-check`);
     }
 }

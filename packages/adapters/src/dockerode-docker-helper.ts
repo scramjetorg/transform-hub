@@ -98,7 +98,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 Binds: binds,
                 Mounts: this.translateVolumesConfig(volumes),
                 AutoRemove: autoRemove,
-                Memory: maxMem
+                Memory: maxMem,
+                MemorySwap: 0
             }
         });
 
