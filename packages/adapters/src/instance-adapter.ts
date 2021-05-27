@@ -149,7 +149,6 @@ IComponent {
         return msg;
     }
 
-
     hookCommunicationHandler(communicationHandler: ICommunicationHandler): void {
         const downstreamStreamsConfig: DownstreamStreamsConfig = [
             this.runnerStdin,
@@ -202,7 +201,7 @@ IComponent {
                 ],
                 envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
                 autoRemove: true,
-                maxMem: 256 * 1024 * 1024 // TODO: config
+                maxMem: 512 * 1024 * 1024 // TODO: config
             });
 
             this.resources.containerId = containerId;
