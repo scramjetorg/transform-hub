@@ -3,6 +3,8 @@ import { Transform } from "stream";
 
 export class ApiClient {
 
+    private apiBase: string;
+
     constructor(private apiBase: string = "http://localhost:8000/api/v1") {
     }
 
@@ -135,4 +137,3 @@ export class ApiClient {
         return this.streamFromAxios(getLogUrl);
     }
 }
-
