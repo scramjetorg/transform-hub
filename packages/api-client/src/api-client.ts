@@ -134,7 +134,7 @@ export class ApiClient {
         return inoutStream;
     }
 
-    private getIncomingMessage(url: string): Promise<IncomingMessage> {
+    private getRemoteStream(url: string): Promise<IncomingMessage> {
         return new Promise((resolve, reject) => {
             http.get(url, (response: IncomingMessage) => {
                 if (response.statusCode !== 200) {
@@ -151,9 +151,9 @@ export class ApiClient {
         return this.streamFromAxios(getLogUrl);
     }
 
-    public getIncomingMessageByInstanceId(id: string, url: string): Promise<IncomingMessage> {
+    public getInstanceStream(id: string, url: string): Promise<IncomingMessage> {
         const absoluteUrl = `${this.apiBase}/instance/${id}/${url}`;
 
-        return this.getIncomingMessage(absoluteUrl);
+        return this.getRemoteStream(absoluteUrl);
     }
 }

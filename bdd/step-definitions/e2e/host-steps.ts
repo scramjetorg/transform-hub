@@ -42,7 +42,7 @@ function streamToString(stream): Promise<string> {
 
 const getOutput = async () => {
     const expectedHttpCode = 200;
-    const response = await callInLoopTillExpectedStatusCode(apiClient.getIncomingMessageByInstanceId, apiClient, expectedHttpCode, instanceId, "output");
+    const response = await callInLoopTillExpectedStatusCode(apiClient.getInstanceStream, apiClient, expectedHttpCode, instanceId, "output");
     const stream = new PassThrough();
 
     response.pipe(stream);
