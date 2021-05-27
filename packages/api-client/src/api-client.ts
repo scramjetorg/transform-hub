@@ -5,8 +5,8 @@ export class ApiClient {
 
     private apiBase: string;
 
-    constructor(private apiBase: string = "http://localhost:8000/api/v1") {
-        this.apiBase = apiBase;
+    constructor(base: string = "http://localhost:8000/api/v1") {
+        this.apiBase = base;
     }
 
     public async postEvent(eventName: string, postMessage: string): Promise<any> {

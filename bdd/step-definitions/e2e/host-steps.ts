@@ -99,7 +99,6 @@ Then("response in every line contains {string} followed by name from file {strin
 
 
 When("save response to file {string}", { timeout: 10000 }, async (outputFile) => {
-    console.log("--------actualLogResponse: ", actualLogResponse);
     fs.writeFile(outputFile, actualLogResponse, function(err) {
         if (err) { console.log(err); }
     });
