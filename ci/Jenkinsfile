@@ -40,7 +40,7 @@ pipeline {
       steps {
         script {
           docker.image("${docker_ci_image}").inside() {
-            sh("yarn build")
+            sh("yarn build:all-packages")
           }
         }
       }
