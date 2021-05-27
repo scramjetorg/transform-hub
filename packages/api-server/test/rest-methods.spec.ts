@@ -68,7 +68,7 @@ test("Op fails with bad and works with good content type", async t => {
     let hadKilled = false;
 
     await (async () => {
-        api.op("/api/op", RunnerMessageCode.KILL, comm);
+        api.op("post", "/api/op", RunnerMessageCode.KILL, comm);
         comm.addControlHandler(RunnerMessageCode.KILL, (data) => {
             hadKilled = true;
             return data;

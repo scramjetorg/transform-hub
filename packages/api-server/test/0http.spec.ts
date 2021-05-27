@@ -2,7 +2,8 @@ import test, { after, beforeEach } from "ava";
 import * as sinon from "sinon";
 import * as http from "http";
 
-import { cero, sequentialRouter } from "../src/lib/0http";
+/* eslint-disable-next-line import/no-extraneous-dependencies */
+import { cero, sequentialRouter } from "@scramjet/api-server";
 
 const sandbox = sinon.createSandbox();
 const { Server } = http;
