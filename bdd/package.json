@@ -7,6 +7,7 @@
     "axios": "^0.21.1",
     "dockerode": "^3.3.0",
     "n-readlines": "^1.0.1",
+    "@scramjet/api-client":"^0.10.0-pre.1",
     "scramjet": "^4.35.12"
   },
   "scripts": {
