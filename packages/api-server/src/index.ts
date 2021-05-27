@@ -12,6 +12,8 @@ type ServerConfig = {
     router?: CeroRouter;
 };
 
+export { cero, sequentialRouter };
+
 export function getRouter(): APIRoute {
     const router = sequentialRouter({});
     const get = createGetterHandler(router);

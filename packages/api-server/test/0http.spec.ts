@@ -1,7 +1,8 @@
 import test, { after, beforeEach } from "ava";
 import * as sinon from "sinon";
-import { cero, sequentialRouter } from "../src/lib/0http";
 import * as http from "http";
+
+import { cero, sequentialRouter } from "../src/lib/0http";
 
 const sandbox = sinon.createSandbox();
 const { Server } = http;

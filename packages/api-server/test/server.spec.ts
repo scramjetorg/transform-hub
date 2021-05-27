@@ -3,10 +3,12 @@ import test, { after, beforeEach } from "ava";
 import { Writable, Readable } from "stream";
 import { DataStream } from "scramjet";
 import * as sinon from "sinon";
-import { createServer } from "..";
 import { getCommunicationHandler } from "./lib/get-communcation-handler";
 import { mockServer } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";
+
+/* eslint-disable-next-line import/no-extraneous-dependencies */
+import { createServer } from "@scramjet/api-server";
 
 export const sandbox = sinon.createSandbox();
 

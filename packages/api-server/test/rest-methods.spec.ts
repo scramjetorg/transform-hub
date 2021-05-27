@@ -4,10 +4,12 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 
 import test, { after, before, beforeEach } from "ava";
 import * as sinon from "sinon";
-import { CeroRouter, createServer } from "../src";
 import { getCommunicationHandler } from "./lib/get-communcation-handler";
 import { mockRequestResponse, mockServer, ServerWithPlayMethods } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";
+
+/* eslint-disable-next-line import/no-extraneous-dependencies */
+import { CeroRouter, createServer } from "@scramjet/api-server";
 
 export const sandbox = sinon.createSandbox();
 

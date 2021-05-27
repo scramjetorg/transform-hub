@@ -2,9 +2,10 @@
 import test from "ava";
 import * as sinon from "sinon";
 import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, RunnerConfig } from "@scramjet/types";
-import { LifeCycleController } from "../src/lib/lifecycle-controller";
 import { PassThrough } from "stream";
 import { DataStream } from "scramjet";
+
+import { LifeCycleController } from "../src/lib/lifecycle-controller";
 
 // let { LifeCycleController } = proxyquire("@scramjet/supervisor/src/lib/lifecycle-controller", {
 //     "@scramjet/model/src/stream-handler": {
