@@ -1,6 +1,6 @@
 import { Given, When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { waitForValueTillTrue } from "../../lib/utils";
+import { callInLoopTillExpectedCodeNew, waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
 import { ApiClient } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
@@ -11,6 +11,7 @@ const testPath = "../dist/samples/hello-alice-out/";
 
 let actualResponse: any;
 let actualLogResponse: any;
+let actualOutputResponse: any;
 let instanceId: any;
 let chunks = "";
 
@@ -39,6 +40,13 @@ function streamToString(stream): Promise<string> {
     });
 }
 
+const getOutput = async () => {
+    const expectedHttpCode = 200;
+    const response = await callInLoopTillExpectedCodeNew(apiClient.getResponseByInstanceId, apiClient, expectedHttpCode, instanceId, "output");
+
+    assert.equal(response.status, expectedHttpCode);
+};
+
 Given("host started", async () => {
     await hostUtils.spawnHost();
 });
@@ -66,14 +74,18 @@ When("instance started", async () => {
     console.log(instanceId);
 });
 
-When("instance started with arguments {string}", async (args) => {
+When("instance started with arguments {string}", async (instanceArg: string) => {
     // eslint-disable-next-line no-extra-parens
     instanceId = (await apiClient.post("sequence/" + actualResponse.id + "/start", {
         appConfig: {},
-        args: [args]
+        args: instanceArg.split(" ")
     }) as any).data.id;
     console.log(instanceId);
 });
+
+When("get logs in background with instanceId", { timeout: 35000 }, async () => {
+    actualResponse = apiClient.getStreamByInstanceId(instanceId, "output");
+    console.log("actualResponse: ", actualResponse);
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
@@ -102,4 +114,12 @@ When("save response to file {string}", { timeout: 10000 }, async (outputFile) =>
     fs.writeFile(outputFile, actualLogResponse, function(err) {
         if (err) { console.log(err); }
     });
+When("get output stream with long timeout", { timeout: 60000 }, async () => {
+    await getOutput();
+});
+
+Then("response data is equal {string}", async (respNumber) => {
+    const data = await streamToString(actualOutputResponse);
+
+    assert.equal(data, respNumber);
 });

@@ -132,9 +132,65 @@ export class ApiClient {
         return inoutStream;
     }
 
+    getResponseAndStreamFromAxios(url: string) {
+
+        const inoutStream = new Transform({
+            transform(chunk, encoding, callback) {
+                this.push(chunk);
+                callback();
+            },
+        });
+        const response = axios({
+            method: "get",
+            url,
+            responseType: "stream",
+            headers: {
+                Accept: "*/*"
+            }
+        }).then((res) => {
+            res.data.pipe(inoutStream);
+            return res;
+        }).catch((err) => {
+            console.log(err);
+        });
+
+        return { response, inoutStream };
+    }
+
+    responseFromAxios(url: string) {
+
+        const inoutStream = new Transform({
+            transform(chunk, encoding, callback) {
+                this.push(chunk);
+                callback();
+            },
+        });
+        const response = axios({
+            method: "get",
+            url,
+            responseType: "stream",
+            headers: {
+                Accept: "*/*"
+            }
+        }).then((res) => {
+            res.data.pipe(inoutStream);
+            return res;
+        }).catch((err) => {
+            console.log(err);
+        });
+
+        return response;
+    }
+
     public getStreamByInstanceId(id: string, url: string): Transform {
         const getLogUrl = `${this.apiBase}/instance/${id}/${url}`;
 
         return this.streamFromAxios(getLogUrl);
+    }
+
+    public getResponseByInstanceId(id: string, url: string) {
+        const getLogUrl = `${this.apiBase}/instance/${id}/${url}`;
+
+        return this.responseFromAxios(getLogUrl);
     }
 }
