@@ -89,6 +89,7 @@ When("instance started with arguments {string}", async (instanceArg: string) => 
 When("get logs in background with instanceId", { timeout: 35000 }, async () => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, "output");
     console.log("actualResponse: ", actualResponse);
+});
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
@@ -117,6 +118,8 @@ When("save response to file {string}", { timeout: 10000 }, async (outputFile) =>
     fs.writeFile(outputFile, actualLogResponse, function(err) {
         if (err) { console.log(err); }
     });
+});
+
 When("get output stream with long timeout", { timeout: 60000 }, async () => {
     await getOutput();
 });
@@ -124,5 +127,3 @@ When("get output stream with long timeout", { timeout: 60000 }, async () => {
 Then("response data is equal {string}", async (respNumber) => {
     assert.equal(actualLogResponse, respNumber);
 });
-
-
