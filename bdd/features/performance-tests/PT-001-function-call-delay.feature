@@ -21,4 +21,17 @@ Feature: Verify delay
         And calculate average delay time from "delay.test.result.txt" of first "10000" function calls starting "2000"
         And host one process is stopped
         Then calculated avereage delay time is lower than "100000" ns
-        
+
+    Scenario: PT-001 TC-003 Verify delay
+        Given host started
+        And wait for "1000" ms
+        And host process is working
+        When sequence "../packages/reference-apps/inert-sequence-2-with-delay.tar.gz" loaded
+        And wait for "1000" ms
+        And instance started with arguments "12000"
+        And wait for "800" ms
+        And get "stdout" in background with instanceId
+        And save response to file "delay.test.result.txt"
+        And file "delay.test.result.txt" is generated
+        And calculate average delay time from "delay.test.result.txt" of first "10000" function calls starting "2000"
+        Then calculated avereage delay time is lower than "100000" ns

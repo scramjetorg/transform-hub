@@ -14,9 +14,9 @@ let actualLogResponse: any;
 let instanceId: any;
 let chunks = "";
 
-const createSequence = async () => {
+const createSequence = async (packagePath: string) => {
     // const expectedHttpCode = 200;
-    const sequence = fs.readFileSync("../packages/samples/hello-alice-out.tar.gz");
+    const sequence = fs.readFileSync(packagePath);
 
     // eslint-disable-next-line no-extra-parens
     actualResponse = (await apiClient.postPackage(sequence) as any).data;
@@ -28,7 +28,10 @@ const createSequence = async () => {
 
 function streamToString(stream): Promise<string> {
     return new Promise((resolve, reject) => {
-        stream.on("data", (chunk) => { chunks += chunk.toString(); });
+        stream.on("data", (chunk) => {
+            chunks += chunk.toString();
+        });
+
         stream.on("error", (err) => { reject(err); });
         stream.on("end", () => {
             resolve(chunks);
@@ -50,8 +53,8 @@ Then("host process is working", async () => {
     assert.equal(hostUtils.hostProcessStopped, false);
 });
 
-When("sequence loaded", async () => {
-    await createSequence();
+When("sequence {string} loaded", async (packagePath) => {
+    await createSequence(packagePath);
 });
 
 When("instance started", async () => {
@@ -63,14 +66,18 @@ When("instance started", async () => {
     console.log(instanceId);
 });
 
-When("get logs in background with instanceId", { timeout: 35000 }, async () => {
-    actualResponse = apiClient.getStreamByInstanceId(instanceId, "output");
-    console.log("actualResponse: ", actualResponse);
+When("instance started with arguments {string}", async (args) => {
+    // eslint-disable-next-line no-extra-parens
+    instanceId = (await apiClient.post("sequence/" + actualResponse.id + "/start", {
+        appConfig: {},
+        args: [args]
+    }) as any).data.id;
+    console.log(instanceId);
+});
 
+When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
+    actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
     actualLogResponse = await streamToString(actualResponse);
-
-    console.log("actualLogResponse: ", actualLogResponse);
-
 });
 
 Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting, file2, suffix) => {
@@ -88,3 +95,12 @@ Then("response in every line contains {string} followed by name from file {strin
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
+// function call delay steps
+
+
+When("save response to file {string}", { timeout: 10000 }, async (outputFile) => {
+    console.log("--------actualLogResponse: ", actualLogResponse);
+    fs.writeFile(outputFile, actualLogResponse, function(err) {
+        if (err) { console.log(err); }
+    });
+});
