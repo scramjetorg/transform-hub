@@ -108,7 +108,7 @@ export class ApiClient {
         return resp;
     }
 
-    streamFromAxios(url: string) {
+    private streamFromAxios(url: string) {
         const inoutStream = new Transform({
             transform(chunk, encoding, callback) {
                 this.push(chunk);
