@@ -94,7 +94,8 @@ export function createOperationHandler(router: SequentialCeroRouter) {
                     return res.end(response);
                 }
 
-                const obj = await getData(req) as Array<any>[1] as MessageDataType<T>;
+                // eslint-disable-next-line no-extra-parens
+                const obj = (await getData(req) as Array<any>)[1] as MessageDataType<T>;
 
                 await conn.sendControlMessage(message, checkMessage(message, obj));
 
