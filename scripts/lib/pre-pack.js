@@ -196,7 +196,6 @@ class PrePack {
             engines = this.rootPackageJson.engines,
             os = this.rootPackageJson.os,
             cpu = this.rootPackageJson.cpu,
-            private: priv = this.rootPackageJson.private,
             publishConfig = this.rootPackageJson.publishConfig,
             man, directories, config, peerDependencies,
             peerDependenciesMeta, bundledDependencies, optionalDependencies
@@ -216,7 +215,7 @@ class PrePack {
             license, author, contributors, funding, files, main, browser,
             bin, man, directories, repository, config, dependencies,
             peerDependencies, peerDependenciesMeta, bundledDependencies, optionalDependencies,
-            engines, os, cpu, private: priv, publishConfig
+            engines, os, cpu, publishConfig
         };
     }
 
