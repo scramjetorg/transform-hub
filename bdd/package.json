@@ -1,15 +1,15 @@
 {
   "name": "scramjet-bdd",
-  "version": "1.0.0",
+  "version": "0.10.0-pre.2",
   "description": "",
   "main": "_cucumber.js",
   "dependencies": {
+    "@cucumber/cucumber": "^7.1.0",
+    "@scramjet/api-client": "^0.10.0-pre.2",
     "axios": "^0.21.1",
     "dockerode": "^3.3.0",
     "n-readlines": "^1.0.1",
-    "@scramjet/api-client":"^0.10.0-pre.1",
-    "scramjet": "^4.35.12",
-    "@cucumber/cucumber": "^7.1.0"
+    "scramjet": "^4.35.12"
   },
   "scripts": {
     "test:bdd": "cucumber-js"
