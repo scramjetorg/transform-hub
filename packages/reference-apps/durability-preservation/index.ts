@@ -1,67 +1,74 @@
 import * as http from "http";
 import { IncomingMessage } from "http";
 import { PassThrough } from "stream";
+import { ReadableApp } from "@scramjet/types";
 
+const mockResponse = () => {
+    const fakeData = new PassThrough();
+
+    fakeData.write(Buffer.alloc(1024));
+
+    return fakeData;
+};
 const startDate = Date.now();
-const downloadFile = (url: string): Promise<IncomingMessage> => {
-    return new Promise((resolve, reject) => {
+const downloadFile = (url: string): Promise<IncomingMessage | PassThrough> => {
+    return new Promise((resolve) => {
         http.get(url, (response: IncomingMessage) => {
             if (response.statusCode !== 200) {
-                console.log("ERRRRRRRRRRRRRRRRRRRRRRRRR");
-                reject();
+                resolve(mockResponse());
             }
-            console.log("file downloaded:", response.statusCode, response.headers["content-length"]);
+
             resolve(response);
+        }).on("error", () => {
+            resolve(mockResponse());
         });
     });
 };
 
 let allocatedMem: Buffer;
 
-const exp = [
-    /**
-     * @param _stream - input
-     * @param config sequence configuration
-     * @returns data
-     */
-    (_stream: any, ...args: any) => {
-        const allocMemSize = args[1];
+/**
+ * @param _stream - input
+ * @param config sequence configuration
+ * @returns data
+ */
+export = async function(_stream: any, ...args: any) {
 
-        allocatedMem = Buffer.allocUnsafe(allocMemSize << 20);
-        allocatedMem.forEach(b => b + ~~(Math.random() * 255));
 
-        const stream = new PassThrough();
-        const durationMs = args[0] * 1000;
-        const files = args[2];
+    const allocMemSize = args[1];
 
-        console.log(`Args: [Duration: ${durationMs}, MemAlloc: ${allocMemSize}, Files: ${files}]`);
+    allocatedMem = Buffer.alloc(allocMemSize << 20, 0x1234);
 
-        const loop = setInterval(async () => {
-            try {
-                // eslint-disable-next-line no-extra-parens
-                (await Promise.all(
-                    files.map(downloadFile)
-                ) as IncomingMessage[]).map((file: IncomingMessage) => {
-                    file.on("data", (chunk: Buffer) => {
-                        chunk.copy(allocatedMem, ~~(Math.random() * (allocatedMem.length - chunk.length)));
-                    });
+    const stream = new PassThrough();
+    const durationMs = args[0] * 1000;
+    const files = args[2];
+
+    console.log(`Args: [Duration: ${durationMs}, MemAlloc: ${allocMemSize}, Files: ${files}]`);
+
+    this.on("alive", () => {
+        stream.write("I'm ok!");
+    });
+
+    const loop = setInterval(async () => {
+        try {
+            // eslint-disable-next-line no-extra-parens
+            (await Promise.all(
+                files.map(downloadFile)
+            ) as IncomingMessage[]).map((file: IncomingMessage) => {
+                file.on("data", (chunk: Buffer) => {
+                    chunk.copy(allocatedMem, ~~(Math.random() * (allocatedMem.length - chunk.length)));
                 });
-            } catch (err) {
-                console.log(err);
-            }
+            });
+        } catch (err) {
+            console.log(err);
+        }
 
-            if (Date.now() - startDate > durationMs) {
-                stream.end();
-                clearInterval(loop);
-            }
-        }, 1000);
+        if (Date.now() - startDate > durationMs) {
+            stream.end();
+            clearInterval(loop);
+        }
+    }, 1000);
 
-        return stream;
-    },
+    return stream;
+} as ReadableApp;
 
-    async (stream: any) => {
-        return stream;
-    }
-];
-
-export = exp;

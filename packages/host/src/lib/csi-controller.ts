@@ -99,8 +99,8 @@ export class CSIController extends EventEmitter {
         this.superVisorProcess = spawn(executable, command);
 
         // TODO: remove
-        this.superVisorProcess.stdout?.pipe(process.stdout);
-        this.superVisorProcess.stderr?.pipe(process.stderr);
+        //this.superVisorProcess.stdout?.pipe(process.stdout);
+        //this.superVisorProcess.stderr?.pipe(process.stderr);
     }
 
     supervisorStopped(): Promise<ExitCode> {
@@ -133,11 +133,10 @@ export class CSIController extends EventEmitter {
             process.stdout, // this should be e2e encrypted
             process.stderr, // this should be e2e encrypted
             new PassThrough(), // control
-            process.stdout, // monitor
+            new PassThrough(), // monitor
             new PassThrough(), // this should be e2e encrypted
-            process.stdout, // this should be e2e encrypted
+            new PassThrough(), // this should be e2e encrypted
             new PassThrough() // this should be e2e encrypted (LOG FILE)
-
         ];
 
         this.communicationHandler.hookUpstreamStreams(this.upStreams);
@@ -147,7 +146,7 @@ export class CSIController extends EventEmitter {
         this.communicationHandler.pipeDataStreams();
 
         // TODO: remove
-        this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
+        //this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
 
         const controlDataStream = new DataStream();
 

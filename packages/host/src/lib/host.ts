@@ -19,6 +19,8 @@ export class Host implements IComponent {
     api: APIExpose;
 
     apiBase = "/api/v1";
+    port = 8000;
+
     instanceBase = `${this.apiBase}/instance`;
 
     socketServer: SocketServer;
@@ -61,11 +63,11 @@ export class Host implements IComponent {
 
         await this.socketServer.start();
 
-        this.api.server.listen(8000);
+        this.api.server.listen(this.port);
 
         await new Promise(res => {
             this.api?.server.once("listening", res);
-            this.logger.info("API listening.");
+            this.logger.info("API listening on port:", this.port);
         });
 
         this.attachListeners();
@@ -134,7 +136,7 @@ export class Host implements IComponent {
     }
 
     async handleNewSequence(stream: IncomingMessage) {
-        this.logger.log("New sequence incomming...");
+        this.logger.log("New sequence incoming...");
 
         const sequenceConfig: RunnerConfig = await this.identifySequence(stream);
         const sequence = new Sequence(

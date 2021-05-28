@@ -135,56 +135,51 @@ const instanceIds = [];
 
 When("starts multiple sequences {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (sequence: string, hrs: number) => {
     // eslint-disable-next-line no-extra-parens
-    const hostLoad = (await apiClient.getHostLoadCheck() as any).data;
     const sequenceId = (await createSequence(sequence)).id;
-
-    console.log("_________SEQ ID", sequenceId, hostLoad);
-
     const data = {
         appConfig: {},
         args: [hrs * 3600, 400, ["http://172.20.10.108:9000/file1.bin", "http://172.20.10.108:9000/file2.bin", "http://172.20.10.108:9000/file3.bin"]]
     };
 
     let accepted = false;
-    let i = 0;
+    let full = false;
 
     do {
         // eslint-disable-next-line no-loop-func
         await new Promise(res => { setTimeout(res, 5000); });
         accepted = false;
+
         const loadCheck = await apiClient.getHostLoadCheck();
 
         // eslint-disable-next-line no-extra-parens
-        if ((loadCheck as any).status !== 200 || loadCheck.data.memFree < 512 << 20) {
-            console.error("______________________________________HELL CHECK!", loadCheck.statusCode);
-            accepted = true;
-            continue;
-        }
-
-        const startSeqResponse = await apiClient.startSequence(sequenceId, data) as any;
-
-        accepted = startSeqResponse && startSeqResponse.data && startSeqResponse.data.id;
-
-
-        if (accepted) {
-            console.log("______________________________________INSTANCE ID", startSeqResponse.data.id);
-            instanceIds.push(startSeqResponse.data.id);
-            console.log("______________________________________TOTAL sequences started: ", instanceIds.length);
-            i++;
+        if ((loadCheck as any).status !== 200 || loadCheck.data.memFree < (512 << 20)) {
+            full = true;
         } else {
-            console.log("______________________________________not accepted");
+            const startSeqResponse = await apiClient.startSequence(sequenceId, data) as any;
+
+            accepted = startSeqResponse && startSeqResponse.data && startSeqResponse.data.id;
+
+            if (accepted) {
+                instanceIds.push(startSeqResponse.data.id);
+            } else {
+                full = true;
+            }
         }
-    } while (accepted && i < 5);
+
+        if (full) {
+            console.log("Host is full. Total sequences started: ", instanceIds.length);
+        }
+    } while (accepted && !full);
 });
 
 Then("check if instances respond", async () => {
-    assert.equal(
+    assert.ok(
         (await Promise.all(instanceIds.map(id =>
             new Promise(resolve => {
-                apiClient.getStreamByInstanceId(id, "stdout")
+                apiClient.getStreamByInstanceId(id, "output")
                     .on("data", resolve);
             })
         ))).length,
-        instanceIds.length
+        "Some instances are unresponsible."
     );
 });

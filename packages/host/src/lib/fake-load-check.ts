@@ -37,7 +37,7 @@ class FakeLoadCheck implements IComponent {
         this.logger.log(check);
 
         const conditionsMet = {
-            cpu: check.currentLoad < 100 - MIN_INSTANCE_REQUIREMENTS.cpuLoad,
+            cpu: check.avgLoad < 100 - MIN_INSTANCE_REQUIREMENTS.cpuLoad,
             mem: check.memFree > MIN_INSTANCE_REQUIREMENTS.freeMem,
             dsk: check.fsSize[0].available > MIN_INSTANCE_REQUIREMENTS.freeSpace
         };
