@@ -167,15 +167,18 @@ scramjet-host              # starts host
 
 ## Publish
 
-Create a new release of the packages that have been updated.
-Prompts for a new version and updates all the packages on git and npm.
+To perform full publishing of packages with build and install perform
+the following commands:
 
 ```bash
-lerna publish
-```
-
-```bash
-yarn publish
+# <clone>
+yarn cache clean           # optional clean cache
+yarn install               # install dependencies
+yarn build:all-packages    # build all packages
+yarn bump:packages         # bump version prior to publishing
+yarn pack:pub              # prepare dist folder
+yarn publish:dist          # publish packages from dist
+git push --follow-tags
 ```
 
 ## How to run components
