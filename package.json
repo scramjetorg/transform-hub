@@ -1,6 +1,6 @@
 {
   "name": "scramjet-csi-dev",
-  "version": "0.10.0-pre.2",
+  "version": "0.10.0-pre.3",
   "private": true,
   "description": "A development repo for Scramjet CSI, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
