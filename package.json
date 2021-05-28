@@ -29,7 +29,7 @@
     "pack:pre": "LOCAL_PACKAGES=true lerna run prepack",
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true lerna run prepack",
     "packseq": "lerna run packseq",
-    "publish": "find dist/ -iname package.json -not -wholename '*node_modules*' -execDir yarn publish --no-git-tag-version --non-interactive \\;",
+    "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
     "lint": "eslint . --ext .ts",
     "lint:dedupe": "scripts/dedupe.js",
     "watch": "lerna run watch",
