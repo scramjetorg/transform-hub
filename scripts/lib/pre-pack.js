@@ -15,14 +15,15 @@ class PrePack {
             throw new Error("No output folder specified");
         }
 
-        console.log(...Object.entries(options).map(([k, v]) => `${k}=${v}`));
-
         this.currDir = process.cwd();
         this.rootDir = path.resolve(__dirname, "../..");
         this.currDirDist = path.join(this.currDir, "dist");
-        this.rootDistPackPath = !this.options.localCopy
-            ? this.currDir.replace(this.PACKAGES_DIR, this.options.outDir)
-            : this.currDirDist;
+
+        if (this.options.localCopy) {
+            this.rootDistPackPath = this.currDirDist;
+        } else {
+            this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
+        }
 
         this.rootPackageJson = null;
         this.currPackageJson = null;
@@ -32,6 +33,14 @@ class PrePack {
     async build() {
         try {
             await this.readPackageJson();
+            if (this.options.flatPkgs) {
+                if (!this.currPackageJson.name)
+                    throw new Error("Package has no name!");
+
+                this.rootDistPackPath = path.join(this.rootDir, "dist", this.currPackageJson.name.replace(/[^\w\d]+/g, "-").replace(/^\-|\-$/, ""));
+                console.log(this.rootDistPackPath);
+            }
+
             await this.readRootPackage();
             await this.makePackagesMap();
 
@@ -200,7 +209,8 @@ class PrePack {
             man, directories, config, peerDependencies,
             peerDependenciesMeta, bundledDependencies, optionalDependencies
         } = content;
-        const srcRe = str => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, ".js");
+        const priv = !this.options.public && this.rootPackageJson.private;
+        const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, rp);
         const main = srcRe(_main);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)
@@ -209,13 +219,18 @@ class PrePack {
                 // eslint-disable-next-line no-return-assign,no-sequences
                 .reduce((acc, [k, v]) => (acc[k] = srcRe(v), acc), {})
         );
+        const types = content.types || !_main || !_main.endsWith(".ts")
+            ? content.types
+            : srcRe(_main, ".d.ts")
+        ;
 
         return {
             name, version, description, keywords, homepage, bugs,
-            license, author, contributors, funding, files, main, browser,
-            bin, man, directories, repository, config, dependencies,
-            peerDependencies, peerDependenciesMeta, bundledDependencies, optionalDependencies,
-            engines, os, cpu, publishConfig
+            license, author, contributors, funding, files, main, types,
+            bin, man, directories, repository, config, browser,
+            dependencies, peerDependencies, peerDependenciesMeta,
+            bundledDependencies, optionalDependencies,
+            engines, os, cpu, private: priv, publishConfig
         };
     }
 
