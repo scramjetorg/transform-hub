@@ -24,8 +24,17 @@ export class ApiClient {
         return await this.get(getEventUrl);
     }
 
-    public async postStop(timeoutInMs: number, canCallKeepalive: boolean): Promise<any> {
-        const stopMethodUrl = `${this.apiBase}/sequence/_stop`;
+    // public async postStop(timeoutInMs: number, canCallKeepalive: boolean): Promise<any> {
+    //     const stopMethodUrl = `${this.apiBase}/sequence/_stop`;
+    //     const data = [4001, { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive }];
+
+    //     return await this.post(stopMethodUrl, data);
+    // }
+
+    public async postStop(id:string, timeoutInMs: number, canCallKeepalive: boolean): Promise<any> {
+        const stopMethodUrl = `instance/${id}/_stop`;
+
+        console.log("-------stopMethodUrl: ", stopMethodUrl);
         const data = [4001, { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive }];
 
         return await this.post(stopMethodUrl, data, "application/json");

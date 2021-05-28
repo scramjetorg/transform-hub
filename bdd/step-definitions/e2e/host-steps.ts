@@ -25,7 +25,7 @@ const createSequence = async (packagePath: string): Promise<{ id: string }> => {
     // eslint-disable-next-line no-extra-parens
     actualResponse = (await apiClient.postPackage(sequence) as any).data;
 
-    console.log("actualResponse: ", actualResponse);
+    // console.log("actualResponse: ", actualResponse);
 
     return actualResponse;
     // assert.equal(actualResponse.status, expectedHttpCode);

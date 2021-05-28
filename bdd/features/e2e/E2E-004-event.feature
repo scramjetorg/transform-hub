@@ -1,5 +1,7 @@
 Feature: Event e2e tests
 
+    #added to ignore because this scenario is based on host-one
+    @ignore
     Scenario: E2E-004 TC-001 Send test-event through API and get event emitted by sequence
         Given host one execute sequence in background "../packages/reference-apps/event-sequence.tar.gz"
         And host one process is working
