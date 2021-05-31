@@ -224,7 +224,6 @@ When("compare checksums of content sent from file {string}", async (filePath: st
     let hex: string;
 
     fs.readFile(filePath, function(err, data) {
-        const crypto = require("crypto");
 
         hex = crypto.createHash("md5").update(data).digest("hex");
     });
