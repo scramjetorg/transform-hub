@@ -1,0 +1,18 @@
+[
+{
+    "lang":"Japanese",
+    "desc":"スクラムジェットは、マルチスレッドをサポートするnode.jsストリーム上に記述された、高速でシンプルな無料のオープンソース関数型リアクティブストリームプログラミングフレームワークです。このコードは、ES7 async / await構文を使用してデータを簡単に変換する関数を連鎖させることによって記述されています。これは、マップ、フィルター、リデュースという3つのよく知られたJavaScript配列操作の背後にあるロジックに基づいて構築されています。スクラムジェット変換は非常に標準的で自然なため、すぐにコードを書き始めることができます。"
+},
+{
+    "lang":"Polish",
+    "desc":"Scramjet to szybki, prosty, darmowy i funkcjonalny framework do programowania strumieni reaktywnych o otwartym kodzie źródłowym, napisany na strumieniach node.js z obsługą wielowątkowości. Kod jest napisany przez łańcuch funkcji, które łatwo przekształcają dane za pomocą składni async / await ES7. Jest zbudowany na logice trzech dobrze znanych operacji tablicowych javascript: mapowania, filtrowania i redukcji. Transformacje Scramjet są tak standardowe i naturalne, że jesteśmy pewni, że możesz od razu rozpocząć pisanie kodu."
+},
+{
+    "lang":"Finish",
+    "desc":"Scramjet on nopea, yksinkertainen, ilmainen ja avoimen lähdekoodin toiminnallinen reaktiivisen virtauksen ohjelmointikehys, joka on kirjoitettu node.js-virtojen päälle monisäikeisen tuen avulla. Koodi kirjoitetaan ketjutustoiminnoilla, jotka muuttavat tietoja helposti ES7: n asynkronoinnilla / odottavat syntaksia. Se perustuu kolmen tunnetun javascript-matriisioperaation takana olevaan logiikkaan: kartoita, suodata ja pienennä. Scramjet-muunnokset ovat niin tavanomaisia ​​ja luonnollisia, että olemme varmoja, että voit aloittaa koodisi kirjoittamisen heti."
+},
+{
+    "lang":"Hebrew",
+    "desc":"Scramjet היא מסגרת תכנות זרם תגובתי פונקציונלית מהירה, פשוטה, חינמית ופתוחה, שנכתבה על גבי זרמי node.js עם תמיכה ברב-הברגה. הקוד נכתב על ידי פונקציות שרשור אשר הופכות נתונים בקלות בעזרת תחביר אסינכרון / ממתין ES7. זה בנוי על ההיגיון שמאחורי שלוש פעולות מערך JavaScript ידועות: מיפוי, סינון והקטנה. טרנספורמציות Scramjet הן כל כך סטנדרטיות וטבעיות שאנחנו בטוחים שתוכל להתחיל לכתוב את הקוד מיד."
+}
+]

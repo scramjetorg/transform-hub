@@ -1,0 +1,25 @@
+{
+  "name": "@scramjet/checksum-sequence",
+  "version": "0.10.0-pre.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && cp data.json dist/",
+    "prepack": "node ../../../scripts/publish.js",
+    "packseq": "node ../../../scripts/packsequence.js",
+    "clean": "rm -rf ./dist"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@scramjet/types": "^0.10.0-pre.1",
+    "@types/node": "^14.14.37"
+  },
+  "dependencies": {
+    "scramjet": "^4.35.12"
+  },
+  "publishConfig": {
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+    "access": "restricted"
+  }
+}

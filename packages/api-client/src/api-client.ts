@@ -15,7 +15,7 @@ export class ApiClient {
         const postEventUrl = `instance/${instanceId}/_event`;
         const data = [4005, { eventName: eventName, message: postMessage }];
 
-        return await this.post(postEventUrl, data);
+        return await this.post(postEventUrl, data, "application/json");
     }
 
     public async getEvent(instanceId: string): Promise<any> {
@@ -28,21 +28,27 @@ export class ApiClient {
         const stopMethodUrl = `${this.apiBase}/sequence/_stop`;
         const data = [4001, { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive }];
 
-        return await this.post(stopMethodUrl, data);
+        return await this.post(stopMethodUrl, data, "application/json");
     }
 
     public async postKill(): Promise<any> {
         const killMethodUrl = `${this.apiBase}/sequence/_kill`;
         const data = [4002, {}];
 
-        return await this.post(killMethodUrl, data);
+        return await this.post(killMethodUrl, data, "application/json");
+    }
+
+    public async postInput(id: string, data: any): Promise<any> {
+        const url = `instance/${id}/input`;
+
+        return await this.post(url, data, "application/octet-stream");
     }
 
     public async postMonitoringRate(): Promise<any> {
         const monitoringMethodUrl = `${this.apiBase}/sequence/_monitoring_rate`;
         const data = [4003, { monitoringRate: 2 }];//TODO implement message
 
-        return await this.post(monitoringMethodUrl, data);
+        return await this.post(monitoringMethodUrl, data, "application/json");
     }
 
     public async getHealth(): Promise<any> {
@@ -51,7 +57,7 @@ export class ApiClient {
         return await this.get(gethealthUrl);
     }
 
-    public async post(url: string, data: any): Promise<any> {
+    public async post(url: string, data: any, contentType: string): Promise<any> {
         let resp;
 
         try {
@@ -60,7 +66,7 @@ export class ApiClient {
                 url: `${this.apiBase}/` + url,
                 data: data,
                 headers: {
-                    "content-type": "application/json"
+                    "content-type": contentType
                 }
             });
         } catch (error) {

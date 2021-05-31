@@ -7,6 +7,7 @@ import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Stream } from "stream";
 
 import * as crypto from "crypto";
+import { promisify } from "util";
 
 const apiClient = new ApiClient();
 const hostUtils = new HostUtils();
@@ -80,7 +81,7 @@ When("instance started", async () => {
     instanceId = (await apiClient.post("sequence/" + actualResponse.id + "/start", {
         appConfig: {},
         args: ["/package/data.json"]
-    }) as any).data.id;
+    }, "application/json") as any).data.id;
 });
 
 When("instance started with arguments {string}", async (instanceArg: string) => {
@@ -88,7 +89,7 @@ When("instance started with arguments {string}", async (instanceArg: string) => 
     instanceId = (await apiClient.post("sequence/" + actualResponse.id + "/start", {
         appConfig: {},
         args: instanceArg.split(" ")
-    }) as any).data.id;
+    }, "application/json") as any).data.id;
 });
 
 When("get logs in background with instanceId", { timeout: 35000 }, async () => {
@@ -99,6 +100,7 @@ When("get logs in background with instanceId", { timeout: 35000 }, async () => {
 When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
     actualLogResponse = await streamToString(actualResponse);
+    console.log("-------------------" + actualLogResponse);
 });
 
 Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting, file2, suffix) => {
@@ -115,9 +117,6 @@ Then("response in every line contains {string} followed by name from file {strin
 
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
-
-// function call delay steps
-
 
 When("save response to file {string}", { timeout: 10000 }, async (outputFile) => {
     fs.writeFile(outputFile, actualLogResponse, function(err) {
@@ -210,3 +209,18 @@ Then("check if instances respond", { timeout: 60000 }, async () => {
         "Some instances are unresponsible."
     );
 });
+Given("file in the location {string} exists on hard drive", async (filename) => {
+    assert.ok(await promisify(fs.exists)(`${testPath}${filename}`));
+});
+
+When("send input from file {string}", async (filePath: string) => {
+
+    const readStream = fs.createReadStream(filePath);
+
+    console.log(filePath);
+
+    const status = (await apiClient.postInput(instanceId, readStream)).status;
+
+    assert.equal(status, 202);
+});
+
