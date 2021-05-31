@@ -11,15 +11,15 @@ export class ApiClient {
         this.apiBase = base;
     }
 
-    public async postEvent(eventName: string, postMessage: string): Promise<any> {
-        const postEventUrl = `${this.apiBase}/sequence/_event`;
+    public async postEvent(instanceId: string, eventName: string, postMessage: string): Promise<any> {
+        const postEventUrl = `instance/${instanceId}/_event`;
         const data = [4005, { eventName: eventName, message: postMessage }];
 
         return await this.post(postEventUrl, data);
     }
 
-    public async getEvent(): Promise<any> {
-        const getEventUrl = `${this.apiBase}/sequence/event`;
+    public async getEvent(instanceId: string): Promise<any> {
+        const getEventUrl = `${this.apiBase}/instance/${instanceId}/event`;
 
         return await this.get(getEventUrl);
     }

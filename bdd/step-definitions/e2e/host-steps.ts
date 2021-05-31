@@ -6,6 +6,8 @@ import { ApiClient } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Stream } from "stream";
 
+import * as crypto from "crypto";
+
 const apiClient = new ApiClient();
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
@@ -133,7 +135,8 @@ Then("response data is equal {string}", async (respNumber) => {
 
 const instanceIds = [];
 
-When("starts multiple sequences {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (sequence: string, hrs: number) => {
+// eslint-disable-next-line complexity
+When("starts at least {int} sequences {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (minNumber: number, sequence: string, hrs: number) => {
     // eslint-disable-next-line no-extra-parens
     const sequenceId = (await createSequence(sequence)).id;
     const data = {
@@ -170,16 +173,32 @@ When("starts multiple sequences {string} for {float} hours", { timeout: 3600 * 4
             console.log("Host is full. Total sequences started: ", instanceIds.length);
         }
     } while (accepted && !full);
+
+    if (instanceIds.length < minNumber) {
+        assert.fail();
+    }
 });
 
-Then("check if instances respond", async () => {
+Then("check if instances respond", { timeout: 60000 }, async () => {
     assert.ok(
-        (await Promise.all(instanceIds.map(id =>
-            new Promise(resolve => {
-                apiClient.getStreamByInstanceId(id, "output")
-                    .on("data", resolve);
-            })
-        ))).length,
+        await Promise.all(instanceIds.map(id =>
+            new Promise(async (resolve, reject) => {
+                const hash = crypto.randomBytes(20).toString("hex");
+
+                await apiClient.postEvent(id, "check", hash);
+                await new Promise(res => setTimeout(res, 2000));
+
+                try {
+                    const response = await apiClient.getEvent(id);
+
+                    if (response.data.message.asked === hash) {
+                        resolve();
+                    }
+                } catch (err) {
+                    reject();
+                }
+            }) as Promise<void>
+        )),
         "Some instances are unresponsible."
     );
 });

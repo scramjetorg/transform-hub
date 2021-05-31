@@ -2,6 +2,7 @@ import * as http from "http";
 import { IncomingMessage } from "http";
 import { PassThrough } from "stream";
 import { ReadableApp } from "@scramjet/types";
+import { StringStream } from "scramjet";
 
 const mockResponse = () => {
     const fakeData = new PassThrough();
@@ -33,20 +34,23 @@ let allocatedMem: Buffer;
  * @returns data
  */
 export = async function(_stream: any, ...args: any) {
-
-
     const allocMemSize = args[1];
 
     allocatedMem = Buffer.alloc(allocMemSize << 20, 0x1234);
 
-    const stream = new PassThrough();
+    const stream = new StringStream();
     const durationMs = args[0] * 1000;
     const files = args[2];
 
     console.log(`Args: [Duration: ${durationMs}, MemAlloc: ${allocMemSize}, Files: ${files}]`);
 
-    this.on("alive", () => {
-        stream.write("I'm ok!");
+    this.on("check", async (data) => {
+        this.emit(
+            "ok",
+            {
+                uptime: (Date.now() - startDate) / 1000,
+                asked: data
+            });
     });
 
     const loop = setInterval(async () => {
