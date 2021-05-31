@@ -32,17 +32,18 @@ const createSequence = async (packagePath: string): Promise<{ id: string }> => {
 };
 const streamToString = (stream: Stream): Promise<string> => {
     return new Promise((resolve, reject) => {
-        stream.on("data", (chunk) => {
+        stream.on("data", (chunk: { toString: () => string; }) => {
             chunks += chunk.toString();
         });
 
-        stream.on("error", (err) => { reject(err); });
+        stream.on("error", (err: any) => { reject(err); });
         stream.on("end", () => {
             resolve(chunks);
         });
     });
 };
 const getOutput = async () => {
+
     const expectedHttpCode = 200;
     const response = await callInLoopTillExpectedStatusCode(apiClient.getInstanceStream, apiClient, expectedHttpCode, instanceId, "output");
     const stream = new PassThrough();
@@ -50,7 +51,6 @@ const getOutput = async () => {
     response.pipe(stream);
 
     actualLogResponse = await streamToString(stream);
-
     assert.equal(response.statusCode, expectedHttpCode);
 };
 
@@ -58,7 +58,7 @@ Given("host started", async () => {
     await hostUtils.spawnHost();
 });
 
-When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs) => {
+When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
@@ -72,7 +72,7 @@ Then("host process is working", async () => {
     assert.equal(hostUtils.hostProcessStopped, false);
 });
 
-When("sequence {string} loaded", async (packagePath) => {
+When("sequence {string} loaded", async (packagePath: string) => {
     await createSequence(packagePath);
 });
 
@@ -103,11 +103,11 @@ When("get {string} in background with instanceId", { timeout: 500000 }, async (o
     console.log("-------------------" + actualLogResponse);
 });
 
-Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting, file2, suffix) => {
+Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
     const lines: string[] = actualLogResponse.split("\n");
 
-    let i;
+    let i: number;
 
     for (i = 0; i < input.length; i++) {
         const line1: string = input[i].name;
@@ -118,17 +118,17 @@ Then("response in every line contains {string} followed by name from file {strin
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-When("save response to file {string}", { timeout: 10000 }, async (outputFile) => {
+When("save response to file {string}", { timeout: 10000 }, async (outputFile: number | fs.PathLike) => {
     fs.writeFile(outputFile, actualLogResponse, function(err) {
         if (err) { console.log(err); }
     });
 });
 
-When("get output stream with long timeout", { timeout: 60000 }, async () => {
+When("get output stream with long timeout", { timeout: 200000 }, async () => {
     await getOutput();
 });
 
-Then("response data is equal {string}", async (respNumber) => {
+Then("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);
 });
 
@@ -213,14 +213,29 @@ Given("file in the location {string} exists on hard drive", async (filename) => 
     assert.ok(await promisify(fs.exists)(`${testPath}${filename}`));
 });
 
-When("send input from file {string}", async (filePath: string) => {
+Given("file in the location {string} exists on hard drive", async (filename: any) => {
+    assert.ok(await promisify(fs.exists)(filename));
+});
+
+When("compare checksums of content sent from file {string}", async (filePath: string) => {
 
     const readStream = fs.createReadStream(filePath);
 
-    console.log(filePath);
+    let hex: string;
+
+    fs.readFile(filePath, function(err, data) {
+        const crypto = require("crypto");
+
+        hex = crypto.createHash("md5").update(data).digest("hex");
+    });
 
     const status = (await apiClient.postInput(instanceId, readStream)).status;
 
+    await apiClient.postInput(instanceId, "null");
+    await getOutput();
+
     assert.equal(status, 202);
+    assert.equal(actualLogResponse, hex);
 });
+
 
