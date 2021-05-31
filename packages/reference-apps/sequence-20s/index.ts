@@ -13,7 +13,7 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
         let x = data?.x || 0;
 
         return async function*() {
-            while (x++ < 20) {
+            while (x++ < 2000) {
                 yield { a: x };
                 await new Promise(res => setTimeout(res, 1000));
             }

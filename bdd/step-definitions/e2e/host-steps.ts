@@ -26,7 +26,10 @@ const createSequence = async (packagePath: string): Promise<{ id: string }> => {
     actualResponse = (await apiClient.postPackage(sequence) as any).data;
 
     // console.log("actualResponse: ", actualResponse);
+<<<<<<< HEAD
 
+=======
+>>>>>>> Fix stop-feature
     return actualResponse;
     // assert.equal(actualResponse.status, expectedHttpCode);
 };
@@ -62,14 +65,15 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
+<<<<<<< HEAD
 When("wait for {float} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs) => {
     await new Promise(res => setTimeout(res, timeoutHrs * 3600 * 1000));
 });
+=======
+>>>>>>> Fix stop-feature
 
 Then("host process is working", async () => {
     await waitForValueTillTrue(hostUtils.hostProcessStopped);
-
-    assert.equal(hostUtils.hostProcessStopped, false);
 });
 
 When("sequence {string} loaded", async (packagePath: string) => {
@@ -90,6 +94,10 @@ When("instance started with arguments {string}", async (instanceArg: string) => 
         appConfig: {},
         args: instanceArg.split(" ")
     }, "application/json") as any).data.id;
+});
+
+Then("instance is working", async () => {
+    // TODO
 });
 
 When("get logs in background with instanceId", { timeout: 35000 }, async () => {
@@ -131,6 +139,7 @@ Then("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);
 });
 
+<<<<<<< HEAD
 const instanceIds = [];
 
 // eslint-disable-next-line complexity
@@ -234,3 +243,13 @@ When("compare checksums of content sent from file {string}", async (filePath: st
 });
 
 
+=======
+When("instance stopped with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
+    console.log("Stop message sent");
+    const resp = await apiClient.stopInstance(instanceId, timeout, canCallKeepalive === "true") as any;
+
+    assert.equal(resp.status, 202);
+
+    return resp;
+});
+>>>>>>> Fix stop-feature

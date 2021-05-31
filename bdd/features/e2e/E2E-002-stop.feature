@@ -37,15 +37,44 @@ Feature: Stop e2e tests
     #sequence process exited with code:  1  and signal:  null
     #issue created: https://github.com/scramjet-cloud-platform/scramjet-csi-dev/issues/201
 
-    Scenario: E2E-002 TC-004 Stop sequence process after 0s canKeepAlive true
+    Scenario: E2E-002 TC-004 Stop instance process after 0s canKeepAlive true
         Given host started
         And wait for "1000" ms
         And host process is working
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
-        And instance started with arguments "/package/data.json"
+        Then instance started with arguments "/package/data.json"
         And wait for "4000" ms
-        And send stop message with InstanceId with timeout "4000" and canKeepAlive "true"
-        # And send stop message with InstanceId with time-out "0" and canKeepAlive "true"
-        # And wait "4000" ms
-        # Then host one process is stopped
+        # Then instance is working
+        And instance stopped with arguments timeout 0 and canCallKeepAlive "true"
+        And wait "4000" ms
+        # Then instance is stopped/killed
+        And host process is working
+
+    Scenario: E2E-002 TC-005 Stop instance process after 0s canKeepAlive false
+        Given host started
+        And wait for "1000" ms
+        And host process is working
+        When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And wait for "4000" ms
+        Then instance started with arguments "/package/data.json"
+        And wait for "4000" ms
+        # Then instance is working
+        And instance stopped with arguments timeout 0 and canCallKeepAlive "false"
+        And wait "4000" ms
+        # Then instance is stopped/killed
+        And host process is working
+
+    Scenario: E2E-002 TC-006 Stop instance process after 4s canKeepAlive true
+        Given host started
+        And wait for "1000" ms
+        And host process is working
+        When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And wait for "4000" ms
+        Then instance started with arguments "/package/data.json"
+        And wait for "8000" ms
+        # Then instance is working
+        And instance stopped with arguments timeout 4000 and canCallKeepAlive "true"
+        And wait "4000" ms
+        # Then instance is stopped/killed
+        And host process is working
