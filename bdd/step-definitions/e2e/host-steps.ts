@@ -208,9 +208,6 @@ Then("check if instances respond", { timeout: 60000 }, async () => {
         "Some instances are unresponsible."
     );
 });
-Given("file in the location {string} exists on hard drive", async (filename) => {
-    assert.ok(await promisify(fs.exists)(`${testPath}${filename}`));
-});
 
 Given("file in the location {string} exists on hard drive", async (filename: any) => {
     assert.ok(await promisify(fs.exists)(filename));

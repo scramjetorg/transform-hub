@@ -98,7 +98,7 @@ export class ApiClient {
     }
 
     public async startSequence(sequenceId: string, sequenceArgs: Object) {
-        return this.post(`sequence/${sequenceId}/start`, sequenceArgs);
+        return this.post(`sequence/${sequenceId}/start`, sequenceArgs, "application/octet-stream");
     }
 
     private async get(url: string): Promise<any> {
