@@ -48,9 +48,9 @@ Feature: Kill e2e tests
         And wait for "4000" ms
         Then instance started with arguments "/package/data.json"
         And wait for "8000" ms
-        # And get logs in background
+        # And get logs in background with instanceId
         And wait "1000" ms
         Then send kill message to instance
         # Then instance is stopped
-        # And get from log response containerId
+        # And get from a log response containerId
         # And container is stopped

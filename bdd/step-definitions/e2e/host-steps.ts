@@ -5,17 +5,19 @@ import * as fs from "fs";
 import { ApiClient } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Stream } from "stream";
-
 import * as crypto from "crypto";
 import { promisify } from "util";
+import * as Dockerode from "dockerode";
 
 const apiClient = new ApiClient();
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
+const dockerode = new Dockerode();
 
 let actualResponse: any;
 let actualLogResponse: any;
 let instanceId: any;
+let containerId;
 let chunks = "";
 
 const createSequence = async (packagePath: string): Promise<{ id: string }> => {
@@ -93,14 +95,17 @@ Then("instance is working", async () => {
     // TODO
 });
 
-When("get logs in background with instanceId", { timeout: 35000 }, async () => {
+When("get logs in background with instanceId", { timeout: 10000 }, async () => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, "output");
     console.log("actualResponse: ", actualResponse);
+    actualLogResponse = await streamToString(actualResponse);
+    console.log("aaaaaaaaactualLogResponse: ", actualLogResponse);
 });
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
     actualLogResponse = await streamToString(actualResponse);
+    console.log("aaaaaaaaactualLogResponse: ", actualLogResponse);
 });
 
 Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
@@ -248,7 +253,37 @@ When("send kill message to instance", async () => {
 
     assert.equal(resp.status, 202);
 
-    return resp;
+    // return resp;
+});
+
+When("get from a log response containerId", { timeout: 31000 }, async () => {
+    const res = await actualLogResponse;
+    const rx = /Container id: ([^\n\r]*)/g;
+    const arr = res.match(rx);
+
+    containerId = arr[0];
+});
+
+When("container is stopped", async () => {
+    if (containerId && containerId.length > 0) {
+        assert.equal(typeof dockerode.getContainer(containerId), "object");
+    } else {
+        assert.fail("Varibale containerId is empty. Cannot verify if container is running. ");
+    }
+});
+
+When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
+    const resp = await apiClient.postEvent(instanceId, eventName, eventMessage);
+
+    assert.equal(resp.status, 202);
+});
+
+Then("get event from instance", { timeout: 5000 }, async () => {
+    const expectedHttpCode = 200;
+
+    actualResponse = await apiClient.getEvent(instanceId);
+    console.log("-----actualResponse: ", actualResponse);
+    assert.equal(actualResponse.status, expectedHttpCode);
 });
 
 Then("instance response body is {string}", async (expectedResp: string) => {

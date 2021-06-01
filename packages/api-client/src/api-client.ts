@@ -37,13 +37,6 @@ export class ApiClient {
         return await this.post(killMethodUrl, data, "application/json");
     }
 
-    public async postKill(): Promise<any> {
-        const killMethodUrl = `${this.apiBase}/sequence/_kill`;
-        const data = [4002, {}];
-
-        return await this.post(killMethodUrl, data, "application/json");
-    }
-
     public async postInput(id: string, data: any): Promise<any> {
         const url = `instance/${id}/input`;
 
