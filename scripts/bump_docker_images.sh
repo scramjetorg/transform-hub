@@ -8,8 +8,8 @@ IMAGE_CONFIG_JSON=(
     "${DIR}/../packages/csi-config/dist/image-config.json"
     "${DIR}/../dist/csi-config/image-config.json"
 )
-CURR_VER=$(jq -r .version < ${DIR}/../package.json)
-NEW_VER=$(npx semver -i prerelease ${CURR_VER})
+CURR_VER=$(jq -r .version < ${DIR}/../package.json) # current release
+NEW_VER=$(npx semver -i prerelease ${CURR_VER}) # new release
 
 for i in "${IMAGE_CONFIG_JSON[@]}"
 do
