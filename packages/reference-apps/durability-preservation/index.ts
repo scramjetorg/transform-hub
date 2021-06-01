@@ -1,4 +1,4 @@
-import * as http from "http";
+import * as http from "https";
 import { IncomingMessage } from "http";
 import { PassThrough } from "stream";
 import { ReadableApp } from "@scramjet/types";

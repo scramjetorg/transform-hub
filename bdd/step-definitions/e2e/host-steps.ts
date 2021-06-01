@@ -141,7 +141,15 @@ When("starts at least {int} sequences {string} for {float} hours", { timeout: 36
     const sequenceId = (await createSequence(sequence)).id;
     const data = {
         appConfig: {},
-        args: [hrs * 3600, 400, ["http://172.20.10.108:9000/file1.bin", "http://172.20.10.108:9000/file2.bin", "http://172.20.10.108:9000/file3.bin"]]
+        args: [
+            hrs * 3600,
+            400,
+            [
+                "https://repo.int.scp.ovh/repository/scp-store/durability-test/file1.bin",
+                "https://repo.int.scp.ovh/repository/scp-store/durability-test/file2.bin",
+                "https://repo.int.scp.ovh/repository/scp-store/durability-test/file3.bin"
+            ]
+        ]
     };
 
     let accepted = false;
