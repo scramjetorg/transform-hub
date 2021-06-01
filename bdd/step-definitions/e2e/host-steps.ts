@@ -100,7 +100,6 @@ When("get logs in background with instanceId", { timeout: 35000 }, async () => {
 When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
     actualLogResponse = await streamToString(actualResponse);
-    console.log("-------------------" + actualLogResponse);
 });
 
 Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
