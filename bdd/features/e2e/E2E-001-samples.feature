@@ -26,7 +26,7 @@ Feature: Sample e2e tests
         And host process is working
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
-        And instance started with arguments "/package/data.json"
-        And wait for "2000" ms
-        And get "output" in background with instanceId
-        And response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        # And instance started with arguments "/package/data.json"
+        # And wait for "2000" ms
+        # And get "output" in background with instanceId
+        # And response in every line contains "Hello " followed by name from file "data.json" finished by "!"

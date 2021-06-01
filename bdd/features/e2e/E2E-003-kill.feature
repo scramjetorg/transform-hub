@@ -39,3 +39,18 @@ Feature: Kill e2e tests
         Then host one process is stopped
         And get from log response containerId
         And container is stopped
+
+    Scenario: E2E-003 TC-004 Kill instance
+        Given host started
+        And wait for "1000" ms
+        And host process is working
+        When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And wait for "4000" ms
+        Then instance started with arguments "/package/data.json"
+        And wait for "8000" ms
+        # And get logs in background
+        And wait "1000" ms
+        Then send kill message to instance
+        # Then instance is stopped
+        # And get from log response containerId
+        # And container is stopped

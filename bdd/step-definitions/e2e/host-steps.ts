@@ -26,10 +26,6 @@ const createSequence = async (packagePath: string): Promise<{ id: string }> => {
     actualResponse = (await apiClient.postPackage(sequence) as any).data;
 
     // console.log("actualResponse: ", actualResponse);
-<<<<<<< HEAD
-
-=======
->>>>>>> Fix stop-feature
     return actualResponse;
     // assert.equal(actualResponse.status, expectedHttpCode);
 };
@@ -65,12 +61,9 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
-<<<<<<< HEAD
 When("wait for {float} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs) => {
     await new Promise(res => setTimeout(res, timeoutHrs * 3600 * 1000));
 });
-=======
->>>>>>> Fix stop-feature
 
 Then("host process is working", async () => {
     await waitForValueTillTrue(hostUtils.hostProcessStopped);
@@ -139,7 +132,6 @@ Then("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);
 });
 
-<<<<<<< HEAD
 const instanceIds = [];
 
 // eslint-disable-next-line complexity
@@ -242,9 +234,7 @@ When("compare checksums of content sent from file {string}", async (filePath: st
     assert.equal(actualLogResponse, hex);
 });
 
-
-=======
-When("instance stopped with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
+When("send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
     console.log("Stop message sent");
     const resp = await apiClient.stopInstance(instanceId, timeout, canCallKeepalive === "true") as any;
 
@@ -252,4 +242,21 @@ When("instance stopped with arguments timeout {int} and canCallKeepAlive {string
 
     return resp;
 });
->>>>>>> Fix stop-feature
+
+When("send kill message to instance", async () => {
+    const resp = await apiClient.killInstance(instanceId) as any;
+
+    assert.equal(resp.status, 202);
+
+    return resp;
+});
+
+Then("instance response body is {string}", async (expectedResp: string) => {
+    if (typeof actualResponse === "undefined"){
+        console.log("-----actualResponse is undefined");
+    } else {
+        console.log(`---------actualResponse.data is ${actualResponse.data}`);
+    }
+    assert.equal(actualResponse.data, expectedResp);
+});
+
