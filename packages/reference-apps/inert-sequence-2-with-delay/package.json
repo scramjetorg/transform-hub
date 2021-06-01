@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/reference-inert-2-with-delay",
-  "version": "0.10.0-pre.3",
+  "version": "0.10.0-pre.4",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.3",
+    "@scramjet/types": "^0.10.0-pre.4",
     "@types/node": "^14.14.37"
   },
   "publishConfig": {

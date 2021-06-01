@@ -175,8 +175,8 @@ the following commands:
 yarn cache clean           # optional clean cache
 yarn install               # install dependencies
 yarn build:all-packages    # build all packages
-yarn version               # bump version and docker images prior to publishing
-yarn postversion           # prepare dist folder, publish packages from dist, push git tags
+yarn bump:version          # bump version and docker images prior to publishing
+yarn bump:postversion      # prepare dist folder, publish packages from dist, push git tags
 ```
 
 ## How to run components

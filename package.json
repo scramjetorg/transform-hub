@@ -1,6 +1,6 @@
 {
   "name": "scramjet-csi-dev",
-  "version": "0.10.0-pre.3",
+  "version": "0.10.0-pre.4",
   "private": true,
   "description": "A development repo for Scramjet CSI, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
@@ -37,13 +37,13 @@
     "postinstall": "lerna exec yarn && lerna link",
     "bump:images": "CURR_VER=$(jq -r .version < package.json) && sed -i \"s|${CURR_VER}|$(npx semver -i prerelease ${CURR_VER})|\" ./packages/csi-config/src/image-config.json",
     "bump:packages": "CURR_VER=$(jq -r .version < package.json) && yarn version --new-version $(npx semver -i prerelease ${CURR_VER})",
-    "prebump:packages": "git diff --exit-code --quiet && lerna version -y --no-git-tag-version $(npx semver -i prerelease $(jq -r .version < package.json)) && git add .",
+    "prebump:packages": "git diff --exit-code --quiet && yarn bump:images && lerna version -y --no-git-tag-version $(npx semver -i prerelease $(jq -r .version < package.json)) && git add .",
     "test": "yarn test:parallel && yarn test:bdd",
     "test:packages": "lerna run test",
     "test:parallel": "lerna run test --parallel",
     "test:bdd": "yarn --cwd=./bdd run test:bdd",
-    "version": "yarn bump:images && yarn bump:packages",
-    "postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags"
+    "bump:version": "yarn bump:packages",
+    "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

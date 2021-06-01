@@ -1,11 +1,11 @@
 {
   "name": "scramjet-bdd",
-  "version": "0.10.0-pre.3",
+  "version": "0.10.0-pre.4",
   "description": "",
   "main": "_cucumber.js",
   "dependencies": {
     "@cucumber/cucumber": "^7.1.0",
-    "@scramjet/api-client": "^0.10.0-pre.3",
+    "@scramjet/api-client": "^0.10.0-pre.4",
     "axios": "^0.21.1",
     "dockerode": "^3.3.0",
     "n-readlines": "^1.0.1",

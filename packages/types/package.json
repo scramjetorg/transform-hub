@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/types",
-  "version": "0.10.0-pre.3",
+  "version": "0.10.0-pre.4",
   "description": "types.",
   "main": "./src/index.ts",
   "scripts": {
@@ -17,7 +17,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/symbols": "^0.10.0-pre.3"
+    "@scramjet/symbols": "^0.10.0-pre.4"
   },
   "devDependencies": {
     "@types/node": "14.14.33",
