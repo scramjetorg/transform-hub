@@ -34,12 +34,22 @@ test("Run main", async (t: any) => {
     const hookupFifoStreams = sinon.stub(runner, "hookupFifoStreams").callsFake(() => {
         // eslint-disable-next-line dot-notation
         runner["loggerStream"] = new DataStream().each(console.log);
-
+        runner["monitorStream"] = new Writable();
         return Promise.resolve([undefined, undefined, undefined, undefined, undefined]);
     });
     const sendHandshakeMessage = sinon.stub(runner, "sendHandshakeMessage");
 
-    await runner.main();
+    runner.getSequence = sinon.stub().returns([() => {}]);
+    runner.runSequence = sinon.stub().resolves();
+    runner.cleanup = sinon.stub().resolves();
+    runner.waitForHandshakeResponse = sinon.stub().resolves({
+        appConfig: {},
+        args: []
+    });
+
+    await runner.main().catch((e) => {
+        console.error(e);
+    });
 
     t.is(hookupFifoStreams.callCount, 1);
     t.is(sendHandshakeMessage.callCount, 1);
@@ -74,13 +84,21 @@ test("Stop sequence", async (t: any) => {
     });
 
     sinon.stub(runner, "sendHandshakeMessage");
+    runner.waitForHandshakeResponse = sinon.stub().resolves({
+        appConfig: {},
+        args: []
+    });
+    runner.cleanup = sinon.stub().resolves();
+    runner.getSequence = sinon.stub().returns([() => {}]);
 
     await runner.main();
 
     runner.initAppContext({ configKey: "configKeyValue" });
-    await runner.controlStreamHandler([RunnerMessageCode.STOP, {}]);
 
+    writeMessageOnStreamMock.reset();
+    await runner.controlStreamHandler([RunnerMessageCode.STOP, {}]);
     await new Promise(resolve => setTimeout(resolve, 200));
+
 
     t.true(
         writeMessageOnStreamMock.calledOnceWith(
