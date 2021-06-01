@@ -50,8 +50,8 @@ export class ApiClient {
         return await this.post(monitoringMethodUrl, data, "application/json");
     }
 
-    public async getHealth(): Promise<any> {
-        const gethealthUrl = `${this.apiBase}/sequence/health`;
+    public async getHealth(instanceId:string): Promise<any> {
+        const gethealthUrl = `${this.apiBase}/instance/${instanceId}/health`;
 
         return await this.get(gethealthUrl);
     }

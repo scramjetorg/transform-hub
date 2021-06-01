@@ -286,12 +286,21 @@ Then("get event from instance", { timeout: 5000 }, async () => {
     assert.equal(actualResponse.status, expectedHttpCode);
 });
 
+When("get instance health", async () => {
+    actualResponse = await apiClient.getHealth(instanceId);
+
+    assert.equal(actualResponse.status, 200);
+});
+
 Then("instance response body is {string}", async (expectedResp: string) => {
-    if (typeof actualResponse === "undefined"){
+    const healthy = JSON.stringify(actualResponse.data);
+
+    if (typeof actualResponse === "undefined") {
         console.log("-----actualResponse is undefined");
     } else {
         console.log(`---------actualResponse.data is ${actualResponse.data}`);
     }
-    assert.equal(actualResponse.data, expectedResp);
+    console.log("healthy: ", healthy);
+    assert.equal(healthy, expectedResp);
 });
 

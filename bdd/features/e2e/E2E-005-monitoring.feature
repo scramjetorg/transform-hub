@@ -19,3 +19,14 @@ Feature: Monitoring e2e tests
         When get sequence health
         And host one process is stopped
         Then response body is "{\"healthy\":false}"
+
+    Scenario: E2E-005 TC-003 Get monitoring from sequence where new handler method is added and returning: healthy false
+        Given host started
+        And wait for "1000" ms
+        And host process is working
+        When sequence "../packages/reference-apps/unhealthy-sequence.tar.gz" loaded
+        And wait for "4000" ms
+        Then instance started with arguments "/package/data.json"
+        And wait for "2000" ms
+        When get instance health
+        Then instance response body is "{\"healthy\":false}"
