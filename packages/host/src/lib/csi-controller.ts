@@ -84,12 +84,11 @@ export class CSIController extends EventEmitter {
     startSupervisor() {
         // eslint-disable-next-line no-extra-parens
         const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
+        const supervisorPath = require.resolve("@scramjet/supervisor");
 
-        let supervisorPath = "../../../dist/supervisor/bin/supervisor.js";
         let executable = process.execPath;
 
         if (isTSNode) {
-            supervisorPath = "../../../supervisor/src/bin/supervisor.ts";
             executable = "ts-node";
         }
 
