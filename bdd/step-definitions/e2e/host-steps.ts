@@ -310,3 +310,20 @@ Then("host stops", async () => {
     await hostUtils.stopHost();
 });
 
+Then("instance is stopped", { timeout: 10000 }, async () => {
+    const expectedHttpCode = 404;
+
+    actualResponse = await apiClient.getEvent(instanceId);
+    assert.notEqual(actualResponse.status, expectedHttpCode);
+
+    console.log("Instance is stopped");
+});
+
+Then("instance is running", { timeout: 10000 }, async () => {
+    const expectedHttpCode = 200;
+
+    actualResponse = await apiClient.getEvent(instanceId);
+    assert.equal(actualResponse.status, expectedHttpCode);
+
+    console.log("Instance is running");
+});

@@ -8,6 +8,7 @@ Feature: Start multiple instances
         Then check if instances respond
         Then host stops
 
+    @ignore
     Scenario: PT-003 TC-002 More than 25 instances work for long time
         Given host started
         And wait for "2000" ms
@@ -16,6 +17,7 @@ Feature: Start multiple instances
         Then check if instances respond
         Then host stops
 
+    @ignore
     Scenario: PT-003 TC-003 More than 25 instances work for long time
         Given host started
         And wait for "2000" ms

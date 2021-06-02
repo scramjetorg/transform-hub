@@ -24,6 +24,7 @@ Feature: Verify delay
         And host one process is stopped
         Then calculated avereage delay time is lower than "100000" ns
 
+    @ignore
     Scenario: PT-001 TC-003 Verify delay - quick
         Given host started
         And wait for "1000" ms
@@ -39,6 +40,7 @@ Feature: Verify delay
         Then calculated avereage delay time is lower than "100000" ns
         Then host stops
 
+    @ignore
     Scenario: PT-001 TC-004 Verify delay - long
         Given host started
         And wait for "1000" ms
