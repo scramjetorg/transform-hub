@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/sequence-with-error",
-  "version": "0.10.0-pre.6",
+  "version": "0.10.0-pre.7",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.6",
+    "@scramjet/types": "^0.10.0-pre.7",
     "@types/node": "^14.14.37"
   },
   "publishConfig": {
