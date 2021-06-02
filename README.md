@@ -30,6 +30,28 @@ yarn install
 
 It'll install all dependencies at once.
 
+
+## Development full build, global installation and execution
+
+```bash
+yarn clean
+yarn install
+yarn build:all-packages    # optionally build:all if you want all dockerfiles.
+yarn pack:pre              # moves files to ./dist/
+npm install -g ./dist/host # installs packages globally
+
+scramjet-host              # starts host
+```
+
+## Running a package from scratch
+
+Assuming that you have the host running (see above):
+
+```bash
+yarn packseq
+<finish here>
+```
+
 ## Commands
 
 Build all packages
@@ -153,17 +175,6 @@ Run an npm script in each package that contains that script.
 lerna run [script]
 ```
 
-## Development full build, global installation and execution
-
-```bash
-yarn clean
-yarn install
-yarn build:all-packages    # optionally build:all if you want all dockerfiles.
-yarn pack:pre              # moves files to ./dist/
-npm install -g ./dist/host # installs packages globally
-
-scramjet-host              # starts host
-```
 
 ## Publish
 
