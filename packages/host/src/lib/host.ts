@@ -65,9 +65,11 @@ export class Host implements IComponent {
 
         this.api.server.listen(this.port);
 
-        await new Promise(res => {
-            this.api?.server.once("listening", res);
-            this.logger.info("API listening on port:", this.port);
+        await new Promise<void>(res => {
+            this.api?.server.once("listening", () => {
+                this.logger.info("API listening on port:", this.port);
+                res();
+            });
         });
 
         this.attachListeners();
