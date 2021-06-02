@@ -47,10 +47,13 @@ Feature: Kill e2e tests
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
         Then instance started with arguments "/package/data.json"
-        And wait for "8000" ms
+        And wait for "2000" ms
         # And get logs in background with instanceId
         And wait "1000" ms
         Then send kill message to instance
+        # pobieram z zasobu /instances, w responsie nie powinno być id instancji którą uruchomiłam
+        # lub wysyłam geta do /event i sprawdzam czy zwraca mi status 404
         # Then instance is stopped
         # And get from a log response containerId
         # And container is stopped
+        # docker container ls

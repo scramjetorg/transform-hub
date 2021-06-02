@@ -16,12 +16,12 @@ Feature: Event e2e tests
         Given host started
         And wait for "1000" ms
         And host process is working
-        When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        When sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
         And wait for "6000" ms
-        Then instance started with arguments "/package/data.json"
+        Then instance started with arguments "20"
         And wait for "4000" ms
-        When send event "check" to instance with message "test message"
+        When send event "test-event" to instance with message "test message"
         And wait for "5000" ms
         Then get event from instance
         And wait for "3000" ms
-        # And instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
+        Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"

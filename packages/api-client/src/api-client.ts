@@ -31,7 +31,7 @@ export class ApiClient {
     }
 
     public async killInstance(instanceId: string) {
-        const killMethodUrl = `/instance/${instanceId}/_kill`;
+        const killMethodUrl = `instance/${instanceId}/_kill`;
         const data = [4002, {}];
 
         return await this.post(killMethodUrl, data, "application/json");
@@ -52,6 +52,12 @@ export class ApiClient {
 
     public async getHealth(instanceId:string): Promise<any> {
         const gethealthUrl = `${this.apiBase}/instance/${instanceId}/health`;
+
+        return await this.get(gethealthUrl);
+    }
+
+    public async getStatus(instanceId:string): Promise<any> {
+        const gethealthUrl = `${this.apiBase}/instance/${instanceId}/status`;
 
         return await this.get(gethealthUrl);
     }

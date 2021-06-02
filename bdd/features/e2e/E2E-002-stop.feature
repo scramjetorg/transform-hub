@@ -46,7 +46,7 @@ Feature: Stop e2e tests
         Then instance started with arguments "/package/data.json"
         And wait for "4000" ms
         # Then instance is working
-        And instance stopped with arguments timeout 0 and canCallKeepAlive "true"
+        And send stop message to instance with arguments timeout 0 and canCallKeepAlive "true"
         And wait "4000" ms
         # Then instance is stopped/killed
         And host process is working
@@ -60,7 +60,7 @@ Feature: Stop e2e tests
         Then instance started with arguments "/package/data.json"
         And wait for "4000" ms
         # Then instance is working
-        And instance stopped with arguments timeout 0 and canCallKeepAlive "false"
+        And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
         And wait "4000" ms
         # Then instance is stopped/killed
         And host process is working

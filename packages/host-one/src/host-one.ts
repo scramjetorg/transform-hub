@@ -216,7 +216,6 @@ export class HostOne implements IComponent {
         this.api = createServer(conf);
         this.api.server.listen(8000); // add .unref() or server will keep process up
         process.on("beforeExit", () => {
-            console.log("YYYYYYYYYYYYYYYY beforeExit TODELETE");
             this.api?.server?.close();
         });
         // stdio

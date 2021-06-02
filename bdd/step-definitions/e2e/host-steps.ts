@@ -95,17 +95,15 @@ Then("instance is working", async () => {
     // TODO
 });
 
-When("get logs in background with instanceId", { timeout: 10000 }, async () => {
+// not in use
+When("get logs in background with instanceId", { timeout: 20000 }, async () => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, "output");
-    console.log("actualResponse: ", actualResponse);
     actualLogResponse = await streamToString(actualResponse);
-    console.log("aaaaaaaaactualLogResponse: ", actualLogResponse);
 });
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
     actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
     actualLogResponse = await streamToString(actualResponse);
-    console.log("aaaaaaaaactualLogResponse: ", actualLogResponse);
 });
 
 Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
@@ -253,7 +251,7 @@ When("send kill message to instance", async () => {
 
     assert.equal(resp.status, 202);
 
-    // return resp;
+    return resp;
 });
 
 When("get from a log response containerId", { timeout: 31000 }, async () => {
@@ -273,36 +271,38 @@ When("container is stopped", async () => {
 });
 
 When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
-    // const resp = await apiClient.postEvent(instanceId, eventName, instanceId);
+    const resp = await apiClient.postEvent(instanceId, eventName, eventMessage);
 
-    await apiClient.postEvent(instanceId, eventName, eventMessage);
-
-    // assert.equal(resp.status, 202);
+    assert.equal(resp.status, 202);
 });
 
-Then("get event from instance", { timeout: 5000 }, async () => {
+Then("get event from instance", { timeout: 10000 }, async () => {
     const expectedHttpCode = 200;
 
     actualResponse = await apiClient.getEvent(instanceId);
-    console.log("-----actualResponse: ", actualResponse);
     assert.equal(actualResponse.status, expectedHttpCode);
 });
 
 When("get instance health", async () => {
     actualResponse = await apiClient.getHealth(instanceId);
-
     assert.equal(actualResponse.status, 200);
 });
+
+// When("get instance status", async () => {
+//     actualResponse = await apiClient.getStatus(instanceId);
+//     console.log("-----actualResponse: ", actualResponse);
+//     assert.equal(actualResponse.status, 200);
+// });
 
 Then("instance response body is {string}", async (expectedResp: string) => {
     const healthy = JSON.stringify(actualResponse.data);
 
     if (typeof actualResponse === "undefined") {
-        console.log("-----actualResponse is undefined");
+        console.log("actualResponse is undefined");
     } else {
-        console.log(`---------actualResponse.data is ${actualResponse.data}`);
+        console.log(`Response body is ${healthy}`);
     }
-    console.log("healthy: ", healthy);
+
     assert.equal(healthy, expectedResp);
 });
 
