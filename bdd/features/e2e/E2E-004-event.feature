@@ -25,3 +25,4 @@ Feature: Event e2e tests
         Then get event from instance
         And wait for "3000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
+        Then host stops

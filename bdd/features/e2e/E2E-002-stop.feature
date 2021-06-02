@@ -50,6 +50,7 @@ Feature: Stop e2e tests
         And wait "4000" ms
         # Then instance is stopped/killed
         And host process is working
+        Then host stops
 
     Scenario: E2E-002 TC-005 Stop instance process after 0s canKeepAlive false
         Given host started
@@ -64,6 +65,7 @@ Feature: Stop e2e tests
         And wait "4000" ms
         # Then instance is stopped/killed
         And host process is working
+        Then host stops
 
     Scenario: E2E-002 TC-006 Stop instance process after 4s canKeepAlive true
         Given host started
@@ -78,3 +80,4 @@ Feature: Stop e2e tests
         And wait "4000" ms
         # Then instance is stopped/killed
         And host process is working
+        Then host stops

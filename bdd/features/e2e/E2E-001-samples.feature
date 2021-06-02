@@ -30,3 +30,4 @@ Feature: Sample e2e tests
         And wait for "2000" ms
         And get "output" in background with instanceId
         And response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        Then host stops

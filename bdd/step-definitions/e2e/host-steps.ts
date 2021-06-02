@@ -306,3 +306,7 @@ Then("instance response body is {string}", async (expectedResp: string) => {
     assert.equal(healthy, expectedResp);
 });
 
+Then("host stops", async () => {
+    await hostUtils.stopHost();
+});
+

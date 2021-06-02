@@ -10,4 +10,5 @@ Feature: Verify the checksums of payloads are correct
         And instance started
         And wait for "2000" ms
         Then compare checksums of content sent from file "../dist/reference-apps/checksum-sequence/data.json"
+        Then host stops
 

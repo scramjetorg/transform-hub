@@ -10,9 +10,23 @@ export class HostUtils {
 
     async execHost(outputFile?: string) {
         await new Promise(async (resolve, reject) => {
-            //TODO package.json is app config, so should be optional in my opinion
             const cmdBase = `node ${hostExecutableFilePath}`;
             const cmd = outputFile ? cmdBase + `> ${outputFile}` : cmdBase;
+
+            exec(cmd, (error) => {
+                if (error) {
+                    reject(error);
+                    return;
+                }
+                resolve(1);
+            });
+        });
+    }
+
+    async stopHost() {
+        await new Promise(async (resolve, reject) => {
+
+            const cmd = "kill -9 $(lsof -t -i:8000)";
 
             exec(cmd, (error) => {
                 if (error) {

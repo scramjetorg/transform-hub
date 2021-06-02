@@ -15,6 +15,7 @@ Feature: Process large file test
         When get output stream long timeout
         And host one process is stopped
         Then response is equal "23435224"
+        Then host stops
 
     Scenario: PT-002 TC-003 Sequence processes file smaller than accessible RAM
         Given host started
@@ -25,5 +26,6 @@ Feature: Process large file test
         And instance started with arguments "https://repo.int.scp.ovh/repository/scp-store/example300M.json.gz"
         When get output stream with long timeout
         Then response data is equal "23435224"
+        Then host stops
 
 

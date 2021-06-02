@@ -57,3 +57,4 @@ Feature: Kill e2e tests
         # And get from a log response containerId
         # And container is stopped
         # docker container ls
+        Then host stops

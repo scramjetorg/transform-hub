@@ -27,9 +27,10 @@ Feature: Monitoring e2e tests
         When sequence "../packages/reference-apps/unhealthy-sequence.tar.gz" loaded
         And wait for "4000" ms
         Then instance started with arguments "/package/data.json"
-        And wait for "2000" ms
+        And wait for "3000" ms
         When get instance health
         Then instance response body is "{\"healthy\":false}"
+        Then host stops
 
     Scenario: E2E-005 TC-004 Get monitoring from sequence, should return default monitoring value: healthy true
         Given host started
@@ -41,3 +42,4 @@ Feature: Monitoring e2e tests
         And wait for "3000" ms
         When get instance health
         Then instance response body is "{\"healthy\":true}"
+        Then host stops
