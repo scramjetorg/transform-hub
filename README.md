@@ -45,11 +45,27 @@ scramjet-host              # starts host
 
 ## Running a package from scratch
 
-Assuming that you have the host running (see above):
+Assuming that you have the host running (see above), generate the tar.gz:
 
 ```bash
-yarn packseq
-<finish here>
+yarn packseq               # this creates tar.gz for all packages in the repo
+```
+
+Upload the package to the host
+
+```bash
+SEQ_ID=$( \
+    curl -H 'content-type: application/octet-stream' \
+    --data-binary '@packages/samples/hello-alice-out.tar.gz' \
+    "http://localhost:8000/api/v1/sequence" | jq ".id" -r \
+)
+```
+
+Start the sequence and see the output from it.
+
+```bash
+INSTANCE_ID=$(curl -H "Content-Type: application/json" --data-raw '{"appConfig": {},"args": ["/package/data.json"]}' http://localhost:8000/api/v1/sequence/$SEQ_ID/start | jq ".id" -r)
+curl -X GET -H "Content-Type: application/octet-stream" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/stdout"
 ```
 
 ## Commands
