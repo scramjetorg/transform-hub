@@ -9,6 +9,7 @@ import { mimeAccepts } from "../lib/mime";
 function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     const types = [];
 
+    console.log("~~~~~~~~~~~~~~~~~~", acc, text, json);
     if (text && json)
         types.push("text/x-ndjson", "application/x-ndjson");
     else if (json)
@@ -18,6 +19,7 @@ function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     else
         types.push("application/octet-stream");
 
+    console.log("~~~~~~~~~~~~~~~~~~", acc, types);
     return mimeAccepts(acc, types);
 }
 
@@ -84,6 +86,8 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     ): void => {
         router.post(path, async (req, res, next) => {
             try {
+                console.log("~~~~~~~~~~~~~~~~~?????", req.headers["content-type"], text, json);
+                console.log("~~~~~~~~~~~~~~~~~????? path ", path);
                 checkAccepts(req.headers["content-type"], text, json);
                 if (req.headers.expect === "100-continue") res.writeContinue();
 
