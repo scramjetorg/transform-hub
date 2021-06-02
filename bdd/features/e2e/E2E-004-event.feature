@@ -14,7 +14,6 @@ Feature: Event e2e tests
 
     Scenario: E2E-004 TC-002 Send test-event through API and get event emitted by sequence
         Given host started
-        And wait for "1000" ms
         And host process is working
         When sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
         And wait for "6000" ms

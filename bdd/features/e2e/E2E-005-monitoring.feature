@@ -22,7 +22,6 @@ Feature: Monitoring e2e tests
 
     Scenario: E2E-005 TC-003 Get monitoring from sequence where new handler method is added and returning: healthy false
         Given host started
-        And wait for "1000" ms
         And host process is working
         When sequence "../packages/reference-apps/unhealthy-sequence.tar.gz" loaded
         And wait for "4000" ms

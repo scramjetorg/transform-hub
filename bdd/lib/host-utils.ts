@@ -1,59 +1,55 @@
 import { strict as assert } from "assert";
-import { exec, spawn } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import { StringStream } from "scramjet";
 import { stdout } from "process";
+import { SIGTERM } from "constants";
+import { StringDecoder } from "string_decoder";
 
 const hostExecutableFilePath = "../dist/host/bin/start.js";
 
 export class HostUtils {
     hostProcessStopped = false;
-
-    async execHost(outputFile?: string) {
-        await new Promise(async (resolve, reject) => {
-            const cmdBase = `node ${hostExecutableFilePath}`;
-            const cmd = outputFile ? cmdBase + `> ${outputFile}` : cmdBase;
-
-            exec(cmd, (error) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve(1);
-            });
-        });
-    }
+    host: ChildProcess;
 
     async stopHost() {
-        await new Promise(async (resolve, reject) => {
-
-            const cmd = "kill -9 $(lsof -t -i:8000)";
-
-            exec(cmd, (error) => {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                resolve(1);
-            });
+        await new Promise<void>(async (resolve, reject) => {
+            if (this.host.kill(SIGTERM)) {
+                resolve();
+            } else {
+                reject();
+            }
         });
     }
 
-    spawnHost() {
-        const command: string[] = ["node", hostExecutableFilePath];
-        const host = spawn("/usr/bin/env", command);
+    async spawnHost() {
+        return new Promise<void>((resolve) => {
+            const command: string[] = ["node", hostExecutableFilePath];
 
-        this.hostProcessStopped = false;
-        //for debugging purposes
-        StringStream.from(host.stdout).pipe(stdout);
-        StringStream.from(host.stderr).pipe(stdout);
+            this.host = spawn("/usr/bin/env", command);
 
-        host.on("exit", (code, signal) => {
-            console.log("sequence process exited with code: ", code, " and signal: ", signal);
-            this.hostProcessStopped = true;
+            this.hostProcessStopped = false;
+            //for debugging purposes
+            StringStream.from(this.host.stdout).pipe(stdout);
+            StringStream.from(this.host.stderr).pipe(stdout);
 
-            if (code === 1) {
-                assert.fail();
-            }
+            const decoder = new StringDecoder();
+
+            this.host.stdout.on("data", (data) => {
+                const decodedData = decoder.write(data);
+
+                if (decodedData.match(/API listening on port/)) {
+                    resolve();
+                }
+            });
+
+            this.host.on("exit", (code, signal) => {
+                console.log("sequence process exited with code: ", code, " and signal: ", signal);
+                this.hostProcessStopped = true;
+
+                if (code === 1) {
+                    assert.fail();
+                }
+            });
         });
     }
 }

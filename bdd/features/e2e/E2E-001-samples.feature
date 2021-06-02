@@ -22,7 +22,6 @@ Feature: Sample e2e tests
 
     Scenario: E2E-001 TC-003 Execute hello-alice-out example for host
         Given host started
-        And wait for "1000" ms
         And host process is working
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms

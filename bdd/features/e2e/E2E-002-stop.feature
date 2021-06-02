@@ -39,7 +39,6 @@ Feature: Stop e2e tests
 
     Scenario: E2E-002 TC-004 Stop instance process after 0s canKeepAlive true
         Given host started
-        And wait for "1000" ms
         And host process is working
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
@@ -54,7 +53,6 @@ Feature: Stop e2e tests
 
     Scenario: E2E-002 TC-005 Stop instance process after 0s canKeepAlive false
         Given host started
-        And wait for "1000" ms
         And host process is working
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms

@@ -42,7 +42,6 @@ Feature: Kill e2e tests
 
     Scenario: E2E-003 TC-004 Kill instance
         Given host started
-        And wait for "1000" ms
         And host process is working
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
