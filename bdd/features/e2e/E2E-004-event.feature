@@ -20,8 +20,8 @@ Feature: Event e2e tests
         And wait for "6000" ms
         Then instance started with arguments "/package/data.json"
         And wait for "4000" ms
-        When send event "test-event" to instance with message "test message"
-        And wait for "3000" ms
+        When send event "check" to instance with message "test message"
+        And wait for "5000" ms
         Then get event from instance
         And wait for "3000" ms
-        # And response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
+        # And instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"

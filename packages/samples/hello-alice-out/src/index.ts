@@ -12,7 +12,15 @@ interface Person {
 
 // This method needs to expose a function that will be executed by the runner.
 const mod: InertApp = function(input, ffrom) {
-    this.on("test", () => console.error("Got test event"));
+    this.on("check", async (data) => {
+        console.log("OVER EMIT LOOOOOG");
+        this.emit(
+            "ok",
+            {
+                uptime: Date.now(),
+                asked: data
+            });
+    });
 
     this.logger.info("Sequence started");
 

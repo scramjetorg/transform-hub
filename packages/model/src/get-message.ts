@@ -56,7 +56,6 @@ export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode
     msgCode: X,
     msgData: MessageDataType<RunnerMessageCode>
 ): MessageDataType<X> => {
-    console.log("-------message code  && msgData:", msgCode, msgData);
     if (msgCode === RunnerMessageCode.KILL) {
         return msgData as MessageDataType<KillSequenceMessage>;
     }
