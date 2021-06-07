@@ -1,7 +1,6 @@
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
-import { StringStream } from "scramjet";
-import { stdout } from "process";
+
 import { SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 
@@ -29,8 +28,8 @@ export class HostUtils {
 
             this.hostProcessStopped = false;
             //for debugging purposes
-            StringStream.from(this.host.stdout).pipe(stdout);
-            StringStream.from(this.host.stderr).pipe(stdout);
+            //StringStream.from(this.host.stdout).pipe(stdout);
+            //StringStream.from(this.host.stderr).pipe(stdout);
 
             const decoder = new StringDecoder();
 

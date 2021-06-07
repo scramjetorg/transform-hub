@@ -12,7 +12,7 @@
     "scramjet": "^4.35.12"
   },
   "scripts": {
-    "test:bdd": "cucumber-js"
+    "test:bdd": "cucumber-js --fail-fast"
   },
   "private": true,
   "publishConfig": {

@@ -1,4 +1,4 @@
-import { Given, When, Then } from "@cucumber/cucumber";
+import { Given, When, Then, Before } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { callInLoopTillExpectedStatusCode, waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
@@ -20,6 +20,11 @@ let instanceId: any;
 let containerId;
 let chunks = "";
 
+Before(() => {
+    actualResponse = "";
+    actualLogResponse = "";
+});
+
 const createSequence = async (packagePath: string): Promise<{ id: string }> => {
     // const expectedHttpCode = 200;
     const sequence = fs.readFileSync(packagePath);
@@ -32,6 +37,8 @@ const createSequence = async (packagePath: string): Promise<{ id: string }> => {
     // assert.equal(actualResponse.status, expectedHttpCode);
 };
 const streamToString = (stream: Stream): Promise<string> => {
+    chunks = "";
+
     return new Promise((resolve, reject) => {
         stream.on("data", (chunk: { toString: () => string; }) => {
             chunks += chunk.toString();
@@ -101,8 +108,9 @@ When("get logs in background with instanceId", { timeout: 20000 }, async () => {
     actualLogResponse = await streamToString(actualResponse);
 });
 
-When("get {string} in background with instanceId", { timeout: 500000 }, async (output: string) => {
-    actualResponse = apiClient.getStreamByInstanceId(instanceId, output);
+
+When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: string) => {
+    actualResponse = apiClient.getStreamByInstanceId(instanceId, stream);
     actualLogResponse = await streamToString(actualResponse);
 });
 
