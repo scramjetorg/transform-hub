@@ -1,5 +1,6 @@
 Feature: Reference inert apps tests
 
+    @ignore
     Scenario: RA-001 TC-001 Run inert function js app
         Given run app "../dist/reference-apps/inert-function-js/index.js" and save output to "./reports/.work/inert-function-js.test.result.txt"
         Then output file "./reports/.work/inert-function-js.test.result.txt" contains
@@ -10,6 +11,7 @@ Feature: Reference inert apps tests
             { x: 4 }
             """
 
+    @ignore
     Scenario: RA-001 TC-002 Run inert function app
         Given run app "../dist/reference-apps/inert-function/index.js" and save output to "./reports/.work/inert-function.test.result.txt"
         Then output file "./reports/.work/inert-function.test.result.txt" contains
@@ -32,6 +34,7 @@ Feature: Reference inert apps tests
             { x: 4 }
             """
 
+    @ignore
     Scenario: RA-001 TC-004 Run inert sequence 2 app
         Given run app "../dist/reference-apps/inert-sequence-2/index.js" and save output to "./reports/.work/inert-sequence-2.test.result.txt"
         Then output file "./reports/.work/inert-sequence-2.test.result.txt" contains
@@ -42,6 +45,7 @@ Feature: Reference inert apps tests
             { x: 4 }
             """
 
+    @ignore
     Scenario: RA-001 TC-005 Run inert sequence 3 app
         Given run app "../dist/reference-apps/inert-sequence-3/index.js" and save output to "./reports/.work/inert-sequence-3.test.result.txt"
         Then output file "./reports/.work/inert-sequence-3.test.result.txt" contains
