@@ -1,9 +1,10 @@
 import axios from "axios";
+import { Stream } from "stream";
 
 export type Response = {
-    data: any;
+    data: Stream | any;
     status: any;
-}
+} | undefined;
 
 class ClientUtils {
     async get(url: string): Promise<Response> {
@@ -14,6 +15,26 @@ class ClientUtils {
                 headers: {
                     Accept: "*/*"
                 }
+            });
+        } catch (error) {
+            console.error("Error during sending request: ", error.message);
+            console.error(error);
+        }
+
+        return resp;
+    }
+
+    async getStream(url: string): Promise<Response> {
+        let resp;
+
+        try {
+            resp = await axios({
+                method: "GET",
+                url: url,
+                headers: {
+                    Accept: "*/*"
+                },
+                responseType: "stream"
             });
         } catch (error) {
             console.error("Error during sending request: ", error.message);
@@ -48,6 +69,12 @@ class ClientUtils {
         }
 
         return undefined;
+    }
+
+    async sendStream(url: string, stream: Stream | string): Promise<Response> {
+        return this.post(url, stream, {
+            "Content-type": "application/octet-stream"
+        });
     }
 }
 

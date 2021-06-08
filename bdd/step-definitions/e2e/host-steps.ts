@@ -1,15 +1,14 @@
 import { Given, When, Then, Before } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { callInLoopTillExpectedStatusCode, waitForValueTillTrue } from "../../lib/utils";
+import { waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
-import { ApiClient, HostClient, SequenceClient } from "@scramjet/api-client";
+import { HostClient, SequenceClient, InstanceClient, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
-import { PassThrough, Stream } from "stream";
+import { Stream } from "stream";
 import * as crypto from "crypto";
 import { promisify } from "util";
 import * as Dockerode from "dockerode";
 
-const apiClient = new ApiClient();
 const hostClient = new HostClient("http://localhost:8000/api/v1");
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
@@ -18,7 +17,7 @@ const dockerode = new Dockerode();
 let actualResponse: any;
 let sequence: SequenceClient;
 let actualLogResponse: any;
-let instanceId: any;
+let instance: InstanceClient;
 let containerId;
 let chunks = "";
 
@@ -41,6 +40,7 @@ const streamToString = (stream: Stream): Promise<string> => {
         });
     });
 };
+/*
 const getOutput = async () => {
 
     const expectedHttpCode = 200;
@@ -52,6 +52,7 @@ const getOutput = async () => {
     actualLogResponse = await streamToString(stream);
     assert.equal(response.statusCode, expectedHttpCode);
 };
+*/
 
 Given("host started", async () => {
     await hostUtils.spawnHost();
@@ -77,18 +78,12 @@ When("sequence {string} loaded", async (packagePath: string) => {
 
 When("instance started", async () => {
     // eslint-disable-next-line no-extra-parens
-    instanceId = (await apiClient.post("sequence/" + sequence.id + "/start", {
-        appConfig: {},
-        args: ["/package/data.json"]
-    }, "application/json") as any).data.id;
+    instance = await sequence.start({}, ["/package/data.json"]);
 });
 
 When("instance started with arguments {string}", { timeout: 25000 }, async (instanceArg: string) => {
     // eslint-disable-next-line no-extra-parens
-    instanceId = (await apiClient.post("sequence/" + sequence.id + "/start", {
-        appConfig: {},
-        args: instanceArg.split(" ")
-    }, "application/json") as any).data.id;
+    instance = await sequence.start({}, instanceArg.split(" "));
 });
 
 Then("instance is working", async () => {
@@ -98,13 +93,13 @@ Then("instance is working", async () => {
 // not in use
 When("get logs in background with instanceId", { timeout: 20000 }, async () => {
     actualLogResponse = await streamToString(
-        apiClient.getStreamByInstanceId(instanceId, "output")
+        (await instance.getStream("output")).data
     );
 });
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: string) => {
     actualLogResponse = await streamToString(
-        apiClient.getStreamByInstanceId(instanceId, stream)
+        (await instance.getStream(stream)).data
     );
 });
 
@@ -130,7 +125,11 @@ When("save response to file {string}", { timeout: 10000 }, async (outputFile: nu
 });
 
 When("get output stream with long timeout", { timeout: 200000 }, async () => {
-    await getOutput();
+    const stream: Response = await instance.getStream("output");
+
+    actualLogResponse = await streamToString(stream.data as Stream);
+
+
 });
 
 When("response data is equal {string}", async (respNumber: any) => {
@@ -142,7 +141,6 @@ Given("file in the location {string} exists on hard drive", async (filename: any
 });
 
 When("compare checksums of content sent from file {string}", async (filePath: string) => {
-
     const readStream = fs.createReadStream(filePath);
 
     let hex: string;
@@ -151,30 +149,28 @@ When("compare checksums of content sent from file {string}", async (filePath: st
         hex = crypto.createHash("md5").update(data).digest("hex");
     });
 
-    const status = (await apiClient.postInput(instanceId, readStream)).status;
+    const status = (await instance.sendInput(readStream)).status;
 
-    await apiClient.postInput(instanceId, "null");
-    await getOutput();
+    await instance.sendInput("null");
 
     assert.equal(status, 202);
-    assert.equal(actualLogResponse, hex);
+    assert.equal(
+        await streamToString((await instance.getStream("output")).data),
+        hex
+    );
 });
 
 When("send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
     console.log("Stop message sent");
-    const resp = await apiClient.stopInstance(instanceId, timeout, canCallKeepalive === "true") as any;
+    const resp = await instance.stop(timeout, canCallKeepalive === "true") as any;
 
     assert.equal(resp.status, 202);
-
-    return resp;
 });
 
 When("send kill message to instance", async () => {
-    const resp = await apiClient.killInstance(instanceId) as any;
+    const resp = await instance.kill();
 
     assert.equal(resp.status, 202);
-
-    return resp;
 });
 
 When("get containerId", { timeout: 31000 }, async () => {
@@ -220,7 +216,7 @@ When("container is not closed", async () => {
 });
 
 When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
-    const resp = await apiClient.postEvent(instanceId, eventName, eventMessage);
+    const resp = await instance.sendEvent(eventName, eventMessage);
 
     assert.equal(resp.status, 202);
 });
@@ -228,11 +224,12 @@ When("send event {string} to instance with message {string}", async (eventName, 
 Then("get event from instance", { timeout: 10000 }, async () => {
     const expectedHttpCode = 200;
 
-    actualResponse = await apiClient.getEvent(instanceId);
+    actualResponse = await instance.getEvent();
     assert.equal(actualResponse.status, expectedHttpCode);
 });
 
 When("get instance health", async () => {
+<<<<<<< HEAD
     if (typeof actualResponse === "undefined") {
         assert.equal(typeof actualResponse, "undefined");
         console.log("Instance is not working");
@@ -240,6 +237,10 @@ When("get instance health", async () => {
         actualResponse = await apiClient.getHealth(instanceId);
         assert.equal(actualResponse.status, 200);
     }
+=======
+    actualResponse = await instance.getHealth();
+    assert.equal(actualResponse.status, 200);
+>>>>>>> All current BDD tests are passing on new APIClient
 });
 
 // for event.feature
@@ -274,7 +275,7 @@ Then("host stops", async () => {
 Then("instance is stopped", { timeout: 10000 }, async () => {
     const expectedHttpCode = 404;
 
-    assert.notEqual((await apiClient.getEvent(instanceId)).status, expectedHttpCode);
+    assert.notEqual((await instance.getEvent()).status, expectedHttpCode);
 
     console.log("Instance is stopped");
 });
@@ -283,7 +284,7 @@ Then("instance is running", { timeout: 10000 }, async () => {
     const expectedHttpCode = 200;
 
     assert.equal(
-        (await apiClient.getEvent(instanceId)).status,
+        (await instance.getEvent()).status,
         expectedHttpCode
     );
 
