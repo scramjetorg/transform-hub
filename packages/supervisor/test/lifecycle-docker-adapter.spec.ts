@@ -186,6 +186,7 @@ test("Identify should return parsed response from stream.", async (t) => {
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
     const expectedResponse = {
+        config: {},
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,
         packageVolumeId: createdVolumeId,

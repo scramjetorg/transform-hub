@@ -197,6 +197,13 @@ export interface IDockerHelper {
     removeContainer: (containerId: DockerContainer) => Promise<void>;
 
     /**
+     * Lists exisiting volumes
+     *
+     * @returns {Promise<DockerVolume[]>} List of existing volumes
+     */
+     listVolumes: () => Promise<DockerVolume[]>;
+
+     /**
      * Creates volume.
      *
      * @param {string} name Volume name.

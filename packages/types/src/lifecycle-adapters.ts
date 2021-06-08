@@ -35,9 +35,9 @@ export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterMain {
      * Passes stream to PreRunner and resolves with PreRunner's results.
      *
      * @param {Readable} stream Stream with package.
-     * @returns {MaybePromise<RunnerConfig>}
+     * @returns {Promise<RunnerConfig>}
      */
-    identify(stream: Readable): MaybePromise<RunnerConfig>;
+    identify(stream: Readable): Promise<RunnerConfig>;
 }
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {

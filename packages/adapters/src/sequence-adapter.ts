@@ -10,9 +10,11 @@ import {
     RunnerConfig
 } from "@scramjet/types";
 import { rmdir } from "fs/promises";
+import { StringDecoder } from "string_decoder";
+import { DataStream } from "scramjet";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunResponse, IDockerHelper } from "./types";
+import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, IDockerHelper } from "./types";
 
 class LifecycleDockerAdapterSequence implements
 ILifeCycleAdapterMain,
@@ -31,7 +33,6 @@ IComponent {
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
-
         this.logger = getLogger(this);
     }
 
@@ -39,75 +40,114 @@ IComponent {
         this.imageConfig = await imageConfig();
     }
 
-    identify(stream: Readable): MaybePromise<RunnerConfig> {
-        return new Promise(async (resolve) => {
-            const volumes = [];
+    async list(): Promise<RunnerConfig[]> {
+        const potentialVolumes = await this.dockerHelper.listVolumes();
+        const res = await DataStream.from(potentialVolumes)
+            .setOptions({ maxParallel: 8 }) // config?
+            .map(volumeName => this.identifyOnly(volumeName))
+            .catch(() => undefined)
+            .toArray()
+        ;
 
-            if (development() && process.env.HOT_VOLUME) {
-                volumes.push(
-                    ...process.env.HOT_VOLUME
-                        .split(",")
-                        .map((volume) => volume.split(":"))
-                        .map(([bind, mountPoint]) => ({ mountPoint, bind }))
-                );
+        return res;
+    }
 
-                this.logger.warn("Using hot volume configuration", volumes);
-            } else {
-                this.logger.info("No hacks", development(), process.env.HOT_VOLUME);
-            }
+    async identifyOnly(volume: string): Promise<RunnerConfig> {
+        try {
+            const { streams, wait } = await this.dockerHelper.run({
+                imageName: this.imageConfig.prerunner || "",
+                volumes: [
+                    { mountPoint: "/package", volume },
+                ],
+                command: ["/app/identify.sh"],
+                autoRemove: true
+            });
 
-            try {
-                this.resources.volumeId = await this.dockerHelper.createVolume();
+            return await this.parsePackage(streams, wait);
+        } catch {
+            throw new SupervisorError("DOCKER_ERROR");
+        }
+    }
 
-                this.logger.log("Volume created. Id: ", this.resources.volumeId);
-            } catch (error) {
-                throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
-            }
+    private async readStreamedJSON(readable: Readable): Promise<any> {
+        const decoder = new StringDecoder("utf-8");
 
-            let runResult: DockerAdapterRunResponse;
+        let out = "";
 
-            try {
-                runResult = await this.dockerHelper.run({
-                    imageName: this.imageConfig.prerunner || "",
-                    volumes: [
-                        { mountPoint: "/package", volume: this.resources.volumeId },
-                        ...volumes
-                    ],
-                    autoRemove: true
-                });
-            } catch {
-                throw new SupervisorError("DOCKER_ERROR");
-            }
+        for await (const chunk of readable) {
+            out += decoder.write(chunk);
+        }
+        out += decoder.end();
 
+        return JSON.parse(out);
+    }
+
+    async identify(stream: Readable): Promise<RunnerConfig> {
+        const volumes = [];
+
+        if (development() && process.env.HOT_VOLUME) {
+            volumes.push(
+                ...process.env.HOT_VOLUME
+                    .split(",")
+                    .map((volume) => volume.split(":"))
+                    .map(([bind, mountPoint]) => ({ mountPoint, bind }))
+            );
+
+            this.logger.warn("Using hot volume configuration", volumes);
+        } else {
+            this.logger.info("No hacks", development(), process.env.HOT_VOLUME);
+        }
+
+        try {
+            this.resources.volumeId = await this.dockerHelper.createVolume();
+
+            this.logger.log("Volume created. Id: ", this.resources.volumeId);
+        } catch (error) {
+            throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
+        }
+
+        let runResult: DockerAdapterRunResponse;
+
+        try {
+            runResult = await this.dockerHelper.run({
+                imageName: this.imageConfig.prerunner || "",
+                volumes: [
+                    { mountPoint: "/package", volume: this.resources.volumeId },
+                    ...volumes
+                ],
+                autoRemove: true
+            });
+        } catch {
+            throw new SupervisorError("DOCKER_ERROR");
+        }
+
+        try {
             const { streams, wait } = runResult;
 
             stream.pipe(streams.stdin);
 
-            const preRunnerResponseChunks: Uint8Array[] = [];
+            return await this.parsePackage(streams, wait);
+        } catch {
+            throw new SupervisorError("PRERUNNER_ERROR", "Unable to parse data from pre-runner");
+        }
+    }
 
-            streams.stdout
-                .on("data", (chunk) => {
-                    preRunnerResponseChunks.push(Buffer.from(chunk));
-                })
-                .on("error", () => {
-                    throw new SupervisorError("PRERUNNER_ERROR");
-                })
-                .on("end", async () => {
-                    const res = JSON.parse(Buffer.concat(preRunnerResponseChunks).toString("utf8"));
+    private async parsePackage(streams: DockerAdapterStreams, wait: Function) {
+        const [res] = await Promise.all([
+            this.readStreamedJSON(streams.stdout as Readable),
+            wait
+        ]);
+        const engines = res.engines ? { ...res.engines } : {};
+        const config = res.config ? { ...res.config } : {};
 
-                    resolve({
-                        image: this.imageConfig.runner || "",
-                        version: res.version || "",
-                        engines: {
-                            ...res.engines
-                        },
-                        sequencePath: res.main,
-                        packageVolumeId: this.resources.volumeId
-                    });
-                });
-
-            await wait();
-        });
+        return {
+            image: this.imageConfig.runner || "",
+            version: res.version || "",
+            engines,
+            config,
+            sequencePath: res.main,
+            packageVolumeId: this.resources.volumeId
+        };
     }
 
     cleanup(): MaybePromise<void> {
