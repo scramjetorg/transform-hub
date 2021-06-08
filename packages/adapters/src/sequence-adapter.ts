@@ -14,7 +14,7 @@ import { StringDecoder } from "string_decoder";
 import { DataStream } from "scramjet";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, IDockerHelper } from "./types";
+import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 
 class LifecycleDockerAdapterSequence implements
 ILifeCycleAdapterMain,
@@ -67,9 +67,9 @@ IComponent {
 
             this.logger.debug(`Prerunner identify started for: ${volume}`);
 
-            const ret = await this.parsePackage(streams, wait);
+            const ret = await this.parsePackage(streams, wait, volume);
 
-            this.logger.debug(`Identified volume ${volume} as to be run with ${ret.image}`);
+            this.logger.info(`Identified volume ${volume} as to be run with ${ret.image}`);
 
             return ret;
         } catch {
@@ -92,13 +92,9 @@ IComponent {
     }
 
     async identify(stream: Readable): Promise<RunnerConfig> {
-        try {
-            this.resources.volumeId = await this.dockerHelper.createVolume();
+        const volumeId = await this.createVolume();
 
-            this.logger.log("Volume created. Id: ", this.resources.volumeId);
-        } catch (error) {
-            throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
-        }
+        this.logger.log("Volume created. Id: ", volumeId);
 
         let runResult: DockerAdapterRunResponse;
 
@@ -106,7 +102,7 @@ IComponent {
             runResult = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
                 volumes: [
-                    { mountPoint: "/package", volume: this.resources.volumeId }
+                    { mountPoint: "/package", volume: volumeId }
                 ],
                 autoRemove: true
             });
@@ -119,13 +115,23 @@ IComponent {
 
             stream.pipe(streams.stdin);
 
-            return await this.parsePackage(streams, wait);
+            return await this.parsePackage(streams, wait, volumeId);
         } catch {
             throw new SupervisorError("PRERUNNER_ERROR", "Unable to parse data from pre-runner");
         }
     }
 
-    private async parsePackage(streams: DockerAdapterStreams, wait: Function) {
+    private async createVolume(): Promise<DockerVolume> {
+        try {
+            const volumeId = await this.dockerHelper.createVolume();
+
+            return volumeId;
+        } catch (error) {
+            throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
+        }
+    }
+
+    private async parsePackage(streams: DockerAdapterStreams, wait: Function, volumeId: DockerVolume) {
         const [res] = await Promise.all([
             this.readStreamedJSON(streams.stdout as Readable),
             wait
@@ -139,7 +145,7 @@ IComponent {
             engines,
             config,
             sequencePath: res.main,
-            packageVolumeId: this.resources.volumeId
+            packageVolumeId: volumeId
         };
     }
 
