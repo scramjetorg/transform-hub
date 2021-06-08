@@ -15,6 +15,11 @@ import { InstanceStore } from "./instance-store";
 
 import { fakeLoadCheck } from "./fake-load-check";
 import { ReasonPhrases } from "http-status-codes";
+
+export type HostOptions = Partial<{
+    identifyExisiting: boolean
+}>;
+
 export class Host implements IComponent {
     api: APIExpose;
 
@@ -50,7 +55,7 @@ export class Host implements IComponent {
         }
     }
 
-    async main() {
+    async main({ identifyExisiting = true }: HostOptions = {}) {
         addLoggerOutput(process.stdout);
 
         this.logger.info("Host main called.");
@@ -61,7 +66,8 @@ export class Host implements IComponent {
             console.error(error.message);
         }
 
-        await this.identifyExistingSequences();
+        if (identifyExisiting)
+            await this.identifyExistingSequences();
 
         await this.socketServer.start();
 
