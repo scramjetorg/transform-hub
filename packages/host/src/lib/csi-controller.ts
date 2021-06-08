@@ -98,8 +98,8 @@ export class CSIController extends EventEmitter {
         this.superVisorProcess = spawn(executable, command);
 
         // TODO: remove
-        //this.superVisorProcess.stdout?.pipe(process.stdout);
-        //this.superVisorProcess.stderr?.pipe(process.stderr);
+        this.superVisorProcess.stdout?.pipe(process.stdout);
+        this.superVisorProcess.stderr?.pipe(process.stderr);
     }
 
     supervisorStopped(): Promise<ExitCode> {
@@ -145,8 +145,8 @@ export class CSIController extends EventEmitter {
         this.communicationHandler.pipeDataStreams();
 
         // TODO: remove
-        //this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
-
+        this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
+        this.upStreams[CommunicationChannel.MONITORING].pipe(process.stdout);
         const controlDataStream = new DataStream();
 
         controlDataStream

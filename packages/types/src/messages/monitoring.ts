@@ -29,6 +29,8 @@ export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
 
     /** The number of transmitted bytes. */
     networkTx?: number;
+
+    containerId?: string;
 }
 
 /**

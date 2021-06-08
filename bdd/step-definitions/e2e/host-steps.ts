@@ -90,7 +90,7 @@ When("instance started", async () => {
     }, "application/json") as any).data.id;
 });
 
-When("instance started with arguments {string}", async (instanceArg: string) => {
+When("instance started with arguments {string}", { timeout: 25000 }, async (instanceArg: string) => {
     // eslint-disable-next-line no-extra-parens
     instanceId = (await apiClient.post("sequence/" + actualResponse.id + "/start", {
         appConfig: {},
@@ -307,6 +307,8 @@ When("get instance health", async () => {
 
 Then("instance response body is {string}", async (expectedResp: string) => {
     const healthy = JSON.stringify(actualResponse.data);
+
+    console.log("+++++++++++++ actualResponse: ", actualResponse);
 
     if (typeof actualResponse === "undefined") {
         console.log("actualResponse is undefined");
