@@ -14,6 +14,9 @@ RUN apt-get update \
   /usr/share/doc
 
 WORKDIR /app
+COPY --chown=prerunner:prerunner ./env.sh .
+COPY --chown=prerunner:prerunner ./unpack.sh .
+COPY --chown=prerunner:prerunner ./identify.sh .
 COPY --chown=prerunner:prerunner ./unpack-identify.sh .
 USER prerunner
 CMD [ "./unpack-identify.sh" ]
