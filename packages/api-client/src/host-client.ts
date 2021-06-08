@@ -44,4 +44,8 @@ export class HostClient {
     getInstance(instanceId: string) {
         throw new Error("Method not implemented");
     }
+
+    getLoadCheck() {
+        return clientUtils.get(`${this.apiBase}/load-check`);
+    }
 }

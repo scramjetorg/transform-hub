@@ -1,4 +1,4 @@
-import { ApiClient, HostClient } from "@scramjet/api-client";
+import { HostClient } from "@scramjet/api-client";
 import { When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 
@@ -6,14 +6,13 @@ import * as crypto from "crypto";
 import * as fs from "fs";
 import { InstanceClient } from "@scramjet/api-client/src/instance-client";
 
-const apiClient = new ApiClient();
 const hostClient = new HostClient("http://localhost:8000/api/v1");
 const instances: InstanceClient[] = [];
 
 // eslint-disable-next-line complexity
-When("starts at least {int} sequences {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (minNumber: number, seq: string, hrs: number) => {
+When("starts at least {int} sequences from file {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (minNumber: number, seq: string, hrs: number) => {
     // eslint-disable-next-line no-extra-parens
-    const sequenceClient = await hostClient.sendSequence(fs.readFileSync(seq));
+    const sequence = await hostClient.sendSequence(fs.readFileSync(seq));
     const data = {
         appConfig: {},
         args: [
@@ -27,39 +26,38 @@ When("starts at least {int} sequences {string} for {float} hours", { timeout: 36
         ]
     };
 
-    let accepted = false;
-    let full = false;
+    let rejected = false;
 
     do {
         // eslint-disable-next-line no-loop-func
-        await new Promise(res => { setTimeout(res, 5000); });
-        accepted = false;
+        await new Promise(res => { setTimeout(res, 1000); });
+        rejected = false;
 
-        const loadCheck = await apiClient.getHostLoadCheck();
+        const loadCheck = await hostClient.getLoadCheck();
 
         // eslint-disable-next-line no-extra-parens
         if ((loadCheck as any).status !== 200 || loadCheck.data.memFree < (512 << 20)) {
-            full = true;
+            rejected = true;
         } else {
-            const instance = await sequenceClient.start(data.appConfig, data.args);
+            const instance = await sequence.start(data.appConfig, data.args);
 
             if (instance) {
                 instances.push(instance);
-                accepted = true;
+                rejected = false;
             } else {
-                full = true;
+                rejected = true;
             }
         }
 
-        if (full) {
-            console.log("Host is full. Total sequences started: ", instances.length);
+        if (rejected) {
+            console.log("Sequence rejected. Total sequences started: ", instances.length);
         }
 
         if (instances.length > minNumber) {
             break;
         }
 
-    } while (accepted && !full);
+    } while (!rejected);
 
     if (instances.length < minNumber) {
         assert.fail();

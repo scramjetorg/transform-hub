@@ -128,8 +128,6 @@ When("get output stream with long timeout", { timeout: 200000 }, async () => {
     const stream: Response = await instance.getStream("output");
 
     actualLogResponse = await streamToString(stream.data as Stream);
-
-
 });
 
 When("response data is equal {string}", async (respNumber: any) => {
