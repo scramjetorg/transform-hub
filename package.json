@@ -40,7 +40,7 @@
     "prebump:packages": "git diff --exit-code --quiet && yarn bump:images && lerna version -y --no-git-tag-version $(npx semver -i prerelease $(jq -r .version < package.json)) && git add .",
     "test": "yarn test:parallel && yarn test:bdd",
     "test:packages": "lerna run test",
-    "test:parallel": "lerna run test --parallel",
+    "test:parallel": "lerna run test --concurrency=8",
     "test:bdd": "yarn --cwd=./bdd run test:bdd",
     "bump:version": "yarn bump:packages",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags"
