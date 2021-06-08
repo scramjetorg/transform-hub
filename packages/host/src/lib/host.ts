@@ -61,6 +61,8 @@ export class Host implements IComponent {
             console.error(error.message);
         }
 
+        await this.identifyExistingSequences();
+
         await this.socketServer.start();
 
         this.api.server.listen(this.port);
@@ -135,6 +137,29 @@ export class Host implements IComponent {
         return {
             opStatus: await this.sequencesStore.delete(id)
         };
+    }
+
+    async identifyExistingSequences() {
+        this.logger.info("Listing exiting sequences");
+        const ldas = new LifecycleDockerAdapterSequence();
+
+        try {
+            await ldas.init();
+            this.logger.debug("LDAS initialized, listing");
+            const sequences = await ldas.list();
+
+            for (const sequenceConfig of sequences) {
+                const sequence = new Sequence(
+                    IDProvider.generate(),
+                    sequenceConfig
+                );
+
+                this.sequencesStore.add(sequence);
+                this.logger.log("Sequence found:", sequence.config);
+            }
+        } catch (e) {
+            this.logger.warn("Error while trying to identify existing sequences", e);
+        }
     }
 
     async handleNewSequence(stream: IncomingMessage) {

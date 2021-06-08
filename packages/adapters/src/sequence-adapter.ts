@@ -1,4 +1,4 @@
-import { development, imageConfig } from "@scramjet/csi-config";
+import { imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
 import { SupervisorError } from "@scramjet/model";
 import {
@@ -46,6 +46,7 @@ IComponent {
             .setOptions({ maxParallel: 8 }) // config?
             .map(volumeName => this.identifyOnly(volumeName))
             .catch(() => undefined)
+            // eslint-disable-next-line no-extra-parens
             .toArray()
         ;
 
@@ -53,6 +54,7 @@ IComponent {
     }
 
     async identifyOnly(volume: string): Promise<RunnerConfig> {
+        this.logger.info(`Attempting to identify volume: ${volume}`);
         try {
             const { streams, wait } = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
@@ -63,8 +65,15 @@ IComponent {
                 autoRemove: true
             });
 
-            return await this.parsePackage(streams, wait);
+            this.logger.debug(`Prerunner identify started for: ${volume}`);
+
+            const ret = await this.parsePackage(streams, wait);
+
+            this.logger.debug(`Identified volume ${volume} as to be run with ${ret.image}`);
+
+            return ret;
         } catch {
+            this.logger.error("Docker failed!");
             throw new SupervisorError("DOCKER_ERROR");
         }
     }
@@ -83,21 +92,6 @@ IComponent {
     }
 
     async identify(stream: Readable): Promise<RunnerConfig> {
-        const volumes = [];
-
-        if (development() && process.env.HOT_VOLUME) {
-            volumes.push(
-                ...process.env.HOT_VOLUME
-                    .split(",")
-                    .map((volume) => volume.split(":"))
-                    .map(([bind, mountPoint]) => ({ mountPoint, bind }))
-            );
-
-            this.logger.warn("Using hot volume configuration", volumes);
-        } else {
-            this.logger.info("No hacks", development(), process.env.HOT_VOLUME);
-        }
-
         try {
             this.resources.volumeId = await this.dockerHelper.createVolume();
 
@@ -112,8 +106,7 @@ IComponent {
             runResult = await this.dockerHelper.run({
                 imageName: this.imageConfig.prerunner || "",
                 volumes: [
-                    { mountPoint: "/package", volume: this.resources.volumeId },
-                    ...volumes
+                    { mountPoint: "/package", volume: this.resources.volumeId }
                 ],
                 autoRemove: true
             });

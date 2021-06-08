@@ -32,6 +32,12 @@ export interface ILifeCycleAdapterMain {
 
 export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterMain {
     /**
+     * Identifies exising sequences
+     *
+     * @returns {Promise<RunnerConfig[]>} found packages
+     */
+    list(): Promise<RunnerConfig[]>;
+    /**
      * Passes stream to PreRunner and resolves with PreRunner's results.
      *
      * @param {Readable} stream Stream with package.

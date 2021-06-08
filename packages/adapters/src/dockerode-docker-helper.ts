@@ -75,6 +75,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @param envs Environmen variables to be set in container.
      * @param autoRemove Indicates that container should be auto-removed on exit.
      * @param maxMem Memory available for container (bytes).
+     * @param command Optional command
      * @returns Created container id.
      */
     async createContainer(
@@ -83,9 +84,10 @@ export class DockerodeDockerHelper implements IDockerHelper {
         binds: string[] = [],
         envs: string[] = [],
         autoRemove: boolean = false,
-        maxMem: number = 64 * 1024 * 1024 // TODO: Container configuration
+        maxMem: number = 64 * 1024 * 1024, // TODO: Container configuration
+        command?: string[]
     ): Promise<DockerContainer> {
-        const { id } = await this.dockerode.createContainer({
+        const config: Dockerode.ContainerCreateOptions = {
             Image: dockerImage,
             AttachStdin: true,
             AttachStdout: true,
@@ -101,7 +103,11 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 Memory: maxMem,
                 MemorySwap: 0
             }
-        });
+        };
+
+        if (command) config.Cmd = [...command];
+
+        const { id } = await this.dockerode.createContainer(config);
 
         return id;
     }
@@ -170,6 +176,12 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getVolume(volumeName).remove();
     }
 
+    async listVolumes() {
+        const { Volumes } = await this.dockerode.listVolumes();
+
+        return Volumes.map(volume => volume.Name);
+    }
+
     /**
      * Attaches to container streams.
      *
@@ -200,7 +212,9 @@ export class DockerodeDockerHelper implements IDockerHelper {
             config.binds,
             config.envs,
             config.autoRemove,
-            config.maxMem);
+            config.maxMem,
+            config.command
+        );
         // ------
         const stream = await this.attach(container, {
             stream: true,
