@@ -2,7 +2,7 @@
     "name": "@scramjet/api-client",
     "version": "0.10.0-pre.7",
     "description": "Important model of the scramjet platform",
-    "main": "./src/api-client.ts",
+    "main": "./src/index.ts",
     "scripts": {
         "start": "ts-node ./src/index",
         "build": "tsc -p tsconfig.build.json",

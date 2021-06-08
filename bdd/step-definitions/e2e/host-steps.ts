@@ -2,19 +2,23 @@ import { Given, When, Then, Before } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { callInLoopTillExpectedStatusCode, waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
-import { ApiClient } from "@scramjet/api-client";
+import { ApiClient, HostClient } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Stream } from "stream";
 import * as crypto from "crypto";
 import { promisify } from "util";
 import * as Dockerode from "dockerode";
+import { SequenceClient } from "@scramjet/api-client/src/sequence-client";
+
 
 const apiClient = new ApiClient();
+const hostClient = new HostClient("http://localhost:8000/api/v1");
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
 const dockerode = new Dockerode();
 
 let actualResponse: any;
+let sequence: SequenceClient;
 let actualLogResponse: any;
 let instanceId: any;
 let containerId;
@@ -25,17 +29,6 @@ Before(() => {
     actualLogResponse = "";
 });
 
-const createSequence = async (packagePath: string): Promise<{ id: string }> => {
-    // const expectedHttpCode = 200;
-    const sequence = fs.readFileSync(packagePath);
-
-    // eslint-disable-next-line no-extra-parens
-    actualResponse = (await apiClient.postPackage(sequence) as any).data;
-
-    // console.log("actualResponse: ", actualResponse);
-    return actualResponse;
-    // assert.equal(actualResponse.status, expectedHttpCode);
-};
 const streamToString = (stream: Stream): Promise<string> => {
     chunks = "";
 
@@ -79,12 +72,14 @@ When("host process is working", async () => {
 });
 
 When("sequence {string} loaded", async (packagePath: string) => {
-    await createSequence(packagePath);
+    sequence = await hostClient.sendSequence(
+        fs.readFileSync(packagePath)
+    );
 });
 
 When("instance started", async () => {
     // eslint-disable-next-line no-extra-parens
-    instanceId = (await apiClient.post("sequence/" + actualResponse.id + "/start", {
+    instanceId = (await apiClient.post("sequence/" + sequence.id + "/start", {
         appConfig: {},
         args: ["/package/data.json"]
     }, "application/json") as any).data.id;
@@ -92,7 +87,7 @@ When("instance started", async () => {
 
 When("instance started with arguments {string}", { timeout: 25000 }, async (instanceArg: string) => {
     // eslint-disable-next-line no-extra-parens
-    instanceId = (await apiClient.post("sequence/" + actualResponse.id + "/start", {
+    instanceId = (await apiClient.post("sequence/" + sequence.id + "/start", {
         appConfig: {},
         args: instanceArg.split(" ")
     }, "application/json") as any).data.id;
@@ -104,14 +99,15 @@ Then("instance is working", async () => {
 
 // not in use
 When("get logs in background with instanceId", { timeout: 20000 }, async () => {
-    actualResponse = apiClient.getStreamByInstanceId(instanceId, "output");
-    actualLogResponse = await streamToString(actualResponse);
+    actualLogResponse = await streamToString(
+        apiClient.getStreamByInstanceId(instanceId, "output")
+    );
 });
 
-
 When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: string) => {
-    actualResponse = apiClient.getStreamByInstanceId(instanceId, stream);
-    actualLogResponse = await streamToString(actualResponse);
+    actualLogResponse = await streamToString(
+        apiClient.getStreamByInstanceId(instanceId, stream)
+    );
 });
 
 When("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
@@ -146,9 +142,9 @@ When("response data is equal {string}", async (respNumber: any) => {
 const instanceIds = [];
 
 // eslint-disable-next-line complexity
-When("starts at least {int} sequences {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (minNumber: number, sequence: string, hrs: number) => {
+When("starts at least {int} sequences {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (minNumber: number, seq: string, hrs: number) => {
     // eslint-disable-next-line no-extra-parens
-    const sequenceId = (await createSequence(sequence)).id;
+    const sequenceClient = await hostClient.sendSequence(fs.readFileSync(seq));
     const data = {
         appConfig: {},
         args: [
@@ -176,7 +172,7 @@ When("starts at least {int} sequences {string} for {float} hours", { timeout: 36
         if ((loadCheck as any).status !== 200 || loadCheck.data.memFree < (512 << 20)) {
             full = true;
         } else {
-            const startSeqResponse = await apiClient.startSequence(sequenceId, data) as any;
+            const startSeqResponse = await apiClient.startSequence(sequenceClient.id, data) as any;
 
             accepted = startSeqResponse && startSeqResponse.data && startSeqResponse.data.id;
 
@@ -362,8 +358,7 @@ Then("host stops", async () => {
 Then("instance is stopped", { timeout: 10000 }, async () => {
     const expectedHttpCode = 404;
 
-    actualResponse = await apiClient.getEvent(instanceId);
-    assert.notEqual(actualResponse.status, expectedHttpCode);
+    assert.notEqual((await apiClient.getEvent(instanceId)).status, expectedHttpCode);
 
     console.log("Instance is stopped");
 });
@@ -371,8 +366,10 @@ Then("instance is stopped", { timeout: 10000 }, async () => {
 Then("instance is running", { timeout: 10000 }, async () => {
     const expectedHttpCode = 200;
 
-    actualResponse = await apiClient.getEvent(instanceId);
-    assert.equal(actualResponse.status, expectedHttpCode);
+    assert.equal(
+        (await apiClient.getEvent(instanceId)).status,
+        expectedHttpCode
+    );
 
     console.log("Instance is running");
 });
