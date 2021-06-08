@@ -29,6 +29,7 @@ Feature: Monitoring e2e tests
         And wait for "3000" ms
         When get instance health
         Then instance response body is "{\"healthy\":false}"
+        And wait for "3000" ms
         Then host stops
 
     Scenario: E2E-005 TC-004 Get monitoring from sequence, should return default monitoring value: healthy true
@@ -41,4 +42,5 @@ Feature: Monitoring e2e tests
         And wait for "3000" ms
         When get instance health
         Then instance response body is "{\"healthy\":true}"
+        And wait for "3000" ms
         Then host stops

@@ -27,6 +27,9 @@ Feature: Sample e2e tests
         And wait for "4000" ms
         And instance started with arguments "/package/data.json"
         And wait for "2000" ms
+        When get instance health
+        Then instance response body is "{\"healthy\":true}"
         And get "output" in background with instanceId
+        And wait for "3000" ms
         And response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         Then host stops

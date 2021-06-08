@@ -2,6 +2,8 @@ import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 
 import { SIGTERM } from "constants";
+import { stdout } from "process";
+import { StringStream } from "scramjet";
 import { StringDecoder } from "string_decoder";
 
 const hostExecutableFilePath = "../dist/host/bin/start.js";
@@ -28,8 +30,8 @@ export class HostUtils {
 
             this.hostProcessStopped = false;
             //for debugging purposes
-            //StringStream.from(this.host.stdout).pipe(stdout);
-            //StringStream.from(this.host.stderr).pipe(stdout);
+            StringStream.from(this.host.stdout).pipe(stdout);
+            StringStream.from(this.host.stderr).pipe(stdout);
 
             const decoder = new StringDecoder();
 

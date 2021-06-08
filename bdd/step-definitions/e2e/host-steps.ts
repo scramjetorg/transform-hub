@@ -197,7 +197,7 @@ When("starts at least {int} sequences {string} for {float} hours", { timeout: 36
     }
 });
 
-Then("check if instances respond", { timeout: 60000 }, async () => {
+Then("check if instances are responsive", { timeout: 60000 }, async () => {
     assert.ok(
         await Promise.all(instanceIds.map(id =>
             new Promise(async (resolve, reject) => {

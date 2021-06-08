@@ -5,7 +5,7 @@ Feature: Start multiple instances
         And wait for "2000" ms
         When starts at least 2 sequences "../packages/reference-apps/durability-preservation.tar.gz" for .25 hours
         When wait for .1 hours
-        Then check if instances respond
+        Then check if instances are responsive
         Then host stops
 
     @ignore
@@ -14,7 +14,7 @@ Feature: Start multiple instances
         And wait for "2000" ms
         When starts at least 25 sequences "../packages/reference-apps/durability-preservation.tar.gz" for 2 hours
         When wait for 1 hours
-        Then check if instances respond
+        Then check if instances are responsive
         Then host stops
 
     @ignore
@@ -23,7 +23,7 @@ Feature: Start multiple instances
         And wait for "2000" ms
         When starts at least 25 sequences "../packages/reference-apps/durability-preservation.tar.gz" for 25 hours
         When wait for 24 hours
-        Then check if instances respond
+        Then check if instances are responsive
         Then host stops
 
 

@@ -48,7 +48,6 @@ Feature: Stop e2e tests
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "true"
         And wait "4000" ms
         # Then instance is stopped/killed
-        And host process is working
         Then host stops
 
     Scenario: E2E-002 TC-005 Stop instance process after 0s canKeepAlive false
@@ -60,9 +59,8 @@ Feature: Stop e2e tests
         And wait for "4000" ms
         # Then instance is working
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
-        And wait "4000" ms
+        And wait for "4000" ms
         # Then instance is stopped/killed
-        And host process is working
         Then host stops
 
     Scenario: E2E-002 TC-006 Stop instance process after 4s canKeepAlive true
@@ -72,10 +70,14 @@ Feature: Stop e2e tests
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
         Then instance started with arguments "/package/data.json"
-        And wait for "8000" ms
-        # Then instance is working
-        And send stop message to instance with arguments timeout 4000 and canCallKeepAlive "true"
-        And wait "4000" ms
+        And wait for "4000" ms
+        When get instance health
+        Then instance response body is "{\"healthy\":true}"
+        And send stop message to instance with arguments timeout 8000 and canCallKeepAlive "true"
+        And wait for "4000" ms
+        When get instance health
+        Then instance response body is "{\"healthy\":true}"
+        And wait for "4000" ms
         # Then instance is stopped/killed
-        And host process is working
+        # And wait for "4000" ms
         Then host stops
