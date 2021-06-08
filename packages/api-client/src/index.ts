@@ -1,4 +1,5 @@
 import { HostClient } from "./host-client";
-import { ApiClient } from "./api-client";
+import { InstanceClient } from "./instance-client";
+import { SequenceClient } from "./sequence-client";
 
-export { ApiClient, HostClient };
+export { HostClient, InstanceClient, SequenceClient };
