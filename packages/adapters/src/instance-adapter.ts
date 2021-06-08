@@ -141,7 +141,8 @@ IComponent {
                     memoryMaxUsage: stats.memory_stats?.max_usage,
                     memoryUsage: stats.memory_stats?.usage,
                     networkRx: stats.networks?.eth0?.rx_bytes,
-                    networkTx: stats.networks?.eth0?.tx_bytes
+                    networkTx: stats.networks?.eth0?.tx_bytes,
+                    containerId: this.resources.containerId
                 };
             }
         }

@@ -180,9 +180,8 @@ class LifeCycleController implements IComponent {
 
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
                 message[1] = await this.lifecycleAdapterRun.stats(message[1]);
-
                 return message;
-            });
+            }, true);
 
             /*
             * When the stop message comes from the CSH via the control stream

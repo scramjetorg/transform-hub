@@ -319,6 +319,18 @@ Then("instance response body is {string}", async (expectedResp: string) => {
     assert.equal(healthy, expectedResp);
 });
 
+Then("instance health is {string}", async (expectedResp: string) => {
+    const healthy = JSON.stringify(actualResponse?.data?.healthy);
+
+    if (typeof actualResponse === "undefined") {
+        console.log("actualResponse is undefined");
+    } else {
+        console.log(`Response body is ${healthy}`);
+    }
+
+    assert.equal(healthy, expectedResp);
+});
+
 Then("host stops", async () => {
     await hostUtils.stopHost();
 });
