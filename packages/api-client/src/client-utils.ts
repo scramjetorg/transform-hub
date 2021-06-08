@@ -23,13 +23,15 @@ class ClientUtils {
         return resp;
     }
 
-    async post(url: string, data: any, headers?: object): Promise<Response> {
+    async post(url: string, data: any, headers?: object): Promise<Response | undefined> {
         let response: any;
+
+        headers = headers || {};
 
         try {
             response = await axios({
                 method: "POST",
-                url,
+                url: url,
                 data,
                 headers
             });
@@ -38,10 +40,14 @@ class ClientUtils {
             console.error(error);
         }
 
-        return {
-            status: response.status,
-            data: response.data
-        };
+        if (response) {
+            return {
+                status: response.status,
+                data: response.data
+            };
+        }
+
+        return undefined;
     }
 }
 

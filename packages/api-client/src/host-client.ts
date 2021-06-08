@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { SequenceClient } from "./sequence-client";
-import { clientUtils } from "./utils";
+import { clientUtils } from "./client-utils";
 
 export class HostClient {
-    apiBase: string = "http://localhost:8000/api/v1";
+    apiBase: string;
 
     constructor(apiBase: string) {
         this.apiBase = apiBase;
@@ -21,12 +21,16 @@ export class HostClient {
         throw new Error("Method not implemented");
     }
 
-    async sendSequence(sequencePackage: Buffer) {
-        const sequenceId = (await clientUtils.post(`${this.apiBase}/sequence`, sequencePackage, {
+    async sendSequence(sequencePackage: Buffer): Promise<SequenceClient | undefined> {
+        const response = await clientUtils.post(`${this.apiBase}/sequence`, sequencePackage, {
             "content-type":"application/octet-stream"
-        })).data.id;
+        });
 
-        return new SequenceClient(sequenceId);
+        if (response) {
+            return new SequenceClient(response.data.id, { apiBase: this.apiBase });
+        }
+        return undefined;
+
     }
 
     getSequence(sequenceId: string) {
