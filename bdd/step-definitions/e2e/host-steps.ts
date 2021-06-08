@@ -219,6 +219,10 @@ Then("check if instances respond", { timeout: 60000 }, async () => {
         )),
         "Some instances are unresponsible."
     );
+
+    await Promise.all(instanceIds.map(id =>
+        apiClient.stopInstance(id, 0, false)
+    ));
 });
 
 Given("file in the location {string} exists on hard drive", async (filename: any) => {
@@ -232,7 +236,6 @@ When("compare checksums of content sent from file {string}", async (filePath: st
     let hex: string;
 
     fs.readFile(filePath, function(err, data) {
-
         hex = crypto.createHash("md5").update(data).digest("hex");
     });
 
