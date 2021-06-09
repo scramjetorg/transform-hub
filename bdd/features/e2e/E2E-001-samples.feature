@@ -29,6 +29,8 @@ Feature: Sample e2e tests
         And wait for "2000" ms
         And get "output" in background with instanceId
         When get instance health
+        And get containerId
+        And container is not closed
         Then instance health is "true"
         And wait for "2000" ms
         And response in every line contains "Hello " followed by name from file "data.json" finished by "!"

@@ -268,26 +268,48 @@ When("send kill message to instance", async () => {
 When("get containerId", { timeout: 31000 }, async () => {
     const res = actualResponse?.data?.containerId;
 
-    containerId = res + "";
-    console.log("ContainerID identified: ", res);
+    containerId = res;
+
 });
 
-// When("container is stopped", async () => {
-//     if (containerId && containerId.length > 0) {
-//         assert.equal(typeof dockerode.getContainer(containerId), "object");
-//     } else {
-//         assert.fail("Varibale containerId is empty. Cannot verify if container is running. ");
-//     }
-// });
-
 When("container is closed", async () => {
-    if (containerId && containerId.length > 0) {
-        assert.equal(typeof dockerode.getContainer(containerId), "object");
-        console.log("typeof: ", typeof dockerode.getContainer(containerId));
-        console.log("-------Container is closed");
-    } else {
-        assert.fail("Varibale containerId is empty. Cannot verify if container is running. ");
-    }
+
+    console.log("~~~~~~~~~~~~~ containerId: " + containerId);
+
+    const containers = await dockerode.listContainers();
+
+    let containerExist = false;
+
+    containers.forEach(containerInfo => {
+        console.log("~~~~~~~~~~~~~~~ containerInfo: " + JSON.stringify(containerInfo));
+
+        if (containerInfo.Id.includes(containerId)) {
+            containerExist = true;
+        }
+    });
+
+    assert.equal(containerExist, false);
+
+});
+
+When("container is not closed", async () => {
+
+    console.log("~~~~~~~~~~~~~ containerId: " + containerId);
+
+    const containers = await dockerode.listContainers();
+
+    let containerExist = false;
+
+    containers.forEach(containerInfo => {
+        console.log("~~~~~~~~~~~~~~~ containerInfo: " + JSON.stringify(containerInfo));
+
+        if (containerInfo.Id.includes(containerId)) {
+            containerExist = true;
+        }
+    });
+
+    assert.equal(containerExist, true);
+
 });
 
 When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
