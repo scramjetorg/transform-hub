@@ -3,9 +3,12 @@
   "version": "0.10.0-pre.10",
   "main": "index",
   "types": "dist/index",
+  "assets": ["data.json"],
   "scripts": {
     "test": "echo \"Error: no test specified\"",
-    "build": "tsc -p tsconfig.json && cp data.json dist/",
+    "build": "yarn build:sample",
+    "build:sample": "tsc -p tsconfig.json",
+    "postbuild:sample": "LOCAL_COPY=true yarn prepack",
     "clean": "rm -rf ./dist",
     "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.json",
@@ -15,11 +18,13 @@
     "packseq": "node ../../../scripts/packsequence.js"
   },
   "engines": {
-    "node": ">=10",
-    "scramjet": ">=0.9"
+    "node": ">=10"
   },
   "scramjet": {
-    "image": "node"
+    "image": "node",
+    "config": {
+      "--test": false
+    }
   },
   "author": "Signicode <open-source@signicode.com>",
   "license": "GPL-3.0",

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "prepack": "node ../../../scripts/publish.js",
-    "build": "tsc -p tsconfig.json",
+    "build:refapps": "tsc -p tsconfig.json",
+    "postbuild:refapps": "LOCAL_COPY=true yarn prepack",
     "packseq": "node ../../../scripts/packsequence.js",
     "clean": "rm -rf ./dist"
   },

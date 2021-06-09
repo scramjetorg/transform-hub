@@ -3,8 +3,10 @@
   "version": "0.10.0-pre.10",
   "description": "",
   "main": "index.js",
+  "assets": ["data.json"],
   "scripts": {
-    "build": "tsc -p tsconfig.json && cp data.json dist/",
+    "build:refapps": "tsc -p tsconfig.json",
+    "postbuild:refapps": "LOCAL_COPY=true yarn prepack",
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js",
     "clean": "rm -rf ./dist"

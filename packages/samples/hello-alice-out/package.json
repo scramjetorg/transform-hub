@@ -5,7 +5,9 @@
   "types": "dist/index",
   "scripts": {
     "test": "echo \"Error: no test specified\"",
-    "build": "tsc -p tsconfig.json && cp data.json dist/",
+    "build": "yarn build:sample",
+    "build:sample": "tsc -p tsconfig.json",
+    "postbuild:sample": "LOCAL_COPY=true yarn prepack",
     "clean": "rm -rf ./dist",
     "watch": "tsc -b --watch",
     "compile": "tsc -p tsconfig.json",
@@ -15,8 +17,7 @@
     "packseq": "node ../../../scripts/packsequence.js"
   },
   "engines": {
-    "node": ">=10",
-    "scramjet": ">=0.9"
+    "node": ">=10"
   },
   "scramjet": {
     "image": "node"

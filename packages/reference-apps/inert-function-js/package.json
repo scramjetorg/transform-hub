@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "mkdir -p dist/ && cp index.js dist/",
+    "build:refapps": "mkdir -p dist/ && cp index.js dist/",
+    "postbuild:refapps": "LOCAL_COPY=true yarn prepack",
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js",
     "clean": "rm -rf ./dist"
