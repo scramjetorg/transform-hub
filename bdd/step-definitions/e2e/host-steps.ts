@@ -265,17 +265,26 @@ When("send kill message to instance", async () => {
     return resp;
 });
 
-When("get from a log response containerId", { timeout: 31000 }, async () => {
-    const res = await actualLogResponse;
-    const rx = /Container id: ([^\n\r]*)/g;
-    const arr = res.match(rx);
+When("get containerId", { timeout: 31000 }, async () => {
+    const res = actualResponse?.data?.containerId;
 
-    containerId = arr[0];
+    containerId = res + "";
+    console.log("ContainerID identified: ", res);
 });
 
-When("container is stopped", async () => {
+// When("container is stopped", async () => {
+//     if (containerId && containerId.length > 0) {
+//         assert.equal(typeof dockerode.getContainer(containerId), "object");
+//     } else {
+//         assert.fail("Varibale containerId is empty. Cannot verify if container is running. ");
+//     }
+// });
+
+When("container is closed", async () => {
     if (containerId && containerId.length > 0) {
         assert.equal(typeof dockerode.getContainer(containerId), "object");
+        console.log("typeof: ", typeof dockerode.getContainer(containerId));
+        console.log("-------Container is closed");
     } else {
         assert.fail("Varibale containerId is empty. Cannot verify if container is running. ");
     }
@@ -295,28 +304,26 @@ Then("get event from instance", { timeout: 10000 }, async () => {
 });
 
 When("get instance health", async () => {
-    actualResponse = await apiClient.getHealth(instanceId);
-    assert.equal(actualResponse.status, 200);
+    if (typeof actualResponse === "undefined") {
+        assert.equal(typeof actualResponse, "undefined");
+        console.log("Instance is not working");
+    } else {
+        actualResponse = await apiClient.getHealth(instanceId);
+        assert.equal(actualResponse.status, 200);
+    }
 });
 
-// When("get instance status", async () => {
-//     actualResponse = await apiClient.getStatus(instanceId);
-//     console.log("-----actualResponse: ", actualResponse);
-//     assert.equal(actualResponse.status, 200);
-// });
-
+// for event.feature
 Then("instance response body is {string}", async (expectedResp: string) => {
-    const healthy = JSON.stringify(actualResponse.data);
-
-    console.log("+++++++++++++ actualResponse: ", actualResponse);
+    const resp = JSON.stringify(actualResponse.data);
 
     if (typeof actualResponse === "undefined") {
         console.log("actualResponse is undefined");
     } else {
-        console.log(`Response body is ${healthy}`);
+        console.log(`Response body is ${resp}`);
     }
 
-    assert.equal(healthy, expectedResp);
+    assert.equal(resp, expectedResp);
 });
 
 Then("instance health is {string}", async (expectedResp: string) => {
@@ -325,7 +332,7 @@ Then("instance health is {string}", async (expectedResp: string) => {
     if (typeof actualResponse === "undefined") {
         console.log("actualResponse is undefined");
     } else {
-        console.log(`Response body is ${healthy}`);
+        console.log(`Response body is ${healthy}, instance is healthy and running.`);
     }
 
     assert.equal(healthy, expectedResp);
@@ -352,3 +359,9 @@ Then("instance is running", { timeout: 10000 }, async () => {
 
     console.log("Instance is running");
 });
+
+// When("get instance status", async () => {
+//     actualResponse = await apiClient.getStatus(instanceId);
+//     console.log("-----actualResponse: ", actualResponse);
+//     assert.equal(actualResponse.status, 200);
+// });

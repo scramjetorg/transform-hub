@@ -8,7 +8,9 @@ Feature: Verify the checksums of payloads are correct
         When sequence "../packages/reference-apps/checksum-sequence.tar.gz" loaded
         And wait for "4000" ms
         And instance started
-        And wait for "2000" ms
+        And wait for "4000" ms
+        When get instance health
+        Then instance health is "true"
         Then compare checksums of content sent from file "../dist/reference-apps/checksum-sequence/data.json"
         Then host stops
 

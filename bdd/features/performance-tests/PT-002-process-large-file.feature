@@ -25,7 +25,12 @@ Feature: Process large file test
         And wait for "4000" ms
         And instance started with arguments "https://repo.int.scp.ovh/repository/scp-store/example300M.json.gz"
         When get output stream with long timeout
+        When get instance health
+        Then instance health is "true"
         Then response data is equal "23435224"
+        # Then instance is stopped/killed
+        # And get containerId
+        # And container is closed
         Then host stops
 
 

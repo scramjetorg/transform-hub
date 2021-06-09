@@ -47,10 +47,11 @@ Feature: Kill e2e tests
         And wait for "4000" ms
         Then instance started with arguments "/package/data.json"
         And wait for "5000" ms
-        # And instance is running  // TODO
-        # And wait for "3000" ms  // TODO
+        When get instance health
+        Then instance health is "true"
         Then send kill message to instance
         And wait "8000" ms
-        # Then instance is stopped
-        # And container is stopped   // TODO
+        # Then instance is stopped/killed
+        # And get containerId
+        # And container is closed
         Then host stops

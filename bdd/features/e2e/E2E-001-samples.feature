@@ -32,4 +32,7 @@ Feature: Sample e2e tests
         Then instance health is "true"
         And wait for "2000" ms
         And response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        # Then instance is stopped/killed
+        And get containerId
+        And container is closed
         Then host stops

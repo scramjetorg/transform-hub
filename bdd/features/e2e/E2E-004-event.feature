@@ -19,10 +19,15 @@ Feature: Event e2e tests
         And wait for "6000" ms
         Then instance started with arguments "20"
         And wait for "4000" ms
+        When get instance health
+        Then instance health is "true"
         When send event "test-event" to instance with message "test message"
         And wait for "5000" ms
         Then get event from instance
         And wait for "3000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
         And wait for "7000" ms
+        # Then instance is stopped/killed
+        # And get containerId
+        # And container is closed
         Then host stops

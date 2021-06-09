@@ -33,6 +33,8 @@ Feature: Verify delay
         And instance started with arguments "4000"
         And wait for "800" ms
         And get "stdout" in background with instanceId
+        When get instance health
+        Then instance health is "true"
         And save response to file "delay.test.result.txt"
         And file "delay.test.result.txt" is generated
         And calculate average delay time from "delay.test.result.txt" of first "2000" function calls starting "2000"
@@ -49,8 +51,13 @@ Feature: Verify delay
         And instance started with arguments "12000"
         And wait for "800" ms
         And get "stdout" in background with instanceId
+        When get instance health
+        Then instance health is "true"
         And save response to file "delay.test.result.txt"
         And file "delay.test.result.txt" is generated
         And calculate average delay time from "delay.test.result.txt" of first "10000" function calls starting "2000"
         Then calculated avereage delay time is lower than "100000" ns
+        # Then instance is stopped/killed
+        # And get containerId
+        # And container is closed
         Then host stops

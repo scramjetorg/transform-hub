@@ -44,10 +44,13 @@ Feature: Stop e2e tests
         And wait for "4000" ms
         Then instance started with arguments "/package/data.json"
         And wait for "4000" ms
-        # Then instance is working
+        When get instance health
+        Then instance health is "true"
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "true"
         And wait "4000" ms
         # Then instance is stopped/killed
+        # And get containerId
+        # And container is closed
         Then host stops
 
     Scenario: E2E-002 TC-005 Stop instance process after 0s canKeepAlive false
@@ -57,10 +60,13 @@ Feature: Stop e2e tests
         And wait for "4000" ms
         Then instance started with arguments "/package/data.json"
         And wait for "4000" ms
-        # Then instance is working
+        When get instance health
+        Then instance health is "true"
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
         And wait for "4000" ms
         # Then instance is stopped/killed
+        # And get containerId
+        # And container is closed
         Then host stops
 
     Scenario: E2E-002 TC-006 Stop instance process after 4s canKeepAlive true
@@ -72,12 +78,13 @@ Feature: Stop e2e tests
         Then instance started with arguments "/package/data.json"
         And wait for "4000" ms
         When get instance health
-        Then instance response body is "{\"healthy\":true}"
+        Then instance health is "true"
         And send stop message to instance with arguments timeout 8000 and canCallKeepAlive "true"
         And wait for "4000" ms
         When get instance health
-        Then instance response body is "{\"healthy\":true}"
+        Then instance health is "true"
         And wait for "4000" ms
         # Then instance is stopped/killed
-        # And wait for "4000" ms
+        # And get containerId
+        # And container is closed
         Then host stops
