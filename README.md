@@ -47,7 +47,7 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 [See more lerna commands =>](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/lerna-commands.md)
 
-## Clean build
+## Clean and rebuild packages
 
 ```bash
 yarn clean
