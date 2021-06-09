@@ -23,14 +23,24 @@
 
 The readme file contains information about the development process of the CSI. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/README.md)
 
-## Default commands
+## Basic commands
 
 ```bash
-yarn build # Build all packages
-yarn bic # Build only the changed components
-yarn lint # Check and fix syntax
-yarn watch # Watch files
-yarn lint:dedupe # check if there are packages to deduplicate
+yarn build          # Build all packages
+yarn bic            # Build only the changed components
+yarn lint           # Check and fix syntax
+yarn watch          # Watch files
+yarn lint:dedupe    # Check if there are packages to deduplicate
+yarn pack:pre       # Move linked packages to dist/ (alias: yarn prepack)
+yarn pack:pub       # Prepare (unlink) packages for publication and move to dist/
+```
+
+## Start host
+
+```bash
+yarn start                          # Starts host after it's been built
+node dist/host/bin/start            # This is the same as above
+ts-node packages/host/src/bin/start # This starts node from source code
 ```
 
 ## Lerna commands
