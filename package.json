@@ -32,6 +32,7 @@
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
     "lint": "eslint . --ext .ts",
     "lint:dedupe": "scripts/dedupe.js",
+    "start": "node dist/host/bin/start.js",
     "watch": "lerna run watch",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "lerna exec yarn && lerna link",
