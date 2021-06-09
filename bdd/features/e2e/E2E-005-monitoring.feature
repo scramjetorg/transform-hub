@@ -28,9 +28,9 @@ Feature: Monitoring e2e tests
         Then instance started with arguments "/package/data.json"
         And wait for "3000" ms
         When get instance health
+        And get containerId
         Then instance health is "false"
         And wait for "3000" ms
-        # And get containerId
         # And container is closed
         Then host stops
 
@@ -42,8 +42,8 @@ Feature: Monitoring e2e tests
         Then instance started with arguments "/package/data.json"
         And wait for "3000" ms
         When get instance health
+        And get containerId
         Then instance health is "true"
         And wait for "3000" ms
-        # And get containerId
         # And container is closed
         Then host stops

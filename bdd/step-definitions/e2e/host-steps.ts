@@ -276,6 +276,8 @@ When("container is closed", async () => {
 
     console.log("~~~~~~~~~~~~~ containerId: " + containerId);
 
+    if (!containerId) assert.fail();
+
     const containers = await dockerode.listContainers();
 
     let containerExist = false;
