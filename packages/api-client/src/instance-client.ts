@@ -2,6 +2,7 @@ import { clientUtils, Response } from "./client-utils";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
+import { IDProvider } from "@scramjet/model";
 
 export class InstanceClient {
     private _id: string;
@@ -12,10 +13,14 @@ export class InstanceClient {
     }
 
     static from(id: string): InstanceClient {
-        return id ? new this(id) : undefined;
+        return new this(id);
     }
 
     private constructor(id: string) {
+        if (!IDProvider.isValid(id)) {
+            throw new Error("Invalid id.");
+        }
+
         this._id = id;
         this.instanceURL = `instance/${this._id}`;
     }

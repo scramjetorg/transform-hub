@@ -1,3 +1,4 @@
+import { IDProvider } from "@scramjet/model";
 import { clientUtils } from "./client-utils";
 import { InstanceClient } from "./instance-client";
 
@@ -10,10 +11,14 @@ export class SequenceClient {
     }
 
     static from(id: string): SequenceClient {
-        return id ? new this(id) : undefined;
+        return new this(id);
     }
 
     private constructor(id: string) {
+        if (!IDProvider.isValid(id)) {
+            throw new Error("Invalid id.");
+        }
+
         this._id = id;
         this.sequenceURL = `sequence/${id}`;
 

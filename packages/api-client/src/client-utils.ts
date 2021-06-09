@@ -7,7 +7,7 @@ export type Response = {
 } | undefined;
 
 class ClientUtils {
-    apiBase: string;
+    apiBase: string = "";
 
     init(apiBase: string) {
         this.apiBase = apiBase;
@@ -15,7 +15,7 @@ class ClientUtils {
 
     async get(url: string): Promise<Response> {
         try {
-            return await axios.get(url, {
+            return await axios.get(`${this.apiBase}/${url}`, {
                 headers: {
                     Accept: "*/*"
                 }
@@ -69,7 +69,7 @@ class ClientUtils {
 
     async delete(url: string): Promise<void> {
         try {
-            return await axios.delete(url).then(() => undefined);
+            return await axios.delete(`${this.apiBase}/${url}`).then(() => undefined);
         } catch (error) {
             console.error("Error during sending request: ", error.message);
             console.error(error);
@@ -80,7 +80,7 @@ class ClientUtils {
 
     async sendStream(url: string, stream: Stream | string): Promise<Response> {
         return this.post(
-            `${this.apiBase}/${url}`,
+            url,
             stream,
             {
                 "Content-type": "application/octet-stream"
