@@ -1,5 +1,5 @@
 import { strict as assert, fail } from "assert";
-import { When, Then } from "@cucumber/cucumber";
+import { When } from "@cucumber/cucumber";
 
 const lineByLine = require("n-readlines");
 
@@ -31,7 +31,7 @@ When("calculate average delay time from {string} of first {string} function call
     delayAverage = average;
 });
 
-Then("calculated avereage delay time is lower than {string} ns", async (acceptedDelayInNs) => {
+When("calculated avereage delay time is lower than {string} ns", async (acceptedDelayInNs) => {
     const averageIsOk: boolean = delayAverage < BigInt(acceptedDelayInNs);
 
     assert.equal(averageIsOk, true, "Average time is: " + delayAverage);

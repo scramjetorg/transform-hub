@@ -142,7 +142,7 @@ Then("response in each line contains {string} followed by name from file {string
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-When("get output stream long timeout", { timeout: 60000 }, async () => {
+Then("get output stream long timeout", { timeout: 60000 }, async () => {
     await getOutput();
 });
 
@@ -196,7 +196,7 @@ When("container is stopped", async () => {
     }
 });
 
-Then("host one process is working", async () => {
+When("host one process is working", async () => {
     await waitForValueTillTrue(hostOneUtils.hostOneProcessStopped);
 
     assert.equal(hostOneUtils.hostOneProcessStopped, false);

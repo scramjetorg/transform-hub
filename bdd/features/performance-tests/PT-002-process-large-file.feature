@@ -1,36 +1,29 @@
 Feature: Process large file test
 
-    #added to ignore because this scenario is based on host-one
     @ignore
     Scenario: PT-002 TC-001 Sequence processes file smaller than accesible RAM
-        Given host one execute sequence in background "../packages/reference-apps/big-file-sequence.tar.gz" with arguments "https://repo.int.scp.ovh/repository/scp-store/small-file.json.gz"
-        When get output stream long timeout
-        And host one process is stopped
-        Then response is equal "95"
-
-    #added to ignore because this scenario is based on host-one
-    @ignore
-    Scenario: PT-002 TC-002 Sequence processes file larger than accesible RAM
-        Given host one execute sequence in background "../packages/reference-apps/big-file-sequence.tar.gz" with arguments "https://repo.int.scp.ovh/repository/scp-store/example300M.json.gz"
-        When get output stream long timeout
-        And host one process is stopped
-        Then response is equal "23435224"
+        Given host started
+        When host process is working
+        When sequence "../packages/reference-apps/big-file-sequence.tar.gz" loaded
+        And wait for "4000" ms
+        And instance started with arguments "https://repo.int.scp.ovh/repository/scp-store/small-file.json.gz"
+        When get output stream with long timeout
+        When response data is equal "95"
         Then host stops
 
-    Scenario: PT-002 TC-003 Sequence processes file smaller than accessible RAM
+    Scenario: PT-002 TC-002 Sequence processes file larger than accesible RAM
         Given host started
-        And wait for "1000" ms
-        And host process is working
+        When host process is working
         When sequence "../packages/reference-apps/big-file-sequence.tar.gz" loaded
         And wait for "4000" ms
         And instance started with arguments "https://repo.int.scp.ovh/repository/scp-store/example300M.json.gz"
         When get output stream with long timeout
         When get instance health
-        Then instance health is "true"
-        Then response data is equal "23435224"
-        # Then instance is stopped/killed
-        # And get containerId
-        # And container is closed
+        And get containerId
+        And instance health is "true"
+        When response data is equal "23435224"
+        And wait for "4000" ms
+        And container is closed
         Then host stops
 
 

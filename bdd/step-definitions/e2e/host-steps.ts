@@ -74,7 +74,7 @@ When("wait for {float} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs)
     await new Promise(res => setTimeout(res, timeoutHrs * 3600 * 1000));
 });
 
-Then("host process is working", async () => {
+When("host process is working", async () => {
     await waitForValueTillTrue(hostUtils.hostProcessStopped);
 });
 
@@ -114,7 +114,7 @@ When("get {string} in background with instanceId", { timeout: 500000 }, async (s
     actualLogResponse = await streamToString(actualResponse);
 });
 
-Then("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
+When("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
     const lines: string[] = actualLogResponse.split("\n");
 
@@ -139,7 +139,7 @@ When("get output stream with long timeout", { timeout: 200000 }, async () => {
     await getOutput();
 });
 
-Then("response data is equal {string}", async (respNumber: any) => {
+When("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);
 });
 
@@ -269,12 +269,10 @@ When("get containerId", { timeout: 31000 }, async () => {
     const res = actualResponse?.data?.containerId;
 
     containerId = res;
-
+    console.log("Container is identified.");
 });
 
 When("container is closed", async () => {
-
-    console.log("~~~~~~~~~~~~~ containerId: " + containerId);
 
     if (!containerId) assert.fail();
 
@@ -283,34 +281,29 @@ When("container is closed", async () => {
     let containerExist = false;
 
     containers.forEach(containerInfo => {
-        console.log("~~~~~~~~~~~~~~~ containerInfo: " + JSON.stringify(containerInfo));
-
         if (containerInfo.Id.includes(containerId)) {
             containerExist = true;
         }
     });
 
     assert.equal(containerExist, false);
+    console.log("Container is closed.");
 
 });
 
 When("container is not closed", async () => {
-
-    console.log("~~~~~~~~~~~~~ containerId: " + containerId);
-
     const containers = await dockerode.listContainers();
 
     let containerExist = false;
 
     containers.forEach(containerInfo => {
-        console.log("~~~~~~~~~~~~~~~ containerInfo: " + JSON.stringify(containerInfo));
-
         if (containerInfo.Id.includes(containerId)) {
             containerExist = true;
         }
     });
 
     assert.equal(containerExist, true);
+    console.log("Container is NOT closed.");
 
 });
 
@@ -350,7 +343,7 @@ Then("instance response body is {string}", async (expectedResp: string) => {
     assert.equal(resp, expectedResp);
 });
 
-Then("instance health is {string}", async (expectedResp: string) => {
+When("instance health is {string}", async (expectedResp: string) => {
     const healthy = JSON.stringify(actualResponse?.data?.healthy);
 
     if (typeof actualResponse === "undefined") {
