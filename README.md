@@ -81,7 +81,7 @@ node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
 
 ### HostOne
 
-Starting `HostOne` script: `/scramjet-csi-dev/packages/host-one/src/bin/start-host-one.ts`
+Starting `HostOne` script: `./packages/host-one/src/bin/start-host-one.ts`
 
 Example of usage:
 
