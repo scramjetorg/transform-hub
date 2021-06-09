@@ -1,0 +1,35 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Launch Test E2E-001 TC-003",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "/home/mczapracki/.nvm/versions/node/v14.15.4/bin/yarn",
+            "args": ["test:bdd", "--name=E2E-001 TC-003"],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        },
+        {
+            "type": "pwa-node",
+            "request": "launch",
+            "name": "Launch Host",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "runtimeExecutable": "ts-node",
+            "program": "packages/host/src/bin/start.ts",
+            "args": ["--identify-existing"],
+            "outFiles": [
+                "${workspaceFolder}/**/*.js"
+            ]
+        }
+    ]
+}
