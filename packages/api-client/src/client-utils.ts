@@ -9,26 +9,17 @@ export type Response = {
 class ClientUtils {
     async get(url: string): Promise<Response> {
         try {
-<<<<<<< Updated upstream
-            const resp = await axios.get(url, {
-=======
             return await axios.get(url, {
->>>>>>> Stashed changes
                 headers: {
                     Accept: "*/*"
                 }
             });
-
-            return resp;
         } catch (error) {
             console.error("Error during sending request: ", error.message);
             console.error(error);
         }
-<<<<<<< Updated upstream
-=======
 
         return undefined;
->>>>>>> Stashed changes
     }
 
     async getStream(url: string): Promise<Response> {
@@ -49,14 +40,7 @@ class ClientUtils {
         return undefined;
     }
 
-<<<<<<< Updated upstream
-    async post(url: string, data: any, headers: {[key: string]: "string"} = {}): Promise<Response | undefined> {
-        let response: any;
-=======
-    async post(url: string, data: any, headers?: object): Promise<Response | undefined> {
-        headers = headers || {};
->>>>>>> Stashed changes
-
+    async post(url: string, data: any, headers: {[key: string]: string} = {}): Promise<Response | undefined> {
         try {
             const response = await axios({
                 method: "POST",
@@ -77,26 +61,25 @@ class ClientUtils {
         return undefined;
     }
 
-    async delete(url: string): Promise<boolean> {
-        let response: any;
-
+    async delete(url: string): Promise<void> {
         try {
-            response = await axios({
-                method: "DELETE",
-                url: url
-            });
+            return await axios.delete(url).then(() => undefined);
         } catch (error) {
             console.error("Error during sending request: ", error.message);
             console.error(error);
         }
 
-        return !!response;
+        return undefined;
     }
 
     async sendStream(url: string, stream: Stream | string): Promise<Response> {
-        return this.post(url, stream, {
-            "Content-type": "application/octet-stream"
-        });
+        return this.post(
+            url,
+            stream,
+            {
+                "Content-type": "application/octet-stream"
+            }
+        );
     }
 }
 
