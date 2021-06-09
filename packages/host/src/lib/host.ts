@@ -98,22 +98,20 @@ export class Host implements IComponent {
             async (req) => this.handleNewSequence(req), { end: true }
         );
 
-        this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req as ParsedMessage));
+        this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
+        this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
 
-        this.api.get(`${this.apiBase}/sequence/:id`,
-            (req) => this.getSequence(req.params?.id));
-
-        // eslint-disable-next-line no-extra-parens
-        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req as ParsedMessage));
-
+        this.api.op("post",
+            `${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req));
+        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
 
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
-
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
-        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
         this.api.get(`${this.apiBase}/load-check`, async () => {
-            return await fakeLoadCheck.getLoadCheck();
+            return fakeLoadCheck.getLoadCheck();
         });
+
+        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
     }
 
     instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
@@ -235,11 +233,19 @@ export class Host implements IComponent {
 
         await csic.start();
 
+        sequence.instances.push(id);
+
         this.logger.log("CSIController started:", id);
 
         csic.on("end", (code) => {
             this.logger.log("CSIControlled ended, code:", code);
             delete InstanceStore[csic.id];
+
+            const index = sequence.instances.indexOf(id);
+
+            if (~index) {
+                sequence.instances.splice(index, 1);
+            }
         });
 
         return id;
@@ -263,6 +269,10 @@ export class Host implements IComponent {
 
     getSequences(): any {
         return this.sequencesStore.getSequences();
+    }
+
+    getSequenceInstances(sequenceId: string) {
+        return this.sequencesStore.getById(sequenceId).instances;
     }
 }
 

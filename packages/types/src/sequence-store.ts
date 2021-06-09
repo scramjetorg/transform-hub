@@ -15,7 +15,8 @@ import { RunnerConfig } from "./runner-config";
  */
 export interface ISequence {
     id: string,
-    config: RunnerConfig
+    config: RunnerConfig,
+    instances: any[]
 }
 
 export interface ISequenceStore {

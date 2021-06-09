@@ -60,10 +60,14 @@ When("starts at least {int} sequences from file {string} for {float} hours", { t
     } while (!rejected);
 
     if (instances.length < minNumber) {
-        assert.fail();
+        assert.fail("Can't start enough instances.");
     }
 
     console.log("Last instance started on:", new Date().toUTCString());
+});
+
+When("wait for {float} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs: number) => {
+    await new Promise(res => setTimeout(res, timeoutHrs * 3600 * 1000));
 });
 
 Then("check if instances respond", { timeout: 60000 }, async () => {
@@ -82,7 +86,7 @@ Then("check if instances respond", { timeout: 60000 }, async () => {
                         resolve();
                     }
                 } catch (err) {
-                    reject();
+                    reject("event data not equal to the data sent");
                 }
             }) as Promise<void>
         )),

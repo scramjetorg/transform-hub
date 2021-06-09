@@ -39,4 +39,16 @@ export class SequenceClient {
 
         return undefined;
     }
+
+    async listInstances() {
+        return clientUtils.get(`${this.sequenceURL}/instances`);
+    }
+
+    async getInstance(id: string) {
+        return InstanceClient.from(id);
+    }
+
+    async overwrite() {
+        throw Error("Not yet implemented");
+    }
 }

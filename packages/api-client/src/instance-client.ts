@@ -4,6 +4,9 @@ import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
 import { IDProvider } from "@scramjet/model";
 
+export type InstanceInputStream = "stdin" | "input";
+export type InstanceOutputStream = "stdout" | "stderr" | "output"
+
 export class InstanceClient {
     private _id: string;
     private instanceURL: string;
@@ -23,6 +26,7 @@ export class InstanceClient {
 
         this._id = id;
         this.instanceURL = `instance/${this._id}`;
+        console.log("New instance:", this.id);
     }
 
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {
@@ -58,11 +62,15 @@ export class InstanceClient {
         return clientUtils.get(`${this.instanceURL}/health`);
     }
 
-    async getStream(stream: string): Promise<Response> {
-        return clientUtils.getStream(`${this.instanceURL}/${stream}`);
+    async getStatus() {
+        return clientUtils.get(`${this.instanceURL}/status`);
     }
 
-    async sendStream(streamId: string, stream: Stream | string) {
+    async getStream(streamId: InstanceOutputStream): Promise<Response> {
+        return clientUtils.getStream(`${this.instanceURL}/${streamId}`);
+    }
+
+    async sendStream(streamId: InstanceInputStream, stream: Stream | string) {
         return clientUtils.sendStream(`${this.instanceURL}/${streamId}`, stream);
     }
 

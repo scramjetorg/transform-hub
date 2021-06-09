@@ -2,7 +2,7 @@ import { Given, When, Then, Before } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
-import { HostClient, SequenceClient, InstanceClient, Response } from "@scramjet/api-client";
+import { HostClient, SequenceClient, InstanceClient, InstanceOutputStream, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { Stream } from "stream";
 import * as crypto from "crypto";
@@ -44,7 +44,9 @@ const streamToString = (stream: Stream): Promise<string> => {
 const getOutput = async () => {
 
     const expectedHttpCode = 200;
-    const response = await callInLoopTillExpectedStatusCode(apiClient.getInstanceStream, apiClient, expectedHttpCode, instanceId, "output");
+    const response = await callInLoopTillExpectedStatusCode(
+        apiClient.getInstanceStream, apiClient, expectedHttpCode, instanceId, "output"
+    );
     const stream = new PassThrough();
 
     response.pipe(stream);
@@ -62,11 +64,7 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
-When("wait for {float} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs) => {
-    await new Promise(res => setTimeout(res, timeoutHrs * 3600 * 1000));
-});
-
-When("host process is working", async () => {
+Then("host process is working", async () => {
     await waitForValueTillTrue(hostUtils.hostProcessStopped);
 });
 
@@ -97,7 +95,7 @@ When("get logs in background with instanceId", { timeout: 20000 }, async () => {
     );
 });
 
-When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: string) => {
+When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: InstanceOutputStream) => {
     actualLogResponse = await streamToString(
         (await instance.getStream(stream)).data
     );
@@ -227,18 +225,8 @@ Then("get event from instance", { timeout: 10000 }, async () => {
 });
 
 When("get instance health", async () => {
-<<<<<<< HEAD
-    if (typeof actualResponse === "undefined") {
-        assert.equal(typeof actualResponse, "undefined");
-        console.log("Instance is not working");
-    } else {
-        actualResponse = await apiClient.getHealth(instanceId);
-        assert.equal(actualResponse.status, 200);
-    }
-=======
     actualResponse = await instance.getHealth();
     assert.equal(actualResponse.status, 200);
->>>>>>> All current BDD tests are passing on new APIClient
 });
 
 // for event.feature
