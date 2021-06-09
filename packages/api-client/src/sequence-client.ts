@@ -1,7 +1,7 @@
 import { clientUtils } from "./client-utils";
 import { InstanceClient } from "./instance-client";
 
-type SequenceClientOptions = {
+type SequenceClientConfig = {
     apiBase: string;
 }
 
@@ -14,12 +14,12 @@ export class SequenceClient {
         return this._id;
     }
 
-    constructor(id: string, options: SequenceClientOptions) {
+    constructor(id: string, options: SequenceClientConfig) {
         this._id = id;
         this.apiBase = options.apiBase;
         this.sequenceURL = `${options.apiBase}/sequence/${id}`;
 
-        console.log("New sequence client:", this.id);
+        console.log("New sequence:", this.id);
     }
 
     async start(appConfig: any, args: any): Promise<InstanceClient | undefined> {

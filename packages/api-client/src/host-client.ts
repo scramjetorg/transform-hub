@@ -10,15 +10,16 @@ export class HostClient {
     }
 
     listSequences() {
-        throw new Error("Method not implemented");
+        return clientUtils.get(`${this.apiBase}/sequences`);
     }
 
     listInstances() {
-        throw new Error("Method not implemented");
+        return clientUtils.get(`${this.apiBase}/instances`);
     }
 
+    // TODO: Dedicated log stream for host not yet implemented.
     getLogStream() {
-        throw new Error("Method not implemented");
+        return clientUtils.getStream(`${this.apiBase}/log`);
     }
 
     async sendSequence(sequencePackage: Buffer): Promise<SequenceClient | undefined> {
@@ -29,20 +30,20 @@ export class HostClient {
         if (response) {
             return new SequenceClient(response.data.id, { apiBase: this.apiBase });
         }
-        return undefined;
 
+        return undefined;
     }
 
     getSequence(sequenceId: string) {
-        throw new Error("Method not implemented");
+        return clientUtils.get(`${this.apiBase}/sequence/${sequenceId}`);
     }
 
     deleteSequence(sequenceId: string) {
-        throw new Error("Method not implemented");
+        return clientUtils.delete(`${this.apiBase}/sequence/${sequenceId}`);
     }
 
     getInstance(instanceId: string) {
-        throw new Error("Method not implemented");
+        return clientUtils.get(`${this.apiBase}/instance/${instanceId}`);
     }
 
     getLoadCheck() {

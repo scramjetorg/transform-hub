@@ -3,7 +3,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 import { RunnerMessage } from "@scramjet/types";
 import { Stream } from "stream";
 
-type InstanceClientOptions = {
+type InstanceClientConfig = {
     apiBase: string;
 }
 
@@ -15,11 +15,11 @@ export class InstanceClient {
         return this._id;
     }
 
-    constructor(id: string, options: InstanceClientOptions) {
+    constructor(id: string, options: InstanceClientConfig) {
         this._id = id;
         this.instanceURL = `${options.apiBase}/instance/${this._id}`;
 
-        console.log("New instance client:", this.id);
+        console.log("New instance:", this.id);
     }
 
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {

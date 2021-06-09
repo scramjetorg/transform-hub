@@ -71,6 +71,22 @@ class ClientUtils {
         return undefined;
     }
 
+    async delete(url: string): Promise<boolean> {
+        let response: any;
+
+        try {
+            response = await axios({
+                method: "DELETE",
+                url: url
+            });
+        } catch (error) {
+            console.error("Error during sending request: ", error.message);
+            console.error(error);
+        }
+
+        return !!response;
+    }
+
     async sendStream(url: string, stream: Stream | string): Promise<Response> {
         return this.post(url, stream, {
             "Content-type": "application/octet-stream"
