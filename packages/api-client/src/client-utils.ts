@@ -8,20 +8,18 @@ export type Response = {
 
 class ClientUtils {
     async get(url: string): Promise<Response> {
-        let resp: any;
-
         try {
-            resp = await axios.get(url, {
+            const resp = await axios.get(url, {
                 headers: {
                     Accept: "*/*"
                 }
             });
+
+            return resp;
         } catch (error) {
             console.error("Error during sending request: ", error.message);
             console.error(error);
         }
-
-        return resp;
     }
 
     async getStream(url: string): Promise<Response> {
