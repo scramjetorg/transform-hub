@@ -42,10 +42,8 @@ class ClientUtils {
         return resp;
     }
 
-    async post(url: string, data: any, headers?: object): Promise<Response | undefined> {
+    async post(url: string, data: any, headers: {[key: string]: "string"} = {}): Promise<Response | undefined> {
         let response: any;
-
-        headers = headers || {};
 
         try {
             response = await axios({
