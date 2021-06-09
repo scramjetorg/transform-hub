@@ -7,6 +7,12 @@ export type Response = {
 } | undefined;
 
 class ClientUtils {
+    apiBase: string;
+
+    init(apiBase: string) {
+        this.apiBase = apiBase;
+    }
+
     async get(url: string): Promise<Response> {
         try {
             return await axios.get(url, {
@@ -26,7 +32,7 @@ class ClientUtils {
         try {
             return await axios({
                 method: "GET",
-                url: url,
+                url: `${this.apiBase}/${url}`,
                 headers: {
                     Accept: "*/*"
                 },
@@ -44,7 +50,7 @@ class ClientUtils {
         try {
             const response = await axios({
                 method: "POST",
-                url: url,
+                url: `${this.apiBase}/${url}`,
                 data,
                 headers
             });
@@ -74,7 +80,7 @@ class ClientUtils {
 
     async sendStream(url: string, stream: Stream | string): Promise<Response> {
         return this.post(
-            url,
+            `${this.apiBase}/${url}`,
             stream,
             {
                 "Content-type": "application/octet-stream"

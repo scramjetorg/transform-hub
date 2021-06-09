@@ -7,46 +7,47 @@ export class HostClient {
 
     constructor(apiBase: string) {
         this.apiBase = apiBase;
+        clientUtils.init(apiBase);
     }
 
     listSequences() {
-        return clientUtils.get(`${this.apiBase}/sequences`);
+        return clientUtils.get("sequences");
     }
 
     listInstances() {
-        return clientUtils.get(`${this.apiBase}/instances`);
+        return clientUtils.get("instances");
     }
 
     // TODO: Dedicated log stream for host not yet implemented.
     getLogStream() {
-        return clientUtils.getStream(`${this.apiBase}/log`);
+        return clientUtils.getStream("/log");
     }
 
     async sendSequence(sequencePackage: Buffer): Promise<SequenceClient | undefined> {
-        const response = await clientUtils.post(`${this.apiBase}/sequence`, sequencePackage, {
+        const response = await clientUtils.post("sequence", sequencePackage, {
             "content-type":"application/octet-stream"
         });
 
         if (response) {
-            return new SequenceClient(response.data.id, { apiBase: this.apiBase });
+            return SequenceClient.from(response.data.id);
         }
 
         return undefined;
     }
 
     getSequence(sequenceId: string) {
-        return clientUtils.get(`${this.apiBase}/sequence/${sequenceId}`);
+        return clientUtils.get(`sequence/${sequenceId}`);
     }
 
     deleteSequence(sequenceId: string) {
-        return clientUtils.delete(`${this.apiBase}/sequence/${sequenceId}`);
+        return clientUtils.delete(`sequence/${sequenceId}`);
     }
 
     getInstance(instanceId: string) {
-        return clientUtils.get(`${this.apiBase}/instance/${instanceId}`);
+        return clientUtils.get(`instance/${instanceId}`);
     }
 
     getLoadCheck() {
-        return clientUtils.get(`${this.apiBase}/load-check`);
+        return clientUtils.get("load-check");
     }
 }

@@ -1,23 +1,21 @@
 import { clientUtils } from "./client-utils";
 import { InstanceClient } from "./instance-client";
 
-type SequenceClientConfig = {
-    apiBase: string;
-}
-
 export class SequenceClient {
     private _id: string;
-    private apiBase: string;
     private sequenceURL: string;
 
     public get id(): string {
         return this._id;
     }
 
-    constructor(id: string, options: SequenceClientConfig) {
+    static from(id: string): SequenceClient {
+        return id ? new this(id) : undefined;
+    }
+
+    private constructor(id: string) {
         this._id = id;
-        this.apiBase = options.apiBase;
-        this.sequenceURL = `${options.apiBase}/sequence/${id}`;
+        this.sequenceURL = `sequence/${id}`;
 
         console.log("New sequence:", this.id);
     }
@@ -31,9 +29,7 @@ export class SequenceClient {
         );
 
         if (response?.data.id) {
-            return new InstanceClient(response.data.id, {
-                apiBase: this.apiBase
-            });
+            return InstanceClient.from(response.data.id);
         }
 
         return undefined;
