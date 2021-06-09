@@ -3,9 +3,10 @@
 ## Table of contents <!-- omit in toc -->
 
 - [Intro](#intro)
-- [Default commands](#default-commands)
+- [Clean and rebuild packages](#clean-and-rebuild-packages)
+- [Basic commands](#basic-commands)
+- [Start host](#start-host)
 - [Lerna commands](#lerna-commands)
-- [Clean build](#clean-build)
 - [Docker commands](#docker-commands)
 - [Install host and execute](#install-host-and-execute)
 - [Run components](#run-components)
@@ -22,6 +23,15 @@
 ## Intro
 
 The readme file contains information about the development process of the CSI. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/README.md)
+
+## Clean and rebuild packages
+
+```bash
+yarn clean
+yarn install # or just yarn
+yarn build:all-packages    # optionally build:all if you want all dockerfiles.
+lerna run prepack              # moves files to ./dist/
+```
 
 ## Basic commands
 
@@ -47,20 +57,13 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 [See more lerna commands =>](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/lerna-commands.md)
 
-## Clean and rebuild packages
-
-```bash
-yarn clean
-yarn install
-yarn build:all-packages    # optionally build:all if you want all dockerfiles.
-lerna run prepack              # moves files to ./dist/
-```
-
 ## Docker commands
 
 [See day by day Docker commands =>](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/configuration.md#docker-commands)
 
 ## Install host and execute
+
+After built and prepack is done, install and run host:
 
 ```bash
 npm install -g ./dist/host # installs packages globally
@@ -119,12 +122,7 @@ tar czf <package-name.tar.gz> <path to file / folder >
 
 ### "Hello Alice" sample
 
-To execute the sample run the commands from the level of the main folder:
-
-```bash
-lerna run clean && lerna run build && lerna run prepack
-
-```
+To execute the sample run the commands listed below from the level of the main folder.
 
 If the sequence is not packed:
 
@@ -172,6 +170,14 @@ sequence: kill
 ```
 
 [See more about streams and curl commands =>](https://github.com/scramjet-cloud-platform/docs/tree/main/architecture/Stream-protocol-and-API-usage.md)
+
+> **HINT:** If something goes wrong run clean, build and prepack.
+
+Copy and pase 🤞
+
+  ```bash
+  lerna run clean && lerna run build && lerna run prepack
+  ```
 
 ## How to run tests
 
