@@ -71,7 +71,7 @@ scramjet-host              # starts host
 
 ### Runner
 
-Starting `Runner` script: `/scramjet-csi-dev/packages/runner/src/bin/start-runner.ts`
+Starting `Runner` script: `./packages/runner/src/bin/start-runner.ts`
 
 Example of usage:
 
