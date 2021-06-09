@@ -9,7 +9,11 @@ export type Response = {
 class ClientUtils {
     async get(url: string): Promise<Response> {
         try {
+<<<<<<< Updated upstream
             const resp = await axios.get(url, {
+=======
+            return await axios.get(url, {
+>>>>>>> Stashed changes
                 headers: {
                     Accept: "*/*"
                 }
@@ -20,13 +24,16 @@ class ClientUtils {
             console.error("Error during sending request: ", error.message);
             console.error(error);
         }
+<<<<<<< Updated upstream
+=======
+
+        return undefined;
+>>>>>>> Stashed changes
     }
 
     async getStream(url: string): Promise<Response> {
-        let resp;
-
         try {
-            resp = await axios({
+            return await axios({
                 method: "GET",
                 url: url,
                 headers: {
@@ -39,29 +46,32 @@ class ClientUtils {
             console.error(error);
         }
 
-        return resp;
+        return undefined;
     }
 
+<<<<<<< Updated upstream
     async post(url: string, data: any, headers: {[key: string]: "string"} = {}): Promise<Response | undefined> {
         let response: any;
+=======
+    async post(url: string, data: any, headers?: object): Promise<Response | undefined> {
+        headers = headers || {};
+>>>>>>> Stashed changes
 
         try {
-            response = await axios({
+            const response = await axios({
                 method: "POST",
                 url: url,
                 data,
                 headers
             });
-        } catch (error) {
-            console.error("Error during sending request: ", error.message);
-            console.error(error);
-        }
 
-        if (response) {
             return {
                 status: response.status,
                 data: response.data
             };
+        } catch (error) {
+            console.error("Error during sending request: ", error.message);
+            console.error(error);
         }
 
         return undefined;

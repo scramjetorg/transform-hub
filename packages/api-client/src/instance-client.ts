@@ -1,6 +1,6 @@
 import { clientUtils, Response } from "./client-utils";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { RunnerMessage } from "@scramjet/types";
+import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
 
 type InstanceClientConfig = {
@@ -27,23 +27,22 @@ export class InstanceClient {
             RunnerMessageCode.STOP, {
                 timeout,
                 canCallKeepalive
-            }] as RunnerMessage);
+            }] as EncodedControlMessage);
     }
 
     async kill(): Promise<Response | undefined> {
         return clientUtils.post(`${this.instanceURL}/_kill`, [
             RunnerMessageCode.KILL,
             {}
-        ] as RunnerMessage);
+        ] as EncodedControlMessage);
     }
-
 
     async sendEvent(eventName: string, message: string): Promise<Response> {
         const data = [
             RunnerMessageCode.EVENT, {
                 eventName,
                 message
-            }];
+            }] as EncodedControlMessage;
 
         return clientUtils.post(`${this.instanceURL}/_event`, data);
     }
