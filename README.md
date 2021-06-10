@@ -154,7 +154,6 @@ curl -X GET -H "Content-Type: application/octet-stream" "http://localhost:8000/a
 as a result you should see something like this in the console:
 
 ```bash
-sequence: [10D[10C[from monitoring] [ 4000, {} ]
 Hello Alice!
 Hello Ada!
 Hello Aga!
@@ -163,6 +162,12 @@ Hello Maciek!
 Hello Marcin!
 Hello Patryk!
 Hello Rafał!
+Hello Aida!
+Hello Basia!
+Hello Natalia!
+Hello Monika!
+Hello Wojtek!
+Hello Arek!
 ```
 
 after that hit enter and type kill to exit the process:
