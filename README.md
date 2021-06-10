@@ -5,10 +5,10 @@
 - [Intro](#intro)
 - [Clean and rebuild packages](#clean-and-rebuild-packages)
 - [Basic commands](#basic-commands)
-- [Start host](#start-host)
+- [Start Host](#start-host)
 - [Lerna commands](#lerna-commands)
 - [Docker commands](#docker-commands)
-- [Install host and execute](#install-host-and-execute)
+- [Install Host and execute](#install-host-and-execute)
 - [Run components](#run-components)
   - [Runner](#runner)
   - [HostOne](#hostone)
@@ -48,7 +48,7 @@ yarn pack:pub       # Prepare (unlink) packages for publication and move to dist
 ## Start host
 
 ```bash
-yarn start                          # Starts host after it's been built
+yarn start                          # Starts Host after it's been built
 node dist/host/bin/start            # This is the same as above
 ts-node packages/host/src/bin/start # This starts node from source code
 ```
@@ -61,13 +61,20 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 [See day by day Docker commands =>](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/configuration.md#docker-commands)
 
-## Install host and execute
+## Install Host and execute
 
-After built and prepack is done, install and run host:
+After built and prepack is done, install and run Host:
 
 ```bash
 npm install -g ./dist/host # installs packages globally
 scramjet-host              # starts host
+```
+
+You can also install current Host release from our internal [Scramjet NPM Registry](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/registries.md#scramjet-npm-registry):
+
+```bash
+npm install -g @scramjet/host
+scramjet-host
 ```
 
 ## Run components
