@@ -142,6 +142,8 @@ SEQ_ID=$( \
 )
 ```
 
+> **HINT:** INSTANCE_ID and SEQ_ID are shell variables.
+
 Start the sequence and see the output from it.
 
 ```bash
