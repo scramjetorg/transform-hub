@@ -1,9 +1,7 @@
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
-
 import { SIGTERM } from "constants";
 import { stdout } from "process";
-import { StringStream } from "scramjet";
 import { StringDecoder } from "string_decoder";
 
 const hostExecutableFilePath = "../dist/host/bin/start.js";
