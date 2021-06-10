@@ -17,7 +17,7 @@
   },
   "scripts": {
     "build": "yarn build:all-packages",
-    "build:all": "yarn build:all-packages && yarn build:docker",
+    "build:all": "yarn build:packages && yarn build:refapps && yarn build:docker",
     "build:refapps": "lerna run build:refapps",
     "build:packages": "lerna run build",
     "build:all-packages": "lerna run build && lerna run build:refapps",
