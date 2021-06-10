@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { SequenceClient } from "./sequence-client";
 import { clientUtils } from "./client-utils";
+import { ReadStream } from "fs";
 
 export class HostClient {
     apiBase: string;
@@ -20,10 +21,10 @@ export class HostClient {
 
     // TODO: Dedicated log stream for host not yet implemented.
     getLogStream() {
-        return clientUtils.getStream("/log");
+        return clientUtils.getStream("log");
     }
 
-    async sendSequence(sequencePackage: Buffer): Promise<SequenceClient | undefined> {
+    async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient | undefined> {
         const response = await clientUtils.post("sequence", sequencePackage, {
             "content-type":"application/octet-stream"
         });
