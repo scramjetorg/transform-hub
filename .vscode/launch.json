@@ -8,8 +8,11 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "program": "/home/mczapracki/.nvm/versions/node/v14.15.4/bin/yarn",
-            "args": ["test:bdd", "--name=E2E-001 TC-003"],
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": [
+                "test:bdd",
+                "--name=E2E-001 TC-003"
+            ],
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]
