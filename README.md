@@ -180,7 +180,7 @@ sequence: kill
 
 > **HINT:** If something goes wrong run clean, build and prepack.
 
-Copy and pase 🤞
+Copy and paste 🤞
 
   ```bash
   lerna run clean && lerna run build && lerna run prepack
