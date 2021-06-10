@@ -30,8 +30,8 @@ export class HostUtils {
 
             this.hostProcessStopped = false;
             //for debugging purposes
-            StringStream.from(this.host.stdout).pipe(stdout);
-            StringStream.from(this.host.stderr).pipe(stdout);
+            this.host.stdout.pipe(stdout);
+            this.host.stderr.pipe(stdout);
 
             const decoder = new StringDecoder();
 
