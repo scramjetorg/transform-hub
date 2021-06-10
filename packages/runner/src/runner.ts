@@ -4,7 +4,7 @@ import { ApplicationFunction, ApplicationInterface, EventMessageData, HandshakeA
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
 
-import { from as scramjetStreamFrom, DataStream, StringStream } from "scramjet";
+import { DataStream, StringStream } from "scramjet";
 import { EventEmitter } from "events";
 import { Readable } from "stream";
 import { createReadStream, createWriteStream } from "fs";
@@ -479,8 +479,11 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
                 } else if (typeof _in === "object" && _in instanceof DataStream) {
-                    stream = scramjetStreamFrom(_in);
+                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned DataStream`);
+                    stream = _in;
                 } else {
+                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned readable`);
+
                     // TODO: what if this is not a DataStream, but BufferStream stream!!!!
                     stream = DataStream.from(_in as Readable);
                 }

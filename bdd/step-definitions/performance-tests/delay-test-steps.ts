@@ -3,13 +3,15 @@ import { When } from "@cucumber/cucumber";
 
 const lineByLine = require("n-readlines");
 
-let delayAverage: bigint;
+let delayAverage;
 
 When("calculate average delay time from {string} of first {string} function calls starting {string}", async (probesFile, numberOfProbes, startFromProbe) => {
     const output = new lineByLine(`${probesFile}`);
 
     let line: string;
     let sum: bigint = BigInt(0);
+    let min: number = Infinity;
+    let max: number = 0;
 
     for (let i = 0; i < startFromProbe; i++) {
         if (!output.next()) {
@@ -22,17 +24,21 @@ When("calculate average delay time from {string} of first {string} function call
             fail("not enough probes in file (" + j + ")");
         }
 
-        sum += BigInt(line.toString().replace("n", ""));
+        const cnt = +line.toString().replace("n", "");
+
+        sum += BigInt(cnt);
+        min = min < cnt ? min : cnt;
+        max = max > cnt ? max : cnt;
     }
 
-    const average: bigint = sum / BigInt(numberOfProbes);
+    const average = Number(BigInt(1e3) * sum / BigInt(numberOfProbes)) / 1e3;
 
-    console.log("Average: ", average);
+    console.log(`Average: ${average / 1000}µs of ${numberOfProbes}, max: ${max / 1000}µs, min: ${min / 1000}µs`);
     delayAverage = average;
 });
 
 When("calculated avereage delay time is lower than {string} ns", async (acceptedDelayInNs) => {
-    const averageIsOk: boolean = delayAverage < BigInt(acceptedDelayInNs);
+    const averageIsOk: boolean = delayAverage < acceptedDelayInNs;
 
     assert.equal(averageIsOk, true, "Average time is: " + delayAverage);
 });
