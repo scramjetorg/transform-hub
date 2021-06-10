@@ -206,36 +206,36 @@ yarn test:parallel && yarn test:bdd
 yarn test:packages
 ```
 
+If you want to run a particular test file, go to directory where the test file is and run command:
+
+```bash
+npx ava name-of-the-file.spec.ts
+```
+
+If you want to run one particular test in the file, go to directory where the test file is and run command:
+
+```bash
+npx ava name-of-the-file.spec.ts -m "Name-of-the-unit-test"
+```
+
+If you add `-w` a the end of the command above the test will run automaticaly after every change you make in the test, eg.:
+
+```bash
+npx ava runner.spec.ts -m "Stop sequence" -w
+```
+
 ### BDD tests
 
-The following instructions apply to the state of the repository from the `release/0.4`.
-BDD tests are located in a `bdd` folder, to execute them there are several steps to follow:
+The following instructions apply to the state of the repository from the `release/0.10`.
+BDD tests are located in a `bdd` folder, to execute them simply follow the steps below:
 
 - start with:
 
 ```bash
-yarn install &&
-yarn build &&
-yarn build:docker &&
-yarn prepack &&
-cd packages/pre-runner &&
-yarn prepare-sample-tar &&
-cd $(git rev-parse --show-toplevel) &&  # this line will throw you back to the main folder
+yarn clean && yarn install && yarn build:all && yarn prepack && yarn packseq
 ```
 
-- go to `bdd` folder:
-
-```bash
-cd bdd
-```
-
-- run `npm i`
-
-```bash
-npm i
-```
-
-- execute all bdd test using from the command line:
+- execute all bdd test from the command line:
 
 ```bash
 yarn test:bdd
@@ -247,9 +247,13 @@ yarn test:bdd
 yarn test:bdd --name="Execute example HelloAlice"
 ```
 
-Results of the performed test will be displayed in the console. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a bdd test, those html's are saved in `bdd` folder.
+Results of the performed test will be displayed in the console. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a bdd test, those html's are saved in `bdd/reports` folder.
 
-As an outcome, Lerna should go through all packages. If you see the error along the way, that means some tests were not passed.
+In a result of runnung all the test, both unit and bdd (command: `yarn test`), Lerna goes through all the packages and runs unit tests and also checks the `bdd` directory and runs all bdd scenarios.
+
+If you see the error along the way, that means some tests were not passed.
+
+Below you can see an example, which shows the result of all passed unit test in all the packages:
 
 ```bash
 lerna success run Ran npm script 'test' in 17 packages in 26.1s:
@@ -275,7 +279,7 @@ Done in 26.66s.
 
 ## Publish
 
-To perform full publishing of packages with build and install perform
+To perform full publishing of packages with build and install, perform
 the following commands:
 
 ```bash
