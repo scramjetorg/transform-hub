@@ -30,7 +30,7 @@ The readme file contains information about the development process of the CSI. I
 yarn clean
 yarn install # or just yarn
 yarn build:all-packages    # optionally build:all if you want all dockerfiles.
-lerna run prepack              # moves files to ./dist/
+yarn prepack              # moves files to ./dist/
 ```
 
 ## Basic commands
