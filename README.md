@@ -117,7 +117,7 @@ lerna run prepare-sample-tar
 To compress specific package use linux tar command:
 
 ```bash
-tar czf <package-name.tar.gz> <path to file / folder >
+tar -C /path/to/package/dir czf <package-name.tar.gz> .
 ```
 
 ### "Hello Alice" sample
