@@ -24,16 +24,12 @@ export class HostClient {
         return clientUtils.getStream("log");
     }
 
-    async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient | undefined> {
+    async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
         const response = await clientUtils.post("sequence", sequencePackage, {
             "content-type":"application/octet-stream"
         });
 
-        if (response) {
-            return SequenceClient.from(response.data.id);
-        }
-
-        return undefined;
+        return SequenceClient.from(response.data.id);
     }
 
     getSequence(sequenceId: string) {
