@@ -4,8 +4,7 @@ import { Stream } from "stream";
 export type Response = {
     data: Stream | any;
     status: any;
-} | undefined;
-
+};
 class ClientUtils {
     apiBase: string = "";
 
@@ -14,68 +13,40 @@ class ClientUtils {
     }
 
     async get(url: string): Promise<Response> {
-        try {
-            return await axios.get(`${this.apiBase}/${url}`, {
-                headers: {
-                    Accept: "*/*"
-                }
-            });
-        } catch (error) {
-            console.error("Error during sending request: ", error.message);
-            console.error(error);
-        }
-
-        return undefined;
+        return axios.get(`${this.apiBase}/${url}`, {
+            headers: {
+                Accept: "*/*"
+            }
+        });
     }
 
     async getStream(url: string): Promise<Response> {
-        try {
-            return await axios({
-                method: "GET",
-                url: `${this.apiBase}/${url}`,
-                headers: {
-                    Accept: "*/*"
-                },
-                responseType: "stream"
-            });
-        } catch (error) {
-            console.error("Error during sending request: ", error.message);
-            console.error(error);
-        }
-
-        return undefined;
+        return axios({
+            method: "GET",
+            url: `${this.apiBase}/${url}`,
+            headers: {
+                Accept: "*/*"
+            },
+            responseType: "stream"
+        });
     }
 
-    async post(url: string, data: any, headers: {[key: string]: string} = {}): Promise<Response | undefined> {
-        try {
-            const response = await axios({
-                method: "POST",
-                url: `${this.apiBase}/${url}`,
-                data,
-                headers
-            });
+    async post(url: string, data: any, headers: {[key: string]: string} = {}): Promise<Response> {
+        const response = await axios({
+            method: "POST",
+            url: `${this.apiBase}/${url}`,
+            data,
+            headers
+        });
 
-            return {
-                status: response.status,
-                data: response.data
-            };
-        } catch (error) {
-            console.error("Error during sending request: ", error.message);
-            console.error(error);
-        }
-
-        return undefined;
+        return {
+            status: response.status,
+            data: response.data
+        };
     }
 
     async delete(url: string): Promise<void> {
-        try {
-            return await axios.delete(`${this.apiBase}/${url}`).then(() => undefined);
-        } catch (error) {
-            console.error("Error during sending request: ", error.message);
-            console.error(error);
-        }
-
-        return undefined;
+        return axios.delete(`${this.apiBase}/${url}`).then(() => undefined);
     }
 
     async sendStream(url: string, stream: Stream | string): Promise<Response> {
