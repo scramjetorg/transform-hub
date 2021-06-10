@@ -15,6 +15,7 @@ Feature: Kill e2e tests
         And container is closed
         Then host stops
 
+    @ignore
     Scenario: E2E-003 TC-002 Kill sequence - kill handler should emit event when executed
         Given host started
         When host process is working
