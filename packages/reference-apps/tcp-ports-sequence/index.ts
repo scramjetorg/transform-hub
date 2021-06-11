@@ -3,12 +3,9 @@ import * as http from "http";
 import { ReadableApp } from "@scramjet/types";
 import { PassThrough } from "stream";
 
+const ports = [7006, 7007, 7008, 7009];
+const servers: http.Server[] = [];
 const createServers = (output: PassThrough): http.Server[] => {
-
-    const ports = [7006, 7007, 7008, 7009];
-    const servers: http.Server[] = [];
-
-    console.log("~~~~~~~~~~~~~~~ ports: " + ports);
 
     let server;
 
@@ -16,10 +13,10 @@ const createServers = (output: PassThrough): http.Server[] => {
         server = http.createServer();
 
         server.on("close", function() {
-            console.log("~~~~~~~~~~~~~~~Server closed");
+            console.log("~~~~~~~~~~~~~~~Server closed.");
         });
         server.on("error", function(error) {
-            console.log("~~~~~~~~~~~~~~~Error: " + error);
+            console.log("~~~~~~~~~~~~~~~Server error: " + error);
         });
 
         server.on("connection", function(socket) {
@@ -31,7 +28,7 @@ const createServers = (output: PassThrough): http.Server[] => {
                 console.log("~~~~~~~~~~~~~~~Data sent to server and output: " + data);
 
                 output.write(data);
-//                output.end();
+                //                output.end();
 
             });
 
@@ -41,20 +38,20 @@ const createServers = (output: PassThrough): http.Server[] => {
 
             socket.on("end", function(data: any) {
                 console.log("~~~~~~~~~~~~~~~End data: " + data);
+                output.end();
             });
 
             socket.on("close", function(error: any) {
-                console.log("~~~~~~~~~~~~~~~Socket closed!");
-                if (error) {
-                    console.log("~~~~~~~~~~~~~~~Socket was closed coz of transmission error");
-                }
+                console.log("~~~~~~~~~~~~~~~Socket closed.");
+                output.end();
+                console.error(error);
             });
 
 
         });
 
         server.listen(port, () => {
-            console.log("~~~~~~~~~~~~~~~ Listenting at port: " + port);
+            console.log("~~~~~~~~~~~~~~~ Listening at port: " + port);
 
         });
         servers.push(server);
