@@ -1,3 +1,4 @@
+import { SupervisorError } from "@scramjet/model";
 import * as Dockerode from "dockerode";
 import { PassThrough } from "stream";
 import {
@@ -8,6 +9,7 @@ import {
     DockerContainer,
     IDockerHelper, DockerImage, DockerVolume, ExitData
 } from "./types";
+import { FreePortsFinder } from "./utils";
 
 /**
  * Configuration for volumes to be mounted to container.
@@ -66,12 +68,27 @@ export class DockerodeDockerHelper implements IDockerHelper {
         });
     }
 
+    async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
+        if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
+            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(declaredPorts.length);
+
+            return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
+                obj[entry] = exposed ? {} : [{ HostPort: freePorts?.pop()?.toString() }];
+
+                return obj;
+            }, {});
+        }
+
+        throw new SupervisorError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
+    }
+
     /**
      * Creates container based on provided parameters.
      *
      * @param dockerImage Image to start container from.
      * @param volumes Configuration of volumes to be mounted in container.
      * @param binds Configuration for mounting directories.
+     * @param ports Exposed ports configuration.
      * @param envs Environmen variables to be set in container.
      * @param autoRemove Indicates that container should be auto-removed on exit.
      * @param maxMem Memory available for container (bytes).
@@ -82,6 +99,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
         dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[] = [],
         binds: string[] = [],
+        ports: any = [],
         envs: string[] = [],
         autoRemove: boolean = false,
         maxMem: number = 64 * 1024 * 1024, // TODO: Container configuration
@@ -96,13 +114,15 @@ export class DockerodeDockerHelper implements IDockerHelper {
             OpenStdin: true,
             StdinOnce: true,
             Env: envs,
+            ExposedPorts: Array.isArray(ports) ? await this.preparePortBindingsConfig(ports, true) : undefined,
             HostConfig: {
                 Binds: binds,
                 Mounts: this.translateVolumesConfig(volumes),
                 AutoRemove: autoRemove,
                 Memory: maxMem,
-                MemorySwap: 0
-            }
+                MemorySwap: 0,
+                PortBindings: Array.isArray(ports) ? await this.preparePortBindingsConfig(ports, false) : undefined,
+            },
         };
 
         if (command) config.Cmd = [...command];
@@ -210,6 +230,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
             config.imageName,
             config.volumes,
             config.binds,
+            config.ports,
             config.envs,
             config.autoRemove,
             config.maxMem,

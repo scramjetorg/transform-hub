@@ -206,7 +206,7 @@ class PrePack {
             os = this.rootPackageJson.os,
             cpu = this.rootPackageJson.cpu,
             publishConfig = this.rootPackageJson.publishConfig,
-            man, directories, config, peerDependencies,
+            man, directories, config, peerDependencies, scramjet,
             peerDependenciesMeta, bundledDependencies, optionalDependencies
         } = content;
         const priv = !this.options.public && this.rootPackageJson.private;
@@ -230,7 +230,7 @@ class PrePack {
             bin, man, directories, repository, config, browser,
             dependencies, peerDependencies, peerDependenciesMeta,
             bundledDependencies, optionalDependencies,
-            engines, os, cpu, private: priv, publishConfig
+            engines, os, cpu, private: priv, publishConfig, scramjet
         };
     }
 

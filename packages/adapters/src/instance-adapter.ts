@@ -200,6 +200,7 @@ IComponent {
                 binds: [
                     `${this.resources.fifosDir}:/pipes`
                 ],
+                ports: config.config.ports,
                 envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
                 autoRemove: true,
                 maxMem: 512 * 1024 * 1024 // TODO: config

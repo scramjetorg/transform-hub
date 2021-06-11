@@ -69,6 +69,12 @@ export type DockerAdapterRunConfig = {
     binds?: string[],
 
     /**
+     * @property {string[]} ports Ports to expose
+     * @example ["8000/tcp", "9000/udp"]
+     */
+    ports?: string[],
+
+    /**
      * @property {string[]} envs A list of environment variables
      * to set inside the container in the form ```["VAR=value", ...]```
      */
@@ -164,6 +170,7 @@ export interface IDockerHelper {
         dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[],
         binds: string[],
+        ports: any,
         envs: string[],
         autoRemove: boolean,
         maxMem: number) => Promise<DockerContainer>;
