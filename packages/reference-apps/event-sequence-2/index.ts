@@ -33,7 +33,7 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
 
         setTimeout(() => {
             this.emit("new-test-event", "event sent between functions in one sequence");
-        }, 1000);
+        }, 2000);
 
         for await (const { a } of stream) {
             x = a;

@@ -18,3 +18,19 @@ Feature: Event e2e tests
         When wait for "10000" ms
         And container is closed
         Then host stops
+
+    Scenario: E2E-004 TC-002 Send test-event in one function and emit this event in another function within one sequence
+        Given host started
+        When host process is working
+        And sequence "../packages/reference-apps/event-sequence-2.tar.gz" loaded
+        And wait for "2000" ms
+        And instance started
+        And wait for "4000" ms
+        And get instance health
+        And get containerId
+        And instance health is "true"
+        Then get event from instance
+        Then instance response body is "{\"eventName\":\"new-test-event\",\"message\":\"event sent between functions in one sequence\"}"
+        When wait for "10000" ms
+        And container is closed
+        Then host stops
