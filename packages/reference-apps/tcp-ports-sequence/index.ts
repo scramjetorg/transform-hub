@@ -1,11 +1,11 @@
-import * as http from "https";
-
-import { ReadableApp } from "@scramjet/types";
+import * as http from "http";
 import { PassThrough } from "stream";
+
+import { Logger, ReadableApp } from "@scramjet/types";
 
 const ports = [7006, 7007, 7008, 7009];
 const servers: http.Server[] = [];
-const createServers = (output: PassThrough): http.Server[] => {
+const createServers = (output: PassThrough, logger: Logger): http.Server[] => {
 
     let server;
 
@@ -13,39 +13,38 @@ const createServers = (output: PassThrough): http.Server[] => {
         server = http.createServer();
 
         server.on("close", function() {
-            console.log("~~~~~~~~~~~~~~~Server closed.");
+            logger.info("TCP server at port " + port + "closed.");
         });
         server.on("error", function(error) {
-            console.error("~~~~~~~~~~~~~~~Server error: " + error);
+            logger.error("TCP server error: " + error);
         });
 
         server.on("connection", function(socket) {
-
-            console.log("~~~~~~~~~~~~~~~ Socket is listening at port: " + socket.remotePort);
+            logger.info("Socket connection at port: " + socket.localPort);
 
             socket.on("data", function(data: any) {
-                console.log("~~~~~~~~~~~~~~~Data sent to server and output: " + data);
+                logger.info("Data sent to server and output: " + data);
                 output.write(data);
             });
 
             socket.on("error", function(error: any) {
-                console.error("~~~~~~~~~~~~~~~Socket Error: " + error);
+                logger.error("Socket Error: " + error);
             });
 
             socket.on("end", function(data: any) {
-                console.log("~~~~~~~~~~~~~~~End data: " + data);
+                logger.info("Socket end: " + data);
                 output.end();
             });
 
             socket.on("close", function(error: any) {
-                console.log("~~~~~~~~~~~~~~~Socket closed, error: " + error);
+                logger.info("Socket closed, error: " + error);
                 output.end();
             });
 
         });
 
         server.listen(port, () => {
-            console.log("~~~~~~~~~~~~~~~ Listening at port: " + port);
+            logger.info("TCP server listening at port: " + port);
         });
 
         servers.push(server);
@@ -53,35 +52,18 @@ const createServers = (output: PassThrough): http.Server[] => {
 
     return servers;
 };
-const testServerConnection = (portNumber: number) => {
-
-    const net = require("net");
-    const client = new net.Socket();
-
-    client.connect({
-        port: portNumber
-    });
-
-    client.on("connect", function() {
-        console.log("~~~~~~~~~~~~~~~ Client: connection established");
-        client.write("Is there anybody out there?");
-    });
-
-};
 /**
  * @param _stream - input
  */
-const mod: ReadableApp = async function(_stream: any) {
+const startServers: ReadableApp = async function(_stream: any) {
+
+    this.logger.log();
 
     const output = new PassThrough();
 
-    createServers(output);
-
-    await new Promise(res => setTimeout(res, 10000));
-
-    testServerConnection(7006);
+    createServers(output, this.logger);
 
     return output;
 };
 
-export default mod;
+export default startServers;
