@@ -3,7 +3,9 @@
   "version": "0.10.0-pre.7",
   "description": "",
   "main": "index.js",
-  "ports": ["7006/tcp", "7007/tcp", "7008/tcp", "7009/tcp"],   
+  "config": {
+      "ports": ["7006/tcp", "7007/tcp", "7008/tcp", "7009/tcp"]
+  },  
   "scripts": {
     "prepack": "node ../../../scripts/publish.js",
     "build": "tsc -p tsconfig.json",
