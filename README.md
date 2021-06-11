@@ -36,13 +36,16 @@ yarn prepack              # moves files to ./dist/
 ## Basic commands
 
 ```bash
-yarn build          # Build all packages
-yarn bic            # Build only the changed components
-yarn lint           # Check and fix syntax
-yarn watch          # Watch files
-yarn lint:dedupe    # Check if there are packages to deduplicate
-yarn pack:pre       # Move linked packages to dist/ (alias: yarn prepack)
-yarn pack:pub       # Prepare (unlink) packages for publication and move to dist/
+yarn install:clean      # Removes dist directories, cleans node_modules, installs packages
+yarn build              # Build all packages and reference apps
+yarn build:all-packages # Builds packages only
+yarn build:refapps      # Builds reference apps only
+yarn bic                # Build only the changed components
+yarn lint               # Check and fix syntax
+yarn watch              # Watch files
+yarn lint:dedupe        # Check if there are packages to deduplicate
+yarn pack:pre           # Move linked packages to dist/ (alias: yarn prepack)
+yarn pack:pub           # Prepare (unlink) packages for publication and move to dist/
 ```
 
 ## Start host
@@ -56,6 +59,14 @@ ts-node packages/host/src/bin/start # This starts node from source code
 ## Lerna commands
 
 [See more lerna commands =>](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/lerna-commands.md)
+
+## Clean build
+
+```bash
+yarn install:clean   # this command will perform yarn clean && yarn clean:modules && yarn install at once
+yarn build:all-packages    # optionally build:all if you want all dockerfiles.
+yarn prepack              # moves files to ./dist/
+```
 
 ## Docker commands
 
