@@ -5,7 +5,11 @@ import { Logger, ReadableApp } from "@scramjet/types";
 
 const ports = [7006, 7007, 7008, 7009];
 const servers: http.Server[] = [];
-const createServers = (output: PassThrough, logger: Logger): http.Server[] => {
+const output = new PassThrough();
+
+let protocol = "tcp";
+
+const createServers = (logger: Logger): http.Server[] => {
 
     let server;
 
@@ -55,13 +59,20 @@ const createServers = (output: PassThrough, logger: Logger): http.Server[] => {
 /**
  * @param _stream - input
  */
-const startServers: ReadableApp = async function(_stream: any) {
+const startServers: ReadableApp = async function(_stream: any, ...args: any) {
 
-    this.logger.log();
+    this.logger.info("Sequence started with arguments: " + args);
 
-    const output = new PassThrough();
+    if (args.length > 0) protocol = args[0];
 
-    createServers(output, this.logger);
+    if (protocol === "tcp") {
+        this.logger.info("Starting TCP servers...");
+        createServers(this.logger);
+    } else if (protocol === "udp") {
+        this.logger.info("Sequence UDP server requested.");
+    } else {
+        this.logger.error("Sequence argument not recognized: " + protocol);
+    }
 
     return output;
 };
