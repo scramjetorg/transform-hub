@@ -105,6 +105,10 @@ export class DockerodeDockerHelper implements IDockerHelper {
         maxMem: number = 64 * 1024 * 1024, // TODO: Container configuration
         command?: string[]
     ): Promise<DockerContainer> {
+        const [ExposedPorts, PortBindings] = await Promise.all([
+            this.preparePortBindingsConfig(ports, true),
+            this.preparePortBindingsConfig(ports, false)
+        ]);
         const config: Dockerode.ContainerCreateOptions = {
             Image: dockerImage,
             AttachStdin: true,
@@ -114,14 +118,14 @@ export class DockerodeDockerHelper implements IDockerHelper {
             OpenStdin: true,
             StdinOnce: true,
             Env: envs,
-            ExposedPorts: Array.isArray(ports) ? await this.preparePortBindingsConfig(ports, true) : undefined,
+            ExposedPorts,
             HostConfig: {
                 Binds: binds,
                 Mounts: this.translateVolumesConfig(volumes),
                 AutoRemove: autoRemove,
                 Memory: maxMem,
                 MemorySwap: 0,
-                PortBindings: Array.isArray(ports) ? await this.preparePortBindingsConfig(ports, false) : undefined,
+                PortBindings
             },
         };
 
