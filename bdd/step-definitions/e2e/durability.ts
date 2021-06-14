@@ -54,6 +54,7 @@ When("starts at least {int} sequences from file {string} for {float} hours", { t
         }
 
         if (instances.length > minNumber) {
+            console.log("Total sequences started: ", instances.length);
             break;
         }
 
