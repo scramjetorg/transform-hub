@@ -12,6 +12,7 @@ Feature: Verify the checksums of payloads are correct
         And get containerId
         And instance health is "true"
         And compare checksums of content sent from file "../dist/reference-apps/checksum-sequence/data.json"
+        And wait for "4000" ms
         When container is closed
         Then host stops
 
