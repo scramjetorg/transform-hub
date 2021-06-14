@@ -1,35 +1,37 @@
-import * as http from "http";
 import { PassThrough } from "stream";
 
 import { Logger, ReadableApp } from "@scramjet/types";
+import { Server } from "net";
+import { Socket } from "dgram";
 
 const ports = [7006, 7007, 7008, 7009];
-const servers: http.Server[] = [];
+const servers: (Server | Socket)[] = [];
 const output = new PassThrough();
 const dgram = require("dgram");
+const net = require("net");
 
 let protocol = "tcp";
 
-const createTCPServers = (logger: Logger): http.Server[] => {
+const createTCPServers = (logger: Logger): (Server | Socket)[] => {
 
     let server;
 
     ports.forEach(function(port) {
-        server = http.createServer();
+        server = net.createServer();
 
         server.on("close", function() {
             logger.info("TCP server at port " + port + "closed.");
         });
-        server.on("error", function(error) {
+        server.on("error", function(error: any) {
             logger.error("TCP server error: " + error);
         });
 
-        server.on("connection", function(socket) {
+        server.on("connection", function(socket: any) {
             logger.info("Socket connection at port: " + socket.localPort);
 
-            socket.on("data", function(data: any) {
-                logger.info("Data sent to server and output: " + data);
-                output.write(data);
+            socket.on("data", (chunk: any) => {
+                logger.info(`chunk received, len=${chunk.length}, type=${typeof chunk}`);
+                output.write(chunk);
             });
 
             socket.on("error", function(error: any) {
@@ -57,7 +59,7 @@ const createTCPServers = (logger: Logger): http.Server[] => {
 
     return servers;
 };
-const creatUDPServers = (logger: Logger): http.Server[] => {
+const createUDPServers = (logger: Logger): (Server | Socket)[] => {
 
     ports.forEach(function(port) {
 
@@ -75,7 +77,7 @@ const creatUDPServers = (logger: Logger): http.Server[] => {
         });
 
         server.on("listening", () => {
-            logger.info("UDP server listening: " + server.address());
+            logger.info("UDP server listening: " + JSON.stringify(server.address()));
         });
 
         server.bind(port);
@@ -99,7 +101,7 @@ const startServers: ReadableApp = async function(_stream: any, ...args: any) {
         createTCPServers(this.logger);
     } else if (protocol === "udp") {
         this.logger.info("Starting UDP servers...");
-        creatUDPServers(this.logger);
+        createUDPServers(this.logger);
     } else {
         this.logger.error("Sequence argument not recognized: " + protocol);
     }

@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/tcp-ports-sequence",
+  "name": "@scramjet/ports-sequence",
   "version": "0.10.0-pre.7",
   "description": "",
   "main": "index.js",
