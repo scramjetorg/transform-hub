@@ -71,7 +71,7 @@ const createUDPServers = (logger: Logger): (Server | Socket)[] => {
         });
 
         server.on("message", (data: any) => {
-            logger.info("Data sent to server and output: " + data);
+            logger.info(`Data ${data} received, len=${data.length}, type=${typeof data}`);
             output.write(data);
             output.end();
         });
