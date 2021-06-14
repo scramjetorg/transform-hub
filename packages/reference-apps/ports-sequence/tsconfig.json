@@ -4,8 +4,7 @@
     },
     "extends": "../../../tsconfig.base.json",
     "include": [
-      "./index.ts",
-      "util/tcp-client.ts"
+      "./index.ts"
     ],
     "exclude": [
         "node_modules"
