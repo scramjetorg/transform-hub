@@ -65,7 +65,7 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
-Then("host process is working", async () => {
+When("host process is working", async () => {
     await waitForValueTillTrue(hostUtils.hostProcessStopped);
 });
 

@@ -96,6 +96,10 @@ When("host one execute sequence in background {string}", { timeout: 20000 }, asy
     hostOneUtils.executeSequenceSpawn(packagePath, [configJson]);
 });
 
+Given("host one execute sequence in background {string}", { timeout: 20000 }, async (packagePath) => {
+    hostOneUtils.executeSequenceSpawn(packagePath, [configJson]);
+});
+
 When("host one execute sequence in background {string} with arguments {string}", { timeout: 20000 }, async (packagePath, args) => {
     hostOneUtils.executeSequenceSpawn(packagePath, [configJson].concat(args.split(" ")));
 });
@@ -114,7 +118,7 @@ When("get sequence health", async () => {
     assert.equal(actualResponse.status, 200);
 });
 
-Then("response body is {string}", async (expectedResp) => {
+When("response body is {string}", async (expectedResp) => {
     assert.ok(typeof actualResponse !== "undefined", "actualResponse is undefined");
     assert.equal(JSON.stringify(actualResponse.data), expectedResp);
 });
