@@ -3,8 +3,8 @@ import { When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 
 import * as crypto from "crypto";
-import * as fs from "fs";
 import { InstanceClient } from "@scramjet/api-client/src/instance-client";
+import { createReadStream } from "fs";
 
 const hostClient = new HostClient("http://localhost:8000/api/v1");
 const instances: InstanceClient[] = [];
@@ -12,7 +12,7 @@ const instances: InstanceClient[] = [];
 // eslint-disable-next-line complexity
 When("starts at least {int} sequences from file {string} for {float} hours", { timeout: 3600 * 48 * 1000 }, async (minNumber: number, seq: string, hrs: number) => {
     // eslint-disable-next-line no-extra-parens
-    const sequence = await hostClient.sendSequence(fs.readFileSync(seq));
+    const sequence = await hostClient.sendSequence(createReadStream(seq));
     const data = {
         appConfig: {},
         args: [

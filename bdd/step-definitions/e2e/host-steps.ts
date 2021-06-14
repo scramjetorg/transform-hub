@@ -2,6 +2,7 @@ import { Given, When, Then, Before } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
+import { createReadStream } from "fs";
 import { HostClient, SequenceClient, InstanceClient, InstanceOutputStream, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { Stream } from "stream";
@@ -70,7 +71,7 @@ Then("host process is working", async () => {
 
 When("sequence {string} loaded", async (packagePath: string) => {
     sequence = await hostClient.sendSequence(
-        fs.readFileSync(packagePath)
+        createReadStream(packagePath)
     );
 });
 
