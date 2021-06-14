@@ -14,52 +14,52 @@ export class ApiClient {
         const postEventUrl = `instance/${instanceId}/_event`;
         const data = [4005, { eventName: eventName, message: postMessage }];
 
-        return await this.post(postEventUrl, data, "application/json");
+        return this.post(postEventUrl, data, "application/json");
     }
 
     public async getEvent(instanceId: string): Promise<any> {
         const getEventUrl = `${this.apiBase}/instance/${instanceId}/event`;
 
-        return await this.get(getEventUrl);
+        return this.get(getEventUrl);
     }
 
     public async stopInstance(instanceId: string, timeoutInMs: number, canCallKeepalive: boolean) {
         const stopMethodUrl = `instance/${instanceId}/_stop`;
         const data = [4001, { timeout: timeoutInMs, canCallKeepalive: canCallKeepalive }];
 
-        return await this.post(stopMethodUrl, data, "application/json");
+        return this.post(stopMethodUrl, data, "application/json");
     }
 
     public async killInstance(instanceId: string) {
         const killMethodUrl = `instance/${instanceId}/_kill`;
         const data = [4002, {}];
 
-        return await this.post(killMethodUrl, data, "application/json");
+        return this.post(killMethodUrl, data, "application/json");
     }
 
     public async postInput(id: string, data: any): Promise<any> {
         const url = `instance/${id}/input`;
 
-        return await this.post(url, data, "application/octet-stream");
+        return this.post(url, data, "application/octet-stream");
     }
 
     public async postMonitoringRate(): Promise<any> {
         const monitoringMethodUrl = `${this.apiBase}/sequence/_monitoring_rate`;
         const data = [4003, { monitoringRate: 2 }];//TODO implement message
 
-        return await this.post(monitoringMethodUrl, data, "application/json");
+        return this.post(monitoringMethodUrl, data, "application/json");
     }
 
     public async getHealth(instanceId:string): Promise<any> {
         const gethealthUrl = `${this.apiBase}/instance/${instanceId}/health`;
 
-        return await this.get(gethealthUrl);
+        return this.get(gethealthUrl);
     }
 
     public async getStatus(instanceId:string): Promise<any> {
         const gethealthUrl = `${this.apiBase}/instance/${instanceId}/status`;
 
-        return await this.get(gethealthUrl);
+        return this.get(gethealthUrl);
     }
 
     public async post(url: string, data: any, contentType: string): Promise<any> {
