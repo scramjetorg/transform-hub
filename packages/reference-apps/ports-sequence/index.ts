@@ -30,7 +30,7 @@ const createTCPServers = (logger: Logger): (Server | Socket)[] => {
             logger.info("Socket connection at port: " + socket.localPort);
 
             socket.on("data", (chunk: any) => {
-                logger.info(`chunk received, len=${chunk.length}, type=${typeof chunk}`);
+                logger.info(`chunk ${chunk} received, len=${chunk.length}, type=${typeof chunk}`);
                 output.write(chunk);
             });
 
@@ -77,7 +77,7 @@ const createUDPServers = (logger: Logger): (Server | Socket)[] => {
         });
 
         server.on("listening", () => {
-            logger.info("UDP server listening: " + JSON.stringify(server.address()));
+            logger.info("UDP server listening at port: " + port);
         });
 
         server.bind(port);
