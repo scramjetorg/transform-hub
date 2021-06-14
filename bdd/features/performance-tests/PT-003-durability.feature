@@ -5,10 +5,7 @@ Feature: Start multiple instances
         When starts at least 2 sequences from file "../packages/reference-apps/durability-preservation.tar.gz" for .25 hours
         When wait for .025 hours
         Then check if instances respond
-        And get instance health
-        And get containerId
-        And wait for "4000"
-        When container is closed
+        When wait for "2000" ms
         Then host stops
 
     @ignore
@@ -17,6 +14,7 @@ Feature: Start multiple instances
         When starts at least 25 sequences from file "../packages/reference-apps/durability-preservation.tar.gz" for 2 hours
         When wait for 1 hours
         Then check if instances respond
+        When wait for "2000" ms
         Then host stops
 
     @ignore
@@ -25,7 +23,7 @@ Feature: Start multiple instances
         When starts at least 25 sequences from file "../packages/reference-apps/durability-preservation.tar.gz" for 25 hours
         When wait for 24 hours
         Then check if instances respond
-        When container is closed
+        When wait for "2000" ms
         Then host stops
 
 
