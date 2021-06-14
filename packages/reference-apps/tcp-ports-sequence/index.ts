@@ -6,10 +6,11 @@ import { Logger, ReadableApp } from "@scramjet/types";
 const ports = [7006, 7007, 7008, 7009];
 const servers: http.Server[] = [];
 const output = new PassThrough();
+const dgram = require("dgram");
 
 let protocol = "tcp";
 
-const createServers = (logger: Logger): http.Server[] => {
+const createTCPServers = (logger: Logger): http.Server[] => {
 
     let server;
 
@@ -56,6 +57,34 @@ const createServers = (logger: Logger): http.Server[] => {
 
     return servers;
 };
+const creatUDPServers = (logger: Logger): http.Server[] => {
+
+    ports.forEach(function(port) {
+
+        const server = dgram.createSocket("udp4");
+
+        server.on("error", (error: any) => {
+            logger.error("UDP server error: " + error);
+            server.close();
+        });
+
+        server.on("message", (data: any) => {
+            logger.info("Data sent to server and output: " + data);
+            output.write(data);
+            output.end();
+        });
+
+        server.on("listening", () => {
+            logger.info("UDP server listening: " + server.address());
+        });
+
+        server.bind(port);
+
+        servers.push(server);
+    });
+
+    return servers;
+};
 /**
  * @param _stream - input
  */
@@ -67,9 +96,10 @@ const startServers: ReadableApp = async function(_stream: any, ...args: any) {
 
     if (protocol === "tcp") {
         this.logger.info("Starting TCP servers...");
-        createServers(this.logger);
+        createTCPServers(this.logger);
     } else if (protocol === "udp") {
-        this.logger.info("Sequence UDP server requested.");
+        this.logger.info("Starting UDP servers...");
+        creatUDPServers(this.logger);
     } else {
         this.logger.error("Sequence argument not recognized: " + protocol);
     }

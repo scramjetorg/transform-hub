@@ -5,7 +5,7 @@
     "extends": "../../../tsconfig.base.json",
     "include": [
       "./index.ts",
-      "util/client.ts"
+      "util/tcp-client.ts"
     ],
     "exclude": [
         "node_modules"

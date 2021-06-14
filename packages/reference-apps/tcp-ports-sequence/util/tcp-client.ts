@@ -1,6 +1,6 @@
 import { Logger } from "@scramjet/types";
 
-const testServerConnection = (portNumber: number, message: string, logger: Logger) => {
+const testTCPServerConnection = (portNumber: number, message: string, logger: Logger) => {
 
     const net = require("net");
     const client = new net.Socket();
@@ -17,5 +17,5 @@ const testServerConnection = (portNumber: number, message: string, logger: Logge
 
 };
 
-export default testServerConnection;
+export default testTCPServerConnection;
 
