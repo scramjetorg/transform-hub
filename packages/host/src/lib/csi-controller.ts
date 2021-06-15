@@ -27,7 +27,9 @@ export class CSIController extends EventEmitter {
     downStreams?: DownstreamStreamsConfig;
     router?: APIRoute;
     info: {
-        ports?: any
+        ports?: any,
+        created?: Date,
+        started?: Date
     } = {};
     initResolver?: { res: Function, rej: Function };
     startResolver?: { res: Function, rej: Function };
@@ -60,6 +62,8 @@ export class CSIController extends EventEmitter {
         this.startPromise = () => new Promise((res, rej) => {
             this.startResolver = { res, rej };
         });
+
+        this.info.created = new Date();
     }
 
     async start() {
@@ -186,6 +190,8 @@ export class CSIController extends EventEmitter {
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
 
             this.startResolver?.res();
+
+            this.info.started = new Date();
         } else {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
@@ -248,6 +254,12 @@ export class CSIController extends EventEmitter {
 
     async getInfo() {
         await this.startPromise();
-        return this.info;
+
+        return {
+            ...this.info,
+            sequenceId: this.sequence.id,
+            appConfig: this.appConfig,
+            args: this.sequenceArgs
+        };
     }
 }

@@ -1,4 +1,4 @@
-import { HostClient } from "@scramjet/api-client/src/host-client";
+import { HostClient } from "@scramjet/api-client/";
 import { createReadStream } from "fs";
 
 const host = new HostClient("http://localhost:8000/api/v1");
