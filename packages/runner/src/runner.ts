@@ -177,6 +177,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             .from(this.inputStream as Readable)
             .do(inputMsg => {
                 this.logger.log("Input message", inputMsg);
+                this.logger.log("Input message toString();", inputMsg.toString());
             });
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
