@@ -1,4 +1,3 @@
-
 const { StringStream } = require("scramjet");
 
 /* eslint-disable no-loop-func */
@@ -18,10 +17,13 @@ module.exports = async function(_stream: any) {
     return StringStream
         .from(process.stdin)
         .lines("\n")
+        .parse((str: any) => [+str.match(/^\w+/), str])
         .filter(([item]:any) => !isNaN(item))
         .do(
             async ([num, line]: any) => {
                 const wrote = process[num % 2 ? "stdout" : "stderr"].write(line + "\n");
+
+                console.log("-------yyyyyyyyyyyy: ", wrote);
 
                 if (!wrote)
                     await new Promise(res => process.stdout.once("drain", res));
