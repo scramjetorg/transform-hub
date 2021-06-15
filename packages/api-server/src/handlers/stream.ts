@@ -92,7 +92,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 const data = await getWritable(stream, req, res);
 
                 // eslint-disable-next-line no-extra-parens
-                if ((data as Writable).writable) {
+                if (typeof (data as Writable).writable !== "undefined") {
                     await new Promise<void>((resolve, reject) => {
                         if (encoding) {
                             req.setEncoding(encoding);
