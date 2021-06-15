@@ -1,0 +1,25 @@
+{
+  "name": "@scramjet/stdio-sequence",
+  "version": "0.10.0-pre.7",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "prepack": "node ../../../scripts/publish.js",
+    "build": "tsc -p tsconfig.json",
+    "packseq": "node ../../../scripts/packsequence.js",
+    "clean": "rm -rf ./dist"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@scramjet/types": "^0.10.0-pre.7",
+    "@types/node": "^14.14.37"
+  },
+  "dependencies": {
+    "scramjet": "^4.35.12"
+  },
+  "publishConfig": {
+    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
+    "access": "restricted"
+  }
+}

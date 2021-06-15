@@ -156,7 +156,7 @@ export class CSIController extends EventEmitter {
         this.communicationHandler.pipeDataStreams();
 
         // TODO: remove
-        // this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
+        this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
         // this.upStreams[CommunicationChannel.MONITORING].pipe(process.stdout);
         const controlDataStream = new DataStream();
 

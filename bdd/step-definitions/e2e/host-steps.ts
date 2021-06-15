@@ -85,9 +85,6 @@ When("instance started with arguments {string}", { timeout: 25000 }, async (inst
     instance = await sequence.start({}, instanceArg.split(" "));
 });
 
-Then("instance is working", async () => {
-    // TODO
-});
 
 // not in use
 When("get logs in background with instanceId", { timeout: 20000 }, async () => {
