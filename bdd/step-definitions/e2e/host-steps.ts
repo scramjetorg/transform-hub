@@ -437,3 +437,20 @@ When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) 
     await instance?.stop(0, false);
 });
 
+When("send data", async () => {
+
+    const status = (await instance.sendInput("{\"a\": 1}")).status;
+
+    console.log(status);
+
+    const data = await streamToString((await instance.getStream("output")).data);
+
+    console.log(data);
+
+});
+
+// When("get instance status", async () => {
+//     actualResponse = await apiClient.getStatus(instanceId);
+//     console.log("-----actualResponse: ", actualResponse);
+//     assert.equal(actualResponse.status, 200);
+// });
