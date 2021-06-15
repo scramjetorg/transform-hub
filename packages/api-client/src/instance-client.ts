@@ -66,6 +66,10 @@ export class InstanceClient {
         return clientUtils.get(`${this.instanceURL}/status`);
     }
 
+    async getInfo() {
+        return clientUtils.get(`${this.instanceURL}`);
+    }
+
     async getStream(streamId: InstanceOutputStream): Promise<Response> {
         return clientUtils.getStream(`${this.instanceURL}/${streamId}`);
     }

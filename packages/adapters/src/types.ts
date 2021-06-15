@@ -40,6 +40,11 @@ export type DockerAdapterVolumeConfig = {
     }
 );
 
+export type DockerAdapterRunPortsConfig = {
+    ExposedPorts: any,
+    PortBindings: any
+}
+
 /**
  * Configuration used to run command in container.
  *
@@ -69,10 +74,9 @@ export type DockerAdapterRunConfig = {
     binds?: string[],
 
     /**
-     * @property {string[]} ports Ports to expose
-     * @example ["8000/tcp", "9000/udp"]
+     * @property {DockerAdapterRunPortsConfig} ports Docker ports configuration
      */
-    ports?: string[],
+    ports?: DockerAdapterRunPortsConfig
 
     /**
      * @property {string[]} envs A list of environment variables
@@ -117,8 +121,9 @@ export type ExitData = {
 
 export type DockerAdapterResources = {
     containerId?: DockerContainer;
-    volumeId?: DockerVolume,
-    fifosDir?: PathLike
+    volumeId?: DockerVolume;
+    fifosDir?: PathLike;
+    ports?: DockerAdapterRunPortsConfig;
 }
 
 export type DockerAdapterWaitOptions = {
@@ -167,13 +172,15 @@ export interface IDockerHelper {
      * @returns {Promise} Created container.
      */
     createContainer: (
+        containerCfg: {
         dockerImage: DockerImage,
         volumes: DockerAdapterVolumeConfig[],
         binds: string[],
         ports: any,
         envs: string[],
         autoRemove: boolean,
-        maxMem: number) => Promise<DockerContainer>;
+        maxMem: number}
+    ) => Promise<DockerContainer>;
 
     /**
      * Starts container.
@@ -208,9 +215,9 @@ export interface IDockerHelper {
      *
      * @returns {Promise<DockerVolume[]>} List of existing volumes
      */
-     listVolumes: () => Promise<DockerVolume[]>;
+    listVolumes: () => Promise<DockerVolume[]>;
 
-     /**
+    /**
      * Creates volume.
      *
      * @param {string} name Volume name.

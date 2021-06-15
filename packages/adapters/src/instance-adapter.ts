@@ -20,8 +20,10 @@ import { tmpdir } from "os";
 import * as path from "path";
 import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
+import { RunnerMessageCode } from "@scramjet/symbols";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, IDockerHelper } from "./types";
+import { DockerAdapterResources, DockerAdapterRunPortsConfig, IDockerHelper } from "./types";
+import { FreePortsFinder } from "./utils";
 
 class LifecycleDockerAdapterInstance implements
 ILifeCycleAdapterMain,
@@ -129,6 +131,30 @@ IComponent {
         });
     }
 
+
+    private async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
+        if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
+            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(declaredPorts.length);
+
+            return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
+                obj[entry] = exposed ? {} : [{ HostPort: freePorts?.pop()?.toString() }];
+
+                return obj;
+            }, {});
+        }
+
+        throw new SupervisorError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
+    }
+
+    async getPortsConfig(ports: string[]): Promise<DockerAdapterRunPortsConfig> {
+        const [ExposedPorts, PortBindings] = await Promise.all([
+            this.preparePortBindingsConfig(ports, true),
+            this.preparePortBindingsConfig(ports, false)
+        ]);
+
+        return { ExposedPorts, PortBindings };
+    }
+
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         if (this.resources.containerId) {
             const stats = await this.dockerHelper.stats(this.resources.containerId);
@@ -163,6 +189,27 @@ IComponent {
         ];
 
         communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);
+
+        communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, (data) => {
+            if (this.resources.ports) {
+                const ports: { [key: string]: string } = {};
+                const portsInfo = this.resources.ports?.PortBindings;
+
+                for (const port in portsInfo) {
+                    if (portsInfo.hasOwnProperty(port)) {
+                        ports[port] = portsInfo[port][0].HostPort;
+                    }
+                }
+
+                data[1] = {
+                    ...data[1],
+                    ports
+                };
+            }
+
+            return data;
+        });
+
     }
 
     async run(config: RunnerConfig): Promise<ExitCode> {
@@ -191,6 +238,10 @@ IComponent {
 
         this.logger.debug("Creating container");
 
+        if (config.config?.ports) {
+            this.resources.ports = await this.getPortsConfig(config.config.ports);
+        }
+
         return new Promise(async (resolve, reject) => {
             const { streams, containerId } = await this.dockerHelper.run({
                 imageName: this.imageConfig.runner || "",
@@ -200,7 +251,7 @@ IComponent {
                 binds: [
                     `${this.resources.fifosDir}:/pipes`
                 ],
-                ports: config.config.ports,
+                ports: this.resources.ports,
                 envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
                 autoRemove: true,
                 maxMem: 512 * 1024 * 1024 // TODO: config

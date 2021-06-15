@@ -26,9 +26,12 @@ export class CSIController extends EventEmitter {
     controlDataStream?: DataStream;
     downStreams?: DownstreamStreamsConfig;
     router?: APIRoute;
-
+    info: {
+        ports?: any
+    } = {};
     initResolver?: { res: Function, rej: Function };
-
+    startResolver?: { res: Function, rej: Function };
+    startPromise: Function;
     /**
      * Streams connected do API.
      */
@@ -53,6 +56,10 @@ export class CSIController extends EventEmitter {
         this.sequenceArgs = sequenceArgs;
         this.logger = logger;
         this.communicationHandler = communicationHandler;
+
+        this.startPromise = () => new Promise((res, rej) => {
+            this.startResolver = { res, rej };
+        });
     }
 
     async start() {
@@ -157,15 +164,17 @@ export class CSIController extends EventEmitter {
         this.controlDataStream.JSONStringify()
             .pipe(this.downStreams[CC.CONTROL]);
 
-        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async () => {
-            await this.handleHandshake();
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message: any) => {
+            await this.handleHandshake(message);
 
             return null;
         });
     }
 
-    async handleHandshake() {
-        this.logger.log("PING RECEIVED");
+    async handleHandshake(message: any) {
+        this.logger.log("PING RECEIVED", message);
+
+        Object.assign(this.info, message[1]);
 
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
@@ -175,6 +184,8 @@ export class CSIController extends EventEmitter {
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
+
+            this.startResolver?.res();
         } else {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
@@ -207,6 +218,10 @@ export class CSIController extends EventEmitter {
         if (this.downStreams) {
             const router = getRouter();
 
+            router.get("/", () => {
+                return this.getInfo();
+            });
+
             router.upstream("/stdout", this.downStreams[CommunicationChannel.STDOUT]);
             router.upstream("/stderr", this.downStreams[CommunicationChannel.STDERR]);
             router.downstream("/stdin", this.downStreams[CommunicationChannel.STDIN]);
@@ -229,5 +244,10 @@ export class CSIController extends EventEmitter {
         } else {
             throw new AppError("UNATTACHED_STREAMS");
         }
+    }
+
+    async getInfo() {
+        await this.startPromise();
+        return this.info;
     }
 }

@@ -42,15 +42,12 @@ IComponent {
 
     async list(): Promise<RunnerConfig[]> {
         const potentialVolumes = await this.dockerHelper.listVolumes();
-        const res = await DataStream.from(potentialVolumes)
+
+        return DataStream.from(potentialVolumes)
             .setOptions({ maxParallel: 8 }) // config?
             .map(volumeName => this.identifyOnly(volumeName))
             .catch(() => undefined)
-            // eslint-disable-next-line no-extra-parens
-            .toArray()
-        ;
-
-        return res;
+            .toArray();
     }
 
     async identifyOnly(volume: string): Promise<RunnerConfig> {
@@ -123,9 +120,7 @@ IComponent {
 
     private async createVolume(): Promise<DockerVolume> {
         try {
-            const volumeId = await this.dockerHelper.createVolume();
-
-            return volumeId;
+            return await this.dockerHelper.createVolume();
         } catch (error) {
             throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
         }

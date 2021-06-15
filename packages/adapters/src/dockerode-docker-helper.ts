@@ -1,4 +1,3 @@
-import { SupervisorError } from "@scramjet/model";
 import * as Dockerode from "dockerode";
 import { PassThrough } from "stream";
 import {
@@ -9,7 +8,6 @@ import {
     DockerContainer,
     IDockerHelper, DockerImage, DockerVolume, ExitData
 } from "./types";
-import { FreePortsFinder } from "./utils";
 
 /**
  * Configuration for volumes to be mounted to container.
@@ -68,68 +66,46 @@ export class DockerodeDockerHelper implements IDockerHelper {
         });
     }
 
-    async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
-        if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
-            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(declaredPorts.length);
-
-            return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
-                obj[entry] = exposed ? {} : [{ HostPort: freePorts?.pop()?.toString() }];
-
-                return obj;
-            }, {});
-        }
-
-        throw new SupervisorError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
-    }
-
     /**
      * Creates container based on provided parameters.
      *
-     * @param dockerImage Image to start container from.
-     * @param volumes Configuration of volumes to be mounted in container.
-     * @param binds Configuration for mounting directories.
-     * @param ports Exposed ports configuration.
-     * @param envs Environmen variables to be set in container.
-     * @param autoRemove Indicates that container should be auto-removed on exit.
-     * @param maxMem Memory available for container (bytes).
-     * @param command Optional command
+     * @param containerCfg Image to start container from.
      * @returns Created container id.
      */
     async createContainer(
-        dockerImage: DockerImage,
-        volumes: DockerAdapterVolumeConfig[] = [],
-        binds: string[] = [],
-        ports: any = [],
-        envs: string[] = [],
-        autoRemove: boolean = false,
-        maxMem: number = 64 * 1024 * 1024, // TODO: Container configuration
-        command?: string[]
+        containerCfg: {
+            dockerImage: DockerImage,
+            volumes: DockerAdapterVolumeConfig[],
+            binds: string[],
+            ports: any,
+            envs: string[],
+            autoRemove: boolean,
+            maxMem: number, // TODO: Container configuration
+            command?: string[]
+        }
     ): Promise<DockerContainer> {
-        const [ExposedPorts, PortBindings] = await Promise.all([
-            this.preparePortBindingsConfig(ports, true),
-            this.preparePortBindingsConfig(ports, false)
-        ]);
+        containerCfg.ports = { ...containerCfg.ports };
         const config: Dockerode.ContainerCreateOptions = {
-            Image: dockerImage,
+            Image: containerCfg.dockerImage,
             AttachStdin: true,
             AttachStdout: true,
             AttachStderr: true,
             Tty: false,
             OpenStdin: true,
             StdinOnce: true,
-            Env: envs,
-            ExposedPorts,
+            Env: containerCfg.envs,
+            ExposedPorts: containerCfg.ports.ExposedPorts,
             HostConfig: {
-                Binds: binds,
-                Mounts: this.translateVolumesConfig(volumes),
-                AutoRemove: autoRemove,
-                Memory: maxMem,
+                Binds: containerCfg.binds,
+                Mounts: this.translateVolumesConfig(containerCfg.volumes),
+                AutoRemove: containerCfg.autoRemove || false,
+                Memory: containerCfg.maxMem,
                 MemorySwap: 0,
-                PortBindings
+                PortBindings: containerCfg.ports.PortBindings
             },
         };
 
-        if (command) config.Cmd = [...command];
+        if (containerCfg.command) config.Cmd = [...containerCfg.command];
 
         const { id } = await this.dockerode.createContainer(config);
 
@@ -231,14 +207,16 @@ export class DockerodeDockerHelper implements IDockerHelper {
         };
         // ------
         const container = await this.createContainer(
-            config.imageName,
-            config.volumes,
-            config.binds,
-            config.ports,
-            config.envs,
-            config.autoRemove,
-            config.maxMem,
-            config.command
+            {
+                dockerImage: config.imageName,
+                volumes: config.volumes || [],
+                binds: config.binds || [],
+                ports: config.ports,
+                envs: config.envs || [],
+                autoRemove: config.autoRemove || false,
+                maxMem: config.maxMem || 64 * 1024 * 1024,
+                command: config.command
+            }
         );
         // ------
         const stream = await this.attach(container, {
