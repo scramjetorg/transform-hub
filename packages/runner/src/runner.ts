@@ -173,16 +173,29 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async hookupInputStream() {
         this.inputStream = createReadStream(this.inputFifoPath);
-        this.inputDataStream = DataStream
+        this.inputDataStream = StringStream
             .from(this.inputStream as Readable)
+            .lines()
+            .do(console.log)
+            .parse(line => {
+                try {
+                    return JSON.parse(line);
+                } catch (e) {
+                    this.logger.error(`Parsing of input data ${e.stack}.`);
+                    return undefined;
+                }
+            })
             .do(inputMsg => {
                 this.logger.log("Input message", inputMsg);
                 this.logger.log("Input message toString();", inputMsg.toString());
-            });
-
+            })
+        ;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.inputDataStream.run();
     }
+
+
+    // echo -e '{"abc":1}\n{"abc":2}\n' | curl -v -d @- -H "Content-Type: text/x-ndjson" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/input"
 
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);
