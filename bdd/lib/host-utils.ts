@@ -27,8 +27,8 @@ export class HostUtils {
 
             this.hostProcessStopped = false;
             //for debugging purposes
-            //this.host.stdout.pipe(process.stdout);
-            //this.host.stderr.pipe(process.stdout);
+            // this.host.stdout.pipe(process.stdout);
+            this.host.stderr.pipe(process.stderr);
 
             const decoder = new StringDecoder();
 

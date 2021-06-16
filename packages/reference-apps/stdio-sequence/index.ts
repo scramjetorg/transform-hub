@@ -2,7 +2,7 @@ const { StringStream } = require("scramjet");
 
 /* eslint-disable no-loop-func */
 /**
- * @typedef {import("@scramjet/types").InertApp InertApp
+ * @typedef {import("@scramjet/types").InertApp} InertApp
  * @typedef {import("@scramjet/types").AppContext} AppContext
  * @typedef {import("stream").Readable} Readable
  */
@@ -14,6 +14,7 @@ const { StringStream } = require("scramjet");
  * @param {Readable} _stream - dummy input stream
  */
 module.exports = async function(_stream: any) {
+    console.log(0);
     return StringStream
         .from(process.stdin)
         .lines("\n")
@@ -22,8 +23,6 @@ module.exports = async function(_stream: any) {
         .do(
             async ([num, line]: any) => {
                 const wrote = process[num % 2 ? "stdout" : "stderr"].write(line + "\n");
-
-                console.log("-------yyyyyyyyyyyy: ", wrote);
 
                 if (!wrote)
                     await new Promise(res => process.stdout.once("drain", res));

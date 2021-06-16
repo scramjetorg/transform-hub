@@ -256,27 +256,22 @@ Then("host stops", async () => {
     await hostUtils.stopHost();
 });
 
-Then("instance is stopped", { timeout: 10000 }, async () => {
-    const expectedHttpCode = 404;
-
-    assert.notEqual((await instance.getEvent()).status, expectedHttpCode);
-
-    console.log("Instance is stopped");
+When("send stdin to instance with arguments {string}", async (filePath: string) => {
+    await instance.sendStream("stdin", createReadStream(filePath));
 });
 
-Then("instance is running", { timeout: 10000 }, async () => {
-    const expectedHttpCode = 200;
+When("get instance {string}", async (endpoint) => {
+    const expectedStatus = 200;
+    const stdout = await instance.getStream(endpoint);
+    const status = stdout.data.statusCode;
+    // const strStdout = streamToString(stdout.data);
 
-    assert.equal(
-        (await instance.getEvent()).status,
-        expectedHttpCode
-    );
+    // console.log("----str strStdout: ", strStdout);
 
-    console.log("Instance is running");
+    // console.log("-----stdout: ", stdout);
+
+    // hostUtils.host.stdout.pipe(process.stdout);
+    // stdout.data.pipe(process.stdout);
+
+    assert.equal(expectedStatus, status);
 });
-
-// When("get instance status", async () => {
-//     actualResponse = await apiClient.getStatus(instanceId);
-//     console.log("-----actualResponse: ", actualResponse);
-//     assert.equal(actualResponse.status, 200);
-// });
