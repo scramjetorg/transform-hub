@@ -87,11 +87,11 @@ When("instance started with arguments {string}", { timeout: 25000 }, async (inst
 
 
 // not in use
-When("get logs in background with instanceId", { timeout: 20000 }, async () => {
-    actualLogResponse = await streamToString(
-        (await instance.getStream("output")).data
-    );
-});
+// When("get logs in background with instanceId", { timeout: 20000 }, async () => {
+//     actualLogResponse = await streamToString(
+//         (await instance.getStream("output")).data
+//     );
+// });
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: InstanceOutputStream) => {
     actualLogResponse = await streamToString(
@@ -260,18 +260,22 @@ When("send stdin to instance with arguments {string}", async (filePath: string) 
     await instance.sendStream("stdin", createReadStream(filePath));
 });
 
-When("get instance {string}", async (endpoint) => {
+When("get instance {string}", async (stream) => {
+    const stdout = (await instance.getStream(stream)).data;
+    const expectedStdout = "2,4,6,8,10,12,14,16,18,20";
+    const strStdout = await streamToString(stdout);
+    const status = stdout.statusCode;
     const expectedStatus = 200;
-    const stdout = await instance.getStream(endpoint);
-    const status = stdout.data.statusCode;
-    // const strStdout = streamToString(stdout.data);
 
-    // console.log("----str strStdout: ", strStdout);
-
-    // console.log("-----stdout: ", stdout);
+    console.log(`succeeded get ${stream} from instance`);
 
     // hostUtils.host.stdout.pipe(process.stdout);
-    // stdout.data.pipe(process.stdout);
+    // stdout.pipe(process.stdout);
+
+    // console.log("-----stdout: ", stdout);
+    // console.log("-----strStdout: ", strStdout);
 
     assert.equal(expectedStatus, status);
+    assert.equal(typeof strStdout, typeof expectedStdout);
 });
+

@@ -13,7 +13,9 @@ Feature: Stdio e2e tests
         And instance health is "true"
         When send kill message to instance
         And get instance "stdout"
+        # Then instance response body is "{\"2,4,6,8,10,12,14,16,18,20\"}"
         And get instance "stderr"
+        # Then instance response body is "{\"1,3,5,7,9,11,13,15,17,19\"}"
         And wait for "3000" ms
         And container is closed
         Then host stops
