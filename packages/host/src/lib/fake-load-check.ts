@@ -10,6 +10,7 @@ const MIN_INSTANCE_REQUIREMENTS = {
     cpuLoad: 10,
     freeSpace: 128 * MB
 };
+const SAFE_OPERATION_LIMIT = 512 * MB;
 
 class FakeLoadCheck implements IComponent {
     logger: Logger = getLogger(this);
@@ -24,7 +25,7 @@ class FakeLoadCheck implements IComponent {
         return {
             avgLoad: load.avgLoad,
             currentLoad: load.currentLoad || 85,
-            memFree: memInfo.free,
+            memFree: Math.max(0, memInfo.available - SAFE_OPERATION_LIMIT),
             memUsed: memInfo.used,
             fsSize: disksInfo
         };
