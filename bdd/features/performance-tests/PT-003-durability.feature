@@ -17,7 +17,6 @@ Feature: Start multiple instances
         When wait for "2000" ms
         Then host stops
 
-    @ignore
     Scenario: PT-003 TC-003 More than 25 instances work for long time
         Given host started
         When starts at least 25 sequences from file "../packages/reference-apps/durability-preservation.tar.gz" for 25 hours
