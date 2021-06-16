@@ -4,18 +4,18 @@ Feature: Stdio e2e tests
         Given host started
         When host process is working
         And sequence "../packages/reference-apps/stdio-sequence.tar.gz" loaded
-        And wait for "4000" ms
+        And wait for "2000" ms
         And instance started
         And wait for "4000" ms
         And keep instance streams "stdout,stderr"
-        When send stdin to instance with arguments "../packages/reference-apps/stdio-sequence/numbers.txt"
         And get instance health
         And get containerId
         And instance health is "true"
+        When send stdin to instance with contents of file "../packages/reference-apps/stdio-sequence/numbers.txt"
         And wait for "1000" ms
         When send kill message to instance
         And wait for "3000" ms
         And container is closed
         Then host stops
-        And kept instance stream "stdout" should be "1,3,5,7,9,11,13,15,17,19"
-        And kept instance stream "stderr" should be "0,2,4,6,8,10,12,14,16,18"
+        And kept instance stream "stdout" should be "1\n3\n5\n7\n9\n11\n13\n15\n17\n19\n"
+        And kept instance stream "stderr" should be "2\n4\n6\n8\n10\n12\n14\n16\n18\n20\n"

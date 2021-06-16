@@ -37,7 +37,7 @@ const streamToString = async (stream: Stream): Promise<string> => {
         chunks.push(chunk);
     }
 
-    return chunks.join();
+    return chunks.join("");
 };
 /*
 const getOutput = async () => {
@@ -152,18 +152,6 @@ When("compare checksums of content sent from file {string}", async (filePath: st
     );
 });
 
-When("keep instance streams {string}", async function(streamNames) {
-    streamNames.split(",").map(streamName => {
-        streams[streamName] = instance
-            .getStream("output")
-            .then(({ data }) => streamToString(data));
-    });
-});
-
-When("kept instance stream {string} should be {string}", async (streamName, expected) => {
-    assert.equal(await streams[streamName], expected);
-});
-
 When("send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
     console.log("Stop message sent");
     const resp = await instance.stop(timeout, canCallKeepalive === "true") as any;
@@ -266,26 +254,27 @@ Then("host stops", async () => {
     await hostUtils.stopHost();
 });
 
-When("send stdin to instance with arguments {string}", async (filePath: string) => {
+When("send stdin to instance with text {string}", async (data: string) => {
+    const stream = new PassThrough();
+
+    stream.end(data);
+    await instance.sendStream("stdin", stream);
+});
+
+When("send stdin to instance with contents of file {string}", async (filePath: string) => {
     await instance.sendStream("stdin", createReadStream(filePath));
 });
 
-When("get instance {string}", async (stream) => {
-    const stdout = (await instance.getStream(stream)).data;
-    const expectedStdout = "2,4,6,8,10,12,14,16,18,20";
-    const strStdout = await streamToString(stdout);
-    const status = stdout.statusCode;
-    const expectedStatus = 200;
-
-    console.log(`succeeded get ${stream} from instance`);
-
-    // hostUtils.host.stdout.pipe(process.stdout);
-    // stdout.pipe(process.stdout);
-
-    // console.log("-----stdout: ", stdout);
-    // console.log("-----strStdout: ", strStdout);
-
-    assert.equal(expectedStatus, status);
-    assert.equal(typeof strStdout, typeof expectedStdout);
+When("keep instance streams {string}", async function(streamNames) {
+    streamNames.split(",").map(streamName => {
+        streams[streamName] = instance
+            .getStream(streamName)
+            .then(({ data }) => streamToString(data));
+    });
 });
 
+When("kept instance stream {string} should be {string}", async (streamName, _expected) => {
+    const expected = JSON.parse(`"${_expected}"`);
+
+    assert.equal(await streams[streamName], expected);
+});
