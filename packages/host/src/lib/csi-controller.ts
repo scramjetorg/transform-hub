@@ -109,13 +109,17 @@ export class CSIController extends EventEmitter {
         this.superVisorProcess = spawn(executable, command);
 
         // TODO: remove
-        this.superVisorProcess.stdout?.pipe(process.stdout);
-        this.superVisorProcess.stderr?.pipe(process.stderr);
+        // this.superVisorProcess.stdout?.pipe(process.stdout);
+        // this.superVisorProcess.stderr?.pipe(process.stderr);
     }
 
     supervisorStopped(): Promise<ExitCode> {
+        const superVisorProcess = this.superVisorProcess;
+
+        if (!superVisorProcess) throw new CSIControllerError("UNATTACHED_STREAMS");
+
         return new Promise((resolve, reject) => {
-            this.superVisorProcess?.on("exit", (code: any, signal: any) => {
+            superVisorProcess.on("exit", (code: any, signal: any) => {
                 this.logger.log("Supervisor process exited with code: " + code + ", signal: " + signal);
 
                 if (code === 0) {
@@ -125,8 +129,8 @@ export class CSIController extends EventEmitter {
                 }
             });
 
-            this.superVisorProcess?.on("error", (error) => {
-                this.logger.error("Supervisor process " + this.superVisorProcess?.pid + " threw an error: " + error);
+            superVisorProcess.on("error", (error) => {
+                this.logger.error("Supervisor process " + superVisorProcess.pid + " threw an error: " + error);
 
                 reject(error);
             });
@@ -139,9 +143,9 @@ export class CSIController extends EventEmitter {
         this.downStreams = streams;
 
         this.upStreams = [
-            process.stdin, // this should be e2e encrypted
-            process.stdout, // this should be e2e encrypted
-            process.stderr, // this should be e2e encrypted
+            new PassThrough(), // this should be e2e encrypted
+            new PassThrough(), // this should be e2e encrypted
+            new PassThrough(), // this should be e2e encrypted
             new PassThrough(), // control
             new PassThrough(), // monitor
             new PassThrough(), // this should be e2e encrypted
@@ -230,10 +234,10 @@ export class CSIController extends EventEmitter {
 
             router.upstream("/stdout", this.downStreams[CommunicationChannel.STDOUT]);
             router.upstream("/stderr", this.downStreams[CommunicationChannel.STDERR]);
-            router.downstream("/stdin", this.downStreams[CommunicationChannel.STDIN]);
+            router.downstream("/stdin", this.downStreams[CommunicationChannel.STDIN], { end: true });
 
             router.upstream("/output", this.downStreams[CommunicationChannel.OUT]);
-            router.downstream("/input", this.downStreams[CommunicationChannel.IN]);
+            router.downstream("/input", this.downStreams[CommunicationChannel.IN], { end: true });
 
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);

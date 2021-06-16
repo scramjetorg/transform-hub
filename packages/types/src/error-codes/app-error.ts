@@ -1,3 +1,4 @@
+import { CSIControllerErrorCode } from "./csi-controller-error";
 import { HostErrorCode } from "./host-error";
 import { RunnerErrorCode } from "./runner-error";
 import { SupervisorErrorCode } from "./supervisor-error";
@@ -11,6 +12,7 @@ export type AppErrorCode =
     "CONTEXT_NOT_INITIALIZED" |
     "SEQUENCE_RUN_BEFORE_INIT" |
     "SEQUENCE_MISCONFIGURED" |
+    CSIControllerErrorCode |
     HostErrorCode |
     SupervisorErrorCode |
     RunnerErrorCode;

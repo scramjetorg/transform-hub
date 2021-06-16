@@ -5,7 +5,7 @@ import * as fs from "fs";
 import { createReadStream } from "fs";
 import { HostClient, SequenceClient, InstanceClient, InstanceOutputStream, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
-import { Stream } from "stream";
+import { PassThrough, Stream } from "stream";
 import * as crypto from "crypto";
 import { promisify } from "util";
 import * as Dockerode from "dockerode";
@@ -20,26 +20,24 @@ let sequence: SequenceClient;
 let actualLogResponse: any;
 let instance: InstanceClient;
 let containerId;
-let chunks = "";
+let streams: {[key: string]: Promise<string>} = {};
 
 Before(() => {
     actualResponse = "";
     actualLogResponse = "";
+    streams = {};
 });
 
-const streamToString = (stream: Stream): Promise<string> => {
-    chunks = "";
+const streamToString = async (stream: Stream): Promise<string> => {
+    const chunks = [];
+    const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
 
-    return new Promise((resolve, reject) => {
-        stream.on("data", (chunk: { toString: () => string; }) => {
-            chunks += chunk.toString();
-        });
+    for await (const chunk of strings) {
+        console.log({ chunk });
+        chunks.push(chunk);
+    }
 
-        stream.on("error", (err: any) => { reject(err); });
-        stream.on("end", () => {
-            resolve(chunks);
-        });
-    });
+    return chunks.join();
 };
 /*
 const getOutput = async () => {
@@ -152,6 +150,18 @@ When("compare checksums of content sent from file {string}", async (filePath: st
         await streamToString((await instance.getStream("output")).data),
         hex
     );
+});
+
+When("keep instance streams {string}", async function(streamNames) {
+    streamNames.split(",").map(streamName => {
+        streams[streamName] = instance
+            .getStream("output")
+            .then(({ data }) => streamToString(data));
+    });
+});
+
+When("kept instance stream {string} should be {string}", async (streamName, expected) => {
+    assert.equal(await streams[streamName], expected);
 });
 
 When("send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
