@@ -4,9 +4,6 @@ pipeline {
       label "scp"
     }
   }
-  environment {
-    docker_tag = ''
-  }
   stages {
     stage("Checkout SCM") {
       steps {
@@ -16,7 +13,7 @@ pipeline {
     stage("Build Docker") {
       steps {
         script {
-            image = docker.build("scramjet/runner", "-f packages/runner/Dockerfile .")
+            image = docker.build("scramjet/host", "-f packages/host/Dockerfile.build .")
         }
       }
     }

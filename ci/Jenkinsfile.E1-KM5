@@ -1,0 +1,116 @@
+pipeline {
+  agent {
+    node {
+      label "scp"
+    }
+  }
+  environment {
+      docker_ci_image = "repo.int.scp.ovh/scramjet/nodejs-ci:buster"
+      docker_host_sock_gid = sh(returnStdout: true, script: "stat -c %g /var/run/docker.sock").trim()
+      // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
+      HOME = "."
+      SCRAMJET_HOST_BASE_URL = "http://localhost:8000/api/v1"
+  }
+  stages {
+    stage("Checkout SCM") {
+      steps {
+        checkout scm
+      }
+    }
+    stage("Install packages") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn install")
+          }
+        }
+      }
+    }
+    stage("Build packages") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn build:all-packages")
+          }
+        }
+      }
+    }
+    stage("Prepack packages") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn prepack")
+          }
+        }
+      }
+    }
+    stage("Pack sequences") {
+      steps {
+        script {
+          docker.image("${docker_ci_image}").inside() {
+            sh("yarn packseq")
+          }
+        }
+      }
+    }
+    stage("Run 24HR Test") {
+      // Currently runner is not exiting correctly, so to avoid hanging job it will abort after timeout.
+      // It will still end with error if something goes wrong in this stage.
+      // Saw on: https://e.printstacktrace.blog/how-to-time-out-jenkins-pipeline-stage-and-keep-the-pipeline-running/
+      options {
+        timeout(time: 32, unit: "HOURS")
+      }
+      steps {
+        script {
+          Exception caughtException = null
+          catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED') {
+            try {
+              docker.image("${docker_ci_image}").inside("--group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
+                 sh("yarn test:bdd")
+              }
+            } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
+              error "Caught ${e.toString()}"
+            } catch (Throwable e) {
+              caughtException = e
+            }
+          }
+          // Catch other exceptions that timeout and fail Stage, but not whole build
+          catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+            if (caughtException) {
+                error caughtException.message
+            }
+          }
+        }
+      }
+    }  
+  }
+  post {
+    always {
+      // When successed currentBuild.result is null
+      script {
+        if (currentBuild.result == null) {
+          currentBuild.result = 'SUCCESS'
+        }
+      }
+      echo "Cleaning.."
+      cleanWs()
+    }
+    // Slack Notifications syntax: https://www.jenkins.io/doc/pipeline/steps/slack/
+    unsuccessful {
+      script {
+        // CHANGE_ID is set only for pull requests
+        if (env.CHANGE_ID) {
+          slackSend (color: '#FF0000', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) failed.")
+        }
+      }
+    }
+    fixed {
+      script {
+        // CHANGE_ID is set only for pull requests
+        if (env.CHANGE_ID) {
+          slackSend (color: '#00FF00', message: "Job ${env.JOB_NAME} [${env.BUILD_NUMBER}] (${env.BUILD_URL}) back to normal.")
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+version: "3"
+services:
+  scramjet-host:
+    image: repo.int.scp.ovh/scramjet/host:0.10.0-pre.7
+    volumes:
+      - /tmp/:/tmp/
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 8000:8000
+    restart: unless-stopped
+    command: ["scramjet-host"]

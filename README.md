@@ -9,6 +9,8 @@
 - [Lerna commands](#lerna-commands)
 - [Docker commands](#docker-commands)
 - [Install Host and execute](#install-host-and-execute)
+  - [Build Host on Docker](#build-host-on-docker)
+  - [Run Host in Docker](#run-host-in-docker)
 - [Run components](#run-components)
   - [Runner](#runner)
   - [HostOne](#hostone)
@@ -86,6 +88,46 @@ You can also install current Host release from our internal [Scramjet NPM Regist
 ```bash
 npm install -g @scramjet/host
 scramjet-host
+```
+
+### Build Host on Docker
+
+Build from current source:
+
+```bash
+cd ./packages/host/
+yarn build:docker
+```
+
+Build current release:
+
+```bash
+cd ./packages/host/
+yarn build:docker-release
+```
+
+### Run Host in Docker
+
+> **HINT:**  If there is no local image it will try to pull it from repo.int.scp.ovh
+
+```bash
+cd ./packages/host/
+docker-compose up
+
+# or run in detached mode
+docker-compose up -d
+docker-compose logs -f
+```
+
+To run Host without docker-compose:
+
+```bash
+docker run -d --init \
+  --name scramjet-host \
+  -p 8000:8000 \
+  -v /tmp/:/tmp/ \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  repo.int.scp.ovh/scramjet/host:$(jq -r .version < package.json)
 ```
 
 ## Run components
