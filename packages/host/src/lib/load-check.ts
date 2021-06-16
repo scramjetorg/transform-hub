@@ -12,7 +12,7 @@ const MIN_INSTANCE_REQUIREMENTS = {
 };
 const SAFE_OPERATION_LIMIT = 512 * MB;
 
-class FakeLoadCheck implements IComponent {
+class LoadCheck implements IComponent {
     logger: Logger = getLogger(this);
 
     async getLoadCheck(): Promise<LoadCheckStat> {
@@ -25,7 +25,7 @@ class FakeLoadCheck implements IComponent {
         return {
             avgLoad: load.avgLoad,
             currentLoad: load.currentLoad || 85,
-            memFree: Math.max(0, memInfo.available - SAFE_OPERATION_LIMIT),
+            memFree: memInfo.free + Math.max(0, memInfo.buffcache - SAFE_OPERATION_LIMIT),
             memUsed: memInfo.used,
             fsSize: disksInfo
         };
@@ -55,4 +55,4 @@ class FakeLoadCheck implements IComponent {
     }
 }
 
-export const fakeLoadCheck = new FakeLoadCheck();
+export const loadCheck = new LoadCheck();

@@ -13,7 +13,7 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
 import { InstanceStore } from "./instance-store";
 
-import { fakeLoadCheck } from "./fake-load-check";
+import { loadCheck } from "./load-check";
 import { ReasonPhrases } from "http-status-codes";
 
 export type HostOptions = Partial<{
@@ -108,7 +108,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
         this.api.get(`${this.apiBase}/load-check`, async () => {
-            return fakeLoadCheck.getLoadCheck();
+            return loadCheck.getLoadCheck();
         });
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
@@ -185,7 +185,7 @@ export class Host implements IComponent {
     }
 
     async handleStartSequence(req: ParsedMessage) {
-        if (await fakeLoadCheck.overloaded()) {
+        if (await loadCheck.overloaded()) {
             return {
                 opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
             };
