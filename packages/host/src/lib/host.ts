@@ -22,7 +22,7 @@ import * as findPackage from "find-package-json";
 const version = findPackage().next().value?.version || "unknown";
 
 export type HostOptions = Partial<{
-    identifyExisiting: boolean
+    identifyExisting: boolean
 }>;
 
 export class Host implements IComponent {
@@ -64,7 +64,7 @@ export class Host implements IComponent {
         }
     }
 
-    async main({ identifyExisiting = true }: HostOptions = {}) {
+    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
         addLoggerOutput(process.stdout);
 
         this.logger.info("Host main called.");

@@ -6,7 +6,7 @@ import { createStreamHandlers } from "./handlers/stream";
 import { cero, sequentialRouter } from "./lib/0http";
 import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
 
-type ServerConfig = {
+export type ServerConfig = {
     verbose?: boolean;
     server?: Server;
     router?: CeroRouter;
