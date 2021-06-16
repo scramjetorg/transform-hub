@@ -31,7 +31,11 @@ BeforeAll(async () => {
 });
 
 AfterAll(async () => {
-    await hostUtils.stopHost();
+    try {
+        await hostUtils.stopHost();
+    } catch {
+        throw new Error("Host unexpected closed");
+    }
 });
 
 Before(() => {

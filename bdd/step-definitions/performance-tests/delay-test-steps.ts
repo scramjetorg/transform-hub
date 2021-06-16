@@ -1,9 +1,12 @@
 import { strict as assert, fail } from "assert";
 import { When } from "@cucumber/cucumber";
+import { getOccurenceNumber, removeFile, getOccurenceFileNumber } from "../../lib/utils";
+import { resolve } from "path";
 
 const lineByLine = require("n-readlines");
 
 let delayAverage;
+
 
 When("calculate average delay time from {string} of first {string} function calls starting {string}", async (probesFile, numberOfProbes, startFromProbe) => {
     const output = new lineByLine(`${probesFile}`);
@@ -41,4 +44,44 @@ When("calculated avereage delay time is lower than {string} ns", async (accepted
     const averageIsOk: boolean = delayAverage < acceptedDelayInNs;
 
     assert.equal(averageIsOk, true, "Average time is: " + delayAverage);
+});
+
+When("search word {word} and i want to find {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
+    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
+
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
+
+    console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
+
+    assert.equal(occurenceNumber, expectedFoundWordNumber, " incorrect number of words in core dump.");
+});
+
+When("memory dump file {word} was created", async (fileName) => {
+    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
+
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const occurenceFile = await getOccurenceFileNumber(filePath);
+
+    assert.ok(occurenceFile >= 1, " memory dump file not created");
+});
+
+When("search word {word} and i want to find more than {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
+    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
+
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
+
+    console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
+
+    assert.ok(occurenceNumber >= expectedFoundWordNumber, " incorrect number of words in core dump.");
+});
+
+When("remove core dump file from {word}", async (fileName) => {
+    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
+
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const occurenceNumber = await removeFile(filePath);
+
+    assert.equal(occurenceNumber, 1, " cannot remove core.dump file.");
 });

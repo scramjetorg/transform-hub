@@ -303,6 +303,8 @@ BDD tests are located in a `bdd` folder, to execute them simply follow the steps
 yarn clean && yarn install && yarn build:all && yarn prepack && yarn packseq
 ```
 
+Remeber if you want to test core dump file you must set ```echo '/cores/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern``` on your linux machine.
+
 - execute all bdd test from the command line:
 
 ```bash

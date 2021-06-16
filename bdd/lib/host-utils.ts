@@ -24,6 +24,10 @@ export class HostUtils {
         );
     }
 
+    async getHostStatus() {
+        return (await new HostClient(this.hostUrl).getLoadCheck()).status;
+    }
+
     async stopHost() {
         if (this.hostUrl) {
             return;
@@ -56,8 +60,10 @@ export class HostUtils {
 
             this.hostProcessStopped = false;
             // for debugging purposes
-            // this.host.stdout.pipe(process.stdout);
-            // this.host.stderr.pipe(process.stderr);
+            if (process.env.SCRAMJET_TEST_LOG) {
+                this.host.stdout.pipe(process.stdout);
+                this.host.stderr.pipe(process.stderr);
+            }
 
             const decoder = new StringDecoder();
 

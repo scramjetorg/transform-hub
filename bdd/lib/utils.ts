@@ -2,6 +2,8 @@
 import * as fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
+import { exec } from "child_process";
+import { PassThrough } from "stream";
 
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
@@ -74,3 +76,39 @@ export const callInLoopTillExpectedStatusCode = async (fnToCall, that, expectedH
 
     return response;
 };
+
+export async function streamToString(_stream): Promise<string> {
+    const chunks = [];
+    const stream = new PassThrough({ encoding: "utf-8" });
+
+    _stream.pipe(stream);
+
+    for await (const chunk of stream) chunks.push(chunk);
+
+    return chunks.join("");
+}
+
+export async function getOccurenceNumber(searchedValue: any, filePath: any) {
+    try {
+        console.log(`${JSON.stringify(searchedValue)}`);
+        return Number((await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout);
+    } catch {
+        return 0;
+    }
+}
+
+export async function getOccurenceFileNumber(filePath: string) {
+    try {
+        return Number((await promisify(exec)(`sudo test -f ${filePath} && echo $? | wc -l `)).stdout);
+    } catch {
+        return 0;
+    }
+}
+
+export async function removeFile(filePath: any) {
+    try {
+        return Number((await promisify(exec)(`sudo rm -v ${filePath} | wc -l`)).stdout);
+    } catch {
+        return 0;
+    }
+}

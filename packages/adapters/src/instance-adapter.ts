@@ -1,4 +1,4 @@
-import { imageConfig } from "@scramjet/csi-config";
+import { development, imageConfig } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -22,7 +22,7 @@ import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunPortsConfig, IDockerHelper } from "./types";
+import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder } from "./utils";
 
 class LifecycleDockerAdapterInstance implements
@@ -242,10 +242,24 @@ IComponent {
             this.resources.ports = await this.getPortsConfig(config.config.ports);
         }
 
+        const extraVolumes: DockerAdapterVolumeConfig[] = [];
+
+        if (development()) {
+            this.logger.debug("Development mode on!");
+            if (process.env.CSI_COREDUMP_VOLUME) {
+                this.logger.log("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
+                extraVolumes.push({
+                    mountPoint: "/cores",
+                    bind: process.env.CSI_COREDUMP_VOLUME
+                });
+            }
+        }
+
         return new Promise(async (resolve, reject) => {
             const { streams, containerId } = await this.dockerHelper.run({
                 imageName: this.imageConfig.runner || "",
                 volumes: [
+                    ...extraVolumes,
                     { mountPoint: "/package", volume: config.packageVolumeId || "" }
                 ],
                 binds: [

@@ -5,6 +5,7 @@
   "main": "_cucumber.js",
   "dependencies": {
     "@cucumber/cucumber": "^7.1.0",
+    "@cucumber/pretty-formatter": "^1.0.0-alpha.0",
     "@scramjet/api-client": "^0.10.0-pre.7",
     "axios": "^0.21.1",
     "dockerode": "^3.3.0",

@@ -232,11 +232,15 @@ export class Runner<X extends AppConfig> implements IComponent {
             if (working) return;
 
             working = true;
-            const message: MonitoringMessageData = await this.context?.monitor() || { healthy: true };
-
-            MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.monitorStream);
+            await this.reportHealth();
             working = false;
         }, 1000 / data.monitoringRate).unref();
+    }
+
+    private async reportHealth() {
+        const message: MonitoringMessageData = await this.context?.monitor() || { healthy: true };
+
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.monitorStream);
     }
 
     async handleKillRequest(): Promise<void> {
@@ -323,6 +327,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             throw new RunnerError("UNINITIALIZED_CONTEXT");
         }
 
+        await this.reportHealth();
         await this.handleMonitoringRequest({ monitoringRate: 1 });
 
         let sequence: any[] = [];
@@ -330,7 +335,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             sequence = this.getSequence();
 
-            this.logger.log(`Seqeunce loaded, functions count: ${sequence.length}.`);
+            this.logger.log(`Sequence loaded, functions count: ${sequence.length}.`);
         } catch (error) {
             if (error instanceof SyntaxError) {
                 this.logger.error("Sequence syntax error.", error.stack);
@@ -513,7 +518,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             stream
                 .once("end", () => {
-                    this.logger.info("Seqeuence stream ended");
+                    this.logger.info("Sequence stream ended");
 
                     this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
                     this.stopExpected = true;
