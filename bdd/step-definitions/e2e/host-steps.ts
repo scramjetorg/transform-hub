@@ -33,27 +33,11 @@ const streamToString = async (stream: Stream): Promise<string> => {
     const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
 
     for await (const chunk of strings) {
-        console.log({ chunk });
         chunks.push(chunk);
     }
 
     return chunks.join("");
 };
-/*
-const getOutput = async () => {
-
-    const expectedHttpCode = 200;
-    const response = await callInLoopTillExpectedStatusCode(
-        apiClient.getInstanceStream, apiClient, expectedHttpCode, instanceId, "output"
-    );
-    const stream = new PassThrough();
-
-    response.pipe(stream);
-
-    actualLogResponse = await streamToString(stream);
-    assert.equal(response.statusCode, expectedHttpCode);
-};
-*/
 
 Given("host started", async () => {
     await hostUtils.spawnHost();
