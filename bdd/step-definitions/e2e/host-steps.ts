@@ -10,7 +10,7 @@ import * as crypto from "crypto";
 import { promisify } from "util";
 import * as Dockerode from "dockerode";
 
-const hostClient = new HostClient("http://localhost:8000/api/v1");
+const hostClient = new HostClient(process.env.SCRAMJET_HOST_BASE_URL || "http://localhost:8000/api/v1");
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
 const dockerode = new Dockerode();
