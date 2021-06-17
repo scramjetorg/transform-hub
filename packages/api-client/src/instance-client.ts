@@ -1,4 +1,4 @@
-import { clientUtils, Response } from "./client-utils";
+import { clientUtils, Response, ResponseStream } from "./client-utils";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
@@ -70,7 +70,7 @@ export class InstanceClient {
         return clientUtils.get(`${this.instanceURL}`);
     }
 
-    async getStream(streamId: InstanceOutputStream): Promise<Response> {
+    async getStream(streamId: InstanceOutputStream): Promise<ResponseStream> {
         return clientUtils.getStream(`${this.instanceURL}/${streamId}`);
     }
 

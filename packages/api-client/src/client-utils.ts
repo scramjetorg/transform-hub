@@ -2,9 +2,15 @@ import axios from "axios";
 import { Stream } from "stream";
 
 export type Response = {
-    data: Stream | any;
-    status: any;
+    data: { [ key: string ]: any };
+    status: number;
 };
+
+export type ResponseStream = {
+    data: Stream;
+    status: number;
+};
+
 class ClientUtils {
     apiBase: string = "";
 
@@ -20,7 +26,7 @@ class ClientUtils {
         });
     }
 
-    async getStream(url: string): Promise<Response> {
+    async getStream(url: string): Promise<ResponseStream> {
         return axios({
             method: "GET",
             url: `${this.apiBase}/${url}`,
@@ -28,6 +34,8 @@ class ClientUtils {
                 Accept: "*/*"
             },
             responseType: "stream"
+        }).then((d) => {
+            return { status: d.status, data: d.data } as ResponseStream;
         });
     }
 

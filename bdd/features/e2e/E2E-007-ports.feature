@@ -7,7 +7,6 @@ Feature: Ports e2e tests
         And instance started with arguments "tcp"
         And get instance info
         And connect to instance
-        And wait for "4000" ms
         And get instance health
         And get containerId
         And send data to instance tcp server
