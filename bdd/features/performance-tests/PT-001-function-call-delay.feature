@@ -12,7 +12,7 @@ Feature: Verify delay
         And instance health is "true"
         # And save response to file "delay.test.result.txt"
         Then file "delay.test.result.txt" is generated
-        When calculate average delay time from "2000" of first "10000" function calls starting "2000"
+        When calculate average delay time from "delay.test.result.txt" of first "10000" function calls starting "2000"
         When calculated avereage delay time is lower than "100000" ns
         And wait for "2000" ms
         And container is closed
