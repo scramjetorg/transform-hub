@@ -1,41 +1,64 @@
 import { When } from "@cucumber/cucumber";
 import { InstanceClient, InstanceOutputStream } from "@scramjet/api-client";
 import * as net from "net";
+import { strict as assert } from "assert";
+import { PassThrough, Stream } from "stream";
+import * as crypto from "crypto";
 
 import { CustomWorld } from "../world";
+
+const streamToString = async (stream: Stream): Promise<string> => {
+    const chunks = [];
+    const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
+
+    for await (const chunk of strings) {
+        chunks.push(chunk);
+    }
+
+    return chunks.join("");
+};
 
 When("get instance info", async function(this: CustomWorld) {
     this.resources.instanceInfo = (await this.resources.instance.getInfo()).data;
 });
 
 When("connect to instance", { timeout: 20000 }, async function(this: CustomWorld) {
-
     const instanceInfo = this.resources.instanceInfo;
 
     this.resources.connection = await new Promise((resolve, reject) => {
-        const connection = net.createConnection({ port: instanceInfo.ports["7006/tcp"] });
-
-        connection.once("connect", () => {
-            resolve(connection);
-        });
-
-        connection.once("error", () => {
-            reject();
-        });
+        const connection = net.createConnection({ port: instanceInfo.ports["7006/tcp"] })
+            .once("connect", () => {
+                resolve(connection);
+            })
+            .once("error", () => {
+                reject();
+            });
     });
 });
 
 
 When("send data to instance tcp server", async function(this: CustomWorld) {
-    this.resources.connection.write("Take this!");
-    this.resources.connection.end();
+    this.resources.testMessage = crypto.randomBytes(128).toString("hex");
+    this.resources.connection.write(this.resources.testMessage);
 });
 
-When("get {string} stream", async function(this: CustomWorld, log: InstanceOutputStream) {
+When("start reading {string} stream", async function(this: CustomWorld, log: InstanceOutputStream) {
     const instance: InstanceClient = this.resources.instance;
-
-    console.log("Getting log");
     const stream = (await instance.getStream(log)).data;
 
-    stream.pipe(process.stdout);
+    this.resources.stream = new PassThrough();
+    stream.pipe(this.resources.stream);
+});
+
+When("check stream for message sent", async function(this: CustomWorld) {
+    this.resources.stream.end();
+    const str = await streamToString(this.resources.stream);
+
+    assert.notEqual(
+        str.match(this.resources.testMessage), null
+    );
+});
+
+When("send null to tcp server", async function(this: CustomWorld) {
+    this.resources.connection.write("null");
 });
