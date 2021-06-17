@@ -10,20 +10,15 @@ const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ ts: bi
      * @returns data
      */
 
-    async function(_stream: any, ...args: any[]) {
-        let timesOfExecution: number;
-
-        if (args.length === 1) {
-            timesOfExecution = args[0];
-        }
+    async function(_stream: any, timesOfExecution = 4000, waitToStart = 2000) {
         const data = this.initialState;
 
         let x = data?.x || 0;
 
         return DataStream.from(async function* () {
-            await new Promise(res => setTimeout(res, 2000));
+            await new Promise(res => setTimeout(res, waitToStart));
             while (++x <= timesOfExecution) {
-                await new Promise(res => setTimeout(res, 1));
+                await new Promise(res => setTimeout(res, 5));
                 yield { i: x };
             }
         })

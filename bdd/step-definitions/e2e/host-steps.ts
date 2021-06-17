@@ -69,6 +69,19 @@ When("instance started with arguments {string}", { timeout: 25000 }, async funct
     this.resources.instance = instance;
 });
 
+When("instance started with arguments {string} and write stream to {string}", { timeout: 25000 }, async (instanceArg: string, fileName: string) => {
+    // eslint-disable-next-line no-extra-parens
+    instance = await sequence.start({}, instanceArg.split(" "));
+
+    const stream: any = (await instance.getStream("stdout")).data;
+    const writeStream = await fs.createWriteStream(fileName);
+
+    stream.pipe(writeStream);
+
+    writeStream.on("error", function(err) {
+        console.log(err);
+    });
+});
 
 // not in use
 // When("get logs in background with instanceId", { timeout: 20000 }, async () => {
