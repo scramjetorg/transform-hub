@@ -9,7 +9,6 @@ pipeline {
       docker_host_sock_gid = sh(returnStdout: true, script: "stat -c %g /var/run/docker.sock").trim()
       // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
       HOME = "."
-      SCRAMJET_HOST_BASE_URL = "http://localhost:8000/api/v1"
   }
   stages {
     stage("Checkout SCM") {

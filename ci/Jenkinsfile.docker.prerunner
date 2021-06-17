@@ -17,7 +17,7 @@ pipeline {
       steps {
         script {
           dir('packages/pre-runner') {
-            image = docker.build("scramjet/csi-prerunner")
+            image = docker.build("scramjet/pre-runner")
           }
         }
       }
