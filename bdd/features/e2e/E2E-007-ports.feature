@@ -7,7 +7,7 @@ Feature: Ports e2e tests
         And instance started with arguments "tcp"
         And get instance info
         And start reading "log" stream
-        And connect to instance
+        And connect to instance on port 7006
         And send data to instance tcp server
         And wait for "3000" ms
         And check stream for message sent

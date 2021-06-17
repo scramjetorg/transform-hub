@@ -20,13 +20,15 @@ const streamToString = async (stream: Stream): Promise<string> => {
 
 When("get instance info", async function(this: CustomWorld) {
     this.resources.instanceInfo = (await this.resources.instance.getInfo()).data;
+
+    console.log(this.resources.instanceInfo);
 });
 
-When("connect to instance", { timeout: 20000 }, async function(this: CustomWorld) {
+When("connect to instance on port {int}", { timeout: 20000 }, async function(this: CustomWorld, internalPort: number) {
     const instanceInfo = this.resources.instanceInfo;
 
     this.resources.connection = await new Promise((resolve, reject) => {
-        const connection = net.createConnection({ port: instanceInfo.ports["7006/tcp"] })
+        const connection = net.createConnection({ port: instanceInfo.ports[internalPort + "/tcp"] })
             .once("connect", () => {
                 resolve(connection);
             })
