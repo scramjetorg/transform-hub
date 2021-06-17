@@ -9,6 +9,7 @@ import { PassThrough, Stream } from "stream";
 import * as crypto from "crypto";
 import { promisify } from "util";
 import * as Dockerode from "dockerode";
+import { CustomWorld } from "../world";
 
 const hostClient = new HostClient(process.env.SCRAMJET_HOST_BASE_URL || "http://localhost:8000/api/v1");
 const hostUtils = new HostUtils();
@@ -57,14 +58,15 @@ When("sequence {string} loaded", async (packagePath: string) => {
     );
 });
 
-When("instance started", async () => {
+When("instance started", async function(this: CustomWorld) {
     // eslint-disable-next-line no-extra-parens
     instance = await sequence.start({}, ["/package/data.json"]);
+    this.resources.instance = instance;
 });
 
-When("instance started with arguments {string}", { timeout: 25000 }, async (instanceArg: string) => {
-    // eslint-disable-next-line no-extra-parens
+When("instance started with arguments {string}", { timeout: 25000 }, async function(this: CustomWorld, instanceArg: string) {
     instance = await sequence.start({}, instanceArg.split(" "));
+    this.resources.instance = instance;
 });
 
 

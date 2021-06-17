@@ -33,7 +33,7 @@ export class CSIController extends EventEmitter {
     } = {};
     initResolver?: { res: Function, rej: Function };
     startResolver?: { res: Function, rej: Function };
-    startPromise: Function;
+    startPromise: Promise<void>;
     /**
      * Streams connected do API.
      */
@@ -59,7 +59,7 @@ export class CSIController extends EventEmitter {
         this.logger = logger;
         this.communicationHandler = communicationHandler;
 
-        this.startPromise = () => new Promise((res, rej) => {
+        this.startPromise = new Promise((res, rej) => {
             this.startResolver = { res, rej };
         });
 
@@ -236,6 +236,8 @@ export class CSIController extends EventEmitter {
             router.upstream("/stderr", this.downStreams[CommunicationChannel.STDERR]);
             router.downstream("/stdin", this.downStreams[CommunicationChannel.STDIN], { end: true });
 
+            router.upstream("/log", this.downStreams[CommunicationChannel.LOG]);
+
             router.upstream("/output", this.downStreams[CommunicationChannel.OUT]);
             router.downstream("/input", this.downStreams[CommunicationChannel.IN], { end: true });
 
@@ -257,7 +259,7 @@ export class CSIController extends EventEmitter {
     }
 
     async getInfo() {
-        await this.startPromise();
+        await this.startPromise;
 
         return {
             ...this.info,

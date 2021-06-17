@@ -5,7 +5,7 @@ import { Stream } from "stream";
 import { IDProvider } from "@scramjet/model";
 
 export type InstanceInputStream = "stdin" | "input";
-export type InstanceOutputStream = "stdout" | "stderr" | "output"
+export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log"
 
 export class InstanceClient {
     private _id: string;
