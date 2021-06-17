@@ -31,6 +31,10 @@ const createTCPServers = (logger: Logger): (Server | Socket)[] => {
 
             socket.on("data", (chunk: any) => {
                 logger.info(`chunk ${chunk} received, len=${chunk.length}, type=${typeof chunk}`);
+                if (chunk.toString() === "null") {
+                    logger.info("Sequence is closing...");
+                    output.end();
+                }
                 output.write(chunk);
             });
 
@@ -40,12 +44,10 @@ const createTCPServers = (logger: Logger): (Server | Socket)[] => {
 
             socket.on("end", function(data: any) {
                 logger.info("Socket end: " + data);
-                output.end();
             });
 
             socket.on("close", function(error: any) {
                 logger.info("Socket closed, error: " + error);
-                output.end();
             });
 
         });
@@ -72,8 +74,11 @@ const createUDPServers = (logger: Logger): (Server | Socket)[] => {
 
         server.on("message", (data: any) => {
             logger.info(`Data ${data} received, len=${data.length}, type=${typeof data}`);
+            if (data.toString() === "null") {
+                logger.info("Sequence is closing...");
+                output.end();
+            }
             output.write(data);
-            output.end();
         });
 
         server.on("listening", () => {
