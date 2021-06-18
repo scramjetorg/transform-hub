@@ -1,3 +1,4 @@
+import { HostClient } from "@scramjet/api-client";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { SIGTERM } from "constants";
@@ -9,7 +10,17 @@ export class HostUtils {
     hostProcessStopped = false;
     host: ChildProcess;
 
+    remoteUrl: string;
+
+    constructor() {
+        this.remoteUrl = process.env.SCRAMJET_HOST_URL;
+    }
+
     async stopHost() {
+        if (this.remoteUrl) {
+            return;
+        }
+
         await new Promise<void>(async (resolve, reject) => {
             if (this.host.kill(SIGTERM)) {
                 resolve();
@@ -20,6 +31,16 @@ export class HostUtils {
     }
 
     async spawnHost() {
+        if (this.remoteUrl) {
+            assert.equal(
+                (await new HostClient(this.remoteUrl).getLoadCheck()).status,
+                200,
+                "Remote host doesn't respond"
+            );
+
+            return Promise.resolve();
+        }
+
         return new Promise<void>((resolve) => {
             const command: string[] = ["node", hostExecutableFilePath];
 
@@ -49,5 +70,6 @@ export class HostUtils {
                 }
             });
         });
+
     }
 }
