@@ -16,15 +16,19 @@ const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
 const dockerode = new Dockerode();
 
-let actualResponse: any;
+let actualHealthResponse: any;
+let actualStatusResponse: any;
 let sequence: SequenceClient;
 let actualLogResponse: any;
 let instance: InstanceClient;
 let containerId;
 let streams: {[key: string]: Promise<string>} = {};
 
+const actualResponse = () => actualStatusResponse || actualHealthResponse;
+
 Before(() => {
-    actualResponse = "";
+    actualHealthResponse = "";
+    actualStatusResponse = "";
     actualLogResponse = "";
     streams = {};
 });
@@ -69,17 +73,20 @@ When("instance started with arguments {string}", { timeout: 25000 }, async funct
     this.resources.instance = instance;
 });
 
-When("instance started with arguments {string} and write stream to {string}", { timeout: 25000 }, async (instanceArg: string, fileName: string) => {
+When("instance started with arguments {string} and write stream to {string}", { timeout: 125000 }, async (instanceArg: string, fileName: string) => {
     // eslint-disable-next-line no-extra-parens
     instance = await sequence.start({}, instanceArg.split(" "));
 
     const stream: any = (await instance.getStream("stdout")).data;
-    const writeStream = await fs.createWriteStream(fileName);
+    const writeStream = fs.createWriteStream(fileName);
 
     stream.pipe(writeStream);
 
-    writeStream.on("error", function(err) {
-        console.log(err);
+    actualHealthResponse = await instance.getHealth();
+
+    await new Promise((res, rej) => {
+        writeStream.on("error", rej);
+        stream.on("end", res);
     });
 });
 
@@ -165,9 +172,12 @@ When("send kill message to instance", async () => {
 });
 
 When("get containerId", { timeout: 31000 }, async () => {
-    const res = actualResponse?.data?.containerId;
+    const res = actualResponse()?.data?.containerId;
+
+    if (!res) assert.fail();
 
     containerId = res;
+
     console.log("Container is identified.");
 });
 
@@ -215,20 +225,20 @@ When("send event {string} to instance with message {string}", async (eventName, 
 Then("get event from instance", { timeout: 10000 }, async () => {
     const expectedHttpCode = 200;
 
-    actualResponse = await instance.getEvent();
-    assert.equal(actualResponse.status, expectedHttpCode);
+    actualStatusResponse = await instance.getEvent();
+    assert.equal(actualStatusResponse.status, expectedHttpCode);
 });
 
 When("get instance health", async () => {
-    actualResponse = await instance.getHealth();
-    assert.equal(actualResponse.status, 200);
+    actualHealthResponse = await instance.getHealth();
+    assert.equal(actualHealthResponse.status, 200);
 });
 
 // for event.feature
 Then("instance response body is {string}", async (expectedResp: string) => {
-    const resp = JSON.stringify(actualResponse.data);
+    const resp = JSON.stringify(actualResponse().data);
 
-    if (typeof actualResponse === "undefined") {
+    if (typeof actualResponse() === "undefined") {
         console.log("actualResponse is undefined");
     } else {
         console.log(`Response body is ${resp}`);
@@ -238,9 +248,9 @@ Then("instance response body is {string}", async (expectedResp: string) => {
 });
 
 When("instance health is {string}", async (expectedResp: string) => {
-    const healthy = JSON.stringify(actualResponse?.data?.healthy);
+    const healthy = JSON.stringify(actualHealthResponse?.data?.healthy);
 
-    if (typeof actualResponse === "undefined") {
+    if (typeof actualHealthResponse === "undefined") {
         console.log("actualResponse is undefined");
     } else {
         console.log(`Response body is ${healthy}, instance is healthy and running.`);
