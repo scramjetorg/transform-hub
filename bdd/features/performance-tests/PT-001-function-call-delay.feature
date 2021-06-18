@@ -13,6 +13,7 @@ Feature: Verify delay
         And container is closed
         Then host stops
 
+    @ignore
     Scenario: PT-001 TC-002 Verify delay - long
         Given host started
         When host process is working
