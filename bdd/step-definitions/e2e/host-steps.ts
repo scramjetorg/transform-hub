@@ -73,7 +73,7 @@ When("instance started with arguments {string}", { timeout: 25000 }, async funct
     this.resources.instance = instance;
 });
 
-When("instance started with arguments {string} and write stream to {string}", { timeout: 125000 }, async (instanceArg: string, fileName: string) => {
+When("instance started with arguments {string} and write stream to {string} and timeout after {int} seconds", { timeout: -1 }, async (instanceArg: string, fileName: string, timeout: number) => {
     // eslint-disable-next-line no-extra-parens
     instance = await sequence.start({}, instanceArg.split(" "));
 
@@ -84,10 +84,13 @@ When("instance started with arguments {string} and write stream to {string}", { 
 
     actualHealthResponse = await instance.getHealth();
 
-    await new Promise((res, rej) => {
-        writeStream.on("error", rej);
-        stream.on("end", res);
-    });
+    await Promise.race([
+        new Promise((res, rej) => {
+            writeStream.on("error", rej);
+            stream.on("end", res);
+        }),
+        new Promise(res => setTimeout(res, 1000 * timeout))
+    ]);
 });
 
 // not in use
