@@ -61,6 +61,6 @@ When("check stream for message sent", async function(this: CustomWorld) {
     );
 });
 
-When("send null to tcp server", async function(this: CustomWorld) {
-    this.resources.connection.write("null");
+When("send {string} to tcp server", async function(this: CustomWorld, str) {
+    this.resources.connection.write(str);
 });
