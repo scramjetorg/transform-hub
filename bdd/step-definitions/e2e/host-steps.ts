@@ -1,4 +1,4 @@
-import { Given, When, Then, Before } from "@cucumber/cucumber";
+import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
@@ -26,6 +26,14 @@ let streams: {[key: string]: Promise<string>} = {};
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
+BeforeAll(async () => {
+    await hostUtils.spawnHost();
+});
+
+AfterAll(async () => {
+    await hostUtils.stopHost();
+});
+
 Before(() => {
     actualHealthResponse = "";
     actualStatusResponse = "";
@@ -44,8 +52,11 @@ const streamToString = async (stream: Stream): Promise<string> => {
     return chunks.join("");
 };
 
-Given("host started", async () => {
-    await hostUtils.spawnHost();
+Given("host is running", async () => {
+    assert.equal(
+        (await hostClient.getLoadCheck()).status,
+        200
+    );
 });
 
 When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
@@ -150,15 +161,15 @@ When("compare checksums of content sent from file {string}", async (filePath: st
         hex = crypto.createHash("md5").update(data).digest("hex");
     });
 
-    const status = (await instance.sendInput(readStream)).status;
+    await instance.sendInput(readStream);
+    const output = await streamToString((await instance.getStream("output")).data);
 
-    await instance.sendInput("null");
-
-    assert.equal(status, 202);
     assert.equal(
-        await streamToString((await instance.getStream("output")).data),
+        output,
         hex
     );
+
+    await instance.sendInput("null");
 });
 
 When("send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
@@ -180,8 +191,7 @@ When("get containerId", { timeout: 31000 }, async () => {
     if (!res) assert.fail();
 
     containerId = res;
-
-    console.log("Container is identified.");
+    console.log("Container is identified.", containerId);
 });
 
 When("container is closed", async () => {

@@ -1,8 +1,7 @@
 Feature: Sample e2e tests
 
     Scenario: E2E-001 TC-001 Execute hello-alice-out example for host
-        Given host started
-        When host process is working
+        Given host is running
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
         And instance started with arguments "/package/data.json"
@@ -14,4 +13,4 @@ Feature: Sample e2e tests
         And wait for "2000" ms
         Then response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         And container is closed
-        And host stops
+        And host is running

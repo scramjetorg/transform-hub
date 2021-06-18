@@ -1,8 +1,7 @@
 Feature: Kill e2e tests
 
     Scenario: E2E-003 TC-001 Kill instance
-        Given host started
-        When host process is working
+        Given host is running
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
         And instance started with arguments "/package/data.json"
@@ -13,12 +12,11 @@ Feature: Kill e2e tests
         And send kill message to instance
         And wait "8000" ms
         And container is closed
-        Then host stops
+        And host is running
 
     @ignore
     Scenario: E2E-003 TC-002 Kill sequence - kill handler should emit event when executed
-        Given host started
-        When host process is working
+        Given host is running
         And sequence "../packages/reference-apps/sequence-20s-kill-handler.tar.gz" loaded
         And wait for "4000" ms
         And instance started with arguments "/package/data.json"
@@ -31,7 +29,7 @@ Feature: Kill e2e tests
         Then instance response body is "{\"eventName\":\"kill-handler-called\",\"message\":\"\"}"
         When wait "8000" ms
         And container is closed
-        Then host stops
+        And host is running
 
     #added to ignore because this scenario is based on host-one
     # @ignore

@@ -37,7 +37,7 @@ export class InstanceClient {
             }] as EncodedControlMessage);
     }
 
-    async kill(): Promise<Response | undefined> {
+    async kill(): Promise<Response> {
         return clientUtils.post(`${this.instanceURL}/_kill`, [
             RunnerMessageCode.KILL,
             {}

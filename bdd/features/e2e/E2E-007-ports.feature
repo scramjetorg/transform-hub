@@ -1,8 +1,7 @@
 Feature: Ports e2e tests
 
     Scenario: E2E-007 TC-001 TCP Connection
-        Given host started
-        When host process is working
+        Given host is running
         And sequence "../packages/reference-apps/ports-sequence.tar.gz" loaded
         And instance started with arguments "tcp"
         And get instance info
@@ -12,4 +11,4 @@ Feature: Ports e2e tests
         And wait for "3000" ms
         And check stream for message sent
         And send "null" to tcp server
-        Then host stops
+        Then host is running

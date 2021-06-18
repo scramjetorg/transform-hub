@@ -10,14 +10,22 @@ export class HostUtils {
     hostProcessStopped = false;
     host: ChildProcess;
 
-    remoteUrl: string;
+    hostUrl: string;
 
     constructor() {
-        this.remoteUrl = process.env.SCRAMJET_HOST_URL;
+        this.hostUrl = process.env.SCRAMJET_HOST_URL;
+    }
+
+    async check() {
+        assert.equal(
+            (await new HostClient(this.hostUrl).getLoadCheck()).status,
+            200,
+            "Remote host doesn't respond"
+        );
     }
 
     async stopHost() {
-        if (this.remoteUrl) {
+        if (this.hostUrl) {
             return;
         }
 
@@ -31,9 +39,9 @@ export class HostUtils {
     }
 
     async spawnHost() {
-        if (this.remoteUrl) {
+        if (this.hostUrl) {
             assert.equal(
-                (await new HostClient(this.remoteUrl).getLoadCheck()).status,
+                (await new HostClient(this.hostUrl).getLoadCheck()).status,
                 200,
                 "Remote host doesn't respond"
             );
@@ -47,9 +55,9 @@ export class HostUtils {
             this.host = spawn("/usr/bin/env", command);
 
             this.hostProcessStopped = false;
-            //for debugging purposes
-            this.host.stdout.pipe(process.stdout);
-            this.host.stderr.pipe(process.stderr);
+            // for debugging purposes
+            // this.host.stdout.pipe(process.stdout);
+            // this.host.stderr.pipe(process.stderr);
 
             const decoder = new StringDecoder();
 
