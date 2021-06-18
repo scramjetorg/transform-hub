@@ -11,5 +11,5 @@ Feature: Ports e2e tests
         And send data to instance tcp server
         And wait for "3000" ms
         And check stream for message sent
-        And send null to tcp server
+        And send "null" to tcp server
         Then host stops
