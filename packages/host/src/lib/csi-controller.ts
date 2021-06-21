@@ -7,13 +7,14 @@ import {
 import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     APIRoute, AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, HandshakeAcknowledgeMessage,
-    InstanceConfigMessage, Logger, UpstreamStreamsConfig
+    InstanceConfigMessage, Logger, PassThroughStreamsConfig
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
+import { development } from "@scramjet/csi-config";
 import { Sequence } from "./sequence";
 
 export class CSIController extends EventEmitter {
@@ -24,7 +25,6 @@ export class CSIController extends EventEmitter {
     sequenceArgs: Array<any> | undefined;
     status?: FunctionDefinition[];
     controlDataStream?: DataStream;
-    downStreams?: DownstreamStreamsConfig;
     router?: APIRoute;
     info: {
         ports?: any,
@@ -34,10 +34,12 @@ export class CSIController extends EventEmitter {
     initResolver?: { res: Function, rej: Function };
     startResolver?: { res: Function, rej: Function };
     startPromise: Promise<void>;
+
     /**
      * Streams connected do API.
      */
-    private upStreams?: UpstreamStreamsConfig;
+     private downStreams?: DownstreamStreamsConfig;
+     private upStreams?: PassThroughStreamsConfig;
 
     communicationHandler: CommunicationHandler;
     logger: Logger;
@@ -142,7 +144,7 @@ export class CSIController extends EventEmitter {
 
         this.downStreams = streams;
 
-        this.upStreams = [
+        const streamConfig: PassThroughStreamsConfig = [
             new PassThrough(), // this should be e2e encrypted
             new PassThrough(), // this should be e2e encrypted
             new PassThrough(), // this should be e2e encrypted
@@ -153,24 +155,28 @@ export class CSIController extends EventEmitter {
             new PassThrough() // this should be e2e encrypted (LOG FILE)
         ];
 
+        this.upStreams = streamConfig as PassThroughStreamsConfig;
+
         this.communicationHandler.hookUpstreamStreams(this.upStreams);
         this.communicationHandler.hookDownstreamStreams(this.downStreams);
+
         this.communicationHandler.pipeStdio();
         this.communicationHandler.pipeMessageStreams();
         this.communicationHandler.pipeDataStreams();
 
         // TODO: remove
-        this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
-        // this.upStreams[CommunicationChannel.MONITORING].pipe(process.stdout);
+        if (development()) this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
+        // if (development()) this.upStreams[CommunicationChannel.MONITORING].pipe(process.stdout);
+
         const controlDataStream = new DataStream();
 
         controlDataStream
             .JSONStringify()
-            .pipe(this.downStreams[CommunicationChannel.CONTROL]);
+            .pipe(this.upStreams[CommunicationChannel.CONTROL]);
 
         this.controlDataStream = new DataStream();
         this.controlDataStream.JSONStringify()
-            .pipe(this.downStreams[CC.CONTROL]);
+            .pipe(this.upStreams[CC.CONTROL]);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message: any) => {
             await this.handleHandshake(message);
@@ -225,21 +231,21 @@ export class CSIController extends EventEmitter {
     }
 
     createInstanceAPIRouter() {
-        if (this.downStreams) {
+        if (this.upStreams) {
             const router = getRouter();
 
             router.get("/", () => {
                 return this.getInfo();
             });
 
-            router.upstream("/stdout", this.downStreams[CommunicationChannel.STDOUT]);
-            router.upstream("/stderr", this.downStreams[CommunicationChannel.STDERR]);
-            router.downstream("/stdin", this.downStreams[CommunicationChannel.STDIN], { end: true });
+            router.upstream("/stdout", this.upStreams[CommunicationChannel.STDOUT]);
+            router.upstream("/stderr", this.upStreams[CommunicationChannel.STDERR]);
+            router.downstream("/stdin", this.upStreams[CommunicationChannel.STDIN], { end: true });
 
-            router.upstream("/log", this.downStreams[CommunicationChannel.LOG]);
+            router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
-            router.upstream("/output", this.downStreams[CommunicationChannel.OUT]);
-            router.downstream("/input", this.downStreams[CommunicationChannel.IN], { end: true });
+            router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
+            router.downstream("/input", this.upStreams[CommunicationChannel.IN], { end: true });
 
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);

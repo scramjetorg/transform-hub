@@ -25,6 +25,7 @@
   "dependencies": {
     "@scramjet/adapters": "^0.10.0-pre.7",
     "@scramjet/api-server": "^0.10.0-pre.7",
+    "@scramjet/csi-config": "^0.10.0-pre.7",
     "@scramjet/logger": "^0.10.0-pre.7",
     "@scramjet/model": "^0.10.0-pre.7",
     "@scramjet/supervisor": "^0.10.0-pre.7",

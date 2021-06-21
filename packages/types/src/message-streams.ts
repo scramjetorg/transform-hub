@@ -123,5 +123,5 @@ export type PassThroughStreamsConfig<serialized extends boolean = true> = [
     input: PassThoughStream<any>,
     output: PassThoughStream<any>,
     log: PassThoughStream<any>,
-    pkg: PassThoughStream<Buffer>
+    pkg?: PassThoughStream<Buffer>
 ];
