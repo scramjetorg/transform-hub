@@ -1,98 +1,107 @@
 pipeline {
   agent {
     node {
-      label "scp"
+      label 'scp'
     }
   }
   environment {
-      docker_ci_image = "repo.int.scp.ovh/scramjet/nodejs-ci:buster"
-      docker_host_sock_gid = sh(returnStdout: true, script: "stat -c %g /var/run/docker.sock").trim()
+      docker_ci_image = 'repo.int.scp.ovh/scramjet/nodejs-ci:buster'
+      docker_host_sock_gid = sh(returnStdout: true, script: 'stat -c %g /var/run/docker.sock').trim()
       // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
-      HOME = "."
+      HOME = '.'
       SONAR_LOGIN = credentials('sonar-token')
       SONAR_PARAMS = setSonarParams()
   }
   stages {
-    stage("Checkout SCM") {
+    stage('Checkout SCM') {
       steps {
         checkout scm
       }
     }
-    stage("Install packages") {
+    stage('Install packages') {
       steps {
         script {
           docker.image("${docker_ci_image}").inside() {
-            sh("yarn install")
+            sh('yarn install')
           }
         }
       }
     }
-    stage("Run Linter") {
+    stage('Run Linter') {
       steps {
         script {
           docker.image("${docker_ci_image}").inside() {
-            sh("yarn lint")
+            sh('yarn lint')
           }
         }
       }
     }
-    stage("Build packages") {
-      steps {
-        script {
-          docker.image("${docker_ci_image}").inside() {
-            sh("yarn build:all-packages")
-          }
-        }
-      }
-    }
-    stage("Build docker images") {
-      steps {
-        script {
-          docker.image("${docker_ci_image}").inside("--group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock") {
-            sh("yarn build:docker")
-          }
-        }
-      }
-    }
-    stage("Prepack packages") {
-      steps {
-        script {
-          docker.image("${docker_ci_image}").inside() {
-            sh("yarn prepack")
-          }
-        }
-      }
-    }
-    stage("Pack sequences") {
-      steps {
-        script {
-          docker.image("${docker_ci_image}").inside() {
-            sh("yarn packseq")
-          }
-        }
-      }
-    }
-    stage("Run Tests") {
-      failFast false
+    stage('Build') {
+      failFast true
       parallel {
-        stage("TS") {
-          steps {
-            script {
-              // temporary until tests will be fixed
-              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                docker.image("${docker_ci_image}").inside() {
-                  sh("yarn test:packages")
+        stage('Build - Typescript') {
+          serial {
+            stage('Build packages') {
+              steps {
+                script {
+                  docker.image("${docker_ci_image}").inside() {
+                    sh('yarn build:all-packages')
+                  }
+                }
+              }
+            }
+            stage('Prepack packages') {
+              steps {
+                script {
+                  docker.image("${docker_ci_image}").inside() {
+                    sh('yarn prepack')
+                  }
+                }
+              }
+            }
+            stage('Pack sequences') {
+              steps {
+                script {
+                  docker.image("${docker_ci_image}").inside() {
+                    sh('yarn packseq')
+                  }
                 }
               }
             }
           }
         }
-        stage("BDD") {
+        stage('Build docker images') {
+          steps {
+            script {
+              docker.image("${docker_ci_image}").inside("--group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock") {
+                sh('yarn build:docker')
+              }
+            }
+          }
+        }
+      }
+    }
+    stage('Run Tests') {
+      failFast false
+      parallel {
+        stage('TS') {
+          steps {
+            script {
+              // temporary until tests will be fixed
+              catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                docker.image("${docker_ci_image}").inside() {
+                  sh('yarn test:packages')
+                }
+              }
+            }
+          }
+        }
+        stage('BDD') {
           // Currently runner is not exiting correctly, so to avoid hanging job it will abort after timeout.
           // It will still end with error if something goes wrong in this stage.
           // Saw on: https://e.printstacktrace.blog/how-to-time-out-jenkins-pipeline-stage-and-keep-the-pipeline-running/
           options {
-            timeout(time: 600, unit: "SECONDS") // 10 minutes!
+            timeout(time: 600, unit: 'SECONDS') // 10 minutes!
           }
           steps {
             script {
@@ -101,7 +110,7 @@ pipeline {
               catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED') {
                 try {
                   docker.image("${docker_ci_image}").inside("--group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
-                     sh("yarn test:bdd-ci")
+                    sh('yarn test:bdd-ci')
                   }
                 } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
                   error "Caught ${e.toString()}"
@@ -112,7 +121,7 @@ pipeline {
               // Catch other exceptions that timeout and fail Stage, but not whole build
               catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                 if (caughtException) {
-                    error caughtException.message
+                  error caughtException.message
                 }
               }
             }
@@ -120,58 +129,58 @@ pipeline {
         }
       }
     }
-    stage("Run SonarScanner") {
+    stage('Run SonarScanner') {
       failFast false
       parallel {
-        stage("Scan HostOne") {
+        stage('Scan HostOne') {
           steps {
             script {
               withSonarQubeEnv('SCPSonar') {
-                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
                   sh('sonar-scanner -Dsonar.projectBaseDir=./packages/host-one $SONAR_PARAMS')
                 }
               }
             }
           }
         }
-        stage("Scan Model") {
+        stage('Scan Model') {
           steps {
             script {
               withSonarQubeEnv('SCPSonar') {
-                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
                   sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model $SONAR_PARAMS')
                 }
               }
             }
           }
         }
-        stage("Scan Pre-Runner") {
+        stage('Scan Pre-Runner') {
           steps {
             script {
               withSonarQubeEnv('SCPSonar') {
-                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
                   sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner $SONAR_PARAMS')
                 }
               }
             }
           }
         }
-        stage("Scan Runner") {
+        stage('Scan Runner') {
           steps {
             script {
               withSonarQubeEnv('SCPSonar') {
-                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
                   sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner $SONAR_PARAMS')
                 }
               }
             }
           }
         }
-        stage("Scan Supervisor") {
+        stage('Scan Supervisor') {
           steps {
             script {
               withSonarQubeEnv('SCPSonar') {
-                docker.image("repo.int.scp.ovh/apps/sonar-scanner:latest").inside() {
+                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
                   sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor $SONAR_PARAMS')
                 }
               }
@@ -189,7 +198,7 @@ pipeline {
           currentBuild.result = 'SUCCESS'
         }
       }
-      echo "Cleaning.."
+      echo 'Cleaning..'
       cleanWs()
     }
     // Slack Notifications syntax: https://www.jenkins.io/doc/pipeline/steps/slack/
