@@ -33,7 +33,7 @@ export class SequenceClient {
             }
         );
 
-        if (response?.data.id) {
+        if (response.data?.id) {
             return InstanceClient.from(response.data.id);
         }
 

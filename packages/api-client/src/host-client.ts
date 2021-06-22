@@ -25,11 +25,15 @@ export class HostClient {
     }
 
     async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
-        const response = await clientUtils.post("sequence", sequencePackage, {
-            "content-type":"application/octet-stream"
-        });
+        try {
+            const response = await clientUtils.post("sequence", sequencePackage, {
+                "content-type": "application/octet-stream"
+            });
 
-        return SequenceClient.from(response.data.id);
+            return SequenceClient.from(response.data?.id);
+        } catch (error) {
+            throw new Error("Sequence upload failed.");
+        }
     }
 
     getSequence(sequenceId: string) {

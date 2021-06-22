@@ -1,14 +1,14 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { Stream } from "stream";
 
 export type Response = {
-    data: { [ key: string ]: any };
-    status: number;
+    data?: { [ key: string ]: any };
+    status: number | undefined;
 };
 
 export type ResponseStream = {
-    data: Stream;
-    status: number;
+    data?: Stream;
+    status: number | undefined;
 };
 
 class ClientUtils {
@@ -18,12 +18,18 @@ class ClientUtils {
         this.apiBase = apiBase;
     }
 
+    private handleError(error: AxiosError) {
+        return Promise.reject({
+            status: error.response?.status
+        });
+    }
+
     async get(url: string): Promise<Response> {
         return axios.get(`${this.apiBase}/${url}`, {
             headers: {
                 Accept: "*/*"
             }
-        });
+        }).catch(this.handleError);
     }
 
     async getStream(url: string): Promise<ResponseStream> {
@@ -35,26 +41,35 @@ class ClientUtils {
             },
             responseType: "stream"
         }).then((d) => {
-            return { status: d.status, data: d.data } as ResponseStream;
-        });
+            return {
+                status: d.status,
+                data: d.data
+            };
+        }).catch(this.handleError);
     }
 
     async post(url: string, data: any, headers: {[key: string]: string} = {}): Promise<Response> {
-        const response = await axios({
+        return axios({
             method: "POST",
             url: `${this.apiBase}/${url}`,
             data,
             headers
-        });
-
-        return {
-            status: response.status,
-            data: response.data
-        };
+        }).then(res => {
+            return {
+                status: res.status,
+                data: res.data
+            };
+        }).catch(this.handleError);
     }
 
-    async delete(url: string): Promise<void> {
-        return axios.delete(`${this.apiBase}/${url}`).then(() => undefined);
+    async delete(url: string): Promise<Response> {
+        return axios.delete(`${this.apiBase}/${url}`)
+            .then((res) => {
+                return {
+                    status: res.status
+                };
+            })
+            .catch(this.handleError);
     }
 
     async sendStream(url: string, stream: Stream | string): Promise<Response> {
