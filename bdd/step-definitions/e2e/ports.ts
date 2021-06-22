@@ -57,7 +57,7 @@ When("check stream for message sent", async function(this: CustomWorld) {
     const str = await streamToString(this.resources.stream);
 
     assert.notEqual(
-        str.match(this.resources.testMessage), null
+        str.includes(this.resources.testMessage), null
     );
 });
 

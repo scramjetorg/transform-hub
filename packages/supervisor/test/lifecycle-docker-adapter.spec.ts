@@ -102,7 +102,8 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         engines: {
             [""]: ""
         },
-        sequencePath: "sequence.js"
+        sequencePath: "sequence.js",
+        packageVolumeId: "abc-123"
     };
     const lcdai = new LifecycleDockerAdapterInstance();
 
@@ -176,7 +177,7 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     lcdas["imageConfig"].runner = configFileContents.runner;
 
-    const res = lcdas.identify(streams.stdin);
+    const res = lcdas.identify(streams.stdin, "abc-123");
 
     streams.stdout.push(JSON.stringify(preRunnerResponse), "utf-8");
     streams.stdout.end();
@@ -185,7 +186,7 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
-    const expectedResponse = {
+    const expectedResponse: RunnerConfig = {
         config: {},
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,

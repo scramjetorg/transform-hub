@@ -92,7 +92,7 @@ pipeline {
           // It will still end with error if something goes wrong in this stage.
           // Saw on: https://e.printstacktrace.blog/how-to-time-out-jenkins-pipeline-stage-and-keep-the-pipeline-running/
           options {
-            timeout(time: 60, unit: "SECONDS")
+            timeout(time: 600, unit: "SECONDS") // 10 minutes!
           }
           steps {
             script {
@@ -101,7 +101,7 @@ pipeline {
               catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED') {
                 try {
                   docker.image("${docker_ci_image}").inside("--group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
-                     sh("yarn test:bdd")
+                     sh("yarn test:bdd-ci")
                   }
                 } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
                   error "Caught ${e.toString()}"
