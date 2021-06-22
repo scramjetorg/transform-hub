@@ -11,6 +11,10 @@ Feature: Sample e2e tests
         And get containerId
         And instance health is "true"
         And wait for "2000" ms
-        Then response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         And container is closed
+<<<<<<< HEAD
         And host is running
+=======
+        Then host stops
+>>>>>>> Add changes in checksum test
