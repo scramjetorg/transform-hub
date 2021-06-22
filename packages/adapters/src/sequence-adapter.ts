@@ -138,6 +138,7 @@ IComponent {
 
         return {
             image: this.imageConfig.runner || "",
+            name: res.name || "",
             version: res.version || "",
             engines,
             config,
