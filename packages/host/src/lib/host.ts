@@ -115,7 +115,6 @@ export class Host implements IComponent {
     }
 
     instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
-        // eslint-disable-next-line no-extra-parens
         const params = req.params;
 
         if (!params || !params.id) {
@@ -124,15 +123,22 @@ export class Host implements IComponent {
 
         const instance = this.instancesStore[params.id];
 
-        if (!instance.router) {
-            return next(new HostError("CONTROLLER_ERROR", "Instance controller doesn't provide API."));
+        if (instance) {
+            if (!instance.router) {
+                return next(new HostError("CONTROLLER_ERROR", "Instance controller doesn't provide API."));
+            }
+
+            req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
+
+            this.logger.debug(req.method, req.url);
+
+            return instance.router.lookup(req, res, next);
         }
 
-        req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
+        res.statusCode = 404;
+        res.end();
 
-        this.logger.debug(req.method, req.url);
-
-        return instance.router.lookup(req, res, next);
+        return next();
     }
 
     async handleDeleteSequence(req: ParsedMessage) {
