@@ -169,11 +169,12 @@ When("compare checksums of content sent from file {string}", async (filePath: st
     });
 
     await instance.sendInput(readStream);
-    const output = await streamToString((await instance.getStream("output")).data);
+    const output = await instance.getStream("output");
+    const outputString = await streamToString(output.data);
 
-    assert.equal(status, 200);
+    assert.equal(output.status, 200);
     assert.equal(
-        output,
+        outputString,
         hex
     );
 
