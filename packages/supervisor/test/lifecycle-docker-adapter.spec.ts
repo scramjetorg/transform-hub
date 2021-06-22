@@ -97,6 +97,7 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
     const config: RunnerConfig = {
+        name: "abc",
         image: "image",
         version: "",
         engines: {
@@ -161,6 +162,7 @@ test("Identify should return parsed response from stream.", async (t) => {
     const createdVolumeId = "uniqueVolumeId";
     const preRunnerResponse = {
         engines: { engine1: "diesel" },
+        name: "abc",
         version: "0.3.0",
         main: "example-sequence-path"
     };
@@ -188,6 +190,7 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     const expectedResponse: RunnerConfig = {
         config: {},
+        name: preRunnerResponse.name,
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,
         packageVolumeId: createdVolumeId,
