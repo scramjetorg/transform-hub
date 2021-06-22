@@ -30,14 +30,21 @@ export function createGetterHandler(router: SequentialCeroRouter) {
         path: string | RegExp, op: T, conn: ICommunicationHandler
     ): void => {
         let lastItem: MessageDataType<T> | null = null;
+        let monitoringMessageResolve: Function;
+
+        const monitoringMessagePromise = new Promise((res) => {
+            monitoringMessageResolve = res;
+        });
 
         conn.addMonitoringHandler(op, (data) => {
+            monitoringMessageResolve();
             lastItem = data[1];
             return data;
         });
 
         router.get(path, async (req, res, next) => {
             try {
+                await monitoringMessagePromise;
                 check(req);
                 return output(lastItem as object, res, next);
             } catch (e) {
