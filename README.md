@@ -195,11 +195,19 @@ lerna run prepare-sample-tar
 Now upload the package:
 
 ```bash
-SEQ_ID=$( \
+SEQ_ID=$(
     curl -H 'content-type: application/octet-stream' \
     --data-binary '@packages/samples/hello-alice-out.tar.gz' \
-    "http://localhost:8000/api/v1/sequence" | jq ".id" -r \
+    "http://localhost:8000/api/v1/sequence" | jq ".id" -r
 )
+```
+
+You can use the following that will build and send any of the reference packages and samples in this repo:
+
+```bash
+SEQ_ID=$(./scripts/_/upload-sequence packages/samples/hello-alice-out) # -> when you want to upload the package (it will be built if needed)
+SEQ_ID=$(./scripts/_/upload-sequence packages/samples/hello-alice-out -r) # -> when you want to upload the package and make sure it's rebuilt
+SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
 > **HINT:** INSTANCE_ID and SEQ_ID are shell variables.

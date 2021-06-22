@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+OUTPUT=""
+DIRNAME=""
+ROOTDIST=$(readlink -f $(dirname $0)/../../dist/)
+
+show_help() {
+    echo "Build and creates tar.gz" >&2
+    echo "" >&2
+    echo "Usage: scripts/_/pack-sequence <dirname> [-o output.tar.gz]" >&2
+    exit 1;
+}
+
+while [ -n "$1" ]
+do
+    case "$1" in
+        -o|--output)
+            shift
+            OUTPUT="$1"
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        *)
+            DIRNAME="$1"
+            ;;
+    esac
+    shift
+done
+
+[[ -z "$DIRNAME" ]] && show_help;
+
+[[ -z "$OUTPUT" ]] && OUTPUT=$(readlink -f $ROOTDIST/$(basename $DIRNAME)).tar.gz
+
+set -e
+SCOPE=`jq -r .name $DIRNAME/package.json`
+
+yarn build:all-packages --scope=$SCOPE >&2
+yarn pack:pre --scope=$SCOPE >&2
+
+tar -C "${DIRNAME//packages/dist}" -czf "$OUTPUT" .
+echo package $OUTPUT created. >&2

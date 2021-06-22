@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+PACKAGE=""
+
+OUTPUT=""
+DIRNAME=""
+ROOTDIST=$(readlink -f $(dirname $0)/../../dist/)
+SCRAMJET_HOST_URL="http://localhost:8000"
+REBUILD=""
+
+show_help() {
+    echo "Builds and uploads package on the fly (use -r for rebuild)" >&2
+    echo "" >&2
+    echo "Usage: scripts/_/upload-sequence [-r] <dirname>" >&2
+    echo "Usage: scripts/_/upload-sequence -p <packafename>" >&2
+    exit 1;
+}
+
+while [ -n "$1" ]
+do
+    case "$1" in
+        -p|--package)
+            shift
+            PACKAGE="$1"
+            ;;
+        -r|--rebuild)
+            REBUILD=true
+            ;;
+        -h|--help)
+            show_help
+            ;;
+        *)
+            DIRNAME="$1"
+            ;;
+    esac
+    shift
+done
+
+[[ -z "$DIRNAME" ]] && show_help;
+
+set -e
+if [[ -z "$PACKAGE" ]]; then
+    PACKAGE=$(readlink -f $ROOTDIST/$(basename $DIRNAME)).tar.gz
+    [[ -z "$REBUILD" && -e "$PACKAGE" ]] || $(dirname $0)/pack-sequence -o "$PACKAGE" "$DIRNAME"
+else
+    [[ -e "$PACKAGE" ]] || ( echo "File '$PACKAGE' does not exist!" )
+fi
+
+
+SEQ_ID=$(
+    cat "$PACKAGE" | \
+        curl -H 'content-type: application/octet-stream' \
+        --data-binary @- "$SCRAMJET_HOST_URL/api/v1/sequence" | jq ".id" -r
+)
+
+echo $SEQ_ID
