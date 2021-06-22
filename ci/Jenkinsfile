@@ -40,7 +40,7 @@ pipeline {
       failFast true
       parallel {
         stage('Build - Typescript') {
-          serial {
+          stages {
             stage('Build packages') {
               steps {
                 script {
