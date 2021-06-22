@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { APIExpose, AppConfig, IComponent, Logger, MaybePromise, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -63,7 +63,7 @@ export class Host implements IComponent {
         try {
             await unlink("/tmp/socket-server-path");
         } catch (error) {
-            console.error(error.message);
+            console.error(error.stack);
         }
 
         if (identifyExisiting)
@@ -154,7 +154,6 @@ export class Host implements IComponent {
 
             for (const sequenceConfig of sequences) {
                 const sequence = new Sequence(
-                    IDProvider.generate(),
                     sequenceConfig
                 );
 
@@ -168,12 +167,9 @@ export class Host implements IComponent {
 
     async handleNewSequence(stream: IncomingMessage) {
         this.logger.log("New sequence incoming...");
-
-        const sequenceConfig: RunnerConfig = await this.identifySequence(stream);
-        const sequence = new Sequence(
-            IDProvider.generate(),
-            sequenceConfig
-        );
+        const id = IDProvider.generate();
+        const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
+        const sequence = new Sequence(sequenceConfig);
 
         this.sequencesStore.add(sequence);
 
@@ -209,17 +205,11 @@ export class Host implements IComponent {
         return undefined;
     }
 
-    identifySequence(stream: Readable): MaybePromise<RunnerConfig> {
-        return new Promise(async (resolve, reject) => {
-            const ldas = new LifecycleDockerAdapterSequence();
+    async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
+        const ldas = new LifecycleDockerAdapterSequence();
 
-            try {
-                await ldas.init();
-                resolve(await ldas.identify(stream));
-            } catch {
-                reject();
-            }
-        });
+        await ldas.init();
+        return ldas.identify(stream, id);
     }
 
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {

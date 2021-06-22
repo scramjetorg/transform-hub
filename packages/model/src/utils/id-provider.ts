@@ -9,3 +9,4 @@ export class IDProvider {
         return validate(id);
     }
 }
+

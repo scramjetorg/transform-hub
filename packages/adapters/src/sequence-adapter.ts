@@ -50,7 +50,7 @@ IComponent {
             .toArray();
     }
 
-    async identifyOnly(volume: string): Promise<RunnerConfig> {
+    async identifyOnly(volume: string): Promise<RunnerConfig|undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
         try {
             const { streams, wait } = await this.dockerHelper.run({
@@ -65,6 +65,8 @@ IComponent {
             this.logger.debug(`Prerunner identify started for: ${volume}`);
 
             const ret = await this.parsePackage(streams, wait, volume);
+
+            if (!ret.packageVolumeId) return undefined;
 
             this.logger.info(`Identified volume ${volume} as to be run with ${ret.image}`);
 
@@ -88,8 +90,8 @@ IComponent {
         return JSON.parse(out);
     }
 
-    async identify(stream: Readable): Promise<RunnerConfig> {
-        const volumeId = await this.createVolume();
+    async identify(stream: Readable, id: string): Promise<RunnerConfig> {
+        const volumeId = await this.createVolume(id);
 
         this.logger.log("Volume created. Id: ", volumeId);
 
@@ -118,9 +120,9 @@ IComponent {
         }
     }
 
-    private async createVolume(): Promise<DockerVolume> {
+    private async createVolume(id: string): Promise<DockerVolume> {
         try {
-            return await this.dockerHelper.createVolume();
+            return await this.dockerHelper.createVolume(id);
         } catch (error) {
             throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
         }

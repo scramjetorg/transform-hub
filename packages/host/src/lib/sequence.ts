@@ -5,8 +5,8 @@ export class Sequence implements ISequence {
     config: RunnerConfig;
     instances: any[] = []
 
-    constructor(id: string, config: RunnerConfig) {
-        this.id = id;
+    constructor(config: RunnerConfig) {
+        this.id = config.packageVolumeId;
         this.config = config;
     }
 }

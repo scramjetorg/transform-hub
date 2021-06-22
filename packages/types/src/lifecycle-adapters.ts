@@ -43,7 +43,7 @@ export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterMain {
      * @param {Readable} stream Stream with package.
      * @returns {Promise<RunnerConfig>}
      */
-    identify(stream: Readable): Promise<RunnerConfig>;
+    identify(stream: Readable, id: string): Promise<RunnerConfig>;
 }
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
