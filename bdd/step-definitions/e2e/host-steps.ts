@@ -59,6 +59,13 @@ Given("host is running", async () => {
     );
 });
 
+Then("host is still running", async () => {
+    assert.equal(
+        (await hostClient.getLoadCheck()).status,
+        200
+    );
+});
+
 When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
@@ -164,10 +171,7 @@ When("compare checksums of content sent from file {string}", async (filePath: st
     await instance.sendInput(readStream);
     const output = await streamToString((await instance.getStream("output")).data);
 
-<<<<<<< HEAD
-=======
     assert.equal(status, 200);
->>>>>>> Add minor corrections
     assert.equal(
         output,
         hex
