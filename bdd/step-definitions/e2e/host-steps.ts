@@ -164,6 +164,10 @@ When("compare checksums of content sent from file {string}", async (filePath: st
     await instance.sendInput(readStream);
     const output = await streamToString((await instance.getStream("output")).data);
 
+<<<<<<< HEAD
+=======
+    assert.equal(status, 200);
+>>>>>>> Add minor corrections
     assert.equal(
         output,
         hex
