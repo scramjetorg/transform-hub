@@ -1,5 +1,6 @@
 Feature: Stdio e2e tests
 
+    @ci
     Scenario: E2E-006 TC-001 Get monitoring from sequence where new handler method is added and returning: healthy false
         Given host is running
         And sequence "../packages/reference-apps/stdio-sequence.tar.gz" loaded

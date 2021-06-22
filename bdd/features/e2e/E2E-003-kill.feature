@@ -1,5 +1,6 @@
 Feature: Kill e2e tests
 
+    @ci
     Scenario: E2E-003 TC-001 Kill instance
         Given host is running
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded

@@ -7,6 +7,9 @@ const pack = new Pack({
 });
 
 pack.pack()
+    .then(
+        (name) => console.log(name)
+    )
     .catch(e => {
         console.error(e.stack);
         process.exitCode = e.exitCode || 10;

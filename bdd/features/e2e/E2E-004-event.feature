@@ -1,5 +1,6 @@
 Feature: Event e2e tests
 
+    @ci
     Scenario: E2E-004 TC-001 Send test-event through API and get event emitted by sequence
         Given host is running
         And sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
@@ -17,6 +18,7 @@ Feature: Event e2e tests
         And container is closed
         And host is running
 
+    @ci
     Scenario: E2E-004 TC-002 Send test-event in one function and emit this event in another function within one sequence
         Given host is running
         And sequence "../packages/reference-apps/event-sequence-2.tar.gz" loaded

@@ -17,13 +17,21 @@ class Pack {
 
     async pack() {
         const outputTar = this.currDir + ".tar.gz";
+        /** @type {import("stream").Writable} */
+        const out =
+            tar.c(
+                {
+                    gzip: true,
+                    cwd: this.rootDistPackPath
+                }, readdirSync(this.rootDistPackPath)
+            ).pipe(createWriteStream(outputTar));
 
-        tar.c(
-            {
-                gzip: true,
-                cwd: this.rootDistPackPath
-            }, readdirSync(this.rootDistPackPath)
-        ).pipe(createWriteStream(outputTar));
+        await new Promise((res, rej) => {
+            out.on("finish", res);
+            out.on("error", rej);
+        });
+
+        return outputTar;
     }
 }
 

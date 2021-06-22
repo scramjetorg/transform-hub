@@ -1,5 +1,6 @@
 Feature: Ports e2e tests
 
+    @ci
     Scenario: E2E-007 TC-001 TCP Connection
         Given host is running
         And sequence "../packages/reference-apps/ports-sequence.tar.gz" loaded

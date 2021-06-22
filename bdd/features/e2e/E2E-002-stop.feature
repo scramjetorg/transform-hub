@@ -1,5 +1,6 @@
 Feature: Stop e2e tests
 
+    @ci
     Scenario: E2E-002 TC-001 Stop instance process after 0s canKeepAlive true
         Given host is running
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
@@ -14,6 +15,7 @@ Feature: Stop e2e tests
         And container is closed
         And host is running
 
+    @ci
     Scenario: E2E-002 TC-002 Stop instance process after 0s canKeepAlive false
         Given host is running
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
@@ -28,6 +30,7 @@ Feature: Stop e2e tests
         And container is closed
         And host is running
 
+    @ci
     Scenario: E2E-002 TC-003 Stop instance process after 4s canKeepAlive true
         Given host is running
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded

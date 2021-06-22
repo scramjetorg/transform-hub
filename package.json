@@ -18,7 +18,7 @@
   "scripts": {
     "build": "yarn build:packages",
     "build:all": "yarn build:all-packages && yarn build:docker",
-    "build:packages": "lerna exec bic --parallel",
+    "build:packages": "lerna exec bic",
     "build:all-packages": "lerna run build",
     "build:docker": "lerna run build:docker",
     "build:docs": "lerna run build:docs",
@@ -42,7 +42,8 @@
     "test": "yarn test:parallel && yarn test:bdd",
     "test:packages": "lerna run test",
     "test:parallel": "lerna run test --concurrency=8",
-    "test:bdd": "yarn --cwd=./bdd run test:bdd",
+    "test:bdd": "yarn --cwd=./bdd run test:bdd --tags=ci",
+    "test:all-bdd": "yarn --cwd=./bdd run test:bdd",
     "bump:version": "yarn bump:packages",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags"
   },
