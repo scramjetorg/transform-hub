@@ -43,7 +43,7 @@
     "test:packages": "lerna run test",
     "test:parallel": "lerna run test --concurrency=8",
     "test:bdd-ci": "yarn --cwd=./bdd run test:bdd --tags=@ci",
-    "test:bdd": "yarn --cwd=./bdd run test:bdd",
+    "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
     "bump:version": "yarn bump:packages",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags"
   },

@@ -26,9 +26,12 @@ When("get instance info", async function(this: CustomWorld) {
 
 When("connect to instance on port {int}", { timeout: 20000 }, async function(this: CustomWorld, internalPort: number) {
     const instanceInfo = this.resources.instanceInfo;
+    const port = instanceInfo.ports[internalPort + "/tcp"];
+
+    console.log("Attempting to connect on port", port);
 
     this.resources.connection = await new Promise((resolve, reject) => {
-        const connection = net.createConnection({ port: instanceInfo.ports[internalPort + "/tcp"] })
+        const connection = net.createConnection({ port })
             .once("connect", () => {
                 resolve(connection);
             })
