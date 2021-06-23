@@ -6,9 +6,9 @@
   "scramjet": {
     "image": "node",
     "config": {
-       "ports": ["7006/tcp", "7007/tcp", "7008/tcp", "7009/tcp"]
+       "ports": ["17006/tcp", "17007/tcp", "17008/tcp", "17009/tcp"]
     }
-  }, 
+  },
   "scripts": {
     "prepack": "node ../../../scripts/publish.js",
     "build": "tsc -p tsconfig.json",

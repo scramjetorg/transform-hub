@@ -32,8 +32,8 @@ When("connect to instance on port {int}", { timeout: 20000 }, async function(thi
             .once("connect", () => {
                 resolve(connection);
             })
-            .once("error", () => {
-                reject();
+            .once("error", (e) => {
+                reject(e);
             });
     });
 });

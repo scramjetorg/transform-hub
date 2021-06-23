@@ -4,7 +4,7 @@ import { Logger, ReadableApp } from "@scramjet/types";
 import { Server } from "net";
 import { Socket } from "dgram";
 
-const ports = [7006, 7007, 7008, 7009];
+const ports = [17006, 17007, 17008, 17009];
 const servers: (Server | Socket)[] = [];
 const output = new PassThrough();
 const dgram = require("dgram");
