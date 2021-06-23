@@ -3,7 +3,7 @@ const glob = require("glob");
 const path = require("path");
 const { exec } = require("child_process");
 const { promises: { access }, constants } = require("fs");
-const { readFile, writeFile } = require("fs/promises");
+const { chmod, readFile, writeFile } = require("fs/promises");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
@@ -253,6 +253,7 @@ class PrePack {
 
                 console.log(`Replacing shebang in ${file}`);
                 await writeFile(file, contents.replace(/^\s*#!\/usr\/bin\/env ts-node/, "#!/usr/bin/env node"));
+                await chmod(file, 0o755);
             }
         ));
     }
