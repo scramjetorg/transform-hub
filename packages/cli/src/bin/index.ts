@@ -13,6 +13,7 @@ program
     // .version(version)
     .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
     .option("-L, --log-level <level>", "Specify log level")
+    .option("-a, --api-url <url>", "Specify base API url", "http://localhost:8000/api/v1/`")
     .parse(process.argv)
     .opts()
 ;
