@@ -253,7 +253,7 @@ export class CSIController extends EventEmitter {
             router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
             router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
-            router.downstream("/input", this.upStreams[CommunicationChannel.IN], { end: true });
+            router.downstream("/input", this.upStreams[CommunicationChannel.IN], { json: true, text: true, end: true, encoding: "utf-8" });
 
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);

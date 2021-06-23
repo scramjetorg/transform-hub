@@ -443,9 +443,15 @@ When("send data", async () => {
 
     console.log(status);
 
-    const data = await streamToString((await instance.getStream("output")).data);
+});
 
-    console.log(data);
+Then("get output", async () => {
+
+    const output = await instance.getStream("output");
+    const outputString = await streamToString(output.data);
+
+    console.log("output.status: " + output.status);
+    console.log("outputString: " + outputString);
 
 });
 

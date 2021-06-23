@@ -7,9 +7,10 @@ const exp: [
 ] = [
     (stream) => {
         return async function* () {
+            console.log("Sequence returning generator.");
             for await (const a of stream) {
-                console.log("~~~~~~~~~~~~~~Sequence a:", a);
-            //    yield { b: a };
+                console.log("Sequence loop on stream. Value of chunk is " + a.toString());
+                yield { b: a };
             }
         };
     }
