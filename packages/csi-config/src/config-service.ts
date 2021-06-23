@@ -3,11 +3,11 @@ import { HostConfiguration, PartialHostConfiguration } from "@scramjet/types";
 const defaultConfig: HostConfiguration = {
     docker: {
         prerunner: {
-            image: "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.8",
+            image: "",
             maxMem: 128
         },
         runner: {
-            image: "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.8",
+            image: "",
             maxMem: 512
         }
     },
@@ -22,7 +22,16 @@ class ConfigService {
     private config: HostConfiguration;
 
     constructor(config?: PartialHostConfiguration) {
-        this.config = Object.assign(defaultConfig, config);
+        this.config = defaultConfig;
+        this.updateImages();
+        Object.assign(this.config, config);
+    }
+
+    updateImages() {
+        const imageConfig = require("./image-config.json");
+
+        this.config.docker.prerunner.image = imageConfig.prerunner;
+        this.config.docker.runner.image = imageConfig.runner;
     }
 
     getConfig() {
