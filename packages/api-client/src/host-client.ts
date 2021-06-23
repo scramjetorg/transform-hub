@@ -2,6 +2,7 @@
 import { SequenceClient } from "./sequence-client";
 import { clientUtils } from "./client-utils";
 import { ReadStream } from "fs";
+import { AxiosError } from "axios";
 
 export class HostClient {
     apiBase: string;
@@ -25,15 +26,20 @@ export class HostClient {
     }
 
     async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
-        try {
-            const response = await clientUtils.post("sequence", sequencePackage, {
-                "content-type": "application/octet-stream"
-            });
+        const response = await clientUtils.post("sequence", sequencePackage, {
+            "content-type": "application/octet-stream"
+        }).catch((error: AxiosError) => {
+            return {
+                ...error.response
+            };
+        });
 
-            return SequenceClient.from(response.data?.id);
-        } catch (error) {
-            throw new Error("Sequence upload failed.");
+        if (response.data?.error || !response.data?.id) {
+            console.error(response.data?.error);
+            throw new Error("Sequence upload failed");
         }
+
+        return SequenceClient.from(response.data?.id);
     }
 
     getSequence(sequenceId: string) {

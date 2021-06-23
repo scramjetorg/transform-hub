@@ -174,16 +174,24 @@ export class Host implements IComponent {
     async handleNewSequence(stream: IncomingMessage) {
         this.logger.log("New sequence incoming...");
         const id = IDProvider.generate();
-        const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
-        const sequence = new Sequence(sequenceConfig);
 
-        this.sequencesStore.add(sequence);
+        try {
+            const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
+            const sequence = new Sequence(sequenceConfig);
 
-        this.logger.log("Sequence identified:", sequence.config);
+            this.sequencesStore.add(sequence);
 
-        return {
-            id: sequence.id
-        };
+            this.logger.log("Sequence identified:", sequence.config);
+
+            return {
+                id: sequence.id
+            };
+        } catch (error) {
+            return {
+                opStatus: 422,
+                error
+            };
+        }
     }
 
     async handleStartSequence(req: ParsedMessage) {
@@ -212,10 +220,22 @@ export class Host implements IComponent {
     }
 
     async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
-        const ldas = new LifecycleDockerAdapterSequence();
+        return new Promise(async (resolve, reject) => {
+            const ldas = new LifecycleDockerAdapterSequence();
 
-        await ldas.init();
-        return ldas.identify(stream, id);
+            try {
+                await ldas.init();
+                const identifyResult = await ldas.identify(stream, id);
+
+                if (identifyResult.error) {
+                    reject(identifyResult.error);
+                }
+
+                resolve(identifyResult);
+            } catch {
+                reject();
+            }
+        });
     }
 
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {

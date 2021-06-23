@@ -9,5 +9,6 @@ export type RunnerConfig = {
     };
     config?: any;
     sequencePath: string;
-    packageVolumeId: string;
+    packageVolumeId?: string;
+    error?: string;
 };

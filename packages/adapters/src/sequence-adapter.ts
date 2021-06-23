@@ -93,6 +93,7 @@ IComponent {
     async identify(stream: Readable, id: string): Promise<RunnerConfig> {
         const volumeId = await this.createVolume(id);
 
+        this.resources.volumeId = volumeId;
         this.logger.log("Volume created. Id: ", volumeId);
 
         let runResult: DockerAdapterRunResponse;
@@ -135,6 +136,11 @@ IComponent {
         ]);
         const engines = res.engines ? { ...res.engines } : {};
         const config = res.config ? { ...res.config } : {};
+
+        if (res.error) {
+            await this.cleanup();
+            return res;
+        }
 
         return {
             image: this.imageConfig.runner || "",

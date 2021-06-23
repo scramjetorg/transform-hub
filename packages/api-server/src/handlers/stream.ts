@@ -109,8 +109,19 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                         req.once("end", resolve);
                     });
                 } else {
-                    res.writeHead(202, { "Content-type": "application/json" });
+                    let status = 202;
+
+                    // eslint-disable-next-line no-extra-parens
+                    if ((data as any).opStatus) {
+                        // eslint-disable-next-line no-extra-parens
+                        status = (data as any).opStatus;
+                        // eslint-disable-next-line no-extra-parens
+                        delete (data as any).opStatus;
+                    }
+
+                    res.writeHead(status, { "Content-type": "application/json" });
                     res.end(JSON.stringify(data));
+
                     return;
                 }
 
