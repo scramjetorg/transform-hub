@@ -315,7 +315,7 @@ When("keep instance streams {string}", async function(streamNames) {
     });
 });
 
-When("kept instance stream {string} should be {string}", async (streamName, _expected) => {
+Then("kept instance stream {string} should be {string}", async (streamName, _expected) => {
     const expected = JSON.parse(`"${_expected}"`);
 
     assert.equal(await streams[streamName], expected);

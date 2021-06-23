@@ -8,7 +8,7 @@ Feature: Process large file test
         And instance started with arguments "https://repo.int.scp.ovh/repository/scp-store/small-file.json.gz"
         When get output stream with long timeout
         When response data is equal "95"
-        Then host is running
+        Then host is still running
 
     @ci
     Scenario: PT-002 TC-002 Sequence processes file larger than accesible RAM
@@ -23,4 +23,4 @@ Feature: Process large file test
         When response data is equal "23435224"
         And wait for "4000" ms
         And container is closed
-        Then host is running
+        Then host is still running

@@ -6,7 +6,7 @@ Feature: Start multiple instances
         When wait for .025 hours
         Then check if instances respond
         When wait for "2000" ms
-        Then host is running
+        Then host is still running
 
     @ignore
     Scenario: PT-003 TC-002 More than 25 instances work for long time
@@ -15,7 +15,7 @@ Feature: Start multiple instances
         When wait for 1 hours
         Then check if instances respond
         When wait for "2000" ms
-        Then host is running
+        Then host is still running
 
     @ignore
     Scenario: PT-003 TC-003 More than 25 instances work for long time
@@ -24,6 +24,6 @@ Feature: Start multiple instances
         When wait for 24 hours
         Then check if instances respond
         When wait for "2000" ms
-        Then host is running
+        Then host is still running
 
 

@@ -3,7 +3,7 @@ Feature: Event e2e tests
     @ci
     Scenario: E2E-004 TC-001 Send test-event through API and get event emitted by sequence
         Given host is running
-        And sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
+        When sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
         And instance started with arguments "20"
         And wait for "6000" ms
         And get instance health
@@ -16,12 +16,12 @@ Feature: Event e2e tests
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
         When wait for "10000" ms
         And container is closed
-        And host is running
+        Then host is still running
 
     @ci
     Scenario: E2E-004 TC-002 Send test-event in one function and emit this event in another function within one sequence
         Given host is running
-        And sequence "../packages/reference-apps/event-sequence-2.tar.gz" loaded
+        When sequence "../packages/reference-apps/event-sequence-2.tar.gz" loaded
         And instance started
         And wait for "6000" ms
         And get instance health
@@ -31,4 +31,4 @@ Feature: Event e2e tests
         Then instance response body is "{\"eventName\":\"new-test-event\",\"message\":\"event sent between functions in one sequence\"}"
         When wait for "10000" ms
         And container is closed
-        And host is running
+        Then host is still running

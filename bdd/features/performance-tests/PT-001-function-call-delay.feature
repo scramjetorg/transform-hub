@@ -11,7 +11,7 @@ Feature: Verify delay
         When calculated avereage delay time is lower than "100000" ns
         And wait for "2000" ms
         And container is closed
-        Given host is running
+        Then host is still running
 
     Scenario: PT-001 TC-002 Verify delay - long
         Given host is running
@@ -23,7 +23,7 @@ Feature: Verify delay
         When calculated avereage delay time is lower than "100000" ns
         And wait for "2000" ms
         And container is closed
-        Then host is running
+        Then host is still running
 
     Scenario: PT-001 TC-003 Verify delay - long with core dump
         Given host is running
@@ -39,4 +39,4 @@ Feature: Verify delay
         And search word "scramjetTest" and i want to find 0 occurences in location "core.node.1" file
         And search word scramjetTest and i want to find more than 1 occurences in location "core.node.1" file
         And remove core dump file from "core.node.1"
-        Then host is running
+        Then host is still running
