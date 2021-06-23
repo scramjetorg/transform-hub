@@ -437,21 +437,33 @@ When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) 
     await instance?.stop(0, false);
 });
 
-When("send data", async () => {
+When("stream sequence logs to stderr", async () => {
+    instance.getStream("log")
+        .then(({ data }) => data.pipe(process.stderr))
+        .catch(e => console.error(e));
+    instance.getStream("stdout")
+        .then(({ data }) => data.pipe(process.stderr))
+        .catch(e => console.error(e));
+    instance.getStream("stderr")
+        .then(({ data }) => data.pipe(process.stderr))
+        .catch(e => console.error(e));
+});
 
+When("send data", async () => {
     const status = (await instance.sendInput("{\"a\": 1}")).status;
 
     console.log(status);
-
 });
 
-Then("get output", async () => {
+Then("output is {string}", async (str) => {
 
     const output = await instance.getStream("output");
     const outputString = await streamToString(output.data);
 
     console.log("output.status: " + output.status);
     console.log("outputString: " + outputString);
+
+    assert(outputString, str);
 
 });
 
