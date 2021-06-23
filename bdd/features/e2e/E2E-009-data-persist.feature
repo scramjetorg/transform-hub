@@ -18,3 +18,4 @@ Feature: Output streams persisting data E2E test
         And kept instance stream "stdout" should store 1000 items divided by ","
         And kept instance stream "stderr" should store 1000 items divided by ","
         And kept instance stream "output" should store 1000 items divided by ","
+        
