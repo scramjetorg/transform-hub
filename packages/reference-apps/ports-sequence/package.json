@@ -1,12 +1,17 @@
 {
   "name": "@scramjet/ports-sequence",
-  "version": "0.10.0-pre.7",
+  "version": "0.10.0-pre.8",
   "description": "",
   "main": "index.js",
   "scramjet": {
     "image": "node",
     "config": {
-       "ports": ["17006/tcp", "17007/tcp", "17008/tcp", "17009/tcp"]
+      "ports": [
+        "17006/tcp",
+        "17007/tcp",
+        "17008/tcp",
+        "17009/tcp"
+      ]
     }
   },
   "scripts": {
@@ -18,7 +23,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.7",
+    "@scramjet/types": "^0.10.0-pre.8",
     "@types/node": "^14.14.37"
   },
   "dependencies": {

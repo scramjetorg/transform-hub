@@ -1,6 +1,6 @@
 FROM repo.int.scp.ovh/scramjet/nodejs:buster
 
-ARG HOST_VERSION=0.10.0-pre.7
+ARG HOST_VERSION=0.10.0-pre.8
 ENV HOST_VERSION=${HOST_VERSION}
 
 RUN set -xe \

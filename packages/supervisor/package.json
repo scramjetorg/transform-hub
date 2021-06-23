@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/supervisor",
-  "version": "0.10.0-pre.7",
+  "version": "0.10.0-pre.8",
   "description": "The supervisor application for the underlying container and program wrapper executed within it.",
   "main": "./src/bin/supervisor.ts",
   "scripts": {
@@ -41,12 +41,12 @@
     ]
   },
   "dependencies": {
-    "@scramjet/adapters": "^0.10.0-pre.7",
-    "@scramjet/csi-config": "^0.10.0-pre.7",
-    "@scramjet/logger": "^0.10.0-pre.7",
-    "@scramjet/model": "^0.10.0-pre.7",
-    "@scramjet/symbols": "^0.10.0-pre.7",
-    "@scramjet/types": "^0.10.0-pre.7",
+    "@scramjet/adapters": "^0.10.0-pre.8",
+    "@scramjet/csi-config": "^0.10.0-pre.8",
+    "@scramjet/logger": "^0.10.0-pre.8",
+    "@scramjet/model": "^0.10.0-pre.8",
+    "@scramjet/symbols": "^0.10.0-pre.8",
+    "@scramjet/types": "^0.10.0-pre.8",
     "bpmux": "^8.1.3",
     "dockerode": "^3.2.1",
     "scramjet": "^4.35.15",

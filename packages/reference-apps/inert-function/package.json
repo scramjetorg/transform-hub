@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/reference-inert-function",
-  "version": "0.10.0-pre.7",
+  "version": "0.10.0-pre.8",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.7",
+    "@scramjet/types": "^0.10.0-pre.8",
     "@types/node": "^14.14.37"
   },
   "publishConfig": {
