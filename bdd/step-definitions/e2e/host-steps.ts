@@ -11,6 +11,9 @@ import { promisify } from "util";
 import * as Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
+import * as findPackage from "find-package-json";
+
+const version = findPackage().next().value?.version || "unknown";
 const hostClient = new HostClient(process.env.SCRAMJET_HOST_BASE_URL || "http://localhost:8000/api/v1");
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
@@ -18,11 +21,12 @@ const dockerode = new Dockerode();
 
 let actualHealthResponse: any;
 let actualStatusResponse: any;
+let actualApiResponse: Response;
 let sequence: SequenceClient;
 let actualLogResponse: any;
 let instance: InstanceClient;
 let containerId;
-let streams: {[key: string]: Promise<string>} = {};
+let streams: { [key: string]: Promise<string> } = {};
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
@@ -312,4 +316,48 @@ When("kept instance stream {string} should be {string}", async (streamName, _exp
     const expected = JSON.parse(`"${_expected}"`);
 
     assert.equal(await streams[streamName], expected);
+});
+
+// ? When I get version
+When("I get version", async function() {
+    actualApiResponse = await hostClient.getVersion();
+});
+
+// ? Then it returns the root package version
+Then("it returns the root package version", function() {
+    // Write code here that turns the phrase above into concrete actions
+    assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
+    console.log(actualApiResponse.data, version);
+    assert.deepStrictEqual(actualApiResponse.data, { version });
+});
+
+// ? When I get load-check
+When("I get load-check", async function() {
+    // Write code here that turns the phrase above into concrete actions
+    actualApiResponse = await hostClient.getLoadCheck();
+});
+
+// ? Then it returns a correct load check with required properties
+
+Then("it returns a correct load check with required properties", function() {
+    // Write code here that turns the phrase above into concrete actions
+    const { data } = actualApiResponse;
+
+    assert.ok(typeof data === "object");
+    assert.strictEqual(typeof data.avgLoad, "number");
+    assert.strictEqual(typeof data.currentLoad, "number");
+    assert.strictEqual(typeof data.memFree, "number");
+    assert.strictEqual(typeof data.memUsed, "number");
+    assert.ok(Array.isArray(data.fsSize));
+    assert.ok(data.fsSize.length > 0);
+    // available);
+    assert.strictEqual(typeof data.fsSize[0].fs, "string"); //: '/dev/sda1',
+    assert.strictEqual(typeof data.fsSize[0].type, "string"); //: 'ext4',
+    assert.strictEqual(typeof data.fsSize[0].size, "number"); //: 41651752960,
+    assert.strictEqual(typeof data.fsSize[0].used, "number"); //: 30935633920,
+    assert.strictEqual(typeof data.fsSize[0].available, "number"); //: 10699341824,
+    assert.strictEqual(typeof data.fsSize[0].use, "number"); //: 74.3,
+    assert.strictEqual(typeof data.fsSize[0].mount, "string"); //: '/'
+
+    return "skip";
 });

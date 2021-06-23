@@ -1423,6 +1423,13 @@
   dependencies:
     "@types/node" "*"
 
+"@types/find-package-json@^1.2.1":
+  version "1.2.1"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/@types/find-package-json/-/find-package-json-1.2.1.tgz#3698017e98d7efab1477f6030dd8fd4f8e5fcac7"
+  integrity sha512-8lNK2BIs/Impf4fSYdwk4U3+G29j6KsZq6TEOK6gSAoVWz1gZBHR32pCYKd9Ij5ux7oh5sX/21axWl6JOoaDGw==
+  dependencies:
+    "@types/node" "*"
+
 "@types/glob@^7.1.1":
   version "7.1.3"
   resolved "https://repo.int.scp.ovh/repository/npm-all/@types/glob/-/glob-7.1.3.tgz#e6ba80f36b7daad2c685acd9266382e68985c183"
@@ -3850,6 +3857,11 @@ find-cache-dir@^3.2.0:
     commondir "^1.0.1"
     make-dir "^3.0.2"
     pkg-dir "^4.1.0"
+
+find-package-json@^1.2.0:
+  version "1.2.0"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/find-package-json/-/find-package-json-1.2.0.tgz#4057d1b943f82d8445fe52dc9cf456f6b8b58083"
+  integrity sha512-+SOGcLGYDJHtyqHd87ysBhmaeQ95oWspDKnMXBrnQ9Eq4OkLNqejgoaD8xVWu6GPa0B6roa6KinCMEMcVeqONw==
 
 find-up@^1.0.0:
   version "1.1.2"

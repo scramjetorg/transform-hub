@@ -57,4 +57,8 @@ export class HostClient {
     getLoadCheck() {
         return clientUtils.get("load-check");
     }
+
+    getVersion() {
+        return clientUtils.get("version");
+    }
 }

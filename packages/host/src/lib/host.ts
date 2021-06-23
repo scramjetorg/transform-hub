@@ -16,6 +16,10 @@ import { InstanceStore } from "./instance-store";
 import { loadCheck } from "./load-check";
 import { ReasonPhrases } from "http-status-codes";
 
+import * as findPackage from "find-package-json";
+
+const version = findPackage().next().value?.version || "unknown";
+
 export type HostOptions = Partial<{
     identifyExisiting: boolean
 }>;
@@ -107,9 +111,8 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
-        this.api.get(`${this.apiBase}/load-check`, async () => {
-            return loadCheck.getLoadCheck();
-        });
+        this.api.get(`${this.apiBase}/load-check`, () => loadCheck.getLoadCheck());
+        this.api.get(`${this.apiBase}/version`, () => ({ version }));
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
     }
