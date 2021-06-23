@@ -10,8 +10,8 @@ export type HostConfiguration = {
     },
     host: {
         port: number,
-        apiSocket: string,
         apiBase: string;
+        socketPath: string,
     }
 }
 

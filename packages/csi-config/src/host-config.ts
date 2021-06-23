@@ -13,8 +13,8 @@ const defaultConfig: HostConfiguration = {
     },
     host: {
         port: 8000,
-        apiSocket: "f",
-        apiBase: "/api/v1"
+        apiBase: "/api/v1",
+        socketPath: "/tmp/scramjet-socket-server-path"
     }
 };
 

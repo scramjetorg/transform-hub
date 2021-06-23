@@ -3,6 +3,7 @@ import { LifeCycleConfig } from "@scramjet/types";
 import { CSHClient } from "../lib/csh-client";
 import { LifecycleDockerAdapterInstance } from "@scramjet/adapters";
 import { LifeCycleController } from "../lib/lifecycle-controller";
+import { configService } from "@scramjet/csi-config";
 
 /**
  * This script runs the main component of the CSI - the Supervisor.
@@ -18,7 +19,7 @@ const config: LifeCycleConfig = {
 };
 const lcdai: LifecycleDockerAdapterInstance = new LifecycleDockerAdapterInstance();
 const id: string = process.argv[2];
-const cshc: CSHClient = new CSHClient("/tmp/socket-server-path");
+const cshc: CSHClient = new CSHClient(configService.getConfig().host.socketPath);
 const lcc: LifeCycleController = new LifeCycleController(id, lcdai, config, cshc);
 
 lcc.main()

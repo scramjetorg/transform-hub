@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createServer } from "@scramjet/api-server";
+import { configService } from "@scramjet/csi-config";
 import { Host, HostOptions } from "../lib/host";
 import { SocketServer } from "../lib/socket-server";
 
@@ -17,7 +18,7 @@ const options: HostOptions = {
 };
 const apiServerConfig = {};
 const apiServer = createServer(apiServerConfig);
-const tcpServer = new SocketServer("/tmp/socket-server-path");
+const tcpServer = new SocketServer(configService.getConfig().host.socketPath);
 //
 const host = new Host(apiServer, tcpServer);
 

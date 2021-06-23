@@ -70,7 +70,7 @@ export class Host implements IComponent {
         this.logger.info("Host main called.");
 
         try {
-            await unlink("/tmp/socket-server-path");
+            await unlink(this.config.host.socketPath);
         } catch (error) {
             console.error(error.stack);
         }
