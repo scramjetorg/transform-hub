@@ -109,7 +109,7 @@ pipeline {
 
               catchError(buildResult: 'SUCCESS', stageResult: 'ABORTED') {
                 try {
-                  docker.image("${docker_ci_image}").inside("--net=host --group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
+                  docker.image("${docker_ci_image}").inside("--network=host --group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock -v /tmp:/tmp") {
                     sh('yarn test:bdd-ci')
                   }
                 } catch (org.jenkinsci.plugins.workflow.steps.FlowInterruptedException e) {
