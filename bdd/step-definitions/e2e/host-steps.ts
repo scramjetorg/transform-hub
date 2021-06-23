@@ -360,4 +360,13 @@ Then("it returns a correct load check with required properties", function() {
     assert.strictEqual(typeof data.fsSize[0].mount, "string"); //: '/'
 
     return "skip";
+
+});
+
+When("kept instance stream {string} should store {int} items divided by {string}", async (streamName, expectedCount, separator) => {
+
+    const res = await streams[streamName];
+    const nrOfItems = res.split(separator).length - 1;
+    
+    assert.equal(nrOfItems, expectedCount);
 });
