@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env ts-node
 
 import { configService } from "@scramjet/csi-config";
 import { HostOptions } from "../lib/host";

@@ -3,6 +3,7 @@ const glob = require("glob");
 const path = require("path");
 const { exec } = require("child_process");
 const { promises: { access }, constants } = require("fs");
+const { readFile, writeFile } = require("fs/promises");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
@@ -224,6 +225,8 @@ class PrePack {
             : srcRe(_main, ".d.ts")
         ;
 
+        await this.fixShebang(bin);
+
         return {
             name, version, description, keywords, homepage, bugs,
             license, author, contributors, funding, files, main, types,
@@ -232,6 +235,26 @@ class PrePack {
             bundledDependencies, optionalDependencies,
             engines, os, cpu, private: priv, publishConfig, scramjet
         };
+    }
+
+    async fixShebang(assets) {
+        const entries = Object.entries(assets);
+
+        if (!entries.length) return;
+
+        // TODO: what about package.json/files?
+
+        await Promise.all(entries.map(
+            async ([, relative]) => {
+                const file = path.resolve(this.rootDistPackPath, relative);
+                const contents = await readFile(file, "utf-8");
+
+                if (!contents.match(/^\s*#!\/usr\/bin\/env ts-node/)) return;
+
+                console.log(`Replacing shebang in ${file}`);
+                await writeFile(file, contents.replace(/^\s*#!\/usr\/bin\/env ts-node/, "#!/usr/bin/env node"));
+            }
+        ));
     }
 
     async saveJson(content) {

@@ -3,6 +3,9 @@
     "version": "0.10.0-pre.7",
     "description": "Package template",
     "main": "./src/index.ts",
+    "bin": {
+      "si": "./src/bin/index.ts"
+    },
     "scripts": {
         "start": "ts-node ./src/index",
         "build": "tsc -p tsconfig.build.json",
