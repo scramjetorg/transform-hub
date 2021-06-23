@@ -1,10 +1,10 @@
-import { Console } from "console";
-
 import { LoggerOptions, PassThoughStream, WritableStream } from "@scramjet/types";
-import { getName } from "./lib/get-name";
+import { Console } from "console";
 import { DataStream } from "scramjet";
-import { inspect, InspectOptions } from "util";
 import { Writable } from "stream";
+import { inspect, InspectOptions } from "util";
+import { getName } from "./lib/get-name";
+
 
 export type MessageFormatter = <Z extends any[]>(name: string, func: string, args: Z) => string;
 

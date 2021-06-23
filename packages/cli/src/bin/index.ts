@@ -11,6 +11,7 @@ for (const command of Object.values(commands))
 
 program
     .version(version)
+    .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
     .option("-L, --log-level <level>", "Specify log level")
     .parse(process.argv)
     .opts()
