@@ -5,10 +5,12 @@
 - [Intro](#intro)
 - [Clean and rebuild packages](#clean-and-rebuild-packages)
 - [Basic commands](#basic-commands)
-- [Start Host](#start-host)
+- [Start host](#start-host)
 - [Lerna commands](#lerna-commands)
+- [Clean build](#clean-build)
 - [Docker commands](#docker-commands)
 - [Install Host and execute](#install-host-and-execute)
+- [Install CLI and execute](#install-cli-and-execute)
   - [Build Host on Docker](#build-host-on-docker)
   - [Run Host in Docker](#run-host-in-docker)
 - [Run components](#run-components)
@@ -89,6 +91,17 @@ You can also install current Host release from our internal [Scramjet NPM Regist
 npm install -g @scramjet/host
 scramjet-host
 ```
+
+## Install CLI and execute
+
+In the root folder make commands:
+
+```bash
+npm i -g cli  #install CLI globally
+si help       #show CLI commands
+```
+
+> **HINT:** If something goes wrong make clean, install, and prepack.
 
 ### Build Host on Docker
 
