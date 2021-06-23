@@ -1,7 +1,6 @@
 Feature: Ports e2e tests
 
-    @ci
-    Scenario: E2E-007 TC-001 TCP Connection
+    Scenario: PT-005 TC-001 TCP Connection
         Given host is running
         When sequence "../packages/reference-apps/ports-sequence.tar.gz" loaded
         And instance started with arguments "tcp"

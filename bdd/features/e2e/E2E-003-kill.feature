@@ -11,7 +11,7 @@ Feature: Kill e2e tests
         And get containerId
         And instance health is "true"
         And send kill message to instance
-        And wait "8000" ms
+        And wait for "8000" ms
         And container is closed
         Then host is still running
 
@@ -28,6 +28,6 @@ Feature: Kill e2e tests
         Then get event from instance
         When send kill message to instance
         Then instance response body is "{\"eventName\":\"kill-handler-called\",\"message\":\"\"}"
-        When wait "8000" ms
+        When wait for "8000" ms
         And container is closed
         Then host is still running

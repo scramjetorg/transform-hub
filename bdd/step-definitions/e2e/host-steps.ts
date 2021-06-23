@@ -1,6 +1,6 @@
+// eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { waitForValueTillTrue } from "../../lib/utils";
 import * as fs from "fs";
 import { createReadStream } from "fs";
 import { HostClient, SequenceClient, InstanceClient, InstanceOutputStream, Response } from "@scramjet/api-client";
@@ -61,25 +61,15 @@ const streamToString = async (stream: Stream): Promise<string> => {
 };
 
 Given("host is running", async () => {
-    assert.equal(
-        (await hostClient.getLoadCheck()).status,
-        200
-    );
+    assert.equal((await hostClient.getLoadCheck()).status, 200);
 });
 
 Then("host is still running", async () => {
-    assert.equal(
-        (await hostClient.getLoadCheck()).status,
-        200
-    );
+    assert.equal((await hostClient.getLoadCheck()).status, 200);
 });
 
 When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
-});
-
-When("host process is working", async () => {
-    await waitForValueTillTrue(hostUtils.hostProcessStopped);
 });
 
 When("sequence {string} loaded", async (packagePath: string) => {
@@ -89,7 +79,6 @@ When("sequence {string} loaded", async (packagePath: string) => {
 });
 
 When("instance started", async function(this: CustomWorld) {
-    // eslint-disable-next-line no-extra-parens
     instance = await sequence.start({}, ["/package/data.json"]);
     this.resources.instance = instance;
 });
@@ -100,7 +89,6 @@ When("instance started with arguments {string}", { timeout: 25000 }, async funct
 });
 
 When("instance started with arguments {string} and write stream to {string} and timeout after {int} seconds", { timeout: -1 }, async (instanceArg: string, fileName: string, timeout: number) => {
-    // eslint-disable-next-line no-extra-parens
     instance = await sequence.start({}, instanceArg.split(" "));
 
     const stream: any = (await instance.getStream("stdout")).data;
@@ -119,17 +107,14 @@ When("instance started with arguments {string} and write stream to {string} and 
     ]);
 });
 
-// not in use
-// When("get logs in background with instanceId", { timeout: 20000 }, async () => {
-//     actualLogResponse = await streamToString(
-//         (await instance.getStream("output")).data
-//     );
-// });
-
 When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: InstanceOutputStream) => {
     actualLogResponse = await streamToString(
         (await instance.getStream(stream)).data
     );
+});
+
+Then("file {string} is generated", async (filename) => {
+    assert.ok(await promisify(fs.exists)(`${filename}`));
 });
 
 When("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
@@ -147,11 +132,11 @@ When("response in every line contains {string} followed by name from file {strin
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-When("save response to file {string}", { timeout: 10000 }, async (outputFile: number | fs.PathLike) => {
-    fs.writeFile(outputFile, actualLogResponse, function(err) {
-        if (err) { console.log(err); }
-    });
-});
+// When("save response to file {string}", { timeout: 10000 }, async (outputFile: number | fs.PathLike) => {
+//     fs.writeFile(outputFile, actualLogResponse, function(err) {
+//         if (err) { console.log(err); }
+//     });
+// });
 
 When("get output stream with long timeout", { timeout: 200000 }, async () => {
     const stream: Response = await instance.getStream("output");
@@ -233,22 +218,6 @@ When("container is closed", async () => {
 
 });
 
-When("container is not closed", async () => {
-    const containers = await dockerode.listContainers();
-
-    let containerExist = false;
-
-    containers.forEach(containerInfo => {
-        if (containerInfo.Id.includes(containerId)) {
-            containerExist = true;
-        }
-    });
-
-    assert.equal(containerExist, true);
-    console.log("Container is NOT closed.");
-
-});
-
 When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
     const resp = await instance.sendEvent(eventName, eventMessage);
 
@@ -267,7 +236,6 @@ When("get instance health", async () => {
     assert.equal(actualHealthResponse.status, 200);
 });
 
-// for event.feature
 Then("instance response body is {string}", async (expectedResp: string) => {
     const resp = JSON.stringify(actualResponse().data);
 
@@ -292,16 +260,12 @@ When("instance health is {string}", async (expectedResp: string) => {
     assert.equal(healthy, expectedResp);
 });
 
-Then("host stops", async () => {
-    await hostUtils.stopHost();
-});
+// When("send stdin to instance with text {string}", async (data: string) => {
+//     const stream = new PassThrough();
 
-When("send stdin to instance with text {string}", async (data: string) => {
-    const stream = new PassThrough();
-
-    stream.end(data);
-    await instance.sendStream("stdin", stream);
-});
+//     stream.end(data);
+//     await instance.sendStream("stdin", stream);
+// });
 
 When("send stdin to instance with contents of file {string}", async (filePath: string) => {
     await instance.sendStream("stdin", createReadStream(filePath));
