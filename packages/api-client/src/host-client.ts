@@ -8,7 +8,7 @@ export class HostClient {
     apiBase: string;
 
     constructor(apiBase: string) {
-        this.apiBase = apiBase;
+        this.apiBase = apiBase.replace(/\/$/, "");
         clientUtils.init(apiBase);
     }
 

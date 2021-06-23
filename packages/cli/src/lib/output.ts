@@ -7,7 +7,7 @@ export async function displayEntitiy(_program: Command, request: Promise<Respons
     try {
         const req = await request;
 
-        console.log(req);
+        console.log(req.data);
     } catch (e) {
         console.error(e && e.stack || e);
         process.exitCode = e.exitCode || 1;

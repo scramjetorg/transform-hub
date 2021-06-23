@@ -34,26 +34,27 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
     const log = new DataStream();
     const config: CeroRouterConfig = {
         defaultRoute: (req, res) => {
-            const date = Date.now();
-
             res.writeHead(404);
             res.end();
-            log.write({ date, method: req.method, url: req.url, status: 404 } as any);
         },
         errorHandler: (err, req, res) => {
             res.writeHead(err.code || 500, err.httpMessage);
             if (conf.verbose) res.end(err.stack);
             else res.end();
-
-            log.write({ date: Date.now(), method: req.method, url: req.url, status: 500 } as any);
         }
     };
     const { server: srv, router } = cero({ server: conf.server, router: sequentialRouter(config) });
+
+    router.use("/", async (req, res, next) => {
+        next();
+        log.write({ date: Date.now(), method: req.method, url: req.url, status: await new Promise(s => res.on("finish", () => s(res.statusCode))) } as any);
+    });
+
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
     const { upstream, downstream } = createStreamHandlers(router);
 
-    log.resume();
+    log.resume(); // if log is not read.
 
     return {
         server: srv,
@@ -61,7 +62,9 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
         op,
         upstream,
         downstream,
-        log,
+        get log() {
+            return log.pause(); // if log is accessed then it should be read
+        },
         use: (path, ...middlewares) => {
             router.use(path, ...middlewares);
         }
