@@ -1,9 +1,11 @@
+// TODO: Move this file to @scramjet/adapters
+
 /* eslint-disable import/no-named-as-default-member, no-extra-parens, dot-notation */
-import * as imageConfig from "@scramjet/csi-config";
+import { configService } from "@scramjet/csi-config";
 import { DelayedStream } from "@scramjet/model";
 import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { RunnerConfig } from "@scramjet/types";
-import test from "ava";
+import test, { skip } from "ava";
 import * as fs from "fs";
 import * as fsPromises from "fs/promises";
 import * as sinon from "sinon";
@@ -11,16 +13,22 @@ import { PassThrough } from "stream";
 
 const sandbox = sinon.createSandbox();
 const configFileContents = {
-    runner: "runner-example-image",
-    prerunner: "pre-runner-example-image"
+    runner: {
+        image: "runner-example-image",
+        maxMem: 512
+    },
+    prerunner: {
+        image: "pre-runner-example-image",
+        maxMem: 16
+    }
 };
 
 sinon.stub(fsPromises, "chmod").resolves();
 sinon.stub(fs, "createWriteStream");
 
+const configStub = sinon.stub(configService, "getDockerConfig").returns(configFileContents);
 const createReadStreamStub = sinon.stub(fs, "createReadStream");
 const mkdtempStub = sinon.stub(fsPromises, "mkdtemp").resolves();
-const configStub = sinon.stub(imageConfig, "imageConfig").returns(Promise.resolve(configFileContents));
 const dockerHelperMock = {
     createVolume: sinon.stub(DockerodeDockerHelper.prototype, "createVolume"),
     run: sinon.stub(DockerodeDockerHelper.prototype, "run"),
@@ -39,18 +47,20 @@ test("Constructor should create instance.", async (t: any) => {
     t.not(lcdai, null);
 });
 
-test("Init should call imageConfig and set results locally.", async (t) => {
+// TODO: Config is provided by PreRunner. No need to get it from global config.
+
+skip("Init should call imageConfig and set results locally.", async () => {
     configStub.resolves(configFileContents);
 
     const lcdai = new LifecycleDockerAdapterInstance();
 
     await lcdai.init();
 
-
-    t.deepEqual(lcdai["imageConfig"], configFileContents);
+    // t.deepEqual(lcdai["imageConfig"], configFileContents);
 });
 
-test("Init should reject on read file error.", async (t) => {
+// TODO: Useless till config is not provided with "require"
+skip("Init should reject on read file error.", async (t) => {
     configStub.rejects(new Error("ENOENT: File not found"));
 
     const lcdai = new LifecycleDockerAdapterInstance();
@@ -98,7 +108,7 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
     const config: RunnerConfig = {
         name: "abc",
-        image: "image",
+        container: { image: "image", maxMem: 2 },
         version: "",
         engines: {
             [""]: ""
@@ -176,13 +186,12 @@ test("Identify should return parsed response from stream.", async (t) => {
     });
 
     const lcdas = new LifecycleDockerAdapterSequence();
-
-    lcdas["imageConfig"].runner = configFileContents.runner;
-
     const res = lcdas.identify(streams.stdin, "abc-123");
 
     streams.stdout.push(JSON.stringify(preRunnerResponse), "utf-8");
     streams.stdout.end();
+
+    configStub.returns(configFileContents);
 
     const identifyResponse = await res;
 
@@ -194,7 +203,7 @@ test("Identify should return parsed response from stream.", async (t) => {
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,
         packageVolumeId: createdVolumeId,
-        image: lcdas["imageConfig"].runner,
+        container: configFileContents.runner,
         sequencePath: preRunnerResponse.main
     };
 

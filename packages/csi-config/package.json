@@ -7,10 +7,9 @@
   "license": "ISC",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && npm run copy:configs",
+    "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist",
-    "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
     "test": "npm run test:ava",
     "test:ava": "ava",
     "prepack": "node ../../scripts/publish.js"
@@ -38,6 +37,7 @@
     "url": "https://github.com/scramjet-cloud-platform/scramjet-csi-dev/issues"
   },
   "devDependencies": {
+    "@scramjet/types": "^0.10.0-pre.7",
     "ava": "^3.15.0"
   }
 }

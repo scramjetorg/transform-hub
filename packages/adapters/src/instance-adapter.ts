@@ -1,4 +1,4 @@
-import { development, imageConfig } from "@scramjet/csi-config";
+import { development } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -37,11 +37,6 @@ IComponent {
     private outputFifoPath?: string;
     private loggerFifoPath?: string;
 
-    private imageConfig: {
-        runner?: string,
-        prerunner?: string
-    } = {};
-
     private runnerStdin: PassThrough;
     private runnerStdout: PassThrough;
     private runnerStderr: PassThrough;
@@ -71,7 +66,7 @@ IComponent {
     }
 
     async init(): Promise<void> {
-        this.imageConfig = await imageConfig();
+        // TODO: useless. config provided from sequence identify.
     }
 
     private async createFifo(dir: string, fifoName: string): Promise<string> {
@@ -256,8 +251,10 @@ IComponent {
         }
 
         return new Promise(async (resolve, reject) => {
+            this.logger.log("Starting Runner", config.container);
+
             const { streams, containerId } = await this.dockerHelper.run({
-                imageName: this.imageConfig.runner || "",
+                imageName: config.container.image || "",
                 volumes: [
                     ...extraVolumes,
                     { mountPoint: "/package", volume: config.packageVolumeId || "" }
@@ -268,7 +265,7 @@ IComponent {
                 ports: this.resources.ports,
                 envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
                 autoRemove: true,
-                maxMem: 512 * 1024 * 1024 // TODO: config
+                maxMem: config.container.maxMem * 1024 * 1024 // TODO: config
             });
 
             this.resources.containerId = containerId;

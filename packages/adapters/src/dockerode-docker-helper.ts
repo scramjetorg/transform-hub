@@ -219,7 +219,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 ports: config.ports,
                 envs: config.envs || [],
                 autoRemove: config.autoRemove || false,
-                maxMem: config.maxMem || 64 * 1024 * 1024,
+                maxMem: (config.maxMem || 64) * 1024 * 1024,
                 command: config.command
             }
         );

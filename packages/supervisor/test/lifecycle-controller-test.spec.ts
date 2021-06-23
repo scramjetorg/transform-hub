@@ -79,7 +79,7 @@ test("LCC main method should call sub methods", async (t) => {
 
     lcc["communicationHandler"] = streamHandlerInstance;
 
-    const config = { image: "example-image" } as RunnerConfig;
+    const config = { container: { image: "example-image" }} as RunnerConfig;
 
     sinon.stub(lcc, "configMessageReceived").resolves(config);
 

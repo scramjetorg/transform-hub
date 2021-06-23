@@ -1,28 +1,28 @@
 import test from "ava";
 
 /* eslint-disable-next-line import/no-extraneous-dependencies */
-import * as config from "@scramjet/csi-config";
+import { configService } from "@scramjet/csi-config";
 
 // const has: (o: object, k: string) => boolean =
 //     Object.prototype.hasOwnProperty.call.bind(Object.prototype.hasOwnProperty);
 
 test("Check the imageConfig test", async t => {
-    t.is(typeof config.imageConfig, "function", "Has image config method");
+    t.is(typeof configService.getDockerConfig, "function", "Has image config method");
 
-    const imageConfig = await config.imageConfig();
+    const dockerConfig = configService.getDockerConfig();
 
-    t.is(typeof imageConfig, "object", "Imageconfig is an object");
-    t.is(typeof imageConfig.prerunner, "string", "Exposes prerunner");
-    t.is(typeof imageConfig.runner, "string", "Exposes runner");
+    t.is(typeof dockerConfig, "object", "Imageconfig is an object");
+    t.is(typeof dockerConfig.prerunner.image, "string", "Exposes prerunner");
+    t.is(typeof dockerConfig.runner.image, "string", "Exposes runner");
 
 });
 
 test("Check if the tags of the images match packages version", async t => {
     const runnerPackageJson = require("../../runner/package.json");
     const preRunnerPackageJson = require("../../pre-runner/package.json");
-    const imageConfig = await config.imageConfig();
-    const runnerTagImageConfig = imageConfig.runner.split(":")[1];
-    const preRunnerTagImageConfig = imageConfig.prerunner.split(":")[1];
+    const dockerConfig = configService.getDockerConfig();
+    const runnerTagImageConfig = dockerConfig.runner.image.split(":")[1];
+    const preRunnerTagImageConfig = dockerConfig.prerunner.image.split(":")[1];
     const runnerTagPackageJson = runnerPackageJson.version;
     const preRunnerTagPackageJson = preRunnerPackageJson.version;
 

@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { APIExpose, AppConfig, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
+import { APIExpose, AppConfig, HostConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -15,6 +15,7 @@ import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "./load-check";
 import { ReasonPhrases } from "http-status-codes";
+import { configService } from "@scramjet/csi-config";
 
 import * as findPackage from "find-package-json";
 
@@ -25,17 +26,16 @@ export type HostOptions = Partial<{
 }>;
 
 export class Host implements IComponent {
+    config: HostConfiguration;
+
     api: APIExpose;
 
-    apiBase = "/api/v1";
-    port = 8000;
-
-    instanceBase = `${this.apiBase}/instance`;
+    apiBase: string;
+    instanceBase: string;
 
     socketServer: SocketServer;
 
     instancesStore = InstanceStore;
-
     sequencesStore: SequenceStore = new SequenceStore();
 
     logger: Logger;
@@ -49,12 +49,17 @@ export class Host implements IComponent {
     }
 
     constructor(apiServer: APIExpose, socketServer: SocketServer) {
+        this.config = configService.getConfig();
+
         this.logger = getLogger(this);
 
         this.socketServer = socketServer;
         this.api = apiServer;
 
-        if (this.apiBase.includes(":")) {
+        this.apiBase = this.config.host.apiBase;
+        this.instanceBase = `${this.config.host.apiBase}/instance`;
+
+        if (this.config.host.apiBase.includes(":")) {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
         }
     }
@@ -75,11 +80,11 @@ export class Host implements IComponent {
 
         await this.socketServer.start();
 
-        this.api.server.listen(this.port);
+        this.api.server.listen(this.config.host.port);
 
         await new Promise<void>(res => {
             this.api?.server.once("listening", () => {
-                this.logger.info("API listening on port:", this.port);
+                this.logger.info("API listening on port:", this.config.host.port);
                 res();
             });
         });

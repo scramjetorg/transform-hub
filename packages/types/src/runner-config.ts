@@ -1,8 +1,10 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
+import { ContainerConfiguration } from "./host-configuration";
+
 export type RunnerConfig = {
     name: string;
-    image: string;
+    container: ContainerConfiguration;
     version: string;
     engines: {
         [key: string]: string;

@@ -1,4 +1,4 @@
-import { imageConfig } from "@scramjet/csi-config";
+import { configService } from "@scramjet/csi-config";
 import { getLogger } from "@scramjet/logger";
 import { SupervisorError } from "@scramjet/model";
 import {
@@ -7,7 +7,8 @@ import {
     ILifeCycleAdapterIdentify,
     Logger,
     MaybePromise,
-    RunnerConfig
+    RunnerConfig,
+    ContainerConfiguration
 } from "@scramjet/types";
 import { rmdir } from "fs/promises";
 import { StringDecoder } from "string_decoder";
@@ -22,10 +23,7 @@ ILifeCycleAdapterIdentify,
 IComponent {
     private dockerHelper: IDockerHelper;
 
-    private imageConfig: {
-        runner?: string,
-        prerunner?: string
-    } = {};
+    private prerunnerConfig?: ContainerConfiguration;
 
     private resources: DockerAdapterResources = {};
 
@@ -37,7 +35,7 @@ IComponent {
     }
 
     async init(): Promise<void> {
-        this.imageConfig = await imageConfig();
+        this.prerunnerConfig = configService.getDockerConfig().prerunner;
     }
 
     async list(): Promise<RunnerConfig[]> {
@@ -52,21 +50,25 @@ IComponent {
 
     async identifyOnly(volume: string): Promise<RunnerConfig|undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
+
         try {
             const { streams, wait } = await this.dockerHelper.run({
-                imageName: this.imageConfig.prerunner || "",
+                imageName: this.prerunnerConfig?.image || "",
                 volumes: [
                     { mountPoint: "/package", volume },
                 ],
                 command: ["/app/identify.sh"],
-                autoRemove: true
+                autoRemove: true,
+                maxMem: this.prerunnerConfig?.maxMem
             });
 
             this.logger.debug(`Prerunner identify started for: ${volume}`);
 
             const ret = await this.parsePackage(streams, wait, volume);
 
-            if (!ret.packageVolumeId) return undefined;
+            if (!ret.packageVolumeId) {
+                return undefined;
+            }
 
             this.logger.info(`Identified volume ${volume} as to be run with ${ret.image}`);
 
@@ -85,6 +87,7 @@ IComponent {
         for await (const chunk of readable) {
             out += decoder.write(chunk);
         }
+
         out += decoder.end();
 
         return JSON.parse(out);
@@ -98,13 +101,16 @@ IComponent {
 
         let runResult: DockerAdapterRunResponse;
 
+        this.logger.log("Starting PreRunner", this.prerunnerConfig);
+
         try {
             runResult = await this.dockerHelper.run({
-                imageName: this.imageConfig.prerunner || "",
+                imageName: this.prerunnerConfig?.image || "",
                 volumes: [
                     { mountPoint: "/package", volume: volumeId }
                 ],
-                autoRemove: true
+                autoRemove: true,
+                maxMem: this.prerunnerConfig?.maxMem
             });
         } catch {
             throw new SupervisorError("DOCKER_ERROR");
@@ -143,7 +149,7 @@ IComponent {
         }
 
         return {
-            image: this.imageConfig.runner || "",
+            container: configService.getDockerConfig().runner,
             name: res.name || "",
             version: res.version || "",
             engines,
