@@ -1,6 +1,6 @@
 {
     "name": "@scramjet/cli",
-    "version": "0.10.0-pre.7",
+    "version": "0.10.0-pre.8",
     "description": "Package template",
     "main": "./src/index.ts",
     "bin": {
@@ -19,7 +19,7 @@
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
     "dependencies": {
-      "@scramjet/api-client": "0.10.0-pre.7",
+      "@scramjet/api-client": "0.10.0-pre.8",
       "commander": "^7.2.0"
     },
     "devDependencies": {
