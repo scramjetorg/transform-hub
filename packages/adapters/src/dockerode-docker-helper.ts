@@ -161,6 +161,9 @@ export class DockerodeDockerHelper implements IDockerHelper {
     async createVolume(name: string = ""): Promise<DockerVolume> {
         return this.dockerode.createVolume({
             Name: name,
+            Labels: {
+                "org.scramjet.host.is-sequence": "true"
+            }
         }).then((volume: Dockerode.Volume) => {
             return volume.name;
         });
@@ -177,7 +180,9 @@ export class DockerodeDockerHelper implements IDockerHelper {
     }
 
     async listVolumes() {
-        const { Volumes } = await this.dockerode.listVolumes();
+        const { Volumes } = await this.dockerode.listVolumes({
+            filters: { label: { "org.scramjet.host.is-sequence": true } }
+        });
 
         return Volumes.map(volume => volume.Name);
     }
