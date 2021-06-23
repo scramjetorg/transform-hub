@@ -9,8 +9,6 @@ pipeline {
       docker_host_sock_gid = sh(returnStdout: true, script: 'stat -c %g /var/run/docker.sock').trim()
       // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
       HOME = '.'
-      SONAR_LOGIN = credentials('sonar-token')
-      SONAR_PARAMS = setSonarParams()
   }
   stages {
     stage('Checkout SCM') {
@@ -129,66 +127,6 @@ pipeline {
         }
       }
     }
-    stage('Run SonarScanner') {
-      failFast false
-      parallel {
-        stage('Scan HostOne') {
-          steps {
-            script {
-              withSonarQubeEnv('SCPSonar') {
-                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/host-one $SONAR_PARAMS')
-                }
-              }
-            }
-          }
-        }
-        stage('Scan Model') {
-          steps {
-            script {
-              withSonarQubeEnv('SCPSonar') {
-                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/model $SONAR_PARAMS')
-                }
-              }
-            }
-          }
-        }
-        stage('Scan Pre-Runner') {
-          steps {
-            script {
-              withSonarQubeEnv('SCPSonar') {
-                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/pre-runner $SONAR_PARAMS')
-                }
-              }
-            }
-          }
-        }
-        stage('Scan Runner') {
-          steps {
-            script {
-              withSonarQubeEnv('SCPSonar') {
-                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/runner $SONAR_PARAMS')
-                }
-              }
-            }
-          }
-        }
-        stage('Scan Supervisor') {
-          steps {
-            script {
-              withSonarQubeEnv('SCPSonar') {
-                docker.image('repo.int.scp.ovh/apps/sonar-scanner:latest').inside() {
-                  sh('sonar-scanner -Dsonar.projectBaseDir=./packages/supervisor $SONAR_PARAMS')
-                }
-              }
-            }
-          }
-        }
-      }
-    }
   }
   post {
     always {
@@ -220,10 +158,4 @@ pipeline {
     }
   }
 }
-def setSonarParams() {
-  if (env.CHANGE_ID) {
-    return "-Dsonar.pullrequest.key=${env.CHANGE_ID} -Dsonar.pullrequest.branch=${env.CHANGE_BRANCH} -Dsonar.pullrequest.base=${env.CHANGE_TARGET}"
-  } else {
-    return "-Dsonar.branch.name=${env.BRANCH_NAME}"
-  }
-}
+
