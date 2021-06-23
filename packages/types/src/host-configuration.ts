@@ -9,6 +9,7 @@ export type HostConfiguration = {
         runner: ContainerConfiguration
     },
     host: {
+        hostname: string,
         port: number,
         apiBase: string;
         socketPath: string,
@@ -16,5 +17,5 @@ export type HostConfiguration = {
 }
 
 export type PartialHostConfiguration = {
-    [P in keyof HostConfiguration]?: HostConfiguration[P]
+    [P in keyof HostConfiguration]?: Partial<HostConfiguration[P]>
 }

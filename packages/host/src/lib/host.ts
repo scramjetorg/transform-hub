@@ -83,11 +83,11 @@ export class Host implements IComponent {
 
         await this.socketServer.start();
 
-        this.api.server.listen(this.config.host.port);
+        this.api.server.listen(this.config.host.port, this.config.host.hostname);
 
         await new Promise<void>(res => {
             this.api?.server.once("listening", () => {
-                this.logger.info("API listening on port:", this.config.host.port);
+                this.logger.info("API listening on port:", `${this.config.host.hostname}:${this.config.host.port}`);
                 res();
             });
         });

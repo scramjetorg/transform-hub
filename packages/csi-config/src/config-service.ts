@@ -1,5 +1,16 @@
 import { HostConfiguration, PartialHostConfiguration } from "@scramjet/types";
 
+
+const merge = (objFrom: any, objTo: any) => Object.keys(objFrom)
+    .reduce(
+        (merged, key) => {
+            merged[key] = typeof merged[key] !== "undefined" && objFrom[key] instanceof Object && !Array.isArray(objFrom[key])
+                ? merge(objFrom[key], merged[key] ?? {})
+                : objFrom[key];
+            return merged;
+        }, { ...objTo }
+    );
+//
 const defaultConfig: HostConfiguration = {
     docker: {
         prerunner: {
@@ -12,6 +23,7 @@ const defaultConfig: HostConfiguration = {
         }
     },
     host: {
+        hostname: "localhost",
         port: 8000,
         apiBase: "/api/v1",
         socketPath: "/tmp/scramjet-socket-server-path"
@@ -43,7 +55,7 @@ class ConfigService {
     }
 
     update(config: PartialHostConfiguration) {
-        Object.assign(this.config, config);
+        merge(this.config, config);
     }
 }
 
