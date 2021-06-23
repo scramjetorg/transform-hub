@@ -225,7 +225,7 @@ class PrePack {
             : srcRe(_main, ".d.ts")
         ;
 
-        if (bin) await this.fixShebang(bin);
+        if (typeof bin === "object") await this.fixShebang(bin);
 
         return {
             name, version, description, keywords, homepage, bugs,
