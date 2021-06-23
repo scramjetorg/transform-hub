@@ -24,6 +24,7 @@
     },
     "devDependencies": {
         "@types/node": "14.14.33",
+        "@scramjet/types": "0.10.0-pre.7",
         "ava": "^3.15.0",
         "ts-node": "^9.1.1",
         "typedoc": "0.20.28",
