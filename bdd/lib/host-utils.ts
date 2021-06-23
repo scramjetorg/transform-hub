@@ -44,8 +44,10 @@ export class HostUtils {
 
     async spawnHost() {
         if (this.hostUrl) {
+            console.error("Host is supposedly running at", this.hostUrl);
+
             assert.equal(
-                (await new HostClient(this.hostUrl).getLoadCheck()).status,
+                (await new HostClient(this.hostUrl).getLoadCheck()).status, // TODO: change to version and log it
                 200,
                 "Remote host doesn't respond"
             );
@@ -54,6 +56,8 @@ export class HostUtils {
         }
 
         return new Promise<void>((resolve) => {
+            console.error("Spawning host...");
+
             const command: string[] = ["node", hostExecutableFilePath];
 
             this.host = spawn("/usr/bin/env", command);
