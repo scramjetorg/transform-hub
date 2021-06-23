@@ -1,5 +1,6 @@
 import { APIExpose, APIRoute } from "@scramjet/types";
 import { Server } from "http";
+import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
 import { createOperationHandler } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
@@ -30,15 +31,21 @@ export function getRouter(): APIRoute {
 }
 
 export function createServer(conf: ServerConfig = {}): APIExpose {
+    const log = new DataStream();
     const config: CeroRouterConfig = {
         defaultRoute: (req, res) => {
+            const date = Date.now();
+
             res.writeHead(404);
             res.end();
+            log.write({ date, method: req.method, url: req.url, status: 404 } as any);
         },
-        errorHandler: (err, _req, res) => {
+        errorHandler: (err, req, res) => {
             res.writeHead(err.code || 500, err.httpMessage);
             if (conf.verbose) res.end(err.stack);
             else res.end();
+
+            log.write({ date: Date.now(), method: req.method, url: req.url, status: 500 } as any);
         }
     };
     const { server: srv, router } = cero({ server: conf.server, router: sequentialRouter(config) });
@@ -46,12 +53,15 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
     const op = createOperationHandler(router);
     const { upstream, downstream } = createStreamHandlers(router);
 
+    log.resume();
+
     return {
         server: srv,
         get,
         op,
         upstream,
         downstream,
+        log,
         use: (path, ...middlewares) => {
             router.use(path, ...middlewares);
         }

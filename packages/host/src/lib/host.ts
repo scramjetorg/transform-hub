@@ -66,6 +66,9 @@ export class Host implements IComponent {
 
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
         addLoggerOutput(process.stdout);
+        this.api.log.each(
+            ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
+        ).resume();
 
         this.logger.info("Host main called.");
 

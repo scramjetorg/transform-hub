@@ -1,4 +1,5 @@
 import { IncomingMessage, Server, ServerResponse } from "http";
+import { DataStream } from "scramjet";
 import { Readable, Writable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
@@ -99,7 +100,6 @@ export interface APIBase {
         stream: StreamOutput,
         config?: StreamConfig
     ): void;
-
 }
 
 export interface APIExpose extends APIBase {
@@ -107,6 +107,7 @@ export interface APIExpose extends APIBase {
      * The raw HTTP server
      */
     server: Server
+    log: DataStream
     use(path: string | RegExp, ...middlewares: Middleware[]): void;
 }
 
