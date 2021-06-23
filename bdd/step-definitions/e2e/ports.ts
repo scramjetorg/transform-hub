@@ -31,7 +31,10 @@ When("connect to instance on port {int}", { timeout: 20000 }, async function(thi
     console.log("Attempting to connect on port", port);
 
     this.resources.connection = await new Promise((resolve, reject) => {
-        const connection = net.createConnection({ port })
+        const connection = net.createConnection({
+            port: instanceInfo.ports[internalPort + "/tcp"],
+            host: process.env.SCRAMJET_HOST_URL ? new URL(process.env.SCRAMJET_HOST_URL).hostname : "localhost"
+        })
             .once("connect", () => {
                 resolve(connection);
             })
