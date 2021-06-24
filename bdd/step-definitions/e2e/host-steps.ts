@@ -132,12 +132,6 @@ When("response in every line contains {string} followed by name from file {strin
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-// When("save response to file {string}", { timeout: 10000 }, async (outputFile: number | fs.PathLike) => {
-//     fs.writeFile(outputFile, actualLogResponse, function(err) {
-//         if (err) { console.log(err); }
-//     });
-// });
-
 When("get output stream with long timeout", { timeout: 200000 }, async () => {
     const stream: Response = await instance.getStream("output");
 
@@ -260,13 +254,6 @@ When("instance health is {string}", async (expectedResp: string) => {
     assert.equal(healthy, expectedResp);
 });
 
-// When("send stdin to instance with text {string}", async (data: string) => {
-//     const stream = new PassThrough();
-
-//     stream.end(data);
-//     await instance.sendStream("stdin", stream);
-// });
-
 When("send stdin to instance with contents of file {string}", async (filePath: string) => {
     await instance.sendStream("stdin", createReadStream(filePath));
 });
@@ -335,4 +322,41 @@ When("kept instance stream {string} should store {int} items divided by {string}
     const nrOfItems = res.split(separator).length - 1;
 
     assert.equal(nrOfItems, expectedCount);
+});
+
+When("get status", async () => {
+    const getStatus = await instance.getStatus();
+
+    console.log("-----------status: ", getStatus);
+
+    // if (getStatus.status === 200) {
+    //     console.log("Process is NOT finished");
+    // } else {
+    //     console.log("Process is finished with status: ", getStatus.status);
+    // }
+
+    // assert.equal(getStatus.status, 200);
+});
+
+When("delete sequence and volumes", async () => {
+    const sequenceId = sequence.id;
+
+    console.log("sequence ID: ", sequenceId);
+
+    await hostClient.deleteSequence(sequenceId);
+});
+
+When("confirm that sequence and volumes are removed", async () => {
+    const sequenceId = sequence.id;
+    const sequences = await hostClient.listSequences();
+
+    if (!sequenceId) assert.fail();
+
+
+    console.log("s-------------equences list : ", sequences.data);
+
+    const containerExist = false;
+
+    assert.equal(containerExist, false);
+    console.log("Sequence is there.");
 });

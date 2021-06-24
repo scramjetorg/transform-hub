@@ -64,6 +64,8 @@ export class HostUtils {
 
             this.hostProcessStopped = false;
             // for debugging purposes
+            this.host.stdout.pipe(process.stdout);
+            this.host.stderr.pipe(process.stderr);
             if (process.env.SCRAMJET_TEST_LOG) {
                 this.host.stdout.pipe(process.stdout);
                 this.host.stderr.pipe(process.stderr);
