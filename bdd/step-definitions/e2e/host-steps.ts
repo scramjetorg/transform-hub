@@ -324,39 +324,38 @@ When("kept instance stream {string} should store {int} items divided by {string}
     assert.equal(nrOfItems, expectedCount);
 });
 
+// not in use, getStatus() does not work
 When("get status", async () => {
     const getStatus = await instance.getStatus();
 
-    console.log("-----------status: ", getStatus);
-
-    // if (getStatus.status === 200) {
-    //     console.log("Process is NOT finished");
-    // } else {
-    //     console.log("Process is finished with status: ", getStatus.status);
-    // }
-
-    // assert.equal(getStatus.status, 200);
+    console.log("Status: ", getStatus);
 });
 
 When("delete sequence and volumes", async () => {
     const sequenceId = sequence.id;
-
-    console.log("sequence ID: ", sequenceId);
 
     await hostClient.deleteSequence(sequenceId);
 });
 
 When("confirm that sequence and volumes are removed", async () => {
     const sequenceId = sequence.id;
-    const sequences = await hostClient.listSequences();
+    const sequences = (await hostClient.listSequences()).data;
+
+    let sequenceExist = false;
 
     if (!sequenceId) assert.fail();
 
+    sequences.forEach(sequenceInfo => {
+        if (sequenceInfo.Id.includes(containerId)) {
+            sequenceExist = true;
+        }
+    });
+    assert.equal(sequenceExist, false);
+    console.log(`Sequence with id ${sequenceId} is removed.`);
+});
 
-    console.log("s-------------equences list : ", sequences.data);
-
-    const containerExist = false;
-
-    assert.equal(containerExist, false);
-    console.log("Sequence is there.");
+When("instance is finished", async () => {
+    actualHealthResponse = await instance.getHealth();
+    assert.equal(actualHealthResponse.status, 404);
+    console.log("Instance porcess has finished.");
 });
