@@ -9,7 +9,6 @@ COPY package.json yarn.lock lerna.json tsconfig.base.json ./
 RUN yarn install --frozen-lock
 
 COPY packages/adapters ./packages/adapters
-COPY packages/api-client ./packages/api-client
 COPY packages/api-server ./packages/api-server
 COPY packages/sth-config ./packages/sth-config
 COPY packages/host ./packages/host
