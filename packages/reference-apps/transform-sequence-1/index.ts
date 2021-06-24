@@ -9,7 +9,7 @@ const exp: [
         return async function* () {
             console.log("Sequence returning generator.");
             for await (const a of stream) {
-                console.log("Sequence loop on stream. Value of chunk is " + a.toString());
+                console.log("Sequence loop on stream. Value of chunk is ", a);
                 yield { b: a };
             }
         };

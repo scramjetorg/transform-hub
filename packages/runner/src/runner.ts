@@ -4,7 +4,7 @@ import { ApplicationFunction, ApplicationInterface, EventMessageData, HandshakeA
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
 
-import { DataStream, StringStream } from "scramjet";
+import { BufferStream, DataStream, StringStream } from "scramjet";
 import { EventEmitter } from "events";
 import { Readable } from "stream";
 import { createReadStream, createWriteStream } from "fs";
@@ -174,9 +174,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     async hookupInputStream() {
         this.inputStream = createReadStream(this.inputFifoPath);
         this.inputDataStream = StringStream
-            .from(this.inputStream as Readable)
+            .from(this.inputStream as Readable, { encoding: "utf-8" })
             .lines()
-            .do(console.log)
             .parse(line => {
                 try {
                     return JSON.parse(line);
@@ -185,17 +184,13 @@ export class Runner<X extends AppConfig> implements IComponent {
                     return undefined;
                 }
             })
-            .do(inputMsg => {
-                this.logger.log("Input message", inputMsg);
-                this.logger.log("Input message toString();", inputMsg.toString());
-            })
         ;
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.inputDataStream.run();
+        // this.inputDataStream.run();
     }
 
 
-    // echo -e '{"abc":1}\n{"abc":2}\n' | curl -v -d @- -H "Content-Type: text/x-ndjson" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/input"
+    // echo -e '{"abc":1}\n{"abc":2}\n' | curl -v --data-binary "@-" -H "Content-Type: text/x-ndjson" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/input"
 
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);
@@ -511,7 +506,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 _in = await out;
 
-                if (_in) {
+                if (_in instanceof DataStream) {
+                    stream = _in;
+                } else if (_in) {
                     stream = DataStream.from(_in as Readable);
                 } else {
                     stream = undefined;
@@ -527,23 +524,29 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        if (stream && this.outputStream) {
+        if (stream && this.outputStream && this.outputDataStream) {
             this.logger.info(`Piping sequence output (type ${typeof stream})`);
 
             stream
                 .once("end", () => {
                     this.logger.info("Sequence stream ended");
-
-                    this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
-                    this.stopExpected = true;
-
+                    this.endRunner();
                 })
-                .pipe(this.outputStream);
+                .pipe(
+                    stream instanceof StringStream || stream instanceof BufferStream
+                        ? this.outputStream
+                        : this.outputDataStream
+                );
         } else {
-            //TODO: for sure?
-            this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
-            this.stopExpected = true;
+            // TODO: this should push a PANG message with the sequence description
+            this.logger.info("Sequence did not output a stream");
+            this.endRunner();
         }
+    }
+
+    private endRunner() {
+        this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
+        this.stopExpected = true;
     }
 
     handleSequenceEvents() {
