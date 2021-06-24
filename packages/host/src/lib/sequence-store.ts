@@ -2,7 +2,6 @@ import { DockerodeDockerHelper } from "@scramjet/adapters";
 import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
 import { ISequence, ISequenceStore } from "@scramjet/types";
-import { CSIController } from "./csi-controller";
 import { ReasonPhrases } from "http-status-codes";
 import { Sequence } from "./sequence";
 import { InstanceStore } from "./instance-store";
@@ -41,7 +40,7 @@ export class SequenceStore implements ISequenceStore {
         this.logger.log("New sequence added:", sequence.id);
     }
 
-    async delete(id: string): Promise<{ opStatus: ReasonPhrases, message?: string }> {
+    async delete(id: string): Promise<{ opStatus: ReasonPhrases, error?: string }> {
         if (!id) {
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST
@@ -56,28 +55,22 @@ export class SequenceStore implements ISequenceStore {
             };
         }
 
-        const isRunning = !!Object.values(this.instancesStore)
-            .find((instance: CSIController) => instance.sequence === sequence);
-
-        if (isRunning) {
+        if (sequence.instances.length) {
             this.logger.log("Can't remove sequence in use:", id);
 
             return {
                 opStatus: ReasonPhrases.CONFLICT,
-                message: "Can't remove sequence in use"
+                error: "Can't remove sequence in use"
             };
         }
-
-        /**
-         * TODO: Here we also need to check if there aren't any Instances running
-         * that use this Sequence.
-         */
 
         const volumeId = this.sequences[id].config.packageVolumeId;
 
         try {
             this.logger.log("Removing volume...", volumeId);
-            await this.dockerHelper.removeVolume(volumeId);
+            await this.dockerHelper.removeVolume(volumeId).catch(reason => {
+                throw new HostError("CONTROLLER_ERROR", reason);
+            });
 
             delete this.sequences[id];
 
@@ -87,7 +80,7 @@ export class SequenceStore implements ISequenceStore {
                 opStatus: ReasonPhrases.OK
             };
         } catch (error) {
-            this.logger.error("Error removing sequence!");
+            this.logger.error("Error removing sequence!", error);
             throw new HostError("CONTROLLER_ERROR");
         }
     }

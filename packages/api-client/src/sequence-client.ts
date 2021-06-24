@@ -48,6 +48,10 @@ export class SequenceClient {
         return InstanceClient.from(id);
     }
 
+    async getInfo() {
+        return clientUtils.get(this.sequenceURL);
+    }
+
     async overwrite() {
         throw Error("Not yet implemented");
     }

@@ -53,7 +53,7 @@ export class HostClient {
             };
         });
 
-        if (response.data?.error || !response.data?.id) {
+        if (response.data?.error) {
             console.error(response.data?.error);
             throw new Error("Sequence delete failed");
         }
