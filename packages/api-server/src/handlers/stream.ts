@@ -1,5 +1,5 @@
 import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
-import { ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "http";
 import { Writable, Readable } from "stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
@@ -20,6 +20,14 @@ function checkAccepts(acc: string|undefined, text: boolean, json: boolean) {
     return mimeAccepts(acc, types);
 }
 
+function checkEndHeader(req: IncomingMessage, _default?: boolean) {
+    if (typeof req.headers["x-end-stream"] === "string" && ["true", "false", "success"].includes(req.headers["x-end-stream"])) {
+        return req.headers["x-end-stream"] === "true";
+    }
+    return _default;
+}
+
+
 export function createStreamHandlers(router: SequentialCeroRouter) {
     const decorator = (
         data: Readable,
@@ -33,12 +41,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 ? `${type}; charset=${encoding}`
                 : type;
 
-            // TODO: I don't think this is necessary
-            // if (data.readableObjectMode) {
-            //     out = data.pipe(new PassThrough({
-            //         writableObjectMode: true
-            //     }));
-            // }
             out.setEncoding(encoding);
 
             res.setHeader("content-type", cType);
@@ -79,16 +81,14 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     const downstream = (
         path: string|RegExp,
         stream: StreamOutput,
-        { json = false, text = false, end = false, encoding = "utf-8" }: StreamConfig = {}
+        { json = false, text = false, end: _end = false, encoding = "utf-8" }: StreamConfig = {}
     ): void => {
         router.post(path, async (req, res, next) => {
             try {
                 checkAccepts(req.headers["content-type"], text, json);
+                if (req.headers.expect === "100-continue") res.writeContinue();
 
-                if (req.headers.expect === "100-continue") {
-                    res.writeContinue();
-                }
-
+                const end = checkEndHeader(req, _end);
                 const data = await getWritable(stream, req, res);
 
                 // eslint-disable-next-line no-extra-parens

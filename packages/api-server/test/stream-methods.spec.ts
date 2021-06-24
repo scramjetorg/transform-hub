@@ -48,7 +48,6 @@ test("Upstream works with stream", async t => {
     t.true(ended, "Did end");
 });
 
-
 test("Downstream works with unended stream", async t => {
     const pt = new StringStream();
     const { request, response } = mockRequestResponse("POST", "/api/down-unended", pt);
@@ -69,6 +68,27 @@ test("Downstream works with unended stream", async t => {
     up.end("abc\n");
 });
 
+test("Downstream works with unended stream and header", async t => {
+    const pt = new StringStream();
+    const { request, response } = mockRequestResponse("POST", "/api/down-unended", pt);
+    const ended = false;
+    const up = new StringStream();
+
+    api.downstream("/api/down-unended-2", up as Writable, { end: false, text: true });
+
+    request.headers.accept = "text/plain";
+    request.headers["x-end-stream"] = "true";
+    server.request(request, response);
+
+    pt.write("ABC");
+    pt.end("\naaa");
+    await response.fullBody;
+
+    t.is(response.statusCode, 200, "Got OK response");
+    t.false(ended, "Didn't end until ended");
+    up.end("abc\n");
+});
+
 test("Downstream works with ended stream", async t => {
     const pt = new StringStream();
     const { request, response } = mockRequestResponse("POST", "/api/down-end", pt);
@@ -85,6 +105,27 @@ test("Downstream works with ended stream", async t => {
     await response.fullBody;
 
     t.is(response.statusCode, 200, "Got OK response");
+    t.false(ended, "Didn't end until ended");
+    up.end("abc\n");
+});
+
+test("Downstream works with ended stream and header", async t => {
+    const pt = new StringStream();
+    const { request, response } = mockRequestResponse("POST", "/api/down-end", pt);
+    const ended = false;
+    const up = new StringStream();
+
+    api.downstream("/api/down-end", up, { end: true, text: true });
+
+    request.headers.accept = "text/plain";
+    request.headers["x-end-stream"] = "false";
+    server.request(request, response);
+
+    pt.write("ABC");
+    pt.end("\naaa");
+    await response.fullBody;
+
+    t.is(response.statusCode, 202, "Got accepted response");
     t.false(ended, "Didn't end until ended");
     up.end("abc\n");
 });
