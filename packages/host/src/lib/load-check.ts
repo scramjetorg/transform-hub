@@ -3,14 +3,16 @@ import { IComponent, Logger } from "@scramjet/types";
 import { LoadCheckStat } from "@scramjet/model";
 
 import * as sysinfo from "systeminformation";
+import { configService } from "@scramjet/csi-config";
 
+const { safeOperationLimit, instanceRequirements } = configService.getConfig();
 const MB = 1024 * 1024;
+const SAFE_OPERATION_LIMIT = safeOperationLimit * MB;
 const MIN_INSTANCE_REQUIREMENTS = {
-    freeMem: 256 * MB,
-    cpuLoad: 10,
-    freeSpace: 128 * MB
+    freeMem: instanceRequirements.freeMem * MB,
+    cpuLoad: instanceRequirements.cpuLoad,
+    freeSpace: instanceRequirements.freeSpace * MB
 };
-const SAFE_OPERATION_LIMIT = 512 * MB;
 
 class LoadCheck implements IComponent {
     logger: Logger = getLogger(this);

@@ -1,4 +1,4 @@
-import { HostConfiguration, PartialHostConfiguration } from "@scramjet/types";
+import { HubConfiguration, PartialHubConfiguration } from "@scramjet/types";
 
 
 const merge = (objFrom: any, objTo: any) => Object.keys(objTo)
@@ -13,7 +13,7 @@ const merge = (objFrom: any, objTo: any) => Object.keys(objTo)
         [objTo, objFrom]
     );
 //
-const defaultConfig: HostConfiguration = {
+const defaultConfig: HubConfiguration = {
     docker: {
         prerunner: {
             image: "",
@@ -22,20 +22,26 @@ const defaultConfig: HostConfiguration = {
         runner: {
             image: "",
             maxMem: 512
-        }
+        },
     },
     host: {
         hostname: "localhost",
         port: 8000,
         apiBase: "/api/v1",
         socketPath: "/tmp/scramjet-socket-server-path"
-    }
+    },
+    instanceRequirements: {
+        freeMem: 256,
+        cpuLoad: 10,
+        freeSpace: 128
+    },
+    safeOperationLimit: 512
 };
 
 class ConfigService {
-    private config: HostConfiguration;
+    private config: HubConfiguration;
 
-    constructor(config?: PartialHostConfiguration) {
+    constructor(config?: PartialHubConfiguration) {
         this.config = defaultConfig;
         this.updateImages();
         Object.assign(this.config, config);
@@ -56,8 +62,8 @@ class ConfigService {
         return this.config.docker;
     }
 
-    update(config: PartialHostConfiguration) {
-        merge(config, this.config);
+    update(config: PartialHubConfiguration) {
+        merge(this.config, config);
     }
 }
 

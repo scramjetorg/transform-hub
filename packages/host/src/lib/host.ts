@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { APIExpose, AppConfig, HostConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
+import { APIExpose, AppConfig, HubConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -28,7 +28,7 @@ export type HostOptions = Partial<{
 }>;
 
 export class Host implements IComponent {
-    config: HostConfiguration;
+    config: HubConfiguration;
 
     api: APIExpose;
 
