@@ -102,7 +102,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
                 res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
                 return res.end();
             } catch (e) {
-                return next(new CeroError("ERR_INTERNAL_ERROR", e));
+                return next(e);
             }
         };
 
