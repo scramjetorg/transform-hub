@@ -28,7 +28,7 @@ pipeline {
     stage('Run Linter') {
       steps {
         script {
-          docker.image("${docker_ci_image}").inside() {
+          docker.image("${docker_ci_image}").inside("-v /tmp:/tmp") {
             sh('yarn lint')
           }
         }

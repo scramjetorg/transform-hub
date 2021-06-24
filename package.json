@@ -30,7 +30,7 @@
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true lerna run prepack",
     "packseq": "lerna run packseq",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --ext .ts --cache --cache-location=/tmp/.eslintcache_$(basename ${PWD})",
     "lint:dedupe": "scripts/dedupe.js",
     "start": "node dist/host/bin/start.js",
     "watch": "lerna run watch",
