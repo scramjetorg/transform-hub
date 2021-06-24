@@ -14,6 +14,8 @@ import { exec } from "child_process";
 
 type MaybeArray<T> = T | T[];
 
+const isPrimitive = (obj: any) => ["string", "number", "boolean"].includes(typeof obj);
+
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private context?: RunnerAppContext<X, any>;
@@ -460,11 +462,11 @@ export class Runner<X extends AppConfig> implements IComponent {
          */
         let stream: DataStream | void = this.inputDataStream || DataStream.from([]);
         let itemsLeftInSequence = sequence.length;
+        let intermediate: SynchronousStreamable<any> | void = stream;
 
         for (const func of sequence) {
             itemsLeftInSequence--;
 
-            let _in: SynchronousStreamable<any> | void = stream;
             let out: MaybePromise<Streamable<any> | void>;
 
             try {
@@ -472,7 +474,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 out = func.call(
                     this.context,
-                    _in as unknown as ReadableStream<any>,
+                    intermediate as unknown as ReadableStream<any>,
                     ...args
                 );
 
@@ -484,32 +486,32 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
 
             if (itemsLeftInSequence > 0) {
-                _in = await out;
+                intermediate = await out;
 
                 this.logger.info(`Sequence at ${sequence.length - itemsLeftInSequence - 1} output type ${typeof out}`);
 
-                if (!_in) {
+                if (!intermediate) {
                     this.logger.error("Sequence ended premature");
 
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
-                } else if (typeof _in === "object" && _in instanceof DataStream) {
+                } else if (typeof intermediate === "object" && intermediate instanceof DataStream) {
                     this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned DataStream`);
-                    stream = _in;
+                    stream = intermediate;
                 } else {
                     this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned readable`);
 
                     // TODO: what if this is not a DataStream, but BufferStream stream!!!!
-                    stream = DataStream.from(_in as Readable);
+                    stream = DataStream.from(intermediate as Readable);
                 }
             } else {
                 this.logger.info("All sequences processed.");
 
-                _in = await out;
+                intermediate = await out;
 
-                if (_in instanceof DataStream) {
-                    stream = _in;
-                } else if (_in) {
-                    stream = DataStream.from(_in as Readable);
+                if (intermediate instanceof DataStream) {
+                    stream = intermediate;
+                } else if (!isPrimitive(intermediate)) {
+                    stream = DataStream.from(intermediate as Readable);
                 } else {
                     stream = undefined;
                 }
@@ -524,7 +526,12 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        if (stream && this.outputStream && this.outputDataStream) {
+        if (isPrimitive(intermediate)) {
+            this.logger.info("Primitive returned as last value");
+
+            this.outputStream?.end(`${intermediate}`);
+            this.endRunner();
+        } else if (stream && this.outputStream && this.outputDataStream) {
             this.logger.info(`Piping sequence output (type ${typeof stream})`);
 
             stream
