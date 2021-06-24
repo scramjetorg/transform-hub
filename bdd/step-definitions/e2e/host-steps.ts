@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
+import { removeBoundaryQuotes, defer } from "../../lib/utils";
 import * as fs from "fs";
 import { createReadStream } from "fs";
 import { HostClient, SequenceClient, InstanceClient, InstanceOutputStream, Response } from "@scramjet/api-client";
@@ -14,7 +15,7 @@ import { CustomWorld } from "../world";
 import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
-import { defer } from "../../lib/utils";
+
 
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
@@ -169,12 +170,15 @@ When("response in every line contains {string} followed by name from file {strin
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
     const lines: string[] = actualLogResponse.split("\n");
 
+    console.log(actualLogResponse);
     let i: number;
 
     for (i = 0; i < input.length; i++) {
         const line1: string = input[i].name;
 
-        assert.deepEqual(greeting + line1 + suffix, lines[i]);
+        console.log(removeBoundaryQuotes(lines[i]));
+
+        assert.deepEqual(greeting + line1 + suffix, removeBoundaryQuotes(lines[i]));
     }
 
     assert.equal(i, input.length, "incorrect number of elements compared");
@@ -211,6 +215,7 @@ When("compare checksums of content sent from file {string}", async (filePath: st
 
     const outputString = await streamToString(output.data);
 
+    console.log("outputString", outputString);
     assert.equal(output.status, 200);
     assert.equal(
         outputString,
