@@ -46,8 +46,17 @@ export class HostClient {
         return clientUtils.get(`sequence/${sequenceId}`);
     }
 
-    deleteSequence(sequenceId: string) {
-        return clientUtils.delete(`sequence/${sequenceId}`);
+    async deleteSequence(sequenceId: string) {
+        const response = await clientUtils.delete(`sequence/${sequenceId}`).catch((error: AxiosError) => {
+            return {
+                ...error.response
+            };
+        });
+
+        if (response.data?.error || !response.data?.id) {
+            console.error(response.data?.error);
+            throw new Error("Sequence delete failed");
+        }
     }
 
     getInstance(instanceId: string) {

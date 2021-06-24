@@ -152,8 +152,10 @@ export class Host implements IComponent {
     async handleDeleteSequence(req: ParsedMessage) {
         const id = req.params?.id;
 
+        this.logger.log("Deleting sequence: ", id);
+
         return {
-            opStatus: await this.sequencesStore.delete(id)
+            opStatus: (await this.sequencesStore.delete(id)).opStatus
         };
     }
 

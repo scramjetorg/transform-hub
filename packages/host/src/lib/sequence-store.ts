@@ -41,15 +41,19 @@ export class SequenceStore implements ISequenceStore {
         this.logger.log("New sequence added:", sequence.id);
     }
 
-    async delete(id: string): Promise<ReasonPhrases> {
+    async delete(id: string): Promise<{ opStatus: ReasonPhrases, message?: string }> {
         if (!id) {
-            return ReasonPhrases.BAD_REQUEST;
+            return {
+                opStatus: ReasonPhrases.BAD_REQUEST
+            };
         }
 
         const sequence = this.getById(id);
 
         if (!sequence) {
-            return ReasonPhrases.NOT_FOUND;
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND
+            };
         }
 
         const isRunning = !!Object.values(this.instancesStore)
@@ -58,7 +62,10 @@ export class SequenceStore implements ISequenceStore {
         if (isRunning) {
             this.logger.log("Can't remove sequence in use:", id);
 
-            return ReasonPhrases.CONFLICT;
+            return {
+                opStatus: ReasonPhrases.CONFLICT,
+                message: "Can't remove sequence in use"
+            };
         }
 
         /**
@@ -66,7 +73,7 @@ export class SequenceStore implements ISequenceStore {
          * that use this Sequence.
          */
 
-        const volumeId = this.sequences[id].config.packageVolumeId as string;
+        const volumeId = this.sequences[id].config.packageVolumeId;
 
         try {
             this.logger.log("Removing volume...", volumeId);
@@ -76,7 +83,9 @@ export class SequenceStore implements ISequenceStore {
 
             this.logger.log("Volume removed:", volumeId);
 
-            return ReasonPhrases.OK;
+            return {
+                opStatus: ReasonPhrases.OK
+            };
         } catch (error) {
             this.logger.error("Error removing sequence!");
             throw new HostError("CONTROLLER_ERROR");

@@ -63,7 +63,12 @@ class ClientUtils {
     }
 
     async delete(url: string): Promise<Response> {
-        return axios.delete(`${this.apiBase}/${url}`)
+        return axios.delete(
+            `${this.apiBase}/${url}`, {
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
             .then((res) => {
                 return {
                     status: res.status
