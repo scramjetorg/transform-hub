@@ -1,9 +1,10 @@
 FROM repo.int.scp.ovh/scramjet/nodejs:buster as builder
 
-RUN set -xe \
- && mkdir -p /build
-
 WORKDIR /build
+
+COPY package.json yarn.lock lerna.json tsconfig.base.json ./
+
+RUN yarn install --frozen-lock
 
 COPY packages/adapters ./packages/adapters
 COPY packages/api-client ./packages/api-client
@@ -18,11 +19,9 @@ COPY packages/types ./packages/types
 COPY scripts ./scripts
 COPY bin ./bin
 COPY conf ./conf
-COPY LICENSE package.json yarn.lock lerna.json tsconfig.base.json ./
+COPY LICENSE ./
 
-RUN npm install -g lerna \
-  && yarn link \
-  && yarn install \
+RUN yarn install --frozen-lock \
   && yarn build:all-packages \
   && yarn pack:pre
 

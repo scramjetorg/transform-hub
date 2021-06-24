@@ -9,6 +9,8 @@ pipeline {
       docker_host_sock_gid = sh(returnStdout: true, script: 'stat -c %g /var/run/docker.sock').trim()
       // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
       HOME = '.'
+      docker_repo = 'https://repo.int.scp.ovh'
+      version = sh(returnStdout: true, script: "jq -r .version < package.json").trim()
   }
   stages {
     stage('Checkout SCM') {
@@ -68,11 +70,31 @@ pipeline {
             }
           }
         }
-        stage('Build docker images') {
+        stage('Build - Docker - Host') {
           steps {
             script {
-              docker.image("${docker_ci_image}").inside("--group-add=${docker_host_sock_gid} -v /var/run/docker.sock:/var/run/docker.sock") {
-                sh('yarn build:docker')
+              docker.withRegistry("${docker_repo}", 'docker-repo') {
+                docker.build("scramjet/host:${version}", "-f packages/host/Dockerfile .")
+              }
+            }
+          }
+        }
+        stage('Build - Docker - Pre-Runner') {
+          steps {
+            script {
+              dir("packages/pre-runner") {
+                docker.withRegistry("${docker_repo}", 'docker-repo') {
+                  docker.build("scramjet/pre-runner:${version}")
+                }
+              }
+            }
+          }
+        }
+        stage('Build - Docker - Runner') {
+          steps {
+            script {
+              docker.withRegistry("${docker_repo}", 'docker-repo') {
+                docker.build("scramjet/runner:${version}", "-f packages/runner/Dockerfile .")
               }
             }
           }
