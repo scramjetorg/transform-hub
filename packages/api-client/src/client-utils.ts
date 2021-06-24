@@ -11,6 +11,15 @@ export type ResponseStream = {
     status: number | undefined;
 };
 
+export type SendStreamOptions = Partial<{
+    type: string;
+    end: boolean;
+}>;
+
+export type Headers = {
+    [key: string]: string;
+};
+
 class ClientUtils {
     apiBase: string = "";
 
@@ -48,7 +57,7 @@ class ClientUtils {
         }).catch(this.handleError);
     }
 
-    async post(url: string, data: any, headers: {[key: string]: string} = {}): Promise<Response> {
+    async post(url: string, data: any, headers: Headers = {}): Promise<Response> {
         return axios({
             method: "POST",
             url: `${this.apiBase}/${url}`,
@@ -77,13 +86,24 @@ class ClientUtils {
             .catch(this.handleError);
     }
 
-    async sendStream(url: string, stream: Stream | string): Promise<Response> {
+    async sendStream(
+        url: string,
+        stream: Stream | string,
+        {
+            type = "application/octet-stream",
+            end
+        }: SendStreamOptions = {}
+    ): Promise<Response> {
+        const headers: Headers = {
+            "content-type": type
+        };
+
+        if (typeof end !== "undefined") headers["x-end-stream"] = end ? "true" : "false";
+
         return this.post(
             url,
             stream,
-            {
-                "Content-type": "application/octet-stream"
-            }
+            headers
         );
     }
 }
