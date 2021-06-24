@@ -97,7 +97,7 @@ scramjet-host
 In the root folder, after building and prepacking, run the following commands:
 
 ```bash
-npm i -g dist/cli  #install CLI globally
+npm i -g ./dist/cli  #install CLI globally
 si help       #show CLI commands
 ```
 

@@ -1,7 +1,7 @@
-import { CommandDefinition } from "../../types";
-
 import { HostClient } from "@scramjet/api-client";
-import { displayEntitiy } from "../output";
+import { CommandDefinition } from "../../types";
+import { displayEntity } from "../output";
+
 
 export const host: CommandDefinition = (program) => {
 
@@ -17,17 +17,15 @@ export const host: CommandDefinition = (program) => {
     hostCmd
         .command("version")
         .description("get version")
-        .action(async () => displayEntitiy(program, getHostClient().getVersion()));
+        .action(async () => displayEntity(program, getHostClient().getVersion()));
 
     hostCmd
         .command("logs")
         .description("show all logs")
-        .action(() => {
-            console.log("Not implemented");
-        });
+        .action(async () => displayEntity(program, getHostClient().getLogStream()));
 
     hostCmd
         .command("load")
         .description("show load")
-        .action(async () => displayEntitiy(program, getHostClient().getLoadCheck()));
+        .action(async () => displayEntity(program, getHostClient().getLoadCheck()));
 };
