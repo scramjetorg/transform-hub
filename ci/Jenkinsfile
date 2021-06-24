@@ -21,8 +21,8 @@ pipeline {
     stage('Install packages') {
       steps {
         script {
-          docker.image("${docker_ci_image}").inside() {
-            sh('yarn install')
+          docker.image("${docker_ci_image}").inside("-v /tmp/:/tmp") {
+            sh('yarn install --prefer-offline --cache-folder /tmp/.cache_yarn-scramjet-csi')
           }
         }
       }
