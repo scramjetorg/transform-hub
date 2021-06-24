@@ -9,7 +9,7 @@ pipeline {
       docker_host_sock_gid = sh(returnStdout: true, script: 'stat -c %g /var/run/docker.sock').trim()
       // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
       HOME = '.'
-      docker_repo = 'https://repo.int.scp.ovh'
+      docker_repo = 'repo.int.scp.ovh'
       version = sh(returnStdout: true, script: "jq -r .version < package.json").trim()
   }
   stages {
@@ -72,20 +72,16 @@ pipeline {
         }
         stage('Build - Docker - Host') {
           steps {
-            script {
-              docker.withRegistry("${docker_repo}", 'docker-repo') {
-                docker.build("scramjet/host:${version}", "-f packages/host/Dockerfile .")
-              }
+            script {            
+                docker.build("${docker_repo}/scramjet/host:${version}", "-f packages/host/Dockerfile .")
             }
           }
         }
         stage('Build - Docker - Pre-Runner') {
           steps {
             script {
-              dir("packages/pre-runner") {
-                docker.withRegistry("${docker_repo}", 'docker-repo') {
-                  docker.build("scramjet/pre-runner:${version}")
-                }
+              dir("packages/pre-runner") {             
+                docker.build("${docker_repo}/scramjet/pre-runner:${version}")
               }
             }
           }
@@ -93,9 +89,7 @@ pipeline {
         stage('Build - Docker - Runner') {
           steps {
             script {
-              docker.withRegistry("${docker_repo}", 'docker-repo') {
-                docker.build("scramjet/runner:${version}", "-f packages/runner/Dockerfile .")
-              }
+              docker.build("${docker_repo}/scramjet/runner:${version}", "-f packages/runner/Dockerfile .")
             }
           }
         }
