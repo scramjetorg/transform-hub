@@ -27,7 +27,7 @@ const mod: ReadableApp = function(_input, ffrom = `${__dirname}/data.json`) {
         .do(() => new Promise(res => setTimeout(res, 1500)))
         .map(
             (names: Person) => {
-                return `Hello ${names.name}!\n`;
+                return `Hello ${names.name}!`;
             }
         )
         .do(console.log);

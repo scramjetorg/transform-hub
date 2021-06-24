@@ -133,3 +133,9 @@ export async function getStreamsFromSpawnSuccess(
     return [stdout, stderr];
 }
 
+export function removeBoundaryQuotes(str: string) {
+    if (str.charAt(0) === "\"" && str.charAt(str.length - 1) === "\"") {
+        return str.substr(1, str.length - 2);
+    }
+    return str;
+}
