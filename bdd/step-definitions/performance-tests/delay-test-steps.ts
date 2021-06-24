@@ -34,27 +34,17 @@ When("calculate average delay time from {string} of first {string} function call
         max = max > cnt ? max : cnt;
     }
 
-    const average = Number(BigInt(1e3) * sum / BigInt(numberOfProbes)) / 1e3;
+    const average = (Number(BigInt(1e3) * sum / BigInt(numberOfProbes)) / 1e3) / 1000;
 
-    console.log(`Average: ${average / 1000}µs of ${numberOfProbes}, max: ${max / 1000}µs, min: ${min / 1000}µs`);
-    delayAverage = average;
+    console.log(`Average: ${average / 1000}ms of ${numberOfProbes} probes, max time: ${max / 1000000}ms, min time: ${min / 1000000}ms`);
+    delayAverage = average / 1000;
 });
 
-When("calculated avereage delay time is lower than {string} ns", async (acceptedDelayInNs) => {
-    const averageIsOk: boolean = delayAverage < acceptedDelayInNs;
+When("calculated avereage delay time is lower than {float} ms", async (acceptedDelay) => {
+    const averageIsOk: boolean = delayAverage < acceptedDelay;
 
     assert.equal(averageIsOk, true, "Average time is: " + delayAverage);
-});
-
-When("search word {word} and i want to find {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
-    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
-
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
-    const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
-
-    console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
-
-    assert.equal(occurenceNumber, expectedFoundWordNumber, " incorrect number of words in core dump.");
+    console.log(`Average delay time ${delayAverage}ms is lower than ${acceptedDelay}ms`);
 });
 
 When("memory dump file {word} was created", async (fileName) => {
@@ -66,13 +56,25 @@ When("memory dump file {word} was created", async (fileName) => {
     assert.ok(occurenceFile >= 1, " memory dump file not created");
 });
 
-When("search word {word} and i want to find more than {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
+When("search word {word} and find {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
     assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
 
     const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
     const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
 
     console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
+    console.log(`Serialized Value ${searchedValue} was found ${occurenceNumber} times in file ${fileName}.`);
+    assert.equal(occurenceNumber, expectedFoundWordNumber, " incorrect number of words in core dump.");
+});
+
+When("search word {word} and find more than {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
+    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
+
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
+
+    console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
+    console.log(`Unserialized value ${searchedValue} was found ${occurenceNumber} times in file ${fileName}.`);
 
     assert.ok(occurenceNumber >= expectedFoundWordNumber, " incorrect number of words in core dump.");
 });

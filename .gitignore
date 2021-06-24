@@ -124,7 +124,7 @@ dist
 # bdd
 bdd/.work/
 bdd/reports/
-bdd/*.test.result.txt
+bdd/*-test-result.txt
 
 # pre-runner sample-package
 packages/pre-runner/sample-package/

@@ -18,7 +18,7 @@ const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ ts: bi
 
         return DataStream.from(async function* () {
             await new Promise(res => setTimeout(res, waitToStart));
-            while (++x <= timesOfExecution) {
+            while (++x <= timesOfExecution - (abort ? 1 : 0)) {
                 await new Promise(res => setTimeout(res, 5));
                 yield { i: x };
             }
