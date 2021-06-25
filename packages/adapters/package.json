@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/adapters",
-  "version": "0.10.0-pre.8",
+  "version": "0.10.0-pre.9",
   "description": "Important model of the scramjet platform",
   "main": "./src/index.ts",
   "scripts": {
@@ -15,16 +15,16 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/csi-config": "^0.10.0-pre.8",
-    "@scramjet/logger": "^0.10.0-pre.8",
-    "@scramjet/model": "^0.10.0-pre.8",
-    "@scramjet/symbols": "^0.10.0-pre.8",
+    "@scramjet/csi-config": "^0.10.0-pre.9",
+    "@scramjet/logger": "^0.10.0-pre.9",
+    "@scramjet/model": "^0.10.0-pre.9",
+    "@scramjet/symbols": "^0.10.0-pre.9",
     "dockerode": "^3.3.0",
     "scramjet": "^4.35.15",
     "shell-escape": "^0.2.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.8",
+    "@scramjet/types": "^0.10.0-pre.9",
     "@types/node": "14.14.33",
     "ava": "^3.15.0",
     "ts-node": "^9.1.1",

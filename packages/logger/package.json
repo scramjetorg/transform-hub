@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/logger",
-  "version": "0.10.0-pre.8",
+  "version": "0.10.0-pre.9",
   "description": "Important basic logger",
   "main": "./src/index.ts",
   "scripts": {
@@ -16,7 +16,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.8",
+    "@scramjet/types": "^0.10.0-pre.9",
     "@types/node": "^14.14.22",
     "ava": "^3.15.0",
     "nyc": "^15.1.0",

@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/pre-runner",
-  "version": "0.10.0-pre.8",
+  "version": "0.10.0-pre.9",
   "description": "",
   "scripts": {
     "build:docker-fast": "docker build -t repo.int.scp.ovh/scramjet/pre-runner:$npm_package_version .",

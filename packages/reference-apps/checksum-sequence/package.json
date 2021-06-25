@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/checksum-sequence",
-  "version": "0.10.0-pre.8",
+  "version": "0.10.0-pre.9",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.8",
+    "@scramjet/types": "^0.10.0-pre.9",
     "@types/node": "^14.14.37"
   },
   "dependencies": {
