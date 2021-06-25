@@ -26,9 +26,8 @@ const packages = glob.sync("packages/**/package.json", {
     ignore: "**/node_modules/**"
 });
 const package = {
-    name: "@scramjet/info",
+    name: "@scramjet/all-deps",
     version: "",
-    install: "exit 0",
     dependencies: {},
     devDependencies: {},
     peerDependencies: {},
@@ -40,9 +39,10 @@ const deps = [
     "peerDependencies",
     "optiopnalDependencies"
 ];
+const local = [];
 
 function older(v1, v2) {
-    return !v1 || semver.valid(v2) && semver.gt(v2, v1);
+    return !semver.valid(v1) || semver.valid(v2) && semver.gt(v2, v1);
 }
 
 for (const file of packages) {
@@ -50,6 +50,7 @@ for (const file of packages) {
         const str = readFileSync(resolve(cwd, file), { encoding: "utf-8" });
         const contents = JSON.parse(str);
 
+        local.push(contents.name);
         if (typeof contents.name === "string" && contents.name.startsWith("@scramjet/")) {
             if (older(package.version, contents.version))
                 package.version = contents.version;
@@ -68,13 +69,27 @@ for (const file of packages) {
     }
 }
 
+const allDeps = {};
+
+for (const n of deps) {
+    for (const dep of Object.keys(package[n])) {
+        if (local.includes(dep)) continue;
+        if (older(allDeps[dep], package[n][dep]))
+            allDeps[dep] = package[n][dep];
+    }
+}
 for (const n of deps) {
     const unsorted = package[n];
 
     package[n] = Object.keys(unsorted)
         .sort()
-        // eslint-disable-next-line no-return-assign, no-sequences
-        .reduce((acc, key) => (acc[key] = unsorted[key], acc), {});
+        // eslint-disable-next-line no-loop-func
+        .reduce((acc, key) => {
+            if (allDeps[key]) acc[key] = allDeps[key];
+            console.log("dep", key);
+            delete allDeps[key];
+            return acc;
+        }, {});
 }
 
 writeFileSync(out, `${JSON.stringify(package, null, 2)}\n`, "utf-8");

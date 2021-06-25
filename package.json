@@ -48,9 +48,9 @@
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
     "bump:version": "yarn bump:packages",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags",
-    "align": "node scripts/make-aaa-package.js && syncpack fix-mismatches",
-    "upgrade:all": "yarn align && yarn install && yarn upgrade:packages",
-    "upgrade:packages": "lerna exec --concurrency=1 -- yarn upgrade --latest"
+    "align": "syncpack fix-mismatches",
+    "update-aaa": "node scripts/make-aaa-package.js && yarn --cwd=./aaa install && yarn --cwd=./aaa upgrade -L --caret",
+    "upgrade:all": "yarn update-aaa && yarn align && yarn install"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

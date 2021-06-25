@@ -13,8 +13,5 @@
         "--no-package-lock"
       ]
     }
-  },
-  "packages": [
-    "packages/*"
-  ]
+  }
 }
