@@ -34,21 +34,13 @@ COPY LICENSE ./
 RUN yarn install
 
 WORKDIR /app/packages/symbols
-RUN    yarn build \
-    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
-
+RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
 WORKDIR /app/packages/logger
-RUN yarn build \
-    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
-
+RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
 WORKDIR /app/packages/model
-RUN    yarn build \
-    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
-
+RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
 WORKDIR /app/packages/runner
-RUN    yarn build \
-    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
-
+RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
 FROM target
 
 ENV PACKAGE_DIR=/package \
