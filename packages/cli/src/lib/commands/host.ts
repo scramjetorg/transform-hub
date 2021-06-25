@@ -1,15 +1,10 @@
-import { HostClient } from "@scramjet/api-client";
 import { CommandDefinition } from "../../types";
+import { getHostClient } from "../get-client";
 import { displayEntity } from "../output";
 
 
 export const host: CommandDefinition = (program) => {
 
-    let hostClient: HostClient;
-
-    const getHostClient = () => {
-        return hostClient || (hostClient = new HostClient(program.opts().apiUrl));
-    };
     const hostCmd = program
         .command("host [command]")
         .description("something");
@@ -17,15 +12,16 @@ export const host: CommandDefinition = (program) => {
     hostCmd
         .command("version")
         .description("get version")
-        .action(async () => displayEntity(program, getHostClient().getVersion()));
+        .action(async () => displayEntity(program, getHostClient(program).getVersion()));
 
+    // response status 500
     hostCmd
         .command("logs")
         .description("show all logs")
-        .action(async () => displayEntity(program, getHostClient().getLogStream()));
+        .action(async () => displayEntity(program, getHostClient(program).getLogStream()));
 
     hostCmd
         .command("load")
         .description("show load")
-        .action(async () => displayEntity(program, getHostClient().getLoadCheck()));
+        .action(async () => displayEntity(program, getHostClient(program).getLoadCheck()));
 };
