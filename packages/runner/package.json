@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runner",
-  "version": "0.10.0-pre.9",
+  "version": "0.10.0-pre.10",
   "description": "Runner Mock",
   "main": "./src/",
   "bin": "bin/start-runner.js",
@@ -20,13 +20,13 @@
   "author": "",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/logger": "^0.10.0-pre.9",
-    "@scramjet/model": "^0.10.0-pre.9",
-    "@scramjet/symbols": "^0.10.0-pre.9",
+    "@scramjet/logger": "^0.10.0-pre.10",
+    "@scramjet/model": "^0.10.0-pre.10",
+    "@scramjet/symbols": "^0.10.0-pre.10",
     "scramjet": "^4.35.15"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.9",
+    "@scramjet/types": "^0.10.0-pre.10",
     "@types/node": "14.14.33",
     "@types/sinon": "^9.0.10",
     "ava": "^3.15.0",

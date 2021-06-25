@@ -1,6 +1,6 @@
 {
     "name": "@scramjet/sth",
-    "version": "0.10.0-pre.9",
+    "version": "0.10.0-pre.10",
     "description": "Scramjet STH Excecutable",
     "main": "src/lib/index.ts",
     "bin": {
@@ -20,12 +20,12 @@
     "author": "Scramjet <open-source@scramjet.org>",
     "license": "AGPL-3.0",
     "dependencies": {
-        "@scramjet/csi-config": "^0.10.0-pre.9",
-        "@scramjet/host": "^0.10.0-pre.9",
+        "@scramjet/csi-config": "^0.10.0-pre.10",
+        "@scramjet/host": "^0.10.0-pre.10",
         "commander": "^7.2.0"
     },
     "devDependencies": {
-        "@scramjet/types": "^0.10.0-pre.9",
+        "@scramjet/types": "^0.10.0-pre.10",
         "@types/node": "14.14.33",
         "ava": "^3.15.0",
         "ts-node": "^9.1.1",
