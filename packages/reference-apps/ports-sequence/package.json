@@ -16,9 +16,9 @@
   },
   "scripts": {
     "prepack": "node ../../../scripts/publish.js",
-    "build": "tsc -p tsconfig.json",
     "packseq": "node ../../../scripts/packsequence.js",
-    "clean": "rm -rf ./dist"
+    "clean": "rm -rf ./dist",
+    "build:refapps": "tsc -p tsconfig.json"
   },
   "author": "",
   "license": "ISC",

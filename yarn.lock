@@ -4299,6 +4299,11 @@ globby@^9.2.0:
     pify "^4.0.1"
     slash "^2.0.0"
 
+globrex@^0.1.2:
+  version "0.1.2"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/globrex/-/globrex-0.1.2.tgz#dd5d9ec826232730cd6793a5e33a9302985e6098"
+  integrity sha512-uHJgbwAMwNFf5mLst7IWLNg14x1CkeqglJb/K3doi4dw6q2IvAAmM/Y81kevy83wP+Sst+nutFTYOGg3d1lsxg==
+
 got@^9.6.0:
   version "9.6.0"
   resolved "https://repo.int.scp.ovh/repository/npm-all/got/-/got-9.6.0.tgz#edf45e7d67f99545705de1f7bbeeeb121765ed85"
