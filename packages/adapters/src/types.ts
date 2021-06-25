@@ -245,10 +245,19 @@ export interface IDockerHelper {
     run: (config: DockerAdapterRunConfig) => Promise<DockerAdapterRunResponse>;
 
     /**
+     * Waits until containter exits
      *
      * @param {DockerContainer} container
      *
      * @returns {Promise<ExitCode>}
      */
     wait(container: DockerContainer, options?: DockerAdapterWaitOptions): Promise<ExitData>;
+
+    /**
+     * Fetches the image from repo
+     *
+     * @param name the name of the image, eg. ubuntu:latest
+     * @param ifNotExists fetch only if not exists (defaults to true)
+     */
+    pullImage(name: string, ifNotExists: boolean): Promise<void>
 }

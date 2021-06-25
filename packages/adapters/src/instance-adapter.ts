@@ -207,13 +207,22 @@ IComponent {
 
     }
 
+    // eslint-disable-next-line complexity
     async run(config: RunnerConfig): Promise<ExitCode> {
-        this.resources.fifosDir = await this.createFifoStreams(
-            "control.fifo",
-            "monitor.fifo",
-            "logger.fifo",
-            "input.fifo",
-            "output.fifo");
+        [
+            this.resources.fifosDir,
+            this.resources.ports
+        ] = await Promise.all([
+            this.createFifoStreams(
+                "control.fifo",
+                "monitor.fifo",
+                "logger.fifo",
+                "input.fifo",
+                "output.fifo"
+            ),
+            config.config?.ports ? this.getPortsConfig(config.config.ports) : undefined,
+            this.dockerHelper.pullImage(config.container.image, true),
+        ]);
 
         if (
             typeof this.monitorFifoPath === "undefined" ||
@@ -232,10 +241,6 @@ IComponent {
         this.outputStream.run(createReadStream(this.outputFifoPath));
 
         this.logger.debug("Creating container");
-
-        if (config.config?.ports) {
-            this.resources.ports = await this.getPortsConfig(config.config.ports);
-        }
 
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 

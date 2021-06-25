@@ -36,6 +36,7 @@ IComponent {
 
     async init(): Promise<void> {
         this.prerunnerConfig = configService.getDockerConfig().prerunner;
+        await this.dockerHelper.pullImage(this.prerunnerConfig.image, true);
     }
 
     async list(): Promise<RunnerConfig[]> {
