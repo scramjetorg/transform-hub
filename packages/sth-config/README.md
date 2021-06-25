@@ -33,7 +33,7 @@ MultiHost starts and loads the file `image-config.json`. Then, the request comes
 [comment]: < I am not sure if the usage below is OK, please correct if not, thank you form the mountain! ;) >
 
 ```js
-import { imageConfig } from "@scramjet/csi-config";
+import { imageConfig } from "@scramjet/sth-config";
 
 async init() {
     this.imageConfig = await imageConfig();

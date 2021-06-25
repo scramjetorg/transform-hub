@@ -12,7 +12,7 @@
     ],
     "typedocOptions": {
       "entryPoints": ["src/index.ts"],
-      "out": "../../docs/csi-config",
+      "out": "../../docs/sth-config",
       "plugin": "typedoc-plugin-markdown",
       "readme": "none",
       "excludePrivate": "true"

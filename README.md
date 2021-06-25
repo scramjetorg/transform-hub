@@ -343,7 +343,7 @@ lerna success run Ran npm script 'test' in 17 packages in 26.1s:
 lerna success - @scramjet/adapters
 lerna success - @scramjet/api-client
 lerna success - @scramjet/api-server
-lerna success - @scramjet/csi-config
+lerna success - @scramjet/sth-config
 lerna success - @scramjet/host-one
 lerna success - @scramjet/host
 lerna success - @scramjet/logger

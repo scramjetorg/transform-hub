@@ -1,7 +1,7 @@
 // TODO: Move this file to @scramjet/adapters
 
 /* eslint-disable import/no-named-as-default-member, no-extra-parens, dot-notation */
-import { configService } from "@scramjet/csi-config";
+import { configService } from "@scramjet/sth-config";
 import { DelayedStream } from "@scramjet/model";
 import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { RunnerConfig } from "@scramjet/types";

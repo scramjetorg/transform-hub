@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import { Command } from "commander";
-import { configService } from "@scramjet/csi-config";
+import { configService } from "@scramjet/sth-config";
 // import { version } from "../../package.json";
 
 const program: Command = new Command() as Command;

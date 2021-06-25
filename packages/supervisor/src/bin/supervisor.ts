@@ -3,7 +3,7 @@ import { LifeCycleConfig } from "@scramjet/types";
 import { CSHClient } from "../lib/csh-client";
 import { LifecycleDockerAdapterInstance } from "@scramjet/adapters";
 import { LifeCycleController } from "../lib/lifecycle-controller";
-import { configService } from "@scramjet/csi-config";
+import { configService } from "@scramjet/sth-config";
 
 /**
  * This script runs the main component of the CSI - the Supervisor.

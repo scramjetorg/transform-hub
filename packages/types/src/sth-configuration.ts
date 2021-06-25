@@ -28,7 +28,7 @@ export type HostConfig = {
     socketPath: string;
 }
 
-export type HubConfiguration = {
+export type STHConfiguration = {
     /**
      * Docker related configuration.
      */
@@ -63,6 +63,6 @@ export type HubConfiguration = {
     safeOperationLimit: number;
 }
 
-export type PartialHubConfiguration = {
-    [P in keyof HubConfiguration]?: HubConfiguration[P]
+export type PartialSTHConfiguration = {
+    [P in keyof STHConfiguration]?: Partial<STHConfiguration[P]>
 }

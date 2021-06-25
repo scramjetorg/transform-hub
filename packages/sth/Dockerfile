@@ -9,7 +9,7 @@ RUN yarn install --frozen-lock
 COPY packages/adapters ./packages/adapters
 COPY packages/api-client ./packages/api-client
 COPY packages/api-server ./packages/api-server
-COPY packages/csi-config ./packages/csi-config
+COPY packages/sth-config ./packages/sth-config
 COPY packages/host ./packages/host
 COPY packages/logger ./packages/logger
 COPY packages/model ./packages/model

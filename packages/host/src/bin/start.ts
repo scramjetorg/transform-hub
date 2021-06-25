@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { configService } from "@scramjet/csi-config";
+import { configService } from "@scramjet/sth-config";
 import { HostOptions } from "../lib/host";
 import { startHost } from "../lib/start-host";
 

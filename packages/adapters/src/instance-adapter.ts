@@ -1,4 +1,4 @@
-import { development } from "@scramjet/csi-config";
+import { development } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {

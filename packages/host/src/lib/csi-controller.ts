@@ -14,7 +14,7 @@ import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
-import { development } from "@scramjet/csi-config";
+import { development } from "@scramjet/sth-config";
 import { Sequence } from "./sequence";
 
 export class CSIController extends EventEmitter {

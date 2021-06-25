@@ -4,9 +4,9 @@ set -e
 
 DIR=$(cd $(dirname $0) && echo $PWD) # return absolute path of the script
 IMAGE_CONFIG_JSON=(
-  "${DIR}/../packages/csi-config/src/image-config.json"
-  "${DIR}/../packages/csi-config/dist/image-config.json"
-  "${DIR}/../dist/csi-config/image-config.json"
+  "${DIR}/../packages/sth-config/src/image-config.json"
+  "${DIR}/../packages/sth-config/dist/image-config.json"
+  "${DIR}/../dist/sth-config/image-config.json"
 )
 OTHER_FILES_WITH_CURRENT_VER=(
   "${DIR}/../packages/host/Dockerfile.release"

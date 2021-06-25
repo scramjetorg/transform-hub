@@ -1,4 +1,4 @@
-import { configService } from "@scramjet/csi-config";
+import { configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { SupervisorError } from "@scramjet/model";
 import {

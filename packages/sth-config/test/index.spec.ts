@@ -1,7 +1,7 @@
 import test from "ava";
 
 /* eslint-disable-next-line import/no-extraneous-dependencies */
-import { configService } from "@scramjet/csi-config";
+import { configService } from "@scramjet/sth-config";
 
 // const has: (o: object, k: string) => boolean =
 //     Object.prototype.hasOwnProperty.call.bind(Object.prototype.hasOwnProperty);

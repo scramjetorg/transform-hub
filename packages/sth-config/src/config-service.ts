@@ -1,4 +1,4 @@
-import { HubConfiguration, PartialHubConfiguration } from "@scramjet/types";
+import { STHConfiguration, PartialSTHConfiguration } from "@scramjet/types";
 
 
 const merge = (objFrom: any, objTo: any) => Object.keys(objTo)
@@ -13,7 +13,7 @@ const merge = (objFrom: any, objTo: any) => Object.keys(objTo)
         [objTo, objFrom]
     );
 //
-const defaultConfig: HubConfiguration = {
+const defaultConfig: STHConfiguration = {
     docker: {
         prerunner: {
             image: "",
@@ -39,9 +39,9 @@ const defaultConfig: HubConfiguration = {
 };
 
 class ConfigService {
-    private config: HubConfiguration;
+    private config: STHConfiguration;
 
-    constructor(config?: PartialHubConfiguration) {
+    constructor(config?: PartialSTHConfiguration) {
         this.config = defaultConfig;
         this.updateImages();
         Object.assign(this.config, config);
@@ -62,7 +62,7 @@ class ConfigService {
         return this.config.docker;
     }
 
-    update(config: PartialHubConfiguration) {
+    update(config: PartialSTHConfiguration) {
         merge(this.config, config);
     }
 }

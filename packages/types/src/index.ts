@@ -17,4 +17,4 @@ export * from "./runner";
 export * from "./sequence";
 export * from "./sequence-store";
 export * from "./utils";
-export * from "./hub-configuration";
+export * from "./sth-configuration";

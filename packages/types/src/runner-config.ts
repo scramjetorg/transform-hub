@@ -1,6 +1,6 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
-import { ContainerConfiguration } from "./hub-configuration";
+import { ContainerConfiguration } from "./sth-configuration";
 
 export type RunnerConfig = {
     name: string;

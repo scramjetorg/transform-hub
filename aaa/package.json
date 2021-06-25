@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/all-deps",
-  "version": "0.10.0-pre.9",
+  "version": "0.10.0-pre.10",
   "dependencies": {
     "0http": "^3.1.0",
     "@cucumber/cucumber": "^7.1.0",

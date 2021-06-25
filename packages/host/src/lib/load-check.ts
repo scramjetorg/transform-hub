@@ -3,7 +3,7 @@ import { IComponent, Logger } from "@scramjet/types";
 import { LoadCheckStat } from "@scramjet/model";
 
 import * as sysinfo from "systeminformation";
-import { configService } from "@scramjet/csi-config";
+import { configService } from "@scramjet/sth-config";
 
 const { safeOperationLimit, instanceRequirements } = configService.getConfig();
 const MB = 1024 * 1024;
