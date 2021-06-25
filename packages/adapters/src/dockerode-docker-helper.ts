@@ -152,6 +152,16 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
+    async pullImage(name: string, ifNotExists: boolean = true) {
+        if (ifNotExists) {
+            const exists = await this.dockerode.getImage(name).get()
+                .then(() => true, () => false);
+
+            if (exists) return;
+        }
+        await this.dockerode.pull(name);
+    }
+
     /**
      * Creates docker volume.
      *
