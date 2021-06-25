@@ -43,6 +43,7 @@ pipeline {
           steps {
             script {
               docker.image("${docker_ci_image}").inside() {
+                sh('yarn install --prefer-offline --cache-folder /tmp/.cache_yarn-scramjet-csi')
                 sh('yarn build:packages')
               }
             }
@@ -52,6 +53,7 @@ pipeline {
           steps {
             script {
               docker.image("${docker_ci_image}").inside() {
+                sh('yarn install --prefer-offline --cache-folder /tmp/.cache_yarn-scramjet-csi')
                 sh('yarn build:refapps')
                 sh('yarn packseq')
               }

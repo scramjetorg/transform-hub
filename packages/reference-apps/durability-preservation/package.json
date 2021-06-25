@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "prepack": "LOCAL_PACKAGES=true node ../../../scripts/publish.js",
+    "prepack": "node ../../../scripts/publish.js",
     "build:refapps": "tsc -p tsconfig.json",
     "postbuild:refapps": "yarn prepack",
     "packseq": "node ../../../scripts/packsequence.js"
