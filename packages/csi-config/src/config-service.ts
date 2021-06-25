@@ -1,14 +1,16 @@
 import { HostConfiguration, PartialHostConfiguration } from "@scramjet/types";
 
 
-const merge = (objFrom: any, objTo: any) => Object.keys(objFrom)
+const merge = (objFrom: any, objTo: any) => Object.keys(objTo)
     .reduce(
-        (merged, key) => {
-            merged[key] = typeof merged[key] !== "undefined" && objFrom[key] instanceof Object && !Array.isArray(objFrom[key])
-                ? merge(objFrom[key], merged[key] ?? {})
-                : objFrom[key];
-            return merged;
-        }, { ...objTo }
+        ([mTo, mFrom], key) => {
+            if (typeof mFrom[key] !== "undefined" && objFrom[key] instanceof Object && !Array.isArray(mTo[key]))
+                merge(mFrom[key], mTo[key] ?? {});
+            else
+                mTo[key] = mFrom[key] || mTo[key];
+            return [mTo, mFrom];
+        },
+        [objTo, objFrom]
     );
 //
 const defaultConfig: HostConfiguration = {
@@ -55,7 +57,7 @@ class ConfigService {
     }
 
     update(config: PartialHostConfiguration) {
-        merge(this.config, config);
+        merge(config, this.config);
     }
 }
 

@@ -8,9 +8,9 @@ const program: Command = new Command() as Command;
 const options = program
     // .version(version) // TODO: replace with find-package-json
     .option("-L, --log-level <level>", "Specify log level", "debug")
-    .option("-S, --socket-location", "CSI socket location")
-    .option("-P, --port", "API port")
-    .option("-H, --hostname", "API IP")
+    .option("-S, --socket-location <socket>", "CSI socket location")
+    .option("-P, --port <port>", "API port")
+    .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
     .parse(process.argv)
     .opts()
