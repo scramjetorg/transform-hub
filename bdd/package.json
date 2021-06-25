@@ -11,7 +11,7 @@
     "dockerode": "^3.3.0",
     "find-package-json": "^1.2.0",
     "n-readlines": "^1.0.1",
-    "scramjet": "^4.35.12"
+    "scramjet": "4.35.15"
   },
   "scripts": {
     "test:bdd": "cucumber-js"
