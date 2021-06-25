@@ -47,7 +47,10 @@
     "test:bdd-ci": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci",
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
     "bump:version": "yarn bump:packages",
-    "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags"
+    "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags",
+    "align": "syncpack fix-mismatches",
+    "upgrade:all": "yarn align && yarn install && yarn upgrade:packages",
+    "upgrade:packages": "lerna exec --concurrency=1 -- yarn upgrade --latest"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -64,6 +67,7 @@
     "husky": "4.3.8",
     "lerna": "^3.22.1",
     "semver": "^7.3.5",
+    "syncpack": "^5.7.11",
     "tar": "^6.1.0",
     "ts-loader": "^8.0.15",
     "ts-node": "^9.1.1",
