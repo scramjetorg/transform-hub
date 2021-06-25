@@ -5,8 +5,6 @@
   "main": "./src/index.ts",
   "scripts": {
     "clean": "rm -rf ./dist",
-    "compile": "tsc -p tsconfig.json",
-    "prepublishOnly": "npm run build",
     "prepack": "node ../../scripts/publish.js",
     "build": "tsc -p tsconfig.build.json && npm run test:expose",
     "build:docs": "typedoc",

@@ -32,6 +32,7 @@
     "packseq": "lerna run packseq",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
     "lint": "eslint . --ext .ts --cache --cache-strategy=content --cache-location=/tmp/.eslintcache_scramjet-csi",
+    "lint:uncached": "rm /tmp/.eslintcache_scramjet-csi && yarn lint",
     "lint:dedupe": "scripts/dedupe.js",
     "start": "node dist/host/bin/start.js",
     "watch": "lerna run watch",

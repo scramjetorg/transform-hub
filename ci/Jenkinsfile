@@ -31,7 +31,7 @@ pipeline {
       steps {
         script {
           docker.image("${docker_ci_image}").inside("-v /tmp:/tmp") {
-            sh('yarn lint')
+            sh('yarn lint || yarn lint:uncached')
           }
         }
       }
