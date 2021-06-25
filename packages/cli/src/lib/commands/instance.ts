@@ -1,4 +1,6 @@
 import { CommandDefinition } from "../../types";
+import { getHostClient } from "../get-client";
+import { displayEntity } from "../output";
 
 export const instance: CommandDefinition = (program) => {
 
@@ -6,6 +8,11 @@ export const instance: CommandDefinition = (program) => {
         .command("instance [command]")
         .alias("inst")
         .description("operations on instance");
+
+    instanceCmd.command("list")
+        .alias("ls")
+        .description("list the instances")
+        .action(async () => displayEntity(program, getHostClient(program).listInstances()));
 
     instanceCmd.command("kill <id>")
         .description("kill instance without waiting for unfinished tasks")
@@ -33,9 +40,7 @@ export const instance: CommandDefinition = (program) => {
 
     instanceCmd.command("info <id>")
         .description("show info about the instance")
-        .action((id) => {
-            console.log("Instance id ", id);
-        });
+        .action(async (id) => displayEntity(program, getHostClient(program).getInstance(id)));
 
     instanceCmd.command("sendEvent <id> <json>")
         .description("send event with eventName and object|array|function|number")
