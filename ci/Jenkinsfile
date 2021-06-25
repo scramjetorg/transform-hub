@@ -72,15 +72,15 @@ pipeline {
         }
         stage('Build - Docker - Host') {
           steps {
-            script {            
-                docker.build("${docker_repo}/scramjet/host:${version}", "-f packages/host/Dockerfile .")
+            script {
+                docker.build("${docker_repo}/scramjet/host:${version}", "-f packages/hub/Dockerfile .")
             }
           }
         }
         stage('Build - Docker - Pre-Runner') {
           steps {
             script {
-              dir("packages/pre-runner") {             
+              dir("packages/pre-runner") {
                 docker.build("${docker_repo}/scramjet/pre-runner:${version}")
               }
             }

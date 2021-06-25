@@ -8,4 +8,4 @@ services:
     ports:
       - 8000:8000
     restart: unless-stopped
-    command: ["scramjet-host"]
+    command: ["scramjet-transform-hub", "-H", "0.0.0.0"]
