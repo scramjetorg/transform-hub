@@ -47,6 +47,10 @@ class ClientUtils {
         this.apiBase = apiBase;
     }
 
+    get initialized() {
+        return !!this.apiBase;
+    }
+
     private handleError(error: AxiosError) {
         return Promise.reject({
             message: error.response?.statusText,

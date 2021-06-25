@@ -7,9 +7,6 @@ const host = new HostClient("http://localhost:8000/api/v1");
 (async () => {
     const pkg = createReadStream(resolve(__dirname, "../../packages/samples/hello-alice-out.tar.gz"));
     const sequence = await host.sendSequence(pkg);
-
-    console.log((await sequence.getInfo()).data);
-
     const instance = await sequence.start({}, ["/package/data.json"]);
     const instanceInfo = (await instance.getInfo()).data;
 

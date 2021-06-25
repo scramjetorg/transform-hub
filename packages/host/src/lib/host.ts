@@ -161,9 +161,7 @@ export class Host implements IComponent {
 
         this.logger.log("Deleting sequence: ", id);
 
-        return {
-            opStatus: (await this.sequencesStore.delete(id)).opStatus
-        };
+        return await this.sequencesStore.delete(id);
     }
 
     async identifyExistingSequences() {

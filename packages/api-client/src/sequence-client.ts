@@ -1,4 +1,5 @@
 import { IDProvider } from "@scramjet/model";
+import { AxiosError } from "axios";
 import { clientUtils } from "./client-utils";
 import { InstanceClient } from "./instance-client";
 
@@ -15,6 +16,10 @@ export class SequenceClient {
     }
 
     private constructor(id: string) {
+        if (!clientUtils.initialized) {
+            throw new Error("ClientUtils not initialized");
+        }
+
         if (!IDProvider.isValid(id)) {
             throw new Error("Invalid id.");
         }
@@ -31,13 +36,18 @@ export class SequenceClient {
                 appConfig,
                 args
             }
-        );
+        ).catch((error: AxiosError) => {
+            console.log(error);
+            return {
+                ...error.response
+            };
+        });
 
         if (response.data?.id) {
             return InstanceClient.from(response.data.id);
         }
 
-        return undefined;
+        return response.data?.error;
     }
 
     async listInstances() {

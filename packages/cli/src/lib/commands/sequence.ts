@@ -1,7 +1,8 @@
-// import { SequenceClient } from "@scramjet/api-client";
+import { SequenceClient } from "@scramjet/api-client";
+import { createReadStream } from "fs";
 import { CommandDefinition } from "../../types";
 import { getHostClient } from "../get-client";
-import { displayEntity } from "../output";
+import { displayEntity, displayObject } from "../output";
 
 export const sequence: CommandDefinition = (program) => {
     const sequenceCmd = program
@@ -11,28 +12,30 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd.command("send <sequencePackage>")
         .description("send packed and compressed sequence file")
-        .action(() => console.log("Not implemented"));
-    // .action(async (sequencePackage) =>
-    //     displayEntity(program, getHostClient(program).sendSequence(sequencePackage))
-    // );
+        .action(async (sequencePackage) =>
+            displayObject(program, await getHostClient(program).sendSequence(
+                createReadStream(sequencePackage)
+            ))
+        );
 
     sequenceCmd.command("list")
         .alias("ls")
         .description("list the sequences")
         .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
-    sequenceCmd.command("start <id>")
+    sequenceCmd.command("start <id> <appConfig> <args>")
         .description("start the sequence")
-        .action(async (id) => displayEntity(
-            program, getHostClient(program).getSequence(id)
-        ));
+        .action(async (id, appConfig, args) => {
+            getHostClient(program);
+            const sequenceClient = SequenceClient.from(id);
+
+            return displayObject(program, await sequenceClient.start(JSON.parse(appConfig), JSON.parse(args)));
+        });
 
     sequenceCmd.command("get <id>")
         .description("get data about the sequence")
-        .action(() => console.log("Not implemented"));
-    // .action(async (id) => displayEntity(program, SequenceClient.from(id)));
+        .action(async (id) => displayEntity(program, getHostClient(program).getSequence(id)));
 
-    // response 500
     sequenceCmd.command("delete <id>")
         .alias("rm")
         .description("delete the sequence")

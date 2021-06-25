@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { SequenceClient } from "./sequence-client";
-import { clientUtils } from "./client-utils";
-import { ReadStream } from "fs";
 import { AxiosError } from "axios";
+import { ReadStream } from "fs";
+import { clientUtils } from "./client-utils";
+import { SequenceClient } from "./sequence-client";
 
 export class HostClient {
     apiBase: string;
@@ -57,6 +57,11 @@ export class HostClient {
             console.error(response.data?.error);
             throw new Error("Sequence delete failed");
         }
+
+        return {
+            data: response.data,
+            status: response.status
+        };
     }
 
     getInstance(instanceId: string) {
