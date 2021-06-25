@@ -35,8 +35,14 @@ IComponent {
     }
 
     async init(): Promise<void> {
+        this.logger.info("Docker sequence adapter init");
         this.prerunnerConfig = configService.getDockerConfig().prerunner;
-        await this.dockerHelper.pullImage(this.prerunnerConfig.image, true);
+        await this.fetch(this.prerunnerConfig.image);
+        this.logger.info("Docker sequence adapter done");
+    }
+
+    async fetch(name: string) {
+        await this.dockerHelper.pullImage(name, true);
     }
 
     async list(): Promise<RunnerConfig[]> {

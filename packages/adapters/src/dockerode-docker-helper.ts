@@ -1,5 +1,8 @@
 import * as Dockerode from "dockerode";
 import { PassThrough } from "stream";
+import { getLogger } from "@scramjet/logger";
+import { Logger } from "@scramjet/types";
+
 import {
     DockerAdapterRunConfig,
     DockerAdapterRunResponse,
@@ -39,6 +42,8 @@ type DockerodeVolumeMountConfig = {
  */
 export class DockerodeDockerHelper implements IDockerHelper {
     dockerode: Dockerode = new Dockerode();
+    logger: Logger = getLogger(this);
+
 
     /**
      * Translates DockerAdapterVolumeConfig to volumes configuration that Docker API can understand.
@@ -152,14 +157,18 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
-    async pullImage(name: string, ifNotExists: boolean = true) {
-        if (ifNotExists) {
+    async pullImage(name: string, ifNeeded: boolean) {
+        this.logger.debug("Checking image", name);
+        if (ifNeeded) {
             const exists = await this.dockerode.getImage(name).get()
                 .then(() => true, () => false);
 
             if (exists) return;
         }
+        this.logger.log("Pulling image", name, "starts");
         await this.dockerode.pull(name);
+        await new Promise(res => setTimeout(res, 1000));
+        this.logger.log("Pulling image", name, "done");
     }
 
     /**

@@ -8,7 +8,7 @@ import { SequenceStore } from "./sequence-store";
 import { Sequence } from "./sequence";
 import { SocketServer } from "./socket-server";
 
-import { unlink } from "fs/promises";
+import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
 import { InstanceStore } from "./instance-store";
@@ -18,8 +18,10 @@ import { ReasonPhrases } from "http-status-codes";
 import { configService } from "@scramjet/csi-config";
 
 import * as findPackage from "find-package-json";
+import { constants } from "fs";
 
 const version = findPackage().next().value?.version || "unknown";
+const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
 
 export type HostOptions = Partial<{
     identifyExisting: boolean
@@ -73,9 +75,11 @@ export class Host implements IComponent {
         this.logger.info("Host main called.");
 
         try {
-            await unlink(this.config.host.socketPath);
+            if (await exists(this.config.host.socketPath)) {
+                await unlink(this.config.host.socketPath);
+            }
         } catch (error) {
-            console.error(error.stack);
+            throw new HostError("SOCKET_TAKEN");
         }
 
         if (identifyExisiting)
@@ -172,9 +176,7 @@ export class Host implements IComponent {
             const sequences = await ldas.list();
 
             for (const sequenceConfig of sequences) {
-                const sequence = new Sequence(
-                    sequenceConfig
-                );
+                const sequence = new Sequence(sequenceConfig);
 
                 this.sequencesStore.add(sequence);
                 this.logger.log("Sequence found:", sequence.config);
@@ -241,7 +243,11 @@ export class Host implements IComponent {
                 const identifyResult = await ldas.identify(stream, id);
 
                 if (identifyResult.error) {
-                    reject(identifyResult.error);
+                    throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", identifyResult.error);
+                }
+
+                if (identifyResult.container.image) {
+                    await ldas.fetch(identifyResult.container.image);
                 }
 
                 resolve(identifyResult);

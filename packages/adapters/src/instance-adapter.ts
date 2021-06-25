@@ -221,8 +221,9 @@ IComponent {
                 "output.fifo"
             ),
             config.config?.ports ? this.getPortsConfig(config.config.ports) : undefined,
-            this.dockerHelper.pullImage(config.container.image, true),
         ]);
+
+        this.logger.info("Instance preparation done");
 
         if (
             typeof this.monitorFifoPath === "undefined" ||

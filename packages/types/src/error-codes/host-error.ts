@@ -7,4 +7,5 @@ export type HostErrorCode =
     "UNKNOWN_SEQUENCE" |
     "UNKNOWN_INSTANCE" |
     "CONTROLLER_ERROR" |
+    "SOCKET_TAKEN" |
     "API_CONFIGURATION_ERROR"

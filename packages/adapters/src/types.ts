@@ -257,7 +257,7 @@ export interface IDockerHelper {
      * Fetches the image from repo
      *
      * @param name the name of the image, eg. ubuntu:latest
-     * @param ifNotExists fetch only if not exists (defaults to true)
+     * @param ifNeeded fetch only if not exists (defaults to true)
      */
-    pullImage(name: string, ifNotExists: boolean): Promise<void>
+    pullImage(name: string, ifNeeded: boolean): Promise<void>
 }
