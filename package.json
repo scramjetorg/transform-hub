@@ -70,7 +70,7 @@
   },
   "workspaces": {
     "packages": [
-      "packages/**/!(dist)",
+      "packages/**",
       "bdd"
     ]
   },
