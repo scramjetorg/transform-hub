@@ -9,6 +9,7 @@ pipeline {
       docker_host_sock_gid = sh(returnStdout: true, script: 'stat -c %g /var/run/docker.sock').trim()
       // https://stackoverflow.com/questions/62282418/jenkins-sh-npm-i-not-working-in-docker-agent
       HOME = '.'
+      SCRAMJET_TEST_LOG = 1
       docker_repo = 'repo.int.scp.ovh'
       version = sh(returnStdout: true, script: "jq -r .version < package.json").trim()
   }
