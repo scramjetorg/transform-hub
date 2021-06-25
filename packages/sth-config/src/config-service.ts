@@ -1,5 +1,4 @@
-import { STHConfiguration, PartialSTHConfiguration } from "@scramjet/types";
-
+import { STHConfiguration } from "@scramjet/types";
 
 const merge = (objFrom: any, objTo: any) => Object.keys(objTo)
     .reduce(
@@ -41,10 +40,11 @@ const defaultConfig: STHConfiguration = {
 class ConfigService {
     private config: STHConfiguration;
 
-    constructor(config?: PartialSTHConfiguration) {
+    constructor(config?: Partial<STHConfiguration>) {
         this.config = defaultConfig;
         this.updateImages();
-        Object.assign(this.config, config);
+
+        merge(this.config, config);
     }
 
     updateImages() {
@@ -62,7 +62,7 @@ class ConfigService {
         return this.config.docker;
     }
 
-    update(config: PartialSTHConfiguration) {
+    update(config: Partial<STHConfiguration>) {
         merge(this.config, config);
     }
 }

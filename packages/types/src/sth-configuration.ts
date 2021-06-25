@@ -62,7 +62,3 @@ export type STHConfiguration = {
      */
     safeOperationLimit: number;
 }
-
-export type PartialSTHConfiguration = {
-    [P in keyof STHConfiguration]?: Partial<STHConfiguration[P]>
-}

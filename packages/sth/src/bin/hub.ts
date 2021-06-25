@@ -18,6 +18,7 @@ const options = program
 
 configService.update({
     host: {
+        apiBase: "/api/v1",
         socketPath: options.socketLocation,
         port: options.port,
         hostname: options.hostname
