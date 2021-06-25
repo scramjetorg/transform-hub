@@ -1,6 +1,6 @@
 Feature: Verify the checksums of payloads are correct
 
-    @ignore
+    @ci
     Scenario: PT-004 TC-001 Checksum of JSON payload
         Given file in the location "../dist/reference-apps/checksum-sequence/data.json" exists on hard drive
         And host is running

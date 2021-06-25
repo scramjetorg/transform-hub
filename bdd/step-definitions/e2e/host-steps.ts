@@ -176,7 +176,10 @@ When("compare checksums of content sent from file {string}", async (filePath: st
         hex = crypto.createHash("md5").update(data).digest("hex");
     });
 
-    await instance.sendInput(readStream);
+    await instance.sendStream("input", readStream, {
+        type: "application/octet-stream",
+        end: true
+    });
     const output = await instance.getStream("output");
     const outputString = await streamToString(output.data);
 
