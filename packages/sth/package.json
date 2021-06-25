@@ -9,6 +9,8 @@
     "scripts": {
         "start": "ts-node ./src/index",
         "build": "tsc -p tsconfig.build.json",
+        "build:docker": "docker build -t repo.int.scp.ovh/scramjet/host:$npm_package_version -f Dockerfile ../../",
+        "build:docker-release": "docker build -t repo.int.scp.ovh/scramjet/host:$npm_package_version -f Dockerfile.release .",
         "clean": "rm -rf ./dist",
         "watch": "tsc -b --watch",
         "test": "echo no tests yet -- # npm run test:ava",
