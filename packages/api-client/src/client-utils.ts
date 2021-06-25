@@ -111,7 +111,8 @@ class ClientUtils {
             })
             .then(logOk, logError)
             .then((res) => ({
-                status: res.status
+                status: res.status,
+                data: res.data
             }))
             .catch(this.handleError);
     }
