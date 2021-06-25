@@ -42,10 +42,23 @@ pipeline {
         stage('Build - Typescript') {
           stages {
             stage('Build packages') {
-              steps {
-                script {
-                  docker.image("${docker_ci_image}").inside() {
-                    sh('yarn build:all-packages')
+              parallel {
+                stage('main packages') {
+                  steps {
+                    script {
+                      docker.image("${docker_ci_image}").inside() {
+                        sh('yarn build:packages')
+                      }
+                    }
+                  }
+                }
+                stage('refapps') {
+                  steps {
+                    script {
+                      docker.image("${docker_ci_image}").inside() {
+                        sh('yarn build:refapps')
+                      }
+                    }
                   }
                 }
               }
@@ -73,7 +86,7 @@ pipeline {
         stage('Build - Docker - Host') {
           steps {
             script {
-                docker.build("${docker_repo}/scramjet/host:${version}", "-f packages/sth/Dockerfile .")
+              docker.build("${docker_repo}/scramjet/host:${version}", "-f packages/sth/Dockerfile .")
             }
           }
         }
