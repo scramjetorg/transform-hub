@@ -35,12 +35,16 @@ RUN yarn install
 
 WORKDIR /app/packages/symbols
 RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
+
 WORKDIR /app/packages/logger
 RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
+
 WORKDIR /app/packages/model
 RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
+
 WORKDIR /app/packages/runner
 RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
+
 FROM target
 
 ENV PACKAGE_DIR=/package \
