@@ -12,7 +12,8 @@
     "build:docs": "typedoc",
     "watch": "tsc -b --watch",
     "test:expose": "scripts/generate.js",
-    "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit"
+    "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit",
+    "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

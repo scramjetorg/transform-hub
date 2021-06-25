@@ -11,7 +11,8 @@
     "compile": "tsc -p tsconfig.json",
     "prepublishOnly": "yarn run build",
     "prepack": "node ../../scripts/publish.js",
-    "test": "tsc --noEmit"
+    "test": "tsc --noEmit",
+    "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

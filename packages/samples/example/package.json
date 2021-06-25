@@ -3,7 +3,9 @@
   "version": "0.10.0-pre.10",
   "main": "index",
   "types": "dist/index",
-  "assets": ["data.json"],
+  "assets": [
+    "data.json"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\"",
     "build": "yarn build:sample",
@@ -15,7 +17,8 @@
     "prepublishOnly": "yarn run build",
     "prepack": "node ../../../scripts/publish.js",
     "start": "node dist/index.js",
-    "packseq": "node ../../../scripts/packsequence.js"
+    "packseq": "node ../../../scripts/packsequence.js",
+    "postbuild": "yarn prepack"
   },
   "engines": {
     "node": ">=10"

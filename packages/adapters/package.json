@@ -10,7 +10,8 @@
     "clean": "rm -rf ./dist",
     "watch": "tsc -b --watch",
     "test": "nyc ava",
-    "prepack": "node ../../scripts/publish.js"
+    "prepack": "node ../../scripts/publish.js",
+    "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

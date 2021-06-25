@@ -8,7 +8,8 @@
     "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../../dist/samples/hello-alice-out .",
     "test": "echo \"Error: no test specified\"",
     "test:docker": "yarn prepare-sample-tar && cat sample-package/package.tar.gz | docker run -i --name pre-runner -v prerunner-$(git rev-parse --short HEAD):/package repo.int.scp.ovh/scramjet/pre-runner:$npm_package_version",
-    "clean:docker": "docker rm -f pre-runner; docker volume rm prerunner-$(git rev-parse --short HEAD)"
+    "clean:docker": "docker rm -f pre-runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
+    "postbuild": "yarn prepack"
   },
   "author": "",
   "license": "AGPL-3.0",

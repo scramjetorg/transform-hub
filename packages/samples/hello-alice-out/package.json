@@ -14,7 +14,8 @@
     "prepublishOnly": "yarn run build",
     "prepack": "node ../../../scripts/publish.js",
     "start": "node dist/index.js",
-    "packseq": "node ../../../scripts/packsequence.js"
+    "packseq": "node ../../../scripts/packsequence.js",
+    "postbuild": "yarn prepack"
   },
   "engines": {
     "node": ">=10"

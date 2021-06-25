@@ -11,7 +11,8 @@
     "watch": "tsc -b --watch",
     "test": "nyc ava",
     "clean": "rm -rf ./dist",
-    "prepack": "node ../../scripts/publish.js"
+    "prepack": "node ../../scripts/publish.js",
+    "postbuild": "yarn prepack"
   },
   "author": "",
   "license": "AGPL-3.0",

@@ -11,7 +11,8 @@
     "stop": "./stop-superviosor.sh",
     "watch": "tsc -b --watch",
     "prepack": "node ../../scripts/publish.js",
-    "clean": "rm -rf ./dist"
+    "clean": "rm -rf ./dist",
+    "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

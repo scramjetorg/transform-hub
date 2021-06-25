@@ -9,7 +9,8 @@
   },
   "scripts": {
     "test": "ava",
-    "clean": "rm -rf ./dist"
+    "clean": "rm -rf ./dist",
+    "postbuild": "yarn prepack"
   },
   "ava": {
     "extensions": [
