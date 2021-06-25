@@ -39,25 +39,21 @@ pipeline {
     stage('Build') {
       failFast true
       parallel {
-        stage('Build - Typescript') {
-          stages {
-            stage('Build packages') {
-              steps {
-                script {
-                  docker.image("${docker_ci_image}").inside() {
-                    sh('yarn build:packages')
-                  }
-                }
+        stage('Build packages') {
+          steps {
+            script {
+              docker.image("${docker_ci_image}").inside() {
+                sh('yarn build:packages')
               }
             }
-            stage('Pack sequences') {
-              steps {
-                script {
-                  docker.image("${docker_ci_image}").inside() {
-                    sh('yarn build:refapps')
-                    sh('yarn packseq')
-                  }
-                }
+          }
+        }
+        stage('Pack sequences') {
+          steps {
+            script {
+              docker.image("${docker_ci_image}").inside() {
+                sh('yarn build:refapps')
+                sh('yarn packseq')
               }
             }
           }
