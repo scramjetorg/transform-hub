@@ -21,7 +21,7 @@ if (options.help || options.h || options["?"]) {
 }
 
 const out = resolve(cwd, "aaa/package.json");
-const packages = glob.sync("packages/**/package.json", {
+const packages = glob.sync("{packages/**,bdd,.}/package.json", {
     cwd,
     ignore: "**/node_modules/**"
 });

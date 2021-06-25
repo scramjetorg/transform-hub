@@ -13,14 +13,14 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.10",
-    "@types/node": "^14.14.37"
+    "@scramjet/types": "0.10.0-pre.10",
+    "@types/node": "14.17.4"
   },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
     "access": "restricted"
   },
   "dependencies": {
-    "scramjet": "^4.35.17"
+    "scramjet": "4.35.20"
   }
 }

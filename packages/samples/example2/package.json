@@ -22,13 +22,13 @@
   "author": "Signicode <open-source@signicode.com>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@scramjet/types": "^0.10.0-pre.10",
-    "@types/node": "14.14.33",
+    "@scramjet/types": "0.10.0-pre.10",
+    "@types/node": "14.17.4",
     "ts-node": "^9.1.1",
     "typescript": "4.1.4"
   },
   "dependencies": {
-    "scramjet": "^4.35.15"
+    "scramjet": "4.35.20"
   },
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
