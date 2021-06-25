@@ -42,32 +42,10 @@ pipeline {
         stage('Build - Typescript') {
           stages {
             stage('Build packages') {
-              parallel {
-                stage('main packages') {
-                  steps {
-                    script {
-                      docker.image("${docker_ci_image}").inside() {
-                        sh('yarn build:packages')
-                      }
-                    }
-                  }
-                }
-                stage('refapps') {
-                  steps {
-                    script {
-                      docker.image("${docker_ci_image}").inside() {
-                        sh('yarn build:refapps')
-                      }
-                    }
-                  }
-                }
-              }
-            }
-            stage('Prepack packages') {
               steps {
                 script {
                   docker.image("${docker_ci_image}").inside() {
-                    sh('yarn prepack')
+                    sh('yarn build:packages')
                   }
                 }
               }
@@ -76,6 +54,7 @@ pipeline {
               steps {
                 script {
                   docker.image("${docker_ci_image}").inside() {
+                    sh('yarn build:refapps')
                     sh('yarn packseq')
                   }
                 }
