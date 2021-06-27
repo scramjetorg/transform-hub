@@ -6,13 +6,13 @@
 
 ## Hierarchy
 
-* *EventEmitter*
+- *EventEmitter*
 
   ↳ **SocketServer**
 
 ## Implements
 
-* *IComponent*
+- *IComponent*
 
 ## Table of contents
 
@@ -59,15 +59,17 @@
 
 \+ **new SocketServer**(`address`: PathLike): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`address` | PathLike |
+| Name | Type |
+| :------ | :------ |
+| `address` | PathLike |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L20)
+Overrides: EventEmitter.constructor
+
+Defined in: [packages/host/src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L20)
 
 ## Properties
 
@@ -75,7 +77,7 @@ Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-plat
 
 • **address**: PathLike
 
-Defined in: [src/lib/socket-server.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L19)
+Defined in: [packages/host/src/lib/socket-server.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L19)
 
 ___
 
@@ -83,23 +85,27 @@ ___
 
 • **logger**: Console
 
-Defined in: [src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L20)
+Implementation of: IComponent.logger
+
+Defined in: [packages/host/src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L20)
 
 ___
 
 ### server
 
-• `Optional` **server**: *undefined* \| *Server*
+• `Optional` **server**: *Server*
 
-Defined in: [src/lib/socket-server.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L18)
+Defined in: [packages/host/src/lib/socket-server.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L18)
 
 ___
 
 ### captureRejectionSymbol
 
-▪ `Readonly` `Static` **captureRejectionSymbol**: *typeof* [*captureRejectionSymbol*](csi_controller.csicontroller.md#capturerejectionsymbol)
+▪ `Static` `Readonly` **captureRejectionSymbol**: *typeof* [*captureRejectionSymbol*](csi_controller.csicontroller.md#capturerejectionsymbol)
 
-Defined in: node_modules/@types/node/events.d.ts:43
+Inherited from: EventEmitter.captureRejectionSymbol
+
+Defined in: node_modules/@types/node/events.d.ts:38
 
 ___
 
@@ -109,7 +115,9 @@ ___
 
 Sets or gets the default captureRejection value for all emitters.
 
-Defined in: node_modules/@types/node/events.d.ts:49
+Inherited from: EventEmitter.captureRejections
+
+Defined in: node_modules/@types/node/events.d.ts:44
 
 ___
 
@@ -117,13 +125,15 @@ ___
 
 ▪ `Static` **defaultMaxListeners**: *number*
 
-Defined in: node_modules/@types/node/events.d.ts:50
+Inherited from: EventEmitter.defaultMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:45
 
 ___
 
 ### errorMonitor
 
-▪ `Readonly` `Static` **errorMonitor**: *typeof* [*errorMonitor*](csi_controller.csicontroller.md#errormonitor)
+▪ `Static` `Readonly` **errorMonitor**: *typeof* [*errorMonitor*](csi_controller.csicontroller.md#errormonitor)
 
 This symbol shall be used to install a listener for only monitoring `'error'`
 events. Listeners installed using this symbol are called before the regular
@@ -133,7 +143,9 @@ Installing a listener using this symbol does not change the behavior once an
 `'error'` event is emitted, therefore the process will still crash if no
 regular `'error'` listener is installed.
 
-Defined in: node_modules/@types/node/events.d.ts:42
+Inherited from: EventEmitter.errorMonitor
+
+Defined in: node_modules/@types/node/events.d.ts:37
 
 ## Methods
 
@@ -141,16 +153,18 @@ Defined in: node_modules/@types/node/events.d.ts:42
 
 ▸ **addListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:62
+Inherited from: EventEmitter.addListener
+
+Defined in: node_modules/@types/node/events.d.ts:57
 
 ___
 
@@ -160,7 +174,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/lib/socket-server.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L118)
+Defined in: [packages/host/src/lib/socket-server.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L118)
 
 ___
 
@@ -168,16 +182,18 @@ ___
 
 ▸ **emit**(`event`: *string* \| *symbol*, ...`args`: *any*[]): *boolean*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`...args` | *any*[] |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `...args` | *any*[] |
 
 **Returns:** *boolean*
 
-Defined in: node_modules/@types/node/events.d.ts:72
+Inherited from: EventEmitter.emit
+
+Defined in: node_modules/@types/node/events.d.ts:67
 
 ___
 
@@ -187,7 +203,9 @@ ___
 
 **Returns:** (*string* \| *symbol*)[]
 
-Defined in: node_modules/@types/node/events.d.ts:77
+Inherited from: EventEmitter.eventNames
+
+Defined in: node_modules/@types/node/events.d.ts:72
 
 ___
 
@@ -197,7 +215,9 @@ ___
 
 **Returns:** *number*
 
-Defined in: node_modules/@types/node/events.d.ts:69
+Inherited from: EventEmitter.getMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:64
 
 ___
 
@@ -205,15 +225,17 @@ ___
 
 ▸ **listenerCount**(`event`: *string* \| *symbol*): *number*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** *number*
 
-Defined in: node_modules/@types/node/events.d.ts:73
+Inherited from: EventEmitter.listenerCount
+
+Defined in: node_modules/@types/node/events.d.ts:68
 
 ___
 
@@ -221,15 +243,17 @@ ___
 
 ▸ **listeners**(`event`: *string* \| *symbol*): Function[]
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** Function[]
 
-Defined in: node_modules/@types/node/events.d.ts:70
+Inherited from: EventEmitter.listeners
+
+Defined in: node_modules/@types/node/events.d.ts:65
 
 ___
 
@@ -237,16 +261,18 @@ ___
 
 ▸ **off**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:66
+Inherited from: EventEmitter.off
+
+Defined in: node_modules/@types/node/events.d.ts:61
 
 ___
 
@@ -254,16 +280,18 @@ ___
 
 ▸ **on**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:63
+Inherited from: EventEmitter.on
+
+Defined in: node_modules/@types/node/events.d.ts:58
 
 ___
 
@@ -271,16 +299,18 @@ ___
 
 ▸ **once**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:64
+Inherited from: EventEmitter.once
+
+Defined in: node_modules/@types/node/events.d.ts:59
 
 ___
 
@@ -288,16 +318,18 @@ ___
 
 ▸ **prependListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:75
+Inherited from: EventEmitter.prependListener
+
+Defined in: node_modules/@types/node/events.d.ts:70
 
 ___
 
@@ -305,16 +337,18 @@ ___
 
 ▸ **prependOnceListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:76
+Inherited from: EventEmitter.prependOnceListener
+
+Defined in: node_modules/@types/node/events.d.ts:71
 
 ___
 
@@ -322,15 +356,17 @@ ___
 
 ▸ **rawListeners**(`event`: *string* \| *symbol*): Function[]
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** Function[]
 
-Defined in: node_modules/@types/node/events.d.ts:71
+Inherited from: EventEmitter.rawListeners
+
+Defined in: node_modules/@types/node/events.d.ts:66
 
 ___
 
@@ -338,15 +374,17 @@ ___
 
 ▸ **removeAllListeners**(`event?`: *string* \| *symbol*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event?` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event?` | *string* \| *symbol* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:67
+Inherited from: EventEmitter.removeAllListeners
+
+Defined in: node_modules/@types/node/events.d.ts:62
 
 ___
 
@@ -354,16 +392,18 @@ ___
 
 ▸ **removeListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:65
+Inherited from: EventEmitter.removeListener
+
+Defined in: node_modules/@types/node/events.d.ts:60
 
 ___
 
@@ -371,88 +411,98 @@ ___
 
 ▸ **setMaxListeners**(`n`: *number*): [*SocketServer*](socket_server.socketserver.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`n` | *number* |
+| Name | Type |
+| :------ | :------ |
+| `n` | *number* |
 
 **Returns:** [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: node_modules/@types/node/events.d.ts:68
+Inherited from: EventEmitter.setMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:63
 
 ___
 
 ### start
 
-▸ **start**(): *Promise*<*void*\>
+▸ **start**(): *Promise*<void\>
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [src/lib/socket-server.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/socket-server.ts#L54)
+Defined in: [packages/host/src/lib/socket-server.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L54)
 
 ___
 
 ### listenerCount
 
-▸ `Static`**listenerCount**(`emitter`: *EventEmitter*, `event`: *string* \| *symbol*): *number*
+▸ `Static` **listenerCount**(`emitter`: *EventEmitter*, `event`: *string* \| *symbol*): *number*
 
 **`deprecated`** since v4.0.0
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`emitter` | *EventEmitter* |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `emitter` | *EventEmitter* |
+| `event` | *string* \| *symbol* |
 
 **Returns:** *number*
 
-Defined in: node_modules/@types/node/events.d.ts:31
+Inherited from: EventEmitter.listenerCount
+
+Defined in: node_modules/@types/node/events.d.ts:26
 
 ___
 
 ### on
 
-▸ `Static`**on**(`emitter`: *EventEmitter*, `event`: *string*): *AsyncIterableIterator*<*any*\>
+▸ `Static` **on**(`emitter`: *EventEmitter*, `event`: *string*): *AsyncIterableIterator*<any\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`emitter` | *EventEmitter* |
-`event` | *string* |
+| Name | Type |
+| :------ | :------ |
+| `emitter` | *EventEmitter* |
+| `event` | *string* |
 
-**Returns:** *AsyncIterableIterator*<*any*\>
+**Returns:** *AsyncIterableIterator*<any\>
 
-Defined in: node_modules/@types/node/events.d.ts:28
+Inherited from: EventEmitter.on
+
+Defined in: node_modules/@types/node/events.d.ts:23
 
 ___
 
 ### once
 
-▸ `Static`**once**(`emitter`: *NodeEventTarget*, `event`: *string* \| *symbol*): *Promise*<*any*[]\>
+▸ `Static` **once**(`emitter`: *NodeEventTarget*, `event`: *string* \| *symbol*): *Promise*<any[]\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`emitter` | *NodeEventTarget* |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `emitter` | *NodeEventTarget* |
+| `event` | *string* \| *symbol* |
 
-**Returns:** *Promise*<*any*[]\>
+**Returns:** *Promise*<any[]\>
 
-Defined in: node_modules/@types/node/events.d.ts:26
+Inherited from: EventEmitter.once
 
-▸ `Static`**once**(`emitter`: DOMEventTarget, `event`: *string*): *Promise*<*any*[]\>
+Defined in: node_modules/@types/node/events.d.ts:21
 
-#### Parameters:
+▸ `Static` **once**(`emitter`: DOMEventTarget, `event`: *string*): *Promise*<any[]\>
 
-Name | Type |
------- | ------ |
-`emitter` | DOMEventTarget |
-`event` | *string* |
+#### Parameters
 
-**Returns:** *Promise*<*any*[]\>
+| Name | Type |
+| :------ | :------ |
+| `emitter` | DOMEventTarget |
+| `event` | *string* |
 
-Defined in: node_modules/@types/node/events.d.ts:27
+**Returns:** *Promise*<any[]\>
+
+Inherited from: EventEmitter.once
+
+Defined in: node_modules/@types/node/events.d.ts:22

@@ -4,99 +4,126 @@
 
 ## Table of contents
 
-### Classes
-
-- [CeroError](../classes/index.ceroerror.md)
-
-### Interfaces
-
-- [CeroRouter](../interfaces/index.cerorouter.md)
-- [SequentialCeroRouter](../interfaces/index.sequentialcerorouter.md)
-
-### Type aliases
+### References
 
 - [CeroCode](index.md#cerocode)
 - [CeroConfig](index.md#ceroconfig)
 - [CeroDefaultRoute](index.md#cerodefaultroute)
+- [CeroError](index.md#ceroerror)
 - [CeroErrorHandler](index.md#ceroerrorhandler)
 - [CeroMiddleware](index.md#ceromiddleware)
+- [CeroRouter](index.md#cerorouter)
 - [CeroRouterConfig](index.md#cerorouterconfig)
+- [SequentialCeroRouter](index.md#sequentialcerorouter)
+- [cero](index.md#cero)
+- [sequentialRouter](index.md#sequentialrouter)
+
+### Type aliases
+
+- [ServerConfig](index.md#serverconfig)
 
 ### Functions
 
 - [createServer](index.md#createserver)
 - [getRouter](index.md#getrouter)
 
-## Type aliases
+## References
 
 ### CeroCode
 
-Ƭ **CeroCode**: keyof *typeof* codelist
-
-Defined in: [packages/api-server/src/lib/definitions.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L35)
+Re-exports: [CeroCode](lib_definitions.md#cerocode)
 
 ___
 
 ### CeroConfig
 
-Ƭ **CeroConfig**<T, S\>: *Partial*<{ `prioRequestsProcessing`: *boolean* ; `router`: S ; `server`: T  }\>
-
-#### Type parameters:
-
-Name | Type | Default |
------- | ------ | ------ |
-`T` | Server | Server |
-`S` | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md) | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md) |
-
-Defined in: [packages/api-server/src/lib/definitions.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L15)
+Re-exports: [CeroConfig](lib_definitions.md#ceroconfig)
 
 ___
 
 ### CeroDefaultRoute
 
-Ƭ **CeroDefaultRoute**: Middleware
+Re-exports: [CeroDefaultRoute](lib_definitions.md#cerodefaultroute)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L6)
+___
+
+### CeroError
+
+Re-exports: [CeroError](../classes/lib_definitions.ceroerror.md)
 
 ___
 
 ### CeroErrorHandler
 
-Ƭ **CeroErrorHandler**: (`err`: [*CeroError*](../classes/lib_definitions.ceroerror.md), `req`: IncomingMessage, `res`: ServerResponse) => *void*
-
-Defined in: [packages/api-server/src/lib/definitions.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L65)
+Re-exports: [CeroErrorHandler](lib_definitions.md#ceroerrorhandler)
 
 ___
 
 ### CeroMiddleware
 
-Ƭ **CeroMiddleware**: Middleware
+Re-exports: [CeroMiddleware](lib_definitions.md#ceromiddleware)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L5)
+___
+
+### CeroRouter
+
+Re-exports: [CeroRouter](../interfaces/lib_definitions.cerorouter.md)
 
 ___
 
 ### CeroRouterConfig
 
-Ƭ **CeroRouterConfig**: *Partial*<{ `cacheSize`: *number* ; `defaultRoute`: [*CeroDefaultRoute*](lib_definitions.md#cerodefaultroute) ; `errorHandler`: [*CeroErrorHandler*](lib_definitions.md#ceroerrorhandler) ; `id`: *string*  }\>
+Re-exports: [CeroRouterConfig](lib_definitions.md#cerorouterconfig)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:67](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L67)
+___
+
+### SequentialCeroRouter
+
+Re-exports: [SequentialCeroRouter](../interfaces/lib_definitions.sequentialcerorouter.md)
+
+___
+
+### cero
+
+Re-exports: [cero](lib_0http.md#cero)
+
+___
+
+### sequentialRouter
+
+Re-exports: [sequentialRouter](lib_0http.md#sequentialrouter)
+
+## Type aliases
+
+### ServerConfig
+
+Ƭ **ServerConfig**: *object*
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `router?` | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md) |
+| `server?` | Server |
+| `verbose?` | *boolean* |
+
+Defined in: [packages/api-server/src/index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/index.ts#L10)
 
 ## Functions
 
 ### createServer
 
-▸ **createServer**(`conf?`: ServerConfig): APIExpose
+▸ **createServer**(`conf?`: [*ServerConfig*](index.md#serverconfig)): APIExpose
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Default value |
------- | ------ | ------ |
-`conf` | ServerConfig | ... |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `conf` | [*ServerConfig*](index.md#serverconfig) | {} |
 
 **Returns:** APIExpose
 
-Defined in: [packages/api-server/src/index.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/index.ts#L30)
+Defined in: [packages/api-server/src/index.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/index.ts#L33)
 
 ___
 
@@ -106,4 +133,4 @@ ___
 
 **Returns:** APIRoute
 
-Defined in: [packages/api-server/src/index.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/index.ts#L15)
+Defined in: [packages/api-server/src/index.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/index.ts#L18)

@@ -10,13 +10,9 @@ Each Supervisor is responsible for deploying and running only one Sequence.
 When Supervisor starts it creates LifeCycleController class and
 initiates Supervisor's lifecycle by calling its start() method.
 
-## Hierarchy
-
-* **LifeCycleController**
-
 ## Implements
 
-* *IComponent*
+- *IComponent*
 
 ## Table of contents
 
@@ -36,6 +32,7 @@ initiates Supervisor's lifecycle by calling its start() method.
 
 ### Methods
 
+- [configMessageReceived](lifecycle_controller.lifecyclecontroller.md#configmessagereceived)
 - [handleKeepAliveCommand](lifecycle_controller.lifecyclecontroller.md#handlekeepalivecommand)
 - [handleSequenceCompleted](lifecycle_controller.lifecyclecontroller.md#handlesequencecompleted)
 - [handleSequenceStopped](lifecycle_controller.lifecyclecontroller.md#handlesequencestopped)
@@ -48,26 +45,26 @@ initiates Supervisor's lifecycle by calling its start() method.
 
 \+ **new LifeCycleController**(`id`: *string*, `lifecycleAdapterRun`: *ILifeCycleAdapterRun*, `lifecycleConfig`: LifeCycleConfig, `client`: ICSHClient): [*LifeCycleController*](lifecycle_controller.lifecyclecontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`id` | *string* | supervisor id   |
-`lifecycleAdapterRun` | *ILifeCycleAdapterRun* | an implementation of LifeCycle interface   |
-`lifecycleConfig` | LifeCycleConfig | configuration specific to running the Sequence on the particular Cloud Server Instance.   |
-`client` | ICSHClient | that communicates with the CSH via TCP connection    |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | *string* | supervisor id |
+| `lifecycleAdapterRun` | *ILifeCycleAdapterRun* | an implementation of LifeCycle interface |
+| `lifecycleConfig` | LifeCycleConfig | configuration specific to running the Sequence on the particular Cloud Server Instance. |
+| `client` | ICSHClient | that communicates with the CSH via TCP connection |
 
 **Returns:** [*LifeCycleController*](lifecycle_controller.lifecyclecontroller.md)
 
-Defined in: [lifecycle-controller.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L65)
+Defined in: [lifecycle-controller.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L65)
 
 ## Properties
 
 ### \_endOfSequence
 
-• `Optional` **\_endOfSequence**: *undefined* \| *Promise*<*number*\>
+• `Optional` **\_endOfSequence**: *Promise*<number\>
 
-Defined in: [lifecycle-controller.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L53)
+Defined in: [lifecycle-controller.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L53)
 
 ___
 
@@ -77,7 +74,7 @@ ___
 
 **`param`** Supervisor id, this id is generated in the host and passed to Supervisor at its initiation.
 
-Defined in: [lifecycle-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L20)
+Defined in: [lifecycle-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L20)
 
 ___
 
@@ -85,83 +82,95 @@ ___
 
 • **logger**: Console
 
-Defined in: [lifecycle-controller.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L51)
+Implementation of: IComponent.logger
+
+Defined in: [lifecycle-controller.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L51)
 
 ## Accessors
 
 ### endOfSequence
 
-• **endOfSequence**(): *Promise*<*number*\>
+• get **endOfSequence**(): *Promise*<number\>
 
-**Returns:** *Promise*<*number*\>
+**Returns:** *Promise*<number\>
 
-Defined in: [lifecycle-controller.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L55)
+Defined in: [lifecycle-controller.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L55)
 
-• **endOfSequence**(`prm`: *Promise*<*number*\>): *void*
+• set **endOfSequence**(`prm`: *Promise*<number\>): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`prm` | *Promise*<*number*\> |
+| Name | Type |
+| :------ | :------ |
+| `prm` | *Promise*<number\> |
 
 **Returns:** *void*
 
-Defined in: [lifecycle-controller.ts:63](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L63)
+Defined in: [lifecycle-controller.ts:63](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L63)
 
 ## Methods
+
+### configMessageReceived
+
+▸ **configMessageReceived**(): *Promise*<RunnerConfig\>
+
+**Returns:** *Promise*<RunnerConfig\>
+
+Defined in: [lifecycle-controller.ts:253](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L253)
+
+___
 
 ### handleKeepAliveCommand
 
 ▸ **handleKeepAliveCommand**(`message`: *EncodedMessage*<ALIVE\>): *EncodedMessage*<ALIVE\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`message` | *EncodedMessage*<ALIVE\> |
+| Name | Type |
+| :------ | :------ |
+| `message` | *EncodedMessage*<ALIVE\> |
 
 **Returns:** *EncodedMessage*<ALIVE\>
 
-Defined in: [lifecycle-controller.ts:319](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L319)
+Defined in: [lifecycle-controller.ts:322](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L322)
 
 ___
 
 ### handleSequenceCompleted
 
-▸ **handleSequenceCompleted**(`message`: *EncodedMessage*<SEQUENCE\_COMPLETED\>): *Promise*<*EncodedMessage*<SEQUENCE\_COMPLETED\>\>
+▸ **handleSequenceCompleted**(`message`: *EncodedMessage*<SEQUENCE\_COMPLETED\>): *Promise*<EncodedMessage<SEQUENCE\_COMPLETED\>\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`message` | *EncodedMessage*<SEQUENCE\_COMPLETED\> |
+| Name | Type |
+| :------ | :------ |
+| `message` | *EncodedMessage*<SEQUENCE\_COMPLETED\> |
 
-**Returns:** *Promise*<*EncodedMessage*<SEQUENCE\_COMPLETED\>\>
+**Returns:** *Promise*<EncodedMessage<SEQUENCE\_COMPLETED\>\>
 
-Defined in: [lifecycle-controller.ts:264](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L264)
+Defined in: [lifecycle-controller.ts:267](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L267)
 
 ___
 
 ### handleSequenceStopped
 
-▸ **handleSequenceStopped**(`message`: *EncodedMessage*<SEQUENCE\_STOPPED\>): *Promise*<*EncodedMessage*<SEQUENCE\_STOPPED\>\>
+▸ **handleSequenceStopped**(`message`: *EncodedMessage*<SEQUENCE\_STOPPED\>): *Promise*<EncodedMessage<SEQUENCE\_STOPPED\>\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`message` | *EncodedMessage*<SEQUENCE\_STOPPED\> |
+| Name | Type |
+| :------ | :------ |
+| `message` | *EncodedMessage*<SEQUENCE\_STOPPED\> |
 
-**Returns:** *Promise*<*EncodedMessage*<SEQUENCE\_STOPPED\>\>
+**Returns:** *Promise*<EncodedMessage<SEQUENCE\_STOPPED\>\>
 
-Defined in: [lifecycle-controller.ts:296](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L296)
+Defined in: [lifecycle-controller.ts:299](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L299)
 
 ___
 
 ### main
 
-▸ **main**(): *Promise*<*void*\>
+▸ **main**(): *Promise*<void\>
 
 This main method controls logical flow of the Cloud Server Instance lifecycle.
 
@@ -180,11 +189,11 @@ After the Sequence terminates it is possible to perform a snapshot of the contai
 When the Sequence terminates and (optionally) the snapshot is created, the LifeCycle Controller
 requests the LifeCycle Adapter Run to perform the cleanup (e.g. removing unused volumes and containers).
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
 resolves when Supervisor completed lifecycle without errors.
 
-Defined in: [lifecycle-controller.ts:106](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L106)
+Defined in: [lifecycle-controller.ts:106](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L106)
 
 ___
 
@@ -192,13 +201,13 @@ ___
 
 ▸ **scheduleExit**(`exitCode?`: *number*, `timeout?`: *number*): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Default value |
------- | ------ | ------ |
-`exitCode?` | *number* | - |
-`timeout` | *number* | 100 |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `exitCode?` | *number* | - |
+| `timeout` | *number* | 100 |
 
 **Returns:** *void*
 
-Defined in: [lifecycle-controller.ts:285](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/lifecycle-controller.ts#L285)
+Defined in: [lifecycle-controller.ts:288](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/lifecycle-controller.ts#L288)

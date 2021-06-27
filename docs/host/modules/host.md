@@ -7,33 +7,15 @@
 ### Classes
 
 - [Host](../classes/host.host-1.md)
-- [SequenceStore](../classes/host.sequencestore.md)
 
 ### Type aliases
 
-- [Sequence](host.md#sequence)
+- [HostOptions](host.md#hostoptions)
 
 ## Type aliases
 
-### Sequence
+### HostOptions
 
-Ƭ **Sequence**: { `config`: RunnerConfig ; `id`: *string*  }
+Ƭ **HostOptions**: *Partial*<{ `identifyExisting`: *boolean*  }\>
 
-Sequence type describes the collection
-of uncompressed developer's code files
-and the configuration file attached to them
-residing on certain volume.
-
-The configuration file is required to run
-Sequence Instance.
-
-Question: this should probably moved to @scramjet/model, right?
-
-#### Type declaration:
-
-Name | Type |
------- | ------ |
-`config` | RunnerConfig |
-`id` | *string* |
-
-Defined in: [src/lib/host.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L24)
+Defined in: [packages/host/src/lib/host.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L26)

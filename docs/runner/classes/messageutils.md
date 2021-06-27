@@ -24,15 +24,15 @@
 
 ### writeMessageOnStream
 
-▸ `Static`**writeMessageOnStream**(`__namedParameters`: EncodedMonitoringMessage, `streamToWrite?`: *WritableStream*<any\>): *void*
+▸ `Static` **writeMessageOnStream**(`__namedParameters`: *EncodedMessage*<MonitoringMessageCode\>, `streamToWrite?`: *WritableStream*<any\>): *void*
 
-#### Parameters:
+#### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `__namedParameters` | EncodedMonitoringMessage |
+| `__namedParameters` | *EncodedMessage*<MonitoringMessageCode\> |
 | `streamToWrite?` | *WritableStream*<any\> |
 
 **Returns:** *void*
 
-Defined in: [message-utils.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/runner/src/message-utils.ts#L4)
+Defined in: [message-utils.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/runner/src/message-utils.ts#L4)

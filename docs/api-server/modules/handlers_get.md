@@ -14,12 +14,12 @@
 
 ▸ **createGetterHandler**(`router`: [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md)): *function*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`router` | [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md) |
+| Name | Type |
+| :------ | :------ |
+| `router` | [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md) |
 
-**Returns:** *function*
+**Returns:** <T\>(`path`: *string* \| *RegExp*, `msg`: T \| GetResolver, `conn?`: *ICommunicationHandler*) => *void*
 
-Defined in: [packages/api-server/src/handlers/get.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/handlers/get.ts#L6)
+Defined in: [packages/api-server/src/handlers/get.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/handlers/get.ts#L6)

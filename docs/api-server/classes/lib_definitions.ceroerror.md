@@ -6,13 +6,13 @@
 
 ## Hierarchy
 
-* *Error*
+- *Error*
 
   ↳ **CeroError**
 
 ## Implements
 
-* *APIError*
+- *APIError*
 
 ## Table of contents
 
@@ -43,27 +43,31 @@
 
 ### constructor
 
-\+ **new CeroError**(`errCode`: *ERR_NOT_FOUND* \| *ERR_NOT_CURRENTLY_AVAILABLE* \| *ERR_FAILED_FETCH_DATA* \| *ERR_FAILED_TO_SERIALIZE* \| *ERR_INTERNAL_ERROR* \| *ERR_INVALID_CONTENT_TYPE* \| *ERR_CANNOT_PARSE_CONTENT* \| *ERR_UNSUPPORTED_ENCODING*, `cause?`: Error, `extraMessage?`: *string*): [*CeroError*](lib_definitions.ceroerror.md)
+\+ **new CeroError**(`errCode`: ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"``, `cause?`: Error, `extraMessage?`: *string*): [*CeroError*](lib_definitions.ceroerror.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`errCode` | *ERR_NOT_FOUND* \| *ERR_NOT_CURRENTLY_AVAILABLE* \| *ERR_FAILED_FETCH_DATA* \| *ERR_FAILED_TO_SERIALIZE* \| *ERR_INTERNAL_ERROR* \| *ERR_INVALID_CONTENT_TYPE* \| *ERR_CANNOT_PARSE_CONTENT* \| *ERR_UNSUPPORTED_ENCODING* |
-`cause?` | Error |
-`extraMessage?` | *string* |
+| Name | Type |
+| :------ | :------ |
+| `errCode` | ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"`` |
+| `cause?` | Error |
+| `extraMessage?` | *string* |
 
 **Returns:** [*CeroError*](lib_definitions.ceroerror.md)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L42)
+Overrides: Error.constructor
+
+Defined in: [packages/api-server/src/lib/definitions.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L42)
 
 ## Properties
 
 ### cause
 
-• `Optional` **cause**: *undefined* \| Error
+• `Optional` **cause**: Error
 
-Defined in: [packages/api-server/src/lib/definitions.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L40)
+Implementation of: APIError.cause
+
+Defined in: [packages/api-server/src/lib/definitions.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L40)
 
 ___
 
@@ -71,7 +75,9 @@ ___
 
 • **code**: *number*
 
-Defined in: [packages/api-server/src/lib/definitions.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L38)
+Implementation of: APIError.code
+
+Defined in: [packages/api-server/src/lib/definitions.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L38)
 
 ___
 
@@ -79,7 +85,9 @@ ___
 
 • **httpMessage**: *string*
 
-Defined in: [packages/api-server/src/lib/definitions.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L39)
+Implementation of: APIError.httpMessage
+
+Defined in: [packages/api-server/src/lib/definitions.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L39)
 
 ___
 
@@ -87,7 +95,11 @@ ___
 
 • **message**: *string*
 
-Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:974
+Implementation of: APIError.message
+
+Inherited from: Error.message
+
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
@@ -95,27 +107,46 @@ ___
 
 • **name**: *string*
 
-Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:973
+Implementation of: APIError.name
+
+Inherited from: Error.name
+
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
 
 ___
 
 ### type
 
-• **type**: *ERR_NOT_FOUND* \| *ERR_NOT_CURRENTLY_AVAILABLE* \| *ERR_FAILED_FETCH_DATA* \| *ERR_FAILED_TO_SERIALIZE* \| *ERR_INTERNAL_ERROR* \| *ERR_INVALID_CONTENT_TYPE* \| *ERR_CANNOT_PARSE_CONTENT* \| *ERR_UNSUPPORTED_ENCODING*
+• **type**: ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"``
 
-Defined in: [packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L41)
+Defined in: [packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L41)
 
 ___
 
 ### prepareStackTrace
 
-▪ `Optional` `Static` **prepareStackTrace**: *undefined* \| (`err`: Error, `stackTraces`: CallSite[]) => *any*
+▪ `Static` `Optional` **prepareStackTrace**: (`err`: Error, `stackTraces`: CallSite[]) => *any*
 
 Optional override for formatting stack traces
 
 **`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 
-Defined in: packages/api-server/node_modules/@types/node/globals.d.ts:11
+#### Type declaration
+
+▸ (`err`: Error, `stackTraces`: CallSite[]): *any*
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `err` | Error |
+| `stackTraces` | CallSite[] |
+
+**Returns:** *any*
+
+Inherited from: Error.prepareStackTrace
+
+Defined in: node_modules/@types/node/globals.d.ts:11
 
 ___
 
@@ -123,33 +154,37 @@ ___
 
 ▪ `Static` **stackTraceLimit**: *number*
 
-Defined in: packages/api-server/node_modules/@types/node/globals.d.ts:13
+Inherited from: Error.stackTraceLimit
+
+Defined in: node_modules/@types/node/globals.d.ts:13
 
 ## Accessors
 
 ### stack
 
-• **stack**(): *string*
+• get **stack**(): *string*
 
 **Returns:** *string*
 
-Defined in: [packages/api-server/src/lib/definitions.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L60)
+Defined in: [packages/api-server/src/lib/definitions.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L60)
 
 ## Methods
 
 ### captureStackTrace
 
-▸ `Static`**captureStackTrace**(`targetObject`: *object*, `constructorOpt?`: Function): *void*
+▸ `Static` **captureStackTrace**(`targetObject`: *object*, `constructorOpt?`: Function): *void*
 
 Create .stack property on a target object
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`targetObject` | *object* |
-`constructorOpt?` | Function |
+| Name | Type |
+| :------ | :------ |
+| `targetObject` | *object* |
+| `constructorOpt?` | Function |
 
 **Returns:** *void*
 
-Defined in: packages/api-server/node_modules/@types/node/globals.d.ts:4
+Inherited from: Error.captureStackTrace
+
+Defined in: node_modules/@types/node/globals.d.ts:4

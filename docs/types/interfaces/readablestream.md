@@ -8,13 +8,13 @@ A readable stream representation with generic chunks.
 
 ## Type parameters
 
-Name |
------- |
-`Produces` |
+| Name |
+| :------ |
+| `Produces` |
 
 ## Hierarchy
 
-* *PipeableStream*<Produces\>
+- *PipeableStream*<Produces\>
 
   ↳ **ReadableStream**
 
@@ -69,7 +69,9 @@ Name |
 
 • **destroyed**: *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:40
+Inherited from: PipeableStream.destroyed
+
+Defined in: node_modules/@types/node/stream.d.ts:35
 
 ___
 
@@ -77,15 +79,19 @@ ___
 
 • **readable**: *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:33
+Inherited from: PipeableStream.readable
+
+Defined in: node_modules/@types/node/stream.d.ts:28
 
 ___
 
 ### readableEncoding
 
-• `Readonly` **readableEncoding**: *null* \| *ascii* \| *utf8* \| *utf-8* \| *utf16le* \| *ucs2* \| *ucs-2* \| *base64* \| *latin1* \| *binary* \| *hex*
+• `Readonly` **readableEncoding**: ``null`` \| ``"ascii"`` \| ``"utf8"`` \| ``"utf-8"`` \| ``"utf16le"`` \| ``"ucs2"`` \| ``"ucs-2"`` \| ``"base64"`` \| ``"latin1"`` \| ``"binary"`` \| ``"hex"``
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:34
+Inherited from: PipeableStream.readableEncoding
+
+Defined in: node_modules/@types/node/stream.d.ts:29
 
 ___
 
@@ -93,15 +99,19 @@ ___
 
 • `Readonly` **readableEnded**: *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:35
+Inherited from: PipeableStream.readableEnded
+
+Defined in: node_modules/@types/node/stream.d.ts:30
 
 ___
 
 ### readableFlowing
 
-• `Readonly` **readableFlowing**: *null* \| *boolean*
+• `Readonly` **readableFlowing**: ``null`` \| *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:36
+Inherited from: PipeableStream.readableFlowing
+
+Defined in: node_modules/@types/node/stream.d.ts:31
 
 ___
 
@@ -109,7 +119,9 @@ ___
 
 • `Readonly` **readableHighWaterMark**: *number*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:37
+Inherited from: PipeableStream.readableHighWaterMark
+
+Defined in: node_modules/@types/node/stream.d.ts:32
 
 ___
 
@@ -117,7 +129,9 @@ ___
 
 • `Readonly` **readableLength**: *number*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:38
+Inherited from: PipeableStream.readableLength
+
+Defined in: node_modules/@types/node/stream.d.ts:33
 
 ___
 
@@ -125,7 +139,9 @@ ___
 
 • `Readonly` **readableObjectMode**: *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:39
+Inherited from: PipeableStream.readableObjectMode
+
+Defined in: node_modules/@types/node/stream.d.ts:34
 
 ## Methods
 
@@ -135,24 +151,28 @@ Defined in: packages/types/node_modules/@types/node/stream.d.ts:39
 
 **Returns:** *AsyncIterableIterator*<Produces\>
 
-Defined in: [packages/types/src/utils.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L45)
+Overrides: PipeableStream.\_\_@asyncIterator
+
+Defined in: [packages/types/src/utils.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L45)
 
 ___
 
 ### \_destroy
 
-▸ **_destroy**(`error`: *null* \| Error, `callback`: (`error?`: *null* \| Error) => *void*): *void*
+▸ **_destroy**(`error`: ``null`` \| Error, `callback`: (`error?`: ``null`` \| Error) => *void*): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`error` | *null* \| Error |
-`callback` | (`error?`: *null* \| Error) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `error` | ``null`` \| Error |
+| `callback` | (`error?`: ``null`` \| Error) => *void* |
 
 **Returns:** *void*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:52
+Inherited from: PipeableStream.\_destroy
+
+Defined in: node_modules/@types/node/stream.d.ts:47
 
 ___
 
@@ -160,21 +180,23 @@ ___
 
 ▸ **_read**(`size`: *number*): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`size` | *number* |
+| Name | Type |
+| :------ | :------ |
+| `size` | *number* |
 
 **Returns:** *void*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:42
+Inherited from: PipeableStream.\_read
+
+Defined in: node_modules/@types/node/stream.d.ts:37
 
 ___
 
 ### addListener
 
-▸ **addListener**(`event`: *close*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+▸ **addListener**(`event`: ``"close"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
 Event emitter
 The defined events on documents including:
@@ -186,107 +208,123 @@ The defined events on documents including:
 6. readable
 7. resume
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *close* |
-`listener` | () => *void* |
-
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:66
-
-▸ **addListener**(`event`: *data*, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *data* |
-`listener` | (`chunk`: *any*) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"close"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:67
+Inherited from: PipeableStream.addListener
 
-▸ **addListener**(`event`: *end*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:61
 
-#### Parameters:
+▸ **addListener**(`event`: ``"data"``, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *end* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:68
-
-▸ **addListener**(`event`: *error*, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *error* |
-`listener` | (`err`: Error) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"data"`` |
+| `listener` | (`chunk`: *any*) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:69
+Inherited from: PipeableStream.addListener
 
-▸ **addListener**(`event`: *pause*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:62
 
-#### Parameters:
+▸ **addListener**(`event`: ``"end"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *pause* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:70
-
-▸ **addListener**(`event`: *readable*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *readable* |
-`listener` | () => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"end"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:71
+Inherited from: PipeableStream.addListener
 
-▸ **addListener**(`event`: *resume*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:63
 
-#### Parameters:
+▸ **addListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *resume* |
-`listener` | () => *void* |
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"error"`` |
+| `listener` | (`err`: Error) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:72
+Inherited from: PipeableStream.addListener
+
+Defined in: node_modules/@types/node/stream.d.ts:64
+
+▸ **addListener**(`event`: ``"pause"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"pause"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.addListener
+
+Defined in: node_modules/@types/node/stream.d.ts:65
+
+▸ **addListener**(`event`: ``"readable"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"readable"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.addListener
+
+Defined in: node_modules/@types/node/stream.d.ts:66
+
+▸ **addListener**(`event`: ``"resume"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"resume"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.addListener
+
+Defined in: node_modules/@types/node/stream.d.ts:67
 
 ▸ **addListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:73
+Inherited from: PipeableStream.addListener
+
+Defined in: node_modules/@types/node/stream.d.ts:68
 
 ___
 
@@ -296,110 +334,128 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/utils.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L46)
+Overrides: PipeableStream.destroy
+
+Defined in: [packages/types/src/utils.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L46)
 
 ___
 
 ### emit
 
-▸ **emit**(`event`: *close*): *boolean*
+▸ **emit**(`event`: ``"close"``): *boolean*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *close* |
-
-**Returns:** *boolean*
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:75
-
-▸ **emit**(`event`: *data*, `chunk`: *any*): *boolean*
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *data* |
-`chunk` | *any* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"close"`` |
 
 **Returns:** *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:76
+Inherited from: PipeableStream.emit
 
-▸ **emit**(`event`: *end*): *boolean*
+Defined in: node_modules/@types/node/stream.d.ts:70
 
-#### Parameters:
+▸ **emit**(`event`: ``"data"``, `chunk`: *any*): *boolean*
 
-Name | Type |
------- | ------ |
-`event` | *end* |
+#### Parameters
 
-**Returns:** *boolean*
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:77
-
-▸ **emit**(`event`: *error*, `err`: Error): *boolean*
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *error* |
-`err` | Error |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"data"`` |
+| `chunk` | *any* |
 
 **Returns:** *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:78
+Inherited from: PipeableStream.emit
 
-▸ **emit**(`event`: *pause*): *boolean*
+Defined in: node_modules/@types/node/stream.d.ts:71
 
-#### Parameters:
+▸ **emit**(`event`: ``"end"``): *boolean*
 
-Name | Type |
------- | ------ |
-`event` | *pause* |
+#### Parameters
 
-**Returns:** *boolean*
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:79
-
-▸ **emit**(`event`: *readable*): *boolean*
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *readable* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"end"`` |
 
 **Returns:** *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:80
+Inherited from: PipeableStream.emit
 
-▸ **emit**(`event`: *resume*): *boolean*
+Defined in: node_modules/@types/node/stream.d.ts:72
 
-#### Parameters:
+▸ **emit**(`event`: ``"error"``, `err`: Error): *boolean*
 
-Name | Type |
------- | ------ |
-`event` | *resume* |
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"error"`` |
+| `err` | Error |
 
 **Returns:** *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:81
+Inherited from: PipeableStream.emit
+
+Defined in: node_modules/@types/node/stream.d.ts:73
+
+▸ **emit**(`event`: ``"pause"``): *boolean*
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"pause"`` |
+
+**Returns:** *boolean*
+
+Inherited from: PipeableStream.emit
+
+Defined in: node_modules/@types/node/stream.d.ts:74
+
+▸ **emit**(`event`: ``"readable"``): *boolean*
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"readable"`` |
+
+**Returns:** *boolean*
+
+Inherited from: PipeableStream.emit
+
+Defined in: node_modules/@types/node/stream.d.ts:75
+
+▸ **emit**(`event`: ``"resume"``): *boolean*
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"resume"`` |
+
+**Returns:** *boolean*
+
+Inherited from: PipeableStream.emit
+
+Defined in: node_modules/@types/node/stream.d.ts:76
 
 ▸ **emit**(`event`: *string* \| *symbol*, ...`args`: *any*[]): *boolean*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`...args` | *any*[] |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `...args` | *any*[] |
 
 **Returns:** *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:82
+Inherited from: PipeableStream.emit
+
+Defined in: node_modules/@types/node/stream.d.ts:77
 
 ___
 
@@ -409,7 +465,9 @@ ___
 
 **Returns:** (*string* \| *symbol*)[]
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:77
+Inherited from: PipeableStream.eventNames
+
+Defined in: node_modules/@types/node/events.d.ts:72
 
 ___
 
@@ -419,7 +477,9 @@ ___
 
 **Returns:** *number*
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:69
+Inherited from: PipeableStream.getMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:64
 
 ___
 
@@ -429,7 +489,9 @@ ___
 
 **Returns:** *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:47
+Inherited from: PipeableStream.isPaused
+
+Defined in: node_modules/@types/node/stream.d.ts:42
 
 ___
 
@@ -437,15 +499,17 @@ ___
 
 ▸ **listenerCount**(`event`: *string* \| *symbol*): *number*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** *number*
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:73
+Inherited from: PipeableStream.listenerCount
+
+Defined in: node_modules/@types/node/events.d.ts:68
 
 ___
 
@@ -453,15 +517,17 @@ ___
 
 ▸ **listeners**(`event`: *string* \| *symbol*): Function[]
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** Function[]
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:70
+Inherited from: PipeableStream.listeners
+
+Defined in: node_modules/@types/node/events.d.ts:65
 
 ___
 
@@ -469,232 +535,266 @@ ___
 
 ▸ **off**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:66
+Inherited from: PipeableStream.off
+
+Defined in: node_modules/@types/node/events.d.ts:61
 
 ___
 
 ### on
 
-▸ **on**(`event`: *close*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+▸ **on**(`event`: ``"close"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *close* |
-`listener` | () => *void* |
-
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:84
-
-▸ **on**(`event`: *data*, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *data* |
-`listener` | (`chunk`: *any*) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"close"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:85
+Inherited from: PipeableStream.on
 
-▸ **on**(`event`: *end*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:79
 
-#### Parameters:
+▸ **on**(`event`: ``"data"``, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *end* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:86
-
-▸ **on**(`event`: *error*, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *error* |
-`listener` | (`err`: Error) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"data"`` |
+| `listener` | (`chunk`: *any*) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:87
+Inherited from: PipeableStream.on
 
-▸ **on**(`event`: *pause*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:80
 
-#### Parameters:
+▸ **on**(`event`: ``"end"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *pause* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:88
-
-▸ **on**(`event`: *readable*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *readable* |
-`listener` | () => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"end"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:89
+Inherited from: PipeableStream.on
 
-▸ **on**(`event`: *resume*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:81
 
-#### Parameters:
+▸ **on**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *resume* |
-`listener` | () => *void* |
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"error"`` |
+| `listener` | (`err`: Error) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:90
+Inherited from: PipeableStream.on
+
+Defined in: node_modules/@types/node/stream.d.ts:82
+
+▸ **on**(`event`: ``"pause"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"pause"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.on
+
+Defined in: node_modules/@types/node/stream.d.ts:83
+
+▸ **on**(`event`: ``"readable"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"readable"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.on
+
+Defined in: node_modules/@types/node/stream.d.ts:84
+
+▸ **on**(`event`: ``"resume"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"resume"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.on
+
+Defined in: node_modules/@types/node/stream.d.ts:85
 
 ▸ **on**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:91
+Inherited from: PipeableStream.on
+
+Defined in: node_modules/@types/node/stream.d.ts:86
 
 ___
 
 ### once
 
-▸ **once**(`event`: *close*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+▸ **once**(`event`: ``"close"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *close* |
-`listener` | () => *void* |
-
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:93
-
-▸ **once**(`event`: *data*, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *data* |
-`listener` | (`chunk`: *any*) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"close"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:94
+Inherited from: PipeableStream.once
 
-▸ **once**(`event`: *end*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:88
 
-#### Parameters:
+▸ **once**(`event`: ``"data"``, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *end* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:95
-
-▸ **once**(`event`: *error*, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *error* |
-`listener` | (`err`: Error) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"data"`` |
+| `listener` | (`chunk`: *any*) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:96
+Inherited from: PipeableStream.once
 
-▸ **once**(`event`: *pause*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:89
 
-#### Parameters:
+▸ **once**(`event`: ``"end"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *pause* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:97
-
-▸ **once**(`event`: *readable*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *readable* |
-`listener` | () => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"end"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:98
+Inherited from: PipeableStream.once
 
-▸ **once**(`event`: *resume*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:90
 
-#### Parameters:
+▸ **once**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *resume* |
-`listener` | () => *void* |
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"error"`` |
+| `listener` | (`err`: Error) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:99
+Inherited from: PipeableStream.once
+
+Defined in: node_modules/@types/node/stream.d.ts:91
+
+▸ **once**(`event`: ``"pause"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"pause"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.once
+
+Defined in: node_modules/@types/node/stream.d.ts:92
+
+▸ **once**(`event`: ``"readable"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"readable"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.once
+
+Defined in: node_modules/@types/node/stream.d.ts:93
+
+▸ **once**(`event`: ``"resume"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"resume"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.once
+
+Defined in: node_modules/@types/node/stream.d.ts:94
 
 ▸ **once**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:100
+Inherited from: PipeableStream.once
+
+Defined in: node_modules/@types/node/stream.d.ts:95
 
 ___
 
@@ -704,282 +804,324 @@ ___
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:45
+Inherited from: PipeableStream.pause
+
+Defined in: node_modules/@types/node/stream.d.ts:40
 
 ___
 
 ### pipe
 
-▸ **pipe**<T\>(`destination`: T, `options?`: { `end?`: *undefined* \| *boolean*  }): T
+▸ **pipe**<T\>(`destination`: T, `options?`: { `end?`: *boolean*  }): T
 
-#### Type parameters:
+#### Type parameters
 
-Name | Type |
------- | ------ |
-`T` | *WritableStream*<T\> |
+| Name | Type |
+| :------ | :------ |
+| `T` | *WritableStream*<T\> |
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`destination` | T |
-`options?` | { `end?`: *undefined* \| *boolean*  } |
-
-**Returns:** T
-
-Defined in: [packages/types/src/utils.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L33)
-
-▸ **pipe**<T\>(`destination`: T, `options?`: { `end?`: *undefined* \| *boolean*  }): T
-
-#### Type parameters:
-
-Name | Type |
------- | ------ |
-`T` | [*WritableStream*](writablestream.md)<Produces, T\> |
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`destination` | T |
-`options?` | { `end?`: *undefined* \| *boolean*  } |
+| Name | Type |
+| :------ | :------ |
+| `destination` | T |
+| `options?` | *object* |
+| `options.end?` | *boolean* |
 
 **Returns:** T
 
-Defined in: [packages/types/src/utils.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L36)
+Inherited from: PipeableStream.pipe
+
+Defined in: [packages/types/src/utils.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L33)
+
+▸ **pipe**<T\>(`destination`: T, `options?`: { `end?`: *boolean*  }): T
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | [*WritableStream*](writablestream.md)<Produces, T\> |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `destination` | T |
+| `options?` | *object* |
+| `options.end?` | *boolean* |
+
+**Returns:** T
+
+Inherited from: PipeableStream.pipe
+
+Defined in: [packages/types/src/utils.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L36)
 
 ___
 
 ### prependListener
 
-▸ **prependListener**(`event`: *close*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+▸ **prependListener**(`event`: ``"close"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *close* |
-`listener` | () => *void* |
-
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:102
-
-▸ **prependListener**(`event`: *data*, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *data* |
-`listener` | (`chunk`: *any*) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"close"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:103
+Inherited from: PipeableStream.prependListener
 
-▸ **prependListener**(`event`: *end*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:97
 
-#### Parameters:
+▸ **prependListener**(`event`: ``"data"``, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *end* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:104
-
-▸ **prependListener**(`event`: *error*, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *error* |
-`listener` | (`err`: Error) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"data"`` |
+| `listener` | (`chunk`: *any*) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:105
+Inherited from: PipeableStream.prependListener
 
-▸ **prependListener**(`event`: *pause*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:98
 
-#### Parameters:
+▸ **prependListener**(`event`: ``"end"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *pause* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:106
-
-▸ **prependListener**(`event`: *readable*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *readable* |
-`listener` | () => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"end"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:107
+Inherited from: PipeableStream.prependListener
 
-▸ **prependListener**(`event`: *resume*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:99
 
-#### Parameters:
+▸ **prependListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *resume* |
-`listener` | () => *void* |
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"error"`` |
+| `listener` | (`err`: Error) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:108
+Inherited from: PipeableStream.prependListener
+
+Defined in: node_modules/@types/node/stream.d.ts:100
+
+▸ **prependListener**(`event`: ``"pause"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"pause"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.prependListener
+
+Defined in: node_modules/@types/node/stream.d.ts:101
+
+▸ **prependListener**(`event`: ``"readable"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"readable"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.prependListener
+
+Defined in: node_modules/@types/node/stream.d.ts:102
+
+▸ **prependListener**(`event`: ``"resume"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"resume"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.prependListener
+
+Defined in: node_modules/@types/node/stream.d.ts:103
 
 ▸ **prependListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:109
+Inherited from: PipeableStream.prependListener
+
+Defined in: node_modules/@types/node/stream.d.ts:104
 
 ___
 
 ### prependOnceListener
 
-▸ **prependOnceListener**(`event`: *close*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+▸ **prependOnceListener**(`event`: ``"close"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *close* |
-`listener` | () => *void* |
-
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:111
-
-▸ **prependOnceListener**(`event`: *data*, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *data* |
-`listener` | (`chunk`: *any*) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"close"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:112
+Inherited from: PipeableStream.prependOnceListener
 
-▸ **prependOnceListener**(`event`: *end*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:106
 
-#### Parameters:
+▸ **prependOnceListener**(`event`: ``"data"``, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *end* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:113
-
-▸ **prependOnceListener**(`event`: *error*, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *error* |
-`listener` | (`err`: Error) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"data"`` |
+| `listener` | (`chunk`: *any*) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:114
+Inherited from: PipeableStream.prependOnceListener
 
-▸ **prependOnceListener**(`event`: *pause*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:107
 
-#### Parameters:
+▸ **prependOnceListener**(`event`: ``"end"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *pause* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:115
-
-▸ **prependOnceListener**(`event`: *readable*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *readable* |
-`listener` | () => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"end"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:116
+Inherited from: PipeableStream.prependOnceListener
 
-▸ **prependOnceListener**(`event`: *resume*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:108
 
-#### Parameters:
+▸ **prependOnceListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *resume* |
-`listener` | () => *void* |
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"error"`` |
+| `listener` | (`err`: Error) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:117
+Inherited from: PipeableStream.prependOnceListener
+
+Defined in: node_modules/@types/node/stream.d.ts:109
+
+▸ **prependOnceListener**(`event`: ``"pause"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"pause"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.prependOnceListener
+
+Defined in: node_modules/@types/node/stream.d.ts:110
+
+▸ **prependOnceListener**(`event`: ``"readable"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"readable"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.prependOnceListener
+
+Defined in: node_modules/@types/node/stream.d.ts:111
+
+▸ **prependOnceListener**(`event`: ``"resume"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"resume"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.prependOnceListener
+
+Defined in: node_modules/@types/node/stream.d.ts:112
 
 ▸ **prependOnceListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:118
+Inherited from: PipeableStream.prependOnceListener
+
+Defined in: node_modules/@types/node/stream.d.ts:113
 
 ___
 
 ### push
 
-▸ **push**(`chunk`: *any*, `encoding?`: *ascii* \| *utf8* \| *utf-8* \| *utf16le* \| *ucs2* \| *ucs-2* \| *base64* \| *latin1* \| *binary* \| *hex*): *boolean*
+▸ **push**(`chunk`: *any*, `encoding?`: ``"ascii"`` \| ``"utf8"`` \| ``"utf-8"`` \| ``"utf16le"`` \| ``"ucs2"`` \| ``"ucs-2"`` \| ``"base64"`` \| ``"latin1"`` \| ``"binary"`` \| ``"hex"``): *boolean*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`chunk` | *any* |
-`encoding?` | *ascii* \| *utf8* \| *utf-8* \| *utf16le* \| *ucs2* \| *ucs-2* \| *base64* \| *latin1* \| *binary* \| *hex* |
+| Name | Type |
+| :------ | :------ |
+| `chunk` | *any* |
+| `encoding?` | ``"ascii"`` \| ``"utf8"`` \| ``"utf-8"`` \| ``"utf16le"`` \| ``"ucs2"`` \| ``"ucs-2"`` \| ``"base64"`` \| ``"latin1"`` \| ``"binary"`` \| ``"hex"`` |
 
 **Returns:** *boolean*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:51
+Inherited from: PipeableStream.push
+
+Defined in: node_modules/@types/node/stream.d.ts:46
 
 ___
 
@@ -987,31 +1129,35 @@ ___
 
 ▸ **rawListeners**(`event`: *string* \| *symbol*): Function[]
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** Function[]
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:71
+Inherited from: PipeableStream.rawListeners
+
+Defined in: node_modules/@types/node/events.d.ts:66
 
 ___
 
 ### read
 
-▸ **read**(`count?`: *number*): *null* \| Produces[]
+▸ **read**(`count?`: *number*): ``null`` \| Produces[]
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`count?` | *number* |
+| Name | Type |
+| :------ | :------ |
+| `count?` | *number* |
 
-**Returns:** *null* \| Produces[]
+**Returns:** ``null`` \| Produces[]
 
-Defined in: [packages/types/src/utils.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/utils.ts#L32)
+Inherited from: PipeableStream.read
+
+Defined in: [packages/types/src/utils.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L32)
 
 ___
 
@@ -1019,123 +1165,141 @@ ___
 
 ▸ **removeAllListeners**(`event?`: *string* \| *symbol*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event?` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event?` | *string* \| *symbol* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:67
+Inherited from: PipeableStream.removeAllListeners
+
+Defined in: node_modules/@types/node/events.d.ts:62
 
 ___
 
 ### removeListener
 
-▸ **removeListener**(`event`: *close*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+▸ **removeListener**(`event`: ``"close"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *close* |
-`listener` | () => *void* |
-
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:120
-
-▸ **removeListener**(`event`: *data*, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *data* |
-`listener` | (`chunk`: *any*) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"close"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:121
+Inherited from: PipeableStream.removeListener
 
-▸ **removeListener**(`event`: *end*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:115
 
-#### Parameters:
+▸ **removeListener**(`event`: ``"data"``, `listener`: (`chunk`: *any*) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *end* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:122
-
-▸ **removeListener**(`event`: *error*, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *error* |
-`listener` | (`err`: Error) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"data"`` |
+| `listener` | (`chunk`: *any*) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:123
+Inherited from: PipeableStream.removeListener
 
-▸ **removeListener**(`event`: *pause*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:116
 
-#### Parameters:
+▸ **removeListener**(`event`: ``"end"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *pause* |
-`listener` | () => *void* |
+#### Parameters
 
-**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
-
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:124
-
-▸ **removeListener**(`event`: *readable*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`event` | *readable* |
-`listener` | () => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"end"`` |
+| `listener` | () => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:125
+Inherited from: PipeableStream.removeListener
 
-▸ **removeListener**(`event`: *resume*, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+Defined in: node_modules/@types/node/stream.d.ts:117
 
-#### Parameters:
+▸ **removeListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-Name | Type |
------- | ------ |
-`event` | *resume* |
-`listener` | () => *void* |
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"error"`` |
+| `listener` | (`err`: Error) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:126
+Inherited from: PipeableStream.removeListener
+
+Defined in: node_modules/@types/node/stream.d.ts:118
+
+▸ **removeListener**(`event`: ``"pause"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"pause"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.removeListener
+
+Defined in: node_modules/@types/node/stream.d.ts:119
+
+▸ **removeListener**(`event`: ``"readable"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"readable"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.removeListener
+
+Defined in: node_modules/@types/node/stream.d.ts:120
+
+▸ **removeListener**(`event`: ``"resume"``, `listener`: () => *void*): [*ReadableStream*](readablestream.md)<Produces\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | ``"resume"`` |
+| `listener` | () => *void* |
+
+**Returns:** [*ReadableStream*](readablestream.md)<Produces\>
+
+Inherited from: PipeableStream.removeListener
+
+Defined in: node_modules/@types/node/stream.d.ts:121
 
 ▸ **removeListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:127
+Inherited from: PipeableStream.removeListener
+
+Defined in: node_modules/@types/node/stream.d.ts:122
 
 ___
 
@@ -1145,7 +1309,9 @@ ___
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:46
+Inherited from: PipeableStream.resume
+
+Defined in: node_modules/@types/node/stream.d.ts:41
 
 ___
 
@@ -1153,15 +1319,17 @@ ___
 
 ▸ **setEncoding**(`encoding`: BufferEncoding): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`encoding` | BufferEncoding |
+| Name | Type |
+| :------ | :------ |
+| `encoding` | BufferEncoding |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:44
+Inherited from: PipeableStream.setEncoding
+
+Defined in: node_modules/@types/node/stream.d.ts:39
 
 ___
 
@@ -1169,15 +1337,17 @@ ___
 
 ▸ **setMaxListeners**(`n`: *number*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`n` | *number* |
+| Name | Type |
+| :------ | :------ |
+| `n` | *number* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/events.d.ts:68
+Inherited from: PipeableStream.setMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:63
 
 ___
 
@@ -1185,32 +1355,36 @@ ___
 
 ▸ **unpipe**(`destination?`: *WritableStream*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`destination?` | *WritableStream* |
+| Name | Type |
+| :------ | :------ |
+| `destination?` | *WritableStream* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:48
+Inherited from: PipeableStream.unpipe
+
+Defined in: node_modules/@types/node/stream.d.ts:43
 
 ___
 
 ### unshift
 
-▸ **unshift**(`chunk`: *any*, `encoding?`: *ascii* \| *utf8* \| *utf-8* \| *utf16le* \| *ucs2* \| *ucs-2* \| *base64* \| *latin1* \| *binary* \| *hex*): *void*
+▸ **unshift**(`chunk`: *any*, `encoding?`: ``"ascii"`` \| ``"utf8"`` \| ``"utf-8"`` \| ``"utf16le"`` \| ``"ucs2"`` \| ``"ucs-2"`` \| ``"base64"`` \| ``"latin1"`` \| ``"binary"`` \| ``"hex"``): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`chunk` | *any* |
-`encoding?` | *ascii* \| *utf8* \| *utf-8* \| *utf16le* \| *ucs2* \| *ucs-2* \| *base64* \| *latin1* \| *binary* \| *hex* |
+| Name | Type |
+| :------ | :------ |
+| `chunk` | *any* |
+| `encoding?` | ``"ascii"`` \| ``"utf8"`` \| ``"utf-8"`` \| ``"utf16le"`` \| ``"ucs2"`` \| ``"ucs-2"`` \| ``"base64"`` \| ``"latin1"`` \| ``"binary"`` \| ``"hex"`` |
 
 **Returns:** *void*
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:49
+Inherited from: PipeableStream.unshift
+
+Defined in: node_modules/@types/node/stream.d.ts:44
 
 ___
 
@@ -1218,12 +1392,14 @@ ___
 
 ▸ **wrap**(`oldStream`: *ReadableStream*): [*ReadableStream*](readablestream.md)<Produces\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`oldStream` | *ReadableStream* |
+| Name | Type |
+| :------ | :------ |
+| `oldStream` | *ReadableStream* |
 
 **Returns:** [*ReadableStream*](readablestream.md)<Produces\>
 
-Defined in: packages/types/node_modules/@types/node/stream.d.ts:50
+Inherited from: PipeableStream.wrap
+
+Defined in: node_modules/@types/node/stream.d.ts:45

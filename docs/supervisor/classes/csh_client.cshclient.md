@@ -4,13 +4,9 @@
 
 [csh-client](../modules/csh_client.md).CSHClient
 
-## Hierarchy
-
-* **CSHClient**
-
 ## Implements
 
-* *ICSHClient*
+- *ICSHClient*
 
 ## Table of contents
 
@@ -35,15 +31,15 @@
 
 \+ **new CSHClient**(`socketPath`: *string*): [*CSHClient*](csh_client.cshclient.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`socketPath` | *string* |
+| Name | Type |
+| :------ | :------ |
+| `socketPath` | *string* |
 
 **Returns:** [*CSHClient*](csh_client.cshclient.md)
 
-Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L23)
+Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L23)
 
 ## Properties
 
@@ -51,27 +47,31 @@ Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramj
 
 • **logger**: Console
 
-Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L23)
+Implementation of: ICSHClient.logger
+
+Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L23)
 
 ## Methods
 
 ### disconnect
 
-▸ **disconnect**(): *Promise*<*void*\>
+▸ **disconnect**(): *Promise*<void\>
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [csh-client.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L84)
+Implementation of: ICSHClient.disconnect
+
+Defined in: [csh-client.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L84)
 
 ___
 
 ### getPackage
 
-▸ **getPackage**(): *ReadableStream*<*Buffer*\>
+▸ **getPackage**(): *ReadableStream*<Buffer\>
 
-**Returns:** *ReadableStream*<*Buffer*\>
+**Returns:** *ReadableStream*<Buffer\>
 
-Defined in: [csh-client.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L107)
+Defined in: [csh-client.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L107)
 
 ___
 
@@ -79,28 +79,32 @@ ___
 
 ▸ **hookCommunicationHandler**(`communicationHandler`: *ICommunicationHandler*): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`communicationHandler` | *ICommunicationHandler* |
+| Name | Type |
+| :------ | :------ |
+| `communicationHandler` | *ICommunicationHandler* |
 
 **Returns:** *void*
 
-Defined in: [csh-client.ts:115](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L115)
+Implementation of: ICSHClient.hookCommunicationHandler
+
+Defined in: [csh-client.ts:115](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L115)
 
 ___
 
 ### init
 
-▸ **init**(`id`: *string*): *Promise*<*void*\>
+▸ **init**(`id`: *string*): *Promise*<void\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`id` | *string* |
+| Name | Type |
+| :------ | :------ |
+| `id` | *string* |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [csh-client.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/supervisor/src/lib/csh-client.ts#L31)
+Implementation of: ICSHClient.init
+
+Defined in: [csh-client.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L31)

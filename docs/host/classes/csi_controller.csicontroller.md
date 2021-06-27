@@ -6,7 +6,7 @@
 
 ## Hierarchy
 
-* *EventEmitter*
+- *EventEmitter*
 
   ↳ **CSIController**
 
@@ -21,13 +21,15 @@
 - [appConfig](csi_controller.csicontroller.md#appconfig)
 - [communicationHandler](csi_controller.csicontroller.md#communicationhandler)
 - [controlDataStream](csi_controller.csicontroller.md#controldatastream)
-- [downStreams](csi_controller.csicontroller.md#downstreams)
 - [id](csi_controller.csicontroller.md#id)
+- [info](csi_controller.csicontroller.md#info)
 - [initResolver](csi_controller.csicontroller.md#initresolver)
 - [logger](csi_controller.csicontroller.md#logger)
 - [router](csi_controller.csicontroller.md#router)
 - [sequence](csi_controller.csicontroller.md#sequence)
 - [sequenceArgs](csi_controller.csicontroller.md#sequenceargs)
+- [startPromise](csi_controller.csicontroller.md#startpromise)
+- [startResolver](csi_controller.csicontroller.md#startresolver)
 - [status](csi_controller.csicontroller.md#status)
 - [superVisorProcess](csi_controller.csicontroller.md#supervisorprocess)
 - [captureRejectionSymbol](csi_controller.csicontroller.md#capturerejectionsymbol)
@@ -41,6 +43,7 @@
 - [createInstanceAPIRouter](csi_controller.csicontroller.md#createinstanceapirouter)
 - [emit](csi_controller.csicontroller.md#emit)
 - [eventNames](csi_controller.csicontroller.md#eventnames)
+- [getInfo](csi_controller.csicontroller.md#getinfo)
 - [getMaxListeners](csi_controller.csicontroller.md#getmaxlisteners)
 - [handleHandshake](csi_controller.csicontroller.md#handlehandshake)
 - [handleSupervisorConnect](csi_controller.csicontroller.md#handlesupervisorconnect)
@@ -69,22 +72,24 @@
 
 ### constructor
 
-\+ **new CSIController**(`id`: *string*, `sequence`: [*Sequence*](../modules/host.md#sequence), `appConfig`: AppConfig, `args`: *undefined* \| *any*[], `communicationHandler`: *CommunicationHandler*, `logger`: Console): [*CSIController*](csi_controller.csicontroller.md)
+\+ **new CSIController**(`id`: *string*, `sequence`: [*Sequence*](sequence.sequence-1.md), `appConfig`: AppConfig, `sequenceArgs`: *undefined* \| *any*[], `communicationHandler`: *CommunicationHandler*, `logger`: Console): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`id` | *string* |
-`sequence` | [*Sequence*](../modules/host.md#sequence) |
-`appConfig` | AppConfig |
-`args` | *undefined* \| *any*[] |
-`communicationHandler` | *CommunicationHandler* |
-`logger` | Console |
+| Name | Type |
+| :------ | :------ |
+| `id` | *string* |
+| `sequence` | [*Sequence*](sequence.sequence-1.md) |
+| `appConfig` | AppConfig |
+| `sequenceArgs` | *undefined* \| *any*[] |
+| `communicationHandler` | *CommunicationHandler* |
+| `logger` | Console |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L35)
+Overrides: EventEmitter.constructor
+
+Defined in: [packages/host/src/lib/csi-controller.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L45)
 
 ## Properties
 
@@ -92,7 +97,7 @@ Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-pla
 
 • **appConfig**: AppConfig
 
-Defined in: [src/lib/csi-controller.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L19)
+Defined in: [packages/host/src/lib/csi-controller.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L23)
 
 ___
 
@@ -100,23 +105,15 @@ ___
 
 • **communicationHandler**: *CommunicationHandler*
 
-Defined in: [src/lib/csi-controller.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L34)
+Defined in: [packages/host/src/lib/csi-controller.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L44)
 
 ___
 
 ### controlDataStream
 
-• `Optional` **controlDataStream**: *undefined* \| *DataStream*
+• `Optional` **controlDataStream**: *DataStream*
 
-Defined in: [src/lib/csi-controller.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L23)
-
-___
-
-### downStreams
-
-• `Optional` **downStreams**: *undefined* \| *DownstreamStreamsConfig*<*true*\>
-
-Defined in: [src/lib/csi-controller.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L24)
+Defined in: [packages/host/src/lib/csi-controller.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L27)
 
 ___
 
@@ -124,15 +121,38 @@ ___
 
 • **id**: *string*
 
-Defined in: [src/lib/csi-controller.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L17)
+Defined in: [packages/host/src/lib/csi-controller.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L21)
+
+___
+
+### info
+
+• **info**: *object*= {}
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `created?` | Date |
+| `ports?` | *any* |
+| `started?` | Date |
+
+Defined in: [packages/host/src/lib/csi-controller.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L29)
 
 ___
 
 ### initResolver
 
-• `Optional` **initResolver**: *undefined* \| { `rej`: Function ; `res`: Function  }
+• `Optional` **initResolver**: *object*
 
-Defined in: [src/lib/csi-controller.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L27)
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `rej` | Function |
+| `res` | Function |
+
+Defined in: [packages/host/src/lib/csi-controller.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L34)
 
 ___
 
@@ -140,55 +160,80 @@ ___
 
 • **logger**: Console
 
-Defined in: [src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L35)
+Defined in: [packages/host/src/lib/csi-controller.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L45)
 
 ___
 
 ### router
 
-• `Optional` **router**: *undefined* \| APIRoute
+• `Optional` **router**: APIRoute
 
-Defined in: [src/lib/csi-controller.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L25)
+Defined in: [packages/host/src/lib/csi-controller.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L28)
 
 ___
 
 ### sequence
 
-• **sequence**: [*Sequence*](../modules/host.md#sequence)
+• **sequence**: [*Sequence*](sequence.sequence-1.md)
 
-Defined in: [src/lib/csi-controller.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L18)
+Defined in: [packages/host/src/lib/csi-controller.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L22)
 
 ___
 
 ### sequenceArgs
 
-• **sequenceArgs**: *undefined* \| *string*[]
+• **sequenceArgs**: *undefined* \| *any*[]
 
-Defined in: [src/lib/csi-controller.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L21)
+Defined in: [packages/host/src/lib/csi-controller.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L25)
+
+___
+
+### startPromise
+
+• **startPromise**: *Promise*<void\>
+
+Defined in: [packages/host/src/lib/csi-controller.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L36)
+
+___
+
+### startResolver
+
+• `Optional` **startResolver**: *object*
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `rej` | Function |
+| `res` | Function |
+
+Defined in: [packages/host/src/lib/csi-controller.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L35)
 
 ___
 
 ### status
 
-• `Optional` **status**: *undefined* \| FunctionDefinition[]
+• `Optional` **status**: FunctionDefinition[]
 
-Defined in: [src/lib/csi-controller.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L22)
+Defined in: [packages/host/src/lib/csi-controller.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L26)
 
 ___
 
 ### superVisorProcess
 
-• `Optional` **superVisorProcess**: *undefined* \| *ChildProcess*
+• `Optional` **superVisorProcess**: *ChildProcess*
 
-Defined in: [src/lib/csi-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L20)
+Defined in: [packages/host/src/lib/csi-controller.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L24)
 
 ___
 
 ### captureRejectionSymbol
 
-▪ `Readonly` `Static` **captureRejectionSymbol**: *typeof* [*captureRejectionSymbol*](csi_controller.csicontroller.md#capturerejectionsymbol)
+▪ `Static` `Readonly` **captureRejectionSymbol**: *typeof* [*captureRejectionSymbol*](csi_controller.csicontroller.md#capturerejectionsymbol)
 
-Defined in: node_modules/@types/node/events.d.ts:43
+Inherited from: EventEmitter.captureRejectionSymbol
+
+Defined in: node_modules/@types/node/events.d.ts:38
 
 ___
 
@@ -198,7 +243,9 @@ ___
 
 Sets or gets the default captureRejection value for all emitters.
 
-Defined in: node_modules/@types/node/events.d.ts:49
+Inherited from: EventEmitter.captureRejections
+
+Defined in: node_modules/@types/node/events.d.ts:44
 
 ___
 
@@ -206,13 +253,15 @@ ___
 
 ▪ `Static` **defaultMaxListeners**: *number*
 
-Defined in: node_modules/@types/node/events.d.ts:50
+Inherited from: EventEmitter.defaultMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:45
 
 ___
 
 ### errorMonitor
 
-▪ `Readonly` `Static` **errorMonitor**: *typeof* [*errorMonitor*](csi_controller.csicontroller.md#errormonitor)
+▪ `Static` `Readonly` **errorMonitor**: *typeof* [*errorMonitor*](csi_controller.csicontroller.md#errormonitor)
 
 This symbol shall be used to install a listener for only monitoring `'error'`
 events. Listeners installed using this symbol are called before the regular
@@ -222,7 +271,9 @@ Installing a listener using this symbol does not change the behavior once an
 `'error'` event is emitted, therefore the process will still crash if no
 regular `'error'` listener is installed.
 
-Defined in: node_modules/@types/node/events.d.ts:42
+Inherited from: EventEmitter.errorMonitor
+
+Defined in: node_modules/@types/node/events.d.ts:37
 
 ## Methods
 
@@ -230,16 +281,18 @@ Defined in: node_modules/@types/node/events.d.ts:42
 
 ▸ **addListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:62
+Inherited from: EventEmitter.addListener
+
+Defined in: node_modules/@types/node/events.d.ts:57
 
 ___
 
@@ -249,7 +302,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/lib/csi-controller.ts:200](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L200)
+Defined in: [packages/host/src/lib/csi-controller.ts:233](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L233)
 
 ___
 
@@ -257,16 +310,18 @@ ___
 
 ▸ **emit**(`event`: *string* \| *symbol*, ...`args`: *any*[]): *boolean*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`...args` | *any*[] |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `...args` | *any*[] |
 
 **Returns:** *boolean*
 
-Defined in: node_modules/@types/node/events.d.ts:72
+Inherited from: EventEmitter.emit
+
+Defined in: node_modules/@types/node/events.d.ts:67
 
 ___
 
@@ -276,7 +331,19 @@ ___
 
 **Returns:** (*string* \| *symbol*)[]
 
-Defined in: node_modules/@types/node/events.d.ts:77
+Inherited from: EventEmitter.eventNames
+
+Defined in: node_modules/@types/node/events.d.ts:72
+
+___
+
+### getInfo
+
+▸ **getInfo**(): *Promise*<{ `appConfig`: AppConfig ; `args`: *undefined* \| *any*[] ; `created?`: Date ; `ports?`: *any* ; `sequenceId`: *string* ; `started?`: Date  }\>
+
+**Returns:** *Promise*<{ `appConfig`: AppConfig ; `args`: *undefined* \| *any*[] ; `created?`: Date ; `ports?`: *any* ; `sequenceId`: *string* ; `started?`: Date  }\>
+
+Defined in: [packages/host/src/lib/csi-controller.ts:267](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L267)
 
 ___
 
@@ -286,49 +353,57 @@ ___
 
 **Returns:** *number*
 
-Defined in: node_modules/@types/node/events.d.ts:69
+Inherited from: EventEmitter.getMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:64
 
 ___
 
 ### handleHandshake
 
-▸ **handleHandshake**(): *Promise*<*void*\>
+▸ **handleHandshake**(`message`: *any*): *Promise*<void\>
 
-**Returns:** *Promise*<*void*\>
+#### Parameters
 
-Defined in: [src/lib/csi-controller.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L160)
+| Name | Type |
+| :------ | :------ |
+| `message` | *any* |
+
+**Returns:** *Promise*<void\>
+
+Defined in: [packages/host/src/lib/csi-controller.ts:188](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L188)
 
 ___
 
 ### handleSupervisorConnect
 
-▸ **handleSupervisorConnect**(`streams`: *DownstreamStreamsConfig*<*true*\>): *Promise*<*void*\>
+▸ **handleSupervisorConnect**(`streams`: *DownstreamStreamsConfig*<``true``\>): *Promise*<void\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`streams` | *DownstreamStreamsConfig*<*true*\> |
+| Name | Type |
+| :------ | :------ |
+| `streams` | *DownstreamStreamsConfig*<``true``\> |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [src/lib/csi-controller.ts:188](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L188)
+Defined in: [packages/host/src/lib/csi-controller.ts:221](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L221)
 
 ___
 
 ### hookupStreams
 
-▸ **hookupStreams**(`streams`: *DownstreamStreamsConfig*<*true*\>): *void*
+▸ **hookupStreams**(`streams`: *DownstreamStreamsConfig*<``true``\>): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`streams` | *DownstreamStreamsConfig*<*true*\> |
+| Name | Type |
+| :------ | :------ |
+| `streams` | *DownstreamStreamsConfig*<``true``\> |
 
 **Returns:** *void*
 
-Defined in: [src/lib/csi-controller.ts:119](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L119)
+Defined in: [packages/host/src/lib/csi-controller.ts:142](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L142)
 
 ___
 
@@ -336,15 +411,17 @@ ___
 
 ▸ **listenerCount**(`event`: *string* \| *symbol*): *number*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** *number*
 
-Defined in: node_modules/@types/node/events.d.ts:73
+Inherited from: EventEmitter.listenerCount
+
+Defined in: node_modules/@types/node/events.d.ts:68
 
 ___
 
@@ -352,25 +429,27 @@ ___
 
 ▸ **listeners**(`event`: *string* \| *symbol*): Function[]
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** Function[]
 
-Defined in: node_modules/@types/node/events.d.ts:70
+Inherited from: EventEmitter.listeners
+
+Defined in: node_modules/@types/node/events.d.ts:65
 
 ___
 
 ### main
 
-▸ **main**(): *Promise*<*void*\>
+▸ **main**(): *Promise*<void\>
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [src/lib/csi-controller.ts:67](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L67)
+Defined in: [packages/host/src/lib/csi-controller.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L84)
 
 ___
 
@@ -378,16 +457,18 @@ ___
 
 ▸ **off**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:66
+Inherited from: EventEmitter.off
+
+Defined in: node_modules/@types/node/events.d.ts:61
 
 ___
 
@@ -395,16 +476,18 @@ ___
 
 ▸ **on**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:63
+Inherited from: EventEmitter.on
+
+Defined in: node_modules/@types/node/events.d.ts:58
 
 ___
 
@@ -412,16 +495,18 @@ ___
 
 ▸ **once**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:64
+Inherited from: EventEmitter.once
+
+Defined in: node_modules/@types/node/events.d.ts:59
 
 ___
 
@@ -429,16 +514,18 @@ ___
 
 ▸ **prependListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:75
+Inherited from: EventEmitter.prependListener
+
+Defined in: node_modules/@types/node/events.d.ts:70
 
 ___
 
@@ -446,16 +533,18 @@ ___
 
 ▸ **prependOnceListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:76
+Inherited from: EventEmitter.prependOnceListener
+
+Defined in: node_modules/@types/node/events.d.ts:71
 
 ___
 
@@ -463,15 +552,17 @@ ___
 
 ▸ **rawListeners**(`event`: *string* \| *symbol*): Function[]
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
 
 **Returns:** Function[]
 
-Defined in: node_modules/@types/node/events.d.ts:71
+Inherited from: EventEmitter.rawListeners
+
+Defined in: node_modules/@types/node/events.d.ts:66
 
 ___
 
@@ -479,15 +570,17 @@ ___
 
 ▸ **removeAllListeners**(`event?`: *string* \| *symbol*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event?` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `event?` | *string* \| *symbol* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:67
+Inherited from: EventEmitter.removeAllListeners
+
+Defined in: node_modules/@types/node/events.d.ts:62
 
 ___
 
@@ -495,26 +588,28 @@ ___
 
 ▸ **removeListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`event` | *string* \| *symbol* |
-`listener` | (...`args`: *any*[]) => *void* |
+| Name | Type |
+| :------ | :------ |
+| `event` | *string* \| *symbol* |
+| `listener` | (...`args`: *any*[]) => *void* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:65
+Inherited from: EventEmitter.removeListener
+
+Defined in: node_modules/@types/node/events.d.ts:60
 
 ___
 
 ### sendConfig
 
-▸ **sendConfig**(): *Promise*<*void*\>
+▸ **sendConfig**(): *Promise*<void\>
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [src/lib/csi-controller.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L177)
+Defined in: [packages/host/src/lib/csi-controller.ts:210](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L210)
 
 ___
 
@@ -522,25 +617,27 @@ ___
 
 ▸ **setMaxListeners**(`n`: *number*): [*CSIController*](csi_controller.csicontroller.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`n` | *number* |
+| Name | Type |
+| :------ | :------ |
+| `n` | *number* |
 
 **Returns:** [*CSIController*](csi_controller.csicontroller.md)
 
-Defined in: node_modules/@types/node/events.d.ts:68
+Inherited from: EventEmitter.setMaxListeners
+
+Defined in: node_modules/@types/node/events.d.ts:63
 
 ___
 
 ### start
 
-▸ **start**(): *Promise*<*unknown*\>
+▸ **start**(): *Promise*<unknown\>
 
-**Returns:** *Promise*<*unknown*\>
+**Returns:** *Promise*<unknown\>
 
-Defined in: [src/lib/csi-controller.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L54)
+Defined in: [packages/host/src/lib/csi-controller.ts:71](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L71)
 
 ___
 
@@ -550,80 +647,88 @@ ___
 
 **Returns:** *void*
 
-Defined in: [src/lib/csi-controller.ts:78](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L78)
+Defined in: [packages/host/src/lib/csi-controller.ts:97](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L97)
 
 ___
 
 ### supervisorStopped
 
-▸ **supervisorStopped**(): *Promise*<*number*\>
+▸ **supervisorStopped**(): *Promise*<number\>
 
-**Returns:** *Promise*<*number*\>
+**Returns:** *Promise*<number\>
 
-Defined in: [src/lib/csi-controller.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/csi-controller.ts#L99)
+Defined in: [packages/host/src/lib/csi-controller.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/csi-controller.ts#L118)
 
 ___
 
 ### listenerCount
 
-▸ `Static`**listenerCount**(`emitter`: *EventEmitter*, `event`: *string* \| *symbol*): *number*
+▸ `Static` **listenerCount**(`emitter`: *EventEmitter*, `event`: *string* \| *symbol*): *number*
 
 **`deprecated`** since v4.0.0
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`emitter` | *EventEmitter* |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `emitter` | *EventEmitter* |
+| `event` | *string* \| *symbol* |
 
 **Returns:** *number*
 
-Defined in: node_modules/@types/node/events.d.ts:31
+Inherited from: EventEmitter.listenerCount
+
+Defined in: node_modules/@types/node/events.d.ts:26
 
 ___
 
 ### on
 
-▸ `Static`**on**(`emitter`: *EventEmitter*, `event`: *string*): *AsyncIterableIterator*<*any*\>
+▸ `Static` **on**(`emitter`: *EventEmitter*, `event`: *string*): *AsyncIterableIterator*<any\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`emitter` | *EventEmitter* |
-`event` | *string* |
+| Name | Type |
+| :------ | :------ |
+| `emitter` | *EventEmitter* |
+| `event` | *string* |
 
-**Returns:** *AsyncIterableIterator*<*any*\>
+**Returns:** *AsyncIterableIterator*<any\>
 
-Defined in: node_modules/@types/node/events.d.ts:28
+Inherited from: EventEmitter.on
+
+Defined in: node_modules/@types/node/events.d.ts:23
 
 ___
 
 ### once
 
-▸ `Static`**once**(`emitter`: *NodeEventTarget*, `event`: *string* \| *symbol*): *Promise*<*any*[]\>
+▸ `Static` **once**(`emitter`: *NodeEventTarget*, `event`: *string* \| *symbol*): *Promise*<any[]\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`emitter` | *NodeEventTarget* |
-`event` | *string* \| *symbol* |
+| Name | Type |
+| :------ | :------ |
+| `emitter` | *NodeEventTarget* |
+| `event` | *string* \| *symbol* |
 
-**Returns:** *Promise*<*any*[]\>
+**Returns:** *Promise*<any[]\>
 
-Defined in: node_modules/@types/node/events.d.ts:26
+Inherited from: EventEmitter.once
 
-▸ `Static`**once**(`emitter`: DOMEventTarget, `event`: *string*): *Promise*<*any*[]\>
+Defined in: node_modules/@types/node/events.d.ts:21
 
-#### Parameters:
+▸ `Static` **once**(`emitter`: DOMEventTarget, `event`: *string*): *Promise*<any[]\>
 
-Name | Type |
------- | ------ |
-`emitter` | DOMEventTarget |
-`event` | *string* |
+#### Parameters
 
-**Returns:** *Promise*<*any*[]\>
+| Name | Type |
+| :------ | :------ |
+| `emitter` | DOMEventTarget |
+| `event` | *string* |
 
-Defined in: node_modules/@types/node/events.d.ts:27
+**Returns:** *Promise*<any[]\>
+
+Inherited from: EventEmitter.once
+
+Defined in: node_modules/@types/node/events.d.ts:22

@@ -4,13 +4,9 @@
 
 [host](../modules/host.md).Host
 
-## Hierarchy
-
-* **Host**
-
 ## Implements
 
-* *IComponent*
+- *IComponent*
 
 ## Table of contents
 
@@ -22,18 +18,26 @@
 
 - [api](host.host-1.md#api)
 - [apiBase](host.host-1.md#apibase)
-- [csiControllers](host.host-1.md#csicontrollers)
+- [config](host.host-1.md#config)
+- [instanceBase](host.host-1.md#instancebase)
+- [instancesStore](host.host-1.md#instancesstore)
 - [logger](host.host-1.md#logger)
-- [sequenceStore](host.host-1.md#sequencestore)
+- [sequencesStore](host.host-1.md#sequencesstore)
 - [socketServer](host.host-1.md#socketserver)
 
 ### Methods
 
 - [attachHostAPIs](host.host-1.md#attachhostapis)
-- [getCSIControllersMap](host.host-1.md#getcsicontrollersmap)
-- [getSequencesData](host.host-1.md#getsequencesdata)
-- [getSequencesMap](host.host-1.md#getsequencesmap)
+- [getCSIControllers](host.host-1.md#getcsicontrollers)
+- [getSequence](host.host-1.md#getsequence)
+- [getSequenceInstances](host.host-1.md#getsequenceinstances)
+- [getSequences](host.host-1.md#getsequences)
+- [handleDeleteSequence](host.host-1.md#handledeletesequence)
+- [handleNewSequence](host.host-1.md#handlenewsequence)
+- [handleStartSequence](host.host-1.md#handlestartsequence)
+- [identifyExistingSequences](host.host-1.md#identifyexistingsequences)
 - [identifySequence](host.host-1.md#identifysequence)
+- [instanceMiddleware](host.host-1.md#instancemiddleware)
 - [main](host.host-1.md#main)
 - [startCSIController](host.host-1.md#startcsicontroller)
 
@@ -43,16 +47,16 @@
 
 \+ **new Host**(`apiServer`: APIExpose, `socketServer`: [*SocketServer*](socket_server.socketserver.md)): [*Host*](host.host-1.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`apiServer` | APIExpose |
-`socketServer` | [*SocketServer*](socket_server.socketserver.md) |
+| Name | Type |
+| :------ | :------ |
+| `apiServer` | APIExpose |
+| `socketServer` | [*SocketServer*](socket_server.socketserver.md) |
 
 **Returns:** [*Host*](host.host-1.md)
 
-Defined in: [src/lib/host.ts:86](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L86)
+Defined in: [packages/host/src/lib/host.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L51)
 
 ## Properties
 
@@ -60,23 +64,41 @@ Defined in: [src/lib/host.ts:86](https://github.com/scramjet-cloud-platform/scra
 
 • **api**: APIExpose
 
-Defined in: [src/lib/host.ts:64](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L64)
+Defined in: [packages/host/src/lib/host.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L33)
 
 ___
 
 ### apiBase
 
-• **apiBase**: *string*= "/api/v1"
+• **apiBase**: *string*
 
-Defined in: [src/lib/host.ts:66](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L66)
+Defined in: [packages/host/src/lib/host.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L35)
 
 ___
 
-### csiControllers
+### config
 
-• **csiControllers**: { [key: string]: [*CSIController*](csi_controller.csicontroller.md);  }
+• **config**: STHConfiguration
 
-Defined in: [src/lib/host.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L70)
+Defined in: [packages/host/src/lib/host.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L31)
+
+___
+
+### instanceBase
+
+• **instanceBase**: *string*
+
+Defined in: [packages/host/src/lib/host.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L36)
+
+___
+
+### instancesStore
+
+• **instancesStore**: *object*
+
+#### Type declaration
+
+Defined in: [packages/host/src/lib/host.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L40)
 
 ___
 
@@ -84,15 +106,17 @@ ___
 
 • **logger**: Console
 
-Defined in: [src/lib/host.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L74)
+Implementation of: IComponent.logger
+
+Defined in: [packages/host/src/lib/host.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L43)
 
 ___
 
-### sequenceStore
+### sequencesStore
 
-• **sequenceStore**: [*SequenceStore*](host.sequencestore.md)
+• **sequencesStore**: [*SequenceStore*](sequence_store.sequencestore.md)
 
-Defined in: [src/lib/host.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L72)
+Defined in: [packages/host/src/lib/host.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L41)
 
 ___
 
@@ -100,7 +124,7 @@ ___
 
 • **socketServer**: [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: [src/lib/host.ts:68](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L68)
+Defined in: [packages/host/src/lib/host.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L38)
 
 ## Methods
 
@@ -109,91 +133,192 @@ Defined in: [src/lib/host.ts:68](https://github.com/scramjet-cloud-platform/scra
 ▸ **attachHostAPIs**(): *void*
 
 Setting up handlers for general Host API endpoints:
-- listing all instances running on the CSH
-- listing all sequences saved on the CSH
 - creating Sequence (passing stream with the compressed package)
 - starting Instance (based on a given Sequence ID passed in the HTTP request body)
+- getting sequence details
+- listing all instances running on the CSH
+- listing all sequences saved on the CSH
+- intance
 
 **Returns:** *void*
 
-Defined in: [src/lib/host.ts:127](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L127)
+Defined in: [packages/host/src/lib/host.ts:112](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L112)
 
 ___
 
-### getCSIControllersMap
+### getCSIControllers
 
-▸ **getCSIControllersMap**(): *object*
+▸ **getCSIControllers**(): { `id`: *string* ; `sequence`: [*Sequence*](sequence.sequence-1.md) ; `status`: *undefined* \| FunctionDefinition[]  }[]
 
-**Returns:** *object*
+**Returns:** { `id`: *string* ; `sequence`: [*Sequence*](sequence.sequence-1.md) ; `status`: *undefined* \| FunctionDefinition[]  }[]
 
-Defined in: [src/lib/host.ts:239](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L239)
-
-___
-
-### getSequencesData
-
-▸ **getSequencesData**(`sequenceId`: *string*): [*Sequence*](../modules/host.md#sequence)
-
-#### Parameters:
-
-Name | Type |
------- | ------ |
-`sequenceId` | *string* |
-
-**Returns:** [*Sequence*](../modules/host.md#sequence)
-
-Defined in: [src/lib/host.ts:248](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L248)
+Defined in: [packages/host/src/lib/host.ts:289](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L289)
 
 ___
 
-### getSequencesMap
+### getSequence
 
-▸ **getSequencesMap**(): *object*
+▸ **getSequence**(`id`: *string*): ISequence
 
-**Returns:** *object*
+#### Parameters
 
-Defined in: [src/lib/host.ts:244](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L244)
+| Name | Type |
+| :------ | :------ |
+| `id` | *string* |
+
+**Returns:** ISequence
+
+Defined in: [packages/host/src/lib/host.ts:301](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L301)
+
+___
+
+### getSequenceInstances
+
+▸ **getSequenceInstances**(`sequenceId`: *string*): *any*[]
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sequenceId` | *string* |
+
+**Returns:** *any*[]
+
+Defined in: [packages/host/src/lib/host.ts:309](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L309)
+
+___
+
+### getSequences
+
+▸ **getSequences**(): *any*
+
+**Returns:** *any*
+
+Defined in: [packages/host/src/lib/host.ts:305](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L305)
+
+___
+
+### handleDeleteSequence
+
+▸ **handleDeleteSequence**(`req`: ParsedMessage): *Promise*<{ `opStatus`: ReasonPhrases  }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `req` | ParsedMessage |
+
+**Returns:** *Promise*<{ `opStatus`: ReasonPhrases  }\>
+
+Defined in: [packages/host/src/lib/host.ts:159](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L159)
+
+___
+
+### handleNewSequence
+
+▸ **handleNewSequence**(`stream`: *IncomingMessage*): *Promise*<{ `error`: *undefined* ; `id`: *string* ; `opStatus`: *undefined* = 422 } \| { `error`: *any* ; `id`: *undefined* ; `opStatus`: *number* = 422 }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `stream` | *IncomingMessage* |
+
+**Returns:** *Promise*<{ `error`: *undefined* ; `id`: *string* ; `opStatus`: *undefined* = 422 } \| { `error`: *any* ; `id`: *undefined* ; `opStatus`: *number* = 422 }\>
+
+Defined in: [packages/host/src/lib/host.ts:189](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L189)
+
+___
+
+### handleStartSequence
+
+▸ **handleStartSequence**(`req`: ParsedMessage): *Promise*<undefined \| { `id`: *undefined* ; `opStatus`: ReasonPhrases  } \| { `id`: *string* ; `opStatus`: *undefined* = 422 }\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `req` | ParsedMessage |
+
+**Returns:** *Promise*<undefined \| { `id`: *undefined* ; `opStatus`: ReasonPhrases  } \| { `id`: *string* ; `opStatus`: *undefined* = 422 }\>
+
+Defined in: [packages/host/src/lib/host.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L212)
+
+___
+
+### identifyExistingSequences
+
+▸ **identifyExistingSequences**(): *Promise*<void\>
+
+**Returns:** *Promise*<void\>
+
+Defined in: [packages/host/src/lib/host.ts:169](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L169)
 
 ___
 
 ### identifySequence
 
-▸ **identifySequence**(`stream`: *Readable*): *MaybePromise*<RunnerConfig\>
+▸ **identifySequence**(`stream`: *Readable*, `id`: *string*): *Promise*<RunnerConfig\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`stream` | *Readable* |
+| Name | Type |
+| :------ | :------ |
+| `stream` | *Readable* |
+| `id` | *string* |
 
-**Returns:** *MaybePromise*<RunnerConfig\>
+**Returns:** *Promise*<RunnerConfig\>
 
-Defined in: [src/lib/host.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L211)
+Defined in: [packages/host/src/lib/host.ts:237](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L237)
+
+___
+
+### instanceMiddleware
+
+▸ **instanceMiddleware**(`req`: ParsedMessage, `res`: *ServerResponse*, `next`: NextCallback): *void*
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `req` | ParsedMessage |
+| `res` | *ServerResponse* |
+| `next` | NextCallback |
+
+**Returns:** *void*
+
+Defined in: [packages/host/src/lib/host.ts:132](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L132)
 
 ___
 
 ### main
 
-▸ **main**(): *Promise*<*void*\>
+▸ **main**(`__namedParameters?`: *Partial*<{ `identifyExisting`: *boolean*  }\>): *Promise*<void\>
 
-**Returns:** *Promise*<*void*\>
+#### Parameters
 
-Defined in: [src/lib/host.ts:97](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L97)
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `__namedParameters` | *Partial*<{ `identifyExisting`: *boolean*  }\> | {} |
+
+**Returns:** *Promise*<void\>
+
+Defined in: [packages/host/src/lib/host.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L69)
 
 ___
 
 ### startCSIController
 
-▸ **startCSIController**(`sequence`: [*Sequence*](../modules/host.md#sequence), `appConfig`: AppConfig, `sequenceArgs?`: *any*[]): *Promise*<*string*\>
+▸ **startCSIController**(`sequence`: [*Sequence*](sequence.sequence-1.md), `appConfig`: AppConfig, `sequenceArgs?`: *any*[]): *Promise*<string\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`sequence` | [*Sequence*](../modules/host.md#sequence) |
-`appConfig` | AppConfig |
-`sequenceArgs?` | *any*[] |
+| Name | Type |
+| :------ | :------ |
+| `sequence` | [*Sequence*](sequence.sequence-1.md) |
+| `appConfig` | AppConfig |
+| `sequenceArgs?` | *any*[] |
 
-**Returns:** *Promise*<*string*\>
+**Returns:** *Promise*<string\>
 
-Defined in: [src/lib/host.ts:225](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/host/src/lib/host.ts#L225)
+Defined in: [packages/host/src/lib/host.ts:260](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L260)

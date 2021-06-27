@@ -14,18 +14,18 @@
 
 ### getObject
 
-▸ **getObject**(`object`: *any*, `req`: IncomingMessage): *Promise*<*any*\>
+▸ **getObject**(`object`: *any*, `req`: IncomingMessage): *Promise*<any\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`object` | *any* |
-`req` | IncomingMessage |
+| Name | Type |
+| :------ | :------ |
+| `object` | *any* |
+| `req` | IncomingMessage |
 
-**Returns:** *Promise*<*any*\>
+**Returns:** *Promise*<any\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/data-extractors.ts#L7)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L6)
 
 ___
 
@@ -33,31 +33,31 @@ ___
 
 ▸ **getStream**(`req`: IncomingMessage, `stream`: StreamInput): *Promise*<Readable\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`req` | IncomingMessage |
-`stream` | StreamInput |
+| Name | Type |
+| :------ | :------ |
+| `req` | IncomingMessage |
+| `stream` | StreamInput |
 
 **Returns:** *Promise*<Readable\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/data-extractors.ts#L23)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L22)
 
 ___
 
 ### getWritable
 
-▸ **getWritable**(`object`: *any*, `req`: IncomingMessage, `res`: ServerResponse): *Promise*<Writable\>
+▸ **getWritable**(`object`: *any*, `req`: IncomingMessage, `res`: ServerResponse): *Promise*<Writable \| Object\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`object` | *any* |
-`req` | IncomingMessage |
-`res` | ServerResponse |
+| Name | Type |
+| :------ | :------ |
+| `object` | *any* |
+| `req` | IncomingMessage |
+| `res` | ServerResponse |
 
-**Returns:** *Promise*<Writable\>
+**Returns:** *Promise*<Writable \| Object\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/data-extractors.ts#L15)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L14)

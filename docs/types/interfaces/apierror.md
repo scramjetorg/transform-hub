@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-* *Error*
+- *Error*
 
   ↳ **APIError**
 
@@ -23,9 +23,9 @@
 
 ### cause
 
-• `Optional` **cause**: *undefined* \| Error
+• `Optional` **cause**: Error
 
-Defined in: [packages/types/src/api-expose.ts:50](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L50)
+Defined in: [packages/types/src/api-expose.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L53)
 
 ___
 
@@ -35,7 +35,7 @@ ___
 
 Http status code to be outputted
 
-Defined in: [packages/types/src/api-expose.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L42)
+Defined in: [packages/types/src/api-expose.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L45)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 The message that will be sent in reason line
 
-Defined in: [packages/types/src/api-expose.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/api-expose.ts#L46)
+Defined in: [packages/types/src/api-expose.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L49)
 
 ___
 
@@ -53,7 +53,9 @@ ___
 
 • **message**: *string*
 
-Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:974
+Inherited from: Error.message
+
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
@@ -61,12 +63,16 @@ ___
 
 • **name**: *string*
 
-Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:973
+Inherited from: Error.name
+
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
 
 ___
 
 ### stack
 
-• `Optional` **stack**: *undefined* \| *string*
+• `Optional` **stack**: *string*
 
-Defined in: node_modules/typedoc/node_modules/typescript/lib/lib.es5.d.ts:975
+Inherited from: Error.stack
+
+Defined in: node_modules/typescript/lib/lib.es5.d.ts:975

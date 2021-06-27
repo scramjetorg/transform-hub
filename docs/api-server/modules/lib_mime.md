@@ -13,32 +13,32 @@
 
 ### mimeAccepts
 
-▸ `Const`**mimeAccepts**(`accepted`: *undefined* \| *string*, `served`: *string*[]): *string*
+▸ `Const` **mimeAccepts**(`accepted`: *undefined* \| *string*, `served`: *string*[]): *string*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`accepted` | *undefined* \| *string* |
-`served` | *string*[] |
+| Name | Type |
+| :------ | :------ |
+| `accepted` | *undefined* \| *string* |
+| `served` | *string*[] |
 
 **Returns:** *string*
 
-Defined in: [packages/api-server/src/lib/mime.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/mime.ts#L19)
+Defined in: [packages/api-server/src/lib/mime.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/mime.ts#L19)
 
 ___
 
 ### mimeCompare
 
-▸ `Const`**mimeCompare**(`accepted`: *string*[], `served`: *string*[]): *undefined* \| *string*
+▸ `Const` **mimeCompare**(`accepted`: *string*[], `served`: *string*[]): *undefined* \| *string*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`accepted` | *string*[] |
-`served` | *string*[] |
+| Name | Type |
+| :------ | :------ |
+| `accepted` | *string*[] |
+| `served` | *string*[] |
 
 **Returns:** *undefined* \| *string*
 
-Defined in: [packages/api-server/src/lib/mime.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/mime.ts#L3)
+Defined in: [packages/api-server/src/lib/mime.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/mime.ts#L3)

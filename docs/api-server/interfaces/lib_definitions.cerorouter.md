@@ -6,13 +6,11 @@
 
 ## Hierarchy
 
-* *TRouter*<[*CeroMiddleware*](../modules/lib_definitions.md#ceromiddleware)\>
+- *TRouter*<[*CeroMiddleware*](../modules/lib_definitions.md#ceromiddleware)\>
 
   ↳ **CeroRouter**
 
   ↳↳ [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
-
-  ↳↳ [*SequentialCeroRouter*](index.sequentialcerorouter.md)
 
 ## Table of contents
 
@@ -39,15 +37,17 @@
 
 ▸ **add**(`method`: Methods, `pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`method` | Methods |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `method` | Methods |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.add
 
 Defined in: node_modules/trouter/index.d.ts:14
 
@@ -57,14 +57,16 @@ ___
 
 ▸ **all**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.all
 
 Defined in: node_modules/trouter/index.d.ts:16
 
@@ -74,14 +76,16 @@ ___
 
 ▸ **connect**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.connect
 
 Defined in: node_modules/trouter/index.d.ts:21
 
@@ -91,14 +95,16 @@ ___
 
 ▸ **delete**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.delete
 
 Defined in: node_modules/trouter/index.d.ts:22
 
@@ -108,19 +114,21 @@ ___
 
 ▸ **find**(`method`: Methods, `url`: *string*): *object*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`method` | Methods |
-`url` | *string* |
+| Name | Type |
+| :------ | :------ |
+| `method` | Methods |
+| `url` | *string* |
 
 **Returns:** *object*
 
-Name | Type |
------- | ------ |
-`handlers` | Middleware[] |
-`params` | *Record*<*string*, *string*\> |
+| Name | Type |
+| :------ | :------ |
+| `handlers` | Middleware[] |
+| `params` | *Record*<string, string\> |
+
+Inherited from: TRouter.find
 
 Defined in: node_modules/trouter/index.d.ts:10
 
@@ -130,14 +138,16 @@ ___
 
 ▸ **get**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.get
 
 Defined in: node_modules/trouter/index.d.ts:17
 
@@ -147,14 +157,16 @@ ___
 
 ▸ **head**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.head
 
 Defined in: node_modules/trouter/index.d.ts:18
 
@@ -164,17 +176,17 @@ ___
 
 ▸ **lookup**(`req`: *IncomingMessage*, `res`: *ServerResponse*, `next`: NextCallback): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`req` | *IncomingMessage* |
-`res` | *ServerResponse* |
-`next` | NextCallback |
+| Name | Type |
+| :------ | :------ |
+| `req` | *IncomingMessage* |
+| `res` | *ServerResponse* |
+| `next` | NextCallback |
 
 **Returns:** *void*
 
-Defined in: [packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L10)
+Defined in: [packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L10)
 
 ___
 
@@ -182,14 +194,16 @@ ___
 
 ▸ **options**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.options
 
 Defined in: node_modules/trouter/index.d.ts:20
 
@@ -199,14 +213,16 @@ ___
 
 ▸ **patch**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.patch
 
 Defined in: node_modules/trouter/index.d.ts:19
 
@@ -216,14 +232,16 @@ ___
 
 ▸ **post**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.post
 
 Defined in: node_modules/trouter/index.d.ts:24
 
@@ -233,14 +251,16 @@ ___
 
 ▸ **put**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.put
 
 Defined in: node_modules/trouter/index.d.ts:25
 
@@ -250,14 +270,16 @@ ___
 
 ▸ **trace**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
+
+Inherited from: TRouter.trace
 
 Defined in: node_modules/trouter/index.d.ts:23
 
@@ -267,13 +289,15 @@ ___
 
 ▸ **use**(`path`: *string* \| *RegExp*, ...`middlewares`: Middleware[]): [*CeroRouter*](lib_definitions.cerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`path` | *string* \| *RegExp* |
-`...middlewares` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `path` | *string* \| *RegExp* |
+| `...middlewares` | Middleware[] |
 
 **Returns:** [*CeroRouter*](lib_definitions.cerorouter.md)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L9)
+Overrides: TRouter.use
+
+Defined in: [packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L9)

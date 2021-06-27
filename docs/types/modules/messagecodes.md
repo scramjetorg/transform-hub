@@ -23,17 +23,17 @@
 
 ### ACKNOWLEDGE
 
-Ƭ **ACKNOWLEDGE**: *ACKNOWLEDGE*
+Ƭ **ACKNOWLEDGE**: ``"ACKNOWLEDGE"``
 
-Defined in: [packages/types/src/runner.ts:87](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L87)
+Defined in: [packages/types/src/runner.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L29)
 
 ___
 
 ### ALIVE
 
-Ƭ **ALIVE**: *ALIVE*
+Ƭ **ALIVE**: ``"ALIVE"``
 
-Defined in: [packages/types/src/runner.ts:92](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L92)
+Defined in: [packages/types/src/runner.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L34)
 
 ___
 
@@ -41,76 +41,76 @@ ___
 
 Ƭ **ANY**: [*STOP*](messagecodes.md#stop) \| [*KILL*](messagecodes.md#kill)
 
-Defined in: [packages/types/src/runner.ts:98](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L98)
+Defined in: [packages/types/src/runner.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L40)
 
 ___
 
 ### DESCRIBE\_SEQUENCE
 
-Ƭ **DESCRIBE\_SEQUENCE**: *DESCRIBE_SEQUENCE*
+Ƭ **DESCRIBE\_SEQUENCE**: ``"DESCRIBE_SEQUENCE"``
 
-Defined in: [packages/types/src/runner.ts:94](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L94)
+Defined in: [packages/types/src/runner.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L36)
 
 ___
 
 ### ERROR
 
-Ƭ **ERROR**: *ERROR*
+Ƭ **ERROR**: ``"ERROR"``
 
-Defined in: [packages/types/src/runner.ts:95](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L95)
+Defined in: [packages/types/src/runner.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L37)
 
 ___
 
 ### FORCE\_CONFIRM\_ALIVE
 
-Ƭ **FORCE\_CONFIRM\_ALIVE**: *FORCE_CONFIRM_ALIVE*
+Ƭ **FORCE\_CONFIRM\_ALIVE**: ``"FORCE_CONFIRM_ALIVE"``
 
-Defined in: [packages/types/src/runner.ts:93](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L93)
+Defined in: [packages/types/src/runner.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L35)
 
 ___
 
 ### KILL
 
-Ƭ **KILL**: *KILL*
+Ƭ **KILL**: ``"KILL"``
 
-Defined in: [packages/types/src/runner.ts:90](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L90)
+Defined in: [packages/types/src/runner.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L32)
 
 ___
 
 ### MONITORING
 
-Ƭ **MONITORING**: *MONITORING*
+Ƭ **MONITORING**: ``"MONITORING"``
 
-Defined in: [packages/types/src/runner.ts:96](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L96)
+Defined in: [packages/types/src/runner.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L38)
 
 ___
 
 ### MONITORING\_RATE
 
-Ƭ **MONITORING\_RATE**: *MONITORING_RATE*
+Ƭ **MONITORING\_RATE**: ``"MONITORING_RATE"``
 
-Defined in: [packages/types/src/runner.ts:91](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L91)
+Defined in: [packages/types/src/runner.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L33)
 
 ___
 
 ### PING
 
-Ƭ **PING**: *PING*
+Ƭ **PING**: ``"PING"``
 
-Defined in: [packages/types/src/runner.ts:88](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L88)
+Defined in: [packages/types/src/runner.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L30)
 
 ___
 
 ### PONG
 
-Ƭ **PONG**: *PONG*
+Ƭ **PONG**: ``"PONG"``
 
-Defined in: [packages/types/src/runner.ts:86](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L86)
+Defined in: [packages/types/src/runner.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L28)
 
 ___
 
 ### STOP
 
-Ƭ **STOP**: *STOP*
+Ƭ **STOP**: ``"STOP"``
 
-Defined in: [packages/types/src/runner.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/runner.ts#L89)
+Defined in: [packages/types/src/runner.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L31)

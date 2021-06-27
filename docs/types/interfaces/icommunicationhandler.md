@@ -2,10 +2,6 @@
 
 # Interface: ICommunicationHandler
 
-## Hierarchy
-
-* **ICommunicationHandler**
-
 ## Table of contents
 
 ### Methods
@@ -27,47 +23,48 @@
 
 ### addControlHandler
 
-▸ **addControlHandler**<T\>(`code`: T, `handler`: *ControlMessageHandler*<T\>): [*ICommunicationHandler*](icommunicationhandler.md)
+▸ **addControlHandler**<T\>(`code`: T, `handler`: [*ControlMessageHandler*](../README.md#controlmessagehandler)<T\>): [*ICommunicationHandler*](icommunicationhandler.md)
 
-#### Type parameters:
+#### Type parameters
 
-Name | Type |
------- | ------ |
-`T` | [*ControlMessageCode*](../README.md#controlmessagecode) |
+| Name | Type |
+| :------ | :------ |
+| `T` | [*ControlMessageCode*](../README.md#controlmessagecode) |
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`code` | T |
-`handler` | *ControlMessageHandler*<T\> |
+| Name | Type |
+| :------ | :------ |
+| `code` | T |
+| `handler` | [*ControlMessageHandler*](../README.md#controlmessagehandler)<T\> |
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L20)
+Defined in: [packages/types/src/communication-handler.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L23)
 
 ___
 
 ### addMonitoringHandler
 
-▸ **addMonitoringHandler**<T\>(`code`: T, `handler`: *MonitoringMessageHandler*<T\>): [*ICommunicationHandler*](icommunicationhandler.md)
+▸ **addMonitoringHandler**<T\>(`code`: T, `handler`: [*MonitoringMessageHandler*](../README.md#monitoringmessagehandler)<T\>, `blocking?`: *boolean*): [*ICommunicationHandler*](icommunicationhandler.md)
 
-#### Type parameters:
+#### Type parameters
 
-Name | Type |
------- | ------ |
-`T` | [*MonitoringMessageCode*](../README.md#monitoringmessagecode) |
+| Name | Type |
+| :------ | :------ |
+| `T` | [*MonitoringMessageCode*](../README.md#monitoringmessagecode) |
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`code` | T |
-`handler` | *MonitoringMessageHandler*<T\> |
+| Name | Type |
+| :------ | :------ |
+| `code` | T |
+| `handler` | [*MonitoringMessageHandler*](../README.md#monitoringmessagehandler)<T\> |
+| `blocking?` | *boolean* |
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L18)
+Defined in: [packages/types/src/communication-handler.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L20)
 
 ___
 
@@ -79,7 +76,7 @@ Returns a copy of log stream for reading - does not interact with the fifo strea
 
 **Returns:** [*LoggerOutput*](../README.md#loggeroutput)
 
-Defined in: [packages/types/src/communication-handler.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L36)
+Defined in: [packages/types/src/communication-handler.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L39)
 
 ___
 
@@ -91,7 +88,7 @@ Returns a copy of monitor stream for reading - does not interact with the fifo s
 
 **Returns:** *DataStream*
 
-Defined in: [packages/types/src/communication-handler.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L32)
+Defined in: [packages/types/src/communication-handler.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L35)
 
 ___
 
@@ -103,45 +100,45 @@ Gets stdio streams for full interaction
 
 **Returns:** *object*
 
-Name | Type |
------- | ------ |
-`stderr` | *Readable* |
-`stdin` | *Writable* |
-`stdout` | *Readable* |
+| Name | Type |
+| :------ | :------ |
+| `stderr` | *Readable* |
+| `stdin` | *Writable* |
+| `stdout` | *Readable* |
 
-Defined in: [packages/types/src/communication-handler.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L41)
+Defined in: [packages/types/src/communication-handler.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L44)
 
 ___
 
 ### hookDownstreamStreams
 
-▸ **hookDownstreamStreams**(`str`: [*DownstreamStreamsConfig*](../README.md#downstreamstreamsconfig)<*true*\>): [*ICommunicationHandler*](icommunicationhandler.md)
+▸ **hookDownstreamStreams**(`str`: [*DownstreamStreamsConfig*](../README.md#downstreamstreamsconfig)<``true``\>): [*ICommunicationHandler*](icommunicationhandler.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`str` | [*DownstreamStreamsConfig*](../README.md#downstreamstreamsconfig)<*true*\> |
+| Name | Type |
+| :------ | :------ |
+| `str` | [*DownstreamStreamsConfig*](../README.md#downstreamstreamsconfig)<``true``\> |
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L16)
+Defined in: [packages/types/src/communication-handler.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L18)
 
 ___
 
 ### hookUpstreamStreams
 
-▸ **hookUpstreamStreams**(`str`: [*UpstreamStreamsConfig*](../README.md#upstreamstreamsconfig)<*true*\>): [*ICommunicationHandler*](icommunicationhandler.md)
+▸ **hookUpstreamStreams**(`str`: [*UpstreamStreamsConfig*](../README.md#upstreamstreamsconfig)<``true``\>): [*ICommunicationHandler*](icommunicationhandler.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`str` | [*UpstreamStreamsConfig*](../README.md#upstreamstreamsconfig)<*true*\> |
+| Name | Type |
+| :------ | :------ |
+| `str` | [*UpstreamStreamsConfig*](../README.md#upstreamstreamsconfig)<``true``\> |
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L15)
+Defined in: [packages/types/src/communication-handler.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L17)
 
 ___
 
@@ -151,7 +148,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L24)
+Defined in: [packages/types/src/communication-handler.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L27)
 
 ___
 
@@ -161,7 +158,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L22)
+Defined in: [packages/types/src/communication-handler.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L25)
 
 ___
 
@@ -171,50 +168,50 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L23)
+Defined in: [packages/types/src/communication-handler.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L26)
 
 ___
 
 ### sendControlMessage
 
-▸ **sendControlMessage**<T\>(`code`: T, `msg`: [*MessageDataType*](../README.md#messagedatatype)<T\>): *Promise*<*void*\>
+▸ **sendControlMessage**<T\>(`code`: T, `msg`: [*MessageDataType*](../README.md#messagedatatype)<T\>): *Promise*<void\>
 
-#### Type parameters:
+#### Type parameters
 
-Name | Type |
------- | ------ |
-`T` | [*ControlMessageCode*](../README.md#controlmessagecode) |
+| Name | Type |
+| :------ | :------ |
+| `T` | [*ControlMessageCode*](../README.md#controlmessagecode) |
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`code` | T |
-`msg` | [*MessageDataType*](../README.md#messagedatatype)<T\> |
+| Name | Type |
+| :------ | :------ |
+| `code` | T |
+| `msg` | [*MessageDataType*](../README.md#messagedatatype)<T\> |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [packages/types/src/communication-handler.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L27)
+Defined in: [packages/types/src/communication-handler.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L30)
 
 ___
 
 ### sendMonitoringMessage
 
-▸ **sendMonitoringMessage**<T\>(`code`: T, `msg`: [*MessageDataType*](../README.md#messagedatatype)<T\>): *Promise*<*void*\>
+▸ **sendMonitoringMessage**<T\>(`code`: T, `msg`: [*MessageDataType*](../README.md#messagedatatype)<T\>): *Promise*<void\>
 
-#### Type parameters:
+#### Type parameters
 
-Name | Type |
------- | ------ |
-`T` | [*MonitoringMessageCode*](../README.md#monitoringmessagecode) |
+| Name | Type |
+| :------ | :------ |
+| `T` | [*MonitoringMessageCode*](../README.md#monitoringmessagecode) |
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`code` | T |
-`msg` | [*MessageDataType*](../README.md#messagedatatype)<T\> |
+| Name | Type |
+| :------ | :------ |
+| `code` | T |
+| `msg` | [*MessageDataType*](../README.md#messagedatatype)<T\> |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
-Defined in: [packages/types/src/communication-handler.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/communication-handler.ts#L26)
+Defined in: [packages/types/src/communication-handler.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L29)

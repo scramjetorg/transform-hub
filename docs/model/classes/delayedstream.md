@@ -2,10 +2,6 @@
 
 # Class: DelayedStream
 
-## Hierarchy
-
-* **DelayedStream**
-
 ## Table of contents
 
 ### Constructors
@@ -33,9 +29,9 @@
 
 ### \_stream
 
-• `Private` `Optional` **\_stream**: *undefined* \| *PassThrough*
+• `Private` `Optional` **\_stream**: *PassThrough*
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/utils/delayed-stream.ts#L4)
+Defined in: [packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L4)
 
 ## Methods
 
@@ -45,7 +41,7 @@ Defined in: [packages/model/src/utils/delayed-stream.ts:4](https://github.com/sc
 
 **Returns:** *PassThrough*
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/utils/delayed-stream.ts#L6)
+Defined in: [packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L6)
 
 ___
 
@@ -53,12 +49,12 @@ ___
 
 ▸ **run**(`inputStream`: *Readable* \| *Writable*): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`inputStream` | *Readable* \| *Writable* |
+| Name | Type |
+| :------ | :------ |
+| `inputStream` | *Readable* \| *Writable* |
 
 **Returns:** *void*
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/model/src/utils/delayed-stream.ts#L15)
+Defined in: [packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L15)

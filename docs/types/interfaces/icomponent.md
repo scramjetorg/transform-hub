@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-* **IComponent**
+- **IComponent**
 
   ↳ [*ICSHClient*](icshclient.md)
 
@@ -20,4 +20,4 @@
 
 • **logger**: Console
 
-Defined in: [packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/component.ts#L2)
+Defined in: [packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/component.ts#L2)

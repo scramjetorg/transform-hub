@@ -20,17 +20,17 @@
 
 Ƭ **MessageFormatter**: <Z\>(`name`: *string*, `func`: *string*, `args`: Z) => *string*
 
-#### Type declaration:
+#### Type declaration
 
 ▸ <Z\>(`name`: *string*, `func`: *string*, `args`: Z): *string*
 
-#### Type parameters:
+#### Type parameters
 
 | Name | Type |
 | :------ | :------ |
 | `Z` | *any*[] |
 
-#### Parameters:
+#### Parameters
 
 | Name | Type |
 | :------ | :------ |
@@ -40,7 +40,7 @@
 
 **Returns:** *string*
 
-Defined in: [index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/logger/src/index.ts#L9)
+Defined in: [index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L9)
 
 ## Functions
 
@@ -50,7 +50,7 @@ Defined in: [index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi
 
 Pipes log streams to the provided outputs in serialized format
 
-#### Parameters:
+#### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
@@ -59,17 +59,17 @@ Pipes log streams to the provided outputs in serialized format
 
 **Returns:** *void*
 
-Defined in: [index.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/logger/src/index.ts#L138)
+Defined in: [index.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L138)
 
 ___
 
 ### close
 
-▸ `Const`**close**(): *void*
+▸ `Const` **close**(): *void*
 
 **Returns:** *void*
 
-Defined in: [index.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/logger/src/index.ts#L128)
+Defined in: [index.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L128)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 Creates a Console compatible logger with basic decorations
 
-#### Parameters:
+#### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
@@ -90,4 +90,4 @@ Creates a Console compatible logger with basic decorations
 
 a Console compatible logger
 
-Defined in: [index.ts:151](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/logger/src/index.ts#L151)
+Defined in: [index.ts:151](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L151)

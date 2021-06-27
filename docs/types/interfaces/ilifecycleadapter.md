@@ -2,10 +2,6 @@
 
 # Interface: ILifeCycleAdapter
 
-## Hierarchy
-
-* **ILifeCycleAdapter**
-
 ## Table of contents
 
 ### Methods
@@ -24,31 +20,31 @@
 
 ### cleanup
 
-▸ **cleanup**(): *MaybePromise*<*void*\>
+▸ **cleanup**(): *MaybePromise*<void\>
 
 Removes resources.
 
-**Returns:** *MaybePromise*<*void*\>
+**Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/lifecycle.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L33)
+Defined in: [packages/types/src/lifecycle.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L35)
 
 ___
 
 ### hookCommunicationHandler
 
-▸ **hookCommunicationHandler**(`communicationHandler`: [*ICommunicationHandler*](icommunicationhandler.md)): *MaybePromise*<*void*\>
+▸ **hookCommunicationHandler**(`communicationHandler`: [*ICommunicationHandler*](icommunicationhandler.md)): *MaybePromise*<void\>
 
 Hooks up downstream streams.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`communicationHandler` | [*ICommunicationHandler*](icommunicationhandler.md) | CommunicationHandler    |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `communicationHandler` | [*ICommunicationHandler*](icommunicationhandler.md) | CommunicationHandler |
 
-**Returns:** *MaybePromise*<*void*\>
+**Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/lifecycle.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L47)
+Defined in: [packages/types/src/lifecycle.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L49)
 
 ___
 
@@ -58,27 +54,27 @@ ___
 
 Passes stream to PreRunner and resolves with PreRunner's results.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`stream` | *Readable* | Stream with package.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `stream` | *Readable* | Stream with package. |
 
 **Returns:** *MaybePromise*<[*RunnerConfig*](../README.md#runnerconfig)\>
 
-Defined in: [packages/types/src/lifecycle.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L20)
+Defined in: [packages/types/src/lifecycle.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L22)
 
 ___
 
 ### init
 
-▸ **init**(): *MaybePromise*<*void*\>
+▸ **init**(): *MaybePromise*<void\>
 
 Initializes Lifecycle adapter.
 
-**Returns:** *MaybePromise*<*void*\>
+**Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/lifecycle.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L12)
+Defined in: [packages/types/src/lifecycle.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L14)
 
 ___
 
@@ -86,72 +82,72 @@ ___
 
 ▸ **monitorRate**(`rps`: *number*): [*ILifeCycleAdapter*](ilifecycleadapter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`rps` | *number* |
+| Name | Type |
+| :------ | :------ |
+| `rps` | *number* |
 
 **Returns:** [*ILifeCycleAdapter*](ilifecycleadapter.md)
 
-Defined in: [packages/types/src/lifecycle.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L49)
+Defined in: [packages/types/src/lifecycle.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L51)
 
 ___
 
 ### remove
 
-▸ **remove**(): *MaybePromise*<*void*\>
+▸ **remove**(): *MaybePromise*<void\>
 
-**Returns:** *MaybePromise*<*void*\>
+**Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/lifecycle.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L52)
+Defined in: [packages/types/src/lifecycle.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L54)
 
 ___
 
 ### run
 
-▸ **run**(`config`: [*RunnerConfig*](../README.md#runnerconfig)): *Promise*<*number*\>
+▸ **run**(`config`: [*RunnerConfig*](../README.md#runnerconfig)): *Promise*<number\>
 
 Starts Runner.
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`config` | [*RunnerConfig*](../README.md#runnerconfig) |
+| Name | Type |
+| :------ | :------ |
+| `config` | [*RunnerConfig*](../README.md#runnerconfig) |
 
-**Returns:** *Promise*<*number*\>
+**Returns:** *Promise*<number\>
 
 Runner exit code.
 
-Defined in: [packages/types/src/lifecycle.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L28)
+Defined in: [packages/types/src/lifecycle.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L30)
 
 ___
 
 ### snapshot
 
-▸ **snapshot**(): *MaybePromise*<*string*\>
+▸ **snapshot**(): *MaybePromise*<string\>
 
 Request snapshot and returns snapshot url.\
 
-**Returns:** *MaybePromise*<*string*\>
+**Returns:** *MaybePromise*<string\>
 
 snapshot url.
 
-Defined in: [packages/types/src/lifecycle.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L40)
+Defined in: [packages/types/src/lifecycle.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L42)
 
 ___
 
 ### stats
 
-▸ **stats**(`msg`: MonitoringMessageData): *Promise*<MonitoringMessageData\>
+▸ **stats**(`msg`: [*MonitoringMessageData*](../README.md#monitoringmessagedata)): *Promise*<[*MonitoringMessageData*](../README.md#monitoringmessagedata)\>
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`msg` | MonitoringMessageData |
+| Name | Type |
+| :------ | :------ |
+| `msg` | [*MonitoringMessageData*](../README.md#monitoringmessagedata) |
 
-**Returns:** *Promise*<MonitoringMessageData\>
+**Returns:** *Promise*<[*MonitoringMessageData*](../README.md#monitoringmessagedata)\>
 
-Defined in: [packages/types/src/lifecycle.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/types/src/lifecycle.ts#L54)
+Defined in: [packages/types/src/lifecycle.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle.ts#L56)

@@ -4,13 +4,9 @@
 
 Communicates with Docker using Dockerode library.
 
-## Hierarchy
-
-* **DockerodeDockerHelper**
-
 ## Implements
 
-* [*IDockerHelper*](../interfaces/idockerhelper.md)
+- [*IDockerHelper*](../interfaces/idockerhelper.md)
 
 ## Table of contents
 
@@ -21,12 +17,15 @@ Communicates with Docker using Dockerode library.
 ### Properties
 
 - [dockerode](dockerodedockerhelper.md#dockerode)
+- [logger](dockerodedockerhelper.md#logger)
 
 ### Methods
 
 - [attach](dockerodedockerhelper.md#attach)
 - [createContainer](dockerodedockerhelper.md#createcontainer)
 - [createVolume](dockerodedockerhelper.md#createvolume)
+- [listVolumes](dockerodedockerhelper.md#listvolumes)
+- [pullImage](dockerodedockerhelper.md#pullimage)
 - [removeContainer](dockerodedockerhelper.md#removecontainer)
 - [removeVolume](dockerodedockerhelper.md#removevolume)
 - [run](dockerodedockerhelper.md#run)
@@ -50,113 +49,167 @@ Communicates with Docker using Dockerode library.
 
 • **dockerode**: *Dockerode*
 
-Defined in: [dockerode-docker-helper.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L41)
+Defined in: [dockerode-docker-helper.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L44)
+
+___
+
+### logger
+
+• **logger**: Console
+
+Defined in: [dockerode-docker-helper.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L45)
 
 ## Methods
 
 ### attach
 
-▸ **attach**(`container`: *string*, `opts`: *any*): *Promise*<*any*\>
+▸ **attach**(`container`: *string*, `opts`: *any*): *Promise*<any\>
 
 Attaches to container streams.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`container` | *string* | Container id.   |
-`opts` | *any* | Attach options.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `container` | *string* | Container id. |
+| `opts` | *any* | Attach options. |
 
-**Returns:** *Promise*<*any*\>
+**Returns:** *Promise*<any\>
 
 Object with container's standard I/O streams.
 
-Defined in: [dockerode-docker-helper.ts:179](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L179)
+Defined in: [dockerode-docker-helper.ts:216](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L216)
 
 ___
 
 ### createContainer
 
-▸ **createContainer**(`dockerImage`: *string*, `volumes?`: [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[], `binds?`: *string*[], `envs?`: *string*[], `autoRemove?`: *boolean*, `maxMem?`: *number*): *Promise*<*string*\>
+▸ **createContainer**(`containerCfg`: { `autoRemove`: *boolean* ; `binds`: *string*[] ; `command?`: *string*[] ; `dockerImage`: *string* ; `envs`: *string*[] ; `maxMem`: *number* ; `ports`: *any* ; `volumes`: [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[]  }): *Promise*<string\>
 
 Creates container based on provided parameters.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Default value | Description |
------- | ------ | ------ | ------ |
-`dockerImage` | *string* | - | Image to start container from.   |
-`volumes` | [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[] | ... | Configuration of volumes to be mounted in container.   |
-`binds` | *string*[] | ... | Configuration for mounting directories.   |
-`envs` | *string*[] | ... | Environmen variables to be set in container.   |
-`autoRemove` | *boolean* | false | Indicates that container should be auto-removed on exit.   |
-`maxMem` | *number* | ... | Memory available for container (bytes).   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerCfg` | *object* | Image to start container from. |
+| `containerCfg.autoRemove` | *boolean* | - |
+| `containerCfg.binds` | *string*[] | - |
+| `containerCfg.command?` | *string*[] | - |
+| `containerCfg.dockerImage` | *string* | - |
+| `containerCfg.envs` | *string*[] | - |
+| `containerCfg.maxMem` | *number* | - |
+| `containerCfg.ports` | *any* | - |
+| `containerCfg.volumes` | [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[] | - |
 
-**Returns:** *Promise*<*string*\>
+**Returns:** *Promise*<string\>
 
 Created container id.
 
-Defined in: [dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L80)
+Implementation of: IDockerHelper.createContainer
+
+Defined in: [dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L80)
 
 ___
 
 ### createVolume
 
-▸ **createVolume**(`name?`: *string*): *Promise*<*string*\>
+▸ **createVolume**(`name?`: *string*): *Promise*<string\>
 
 Creates docker volume.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Default value | Description |
------- | ------ | ------ | ------ |
-`name` | *string* | "" | Volume name. Optional. If not provided, volume will be named with unique name.   |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `name` | *string* | "" | Volume name. Optional. If not provided, volume will be named with unique name. |
 
-**Returns:** *Promise*<*string*\>
+**Returns:** *Promise*<string\>
 
 Volume name.
 
-Defined in: [dockerode-docker-helper.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L154)
+Implementation of: IDockerHelper.createVolume
+
+Defined in: [dockerode-docker-helper.ts:180](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L180)
+
+___
+
+### listVolumes
+
+▸ **listVolumes**(): *Promise*<string[]\>
+
+Lists exisiting volumes
+
+**Returns:** *Promise*<string[]\>
+
+Implementation of: IDockerHelper.listVolumes
+
+Defined in: [dockerode-docker-helper.ts:201](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L201)
+
+___
+
+### pullImage
+
+▸ **pullImage**(`name`: *string*, `ifNeeded`: *boolean*): *Promise*<void\>
+
+Fetches the image from repo
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | *string* |
+| `ifNeeded` | *boolean* |
+
+**Returns:** *Promise*<void\>
+
+Implementation of: [IDockerHelper](../interfaces/idockerhelper.md)
+
+Defined in: [dockerode-docker-helper.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L160)
 
 ___
 
 ### removeContainer
 
-▸ **removeContainer**(`containerId`: *string*): *Promise*<*void*\>
+▸ **removeContainer**(`containerId`: *string*): *Promise*<void\>
 
 Forcefully removes container with provided id.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`containerId` | *string* | Container id.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerId` | *string* | Container id. |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
 Promise which resolves when container has been removed.
 
-Defined in: [dockerode-docker-helper.ts:134](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L134)
+Implementation of: IDockerHelper.removeContainer
+
+Defined in: [dockerode-docker-helper.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L146)
 
 ___
 
 ### removeVolume
 
-▸ **removeVolume**(`volumeName`: *string*): *Promise*<*void*\>
+▸ **removeVolume**(`volumeName`: *string*): *Promise*<void\>
 
 Removes volume with specific name.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`volumeName` | *string* | Volume name.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `volumeName` | *string* | Volume name. |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
 Promise which resolves when volume has been removed.
 
-Defined in: [dockerode-docker-helper.ts:168](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L168)
+Implementation of: IDockerHelper.removeVolume
+
+Defined in: [dockerode-docker-helper.ts:197](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L197)
 
 ___
 
@@ -166,37 +219,41 @@ ___
 
 Starts container.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`config` | [*DockerAdapterRunConfig*](../README.md#dockeradapterrunconfig) | Container configuration.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `config` | [*DockerAdapterRunConfig*](../README.md#dockeradapterrunconfig) | Container configuration. |
 
 **Returns:** *Promise*<[*DockerAdapterRunResponse*](../README.md#dockeradapterrunresponse)\>
 
 @see {DockerAdapterRunResponse}
 
-Defined in: [dockerode-docker-helper.ts:189](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L189)
+Implementation of: IDockerHelper.run
+
+Defined in: [dockerode-docker-helper.ts:226](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L226)
 
 ___
 
 ### startContainer
 
-▸ **startContainer**(`containerId`: *string*): *Promise*<*void*\>
+▸ **startContainer**(`containerId`: *string*): *Promise*<void\>
 
 Start continer with provided id.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`containerId` | *string* | Container id.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerId` | *string* | Container id. |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
 Promise resolving when container has been started.
 
-Defined in: [dockerode-docker-helper.ts:114](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L114)
+Implementation of: IDockerHelper.startContainer
+
+Defined in: [dockerode-docker-helper.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L126)
 
 ___
 
@@ -206,37 +263,41 @@ ___
 
 Gets statistics from container with provided id.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`containerId` | *string* | Container id.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerId` | *string* | Container id. |
 
 **Returns:** *Promise*<ContainerStats\>
 
 Promise which resolves with container statistics.
 
-Defined in: [dockerode-docker-helper.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L144)
+Implementation of: IDockerHelper.stats
+
+Defined in: [dockerode-docker-helper.ts:156](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L156)
 
 ___
 
 ### stopContainer
 
-▸ **stopContainer**(`containerId`: *string*): *Promise*<*void*\>
+▸ **stopContainer**(`containerId`: *string*): *Promise*<void\>
 
 Stops container with provided id.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`containerId` | *string* | Container id.   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerId` | *string* | Container id. |
 
-**Returns:** *Promise*<*void*\>
+**Returns:** *Promise*<void\>
 
 Promise which resolves when the container has been stopped.
 
-Defined in: [dockerode-docker-helper.ts:124](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L124)
+Implementation of: IDockerHelper.stopContainer
+
+Defined in: [dockerode-docker-helper.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L136)
 
 ___
 
@@ -246,17 +307,19 @@ ___
 
 Translates DockerAdapterVolumeConfig to volumes configuration that Docker API can understand.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`volumeConfigs` | [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[] | Volumes configuration,   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `volumeConfigs` | [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[] | Volumes configuration, |
 
 **Returns:** DockerodeVolumeMountConfig[]
 
 Translated volumes configuration.
 
-Defined in: [dockerode-docker-helper.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L49)
+Implementation of: IDockerHelper.translateVolumesConfig
+
+Defined in: [dockerode-docker-helper.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L54)
 
 ___
 
@@ -266,12 +329,12 @@ ___
 
 Waits for container status change.
 
-#### Parameters:
+#### Parameters
 
-Name | Type | Description |
------- | ------ | ------ |
-`container` | *string* | Container id.   |
-`options` | [*DockerAdapterWaitOptions*](../README.md#dockeradapterwaitoptions) | Condition to be fullfilled. @see {DockerAdapterWaitOptions}   |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `container` | *string* | Container id. |
+| `options` | [*DockerAdapterWaitOptions*](../README.md#dockeradapterwaitoptions) | Condition to be fullfilled. @see {DockerAdapterWaitOptions} |
 
 **Returns:** *Promise*<[*ExitData*](../README.md#exitdata)\>
 
@@ -279,4 +342,4 @@ Container exit code.
 
 Implementation of: [IDockerHelper](../interfaces/idockerhelper.md)
 
-Defined in: [dockerode-docker-helper.ts:238](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/dockerode-docker-helper.ts#L238)
+Defined in: [dockerode-docker-helper.ts:280](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L280)

@@ -6,7 +6,7 @@
 
 ## Hierarchy
 
-* [*CeroRouter*](lib_definitions.cerorouter.md)
+- [*CeroRouter*](lib_definitions.cerorouter.md)
 
   ↳ **SequentialCeroRouter**
 
@@ -35,13 +35,13 @@
 
 ▸ **add**(`method`: Methods, `pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`method` | Methods |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `method` | Methods |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -55,12 +55,12 @@ ___
 
 ▸ **all**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -74,12 +74,12 @@ ___
 
 ▸ **connect**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -93,12 +93,12 @@ ___
 
 ▸ **delete**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -112,19 +112,19 @@ ___
 
 ▸ **find**(`method`: Methods, `url`: *string*): *object*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`method` | Methods |
-`url` | *string* |
+| Name | Type |
+| :------ | :------ |
+| `method` | Methods |
+| `url` | *string* |
 
 **Returns:** *object*
 
-Name | Type |
------- | ------ |
-`handlers` | Middleware[] |
-`params` | *Record*<*string*, *string*\> |
+| Name | Type |
+| :------ | :------ |
+| `handlers` | Middleware[] |
+| `params` | *Record*<string, string\> |
 
 Inherited from: [CeroRouter](lib_definitions.cerorouter.md)
 
@@ -136,12 +136,12 @@ ___
 
 ▸ **get**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -155,12 +155,12 @@ ___
 
 ▸ **head**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -174,19 +174,19 @@ ___
 
 ▸ **lookup**(`req`: *IncomingMessage*, `res`: *ServerResponse*, `next`: NextCallback): *void*
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`req` | *IncomingMessage* |
-`res` | *ServerResponse* |
-`next` | NextCallback |
+| Name | Type |
+| :------ | :------ |
+| `req` | *IncomingMessage* |
+| `res` | *ServerResponse* |
+| `next` | NextCallback |
 
 **Returns:** *void*
 
 Inherited from: [CeroRouter](lib_definitions.cerorouter.md)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L10)
+Defined in: [packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L10)
 
 ___
 
@@ -194,12 +194,12 @@ ___
 
 ▸ **options**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -213,12 +213,12 @@ ___
 
 ▸ **patch**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -232,12 +232,12 @@ ___
 
 ▸ **post**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -251,12 +251,12 @@ ___
 
 ▸ **put**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -270,12 +270,12 @@ ___
 
 ▸ **trace**(`pattern`: *string* \| *RegExp*, ...`handlers`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`pattern` | *string* \| *RegExp* |
-`...handlers` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `pattern` | *string* \| *RegExp* |
+| `...handlers` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
@@ -289,15 +289,15 @@ ___
 
 ▸ **use**(`path`: *string* \| *RegExp*, ...`middlewares`: Middleware[]): [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
-#### Parameters:
+#### Parameters
 
-Name | Type |
------- | ------ |
-`path` | *string* \| *RegExp* |
-`...middlewares` | Middleware[] |
+| Name | Type |
+| :------ | :------ |
+| `path` | *string* \| *RegExp* |
+| `...middlewares` | Middleware[] |
 
 **Returns:** [*SequentialCeroRouter*](lib_definitions.sequentialcerorouter.md)
 
 Inherited from: [CeroRouter](lib_definitions.cerorouter.md)
 
-Defined in: [packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/api-server/src/lib/definitions.ts#L9)
+Defined in: [packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L9)

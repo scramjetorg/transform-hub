@@ -18,6 +18,7 @@
 
 - [DockerAdapterResources](README.md#dockeradapterresources)
 - [DockerAdapterRunConfig](README.md#dockeradapterrunconfig)
+- [DockerAdapterRunPortsConfig](README.md#dockeradapterrunportsconfig)
 - [DockerAdapterRunResponse](README.md#dockeradapterrunresponse)
 - [DockerAdapterStreams](README.md#dockeradapterstreams)
 - [DockerAdapterVolumeConfig](README.md#dockeradaptervolumeconfig)
@@ -31,75 +32,92 @@
 
 ### DockerAdapterResources
 
-Ƭ **DockerAdapterResources**: { `containerId?`: [*DockerContainer*](README.md#dockercontainer) ; `fifosDir?`: PathLike ; `volumeId?`: [*DockerVolume*](README.md#dockervolume)  }
+Ƭ **DockerAdapterResources**: *object*
 
-#### Type declaration:
+#### Type declaration
 
-Name | Type |
------- | ------ |
-`containerId?` | [*DockerContainer*](README.md#dockercontainer) |
-`fifosDir?` | PathLike |
-`volumeId?` | [*DockerVolume*](README.md#dockervolume) |
+| Name | Type |
+| :------ | :------ |
+| `containerId?` | [*DockerContainer*](README.md#dockercontainer) |
+| `fifosDir?` | PathLike |
+| `ports?` | [*DockerAdapterRunPortsConfig*](README.md#dockeradapterrunportsconfig) |
+| `volumeId?` | [*DockerVolume*](README.md#dockervolume) |
 
-Defined in: [types.ts:112](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L112)
+Defined in: [types.ts:122](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L122)
 
 ___
 
 ### DockerAdapterRunConfig
 
-Ƭ **DockerAdapterRunConfig**: { `autoRemove?`: *boolean* ; `binds?`: *string*[] ; `command?`: *string*[] ; `envs?`: *string*[] ; `imageName`: *string* ; `maxMem?`: *number* ; `volumes?`: [*DockerAdapterVolumeConfig*](README.md#dockeradaptervolumeconfig)[]  }
+Ƭ **DockerAdapterRunConfig**: *object*
 
 Configuration used to run command in container.
 
-#### Type declaration:
+#### Type declaration
 
-Name | Type | Description |
------- | ------ | ------ |
-`autoRemove?` | *boolean* | **`property`** {boolean} autoRemove If true container will be removed after container's process exit.  |
-`binds?` | *string*[] | **`property`** {string[]} binds Directories mount configuration.  |
-`command?` | *string*[] | Command with optional parameters.  **`property`** {string[]} command Command to be executed.  |
-`envs?` | *string*[] | **`property`** {string[]} envs A list of environment variables to set inside the container in the form ```["VAR=value", ...]```  |
-`imageName` | *string* | **`property`** {string} imageName Image name.  |
-`maxMem?` | *number* | **`property`** {number} maxMem Maximum available memory.  |
-`volumes?` | [*DockerAdapterVolumeConfig*](README.md#dockeradaptervolumeconfig)[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration.  |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `autoRemove?` | *boolean* | **`property`** {boolean} autoRemove If true container will be removed after container's process exit. |
+| `binds?` | *string*[] | **`property`** {string[]} binds Directories mount configuration. |
+| `command?` | *string*[] | Command with optional parameters.  **`property`** {string[]} command Command to be executed. |
+| `envs?` | *string*[] | **`property`** {string[]} envs A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
+| `imageName` | *string* | **`property`** {string} imageName Image name. |
+| `maxMem?` | *number* | **`property`** {number} maxMem Maximum available memory. |
+| `ports?` | [*DockerAdapterRunPortsConfig*](README.md#dockeradapterrunportsconfig) | **`property`** {DockerAdapterRunPortsConfig} ports Docker ports configuration |
+| `volumes?` | [*DockerAdapterVolumeConfig*](README.md#dockeradaptervolumeconfig)[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration. |
 
-Defined in: [types.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L48)
+Defined in: [types.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L53)
+
+___
+
+### DockerAdapterRunPortsConfig
+
+Ƭ **DockerAdapterRunPortsConfig**: *object*
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `ExposedPorts` | *any* |
+| `PortBindings` | *any* |
+
+Defined in: [types.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L43)
 
 ___
 
 ### DockerAdapterRunResponse
 
-Ƭ **DockerAdapterRunResponse**: { `containerId`: [*DockerContainer*](README.md#dockercontainer) ; `streams`: [*DockerAdapterStreams*](README.md#dockeradapterstreams) ; `wait`: Function  }
+Ƭ **DockerAdapterRunResponse**: *object*
 
 Result of running command in container.
 
-#### Type declaration:
+#### Type declaration
 
-Name | Type |
------- | ------ |
-`containerId` | [*DockerContainer*](README.md#dockercontainer) |
-`streams` | [*DockerAdapterStreams*](README.md#dockeradapterstreams) |
-`wait` | Function |
+| Name | Type |
+| :------ | :------ |
+| `containerId` | [*DockerContainer*](README.md#dockercontainer) |
+| `streams` | [*DockerAdapterStreams*](README.md#dockeradapterstreams) |
+| `wait` | Function |
 
-Defined in: [types.ts:125](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L125)
+Defined in: [types.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L136)
 
 ___
 
 ### DockerAdapterStreams
 
-Ƭ **DockerAdapterStreams**: { `stderr`: Stream ; `stdin`: Writable ; `stdout`: Stream  }
+Ƭ **DockerAdapterStreams**: *object*
 
 Standard streams connected with container.
 
-#### Type declaration:
+#### Type declaration
 
-Name | Type |
------- | ------ |
-`stderr` | Stream |
-`stdin` | Writable |
-`stdout` | Stream |
+| Name | Type |
+| :------ | :------ |
+| `stderr` | Stream |
+| `stdin` | Writable |
+| `stdout` | Stream |
 
-Defined in: [types.ts:91](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L91)
+Defined in: [types.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L101)
 
 ___
 
@@ -109,21 +127,21 @@ ___
 
 Volume mounting configuration.
 
-Defined in: [types.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L32)
+Defined in: [types.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L32)
 
 ___
 
 ### DockerAdapterWaitOptions
 
-Ƭ **DockerAdapterWaitOptions**: { `condition?`: *not-running* \| *next-exit* \| *removed*  }
+Ƭ **DockerAdapterWaitOptions**: *object*
 
-#### Type declaration:
+#### Type declaration
 
-Name | Type |
------- | ------ |
-`condition?` | *not-running* \| *next-exit* \| *removed* |
+| Name | Type |
+| :------ | :------ |
+| `condition?` | ``"not-running"`` \| ``"next-exit"`` \| ``"removed"`` |
 
-Defined in: [types.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L118)
+Defined in: [types.ts:129](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L129)
 
 ___
 
@@ -133,7 +151,7 @@ ___
 
 Docker container.
 
-Defined in: [types.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L18)
+Defined in: [types.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L18)
 
 ___
 
@@ -143,7 +161,7 @@ ___
 
 Docker image.
 
-Defined in: [types.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L11)
+Defined in: [types.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L11)
 
 ___
 
@@ -153,18 +171,18 @@ ___
 
 Docker volume.
 
-Defined in: [types.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L25)
+Defined in: [types.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L25)
 
 ___
 
 ### ExitData
 
-Ƭ **ExitData**: { `statusCode`: ExitCode  }
+Ƭ **ExitData**: *object*
 
-#### Type declaration:
+#### Type declaration
 
-Name | Type |
------- | ------ |
-`statusCode` | ExitCode |
+| Name | Type |
+| :------ | :------ |
+| `statusCode` | ExitCode |
 
-Defined in: [types.ts:108](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/61a9cb1/packages/adapters/src/types.ts#L108)
+Defined in: [types.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L118)
