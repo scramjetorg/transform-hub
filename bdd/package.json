@@ -17,6 +17,10 @@
     "build:bdd": "tsc -p tsconfig.json",
     "test:bdd": "cucumber-js"
   },
+  "repo": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
   "private": true,
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"

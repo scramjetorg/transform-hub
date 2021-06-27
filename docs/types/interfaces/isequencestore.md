@@ -25,7 +25,7 @@
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/sequence-store.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence-store.ts#L25)
+Defined in: [packages/types/src/sequence-store.ts:25](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L25)
 
 ___
 
@@ -41,7 +41,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/sequence-store.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence-store.ts#L26)
+Defined in: [packages/types/src/sequence-store.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L26)
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 **Returns:** [*ISequence*](isequence.md)
 
-Defined in: [packages/types/src/sequence-store.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence-store.ts#L24)
+Defined in: [packages/types/src/sequence-store.ts:24](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L24)
 
 ___
 
@@ -67,4 +67,4 @@ ___
 
 **Returns:** [*ISequence*](isequence.md)[]
 
-Defined in: [packages/types/src/sequence-store.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence-store.ts#L23)
+Defined in: [packages/types/src/sequence-store.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L23)

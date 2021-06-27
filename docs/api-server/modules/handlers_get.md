@@ -22,4 +22,4 @@
 
 **Returns:** <T\>(`path`: *string* \| *RegExp*, `msg`: T \| GetResolver, `conn?`: *ICommunicationHandler*) => *void*
 
-Defined in: [packages/api-server/src/handlers/get.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/handlers/get.ts#L6)
+Defined in: [packages/api-server/src/handlers/get.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/handlers/get.ts#L6)

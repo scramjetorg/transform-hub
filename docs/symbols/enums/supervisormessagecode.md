@@ -14,4 +14,4 @@
 
 • **CONFIG**: = 1000
 
-Defined in: [supervisor-message-code.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/symbols/src/supervisor-message-code.ts#L2)
+Defined in: [supervisor-message-code.ts:2](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/symbols/src/supervisor-message-code.ts#L2)

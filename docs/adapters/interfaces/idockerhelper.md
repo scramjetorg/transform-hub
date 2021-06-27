@@ -65,7 +65,7 @@ Creates Docker container from provided image with attached volumes and local dir
 
 **Returns:** *Promise*<string\>
 
-Defined in: [types.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L174)
+Defined in: [types.ts:174](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L174)
 
 ___
 
@@ -91,7 +91,7 @@ Creates volume.
 
 **Returns:** *Promise*<string\>
 
-Defined in: [types.ts:227](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L227)
+Defined in: [types.ts:227](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L227)
 
 ___
 
@@ -109,7 +109,7 @@ Lists exisiting volumes
 
 **Returns:** *Promise*<string[]\>
 
-Defined in: [types.ts:218](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L218)
+Defined in: [types.ts:218](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L218)
 
 ___
 
@@ -135,7 +135,7 @@ Removes container.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [types.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L211)
+Defined in: [types.ts:211](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L211)
 
 ___
 
@@ -161,7 +161,7 @@ Removes volume.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [types.ts:236](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L236)
+Defined in: [types.ts:236](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L236)
 
 ___
 
@@ -187,7 +187,7 @@ Executes command in container.
 
 **Returns:** *Promise*<[*DockerAdapterRunResponse*](../README.md#dockeradapterrunresponse)\>
 
-Defined in: [types.ts:245](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L245)
+Defined in: [types.ts:245](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L245)
 
 ___
 
@@ -213,7 +213,7 @@ Starts container.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [types.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L192)
+Defined in: [types.ts:192](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L192)
 
 ___
 
@@ -233,7 +233,7 @@ ___
 
 **Returns:** *Promise*<ContainerStats\>
 
-Defined in: [types.ts:203](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L203)
+Defined in: [types.ts:203](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L203)
 
 ___
 
@@ -259,7 +259,7 @@ Stops container.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [types.ts:201](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L201)
+Defined in: [types.ts:201](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L201)
 
 ___
 
@@ -285,7 +285,7 @@ Converts pairs of mount path and volume name to DockerHelper specific volume con
 
 **Returns:** *any*
 
-Defined in: [types.ts:161](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L161)
+Defined in: [types.ts:161](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L161)
 
 ## Methods
 
@@ -304,7 +304,7 @@ Fetches the image from repo
 
 **Returns:** *Promise*<void\>
 
-Defined in: [types.ts:262](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L262)
+Defined in: [types.ts:262](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L262)
 
 ___
 
@@ -323,4 +323,4 @@ Waits until containter exits
 
 **Returns:** *Promise*<[*ExitData*](../README.md#exitdata)\>
 
-Defined in: [types.ts:254](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L254)
+Defined in: [types.ts:254](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L254)

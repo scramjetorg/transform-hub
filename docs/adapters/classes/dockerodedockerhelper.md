@@ -49,7 +49,7 @@ Communicates with Docker using Dockerode library.
 
 • **dockerode**: *Dockerode*
 
-Defined in: [dockerode-docker-helper.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L44)
+Defined in: [dockerode-docker-helper.ts:44](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L44)
 
 ___
 
@@ -57,7 +57,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [dockerode-docker-helper.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L45)
+Defined in: [dockerode-docker-helper.ts:45](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L45)
 
 ## Methods
 
@@ -78,7 +78,7 @@ Attaches to container streams.
 
 Object with container's standard I/O streams.
 
-Defined in: [dockerode-docker-helper.ts:216](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L216)
+Defined in: [dockerode-docker-helper.ts:216](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L216)
 
 ___
 
@@ -108,7 +108,7 @@ Created container id.
 
 Implementation of: IDockerHelper.createContainer
 
-Defined in: [dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L80)
+Defined in: [dockerode-docker-helper.ts:80](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L80)
 
 ___
 
@@ -130,7 +130,7 @@ Volume name.
 
 Implementation of: IDockerHelper.createVolume
 
-Defined in: [dockerode-docker-helper.ts:180](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L180)
+Defined in: [dockerode-docker-helper.ts:180](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L180)
 
 ___
 
@@ -144,7 +144,7 @@ Lists exisiting volumes
 
 Implementation of: IDockerHelper.listVolumes
 
-Defined in: [dockerode-docker-helper.ts:201](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L201)
+Defined in: [dockerode-docker-helper.ts:201](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L201)
 
 ___
 
@@ -165,7 +165,7 @@ Fetches the image from repo
 
 Implementation of: [IDockerHelper](../interfaces/idockerhelper.md)
 
-Defined in: [dockerode-docker-helper.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L160)
+Defined in: [dockerode-docker-helper.ts:160](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L160)
 
 ___
 
@@ -187,7 +187,7 @@ Promise which resolves when container has been removed.
 
 Implementation of: IDockerHelper.removeContainer
 
-Defined in: [dockerode-docker-helper.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L146)
+Defined in: [dockerode-docker-helper.ts:146](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L146)
 
 ___
 
@@ -209,7 +209,7 @@ Promise which resolves when volume has been removed.
 
 Implementation of: IDockerHelper.removeVolume
 
-Defined in: [dockerode-docker-helper.ts:197](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L197)
+Defined in: [dockerode-docker-helper.ts:197](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L197)
 
 ___
 
@@ -231,7 +231,7 @@ Starts container.
 
 Implementation of: IDockerHelper.run
 
-Defined in: [dockerode-docker-helper.ts:226](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L226)
+Defined in: [dockerode-docker-helper.ts:226](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L226)
 
 ___
 
@@ -253,7 +253,7 @@ Promise resolving when container has been started.
 
 Implementation of: IDockerHelper.startContainer
 
-Defined in: [dockerode-docker-helper.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L126)
+Defined in: [dockerode-docker-helper.ts:126](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L126)
 
 ___
 
@@ -275,7 +275,7 @@ Promise which resolves with container statistics.
 
 Implementation of: IDockerHelper.stats
 
-Defined in: [dockerode-docker-helper.ts:156](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L156)
+Defined in: [dockerode-docker-helper.ts:156](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L156)
 
 ___
 
@@ -297,7 +297,7 @@ Promise which resolves when the container has been stopped.
 
 Implementation of: IDockerHelper.stopContainer
 
-Defined in: [dockerode-docker-helper.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L136)
+Defined in: [dockerode-docker-helper.ts:136](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L136)
 
 ___
 
@@ -319,7 +319,7 @@ Translated volumes configuration.
 
 Implementation of: IDockerHelper.translateVolumesConfig
 
-Defined in: [dockerode-docker-helper.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L54)
+Defined in: [dockerode-docker-helper.ts:54](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L54)
 
 ___
 
@@ -342,4 +342,4 @@ Container exit code.
 
 Implementation of: [IDockerHelper](../interfaces/idockerhelper.md)
 
-Defined in: [dockerode-docker-helper.ts:280](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L280)
+Defined in: [dockerode-docker-helper.ts:280](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/dockerode-docker-helper.ts#L280)

@@ -42,7 +42,7 @@ interruption.
 
 • `Readonly` **AppError**: [*AppErrorConstructor*](../README.md#apperrorconstructor)
 
-Defined in: [packages/types/src/app-context.ts:178](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L178)
+Defined in: [packages/types/src/app-context.ts:178](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L178)
 
 ___
 
@@ -50,7 +50,7 @@ ___
 
 • `Readonly` **config**: AppConfigType
 
-Defined in: [packages/types/src/app-context.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L177)
+Defined in: [packages/types/src/app-context.ts:177](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L177)
 
 ___
 
@@ -60,7 +60,7 @@ ___
 
 Provides automated definition as understood by the system
 
-Defined in: [packages/types/src/app-context.ts:168](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L168)
+Defined in: [packages/types/src/app-context.ts:168](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L168)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 Holds the previous state if there was a previous process in existance and it called the
 {@link this#save}.
 
-Defined in: [packages/types/src/app-context.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L144)
+Defined in: [packages/types/src/app-context.ts:144](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L144)
 
 ___
 
@@ -79,7 +79,7 @@ ___
 
 • **logger**: Console
 
-Defined in: [packages/types/src/app-context.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L38)
+Defined in: [packages/types/src/app-context.ts:38](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L38)
 
 ## Methods
 
@@ -105,7 +105,7 @@ and the data will be lost.
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L80)
+Defined in: [packages/types/src/app-context.ts:80](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L80)
 
 ___
 
@@ -130,7 +130,7 @@ return value from the Sequence.
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L49)
+Defined in: [packages/types/src/app-context.ts:49](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L49)
 
 ___
 
@@ -157,7 +157,7 @@ last call will be made sure to be saved before the process will be terminated.
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L65)
+Defined in: [packages/types/src/app-context.ts:65](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L65)
 
 ___
 
@@ -175,7 +175,7 @@ Allows overriding the function definition from within the code
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:175](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L175)
+Defined in: [packages/types/src/app-context.ts:175](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L175)
 
 ___
 
@@ -202,7 +202,7 @@ out.
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:127](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L127)
+Defined in: [packages/types/src/app-context.ts:127](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L127)
 
 ___
 
@@ -221,7 +221,7 @@ Sends events to the Instance that can be received by CLI and configured actions
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L162)
+Defined in: [packages/types/src/app-context.ts:162](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L162)
 
 ▸ **emit**(`ev`: ``"error"``, `message`: [*AppError*](../README.md#apperror)): [*AppContext*](appcontext.md)<AppConfigType, State\>
 
@@ -234,7 +234,7 @@ Defined in: [packages/types/src/app-context.ts:162](https://github.com/scramjet-
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:163](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L163)
+Defined in: [packages/types/src/app-context.ts:163](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L163)
 
 ___
 
@@ -253,7 +253,7 @@ This method will be called automatically when the readable side of the sequence 
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L111)
+Defined in: [packages/types/src/app-context.ts:111](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L111)
 
 ___
 
@@ -278,7 +278,7 @@ stop it.
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L99)
+Defined in: [packages/types/src/app-context.ts:99](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L99)
 
 ___
 
@@ -298,7 +298,7 @@ actions.
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:153](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L153)
+Defined in: [packages/types/src/app-context.ts:153](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L153)
 
 ▸ **on**(`ev`: ``"error"``, `handler`: (`message`: Error) => *void*): [*AppContext*](appcontext.md)<AppConfigType, State\>
 
@@ -311,7 +311,7 @@ Defined in: [packages/types/src/app-context.ts:153](https://github.com/scramjet-
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L154)
+Defined in: [packages/types/src/app-context.ts:154](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L154)
 
 ___
 
@@ -333,4 +333,4 @@ passed to the process that will take over after this one is terminated.
 
 **Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
 
-Defined in: [packages/types/src/app-context.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L138)
+Defined in: [packages/types/src/app-context.ts:138](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L138)

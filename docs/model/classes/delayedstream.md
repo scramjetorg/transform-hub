@@ -31,7 +31,7 @@
 
 • `Private` `Optional` **\_stream**: *PassThrough*
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L4)
+Defined in: [packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L4)
 
 ## Methods
 
@@ -41,7 +41,7 @@ Defined in: [packages/model/src/utils/delayed-stream.ts:4](https://github.com/sc
 
 **Returns:** *PassThrough*
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L6)
+Defined in: [packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L6)
 
 ___
 
@@ -57,4 +57,4 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L15)
+Defined in: [packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L15)

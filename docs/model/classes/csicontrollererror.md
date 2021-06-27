@@ -49,7 +49,7 @@
 
 Overrides: [AppError](apperror.md)
 
-Defined in: [packages/model/src/errors/csi-controller-error.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/csi-controller-error.ts#L6)
+Defined in: [packages/model/src/errors/csi-controller-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/csi-controller-error.ts#L6)
 
 ## Properties
 
@@ -59,7 +59,7 @@ Defined in: [packages/model/src/errors/csi-controller-error.ts:6](https://github
 
 Inherited from: [AppError](apperror.md).[code](apperror.md#code)
 
-Defined in: [packages/model/src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/app-error.ts#L8)
+Defined in: [packages/model/src/errors/app-error.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/app-error.ts#L8)
 
 ___
 
@@ -69,7 +69,7 @@ ___
 
 Inherited from: [AppError](apperror.md).[data](apperror.md#data)
 
-Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/app-error.ts#L9)
+Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/app-error.ts#L9)
 
 ___
 

@@ -56,7 +56,7 @@
 
 **Returns:** [*Host*](host.host-1.md)
 
-Defined in: [packages/host/src/lib/host.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L51)
+Defined in: [packages/host/src/lib/host.ts:51](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L51)
 
 ## Properties
 
@@ -64,7 +64,7 @@ Defined in: [packages/host/src/lib/host.ts:51](https://github.com/scramjet-cloud
 
 • **api**: APIExpose
 
-Defined in: [packages/host/src/lib/host.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L33)
+Defined in: [packages/host/src/lib/host.ts:33](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L33)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 • **apiBase**: *string*
 
-Defined in: [packages/host/src/lib/host.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L35)
+Defined in: [packages/host/src/lib/host.ts:35](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L35)
 
 ___
 
@@ -80,7 +80,7 @@ ___
 
 • **config**: STHConfiguration
 
-Defined in: [packages/host/src/lib/host.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L31)
+Defined in: [packages/host/src/lib/host.ts:31](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L31)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 • **instanceBase**: *string*
 
-Defined in: [packages/host/src/lib/host.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L36)
+Defined in: [packages/host/src/lib/host.ts:36](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L36)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 #### Type declaration
 
-Defined in: [packages/host/src/lib/host.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L40)
+Defined in: [packages/host/src/lib/host.ts:40](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L40)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 Implementation of: IComponent.logger
 
-Defined in: [packages/host/src/lib/host.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L43)
+Defined in: [packages/host/src/lib/host.ts:43](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L43)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 • **sequencesStore**: [*SequenceStore*](sequence_store.sequencestore.md)
 
-Defined in: [packages/host/src/lib/host.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L41)
+Defined in: [packages/host/src/lib/host.ts:41](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L41)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 • **socketServer**: [*SocketServer*](socket_server.socketserver.md)
 
-Defined in: [packages/host/src/lib/host.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L38)
+Defined in: [packages/host/src/lib/host.ts:38](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L38)
 
 ## Methods
 
@@ -142,7 +142,7 @@ Setting up handlers for general Host API endpoints:
 
 **Returns:** *void*
 
-Defined in: [packages/host/src/lib/host.ts:112](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L112)
+Defined in: [packages/host/src/lib/host.ts:112](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L112)
 
 ___
 
@@ -152,7 +152,7 @@ ___
 
 **Returns:** { `id`: *string* ; `sequence`: [*Sequence*](sequence.sequence-1.md) ; `status`: *undefined* \| FunctionDefinition[]  }[]
 
-Defined in: [packages/host/src/lib/host.ts:289](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L289)
+Defined in: [packages/host/src/lib/host.ts:289](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L289)
 
 ___
 
@@ -168,7 +168,7 @@ ___
 
 **Returns:** ISequence
 
-Defined in: [packages/host/src/lib/host.ts:301](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L301)
+Defined in: [packages/host/src/lib/host.ts:301](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L301)
 
 ___
 
@@ -184,7 +184,7 @@ ___
 
 **Returns:** *any*[]
 
-Defined in: [packages/host/src/lib/host.ts:309](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L309)
+Defined in: [packages/host/src/lib/host.ts:309](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L309)
 
 ___
 
@@ -194,7 +194,7 @@ ___
 
 **Returns:** *any*
 
-Defined in: [packages/host/src/lib/host.ts:305](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L305)
+Defined in: [packages/host/src/lib/host.ts:305](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L305)
 
 ___
 
@@ -210,7 +210,7 @@ ___
 
 **Returns:** *Promise*<{ `opStatus`: ReasonPhrases  }\>
 
-Defined in: [packages/host/src/lib/host.ts:159](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L159)
+Defined in: [packages/host/src/lib/host.ts:159](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L159)
 
 ___
 
@@ -226,7 +226,7 @@ ___
 
 **Returns:** *Promise*<{ `error`: *undefined* ; `id`: *string* ; `opStatus`: *undefined* = 422 } \| { `error`: *any* ; `id`: *undefined* ; `opStatus`: *number* = 422 }\>
 
-Defined in: [packages/host/src/lib/host.ts:189](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L189)
+Defined in: [packages/host/src/lib/host.ts:189](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L189)
 
 ___
 
@@ -242,7 +242,7 @@ ___
 
 **Returns:** *Promise*<undefined \| { `id`: *undefined* ; `opStatus`: ReasonPhrases  } \| { `id`: *string* ; `opStatus`: *undefined* = 422 }\>
 
-Defined in: [packages/host/src/lib/host.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L212)
+Defined in: [packages/host/src/lib/host.ts:212](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L212)
 
 ___
 
@@ -252,7 +252,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [packages/host/src/lib/host.ts:169](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L169)
+Defined in: [packages/host/src/lib/host.ts:169](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L169)
 
 ___
 
@@ -269,7 +269,7 @@ ___
 
 **Returns:** *Promise*<RunnerConfig\>
 
-Defined in: [packages/host/src/lib/host.ts:237](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L237)
+Defined in: [packages/host/src/lib/host.ts:237](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L237)
 
 ___
 
@@ -287,7 +287,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/host/src/lib/host.ts:132](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L132)
+Defined in: [packages/host/src/lib/host.ts:132](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L132)
 
 ___
 
@@ -303,7 +303,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [packages/host/src/lib/host.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L69)
+Defined in: [packages/host/src/lib/host.ts:69](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L69)
 
 ___
 
@@ -321,4 +321,4 @@ ___
 
 **Returns:** *Promise*<string\>
 
-Defined in: [packages/host/src/lib/host.ts:260](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L260)
+Defined in: [packages/host/src/lib/host.ts:260](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L260)

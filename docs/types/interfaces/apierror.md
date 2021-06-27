@@ -25,7 +25,7 @@
 
 • `Optional` **cause**: Error
 
-Defined in: [packages/types/src/api-expose.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L53)
+Defined in: [packages/types/src/api-expose.ts:53](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L53)
 
 ___
 
@@ -35,7 +35,7 @@ ___
 
 Http status code to be outputted
 
-Defined in: [packages/types/src/api-expose.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L45)
+Defined in: [packages/types/src/api-expose.ts:45](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L45)
 
 ___
 
@@ -45,7 +45,7 @@ ___
 
 The message that will be sent in reason line
 
-Defined in: [packages/types/src/api-expose.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L49)
+Defined in: [packages/types/src/api-expose.ts:49](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L49)
 
 ___
 

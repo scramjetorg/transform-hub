@@ -149,7 +149,7 @@ Optionally, it can indicate if the command was performed successfully, or
 (in case of issues) attach a related error description.
 This message type is sent from Runner.
 
-Defined in: [packages/types/src/messages/acknowledge.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/acknowledge.ts#L22)
+Defined in: [packages/types/src/messages/acknowledge.ts:22](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/acknowledge.ts#L22)
 
 ___
 
@@ -165,7 +165,7 @@ ___
 | `errorMsg?` | [*ErrorMessage*](README.md#errormessage) | Describes an error message if error was thrown after performing a requested operation. |
 | `status?` | *number* | Indicates status of the performed operation. |
 
-Defined in: [packages/types/src/messages/acknowledge.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/acknowledge.ts#L4)
+Defined in: [packages/types/src/messages/acknowledge.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/acknowledge.ts#L4)
 
 ___
 
@@ -177,7 +177,7 @@ App configuration primitive.
 
 #### Type declaration
 
-Defined in: [packages/types/src/app-config.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-config.ts#L6)
+Defined in: [packages/types/src/app-config.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-config.ts#L6)
 
 ___
 
@@ -187,7 +187,7 @@ ___
 
 Application error class
 
-Defined in: [packages/types/src/error-codes/app-error.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/error-codes/app-error.ts#L23)
+Defined in: [packages/types/src/error-codes/app-error.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/error-codes/app-error.ts#L23)
 
 ___
 
@@ -197,7 +197,7 @@ ___
 
 Acceptable error codes
 
-Defined in: [packages/types/src/error-codes/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/error-codes/app-error.ts#L9)
+Defined in: [packages/types/src/error-codes/app-error.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/error-codes/app-error.ts#L9)
 
 ___
 
@@ -224,7 +224,7 @@ Constructs an AppError
 
 **Returns:** [*AppError*](README.md#apperror)
 
-Defined in: [packages/types/src/error-codes/app-error.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/error-codes/app-error.ts#L34)
+Defined in: [packages/types/src/error-codes/app-error.ts:34](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/error-codes/app-error.ts#L34)
 
 ___
 
@@ -246,7 +246,7 @@ Application is an acceptable input for the runner.
 | `S` | *any* | *any* |
 | `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 
-Defined in: [packages/types/src/application.ts:91](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L91)
+Defined in: [packages/types/src/application.ts:91](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L91)
 
 ___
 
@@ -270,7 +270,7 @@ ___
 | :------ | :------ |
 | `[exposeSequenceSymbol]` | [*Application*](README.md#application)<Consumes, Produces, Z, S, AppConfigType\> |
 
-Defined in: [packages/types/src/application.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L74)
+Defined in: [packages/types/src/application.ts:74](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L74)
 
 ___
 
@@ -278,7 +278,7 @@ ___
 
 Ƭ **ApplicationFunction**: [*ReadableApp*](README.md#readableapp) \| [*WritableApp*](README.md#writableapp) \| [*TransformApp*](README.md#transformapp) \| [*InertApp*](README.md#inertapp)
 
-Defined in: [packages/types/src/application.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L72)
+Defined in: [packages/types/src/application.ts:72](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L72)
 
 ___
 
@@ -300,7 +300,7 @@ ___
 
 **Returns:** *MaybePromise*<[*Streamable*](README.md#streamable)<any\> \| void\>
 
-Defined in: [packages/types/src/application.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L7)
+Defined in: [packages/types/src/application.ts:7](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L7)
 
 ___
 
@@ -308,7 +308,7 @@ ___
 
 Ƭ **CSIControllerErrorCode**: ``"UNINITIALIZED_STREAM"`` \| ``"UNATTACHED_STREAMS"`` \| ``"NO_CHILD_PROCESS"``
 
-Defined in: [packages/types/src/error-codes/csi-controller-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/error-codes/csi-controller-error.ts#L1)
+Defined in: [packages/types/src/error-codes/csi-controller-error.ts:1](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/error-codes/csi-controller-error.ts#L1)
 
 ___
 
@@ -327,7 +327,7 @@ This message type is sent from Supervisor.
 | :------ | :------ |
 | `msgCode` | RunnerMessageCode.FORCE\_CONFIRM\_ALIVE |
 
-Defined in: [packages/types/src/messages/confirm-health.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/confirm-health.ts#L9)
+Defined in: [packages/types/src/messages/confirm-health.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/confirm-health.ts#L9)
 
 ___
 
@@ -342,7 +342,7 @@ ___
 | `image` | *string* | Docker image to use. |
 | `maxMem` | *number* | Maximum memory container can allocate. |
 
-Defined in: [packages/types/src/sth-configuration.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sth-configuration.ts#L1)
+Defined in: [packages/types/src/sth-configuration.ts:1](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sth-configuration.ts#L1)
 
 ___
 
@@ -350,7 +350,7 @@ ___
 
 Ƭ **ControlMessageCode**: RunnerMessageCode.FORCE\_CONFIRM\_ALIVE \| RunnerMessageCode.KILL \| RunnerMessageCode.MONITORING\_RATE \| RunnerMessageCode.STOP \| RunnerMessageCode.EVENT \| RunnerMessageCode.PONG \| SupervisorMessageCode.CONFIG
 
-Defined in: [packages/types/src/message-streams.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L74)
+Defined in: [packages/types/src/message-streams.ts:74](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L74)
 
 ___
 
@@ -376,7 +376,7 @@ ___
 
 **Returns:** *MaybePromise*<[*EncodedMessage*](README.md#encodedmessage)<T\> \| ``null``\>
 
-Defined in: [packages/types/src/communication-handler.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L12)
+Defined in: [packages/types/src/communication-handler.ts:12](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L12)
 
 ___
 
@@ -388,7 +388,7 @@ Message providing the definition of the Sequence.
 It includes information on stream mode, name, description and scalability of each subsequence.
 This message type is sent from Runner.
 
-Defined in: [packages/types/src/messages/describe-sequence.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/describe-sequence.ts#L60)
+Defined in: [packages/types/src/messages/describe-sequence.ts:60](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/describe-sequence.ts#L60)
 
 ___
 
@@ -402,7 +402,7 @@ ___
 | :------ | :------ | :------ |
 | `definition?` | [*FunctionDefinition*](README.md#functiondefinition)[] | Provides the definition of each subsequence. |
 
-Defined in: [packages/types/src/messages/describe-sequence.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/describe-sequence.ts#L49)
+Defined in: [packages/types/src/messages/describe-sequence.ts:49](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/describe-sequence.ts#L49)
 
 ___
 
@@ -410,7 +410,7 @@ ___
 
 Ƭ **DockerRunnerConfig**: [*RunnerConfig*](README.md#runnerconfig) & { `config`: { `volumesFrom`: *string*  }  }
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L11)
+Defined in: [packages/types/src/lifecycle-adapters.ts:11](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L11)
 
 ___
 
@@ -424,7 +424,7 @@ ___
 | :------ | :------ | :------ |
 | `serialized` | *boolean* | ``true`` |
 
-Defined in: [packages/types/src/message-streams.ts:93](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L93)
+Defined in: [packages/types/src/message-streams.ts:93](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L93)
 
 ___
 
@@ -439,7 +439,7 @@ ___
 | `Consumes` |
 | `Produces` |
 
-Defined in: [packages/types/src/utils.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L65)
+Defined in: [packages/types/src/utils.ts:65](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L65)
 
 ___
 
@@ -449,7 +449,7 @@ ___
 
 #### Type declaration
 
-Defined in: [packages/types/src/messages/message.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/message.ts#L16)
+Defined in: [packages/types/src/messages/message.ts:16](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/message.ts#L16)
 
 ___
 
@@ -457,7 +457,7 @@ ___
 
 Ƭ **EncodedControlMessage**: [*EncodedMessage*](README.md#encodedmessage)<[*ControlMessageCode*](README.md#controlmessagecode)\>
 
-Defined in: [packages/types/src/message-streams.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L80)
+Defined in: [packages/types/src/message-streams.ts:80](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L80)
 
 ___
 
@@ -471,7 +471,7 @@ ___
 | :------ | :------ |
 | `T` | RunnerMessageCode \| SupervisorMessageCode |
 
-Defined in: [packages/types/src/message-streams.ts:73](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L73)
+Defined in: [packages/types/src/message-streams.ts:73](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L73)
 
 ___
 
@@ -479,7 +479,7 @@ ___
 
 Ƭ **EncodedMonitoringMessage**: [*EncodedMessage*](README.md#encodedmessage)<[*MonitoringMessageCode*](README.md#monitoringmessagecode)\>
 
-Defined in: [packages/types/src/message-streams.ts:91](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L91)
+Defined in: [packages/types/src/message-streams.ts:91](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L91)
 
 ___
 
@@ -487,7 +487,7 @@ ___
 
 Ƭ **EncodedSerializedControlMessage**: *string*
 
-Defined in: [packages/types/src/message-streams.ts:88](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L88)
+Defined in: [packages/types/src/message-streams.ts:88](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L88)
 
 ___
 
@@ -495,7 +495,7 @@ ___
 
 Ƭ **EncodedSerializedMonitoringMessage**: *string*
 
-Defined in: [packages/types/src/message-streams.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L89)
+Defined in: [packages/types/src/message-streams.ts:89](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L89)
 
 ___
 
@@ -506,7 +506,7 @@ ___
 A general purpose error message.
 This message type is sent from Runner.
 
-Defined in: [packages/types/src/messages/error.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/error.ts#L22)
+Defined in: [packages/types/src/messages/error.ts:22](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/error.ts#L22)
 
 ___
 
@@ -523,7 +523,7 @@ ___
 | `message` | *string* | Error message. |
 | `stack` | *string* | Error stack trace. |
 
-Defined in: [packages/types/src/messages/error.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/error.ts#L3)
+Defined in: [packages/types/src/messages/error.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/error.ts#L3)
 
 ___
 
@@ -534,7 +534,7 @@ ___
 TODO update
 Event message emitted by sequence and handeled in the context.
 
-Defined in: [packages/types/src/messages/event.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/event.ts#L16)
+Defined in: [packages/types/src/messages/event.ts:16](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/event.ts#L16)
 
 ___
 
@@ -549,7 +549,7 @@ ___
 | `eventName` | *string* | Name of the event. |
 | `message` | *any* | TODO update Informs if keepAlive can be called to prolong the running of the Sequence. |
 
-Defined in: [packages/types/src/messages/event.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/event.ts#L3)
+Defined in: [packages/types/src/messages/event.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/event.ts#L3)
 
 ___
 
@@ -557,7 +557,7 @@ ___
 
 Ƭ **ExitCode**: *number*
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L15)
+Defined in: [packages/types/src/lifecycle-adapters.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L15)
 
 ___
 
@@ -578,7 +578,7 @@ Definition that informs the platform of the details of a single function.
 | `scalability.head?` | ScalabilityOptions | Writable side scalability |
 | `scalability.tail?` | ScalabilityOptions | Readable side scalability |
 
-Defined in: [packages/types/src/messages/describe-sequence.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/describe-sequence.ts#L16)
+Defined in: [packages/types/src/messages/describe-sequence.ts:16](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/describe-sequence.ts#L16)
 
 ___
 
@@ -597,7 +597,7 @@ Provides basic function status information
 | `processing` | *number* | The number of stream entries currently being processed. |
 | `throughput` | *number* | Average number of stream entries passing that specific function over the duration of 1 second during the last 10 seconds. |
 
-Defined in: [packages/types/src/runner.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L6)
+Defined in: [packages/types/src/runner.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/runner.ts#L6)
 
 ___
 
@@ -617,7 +617,7 @@ ___
 
 **Returns:** *MaybePromise*<any\>
 
-Defined in: [packages/types/src/api-expose.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L13)
+Defined in: [packages/types/src/api-expose.ts:13](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L13)
 
 ___
 
@@ -629,7 +629,7 @@ Cloud Server Host (CSH) sends handshake acknowledge message (PONG) to the Runner
 the received handshake message (PING).
 The message includes the Sequence configuration information.
 
-Defined in: [packages/types/src/messages/handshake-acknowledge.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/handshake-acknowledge.ts#L16)
+Defined in: [packages/types/src/messages/handshake-acknowledge.ts:16](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/handshake-acknowledge.ts#L16)
 
 ___
 
@@ -644,7 +644,7 @@ ___
 | `appConfig` | [*AppConfig*](README.md#appconfig) | Sequence configuration passed to the Sequence when it is started by the Runner. |
 | `args?` | *any*[] | - |
 
-Defined in: [packages/types/src/messages/handshake-acknowledge.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/handshake-acknowledge.ts#L4)
+Defined in: [packages/types/src/messages/handshake-acknowledge.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/handshake-acknowledge.ts#L4)
 
 ___
 
@@ -662,7 +662,7 @@ from the CSH to start the Sequence.
 | :------ | :------ |
 | `msgCode` | RunnerMessageCode.PING |
 
-Defined in: [packages/types/src/messages/handshake.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/handshake.ts#L8)
+Defined in: [packages/types/src/messages/handshake.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/handshake.ts#L8)
 
 ___
 
@@ -679,7 +679,7 @@ ___
 | `port` | *number* | API port. |
 | `socketPath` | *string* | Socket name for connecting supervisors. |
 
-Defined in: [packages/types/src/sth-configuration.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sth-configuration.ts#L12)
+Defined in: [packages/types/src/sth-configuration.ts:12](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sth-configuration.ts#L12)
 
 ___
 
@@ -687,7 +687,7 @@ ___
 
 Ƭ **HostErrorCode**: ``"UNINITIALIZED_STREAM"`` \| ``"UNATTACHED_STREAMS"`` \| ``"UNKNOWN_CHANNEL"`` \| ``"LOG_NOT_AVAILABLE"`` \| ``"SEQUENCE_IDENTIFICATION_FAILED"`` \| ``"UNKNOWN_SEQUENCE"`` \| ``"UNKNOWN_INSTANCE"`` \| ``"CONTROLLER_ERROR"`` \| ``"SOCKET_TAKEN"`` \| ``"API_CONFIGURATION_ERROR"``
 
-Defined in: [packages/types/src/error-codes/host-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/error-codes/host-error.ts#L1)
+Defined in: [packages/types/src/error-codes/host-error.ts:1](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/error-codes/host-error.ts#L1)
 
 ___
 
@@ -695,7 +695,7 @@ ___
 
 Ƭ **HttpMethod**: ``"get"`` \| ``"head"`` \| ``"post"`` \| ``"put"`` \| ``"delete"`` \| ``"connect"`` \| ``"trace"`` \| ``"patch"``
 
-Defined in: [packages/types/src/api-expose.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L9)
+Defined in: [packages/types/src/api-expose.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L9)
 
 ___
 
@@ -716,7 +716,7 @@ An Inert App is an app that doesn't accept data from the platform and doesn't ou
 | `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 | `VoidType` | - | *void* |
 
-Defined in: [packages/types/src/application.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L65)
+Defined in: [packages/types/src/application.ts:65](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L65)
 
 ___
 
@@ -736,7 +736,7 @@ the progress via streaming.
 | `Y` | - | *any* |
 | `X` | *any*[] | *any*[] |
 
-Defined in: [packages/types/src/sequence.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence.ts#L9)
+Defined in: [packages/types/src/sequence.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence.ts#L9)
 
 ___
 
@@ -744,7 +744,7 @@ ___
 
 Ƭ **InstanceConfigMessage**: { `msgCode`: SupervisorMessageCode.CONFIG  } & [*InstanceConfigMessageData*](README.md#instanceconfigmessagedata)
 
-Defined in: [packages/types/src/messages/instance-config.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/instance-config.ts#L8)
+Defined in: [packages/types/src/messages/instance-config.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/instance-config.ts#L8)
 
 ___
 
@@ -758,7 +758,7 @@ ___
 | :------ | :------ |
 | `config` | [*RunnerConfig*](README.md#runnerconfig) |
 
-Defined in: [packages/types/src/messages/instance-config.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/instance-config.ts#L4)
+Defined in: [packages/types/src/messages/instance-config.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/instance-config.ts#L4)
 
 ___
 
@@ -769,7 +769,7 @@ ___
 Message instrucing how much longer to keep Sequence alive.
 This message type is sent from Runner.
 
-Defined in: [packages/types/src/messages/keep-alive.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/keep-alive.ts#L13)
+Defined in: [packages/types/src/messages/keep-alive.ts:13](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/keep-alive.ts#L13)
 
 ___
 
@@ -783,7 +783,7 @@ ___
 | :------ | :------ | :------ |
 | `keepAlive` | *number* | Information on how much longer the Sequence will be active (in miliseconds). |
 
-Defined in: [packages/types/src/messages/keep-alive.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/keep-alive.ts#L3)
+Defined in: [packages/types/src/messages/keep-alive.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/keep-alive.ts#L3)
 
 ___
 
@@ -797,7 +797,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/app-context.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L20)
+Defined in: [packages/types/src/app-context.ts:20](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L20)
 
 ___
 
@@ -815,7 +815,7 @@ This message type is sent from Supervisor.
 | :------ | :------ |
 | `msgCode` | RunnerMessageCode.KILL |
 
-Defined in: [packages/types/src/messages/kill-sequence.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/kill-sequence.ts#L8)
+Defined in: [packages/types/src/messages/kill-sequence.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/kill-sequence.ts#L8)
 
 ___
 
@@ -829,7 +829,7 @@ ___
 | :------ | :------ |
 | `makeSnapshotOnError` | *boolean* |
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L7)
+Defined in: [packages/types/src/lifecycle-adapters.ts:7](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L7)
 
 ___
 
@@ -837,7 +837,7 @@ ___
 
 Ƭ **LifeCycleError**: *any* \| Error & { `errorMessage?`: *string* ; `exitCode?`: *number*  }
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:77](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L77)
+Defined in: [packages/types/src/lifecycle-adapters.ts:77](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L77)
 
 ___
 
@@ -845,7 +845,7 @@ ___
 
 Ƭ **Logger**: Console
 
-Defined in: [packages/types/src/logger.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/logger.ts#L15)
+Defined in: [packages/types/src/logger.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/logger.ts#L15)
 
 ___
 
@@ -859,7 +859,7 @@ ___
 | :------ | :------ | :------ |
 | `useCallsite?` | *boolean* | Should we show callsites to show originating line |
 
-Defined in: [packages/types/src/logger.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/logger.ts#L10)
+Defined in: [packages/types/src/logger.ts:10](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/logger.ts#L10)
 
 ___
 
@@ -874,7 +874,7 @@ ___
 | `err?` | [*WritableStream*](interfaces/writablestream.md)<any\> | Errror stream |
 | `out` | [*WritableStream*](interfaces/writablestream.md)<any\> | Output stream |
 
-Defined in: [packages/types/src/logger.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/logger.ts#L3)
+Defined in: [packages/types/src/logger.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/logger.ts#L3)
 
 ___
 
@@ -893,7 +893,7 @@ This message type is sent from Runner.
 | :------ | :------ | :------ |
 | `msgCode` | RunnerMessageCode | Message type code from RunnerMessageCode enumeration. |
 
-Defined in: [packages/types/src/messages/message.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/message.ts#L10)
+Defined in: [packages/types/src/messages/message.ts:10](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/message.ts#L10)
 
 ___
 
@@ -901,7 +901,7 @@ ___
 
 Ƭ **MessageCode**: [*ANY*](modules/messagecodes.md#any)
 
-Defined in: [packages/types/src/runner.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L43)
+Defined in: [packages/types/src/runner.ts:43](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/runner.ts#L43)
 
 ___
 
@@ -915,7 +915,7 @@ ___
 | :------ |
 | `T` |
 
-Defined in: [packages/types/src/message-streams.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L55)
+Defined in: [packages/types/src/message-streams.ts:55](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L55)
 
 ___
 
@@ -929,7 +929,7 @@ ___
 | :------ |
 | `T` |
 
-Defined in: [packages/types/src/message-streams.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L37)
+Defined in: [packages/types/src/message-streams.ts:37](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L37)
 
 ___
 
@@ -951,7 +951,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/api-expose.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L17)
+Defined in: [packages/types/src/api-expose.ts:17](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L17)
 
 ___
 
@@ -977,7 +977,7 @@ A handler for the monitoring message.
 
 **Returns:** *MaybePromise*<[*MonitoringMessageFromRunnerData*](README.md#monitoringmessagefromrunnerdata)\>
 
-Defined in: [packages/types/src/app-context.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L28)
+Defined in: [packages/types/src/app-context.ts:28](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L28)
 
 ___
 
@@ -988,7 +988,7 @@ ___
 Monitoring message including detailed performance statistics.
 This message type is sent from Runner.
 
-Defined in: [packages/types/src/messages/monitoring.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/monitoring.ts#L40)
+Defined in: [packages/types/src/messages/monitoring.ts:40](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/monitoring.ts#L40)
 
 ___
 
@@ -996,7 +996,7 @@ ___
 
 Ƭ **MonitoringMessageCode**: RunnerMessageCode.ACKNOWLEDGE \| RunnerMessageCode.DESCRIBE\_SEQUENCE \| RunnerMessageCode.STATUS \| RunnerMessageCode.ALIVE \| RunnerMessageCode.ERROR \| RunnerMessageCode.MONITORING \| RunnerMessageCode.EVENT \| RunnerMessageCode.PING \| RunnerMessageCode.SNAPSHOT\_RESPONSE \| RunnerMessageCode.SEQUENCE\_STOPPED \| RunnerMessageCode.SEQUENCE\_COMPLETED
 
-Defined in: [packages/types/src/message-streams.ts:82](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L82)
+Defined in: [packages/types/src/message-streams.ts:82](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L82)
 
 ___
 
@@ -1004,7 +1004,7 @@ ___
 
 Ƭ **MonitoringMessageData**: [*MonitoringMessageFromRunnerData*](README.md#monitoringmessagefromrunnerdata) & { `containerId?`: *string* ; `cpuTotalUsage?`: *number* ; `limit?`: *number* ; `memoryMaxUsage?`: *number* ; `memoryUsage?`: *number* ; `networkRx?`: *number* ; `networkTx?`: *number*  }
 
-Defined in: [packages/types/src/messages/monitoring.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/monitoring.ts#L13)
+Defined in: [packages/types/src/messages/monitoring.ts:13](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/monitoring.ts#L13)
 
 ___
 
@@ -1019,7 +1019,7 @@ ___
 | `healthy` | *boolean* | Calculated backpressure: processing * throughput / buffer. |
 | `sequences?` | [*FunctionStatus*](README.md#functionstatus)[] | How many items are processed by the Sequence per second. |
 
-Defined in: [packages/types/src/messages/monitoring.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/monitoring.ts#L4)
+Defined in: [packages/types/src/messages/monitoring.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/monitoring.ts#L4)
 
 ___
 
@@ -1045,7 +1045,7 @@ ___
 
 **Returns:** *MaybePromise*<[*EncodedMessage*](README.md#encodedmessage)<T\> \| ``null``\>
 
-Defined in: [packages/types/src/communication-handler.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L10)
+Defined in: [packages/types/src/communication-handler.ts:10](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L10)
 
 ___
 
@@ -1056,7 +1056,7 @@ ___
 Message instructing Runner how often to emit monitoring messages.
 This message type is sent from Supervisor.
 
-Defined in: [packages/types/src/messages/monitor-rate.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/monitor-rate.ts#L13)
+Defined in: [packages/types/src/messages/monitor-rate.ts:13](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/monitor-rate.ts#L13)
 
 ___
 
@@ -1070,7 +1070,7 @@ ___
 | :------ | :------ | :------ |
 | `monitoringRate` | *number* | Indicates how frequently should monitoring messages be emitted (in miliseconds). |
 
-Defined in: [packages/types/src/messages/monitor-rate.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/monitor-rate.ts#L3)
+Defined in: [packages/types/src/messages/monitor-rate.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/monitor-rate.ts#L3)
 
 ___
 
@@ -1090,7 +1090,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/types/src/api-expose.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L16)
+Defined in: [packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L16)
 
 ___
 
@@ -1111,7 +1111,7 @@ ___
 
 **Returns:** *MaybePromise*<any\>
 
-Defined in: [packages/types/src/api-expose.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L14)
+Defined in: [packages/types/src/api-expose.ts:14](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L14)
 
 ___
 
@@ -1119,7 +1119,7 @@ ___
 
 Ƭ **ParsedMessage**: IncomingMessage & { `body?`: *any* ; `params`: { [key: string]: *any*;  } \| *undefined*  }
 
-Defined in: [packages/types/src/api-expose.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L8)
+Defined in: [packages/types/src/api-expose.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L8)
 
 ___
 
@@ -1133,7 +1133,7 @@ ___
 | :------ |
 | `Passes` |
 
-Defined in: [packages/types/src/utils.ts:66](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L66)
+Defined in: [packages/types/src/utils.ts:66](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L66)
 
 ___
 
@@ -1147,7 +1147,7 @@ ___
 | :------ | :------ | :------ |
 | `serialized` | *boolean* | ``true`` |
 
-Defined in: [packages/types/src/message-streams.ts:117](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L117)
+Defined in: [packages/types/src/message-streams.ts:117](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L117)
 
 ___
 
@@ -1161,7 +1161,7 @@ ___
 | :------ |
 | `Produces` |
 
-Defined in: [packages/types/src/functions.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/functions.ts#L22)
+Defined in: [packages/types/src/functions.ts:22](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/functions.ts#L22)
 
 ___
 
@@ -1190,7 +1190,7 @@ A Function that returns a streamable result is a read function
 
 **Returns:** [*Streamable*](README.md#streamable)<Produces\>
 
-Defined in: [packages/types/src/functions.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/functions.ts#L13)
+Defined in: [packages/types/src/functions.ts:13](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/functions.ts#L13)
 
 ___
 
@@ -1209,7 +1209,7 @@ a chain of transforms.
 | `Y` | *any*[] | *any*[] |
 | `Z` | - | *any* |
 
-Defined in: [packages/types/src/sequence.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence.ts#L23)
+Defined in: [packages/types/src/sequence.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence.ts#L23)
 
 ___
 
@@ -1232,7 +1232,7 @@ A Readable App is an app that obtains the data by it's own means and preforms
 | `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 | `VoidType` | - | *void* |
 
-Defined in: [packages/types/src/application.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L38)
+Defined in: [packages/types/src/application.ts:38](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L38)
 
 ___
 
@@ -1253,7 +1253,7 @@ ___
 | `sequencePath` | *string* |
 | `version` | *string* |
 
-Defined in: [packages/types/src/runner-config.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner-config.ts#L5)
+Defined in: [packages/types/src/runner-config.ts:5](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/runner-config.ts#L5)
 
 ___
 
@@ -1261,7 +1261,7 @@ ___
 
 Ƭ **RunnerErrorCode**: ``"SEQUENCE_ENDED_PREMATURE"`` \| ``"SEQUENCE_RUNTIME_ERROR"`` \| ``"UNINITIALIZED_STREAMS"`` \| ``"UNKNOWN_MESSAGE_CODE"`` \| ``"NO_MONITORING"`` \| ``"UNINITIALIZED_CONTEXT"``
 
-Defined in: [packages/types/src/error-codes/runner-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/error-codes/runner-error.ts#L1)
+Defined in: [packages/types/src/error-codes/runner-error.ts:1](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/error-codes/runner-error.ts#L1)
 
 ___
 
@@ -1269,7 +1269,7 @@ ___
 
 Ƭ **RunnerMessage**: [RunnerMessageCode, *object*]
 
-Defined in: [packages/types/src/runner.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L49)
+Defined in: [packages/types/src/runner.ts:49](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/runner.ts#L49)
 
 ___
 
@@ -1283,7 +1283,7 @@ ___
 | :------ | :------ |
 | `monitoringInterval?` | *number* |
 
-Defined in: [packages/types/src/runner.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L45)
+Defined in: [packages/types/src/runner.ts:45](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/runner.ts#L45)
 
 ___
 
@@ -1305,7 +1305,7 @@ ___
 | `instanceRequirements.freeSpace` | *number* | Free disk space required to start instance. In megabytes. |
 | `safeOperationLimit` | *number* | The amount of memory that must remain free. |
 
-Defined in: [packages/types/src/sth-configuration.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sth-configuration.ts#L31)
+Defined in: [packages/types/src/sth-configuration.ts:31](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sth-configuration.ts#L31)
 
 ___
 
@@ -1316,7 +1316,7 @@ ___
 Message from the Runner indicating that the sequence has completed sending it's data
 and now can be asked to exit with high probability of accepting the exit gracefully.
 
-Defined in: [packages/types/src/messages/sequence-complete.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/sequence-complete.ts#L8)
+Defined in: [packages/types/src/messages/sequence-complete.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/sequence-complete.ts#L8)
 
 ___
 
@@ -1328,7 +1328,7 @@ Message from the Runner indicating that the sequence has called the end method
 on context and it should be safe to terminate it without additional waiting,
 unless it exits correctly itself.
 
-Defined in: [packages/types/src/messages/sequence-end.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/sequence-end.ts#L13)
+Defined in: [packages/types/src/messages/sequence-end.ts:13](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/sequence-end.ts#L13)
 
 ___
 
@@ -1342,7 +1342,7 @@ ___
 | :------ | :------ | :------ |
 | `err` | Error | The url of container snapshot created. |
 
-Defined in: [packages/types/src/messages/sequence-end.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/sequence-end.ts#L3)
+Defined in: [packages/types/src/messages/sequence-end.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/sequence-end.ts#L3)
 
 ___
 
@@ -1353,7 +1353,7 @@ ___
 Information about the url of the container snapshot created.
 This message type is sent from the LifeCycle Controller.
 
-Defined in: [packages/types/src/messages/snapshot-response.ts:13](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/snapshot-response.ts#L13)
+Defined in: [packages/types/src/messages/snapshot-response.ts:13](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/snapshot-response.ts#L13)
 
 ___
 
@@ -1367,7 +1367,7 @@ ___
 | :------ | :------ | :------ |
 | `url` | *string* | The url of container snapshot created. |
 
-Defined in: [packages/types/src/messages/snapshot-response.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/snapshot-response.ts#L3)
+Defined in: [packages/types/src/messages/snapshot-response.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/snapshot-response.ts#L3)
 
 ___
 
@@ -1379,7 +1379,7 @@ Message providing the definition of the Sequence.
 It includes information on stream mode, name, description and scalability of each subsequence.
 This message type is sent from Runner.
 
-Defined in: [packages/types/src/messages/status.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/status.ts#L15)
+Defined in: [packages/types/src/messages/status.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/status.ts#L15)
 
 ___
 
@@ -1393,7 +1393,7 @@ ___
 | :------ | :------ | :------ |
 | `definition?` | [*FunctionDefinition*](README.md#functiondefinition)[] | Provides the definition of each subsequence. |
 
-Defined in: [packages/types/src/messages/status.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/status.ts#L4)
+Defined in: [packages/types/src/messages/status.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/status.ts#L4)
 
 ___
 
@@ -1424,7 +1424,7 @@ to prolong the operation
 
 **Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/app-context.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/app-context.ts#L18)
+Defined in: [packages/types/src/app-context.ts:18](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L18)
 
 ___
 
@@ -1436,7 +1436,7 @@ Message instructing Runner to terminate Sequence gracefully after a specified pe
 It gives Sequence and Runner time to perform a cleanup.
 This message type is sent from Supervisor.
 
-Defined in: [packages/types/src/messages/stop-sequence.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/stop-sequence.ts#L17)
+Defined in: [packages/types/src/messages/stop-sequence.ts:17](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/stop-sequence.ts#L17)
 
 ___
 
@@ -1451,7 +1451,7 @@ ___
 | `canCallKeepalive` | *boolean* | Informs if keepAlive can be called to prolong the running of the Sequence. |
 | `timeout` | *number* | The number of milliseconds before the Sequence will be killed. |
 
-Defined in: [packages/types/src/messages/stop-sequence.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/messages/stop-sequence.ts#L3)
+Defined in: [packages/types/src/messages/stop-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/messages/stop-sequence.ts#L3)
 
 ___
 
@@ -1470,7 +1470,7 @@ Configuration options for streaming endpoionts
 | `json?` | *boolean* | Is the stream a JSON stream? |
 | `text?` | *boolean* | Is the stream a text stream? |
 
-Defined in: [packages/types/src/api-expose.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L22)
+Defined in: [packages/types/src/api-expose.ts:22](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L22)
 
 ___
 
@@ -1478,7 +1478,7 @@ ___
 
 Ƭ **StreamInput**: (`req`: IncomingMessage) => *MaybePromise*<Readable\> \| *MaybePromise*<Readable\>
 
-Defined in: [packages/types/src/api-expose.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L11)
+Defined in: [packages/types/src/api-expose.ts:11](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L11)
 
 ___
 
@@ -1486,7 +1486,7 @@ ___
 
 Ƭ **StreamOutput**: (`req`: IncomingMessage, `res`: ServerResponse) => *MaybePromise*<any\> \| *MaybePromise*<Writable\>
 
-Defined in: [packages/types/src/api-expose.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L12)
+Defined in: [packages/types/src/api-expose.ts:12](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L12)
 
 ___
 
@@ -1503,7 +1503,7 @@ from {@see TFunction}
 | :------ |
 | `Produces` |
 
-Defined in: [packages/types/src/utils.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L83)
+Defined in: [packages/types/src/utils.ts:83](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L83)
 
 ___
 
@@ -1511,7 +1511,7 @@ ___
 
 Ƭ **SupervisorErrorCode**: ``"INVALID_CONFIGURATION"`` \| ``"UNINITIALIZED_STREAMS"`` \| ``"GENERAL_ERROR"`` \| ``"SEQUENCE_RUN_BEFORE_INIT"`` \| ``"RUNNER_ERROR"`` \| ``"RUNNER_NON_ZERO_EXITCODE"`` \| ``"RUNNER_NOT_STARTED"`` \| ``"DOCKER_ERROR"`` \| ``"PRERUNNER_ERROR"``
 
-Defined in: [packages/types/src/error-codes/supervisor-error.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/error-codes/supervisor-error.ts#L1)
+Defined in: [packages/types/src/error-codes/supervisor-error.ts:1](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/error-codes/supervisor-error.ts#L1)
 
 ___
 
@@ -1519,7 +1519,7 @@ ___
 
 Ƭ **SupervisorMessage**: [SupervisorMessageCode, *object*]
 
-Defined in: [packages/types/src/runner.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/runner.ts#L54)
+Defined in: [packages/types/src/runner.ts:54](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/runner.ts#L54)
 
 ___
 
@@ -1537,7 +1537,7 @@ is second phase the stream is piped from external stream by running run() method
 | :------ |
 | `Produces` |
 
-Defined in: [packages/types/src/utils.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L74)
+Defined in: [packages/types/src/utils.ts:74](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L74)
 
 ___
 
@@ -1552,7 +1552,7 @@ ___
 | `Consumes` |
 | `Produces` |
 
-Defined in: [packages/types/src/functions.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/functions.ts#L23)
+Defined in: [packages/types/src/functions.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/functions.ts#L23)
 
 ___
 
@@ -1568,7 +1568,7 @@ ___
 | `Produces` | - |
 | `Z` | *any*[] |
 
-Defined in: [packages/types/src/functions.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/functions.ts#L43)
+Defined in: [packages/types/src/functions.ts:43](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/functions.ts#L43)
 
 ___
 
@@ -1596,7 +1596,7 @@ ___
 
 **Returns:** *StreambleMaybeFunction*<Produces\>
 
-Defined in: [packages/types/src/functions.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/functions.ts#L17)
+Defined in: [packages/types/src/functions.ts:17](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/functions.ts#L17)
 
 ___
 
@@ -1636,7 +1636,7 @@ Has both active readable and writable sides.
 
 **Returns:** *MaybePromise*<ReturnType\>
 
-Defined in: [packages/types/src/application.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L19)
+Defined in: [packages/types/src/application.ts:19](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L19)
 
 ___
 
@@ -1651,7 +1651,7 @@ ___
 | `Consumes` |
 | `Produces` |
 
-Defined in: [packages/types/src/sequence.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence.ts#L35)
+Defined in: [packages/types/src/sequence.ts:35](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence.ts#L35)
 
 ___
 
@@ -1671,7 +1671,7 @@ outputs the result.
 | `Z` | - | *any* |
 | `X` | *any*[] | *any*[] |
 
-Defined in: [packages/types/src/sequence.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence.ts#L31)
+Defined in: [packages/types/src/sequence.ts:31](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence.ts#L31)
 
 ___
 
@@ -1685,7 +1685,7 @@ ___
 | :------ | :------ | :------ |
 | `serialized` | *boolean* | ``true`` |
 
-Defined in: [packages/types/src/message-streams.ts:105](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/message-streams.ts#L105)
+Defined in: [packages/types/src/message-streams.ts:105](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/message-streams.ts#L105)
 
 ___
 
@@ -1699,7 +1699,7 @@ ___
 | :------ |
 | `Consumes` |
 
-Defined in: [packages/types/src/functions.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/functions.ts#L27)
+Defined in: [packages/types/src/functions.ts:27](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/functions.ts#L27)
 
 ___
 
@@ -1722,7 +1722,7 @@ of transforms and then saves it to the data destination by it's own means.
 | `AppConfigType` | [*AppConfig*](README.md#appconfig) | [*AppConfig*](README.md#appconfig) |
 | `VoidType` | - | *void* |
 
-Defined in: [packages/types/src/application.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/application.ts#L52)
+Defined in: [packages/types/src/application.ts:52](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/application.ts#L52)
 
 ___
 
@@ -1749,7 +1749,7 @@ ___
 
 **Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/functions.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/functions.ts#L15)
+Defined in: [packages/types/src/functions.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/functions.ts#L15)
 
 ___
 
@@ -1768,4 +1768,4 @@ a number of functions and writes to some destination.
 | `Y` | *any*[] | *any*[] |
 | `Z` | - | *any* |
 
-Defined in: [packages/types/src/sequence.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/sequence.ts#L15)
+Defined in: [packages/types/src/sequence.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence.ts#L15)

@@ -28,5 +28,9 @@
   "publishConfig": {
     "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
     "access": "restricted"
+  },
+  "repo": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
   }
 }

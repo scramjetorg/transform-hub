@@ -57,7 +57,7 @@
 
 Overrides: Error.constructor
 
-Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/app-error.ts#L9)
+Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/app-error.ts#L9)
 
 ## Properties
 
@@ -67,7 +67,7 @@ Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramj
 
 Implementation of: IAppError.code
 
-Defined in: [packages/model/src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/app-error.ts#L8)
+Defined in: [packages/model/src/errors/app-error.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/app-error.ts#L8)
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 Implementation of: IAppErrorData.data
 
-Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/app-error.ts#L9)
+Defined in: [packages/model/src/errors/app-error.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/app-error.ts#L9)
 
 ___
 

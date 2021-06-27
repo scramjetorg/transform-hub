@@ -34,7 +34,7 @@
 
 **Returns:** [*Sequence*](sequence.sequence-1.md)
 
-Defined in: [packages/host/src/lib/sequence.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/sequence.ts#L6)
+Defined in: [packages/host/src/lib/sequence.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/sequence.ts#L6)
 
 ## Properties
 
@@ -44,7 +44,7 @@ Defined in: [packages/host/src/lib/sequence.ts:6](https://github.com/scramjet-cl
 
 Implementation of: ISequence.config
 
-Defined in: [packages/host/src/lib/sequence.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/sequence.ts#L5)
+Defined in: [packages/host/src/lib/sequence.ts:5](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/sequence.ts#L5)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 Implementation of: ISequence.id
 
-Defined in: [packages/host/src/lib/sequence.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/sequence.ts#L4)
+Defined in: [packages/host/src/lib/sequence.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/sequence.ts#L4)
 
 ___
 
@@ -64,4 +64,4 @@ ___
 
 Implementation of: ISequence.instances
 
-Defined in: [packages/host/src/lib/sequence.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/sequence.ts#L6)
+Defined in: [packages/host/src/lib/sequence.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/sequence.ts#L6)

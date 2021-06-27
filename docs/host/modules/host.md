@@ -18,4 +18,4 @@
 
 Ƭ **HostOptions**: *Partial*<{ `identifyExisting`: *boolean*  }\>
 
-Defined in: [packages/host/src/lib/host.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/host.ts#L26)
+Defined in: [packages/host/src/lib/host.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L26)

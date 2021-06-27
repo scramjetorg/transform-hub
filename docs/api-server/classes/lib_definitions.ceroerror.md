@@ -57,7 +57,7 @@
 
 Overrides: Error.constructor
 
-Defined in: [packages/api-server/src/lib/definitions.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L42)
+Defined in: [packages/api-server/src/lib/definitions.ts:42](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L42)
 
 ## Properties
 
@@ -67,7 +67,7 @@ Defined in: [packages/api-server/src/lib/definitions.ts:42](https://github.com/s
 
 Implementation of: APIError.cause
 
-Defined in: [packages/api-server/src/lib/definitions.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L40)
+Defined in: [packages/api-server/src/lib/definitions.ts:40](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L40)
 
 ___
 
@@ -77,7 +77,7 @@ ___
 
 Implementation of: APIError.code
 
-Defined in: [packages/api-server/src/lib/definitions.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L38)
+Defined in: [packages/api-server/src/lib/definitions.ts:38](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L38)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 Implementation of: APIError.httpMessage
 
-Defined in: [packages/api-server/src/lib/definitions.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L39)
+Defined in: [packages/api-server/src/lib/definitions.ts:39](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L39)
 
 ___
 
@@ -119,7 +119,7 @@ ___
 
 • **type**: ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"``
 
-Defined in: [packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L41)
+Defined in: [packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L41)
 
 ___
 
@@ -166,7 +166,7 @@ Defined in: node_modules/@types/node/globals.d.ts:13
 
 **Returns:** *string*
 
-Defined in: [packages/api-server/src/lib/definitions.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L60)
+Defined in: [packages/api-server/src/lib/definitions.ts:60](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L60)
 
 ## Methods
 

@@ -43,7 +43,7 @@
 
 **Returns:** [*HostOne*](hostone.md)
 
-Defined in: [host-one.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L99)
+Defined in: [host-one.ts:99](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L99)
 
 ## Properties
 
@@ -59,7 +59,7 @@ Defined in: [host-one.ts:99](https://github.com/scramjet-cloud-platform/scramjet
 | `noParams` | *string* |
 | `parsingError` | *string* |
 
-Defined in: [host-one.ts:75](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L75)
+Defined in: [host-one.ts:75](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L75)
 
 ___
 
@@ -71,7 +71,7 @@ Logger.
 
 Implementation of: IComponent.logger
 
-Defined in: [host-one.ts:73](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L73)
+Defined in: [host-one.ts:73](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L73)
 
 ## Methods
 
@@ -81,7 +81,7 @@ Defined in: [host-one.ts:73](https://github.com/scramjet-cloud-platform/scramjet
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:257](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L257)
+Defined in: [host-one.ts:257](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L257)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 **Returns:** *Promise*<unknown\>
 
-Defined in: [host-one.ts:394](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L394)
+Defined in: [host-one.ts:394](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L394)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [host-one.ts:338](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L338)
+Defined in: [host-one.ts:338](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L338)
 
 ___
 
@@ -113,7 +113,7 @@ Creates API Server and defines it's endpoints.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:207](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L207)
+Defined in: [host-one.ts:207](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L207)
 
 ___
 
@@ -125,7 +125,7 @@ Starts socket server.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:198](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L198)
+Defined in: [host-one.ts:198](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L198)
 
 ___
 
@@ -138,7 +138,7 @@ Response contains sequence configuration and arguments.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:306](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L306)
+Defined in: [host-one.ts:306](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L306)
 
 ___
 
@@ -150,7 +150,7 @@ Creates StringStream from log stream.
 
 **Returns:** *void*
 
-Defined in: [host-one.ts:179](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L179)
+Defined in: [host-one.ts:179](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L179)
 
 ___
 
@@ -162,7 +162,7 @@ Adds handshake listener to monitor stream.
 
 **Returns:** *void*
 
-Defined in: [host-one.ts:287](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L287)
+Defined in: [host-one.ts:287](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L287)
 
 ___
 
@@ -174,7 +174,7 @@ Connects upstreams with downstreams.
 
 **Returns:** *void*
 
-Defined in: [host-one.ts:271](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L271)
+Defined in: [host-one.ts:271](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L271)
 
 ___
 
@@ -194,7 +194,7 @@ Initializes HostOne.
 
 **Returns:** *void*
 
-Defined in: [host-one.ts:147](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L147)
+Defined in: [host-one.ts:147](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L147)
 
 ___
 
@@ -206,7 +206,7 @@ Sends kill command via control stream.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:333](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L333)
+Defined in: [host-one.ts:333](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L333)
 
 ___
 
@@ -218,7 +218,7 @@ Starts all submodules.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L111)
+Defined in: [host-one.ts:111](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L111)
 
 ___
 
@@ -235,7 +235,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:407](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L407)
+Defined in: [host-one.ts:407](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L407)
 
 ___
 
@@ -254,7 +254,7 @@ Sends stop command via control stream.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:326](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L326)
+Defined in: [host-one.ts:326](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L326)
 
 ___
 
@@ -270,4 +270,4 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [host-one.ts:390](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host-one/src/host-one.ts#L390)
+Defined in: [host-one.ts:390](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host-one/src/host-one.ts#L390)

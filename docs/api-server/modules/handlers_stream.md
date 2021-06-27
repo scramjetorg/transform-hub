@@ -27,4 +27,4 @@
 | `downstream` | (`path`: *string* \| *RegExp*, `stream`: StreamOutput, `__namedParameters`: StreamConfig) => *void* |
 | `upstream` | (`path`: *string* \| *RegExp*, `stream`: StreamInput, `__namedParameters`: StreamConfig) => *void* |
 
-Defined in: [packages/api-server/src/handlers/stream.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/handlers/stream.ts#L31)
+Defined in: [packages/api-server/src/handlers/stream.ts:31](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/handlers/stream.ts#L31)

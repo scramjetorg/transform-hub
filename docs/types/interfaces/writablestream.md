@@ -77,7 +77,7 @@ ___
 
 • `Optional` **objectMode**: ``true``
 
-Defined in: [packages/types/src/utils.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L55)
+Defined in: [packages/types/src/utils.ts:55](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L55)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 Overrides: Writable.writable
 
-Defined in: [packages/types/src/utils.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L56)
+Defined in: [packages/types/src/utils.ts:56](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L56)
 
 ___
 
@@ -365,7 +365,7 @@ ___
 
 Overrides: Writable.destroy
 
-Defined in: [packages/types/src/utils.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L57)
+Defined in: [packages/types/src/utils.ts:57](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L57)
 
 ___
 
@@ -489,7 +489,7 @@ ___
 
 Overrides: Writable.end
 
-Defined in: [packages/types/src/utils.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L60)
+Defined in: [packages/types/src/utils.ts:60](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L60)
 
 ▸ **end**(`data`: Consumes, `cb?`: () => *void*): *void*
 
@@ -504,7 +504,7 @@ Defined in: [packages/types/src/utils.ts:60](https://github.com/scramjet-cloud-p
 
 Overrides: Writable.end
 
-Defined in: [packages/types/src/utils.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L61)
+Defined in: [packages/types/src/utils.ts:61](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L61)
 
 ▸ **end**(`str`: *never*, `encoding`: *never*, `cb?`: () => *void*): *void*
 
@@ -520,7 +520,7 @@ Defined in: [packages/types/src/utils.ts:61](https://github.com/scramjet-cloud-p
 
 Overrides: Writable.end
 
-Defined in: [packages/types/src/utils.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L62)
+Defined in: [packages/types/src/utils.ts:62](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L62)
 
 ___
 
@@ -1273,7 +1273,7 @@ ___
 
 Overrides: Writable.write
 
-Defined in: [packages/types/src/utils.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L58)
+Defined in: [packages/types/src/utils.ts:58](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L58)
 
 ▸ **write**(`str`: *never*, `encoding`: *never*, `cb?`: (`err?`: ``null`` \| Error) => *void*): *boolean*
 
@@ -1289,4 +1289,4 @@ Defined in: [packages/types/src/utils.ts:58](https://github.com/scramjet-cloud-p
 
 Overrides: Writable.write
 
-Defined in: [packages/types/src/utils.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L59)
+Defined in: [packages/types/src/utils.ts:59](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L59)

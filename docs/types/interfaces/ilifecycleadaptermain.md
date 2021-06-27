@@ -28,7 +28,7 @@ Removes resources.
 
 **Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L26)
+Defined in: [packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L26)
 
 ___
 
@@ -40,7 +40,7 @@ Initializes Lifecycle adapter.
 
 **Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L21)
+Defined in: [packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L21)
 
 ___
 
@@ -50,4 +50,4 @@ ___
 
 **Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L29)
+Defined in: [packages/types/src/lifecycle-adapters.ts:29](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L29)

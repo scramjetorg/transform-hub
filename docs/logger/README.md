@@ -40,7 +40,7 @@
 
 **Returns:** *string*
 
-Defined in: [index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L9)
+Defined in: [index.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L9)
 
 ## Functions
 
@@ -59,7 +59,7 @@ Pipes log streams to the provided outputs in serialized format
 
 **Returns:** *void*
 
-Defined in: [index.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L138)
+Defined in: [index.ts:138](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L138)
 
 ___
 
@@ -69,7 +69,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [index.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L128)
+Defined in: [index.ts:128](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L128)
 
 ___
 
@@ -90,4 +90,4 @@ Creates a Console compatible logger with basic decorations
 
 a Console compatible logger
 
-Defined in: [index.ts:151](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/logger/src/index.ts#L151)
+Defined in: [index.ts:151](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L151)

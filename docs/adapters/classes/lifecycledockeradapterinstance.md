@@ -56,7 +56,7 @@
 
 **Returns:** [*LifecycleDockerAdapterInstance*](lifecycledockeradapterinstance.md)
 
-Defined in: [instance-adapter.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L51)
+Defined in: [instance-adapter.ts:51](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L51)
 
 ## Properties
 
@@ -64,7 +64,7 @@ Defined in: [instance-adapter.ts:51](https://github.com/scramjet-cloud-platform/
 
 • `Private` `Optional` **controlFifoPath**: *string*
 
-Defined in: [instance-adapter.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L35)
+Defined in: [instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L35)
 
 ___
 
@@ -72,7 +72,7 @@ ___
 
 • `Private` **controlStream**: *DelayedStream*
 
-Defined in: [instance-adapter.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L44)
+Defined in: [instance-adapter.ts:44](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L44)
 
 ___
 
@@ -80,7 +80,7 @@ ___
 
 • `Private` **dockerHelper**: [*IDockerHelper*](../interfaces/idockerhelper.md)
 
-Defined in: [instance-adapter.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L32)
+Defined in: [instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L32)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 • `Private` `Optional` **inputFifoPath**: *string*
 
-Defined in: [instance-adapter.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L36)
+Defined in: [instance-adapter.ts:36](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L36)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 • `Private` **inputStream**: *DelayedStream*
 
-Defined in: [instance-adapter.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L46)
+Defined in: [instance-adapter.ts:46](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L46)
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 Implementation of: IComponent.logger
 
-Defined in: [instance-adapter.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L51)
+Defined in: [instance-adapter.ts:51](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L51)
 
 ___
 
@@ -114,7 +114,7 @@ ___
 
 • `Private` `Optional` **loggerFifoPath**: *string*
 
-Defined in: [instance-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L38)
+Defined in: [instance-adapter.ts:38](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L38)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 • `Private` **loggerStream**: *DelayedStream*
 
-Defined in: [instance-adapter.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L45)
+Defined in: [instance-adapter.ts:45](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L45)
 
 ___
 
@@ -130,7 +130,7 @@ ___
 
 • `Private` `Optional` **monitorFifoPath**: *string*
 
-Defined in: [instance-adapter.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L34)
+Defined in: [instance-adapter.ts:34](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L34)
 
 ___
 
@@ -138,7 +138,7 @@ ___
 
 • `Private` **monitorStream**: *DelayedStream*
 
-Defined in: [instance-adapter.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L43)
+Defined in: [instance-adapter.ts:43](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L43)
 
 ___
 
@@ -146,7 +146,7 @@ ___
 
 • `Private` `Optional` **outputFifoPath**: *string*
 
-Defined in: [instance-adapter.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L37)
+Defined in: [instance-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L37)
 
 ___
 
@@ -154,7 +154,7 @@ ___
 
 • `Private` **outputStream**: *DelayedStream*
 
-Defined in: [instance-adapter.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L47)
+Defined in: [instance-adapter.ts:47](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L47)
 
 ___
 
@@ -162,7 +162,7 @@ ___
 
 • `Private` **resources**: [*DockerAdapterResources*](../README.md#dockeradapterresources)= {}
 
-Defined in: [instance-adapter.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L49)
+Defined in: [instance-adapter.ts:49](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L49)
 
 ___
 
@@ -170,7 +170,7 @@ ___
 
 • `Private` **runnerStderr**: *PassThrough*
 
-Defined in: [instance-adapter.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L42)
+Defined in: [instance-adapter.ts:42](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L42)
 
 ___
 
@@ -178,7 +178,7 @@ ___
 
 • `Private` **runnerStdin**: *PassThrough*
 
-Defined in: [instance-adapter.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L40)
+Defined in: [instance-adapter.ts:40](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L40)
 
 ___
 
@@ -186,7 +186,7 @@ ___
 
 • `Private` **runnerStdout**: *PassThrough*
 
-Defined in: [instance-adapter.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L41)
+Defined in: [instance-adapter.ts:41](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L41)
 
 ## Methods
 
@@ -198,7 +198,7 @@ Defined in: [instance-adapter.ts:41](https://github.com/scramjet-cloud-platform/
 
 Implementation of: ILifeCycleAdapterMain.cleanup
 
-Defined in: [instance-adapter.ts:309](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L309)
+Defined in: [instance-adapter.ts:309](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L309)
 
 ___
 
@@ -215,7 +215,7 @@ ___
 
 **Returns:** *Promise*<string\>
 
-Defined in: [instance-adapter.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L72)
+Defined in: [instance-adapter.ts:72](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L72)
 
 ___
 
@@ -235,7 +235,7 @@ ___
 
 **Returns:** *Promise*<string\>
 
-Defined in: [instance-adapter.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L89)
+Defined in: [instance-adapter.ts:89](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L89)
 
 ___
 
@@ -251,7 +251,7 @@ ___
 
 **Returns:** *Promise*<[*DockerAdapterRunPortsConfig*](../README.md#dockeradapterrunportsconfig)\>
 
-Defined in: [instance-adapter.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L144)
+Defined in: [instance-adapter.ts:144](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L144)
 
 ___
 
@@ -269,7 +269,7 @@ ___
 
 Implementation of: ILifeCycleAdapterRun.hookCommunicationHandler
 
-Defined in: [instance-adapter.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L174)
+Defined in: [instance-adapter.ts:174](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L174)
 
 ___
 
@@ -281,7 +281,7 @@ ___
 
 Implementation of: ILifeCycleAdapterMain.init
 
-Defined in: [instance-adapter.ts:68](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L68)
+Defined in: [instance-adapter.ts:68](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L68)
 
 ___
 
@@ -299,7 +299,7 @@ ___
 
 Implementation of: ILifeCycleAdapterRun.monitorRate
 
-Defined in: [instance-adapter.ts:338](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L338)
+Defined in: [instance-adapter.ts:338](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L338)
 
 ___
 
@@ -316,7 +316,7 @@ ___
 
 **Returns:** *Promise*<{ [key: string]: *any*;  }\>
 
-Defined in: [instance-adapter.ts:130](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L130)
+Defined in: [instance-adapter.ts:130](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L130)
 
 ___
 
@@ -328,7 +328,7 @@ ___
 
 Implementation of: ILifeCycleAdapterMain.remove
 
-Defined in: [instance-adapter.ts:343](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L343)
+Defined in: [instance-adapter.ts:343](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L343)
 
 ___
 
@@ -346,7 +346,7 @@ ___
 
 Implementation of: ILifeCycleAdapterRun.run
 
-Defined in: [instance-adapter.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L211)
+Defined in: [instance-adapter.ts:211](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L211)
 
 ___
 
@@ -358,7 +358,7 @@ ___
 
 Implementation of: ILifeCycleAdapterRun.snapshot
 
-Defined in: [instance-adapter.ts:333](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L333)
+Defined in: [instance-adapter.ts:333](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L333)
 
 ___
 
@@ -376,4 +376,4 @@ ___
 
 Implementation of: ILifeCycleAdapterRun.stats
 
-Defined in: [instance-adapter.ts:153](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L153)
+Defined in: [instance-adapter.ts:153](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/instance-adapter.ts#L153)

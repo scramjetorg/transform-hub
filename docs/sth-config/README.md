@@ -19,7 +19,7 @@
 
 • `Const` **configService**: *ConfigService*
 
-Defined in: [config-service.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/sth-config/src/config-service.ts#L70)
+Defined in: [config-service.ts:70](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/sth-config/src/config-service.ts#L70)
 
 ## Functions
 
@@ -29,7 +29,7 @@ Defined in: [config-service.ts:70](https://github.com/scramjet-cloud-platform/sc
 
 **Returns:** *Promise*<STHConfiguration\>
 
-Defined in: [index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/sth-config/src/index.ts#L10)
+Defined in: [index.ts:10](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/sth-config/src/index.ts#L10)
 
 ___
 
@@ -39,4 +39,4 @@ ___
 
 **Returns:** *boolean*
 
-Defined in: [index.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/sth-config/src/index.ts#L6)
+Defined in: [index.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/sth-config/src/index.ts#L6)

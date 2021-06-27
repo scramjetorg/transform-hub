@@ -43,7 +43,7 @@
 | `ports?` | [*DockerAdapterRunPortsConfig*](README.md#dockeradapterrunportsconfig) |
 | `volumeId?` | [*DockerVolume*](README.md#dockervolume) |
 
-Defined in: [types.ts:122](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L122)
+Defined in: [types.ts:122](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L122)
 
 ___
 
@@ -66,7 +66,7 @@ Configuration used to run command in container.
 | `ports?` | [*DockerAdapterRunPortsConfig*](README.md#dockeradapterrunportsconfig) | **`property`** {DockerAdapterRunPortsConfig} ports Docker ports configuration |
 | `volumes?` | [*DockerAdapterVolumeConfig*](README.md#dockeradaptervolumeconfig)[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration. |
 
-Defined in: [types.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L53)
+Defined in: [types.ts:53](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L53)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 | `ExposedPorts` | *any* |
 | `PortBindings` | *any* |
 
-Defined in: [types.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L43)
+Defined in: [types.ts:43](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L43)
 
 ___
 
@@ -99,7 +99,7 @@ Result of running command in container.
 | `streams` | [*DockerAdapterStreams*](README.md#dockeradapterstreams) |
 | `wait` | Function |
 
-Defined in: [types.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L136)
+Defined in: [types.ts:136](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L136)
 
 ___
 
@@ -117,7 +117,7 @@ Standard streams connected with container.
 | `stdin` | Writable |
 | `stdout` | Stream |
 
-Defined in: [types.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L101)
+Defined in: [types.ts:101](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L101)
 
 ___
 
@@ -127,7 +127,7 @@ ___
 
 Volume mounting configuration.
 
-Defined in: [types.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L32)
+Defined in: [types.ts:32](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L32)
 
 ___
 
@@ -141,7 +141,7 @@ ___
 | :------ | :------ |
 | `condition?` | ``"not-running"`` \| ``"next-exit"`` \| ``"removed"`` |
 
-Defined in: [types.ts:129](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L129)
+Defined in: [types.ts:129](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L129)
 
 ___
 
@@ -151,7 +151,7 @@ ___
 
 Docker container.
 
-Defined in: [types.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L18)
+Defined in: [types.ts:18](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L18)
 
 ___
 
@@ -161,7 +161,7 @@ ___
 
 Docker image.
 
-Defined in: [types.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L11)
+Defined in: [types.ts:11](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L11)
 
 ___
 
@@ -171,7 +171,7 @@ ___
 
 Docker volume.
 
-Defined in: [types.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L25)
+Defined in: [types.ts:25](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L25)
 
 ___
 
@@ -185,4 +185,4 @@ ___
 | :------ | :------ |
 | `statusCode` | ExitCode |
 
-Defined in: [types.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/types.ts#L118)
+Defined in: [types.ts:118](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L118)

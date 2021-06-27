@@ -29,7 +29,7 @@
 
 **Returns:** *string*
 
-Defined in: [packages/model/src/utils/id-provider.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/id-provider.ts#L4)
+Defined in: [packages/model/src/utils/id-provider.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/id-provider.ts#L4)
 
 ___
 
@@ -45,4 +45,4 @@ ___
 
 **Returns:** *boolean*
 
-Defined in: [packages/model/src/utils/id-provider.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/id-provider.ts#L8)
+Defined in: [packages/model/src/utils/id-provider.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/id-provider.ts#L8)

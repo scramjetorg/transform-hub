@@ -49,7 +49,7 @@
 | :------ | :------ |
 | `T` | RunnerMessageCode \| SupervisorMessageCode |
 
-Defined in: [packages/model/src/stream-handler.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/stream-handler.ts#L22)
+Defined in: [packages/model/src/stream-handler.ts:22](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/stream-handler.ts#L22)
 
 ___
 
@@ -67,7 +67,7 @@ ___
 | `use` | *number* |
 | `used` | *number* |
 
-Defined in: [packages/model/src/load-check-stat.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/load-check-stat.ts#L1)
+Defined in: [packages/model/src/load-check-stat.ts:1](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/load-check-stat.ts#L1)
 
 ___
 
@@ -75,7 +75,7 @@ ___
 
 Ƭ **ICSIControllerErrorData**: *any*
 
-Defined in: [packages/model/src/errors/csi-controller-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/csi-controller-error.ts#L4)
+Defined in: [packages/model/src/errors/csi-controller-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/csi-controller-error.ts#L4)
 
 ___
 
@@ -83,7 +83,7 @@ ___
 
 Ƭ **IHostErrorData**: *any*
 
-Defined in: [packages/model/src/errors/host-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/host-error.ts#L4)
+Defined in: [packages/model/src/errors/host-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/host-error.ts#L4)
 
 ___
 
@@ -91,7 +91,7 @@ ___
 
 Ƭ **IRunnerErrorData**: *any*
 
-Defined in: [packages/model/src/errors/runner-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/runner-error.ts#L4)
+Defined in: [packages/model/src/errors/runner-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/runner-error.ts#L4)
 
 ___
 
@@ -99,7 +99,7 @@ ___
 
 Ƭ **ISupervisorErrorData**: *any*
 
-Defined in: [packages/model/src/errors/supervisor-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/errors/supervisor-error.ts#L4)
+Defined in: [packages/model/src/errors/supervisor-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/errors/supervisor-error.ts#L4)
 
 ___
 
@@ -117,7 +117,7 @@ ___
 | `memFree` | *number* |
 | `memUsed` | *number* |
 
-Defined in: [packages/model/src/load-check-stat.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/load-check-stat.ts#L9)
+Defined in: [packages/model/src/load-check-stat.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/load-check-stat.ts#L9)
 
 ## Variables
 
@@ -132,7 +132,7 @@ Defined in: [packages/model/src/load-check-stat.ts:9](https://github.com/scramje
 | `deserializeMessage` | (`msg`: *string*) => *MessageType*<RunnerMessageCode\> |
 | `serializeMessage` | <T\>(`__namedParameters`: *MessageType*<T\>) => RunnerMessage \| SupervisorMessage |
 
-Defined in: [packages/model/src/index.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/index.ts#L12)
+Defined in: [packages/model/src/index.ts:12](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/index.ts#L12)
 
 ## Functions
 
@@ -155,7 +155,7 @@ Defined in: [packages/model/src/index.ts:12](https://github.com/scramjet-cloud-p
 
 **Returns:** *MessageDataType*<X\>
 
-Defined in: [packages/model/src/get-message.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/get-message.ts#L55)
+Defined in: [packages/model/src/get-message.ts:55](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/get-message.ts#L55)
 
 ___
 
@@ -175,7 +175,7 @@ Get an object of message type from serialized message.
 
 - an object of message type
 
-Defined in: [packages/model/src/messages-utils.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/messages-utils.ts#L29)
+Defined in: [packages/model/src/messages-utils.ts:29](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/messages-utils.ts#L29)
 
 ___
 
@@ -203,7 +203,7 @@ A helper method used for deserializing messages.
 
 - an object of message type
 
-Defined in: [packages/model/src/get-message.ts:102](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/get-message.ts#L102)
+Defined in: [packages/model/src/get-message.ts:102](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/get-message.ts#L102)
 
 ___
 
@@ -220,7 +220,7 @@ ___
 
 **Returns:** *Promise*<any\>
 
-Defined in: [packages/model/src/utils/promiseTimout.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/utils/promiseTimout.ts#L4)
+Defined in: [packages/model/src/utils/promiseTimout.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/promiseTimout.ts#L4)
 
 ___
 
@@ -247,4 +247,4 @@ Serizalized message.
 - a serializable message in a format [msgCode, {msgBody}]
           where 'msgCode' is a message type code and 'msgBody' is a message body
 
-Defined in: [packages/model/src/messages-utils.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/model/src/messages-utils.ts#L14)
+Defined in: [packages/model/src/messages-utils.ts:14](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/messages-utils.ts#L14)

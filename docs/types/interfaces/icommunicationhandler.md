@@ -40,7 +40,7 @@
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L23)
+Defined in: [packages/types/src/communication-handler.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L23)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L20)
+Defined in: [packages/types/src/communication-handler.ts:20](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L20)
 
 ___
 
@@ -76,7 +76,7 @@ Returns a copy of log stream for reading - does not interact with the fifo strea
 
 **Returns:** [*LoggerOutput*](../README.md#loggeroutput)
 
-Defined in: [packages/types/src/communication-handler.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L39)
+Defined in: [packages/types/src/communication-handler.ts:39](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L39)
 
 ___
 
@@ -88,7 +88,7 @@ Returns a copy of monitor stream for reading - does not interact with the fifo s
 
 **Returns:** *DataStream*
 
-Defined in: [packages/types/src/communication-handler.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L35)
+Defined in: [packages/types/src/communication-handler.ts:35](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L35)
 
 ___
 
@@ -106,7 +106,7 @@ Gets stdio streams for full interaction
 | `stdin` | *Writable* |
 | `stdout` | *Readable* |
 
-Defined in: [packages/types/src/communication-handler.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L44)
+Defined in: [packages/types/src/communication-handler.ts:44](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L44)
 
 ___
 
@@ -122,7 +122,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L18)
+Defined in: [packages/types/src/communication-handler.ts:18](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L18)
 
 ___
 
@@ -138,7 +138,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L17)
+Defined in: [packages/types/src/communication-handler.ts:17](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L17)
 
 ___
 
@@ -148,7 +148,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L27)
+Defined in: [packages/types/src/communication-handler.ts:27](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L27)
 
 ___
 
@@ -158,7 +158,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L25)
+Defined in: [packages/types/src/communication-handler.ts:25](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L25)
 
 ___
 
@@ -168,7 +168,7 @@ ___
 
 **Returns:** [*ICommunicationHandler*](icommunicationhandler.md)
 
-Defined in: [packages/types/src/communication-handler.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L26)
+Defined in: [packages/types/src/communication-handler.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L26)
 
 ___
 
@@ -191,7 +191,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [packages/types/src/communication-handler.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L30)
+Defined in: [packages/types/src/communication-handler.ts:30](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L30)
 
 ___
 
@@ -214,4 +214,4 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [packages/types/src/communication-handler.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/communication-handler.ts#L29)
+Defined in: [packages/types/src/communication-handler.ts:29](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/communication-handler.ts#L29)

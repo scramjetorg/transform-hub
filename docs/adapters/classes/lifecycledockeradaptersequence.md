@@ -42,7 +42,7 @@
 
 **Returns:** [*LifecycleDockerAdapterSequence*](lifecycledockeradaptersequence.md)
 
-Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L30)
+Defined in: [sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L30)
 
 ## Properties
 
@@ -50,7 +50,7 @@ Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/
 
 • `Private` **dockerHelper**: [*IDockerHelper*](../interfaces/idockerhelper.md)
 
-Defined in: [sequence-adapter.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L24)
+Defined in: [sequence-adapter.ts:24](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L24)
 
 ___
 
@@ -60,7 +60,7 @@ ___
 
 Implementation of: IComponent.logger
 
-Defined in: [sequence-adapter.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L30)
+Defined in: [sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L30)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 • `Private` `Optional` **prerunnerConfig**: ContainerConfiguration
 
-Defined in: [sequence-adapter.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L26)
+Defined in: [sequence-adapter.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L26)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 • `Private` **resources**: [*DockerAdapterResources*](../README.md#dockeradapterresources)= {}
 
-Defined in: [sequence-adapter.ts:28](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L28)
+Defined in: [sequence-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L28)
 
 ## Methods
 
@@ -88,7 +88,7 @@ Defined in: [sequence-adapter.ts:28](https://github.com/scramjet-cloud-platform/
 
 Implementation of: ILifeCycleAdapterMain.cleanup
 
-Defined in: [sequence-adapter.ts:169](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L169)
+Defined in: [sequence-adapter.ts:169](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L169)
 
 ___
 
@@ -104,7 +104,7 @@ ___
 
 **Returns:** *Promise*<string\>
 
-Defined in: [sequence-adapter.ts:137](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L137)
+Defined in: [sequence-adapter.ts:137](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L137)
 
 ___
 
@@ -120,7 +120,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [sequence-adapter.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L44)
+Defined in: [sequence-adapter.ts:44](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L44)
 
 ___
 
@@ -139,7 +139,7 @@ ___
 
 Implementation of: ILifeCycleAdapterIdentify.identify
 
-Defined in: [sequence-adapter.ts:103](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L103)
+Defined in: [sequence-adapter.ts:103](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L103)
 
 ___
 
@@ -155,7 +155,7 @@ ___
 
 **Returns:** *Promise*<undefined \| RunnerConfig\>
 
-Defined in: [sequence-adapter.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L58)
+Defined in: [sequence-adapter.ts:58](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L58)
 
 ___
 
@@ -167,7 +167,7 @@ ___
 
 Implementation of: ILifeCycleAdapterMain.init
 
-Defined in: [sequence-adapter.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L37)
+Defined in: [sequence-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L37)
 
 ___
 
@@ -179,7 +179,7 @@ ___
 
 Implementation of: ILifeCycleAdapterIdentify.list
 
-Defined in: [sequence-adapter.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L48)
+Defined in: [sequence-adapter.ts:48](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L48)
 
 ___
 
@@ -197,7 +197,7 @@ ___
 
 **Returns:** *Promise*<any\>
 
-Defined in: [sequence-adapter.ts:145](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L145)
+Defined in: [sequence-adapter.ts:145](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L145)
 
 ___
 
@@ -213,7 +213,7 @@ ___
 
 **Returns:** *Promise*<any\>
 
-Defined in: [sequence-adapter.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L89)
+Defined in: [sequence-adapter.ts:89](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L89)
 
 ___
 
@@ -225,4 +225,4 @@ ___
 
 Implementation of: ILifeCycleAdapterMain.remove
 
-Defined in: [sequence-adapter.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L192)
+Defined in: [sequence-adapter.ts:192](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L192)

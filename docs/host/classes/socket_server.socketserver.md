@@ -69,7 +69,7 @@
 
 Overrides: EventEmitter.constructor
 
-Defined in: [packages/host/src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L20)
+Defined in: [packages/host/src/lib/socket-server.ts:20](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/socket-server.ts#L20)
 
 ## Properties
 
@@ -77,7 +77,7 @@ Defined in: [packages/host/src/lib/socket-server.ts:20](https://github.com/scram
 
 • **address**: PathLike
 
-Defined in: [packages/host/src/lib/socket-server.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L19)
+Defined in: [packages/host/src/lib/socket-server.ts:19](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/socket-server.ts#L19)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 Implementation of: IComponent.logger
 
-Defined in: [packages/host/src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L20)
+Defined in: [packages/host/src/lib/socket-server.ts:20](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/socket-server.ts#L20)
 
 ___
 
@@ -95,7 +95,7 @@ ___
 
 • `Optional` **server**: *Server*
 
-Defined in: [packages/host/src/lib/socket-server.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L18)
+Defined in: [packages/host/src/lib/socket-server.ts:18](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/socket-server.ts#L18)
 
 ___
 
@@ -174,7 +174,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/host/src/lib/socket-server.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L118)
+Defined in: [packages/host/src/lib/socket-server.ts:118](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/socket-server.ts#L118)
 
 ___
 
@@ -431,7 +431,7 @@ ___
 
 **Returns:** *Promise*<void\>
 
-Defined in: [packages/host/src/lib/socket-server.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/host/src/lib/socket-server.ts#L54)
+Defined in: [packages/host/src/lib/socket-server.ts:54](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/socket-server.ts#L54)
 
 ___
 

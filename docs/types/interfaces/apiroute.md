@@ -27,7 +27,7 @@
 
 • **lookup**: [*Middleware*](../README.md#middleware)
 
-Defined in: [packages/types/src/api-expose.ts:115](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L115)
+Defined in: [packages/types/src/api-expose.ts:115](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L115)
 
 ## Methods
 
@@ -49,7 +49,7 @@ A method that allows to consume incoming stream from the specified path on the A
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:98](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L98)
+Defined in: [packages/types/src/api-expose.ts:98](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L98)
 
 ___
 
@@ -77,7 +77,7 @@ Simple GET request hook for static data in monitoring stream.
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:77](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L77)
+Defined in: [packages/types/src/api-expose.ts:77](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L77)
 
 ___
 
@@ -106,7 +106,7 @@ Simple POST request hook for static data in monitoring stream.
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:68](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L68)
+Defined in: [packages/types/src/api-expose.ts:68](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L68)
 
 ___
 
@@ -128,4 +128,4 @@ A method that allows to pass a stream to the specified path on the API server
 
 Inherited from: [APIBase](apibase.md)
 
-Defined in: [packages/types/src/api-expose.ts:86](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/api-expose.ts#L86)
+Defined in: [packages/types/src/api-expose.ts:86](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L86)

@@ -28,7 +28,7 @@
 
 Ƭ **CeroCode**: keyof *typeof* codelist
 
-Defined in: [packages/api-server/src/lib/definitions.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L35)
+Defined in: [packages/api-server/src/lib/definitions.ts:35](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L35)
 
 ___
 
@@ -43,7 +43,7 @@ ___
 | `T` | Server | Server |
 | `S` | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md) | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md) |
 
-Defined in: [packages/api-server/src/lib/definitions.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L15)
+Defined in: [packages/api-server/src/lib/definitions.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L15)
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 Ƭ **CeroDefaultRoute**: Middleware
 
-Defined in: [packages/api-server/src/lib/definitions.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L6)
+Defined in: [packages/api-server/src/lib/definitions.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L6)
 
 ___
 
@@ -73,7 +73,7 @@ ___
 
 **Returns:** *void*
 
-Defined in: [packages/api-server/src/lib/definitions.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L65)
+Defined in: [packages/api-server/src/lib/definitions.ts:65](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L65)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 Ƭ **CeroMiddleware**: Middleware
 
-Defined in: [packages/api-server/src/lib/definitions.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L5)
+Defined in: [packages/api-server/src/lib/definitions.ts:5](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L5)
 
 ___
 
@@ -89,4 +89,4 @@ ___
 
 Ƭ **CeroRouterConfig**: *Partial*<{ `cacheSize`: *number* ; `defaultRoute`: [*CeroDefaultRoute*](lib_definitions.md#cerodefaultroute) ; `errorHandler`: [*CeroErrorHandler*](lib_definitions.md#ceroerrorhandler) ; `id`: *string*  }\>
 
-Defined in: [packages/api-server/src/lib/definitions.ts:67](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L67)
+Defined in: [packages/api-server/src/lib/definitions.ts:67](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/definitions.ts#L67)

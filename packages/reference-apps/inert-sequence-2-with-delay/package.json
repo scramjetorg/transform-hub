@@ -22,5 +22,9 @@
   },
   "dependencies": {
     "scramjet": "4.35.20"
+  },
+  "repo": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
   }
 }

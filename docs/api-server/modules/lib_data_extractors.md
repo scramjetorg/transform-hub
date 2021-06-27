@@ -25,7 +25,7 @@
 
 **Returns:** *Promise*<any\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L6)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L6)
 
 ___
 
@@ -42,7 +42,7 @@ ___
 
 **Returns:** *Promise*<Readable\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L22)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:22](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L22)
 
 ___
 
@@ -60,4 +60,4 @@ ___
 
 **Returns:** *Promise*<Writable \| Object\>
 
-Defined in: [packages/api-server/src/lib/data-extractors.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L14)
+Defined in: [packages/api-server/src/lib/data-extractors.ts:14](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/data-extractors.ts#L14)

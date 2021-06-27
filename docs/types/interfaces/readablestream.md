@@ -153,7 +153,7 @@ Defined in: node_modules/@types/node/stream.d.ts:34
 
 Overrides: PipeableStream.\_\_@asyncIterator
 
-Defined in: [packages/types/src/utils.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L45)
+Defined in: [packages/types/src/utils.ts:45](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L45)
 
 ___
 
@@ -336,7 +336,7 @@ ___
 
 Overrides: PipeableStream.destroy
 
-Defined in: [packages/types/src/utils.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L46)
+Defined in: [packages/types/src/utils.ts:46](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L46)
 
 ___
 
@@ -832,7 +832,7 @@ ___
 
 Inherited from: PipeableStream.pipe
 
-Defined in: [packages/types/src/utils.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L33)
+Defined in: [packages/types/src/utils.ts:33](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L33)
 
 ▸ **pipe**<T\>(`destination`: T, `options?`: { `end?`: *boolean*  }): T
 
@@ -854,7 +854,7 @@ Defined in: [packages/types/src/utils.ts:33](https://github.com/scramjet-cloud-p
 
 Inherited from: PipeableStream.pipe
 
-Defined in: [packages/types/src/utils.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L36)
+Defined in: [packages/types/src/utils.ts:36](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L36)
 
 ___
 
@@ -1157,7 +1157,7 @@ ___
 
 Inherited from: PipeableStream.read
 
-Defined in: [packages/types/src/utils.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/utils.ts#L32)
+Defined in: [packages/types/src/utils.ts:32](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L32)
 
 ___
 

@@ -39,7 +39,7 @@
 
 **Returns:** [*CSHClient*](csh_client.cshclient.md)
 
-Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L23)
+Defined in: [csh-client.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L23)
 
 ## Properties
 
@@ -49,7 +49,7 @@ Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramj
 
 Implementation of: ICSHClient.logger
 
-Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L23)
+Defined in: [csh-client.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L23)
 
 ## Methods
 
@@ -61,7 +61,7 @@ Defined in: [csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramj
 
 Implementation of: ICSHClient.disconnect
 
-Defined in: [csh-client.ts:84](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L84)
+Defined in: [csh-client.ts:84](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L84)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 **Returns:** *ReadableStream*<Buffer\>
 
-Defined in: [csh-client.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L107)
+Defined in: [csh-client.ts:107](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L107)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 Implementation of: ICSHClient.hookCommunicationHandler
 
-Defined in: [csh-client.ts:115](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L115)
+Defined in: [csh-client.ts:115](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L115)
 
 ___
 
@@ -107,4 +107,4 @@ ___
 
 Implementation of: ICSHClient.init
 
-Defined in: [csh-client.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L31)
+Defined in: [csh-client.ts:31](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/supervisor/src/lib/csh-client.ts#L31)

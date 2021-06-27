@@ -28,7 +28,7 @@
 
 Inherited from: [IComponent](icomponent.md).[logger](icomponent.md#logger)
 
-Defined in: [packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/component.ts#L2)
+Defined in: [packages/types/src/component.ts:2](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/component.ts#L2)
 
 ## Methods
 
@@ -40,7 +40,7 @@ Disconnects from a host server.
 
 **Returns:** *Promise*<void\>
 
-Defined in: [packages/types/src/csh-connector.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/csh-connector.ts#L26)
+Defined in: [packages/types/src/csh-connector.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/csh-connector.ts#L26)
 
 ___
 
@@ -58,7 +58,7 @@ Create array of streams on LCC demand than hook streams.
 
 **Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/csh-connector.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/csh-connector.ts#L21)
+Defined in: [packages/types/src/csh-connector.ts:21](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/csh-connector.ts#L21)
 
 ___
 
@@ -76,4 +76,4 @@ Initializes the client
 
 **Returns:** *MaybePromise*<void\>
 
-Defined in: [packages/types/src/csh-connector.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/8f44413a/packages/types/src/csh-connector.ts#L14)
+Defined in: [packages/types/src/csh-connector.ts:14](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/csh-connector.ts#L14)
