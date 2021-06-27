@@ -1,6 +1,6 @@
 import { STHConfiguration } from "@scramjet/types";
 
-const merge = (objFrom: any, objTo: any) => Object.keys(objTo)
+const merge = (objFrom: any, objTo: any) => !objTo ? objFrom : Object.keys(objTo)
     .reduce(
         ([mTo, mFrom], key) => {
             if (typeof mFrom[key] !== "undefined" && objFrom[key] instanceof Object && !Array.isArray(mTo[key]))
