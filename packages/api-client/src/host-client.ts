@@ -22,7 +22,7 @@ export class HostClient {
 
     // TODO: Dedicated log stream for host not yet implemented.
     getLogStream() {
-        return clientUtils.getStream("log");
+        return clientUtils.getStream("stream/log");
     }
 
     async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {

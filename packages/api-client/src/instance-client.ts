@@ -20,6 +20,9 @@ export class InstanceClient {
     }
 
     private constructor(id: string) {
+        if (!clientUtils.initialized) {
+            throw new Error("ClientUtils not initialized");
+        }
         if (!IDProvider.isValid(id)) {
             throw new Error("Invalid id.");
         }
@@ -44,7 +47,7 @@ export class InstanceClient {
         ] as EncodedControlMessage);
     }
 
-    async sendEvent(eventName: string, message: string): Promise<Response> {
+    async sendEvent(eventName: string, message: [string]): Promise<Response> {
         const data = [
             RunnerMessageCode.EVENT, {
                 eventName,
