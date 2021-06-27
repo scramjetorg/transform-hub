@@ -157,18 +157,26 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
-    async pullImage(name: string, ifNeeded: boolean) {
-        this.logger.debug("Checking image", name);
-        if (ifNeeded) {
-            const exists = await this.dockerode.getImage(name).get()
-                .then(() => true, () => false);
+    private pulledImages: {[key: string]: Promise<void>} = {};
 
-            if (exists) return;
-        }
-        this.logger.log("Pulling image", name, "starts");
-        await this.dockerode.pull(name);
-        await new Promise(res => setTimeout(res, 1000));
-        this.logger.log("Pulling image", name, "done");
+    async pullImage(name: string, ifNeeded: boolean) {
+        if (this.pulledImages[name]) return this.pulledImages[name];
+
+        this.pulledImages[name] = (async () => {
+            this.logger.debug("Checking image", name);
+            if (ifNeeded) {
+                const exists = await this.dockerode.getImage(name).get()
+                    .then(() => true, () => false);
+
+                if (exists) return;
+            }
+            this.logger.log("Pulling image", name, "starts");
+            await this.dockerode.pull(name);
+            await new Promise(res => setTimeout(res, 1000));
+            this.logger.log("Pulling image", name, "done");
+        })();
+
+        return this.pulledImages[name];
     }
 
     /**
