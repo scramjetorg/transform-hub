@@ -39,13 +39,12 @@ export = async function(_stream: any, ...args: any) {
     allocatedMem = Buffer.alloc(allocMemSize << 20, 0x1234);
 
     const stream = new StringStream();
-    const durationMs = args[0] * 1000;
     const files = args[2];
 
-    console.log(`Args: [Duration: ${durationMs}, MemAlloc: ${allocMemSize}, Files: ${files}]`);
+    console.log(`Args: MemAlloc: ${allocMemSize}, Files: ${files}]`);
 
     this.on("check", async (data) => {
-        console.log(`Check received: ${JSON.stringify(data)}`);
+        this.logger.log(`Check received: ${JSON.stringify(data)}`);
         this.emit(
             "ok",
             {
@@ -54,7 +53,7 @@ export = async function(_stream: any, ...args: any) {
             });
     });
 
-    const loop = setInterval(async () => {
+    setInterval(async () => {
         try {
             // eslint-disable-next-line no-extra-parens
             (await Promise.all(
@@ -66,11 +65,6 @@ export = async function(_stream: any, ...args: any) {
             });
         } catch (err) {
             console.log(err);
-        }
-
-        if (Date.now() - startDate > durationMs) {
-            stream.end();
-            clearInterval(loop);
         }
     }, 1000);
 
