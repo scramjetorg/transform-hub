@@ -143,10 +143,10 @@ yarn prepack              # moves files to ./dist/
 ## Docker commands
 
 ```bash
-docker ps                      # list containers
-docker volume prune -f         # remove all unused local volumes
-docker system prune --all -f   # remove all unused images not just dangling ones
-docker stop $(docker ps -a -q) # stops all running containers
+docker ps                         # list containers
+docker volume prune -f            # remove all unused local volumes
+docker system prune --all -f      # remove all unused images not just dangling ones
+docker stop -f $(docker ps -a -q) # stops all running containers
 ```
 
 > *(`-f`) -  don't prompt confirmation
