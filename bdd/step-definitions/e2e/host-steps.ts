@@ -455,7 +455,11 @@ When("stream sequence logs to stderr", async () => {
 });
 
 When("send data", async () => {
-    const status = (await instance.sendInput("{\"a\": 1}")).status;
+
+    const status = await instance.sendStream("input", "{\"a\": 1}", {
+        type: "application/x-ndjson",
+        end: true
+    });
 
     console.log(status);
 });
