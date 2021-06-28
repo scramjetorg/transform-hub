@@ -65,7 +65,7 @@
     "eslint-to-editorconfig": "^2.0.0",
     "glob": "^7.1.7",
     "globrex": "^0.1.2",
-    "husky": "6.0.0",
+    "husky": "^6.0.0",
     "lerna": "^4.0.0",
     "semver": "^7.3.5",
     "syncpack": "^5.7.11",
