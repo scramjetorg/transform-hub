@@ -2,6 +2,7 @@ Feature: Start multiple instances
 
     Scenario: PT-001 TC-001 More than 5 instances work for long time
         Given host is running
+        And we pipe the sequence logs to stdout
         When starts at least 2 sequences from file "../packages/reference-apps/durability-preservation.tar.gz" for .25 hours
         When wait for .025 hours
         Then check if instances respond

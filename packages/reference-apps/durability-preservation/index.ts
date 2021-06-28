@@ -45,6 +45,7 @@ export = async function(_stream: any, ...args: any) {
     console.log(`Args: [Duration: ${durationMs}, MemAlloc: ${allocMemSize}, Files: ${files}]`);
 
     this.on("check", async (data) => {
+        console.log(`Check received: ${JSON.stringify(data)}`);
         this.emit(
             "ok",
             {
