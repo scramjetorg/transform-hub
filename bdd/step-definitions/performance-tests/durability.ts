@@ -33,12 +33,16 @@ When("starts at least {int} sequences from file {string} for {float} hours", { t
         await new Promise(res => { setTimeout(res, 1000); });
         rejected = false;
 
+        console.error(`Getting loadcheck before sequence ${instances.length}`);
         const loadCheck = await hostClient.getLoadCheck();
 
         // eslint-disable-next-line no-extra-parens
         if ((loadCheck as any).status !== 200 || loadCheck.data.memFree < (512 << 20)) {
+            // eslint-disable-next-line no-extra-parens
+            console.error(`Load check failed: status=${(loadCheck as any).status}, memFree=${loadCheck.data.memFree}`);
             rejected = true;
         } else {
+            console.error("Starting another sequence");
             const instance = await sequence.start(data.appConfig, data.args);
 
             if (instance) {
@@ -50,11 +54,11 @@ When("starts at least {int} sequences from file {string} for {float} hours", { t
         }
 
         if (rejected) {
-            console.log("Sequence rejected. Total sequences started: ", instances.length);
+            console.error("Sequence rejected. Total sequences started: ", instances.length);
         }
 
         if (instances.length > minNumber) {
-            console.log("Total sequences started: ", instances.length);
+            console.error("Total sequences started: ", instances.length);
             break;
         }
 
@@ -64,7 +68,7 @@ When("starts at least {int} sequences from file {string} for {float} hours", { t
         assert.fail("Can't start enough instances.");
     }
 
-    console.log("Last instance started on:", new Date().toUTCString());
+    console.error("Last instance started on:", new Date().toUTCString());
 });
 
 When("wait for {float} hours", { timeout: 3600 * 48 * 1000 }, async (timeoutHrs: number) => {
