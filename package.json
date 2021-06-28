@@ -56,7 +56,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "@types/node": "14.17.4",
+    "@types/node": "15.12.5",
     "@typescript-eslint/eslint-plugin": "^4.22.0",
     "@typescript-eslint/parser": "^4.22.0",
     "build-if-changed": "^1.5.5",
@@ -65,14 +65,14 @@
     "eslint-to-editorconfig": "^2.0.0",
     "glob": "^7.1.7",
     "globrex": "^0.1.2",
-    "husky": "4.3.8",
-    "lerna": "^3.22.1",
+    "husky": "6.0.0",
+    "lerna": "^4.0.0",
     "semver": "^7.3.5",
     "syncpack": "^5.7.11",
     "tar": "^6.1.0",
-    "ts-loader": "^8.0.15",
-    "ts-node": "^9.1.1",
-    "typescript": "4.1.4"
+    "ts-loader": "^9.2.3",
+    "ts-node": "^10.0.0",
+    "typescript": "4.3.4"
   },
   "workspaces": {
     "packages": [
