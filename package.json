@@ -49,16 +49,16 @@
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
     "bump:version": "yarn bump:packages",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags",
-    "align": "syncpack fix-mismatches",
-    "update-aaa": "node scripts/make-aaa-package.js && yarn --cwd=./aaa install && yarn --cwd=./aaa upgrade -L --caret",
+    "align": "syncpack fix-mismatches --source aaa/package.json --source bdd/package.json --source='packages/**[!node_modules]/package.json' --source='packages/samples/**[!node_modules]/package.json' --source='packages/reference-apps/**[!node_modules]/package.json' --source='template/package.json'",
+    "update-aaa": "node scripts/make-aaa-package.js && rm -rf aaa/node_moduels aaa/yarn.lock  && yarn --cwd=./aaa install && yarn --cwd=./aaa upgrade -L --caret",
     "upgrade:all": "yarn update-aaa && yarn align && yarn install"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "devDependencies": {
     "@types/node": "15.12.5",
-    "@typescript-eslint/eslint-plugin": "^4.22.0",
-    "@typescript-eslint/parser": "^4.22.0",
+    "@typescript-eslint/eslint-plugin": "^4.27.0",
+    "@typescript-eslint/parser": "^4.27.0",
     "build-if-changed": "^1.5.5",
     "eslint": "^7.29.0",
     "eslint-plugin-import": "^2.23.3",
@@ -72,7 +72,7 @@
     "tar": "^6.1.0",
     "ts-loader": "^9.2.3",
     "ts-node": "^10.0.0",
-    "typescript": "4.3.4"
+    "typescript": "^4.3.4"
   },
   "workspaces": {
     "packages": [

@@ -25,7 +25,7 @@
   "license": "ISC",
   "devDependencies": {
     "@scramjet/types": "0.10.0-pre.10",
-    "@types/node": "14.17.4"
+    "@types/node": "15.12.5"
   },
   "dependencies": {
     "scramjet": "4.35.20"

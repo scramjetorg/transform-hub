@@ -16,9 +16,9 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/sth-config": "0.10.0-pre.10",
     "@scramjet/logger": "^0.10.0-pre.10",
     "@scramjet/model": "^0.10.0-pre.10",
+    "@scramjet/sth-config": "0.10.0-pre.10",
     "@scramjet/symbols": "^0.10.0-pre.10",
     "dockerode": "^3.3.0",
     "scramjet": "4.35.20",
@@ -26,12 +26,12 @@
   },
   "devDependencies": {
     "@scramjet/types": "0.10.0-pre.10",
-    "@types/node": "14.17.4",
+    "@types/node": "15.12.5",
     "ava": "^3.15.0",
-    "ts-node": "^9.1.1",
-    "typedoc": "0.20.36",
-    "typedoc-plugin-markdown": "3.8.2",
-    "typescript": "4.1.4"
+    "ts-node": "^10.0.0",
+    "typedoc": "0.21.2",
+    "typedoc-plugin-markdown": "3.10.2",
+    "typescript": "^4.3.4"
   },
   "ava": {
     "extensions": [

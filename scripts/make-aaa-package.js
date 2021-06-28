@@ -21,7 +21,7 @@ if (options.help || options.h || options["?"]) {
 }
 
 const out = resolve(cwd, "aaa/package.json");
-const packages = glob.sync("{packages/**,bdd,.}/package.json", {
+const packages = glob.sync("{./,packages/**,bdd}/package.json", {
     cwd,
     ignore: "**/node_modules/**"
 });
@@ -46,6 +46,8 @@ function older(v1, v2) {
 }
 
 for (const file of packages) {
+    console.error(`indexing file ${file}`);
+
     try {
         const str = readFileSync(resolve(cwd, file), { encoding: "utf-8" });
         const contents = JSON.parse(str);
@@ -53,7 +55,7 @@ for (const file of packages) {
         local.push(contents.name);
         if (typeof contents.name === "string" && contents.name.startsWith("@scramjet/")) {
             if (older(package.version, contents.version))
-                package.version = contents.version;
+                package.version = contents.version.replace(/^\^?|^(?=\d)/, "^");
         }
 
         for (const n of deps) {
@@ -86,7 +88,7 @@ for (const n of deps) {
         // eslint-disable-next-line no-loop-func
         .reduce((acc, key) => {
             if (allDeps[key]) acc[key] = allDeps[key];
-            console.log("dep", key);
+            console.log("dep", key, acc[key]);
             delete allDeps[key];
             return acc;
         }, {});
