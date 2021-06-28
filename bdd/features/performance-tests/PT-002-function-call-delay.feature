@@ -1,7 +1,7 @@
 Feature: Maintain efficiency within a host
 
     @ci
-    Scenario: PT-001 TC-001 Maintain efficiency - quick test
+    Scenario: PT-002 TC-001 Maintain efficiency - quick test
         Given host is running
         When sequence "../packages/reference-apps/inert-sequence-2-with-delay.tar.gz" loaded
         And instance started with arguments "4000 2000" and write stream to "delay-test-result.txt" and timeout after 30 seconds
@@ -13,7 +13,7 @@ Feature: Maintain efficiency within a host
         And container is closed
         Then host is still running
 
-    Scenario: PT-001 TC-002 Maintain efficiency
+    Scenario: PT-002 TC-002 Maintain efficiency
         Given host is running
         When sequence "../packages/reference-apps/inert-sequence-2-with-delay.tar.gz" loaded
         And instance started with arguments "12000 2000" and write stream to "delay-test-result.txt" and timeout after 120 seconds
@@ -25,7 +25,7 @@ Feature: Maintain efficiency within a host
         And container is closed
         Then host is still running
 
-    Scenario: PT-001 TC-003 Maintain efficiency test with core dump
+    Scenario: PT-002 TC-003 Maintain efficiency test with core dump
         Given host is running
         When sequence "../packages/reference-apps/inert-sequence-2-with-delay.tar.gz" loaded
         And instance started with arguments "12000 2000 1" and write stream to "delay-test-result.txt" and timeout after 120 seconds

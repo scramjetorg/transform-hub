@@ -25,9 +25,7 @@ Feature: Sample e2e tests
         And instance health is "true"
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         And wait for "2000" ms
-        # And instance is finished
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         And container is closed
-        # And get instance health
         Then host is still running
