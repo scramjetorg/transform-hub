@@ -23,13 +23,15 @@ export const sequence: CommandDefinition = (program) => {
         .description("list the sequences")
         .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
+    // args for example '[10000, 2000]' | '["tcp"]'
     sequenceCmd.command("start <id> <appConfig> <args>")
         .description("start the sequence")
         .action(async (id, appConfig, args) => {
             getHostClient(program);
             const sequenceClient = SequenceClient.from(id);
 
-            return displayObject(program, await sequenceClient.start(JSON.parse(appConfig), JSON.parse(args)));
+            return displayObject(program,
+                await sequenceClient.start(JSON.parse(appConfig), JSON.parse(args)));
         });
 
     sequenceCmd.command("get <id>")

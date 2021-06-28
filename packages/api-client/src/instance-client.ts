@@ -47,7 +47,7 @@ export class InstanceClient {
         ] as EncodedControlMessage);
     }
 
-    async sendEvent(eventName: string, message: [string]): Promise<Response> {
+    async sendEvent(eventName: string, message: string): Promise<Response> {
         const data = [
             RunnerMessageCode.EVENT, {
                 eventName,
@@ -83,5 +83,9 @@ export class InstanceClient {
 
     async sendInput(stream: Stream | string) {
         return this.sendStream("input", stream);
+    }
+
+    async sendStdin(stream: Stream | string) {
+        return this.sendStream("stdin", stream);
     }
 }

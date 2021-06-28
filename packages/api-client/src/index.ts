@@ -1,4 +1,5 @@
+export { Response, ResponseStream } from "./client-utils";
 export { HostClient } from "./host-client";
-export { SequenceClient } from "./sequence-client";
 export { InstanceClient, InstanceInputStream, InstanceOutputStream } from "./instance-client";
-export { Response } from "./client-utils";
+export { SequenceClient } from "./sequence-client";
+
