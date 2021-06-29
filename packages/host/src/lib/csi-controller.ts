@@ -85,15 +85,18 @@ export class CSIController extends EventEmitter {
 
     async main() {
         this.logger.log("Supervisor started.");
+        let code = 0;
 
         try {
-            const code = await this.supervisorStopped();
+            code = await this.supervisorStopped();
 
             this.logger.log("Supervisor stopped.");
-            this.emit("end", code);
         } catch (e) {
-            this.logger.error(e);
+            code = e;
+            this.logger.error("Supervisior caused error, code:", e);
         }
+
+        this.emit("end", code);
     }
 
     startSupervisor() {
@@ -138,7 +141,7 @@ export class CSIController extends EventEmitter {
             });
 
             superVisorProcess.on("error", (error) => {
-                this.logger.error("Supervisor process " + superVisorProcess.pid + " threw an error: " + error);
+                this.logger.error("Supervisor process " + superVisorProcess.pid + " threw an error: ", error);
 
                 reject(error);
             });
