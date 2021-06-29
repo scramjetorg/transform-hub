@@ -14,7 +14,7 @@
     "scramjet": "4.35.20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build:bdd": "tsc -p tsconfig.json",
     "test:bdd": "cucumber-js"
   },
   "private": true,
