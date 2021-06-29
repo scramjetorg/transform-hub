@@ -68,7 +68,7 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
     console.log("Last instance started on:", new Date().toUTCString());
 });
 
-When("stop all instances", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
+Then("stop all instances", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
     await Promise.all(instances.map(instance =>
         instance.stop(0, false)
     ));

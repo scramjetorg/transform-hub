@@ -72,10 +72,11 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
-When("sequence {string} loaded", { timeout: 10000 }, async (packagePath: string) => {
+When("sequence {string} loaded", async (packagePath: string) => {
     sequence = await hostClient.sendSequence(
         createReadStream(packagePath)
     );
+    console.log("Package successfuly loaded, sequence started.");
 });
 
 When("instance started", async function(this: CustomWorld) {
@@ -107,10 +108,10 @@ When("instance started with arguments {string} and write stream to {string} and 
     ]);
 });
 
-When("get {string} in background with instanceId", { timeout: 500000 }, async (stream: InstanceOutputStream) => {
-    actualLogResponse = await streamToString(
-        (await instance.getStream(stream)).data
-    );
+When("get {string} in background with instanceId", { timeout: 500000 }, async (outputStream: InstanceOutputStream) => {
+    const stream: Response = await instance.getStream(outputStream);
+
+    actualLogResponse = await streamToString(stream.data as Stream);
 });
 
 Then("file {string} is generated", async (filename) => {
@@ -132,11 +133,12 @@ When("response in every line contains {string} followed by name from file {strin
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-When("get output stream with long timeout", { timeout: 200000 }, async () => {
-    const stream: Response = await instance.getStream("output");
+//not in use
+// When("get output stream with long timeout", { timeout: 200000 }, async () => {
+//     const stream: Response = await instance.getStream("output");
 
-    actualLogResponse = await streamToString(stream.data as Stream);
-});
+//     actualLogResponse = await streamToString(stream.data as Stream);
+// });
 
 When("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);
@@ -358,4 +360,8 @@ When("instance is finished", async () => {
     actualHealthResponse = await instance.getHealth();
     assert.equal(actualHealthResponse.status, 404);
     console.log("Instance porcess has finished.");
+});
+
+When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
+    await instance.stop(0, false);
 });

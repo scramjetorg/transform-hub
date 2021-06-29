@@ -14,7 +14,7 @@ Feature: Start multiple instances
         Then stop all instances
         Then host is still running
 
-    Scenario: PT-001 TC-003 More than 25 instances work for long time
+    Scenario: PT-001 TC-003 KM1_Maintain persistence within a host
         Given host is running
         When starts at least 25 sequences from file "../packages/reference-apps/durability-preservation.tar.gz"
         Then check every 60 seconds if instances respond for 24 hours
