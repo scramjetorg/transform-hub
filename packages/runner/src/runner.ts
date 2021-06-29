@@ -89,7 +89,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         StringStream
             .from(this.controlStream as Readable)
             .JSONParse()
-            .map(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
+            .each(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
             .run()
             .catch(async (error) => {
                 this.logger.error("An error occurred during parsing control message.", error.stack);

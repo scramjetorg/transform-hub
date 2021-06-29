@@ -37,8 +37,8 @@ export function createGetterHandler(router: SequentialCeroRouter) {
         });
 
         conn.addMonitoringHandler(op, (data) => {
-            monitoringMessageResolve();
             lastItem = data[1];
+            monitoringMessageResolve();
             return data;
         });
 

@@ -72,7 +72,7 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await new Promise(res => setTimeout(res, timeoutMs));
 });
 
-When("sequence {string} loaded", async (packagePath: string) => {
+When("sequence {string} loaded", { timeout: 10000 }, async (packagePath: string) => {
     sequence = await hostClient.sendSequence(
         createReadStream(packagePath)
     );

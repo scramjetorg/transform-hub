@@ -30,27 +30,24 @@ let allocatedMem: Buffer;
 
 /**
  * @param _stream - input
- * @param config sequence configuration
+ * @param allocMemSize preallocate memory
+ * @param files list of files
  * @returns data
  */
-export = async function(_stream: any, ...args: any) {
-    const allocMemSize = args[1];
+export = async function(_stream: any, allocMemSize: string, files: string[] = [
 
-    allocatedMem = Buffer.alloc(allocMemSize << 20, 0x1234);
+]) {
+    allocatedMem = Buffer.alloc((+allocMemSize || 400) << 20, 0x1234);
 
     const stream = new StringStream();
-    const files = args[2];
 
     console.log(`Args: MemAlloc: ${allocMemSize}, Files: ${files}]`);
 
-    this.on("check", async (data) => {
-        this.logger.log(`Check received: ${JSON.stringify(data)}`);
-        this.emit(
-            "ok",
-            {
-                uptime: (Date.now() - startDate) / 1000,
-                asked: data
-            });
+    this.on("check", async (asked) => {
+        const uptime = (Date.now() - startDate) / 1000;
+
+        this.logger.log(`Check received: ${JSON.stringify(asked)}`);
+        this.emit("ok", { uptime, asked });
     });
 
     setInterval(async () => {

@@ -140,7 +140,7 @@ implements AppContext<AppConfigType, State> {
 
     emit(eventName: string, message: any) {
         this.runner.sendEvent({ eventName, message });
-        this.emitter.emit(eventName, message);
+        // this.emitter.emit(eventName, message);
         return this;
     }
 }

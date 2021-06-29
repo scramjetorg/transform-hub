@@ -55,9 +55,14 @@ class CSHClient implements ICSHClient {
                     this.mux.multiplex({ channel: CC.PACKAGE })
                 ];
 
-                connectionChannels.forEach((channel) => channel.on("error", (e) => {
-                    this.logger.warn(e.stack);
-                }));
+                let i = 0;
+
+                connectionChannels.forEach(
+                    (channel) => {
+                        channel.on("error", (e) => this.logger.warn(e.stack));
+                        channel.on("pipe", () => this.logger.debug(`stream ${i++} piped to output`));
+                    }
+                );
 
                 this.connection?.on("error", (e) => {
                     this.logger.error("Connection error: ", e.stack);
@@ -72,9 +77,9 @@ class CSHClient implements ICSHClient {
                     connectionChannels[CC.IN],
                     connectionChannels[CC.OUT],
                     connectionChannels[CC.LOG],
-                connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer>
+                    connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer>
                 ];
-
+                connectionChannels[CC.MONITORING].resume();
                 resolve();
 
             });
@@ -93,13 +98,12 @@ class CSHClient implements ICSHClient {
                 CC.LOG
             ]
                 .map(streamIndex => streams[streamIndex] as unknown as Writable)
-                .map(
-                    (stream: Writable) => new Promise(
-                        (res, rej) => stream
-                            .on("error", rej)
-                            .end(res)
-                    )
-                )
+                .map((stream: Writable) => new Promise(
+                    (res, rej) => stream
+                        .on("error", rej)
+                        .on("end", res)
+                        .end()
+                ))
             );
         }
     }

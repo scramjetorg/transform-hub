@@ -168,14 +168,9 @@ export class CSIController extends EventEmitter {
         if (development()) this.upStreams[CommunicationChannel.LOG].pipe(process.stdout);
         // if (development()) this.upStreams[CommunicationChannel.MONITORING].pipe(process.stdout);
 
-        const controlDataStream = new DataStream();
-
-        controlDataStream
-            .JSONStringify()
-            .pipe(this.upStreams[CommunicationChannel.CONTROL]);
-
         this.controlDataStream = new DataStream();
-        this.controlDataStream.JSONStringify()
+        this.controlDataStream
+            .JSONStringify()
             .pipe(this.upStreams[CC.CONTROL]);
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message: any) => {
@@ -183,6 +178,7 @@ export class CSIController extends EventEmitter {
 
             return null;
         });
+        this.upStreams[CC.MONITORING].resume();
     }
 
     async handleHandshake(message: any) {
