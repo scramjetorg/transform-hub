@@ -343,15 +343,12 @@ When("confirm that sequence and volumes are removed", async () => {
     const sequenceId = sequence.id;
     const sequences = (await hostClient.listSequences()).data;
 
-    let sequenceExist = false;
-
     if (!sequenceId) assert.fail();
 
-    sequences.forEach(sequenceInfo => {
-        if (sequenceInfo.Id.includes(containerId)) {
-            sequenceExist = true;
-        }
+    const sequenceExist = !!sequences.find(sequenceInfo => {
+        return sequenceId === sequenceInfo.id;
     });
+
     assert.equal(sequenceExist, false);
     console.log(`Sequence with id ${sequenceId} is removed.`);
 });
