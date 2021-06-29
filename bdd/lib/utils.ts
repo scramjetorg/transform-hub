@@ -115,7 +115,7 @@ export async function removeFile(filePath: any) {
     }
 }
 
-export async function getStreamsFromSpawn(command: string, options: string[]) {
+export async function getStreamsFromSpawn(command: string, options: string[]): Promise<[string, string, any]> {
 
     const child = spawn(command, options);
     const [stdout, stderr, statusCode] = await Promise.all([
