@@ -1,4 +1,4 @@
-import { STHConfiguration } from "@scramjet/types";
+import { PartialSTHConfiguration, STHConfiguration } from "@scramjet/types";
 
 const merge = (objTo: any, objFrom: any) => !objTo ? objFrom : Object.keys(objTo)
     .reduce(
@@ -63,7 +63,7 @@ class ConfigService {
         return this.config.docker;
     }
 
-    update(config: Partial<STHConfiguration>) {
+    update(config: PartialSTHConfiguration) {
         merge(this.config, config);
     }
 }

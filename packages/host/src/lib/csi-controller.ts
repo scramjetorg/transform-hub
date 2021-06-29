@@ -14,7 +14,7 @@ import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
-import { development } from "@scramjet/sth-config";
+import { configService, development } from "@scramjet/sth-config";
 import { Sequence } from "./sequence";
 
 export class CSIController extends EventEmitter {
@@ -43,6 +43,7 @@ export class CSIController extends EventEmitter {
 
     communicationHandler: CommunicationHandler;
     logger: Logger;
+    private socketServerPath: string;
 
     constructor(
         id: string,
@@ -60,6 +61,7 @@ export class CSIController extends EventEmitter {
         this.sequenceArgs = sequenceArgs;
         this.logger = logger;
         this.communicationHandler = communicationHandler;
+        this.socketServerPath = configService.getConfig().host.socketPath;
 
         this.startPromise = new Promise((res, rej) => {
             this.startResolver = { res, rej };
@@ -106,13 +108,17 @@ export class CSIController extends EventEmitter {
         }
 
         const path = resolvePath(__dirname, supervisorPath);
-        const command: string[] = [path, this.id];
+        const command: string[] = [path, this.id, this.socketServerPath];
 
         this.superVisorProcess = spawn(executable, command);
 
+        this.logger.info("Spawning supervisor with command:", command);
+
         // TODO: remove
-        // this.superVisorProcess.stdout?.pipe(process.stdout);
-        // this.superVisorProcess.stderr?.pipe(process.stderr);
+        if (development()) {
+            this.superVisorProcess.stdout?.pipe(process.stdout);
+            this.superVisorProcess.stderr?.pipe(process.stderr);
+        }
     }
 
     supervisorStopped(): Promise<ExitCode> {

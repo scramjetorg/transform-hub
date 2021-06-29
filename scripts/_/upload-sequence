@@ -12,7 +12,7 @@ show_help() {
     echo "Builds and uploads package on the fly (use -r for rebuild)" >&2
     echo "" >&2
     echo "Usage: scripts/_/upload-sequence [-r] <dirname>" >&2
-    echo "Usage: scripts/_/upload-sequence -p <packafename>" >&2
+    echo "Usage: scripts/_/upload-sequence -p <packagename>" >&2
     exit 1;
 }
 

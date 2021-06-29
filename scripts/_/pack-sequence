@@ -35,7 +35,7 @@ done
 set -e
 SCOPE=`jq -r .name $DIRNAME/package.json`
 
-yarn build:all-packages --scope=$SCOPE >&2
+yarn build:refapps --scope=$SCOPE >&2 || yarn build:packages --scope=$SCOPE >&2
 yarn pack:pre --scope=$SCOPE >&2
 
 tar -C "${DIRNAME//packages/dist}" -czf "$OUTPUT" .

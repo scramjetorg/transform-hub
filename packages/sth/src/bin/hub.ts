@@ -2,13 +2,14 @@
 
 import { Command } from "commander";
 import { configService } from "@scramjet/sth-config";
+import { resolve } from "path";
 // import { version } from "../../package.json";
 
 const program: Command = new Command() as Command;
 const options = program
     // .version(version) // TODO: replace with find-package-json
     .option("-L, --log-level <level>", "Specify log level", "debug")
-    .option("-S, --socket-location <socket>", "CSI socket location")
+    .option("-S, --socket-path <socket>", "CSI socket location")
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
@@ -19,7 +20,7 @@ const options = program
 configService.update({
     host: {
         apiBase: "/api/v1",
-        socketPath: options.socketLocation,
+        socketPath: options.socketPath ? resolve(process.cwd(), options.socketPath) : undefined,
         port: options.port,
         hostname: options.hostname
     }
