@@ -13,7 +13,7 @@ export class HostUtils {
     hostUrl: string;
 
     constructor() {
-        this.hostUrl = process.env.SCRAMJET_HOST_URL || "http://localhost:8000/api/v1";
+        this.hostUrl = process.env.SCRAMJET_HOST_URL || "";
     }
 
     async check() {
