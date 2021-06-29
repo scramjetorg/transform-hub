@@ -25,7 +25,7 @@ Given("CLI is installed", async () => {
 When("I execute CLI with {string} arguments", { timeout: 10000 }, async function(args: string) {
 
     stdio = await getStreamsFromSpawn("ts-node", si.concat(args.split(" ")));
-//    console.log(stdio);
+    //    console.log(stdio);
 
 });
 
