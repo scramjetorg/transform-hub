@@ -1,10 +1,10 @@
 import { STHConfiguration } from "@scramjet/types";
 
-const merge = (objFrom: any, objTo: any) => !objTo ? objFrom : Object.keys(objTo)
+const merge = (objTo: any, objFrom: any) => !objTo ? objFrom : Object.keys(objTo)
     .reduce(
         ([mTo, mFrom], key) => {
-            if (typeof mFrom[key] !== "undefined" && objFrom[key] instanceof Object && !Array.isArray(mTo[key]))
-                merge(mFrom[key], mTo[key] ?? {});
+            if (typeof mFrom[key] === "object" && typeof mTo[key] === "object" && !Array.isArray(mTo[key]))
+                merge(mTo[key], mFrom[key] ?? {});
             else
                 mTo[key] = mFrom[key] || mTo[key];
             return [mTo, mFrom];
@@ -44,7 +44,7 @@ class ConfigService {
         this.config = defaultConfig;
         this.updateImages();
 
-        merge(this.config, config);
+        if (config) merge(this.config, config);
     }
 
     updateImages() {
