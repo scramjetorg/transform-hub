@@ -2,7 +2,7 @@
 import * as fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 
 const lineByLine = require("n-readlines");
@@ -113,4 +113,20 @@ export async function removeFile(filePath: any) {
     } catch {
         return 0;
     }
+}
+
+export async function getStreamsFromSpawn(command: string, options: string[]) {
+
+    const child = spawn(command, options);
+    const [stdout, stderr, statusCode] = await Promise.all([
+        streamToString(child.stdout),
+        streamToString(child.stderr),
+        new Promise((res, rej) => {
+            child.on("error", rej);
+            child.on("exit", res);
+        })
+    ]);
+
+    return [stdout, stderr, statusCode];
+
 }
