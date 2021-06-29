@@ -6,6 +6,7 @@ import { PassThrough, Stream } from "stream";
 import * as crypto from "crypto";
 
 import { CustomWorld } from "../world";
+import { URL } from "url";
 
 const streamToString = async (stream: Stream): Promise<string> => {
     const chunks = [];
@@ -55,7 +56,7 @@ When("start reading {string} stream", async function(this: CustomWorld, log: Ins
     const stream = (await instance.getStream(log)).data;
 
     this.resources.stream = new PassThrough();
-    stream.pipe(this.resources.stream);
+    stream?.pipe(this.resources.stream);
 });
 
 When("check stream for message sent", async function(this: CustomWorld) {

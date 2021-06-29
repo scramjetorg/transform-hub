@@ -5,8 +5,7 @@ import { resolve } from "path";
 
 const lineByLine = require("n-readlines");
 
-let delayAverage;
-
+let delayAverage: number;
 
 When("calculate average delay time from {string} of first {string} function calls starting {string}", async (probesFile, numberOfProbes, startFromProbe) => {
     const output = new lineByLine(`${probesFile}`);
@@ -50,7 +49,7 @@ When("calculated avereage delay time is lower than {float} ms", async (acceptedD
 When("memory dump file {word} was created", async (fileName) => {
     assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
 
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
     const occurenceFile = await getOccurenceFileNumber(filePath);
 
     assert.ok(occurenceFile >= 1, " memory dump file not created");
@@ -59,7 +58,7 @@ When("memory dump file {word} was created", async (fileName) => {
 When("search word {word} and find {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
     assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
 
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
     const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
 
     console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
@@ -70,7 +69,7 @@ When("search word {word} and find {int} occurences in location {word} file", asy
 When("search word {word} and find more than {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
     assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
 
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
     const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
 
     console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
@@ -82,7 +81,7 @@ When("search word {word} and find more than {int} occurences in location {word} 
 When("remove core dump file from {word}", async (fileName) => {
     assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
 
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME, fileName);
+    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
     const occurenceNumber = await removeFile(filePath);
 
     assert.equal(occurenceNumber, 1, " cannot remove core.dump file.");

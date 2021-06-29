@@ -8,7 +8,7 @@ export class CustomWorld implements World {
 
     resources: { [key: string]: any } = {}
 
-    constructor({ attach, log, parameters }) {
+    constructor({ attach, log, parameters }: any) {
         this.attach = attach;
         this.log = log;
         this.parameters = parameters;

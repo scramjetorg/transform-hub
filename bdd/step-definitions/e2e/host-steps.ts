@@ -12,6 +12,7 @@ import * as Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
 import * as findPackage from "find-package-json";
+import { readFile } from "fs/promises";
 
 const version = findPackage().next().value?.version || "unknown";
 const hostClient = new HostClient(process.env.SCRAMJET_HOST_BASE_URL || "http://localhost:8000/api/v1");
@@ -24,9 +25,9 @@ let actualStatusResponse: any;
 let actualApiResponse: Response;
 let sequence: SequenceClient;
 let actualLogResponse: any;
-let instance: InstanceClient;
-let containerId;
-let streams: { [key: string]: Promise<string> } = {};
+let instance: InstanceClient | undefined;
+let containerId: string;
+let streams: { [key: string]: Promise<string | undefined> } = {};
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
@@ -92,12 +93,12 @@ When("instance started with arguments {string}", { timeout: 25000 }, async funct
 When("instance started with arguments {string} and write stream to {string} and timeout after {int} seconds", { timeout: -1 }, async (instanceArg: string, fileName: string, timeout: number) => {
     instance = await sequence.start({}, instanceArg.split(" "));
 
-    const stream: any = (await instance.getStream("stdout")).data;
+    const stream: any = (await instance?.getStream("stdout"))?.data;
     const writeStream = fs.createWriteStream(fileName);
 
     stream.pipe(writeStream);
 
-    actualHealthResponse = await instance.getHealth();
+    actualHealthResponse = await instance?.getHealth();
 
     await Promise.race([
         new Promise((res, rej) => {
@@ -110,8 +111,11 @@ When("instance started with arguments {string} and write stream to {string} and 
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (outputStream: InstanceOutputStream) => {
     const stream: Response = await instance.getStream(outputStream);
+    const out = stream?.data;
 
-    actualLogResponse = await streamToString(stream.data as Stream);
+    if (!out) assert.fail("No output!");
+
+    actualLogResponse = await streamToString(out as Stream);
 });
 
 Then("file {string} is generated", async (filename) => {
@@ -135,8 +139,9 @@ When("response in every line contains {string} followed by name from file {strin
 
 //not in use
 // When("get output stream with long timeout", { timeout: 200000 }, async () => {
-//     const stream: Response = await instance.getStream("output");
+//     const stream = await instance?.getStream("output");
 
+//     if (!stream?.data) assert.fail("No output!");
 //     actualLogResponse = await streamToString(stream.data as Stream);
 // });
 
@@ -150,18 +155,17 @@ Given("file in the location {string} exists on hard drive", async (filename: any
 
 When("compare checksums of content sent from file {string}", async (filePath: string) => {
     const readStream = fs.createReadStream(filePath);
+    const hex: string = crypto.createHash("md5").update(await readFile(filePath)).digest("hex");
 
-    let hex: string;
-
-    fs.readFile(filePath, function(err, data) {
-        hex = crypto.createHash("md5").update(data).digest("hex");
-    });
-
-    await instance.sendStream("input", readStream, {
+    await instance?.sendStream("input", readStream, {
         type: "application/octet-stream",
         end: true
     });
-    const output = await instance.getStream("output");
+
+    const output = await instance?.getStream("output");
+
+    if (!output?.data) assert.fail("No output!");
+
     const outputString = await streamToString(output.data);
 
     assert.equal(output.status, 200);
@@ -170,20 +174,20 @@ When("compare checksums of content sent from file {string}", async (filePath: st
         hex
     );
 
-    await instance.sendInput("null");
+    await instance?.sendInput("null");
 });
 
 When("send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}", async (timeout: number, canCallKeepalive: string) => {
     console.log("Stop message sent");
-    const resp = await instance.stop(timeout, canCallKeepalive === "true") as any;
+    const resp = await instance?.stop(timeout, canCallKeepalive === "true");
 
-    assert.equal(resp.status, 202);
+    assert.equal(resp?.status, 202);
 });
 
 When("send kill message to instance", async () => {
-    const resp = await instance.kill();
+    const resp = await instance?.kill();
 
-    assert.equal(resp.status, 202);
+    assert.equal(resp?.status, 202);
 });
 
 When("get containerId", { timeout: 31000 }, async () => {
@@ -215,21 +219,21 @@ When("container is closed", async () => {
 });
 
 When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
-    const resp = await instance.sendEvent(eventName, eventMessage);
+    const resp = await instance?.sendEvent(eventName, eventMessage);
 
-    assert.equal(resp.status, 202);
+    assert.equal(resp?.status, 202);
 });
 
 Then("get event from instance", { timeout: 10000 }, async () => {
     const expectedHttpCode = 200;
 
-    actualStatusResponse = await instance.getEvent();
-    assert.equal(actualStatusResponse.status, expectedHttpCode);
+    actualStatusResponse = await instance?.getEvent();
+    assert.equal(actualStatusResponse?.status, expectedHttpCode);
 });
 
 When("get instance health", async () => {
-    actualHealthResponse = await instance.getHealth();
-    assert.equal(actualHealthResponse.status, 200);
+    actualHealthResponse = await instance?.getHealth();
+    assert.equal(actualHealthResponse?.status, 200);
 });
 
 Then("instance response body is {string}", async (expectedResp: string) => {
@@ -257,14 +261,16 @@ When("instance health is {string}", async (expectedResp: string) => {
 });
 
 When("send stdin to instance with contents of file {string}", async (filePath: string) => {
-    await instance.sendStream("stdin", createReadStream(filePath));
+    await instance?.sendStream("stdin", createReadStream(filePath));
 });
 
 When("keep instance streams {string}", async function(streamNames) {
-    streamNames.split(",").map(streamName => {
+    streamNames.split(",").map((streamName: InstanceOutputStream) => {
+        if (!instance) assert.fail("Instance not existent");
+
         streams[streamName] = instance
             .getStream(streamName)
-            .then(({ data }) => streamToString(data));
+            .then(({ data }) => data && streamToString(data));
     });
 });
 
@@ -321,6 +327,9 @@ Then("it returns a correct load check with required properties", function() {
 
 When("kept instance stream {string} should store {int} items divided by {string}", async (streamName, expectedCount, separator) => {
     const res = await streams[streamName];
+
+    if (!res) assert.fail(`Stream ${streamName} not ready`);
+
     const nrOfItems = res.split(separator).length - 1;
 
     assert.equal(nrOfItems, expectedCount);
@@ -328,7 +337,7 @@ When("kept instance stream {string} should store {int} items divided by {string}
 
 // not in use, getStatus() does not work
 When("get status", async () => {
-    const getStatus = await instance.getStatus();
+    const getStatus = await instance?.getStatus();
 
     console.log("Status: ", getStatus);
 });
@@ -354,7 +363,7 @@ When("confirm that sequence and volumes are removed", async () => {
 });
 
 When("instance is finished", async () => {
-    actualHealthResponse = await instance.getHealth();
+    actualHealthResponse = await instance?.getHealth();
     assert.equal(actualHealthResponse.status, 404);
     console.log("Instance porcess has finished.");
 });

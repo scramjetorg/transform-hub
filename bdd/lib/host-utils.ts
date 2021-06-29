@@ -8,12 +8,12 @@ const hostExecutableFilePath = "../dist/host/bin/start.js";
 
 export class HostUtils {
     hostProcessStopped = false;
-    host: ChildProcess;
+    host?: ChildProcess;
 
     hostUrl: string;
 
     constructor() {
-        this.hostUrl = process.env.SCRAMJET_HOST_URL;
+        this.hostUrl = process.env.SCRAMJET_HOST_URL || "http://localhost:8000/api/v1";
     }
 
     async check() {
@@ -34,7 +34,7 @@ export class HostUtils {
         }
 
         await new Promise<void>(async (resolve, reject) => {
-            if (this.host.kill(SIGTERM)) {
+            if (this.host?.kill(SIGTERM)) {
                 resolve();
             } else {
                 reject();
@@ -65,13 +65,13 @@ export class HostUtils {
             this.hostProcessStopped = false;
 
             if (process.env.SCRAMJET_TEST_LOG) {
-                this.host.stdout.pipe(process.stdout);
-                this.host.stderr.pipe(process.stderr);
+                this.host?.stdout?.pipe(process.stdout);
+                this.host?.stderr?.pipe(process.stderr);
             }
 
             const decoder = new StringDecoder();
 
-            this.host.stdout.on("data", (data) => {
+            this.host?.stdout?.on("data", (data) => {
                 const decodedData = decoder.write(data);
 
                 if (decodedData.match(/API listening on port/)) {

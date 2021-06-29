@@ -1,13 +1,13 @@
 import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { spawn } from "child_process";
+import { ChildProcess, spawn } from "child_process";
 import { StringStream } from "scramjet";
 import { runnerMessages } from "../../data/runner-messages";
 
 const mockRunnerExec = "../packages/runner/src/index.ts";
 
-let runner;
-let runnerProcessStopped;
+let runner: ChildProcess;
+let runnerProcessStopped: boolean;
 
 function runRunner(withMonitoring: boolean): void {
     let command: string[] = ["npx", "ts-node", mockRunnerExec];
@@ -33,11 +33,15 @@ Given("mock runner is running", () => {
 });
 
 When("a message {string} is sent", (message: string) => {
-    runner.stdin.write(runnerMessages.get(message) + "\n");
-    runner.stdin.end();
+    runner.stdin?.write(runnerMessages.get(message) + "\n");
+    runner.stdin?.end();
 });
 
 Then("a message {string} is received", async (message: string) => {
+    if (!runner.stdout) {
+        assert.fail("No stdout from runner");
+    }
+
     const data = await StringStream.from(runner.stdout).lines().slice(0, 1).whenRead();
 
     assert.equal(data, runnerMessages.get(message));

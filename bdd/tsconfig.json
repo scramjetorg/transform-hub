@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist"
+    },
+    "extends": "../tsconfig.base.json",
+    "include": [
+      "./step-definitions",
+      "./lib"
+    ],
+    "exclude": [
+        "../node_modules"
+    ]
+}

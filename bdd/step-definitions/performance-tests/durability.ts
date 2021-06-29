@@ -36,7 +36,7 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
         const loadCheck = await hostClient.getLoadCheck();
 
         // eslint-disable-next-line no-extra-parens
-        if ((loadCheck as any).status !== 200 || loadCheck.data.memFree < (512 << 20)) {
+        if ((loadCheck as any).status !== 200 || loadCheck.data?.memFree < (512 << 20)) {
             rejected = true;
         } else {
             const instance = await sequence.start(data.appConfig, data.args);
@@ -99,7 +99,7 @@ Then("check every {float} seconds if instances respond for {float} hours", { tim
                     try {
                         const response = await instance.getEvent();
 
-                        if (response.data.message.asked === hash) {
+                        if (response.data?.message.asked === hash) {
                             resolve();
                         } else {
                             console.error(`${instance.id}, sent: ${hash}, received: ${JSON.stringify(response.data)}`);

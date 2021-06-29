@@ -3,14 +3,14 @@ import * as fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
 import { exec } from "child_process";
-import { PassThrough } from "stream";
+import { PassThrough, Readable } from "stream";
 
 const lineByLine = require("n-readlines");
 const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
-export async function file1ContainsLinesFromFile2(file1, greeting, file2, suffix) {
+export async function file1ContainsLinesFromFile2(file1: any, greeting: any, file2: any, suffix: any) {
     const output = new lineByLine(`${file1}`);
     const input = JSON.parse(await promisify(fs.readFile)(`${testPath}${file2}`, "utf8"));
 
@@ -34,21 +34,22 @@ export const waitForValueTillTrue = async (valueToCheck: boolean, timeoutMs = 40
     }
 };
 
-export const callInLoopTillExpectedCode = async (fnToCall, that, expectedHttpCode: number = 200): Promise<any> => {
-    let response;
+export const callInLoopTillExpectedCode =
+    async (fnToCall: any, that: any, expectedHttpCode: number = 200): Promise<any> => {
+        let response;
 
-    const startTime: number = Date.now();
-    const timeout: number = timeoutLongMs;
+        const startTime: number = Date.now();
+        const timeout: number = timeoutLongMs;
 
-    do {
-        response = await fnToCall.call(that);
-        await new Promise(res => setTimeout(res, timeout));
-    } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
+        do {
+            response = await fnToCall.call(that);
+            await new Promise(res => setTimeout(res, timeout));
+        } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
 
-    return response;
-};
+        return response;
+    };
 
-export function fileContains(filename, key) {
+export function fileContains(filename: any, key: any) {
     const stdoutFile = new lineByLine(filename);
 
     let line;
@@ -63,21 +64,22 @@ export function fileContains(filename, key) {
     assert.fail("stdout does not contain: " + key);
 }
 
-export const callInLoopTillExpectedStatusCode = async (fnToCall, that, expectedHttpCode: number = 200, ...args) => {
-    let response;
+export const callInLoopTillExpectedStatusCode =
+    async (fnToCall: any, that: any, expectedHttpCode: number = 200, ...args: any[]) => {
+        let response;
 
-    const startTime: number = Date.now();
-    const timeout: number = timeoutLongMs;
+        const startTime: number = Date.now();
+        const timeout: number = timeoutLongMs;
 
-    do {
-        response = await fnToCall.call(that, ...args);
-        await new Promise(res => setTimeout(res, timeout));
-    } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
+        do {
+            response = await fnToCall.call(that, ...args);
+            await new Promise(res => setTimeout(res, timeout));
+        } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
 
-    return response;
-};
+        return response;
+    };
 
-export async function streamToString(_stream): Promise<string> {
+export async function streamToString(_stream: Readable): Promise<string> {
     const chunks = [];
     const stream = new PassThrough({ encoding: "utf-8" });
 
