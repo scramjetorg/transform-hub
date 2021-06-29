@@ -7,3 +7,11 @@ Feature: CLI tests
         Then I get a help information
         And the exit status is 0
         And host is still running
+
+    @ci
+    Scenario: E2E-010 TC-002 Send package
+        Given host is running
+        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz" arguments
+        Then I get Sequence id and URL
+        And the exit status is 0
+        And host is still running

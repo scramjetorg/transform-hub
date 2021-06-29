@@ -6,7 +6,7 @@ const si = "si";
 
 let stdio: [stdout: string, stderr: string, statusCode: any];
 
-When("I execute CLI with {string} arguments", async function(args: string) {
+When("I execute CLI with {string} arguments", { timeout: 10000 }, async function(args: string) {
 
     stdio = await getStreamsFromSpawn(si, args.split(" "));
 
@@ -17,7 +17,11 @@ Then("I get a help information", function() {
 });
 
 Then("the exit status is {int}", function(status: number) {
-
     assert.equal(stdio[2], status);
+});
+
+Then("I get Sequence id and URL", function() {
+    assert.equal(stdio[0].includes("_id"), true);
+    assert.equal(stdio[0].includes("sequenceURL"), true);
 });
 

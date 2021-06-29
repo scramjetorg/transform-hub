@@ -410,9 +410,21 @@ yarn test:bdd
 yarn test:bdd --name="Execute example HelloAlice"
 ```
 
+When you want to execute a group of tests you can do it using the substring of their name, for example, to execute all E2E tests:
+
+```bash
+yarn test:bdd --name="E2E"
+```
+
+You can also execute tests based on their tag name, for example:
+
+```bash
+yarn test:bdd --tags '@ci'
+```
+
 Results of the performed test will be displayed in the console. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a bdd test, those html's are saved in `bdd/reports` folder.
 
-In a result of runnung all the test, both unit and bdd (command: `yarn test`), Lerna goes through all the packages and runs unit tests and also checks the `bdd` directory and runs all bdd scenarios.
+In a result of running all the test, both unit and bdd (command: `yarn test`), Lerna goes through all the packages and runs unit tests and also checks the `bdd` directory and runs all bdd scenarios.
 
 If you see the error along the way, that means some tests were not passed.
 
