@@ -61,4 +61,9 @@ export type STHConfiguration = {
      * The amount of memory that must remain free.
      */
     safeOperationLimit: number;
+
+    /**
+     * Should we identify existing sequences
+     */
+    identifyExisting: boolean;
 }

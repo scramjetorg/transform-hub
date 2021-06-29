@@ -27,7 +27,7 @@ configService.update({
 
 // before here we actually load the host and we have the config imported elsewhere
 // so the config is changed before compile time, not in runtime.
-require("@scramjet/host").startHost({}, options.socketLocation as string, {
+require("@scramjet/host").startHost({}, configService.getConfig().host.socketPath, {
     identifyExisting: options.identifyExisting as boolean
 })
     .catch((e: Error & { exitCode?: number }) => {

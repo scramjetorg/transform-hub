@@ -23,6 +23,7 @@ const defaultConfig: STHConfiguration = {
             maxMem: 512
         },
     },
+    identifyExisting: false,
     host: {
         hostname: "localhost",
         port: 8000,
