@@ -110,8 +110,8 @@ When("instance started with arguments {string} and write stream to {string} and 
 });
 
 When("get {string} in background with instanceId", { timeout: 500000 }, async (outputStream: InstanceOutputStream) => {
-    const stream: Response = await instance.getStream(outputStream);
-    const out = stream?.data;
+    const stream: Response = await instance?.getStream(outputStream) as Response;
+    const out = stream.data;
 
     if (!out) assert.fail("No output!");
 
@@ -354,7 +354,7 @@ When("confirm that sequence and volumes are removed", async () => {
 
     if (!sequenceId) assert.fail();
 
-    const sequenceExist = !!sequences.find(sequenceInfo => {
+    const sequenceExist = !!sequences?.find((sequenceInfo: { id: string }) => {
         return sequenceId === sequenceInfo.id;
     });
 
@@ -369,5 +369,5 @@ When("instance is finished", async () => {
 });
 
 When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
-    await instance.stop(0, false);
+    await instance?.stop(0, false);
 });
