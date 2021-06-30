@@ -37,13 +37,32 @@ This is the STH development repo.
 
 The readme file contains information about the development process of the STH. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](docs/development-guide/README.md)
 
-## Clean and rebuild packages
+## How to start development
+
+Follow the below information to start development
 
 ```bash
-yarn clean
-yarn install # or just yarn
-yarn build:all-packages    # optionally build:all if you want all dockerfiles.
-yarn prepack              # moves files to ./dist/
+git clone git@github.com:scramjetorg/transform-hub.git      # clone the repo
+cd transform-hub/                                           # enter the cloned directory
+yarn install                                                # install dependencies
+yarn build:all                                              # build all packages
+                                                            #    -> modules, samples and docker images
+yarn install -g dist/cli/                                   # install the cli
+yarn packseq
+yarn start                                                  # start the hub
+```
+
+Now in another window:
+
+```bash
+# this will upload the program to the host
+SEQ_ID=$(./scripts/_/upload-sequence packages/samples/example/)
+
+# this will start the sequence
+INSTANCE_ID=$(curl -H "Content-Type: application/json" --data-raw '{"appConfig": {},"args": ["/package/data.json"]}' http://localhost:8000/api/v1/sequence/$SEQ_ID/start | jq ".id" -r);
+
+# this will show the stdout
+stdbuf -o0 -e0 curl --no-progress-meter -X GET -H "Content-Type: application/octet-stream" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/stdout"
 ```
 
 ## Basic commands

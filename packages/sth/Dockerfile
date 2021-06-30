@@ -23,8 +23,7 @@ COPY conf ./conf
 COPY LICENSE ./
 
 RUN yarn install --frozen-lock \
-  && yarn build:all-packages \
-  && yarn pack:pre
+  && yarn build:packages
 
 FROM repo.int.scp.ovh/scramjet/nodejs:buster as release
 
