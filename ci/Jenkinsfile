@@ -11,6 +11,7 @@ pipeline {
       HOME = '.'
       SCRAMJET_TEST_LOG = 1
       docker_repo = 'repo.int.scp.ovh'
+      docker_img_prefix = 'repo.int.scp.ovh/scramjet/'
       version = sh(returnStdout: true, script: "jq -r .version < package.json").trim()
   }
   stages {
@@ -62,7 +63,7 @@ pipeline {
         stage('Build - Docker - Host') {
           steps {
             script {
-              docker.build("${docker_repo}/scramjet/hub:${version}", "-f packages/sth/Dockerfile .")
+              docker.build("${docker_img_prefix}hub:${version}", "-f packages/sth/Dockerfile .")
             }
           }
         }
@@ -70,7 +71,7 @@ pipeline {
           steps {
             script {
               dir("packages/pre-runner") {
-                docker.build("${docker_repo}/scramjet/pre-runner:${version}")
+                docker.build("${docker_img_prefix}pre-runner:${version}")
               }
             }
           }
@@ -78,7 +79,7 @@ pipeline {
         stage('Build - Docker - Runner') {
           steps {
             script {
-              docker.build("${docker_repo}/scramjet/runner:${version}", "-f packages/runner/Dockerfile .")
+              docker.build("${docker_img_prefix}runner:${version}", "-f packages/runner/Dockerfile .")
             }
           }
         }

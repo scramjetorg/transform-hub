@@ -85,10 +85,16 @@ When("instance started", async function(this: CustomWorld) {
     this.resources.instance = instance;
 });
 
-When("instance started with arguments {string}", { timeout: 25000 }, async function(this: CustomWorld, instanceArg: string) {
+const startWith = async function(this: CustomWorld, instanceArg: string) {
     instance = await sequence.start({}, instanceArg.split(" "));
     this.resources.instance = instance;
+};
+const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
+
+When("instance started with url from assets argument {string}", { timeout: 25000 }, async function(this: CustomWorld, assetUrl: string) {
+    return startWith.call(this, `${assetsLocation}${assetUrl}`);
 });
+When("instance started with arguments {string}", { timeout: 25000 }, startWith);
 
 When("instance started with arguments {string} and write stream to {string} and timeout after {int} seconds", { timeout: -1 }, async (instanceArg: string, fileName: string, timeout: number) => {
     instance = await sequence.start({}, instanceArg.split(" "));

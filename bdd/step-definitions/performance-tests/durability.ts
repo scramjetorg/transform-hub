@@ -9,6 +9,7 @@ import { CustomWorld } from "../world";
 
 const hostClient = new HostClient("http://localhost:8000/api/v1");
 const instances: InstanceClient[] = [];
+const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 
 // eslint-disable-next-line complexity
 When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 * 1000 }, async (minNumber: number, seq: string) => {
@@ -19,9 +20,9 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
         args: [
             400,
             [
-                "https://repo.int.scp.ovh/repository/scp-store/durability-test/file1.bin",
-                "https://repo.int.scp.ovh/repository/scp-store/durability-test/file2.bin",
-                "https://repo.int.scp.ovh/repository/scp-store/durability-test/file3.bin"
+                `${assetsLocation}scp-store/durability-test/file1.bin`,
+                `${assetsLocation}scp-store/durability-test/file2.bin`,
+                `${assetsLocation}scp-store/durability-test/file3.bin`
             ]
         ]
     };
