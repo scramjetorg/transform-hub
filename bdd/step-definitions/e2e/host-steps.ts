@@ -350,10 +350,10 @@ When("delete sequence and volumes", async () => {
 
 When("confirm that sequence and volumes are removed", async () => {
     const sequenceId = sequence.id;
-    const sequences = (await hostClient.listSequences()).data;
 
     if (!sequenceId) assert.fail();
 
+    const sequences = (await hostClient.listSequences()).data;
     const sequenceExist = !!sequences?.find((sequenceInfo: { id: string }) => {
         return sequenceId === sequenceInfo.id;
     });
