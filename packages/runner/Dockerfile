@@ -1,4 +1,4 @@
-FROM repo.int.scp.ovh/scramjet/nodejs:buster as target
+FROM node:buster as target
 
 ENV PACKAGE_DIR=/package \
     PIPES_DIR=/pipes \
@@ -11,7 +11,7 @@ RUN groupadd -g 1200 runner \
     && mkdir ${PACKAGE_DIR} ${PIPES_DIR} \
     && chown runner:runner ${PACKAGE_DIR} ${PIPES_DIR}
 
-FROM repo.int.scp.ovh/scramjet/nodejs:buster AS builder
+FROM node:buster AS builder
 
 WORKDIR /app/
 

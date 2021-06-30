@@ -1,4 +1,4 @@
-FROM repo.int.scp.ovh/scramjet/nodejs:buster as builder
+FROM node:buster as builder
 
 WORKDIR /build
 
@@ -25,7 +25,7 @@ COPY LICENSE ./
 RUN yarn install --frozen-lock \
   && yarn build:packages
 
-FROM repo.int.scp.ovh/scramjet/nodejs:buster as release
+FROM node:buster as release
 
 RUN set -xe \
   && mkdir -p /app

@@ -1,9 +1,9 @@
-FROM repo.int.scp.ovh/scramjet/nodejs:buster
+FROM nodejs:buster
 
 ARG HOST_VERSION=0.10.0-pre.10
 ENV HOST_VERSION=${HOST_VERSION}
 
 RUN set -xe \
-    && npm --registry=https://repo.int.scp.ovh/repository/npm-all/ install -g @scramjet/sth@${HOST_VERSION}
+    && npm install -g @scramjet/sth@${HOST_VERSION}
 
 CMD [ "scramjet-transform-hub" ]

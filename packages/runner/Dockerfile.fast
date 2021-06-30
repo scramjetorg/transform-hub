@@ -2,13 +2,13 @@ ARG PACKAGE_DIR="/package"
 ARG PIPES_DIR="/pipes"
 ARG RUNNER_DIR="/app"
 
-FROM repo.int.scp.ovh/scramjet/nodejs:buster AS target
+FROM nodejs:buster AS target
 
 ARG PACKAGE_DIR
 ARG PIPES_DIR
 ARG RUNNER_DIR
 
-ADD https://repo.int.scp.ovh/repository/storage/bin/gosu/1.12/gosu-amd64 /usr/local/bin/gosu
+ADD https://please-fill-this.org/bin/gosu/1.12/gosu-amd64 /usr/local/bin/gosu
 
 RUN    set -x \
     && chmod +x /usr/local/bin/gosu \
@@ -17,7 +17,7 @@ RUN    set -x \
     && mkdir ${PACKAGE_DIR} ${PIPES_DIR} \
     && chown runner:runner ${PACKAGE_DIR} ${PIPES_DIR}
 
-FROM repo.int.scp.ovh/scramjet/nodejs:buster AS builder
+FROM nodejs:buster AS builder
 
 ARG RUNNER_DIR
 

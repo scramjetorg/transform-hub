@@ -1,4 +1,4 @@
-FROM repo.int.scp.ovh/scramjet/base:buster
+FROM node:buster
 
 RUN groupadd -g 1200 prerunner \
   && useradd -g 1200 -u 1200 -m -d /app -s /bin/bash prerunner \

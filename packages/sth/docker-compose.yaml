@@ -1,7 +1,7 @@
 version: "3"
 services:
   scramjet-hub:
-    image: repo.int.scp.ovh/scramjet/hub:0.10.0-pre.10
+    image: scramjetorg/hub:0.10.0-pre.10
     volumes:
       - /tmp/:/tmp/
       - /var/run/docker.sock:/var/run/docker.sock
