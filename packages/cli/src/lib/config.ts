@@ -5,7 +5,8 @@ import { resolve } from "path";
 const defaultConfig = {
     configVersion: 1,
     apiUrl: "http://127.0.0.1:8000/api/v1",
-    logLevel: "trace"
+    logLevel: "trace",
+    format: "pretty"
 };
 
 type Config = typeof defaultConfig;

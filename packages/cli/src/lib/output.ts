@@ -35,7 +35,6 @@ export async function displayStream(_program: Command, request: Promise<Response
 
 export async function displayEntity(_program: Command, request: Promise<Response>): Promise<void> {
     // todo: different displays depending on _program.opts().format
-
     try {
         const req = await request;
 
