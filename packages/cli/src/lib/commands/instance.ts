@@ -100,6 +100,13 @@ export const instance: CommandDefinition = (program) => {
             return displayStream(program, InstanceClient.from(id).getStream("stdout"));
         });
 
+    instanceCmd.command("log <id>")
+        .description("show instance log")
+        .action((id) => {
+            getHostClient(program);
+            return displayStream(program, InstanceClient.from(id).getStream("log"));
+        });
+
     instanceCmd.command("stdin <id> <stream>")
         .description("send stream to stdin")
         .action((id, stream) => {
