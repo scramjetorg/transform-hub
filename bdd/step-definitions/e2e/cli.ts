@@ -23,6 +23,7 @@ Given("CLI is installed", async () => {
 When("I execute CLI with {string} arguments", { timeout: 10000 }, async function(args: string) {
 
     stdio = await getStreamsFromSpawn(si, args.split(" "));
+    console.log(stdio);
 
 });
 
@@ -37,6 +38,10 @@ Then("the exit status is {int}", function(status: number) {
 Then("I get Sequence id and URL", function() {
     assert.equal(stdio[0].includes("_id"), true);
     assert.equal(stdio[0].includes("sequenceURL"), true);
+});
+
+Then("I get location of compressed directory", function() {
+    assert.equal(stdio[0].includes(" undefined\n"), false);
 });
 
 

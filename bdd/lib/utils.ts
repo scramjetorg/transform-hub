@@ -131,7 +131,6 @@ export async function getStreamsFromSpawn(command: string, options: string[]): P
 
 }
 
-
 export async function installCLI() {
     console.log(process.cwd());
     const [stdout, stderr, statusCode] = await getStreamsFromSpawn("npm", ["i", "-g", "../dist/cli"]);
