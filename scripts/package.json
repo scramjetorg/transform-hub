@@ -16,9 +16,5 @@
   "devDependencies": {
     "fs-extra": "^9.1.0"
   },
-  "private": true,
-  "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
-    "access": "restricted"
-  }
+  "private": true
 }

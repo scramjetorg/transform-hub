@@ -6,8 +6,8 @@
   "bin": "bin/start-runner.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "build:docker": "docker build -t repo.int.scp.ovh/scramjet/runner:$npm_package_version -f Dockerfile ../../",
-    "build:docker-fast": "docker build -t repo.int.scp.ovh/scramjet/runner:$npm_package_version -f Dockerfile.fast ../../",
+    "build:docker": "docker build -t ${SCRAMJET_INT_REPO_PATH}/runner:$npm_package_version -f Dockerfile ../../",
+    "build:docker-fast": "docker build -t ${SCRAMJET_INT_REPO_PATH}/runner:$npm_package_version -f Dockerfile.fast ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
     "watch": "tsc -b --watch",

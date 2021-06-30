@@ -36,8 +36,5 @@
       "ts-node/register"
     ]
   },
-  "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
-    "access": "restricted"
-  }
+  "private": true
 }

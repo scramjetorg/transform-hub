@@ -85,10 +85,6 @@
       "bdd"
     ]
   },
-  "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
-    "access": "restricted"
-  },
   "husky": {
     "hooks": {
       "pre-push": "yarn lint"
