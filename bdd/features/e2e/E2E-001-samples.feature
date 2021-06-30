@@ -21,16 +21,16 @@ Feature: Sample e2e tests
         When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
         And get "output" in background with instanceId
-        And stop instance
         And get instance health
         And get containerId
         And instance health is "true"
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        And send kill message to instance
         And wait for "2000" ms
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
-        And container is closed
-        Then host is still running
+        Then container is closed
+        And host is still running
 
     Scenario: E2E-001 TC-003 - KM5_Cloud Server Instance Component
         Given host is running

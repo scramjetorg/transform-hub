@@ -31,8 +31,6 @@ const mod: InertApp = function(_input, ffrom = `${__dirname}/data.json`) {
             }
         )
         .do(console.log);
-
-
 };
 
 export default mod;
