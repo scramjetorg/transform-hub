@@ -1,5 +1,13 @@
 # Scramjet Transform Hub <!-- omit in toc -->
 
+Scramjet Transform Hub is an execution system that is installed on a managed
+server by the developer. Once installed, it will serve as an execution platform for
+programs on this server. You will be able to quickly and simply execute
+programs on this platform, which will automatically forge connections between
+programs and allow for remote control of program running, managing and
+termination.
+
+This is the STH development repo.
 
 ## Table of contents <!-- omit in toc -->
 
