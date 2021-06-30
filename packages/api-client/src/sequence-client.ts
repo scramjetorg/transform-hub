@@ -27,7 +27,6 @@ export class SequenceClient {
         this._id = id;
         this.sequenceURL = `sequence/${id}`;
 
-        console.log("New sequence:", this.id);
     }
 
     async start(appConfig: any, args: any): Promise<InstanceClient | undefined> {

@@ -41,6 +41,9 @@ Then("the exit status is {int}", function(status: number) {
 });
 
 Then("I get Sequence id and URL", function() {
+    const seq = JSON.parse(stdio[0].replace("\n", ""));
+
+    console.log(seq);
     assert.equal(stdio[0].includes("_id"), true);
     assert.equal(stdio[0].includes("sequenceURL"), true);
 });
@@ -55,9 +58,9 @@ Then("I get Host load information", function() {
 });
 
 Then("I get array of information about sequences", function() {
+    const arr = JSON.parse(stdio[0].replace("\n", ""));
 
-    //    const arr = JSON.parse(stdio[0].trim());
-
+    console.log(arr);
     //    assert.equal(Array.isArray(arr), true);
 
 });

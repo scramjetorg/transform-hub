@@ -29,7 +29,7 @@ export class InstanceClient {
 
         this._id = id;
         this.instanceURL = `instance/${this._id}`;
-        console.log("New instance:", this.id);
+
     }
 
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {

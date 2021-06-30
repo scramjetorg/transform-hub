@@ -27,31 +27,31 @@ Feature: CLI tests
         And the exit status is 0
         And host is still running
 
-    @ignore
+    @ci
     Scenario: E2E-010 TC-004 Send package
         Given host is running
         And CLI is installed
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz" arguments
+        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         Then I get Sequence id and URL
         And the exit status is 0
         And host is still running
 
-    @ignore
+    @ci
     Scenario: E2E-010 TC-005 List sequences
         Given host is running
         And CLI is installed
-        When I execute CLI with "seq ls" arguments
+        When I execute CLI with "seq ls --format json" arguments
         Then I get array of information about sequences
         And the exit status is 0
         And host is still running
 
-    @ignore
+    @ci
     Scenario: E2E-010 TC-006 Start sequence
         Given host is running
         And CLI is installed
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz" arguments
+        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         Then I get Sequence id and URL
-#        And I execute CLI with "seq start" arguments
+#       And I execute CLI with "seq start" arguments
         And the exit status is 0
         And host is still running
 
