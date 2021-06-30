@@ -79,7 +79,7 @@ Install lerna globally.
 npm install -g lerna
 ```
 
-[See more lerna commands  =>]("https://github.com/lerna/lerna/tree/main/commands/")
+[See more lerna commands  =>](https://github.com/lerna/lerna/tree/main/commands/)
 
 ### Yarn
 
@@ -110,7 +110,7 @@ Example:
     "typedoc-plugin-markdown": "3.4.5",
     "typescript": "4.1.4"
   },
-  // here goes all dependencies that will be used by STH after the bundle is made (in dist folder)
+  /* here goes all dependencies that will be used by STH after the bundle is made (in dist folder) */
   "dependencies": {
     "scramjet": "^4.35.2"
   },

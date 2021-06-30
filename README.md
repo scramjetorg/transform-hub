@@ -12,11 +12,10 @@ This is the STH development repo.
 ## Table of contents <!-- omit in toc -->
 
 - [Intro](#intro)
-- [Clean and rebuild packages](#how-to-start-development)
+- [How to start development](#how-to-start-development)
 - [Basic commands](#basic-commands)
 - [Start host](#start-host)
 - [Lerna commands](#lerna-commands)
-  - [Add](#add)
 - [Clean build](#clean-build)
 - [Docker commands](#docker-commands)
 - [Install Host and execute](#install-host-and-execute)
@@ -91,9 +90,7 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 ## Lerna commands
 
-### Add
-
-New package:
+Add new package:
 
 ```bash
 lerna create package_name
