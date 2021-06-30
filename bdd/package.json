@@ -17,7 +17,7 @@
     "build:bdd": "tsc -p tsconfig.json",
     "test:bdd": "cucumber-js"
   },
-  "repo": {
+  "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },

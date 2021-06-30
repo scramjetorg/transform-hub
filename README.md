@@ -128,8 +128,6 @@ yarn build:docker-release
 
 ### Run Host in Docker
 
-> **HINT:**  If there is no local image it will try to pull it from repo.int.scp.ovh
-
 ```bash
 cd ./packages/host/
 docker-compose up
@@ -139,7 +137,7 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
-To run Host without docker-compose:
+To run Hub without docker-compose:
 
 ```bash
 docker run -d --init \

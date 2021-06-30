@@ -42,7 +42,7 @@
     "@scramjet/types": "0.10.0-pre.10",
     "ava": "^3.15.0"
   },
-  "repo": {
+  "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
   }
