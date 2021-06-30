@@ -51,10 +51,6 @@
     "dockerode": "^3.3.0",
     "scramjet": "4.35.20"
   },
-  "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
-    "access": "restricted"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"

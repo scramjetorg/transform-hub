@@ -17,10 +17,6 @@
     "@scramjet/types": "0.10.0-pre.10",
     "@types/node": "15.12.5"
   },
-  "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
-    "access": "restricted"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
