@@ -12,7 +12,7 @@ This is the STH development repo.
 ## Table of contents <!-- omit in toc -->
 
 - [Intro](#intro)
-- [Clean and rebuild packages](#clean-and-rebuild-packages)
+- [Clean and rebuild packages](#how-to-start-development)
 - [Basic commands](#basic-commands)
 - [Start host](#start-host)
 - [Lerna commands](#lerna-commands)
