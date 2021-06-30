@@ -1,4 +1,4 @@
-[Home](../README.md)
+[Back](README.md)
 
 Stream protocol and API usage <!-- omit in toc -->
 ===
@@ -20,7 +20,7 @@ Stream protocol and API usage <!-- omit in toc -->
   - [Monitoring health check](#monitoring-health-check)
   - [Status](#status)
   - [Event](#event)
-- [Log](#log)
+- [Host Log](#host-log)
 
 ## Introduction
 
@@ -56,17 +56,17 @@ List of channels:
 
 ## Type of streams
 
-| STREAM  |  DESCRIPTION |
-|---|---|
-| stdin | process.stdin |
-| stdout | process.stdout |
-| stderr | process.stderr |
-| control | Used for sending events like: kill, stop, etc. and info about sequence configuration. |
-| monitor | Contains all information about a sequence like description, status, feedback from all performed operations, etc. |
-| pkg | Contains sequence stream with a config file which is sent to the runner. |
-| input | An optional input stream transporting data for processing to the Sequence. |
-| output | An optional output stream transporting data processed by the Sequence, piped to runner - if none passed, `this.stdout` will be used. |
-| log | Log channel is for all kinds of log messages not only for development purposes but also for messages defined in sequence. |
+| STREAM  | DESCRIPTION                                                                                                                          |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| stdin   | process.stdin                                                                                                                        |
+| stdout  | process.stdout                                                                                                                       |
+| stderr  | process.stderr                                                                                                                       |
+| control | Used for sending events like: kill, stop, etc. and info about sequence configuration.                                                |
+| monitor | Contains all information about a sequence like description, status, feedback from all performed operations, etc.                     |
+| pkg     | Contains sequence stream with a config file which is sent to the runner.                                                             |
+| input   | An optional input stream transporting data for processing to the Sequence.                                                           |
+| output  | An optional output stream transporting data processed by the Sequence, piped to runner - if none passed, `this.stdout` will be used. |
+| log     | Log channel is for all kinds of log messages not only for development purposes but also for messages defined in sequence.            |
 
 [Read more about node processes =>](https://nodejs.org/api/process.html#process_process_stdin)
 
@@ -197,14 +197,14 @@ Streams that are coming from Runner to Host.
 
 Control the sequence and send data to it via messages described below.
 
-| CODE | DESCRIPTION | TO |
-|---|---|---|
-| FORCE_CONFIRM_ALIVE | Confirm that sequence is alive when it is not responding. |Runner|
-| KILL | Send kill running sequence signal. |Runner|
-| MONITORING_RATE | Used to change the sequence monitoring rate. |Runner|
-| STOP | Send stop the running sequence signal. |Runner|
-| EVENT | Send event name and any object, array, function to the sequence. |Runner|
-| PONG | Acknowledge message from CSH to Runner. The message includes the Sequence configuration information. |Runner|
+| CODE                | DESCRIPTION                                                                                          | TO     |
+| ------------------- | ---------------------------------------------------------------------------------------------------- | ------ |
+| FORCE_CONFIRM_ALIVE | Confirm that sequence is alive when it is not responding.                                            | Runner |
+| KILL                | Send kill running sequence signal.                                                                   | Runner |
+| MONITORING_RATE     | Used to change the sequence monitoring rate.                                                         | Runner |
+| STOP                | Send stop the running sequence signal.                                                               | Runner |
+| EVENT               | Send event name and any object, array, function to the sequence.                                     | Runner |
+| PONG                | Acknowledge message from CSH to Runner. The message includes the Sequence configuration information. | Runner |
 
 ### Send event
 
@@ -248,18 +248,18 @@ curl -H "Content-Type: application/json" -d "[4002, {}]" http://localhost:8000/a
 
 ## Monitor Messages
 
-| CODE  | DESCRIPTION  | TO |
-|---|---|---|
-| ACKNOWLEDGE | Indicating whether the command with message (e.g. stop or kill) was received. | Host |
-| DESCRIBE_SEQUENCE | Includes info of stream mode, name, description and scalability of each subsequence. | Runner |
-| STATUS | Includes info of host address, instance_id, sequence modifications, health checks, data time flow, etc.  | Host |
-| ALIVE | Information on how much longer the Sequence will be active (in milliseconds). | Host |
-| ERROR | All errors that occur. | Runner, Host |
-| MONITORING | Contains messages about sequence health and information about instance resource usage like: cpu, memory, memory usage, net i/o, and disk size. | Host |
-| EVENT | Execute defined event in sequence with additional message as a parameter. | Runner |
-| PING | Check if a runner is ready to communicate with. | Runner |
-| SNAPSHOT_RESPONSE | Status about snapshot communicates if snapshot is done created without error. | Host |
-| SEQUENCE_STOPPED | Status about sequence communicates if it is running or not. | Host |
+| CODE              | DESCRIPTION                                                                                                                                    | TO           |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| ACKNOWLEDGE       | Indicating whether the command with message (e.g. stop or kill) was received.                                                                  | Host         |
+| DESCRIBE_SEQUENCE | Includes info of stream mode, name, description and scalability of each subsequence.                                                           | Runner       |
+| STATUS            | Includes info of host address, instance_id, sequence modifications, health checks, data time flow, etc.                                        | Host         |
+| ALIVE             | Information on how much longer the Sequence will be active (in milliseconds).                                                                  | Host         |
+| ERROR             | All errors that occur.                                                                                                                         | Runner, Host |
+| MONITORING        | Contains messages about sequence health and information about instance resource usage like: cpu, memory, memory usage, net i/o, and disk size. | Host         |
+| EVENT             | Execute defined event in sequence with additional message as a parameter.                                                                      | Runner       |
+| PING              | Check if a runner is ready to communicate with.                                                                                                | Runner       |
+| SNAPSHOT_RESPONSE | Status about snapshot communicates if snapshot is done created without error.                                                                  | Host         |
+| SEQUENCE_STOPPED  | Status about sequence communicates if it is running or not.                                                                                    | Host         |
 
 ### Monitoring health check
 
@@ -281,19 +281,12 @@ cat test.txt | curl -H "Content-Type: application/json" -d "[5001, {2000}]" http
 }
 ```
 
-<!-- QUESTION:
-Under what circumstances circumstances sequence won't be healthy?
-Can the user set up the buffer?
- -->
-
 1. **Throughput**: The number of bits per second that are physically delivered. Measure items per second.
 2. **Buffer**: Performed the reading and writing operations of the stream. Measure input and output.
 3. **Processing**: The collection and manipulation of items, data to produce meaningful information.
 4. **Pressure**: How effectively the data in buffers is being allocated and consumed. Measure stream in all socket tcp.
 
 ### Status
-
-Not fully implemented.
 
 ```bash
 curl -H "Content-Type: application/json" -d "{}" http://localhost:8000/api/v1/sequence/status
@@ -322,14 +315,10 @@ Links to description in model modules:
 - [SNAPSHOT_RESPONSE](../model/modules.md)
 - [SEQUENCE_STOPPED](../model/modules.md)
 
-## Log
+## Host Log
 
-Not fully implemented. There is no log filtering.
-
-<!-- QUESTION:
-Can we manage logs?? For example get only warnings. We need to think about log filtering soon.
- -->
+Not implemented.
 
 ```bash
-curl -H "Content-Type: application/json" -d "{}" http://localhost:8000/api/v1/stream/log
+curl -H "Content-Type: application/json" -d "{}" http://localhost:8000/api/v1/stream/logs
 ```

@@ -16,12 +16,13 @@ This is the STH development repo.
 - [Basic commands](#basic-commands)
 - [Start host](#start-host)
 - [Lerna commands](#lerna-commands)
+  - [Add](#add)
 - [Clean build](#clean-build)
 - [Docker commands](#docker-commands)
 - [Install Host and execute](#install-host-and-execute)
 - [Install CLI and execute](#install-cli-and-execute)
   - [Build Host on Docker](#build-host-on-docker)
-  - [Run Host in Docker](#run-host-in-docker)
+  - [Run Transform Hub in Docker](#run-transform-hub-in-docker)
 - [Run components](#run-components)
   - [Runner](#runner)
   - [HostOne](#hostone)
@@ -90,7 +91,49 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 ## Lerna commands
 
-[See more lerna commands =>](docs/development-guide/lerna-commands.md)
+### Add
+
+New package:
+
+```bash
+lerna create package_name
+```
+
+List all of the public packages in the current Lerna repo:
+
+```bash
+lerna ls
+```
+
+Run an npm script in each package that contains that script.
+
+```bash
+lerna run [script]
+```
+
+Run script in all packages excluding one package:
+
+```bash
+lerna run --ignore @scramjet/<package_name> <script-name>
+```
+
+... or run script excluding more packages
+
+```bash
+lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
+```
+
+Run script only in one package
+
+```bash
+lerna run --scope @scramjet/<package_name> <script-name>
+```
+
+Run script in more packages
+
+```bash
+lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
+```
 
 ## Clean build
 
@@ -102,7 +145,14 @@ yarn prepack              # moves files to ./dist/
 
 ## Docker commands
 
-[See day by day Docker commands =>](docs/development-guide/configuration.md#docker-commands)
+```bash
+docker ps                      # list containers
+docker volume prune -f         # remove all unused local volumes
+docker system prune --all -f   # remove all unused images not just dangling ones
+docker stop $(docker ps -a -q) # stops all running containers
+```
+
+> *(`-f`) -  don't prompt confirmation
 
 ## Install Host and execute
 

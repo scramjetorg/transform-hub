@@ -1,12 +1,14 @@
-[Home](../README.md)  |  [Back](README.md)
+[Back](README.md)
 
 STH configuration and usage 👀 <!-- omit in toc -->
 ===
 
 ## Table of Contents <!-- omit in toc -->
 
-- [Intro](#intro)
+- [Introduction](#introduction)
+- [Dictionary](#dictionary)
 - [Installation](#installation)
+  - [Node](#node)
   - [Lerna](#lerna)
   - [Yarn](#yarn)
   - [Dependencies](#dependencies)
@@ -16,7 +18,6 @@ STH configuration and usage 👀 <!-- omit in toc -->
   - [How to setup](#how-to-setup)
   - [How to run](#how-to-run)
 - [Code building](#code-building)
-- [Execute sample](#execute-sample)
 - [Configure your own sample](#configure-your-own-sample)
 - [Run the server](#run-the-server)
 - [Send package](#send-package)
@@ -28,19 +29,45 @@ STH configuration and usage 👀 <!-- omit in toc -->
   - [How to generate](#how-to-generate)
   - [How to use](#how-to-use)
 
-## Intro
+## Introduction
 
-You need to have installed git and also [cloned the repository](https://github.com/scramjetorg/transform-hub). Check out below links *how to do things* or jump right to the STH [installation and configuration process](#installation).
+**Scramjet Transform Hub** (STH) is an execution system that will be installed on a managed server by the developer. Once installed, it will serve as an execution platform for programs on this server. Developers will be able to quickly and simply execute programs on this platform, which will automatically forge connections between programs and allow for remote control of program running, managing and termination.
 
-How to:
+The main aim of STH is to enable developers to execute programs in a much more efficient and simpler way than is currently available. Think of it as an operating system living on a managed server, fully controlled by the developer, but drastically cutting the code required to run applications.
 
-- [install git and download the repo](./helpers.md),
-- [work remotely in Visual Studio code](./linux-setup-and-vscode.md),
-- [work remotely in IntelliJ IDEA](https://www.jetbrains.com/help/idea/creating-a-remote-server-configuration.html).
+STH right now support only node, but we will do more engines and languages shortly.
 
-Check out tips and tricks abut [VM, Linux and stuff =>](./linux-setup-and-vscode.md#some-things-worth-doing/installing-on-your-machine)
+## Dictionary
+
+What is **sequence**?
+> Chained list of functions with at least one function element.
+
+What is **package**?
+> Package is zipped folder witch contains sequence and package.json file.
+
+What is **instance**?
+> Executed sequence, in other words instance of the sequence that is running.
+
+What is **package.json**?
+> Contains the characteristic of the sequence, and instance in json format. [See how to prepare the package.json file](#1-specify-the-json-file).
 
 ## Installation
+
+Project works only on Unix-like operating systems. Right now we don't support Windows.
+
+### Node
+
+Check if you already have Node.js and npm installed, run the following commands in your console:
+
+```bash
+node -v
+npm -v
+```
+
+If your local machine don't have node.js installed download it. Choose the way and follow the instructions.
+
+- [Download binary file to install node.js](https://nodejs.org/en/download/)
+- [Installing Node.js via package manager](https://nodejs.org/en/download/package-manager/)
 
 ### Lerna
 
@@ -52,7 +79,7 @@ Install lerna globally.
 npm install -g lerna
 ```
 
-[See more lerna commands  =>](./lerna-commands.md)
+[See more lerna commands  =>]("https://github.com/lerna/lerna/tree/main/commands/")
 
 ### Yarn
 
@@ -91,30 +118,11 @@ Example:
 }
 ```
 
-Firs install root `package.json` file:
+Install all dependencies at once:
 
 ```bash
-npm i
-```
-
-Then install packages dependencies. To do it, run the below commands (also in the root directory).
-
-Symlink packages via command:
-
-```bash
-lerna exec yarn && lerna link
-```
-
-> Hint: We are using yarn workspaces because there is a bug in `lerna bootstrap` with symlinking packages 😅. NPM recently added workspaces in version 7.x, but it'll take a while for them to fix all bugs 🙄.
-
-[Read more about symlink =>](https://classic.yarnpkg.com/en/docs/cli/link/)
-
-[Read more about lerna issue =>](https://github.com/lerna/lerna/issues/1457)
-
-Now install all dependencies at once 🥳
-
-```bash
-yarn
+npm i  # npm install
+yarn   # yarn install
 ```
 
 ### Other
@@ -195,13 +203,13 @@ Use command in a root directory.
 To check lint errors and warnings:
 
 ```bash
-yarn run lint
+yarn lint
 ```
 
 To auto-fix code formatting in files:
 
 ```bash
-yarn run lint --fix
+yarn lint --fix
 ```
 
 ## Code building
@@ -209,21 +217,16 @@ yarn run lint --fix
 To build all services and samples type below command in the root directory:
 
 ```bash
-lerna run build
+yarn build
 ```
 
 To build global dist folder and move all compiled to js output files use:
 
 ```bash
-lerna run prepack
+yarn prepack
 ```
 
-You can also build samples and services separately.
-For example, to build a *sample/test* can be used scripts listed in VS Code.
-
-![show npm scripts](./../images/npm-scripts.png)
-
-Furthermore, you can use lerna to do it via command:
+You can also build samples and services separately. Use lerna to do it via command:
 
 ```bash
 lerna run --scope @scramjet/<package_name> build
@@ -238,15 +241,7 @@ yarn run clean
 In the nut shell you can use:
 
 ```bash
-lerna run clean && lerna run build && lerna run prepack
-```
-
-## Execute sample
-
-To execute a sample also use lerna and type:
-
-```bash
-lerna run --scope @scramjet/<package_name> start
+yarn clean && yarn build && yarn prepack
 ```
 
 ## Configure your own sample
@@ -290,6 +285,8 @@ As well as scripts.
 
 ## Run the server
 
+Run server in development mode.
+
 ```bash
 ts-node packages/host/src/bin/start.ts
 ```
@@ -301,8 +298,6 @@ To send a package use below command.
 ```bash
 curl -H "Content-Type: application/octet-stream" --data-binary "@home/user/package.tar.gz" http://localhost:8000/api/v1/sequence -v
 ```
-
-See other commands to manage and communicate with sequence / instance [go to CSH stream protocol description](../architecture/CSH-stream-protocol.md)
 
 ## Code debugging
 
@@ -339,8 +334,6 @@ There's no need to install any additional extensions. You just need to copy `lau
 [Read more about config in VS doc =>](https://code.visualstudio.com/docs/typescript/typescript-debugging)
 
 [Read more about VS code debugging =>](https://code.visualstudio.com/docs/editor/debugging)
-
-[Read how to setup VS code =>](./linux-setup-and-vscode.md)
 
 [Link to VS the doc =>](https://vscode.readthedocs.io/en/latest/editor/debugging/)
 
