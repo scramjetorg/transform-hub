@@ -26,7 +26,7 @@
 
 ## Intro
 
-The readme file contains information about the development process of the CSI. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/README.md)
+The readme file contains information about the development process of the CSI. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](docs/development-guide/README.md)
 
 ## Clean and rebuild packages
 
@@ -62,7 +62,7 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 ## Lerna commands
 
-[See more lerna commands =>](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/lerna-commands.md)
+[See more lerna commands =>](docs/development-guide/lerna-commands.md)
 
 ## Clean build
 
@@ -74,22 +74,22 @@ yarn prepack              # moves files to ./dist/
 
 ## Docker commands
 
-[See day by day Docker commands =>](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/configuration.md#docker-commands)
+[See day by day Docker commands =>](docs/development-guide/configuration.md#docker-commands)
 
 ## Install Host and execute
 
 After built and prepack is done, install and run Host:
 
 ```bash
-npm install -g ./dist/host # installs packages globally
-scramjet-host              # starts host
+npm install -g ./dist/hub  # installs packages globally
+scramjet-transform-hub     # starts host
 ```
 
-You can also install current Host release from our internal [Scramjet NPM Registry](https://github.com/scramjet-cloud-platform/docs/blob/main/developers-instructions/registries.md#scramjet-npm-registry):
+You can also install current Hub release from registry:
 
 ```bash
-npm install -g @scramjet/host
-scramjet-host
+npm install -g @scramjet/hub
+scramjet-transform-hub
 ```
 
 ## Install CLI and execute
@@ -97,8 +97,15 @@ scramjet-host
 In the root folder, after building and prepacking, run the following commands:
 
 ```bash
-npm i -g ./dist/cli  #install CLI globally
-si help       #show CLI commands
+npm i -g ./dist/cli # install CLI globally
+si help             # show CLI commands
+```
+
+You can also install the package from NPM.
+
+```bash
+npm i -g @scramjet/cli # install CLI globally
+si help                # show CLI commands
 ```
 
 > **HINT:** If something goes wrong make clean, install, and prepack.
@@ -257,7 +264,7 @@ after that hit enter and type kill to exit the process:
 sequence: kill
 ```
 
-[See more about streams and curl commands =>](https://github.com/scramjet-cloud-platform/docs/tree/main/architecture/Stream-protocol-and-API-usage.md)
+[See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
 > **HINT:** If something goes wrong run clean, build and prepack.
 
