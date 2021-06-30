@@ -1,8 +1,8 @@
 {
-  "name": "scramjet-csi-dev",
+  "name": "@scramjet/transform-hub",
   "version": "0.10.0-pre.10",
   "private": true,
-  "description": "A development repo for Scramjet CSI, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
+  "description": "A development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
   "bic": {
     "only": [
@@ -13,7 +13,7 @@
     ]
   },
   "bin": {
-    "csi-supervisor": "bin/scramjet-csi-supervisor"
+    "scramjet-transform-hub": "dist/sth/bin/hub.js"
   },
   "scripts": {
     "build": "yarn build:all-packages",

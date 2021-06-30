@@ -1,4 +1,5 @@
-# Scramjet Cloud Server Instance (CSI) <!-- omit in toc -->
+# Scramjet Transform Hub <!-- omit in toc -->
+
 
 ## Table of contents <!-- omit in toc -->
 
@@ -26,7 +27,7 @@
 
 ## Intro
 
-The readme file contains information about the development process of the CSI. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](docs/development-guide/README.md)
+The readme file contains information about the development process of the STH. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](docs/development-guide/README.md)
 
 ## Clean and rebuild packages
 

@@ -23,8 +23,8 @@ A clear and concise description of what the bug is.
 A clear and concise description of what you expected to happen.
 
 **Version (please complete the following information):**
- - csi version:
+ - STH version:
  - node version:
- - os: 
+ - os:
 
 **Additional information like logs, screenshots etc.**

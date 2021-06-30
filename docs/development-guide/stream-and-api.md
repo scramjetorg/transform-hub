@@ -24,7 +24,7 @@ Stream protocol and API usage <!-- omit in toc -->
 
 ## Introduction
 
-**Stream protocol** is used to communicate and push data through Cloud Server Instance (CSI). Streams are piped to proper communication channel, which are grouped (multiplexed) as interleaved data packets to travel from Host to Runner. All the communication takes place thanks to `CommunicationHandler` class.
+**Stream protocol** is used to communicate and push data through Cloud Server Instance (STH). Streams are piped to proper communication channel, which are grouped (multiplexed) as interleaved data packets to travel from Host to Runner. All the communication takes place thanks to `CommunicationHandler` class.
 
 **Cloud Server Host** on initialization of a new Sequence and a Sequence Instance based on passed parameters, like: `package stream`, `application config` (package.json) and `sequence arguments`, creates `downstream` and `upstream`. Both arrays of streams are hooked (hookUpstreamStreams, hookDownstreamStreams, hookLogStream) to proper communication channel.
 

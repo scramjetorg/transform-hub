@@ -1,6 +1,6 @@
 [Home](../README.md)  |  [Back](README.md)
 
-CSI configuration and usage 👀 <!-- omit in toc -->
+STH configuration and usage 👀 <!-- omit in toc -->
 ===
 
 ## Table of Contents <!-- omit in toc -->
@@ -30,7 +30,7 @@ CSI configuration and usage 👀 <!-- omit in toc -->
 
 ## Intro
 
-You need to have installed git and also [cloned the repository](https://github.com/scramjetorg/transform-hub). Check out below links *how to do things* or jump right to the CSI [installation and configuration process](#installation).
+You need to have installed git and also [cloned the repository](https://github.com/scramjetorg/transform-hub). Check out below links *how to do things* or jump right to the STH [installation and configuration process](#installation).
 
 How to:
 
@@ -83,7 +83,7 @@ Example:
     "typedoc-plugin-markdown": "3.4.5",
     "typescript": "4.1.4"
   },
-  // here goes all dependencies that will be used by CSI after the bundle is made (in dist folder)
+  // here goes all dependencies that will be used by STH after the bundle is made (in dist folder)
   "dependencies": {
     "scramjet": "^4.35.2"
   },
