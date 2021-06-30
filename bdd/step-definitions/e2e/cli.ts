@@ -1,19 +1,21 @@
-import { Then, When, Given, BeforeAll } from "@cucumber/cucumber";
+import { Then, When, Given } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { getStreamsFromSpawn, installCLI } from "../../lib/utils";
+import * as fs from "fs";
+import { getStreamsFromSpawn } from "../../lib/utils";
 
-const si = "si";
+const si = ["../packages/cli/src/bin/index"];
 
 let stdio: [stdout: string, stderr: string, statusCode: any];
 
-
+/*
 BeforeAll(async () => {
     await installCLI();
 });
+*/
 
 Given("CLI is installed", async () => {
 
-    stdio = await getStreamsFromSpawn(si, ["help"]);
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(["help"]));
     assert.equal(
         stdio[2],
         0
@@ -22,26 +24,30 @@ Given("CLI is installed", async () => {
 
 When("I execute CLI with {string} arguments", { timeout: 10000 }, async function(args: string) {
 
-    stdio = await getStreamsFromSpawn(si, args.split(" "));
-    console.log(stdio);
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(args.split(" ")));
 
 });
 
 Then("I get a help information", function() {
+
     assert.equal(stdio[0].includes("Usage:"), true);
 });
 
 Then("the exit status is {int}", function(status: number) {
+
     assert.equal(stdio[2], status);
 });
 
 Then("I get Sequence id and URL", function() {
+
     assert.equal(stdio[0].includes("_id"), true);
     assert.equal(stdio[0].includes("sequenceURL"), true);
 });
 
-Then("I get location of compressed directory", function() {
-    assert.equal(stdio[0].includes(" undefined\n"), false);
+Then("I get location {string} of compressed directory", function(filepath: string) {
+
+    assert.equal(fs.existsSync(filepath), true);
+//    assert.equal(stdio[0].includes(" undefined\n"), false);
 });
 
 

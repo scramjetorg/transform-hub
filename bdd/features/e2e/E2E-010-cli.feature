@@ -14,7 +14,7 @@ Feature: CLI tests
         Given host is running
         And CLI is installed
         When I execute CLI with "pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz" arguments
-        Then I get location of compressed directory
+        Then I get location "../packages/reference-apps/transform-function.tar.gz" of compressed directory
         And the exit status is 0
         And host is still running
 
