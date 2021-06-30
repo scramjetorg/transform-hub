@@ -2,8 +2,8 @@
 
 ```json
 {
-    "prerunner": "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.1",
-    "runner": "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.1"
+    "prerunner": "scramjetorg/pre-runner:0.10.0-pre.1",
+    "runner": "scramjetorg/runner:0.10.0-pre.1"
 }
 ```
 
@@ -19,10 +19,8 @@ and
 
  and their addresses:
 
-`"repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.1"`
-`"repo.int.scp.ovh/scramjet/runner:0.10.0-pre.1"`
-
-located in Scramjet Registry <https://repo.int.scp.ovh>
+`"scramjetorg/pre-runner:0.10.0-pre.1"`
+`"scramjetorg/runner:0.10.0-pre.1"`
 
 The list of the images will grow together with the number of programming languages that Scramjet Platform will support. e.g.: the Sequence written in C++ will be run in a container that was created from a different image than the one written in JavaScript.
 

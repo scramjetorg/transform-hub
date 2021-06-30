@@ -5,8 +5,7 @@
   "stream": true,
   "command": {
     "publish": {
-      "message": "chore(release): publish %s",
-      "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/"
+      "message": "chore(release): publish %s"
     },
     "bootstrap": {
       "npmClientArgs": [

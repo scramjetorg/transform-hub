@@ -13,7 +13,7 @@ pipeline {
     stage("Build Docker") {
       steps {
         script {
-            image = docker.build("scramjet/host", "-f packages/sth/Dockerfile.build .")
+            image = docker.build("scramjet/hub", "-f packages/sth/Dockerfile.build .")
         }
       }
     }

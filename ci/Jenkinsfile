@@ -62,7 +62,7 @@ pipeline {
         stage('Build - Docker - Host') {
           steps {
             script {
-              docker.build("${docker_repo}/scramjet/host:${version}", "-f packages/sth/Dockerfile .")
+              docker.build("${docker_repo}/scramjet/hub:${version}", "-f packages/sth/Dockerfile .")
             }
           }
         }

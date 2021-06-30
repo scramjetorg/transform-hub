@@ -134,7 +134,7 @@ In a response JSON object will be displayed. Response example:
   "va+RikUw+2u23ZtPH2fPenB1mSoxSOrl": {
     "id": "va+RikUw+2u23ZtPH2fPenB1mSoxSOrl",
     "config": {
-      "image": "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.1",
+      "image": "scramjetorg/runner:0.10.0",
       "version": "",
       "engines": {
         "node": ">=10",

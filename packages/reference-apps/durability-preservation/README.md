@@ -1,9 +1,9 @@
 Sequence downloads following files every second:
 ```
 [
-    "https://repo.int.scp.ovh/repository/scp-store/durability-test/file1.bin",
-    "https://repo.int.scp.ovh/repository/scp-store/durability-test/file2.bin",
-    "https://repo.int.scp.ovh/repository/scp-store/durability-test/file3.bin"
+    "http://some.host.com/durability-test/file2.bin",
+    "http://some.host.com/durability-test/file1.bin",
+    "http://some.host.com/durability-test/file3.bin"
 ]
 ```
 
@@ -72,7 +72,7 @@ $ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seq
 --header 'content-type: application/json' \
 --data-raw '{
     "appConfig": {},
-    "args": [60, 128, ["https://repo.int.scp.ovh/repository/scp-store/durability-test/file1.bin","https://repo.int.scp.ovh/repository/scp-store/durability-test/file2.bin","https://repo.int.scp.ovh/repository/scp-store/durability-test/file3.bin"]]
+    "args": [60, 128, ["https://assets.scramjet.org/scp-store/durability-test/file1.bin","https://assets.scramjet.org/scp-store/durability-test/file2.bin","https://assets.scramjet.org/scp-store/durability-test/file3.bin"]]
 }' | jq ".id" -r)
 ```
 

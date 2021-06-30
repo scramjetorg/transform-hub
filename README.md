@@ -126,10 +126,10 @@ cd ./packages/host/
 yarn build:docker-release
 ```
 
-### Run Host in Docker
+### Run Transform Hub in Docker
 
 ```bash
-cd ./packages/host/
+cd ./packages/sth/
 docker-compose up
 
 # or run in detached mode
@@ -141,11 +141,11 @@ To run Hub without docker-compose:
 
 ```bash
 docker run -d --init \
-  --name scramjet-host \
+  --name scramjet-hub \
   -p 8000:8000 \
   -v /tmp/:/tmp/ \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  repo.int.scp.ovh/scramjet/host:$(jq -r .version < package.json)
+  scramjetorg/host:$(jq -r .version < package.json)
 ```
 
 ## Run components
@@ -349,7 +349,6 @@ lerna success - @scramjet/adapters
 lerna success - @scramjet/api-client
 lerna success - @scramjet/api-server
 lerna success - @scramjet/sth-config
-lerna success - @scramjet/host-one
 lerna success - @scramjet/host
 lerna success - @scramjet/logger
 lerna success - @scramjet/model
