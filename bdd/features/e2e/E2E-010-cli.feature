@@ -10,7 +10,16 @@ Feature: CLI tests
         And host is still running
 
     @ci
-    Scenario: E2E-010 TC-002 Pack sequence
+    Scenario: E2E-010 TC-002 Shows Host load information
+        Given host is running
+        And CLI is installed
+        When I execute CLI with "host load" arguments
+        Then I get Host load information
+        And the exit status is 0
+        And host is still running
+
+    @ci
+    Scenario: E2E-010 TC-003 Pack sequence
         Given host is running
         And CLI is installed
         When I execute CLI with "pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz" arguments
@@ -19,7 +28,7 @@ Feature: CLI tests
         And host is still running
 
     @ci
-    Scenario: E2E-010 TC-003 Send package
+    Scenario: E2E-010 TC-004 Send package
         Given host is running
         And CLI is installed
         When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz" arguments
