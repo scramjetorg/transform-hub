@@ -85,7 +85,7 @@ Then("I delete sequence", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("ts-node", si.concat(["seq", "delete", sequenceId].concat(formatFlags)));
 });
 
-Then("I get instance health", async function() {
+Then("I get instance health", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "health", instanceId].concat(formatFlags)));
     const msg = JSON.parse(stdio[0].replace("\n", ""));
 
@@ -94,5 +94,42 @@ Then("I get instance health", async function() {
 
 Then("I get instance log", { timeout: 30000 }, async function() {
     stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "log", instanceId]));
-    console.log(stdio[0]);
 });
+
+Then("I send input data {string}", async function(pathToFile: string) {
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "input", instanceId, pathToFile].concat(formatFlags)));
+});
+
+Then("I stop instance {string} {string}", async function(timeout: string, canCallKeepAlive: string) {
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "stop", instanceId, timeout, canCallKeepAlive].concat(formatFlags)));
+});
+
+Then("I get list of instances", async function() {
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "ls"].concat(formatFlags)));
+    const sequences = JSON.parse(stdio[0].replace("\n", ""));
+
+    let instanceFound = false;
+
+    for (let i = 0; i < sequences.length; i++) {
+        const instances = sequences[i].sequence.instances;
+
+        if (instances.includes(instanceId))
+            instanceFound = true;
+    }
+    assert.equal(instanceFound, true);
+
+});
+
+Then("I get instance info", async function() {
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "info", instanceId].concat(formatFlags)));
+    const info = JSON.parse(stdio[0].replace("\n", ""));
+    const seqId = info.sequenceId;
+
+    assert.equal(seqId, sequenceId);
+});
+
+When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "sendEvent", instanceId, eventName, eventMsg].concat(formatFlags)));
+    console.log(stdio);
+});
+
