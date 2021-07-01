@@ -35,3 +35,17 @@ Feature: Host configuration
         When hub process is started with parameters "--socket-path /tmp/test-socket"
         Then SocketServer starts on "/tmp/test-socket"
         * exit hub process
+
+    @starts-host
+    Scenario: HUB-001 TC-007  Set API server name (--hostname)
+        When hub process is started with parameters "--hostname 0.0.0.0"
+        Then API starts with "0.0.0.0" server name
+        * exit hub process
+
+    @starts-host
+    Scenario: HUB-001 TC-008  Set API server name (-H)
+        When hub process is started with parameters "-H localhost"
+        Then API starts with "localhost" server name
+        * exit hub process
+
+

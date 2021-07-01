@@ -25,12 +25,12 @@ When("hub process is started with parameters {string}", async function(this: Cus
 
         this.resources.hub.on("error", reject);
 
-        const chunks = [];
+        this.resources.hubStdoutChunks = [];
 
         for await (const chunk of this.resources.hub.stdout) {
-            chunks.push(chunk);
+            this.resources.hubStdoutChunks.push(chunk);
 
-            if (~chunks.join("").indexOf("API listening on port")) {
+            if (~this.resources.hubStdoutChunks.join("").indexOf("API listening on port")) {
                 break;
             }
         }
@@ -61,6 +61,17 @@ Then("SocketServer starts on {string}", async function(this: CustomWorld, socket
             reject(error);
         });
     });
+});
+
+Then("API starts with {string} server name", async function(this: CustomWorld, server: string) {
+    const hostClient = new HostClient(`http://${server}:8000/api/v1`);
+    const status = (await hostClient.getVersion()).status;
+
+    assert.equal(status, 200);
+
+    const apiURL = this.resources.hubStdoutChunks.join().match(/port: \s*(.*)/)[1];
+
+    assert.equal(new RegExp(server).test(apiURL), true);
 });
 
 Then("exit hub process", async function(this: CustomWorld) {
