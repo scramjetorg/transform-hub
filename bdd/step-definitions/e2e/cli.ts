@@ -1,4 +1,4 @@
-import { Then, When, Given } from "@cucumber/cucumber";
+import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { getStreamsFromSpawn } from "../../lib/utils";
@@ -9,21 +9,6 @@ const formatFlags = ["--format", "json"];
 let stdio: [stdout: string, stderr: string, statusCode: any];
 let sequenceId: string;
 let instanceId: string;
-
-/*
-BeforeAll(async () => {
-    await installCLI();
-});
-*/
-
-Given("CLI is installed", async () => {
-
-    stdio = await getStreamsFromSpawn("ts-node", si.concat(["help"]));
-    assert.equal(
-        stdio[2],
-        0
-    );
-});
 
 When("I execute CLI with {string} arguments", { timeout: 10000 }, async function(args: string) {
 
@@ -130,6 +115,11 @@ Then("I get instance info", async function() {
 
 When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
     stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "sendEvent", instanceId, eventName, eventMsg].concat(formatFlags)));
-    console.log(stdio);
+});
+
+Then("I get event {string} from instance", async function(event: string) {
+    stdio = await getStreamsFromSpawn("ts-node", si.concat(["inst", "event", instanceId].concat(formatFlags)));
+    assert.equal(stdio[0].includes(event), true);
+
 });
 
