@@ -38,6 +38,10 @@ const actualResponse = () => actualStatusResponse || actualHealthResponse;
 process.env.LOCAL_HOST_BASE_URL = "";
 
 BeforeAll({ timeout: 10e3 }, async () => {
+    if (process.env.NO_HOST) {
+        return;
+    }
+
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
     if (!apiUrl) {
@@ -69,15 +73,15 @@ BeforeAll({ timeout: 10e3 }, async () => {
             }
         });
     }
-
-    await hostUtils.spawnHost();
 });
 
 AfterAll(async () => {
-    try {
-        await hostUtils.stopHost();
-    } catch {
-        throw new Error("Host unexpected closed");
+    if (!process.env.NO_HOST) {
+        try {
+            await hostUtils.stopHost();
+        } catch {
+            throw new Error("Host unexpected closed");
+        }
     }
 });
 
