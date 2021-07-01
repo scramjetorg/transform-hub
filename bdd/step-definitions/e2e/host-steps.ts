@@ -114,10 +114,12 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string) => {
+When("sequence {string} loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     sequence = await hostClient.sendSequence(
         createReadStream(packagePath)
     );
+
+    this.resources.sequence = sequence;
     console.log("Package successfuly loaded, sequence started.");
 });
 
@@ -237,7 +239,7 @@ When("send kill message to instance", async () => {
     assert.equal(resp?.status, 202);
 });
 
-When("get containerId", { timeout: 31000 }, async () => {
+When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
     const res = actualResponse()?.data?.containerId;
 
     if (!res) assert.fail();

@@ -13,12 +13,24 @@ const options = program
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
     .option("-C, --cpm-url <host:ip>")
+    .option("--runner-image <image name>", "Image used by runner")
+    .option("--runner-max-mem <mb>", "Maximum mem used by runner")
+    .option("--prerunner-image <image name>", "Image used by prerunner")
+    .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .parse(process.argv)
     .opts()
 ;
 
 configService.update({
     cpmUrl: options.cpmUrl,
+    docker: {
+        prerunner: {
+            image: options.prerunnerImage
+        },
+        runner: {
+            image: options.runnerImage
+        }
+    },
     host: {
         apiBase: "/api/v1",
         socketPath: options.socketPath ? resolve(process.cwd(), options.socketPath) : undefined,

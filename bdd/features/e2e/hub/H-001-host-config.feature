@@ -48,4 +48,23 @@ Feature: Host configuration
         Then API starts with "localhost" server name
         * exit hub process
 
+    @starts-host
+    Scenario: HUB-001 TC-009  Set runner image (--runner-image)
+        When hub process is started with parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
+        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And instance started with arguments "/package/data.json"
+        And get container information
+        Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
+        * exit hub process
+
+    # Can't receive Memory config in this way
+    @ignore @starts-host
+    Scenario: HUB-001 TC-010  Set runner memory limit (--runner-max-mem)
+        When hub process is started with parameters "--runner-max-mem 128"
+        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And instance started with arguments "/package/data.json"
+        And get container information
+        Then container memory limit is 128
+        * exit hub process
+
 
