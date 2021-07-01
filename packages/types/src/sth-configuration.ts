@@ -69,3 +69,5 @@ export type STHConfiguration = {
      */
     identifyExisting: boolean;
 }
+
+export type DeepPartial<T> = { [P in keyof T]?: DeepPartial<T[P]>; };

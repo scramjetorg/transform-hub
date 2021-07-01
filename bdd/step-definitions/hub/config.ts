@@ -1,13 +1,16 @@
 import { Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
-import { HostClient } from "@scramjet/api-client";
+import { HostClient, InstanceClient } from "@scramjet/api-client";
+import Dockerode = require("dockerode");
 
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
+import { SIGTERM } from "constants";
 import * as net from "net";
 import path = require("path");
-import { SIGTERM } from "constants";
+import { StringDecoder } from "string_decoder";
+//import { streamToString } from "../../lib/utils";
 
 When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
     await new Promise<void>(async (resolve, reject) => {
@@ -25,17 +28,16 @@ When("hub process is started with parameters {string}", async function(this: Cus
 
         this.resources.hub.on("error", reject);
 
-        this.resources.hubStdoutChunks = [];
+        const decoder = new StringDecoder();
 
-        for await (const chunk of this.resources.hub.stdout) {
-            this.resources.hubStdoutChunks.push(chunk);
+        this.resources.hub.stdout.on("data", (data: Buffer) => {
+            const decodedData = decoder.write(data);
 
-            if (~this.resources.hubStdoutChunks.join("").indexOf("API listening on port")) {
-                break;
+            if (decodedData.match(/API listening on port/)) {
+                this.resources.startOutput = decodedData;
+                resolve();
             }
-        }
-
-        resolve();
+        });
     });
 });
 
@@ -69,7 +71,7 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
 
     assert.equal(status, 200);
 
-    const apiURL = this.resources.hubStdoutChunks.join().match(/port: \s*(.*)/)[1];
+    const apiURL = this.resources.startOutput.match(/port: \s*(.*)/)[1];
 
     assert.equal(new RegExp(server).test(apiURL), true);
 });
@@ -84,3 +86,23 @@ Then("exit hub process", async function(this: CustomWorld) {
     });
 });
 
+Then("get container information", { timeout: 10000 }, async function(this: CustomWorld) {
+    const instance = this.resources.instance as InstanceClient;
+    const resp = await instance.getHealth();
+    const containerId = resp.data?.containerId;
+    const [stats, info] = await Promise.all([
+        new Dockerode().getContainer(containerId).stats({ stream: false }),
+        new Dockerode().listContainers().then(containers => containers.find(container => container.Id === containerId))
+    ]);
+
+    this.resources.containerStats = stats;
+    this.resources.containerInfo = info;
+});
+
+Then("container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
+    assert.equal(this.resources.containerInfo.HostConfig.Memory / 1024 / 1024, maxMem);
+});
+
+Then("container uses {string} image", async function(this: CustomWorld, image: string) {
+    assert.equal(this.resources.containerInfo.Image, image);
+});
