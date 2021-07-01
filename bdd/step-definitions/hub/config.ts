@@ -5,6 +5,7 @@ import { HostClient } from "@scramjet/api-client";
 
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
+import * as net from "net";
 import path = require("path");
 import { SIGTERM } from "constants";
 
@@ -43,6 +44,23 @@ Then("API is available on port {int}", async function(this: CustomWorld, port: n
     const status = (await hostClient.getVersion()).status;
 
     assert.equal(status, 200);
+});
+
+Then("SocketServer starts on {string}", async function(this: CustomWorld, socketPath: string) {
+    await new Promise<void>((resolve, reject) => {
+        const connection = net.createConnection({
+            path: socketPath
+        });
+
+        connection.once("connect", () => {
+            connection.end();
+            resolve();
+        });
+
+        connection.once("error", (error) => {
+            reject(error);
+        });
+    });
 });
 
 Then("exit hub process", async function(this: CustomWorld) {
