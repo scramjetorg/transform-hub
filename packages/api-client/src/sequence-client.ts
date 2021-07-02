@@ -1,6 +1,5 @@
 import { IDProvider } from "@scramjet/model";
-import { AxiosError } from "axios";
-import { clientUtils } from "./client-utils";
+import { ClientError, clientUtils } from "./client-utils";
 import { InstanceClient } from "./instance-client";
 
 export class SequenceClient {
@@ -31,22 +30,14 @@ export class SequenceClient {
 
     async start(appConfig: any, args: any): Promise<InstanceClient | undefined> {
         const response = await clientUtils.post(
-            `${this.sequenceURL}/start`, {
-                appConfig,
-                args
-            }
-        ).catch((error: AxiosError) => {
-            console.log(error);
-            return {
-                ...error.response
-            };
-        });
+            `${this.sequenceURL}/start`, { appConfig, args }
+        );
 
         if (response.data?.id) {
             return InstanceClient.from(response.data.id);
+        } else {
+            throw new ClientError(4, "Response did not include instance id.");
         }
-
-        return response.data?.error;
     }
 
     async listInstances() {

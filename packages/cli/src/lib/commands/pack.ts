@@ -29,14 +29,10 @@ const getIgnoreFunction = async (file: PathLike) => {
 
 export const pack: CommandDefinition = (program) => {
     const packProgram = program
-        .command("pack")
-        // @ts-ignore
-        .arguments("[<directory>]")
+        .command("pack <directory>")
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname");
 
     packProgram.action(async (directory, { output }) => {
-        console.log(directory, output);
-
         const cwd = resolve(process.cwd(), directory);
         const target = output
             ? resolve(process.cwd(), output)

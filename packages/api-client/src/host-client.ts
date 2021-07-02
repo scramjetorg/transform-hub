@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AxiosError } from "axios";
 import { ReadStream } from "fs";
-import { clientUtils } from "./client-utils";
+import { ClientError, clientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
 
 export class HostClient {
@@ -26,20 +25,15 @@ export class HostClient {
     }
 
     async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
-        const response = await clientUtils.post("sequence", sequencePackage, {
-            "content-type": "application/octet-stream"
-        }).catch((error: AxiosError) => {
-            return {
-                ...error.response
-            };
-        });
+        try {
+            const response = await clientUtils.post("sequence", sequencePackage, {
+                "content-type": "application/octet-stream"
+            });
 
-        if (response.data?.error || !response.data?.id) {
-            console.error(response.data?.error);
-            throw new Error("Sequence upload failed");
+            return SequenceClient.from(response.data?.id);
+        } catch (e) {
+            throw new ClientError(1, e, "Sequence upload failed");
         }
-
-        return SequenceClient.from(response.data?.id);
     }
 
     getSequence(sequenceId: string) {
@@ -47,21 +41,16 @@ export class HostClient {
     }
 
     async deleteSequence(sequenceId: string) {
-        const response = await clientUtils.delete(`sequence/${sequenceId}`).catch((error: AxiosError) => {
+        try {
+            const response = await clientUtils.delete(`sequence/${sequenceId}`);
+
             return {
-                ...error.response
+                data: response.data,
+                status: response.status
             };
-        });
-
-        if (response.data?.error) {
-            console.error(response.data?.error);
-            throw new Error("Sequence delete failed");
+        } catch(e) {
+            throw new ClientError(1, e, "Sequence delete failed");
         }
-
-        return {
-            data: response.data,
-            status: response.status
-        };
     }
 
     getInstance(instanceId: string) {

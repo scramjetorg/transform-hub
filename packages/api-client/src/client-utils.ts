@@ -40,6 +40,19 @@ const logError = (result: AxiosError) => {
     return Promise.reject(result);
 };
 
+export class ClientError extends Error {
+    reason?: Error;
+    exitCode: number = 1;
+
+    constructor(exitCode: number = 1, reason?: Error|string, message?: string) {
+        super(message || (reason instanceof Error ? reason.message : reason));
+        if (reason instanceof Error) {
+            this.reason = reason;
+        }
+        this.exitCode = exitCode;
+    }
+}
+
 class ClientUtils {
     apiBase: string = "";
 
@@ -52,10 +65,7 @@ class ClientUtils {
     }
 
     private handleError(error: AxiosError) {
-        return Promise.reject({
-            message: error.response?.statusText,
-            status: error.response?.status
-        });
+        return Promise.reject(new ClientError(2, error, "Request failed"));
     }
 
     async get(url: string): Promise<Response> {
