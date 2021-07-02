@@ -90,7 +90,7 @@ export type DockerAdapterRunConfig = {
     autoRemove?: boolean,
 
     /**
-     * @property {number} maxMem Maximum available memory.
+     * @property {number} maxMem Container memory limit (bytes).
      */
     maxMem?: number
 };
