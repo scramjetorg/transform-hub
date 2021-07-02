@@ -10,6 +10,8 @@ import { SIGTERM } from "constants";
 import * as net from "net";
 import path = require("path");
 import { StringDecoder } from "string_decoder";
+import { ReadStream } from "fs";
+import { PassThrough } from "stream";
 
 When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
     await new Promise<void>(async (resolve, reject) => {
@@ -85,7 +87,7 @@ Then("exit hub process", async function(this: CustomWorld) {
     });
 });
 
-Then("get container information", { timeout: 10000 }, async function(this: CustomWorld) {
+Then("get runner container information", { timeout: 10000 }, async function(this: CustomWorld) {
     const instance = this.resources.instance as InstanceClient;
     const resp = await instance.getHealth();
     const containerId = resp.data?.containerId;
@@ -114,4 +116,42 @@ Then("container uses image defined in sth-config", async function(this: CustomWo
     assert.equal(this.resources.containerInfo.Image, defaultRunnerImage);
 });
 
+Then("get all containers", async function(this: CustomWorld) {
+    this.resources.containers = await new Dockerode().listContainers();
+});
 
+Then("send paused stream as sequence", { timeout: 150000 }, async function(this: CustomWorld) {
+    const hostClient = new HostClient("http://localhost:8000/api/v1");
+
+    this.resources.pkgFake = new PassThrough();
+
+    this.resources.sequenceSendPromise = hostClient.sendSequence(
+        this.resources.pkgFake as unknown as ReadStream
+    );
+
+    this.resources.pkgFake.write("bb");
+});
+
+Then("get last container info", async function(this: CustomWorld) {
+    const containers = await new Dockerode().listContainers();
+
+    console.log("----------------------", containers);
+
+    this.resources.lastContainer = containers.filter(container =>
+        !this.resources.containers.find((c: Dockerode.ContainerInfo) => c.Id === container.Id)
+    )[0];
+
+    console.log(this.resources.lastContainer);
+});
+
+When("last container uses {string} image", async function(this: CustomWorld, image: string) {
+    assert.equal(this.resources.lastContainer.Image, image);
+});
+
+Then("last container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
+    const inspect = await new Dockerode().getContainer(this.resources.lastContainer.Id).inspect();
+
+    if (inspect) {
+        assert.equal(inspect.HostConfig?.Memory, maxMem * 1024 * 1024);
+    }
+});

@@ -25,7 +25,8 @@ configService.update({
     cpmUrl: options.cpmUrl,
     docker: {
         prerunner: {
-            image: options.prerunnerImage
+            image: options.prerunnerImage,
+            maxMem: options.prerunnerMaxMem
         },
         runner: {
             image: options.runnerImage,
