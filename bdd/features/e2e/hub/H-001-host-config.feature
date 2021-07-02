@@ -53,7 +53,7 @@ Feature: Host configuration
         When hub process is started with parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
-        And get container information
+        And get runner container information
         Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
         * exit hub process
 
@@ -62,7 +62,7 @@ Feature: Host configuration
         When hub process is started with parameters ""
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
-        And get container information
+        And get runner container information
         Then container uses image defined in sth-config
         * exit hub process
 
@@ -71,8 +71,28 @@ Feature: Host configuration
         When hub process is started with parameters "--runner-max-mem 128"
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
-        And get container information
+        And get runner container information
         Then container memory limit is 128
+        * exit hub process
+
+    @starts-host
+    Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
+        When hub process is started with parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
+        And get all containers
+        And send paused stream as sequence
+        And wait for "5000" ms
+        And get last container info
+        And last container uses "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7" image
+        * exit hub process
+
+    @starts-host
+    Scenario: HUB-001 TC-013  Set prerunner memory limit (--prerunner-max-mem)
+        When hub process is started with parameters "--prerunner-max-mem 64"
+        And get all containers
+        And send paused stream as sequence
+        And wait for "5000" ms
+        And get last container info
+        Then last container memory limit is 64
         * exit hub process
 
 
