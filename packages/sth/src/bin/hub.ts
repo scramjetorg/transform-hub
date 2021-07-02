@@ -28,7 +28,8 @@ configService.update({
             image: options.prerunnerImage
         },
         runner: {
-            image: options.runnerImage
+            image: options.runnerImage,
+            maxMem: options.runnerMaxMem
         }
     },
     host: {

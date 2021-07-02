@@ -89,19 +89,19 @@ Then("get container information", { timeout: 10000 }, async function(this: Custo
     const instance = this.resources.instance as InstanceClient;
     const resp = await instance.getHealth();
     const containerId = resp.data?.containerId;
-    const [stats, info] = await Promise.all([
+    const [stats, info, inspect] = await Promise.all([
         new Dockerode().getContainer(containerId).stats({ stream: false }),
-        new Dockerode().listContainers().then(containers => containers.find(container => container.Id === containerId))
+        new Dockerode().listContainers().then(containers => containers.find(container => container.Id === containerId)),
+        new Dockerode().getContainer(containerId).inspect(),
     ]);
 
     this.resources.containerStats = stats;
     this.resources.containerInfo = info;
+    this.resources.containerInspect = inspect;
 });
 
 Then("container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
-    assert.equal(this.resources.containerInfo.HostConfig.Memory / 1024 / 1024, maxMem);
-
-
+    assert.equal(this.resources.containerInspect.HostConfig.Memory / 1024 ** 4, maxMem);
 });
 
 Then("container uses {string} image", async function(this: CustomWorld, image: string) {
