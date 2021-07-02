@@ -6,6 +6,8 @@ import { ClientError } from "@scramjet/api-client";
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
 
+let options: OptionValues;
+
 const program: Command = new Command() as Command;
 const errorHandler = (err: ClientError) => {
     process.exitCode = !isNaN(+err.exitCode) ? err.exitCode : 1;
@@ -24,7 +26,6 @@ const errorHandler = (err: ClientError) => {
     }
     process.exit();
 };
-let options: OptionValues;
 
 (async () => {
     const conf = getConfig();

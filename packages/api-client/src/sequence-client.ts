@@ -35,9 +35,9 @@ export class SequenceClient {
 
         if (response.data?.id) {
             return InstanceClient.from(response.data.id);
-        } else {
-            throw new ClientError(4, "Response did not include instance id.");
         }
+        throw new ClientError(4, "Response did not include instance id.");
+
     }
 
     async listInstances() {

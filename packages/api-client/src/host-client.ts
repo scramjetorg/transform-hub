@@ -48,7 +48,7 @@ export class HostClient {
                 data: response.data,
                 status: response.status
             };
-        } catch(e) {
+        } catch (e) {
             throw new ClientError(1, e, "Sequence delete failed");
         }
     }
