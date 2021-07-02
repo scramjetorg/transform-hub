@@ -10,7 +10,7 @@ let stdio: [stdout: string, stderr: string, statusCode: any];
 let sequenceId: string;
 let instanceId: string;
 
-When("I execute CLI with {string} arguments", { timeout: 10000 }, async function(args: string) {
+When("I execute CLI with {string} arguments", { timeout: 20000 }, async function(args: string) {
 
     stdio = await getStreamsFromSpawn("ts-node", si.concat(args.split(" ")));
 
