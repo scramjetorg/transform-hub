@@ -10,7 +10,7 @@ let stdio: [stdout: string, stderr: string, statusCode: any];
 let sequenceId: string;
 let instanceId: string;
 
-When("I execute CLI with {string} arguments", { timeout: 20000 }, async function(args: string) {
+When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
 
     stdio = await getStreamsFromSpawn("ts-node", si.concat(args.split(" ")));
 
@@ -51,6 +51,7 @@ Then("I get array of information about sequences", function() {
 
 Then("I start Sequence", async function() {
     stdio = await getStreamsFromSpawn("ts-node", si.concat(["seq", "start", sequenceId, "{}", "[]"].concat(formatFlags)));
+    console.log(stdio[0]);
     const instance = JSON.parse(stdio[0].replace("\n", ""));
 
     instanceId = instance._id;
