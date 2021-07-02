@@ -297,6 +297,8 @@ export class Host implements IComponent {
     }
 
     getSequence(id: string) {
+        if (!this.sequencesStore.getById(id))
+            throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
         return this.sequencesStore.getById(id);
     }
 
