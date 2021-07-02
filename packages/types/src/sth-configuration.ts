@@ -4,7 +4,7 @@ export type ContainerConfiguration = {
      */
     image: string;
     /**
-     * Maximum memory container can allocate.
+     * Maximum memory container can allocate (megabytes)
      */
     maxMem: number;
 }

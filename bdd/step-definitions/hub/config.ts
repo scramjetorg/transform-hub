@@ -103,7 +103,7 @@ Then("get runner container information", { timeout: 10000 }, async function(this
 });
 
 Then("container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
-    assert.equal(this.resources.containerInspect.HostConfig.Memory / 1024 ** 4, maxMem);
+    assert.equal(this.resources.containerInspect.HostConfig.Memory / 1024 ** 2, maxMem);
 });
 
 Then("container uses {string} image", async function(this: CustomWorld, image: string) {
@@ -120,28 +120,37 @@ Then("get all containers", async function(this: CustomWorld) {
     this.resources.containers = await new Dockerode().listContainers();
 });
 
-Then("send paused stream as sequence", { timeout: 150000 }, async function(this: CustomWorld) {
+Then("send fake stream as sequence", async function(this: CustomWorld) {
     const hostClient = new HostClient("http://localhost:8000/api/v1");
 
     this.resources.pkgFake = new PassThrough();
 
     this.resources.sequenceSendPromise = hostClient.sendSequence(
         this.resources.pkgFake as unknown as ReadStream
-    );
+    ).catch(/* ignore */);
 
-    this.resources.pkgFake.write("bb");
+    this.resources.pkgFake.write(
+        Buffer.from([
+            0x1f8b080000000000,
+            0x0003ed7d6b73db46,
+            0x96683ef7afe8e5ad,
+            0xda8877615af273c7,
+            0x4a324bcbb4cd8d2c,
+            0x6924d91e972b9502,
+            0x8926891804180094,
+            0xccc9e6bfdff3ea17,
+            0x48da9ecc6677eb6e,
+            0x5889c507d07dfaf4
+        ])
+    );
 });
 
 Then("get last container info", async function(this: CustomWorld) {
     const containers = await new Dockerode().listContainers();
 
-    console.log("----------------------", containers);
-
     this.resources.lastContainer = containers.filter(container =>
         !this.resources.containers.find((c: Dockerode.ContainerInfo) => c.Id === container.Id)
     )[0];
-
-    console.log(this.resources.lastContainer);
 });
 
 When("last container uses {string} image", async function(this: CustomWorld, image: string) {

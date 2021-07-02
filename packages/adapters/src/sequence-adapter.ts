@@ -67,7 +67,7 @@ IComponent {
                 ],
                 command: ["/app/identify.sh"],
                 autoRemove: true,
-                maxMem: this.prerunnerConfig?.maxMem
+                maxMem: this.prerunnerConfig?.maxMem || 0
             });
 
             this.logger.debug(`Prerunner identify started for: ${volume}`);
@@ -118,7 +118,7 @@ IComponent {
                     { mountPoint: "/package", volume: volumeId }
                 ],
                 autoRemove: true,
-                maxMem: this.prerunnerConfig?.maxMem
+                maxMem: this.prerunnerConfig?.maxMem || 0
             });
         } catch {
             throw new SupervisorError("DOCKER_ERROR");
