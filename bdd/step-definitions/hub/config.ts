@@ -10,7 +10,6 @@ import { SIGTERM } from "constants";
 import * as net from "net";
 import path = require("path");
 import { StringDecoder } from "string_decoder";
-//import { streamToString } from "../../lib/utils";
 
 When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
     await new Promise<void>(async (resolve, reject) => {
@@ -101,8 +100,18 @@ Then("get container information", { timeout: 10000 }, async function(this: Custo
 
 Then("container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
     assert.equal(this.resources.containerInfo.HostConfig.Memory / 1024 / 1024, maxMem);
+
+
 });
 
 Then("container uses {string} image", async function(this: CustomWorld, image: string) {
     assert.equal(this.resources.containerInfo.Image, image);
 });
+
+Then("container uses image defined in sth-config", async function(this: CustomWorld) {
+    const defaultRunnerImage = (await require("@scramjet/sth-config").config()).docker.runner.image;
+
+    assert.equal(this.resources.containerInfo.Image, defaultRunnerImage);
+});
+
+
