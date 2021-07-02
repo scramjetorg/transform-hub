@@ -66,8 +66,7 @@ Feature: Host configuration
         Then container uses image defined in sth-config
         * exit hub process
 
-    # Can't receive Memory config in this way
-    @ignore @starts-host
+    @starts-host
     Scenario: HUB-001 TC-011  Set runner memory limit (--runner-max-mem)
         When hub process is started with parameters "--runner-max-mem 128"
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
