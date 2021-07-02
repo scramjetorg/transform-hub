@@ -26,6 +26,7 @@ const logOk = (result: AxiosResponse) => {
             status, statusText, config: { url, method }
         } = result;
 
+        // eslint-disable-next-line no-console
         console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
     }
     return result;
@@ -35,6 +36,7 @@ const logError = (result: AxiosError) => {
         const { status, statusText } = result.response || {};
         const { url, method } = result.config;
 
+        // eslint-disable-next-line no-console
         console.error("Request failed:", method, url, `status: ${status} ${statusText}`);
     }
     return Promise.reject(result);
