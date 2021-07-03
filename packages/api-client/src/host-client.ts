@@ -2,34 +2,34 @@
 import { ReadStream } from "fs";
 import { ClientError, ClientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
-import { ClientProvider } from "./types/client-provider";
+import { ClientProvider } from "./types";
 
 export class HostClient implements ClientProvider {
     apiBase: string;
-    clientUtils: ClientUtils;
+    client: ClientUtils;
 
     constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
-        this.clientUtils = utils;
+        this.client = utils;
     }
 
     listSequences() {
-        return this.clientUtils.get("sequences");
+        return this.client.get("sequences");
     }
 
     listInstances() {
-        return this.clientUtils.get("instances");
+        return this.client.get("instances");
     }
 
     // TODO: Dedicated log stream for host not yet implemented.
     getLogStream() {
-        return this.clientUtils.getStream("stream/log");
+        return this.client.getStream("stream/log");
     }
 
     async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
         try {
-            const response = await this.clientUtils.post("sequence", sequencePackage, {
+            const response = await this.client.post("sequence", sequencePackage, {
                 "content-type": "application/octet-stream"
             });
 
@@ -40,12 +40,12 @@ export class HostClient implements ClientProvider {
     }
 
     getSequence(sequenceId: string) {
-        return this.clientUtils.get(`sequence/${sequenceId}`);
+        return this.client.get(`sequence/${sequenceId}`);
     }
 
     async deleteSequence(sequenceId: string) {
         try {
-            const response = await this.clientUtils.delete(`sequence/${sequenceId}`);
+            const response = await this.client.delete(`sequence/${sequenceId}`);
 
             return {
                 data: response.data,
@@ -57,14 +57,14 @@ export class HostClient implements ClientProvider {
     }
 
     getInstance(instanceId: string) {
-        return this.clientUtils.get(`instance/${instanceId}`);
+        return this.client.get(`instance/${instanceId}`);
     }
 
     getLoadCheck() {
-        return this.clientUtils.get("load-check");
+        return this.client.get("load-check");
     }
 
     getVersion() {
-        return this.clientUtils.get("version");
+        return this.client.get("version");
     }
 }

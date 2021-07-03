@@ -1,9 +1,9 @@
-import { ClientUtils, Response, ResponseStream, SendStreamOptions } from "./client-utils";
+import { Response, ResponseStream, SendStreamOptions, ClientProvider, HttpClient } from "./types";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
 import { IDProvider } from "@scramjet/model";
-import { ClientProvider } from "./types/client-provider";
+
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log"
@@ -17,8 +17,8 @@ export class InstanceClient {
         return this._id;
     }
 
-    private get clientUtils(): ClientUtils {
-        return this.host.clientUtils;
+    private get clientUtils(): HttpClient {
+        return this.host.client;
     }
 
     static from(id: string, host: ClientProvider): InstanceClient {

@@ -1,7 +1,7 @@
 import { IDProvider } from "@scramjet/model";
-import { ClientError, ClientUtils } from "./client-utils";
+import { ClientError } from "./client-utils";
 import { InstanceClient } from "./instance-client";
-import { ClientProvider } from "./types/client-provider";
+import { ClientProvider, HttpClient } from "./types";
 
 export class SequenceClient {
     private _id: string;
@@ -12,8 +12,8 @@ export class SequenceClient {
         return this._id;
     }
 
-    private get clientUtils(): ClientUtils {
-        return this.host.clientUtils;
+    private get clientUtils(): HttpClient {
+        return this.host.client;
     }
 
     static from(id: string, host: ClientProvider): SequenceClient {

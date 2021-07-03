@@ -1,46 +1,6 @@
-import axios, { AxiosError, AxiosResponse } from "axios";
+import axios, { AxiosResponse } from "axios";
 import { Stream } from "stream";
-
-export type Response = {
-    data?: { [ key: string ]: any };
-    status: number | undefined;
-};
-
-export type ResponseStream = {
-    data?: Stream;
-    status: number | undefined;
-};
-
-export type SendStreamOptions = Partial<{
-    type: string;
-    end: boolean;
-}>;
-
-export type Headers = {
-    [key: string]: string;
-};
-
-const logOk = (result: AxiosResponse) => {
-    if (process.env.SCRAMJET_TEST_LOG) {
-        const {
-            status, statusText, config: { url, method }
-        } = result;
-
-        // eslint-disable-next-line no-console
-        console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
-    }
-    return result;
-};
-const logError = (result: AxiosError) => {
-    if (process.env.SCRAMJET_TEST_LOG) {
-        const { status, statusText } = result.response || {};
-        const { url, method } = result.config;
-
-        // eslint-disable-next-line no-console
-        console.error("Request failed:", method, url, `status: ${status} ${statusText}`);
-    }
-    return Promise.reject(result);
-};
+import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions } from "./types";
 
 export class ClientError extends Error {
     reason?: Error;
@@ -55,77 +15,82 @@ export class ClientError extends Error {
     }
 }
 
-export class ClientUtils {
+export class ClientUtils implements HttpClient {
     apiBase: string = "";
+    private log?: RequestLogger;
 
     constructor(apiBase: string) {
         this.apiBase = apiBase;
     }
 
-    get initialized() {
-        return !!this.apiBase;
+    public addLogger(logger: RequestLogger) {
+        this.log = logger;
     }
 
-    private handleError(error: AxiosError) {
-        return Promise.reject(new ClientError(2, error, "Request failed"));
+    private logRequest(resp: Promise<AxiosResponse>): typeof resp {
+        if (this.log) {
+            const log = this.log;
+
+            return resp.then(
+                res => { log.ok(res); return res; },
+                err => { log.error(err); throw err; }
+            );
+        }
+
+        return resp;
     }
 
     async get(url: string): Promise<Response> {
-        return axios.get(`${this.apiBase}/${url}`, {
+        return this.logRequest(axios.get(`${this.apiBase}/${url}`, {
             headers: {
                 Accept: "*/*"
             }
-        })
-            .then(logOk, logError)
-            .catch(this.handleError);
+        }));
     }
 
     async getStream(url: string): Promise<ResponseStream> {
-        return axios({
+        return this.logRequest(axios({
             method: "GET",
             url: `${this.apiBase}/${url}`,
             headers: {
                 Accept: "*/*"
             },
             responseType: "stream"
-        })
-            .then(logOk, logError)
+        }))
             .then((d) => {
                 return {
                     status: d.status,
                     data: d.data
                 };
             })
-            .catch(this.handleError);
+        ;
     }
 
     async post(url: string, data: any, headers: Headers = {}): Promise<Response> {
-        return axios({
+        return this.logRequest(axios({
             method: "POST",
             url: `${this.apiBase}/${url}`,
             data,
             headers
-        })
-            .then(logOk, logError)
+        }))
             .then(res => ({
                 status: res.status,
                 data: res.data
             }))
-            .catch(this.handleError);
+        ;
     }
 
     async delete(url: string): Promise<Response> {
-        return axios.delete(
+        return this.logRequest(axios.delete(
             `${this.apiBase}/${url}`, {
                 headers: {
                     "Content-Type": "application/json"
                 }
-            })
-            .then(logOk, logError)
+            }))
             .then((res) => ({
                 status: res.status
             }))
-            .catch(this.handleError);
+        ;
     }
 
     async sendStream(
