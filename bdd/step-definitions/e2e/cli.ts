@@ -3,8 +3,8 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import { getStreamsFromSpawn } from "../../lib/utils";
 
-const si = ["../packages/cli/src/bin/index"];
-const formatFlags = ["--format", "json"];
+const si = ["../dist/cli/bin"];
+const formatFlags = ["-L", "--format", "json"];
 
 let stdio: [stdout: string, stderr: string, statusCode: any];
 let sequenceId: string;
@@ -12,7 +12,7 @@ let instanceId: string;
 
 When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
 
-    stdio = await getStreamsFromSpawn("ts-node", si.concat(args.split(" ")));
+    stdio = await getStreamsFromSpawn("node", si.concat(args.split(" ")));
 
 });
 

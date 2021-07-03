@@ -45,12 +45,17 @@ export class HostUtils {
     async spawnHost() {
         if (this.hostUrl) {
             console.error("Host is supposedly running at", this.hostUrl);
+            const hostClient = new HostClient(this.hostUrl);
 
             assert.equal(
-                (await new HostClient(this.hostUrl).getLoadCheck()).status, // TODO: change to version and log it
+                (await hostClient.getLoadCheck()).status, // TODO: change to version and log it
                 200,
                 "Remote host doesn't respond"
             );
+            // TODO: Consider this, but needs testing.
+            // if (process.env.SCRAMJET_TEST_LOG) {
+            //     (await hostClient.getLogStream()).data?.pipe(process.stderr);
+            // }
 
             return Promise.resolve();
         }

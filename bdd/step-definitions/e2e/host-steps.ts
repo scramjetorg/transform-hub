@@ -43,6 +43,27 @@ AfterAll(async () => {
     }
 });
 
+
+if (process.env.SCRAMJET_TEST_LOG) {
+    hostClient.client.addLogger({
+        ok(result) {
+            const {
+                status, statusText, config: { url, method }
+            } = result;
+
+            // eslint-disable-next-line no-console
+            console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
+        },
+        error(result) {
+            const { status, statusText } = result.response || {};
+            const { url, method } = result.config;
+
+            // eslint-disable-next-line no-console
+            console.error("Request failed:", method, url, `status: ${status} ${statusText}`);
+        }
+    });
+}
+
 Before(() => {
     actualHealthResponse = "";
     actualStatusResponse = "";
