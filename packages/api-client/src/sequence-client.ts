@@ -1,5 +1,5 @@
 import { IDProvider } from "@scramjet/model";
-import { ClientError } from "./client-utils";
+import { ClientError } from "./client-error";
 import { InstanceClient } from "./instance-client";
 import { ClientProvider, HttpClient } from "./types";
 
@@ -38,8 +38,8 @@ export class SequenceClient {
         if (response.data?.id) {
             return InstanceClient.from(response.data.id, this.host);
         }
-        throw new ClientError(4, "Response did not include instance id.");
 
+        throw new ClientError("INVALID_RESPONSE", "Response did not include instance id.");
     }
 
     async listInstances() {

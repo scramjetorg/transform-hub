@@ -1,19 +1,7 @@
 import axios, { AxiosResponse } from "axios";
 import { Stream } from "stream";
+import { ClientError } from "./client-error";
 import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions } from "./types";
-
-export class ClientError extends Error {
-    reason?: Error;
-    exitCode: number = 1;
-
-    constructor(exitCode: number = 1, reason?: Error|string, message?: string) {
-        super(message || (reason instanceof Error ? reason.message : reason));
-        if (reason instanceof Error) {
-            this.reason = reason;
-        }
-        this.exitCode = exitCode;
-    }
-}
 
 export class ClientUtils implements HttpClient {
     apiBase: string = "";
@@ -27,7 +15,9 @@ export class ClientUtils implements HttpClient {
         this.log = logger;
     }
 
-    private logRequest(resp: Promise<AxiosResponse>): typeof resp {
+    private safeRequest(_resp: Promise<AxiosResponse>): typeof _resp {
+        const resp = _resp.catch(e => Promise.reject(ClientError.from(e)));
+
         if (this.log) {
             const log = this.log;
 
@@ -41,7 +31,7 @@ export class ClientUtils implements HttpClient {
     }
 
     async get(url: string): Promise<Response> {
-        return this.logRequest(axios.get(`${this.apiBase}/${url}`, {
+        return this.safeRequest(axios.get(`${this.apiBase}/${url}`, {
             headers: {
                 Accept: "*/*"
             }
@@ -49,7 +39,7 @@ export class ClientUtils implements HttpClient {
     }
 
     async getStream(url: string): Promise<ResponseStream> {
-        return this.logRequest(axios({
+        return this.safeRequest(axios({
             method: "GET",
             url: `${this.apiBase}/${url}`,
             headers: {
@@ -67,7 +57,7 @@ export class ClientUtils implements HttpClient {
     }
 
     async post(url: string, data: any, headers: Headers = {}): Promise<Response> {
-        return this.logRequest(axios({
+        return this.safeRequest(axios({
             method: "POST",
             url: `${this.apiBase}/${url}`,
             data,
@@ -81,7 +71,7 @@ export class ClientUtils implements HttpClient {
     }
 
     async delete(url: string): Promise<Response> {
-        return this.logRequest(axios.delete(
+        return this.safeRequest(axios.delete(
             `${this.apiBase}/${url}`, {
                 headers: {
                     "Content-Type": "application/json"

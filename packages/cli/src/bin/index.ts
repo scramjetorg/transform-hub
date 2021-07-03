@@ -8,9 +8,10 @@ import { getConfig } from "../lib/config";
 
 let options: OptionValues;
 
+const getExitCode = (_err: ClientError) => 1;
 const program: Command = new Command() as Command;
 const errorHandler = (err: ClientError) => {
-    process.exitCode = !isNaN(+err.exitCode) ? err.exitCode : 1;
+    process.exitCode = getExitCode(err);
     if (options?.format === "json") {
         console.log(JSON.stringify({
             error: true,

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ReadStream } from "fs";
-import { ClientError, ClientUtils } from "./client-utils";
+import { ClientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
 import { ClientProvider } from "./types";
 
@@ -14,57 +14,49 @@ export class HostClient implements ClientProvider {
         this.client = utils;
     }
 
-    listSequences() {
-        return this.client.get("sequences");
+    async listSequences() {
+        return await this.client.get("sequences");
     }
 
-    listInstances() {
-        return this.client.get("instances");
+    async listInstances() {
+        return await this.client.get("instances");
     }
 
     // TODO: Dedicated log stream for host not yet implemented.
-    getLogStream() {
-        return this.client.getStream("stream/log");
+    async getLogStream() {
+        return await this.client.getStream("stream/log");
     }
 
     async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
-        try {
-            const response = await this.client.post("sequence", sequencePackage, {
-                "content-type": "application/octet-stream"
-            });
+        const response = await this.client.post("sequence", sequencePackage, {
+            "content-type": "application/octet-stream"
+        });
 
-            return SequenceClient.from(response.data?.id, this);
-        } catch (e) {
-            throw new ClientError(1, e, "Sequence upload failed");
-        }
+        return SequenceClient.from(response.data?.id, this);
     }
 
-    getSequence(sequenceId: string) {
-        return this.client.get(`sequence/${sequenceId}`);
+    async getSequence(sequenceId: string) {
+        return await this.client.get(`sequence/${sequenceId}`);
     }
 
     async deleteSequence(sequenceId: string) {
-        try {
-            const response = await this.client.delete(`sequence/${sequenceId}`);
+        const response = await this.client.delete(`sequence/${sequenceId}`);
 
-            return {
-                data: response.data,
-                status: response.status
-            };
-        } catch (e) {
-            throw new ClientError(1, e, "Sequence delete failed");
-        }
+        return {
+            data: response.data,
+            status: response.status
+        };
     }
 
-    getInstance(instanceId: string) {
+    async getInstance(instanceId: string) {
         return this.client.get(`instance/${instanceId}`);
     }
 
-    getLoadCheck() {
+    async getLoadCheck() {
         return this.client.get("load-check");
     }
 
-    getVersion() {
+    async getVersion() {
         return this.client.get("version");
     }
 }
