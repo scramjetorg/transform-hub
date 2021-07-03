@@ -27,8 +27,7 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd.command("start <id> <appConfig> <args>")
         .description("start the sequence")
         .action(async (id, appConfig, args) => {
-            getHostClient(program);
-            const sequenceClient = SequenceClient.from(id);
+            const sequenceClient = SequenceClient.from(id, getHostClient(program));
 
             return displayObject(program,
                 await sequenceClient.start(JSON.parse(appConfig), JSON.parse(args)));

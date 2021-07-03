@@ -1,8 +1,9 @@
-import { clientUtils, Response, ResponseStream, SendStreamOptions } from "./client-utils";
+import { ClientUtils, Response, ResponseStream, SendStreamOptions } from "./client-utils";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
 import { IDProvider } from "@scramjet/model";
+import { ClientProvider } from "./types/client-provider";
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log"
@@ -10,19 +11,22 @@ export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log"
 export class InstanceClient {
     private _id: string;
     private instanceURL: string;
+    private host: ClientProvider;
 
     public get id(): string {
         return this._id;
     }
 
-    static from(id: string): InstanceClient {
-        return new this(id);
+    private get clientUtils(): ClientUtils {
+        return this.host.clientUtils;
     }
 
-    private constructor(id: string) {
-        if (!clientUtils.initialized) {
-            throw new Error("ClientUtils not initialized");
-        }
+    static from(id: string, host: ClientProvider): InstanceClient {
+        return new this(id, host);
+    }
+
+    private constructor(id: string, host: ClientProvider) {
+        this.host = host;
         if (!IDProvider.isValid(id)) {
             throw new Error("Invalid id.");
         }
@@ -33,7 +37,7 @@ export class InstanceClient {
     }
 
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {
-        return clientUtils.post(`${this.instanceURL}/_stop`, [
+        return this.clientUtils.post(`${this.instanceURL}/_stop`, [
             RunnerMessageCode.STOP, {
                 timeout,
                 canCallKeepalive
@@ -41,7 +45,7 @@ export class InstanceClient {
     }
 
     async kill(): Promise<Response> {
-        return clientUtils.post(`${this.instanceURL}/_kill`, [
+        return this.clientUtils.post(`${this.instanceURL}/_kill`, [
             RunnerMessageCode.KILL,
             {}
         ] as EncodedControlMessage);
@@ -54,31 +58,31 @@ export class InstanceClient {
                 message
             }] as EncodedControlMessage;
 
-        return clientUtils.post(`${this.instanceURL}/_event`, data);
+        return this.clientUtils.post(`${this.instanceURL}/_event`, data);
     }
 
     async getEvent() {
-        return clientUtils.get(`${this.instanceURL}/event`);
+        return this.clientUtils.get(`${this.instanceURL}/event`);
     }
 
     async getHealth() {
-        return clientUtils.get(`${this.instanceURL}/health`);
+        return this.clientUtils.get(`${this.instanceURL}/health`);
     }
 
     async getStatus() {
-        return clientUtils.get(`${this.instanceURL}/status`);
+        return this.clientUtils.get(`${this.instanceURL}/status`);
     }
 
     async getInfo() {
-        return clientUtils.get(`${this.instanceURL}`);
+        return this.clientUtils.get(`${this.instanceURL}`);
     }
 
     async getStream(streamId: InstanceOutputStream): Promise<ResponseStream> {
-        return clientUtils.getStream(`${this.instanceURL}/${streamId}`);
+        return this.clientUtils.getStream(`${this.instanceURL}/${streamId}`);
     }
 
     async sendStream(streamId: InstanceInputStream, stream: Stream | string, options?: SendStreamOptions) {
-        return clientUtils.sendStream(`${this.instanceURL}/${streamId}`, stream, options);
+        return this.clientUtils.sendStream(`${this.instanceURL}/${streamId}`, stream, options);
     }
 
     async sendInput(stream: Stream | string) {

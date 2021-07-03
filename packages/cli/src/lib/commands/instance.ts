@@ -6,6 +6,7 @@ import { displayEntity, displayStream } from "../output";
 
 export const instance: CommandDefinition = (program) => {
 
+    const getInstance = (id: string) => InstanceClient.from(id, getHostClient(program));
     const instanceCmd = program
         .command("instance [command]")
         .alias("inst")
@@ -20,19 +21,19 @@ export const instance: CommandDefinition = (program) => {
         .description("kill instance without waiting for unfinished tasks")
         .action(async (id) => {
             getHostClient(program);
-            return displayEntity(program, InstanceClient.from(id).kill());
+            return displayEntity(program, getInstance(id).kill());
         });
 
-    /** 
+    /**
      * @canCallKeepAlive
-     * if true instance can prolong its lifetime  
-     * if false instance will end after timeout  
+     * if true instance can prolong its lifetime
+     * if false instance will end after timeout
     */
     instanceCmd.command("stop <id> <timeout>")
         .description("end instance gracefully waiting for unfinished tasks")
         .action(async (id, timeout) => {
             getHostClient(program);
-            return displayEntity(program, InstanceClient.from(id).stop(+timeout, true));
+            return displayEntity(program, getInstance(id).stop(+timeout, true));
         });
 
     instanceCmd.command("status <id>")
@@ -43,7 +44,7 @@ export const instance: CommandDefinition = (program) => {
         .description("show the instance health status")
         .action((id) => {
             getHostClient(program);
-            return displayEntity(program, InstanceClient.from(id).getHealth());
+            return displayEntity(program, getInstance(id).getHealth());
         });
 
     instanceCmd.command("info <id>")
@@ -54,15 +55,15 @@ export const instance: CommandDefinition = (program) => {
         .description("send event with eventName and object|array|function|number")
         .action(async (id, eventName, message) => {
             getHostClient(program);
-            const instanceClient = InstanceClient.from(id);
+            const instanceClient = getInstance(id);
 
             return displayEntity(program, instanceClient.sendEvent(eventName, message));
         });
 
-    /** 
-     * No eventName. 
-     * Currently there is no event filtering. 
-     * Only the last event instance is returned 
+    /**
+     * No eventName.
+     * Currently there is no event filtering.
+     * Only the last event instance is returned
      */
     instanceCmd.command("event <id>")
         .description("invoke the event by eventName and optionally with message")
@@ -70,17 +71,17 @@ export const instance: CommandDefinition = (program) => {
             getHostClient(program);
             console.log(program);
 
-            const resp = await InstanceClient.from(id).getEvent();
+            const resp = await getInstance(id).getEvent();
 
             console.log(resp.status, resp?.data);
-            return displayEntity(program, InstanceClient.from(id).getEvent());
+            return displayEntity(program, getInstance(id).getEvent());
         });
 
     instanceCmd.command("input <id> <stream>")
         .description("send stream to input")
         .action((id, stream) => {
             getHostClient(program);
-            const instanceClient = InstanceClient.from(id);
+            const instanceClient = getInstance(id);
 
             return displayEntity(program,
                 instanceClient.sendStdin(createReadStream(stream)));
@@ -90,28 +91,28 @@ export const instance: CommandDefinition = (program) => {
         .description("show stream on output")
         .action((id) => {
             getHostClient(program);
-            return displayStream(program, InstanceClient.from(id).getStream("output"));
+            return displayStream(program, getInstance(id).getStream("output"));
         });
 
     instanceCmd.command("stdout <id>")
         .description("show stream on stdout")
         .action((id) => {
             getHostClient(program);
-            return displayStream(program, InstanceClient.from(id).getStream("stdout"));
+            return displayStream(program, getInstance(id).getStream("stdout"));
         });
 
     instanceCmd.command("log <id>")
         .description("show instance log")
         .action((id) => {
             getHostClient(program);
-            return displayStream(program, InstanceClient.from(id).getStream("log"));
+            return displayStream(program, getInstance(id).getStream("log"));
         });
 
     instanceCmd.command("stdin <id> <stream>")
         .description("send stream to stdin")
         .action((id, stream) => {
             getHostClient(program);
-            const instanceClient = InstanceClient.from(id);
+            const instanceClient = getInstance(id);
 
             return displayEntity(program,
                 instanceClient.sendStdin(createReadStream(stream)));
@@ -121,6 +122,6 @@ export const instance: CommandDefinition = (program) => {
         .description("show stream on stderr")
         .action((id) => {
             getHostClient(program);
-            return displayStream(program, InstanceClient.from(id).getStream("stderr"));
+            return displayStream(program, getInstance(id).getStream("stderr"));
         });
 };

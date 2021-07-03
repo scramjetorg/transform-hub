@@ -55,10 +55,10 @@ export class ClientError extends Error {
     }
 }
 
-class ClientUtils {
+export class ClientUtils {
     apiBase: string = "";
 
-    init(apiBase: string) {
+    constructor(apiBase: string) {
         this.apiBase = apiBase;
     }
 
@@ -149,5 +149,3 @@ class ClientUtils {
         );
     }
 }
-
-export const clientUtils = new ClientUtils();
