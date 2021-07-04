@@ -15,6 +15,7 @@ const errorHandler = (err: ClientError) => {
     if (options?.format === "json") {
         console.log(JSON.stringify({
             error: true,
+            code: err.code,
             message: err.message,
             reason: err.reason?.message
         }));
@@ -37,7 +38,7 @@ const errorHandler = (err: ClientError) => {
     options = program
         // .version(version)
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
-        .option("-L, --log", "Logs all API requests in detail", conf.logLevel)
+        .option("-L, --log", "Logs all API requests in detail", conf.log)
         .option("-a, --api-url <url>", "Specify base API url", conf.apiUrl)
         .option("-f, --format <value>", "Specify display formatting: json or pretty", conf.format)
         .parse(process.argv)

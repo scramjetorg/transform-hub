@@ -20,7 +20,7 @@ export const config: CommandDefinition = (program) => {
 
     configCmd.command("logLevel <logLevel>")
         .description("set the hub API url")
-        .action((value) => setConfigValue("logLevel", value));
+        .action((value) => setConfigValue("log", value));
 
     // apiUrl: 'http://127.0.0.1:8000/api/v1',
     // logLevel: 'trace',

@@ -258,7 +258,7 @@ export class CSIController extends EventEmitter {
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
             router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
 
-            const localEmitter = new EventEmitter();
+            const localEmitter = Object.assign(new EventEmitter(), {lastEvents: {}} as {lastEvents: {[evname: string]: any}});
 
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
                 const event = data[1] as unknown as EventMessageData;
@@ -267,7 +267,7 @@ export class CSIController extends EventEmitter {
                 localEmitter.emit(event.eventName, event.message);
             });
 
-            router.upstream("/event/:name", async (req: ParsedMessage, res: ServerResponse) => {
+            router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
                 const name = req.params?.name;
 
                 if (!name) throw new HostError("EVENT_NAME_MISSING");
@@ -286,12 +286,19 @@ export class CSIController extends EventEmitter {
 
                 return out.JSONStringify();
             });
-            router.get("/once/:name", async (req) => new Promise(res => {
+            const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
                 const name = req.params?.name;
 
-                if (!name) throw new HostError("EVENT_NAME_MISSING");
+                if (!name)
+                    throw new HostError("EVENT_NAME_MISSING");
                 localEmitter.once(name, res);
-            }));
+            });
+            router.get("/event/:name", async (req) => {
+                if (req.params?.name && localEmitter.lastEvents[req.params?.name])
+                    return localEmitter.lastEvents[req.params?.name];
+                return awaitEvent(req);
+            });
+            router.get("/once/:name", awaitEvent);
 
             // operations
             router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);

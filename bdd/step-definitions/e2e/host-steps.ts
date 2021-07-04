@@ -54,12 +54,13 @@ if (process.env.SCRAMJET_TEST_LOG) {
             // eslint-disable-next-line no-console
             console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
         },
-        error(result) {
-            const { status, statusText } = result.response || {};
-            const { url, method } = result.config;
+        error(error) {
+            const { code, reason: result } = error;
+            const { status, statusText } = result?.response || {};
+            const { url, method } = result?.config || {};
 
             // eslint-disable-next-line no-console
-            console.error("Request failed:", method, url, `status: ${status} ${statusText}`);
+            console.error(`Request ${method} "${url}" failed with code "${code}" status: ${status} ${statusText}`);
         }
     });
 }
@@ -254,7 +255,7 @@ When("send event {string} to instance with message {string}", async (eventName, 
 Then("get event {string} from instance", { timeout: 10000 }, async (event: string) => {
     const expectedHttpCode = 200;
 
-    actualStatusResponse = await instance?.getEvent(event);
+    actualStatusResponse = await instance?.getEvent(event, true);
     assert.equal(actualStatusResponse?.status, expectedHttpCode);
 });
 

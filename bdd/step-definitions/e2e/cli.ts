@@ -126,8 +126,7 @@ When("I send an event named {string} with event message {string} to Instance", a
 });
 
 Then("I get event {string} from instance", async function(event: string) {
-    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", instanceId, ...formatFlags]);
-    assert.equal(stdio[0].includes(event), true);
-
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", event, instanceId, ...formatFlags]);
+    assert.equal(stdio[0], "ok");
 });
 

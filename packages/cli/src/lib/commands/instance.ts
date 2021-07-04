@@ -62,6 +62,7 @@ export const instance: CommandDefinition = (program) => {
      */
     instanceCmd.command("event <id> <event>")
         .alias("on")
+        .option("-p, --previous", "immediatelly return the event if it was fired before")
         .description("invoke the event by eventName and optionally with message")
         .action(async (id, event) => {
             return displayStream(program, getInstance(program, id).getEvent(event));

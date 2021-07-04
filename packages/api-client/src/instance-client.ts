@@ -65,8 +65,17 @@ export class InstanceClient {
         return this.clientUtils.get(`${this.instanceURL}/once/${eventName}`);
     }
 
-    async getEvent(eventName: string) {
-        return this.clientUtils.getStream(`${this.instanceURL}/event/${eventName}`);
+    /**
+     * Fetches event
+     *
+     * @param eventName - event name
+     * @param previous - return old event if was ever fired
+     * @returns
+     */
+    async getEvent(eventName: string, previous: boolean = false) {
+        const endpoint = previous ? "event" : "once";
+
+        return this.clientUtils.getStream(`${this.instanceURL}/${endpoint}/${eventName}`);
     }
 
     async getHealth() {

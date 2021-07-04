@@ -1,6 +1,7 @@
-import { AxiosError, AxiosResponse } from "axios";
+import { AxiosResponse } from "axios";
 
 import { Stream } from "stream";
+import { ClientError } from "../client-error";
 
 export type Response = {
     data?: { [ key: string ]: any };
@@ -23,7 +24,7 @@ export type Headers = {
 
 export type RequestLogger = {
     ok: (res: AxiosResponse) => void;
-    error: (res: AxiosError) => void;
+    error: (res: ClientError) => void;
 };
 
 export interface HttpClient {

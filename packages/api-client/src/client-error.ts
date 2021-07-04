@@ -15,7 +15,7 @@ export type ClientErrorCode =
     ;
 
 export class ClientError extends Error {
-    reason?: Error;
+    reason?: AxiosError;
     code: string;
 
     constructor(code: ClientErrorCode, reason?: Error | string, message?: string) {
@@ -23,7 +23,7 @@ export class ClientError extends Error {
 
         this.code = code;
         if (reason instanceof Error) {
-            this.reason = reason;
+            this.reason = reason as AxiosError;
         }
     }
 
