@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ReadStream } from "fs";
+import { Readable } from "stream";
 import { ClientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
 import { ClientProvider } from "./types";
@@ -27,7 +27,7 @@ export class HostClient implements ClientProvider {
         return await this.client.getStream("stream/log");
     }
 
-    async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
+    async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
         const response = await this.client.post("sequence", sequencePackage, {
             "content-type": "application/octet-stream"
         });
@@ -48,7 +48,8 @@ export class HostClient implements ClientProvider {
         };
     }
 
-    async getInstance(instanceId: string) {
+    // REVIEW: move this to InstanceClient..getInfo()?
+    async getInstanceInfo(instanceId: string) {
         return this.client.get(`instance/${instanceId}`);
     }
 

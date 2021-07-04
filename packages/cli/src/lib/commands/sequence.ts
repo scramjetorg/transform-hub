@@ -1,7 +1,8 @@
 import { SequenceClient } from "@scramjet/api-client";
 import { createReadStream } from "fs";
+import { readFile } from "fs/promises";
 import { CommandDefinition } from "../../types";
-import { getHostClient } from "../get-client";
+import { attachStdio, getHostClient } from "../common";
 import { displayEntity, displayObject } from "../output";
 
 export const sequence: CommandDefinition = (program) => {
@@ -10,11 +11,32 @@ export const sequence: CommandDefinition = (program) => {
         .alias("seq")
         .description("operations on sequence");
 
-    sequenceCmd.command("send <sequencePackage>")
+
+    sequenceCmd
+        .command("run [package] [args...]")
+        .description("Uploads a package and immediatelly executes it with given arguments")
+        .option("-d, --detached", "Don't attach to stdio")
+        .option("-c, --config <path>", "Appconfig path location")
+        .action(async (sequencePackage, args) => {
+            console.log("abc", sequencePackage, args);
+
+            const { config: configPath, detached } = sequenceCmd.opts();
+            const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
+            const seq = await getHostClient(program)
+                .sendSequence(sequencePackage ? createReadStream(sequencePackage) : process.stdin);
+            const instance = await seq.start(config, args);
+
+            if (!detached) {
+                await attachStdio(program, instance);
+            }
+        })
+    ;
+
+    sequenceCmd.command("send [<sequencePackage>]")
         .description("send packed and compressed sequence file")
         .action(async (sequencePackage) =>
             displayObject(program, await getHostClient(program).sendSequence(
-                createReadStream(sequencePackage)
+                sequencePackage ? createReadStream(sequencePackage) : process.stdin
             ))
         );
 
@@ -26,11 +48,12 @@ export const sequence: CommandDefinition = (program) => {
     // args for example '[10000, 2000]' | '["tcp"]'
     sequenceCmd.command("start <id> <appConfig> <args>")
         .description("start the sequence")
-        .action(async (id, appConfig, args) => {
+        .option("-c, --config <config-location>")
+        .action(async (id, { config }, args) => {
             const sequenceClient = SequenceClient.from(id, getHostClient(program));
 
             return displayObject(program,
-                await sequenceClient.start(JSON.parse(appConfig), JSON.parse(args)));
+                await sequenceClient.start(JSON.parse(await readFile(config, "utf-8")), JSON.parse(args)));
         });
 
     sequenceCmd.command("get <id>")

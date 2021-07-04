@@ -24,7 +24,7 @@ module.exports = async function(_stream: any) {
                 this.logger.info("wrote", num, stream, wrote);
 
                 if (!wrote)
-                    await new Promise(res => process.stdout.once("drain", res));
+                    await new Promise(res => process[stream].once("drain", res));
             }
         )
         .run()

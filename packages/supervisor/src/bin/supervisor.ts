@@ -30,7 +30,8 @@ lcc.main()
                 exitCode = e.data.exitCode;
             }
 
-            console.log(e.stack);
+            // eslint-disable-next-line no-console
+            console.error(e.stack);
             process.exitCode = exitCode;
         }, 100);
     })

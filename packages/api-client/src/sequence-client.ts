@@ -30,7 +30,7 @@ export class SequenceClient {
         this.sequenceURL = `sequence/${id}`;
     }
 
-    async start(appConfig: any, args: any): Promise<InstanceClient | undefined> {
+    async start(appConfig: any, args: any): Promise<InstanceClient> {
         const response = await this.clientUtils.post(
             `${this.sequenceURL}/start`, { appConfig, args }
         );
@@ -38,7 +38,6 @@ export class SequenceClient {
         if (response.data?.id) {
             return InstanceClient.from(response.data.id, this.host);
         }
-
         throw new ClientError("INVALID_RESPONSE", "Response did not include instance id.");
     }
 

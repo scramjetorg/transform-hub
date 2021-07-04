@@ -1,5 +1,6 @@
-import { HostClient } from "@scramjet/api-client";
+import { InstanceClient, HostClient } from "@scramjet/api-client";
 import { Command } from "commander";
+import { displayEntity } from "./output";
 
 let hostClient: HostClient;
 
@@ -27,4 +28,15 @@ export const getHostClient = (program: Command) => {
             }
         });
     return hostClient;
+};
+export const getInstance = (program: Command, id: string) => InstanceClient.from(id, getHostClient(program));
+export const attachStdio = (program: Command, instance: InstanceClient) => {
+    return displayEntity(
+        program,
+        Promise.all([
+            instance.sendStdin(process.stdin),
+            instance.getStream("stdout").then(out => out.data?.pipe(process.stdout)),
+            instance.getStream("stderr").then(err => err.data?.pipe(process.stderr))
+        ]).then(() => undefined)
+    );
 };

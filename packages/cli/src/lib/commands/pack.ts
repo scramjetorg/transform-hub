@@ -30,13 +30,14 @@ const getIgnoreFunction = async (file: PathLike) => {
 export const pack: CommandDefinition = (program) => {
     const packProgram = program
         .command("pack <directory>")
+        .option("-c, --stdout", "output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname");
 
-    packProgram.action(async (directory, { output }) => {
+    packProgram.action(async (directory, { stdout, output }) => {
         const cwd = resolve(process.cwd(), directory);
-        const target = output
+        const target = stdout ? process.stdout : createWriteStream(output
             ? resolve(process.cwd(), output)
-            : `${cwd}.tar.gz`;
+            : `${cwd}.tar.gz`);
         const packageLocation = resolve(cwd, "package.json");
         const ignoreLocation = resolve(cwd, ".siignore");
 
@@ -53,7 +54,7 @@ export const pack: CommandDefinition = (program) => {
             },
             await readdir(directory)
         )
-            .pipe(createWriteStream(target));
+            .pipe(target);
 
         await new Promise((res, rej) => {
             out.on("finish", res);

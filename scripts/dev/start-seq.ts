@@ -10,5 +10,6 @@ const host = new HostClient("http://localhost:8000/api/v1");
     const instance = await sequence.start({}, ["/package/data.json"]);
     const instanceInfo = (await instance.getInfo()).data;
 
-    console.log(instanceInfo);
+    // eslint-disable-next-line no-console
+    console.error(instanceInfo);
 })();

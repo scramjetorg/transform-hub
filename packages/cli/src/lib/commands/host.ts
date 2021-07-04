@@ -1,5 +1,5 @@
 import { CommandDefinition } from "../../types";
-import { getHostClient } from "../get-client";
+import { getHostClient } from "../common";
 import { displayEntity } from "../output";
 
 

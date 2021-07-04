@@ -61,8 +61,8 @@ export class InstanceClient {
         return this.clientUtils.post(`${this.instanceURL}/_event`, data);
     }
 
-    async getEvent() {
-        return this.clientUtils.get(`${this.instanceURL}/event`);
+    async getEvent(eventName: string) {
+        return this.clientUtils.getStream(`${this.instanceURL}/event/${eventName}`);
     }
 
     async getHealth() {
