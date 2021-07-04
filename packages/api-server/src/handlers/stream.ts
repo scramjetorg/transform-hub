@@ -69,7 +69,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         router.get(path, async (req, res, next) => {
             try {
                 const type = checkAccepts(req.headers.accept, text, json);
-                const data = await getStream(req, stream);
+                const data = await getStream(req, res, stream);
 
                 return decorator(data, type, encoding, res);
             } catch (e) {

@@ -11,6 +11,7 @@ import {
     MessageDataType,
     MonitoringMessageCode,
     MonitoringMessageHandler,
+    MutatingMonitoringMessageHandler,
     PassThoughStream,
     UpstreamStreamsConfig,
     WritableStream
@@ -20,7 +21,7 @@ import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
 
 export type ConfiguredMessageHandler<T extends RunnerMessageCode | SupervisorMessageCode> = {
-    handler: MonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
+    handler: MutatingMonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
     blocking: boolean
 } | {
     handler: ControlMessageHandler<T extends ControlMessageCode ? T : never>
@@ -231,7 +232,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     addMonitoringHandler<T extends MonitoringMessageCode>(
         _code: T,
-        handler: MonitoringMessageHandler<T>,
+        handler: MonitoringMessageHandler<T> | MutatingMonitoringMessageHandler<T>,
         blocking: boolean = false
     ): this {
         this.monitoringHandlerHash[_code].push({

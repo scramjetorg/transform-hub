@@ -98,7 +98,7 @@ Then("check every {float} seconds if instances respond for {float} hours", { tim
                     await new Promise(res => setTimeout(res, 5000));
 
                     try {
-                        const response = await instance.getEvent();
+                        const response = await instance.getNextEvent("ok");
 
                         if (response.data?.message.asked === hash) {
                             resolve();

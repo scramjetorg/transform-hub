@@ -7,7 +7,7 @@ function getActualName(nameSource: any): string {
         return nameSource;
 
     if (typeof nameSource === "function" && nameSource.prototype && nameSource === nameSource.prototype.constructor) {
-        return `class:${nameSource.name}`;
+        return `class:${nameSource.name}`
     }
 
     if (typeof nameSource.name === "string")
@@ -29,5 +29,6 @@ function getActualName(nameSource: any): string {
  * @returns the resulting string
  */
 export function getName(item: any) {
-    return getActualName(item).replace(/\r?\n[\s\S]*$/g, "").replace(/[\s]+/g, ":");
+    const id = item?.id ? `:${item.id}` : "";
+    return `${getActualName(item)}${id}`.replace(/\r?\n[\s\S]*$/g, "").replace(/[\s]+/g, ":");
 }

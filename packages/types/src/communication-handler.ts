@@ -8,6 +8,8 @@ import {
 import { MaybePromise } from "./utils";
 
 export type MonitoringMessageHandler<T extends MonitoringMessageCode> =
+    (msg: EncodedMessage<T>) => void;
+export type MutatingMonitoringMessageHandler<T extends MonitoringMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
 export type ControlMessageHandler<T extends ControlMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
@@ -17,8 +19,12 @@ export interface ICommunicationHandler {
     hookUpstreamStreams(str: UpstreamStreamsConfig): this;
     hookDownstreamStreams(str: DownstreamStreamsConfig): this;
 
+    addMonitoringHandler<T extends MonitoringMessageCode>(code: T, handler: MutatingMonitoringMessageHandler<T>,
+        blocking: true): this;
     addMonitoringHandler<T extends MonitoringMessageCode>(code: T, handler: MonitoringMessageHandler<T>,
-        blocking?: boolean): this;
+        blocking: false): this;
+    addMonitoringHandler<T extends MonitoringMessageCode>(code: T, handler: MonitoringMessageHandler<T>): this;
+
     // TODO: we need non-mutating handlers (addControlListener)
     addControlHandler<T extends ControlMessageCode>(code: T, handler: ControlMessageHandler<T>): this;
 

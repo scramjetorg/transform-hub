@@ -18,8 +18,6 @@ export const sequence: CommandDefinition = (program) => {
         .option("-d, --detached", "Don't attach to stdio")
         .option("-c, --config <path>", "Appconfig path location")
         .action(async (sequencePackage, args) => {
-            console.log("abc", sequencePackage, args);
-
             const { config: configPath, detached } = sequenceCmd.opts();
             const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
             const seq = await getHostClient(program)
@@ -46,14 +44,16 @@ export const sequence: CommandDefinition = (program) => {
         .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
     // args for example '[10000, 2000]' | '["tcp"]'
-    sequenceCmd.command("start <id> <appConfig> <args>")
+    sequenceCmd.command("start <id> <args...>")
         .description("start the sequence")
-        .option("-c, --config <config-location>")
-        .action(async (id, { config }, args) => {
+        .option("-c, --config <config-path>")
+        .option("-C, --config-json <config-string>")
+        .action(async (id, args) => {
+            const { config, configJson } = sequenceCmd.opts();
             const sequenceClient = SequenceClient.from(id, getHostClient(program));
 
             return displayObject(program,
-                await sequenceClient.start(JSON.parse(await readFile(config, "utf-8")), JSON.parse(args)));
+                await sequenceClient.start(configJson || config ? JSON.parse(configJson || await readFile(config, "utf-8")) : {}, JSON.parse(args)));
         });
 
     sequenceCmd.command("get <id>")

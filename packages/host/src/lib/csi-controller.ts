@@ -2,12 +2,13 @@ import { getRouter } from "@scramjet/api-server";
 import {
     AppError,
     CommunicationHandler, CSIControllerError,
+    HostError,
     MessageUtilities
 } from "@scramjet/model";
 import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
-    APIRoute, AppConfig, DownstreamStreamsConfig, ExitCode, FunctionDefinition, HandshakeAcknowledgeMessage,
-    InstanceConfigMessage, Logger, PassThroughStreamsConfig
+    APIRoute, AppConfig, DownstreamStreamsConfig, EventMessageData, ExitCode, FunctionDefinition, HandshakeAcknowledgeMessage,
+    ICommunicationHandler, InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
@@ -16,6 +17,8 @@ import { DataStream } from "scramjet";
 import { PassThrough } from "stream";
 import { configService, development } from "@scramjet/sth-config";
 import { Sequence } from "./sequence";
+import { ServerResponse } from "http";
+import { getLogger } from "../../../logger/src";
 
 export class CSIController extends EventEmitter {
     id: string;
@@ -41,7 +44,7 @@ export class CSIController extends EventEmitter {
      private downStreams?: DownstreamStreamsConfig;
      private upStreams?: PassThroughStreamsConfig;
 
-    communicationHandler: CommunicationHandler;
+    communicationHandler: ICommunicationHandler;
     logger: Logger;
     private socketServerPath: string;
 
@@ -50,8 +53,7 @@ export class CSIController extends EventEmitter {
         sequence: Sequence,
         appConfig: AppConfig,
         sequenceArgs: any[] | undefined,
-        communicationHandler: CommunicationHandler,
-        logger: Logger
+        communicationHandler: CommunicationHandler
     ) {
         super();
 
@@ -59,7 +61,7 @@ export class CSIController extends EventEmitter {
         this.sequence = sequence;
         this.appConfig = appConfig;
         this.sequenceArgs = sequenceArgs;
-        this.logger = logger;
+        this.logger = getLogger(this);
         this.communicationHandler = communicationHandler;
         this.socketServerPath = configService.getConfig().host.socketPath;
 
@@ -255,7 +257,41 @@ export class CSIController extends EventEmitter {
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
             router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
-            router.get("/event", RunnerMessageCode.EVENT, this.communicationHandler);
+
+            const localEmitter = new EventEmitter();
+
+            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
+                const event = data[1] as unknown as EventMessageData;
+
+                if (!event.eventName) return;
+                localEmitter.emit(event.eventName, event.message);
+            });
+
+            router.upstream("/event/:name", async (req: ParsedMessage, res: ServerResponse) => {
+                const name = req.params?.name;
+
+                if (!name) throw new HostError("EVENT_NAME_MISSING");
+
+                const out = new DataStream();
+                const handler = (data: any) => res.write(data);
+                const clean = () => {
+                    this.logger.debug(`Event stream "${name}" disconnected`);
+                    localEmitter.off(name, handler);
+                };
+
+                this.logger.debug(`Event stream "${name}" connected`);
+                localEmitter.on(name, handler)
+                res.on("error", clean);
+                res.on("end", clean);
+
+                return out.JSONStringify();
+            });
+            router.get("/once/:name", async (req) => new Promise(res => {
+                const name = req.params?.name;
+
+                if (!name) throw new HostError("EVENT_NAME_MISSING");
+                localEmitter.once(name, res);
+            }));
 
             // operations
             router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);

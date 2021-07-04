@@ -61,6 +61,10 @@ export class InstanceClient {
         return this.clientUtils.post(`${this.instanceURL}/_event`, data);
     }
 
+    async getNextEvent(eventName: string) {
+        return this.clientUtils.get(`${this.instanceURL}/once/${eventName}`);
+    }
+
     async getEvent(eventName: string) {
         return this.clientUtils.getStream(`${this.instanceURL}/event/${eventName}`);
     }

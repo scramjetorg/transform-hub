@@ -258,7 +258,7 @@ export class Host implements IComponent {
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
-        const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler, this.logger);
+        const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler);
 
         this.logger.log("New CSIController created: ", id);
 

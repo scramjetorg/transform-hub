@@ -47,9 +47,10 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
-        Then I get instance id
+        Then I start Sequence
         And the exit status is 0
+        Then the exit status is 0
+        And I get instance id
         And host is still running
 
     @ci
@@ -58,10 +59,10 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
-        Then I get instance id
-        Then I kill instance
+        Then I start Sequence
         And the exit status is 0
+        And I get instance id
+        Then I kill instance
         And host is still running
 
     @ci
@@ -80,11 +81,11 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
-        Then I get instance id
+        Then I start Sequence
+        And the exit status is 0
+        And I get instance id
         And wait for "6000" ms
         Then I get instance health
-        And the exit status is 0
         And host is still running
 
     # Test E2E-010 TC-010 works but it is ignored, because changes need to be made in CLI to end the displayed stream.
@@ -94,10 +95,10 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
-        Then I get instance id
-        Then I get instance log
+        Then I start Sequence
         And the exit status is 0
+        And I get instance id
+        Then I get instance log
         And host is still running
 
 
@@ -107,10 +108,10 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
-        Then I get instance id
-        Then I send input data "../dist/reference-apps/checksum-sequence/data.json"
+        Then I start Sequence
         And the exit status is 0
+        And I get instance id
+        Then I send input data "../dist/reference-apps/checksum-sequence/data.json"
         And host is still running
 
     @ci
@@ -119,8 +120,9 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
-        Then I get instance id
+        Then I start Sequence
+        And the exit status is 0
+        And I get instance id
         Then I stop instance "3000" "false"
         And the exit status is 0
         And host is still running
@@ -131,7 +133,8 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence-2.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
+        Then I start Sequence
+        And the exit status is 0
         Then I get list of instances
         And the exit status is 0
         And host is still running
@@ -142,7 +145,8 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
+        Then I start Sequence
+        And the exit status is 0
         Then I get instance info
         And the exit status is 0
         And host is still running
@@ -153,10 +157,24 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        And I start Sequence
+        Then I start Sequence
+        And the exit status is 0
         When I send an event named "test-event" with event message "test message" to Instance
         And the exit status is 0
         And wait for "5000" ms
         Then I get event "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
         And the exit status is 0
         And host is still running
+
+    @ci
+    Scenario: E2E-010 TC-013 Package and send with stdout
+        Given host is running
+        When I execute CLI with bash command "$SI pack ../packages/reference-apps/transform-function -c | $SI send --format json"
+        And the exit status is 0
+        Then I get Sequence id
+        Then I start Sequence
+        And the exit status is 0
+        Then I get list of instances
+        And the exit status is 0
+        And host is still running
+
