@@ -63,8 +63,6 @@ Then("I start Sequence", async function() {
         if (process.env.SCRAMJET_TEST_LOG) console.error(stdio[0]);
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 
-        console.log(instance);
-
         instanceId = instance._id;
     } catch (e) {
         console.error(e.stack, stdio);
