@@ -22,7 +22,7 @@ export class SequenceClient {
 
     private constructor(id: string, host: ClientProvider) {
         if (!IDProvider.isValid(id)) {
-            throw new Error("Invalid id.");
+            throw new Error(`Invalid id: ${id}`);
         }
 
         this._id = id;

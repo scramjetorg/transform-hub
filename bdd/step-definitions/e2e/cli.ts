@@ -24,8 +24,11 @@ Then("I get a help information", function() {
 });
 
 Then("the exit status is {int}", function(status: number) {
-
-    assert.equal(stdio[2], status);
+    if (stdio[2] !== status) {
+        console.error(stdio);
+        assert.equal(stdio[2], status);
+    }
+    assert.ok(true);
 });
 
 Then("I get Sequence id", function() {
@@ -57,9 +60,11 @@ Then("I start Sequence", async function() {
         if (process.env.SCRAMJET_TEST_LOG) console.error(stdio[0]);
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 
+        console.log(instance);
+
         instanceId = instance._id;
     } catch (e) {
-        console.error(stdio);
+        console.error(e.stack, stdio);
         assert.fail("Error occurred");
     }
 });
@@ -124,8 +129,8 @@ When("I send an event named {string} with event message {string} to Instance", a
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "emit", instanceId, eventName, eventMsg, ...formatFlags]);
 });
 
-Then("I get event {string} from instance", async function(event: string) {
-    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", event, instanceId, ...formatFlags]);
-    assert.equal(stdio[0], "ok");
+Then("I get event {string} with event message {string} from instance", async function(eventName: string, value: string) {
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", "-p", instanceId, eventName, ...formatFlags]);
+    assert.equal(stdio[0], value);
 });
 

@@ -159,17 +159,19 @@ Feature: CLI tests
         Then I get Sequence id
         Then I start Sequence
         And the exit status is 0
-        When I send an event named "test-event" with event message "test message" to Instance
+        Then I get instance info
+        Then I send an event named "test-event" with event message "test message" to Instance
         And the exit status is 0
         And wait for "5000" ms
-        Then I get event "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
+        Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
         And the exit status is 0
+
         And host is still running
 
     @ci
-    Scenario: E2E-010 TC-013 Package and send with stdout
+    Scenario: E2E-010 TC-016 Package and send with stdout
         Given host is running
-        When I execute CLI with bash command "$SI pack ../packages/reference-apps/transform-function -c | $SI send --format json"
+        When I execute CLI with bash command "$SI pack ../packages/reference-apps/transform-function -c | $SI seq send --format json"
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence

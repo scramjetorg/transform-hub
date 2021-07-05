@@ -28,7 +28,7 @@ export class InstanceClient {
     private constructor(id: string, host: ClientProvider) {
         this.host = host;
         if (!IDProvider.isValid(id)) {
-            throw new Error("Invalid id.");
+            throw new Error(`Invalid id: ${id}`);
         }
 
         this._id = id;
