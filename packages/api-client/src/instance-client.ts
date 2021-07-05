@@ -70,8 +70,8 @@ export class InstanceClient {
      *
      * @param eventName - event name
      * @param previous - return old event if was ever fired
-     * @returns
-     */
+     * @returns stream of events from instance
+     **/
     async getEvent(eventName: string, previous: boolean = false) {
         const endpoint = previous ? "event" : "once";
 

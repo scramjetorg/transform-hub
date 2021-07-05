@@ -115,9 +115,11 @@ export async function removeFile(filePath: any) {
     }
 }
 
-export async function getStreamsFromSpawn(command: string, options: string[], env: NodeJS.ProcessEnv = process.env): Promise<[string, string, any]> {
+export async function getStreamsFromSpawn(
+    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+): Promise<[string, string, any]> {
 
-    process.env.SCRAMJET_TEST_LOG && console.error("Spawning command", command, ...options);
+    if (process.env.SCRAMJET_TEST_LOG) console.error("Spawning command", command, ...options);
 
     const child = spawn(command, options, {
         env
@@ -135,9 +137,12 @@ export async function getStreamsFromSpawn(command: string, options: string[], en
 
 }
 
-export async function getStreamsFromSpawnSuccess(command: string, options: string[], env: NodeJS.ProcessEnv = process.env): Promise<[string, string]> {
+export async function getStreamsFromSpawnSuccess(
+    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+): Promise<[string, string]> {
     const [stdout, stderr, code] = await getStreamsFromSpawn(command, options, env);
-    process.env.SCRAMJET_TEST_LOG && console.error("Results", {stdout, stderr});
+
+    if (process.env.SCRAMJET_TEST_LOG) console.error("Results", { stdout, stderr });
     if (code) throw new Error(`Non zero exit code: ${code}`);
 
     return [stdout, stderr];

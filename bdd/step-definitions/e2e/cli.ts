@@ -11,12 +11,11 @@ let sequenceId: string;
 let instanceId: string;
 
 When("I execute CLI with bash command {string}", { timeout: 30000 }, async function(cmd: string) {
-    stdio = await getStreamsFromSpawn("/bin/bash", ["-c" , cmd], {...process.env, SI: si.join(" ")});
+    stdio = await getStreamsFromSpawn("/bin/bash", ["-c", cmd], { ...process.env, SI: si.join(" ") });
 });
 When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", si.concat(args.split(" ")));
 });
-
 
 
 Then("I get a help information", function() {
@@ -55,12 +54,12 @@ Then("I get array of information about sequences", function() {
 Then("I start Sequence", async function() {
     try {
         stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, "-C", "{}", "[]", ...formatFlags]);
-        process.env.SCRAMJET_TEST_LOG && console.error(stdio[0]);
+        if (process.env.SCRAMJET_TEST_LOG) console.error(stdio[0]);
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 
         instanceId = instance._id;
     } catch (e) {
-        console.error(stdio)
+        console.error(stdio);
         assert.fail("Error occurred");
     }
 });

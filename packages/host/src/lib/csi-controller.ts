@@ -7,8 +7,9 @@ import {
 } from "@scramjet/model";
 import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
-    APIRoute, AppConfig, DownstreamStreamsConfig, EventMessageData, ExitCode, FunctionDefinition, HandshakeAcknowledgeMessage,
-    ICommunicationHandler, InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig
+    APIRoute, AppConfig, DownstreamStreamsConfig, EventMessageData, ExitCode,
+    FunctionDefinition, HandshakeAcknowledgeMessage, ICommunicationHandler,
+    InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
@@ -18,7 +19,7 @@ import { PassThrough } from "stream";
 import { configService, development } from "@scramjet/sth-config";
 import { Sequence } from "./sequence";
 import { ServerResponse } from "http";
-import { getLogger } from "../../../logger/src";
+import { getLogger } from "@scramjet/logger";
 
 export class CSIController extends EventEmitter {
     id: string;
@@ -258,7 +259,10 @@ export class CSIController extends EventEmitter {
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
             router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
 
-            const localEmitter = Object.assign(new EventEmitter(), {lastEvents: {}} as {lastEvents: {[evname: string]: any}});
+            const localEmitter = Object.assign(
+                new EventEmitter(),
+                { lastEvents: {} } as {lastEvents: {[evname: string]: any}}
+            );
 
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
                 const event = data[1] as unknown as EventMessageData;
@@ -280,7 +284,7 @@ export class CSIController extends EventEmitter {
                 };
 
                 this.logger.debug(`Event stream "${name}" connected`);
-                localEmitter.on(name, handler)
+                localEmitter.on(name, handler);
                 res.on("error", clean);
                 res.on("end", clean);
 
@@ -293,6 +297,7 @@ export class CSIController extends EventEmitter {
                     throw new HostError("EVENT_NAME_MISSING");
                 localEmitter.once(name, res);
             });
+
             router.get("/event/:name", async (req) => {
                 if (req.params?.name && localEmitter.lastEvents[req.params?.name])
                     return localEmitter.lastEvents[req.params?.name];
