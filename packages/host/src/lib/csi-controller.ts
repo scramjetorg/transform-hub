@@ -257,7 +257,9 @@ export class CSIController extends EventEmitter {
 
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
-            router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
+
+            // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
+            // router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
 
             const localEmitter = Object.assign(
                 new EventEmitter(),
