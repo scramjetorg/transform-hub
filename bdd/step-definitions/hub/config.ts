@@ -130,18 +130,7 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
     ).catch(/* ignore */);
 
     this.resources.pkgFake.write(
-        Buffer.from([
-            0x1f8b080000000000,
-            0x0003ed7d6b73db46,
-            0x96683ef7afe8e5ad,
-            0xda8877615af273c7,
-            0x4a324bcbb4cd8d2c,
-            0x6924d91e972b9502,
-            0x8926891804180094,
-            0xccc9e6bfdff3ea17,
-            0x48da9ecc6677eb6e,
-            0x5889c507d07dfaf4
-        ])
+        Buffer.from([0x1f8b0800000000000003])
     );
 });
 
