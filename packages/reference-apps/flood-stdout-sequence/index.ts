@@ -1,31 +1,33 @@
+/* eslint-disable no-loop-func */
 import { InertApp } from "@scramjet/types";
-const scramjet = require("scramjet");
-const fs = require("fs");
 
 /**
  * An inert app that is just a function (not wrapped)
  *
  * @type {InertApp}
  * @param {Readable} _stream - dummy input stream
- * @param {string} ffrom - dummy input stream
+ * @param {number} kbytes - size of data to write in kb
+ * @param {number} timeout - time to keep Instance running after exceeding the buffer size.
  */
-module.exports = async function(_stream: any, ffrom = `${__dirname}/numbers.txt`) {
+module.exports = async function(_stream: any, kbytes: number, timeout: number) {
+
+    this.logger.info("Sequence called with: ", kbytes, timeout);
 
     this.on("test-event", () =>
         this.emit("test-event-response", "message from sequence")
     );
 
-    /** 
-     * TO BE REPLACED:
-     * Writing to stream will be done with generator and on pause event will be caught.
-    */
-    return fs.createReadStream(ffrom)
-        .on("end", () => {
-            this.logger.info("File read by Sequence ended.");
-        })
-        .pipe(new scramjet.StringStream())
-        .do((line: string) => {
-            process.stdout.write(line + "\n");
-        });
+    let i = 0;
+
+    while (i < +kbytes) {
+        const isPlaceInBuffer = process.stdout.write(Buffer.alloc(1024, 0xdeadbeef));
+
+        if (!isPlaceInBuffer) {
+            this.emit("test-event-response", "message from sequence");
+
+            await new Promise(res => setTimeout(res, +timeout));
+        }
+        i++;
+    }
 
 } as InertApp;

@@ -21,19 +21,16 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         And container is closed
         Then host is still running
 
-    # Just a placeholder - WIP
-    @ignore
-    Scenario: E2E-012 TC-002 Instance floods wrtites stdout and Host checks whether Instance still responds to event sent.
+    @ci
+    Scenario: E2E-012 TC-002 Instance floods wrtites stdout, then Host checks whether even sent by Instance can be still received.
         Given host is running
         When sequence "../packages/reference-apps/flood-stdout-sequence.tar.gz" loaded
-        And instance started
-        And wait for "6000" ms
+        And instance started with arguments "1000 10000"
+        And wait for "1000" ms
         And get instance health
         And get containerId
         And instance health is "true"
-        And wait for "5000" ms
-        And send event "test-event" to instance with message "test message"
-        And wait for "5000" ms
+        And wait for "6000" ms
         Then get event from instance
         When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
