@@ -31,7 +31,7 @@ let streams: { [key: string]: Promise<string | undefined> } = {};
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
-BeforeAll(async () => {
+BeforeAll({ timeout: 10e3 }, async () => {
     await hostUtils.spawnHost();
 });
 

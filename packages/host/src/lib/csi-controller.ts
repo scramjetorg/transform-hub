@@ -269,7 +269,7 @@ export class CSIController extends EventEmitter {
 
                 if (!event.eventName) return;
                 localEmitter.lastEvents[event.eventName] = event;
-                localEmitter.emit(event.eventName, event.message);
+                localEmitter.emit(event.eventName, event);
             });
 
             router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {

@@ -4,7 +4,10 @@ import { ChildProcess, spawn } from "child_process";
 import { SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 
-const hostExecutableFilePath = "../dist/host/bin/start.js";
+const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
+    ? ["npx", "ts-node", "../packages/sth/src/bin/hub.ts"]
+    : ["node", "../dist/sth/bin/hub.js"]
+;
 
 export class HostUtils {
     hostProcessStopped = false;
@@ -63,7 +66,7 @@ export class HostUtils {
         return new Promise<void>((resolve) => {
             console.error("Spawning host...");
 
-            const command: string[] = ["node", hostExecutableFilePath];
+            const command: string[] = hostExecutableCommand;
 
             this.host = spawn("/usr/bin/env", command);
 

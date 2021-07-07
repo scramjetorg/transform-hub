@@ -3,7 +3,10 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import { getStreamsFromSpawn } from "../../lib/utils";
 
-const si = ["node", "../dist/cli/bin"];
+const si = process.env.SCRAMJET_SPAWN_TS
+    ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
+    : ["node", "../dist/cli/bin"]
+;
 const formatFlags = ["-L", "--format", "json"];
 
 let stdio: [stdout: string, stderr: string, statusCode: any];
@@ -130,7 +133,7 @@ When("I send an event named {string} with event message {string} to Instance", a
 });
 
 Then("I get event {string} with event message {string} from instance", async function(eventName: string, value: string) {
-    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", instanceId, eventName, "-p", ...formatFlags]);
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", instanceId, eventName, ...formatFlags]);
     assert.equal(stdio[0].trim(), value);
 });
 

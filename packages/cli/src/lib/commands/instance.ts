@@ -65,13 +65,13 @@ export const instance: CommandDefinition = (program) => {
         .option("-s, --stream", "stream the events (the stream will start with last event)")
         .option("-n, --next", "wait for the next event occurrence")
         .description("get the last event occurence (will wait for the first one if not yet retrieved)")
-        .action(async (id, event, { previous, stream }) => {
+        .action(async (id, event, { next, stream }) => {
             if (stream)
                 return displayStream(program, getInstance(program, id).getEventStream(event));
+            if (next)
+                return displayEntity(program, getInstance(program, id).getNextEvent(event));
 
-            if (previous)
-                return displayEntity(program, getInstance(program, id).getEvent(event));
-            return displayEntity(program, getInstance(program, id).getNextEvent(event));
+            return displayEntity(program, getInstance(program, id).getEvent(event));
         });
 
     instanceCmd.command("input <id> [<file>]")
