@@ -38,6 +38,7 @@ export class ClientError extends Error {
                 if (error.code === "403") return new this("NOT_AUTHORIZED", error, message);
                 if (error.code === "404") return new this("NOT_FOUND", error, message);
                 if (error.code === "410") return new this("GONE", error, message);
+                if (error.code === "ECONNREFUSED") return new this("CANNOT_CONNECT", error, message);
                 if (+error.code >= 500) return new this("SERVER_ERROR", error, message);
                 if (+error.code >= 400) return new this("REQUEST_ERROR", error, message);
                 return new this("UNKNOWN_ERROR", error, `Response code is "${error.code}"`);

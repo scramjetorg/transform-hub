@@ -62,10 +62,16 @@ export const instance: CommandDefinition = (program) => {
      */
     instanceCmd.command("event <id> <event>")
         .alias("on")
+        .option("-s, --stream", "stream the events (the stream will start with last event)")
         .option("-p, --previous", "immediatelly return the event if it was fired before")
         .description("invoke the event by eventName and optionally with message")
-        .action(async (id, event) => {
-            return displayStream(program, getInstance(program, id).getEvent(event));
+        .action(async (id, event, { previous, stream }) => {
+            if (stream)
+                return displayStream(program, getInstance(program, id).getEvent(event));
+
+            if (previous)
+                return displayEntity(program, getInstance(program, id).getPreviousEvent(event));
+            return displayEntity(program, getInstance(program, id).getNextEvent(event));
         });
 
     instanceCmd.command("input <id> [<file>]")

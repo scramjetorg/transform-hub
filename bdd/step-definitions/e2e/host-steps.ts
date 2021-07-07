@@ -255,7 +255,7 @@ When("send event {string} to instance with message {string}", async (eventName, 
 Then("get event {string} from instance", { timeout: 10000 }, async (event: string) => {
     const expectedHttpCode = 200;
 
-    actualStatusResponse = await instance?.getEvent(event, true);
+    actualStatusResponse = await instance?.getPreviousEvent(event);
     assert.equal(actualStatusResponse?.status, expectedHttpCode);
 });
 

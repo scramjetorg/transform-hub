@@ -1,23 +1,24 @@
 #!/usr/bin/env ts-node
 
-import { Command, OptionValues } from "commander";
+import { Command } from "commander";
 import { ClientError } from "@scramjet/api-client";
 // import { version } from "../../package.json";
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
 
-let options: OptionValues;
-
 const getExitCode = (_err: ClientError) => 1;
 const program: Command = new Command() as Command;
 const errorHandler = (err: ClientError) => {
     process.exitCode = getExitCode(err);
-    if (options?.format === "json") {
+    const opts = program.opts();
+
+    if (opts.format === "json") {
         console.log(JSON.stringify({
             error: true,
-            code: err.code,
-            message: err.message,
-            reason: err.reason?.message
+            code: err?.code,
+            stack: opts.log ? err?.stack : undefined,
+            message: err?.message,
+            reason: err?.reason?.message
         }));
     } else {
         console.error(err.stack);
@@ -35,7 +36,7 @@ const errorHandler = (err: ClientError) => {
     for (const command of Object.values(commands))
         command(program);
 
-    options = program
+    program
         // .version(version)
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
         .option("-L, --log", "Logs all API requests in detail", conf.log)
@@ -44,6 +45,8 @@ const errorHandler = (err: ClientError) => {
         .parse(process.argv)
         .opts()
     ;
+
+    await new Promise(res => program.hook("postAction", res));
 })()
     .catch(errorHandler);
 

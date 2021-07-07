@@ -130,7 +130,7 @@ When("I send an event named {string} with event message {string} to Instance", a
 });
 
 Then("I get event {string} with event message {string} from instance", async function(eventName: string, value: string) {
-    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", "-p", instanceId, eventName, ...formatFlags]);
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", instanceId, eventName, "-p", ...formatFlags]);
     assert.equal(stdio[0], value);
 });
 
