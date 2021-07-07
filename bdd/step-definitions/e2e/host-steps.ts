@@ -13,6 +13,7 @@ import { CustomWorld } from "../world";
 
 import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
+import { BufferStream } from "scramjet";
 
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
@@ -115,18 +116,18 @@ When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string)
     console.log("Package successfuly loaded, sequence started.");
 });
 
-When("instance started", async function (this: CustomWorld) {
+When("instance started", async function(this: CustomWorld) {
     instance = await sequence.start({}, ["/package/data.json"]);
     this.resources.instance = instance;
 });
 
-const startWith = async function (this: CustomWorld, instanceArg: string) {
+const startWith = async function(this: CustomWorld, instanceArg: string) {
     instance = await sequence.start({}, instanceArg.split(" "));
     this.resources.instance = instance;
 };
 const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 
-When("instance started with url from assets argument {string}", { timeout: 25000 }, async function (this: CustomWorld, assetUrl: string) {
+When("instance started with url from assets argument {string}", { timeout: 25000 }, async function(this: CustomWorld, assetUrl: string) {
     return startWith.call(this, `${assetsLocation}${assetUrl}`);
 });
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
@@ -308,11 +309,26 @@ When("instance health is {string}", async (expectedResp: string) => {
     assert.equal(healthy, expectedResp);
 });
 
-When("send stdin to instance with contents of file {string}", async (filePath: string) => {
+When("send stdin to instance with contents of file {string}", { timeout: 200000 }, async (filePath: string) => {
+    console.log("filePath = ", filePath);
     await instance?.sendStream("stdin", createReadStream(filePath));
 });
 
-When("keep instance streams {string}", async function (streamNames) {
+When("I try to flood the stdin stream with {int} kilobytes", async function(kbytes: number) {
+    let i = 0;
+
+    await new Promise<void>((res, rej) => {
+        instance?.sendStream("stdin", BufferStream.from(function* () {
+            while (i < kbytes) { yield Buffer.alloc(1024, 0xdeadbeef); i++; }
+        }).on("pause", () => {
+            console.log(`Stream paused, sent ${i}kb`);
+            res();
+        }).on("end", rej));
+    });
+
+});
+
+When("keep instance streams {string}", async function(streamNames) {
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!instance) assert.fail("Instance not existent");
 
@@ -329,12 +345,12 @@ Then("kept instance stream {string} should be {string}", async (streamName, _exp
 });
 
 // ? When I get version
-When("I get version", async function () {
+When("I get version", async function() {
     actualApiResponse = await hostClient.getVersion();
 });
 
 // ? Then it returns the root package version
-Then("it returns the root package version", function () {
+Then("it returns the root package version", function() {
     // Write code here that turns the phrase above into concrete actions
     assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
     console.log(actualApiResponse.data, version);
@@ -342,14 +358,14 @@ Then("it returns the root package version", function () {
 });
 
 // ? When I get load-check
-When("I get load-check", async function () {
+When("I get load-check", async function() {
     // Write code here that turns the phrase above into concrete actions
     actualApiResponse = await hostClient.getLoadCheck();
 });
 
 // ? Then it returns a correct load check with required properties
 
-Then("it returns a correct load check with required properties", function () {
+Then("it returns a correct load check with required properties", function() {
     // Write code here that turns the phrase above into concrete actions
     const { data } = actualApiResponse;
 
@@ -416,6 +432,7 @@ When("instance is finished", async () => {
     console.log("Instance porcess has finished.");
 });
 
-When("stop instance", { timeout: 60 * 1000 }, async function (this: CustomWorld) {
+When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
     await instance?.stop(0, false);
 });
+
