@@ -3,9 +3,7 @@ import { InstanceClient, InstanceOutputStream } from "@scramjet/api-client";
 import * as net from "net";
 import { strict as assert } from "assert";
 import { PassThrough, Stream } from "stream";
-import * as crypto from "crypto";
 import * as dgram from "dgram";
-
 import { CustomWorld } from "../world";
 import { URL } from "url";
 
@@ -23,55 +21,61 @@ const streamToString = async (stream: Stream): Promise<string> => {
 When("get instance info", async function(this: CustomWorld) {
     this.resources.instanceInfo = (await this.resources.instance.getInfo()).data;
 
-    // console.log(this.resources.instanceInfo);
+    console.log(this.resources.instanceInfo);
 });
 
-When("connect to instance on port {int}", { timeout: 20000 }, async function(this: CustomWorld, internalPort: number) {
+When("connect to instance on port {int} using {string} server", { timeout: 20000 }, async function(this: CustomWorld, internalPort: number, givenServer: string) {
     const instanceInfo = this.resources.instanceInfo;
-    const port = instanceInfo.ports[internalPort + "/tcp"];
-
-    console.log("Attempting to connect on port", port);
-
-    this.resources.connection = await new Promise((resolve, reject) => {
-        const connection = net.createConnection({
-            port: instanceInfo.ports[internalPort + "/tcp"],
-            host: process.env.SCRAMJET_HOST_URL ? new URL(process.env.SCRAMJET_HOST_URL).hostname : "localhost"
-        })
-            .once("connect", () => {
-                resolve(connection);
-            })
-            .once("error", (e) => {
-                reject(e);
-            });
-    });
-});
-
-When("connect to instance on port {int} udp server", { timeout: 20000 }, async function(this: CustomWorld, internalPort: number) {
-    const instanceInfo = this.resources.instanceInfo;
-    const port = instanceInfo.ports[internalPort + "/udp"];
     const host = process.env.SCRAMJET_HOST_URL ? new URL(process.env.SCRAMJET_HOST_URL).hostname : "localhost";
 
-    console.log("Attempting to connect on port: ", port, "host: ", host);
+    if (givenServer === "tcp") {
+        const port = instanceInfo.ports[internalPort + "/tcp"];
 
-    this.resources.client = dgram.createSocket("udp4")
-        .on("error", (err) => {
-            console.log(`server error:\n${err.stack}`);
+        console.log(`Attempting to connect on ${givenServer} port:${port}, host: ${host}`);
+
+        this.resources.connection = await new Promise((resolve, reject) => {
+            const connection = net.createConnection({
+                port: instanceInfo.ports[internalPort + "/tcp"],
+                host: host
+            })
+                .once("connect", () => {
+                    resolve(connection);
+                })
+                .once("error", (e) => {
+                    reject(e);
+                });
         });
+    } else if (givenServer === "udp") {
+        this.resources.internalPort = internalPort;
+        const port = instanceInfo.ports[internalPort + "/udp"];
+
+        console.log(`Attempting to connect on ${givenServer} port:${port}, host: ${host}`);
+
+        this.resources.client = dgram.createSocket("udp4")
+            .on("error", (err) => {
+                console.log(`server error:\n${err.stack}`);
+            });
+    } else {
+        console.log(`Sequence argument not recognized: ${givenServer}`);
+    }
 });
 
-When("send data to instance tcp server", async function(this: CustomWorld) {
-    this.resources.testMessage = crypto.randomBytes(128).toString("hex");
+When("send {string} to {string} server", async function(this: CustomWorld, str: string, serverType: string) {
 
-    const client = this.resources.client as dgram.Socket;
-    //connection.write(this.resources.testMessage);
-    const message = Buffer.from("Some bytes");
+    if (serverType === "tcp") {
+        this.resources.connection.write(str);
+    }
 
-    client.send(message, 0, message.length, 41234, "localhost", (err) => {
-        this.resources.connection.close();
-    });
-    client.on("message", (msg, rinfo) => {
-        console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
-    });
+    if (serverType === "udp") {
+        const client = this.resources.client as dgram.Socket;
+        const instanceInfo = this.resources.instanceInfo;
+        const port = instanceInfo.ports[this.resources.internalPort + "/udp"];
+        const host = process.env.SCRAMJET_HOST_URL ? new URL(process.env.SCRAMJET_HOST_URL).hostname : "localhost";
+
+        client.send(str, 0, str.length, port, host, (err) => {
+            console.log(err?.stack);
+        });
+    }
 });
 
 When("start reading {string} stream", async function(this: CustomWorld, log: InstanceOutputStream) {
@@ -89,18 +93,4 @@ When("check stream for message sent", async function(this: CustomWorld) {
     assert.notEqual(
         str.includes(this.resources.testMessage), null
     );
-});
-
-When("send {string} to {string} server", async function(this: CustomWorld, str: string, serverType: string) {
-    if (serverType === "tcp") {
-        this.resources.connection.write(str);
-    }
-
-    if (serverType === "udp") {
-        const client = this.resources.client as dgram.Socket;
-
-        client.send(str, 0, str.length, 41234, "localhost", (err) => {
-            client.close();
-        });
-    }
 });
