@@ -27,7 +27,6 @@ function checkEndHeader(req: IncomingMessage, _default?: boolean) {
     return _default;
 }
 
-
 export function createStreamHandlers(router: SequentialCeroRouter) {
     const decorator = (
         data: Readable,
@@ -45,7 +44,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
             res.setHeader("content-type", cType);
             res.setHeader("transfer-encoding", "chunked");
-
+            res.setHeader("Access-Control-Allow-Origin", "*");
             res.writeHead(200);
 
             // Error handling on disconnect!
