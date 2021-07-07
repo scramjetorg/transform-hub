@@ -4,7 +4,7 @@ Feature: Event e2e tests
     Scenario: E2E-004 TC-001 Send test-event through API and get event emitted by sequence
         Given host is running
         When sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
-        And instance started with arguments "20"
+        And instance started with arguments "10"
         And wait for "6000" ms
         And get instance health
         And get containerId
