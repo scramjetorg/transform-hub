@@ -19,9 +19,9 @@ Feature: Ports e2e tests
         And instance started with arguments "udp"
         And get instance info
         And start reading "log" stream
-        And connect to instance on port 17006
-        And send data to instance server
-        And wait for "3000" ms
-        And check stream for message sent
-        And send "null" to server
-        Then host is still running
+        And connect to instance on port 17008 udp server
+        # And send data to instance tcp server
+        # And wait for "3000" ms
+        # And check stream for message sent
+        # And send "null" to tcp server
+        # Then host is still running
