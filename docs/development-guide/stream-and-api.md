@@ -292,12 +292,19 @@ cat test.txt | curl -H "Content-Type: application/json" -d "[5001, {2000}]" http
 curl -H "Content-Type: application/json" -d "{}" http://localhost:8000/api/v1/sequence/status
 ```
 
+
 ### Event
 
 Event contains `<eventName>` with optional `<message>`.
 
 ```bash
-curl -H "Content-Type: application/json" -d "{'event_name', message}" http://localhost:8000/api/v1/sequence/event
+curl -H "Content-Type: application/json" http://localhost:8000/api/v1/sequence/events/<eventName>
+```
+
+Get the event only once:
+
+```bash
+curl -H "Content-Type: application/json" http://localhost:8000/api/v1/sequence/once/<eventName>
 ```
 
 ---
