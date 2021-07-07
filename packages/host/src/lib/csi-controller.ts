@@ -268,6 +268,7 @@ export class CSIController extends EventEmitter {
                 const event = data[1] as unknown as EventMessageData;
 
                 if (!event.eventName) return;
+                localEmitter.lastEvents[event.eventName] = event;
                 localEmitter.emit(event.eventName, event.message);
             });
 

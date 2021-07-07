@@ -151,7 +151,7 @@ Feature: CLI tests
         And the exit status is 0
         And host is still running
 
-    # @ci - TODO: events are not propagated...
+    @ci
     Scenario: E2E-010 TC-015 Send event
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence.tar.gz --format json" arguments
