@@ -10,7 +10,7 @@ Feature: Ports e2e tests
         And send data to instance tcp server
         And wait for "3000" ms
         And check stream for message sent
-        And send "null" to tcp server
+        And send "null" to "tcp" server
         Then host is still running
 
     Scenario: PT-005 TC-002 UDP Connection
@@ -20,8 +20,8 @@ Feature: Ports e2e tests
         And get instance info
         And start reading "log" stream
         And connect to instance on port 17008 udp server
-        # And send data to instance tcp server
-        # And wait for "3000" ms
-        # And check stream for message sent
-        # And send "null" to tcp server
-        # Then host is still running
+        And send data to instance tcp server
+        And wait for "3000" ms
+        And check stream for message sent
+        And send "null" to "udp" server
+        Then host is still running

@@ -53,45 +53,25 @@ When("connect to instance on port {int} udp server", { timeout: 20000 }, async f
 
     console.log("Attempting to connect on port: ", port, "host: ", host);
 
-    this.resources.connection = await new Promise((resolve, reject) => {
-        const server = dgram.createSocket("udp4")
-            .on("error", (err) => {
-                console.log(`server error:\n${err.stack}`);
-            });
-
-        server.on("listening", () => {
-            const address = server.address();
-
-            console.log(`server listening ${address.address}:${address.port}`);
+    this.resources.client = dgram.createSocket("udp4")
+        .on("error", (err) => {
+            console.log(`server error:\n${err.stack}`);
         });
-
-        server.once("connect", () => {
-            resolve(server);
-        });
-
-        server.once("error", (e) => {
-            reject(e);
-        });
-
-        server.bind({
-            address: host,
-            port: port
-        });
-    });
 });
 
 When("send data to instance tcp server", async function(this: CustomWorld) {
     this.resources.testMessage = crypto.randomBytes(128).toString("hex");
-    this.resources.connection.write(this.resources.testMessage);
 
-    // const message = new Buffer("Some bytes");
+    const client = this.resources.client as dgram.Socket;
+    //connection.write(this.resources.testMessage);
+    const message = Buffer.from("Some bytes");
 
-    // this.resources.connection.send(message, 0, message.length, 41234, "localhost", (err) => {
-    //     connection.close();
-    //   });
-    // server.on("message", (msg, rinfo) => {
-    //     console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
-    // });
+    client.send(message, 0, message.length, 41234, "localhost", (err) => {
+        this.resources.connection.close();
+    });
+    client.on("message", (msg, rinfo) => {
+        console.log(`server got: ${msg} from ${rinfo.address}:${rinfo.port}`);
+    });
 });
 
 When("start reading {string} stream", async function(this: CustomWorld, log: InstanceOutputStream) {
@@ -111,6 +91,16 @@ When("check stream for message sent", async function(this: CustomWorld) {
     );
 });
 
-When("send {string} to tcp server", async function(this: CustomWorld, str) {
-    this.resources.connection.write(str);
+When("send {string} to {string} server", async function(this: CustomWorld, str: string, serverType: string) {
+    if (serverType === "tcp") {
+        this.resources.connection.write(str);
+    }
+
+    if (serverType === "udp") {
+        const client = this.resources.client as dgram.Socket;
+
+        client.send(str, 0, str.length, 41234, "localhost", (err) => {
+            client.close();
+        });
+    }
 });
