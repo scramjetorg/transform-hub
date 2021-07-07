@@ -59,7 +59,7 @@ See `si help` for more information. Also you will need to get an [API key for th
 
 ## Table of contents <!-- omit in toc -->
 
-- [TL;DR](#tl-dr)
+- [TL;DR](#tldr)
 - [Intro](#intro)
 - [The Basics](#the-basics)
 - [How to start development](#how-to-start-development)
