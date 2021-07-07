@@ -203,7 +203,7 @@ scramjet-transform-hub
 
 ### Install CLI and execute
 
-In the root folder, after building and prepacking, run the following commands:
+In the root folder, after building run the following commands:
 
 ```bash
 npm i -g ./dist/cli # install CLI globally
@@ -217,7 +217,7 @@ npm i -g @scramjet/cli # install CLI globally
 si help                # show CLI commands
 ```
 
-> **HINT:** If something goes wrong make clean, install, and prepack.
+> **HINT:** If something goes wrong make clean, install, build.
 
 ### Build Host on Docker
 
@@ -363,13 +363,13 @@ sequence: kill
 
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
-> **HINT:** If something goes wrong run clean, build and prepack.
+> **HINT:** If something goes wrong run clean, build.
 
 Copy and paste 🤞
 
-  ```bash
-  lerna run clean && lerna run build && lerna run prepack
-  ```
+```bash
+yarn clean && yarn build
+```
 
 ## How to run tests
 
@@ -417,7 +417,7 @@ BDD tests are located in a `bdd` folder, to execute them simply follow the steps
 - start with:
 
 ```bash
-yarn clean && yarn install && yarn build:all && yarn prepack && yarn packseq
+yarn clean && yarn install && yarn build:all && yarn packseq
 ```
 
 Remeber if you want to test core dump file you must set ```echo '/cores/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern``` on your linux machine.
