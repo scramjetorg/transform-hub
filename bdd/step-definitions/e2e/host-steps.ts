@@ -309,8 +309,8 @@ When("instance health is {string}", async (expectedResp: string) => {
     assert.equal(healthy, expectedResp);
 });
 
-When("send stdin to instance with contents of file {string}", { timeout: 200000 }, async (filePath: string) => {
-    console.log("filePath = ", filePath);
+When("send stdin to instance with contents of file {string}", async (filePath: string) => {
+
     await instance?.sendStream("stdin", createReadStream(filePath));
 });
 
