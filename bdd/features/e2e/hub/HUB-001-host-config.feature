@@ -85,6 +85,7 @@ Feature: Host configuration
         And wait for "5000" ms
         And get last container info
         And last container uses "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7" image
+        And end fake stream
         * exit hub process
 
     @ci @starts-host
@@ -95,6 +96,7 @@ Feature: Host configuration
         And wait for "5000" ms
         And get last container info
         Then last container memory limit is 64
+        And end fake stream
         * exit hub process
 
 

@@ -125,13 +125,21 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
 
     this.resources.pkgFake = new PassThrough();
 
-    this.resources.sequenceSendPromise = hostClient.sendSequence(
-        this.resources.pkgFake as unknown as ReadStream
-    ).catch(/* ignore */);
+    try {
+        this.resources.sequenceSendPromise = hostClient.sendSequence(
+            this.resources.pkgFake as unknown as ReadStream
+        );
+    } catch {
+        /* don't care */
+    }
 
     this.resources.pkgFake.write(
         Buffer.from([0x1f8b0800000000000003])
     );
+});
+
+Then("end fake stream", async function(this: CustomWorld) {
+    this.resources.pkgFake.end();
 });
 
 Then("get last container info", async function(this: CustomWorld) {
