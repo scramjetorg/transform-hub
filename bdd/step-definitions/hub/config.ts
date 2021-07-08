@@ -128,7 +128,7 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
     try {
         this.resources.sequenceSendPromise = hostClient.sendSequence(
             this.resources.pkgFake as unknown as ReadStream
-        );
+        ).catch(() => undefined);
     } catch {
         /* don't care */
     }
@@ -136,6 +136,8 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
     this.resources.pkgFake.write(
         Buffer.from([0x1f8b0800000000000003])
     );
+
+
 });
 
 Then("end fake stream", async function(this: CustomWorld) {
