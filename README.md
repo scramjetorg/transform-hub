@@ -80,7 +80,8 @@ See `si help` for more information. Also you will need to get an [API key for th
 - [How to run tests](#how-to-run-tests)
   - [Unit tests](#unit-tests)
   - [BDD tests](#bdd-tests)
-- [Publish](#publish)
+- [Publishing](#publishing)
+- [License and contributions](#license-and-contributions)
 
 ## Intro
 
@@ -475,7 +476,7 @@ lerna success - @scramjet/types
 Done in 26.66s.
 ```
 
-## Publish
+## Publishing
 
 To perform full publishing of packages with build and install, perform
 the following commands:
@@ -488,3 +489,23 @@ yarn build:all-packages    # build all packages
 yarn bump:version          # bump version and docker images prior to publishing
 yarn bump:postversion      # prepare dist folder, publish packages from dist, push git tags
 ```
+
+## License and contributions
+
+This project is licensed dual licensed under the AGPL-3.0 and MIT licences. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
+
+We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
+
+We provide support for contributions via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in [`bdd` directory](./bdd).
+
+### Help wanted
+
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](opensource@scramjet.org).
+
+### Donation
+
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ;)
+
+[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
+
+* There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)

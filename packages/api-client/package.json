@@ -14,7 +14,7 @@
     "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
-  "license": "AGPL-3.0",
+  "license": "MIT",
   "dependencies": {
     "@scramjet/logger": "^0.10.0-pre.10",
     "@scramjet/model": "^0.10.0-pre.10",
