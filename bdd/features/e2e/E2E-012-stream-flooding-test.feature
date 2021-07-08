@@ -13,7 +13,7 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         And wait for "5000" ms
         And send event "test-event" to instance with message "test message"
         And wait for "5000" ms
-        Then get event from instance
+        Then get event "test-event-response" from instance
         When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
         And send kill message to instance
@@ -31,7 +31,7 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         And get containerId
         And instance health is "true"
         And wait for "6000" ms
-        Then get event from instance
+        Then get event "test-event-response" from instance
         When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
         And send kill message to instance
