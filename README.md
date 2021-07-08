@@ -89,15 +89,15 @@ The readme file contains information about the development process of the STH. I
 
 ## The basics
 
-Scramjet Transform Hub allows you to deploy and execure programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple important things:
+Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
 
 * The program should consist of a function or an array of functions, such a program is called a **Transform Sequence**.
 * The sequence will be executed within a separate docker instance (we're working on other execution environment integrations - help will be appreciated).
 * The sequence function will receive a stream as input in the first argument - you can send the data to it via the command `si instance input`.
 * If your sequence contains more than one function, then the output from the previous one is passed to the next one. The first function in sequence receives the input from API.
 * The last (or the only) function in sequence can return a `Promise` or a `Stream` - based on this, STH will know when processing is done.
-* Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the sequence and remove it's container.
-* You can communicate with the server via API, command line client `si` which we wrote for your convienience.
+* Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the sequence and remove its container.
+* You can communicate with the server via API, command line client `si` which we wrote for your convenience.
 * The sequence is called with an AppContext as `this`, a class that allows you to communicate back from the sequence: send logs, provide health info, send and receive events from the API or CLI.
 * You can run your sequence multiple times with different arguments (like for instance currency tickers with different symbols or sensor data readers for each sensor)
 * The program does not leave your server and doesn't use any external systems. It runs on the server you install the host on.
@@ -113,7 +113,7 @@ Some important links:
 
 ## How to start development
 
-If you want to help out, we're happy to accept pull requests. Please follow the below information to start development.
+If you want to help out, we're happy to accept your pull requests. Please follow the below information to start development.
 
 ```bash
 git clone git@github.com:scramjetorg/transform-hub.git      # clone the repo
