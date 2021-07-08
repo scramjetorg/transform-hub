@@ -4,7 +4,8 @@
   "description": "Scramjet STH Excecutable",
   "main": "src/lib/index.ts",
   "bin": {
-    "scramjet-transform-hub": "src/bin/hub.ts"
+      "scramjet-transform-hub": "src/bin/hub.ts",
+      "sth": "src/bin/hub.ts"
   },
   "scripts": {
     "start": "ts-node ./src/index",

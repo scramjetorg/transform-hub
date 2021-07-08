@@ -1317,7 +1317,7 @@
   resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
   integrity sha1-7ihweulOEdK4J7y+UnC86n8+ce4=
 
-"@types/minimatch@^3.0.3":
+"@types/minimatch@^3.0.3", "@types/minimatch@^3.0.4":
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.4.tgz#f0ec25dbf2f0e4b18647313ac031134ca5b24b21"
   integrity sha512-1z8k4wzFnNjVK/tlxvrWuK5WMt6mydWWP7+zvH5eFep4oj+UkrfiJTRtjCeBXNpwaA/FYqqtb4/QS4ianFpIRA==
@@ -1326,6 +1326,13 @@
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/@types/minimist/-/minimist-1.2.1.tgz#283f669ff76d7b8260df8ab7a4262cc83d988256"
   integrity sha512-fZQQafSREFyuZcdWFAExYjBiCL7AUCdgsk80iO0q4yihYYdcIiH28CcuPTGFgLOCC8RlW49GSQxdHwZP+I7CNg==
+
+"@types/minipass@*":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@types/minipass/-/minipass-2.2.0.tgz#51ad404e8eb1fa961f75ec61205796807b6f9651"
+  integrity sha512-wuzZksN4w4kyfoOv/dlpov4NOunwutLA/q7uc00xU02ZyUY+aoM5PWIXEKBMnm0NHd4a+N71BMjq+x7+2Af1fg==
+  dependencies:
+    "@types/node" "*"
 
 "@types/node@*", "@types/node@15.12.5":
   version "15.12.5"
@@ -1358,6 +1365,14 @@
   integrity sha512-BHn8Bpkapj8Wdfxvh2jWIUoaYB/9/XhsL0oOvBfRagJtKlSl9NWPcFOz2lRukI9szwGxFtYZCTejJSqsGDbdmw==
   dependencies:
     "@sinonjs/fake-timers" "^7.1.0"
+
+"@types/tar@^4.0.4":
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/@types/tar/-/tar-4.0.4.tgz#d680de60855e7778a51c672b755869a3b8d2889f"
+  integrity sha512-0Xv+xcmkTsOZdIF4yCnd7RkOOyfyqPaqJ7RZFKnwdxfDbkN3eAAE9sHl8zJFqBz4VhxolW9EErbjR1oyH7jK2A==
+  dependencies:
+    "@types/minipass" "*"
+    "@types/node" "*"
 
 "@types/trouter@^3.1.0":
   version "3.1.0"
@@ -6406,7 +6421,7 @@ scramjet-core@^4.31.19:
   resolved "https://registry.yarnpkg.com/scramjet-core/-/scramjet-core-4.31.19.tgz#ac69687c792abae40ab1a4bedc2cdca7a1f814ec"
   integrity sha512-/rmtiNw7CY2xLKCm7qBc7RwToltdZ+0MpLaS7XCdPAjMwheKT3+Jbu/r708DryySQypy2IKJQkUx5kx7b2qkeg==
 
-scramjet@4.35.20:
+scramjet@4.35.20, scramjet@^4.35.20:
   version "4.35.20"
   resolved "https://registry.yarnpkg.com/scramjet/-/scramjet-4.35.20.tgz#acce89a4d4419af3b8dd0d5dde95eaef2d839665"
   integrity sha512-Lnj3Js/y07VsaQM2vhMkNHl51jRHucnpAOPE55Ug3B6mo3CtPdO+DEpCsaV97u0ZBXcxWIbR9DN4SPftcAprDw==

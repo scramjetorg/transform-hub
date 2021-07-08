@@ -8,8 +8,10 @@ import { MaybePromise } from "./utils";
 export type ParsedMessage = IncomingMessage & { body?: any, params: { [key: string]: any} | undefined};
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
-export type StreamInput = ((req: IncomingMessage) => MaybePromise<Readable>) | MaybePromise<Readable>;
-export type StreamOutput = ((req: IncomingMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
+export type StreamInput =
+    ((req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>) | MaybePromise<Readable>;
+export type StreamOutput =
+    ((req: IncomingMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
 export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
 
@@ -75,7 +77,14 @@ export interface APIBase {
      * @param conn the communication handler to use
      */
     get<T extends MonitoringMessageCode>(
-        path: string | RegExp, msg: GetResolver | T, conn?: ICommunicationHandler): void;
+        path: string | RegExp, msg: T, conn: ICommunicationHandler): void;
+    /**
+     * Alternative GET request hook with dynamic resolution
+     *
+     * @param path the request path as string or regex
+     * @param op which operation
+     */
+     get(path: string | RegExp, msg: GetResolver): void;
     /**
      * A method that allows to pass a stream to the specified path on the API server
      *

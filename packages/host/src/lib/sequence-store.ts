@@ -40,7 +40,7 @@ export class SequenceStore implements ISequenceStore {
         this.logger.log("New sequence added:", sequence.id);
     }
 
-    async delete(id: string): Promise<{ opStatus: ReasonPhrases, error?: string }> {
+    async delete(id: string): Promise<{ opStatus: ReasonPhrases, error?: string, id?:string }> {
         if (!id) {
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST
@@ -77,7 +77,8 @@ export class SequenceStore implements ISequenceStore {
             this.logger.log("Volume removed:", volumeId);
 
             return {
-                opStatus: ReasonPhrases.OK
+                opStatus: ReasonPhrases.OK,
+                id
             };
         } catch (error) {
             this.logger.error("Error removing sequence!", error);

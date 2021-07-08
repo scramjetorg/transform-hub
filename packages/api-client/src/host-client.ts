@@ -1,73 +1,63 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { Readable } from "stream";
+import { ClientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
-import { clientUtils } from "./client-utils";
-import { ReadStream } from "fs";
-import { AxiosError } from "axios";
+import { ClientProvider } from "./types";
 
-export class HostClient {
+export class HostClient implements ClientProvider {
     apiBase: string;
+    client: ClientUtils;
 
-    constructor(apiBase: string) {
+    constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
         this.apiBase = apiBase.replace(/\/$/, "");
-        clientUtils.init(apiBase);
+
+        this.client = utils;
     }
 
-    listSequences() {
-        return clientUtils.get("sequences");
+    async listSequences() {
+        return await this.client.get("sequences");
     }
 
-    listInstances() {
-        return clientUtils.get("instances");
+    async listInstances() {
+        return await this.client.get("instances");
     }
 
     // TODO: Dedicated log stream for host not yet implemented.
-    getLogStream() {
-        return clientUtils.getStream("log");
+    async getLogStream() {
+        return await this.client.getStream("stream/log");
     }
 
-    async sendSequence(sequencePackage: ReadStream): Promise<SequenceClient> {
-        const response = await clientUtils.post("sequence", sequencePackage, {
+    async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
+        const response = await this.client.post("sequence", sequencePackage, {
             "content-type": "application/octet-stream"
-        }).catch((error: AxiosError) => {
-            return {
-                ...error.response
-            };
         });
 
-        if (response.data?.error || !response.data?.id) {
-            console.error(response.data?.error);
-            throw new Error("Sequence upload failed");
-        }
-
-        return SequenceClient.from(response.data?.id);
+        return SequenceClient.from(response.data?.id, this);
     }
 
-    getSequence(sequenceId: string) {
-        return clientUtils.get(`sequence/${sequenceId}`);
+    async getSequence(sequenceId: string) {
+        return await this.client.get(`sequence/${sequenceId}`);
     }
 
     async deleteSequence(sequenceId: string) {
-        const response = await clientUtils.delete(`sequence/${sequenceId}`).catch((error: AxiosError) => {
-            return {
-                ...error.response
-            };
-        });
+        const response = await this.client.delete(`sequence/${sequenceId}`);
 
-        if (response.data?.error) {
-            console.error(response.data?.error);
-            throw new Error("Sequence delete failed");
-        }
+        return {
+            data: response.data,
+            status: response.status
+        };
     }
 
-    getInstance(instanceId: string) {
-        return clientUtils.get(`instance/${instanceId}`);
+    // REVIEW: move this to InstanceClient..getInfo()?
+    async getInstanceInfo(instanceId: string) {
+        return this.client.get(`instance/${instanceId}`);
     }
 
-    getLoadCheck() {
-        return clientUtils.get("load-check");
+    async getLoadCheck() {
+        return this.client.get("load-check");
     }
 
-    getVersion() {
-        return clientUtils.get("version");
+    async getVersion() {
+        return this.client.get("version");
     }
 }

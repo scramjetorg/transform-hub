@@ -1,4 +1,4 @@
-import { StreamInput } from "@scramjet/types";
+import { ParsedMessage, StreamInput } from "@scramjet/types";
 import { ServerResponse, IncomingMessage } from "http";
 import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";
@@ -21,6 +21,7 @@ export async function getWritable(object: any, req: IncomingMessage, res: Server
 
 export async function getStream(
     req: IncomingMessage,
+    res: ServerResponse,
     stream: StreamInput
 ): Promise<Readable> {
     if (!stream)
@@ -29,9 +30,9 @@ export async function getStream(
     else if (typeof (stream as Readable).readable === "boolean")
         return stream as Readable;
     else if (stream instanceof Promise)
-        return getStream(req, await stream);
+        return getStream(req, res, await stream);
     else if (typeof stream === "function")
-        return getStream(req, await stream(req));
+        return getStream(req, res, await stream(req as ParsedMessage, res));
 
     throw new CeroError("ERR_FAILED_FETCH_DATA");
 }

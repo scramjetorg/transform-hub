@@ -4,7 +4,10 @@ import { ChildProcess, spawn } from "child_process";
 import { SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 
-const hostExecutableFilePath = "../dist/host/bin/start.js";
+const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
+    ? ["npx", "ts-node", "../packages/sth/src/bin/hub.ts"]
+    : ["node", "../dist/sth/bin/hub.js"]
+;
 
 export class HostUtils {
     hostProcessStopped = false;
@@ -45,12 +48,17 @@ export class HostUtils {
     async spawnHost() {
         if (this.hostUrl) {
             console.error("Host is supposedly running at", this.hostUrl);
+            const hostClient = new HostClient(this.hostUrl);
 
             assert.equal(
-                (await new HostClient(this.hostUrl).getLoadCheck()).status, // TODO: change to version and log it
+                (await hostClient.getLoadCheck()).status, // TODO: change to version and log it
                 200,
                 "Remote host doesn't respond"
             );
+            // TODO: Consider this, but needs testing.
+            // if (process.env.SCRAMJET_TEST_LOG) {
+            //     (await hostClient.getLogStream()).data?.pipe(process.stderr);
+            // }
 
             return Promise.resolve();
         }
@@ -58,7 +66,7 @@ export class HostUtils {
         return new Promise<void>((resolve) => {
             console.error("Spawning host...");
 
-            const command: string[] = ["node", hostExecutableFilePath];
+            const command: string[] = hostExecutableCommand;
 
             this.host = spawn("/usr/bin/env", command);
 

@@ -4,7 +4,8 @@ import { Logger, ReadableApp } from "@scramjet/types";
 import { Server } from "net";
 import { Socket } from "dgram";
 
-const ports = [17006, 17007, 17008, 17009];
+const portsTCP = [17006, 17007];
+const portsUDP = [17008, 17009];
 const servers: (Server | Socket)[] = [];
 const output = new PassThrough();
 const dgram = require("dgram");
@@ -16,7 +17,7 @@ const createTCPServers = (logger: Logger): (Server | Socket)[] => {
 
     let server;
 
-    ports.forEach(function(port) {
+    portsTCP.forEach(function(port) {
         server = net.createServer();
 
         server.on("close", function() {
@@ -63,7 +64,7 @@ const createTCPServers = (logger: Logger): (Server | Socket)[] => {
 };
 const createUDPServers = (logger: Logger): (Server | Socket)[] => {
 
-    ports.forEach(function(port) {
+    portsUDP.forEach(function(port) {
 
         const server = dgram.createSocket("udp4");
 

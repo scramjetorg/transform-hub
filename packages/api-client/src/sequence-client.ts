@@ -1,55 +1,56 @@
 import { IDProvider } from "@scramjet/model";
-import { clientUtils } from "./client-utils";
+import { ClientError } from "./client-error";
 import { InstanceClient } from "./instance-client";
+import { ClientProvider, HttpClient } from "./types";
 
 export class SequenceClient {
     private _id: string;
     private sequenceURL: string;
+    private host: ClientProvider;
 
     public get id(): string {
         return this._id;
     }
 
-    static from(id: string): SequenceClient {
-        return new this(id);
+    private get clientUtils(): HttpClient {
+        return this.host.client;
     }
 
-    private constructor(id: string) {
+    static from(id: string, host: ClientProvider): SequenceClient {
+        return new this(id, host);
+    }
+
+    private constructor(id: string, host: ClientProvider) {
         if (!IDProvider.isValid(id)) {
-            throw new Error("Invalid id.");
+            throw new Error(`Invalid id: ${id}`);
         }
 
         this._id = id;
+        this.host = host;
         this.sequenceURL = `sequence/${id}`;
-
-        console.log("New sequence:", this.id);
     }
 
-    async start(appConfig: any, args: any): Promise<InstanceClient | undefined> {
-        const response = await clientUtils.post(
-            `${this.sequenceURL}/start`, {
-                appConfig,
-                args
-            }
+    async start(appConfig: any, args: any): Promise<InstanceClient> {
+        const response = await this.clientUtils.post(
+            `${this.sequenceURL}/start`, { appConfig, args }
         );
 
         if (response.data?.id) {
-            return InstanceClient.from(response.data.id);
+            return InstanceClient.from(response.data.id, this.host);
         }
-
-        return undefined;
+        throw new ClientError("INVALID_RESPONSE", "Response did not include instance id.");
     }
 
     async listInstances() {
-        return clientUtils.get(`${this.sequenceURL}/instances`);
+        return this.clientUtils.get(`${this.sequenceURL}/instances`);
     }
 
-    async getInstance(id: string) {
-        return InstanceClient.from(id);
+    async getInstance(id: string, host: ClientProvider) {
+        return InstanceClient.from(id, host);
     }
 
     async getInfo() {
-        return clientUtils.get(this.sequenceURL);
+        return this.clientUtils.get(this.sequenceURL);
     }
 
     async overwrite() {

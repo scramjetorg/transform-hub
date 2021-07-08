@@ -29,5 +29,7 @@ function getActualName(nameSource: any): string {
  * @returns the resulting string
  */
 export function getName(item: any) {
-    return getActualName(item).replace(/\r?\n[\s\S]*$/g, "").replace(/[\s]+/g, ":");
+    const id = item?.id ? `:${item.id}` : "";
+
+    return `${getActualName(item)}${id}`.replace(/\r?\n[\s\S]*$/g, "").replace(/[\s]+/g, ":");
 }

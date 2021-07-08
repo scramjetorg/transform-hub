@@ -13,7 +13,7 @@
     "watch": "tsc -b --watch",
     "test": "echo no tests yet -- # npm run test:ava",
     "test:ava": "ava",
-    "preinstall": "tar --version",
+    "preinstall": "tar --version 2>&1 >/dev/null",
     "prepack": "node ../../scripts/publish.js",
     "postbuild": "yarn prepack"
   },
@@ -21,7 +21,10 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/api-client": "0.10.0-pre.10",
-    "commander": "^8.0.0"
+    "commander": "^8.0.0",
+    "minimatch": "^3.0.4",
+    "scramjet": "^4.35.20",
+    "tar": "^6.1.0"
   },
   "devDependencies": {
     "@types/node": "15.12.5",
@@ -29,7 +32,9 @@
     "ts-node": "^10.0.0",
     "typedoc": "0.21.2",
     "typedoc-plugin-markdown": "3.10.2",
-    "typescript": "^4.3.4"
+    "typescript": "^4.3.4",
+    "@types/minimatch": "^3.0.4",
+    "@types/tar": "^4.0.4"
   },
   "ava": {
     "extensions": [

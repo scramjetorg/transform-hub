@@ -161,9 +161,7 @@ export class Host implements IComponent {
 
         this.logger.log("Deleting sequence: ", id);
 
-        return {
-            opStatus: (await this.sequencesStore.delete(id)).opStatus
-        };
+        return await this.sequencesStore.delete(id);
     }
 
     async identifyExistingSequences() {
@@ -260,7 +258,7 @@ export class Host implements IComponent {
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
-        const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler, this.logger);
+        const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler);
 
         this.logger.log("New CSIController created: ", id);
 
@@ -299,6 +297,8 @@ export class Host implements IComponent {
     }
 
     getSequence(id: string) {
+        if (!this.sequencesStore.getById(id))
+            throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
         return this.sequencesStore.getById(id);
     }
 

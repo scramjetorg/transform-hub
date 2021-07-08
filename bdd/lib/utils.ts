@@ -2,7 +2,7 @@
 import * as fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
-import { exec } from "child_process";
+import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 
 const lineByLine = require("n-readlines");
@@ -113,4 +113,37 @@ export async function removeFile(filePath: any) {
     } catch {
         return 0;
     }
+}
+
+export async function getStreamsFromSpawn(
+    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+): Promise<[string, string, any]> {
+
+    if (process.env.SCRAMJET_TEST_LOG) console.error("Spawning command", command, ...options);
+
+    const child = spawn(command, options, {
+        env
+    });
+    const [stdout, stderr, statusCode] = await Promise.all([
+        streamToString(child.stdout),
+        streamToString(child.stderr),
+        new Promise((res, rej) => {
+            child.on("error", rej);
+            child.on("exit", res);
+        })
+    ]);
+
+    return [stdout, stderr, statusCode];
+
+}
+
+export async function getStreamsFromSpawnSuccess(
+    command: string, options: string[], env: NodeJS.ProcessEnv = process.env
+): Promise<[string, string]> {
+    const [stdout, stderr, code] = await getStreamsFromSpawn(command, options, env);
+
+    if (process.env.SCRAMJET_TEST_LOG) console.error("Results", { stdout, stderr });
+    if (code) throw new Error(`Non zero exit code: ${code}`);
+
+    return [stdout, stderr];
 }
