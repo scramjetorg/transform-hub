@@ -21,7 +21,7 @@
     "build:refapps": "tsc -p tsconfig.json",
     "postbuild:refapps": "yarn prepack"
   },
-  "author": "",
+  "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
     "@scramjet/types": "0.10.0-pre.10",
