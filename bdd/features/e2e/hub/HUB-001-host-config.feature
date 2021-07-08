@@ -62,6 +62,7 @@ Feature: Host configuration
         When hub process is started with parameters ""
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
+        And wait for "2000" ms
         And get runner container information
         Then container uses image defined in sth-config
         * exit hub process
@@ -71,6 +72,7 @@ Feature: Host configuration
         When hub process is started with parameters "--runner-max-mem 128"
         And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
+        And wait for "2000" ms
         And get runner container information
         Then container memory limit is 128
         * exit hub process
