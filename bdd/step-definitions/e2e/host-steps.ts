@@ -314,7 +314,7 @@ When("send stdin to instance with contents of file {string}", async (filePath: s
     await instance?.sendStream("stdin", createReadStream(filePath));
 });
 
-When("I try to flood the stdin stream with {int} kilobytes", async function(kbytes: number) {
+When("flood the stdin stream with {int} kilobytes", async function(kbytes: number) {
     let i = 0;
 
     await new Promise<void>((res, rej) => {

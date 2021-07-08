@@ -9,7 +9,7 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         And get instance health
         And get containerId
         And instance health is "true"
-        When I try to flood the stdin stream with 11000 kilobytes
+        When flood the stdin stream with 11000 kilobytes
         And wait for "5000" ms
         And send event "test-event" to instance with message "test message"
         And wait for "5000" ms
