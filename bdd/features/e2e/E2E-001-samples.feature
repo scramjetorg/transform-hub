@@ -41,7 +41,7 @@ Feature: Sample e2e tests
         And get containerId
         And instance health is "true"
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
-        And wait for "2000" ms
+        And wait for "4000" ms
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         And container is closed
