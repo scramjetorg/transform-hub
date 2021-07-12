@@ -1,7 +1,9 @@
-import axios, { AxiosResponse } from "axios";
+/* eslint-disable no-console */
+import fetch, { FetchError, Response as FetchReponse } from "node-fetch";
 import { Stream } from "stream";
 import { ClientError } from "./client-error";
 import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions } from "./types";
+
 
 export class ClientUtils implements HttpClient {
     apiBase: string = "";
@@ -15,8 +17,8 @@ export class ClientUtils implements HttpClient {
         this.log = logger;
     }
 
-    private safeRequest(_resp: Promise<AxiosResponse>): typeof _resp {
-        const resp = _resp.catch(e => Promise.reject(ClientError.from(e)));
+    private safeRequest(_resp: Promise<FetchReponse>): typeof _resp {
+        const resp = _resp.catch((e: FetchError) => Promise.reject(ClientError.from(e)));
 
         if (this.log) {
             const log = this.log;
@@ -31,56 +33,54 @@ export class ClientUtils implements HttpClient {
     }
 
     async get(url: string): Promise<Response> {
-        return this.safeRequest(axios.get(`${this.apiBase}/${url}`, {
-            headers: {
-                Accept: "*/*"
-            }
-        }));
+        return this.safeRequest(
+            fetch(`${this.apiBase}/${url}`)
+        ).then(async (response) => ({ data: await response.json(), status: response.status }));
     }
 
     async getStream(url: string): Promise<ResponseStream> {
-        return this.safeRequest(axios({
-            method: "GET",
-            url: `${this.apiBase}/${url}`,
-            headers: {
-                Accept: "*/*"
-            },
-            responseType: "stream"
-        }))
+        return this.safeRequest(
+            fetch(`${this.apiBase}/${url}`)
+        )
             .then((d) => {
                 return {
                     status: d.status,
-                    data: d.data
+                    data: d.body
                 };
-            })
-        ;
+            });
     }
 
-    async post(url: string, data: any, headers: Headers = {}): Promise<Response> {
-        return this.safeRequest(axios({
-            method: "POST",
-            url: `${this.apiBase}/${url}`,
-            data,
-            headers
-        }))
-            .then(res => ({
+    async post(url: string, data: any, headers: Headers = {}, config = { json: false }): Promise<Response> {
+        if (config.json) {
+            headers["Content-Type"] = "application/json";
+            data = JSON.stringify(data);
+        }
+
+        return this.safeRequest(
+            fetch(`${this.apiBase}/${url}`, {
+                method: "post",
+                body: data,
+                headers
+            })
+        )
+            .then(async (res) => ({
                 status: res.status,
-                data: res.data
-            }))
-        ;
+                data: await res.json().catch(() => { /**/ })
+            }));
     }
 
     async delete(url: string): Promise<Response> {
-        return this.safeRequest(axios.delete(
-            `${this.apiBase}/${url}`, {
+        return this.safeRequest(
+            fetch(`${this.apiBase}/${url}`, {
+                method: "delete",
                 headers: {
                     "Content-Type": "application/json"
                 }
-            }))
+            })
+        )
             .then((res) => ({
                 status: res.status
-            }))
-        ;
+            }));
     }
 
     async sendStream(

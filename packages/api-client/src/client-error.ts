@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import { FetchError } from "node-fetch";
 
 export type ClientErrorCode =
     "GENERAL_ERROR" |
@@ -15,7 +15,7 @@ export type ClientErrorCode =
     ;
 
 export class ClientError extends Error {
-    reason?: AxiosError;
+    reason?: FetchError;
     code: string;
 
     constructor(code: ClientErrorCode, reason?: Error | string, message?: string) {
@@ -23,15 +23,15 @@ export class ClientError extends Error {
 
         this.code = code;
         if (reason instanceof Error) {
-            this.reason = reason as AxiosError;
+            this.reason = reason as FetchError;
         }
     }
 
     // eslint-disable-next-line complexity
-    static from(error: Error | AxiosError, message?: string): ClientError {
+    static from(error: Error | FetchError, message?: string): ClientError {
         if (error instanceof ClientError) {
             return error;
-        } else if ("isAxiosError" in error && error.isAxiosError) {
+        } else if (error instanceof FetchError) {
             if (error.code) {
                 if (error.code === "400") return new this("BAD_PARAMETERS", error, message);
                 if (error.code === "401") return new this("NEED_AUTHENTICATION", error, message);

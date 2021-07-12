@@ -51,19 +51,18 @@ BeforeAll({ timeout: 10e3 }, async () => {
         hostClient.client.addLogger({
             ok(result) {
                 const {
-                    status, statusText, config: { url, method }
+                    status, statusText, url
                 } = result;
 
                 // eslint-disable-next-line no-console
-                console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
+                console.error("Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error) {
                 const { code, reason: result } = error;
-                const { status, statusText } = result?.response || {};
-                const { url, method } = result?.config || {};
+                const { message } = result || {};
 
                 // eslint-disable-next-line no-console
-                console.error(`Request ${method} "${url}" failed with code "${code}" status: ${status} ${statusText}`);
+                console.error(`Request failed with code "${code}" status: ${message}`);
             }
         });
     }
@@ -78,7 +77,6 @@ AfterAll(async () => {
         throw new Error("Host unexpected closed");
     }
 });
-
 
 Before(() => {
     actualHealthResponse = "";
@@ -117,18 +115,18 @@ When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string)
     console.log("Package successfuly loaded, sequence started.");
 });
 
-When("instance started", async function(this: CustomWorld) {
+When("instance started", async function (this: CustomWorld) {
     instance = await sequence.start({}, ["/package/data.json"]);
     this.resources.instance = instance;
 });
 
-const startWith = async function(this: CustomWorld, instanceArg: string) {
+const startWith = async function (this: CustomWorld, instanceArg: string) {
     instance = await sequence.start({}, instanceArg.split(" "));
     this.resources.instance = instance;
 };
 const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 
-When("instance started with url from assets argument {string}", { timeout: 25000 }, async function(this: CustomWorld, assetUrl: string) {
+When("instance started with url from assets argument {string}", { timeout: 25000 }, async function (this: CustomWorld, assetUrl: string) {
     return startWith.call(this, `${assetsLocation}${assetUrl}`);
 });
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
@@ -314,7 +312,7 @@ When("send stdin to instance with contents of file {string}", async (filePath: s
     await instance?.sendStream("stdin", createReadStream(filePath));
 });
 
-When("keep instance streams {string}", async function(streamNames) {
+When("keep instance streams {string}", async function (streamNames) {
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!instance) assert.fail("Instance not existent");
 
@@ -331,12 +329,12 @@ Then("kept instance stream {string} should be {string}", async (streamName, _exp
 });
 
 // ? When I get version
-When("I get version", async function() {
+When("I get version", async function () {
     actualApiResponse = await hostClient.getVersion();
 });
 
 // ? Then it returns the root package version
-Then("it returns the root package version", function() {
+Then("it returns the root package version", function () {
     // Write code here that turns the phrase above into concrete actions
     assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
     console.log(actualApiResponse.data, version);
@@ -344,14 +342,14 @@ Then("it returns the root package version", function() {
 });
 
 // ? When I get load-check
-When("I get load-check", async function() {
+When("I get load-check", async function () {
     // Write code here that turns the phrase above into concrete actions
     actualApiResponse = await hostClient.getLoadCheck();
 });
 
 // ? Then it returns a correct load check with required properties
 
-Then("it returns a correct load check with required properties", function() {
+Then("it returns a correct load check with required properties", function () {
     // Write code here that turns the phrase above into concrete actions
     const { data } = actualApiResponse;
 
@@ -418,6 +416,6 @@ When("instance is finished", async () => {
     console.log("Instance porcess has finished.");
 });
 
-When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
+When("stop instance", { timeout: 60 * 1000 }, async function (this: CustomWorld) {
     await instance?.stop(0, false);
 });

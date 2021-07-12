@@ -21,19 +21,18 @@ export const getHostClient = (program: Command) => {
         hostClient.client.addLogger({
             ok(result) {
                 const {
-                    status, statusText, config: { url, method }
+                    status, statusText, url
                 } = result;
 
                 // eslint-disable-next-line no-console
-                console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
+                console.error("Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error) {
                 const { code, reason: result } = error;
-                const { status, statusText } = result?.response || {};
-                const { url, method } = result?.config || {};
+                const { message } = result || {};
 
                 // eslint-disable-next-line no-console
-                console.error(`Request ${method} "${url}" failed with code "${code}" status: ${status} ${statusText}`);
+                console.error(`Request failed with code "${code}" status: ${message}`);
             }
         });
     return hostClient;
@@ -59,7 +58,7 @@ export const getIgnoreFunction = async (file: PathLike) => {
     const rules: ReturnType<typeof mmfilter>[] =
         await StringStream.from(createReadStream(file))
             .lines()
-            .filter((line:string) => line.substr(0, line.indexOf("#")).trim() === "")
+            .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
             .parse((line: string) => mmfilter(line))
             .catch(() => undefined)
             .toArray()
