@@ -64,9 +64,11 @@ export class HostUtils {
         }
 
         return new Promise<void>((resolve) => {
-            console.error("Spawning host...");
-
             const command: string[] = hostExecutableCommand;
+
+            if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
+            if (process.env.LOCAL_HOST_SOCKET_PATH) command.push("-S", process.env.LOCAL_HOST_SOCKET_PATH);
+            if (process.env.SCRAMJET_TEST_LOG) console.error("Spawning with command:", ...command);
 
             this.host = spawn("/usr/bin/env", command);
 

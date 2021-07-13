@@ -635,10 +635,6 @@
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@lerna/gitlab-client/-/gitlab-client-4.0.0.tgz#00dad73379c7b38951d4b4ded043504c14e2b67d"
   integrity sha512-OMUpGSkeDWFf7BxGHlkbb35T7YHqVFCwBPSIR6wRsszY8PAzCYahtH3IaJzEJyUg6vmZsNl0FSr3pdA2skhxqA==
-  dependencies:
-    node-fetch "^2.6.1"
-    npmlog "^4.1.2"
-    whatwg-url "^8.4.0"
 
 "@lerna/global-options@4.0.0":
   version "4.0.0"
@@ -3386,6 +3382,11 @@ frame-stream@^2.0.3:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/frame-stream/-/frame-stream-2.1.0.tgz#571a4b009975499b456b6d8c6ab464f0cb77fbfb"
   integrity sha512-EFeq3xo+oXi2zmpwzK3cN84iIPp7gR8dZS8VZXd4kcBtjct1Br8VDsfib235pWo4VrBO/LxT5lGHbxvX+XgSUQ==
+
+freeport@^1.0.5:
+  version "1.0.5"
+  resolved "https://repo.int.scp.ovh/repository/npm-all/freeport/-/freeport-1.0.5.tgz#255e8ab84170c33ba85d990e821ae5f4a1a9bc5d"
+  integrity sha1-JV6KuEFwwzuoXZkOghrl9KGpvF0=
 
 fromentries@^1.2.0:
   version "1.3.2"

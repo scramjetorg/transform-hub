@@ -14,12 +14,13 @@ import { CustomWorld } from "../world";
 import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 
+const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
-const hostClient = new HostClient(process.env.SCRAMJET_HOST_BASE_URL || "http://localhost:8000/api/v1");
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
 const dockerode = new Dockerode();
 
+let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
 let actualApiResponse: Response;
@@ -31,7 +32,42 @@ let streams: { [key: string]: Promise<string | undefined> } = {};
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
+process.env.LOCAL_HOST_BASE_URL = "";
+
 BeforeAll({ timeout: 10e3 }, async () => {
+    let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+
+    if (!apiUrl) {
+        const port = await promisify(freeport)();
+
+        process.env.LOCAL_HOST_PORT = `${port}`;
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${port}/api/v1`;
+        process.env.LOCAL_HOST_SOCKET_PATH = `/tmp/scramjet-socket-server-path-${port}`;
+
+        console.error(`Starting host on port: ${port}`);
+    }
+    hostClient = new HostClient(apiUrl);
+    if (process.env.SCRAMJET_TEST_LOG) {
+        hostClient.client.addLogger({
+            ok(result) {
+                const {
+                    status, statusText, config: { url, method }
+                } = result;
+
+                // eslint-disable-next-line no-console
+                console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
+            },
+            error(error) {
+                const { code, reason: result } = error;
+                const { status, statusText } = result?.response || {};
+                const { url, method } = result?.config || {};
+
+                // eslint-disable-next-line no-console
+                console.error(`Request ${method} "${url}" failed with code "${code}" status: ${status} ${statusText}`);
+            }
+        });
+    }
+
     await hostUtils.spawnHost();
 });
 
@@ -43,27 +79,6 @@ AfterAll(async () => {
     }
 });
 
-
-if (process.env.SCRAMJET_TEST_LOG) {
-    hostClient.client.addLogger({
-        ok(result) {
-            const {
-                status, statusText, config: { url, method }
-            } = result;
-
-            // eslint-disable-next-line no-console
-            console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
-        },
-        error(error) {
-            const { code, reason: result } = error;
-            const { status, statusText } = result?.response || {};
-            const { url, method } = result?.config || {};
-
-            // eslint-disable-next-line no-console
-            console.error(`Request ${method} "${url}" failed with code "${code}" status: ${status} ${statusText}`);
-        }
-    });
-}
 
 Before(() => {
     actualHealthResponse = "";
