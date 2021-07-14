@@ -26,6 +26,10 @@ class PrePack {
             this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
         }
 
+        if (this.options.distPackDir) {
+            this.rootDistPackPath = this.options.distPackDir + "/" + this.currDir.split("/").pop();
+        }
+
         this.rootPackageJson = null;
         this.currPackageJson = null;
         this.packagesMap = null;
