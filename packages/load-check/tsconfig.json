@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist"
+    },
+    "extends": "../../tsconfig.base.json",
+    "include": [
+      "./src"
+    ],
+    "exclude": [
+        "node_modules"
+    ],
+    "typedocOptions": {
+        "entryPoints": ["src/index.ts"],
+        "out": "../../docs/load-check",
+        "plugin": "typedoc-plugin-markdown",
+        "readme": "none"
+    }
+}

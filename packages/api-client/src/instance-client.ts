@@ -37,18 +37,20 @@ export class InstanceClient {
     }
 
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {
-        return this.clientUtils.post(
-            `${this.instanceURL}/_stop`,
-            [RunnerMessageCode.STOP, { timeout, canCallKeepalive }] as EncodedControlMessage,
-            {},
-            { json: true });
+        return this.clientUtils.post(`${this.instanceURL}/_stop`, [
+            RunnerMessageCode.STOP, {
+                timeout,
+                canCallKeepalive
+            }] as EncodedControlMessage,
+        {}, { json: true });
     }
 
     async kill(): Promise<Response> {
-        return this.clientUtils.post(
-            `${this.instanceURL}/_kill`,
-            [RunnerMessageCode.KILL, {}] as EncodedControlMessage,
-            {}, { json: true }
+        return this.clientUtils.post(`${this.instanceURL}/_kill`, [
+            RunnerMessageCode.KILL,
+            {}
+        ] as EncodedControlMessage,
+        {}, { json: true }
         );
     }
 

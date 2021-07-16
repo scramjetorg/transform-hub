@@ -13,7 +13,7 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
 import { InstanceStore } from "./instance-store";
 
-import { loadCheck } from "./load-check";
+import { loadCheck } from "@scramjet/load-check";
 import { ReasonPhrases } from "http-status-codes";
 import { configService } from "@scramjet/sth-config";
 
