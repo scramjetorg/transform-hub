@@ -19,6 +19,8 @@ import { configService } from "@scramjet/sth-config";
 
 import * as findPackage from "find-package-json";
 import { constants } from "fs";
+import { CPMConnector } from "./cpm-connector";
+import { DuplexStream } from "@scramjet/api-server";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -36,6 +38,8 @@ export class Host implements IComponent {
     instanceBase: string;
 
     socketServer: SocketServer;
+    cpmConnector: CPMConnector;
+    cpmConnected = false;
 
     instancesStore = InstanceStore;
     sequencesStore: SequenceStore = new SequenceStore();
@@ -64,6 +68,8 @@ export class Host implements IComponent {
         if (this.config.host.apiBase.includes(":")) {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
         }
+
+        this.cpmConnector = new CPMConnector();
     }
 
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
@@ -98,6 +104,32 @@ export class Host implements IComponent {
 
         this.attachListeners();
         this.attachHostAPIs();
+
+        await this.connectToCPM();
+    }
+
+    async connectToCPM() {
+        return new Promise<void>(async (resolve) => {
+            this.cpmConnector.on("connect", (duplex: DuplexStream) => {
+                this.logger.log("Connected to CPM");
+                this.cpmConnected = true;
+
+                const i = setInterval(() => {
+                    duplex.write("HEllo from client");
+                }, 1000);
+
+                duplex.on("end", () => {
+                    this.logger.info("STH connection ended");
+                    clearInterval(i);
+                });
+            });
+
+            await this.cpmConnector.init();
+
+            this.cpmConnector.connect();
+
+            resolve();
+        });
     }
 
     /**

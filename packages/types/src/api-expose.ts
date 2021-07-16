@@ -1,11 +1,11 @@
-import { IncomingMessage, Server, ServerResponse } from "http";
+import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { DataStream } from "scramjet";
-import { Readable, Writable } from "stream";
+import { Duplex, Readable, Writable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";
 
-export type ParsedMessage = IncomingMessage & { body?: any, params: { [key: string]: any} | undefined};
+export type ParsedMessage = IncomingMessage & { body?: any, params: { [key: string]: any } | undefined };
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
 export type StreamInput =
@@ -84,7 +84,7 @@ export interface APIBase {
      * @param path the request path as string or regex
      * @param op which operation
      */
-     get(path: string | RegExp, msg: GetResolver): void;
+    get(path: string | RegExp, msg: GetResolver): void;
     /**
      * A method that allows to pass a stream to the specified path on the API server
      *
@@ -108,6 +108,11 @@ export interface APIBase {
         path: string | RegExp,
         stream: StreamOutput,
         config?: StreamConfig
+    ): void;
+
+    duplex(
+        path: string | RegExp,
+        callback: (stream: Duplex, headers: IncomingHttpHeaders) => void
     ): void;
 }
 
