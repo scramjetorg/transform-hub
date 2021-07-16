@@ -1,9 +1,10 @@
 import { getLogger } from "@scramjet/logger";
 import { IComponent, Logger } from "@scramjet/types";
-import { LoadCheckStat } from "@scramjet/model";
+import { defer, LoadCheckStat } from "@scramjet/model";
 
 import * as sysinfo from "systeminformation";
 import { configService } from "@scramjet/sth-config";
+import { DataStream } from "scramjet";
 
 const { safeOperationLimit, instanceRequirements } = configService.getConfig();
 const MB = 1024 * 1024;
@@ -54,6 +55,30 @@ class LoadCheck implements IComponent {
         }
 
         return isOverloaded;
+    }
+
+    async getLoadCheckStream(): Promise<DataStream> {
+        const [load, disksInfo, memInfo] = await Promise.all([
+            sysinfo.currentLoad(),
+            sysinfo.fsSize(),
+            sysinfo.mem()
+        ]);
+
+        return DataStream.from(
+            async function*(){
+                // eslint-disable-next-line no-constant-condition
+                while (true) {
+                    await defer(1000);
+                    yield {
+                        avgLoad: load.avgLoad,
+                        currentLoad: load.currentLoad || 85,
+                        memFree: memInfo.free + Math.max(0, memInfo.buffcache - SAFE_OPERATION_LIMIT),
+                        memUsed: memInfo.used,
+                        fsSize: disksInfo
+                    };
+                }
+            }
+        );
     }
 }
 
