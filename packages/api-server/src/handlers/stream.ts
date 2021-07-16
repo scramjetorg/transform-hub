@@ -6,7 +6,6 @@ import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
 
-
 function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     const types = [];
 

@@ -1,18 +1,16 @@
 import { getLogger } from "@scramjet/logger";
-import { EncodedControlMessage, Logger } from "@scramjet/types";
+import { EncodedControlMessage, Logger, STHIDMessageData } from "@scramjet/types";
 import { DuplexStream } from "@scramjet/api-server";
 import * as http from "http";
 
 import * as fs from "fs";
 import { EventEmitter, Readable } from "stream";
 import { StringStream } from "scramjet";
-import { CPMMessageCode } from "../../../symbols/src";
-import { STHIDMessageData } from "../../../types/src/messages/sth-id";
+import { CPMMessageCode } from "@scramjet/symbols";
 
 type STHInformation = {
     id?: string;
 }
-
 export class CPMConnector extends EventEmitter {
     duplex?: DuplexStream;
     logger: Logger = getLogger(this);
@@ -75,19 +73,11 @@ export class CPMConnector extends EventEmitter {
             async (response) => {
                 console.log("Connected.");
 
-                /*
-                response.on("data", (a) => {
-                    this.logger.log("Received", a.toString());
-                });
-                */
-
                 this.duplex = new DuplexStream({}, response, this.connection as http.ClientRequest);
 
                 this.connection?.on("close", () => {
                     console.log("Connection to CPM closed");
                 });
-
-                this.duplex.pipe(process.stdout);
 
                 StringStream.from(this.duplex as Readable)
                     //.lines()
