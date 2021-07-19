@@ -7,7 +7,6 @@ import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
 
 
-
 function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     const types = [];
 
@@ -55,8 +54,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
             res
                 .on("error", disconnect)
-                .on("unpipe", disconnect)
-                ;
+                .on("unpipe", disconnect);
 
             return out.pipe(res);
         } catch (e) {
@@ -156,6 +154,8 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             } catch (e) {
                 return next(new CeroError("ERR_FAILED_FETCH_DATA", e));
             }
+
+            return undefined;
         });
     };
 
