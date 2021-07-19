@@ -95,3 +95,7 @@ export type Streamable<Produces> = MaybePromise<SynchronousStreamable<Produces>>
  * @ignore
  */
 export type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;
+
+export type DeepPartial<T> = {
+    [K in keyof T]?: DeepPartial<T[K]>;
+};
