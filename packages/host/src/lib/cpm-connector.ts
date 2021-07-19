@@ -21,7 +21,7 @@ export class CPMConnector extends EventEmitter {
 
     constructor() {
         super();
-        this.infoFilePath = "/var/lib/sth/sth-id.json";
+        this.infoFilePath = "/tmp/sth-id.json";
     }
 
     async init() {
@@ -29,13 +29,16 @@ export class CPMConnector extends EventEmitter {
             this.info = await new Promise((resolve, reject) => {
                 fs.readFile(this.infoFilePath, { encoding: "utf-8" }, (err, data) => {
                     if (err) {
+                        this.logger.log("Can't read config file");
                         reject(err);
-                    }
-
-                    try {
-                        resolve(JSON.parse(data));
-                    } catch (error) {
-                        reject(error);
+                    } else {
+                        try {
+                            this.logger.log("Config file", JSON.parse(data));
+                            resolve(JSON.parse(data));
+                        } catch (error) {
+                            this.logger.log("Can't parse config file");
+                            reject(error);
+                        }
                     }
                 });
             });
@@ -89,6 +92,7 @@ export class CPMConnector extends EventEmitter {
                         if (message[0] === CPMMessageCode.STH_ID) {
                             // eslint-disable-next-line no-extra-parens
                             this.info.id = (message[1] as STHIDMessageData).id;
+                            fs.writeFileSync(this.infoFilePath, JSON.stringify(this.info));
                         }
 
                         this.logger.log("Received id: ", this.info.id);
