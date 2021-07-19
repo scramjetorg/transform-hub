@@ -18,3 +18,4 @@ export * from "./sequence";
 export * from "./sequence-store";
 export * from "./utils";
 export * from "./sth-configuration";
+export * from "./load-check-stat";

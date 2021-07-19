@@ -1,6 +1,6 @@
 import { getLogger } from "@scramjet/logger";
-import { IComponent, Logger } from "@scramjet/types";
-import { defer, LoadCheckStat } from "@scramjet/model";
+import { IComponent, Logger, LoadCheckStat } from "@scramjet/types";
+import { defer } from "@scramjet/model";
 
 import * as sysinfo from "systeminformation";
 import { configService } from "@scramjet/sth-config";

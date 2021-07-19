@@ -17,4 +17,7 @@ export enum RunnerMessageCode {
     FORCE_CONFIRM_ALIVE = 4004,
 
     EVENT = 5001,
+
+    STH_ID = 7000,
+    LOAD = 7001
 }
