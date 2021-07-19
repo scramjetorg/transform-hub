@@ -1,9 +1,10 @@
 import {
     ReadableStream,
     WritableStream,
-    PassThoughStream } from "./utils";
+    PassThoughStream
+} from "./utils";
 
-import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { RunnerMessageCode, SupervisorMessageCode, CPMMessageCode } from "@scramjet/symbols";
 
 import {
     AcknowledgeMessage,
@@ -33,6 +34,7 @@ import {
     StatusMessageData,
     MonitoringMessage
 } from "./messages";
+import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -49,6 +51,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessage :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessage :
+    T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     never
     ;
 
@@ -67,15 +70,20 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
+    T extends CPMMessageCode.STH_ID ? STHIDMessageData :
     never
     ;
 
-export type EncodedMessage<T extends RunnerMessageCode | SupervisorMessageCode> = [T, MessageDataType<T>];
+export type EncodedMessage<
+    T extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode
+    > = [T, MessageDataType<T>];
+
 export type ControlMessageCode =
     RunnerMessageCode.FORCE_CONFIRM_ALIVE | RunnerMessageCode.KILL |
     RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
-    SupervisorMessageCode.CONFIG;
+    SupervisorMessageCode.CONFIG |
+    CPMMessageCode.STH_ID;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 
