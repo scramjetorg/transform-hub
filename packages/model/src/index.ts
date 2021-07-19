@@ -4,7 +4,6 @@ export * from "./errors";
 export * from "./get-message";
 export * from "./messages-utils";
 export * from "./stream-handler";
-export * from "./load-check-stat";
 
 export { promiseTimeout } from "./utils/promiseTimout";
 export { DelayedStream } from "./utils/delayed-stream";
