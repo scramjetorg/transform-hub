@@ -87,9 +87,9 @@ export class CPMConnector extends EventEmitter {
 
                 StringStream.from(this.duplex as Readable)
                     //.lines()
-                    //.JSONParse()
+                    .JSONParse()
                     .map(async (message: EncodedControlMessage) => {
-                        message = JSON.parse(message as unknown as string);
+                    //    message = JSON.parse(message as unknown as string);
                         this.logger.log("Received message:", message);
 
                         if (message[0] === CPMMessageCode.STH_ID) {
