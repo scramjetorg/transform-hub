@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
+import { CommunicationHandler, HostError, IDProvider, MessageUtilities } from "@scramjet/model";
+import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, LoadCheckStatMessage } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -22,6 +22,8 @@ import { constants } from "fs";
 import { CPMConnector } from "./cpm-connector";
 import { DuplexStream } from "@scramjet/api-server";
 import { AddressInfo } from "net";
+import { StringStream } from "scramjet";
+import { CPMMessageCode } from "@scramjet/symbols";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -111,11 +113,36 @@ export class Host implements IComponent {
         await this.connectToCPM();
     }
 
+    async sendLoad(duplex: DuplexStream) {
+        const communicationStream = new StringStream();
+        const load = await loadCheck.getLoadCheck();
+        const msgLoad: LoadCheckStatMessage = {
+            msgCode: CPMMessageCode.LOAD,
+            avgLoad: load.avgLoad,
+            currentLoad: load.currentLoad,
+            memFree: load.memFree,
+            memUsed: load.memUsed,
+            fsSize: load.fsSize
+        };
+
+        setInterval(async () => {
+            await communicationStream?.whenWrote(
+                JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(msgLoad))
+            );
+
+        }, 10000);
+
+        communicationStream.pipe(duplex);
+    }
+
     async connectToCPM() {
+
         return new Promise<void>(async (resolve) => {
-            this.cpmConnector.on("connect", (duplex: DuplexStream) => {
+            this.cpmConnector.on("connect", async (duplex: DuplexStream) => {
                 this.logger.log("Connected to CPM");
                 this.cpmConnected = true;
+
+                await this.sendLoad(duplex);
 
                 duplex.on("end", () => {
                     this.logger.info("STH connection ended");

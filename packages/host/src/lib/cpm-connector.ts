@@ -106,6 +106,9 @@ export class CPMConnector extends EventEmitter {
             }
         );
 
+
+        this.duplex?.write("HELLO FROM STH CLIENT");
+
         this.connection.on("error", () => this.reconnect());
         this.connection.on("close", () => this.reconnect());
     }

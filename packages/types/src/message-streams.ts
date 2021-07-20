@@ -32,9 +32,11 @@ import {
     SnapshotResponseMessageData,
     StatusMessage,
     StatusMessageData,
-    MonitoringMessage
+    MonitoringMessage,
+    LoadCheckStatMessage
 } from "./messages";
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
+import { LoadCheckStat } from "./load-check-stat";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -52,6 +54,7 @@ export type MessageType<T> =
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessage :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessage :
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
+    T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
     never
     ;
 
@@ -71,6 +74,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
     T extends CPMMessageCode.STH_ID ? STHIDMessageData :
+    T extends CPMMessageCode.LOAD ? LoadCheckStat :
     never
     ;
 
@@ -91,7 +95,7 @@ export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.SNAPSHOT_RESPONSE | RunnerMessageCode.SEQUENCE_STOPPED |
-    RunnerMessageCode.SEQUENCE_COMPLETED;
+    RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD;
 
 export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;
