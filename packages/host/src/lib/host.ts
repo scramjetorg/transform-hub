@@ -127,9 +127,8 @@ export class Host implements IComponent {
 
         setInterval(async () => {
             await communicationStream?.whenWrote(
-                JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(msgLoad))
+                JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(msgLoad)) + "\n"
             );
-
         }, 10000);
 
         communicationStream.pipe(duplex);

@@ -1,5 +1,5 @@
 import { getLogger } from "@scramjet/logger";
-import { EncodedControlMessage, Logger, STHIDMessageData } from "@scramjet/types";
+import { EncodedControlMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
 import { DuplexStream } from "@scramjet/api-server";
 import * as http from "http";
 
@@ -88,10 +88,8 @@ export class CPMConnector extends EventEmitter {
                 });
 
                 StringStream.from(this.duplex as Readable)
-                    //.lines()
                     .JSONParse()
                     .map(async (message: EncodedControlMessage) => {
-                    //    message = JSON.parse(message as unknown as string);
                         this.logger.log("Received message:", message);
 
                         if (message[0] === CPMMessageCode.STH_ID) {
@@ -110,7 +108,7 @@ export class CPMConnector extends EventEmitter {
                 this.communicationStream.pipe(this.duplex);
 
                 await this.communicationStream?.whenWrote(
-                    JSON.stringify([9999, await this.getNetworkInfo()]) + "\n"
+                    JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
                 );
             }
         );
@@ -146,7 +144,7 @@ export class CPMConnector extends EventEmitter {
         }
     }
 
-    async getNetworkInfo() {
+    async getNetworkInfo(): Promise<NetworkInfo[]> {
         const fields = ["iface", "ifaceName", "ip4", "ip4subnet", "ip6", "ip6subnet", "mac", "dhcp"];
 
         return (await networkInterfaces()).map((iface: any) => {
