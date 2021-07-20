@@ -12,12 +12,17 @@ type STHInformation = {
     id?: string;
 }
 export class CPMConnector extends EventEmitter {
+    MAX_CONNECTION_ATTEMPTS = 5;
+    MAX_RECONNECTION_ATTEMPTS = 10;
+
     duplex?: DuplexStream;
     logger: Logger = getLogger(this);
     infoFilePath: string;
     info: STHInformation = {};
     connection?: http.ClientRequest;
     isReconnecting: boolean = false;
+    wasConnected: boolean = false;
+    connectionAttempts = 0;
 
     constructor() {
         super();
@@ -62,7 +67,7 @@ export class CPMConnector extends EventEmitter {
         };
 
         if (this.info.id) {
-            headers["X-STH"] = this.info.id;
+            headers["x-sth"] = this.info.id;
         }
 
         this.connection = http.request(
@@ -74,8 +79,6 @@ export class CPMConnector extends EventEmitter {
                 headers
             },
             async (response) => {
-                console.log("Connected.");
-
                 this.duplex = new DuplexStream({}, response, this.connection as http.ClientRequest);
 
                 this.connection?.on("close", () => {
@@ -99,6 +102,7 @@ export class CPMConnector extends EventEmitter {
                     });
 
                 this.emit("connect", this.duplex);
+                this.connectionAttempts = 0;
             }
         );
 
@@ -111,9 +115,23 @@ export class CPMConnector extends EventEmitter {
             return;
         }
 
-        this.isReconnecting = true;
-        setTimeout(() => { this.connect(); }, 1000);
+        this.connectionAttempts++;
 
-        console.log("Connection lost, retrying...");
+        let shouldReconnect = true;
+
+        if (this.wasConnected) {
+            if (this.connectionAttempts > this.MAX_RECONNECTION_ATTEMPTS) {
+                shouldReconnect = false;
+            }
+        } else if (this.connectionAttempts > this.MAX_CONNECTION_ATTEMPTS) {
+            shouldReconnect = false;
+        }
+
+        if (shouldReconnect) {
+            this.isReconnecting = true;
+            setTimeout(() => { this.connect(); }, 1000);
+
+            console.log("Connection lost, retrying...");
+        }
     }
 }

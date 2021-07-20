@@ -21,6 +21,7 @@ import * as findPackage from "find-package-json";
 import { constants } from "fs";
 import { CPMConnector } from "./cpm-connector";
 import { DuplexStream } from "@scramjet/api-server";
+import { AddressInfo } from "net";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -97,7 +98,9 @@ export class Host implements IComponent {
 
         await new Promise<void>(res => {
             this.api?.server.once("listening", () => {
-                this.logger.info("API listening on port:", `${this.config.host.hostname}:${this.config.host.port}`);
+                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+
+                this.logger.info("API listening on port:", `${serverInfo?.address}:${serverInfo.port}`);
                 res();
             });
         });
@@ -114,13 +117,9 @@ export class Host implements IComponent {
                 this.logger.log("Connected to CPM");
                 this.cpmConnected = true;
 
-                const i = setInterval(() => {
-                    duplex.write("HEllo from client");
-                }, 1000);
-
                 duplex.on("end", () => {
                     this.logger.info("STH connection ended");
-                    clearInterval(i);
+                    this.cpmConnected = true;
                 });
             });
 
