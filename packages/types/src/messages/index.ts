@@ -17,4 +17,4 @@ export { SequenceEndMessage, SequenceEndMessageData } from "./sequence-end";
 export { SequenceCompleteMessage } from "./sequence-complete";
 export { InstanceConfigMessageData, InstanceConfigMessage } from "./instance-config";
 export { LoadCheckStatMessage } from "./load";
-export { CPMMessageSTHID } from "./sth-id";
+export { STHIDMessageData, CPMMessageSTHID } from "./sth-id";

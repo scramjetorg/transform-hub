@@ -1,7 +1,6 @@
 import { CPMMessageCode } from "@scramjet/symbols";
 
 export type STHIDMessageData = {
-
     id: string;
 }
 
