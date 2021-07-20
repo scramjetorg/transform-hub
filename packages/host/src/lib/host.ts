@@ -113,10 +113,10 @@ export class Host implements IComponent {
         await this.connectToCPM();
     }
 
-    async sendLoad(duplex: DuplexStream) {
-        const communicationStream = new StringStream();
+    async getLoad(): Promise<LoadCheckStatMessage> {
         const load = await loadCheck.getLoadCheck();
-        const msgLoad: LoadCheckStatMessage = {
+
+        return {
             msgCode: CPMMessageCode.LOAD,
             avgLoad: load.avgLoad,
             currentLoad: load.currentLoad,
@@ -124,28 +124,32 @@ export class Host implements IComponent {
             memUsed: load.memUsed,
             fsSize: load.fsSize
         };
-
-        setInterval(async () => {
-            await communicationStream?.whenWrote(
-                JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(msgLoad)) + "\n"
-            );
-        }, 10000);
-
-        communicationStream.pipe(duplex);
     }
 
     async connectToCPM() {
+        let loadInterval: NodeJS.Timer;
 
         return new Promise<void>(async (resolve) => {
             this.cpmConnector.on("connect", async (duplex: DuplexStream) => {
+                const communicationStream = new StringStream();
+
+                communicationStream.pipe(duplex);
+
                 this.logger.log("Connected to CPM");
                 this.cpmConnected = true;
 
-                await this.sendLoad(duplex);
+                loadInterval = setInterval(async () => {
+                    const load = await this.getLoad();
+
+                    await communicationStream?.whenWrote(
+                        JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
+                    );
+                }, 10000);
 
                 duplex.on("end", () => {
                     this.logger.info("STH connection ended");
                     this.cpmConnected = true;
+                    clearInterval(loadInterval);
                 });
             });
 
