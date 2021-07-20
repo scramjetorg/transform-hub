@@ -7,6 +7,7 @@ import * as fs from "fs";
 import { EventEmitter, Readable } from "stream";
 import { StringStream } from "scramjet";
 import { CPMMessageCode } from "@scramjet/symbols";
+import { networkInterfaces } from "systeminformation";
 
 type STHInformation = {
     id?: string;
@@ -16,6 +17,7 @@ export class CPMConnector extends EventEmitter {
     MAX_RECONNECTION_ATTEMPTS = 10;
 
     duplex?: DuplexStream;
+    communicationStream?: StringStream;
     logger: Logger = getLogger(this);
     infoFilePath: string;
     info: STHInformation = {};
@@ -103,6 +105,13 @@ export class CPMConnector extends EventEmitter {
 
                 this.emit("connect", this.duplex);
                 this.connectionAttempts = 0;
+
+                this.communicationStream = new StringStream();
+                this.communicationStream.pipe(this.duplex);
+
+                await this.communicationStream?.whenWrote(
+                    JSON.stringify([9999, await this.getNetworkInfo()]) + "\n"
+                );
             }
         );
 
@@ -129,9 +138,25 @@ export class CPMConnector extends EventEmitter {
 
         if (shouldReconnect) {
             this.isReconnecting = true;
-            setTimeout(() => { this.connect(); }, 1000);
 
-            console.log("Connection lost, retrying...");
+            setTimeout(() => {
+                console.log("Connection lost, retrying...");
+                this.connect();
+            }, 1000);
         }
+    }
+
+    async getNetworkInfo() {
+        const fields = ["iface", "ifaceName", "ip4", "ip4subnet", "ip6", "ip6subnet", "mac", "dhcp"];
+
+        return (await networkInterfaces()).map((iface: any) => {
+            const info: any = {};
+
+            for (const field of fields) {
+                info[field] = iface[field];
+            }
+
+            return info;
+        });
     }
 }
