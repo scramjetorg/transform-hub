@@ -34,7 +34,7 @@ export class CPMConnector extends EventEmitter {
             this.info = await new Promise((resolve, reject) => {
                 fs.readFile(this.infoFilePath, { encoding: "utf-8" }, (err, data) => {
                     if (err) {
-                        this.logger.log("Can't read config file");
+                        this.logger.log("Can not read config file");
                         reject(err);
                     } else {
                         try {
@@ -105,9 +105,6 @@ export class CPMConnector extends EventEmitter {
                 this.connectionAttempts = 0;
             }
         );
-
-
-        this.duplex?.write("HELLO FROM STH CLIENT");
 
         this.connection.on("error", () => this.reconnect());
         this.connection.on("close", () => this.reconnect());
