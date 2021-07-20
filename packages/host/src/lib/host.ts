@@ -146,7 +146,7 @@ export class Host implements IComponent {
                     );
                 }, 10000);
 
-                duplex.on("end", () => {
+                this.cpmConnector.on("disconnected", () => {
                     this.logger.info("STH connection ended");
                     this.cpmConnected = true;
                     clearInterval(loadInterval);

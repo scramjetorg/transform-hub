@@ -15,6 +15,7 @@ type STHInformation = {
 export class CPMConnector extends EventEmitter {
     MAX_CONNECTION_ATTEMPTS = 5;
     MAX_RECONNECTION_ATTEMPTS = 10;
+    RECONNECT_INTERVAL = 5000;
 
     duplex?: DuplexStream;
     communicationStream?: StringStream;
@@ -81,10 +82,12 @@ export class CPMConnector extends EventEmitter {
                 headers
             },
             async (response) => {
+                this.wasConnected = true;
                 this.duplex = new DuplexStream({}, response, this.connection as http.ClientRequest);
 
                 this.connection?.on("close", () => {
                     console.log("Connection to CPM closed");
+                    this.emit("disconnected");
                 });
 
                 StringStream.from(this.duplex as Readable)
@@ -140,7 +143,7 @@ export class CPMConnector extends EventEmitter {
             setTimeout(() => {
                 console.log("Connection lost, retrying...");
                 this.connect();
-            }, 1000);
+            }, this.RECONNECT_INTERVAL);
         }
     }
 
