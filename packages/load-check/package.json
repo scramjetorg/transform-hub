@@ -20,6 +20,7 @@
     "@scramjet/logger": "^0.10.0-pre.10",
     "@scramjet/model": "^0.10.0-pre.10",
     "@scramjet/sth-config": "0.10.0-pre.10",
+    "@scramjet/utility": "^0.10.0-pre.10",
     "scramjet": "4.35.20",
     "uuid": "^8.3.2",
     "systeminformation": "5.7.7"

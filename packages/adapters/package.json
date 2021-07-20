@@ -20,6 +20,7 @@
     "@scramjet/model": "^0.10.0-pre.10",
     "@scramjet/sth-config": "0.10.0-pre.10",
     "@scramjet/symbols": "^0.10.0-pre.10",
+    "@scramjet/utility": "^0.10.0-pre.10",
     "dockerode": "^3.3.0",
     "scramjet": "4.35.20",
     "shell-escape": "^0.2.0"

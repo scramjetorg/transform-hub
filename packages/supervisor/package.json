@@ -47,6 +47,7 @@
     "@scramjet/sth-config": "0.10.0-pre.10",
     "@scramjet/symbols": "^0.10.0-pre.10",
     "@scramjet/types": "0.10.0-pre.10",
+    "@scramjet/utility": "^0.10.0-pre.10",
     "bpmux": "^8.1.3",
     "dockerode": "^3.3.0",
     "scramjet": "4.35.20"

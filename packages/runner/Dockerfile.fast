@@ -30,12 +30,17 @@ ADD packages/symbols ./packages/symbols
 ADD packages/model ./packages/model
 ADD packages/logger ./packages/logger
 ADD packages/runner ./packages/runner
+ADD packages/utility ./packages/utility
 ADD scripts ./scripts
 ADD bin ./bin
 ADD conf ./conf
 ADD LICENSE package.json yarn.lock lerna.json tsconfig.base.json ./
 
 RUN yarn bic
+
+WORKDIR $RUNNER_DIR/packages/utility
+RUN    test -d ./dist \
+    && NO_INSTALL=true LOCAL_PACKAGES=true node ../../scripts/publish.js
 
 WORKDIR $RUNNER_DIR/packages/symbols
 RUN    test -d ./dist \

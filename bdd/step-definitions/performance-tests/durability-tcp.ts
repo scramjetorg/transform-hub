@@ -1,3 +1,4 @@
+/* eslint-disable max-nested-callbacks */
 import { Then } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
@@ -9,6 +10,7 @@ import { stdout } from "process";
 import { InstanceClient } from "@scramjet/api-client";
 import { getLogger, addLoggerOutput } from "@scramjet/logger";
 import { URL } from "url";
+import { defer } from "../../lib/utils";
 
 const logger = getLogger("Test");
 
@@ -37,7 +39,7 @@ Then("check every {int} seconds if instances respond with correct data for {floa
 
                 console.log("SENT:", hash);
 
-                await new Promise(res => setTimeout(res, 500));
+                await defer(500);
 
                 const instanceInfo = (await instance.getInfo()).data;
                 const chunks: Buffer[] = [];

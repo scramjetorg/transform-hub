@@ -6,6 +6,7 @@ import * as crypto from "crypto";
 
 import { createReadStream } from "fs";
 import { CustomWorld } from "../world";
+import { defer } from "../../lib/utils";
 
 const hostClient = new HostClient("http://localhost:8000/api/v1");
 const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
@@ -31,9 +32,7 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
     this.resources.instances = [];
 
     do {
-
-        // eslint-disable-next-line no-loop-func
-        await new Promise(res => { setTimeout(res, 1000); });
+        await defer(1000);
 
         const loadCheck = await hostClient.getLoadCheck();
 
@@ -96,7 +95,7 @@ Then("check every {float} seconds if instances respond for {float} hours", { tim
                 const hash = `${instance.id} ${crypto.randomBytes(20).toString("hex")}`;
 
                 await instance.sendEvent("check", hash);
-                await new Promise(res => setTimeout(res, 5000));
+                await defer(5000);
 
                 try {
                     const response = await instance.getEvent("check");

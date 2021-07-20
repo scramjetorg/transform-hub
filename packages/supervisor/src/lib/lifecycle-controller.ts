@@ -1,8 +1,8 @@
 import { getLogger } from "@scramjet/logger";
-import { CommunicationHandler, promiseTimeout, SupervisorError } from "@scramjet/model";
+import { CommunicationHandler, SupervisorError } from "@scramjet/model";
 import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import { ICSHClient, ICommunicationHandler, LifeCycleConfig, IComponent, Logger, EncodedMessage, ILifeCycleAdapterRun, RunnerConfig } from "@scramjet/types";
-
+import { promiseTimeout } from "@scramjet/utility";
 
 const stopTimeout = 7000; // where to config this?
 

@@ -1,6 +1,6 @@
 import test from "ava";
 
-import { merge } from "../src/config-service";
+import { merge } from "../src/merge";
 
 test("merge() should overwrite primitive values", t => {
     const source = { url: "http://example.com", name: "Johnny" };

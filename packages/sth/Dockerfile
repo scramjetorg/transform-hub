@@ -18,6 +18,7 @@ COPY packages/supervisor ./packages/supervisor
 COPY packages/symbols ./packages/symbols
 COPY packages/types ./packages/types
 COPY packages/load-check ./packages/load-check
+COPY packages/utility ./packages/utility
 COPY scripts ./scripts
 COPY bin ./bin
 COPY conf ./conf

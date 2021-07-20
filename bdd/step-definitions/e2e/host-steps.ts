@@ -14,6 +14,7 @@ import { CustomWorld } from "../world";
 import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
+import { defer } from "../../lib/utils";
 
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
@@ -106,7 +107,7 @@ Then("host is still running", async () => {
 });
 
 When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
-    await new Promise(res => setTimeout(res, timeoutMs));
+    await defer(timeoutMs);
 });
 
 When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string) => {
