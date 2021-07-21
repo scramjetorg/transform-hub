@@ -38,4 +38,4 @@ export = async function(_stream, baseCurrency, currency) {
     }, 1000);
 
     return outputStream;
-} as ReadableApp<any>;
+} as ReadableApp<string>;
