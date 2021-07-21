@@ -3,7 +3,7 @@ import { PassThrough } from "stream";
 import * as https from "https";
 
 const getData = async (pair: string) => {
-    return new Promise<any>((resolve, reject) => {
+    return new Promise<string>((resolve, reject) => {
         https.get(`https://api.coinbase.com/v2/prices/${pair}/spot`, async (res) => {
             const chunks: Buffer[] = [];
 
