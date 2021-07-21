@@ -1,1 +1,2 @@
 aiofiles==0.7.0
+aiostream==0.4.3

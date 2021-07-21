@@ -3,9 +3,10 @@
 
 import sys
 import asyncio
+import aiofiles
+from aiostream import stream, pipe
 import json
 from datetime import datetime
-import aiofiles
 import importlib
 
 try:
@@ -18,25 +19,16 @@ except IndexError:
     print(f"Usage: {sys.argv[0]} input-fifo output-fifo ctrl-fifo user_module")
     sys.exit(1)
 
-print(f'Reading from {INPUT} and writing to {OUTPUT}.\n')
-
 def with_time(text):
     print(f'{datetime.now().strftime("%H:%M:%S")} - {text}')
 
-user_module = importlib.import_module(MODULE)
-
-async def process(chunk, output, context):
-    data = json.loads(chunk)
-    with_time(f'Processing #{data["counter"]}')
-    result = await user_module.transform(data, context)
-    await output.write(json.dumps(result) + '\n')
-    await output.flush()
-    with_time(f'Finished #{data["counter"]}')
-
 async def handle_control_stream(stream, context):
     async for line in stream:
-        with_time(f'Got control message: {line}')
-        context['args'] = json.loads(line)
+        try:
+            context['add'] = int(line)
+            with_time(f'Got ctrl message: {context}')
+        except ValueError:
+            print('Invalid control message - not a number:', line)
 
 async def main():
     async with aiofiles.open(INPUT, 'r') as f_in, \
@@ -44,7 +36,18 @@ async def main():
                aiofiles.open(CONTROL, 'r') as f_ctrl:
         context = {}
         asyncio.create_task(handle_control_stream(f_ctrl, context))
-        async for line in f_in:
-            asyncio.create_task(process(line, f_out, context))
+        user_module = importlib.import_module(MODULE)
+
+        async def process(chunk):
+            return await transform(chunk, context)
+
+        result = await user_module.transform(stream.iterate(f_in), context)
+        async with result.stream() as streamer:
+            async for chunk in streamer:
+                await f_out.write(str(chunk))
+                await f_out.flush()
+
+        # asyncio.create_task(handle_control_stream(f_ctrl, context))
+        # await user_module.transform(context, f_in, f_out)
 
 asyncio.run(main())
