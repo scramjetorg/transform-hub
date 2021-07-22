@@ -116,6 +116,8 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
 });
 
 When("sequence {string} loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
+    hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
+
     sequence = await hostClient.sendSequence(
         createReadStream(packagePath)
     );

@@ -44,8 +44,8 @@ Feature: Host configuration
 
     @ci @starts-host
     Scenario: HUB-001 TC-008  Set API server name (-H)
-        When hub process is started with parameters "-H localhost"
-        Then API starts with "localhost" server name
+        When hub process is started with parameters "-H 0.0.0.0"
+        Then API starts with "0.0.0.0" server name
         * exit hub process
 
     @ci @starts-host
