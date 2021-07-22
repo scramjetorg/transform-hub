@@ -635,6 +635,10 @@
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@lerna/gitlab-client/-/gitlab-client-4.0.0.tgz#00dad73379c7b38951d4b4ded043504c14e2b67d"
   integrity sha512-OMUpGSkeDWFf7BxGHlkbb35T7YHqVFCwBPSIR6wRsszY8PAzCYahtH3IaJzEJyUg6vmZsNl0FSr3pdA2skhxqA==
+  dependencies:
+    node-fetch "^2.6.1"
+    npmlog "^4.1.2"
+    whatwg-url "^8.4.0"
 
 "@lerna/global-options@4.0.0":
   version "4.0.0"
@@ -1332,7 +1336,7 @@
 
 "@types/node-fetch@^2.5.11":
   version "2.5.11"
-  resolved "https://repo.int.scp.ovh/repository/npm-all/@types/node-fetch/-/node-fetch-2.5.11.tgz#ce22a2e65fc8999f4dbdb7ddbbcf187d755169e4"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.5.11.tgz#ce22a2e65fc8999f4dbdb7ddbbcf187d755169e4"
   integrity sha512-2upCKaqVZETDRb8A2VTaRymqFBEgH8u6yr96b/u3+1uQEPDRo3mJLEiPk7vdXBHRtjwkjqzFYMJXrt0Z9QsYjQ==
   dependencies:
     "@types/node" "*"
@@ -3379,7 +3383,7 @@ forever-agent@~0.6.1:
 
 form-data@^3.0.0:
   version "3.0.1"
-  resolved "https://repo.int.scp.ovh/repository/npm-all/form-data/-/form-data-3.0.1.tgz#ebd53791b78356a99af9a300d4282c4d5eb9755f"
+  resolved "https://registry.yarnpkg.com/form-data/-/form-data-3.0.1.tgz#ebd53791b78356a99af9a300d4282c4d5eb9755f"
   integrity sha512-RHkBKtLWUVwd7SqRIvCZMEvAMoGUp0XU+seQiZejj0COz3RI3hWP4sCv3gZWWLjJTd7rGwcsF5eKZGii0r/hbg==
   dependencies:
     asynckit "^0.4.0"
@@ -3402,7 +3406,7 @@ frame-stream@^2.0.3:
 
 freeport@^1.0.5:
   version "1.0.5"
-  resolved "https://repo.int.scp.ovh/repository/npm-all/freeport/-/freeport-1.0.5.tgz#255e8ab84170c33ba85d990e821ae5f4a1a9bc5d"
+  resolved "https://registry.yarnpkg.com/freeport/-/freeport-1.0.5.tgz#255e8ab84170c33ba85d990e821ae5f4a1a9bc5d"
   integrity sha1-JV6KuEFwwzuoXZkOghrl9KGpvF0=
 
 fromentries@^1.2.0:
@@ -5139,7 +5143,7 @@ no-case@^3.0.4:
 
 node-fetch@^2.6.1:
   version "2.6.1"
-  resolved "https://repo.int.scp.ovh/repository/npm-all/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.1.tgz#045bd323631f76ed2e2b55573394416b639a0052"
   integrity sha512-V4aYg89jEoVRxRb2fJdAg8FHvI7cEyYdVAh94HH0UIK8oJxUfkjlDQN9RbMx+bEjP7+ggMiFRprSti032Oipxw==
 
 node-gyp@^5.0.2:

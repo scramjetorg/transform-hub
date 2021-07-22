@@ -27,8 +27,5 @@
   "dependencies": {
     "scramjet": "4.35.20"
   },
-  "publishConfig": {
-    "registry": "https://repo.int.scp.ovh/repository/npm-scramjet/",
-    "access": "restricted"
-  }
+  "private": true
 }
