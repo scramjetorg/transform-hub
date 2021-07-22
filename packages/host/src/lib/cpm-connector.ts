@@ -26,9 +26,12 @@ export class CPMConnector extends EventEmitter {
     isReconnecting: boolean = false;
     wasConnected: boolean = false;
     connectionAttempts = 0;
+    cpmURL: string;
 
-    constructor() {
+    constructor(cpmUrl: string) {
         super();
+        this.cpmURL = cpmUrl;
+
         this.infoFilePath = "/tmp/sth-id.json";
     }
 
@@ -73,12 +76,9 @@ export class CPMConnector extends EventEmitter {
             headers["x-sth"] = this.info.id;
         }
 
-        this.connection = http.request(
+        this.connection = http.request("http://" + this.cpmURL + "/connect",
             {
-                port: 7000,
-                host: "0.0.0.0",
                 method: "POST",
-                path: "/connect",
                 headers
             },
             async (response) => {

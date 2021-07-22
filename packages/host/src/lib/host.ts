@@ -41,7 +41,7 @@ export class Host implements IComponent {
     instanceBase: string;
 
     socketServer: SocketServer;
-    cpmConnector: CPMConnector;
+    cpmConnector?: CPMConnector;
     cpmConnected = false;
 
     instancesStore = InstanceStore;
@@ -72,7 +72,9 @@ export class Host implements IComponent {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
         }
 
-        this.cpmConnector = new CPMConnector();
+        if (this.config.cpmUrl) {
+            this.cpmConnector = new CPMConnector(this.config.cpmUrl);
+        }
     }
 
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
@@ -91,8 +93,9 @@ export class Host implements IComponent {
             throw new HostError("SOCKET_TAKEN");
         }
 
-        if (identifyExisiting)
+        if (identifyExisiting) {
             await this.identifyExistingSequences();
+        }
 
         await this.socketServer.start();
 
@@ -110,7 +113,9 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-        await this.connectToCPM();
+        if (this.cpmConnector) {
+            await this.connectToCPM();
+        }
     }
 
     async getLoad(): Promise<LoadCheckStatMessage> {
@@ -130,7 +135,7 @@ export class Host implements IComponent {
         let loadInterval: NodeJS.Timer;
 
         return new Promise<void>(async (resolve) => {
-            this.cpmConnector.on("connect", async (duplex: DuplexStream) => {
+            this.cpmConnector?.on("connect", async (duplex: DuplexStream) => {
                 const communicationStream = new StringStream();
 
                 communicationStream.pipe(duplex);
@@ -146,16 +151,16 @@ export class Host implements IComponent {
                     );
                 }, 10000);
 
-                this.cpmConnector.on("disconnected", () => {
+                this.cpmConnector?.on("disconnected", () => {
                     this.logger.info("STH connection ended");
                     this.cpmConnected = true;
                     clearInterval(loadInterval);
                 });
             });
 
-            await this.cpmConnector.init();
+            await this.cpmConnector?.init();
 
-            this.cpmConnector.connect();
+            this.cpmConnector?.connect();
 
             resolve();
         });

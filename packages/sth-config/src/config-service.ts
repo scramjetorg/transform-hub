@@ -2,6 +2,7 @@ import { DeepPartial, STHConfiguration } from "@scramjet/types";
 import { merge } from "@scramjet/utility";
 
 const defaultConfig: STHConfiguration = {
+    cpmUrl: "",
     docker: {
         prerunner: {
             image: "",

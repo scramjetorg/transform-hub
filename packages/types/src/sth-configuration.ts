@@ -29,6 +29,8 @@ export type HostConfig = {
 }
 
 export type STHConfiguration = {
+    cpmUrl: string;
+
     /**
      * Docker related configuration.
      */

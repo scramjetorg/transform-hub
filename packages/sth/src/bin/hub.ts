@@ -3,9 +3,8 @@
 import { Command } from "commander";
 import { configService } from "@scramjet/sth-config";
 import { resolve } from "path";
-// import { version } from "../../package.json";
 
-const program: Command = new Command() as Command;
+const program = new Command();
 const options = program
     // .version(version) // TODO: replace with find-package-json
     .option("-L, --log-level <level>", "Specify log level", "debug")
@@ -13,11 +12,13 @@ const options = program
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
+    .option("-C, --cpm-url <host:ip>")
     .parse(process.argv)
     .opts()
 ;
 
 configService.update({
+    cpmUrl: options.cpmUrl,
     host: {
         apiBase: "/api/v1",
         socketPath: options.socketPath ? resolve(process.cwd(), options.socketPath) : undefined,
