@@ -57,18 +57,17 @@ class LoadCheck implements IComponent {
         return isOverloaded;
     }
 
-    async getLoadCheckStream(): Promise<DataStream> {
-        const [load, disksInfo, memInfo] = await Promise.all([
-            sysinfo.currentLoad(),
-            sysinfo.fsSize(),
-            sysinfo.mem()
-        ]);
-
+    async getLoadCheckStream(): Promise<any> {
         return DataStream.from(
             async function*(){
                 // eslint-disable-next-line no-constant-condition
                 while (true) {
-                    await defer(1000);
+                    const [load, disksInfo, memInfo] = await Promise.all([
+                        sysinfo.currentLoad(),
+                        sysinfo.fsSize(),
+                        sysinfo.mem()
+                    ]);
+
                     yield {
                         avgLoad: load.avgLoad,
                         currentLoad: load.currentLoad || 85,
@@ -76,9 +75,11 @@ class LoadCheck implements IComponent {
                         memUsed: memInfo.used,
                         fsSize: disksInfo
                     };
+
+                    await defer(1000);
                 }
             }
-        );
+        ).JSONStringify();
     }
 }
 
