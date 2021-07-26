@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/stdio-sequence",
-  "version": "0.10.0",
+  "version": "0.10.2",
   "description": "",
   "main": "index.js",
   "scripts": {

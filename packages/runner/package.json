@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runner",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them throgh abstraction layer provided by adapters.",
   "main": "./src/",
   "bin": "bin/start-runner.js",
