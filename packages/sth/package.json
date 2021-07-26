@@ -24,6 +24,17 @@
     "@scramjet/sth-config": "0.10.0-pre.10",
     "commander": "^8.0.0"
   },
+  "readme": "README.md",
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/scramjetorg"
+    },
+    {
+      "type": "individual",
+      "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW"
+    }
+  ],
   "devDependencies": {
     "@scramjet/types": "0.10.0-pre.10",
     "@types/node": "15.12.5",
