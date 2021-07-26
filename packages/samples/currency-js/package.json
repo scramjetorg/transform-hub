@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/currency-js",
-  "version": "0.10.4",
+  "version": "0.10.5",
   "main": "./index",
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "GPL-3.0",
