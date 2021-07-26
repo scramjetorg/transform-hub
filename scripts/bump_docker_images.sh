@@ -13,7 +13,7 @@ OTHER_FILES_WITH_CURRENT_VER=(
   "${DIR}/../packages/host/docker-compose.yaml"
 )
 CURR_VER=$(jq -r .version < ${DIR}/../package.json) # current release
-NEW_VER=$(npx semver -i prerelease ${CURR_VER}) # new release
+NEW_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} ${CURR_VER}) # new release
 
 echo "Checking image-config.json files.."
 for i in "${IMAGE_CONFIG_JSON[@]}"
