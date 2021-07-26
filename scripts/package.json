@@ -12,7 +12,9 @@
   },
   "author": "",
   "license": "AGPL-3.0",
-  "dependencies": {},
+  "dependencies": {
+    "toposort": "^2.0.2"
+  },
   "devDependencies": {
     "fs-extra": "^9.1.0"
   },
