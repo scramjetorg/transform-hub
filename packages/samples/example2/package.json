@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/example2",
-  "version": "0.10.0",
+  "version": "0.10.2",
   "main": "index",
   "types": "dist/index",
   "scripts": {

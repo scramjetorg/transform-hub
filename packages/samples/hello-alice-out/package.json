@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/hello-alice-out",
-  "version": "0.10.0",
+  "version": "0.10.2",
   "main": "index",
   "assets": [
     "data.json"

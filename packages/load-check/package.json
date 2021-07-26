@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/load-check",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "This package is part of Scramjet Transform Hub. The package provides health info for STH.",
   "main": "./src/index.ts",
   "scripts": {

@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/model",
-  "version": "0.10.0",
+  "version": "0.10.2",
   "description": "This package is part of Scramjet Transform Hub. The package provides the domain model for STH and the CLI.",
   "main": "./src/index.ts",
   "scripts": {
