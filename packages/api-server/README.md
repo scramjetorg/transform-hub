@@ -1,35 +1,6 @@
-# `@scramjet/utility`
+# `@scramjet/api-server` <!-- omit in toc -->
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package holds utility functions used in places around Scramjet Tranform Hub.
-
-This package includes **domain agnostic** utility **functions**, meaning there shouldn't be any business use-case specific code here. It's important since a package like this one tends to be a very common dependency for other packages. Ideally functions from this package should be written once, well tested and never changed.
-
-## Functions
-
-### Example of a **GOOD** function for this package
-This function does not have any knowledge of business components in the system and it's simple. Thus it's pretty stable.
-```ts
-export const defer = (timeout: number): Promise<void> =>
-    new Promise(res => setTimeout(res, timeout));
-```
-
-### Example of a **BAD** function for this package
-Knowledge about different types of streams on our platform indicates that this function defines a business logic.
-```ts
-import { EncodedMonitoringMessage, WritableStream } from "@scramjet/types";
-
-export class MessageUtils {
-    public static writeMessageOnStream([code, data]: EncodedMonitoringMessage, streamToWrite?: WritableStream<any>){
-        if (streamToWrite === undefined) {
-            throw new Error("The Stream is not defined.");
-        }
-
-        streamToWrite.write(JSON.stringify([code, data]) + "\r\n");
-    }
-}
-```
-
-## Scramjet Transform Hub
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package provides the domain model for STH and the CLI.
 
 Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Rasperry Pi or wherever else you'd like.
 

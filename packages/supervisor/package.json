@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/supervisor",
   "version": "0.10.0-pre.10",
-  "description": "The supervisor application for the underlying container and program wrapper executed within it.",
+  "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them throgh abstraction layer provided by adapters.",
   "main": "./src/bin/supervisor.ts",
   "scripts": {
     "test": "nyc ava",

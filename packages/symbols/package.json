@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/symbols",
   "version": "0.10.0-pre.10",
-  "description": "Important symbols of the scramjet platform",
+  "description": "This package is part of Scramjet Transform Hub. The package holds the symbols and enumerations for STH.",
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

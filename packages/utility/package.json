@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/utility",
   "version": "0.10.0-pre.10",
-  "description": "> TODO: description",
+  "description": "This package is part of Scramjet Transform Hub. The package holds utility functions used in places around Scramjet Tranform Hub.",
   "author": "Scramjet <open-source@scramjet.org>",
   "homepage": "https://github.com/scramjetorg/transform-hub#readme",
   "license": "ISC",
