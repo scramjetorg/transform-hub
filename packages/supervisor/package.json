@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/supervisor",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them throgh abstraction layer provided by adapters.",
   "main": "./src/bin/supervisor.ts",
   "scripts": {
@@ -40,10 +40,10 @@
     ]
   },
   "dependencies": {
-    "@scramjet/adapters": "^0.10.0",
+    "@scramjet/adapters": "^0.10.1",
     "@scramjet/logger": "^0.10.0",
     "@scramjet/model": "^0.10.0",
-    "@scramjet/sth-config": "^0.10.0",
+    "@scramjet/sth-config": "^0.10.1",
     "@scramjet/symbols": "^0.10.0",
     "@scramjet/types": "^0.10.0",
     "@scramjet/utility": "^0.10.0",
