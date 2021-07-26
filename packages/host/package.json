@@ -1,9 +1,7 @@
 {
   "name": "@scramjet/host",
   "version": "0.10.0-pre.10",
-  "description": "Host",
-  "---remove-next-line": "",
-  "bic": false,
+  "description": "This package is part of Scramjet Transform Hub. The package provides the main host subsystem of STH - starts API Servers, creates adapters etc.",
   "main": "./src/index.ts",
   "bin": {
     "scramjet-host": "bin/start.ts"

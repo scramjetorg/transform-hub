@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/api-server",
   "version": "0.10.0-pre.10",
-  "description": "Important model of the scramjet platform",
+  "description": "This package is part of Scramjet Transform Hub. The package provides the domain model for STH and the CLI.",
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",

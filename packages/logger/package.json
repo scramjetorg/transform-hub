@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/logger",
   "version": "0.10.0-pre.10",
-  "description": "Important basic logger",
+  "description": "This package is part of Scramjet Transform Hub. The package provides a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice.",
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",

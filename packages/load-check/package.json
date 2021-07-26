@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/load-check",
   "version": "0.10.0-pre.10",
-  "description": "Important model of the scramjet platform",
+  "description": "This package is part of Scramjet Transform Hub. The package provides health info for STH.",
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
