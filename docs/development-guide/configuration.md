@@ -337,22 +337,6 @@ There's no need to install any additional extensions. You just need to copy `lau
 
 [Link to VS the doc =>](https://vscode.readthedocs.io/en/latest/editor/debugging/)
 
-## File watcher
-
-If you want to add a watcher to your sample add the following script to the package JSON file.
-
-```json
-  "scripts": {
-    // ...,
-    "watch": "tsc -b --watch",
-    // ...
-  }
-```
-
-Watcher can be executed from root folder via lerna per one package, few packages, or for all packages in the repo.
-
-[See lerna commands =>](./lerna-commands.md)
-
 ## Docker commands
 
 Remove all unused containers, networks, images. Optionally both dangling and unreferenced images with `--all` flag, and volumes with `--volumes` .
