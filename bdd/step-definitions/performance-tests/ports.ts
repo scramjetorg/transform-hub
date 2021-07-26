@@ -61,7 +61,6 @@ When("connect to instance on port {int} using {string} server", { timeout: 20000
 });
 
 When("send {string} to {string} server", async function(this: CustomWorld, str: string, serverType: string) {
-
     if (serverType === "tcp") {
         this.resources.connection.write(str);
     }
@@ -74,6 +73,7 @@ When("send {string} to {string} server", async function(this: CustomWorld, str: 
 
         client.send(str, 0, str.length, port, host, (err) => {
             console.log(err?.stack);
+            client.close();
         });
     }
 });

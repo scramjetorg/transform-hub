@@ -1,5 +1,7 @@
-import { setWorldConstructor, World } from "@cucumber/cucumber";
+import { setWorldConstructor, World, setDefaultTimeout } from "@cucumber/cucumber";
 import { ICreateAttachment, ICreateLog } from "@cucumber/cucumber/lib/runtime/attachment_manager";
+
+const DEFAULT_TIMEOUT = 10000;
 
 export class CustomWorld implements World {
     readonly attach: ICreateAttachment;
@@ -16,3 +18,4 @@ export class CustomWorld implements World {
 }
 
 setWorldConstructor(CustomWorld);
+setDefaultTimeout(DEFAULT_TIMEOUT);

@@ -1,4 +1,4 @@
-import { CommunicationChannel as CC, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, CPMMessageCode, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     ControlMessageCode,
     ControlMessageHandler,
@@ -20,7 +20,7 @@ import {
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
 
-export type ConfiguredMessageHandler<T extends RunnerMessageCode | SupervisorMessageCode> = {
+export type ConfiguredMessageHandler<T extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode> = {
     handler: MutatingMonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
     blocking: boolean
 } | {
@@ -40,6 +40,8 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.SEQUENCE_STOPPED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
     [RunnerMessageCode.SEQUENCE_COMPLETED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_COMPLETED>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
+    [CPMMessageCode.LOAD]: ConfiguredMessageHandler<CPMMessageCode.LOAD>[];
+    [CPMMessageCode.NETWORK_INFO]: ConfiguredMessageHandler<CPMMessageCode.NETWORK_INFO>[];
 };
 
 type ControlMessageHandlerList = {
@@ -50,6 +52,7 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
     [SupervisorMessageCode.CONFIG]: ConfiguredMessageHandler<SupervisorMessageCode.CONFIG>[];
+    [CPMMessageCode.STH_ID]: ConfiguredMessageHandler<CPMMessageCode.STH_ID>[];
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
@@ -79,7 +82,8 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.STOP]: [],
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],
-            [SupervisorMessageCode.CONFIG]: []
+            [SupervisorMessageCode.CONFIG]: [],
+            [CPMMessageCode.STH_ID]: []
         };
         this.monitoringHandlerHash = {
             [RunnerMessageCode.ACKNOWLEDGE]: [],
@@ -92,7 +96,9 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.PING]: [],
             [RunnerMessageCode.SNAPSHOT_RESPONSE]: [],
             [RunnerMessageCode.SEQUENCE_STOPPED]: [],
-            [RunnerMessageCode.SEQUENCE_COMPLETED]: []
+            [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
+            [CPMMessageCode.LOAD]: [],
+            [CPMMessageCode.NETWORK_INFO]: []
         };
     }
 

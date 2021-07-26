@@ -13,13 +13,16 @@ import { CustomWorld } from "../world";
 
 import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
+import { BufferStream } from "scramjet";
+import { defer } from "../../lib/utils";
 
+const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
-const hostClient = new HostClient(process.env.SCRAMJET_HOST_BASE_URL || "http://localhost:8000/api/v1");
 const hostUtils = new HostUtils();
 const testPath = "../dist/samples/hello-alice-out/";
 const dockerode = new Dockerode();
 
+let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
 let actualApiResponse: Response;
@@ -31,7 +34,41 @@ let streams: { [key: string]: Promise<string | undefined> } = {};
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
+process.env.LOCAL_HOST_BASE_URL = "";
+
 BeforeAll({ timeout: 10e3 }, async () => {
+    let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+
+    if (!apiUrl) {
+        const port = await promisify(freeport)();
+
+        process.env.LOCAL_HOST_PORT = `${port}`;
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${port}/api/v1`;
+        process.env.LOCAL_HOST_SOCKET_PATH = `/tmp/scramjet-socket-server-path-${port}`;
+
+        console.error(`Starting host on port: ${port}`);
+    }
+    hostClient = new HostClient(apiUrl);
+    if (process.env.SCRAMJET_TEST_LOG) {
+        hostClient.client.addLogger({
+            ok(result) {
+                const {
+                    status, statusText, url
+                } = result;
+
+                // eslint-disable-next-line no-console
+                console.error("Request ok:", url, `status: ${status} ${statusText}`);
+            },
+            error(error) {
+                const { code, reason: result } = error;
+                const { message } = result || {};
+
+                // eslint-disable-next-line no-console
+                console.error(`Request failed with code "${code}" status: ${message}`);
+            }
+        });
+    }
+
     await hostUtils.spawnHost();
 });
 
@@ -42,28 +79,6 @@ AfterAll(async () => {
         throw new Error("Host unexpected closed");
     }
 });
-
-
-if (process.env.SCRAMJET_TEST_LOG) {
-    hostClient.client.addLogger({
-        ok(result) {
-            const {
-                status, statusText, config: { url, method }
-            } = result;
-
-            // eslint-disable-next-line no-console
-            console.error("Request ok:", method, url, `status: ${status} ${statusText}`);
-        },
-        error(error) {
-            const { code, reason: result } = error;
-            const { status, statusText } = result?.response || {};
-            const { url, method } = result?.config || {};
-
-            // eslint-disable-next-line no-console
-            console.error(`Request ${method} "${url}" failed with code "${code}" status: ${status} ${statusText}`);
-        }
-    });
-}
 
 Before(() => {
     actualHealthResponse = "";
@@ -92,7 +107,7 @@ Then("host is still running", async () => {
 });
 
 When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
-    await new Promise(res => setTimeout(res, timeoutMs));
+    await defer(timeoutMs);
 });
 
 When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string) => {
@@ -296,7 +311,22 @@ When("instance health is {string}", async (expectedResp: string) => {
 });
 
 When("send stdin to instance with contents of file {string}", async (filePath: string) => {
+
     await instance?.sendStream("stdin", createReadStream(filePath));
+});
+
+When("flood the stdin stream with {int} kilobytes", async function(kbytes: number) {
+    let i = 0;
+
+    await new Promise<void>((res, rej) => {
+        instance?.sendStream("stdin", BufferStream.from(function* () {
+            while (i < kbytes) { yield Buffer.alloc(1024, 0xdeadbeef); i++; }
+        }).on("pause", () => {
+            console.log(`Stream paused, sent ${i}kb`);
+            res();
+        }).on("end", rej));
+    });
+
 });
 
 When("keep instance streams {string}", async function(streamNames) {
@@ -406,3 +436,4 @@ When("instance is finished", async () => {
 When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
     await instance?.stop(0, false);
 });
+

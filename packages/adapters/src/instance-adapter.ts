@@ -24,6 +24,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder } from "./utils";
+import { defer } from "@scramjet/utility";
 
 class LifecycleDockerAdapterInstance implements
 ILifeCycleAdapterMain,
@@ -311,7 +312,7 @@ IComponent {
             if (this.resources.volumeId) {
                 this.logger.log("Volume will be removed in 1 sec");
 
-                await new Promise(res => setTimeout(res, 1000));
+                await defer(1000);
                 await this.dockerHelper.removeVolume(this.resources.volumeId);
 
                 this.logger.log("Volume removed");

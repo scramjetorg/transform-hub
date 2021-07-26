@@ -29,6 +29,8 @@ export type HostConfig = {
 }
 
 export type STHConfiguration = {
+    cpmUrl: string;
+
     /**
      * Docker related configuration.
      */
@@ -67,7 +69,3 @@ export type STHConfiguration = {
      */
     identifyExisting: boolean;
 }
-
-export type PartialSTHConfiguration = Partial<{
-    [key in keyof STHConfiguration]: Partial<STHConfiguration[key]>
-}>

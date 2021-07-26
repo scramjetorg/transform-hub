@@ -28,7 +28,7 @@
     "typescript": "^4.3.4"
   },
   "dependencies": {
-    "scramjet": "4.35.20"
+    "scramjet": "^4.35.20"
   },
   "repository": {
     "type": "git",

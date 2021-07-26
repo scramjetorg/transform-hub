@@ -7,7 +7,8 @@ const prePack = new PrePack({
     flatPkgs: process.env.FLAT_PACKAGES,
     localCopy: process.env.LOCAL_COPY,
     noInstall: process.env.NO_INSTALL,
-    public: process.env.MAKE_PUBLIC
+    public: process.env.MAKE_PUBLIC,
+    distPackDir: process.env.DIST_PACK_DIR
 });
 
 prePack.build()

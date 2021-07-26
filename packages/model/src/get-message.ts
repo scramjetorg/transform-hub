@@ -1,5 +1,5 @@
 /* eslint-disable no-extra-parens */
-import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
     ConfirmHealthMessage,
@@ -52,9 +52,9 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
 }
 
 // eslint-disable-next-line complexity
-export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode>(
+export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode>(
     msgCode: X,
-    msgData: MessageDataType<RunnerMessageCode>
+    msgData: MessageDataType<RunnerMessageCode | CPMMessageCode>
 ): MessageDataType<X> => {
     if (msgCode === RunnerMessageCode.KILL) {
         return msgData as MessageDataType<KillSequenceMessage>;

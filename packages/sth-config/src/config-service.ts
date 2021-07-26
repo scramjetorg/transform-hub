@@ -1,18 +1,8 @@
-import { PartialSTHConfiguration, STHConfiguration } from "@scramjet/types";
+import { DeepPartial, STHConfiguration } from "@scramjet/types";
+import { merge } from "@scramjet/utility";
 
-const merge = (objTo: any, objFrom: any) => !objTo ? objFrom : Object.keys(objTo)
-    .reduce(
-        ([mTo, mFrom], key) => {
-            if (typeof mFrom[key] === "object" && typeof mTo[key] === "object" && !Array.isArray(mTo[key]))
-                merge(mTo[key], mFrom[key] ?? {});
-            else
-                mTo[key] = mFrom[key] || mTo[key];
-            return [mTo, mFrom];
-        },
-        [objTo, objFrom]
-    );
-//
 const defaultConfig: STHConfiguration = {
+    cpmUrl: "",
     docker: {
         prerunner: {
             image: "",
@@ -41,7 +31,7 @@ const defaultConfig: STHConfiguration = {
 class ConfigService {
     private config: STHConfiguration;
 
-    constructor(config?: Partial<STHConfiguration>) {
+    constructor(config?: DeepPartial<STHConfiguration>) {
         this.config = defaultConfig;
         this.updateImages();
 
@@ -63,7 +53,7 @@ class ConfigService {
         return this.config.docker;
     }
 
-    update(config: PartialSTHConfiguration) {
+    update(config: DeepPartial<STHConfiguration>) {
         merge(this.config, config);
     }
 }

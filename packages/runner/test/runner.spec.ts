@@ -36,7 +36,7 @@ test("Runner new instance", (t: any) => {
 test("Run main", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
     const hookupFifoStreams = sinon.stub(runner, "hookupFifoStreams").callsFake(() => {
-        // eslint-disable-next-line dot-notation
+        // eslint-disable-next-line no-console
         runner["loggerStream"] = new DataStream().each(console.log);
         runner["monitorStream"] = new Writable();
         return Promise.resolve([undefined, undefined, undefined, undefined, undefined]);
@@ -75,9 +75,8 @@ test("Stop sequence", async (t: any) => {
     const runner = new Runner("sequencePath", "fifoDir");
 
     sinon.stub(runner, "hookupFifoStreams").callsFake(async () => {
-        // eslint-disable-next-line dot-notation
+        // eslint-disable-next-line no-console
         runner["loggerStream"] = new DataStream().each(console.log);
-        // eslint-disable-next-line dot-notation
         runner["monitorStream"] = new Writable();
         runner["controlStream"] = new Readable();
 

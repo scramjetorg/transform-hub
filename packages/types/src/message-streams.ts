@@ -1,9 +1,10 @@
 import {
     ReadableStream,
     WritableStream,
-    PassThoughStream } from "./utils";
+    PassThoughStream
+} from "./utils";
 
-import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { RunnerMessageCode, SupervisorMessageCode, CPMMessageCode } from "@scramjet/symbols";
 
 import {
     AcknowledgeMessage,
@@ -31,8 +32,13 @@ import {
     SnapshotResponseMessageData,
     StatusMessage,
     StatusMessageData,
-    MonitoringMessage
+    MonitoringMessage,
+    LoadCheckStatMessage,
+    NetworkInfoMessage
 } from "./messages";
+import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
+import { LoadCheckStat } from "./load-check-stat";
+import { NetworkInfo } from "./network-info";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -49,6 +55,9 @@ export type MessageType<T> =
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessage :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessage :
+    T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
+    T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
+    T extends CPMMessageCode.NETWORK_INFO ? NetworkInfoMessage :
     never
     ;
 
@@ -67,15 +76,22 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
+    T extends CPMMessageCode.STH_ID ? STHIDMessageData :
+    T extends CPMMessageCode.LOAD ? LoadCheckStat :
+    T extends CPMMessageCode.NETWORK_INFO ? NetworkInfo[] :
     never
     ;
 
-export type EncodedMessage<T extends RunnerMessageCode | SupervisorMessageCode> = [T, MessageDataType<T>];
+export type EncodedMessage<
+    T extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode
+    > = [T, MessageDataType<T>];
+
 export type ControlMessageCode =
     RunnerMessageCode.FORCE_CONFIRM_ALIVE | RunnerMessageCode.KILL |
     RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
-    SupervisorMessageCode.CONFIG;
+    SupervisorMessageCode.CONFIG |
+    CPMMessageCode.STH_ID;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 
@@ -83,7 +99,7 @@ export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
     RunnerMessageCode.PING | RunnerMessageCode.SNAPSHOT_RESPONSE | RunnerMessageCode.SEQUENCE_STOPPED |
-    RunnerMessageCode.SEQUENCE_COMPLETED;
+    RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD | CPMMessageCode.NETWORK_INFO;
 
 export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;

@@ -10,6 +10,9 @@ const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
+export const defer = (timeout: number): Promise<void> =>
+    new Promise(res => setTimeout(res, timeout));
+
 export async function file1ContainsLinesFromFile2(file1: any, greeting: any, file2: any, suffix: any) {
     const output = new lineByLine(`${file1}`);
     const input = JSON.parse(await promisify(fs.readFile)(`${testPath}${file2}`, "utf8"));
@@ -30,7 +33,7 @@ export const waitForValueTillTrue = async (valueToCheck: boolean, timeoutMs = 40
     const startTime: number = Date.now();
 
     while (valueToCheck && Date.now() - startTime < timeoutMs) {
-        await new Promise(res => setTimeout(res, timeoutShortMs));
+        await defer(timeoutShortMs);
     }
 };
 
@@ -43,7 +46,7 @@ export const callInLoopTillExpectedCode =
 
         do {
             response = await fnToCall.call(that);
-            await new Promise(res => setTimeout(res, timeout));
+            await defer(timeout);
         } while (response?.status !== expectedHttpCode && Date.now() - startTime < 10000);
 
         return response;
@@ -73,7 +76,7 @@ export const callInLoopTillExpectedStatusCode =
 
         do {
             response = await fnToCall.call(that, ...args);
-            await new Promise(res => setTimeout(res, timeout));
+            await defer(timeout);
         } while (response?.statusCode !== expectedHttpCode && Date.now() - startTime < 10000);
 
         return response;
@@ -147,3 +150,4 @@ export async function getStreamsFromSpawnSuccess(
 
     return [stdout, stderr];
 }
+

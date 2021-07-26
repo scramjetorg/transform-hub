@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig } from "@scramjet/types";
+import { CommunicationHandler, HostError, IDProvider, MessageUtilities } from "@scramjet/model";
+import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, LoadCheckStatMessage } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -13,12 +13,17 @@ import { IncomingMessage, ServerResponse } from "http";
 import { Readable } from "stream";
 import { InstanceStore } from "./instance-store";
 
-import { loadCheck } from "./load-check";
+import { loadCheck } from "@scramjet/load-check";
 import { ReasonPhrases } from "http-status-codes";
 import { configService } from "@scramjet/sth-config";
 
 import * as findPackage from "find-package-json";
 import { constants } from "fs";
+import { CPMConnector } from "./cpm-connector";
+import { DuplexStream } from "@scramjet/api-server";
+import { AddressInfo } from "net";
+import { StringStream } from "scramjet";
+import { CPMMessageCode } from "@scramjet/symbols";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -36,6 +41,8 @@ export class Host implements IComponent {
     instanceBase: string;
 
     socketServer: SocketServer;
+    cpmConnector?: CPMConnector;
+    cpmConnected = false;
 
     instancesStore = InstanceStore;
     sequencesStore: SequenceStore = new SequenceStore();
@@ -64,6 +71,10 @@ export class Host implements IComponent {
         if (this.config.host.apiBase.includes(":")) {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
         }
+
+        if (this.config.cpmUrl) {
+            this.cpmConnector = new CPMConnector(this.config.cpmUrl);
+        }
     }
 
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
@@ -82,8 +93,9 @@ export class Host implements IComponent {
             throw new HostError("SOCKET_TAKEN");
         }
 
-        if (identifyExisiting)
+        if (identifyExisiting) {
             await this.identifyExistingSequences();
+        }
 
         await this.socketServer.start();
 
@@ -91,13 +103,67 @@ export class Host implements IComponent {
 
         await new Promise<void>(res => {
             this.api?.server.once("listening", () => {
-                this.logger.info("API listening on port:", `${this.config.host.hostname}:${this.config.host.port}`);
+                const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
+
+                this.logger.info("API listening on port:", `${serverInfo?.address}:${serverInfo.port}`);
                 res();
             });
         });
 
         this.attachListeners();
         this.attachHostAPIs();
+
+        if (this.cpmConnector) {
+            await this.connectToCPM();
+        }
+    }
+
+    async getLoad(): Promise<LoadCheckStatMessage> {
+        const load = await loadCheck.getLoadCheck();
+
+        return {
+            msgCode: CPMMessageCode.LOAD,
+            avgLoad: load.avgLoad,
+            currentLoad: load.currentLoad,
+            memFree: load.memFree,
+            memUsed: load.memUsed,
+            fsSize: load.fsSize
+        };
+    }
+
+    async connectToCPM() {
+        let loadInterval: NodeJS.Timer;
+
+        return new Promise<void>(async (resolve) => {
+            this.cpmConnector?.on("connect", async (duplex: DuplexStream) => {
+                const communicationStream = new StringStream();
+
+                communicationStream.pipe(duplex);
+
+                this.logger.log("Connected to CPM");
+                this.cpmConnected = true;
+
+                loadInterval = setInterval(async () => {
+                    const load = await this.getLoad();
+
+                    await communicationStream?.whenWrote(
+                        JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
+                    );
+                }, 10000);
+
+                this.cpmConnector?.on("disconnected", () => {
+                    this.logger.info("STH connection ended");
+                    this.cpmConnected = true;
+                    clearInterval(loadInterval);
+                });
+            });
+
+            await this.cpmConnector?.init();
+
+            this.cpmConnector?.connect();
+
+            resolve();
+        });
     }
 
     /**

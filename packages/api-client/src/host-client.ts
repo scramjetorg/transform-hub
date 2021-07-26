@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Readable } from "stream";
 import { ClientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
@@ -15,28 +14,26 @@ export class HostClient implements ClientProvider {
     }
 
     async listSequences() {
-        return await this.client.get("sequences");
+        return this.client.get("sequences");
     }
 
     async listInstances() {
-        return await this.client.get("instances");
+        return this.client.get("instances");
     }
 
     // TODO: Dedicated log stream for host not yet implemented.
     async getLogStream() {
-        return await this.client.getStream("stream/log");
+        return this.client.getStream("stream/log");
     }
 
     async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
-        const response = await this.client.post("sequence", sequencePackage, {
-            "content-type": "application/octet-stream"
-        });
+        const response = await this.client.sendStream("sequence", sequencePackage);
 
         return SequenceClient.from(response.data?.id, this);
     }
 
     async getSequence(sequenceId: string) {
-        return await this.client.get(`sequence/${sequenceId}`);
+        return this.client.get(`sequence/${sequenceId}`);
     }
 
     async deleteSequence(sequenceId: string) {

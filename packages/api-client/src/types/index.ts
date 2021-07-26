@@ -1,10 +1,9 @@
-import { AxiosResponse } from "axios";
-
+import { Response as FetchResponse } from "node-fetch";
 import { Stream } from "stream";
 import { ClientError } from "../client-error";
 
 export type Response = {
-    data?: { [ key: string ]: any };
+    data?: { [key: string]: any };
     status: number | undefined;
 };
 
@@ -23,7 +22,7 @@ export type Headers = {
 };
 
 export type RequestLogger = {
-    ok: (res: AxiosResponse) => void;
+    ok: (res: FetchResponse) => void;
     error: (res: ClientError) => void;
 };
 
@@ -31,7 +30,7 @@ export interface HttpClient {
     addLogger(logger: RequestLogger): void;
     get(url: string): Promise<Response>;
     getStream(url: string): Promise<ResponseStream>;
-    post(url: string, data: any, headers?: Headers): Promise<Response>;
+    post(url: string, data: any, headers?: Headers, options?: { json: boolean }): Promise<Response>;
     delete(url: string): Promise<Response>;
     sendStream(
         url: string,

@@ -41,14 +41,17 @@ export class InstanceClient {
             RunnerMessageCode.STOP, {
                 timeout,
                 canCallKeepalive
-            }] as EncodedControlMessage);
+            }] as EncodedControlMessage,
+        {}, { json: true });
     }
 
     async kill(): Promise<Response> {
         return this.clientUtils.post(`${this.instanceURL}/_kill`, [
             RunnerMessageCode.KILL,
             {}
-        ] as EncodedControlMessage);
+        ] as EncodedControlMessage,
+        {}, { json: true }
+        );
     }
 
     async sendEvent(eventName: string, message: string): Promise<Response> {
@@ -58,7 +61,7 @@ export class InstanceClient {
                 message
             }] as EncodedControlMessage;
 
-        return this.clientUtils.post(`${this.instanceURL}/_event`, data);
+        return this.clientUtils.post(`${this.instanceURL}/_event`, data, {}, { json: true });
     }
 
     async getNextEvent(eventName: string) {

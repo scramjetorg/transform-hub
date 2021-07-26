@@ -1,4 +1,4 @@
-import { InertApp } from "@scramjet/types";
+import { ReadableApp } from "@scramjet/types";
 
 const scramjet = require("scramjet");
 const JSONStream = require("JSONStream");
@@ -11,7 +11,7 @@ interface Person {
 }
 
 // This method needs to expose a function that will be executed by the runner.
-const mod: InertApp = function(_input, ffrom = `${__dirname}/data.json`) {
+const mod: ReadableApp = function(_input, ffrom = `${__dirname}/data.json`) {
     this.on("test", () => console.error("Got test event"));
 
     this.logger.info("Sequence started");

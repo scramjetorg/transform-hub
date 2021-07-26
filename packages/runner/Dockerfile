@@ -24,12 +24,16 @@ COPY packages/symbols ./packages/symbols
 COPY packages/model ./packages/model
 COPY packages/logger ./packages/logger
 COPY packages/runner ./packages/runner
+COPY packages/utility ./packages/utility
 COPY scripts ./scripts
 COPY bin ./bin
 COPY conf ./conf
 COPY LICENSE ./
 
 RUN yarn install
+
+WORKDIR /app/packages/utility
+RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build
 
 WORKDIR /app/packages/symbols
 RUN     LOCAL_PACKAGES=true NO_INSTALL=true yarn build

@@ -1,9 +1,0 @@
-{
-    "parserOptions": {
-        "project": "./tsconfig.json",
-        "tsconfigRootDir": "./packages/api-client"
-    },
-    "rules": {
-        "no-console": 2
-    }
-}

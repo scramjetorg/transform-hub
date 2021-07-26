@@ -1,11 +1,12 @@
 import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
-import { IncomingMessage, ServerResponse } from "http";
-import { Writable, Readable } from "stream";
+import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
+import { Writable, Readable, Duplex } from "stream";
+import { DuplexStream } from "../lib/duplex-stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
 
-function checkAccepts(acc: string|undefined, text: boolean, json: boolean) {
+function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     const types = [];
 
     if (text && json)
@@ -27,7 +28,6 @@ function checkEndHeader(req: IncomingMessage, _default?: boolean) {
     return _default;
 }
 
-
 export function createStreamHandlers(router: SequentialCeroRouter) {
     const decorator = (
         data: Readable,
@@ -45,7 +45,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
             res.setHeader("content-type", cType);
             res.setHeader("transfer-encoding", "chunked");
-
+            res.setHeader("Access-Control-Allow-Origin", "*");
             res.writeHead(200);
 
             // Error handling on disconnect!
@@ -53,8 +53,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
             res
                 .on("error", disconnect)
-                .on("unpipe", disconnect)
-            ;
+                .on("unpipe", disconnect);
 
             return out.pipe(res);
         } catch (e) {
@@ -62,7 +61,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         }
     };
     const upstream = (
-        path: string|RegExp,
+        path: string | RegExp,
         stream: StreamInput,
         { json = false, text = false, encoding = "utf-8" }: StreamConfig = {}
     ): void => {
@@ -79,7 +78,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         });
     };
     const downstream = (
-        path: string|RegExp,
+        path: string | RegExp,
         stream: StreamOutput,
         { json = false, text = false, end: _end = false, encoding = "utf-8" }: StreamConfig = {}
     ): void => {
@@ -138,9 +137,30 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             }
         });
     };
+    const duplex = (
+        path: string | RegExp,
+        callback: (stream: Duplex, headers: IncomingHttpHeaders) => void
+    ): void => {
+        router.post(path, (req, res, next) => {
+            if (req.headers.expect === "100-continue") {
+                res.writeContinue();
+            }
+
+            try {
+                const d = new DuplexStream({}, req, res);
+
+                callback(d, req.headers);
+            } catch (e) {
+                return next(new CeroError("ERR_FAILED_FETCH_DATA", e));
+            }
+
+            return undefined;
+        });
+    };
 
     return {
-        upstream,
-        downstream
+        downstream,
+        duplex,
+        upstream
     };
 }

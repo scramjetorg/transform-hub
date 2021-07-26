@@ -42,8 +42,8 @@ export class CSIController extends EventEmitter {
     /**
      * Streams connected do API.
      */
-     private downStreams?: DownstreamStreamsConfig;
-     private upStreams?: PassThroughStreamsConfig;
+    private downStreams?: DownstreamStreamsConfig;
+    private upStreams?: PassThroughStreamsConfig;
 
     communicationHandler: ICommunicationHandler;
     logger: Logger;
@@ -263,7 +263,7 @@ export class CSIController extends EventEmitter {
 
             const localEmitter = Object.assign(
                 new EventEmitter(),
-                { lastEvents: {} } as {lastEvents: {[evname: string]: any}}
+                { lastEvents: {} } as { lastEvents: { [evname: string]: any } }
             );
 
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
@@ -293,6 +293,7 @@ export class CSIController extends EventEmitter {
 
                 return out.JSONStringify();
             });
+
             const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
                 const name = req.params?.name;
 

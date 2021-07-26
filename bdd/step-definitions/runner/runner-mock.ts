@@ -2,6 +2,7 @@ import { Given, When, Then, After } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { StringStream } from "scramjet";
+import { defer } from "../../lib/utils";
 import { runnerMessages } from "../../data/runner-messages";
 
 const mockRunnerExec = "../packages/runner/src/index.ts";
@@ -48,7 +49,7 @@ Then("a message {string} is received", async (message: string) => {
 });
 
 Then("mock runner is not running", async () => {
-    await new Promise(resolve => setTimeout(() => resolve(1), 2000));
+    await defer(2000);
     assert.equal(runnerProcessStopped, true);
 });
 

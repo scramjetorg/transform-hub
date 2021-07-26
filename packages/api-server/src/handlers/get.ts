@@ -54,6 +54,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
     };
     const getResolver = (path: string | RegExp, callback: GetResolver): void => {
         router.get(path, async (req, res, next) => {
+            res.setHeader("Access-Control-Allow-Origin", "*");
             try {
                 check(req);
                 return output(await callback(req as ParsedMessage), res, next);
