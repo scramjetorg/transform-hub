@@ -8,8 +8,6 @@
     "test": "echo \"Error: no test specified\"",
     "test:docker": "yarn prepare-sample-tar && cat sample-package/package.tar.gz | docker run -i --name pre-runner -v prerunner-$(git rev-parse --short HEAD):/package ${SCRAMJET_INT_REPO_PATH}scramjetorg/pre-runner:$npm_package_version",
     "clean:docker": "docker rm -f scramjetorg/pre-runner; docker volume rm scramjetorg/prerunner-$(git rev-parse --short HEAD)",
-    "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack",
     "clean": "rm -rf ./dist .bic_cache"
   },
   "author": "Scramjet <open-source@scramjet.org>",
