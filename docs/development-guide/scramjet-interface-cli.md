@@ -150,7 +150,7 @@ Options:
 si seq run [options] [package] [args...] # Uploads a package and immediatelly executes it with given arguments
 si seq send [<sequencePackage>]          # send packed and compressed sequence file
 si seq list|ls                           # list the sequences
-si seq start [options] <id> <args...>    # start the sequence
+si seq start [options] <id> [args...]    # start the sequence
 si seq get <id>                          # get data about the sequence
 si seq delete|rm <id>                    # delete the sequence
 si seq help [command]                    # display help for command
