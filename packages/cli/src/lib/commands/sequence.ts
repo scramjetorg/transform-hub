@@ -44,7 +44,7 @@ export const sequence: CommandDefinition = (program) => {
         .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
     // args for example '[10000, 2000]' | '["tcp"]'
-    sequenceCmd.command("start <id> <args...>")
+    sequenceCmd.command("start <id> [args...]")
         .description("start the sequence")
         .option("-c, --config <config-path>")
         .option("-C, --config-json <config-string>")
