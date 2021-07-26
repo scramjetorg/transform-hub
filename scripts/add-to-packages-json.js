@@ -8,8 +8,9 @@ const cwd = resolve(__dirname, "../");
 const options = {};
 const [path, _value, match] = process.argv.slice(2).reduce((acc, x) => {
     if (x.startsWith("--"))
-        if (x.includes("=")) { const [k, v] = x.substr(2).split("="); options[k] = v; }
-        else options[x.substr(2)] = true;
+        if (x.includes("=")) {
+            const [k, v] = x.substr(2).split("="); options[k] = v;
+        } else options[x.substr(2)] = true;
     else if (x.startsWith("-")) x.substr(1).split("").forEach(y => { options[y] = true; });
     else acc.push(x);
     return acc;
