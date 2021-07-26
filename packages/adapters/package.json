@@ -1,14 +1,13 @@
 {
   "name": "@scramjet/adapters",
   "version": "0.10.0-pre.10",
-  "description": "Important model of the scramjet platform",
+  "description": "Docker execution adapters for Scramjet Transform Hub",
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
-    "watch": "tsc -b --watch",
     "test": "nyc ava",
     "prepack": "node ../../scripts/publish.js",
     "postbuild": "yarn prepack"
