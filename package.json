@@ -36,7 +36,6 @@
     "lint:dedupe": "scripts/dedupe.js",
     "start": "node dist/sth/bin/hub.js",
     "start:dev": "ts-node packages/sth/src/bin/hub.ts",
-    "watch": "lerna run watch",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "lerna link",
     "prepare": "npx husky install",

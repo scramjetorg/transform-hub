@@ -12,7 +12,6 @@
     "build": "tsc -p tsconfig.build.json",
     "build:docker": "docker build -t ${SCRAMJET_INT_REPO_PATH}scramjetorg/hub:$npm_package_version -f Dockerfile ../../",
     "clean": "rm -rf ./dist .bic_cache",
-    "watch": "tsc -b --watch",
     "test": "echo no tests yet -- # npm run test:ava",
     "test:ava": "ava",
     "prepack": "node ../../scripts/publish.js",
