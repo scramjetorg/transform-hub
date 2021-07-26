@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable padding-line-between-statements */
 
 const { glob } = require("glob");
 const { readFileSync, writeFileSync } = require("fs");
@@ -6,27 +7,30 @@ const { resolve } = require("path");
 const cwd = resolve(__dirname, "../");
 const options = {};
 const [path, _value, match] = process.argv.slice(2).reduce((acc, x) => {
-    if (x.startsWith("--")) options[x.substr(2)] = true;
+    if (x.startsWith("--"))
+        if (x.includes("=")) { const [k, v] = x.substr(2).split("="); options[k] = v; }
+        else options[x.substr(2)] = true;
     else if (x.startsWith("-")) x.substr(1).split("").forEach(y => { options[y] = true; });
     else acc.push(x);
     return acc;
 }, []);
 
 if (!path || options.help || options.h || options["?"]) {
-    console.error(`Usage: ${process.argv[1]} [--delete|-d] [--override|-o] <key-path> [<value>] [<name-match>]`);
+    console.error(`Usage: ${process.argv[1]} [--pattern=<json-glob>] [--delete|-d] [--override|-o] <key-path> [<value>] [<name-match>]`);
     process.exit(1);
 }
 
-const packages = glob.sync("packages/**/package.json", {
-    cwd,
-    ignore: "**/node_modules/**"
-});
 const chunks = path.split(".");
 const key = chunks.pop();
 const re = match ? require("globrex")(match).regex : "";
 const del = options.d || options.delete;
+const pattern = options.pattern || "packages/**/package.json";
 const override = del || options.override || options.o;
 const value = del ? undefined : _value;
+const packages = glob.sync(pattern, {
+    cwd,
+    ignore: "**/node_modules/**"
+});
 
 for (const file of packages) {
     if (!file.match(re)) continue;
