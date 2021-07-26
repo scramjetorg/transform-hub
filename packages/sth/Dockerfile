@@ -1,4 +1,4 @@
-FROM node:buster as builder
+FROM node:lts-buster-slim as builder
 
 WORKDIR /build
 
@@ -27,7 +27,7 @@ COPY LICENSE ./
 RUN yarn install --frozen-lock \
   && yarn build:packages
 
-FROM node:buster as release
+FROM node:lts-buster-slim as release
 
 RUN set -xe \
   && mkdir -p /app
