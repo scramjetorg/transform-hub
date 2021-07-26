@@ -13,7 +13,7 @@ First clone build and start the hub, copy the following commands to the terminal
 ```bash
 git clone https://github.com/scramjetorg/transform-hub.git && \
   cd transform-hub && sudo gpasswd -a $USER docker && \
-  yarn install && yarn build:all && npm i -g dist/cli && yarn start -P 8000
+  yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
 ```
 
 Depending on your machine this may take some time. When it's done the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
