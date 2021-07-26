@@ -13,6 +13,7 @@
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$npm_package_version",
     "clean": "rm -rf ./dist .bic_cache",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
+    "postbuild": "yarn prepack",
     "prepack": "node ../../scripts/publish.js"
   },
   "author": "Scramjet <opensource@scramjet.org>",
