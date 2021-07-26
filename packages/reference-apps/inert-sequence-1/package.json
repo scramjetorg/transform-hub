@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/reference-inert-1-seq",
-  "version": "0.10.0-pre.10",
+  "version": "0.10.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,8 +13,8 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/reference-inert-function": "^0.10.0-pre.10",
-    "@scramjet/types": "0.10.0-pre.10",
+    "@scramjet/reference-inert-function": "^0.10.0",
+    "@scramjet/types": "^0.10.0",
     "@types/node": "15.12.5"
   },
   "repository": {
