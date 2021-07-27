@@ -1,12 +1,13 @@
 FROM node:lts-buster-slim
 
+RUN apt-get update && apt-get upgrade -y
+
 RUN groupadd -g 1200 prerunner \
   && useradd -g 1200 -u 1200 -m -d /app -s /bin/bash prerunner \
   && mkdir /package \
   && chown prerunner:prerunner /package
 
-RUN apt-get update \
-  && apt-get install -y jq \
+RUN apt-get install -y jq \
   && apt-get clean \
   && rm -rf \
   /var/lib/apt/* \

@@ -1,5 +1,7 @@
 FROM node:lts-buster-slim as builder
 
+RUN apt-get update && apt-get upgrade -y
+
 WORKDIR /build
 
 COPY package.json yarn.lock lerna.json tsconfig.base.json ./
@@ -28,6 +30,8 @@ RUN yarn install --frozen-lock \
   && yarn build:packages
 
 FROM node:lts-buster-slim as release
+
+RUN apt-get update && apt-get upgrade -y
 
 RUN set -xe \
   && mkdir -p /app

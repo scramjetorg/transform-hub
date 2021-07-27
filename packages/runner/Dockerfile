@@ -1,10 +1,11 @@
 FROM node:lts-buster-slim as target
 
+RUN apt-get update && apt-get upgrade -y
+
 ENV PACKAGE_DIR=/package \
     PIPES_DIR=/pipes \
     RUNNER_DIR=/app
 
-RUN apt-get update
 RUN apt-get install -y gosu
 RUN groupadd -g 1200 runner \
     && useradd -g 1200 -u 1200 -m -d ${RUNNER_DIR} -s /bin/bash runner \
@@ -14,6 +15,8 @@ RUN groupadd -g 1200 runner \
 FROM node:lts-buster-slim AS builder
 
 WORKDIR /app/
+
+RUN apt-get update && apt-get upgrade -y
 
 COPY package.json yarn.lock lerna.json tsconfig.base.json ./
 
