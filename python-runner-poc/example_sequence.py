@@ -1,24 +1,20 @@
 import asyncio
 import json
-from datetime import datetime
 from aiostream import stream, pipe
 
-def with_time(text):
-    print(f'{datetime.now().strftime("%H:%M:%S")} - {text}')
-
-async def transform(stream, context):
+async def transform(context, in_stream):
     async def process(chunk):
         data = json.loads(chunk)
-        with_time(f'Processing #{data["counter"]}')
+        context.logger.info(f'Processing #{data["counter"]}')
 
         await asyncio.sleep(2)
         data['result'] = data['value']
-        if 'add' in context:
-            data['result'] += context['add']
+        if hasattr(context, 'increment_result'):
+            data['result'] += context.increment_result
         del data['value']
 
-        with_time(f'Finished #{data["counter"]}')
+        context.logger.info(f'Finished #{data["counter"]}')
         return json.dumps(data) + '\n'
 
-    return stream | pipe.map(process)
+    return in_stream | pipe.map(process)
 
