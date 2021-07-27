@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/healthy-sequence",
-  "version": "0.10.7",
+  "version": "0.11.0-0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.10.7",
+    "@scramjet/types": "^0.11.0-0",
     "@types/node": "15.12.5"
   },
   "repository": {
