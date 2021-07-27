@@ -97,8 +97,8 @@ class CSHClient implements ICSHClient {
                 CC.OUT,
                 CC.LOG
             ]
-                .map(streamIndex => streams[streamIndex] as unknown as Writable)
-                .map((stream: Writable) => new Promise(
+                .map(streamIndex => streams[streamIndex] as Writable)
+                .map(stream => new Promise(
                     (res, rej) => stream
                         .on("error", rej)
                         .on("end", res)

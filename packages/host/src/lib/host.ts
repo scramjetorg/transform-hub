@@ -342,7 +342,7 @@ export class Host implements IComponent {
 
             const index = sequence.instances.indexOf(id);
 
-            if (~index) {
+            if (index > -1) {
                 sequence.instances.splice(index, 1);
             }
         });

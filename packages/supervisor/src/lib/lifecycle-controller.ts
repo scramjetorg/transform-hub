@@ -92,7 +92,7 @@ class LifeCycleController implements IComponent {
      * Before the Sequence is executed the LifeCycle Adapter Run needs to connect the message and data streams
      * between the client and the LifeCycle Adapter Run.
      *
-     * LifeCycle Controller than requests LifeCycle Adapter Run to run the Sequence.
+     * LifeCycle Controller then requests LifeCycle Adapter Run to run the Sequence.
      *
      * The Sequence runs until it has not terminated, either by itself or by a command sent from the CSH.
      *
@@ -205,7 +205,6 @@ class LifeCycleController implements IComponent {
             // TODO: if we have a non-zero exit code is this expected?
             this.logger.log(`Sequence finished with ${exitcode} status`);
 
-            await this.client.disconnect();
             this.logger.log("Client disconnected");
         } catch (error) {
             this.logger.error("Error caught", error.stack);
@@ -230,8 +229,6 @@ class LifeCycleController implements IComponent {
             await this.lifecycleAdapterRun.cleanup();
 
             this.logger.error("Cleanup done (post error)");
-
-            await this.client.disconnect();
 
             this.scheduleExit(251, 50);
             return;
