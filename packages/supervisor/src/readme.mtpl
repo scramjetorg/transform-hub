@@ -1,0 +1,13 @@
+# `@scramjet/supervisor` <!-- omit in toc -->
+
+This package executes the remote runners and provides communication with them throgh abstraction layer provided by adapters.
+
+## Docs
+
+>!docs supervisor/README.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib

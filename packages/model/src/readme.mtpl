@@ -1,0 +1,13 @@
+# `@scramjet/model` <!-- omit in toc -->
+
+The package provides the domain model for Scramjet Transform Hub, the API Client and CLI.
+
+## Docs
+
+>!docs model/README.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib

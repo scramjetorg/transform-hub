@@ -1,0 +1,9 @@
+# `@scramjet/pre-runner` <!-- omit in toc -->
+
+The package builds a docker container that identifies the sequences and returns the information to back STH.
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib

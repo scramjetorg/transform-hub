@@ -1,8 +1,8 @@
 {
   "bin": {},
-  "name": "pre-publish",
-  "version": "0.2.0",
-  "description": "Autogenerate packages",
+  "name": "@scramjet/scripts",
+  "version": "0.11.0",
+  "description": "Scripts used by scramjet cloud platform",
   "scripts": {
     "test": "echo \"Error: no test specified\""
   },

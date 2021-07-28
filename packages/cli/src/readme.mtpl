@@ -1,0 +1,102 @@
+# Scramjet Transform Hub Command Line Interface <!-- omit in toc -->
+
+![Scramjet Transform Hub](https://assets.scramjet.org/sth-logo.svg "Scramjet Transform Hub Logo")
+
+This package provides a CLI interface to communicate with Scramjet Transform Hub. You can install the CLI like this:
+
+```bash
+npm install -g @scramjet/cli
+```
+
+Once installed, the CLI is available as the command `si` or `scramjet-interface`:
+
+```md
+Usage: si [options...] | si [command] [options...]
+
+General options
+
+* `-L, --log-level <level>  Specify log level (default: "trace")`
+* `-a, --api-url <url>      Specify base API url (default: "http://localhost:8000/api/v1")`
+* `-f, --format <value>     Specify display formatting: json or pretty (default: "pretty")`
+* `-h, --help               display help for command`
+
+Commands
+
+* `pack [options]`
+* `host [command]           something`
+* `config, c [command]       configuration file operations`
+* `sequence, seq [command]   operations on sequence`
+* `instance, inst [command]  operations on instance`
+* `help [command]           display help for command`
+
+Show sequence and instance help by providing --help option after each.
+```
+
+### Set up config
+
+Set STH url:
+
+```bash
+si config apiUrl "http://url.to.host:8000"
+```
+
+See the current config (including default values):
+
+```bash
+> si config print
+```
+
+## Create a package
+
+Usage: `si pack [options] <directory>`
+
+Options:
+
+* `-c, --stdout                output to stdout (ignores -o)`
+* `-o, --output <file.tar.gz>  output path - defaults to dirname`
+* `-h, --help                  display help for command`
+
+## Sequence operations
+
+```bash
+si seq run [options] [package] [args...] # Uploads a package and immediatelly executes it with given arguments
+si seq send [<sequencePackage>]          # send packed and compressed sequence file
+si seq list|ls                           # list the sequences
+si seq start [options] <id> [args...]    # start the sequence
+si seq get <id>                          # get data about the sequence
+si seq delete|rm <id>                    # delete the sequence
+si seq help [command]                    # display help for command
+```
+
+## Instance operations
+
+```bash
+si inst list|ls                                       # list the instances
+si inst kill <id>                                     # kill instance without waiting for unfinished tasks
+si inst stop <id> <timeout>                           # end instance gracefully waiting for unfinished tasks
+si inst status <id>                                   # status data about the instance
+si inst health <id>                                   # show the instance health status
+si inst info <id>                                     # show info about the instance
+si inst invokeEvent|emit <id> <eventName> [<payload>] # send event with eventName and a JSON formatted event payload
+si inst event|on [options] <id> <event>               # get the last event occurence (will wait for the first one if not yet retrieved)
+si inst input <id> [<file>]                           # send file to input, if file not given the data will be read from stdin
+si inst output <id>                                   # show stream on output
+si inst log <id>                                      # show instance log
+si inst attach <id>                                   # connect to all stdio - stdin, stdout, stderr of a running instance
+si inst stdin <id> [<file>]                           # send file to stdin, if file not given the data will be read from stdin
+si inst stderr <id>                                   # show stream on stderr
+si inst stdout <id>                                   # show stream on stdout
+si inst help [command]                                # display help for command
+```
+
+## Extra reading
+
+See more detailed docs here:
+
+>!docs development-guide/scramjet-interface-cli.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib

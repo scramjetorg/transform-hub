@@ -1,0 +1,13 @@
+# `@scramjet/sth-config`
+
+This package executes the sequences and controls the runner via the wired adapter.
+
+## Docs
+
+>!docs sth-config/README.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib
