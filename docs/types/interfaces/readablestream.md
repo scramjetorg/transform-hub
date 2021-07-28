@@ -192,7 +192,7 @@ PipeableStream.\_\_@asyncIterator@3267
 
 #### Defined in
 
-[packages/types/src/utils.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L45)
+[packages/types/src/utils.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L45)
 
 ___
 
@@ -465,7 +465,7 @@ PipeableStream.destroy
 
 #### Defined in
 
-[packages/types/src/utils.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L46)
+[packages/types/src/utils.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L46)
 
 ___
 
@@ -1153,7 +1153,7 @@ PipeableStream.pipe
 
 #### Defined in
 
-[packages/types/src/utils.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L33)
+[packages/types/src/utils.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L33)
 
 ▸ **pipe**<`T`\>(`destination`, `options?`): `T`
 
@@ -1181,7 +1181,7 @@ PipeableStream.pipe
 
 #### Defined in
 
-[packages/types/src/utils.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L36)
+[packages/types/src/utils.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L36)
 
 ___
 
@@ -1598,7 +1598,7 @@ PipeableStream.read
 
 #### Defined in
 
-[packages/types/src/utils.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L32)
+[packages/types/src/utils.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L32)
 
 ___
 

@@ -48,7 +48,7 @@
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/stream-handler.ts#L23)
+[packages/model/src/stream-handler.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/stream-handler.ts#L23)
 
 ___
 
@@ -58,7 +58,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/errors/csi-controller-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/errors/csi-controller-error.ts#L4)
+[packages/model/src/errors/csi-controller-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/errors/csi-controller-error.ts#L4)
 
 ___
 
@@ -68,7 +68,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/errors/host-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/errors/host-error.ts#L4)
+[packages/model/src/errors/host-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/errors/host-error.ts#L4)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/errors/runner-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/errors/runner-error.ts#L4)
+[packages/model/src/errors/runner-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/errors/runner-error.ts#L4)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/errors/supervisor-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/errors/supervisor-error.ts#L4)
+[packages/model/src/errors/supervisor-error.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/errors/supervisor-error.ts#L4)
 
 ## Variables
 
@@ -105,7 +105,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/index.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/index.ts#L11)
+[packages/model/src/index.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/index.ts#L11)
 
 ## Functions
 
@@ -132,7 +132,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/get-message.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/get-message.ts#L55)
+[packages/model/src/get-message.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/get-message.ts#L55)
 
 ___
 
@@ -156,7 +156,7 @@ Get an object of message type from serialized message.
 
 #### Defined in
 
-[packages/model/src/messages-utils.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/messages-utils.ts#L29)
+[packages/model/src/messages-utils.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/messages-utils.ts#L29)
 
 ___
 
@@ -188,7 +188,7 @@ A helper method used for deserializing messages.
 
 #### Defined in
 
-[packages/model/src/get-message.ts:102](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/get-message.ts#L102)
+[packages/model/src/get-message.ts:102](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/get-message.ts#L102)
 
 ___
 
@@ -219,4 +219,4 @@ Serizalized message.
 
 #### Defined in
 
-[packages/model/src/messages-utils.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/messages-utils.ts#L14)
+[packages/model/src/messages-utils.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/messages-utils.ts#L14)

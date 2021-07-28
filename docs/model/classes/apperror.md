@@ -59,7 +59,7 @@ Error.constructor
 
 #### Defined in
 
-[packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/errors/app-error.ts#L9)
+[packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/errors/app-error.ts#L9)
 
 ## Properties
 
@@ -73,7 +73,7 @@ IAppError.code
 
 #### Defined in
 
-[packages/model/src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/errors/app-error.ts#L8)
+[packages/model/src/errors/app-error.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/errors/app-error.ts#L8)
 
 ___
 
@@ -87,7 +87,7 @@ IAppErrorData.data
 
 #### Defined in
 
-[packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/errors/app-error.ts#L9)
+[packages/model/src/errors/app-error.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/errors/app-error.ts#L9)
 
 ___
 

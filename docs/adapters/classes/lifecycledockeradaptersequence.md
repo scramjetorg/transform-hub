@@ -42,7 +42,7 @@
 
 #### Defined in
 
-[sequence-adapter.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L31)
+[sequence-adapter.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L31)
 
 ## Properties
 
@@ -52,7 +52,7 @@
 
 #### Defined in
 
-[sequence-adapter.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L25)
+[sequence-adapter.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L25)
 
 ___
 
@@ -66,7 +66,7 @@ IComponent.logger
 
 #### Defined in
 
-[sequence-adapter.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L31)
+[sequence-adapter.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L31)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[sequence-adapter.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L27)
+[sequence-adapter.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L27)
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-[sequence-adapter.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L29)
+[sequence-adapter.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L29)
 
 ## Methods
 
@@ -104,7 +104,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[sequence-adapter.ts:170](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L170)
+[sequence-adapter.ts:170](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L170)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 #### Defined in
 
-[sequence-adapter.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L138)
+[sequence-adapter.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L138)
 
 ___
 
@@ -144,7 +144,7 @@ ___
 
 #### Defined in
 
-[sequence-adapter.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L45)
+[sequence-adapter.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L45)
 
 ___
 
@@ -169,7 +169,7 @@ ILifeCycleAdapterIdentify.identify
 
 #### Defined in
 
-[sequence-adapter.ts:104](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L104)
+[sequence-adapter.ts:104](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L104)
 
 ___
 
@@ -189,7 +189,7 @@ ___
 
 #### Defined in
 
-[sequence-adapter.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L59)
+[sequence-adapter.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L59)
 
 ___
 
@@ -207,7 +207,7 @@ ILifeCycleAdapterMain.init
 
 #### Defined in
 
-[sequence-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L38)
+[sequence-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L38)
 
 ___
 
@@ -225,7 +225,7 @@ ILifeCycleAdapterIdentify.list
 
 #### Defined in
 
-[sequence-adapter.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L49)
+[sequence-adapter.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L49)
 
 ___
 
@@ -247,7 +247,7 @@ ___
 
 #### Defined in
 
-[sequence-adapter.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L146)
+[sequence-adapter.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L146)
 
 ___
 
@@ -267,7 +267,7 @@ ___
 
 #### Defined in
 
-[sequence-adapter.ts:90](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L90)
+[sequence-adapter.ts:90](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L90)
 
 ___
 
@@ -285,4 +285,4 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[sequence-adapter.ts:193](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L193)
+[sequence-adapter.ts:193](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/sequence-adapter.ts#L193)

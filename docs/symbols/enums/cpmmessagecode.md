@@ -18,7 +18,7 @@
 
 #### Defined in
 
-[cpm-message-code.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/cpm-message-code.ts#L3)
+[cpm-message-code.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L3)
 
 ___
 
@@ -28,7 +28,7 @@ ___
 
 #### Defined in
 
-[cpm-message-code.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/cpm-message-code.ts#L5)
+[cpm-message-code.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L5)
 
 ___
 
@@ -38,4 +38,4 @@ ___
 
 #### Defined in
 
-[cpm-message-code.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/cpm-message-code.ts#L2)
+[cpm-message-code.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L2)

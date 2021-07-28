@@ -84,7 +84,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L55)
+[packages/types/src/utils.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L55)
 
 ___
 
@@ -98,7 +98,7 @@ Writable.writable
 
 #### Defined in
 
-[packages/types/src/utils.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L56)
+[packages/types/src/utils.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L56)
 
 ___
 
@@ -502,7 +502,7 @@ Writable.destroy
 
 #### Defined in
 
-[packages/types/src/utils.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L57)
+[packages/types/src/utils.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L57)
 
 ___
 
@@ -674,7 +674,7 @@ Writable.end
 
 #### Defined in
 
-[packages/types/src/utils.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L60)
+[packages/types/src/utils.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L60)
 
 ▸ **end**(`data`, `cb?`): `void`
 
@@ -695,7 +695,7 @@ Writable.end
 
 #### Defined in
 
-[packages/types/src/utils.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L61)
+[packages/types/src/utils.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L61)
 
 ▸ **end**(`str`, `encoding`, `cb?`): `void`
 
@@ -717,7 +717,7 @@ Writable.end
 
 #### Defined in
 
-[packages/types/src/utils.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L62)
+[packages/types/src/utils.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L62)
 
 ___
 
@@ -1752,7 +1752,7 @@ Writable.write
 
 #### Defined in
 
-[packages/types/src/utils.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L58)
+[packages/types/src/utils.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L58)
 
 ▸ **write**(`str`, `encoding`, `cb?`): `boolean`
 
@@ -1774,4 +1774,4 @@ Writable.write
 
 #### Defined in
 
-[packages/types/src/utils.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L59)
+[packages/types/src/utils.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/utils.ts#L59)

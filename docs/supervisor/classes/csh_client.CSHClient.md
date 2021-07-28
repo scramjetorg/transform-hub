@@ -39,7 +39,7 @@
 
 #### Defined in
 
-[csh-client.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/csh-client.ts#L25)
+[csh-client.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/csh-client.ts#L25)
 
 ## Properties
 
@@ -53,7 +53,7 @@ ICSHClient.logger
 
 #### Defined in
 
-[csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/csh-client.ts#L23)
+[csh-client.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/csh-client.ts#L23)
 
 ## Methods
 
@@ -71,7 +71,7 @@ ICSHClient.disconnect
 
 #### Defined in
 
-[csh-client.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/csh-client.ts#L89)
+[csh-client.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/csh-client.ts#L89)
 
 ___
 
@@ -85,7 +85,7 @@ ___
 
 #### Defined in
 
-[csh-client.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/csh-client.ts#L111)
+[csh-client.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/csh-client.ts#L111)
 
 ___
 
@@ -109,7 +109,7 @@ ICSHClient.hookCommunicationHandler
 
 #### Defined in
 
-[csh-client.ts:119](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/csh-client.ts#L119)
+[csh-client.ts:119](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/csh-client.ts#L119)
 
 ___
 
@@ -133,4 +133,4 @@ ICSHClient.init
 
 #### Defined in
 
-[csh-client.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/csh-client.ts#L31)
+[csh-client.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/csh-client.ts#L31)

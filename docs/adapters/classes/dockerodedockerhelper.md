@@ -50,7 +50,7 @@ Communicates with Docker using Dockerode library.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L44)
+[dockerode-docker-helper.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L44)
 
 ___
 
@@ -60,7 +60,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L45)
+[dockerode-docker-helper.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L45)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L160)
+[dockerode-docker-helper.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L160)
 
 ## Methods
 
@@ -99,7 +99,7 @@ Object with container's standard I/O streams.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:224](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L224)
+[dockerode-docker-helper.ts:224](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L224)
 
 ___
 
@@ -135,7 +135,7 @@ IDockerHelper.createContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L80)
+[dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L80)
 
 ___
 
@@ -163,7 +163,7 @@ IDockerHelper.createVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:188](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L188)
+[dockerode-docker-helper.ts:188](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L188)
 
 ___
 
@@ -181,7 +181,7 @@ IDockerHelper.listVolumes
 
 #### Defined in
 
-[dockerode-docker-helper.ts:209](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L209)
+[dockerode-docker-helper.ts:209](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L209)
 
 ___
 
@@ -208,7 +208,7 @@ Fetches the image from repo
 
 #### Defined in
 
-[dockerode-docker-helper.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L162)
+[dockerode-docker-helper.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L162)
 
 ___
 
@@ -236,7 +236,7 @@ IDockerHelper.removeContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L146)
+[dockerode-docker-helper.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L146)
 
 ___
 
@@ -264,7 +264,7 @@ IDockerHelper.removeVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:205](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L205)
+[dockerode-docker-helper.ts:205](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L205)
 
 ___
 
@@ -292,7 +292,7 @@ IDockerHelper.run
 
 #### Defined in
 
-[dockerode-docker-helper.ts:234](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L234)
+[dockerode-docker-helper.ts:234](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L234)
 
 ___
 
@@ -320,7 +320,7 @@ IDockerHelper.startContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L126)
+[dockerode-docker-helper.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L126)
 
 ___
 
@@ -348,7 +348,7 @@ IDockerHelper.stats
 
 #### Defined in
 
-[dockerode-docker-helper.ts:156](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L156)
+[dockerode-docker-helper.ts:156](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L156)
 
 ___
 
@@ -376,7 +376,7 @@ IDockerHelper.stopContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L136)
+[dockerode-docker-helper.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L136)
 
 ___
 
@@ -404,7 +404,7 @@ IDockerHelper.translateVolumesConfig
 
 #### Defined in
 
-[dockerode-docker-helper.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L54)
+[dockerode-docker-helper.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L54)
 
 ___
 
@@ -433,4 +433,4 @@ Container exit code.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:288](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/dockerode-docker-helper.ts#L288)
+[dockerode-docker-helper.ts:288](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L288)

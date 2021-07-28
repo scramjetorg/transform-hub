@@ -32,7 +32,7 @@
 
 #### Defined in
 
-[packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/component.ts#L2)
+[packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/component.ts#L2)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Disconnects from a host server.
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/csh-connector.ts#L26)
+[packages/types/src/csh-connector.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/csh-connector.ts#L26)
 
 ___
 
@@ -70,7 +70,7 @@ Create array of streams on LCC demand than hook streams.
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/csh-connector.ts#L21)
+[packages/types/src/csh-connector.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/csh-connector.ts#L21)
 
 ___
 
@@ -92,4 +92,4 @@ Initializes the client
 
 #### Defined in
 
-[packages/types/src/csh-connector.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/csh-connector.ts#L14)
+[packages/types/src/csh-connector.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/csh-connector.ts#L14)

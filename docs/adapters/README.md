@@ -45,7 +45,7 @@
 
 #### Defined in
 
-[types.ts:122](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L122)
+[types.ts:122](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L122)
 
 ___
 
@@ -70,7 +70,7 @@ Configuration used to run command in container.
 
 #### Defined in
 
-[types.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L53)
+[types.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L53)
 
 ___
 
@@ -87,7 +87,7 @@ ___
 
 #### Defined in
 
-[types.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L43)
+[types.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L43)
 
 ___
 
@@ -107,7 +107,7 @@ Result of running command in container.
 
 #### Defined in
 
-[types.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L136)
+[types.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L136)
 
 ___
 
@@ -127,7 +127,7 @@ Standard streams connected with container.
 
 #### Defined in
 
-[types.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L101)
+[types.ts:101](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L101)
 
 ___
 
@@ -139,7 +139,7 @@ Volume mounting configuration.
 
 #### Defined in
 
-[types.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L32)
+[types.ts:32](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L32)
 
 ___
 
@@ -155,7 +155,7 @@ ___
 
 #### Defined in
 
-[types.ts:129](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L129)
+[types.ts:129](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L129)
 
 ___
 
@@ -167,7 +167,7 @@ Docker container.
 
 #### Defined in
 
-[types.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L18)
+[types.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L18)
 
 ___
 
@@ -179,7 +179,7 @@ Docker image.
 
 #### Defined in
 
-[types.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L11)
+[types.ts:11](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L11)
 
 ___
 
@@ -191,7 +191,7 @@ Docker volume.
 
 #### Defined in
 
-[types.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L25)
+[types.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L25)
 
 ___
 
@@ -207,4 +207,4 @@ ___
 
 #### Defined in
 
-[types.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L118)
+[types.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L118)

@@ -27,7 +27,7 @@
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/api-expose.ts#L55)
+[packages/types/src/api-expose.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L55)
 
 ___
 
@@ -39,7 +39,7 @@ Http status code to be outputted
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/api-expose.ts#L47)
+[packages/types/src/api-expose.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L47)
 
 ___
 
@@ -51,7 +51,7 @@ The message that will be sent in reason line
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/api-expose.ts#L51)
+[packages/types/src/api-expose.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L51)
 
 ___
 

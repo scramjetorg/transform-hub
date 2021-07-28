@@ -56,7 +56,7 @@
 
 #### Defined in
 
-[instance-adapter.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L52)
+[instance-adapter.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L52)
 
 ## Properties
 
@@ -66,7 +66,7 @@
 
 #### Defined in
 
-[instance-adapter.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L36)
+[instance-adapter.ts:36](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L36)
 
 ___
 
@@ -76,7 +76,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L45)
+[instance-adapter.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L45)
 
 ___
 
@@ -86,7 +86,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L33)
+[instance-adapter.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L33)
 
 ___
 
@@ -96,7 +96,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L37)
+[instance-adapter.ts:37](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L37)
 
 ___
 
@@ -106,7 +106,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L47)
+[instance-adapter.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L47)
 
 ___
 
@@ -120,7 +120,7 @@ IComponent.logger
 
 #### Defined in
 
-[instance-adapter.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L52)
+[instance-adapter.ts:52](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L52)
 
 ___
 
@@ -130,7 +130,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L39)
+[instance-adapter.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L39)
 
 ___
 
@@ -140,7 +140,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L46)
+[instance-adapter.ts:46](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L46)
 
 ___
 
@@ -150,7 +150,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L35)
+[instance-adapter.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L35)
 
 ___
 
@@ -160,7 +160,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L44)
+[instance-adapter.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L44)
 
 ___
 
@@ -170,7 +170,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L38)
+[instance-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L38)
 
 ___
 
@@ -180,7 +180,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L48)
+[instance-adapter.ts:48](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L48)
 
 ___
 
@@ -190,7 +190,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:50](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L50)
+[instance-adapter.ts:50](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L50)
 
 ___
 
@@ -200,7 +200,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L43)
+[instance-adapter.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L43)
 
 ___
 
@@ -210,7 +210,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L41)
+[instance-adapter.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L41)
 
 ___
 
@@ -220,7 +220,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L42)
+[instance-adapter.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L42)
 
 ## Methods
 
@@ -238,7 +238,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[instance-adapter.ts:310](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L310)
+[instance-adapter.ts:310](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L310)
 
 ___
 
@@ -259,7 +259,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:73](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L73)
+[instance-adapter.ts:73](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L73)
 
 ___
 
@@ -283,7 +283,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:90](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L90)
+[instance-adapter.ts:90](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L90)
 
 ___
 
@@ -303,7 +303,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:145](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L145)
+[instance-adapter.ts:145](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L145)
 
 ___
 
@@ -327,7 +327,7 @@ ILifeCycleAdapterRun.hookCommunicationHandler
 
 #### Defined in
 
-[instance-adapter.ts:175](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L175)
+[instance-adapter.ts:175](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L175)
 
 ___
 
@@ -345,7 +345,7 @@ ILifeCycleAdapterMain.init
 
 #### Defined in
 
-[instance-adapter.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L69)
+[instance-adapter.ts:69](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L69)
 
 ___
 
@@ -369,7 +369,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[instance-adapter.ts:339](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L339)
+[instance-adapter.ts:339](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L339)
 
 ___
 
@@ -390,7 +390,7 @@ ___
 
 #### Defined in
 
-[instance-adapter.ts:131](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L131)
+[instance-adapter.ts:131](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L131)
 
 ___
 
@@ -408,7 +408,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[instance-adapter.ts:344](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L344)
+[instance-adapter.ts:344](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L344)
 
 ___
 
@@ -432,7 +432,7 @@ ILifeCycleAdapterRun.run
 
 #### Defined in
 
-[instance-adapter.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L212)
+[instance-adapter.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L212)
 
 ___
 
@@ -450,7 +450,7 @@ ILifeCycleAdapterRun.snapshot
 
 #### Defined in
 
-[instance-adapter.ts:334](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L334)
+[instance-adapter.ts:334](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L334)
 
 ___
 
@@ -474,4 +474,4 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[instance-adapter.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/instance-adapter.ts#L154)
+[instance-adapter.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/instance-adapter.ts#L154)

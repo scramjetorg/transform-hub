@@ -24,7 +24,7 @@
 
 #### Defined in
 
-[communication-channel.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L5)
+[communication-channel.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L5)
 
 ___
 
@@ -34,7 +34,7 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L7)
+[communication-channel.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L7)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L9)
+[communication-channel.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L9)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L6)
+[communication-channel.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L6)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L8)
+[communication-channel.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L8)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L10)
+[communication-channel.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L10)
 
 ___
 
@@ -84,7 +84,7 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L4)
+[communication-channel.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L4)
 
 ___
 
@@ -94,7 +94,7 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L2)
+[communication-channel.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L2)
 
 ___
 
@@ -104,4 +104,4 @@ ___
 
 #### Defined in
 
-[communication-channel.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/communication-channel.ts#L3)
+[communication-channel.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/communication-channel.ts#L3)

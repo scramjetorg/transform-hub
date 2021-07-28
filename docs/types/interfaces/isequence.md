@@ -28,7 +28,7 @@ Question: this should probably moved to @scramjet/model, right?
 
 #### Defined in
 
-[packages/types/src/sequence-store.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/sequence-store.ts#L18)
+[packages/types/src/sequence-store.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/sequence-store.ts#L18)
 
 ___
 
@@ -38,7 +38,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-store.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/sequence-store.ts#L17)
+[packages/types/src/sequence-store.ts:17](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/sequence-store.ts#L17)
 
 ___
 
@@ -48,4 +48,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-store.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/sequence-store.ts#L19)
+[packages/types/src/sequence-store.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/sequence-store.ts#L19)

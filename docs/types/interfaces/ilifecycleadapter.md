@@ -30,7 +30,7 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L35)
+[packages/types/src/lifecycle.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L35)
 
 ___
 
@@ -52,7 +52,7 @@ Hooks up downstream streams.
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L49)
+[packages/types/src/lifecycle.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L49)
 
 ___
 
@@ -74,7 +74,7 @@ Passes stream to PreRunner and resolves with PreRunner's results.
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L22)
+[packages/types/src/lifecycle.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L22)
 
 ___
 
@@ -90,7 +90,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L14)
+[packages/types/src/lifecycle.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L14)
 
 ___
 
@@ -110,7 +110,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L51)
+[packages/types/src/lifecycle.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L51)
 
 ___
 
@@ -124,7 +124,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L54)
+[packages/types/src/lifecycle.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L54)
 
 ___
 
@@ -148,7 +148,7 @@ Runner exit code.
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L30)
+[packages/types/src/lifecycle.ts:30](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L30)
 
 ___
 
@@ -166,7 +166,7 @@ snapshot url.
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L42)
+[packages/types/src/lifecycle.ts:42](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L42)
 
 ___
 
@@ -186,4 +186,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle.ts#L56)
+[packages/types/src/lifecycle.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle.ts#L56)
