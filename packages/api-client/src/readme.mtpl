@@ -1,0 +1,23 @@
+# Scramjet Transform Hub API Client <!-- omit in toc -->
+
+The package provides an API Client for use with Scramjet Transform Hub.
+
+Usage:
+
+```js
+import { HostClient, SequenceClient } from "@scramjet/api-client";
+
+const host = new HostClient("http://192.168.0.34:8000/api/v1");
+
+host.getSequence("3e989fe7-a3b7-401e-a269-2fa0a7ac70f4")
+```
+
+## Docs
+
+>!docs api-client/README.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib

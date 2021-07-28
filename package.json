@@ -22,7 +22,7 @@
     "build:packages": "LOCAL_PACKAGES=true lerna run build",
     "build:all-packages": "LOCAL_PACKAGES=true lerna run build && LOCAL_PACKAGES=true lerna run build:refapps",
     "build:docker": "lerna run build:docker",
-    "build:docs": "lerna run build:docs",
+    "build:docs": "lerna run build:docs && node ./scripts/mk-readme",
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -prune -exec rm -rf {} ';' 2> /dev/null",
     "clean": "lerna run clean && yarn clean:root",

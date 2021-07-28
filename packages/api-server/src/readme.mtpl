@@ -1,0 +1,11 @@
+# Scramjet Transform Hub API Server <!-- omit in toc -->
+
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package provides the API Server used by STH to expose the interface.
+
+>!docs api-server/README.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib

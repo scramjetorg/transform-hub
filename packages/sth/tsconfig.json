@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/bin/index.ts"
     ],
-    "out": "../../docs/cli",
+    "out": "../../docs/sth",
     "plugin": "typedoc-plugin-markdown",
     "readme": "README.md",
     "excludePrivate": "true",
