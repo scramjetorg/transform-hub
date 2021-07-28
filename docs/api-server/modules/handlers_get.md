@@ -12,14 +12,38 @@
 
 ### createGetterHandler
 
-▸ **createGetterHandler**(`router`: [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md)): *function*
+▸ **createGetterHandler**(`router`): <T\>(`path`: `string` \| `RegExp`, `msg`: `T` \| `GetResolver`, `conn?`: `ICommunicationHandler`) => `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `router` | [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md) |
+| `router` | [`SequentialCeroRouter`](../interfaces/lib_definitions.SequentialCeroRouter.md) |
 
-**Returns:** <T\>(`path`: *string* \| *RegExp*, `msg`: T \| GetResolver, `conn?`: *ICommunicationHandler*) => *void*
+#### Returns
 
-Defined in: [packages/api-server/src/handlers/get.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/handlers/get.ts#L6)
+`fn`
+
+▸ <`T`\>(`path`, `msg`, `conn?`): `void`
+
+##### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends `MonitoringMessageCode` |
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` \| `RegExp` |
+| `msg` | `T` \| `GetResolver` |
+| `conn?` | `ICommunicationHandler` |
+
+##### Returns
+
+`void`
+
+#### Defined in
+
+[packages/api-server/src/handlers/get.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/handlers/get.ts#L6)

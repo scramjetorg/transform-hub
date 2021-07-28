@@ -12,8 +12,12 @@
 
 ### InstanceStore
 
-• `Const` **InstanceStore**: *object*= {}
+• `Const` **InstanceStore**: `Object` = `{}`
 
-#### Type declaration
+#### Index signature
 
-Defined in: [packages/host/src/lib/instance-store.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/instance-store.ts#L4)
+▪ [key: `string`]: [`CSIController`](../classes/csi_controller.CSIController.md)
+
+#### Defined in
+
+[packages/host/src/lib/instance-store.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/instance-store.ts#L4)

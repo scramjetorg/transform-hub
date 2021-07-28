@@ -6,4 +6,4 @@
 
 ### Classes
 
-- [CSHClient](../classes/csh_client.cshclient.md)
+- [CSHClient](../classes/csh_client.CSHClient.md)

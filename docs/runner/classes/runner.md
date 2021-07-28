@@ -6,11 +6,11 @@
 
 | Name | Type |
 | :------ | :------ |
-| `X` | AppConfig |
+| `X` | extends `AppConfig` |
 
 ## Implements
 
-- *IComponent*
+- `IComponent`
 
 ## Table of contents
 
@@ -52,233 +52,303 @@
 
 ### constructor
 
-\+ **new Runner**<X\>(`sequencePath`: *string*, `fifosPath`: *string*): [*Runner*](runner.md)<X\>
+• **new Runner**<`X`\>(`sequencePath`, `fifosPath`)
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `X` | AppConfig |
+| `X` | extends `AppConfig` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `sequencePath` | *string* |
-| `fifosPath` | *string* |
+| `sequencePath` | `string` |
+| `fifosPath` | `string` |
 
-**Returns:** [*Runner*](runner.md)<X\>
+#### Defined in
 
-Defined in: [runner.ts:40](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L40)
+[runner.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L40)
 
 ## Properties
 
 ### handshakeResolver
 
-• `Optional` **handshakeResolver**: *object*
+• `Optional` **handshakeResolver**: `Object`
 
 #### Type declaration
 
 | Name | Type |
 | :------ | :------ |
-| `rej` | Function |
-| `res` | Function |
+| `rej` | `Function` |
+| `res` | `Function` |
 
-Defined in: [runner.ts:38](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L38)
+#### Defined in
+
+[runner.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L38)
 
 ___
 
 ### logger
 
-• **logger**: Console
+• **logger**: `Console`
 
-Implementation of: IComponent.logger
+#### Implementation of
 
-Defined in: [runner.ts:40](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L40)
+IComponent.logger
+
+#### Defined in
+
+[runner.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L40)
 
 ## Methods
 
 ### addStopHandlerRequest
 
-▸ **addStopHandlerRequest**(`data`: StopSequenceMessageData): *Promise*<void\>
+▸ **addStopHandlerRequest**(`data`): `Promise`<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `data` | StopSequenceMessageData |
+| `data` | `StopSequenceMessageData` |
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:262](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L262)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:262](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L262)
 
 ___
 
 ### cleanup
 
-▸ **cleanup**(): *Promise*<void\>
+▸ **cleanup**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:99](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L99)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L99)
 
 ___
 
 ### cleanupStreams
 
-▸ **cleanupStreams**(): *Promise*<any\>
+▸ **cleanupStreams**(): `Promise`<`any`\>
 
-**Returns:** *Promise*<any\>
+#### Returns
 
-Defined in: [runner.ts:131](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L131)
+`Promise`<`any`\>
+
+#### Defined in
+
+[runner.ts:131](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L131)
 
 ___
 
 ### controlStreamHandler
 
-▸ **controlStreamHandler**(`__namedParameters`: *EncodedMessage*<ControlMessageCode\>): *Promise*<void\>
+▸ **controlStreamHandler**(`__namedParameters`): `Promise`<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `__namedParameters` | *EncodedMessage*<ControlMessageCode\> |
+| `__namedParameters` | `EncodedControlMessage` |
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:54](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L54)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L54)
 
 ___
 
 ### defineControlStream
 
-▸ **defineControlStream**(): *void*
+▸ **defineControlStream**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [runner.ts:88](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L88)
+`void`
+
+#### Defined in
+
+[runner.ts:88](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L88)
 
 ___
 
 ### getSequence
 
-▸ **getSequence**(): ApplicationInterface[]
+▸ **getSequence**(): `ApplicationInterface`[]
 
-**Returns:** ApplicationInterface[]
+#### Returns
 
-Defined in: [runner.ts:417](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L417)
+`ApplicationInterface`[]
+
+#### Defined in
+
+[runner.ts:417](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L417)
 
 ___
 
 ### handleForceConfirmAliveRequest
 
-▸ **handleForceConfirmAliveRequest**(): *void*
+▸ **handleForceConfirmAliveRequest**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [runner.ts:212](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L212)
+`void`
+
+#### Defined in
+
+[runner.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L212)
 
 ___
 
 ### handleKillRequest
 
-▸ **handleKillRequest**(): *Promise*<void\>
+▸ **handleKillRequest**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:246](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L246)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:246](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L246)
 
 ___
 
 ### handleMonitoringRequest
 
-▸ **handleMonitoringRequest**(`data`: MonitoringRateMessageData): *Promise*<void\>
+▸ **handleMonitoringRequest**(`data`): `Promise`<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `data` | MonitoringRateMessageData |
+| `data` | `MonitoringRateMessageData` |
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:218](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L218)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:218](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L218)
 
 ___
 
 ### handleSequenceEvents
 
-▸ **handleSequenceEvents**(): *void*
+▸ **handleSequenceEvents**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [runner.ts:535](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L535)
+`void`
+
+#### Defined in
+
+[runner.ts:535](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L535)
 
 ___
 
 ### hookupControlStream
 
-▸ **hookupControlStream**(): *Promise*<void\>
+▸ **hookupControlStream**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:83](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L83)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L83)
 
 ___
 
 ### hookupFifoStreams
 
-▸ **hookupFifoStreams**(): *Promise*<[*void*, *void*, *void*, *void*, *void*]\>
+▸ **hookupFifoStreams**(): `Promise`<[`void`, `void`, `void`, `void`, `void`]\>
 
-**Returns:** *Promise*<[*void*, *void*, *void*, *void*, *void*]\>
+#### Returns
 
-Defined in: [runner.ts:194](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L194)
+`Promise`<[`void`, `void`, `void`, `void`, `void`]\>
+
+#### Defined in
+
+[runner.ts:194](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L194)
 
 ___
 
 ### hookupInputStream
 
-▸ **hookupInputStream**(): *Promise*<void\>
+▸ **hookupInputStream**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:174](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L174)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L174)
 
 ___
 
 ### hookupLoggerStream
 
-▸ **hookupLoggerStream**(): *Promise*<void\>
+▸ **hookupLoggerStream**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:170](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L170)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:170](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L170)
 
 ___
 
 ### hookupMonitorStream
 
-▸ **hookupMonitorStream**(): *Promise*<void\>
+▸ **hookupMonitorStream**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:166](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L166)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:166](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L166)
 
 ___
 
 ### hookupOutputStream
 
-▸ **hookupOutputStream**(): *Promise*<void\>
+▸ **hookupOutputStream**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:186](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L186)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:186](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L186)
 
 ___
 
 ### initAppContext
 
-▸ **initAppContext**(`config`: X): *void*
+▸ **initAppContext**(`config`): `void`
 
 initialize app context
 set up streams process.stdin, process.stdout, process.stderr, fifo downstream, fifo upstream
@@ -287,41 +357,53 @@ set up streams process.stdin, process.stdout, process.stderr, fifo downstream, f
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `config` | X | Configuration for App. |
+| `config` | `X` | Configuration for App. |
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [runner.ts:378](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L378)
+`void`
+
+#### Defined in
+
+[runner.ts:378](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L378)
 
 ___
 
 ### initializeLogger
 
-▸ **initializeLogger**(): *void*
+▸ **initializeLogger**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [runner.ts:204](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L204)
+`void`
+
+#### Defined in
+
+[runner.ts:204](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L204)
 
 ___
 
 ### main
 
-▸ **main**(): *Promise*<void\>
+▸ **main**(): `Promise`<`void`\>
 
 Initialization of runner class.
 * initilize streams (fifo and std)
 * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:308](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L308)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:308](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L308)
 
 ___
 
 ### runSequence
 
-▸ **runSequence**(`sequence`: *any*[], `args?`: *any*[]): *Promise*<void\>
+▸ **runSequence**(`sequence`, `args?`): `Promise`<`void`\>
 
 run sequence
 
@@ -329,29 +411,41 @@ run sequence
 
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
-| `sequence` | *any*[] | - | - |
-| `args` | *any*[] | [] | arguments that the app will be called with |
+| `sequence` | `any`[] | `undefined` | - |
+| `args` | `any`[] | `[]` | arguments that the app will be called with |
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [runner.ts:432](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L432)
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:432](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L432)
 
 ___
 
 ### sendHandshakeMessage
 
-▸ **sendHandshakeMessage**(): *void*
+▸ **sendHandshakeMessage**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [runner.ts:405](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L405)
+`void`
+
+#### Defined in
+
+[runner.ts:405](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L405)
 
 ___
 
 ### waitForHandshakeResponse
 
-▸ **waitForHandshakeResponse**(): *Promise*<HandshakeAcknowledgeMessageData\>
+▸ **waitForHandshakeResponse**(): `Promise`<`HandshakeAcknowledgeMessageData`\>
 
-**Returns:** *Promise*<HandshakeAcknowledgeMessageData\>
+#### Returns
 
-Defined in: [runner.ts:411](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/runner.ts#L411)
+`Promise`<`HandshakeAcknowledgeMessageData`\>
+
+#### Defined in
+
+[runner.ts:411](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/runner.ts#L411)

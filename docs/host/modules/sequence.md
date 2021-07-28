@@ -6,4 +6,4 @@
 
 ### Classes
 
-- [Sequence](../classes/sequence.sequence-1.md)
+- [Sequence](../classes/sequence.Sequence.md)

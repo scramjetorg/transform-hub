@@ -6,4 +6,4 @@
 
 ### Classes
 
-- [CSIController](../classes/csi_controller.csicontroller.md)
+- [CSIController](../classes/csi_controller.CSIController.md)

@@ -4,9 +4,9 @@
 
 ## Hierarchy
 
-- *Error*
+- `Error`
 
-  ↳ **APIError**
+  ↳ **`APIError`**
 
 ## Table of contents
 
@@ -23,56 +23,74 @@
 
 ### cause
 
-• `Optional` **cause**: Error
+• `Optional` **cause**: `Error`
 
-Defined in: [packages/types/src/api-expose.ts:53](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L53)
+#### Defined in
+
+[packages/types/src/api-expose.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/api-expose.ts#L55)
 
 ___
 
 ### code
 
-• **code**: *number*
+• **code**: `number`
 
 Http status code to be outputted
 
-Defined in: [packages/types/src/api-expose.ts:45](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L45)
+#### Defined in
+
+[packages/types/src/api-expose.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/api-expose.ts#L47)
 
 ___
 
 ### httpMessage
 
-• **httpMessage**: *string*
+• **httpMessage**: `string`
 
 The message that will be sent in reason line
 
-Defined in: [packages/types/src/api-expose.ts:49](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/api-expose.ts#L49)
+#### Defined in
+
+[packages/types/src/api-expose.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/api-expose.ts#L51)
 
 ___
 
 ### message
 
-• **message**: *string*
+• **message**: `string`
 
-Inherited from: Error.message
+#### Inherited from
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:974
+Error.message
+
+#### Defined in
+
+node_modules/typescript/lib/lib.es5.d.ts:974
 
 ___
 
 ### name
 
-• **name**: *string*
+• **name**: `string`
 
-Inherited from: Error.name
+#### Inherited from
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:973
+Error.name
+
+#### Defined in
+
+node_modules/typescript/lib/lib.es5.d.ts:973
 
 ___
 
 ### stack
 
-• `Optional` **stack**: *string*
+• `Optional` **stack**: `string`
 
-Inherited from: Error.stack
+#### Inherited from
 
-Defined in: node_modules/typescript/lib/lib.es5.d.ts:975
+Error.stack
+
+#### Defined in
+
+node_modules/typescript/lib/lib.es5.d.ts:975

@@ -21,40 +21,48 @@
 
 ### constructor
 
-\+ **new DelayedStream**(): [*DelayedStream*](delayedstream.md)
-
-**Returns:** [*DelayedStream*](delayedstream.md)
+• **new DelayedStream**()
 
 ## Properties
 
 ### \_stream
 
-• `Private` `Optional` **\_stream**: *PassThrough*
+• `Private` `Optional` **\_stream**: `PassThrough`
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L4)
+#### Defined in
+
+[packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/utils/delayed-stream.ts#L4)
 
 ## Methods
 
 ### getStream
 
-▸ **getStream**(): *PassThrough*
+▸ **getStream**(): `PassThrough`
 
-**Returns:** *PassThrough*
+#### Returns
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L6)
+`PassThrough`
+
+#### Defined in
+
+[packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/utils/delayed-stream.ts#L6)
 
 ___
 
 ### run
 
-▸ **run**(`inputStream`: *Readable* \| *Writable*): *void*
+▸ **run**(`inputStream`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `inputStream` | *Readable* \| *Writable* |
+| `inputStream` | `Readable` \| `Writable` |
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/delayed-stream.ts#L15)
+`void`
+
+#### Defined in
+
+[packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/utils/delayed-stream.ts#L15)

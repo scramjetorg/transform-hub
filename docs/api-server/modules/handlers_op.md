@@ -12,14 +12,41 @@
 
 ### createOperationHandler
 
-▸ **createOperationHandler**(`router`: [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md)): *function*
+▸ **createOperationHandler**(`router`): <T\>(`method`: `string`, `path`: `string` \| `RegExp`, `message`: `T` \| `OpResolver`, `conn`: `ICommunicationHandler`) => `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `router` | [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md) |
+| `router` | [`SequentialCeroRouter`](../interfaces/lib_definitions.SequentialCeroRouter.md) |
 
-**Returns:** <T\>(`method`: *string*, `path`: *string* \| *RegExp*, `message`: T \| OpResolver, `conn`: *ICommunicationHandler*) => *void*
+#### Returns
 
-Defined in: [packages/api-server/src/handlers/op.ts:12](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/handlers/op.ts#L12)
+`fn`
+
+▸ <`T`\>(`method?`, `path`, `message`, `conn`): `void`
+
+Simple POST request hook for static data in monitoring stream.
+
+##### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends `ControlMessageCode` |
+
+##### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `method` | `string` | `"post"` | request method |
+| `path` | `string` \| `RegExp` | `undefined` | the request path as string or regex |
+| `message` | `T` \| `OpResolver` | `undefined` | which operation |
+| `conn` | `ICommunicationHandler` | `undefined` | the communication handler to use |
+
+##### Returns
+
+`void`
+
+#### Defined in
+
+[packages/api-server/src/handlers/op.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/handlers/op.ts#L12)

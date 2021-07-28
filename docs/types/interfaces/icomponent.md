@@ -4,9 +4,9 @@
 
 ## Hierarchy
 
-- **IComponent**
+- **`IComponent`**
 
-  ↳ [*ICSHClient*](icshclient.md)
+  ↳ [`ICSHClient`](icshclient.md)
 
 ## Table of contents
 
@@ -18,6 +18,8 @@
 
 ### logger
 
-• **logger**: Console
+• **logger**: `Console`
 
-Defined in: [packages/types/src/component.ts:2](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/component.ts#L2)
+#### Defined in
+
+[packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/component.ts#L2)

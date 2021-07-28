@@ -4,9 +4,9 @@
 
 ## Implements
 
-- *ILifeCycleAdapterMain*
-- *ILifeCycleAdapterIdentify*
-- *IComponent*
+- `ILifeCycleAdapterMain`
+- `ILifeCycleAdapterIdentify`
+- `IComponent`
 
 ## Table of contents
 
@@ -38,191 +38,251 @@
 
 ### constructor
 
-\+ **new LifecycleDockerAdapterSequence**(): [*LifecycleDockerAdapterSequence*](lifecycledockeradaptersequence.md)
+• **new LifecycleDockerAdapterSequence**()
 
-**Returns:** [*LifecycleDockerAdapterSequence*](lifecycledockeradaptersequence.md)
+#### Defined in
 
-Defined in: [sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L30)
+[sequence-adapter.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L31)
 
 ## Properties
 
 ### dockerHelper
 
-• `Private` **dockerHelper**: [*IDockerHelper*](../interfaces/idockerhelper.md)
+• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/idockerhelper.md)
 
-Defined in: [sequence-adapter.ts:24](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L24)
+#### Defined in
+
+[sequence-adapter.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L25)
 
 ___
 
 ### logger
 
-• **logger**: Console
+• **logger**: `Console`
 
-Implementation of: IComponent.logger
+#### Implementation of
 
-Defined in: [sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L30)
+IComponent.logger
+
+#### Defined in
+
+[sequence-adapter.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L31)
 
 ___
 
 ### prerunnerConfig
 
-• `Private` `Optional` **prerunnerConfig**: ContainerConfiguration
+• `Private` `Optional` **prerunnerConfig**: `ContainerConfiguration`
 
-Defined in: [sequence-adapter.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L26)
+#### Defined in
+
+[sequence-adapter.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L27)
 
 ___
 
 ### resources
 
-• `Private` **resources**: [*DockerAdapterResources*](../README.md#dockeradapterresources)= {}
+• `Private` **resources**: [`DockerAdapterResources`](../README.md#dockeradapterresources) = `{}`
 
-Defined in: [sequence-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L28)
+#### Defined in
+
+[sequence-adapter.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L29)
 
 ## Methods
 
 ### cleanup
 
-▸ **cleanup**(): *MaybePromise*<void\>
+▸ **cleanup**(): `MaybePromise`<`void`\>
 
-**Returns:** *MaybePromise*<void\>
+#### Returns
 
-Implementation of: ILifeCycleAdapterMain.cleanup
+`MaybePromise`<`void`\>
 
-Defined in: [sequence-adapter.ts:169](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L169)
+#### Implementation of
+
+ILifeCycleAdapterMain.cleanup
+
+#### Defined in
+
+[sequence-adapter.ts:170](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L170)
 
 ___
 
 ### createVolume
 
-▸ `Private` **createVolume**(`id`: *string*): *Promise*<string\>
+▸ `Private` **createVolume**(`id`): `Promise`<`string`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `id` | *string* |
+| `id` | `string` |
 
-**Returns:** *Promise*<string\>
+#### Returns
 
-Defined in: [sequence-adapter.ts:137](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L137)
+`Promise`<`string`\>
+
+#### Defined in
+
+[sequence-adapter.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L138)
 
 ___
 
 ### fetch
 
-▸ **fetch**(`name`: *string*): *Promise*<void\>
+▸ **fetch**(`name`): `Promise`<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `name` | *string* |
+| `name` | `string` |
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [sequence-adapter.ts:44](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L44)
+`Promise`<`void`\>
+
+#### Defined in
+
+[sequence-adapter.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L45)
 
 ___
 
 ### identify
 
-▸ **identify**(`stream`: *Readable*, `id`: *string*): *Promise*<RunnerConfig\>
+▸ **identify**(`stream`, `id`): `Promise`<`RunnerConfig`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `stream` | *Readable* |
-| `id` | *string* |
+| `stream` | `Readable` |
+| `id` | `string` |
 
-**Returns:** *Promise*<RunnerConfig\>
+#### Returns
 
-Implementation of: ILifeCycleAdapterIdentify.identify
+`Promise`<`RunnerConfig`\>
 
-Defined in: [sequence-adapter.ts:103](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L103)
+#### Implementation of
+
+ILifeCycleAdapterIdentify.identify
+
+#### Defined in
+
+[sequence-adapter.ts:104](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L104)
 
 ___
 
 ### identifyOnly
 
-▸ **identifyOnly**(`volume`: *string*): *Promise*<undefined \| RunnerConfig\>
+▸ **identifyOnly**(`volume`): `Promise`<`undefined` \| `RunnerConfig`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `volume` | *string* |
+| `volume` | `string` |
 
-**Returns:** *Promise*<undefined \| RunnerConfig\>
+#### Returns
 
-Defined in: [sequence-adapter.ts:58](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L58)
+`Promise`<`undefined` \| `RunnerConfig`\>
+
+#### Defined in
+
+[sequence-adapter.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L59)
 
 ___
 
 ### init
 
-▸ **init**(): *Promise*<void\>
+▸ **init**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Implementation of: ILifeCycleAdapterMain.init
+`Promise`<`void`\>
 
-Defined in: [sequence-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L37)
+#### Implementation of
+
+ILifeCycleAdapterMain.init
+
+#### Defined in
+
+[sequence-adapter.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L38)
 
 ___
 
 ### list
 
-▸ **list**(): *Promise*<RunnerConfig[]\>
+▸ **list**(): `Promise`<`RunnerConfig`[]\>
 
-**Returns:** *Promise*<RunnerConfig[]\>
+#### Returns
 
-Implementation of: ILifeCycleAdapterIdentify.list
+`Promise`<`RunnerConfig`[]\>
 
-Defined in: [sequence-adapter.ts:48](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L48)
+#### Implementation of
+
+ILifeCycleAdapterIdentify.list
+
+#### Defined in
+
+[sequence-adapter.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L49)
 
 ___
 
 ### parsePackage
 
-▸ `Private` **parsePackage**(`streams`: [*DockerAdapterStreams*](../README.md#dockeradapterstreams), `wait`: Function, `volumeId`: *string*): *Promise*<any\>
+▸ `Private` **parsePackage**(`streams`, `wait`, `volumeId`): `Promise`<`any`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `streams` | [*DockerAdapterStreams*](../README.md#dockeradapterstreams) |
-| `wait` | Function |
-| `volumeId` | *string* |
+| `streams` | [`DockerAdapterStreams`](../README.md#dockeradapterstreams) |
+| `wait` | `Function` |
+| `volumeId` | `string` |
 
-**Returns:** *Promise*<any\>
+#### Returns
 
-Defined in: [sequence-adapter.ts:145](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L145)
+`Promise`<`any`\>
+
+#### Defined in
+
+[sequence-adapter.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L146)
 
 ___
 
 ### readStreamedJSON
 
-▸ `Private` **readStreamedJSON**(`readable`: *Readable*): *Promise*<any\>
+▸ `Private` **readStreamedJSON**(`readable`): `Promise`<`any`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `readable` | *Readable* |
+| `readable` | `Readable` |
 
-**Returns:** *Promise*<any\>
+#### Returns
 
-Defined in: [sequence-adapter.ts:89](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L89)
+`Promise`<`any`\>
+
+#### Defined in
+
+[sequence-adapter.ts:90](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L90)
 
 ___
 
 ### remove
 
-▸ **remove**(): *Promise*<void\>
+▸ **remove**(): `Promise`<`void`\>
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Implementation of: ILifeCycleAdapterMain.remove
+`Promise`<`void`\>
 
-Defined in: [sequence-adapter.ts:192](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/sequence-adapter.ts#L192)
+#### Implementation of
+
+ILifeCycleAdapterMain.remove
+
+#### Defined in
+
+[sequence-adapter.ts:193](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/sequence-adapter.ts#L193)

@@ -6,6 +6,7 @@
 
 ### Enumerations
 
+- [CPMMessageCode](enums/cpmmessagecode.md)
 - [CommunicationChannel](enums/communicationchannel.md)
 - [RunnerMessageCode](enums/runnermessagecode.md)
 - [SupervisorMessageCode](enums/supervisormessagecode.md)
@@ -18,6 +19,8 @@
 
 ### exposeSequenceSymbol
 
-• `Const` **exposeSequenceSymbol**: *typeof* [*exposeSequenceSymbol*](README.md#exposesequencesymbol)
+• `Const` **exposeSequenceSymbol**: typeof [`exposeSequenceSymbol`](README.md#exposesequencesymbol)
 
-Defined in: [symbols.ts:1](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/symbols/src/symbols.ts#L1)
+#### Defined in
+
+[symbols.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/symbols.ts#L1)

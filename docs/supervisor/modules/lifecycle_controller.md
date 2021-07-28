@@ -6,4 +6,4 @@
 
 ### Classes
 
-- [LifeCycleController](../classes/lifecycle_controller.lifecyclecontroller.md)
+- [LifeCycleController](../classes/lifecycle_controller.LifeCycleController.md)

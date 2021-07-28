@@ -12,16 +12,20 @@
 
 ### startHost
 
-▸ **startHost**(`apiServerConfig`: ServerConfig, `tcpSocketPath`: *string*, `hostOptions`: [*HostOptions*](host.md#hostoptions)): *Promise*<void\>
+▸ **startHost**(`apiServerConfig`, `tcpSocketPath`, `hostOptions`): `Promise`<`void`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `apiServerConfig` | ServerConfig |
-| `tcpSocketPath` | *string* |
-| `hostOptions` | [*HostOptions*](host.md#hostoptions) |
+| `apiServerConfig` | `ServerConfig` |
+| `tcpSocketPath` | `string` |
+| `hostOptions` | [`HostOptions`](host.md#hostoptions) |
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [packages/host/src/lib/start-host.ts:5](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/start-host.ts#L5)
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/start-host.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/start-host.ts#L5)
