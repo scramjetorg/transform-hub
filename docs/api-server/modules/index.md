@@ -14,6 +14,7 @@
 - [CeroMiddleware](index.md#ceromiddleware)
 - [CeroRouter](index.md#cerorouter)
 - [CeroRouterConfig](index.md#cerorouterconfig)
+- [DuplexStream](index.md#duplexstream)
 - [SequentialCeroRouter](index.md#sequentialcerorouter)
 - [cero](index.md#cero)
 - [sequentialRouter](index.md#sequentialrouter)
@@ -49,7 +50,7 @@ ___
 
 ### CeroError
 
-Re-exports: [CeroError](../classes/lib_definitions.ceroerror.md)
+Re-exports: [CeroError](../classes/lib_definitions.CeroError.md)
 
 ___
 
@@ -67,7 +68,7 @@ ___
 
 ### CeroRouter
 
-Re-exports: [CeroRouter](../interfaces/lib_definitions.cerorouter.md)
+Re-exports: [CeroRouter](../interfaces/lib_definitions.CeroRouter.md)
 
 ___
 
@@ -77,9 +78,15 @@ Re-exports: [CeroRouterConfig](lib_definitions.md#cerorouterconfig)
 
 ___
 
+### DuplexStream
+
+Re-exports: [DuplexStream](../classes/lib_duplex_stream.DuplexStream.md)
+
+___
+
 ### SequentialCeroRouter
 
-Re-exports: [SequentialCeroRouter](../interfaces/lib_definitions.sequentialcerorouter.md)
+Re-exports: [SequentialCeroRouter](../interfaces/lib_definitions.SequentialCeroRouter.md)
 
 ___
 
@@ -97,40 +104,50 @@ Re-exports: [sequentialRouter](lib_0http.md#sequentialrouter)
 
 ### ServerConfig
 
-Ƭ **ServerConfig**: *object*
+Ƭ **ServerConfig**: `Object`
 
 #### Type declaration
 
 | Name | Type |
 | :------ | :------ |
-| `router?` | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md) |
-| `server?` | Server |
-| `verbose?` | *boolean* |
+| `router?` | [`CeroRouter`](../interfaces/lib_definitions.CeroRouter.md) |
+| `server?` | `Server` |
+| `verbose?` | `boolean` |
 
-Defined in: [packages/api-server/src/index.ts:10](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/index.ts#L10)
+#### Defined in
+
+[packages/api-server/src/index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/index.ts#L10)
 
 ## Functions
 
 ### createServer
 
-▸ **createServer**(`conf?`: [*ServerConfig*](index.md#serverconfig)): APIExpose
+▸ **createServer**(`conf?`): `APIExpose`
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `conf` | [*ServerConfig*](index.md#serverconfig) | {} |
+| Name | Type |
+| :------ | :------ |
+| `conf` | [`ServerConfig`](index.md#serverconfig) |
 
-**Returns:** APIExpose
+#### Returns
 
-Defined in: [packages/api-server/src/index.ts:33](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/index.ts#L33)
+`APIExpose`
+
+#### Defined in
+
+[packages/api-server/src/index.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/index.ts#L34)
 
 ___
 
 ### getRouter
 
-▸ **getRouter**(): APIRoute
+▸ **getRouter**(): `APIRoute`
 
-**Returns:** APIRoute
+#### Returns
 
-Defined in: [packages/api-server/src/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/index.ts#L18)
+`APIRoute`
+
+#### Defined in
+
+[packages/api-server/src/index.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/index.ts#L18)

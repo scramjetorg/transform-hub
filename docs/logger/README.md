@@ -18,35 +18,39 @@
 
 ### MessageFormatter
 
-Ƭ **MessageFormatter**: <Z\>(`name`: *string*, `func`: *string*, `args`: Z) => *string*
+Ƭ **MessageFormatter**: <Z\>(`name`: `string`, `func`: `string`, `args`: `Z`) => `string`
 
 #### Type declaration
 
-▸ <Z\>(`name`: *string*, `func`: *string*, `args`: Z): *string*
+▸ <`Z`\>(`name`, `func`, `args`): `string`
 
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `Z` | *any*[] |
-
-#### Parameters
+##### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `name` | *string* |
-| `func` | *string* |
-| `args` | Z |
+| `Z` | extends `any`[] |
 
-**Returns:** *string*
+##### Parameters
 
-Defined in: [index.ts:9](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L9)
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+| `func` | `string` |
+| `args` | `Z` |
+
+##### Returns
+
+`string`
+
+#### Defined in
+
+[index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L9)
 
 ## Functions
 
 ### addLoggerOutput
 
-▸ **addLoggerOutput**(`out`: *WritableStream*<any\>, `err?`: *WritableStream*<any\>): *void*
+▸ **addLoggerOutput**(`out`, `err?`): `void`
 
 Pipes log streams to the provided outputs in serialized format
 
@@ -54,28 +58,36 @@ Pipes log streams to the provided outputs in serialized format
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `out` | *WritableStream*<any\> | stream for stdout logging |
-| `err` | *WritableStream*<any\> | stream for stderr logging |
+| `out` | `WritableStream`<`any`\> | stream for stdout logging |
+| `err` | `WritableStream`<`any`\> | stream for stderr logging |
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [index.ts:138](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L138)
+`void`
+
+#### Defined in
+
+[index.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L138)
 
 ___
 
 ### close
 
-▸ `Const` **close**(): *void*
+▸ `Const` **close**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [index.ts:128](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L128)
+`void`
+
+#### Defined in
+
+[index.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L128)
 
 ___
 
 ### getLogger
 
-▸ **getLogger**(`reference`: *any*, `options?`: LoggerOptions): Logger
+▸ **getLogger**(`reference`, `options?`): `Logger`
 
 Creates a Console compatible logger with basic decorations
 
@@ -83,11 +95,15 @@ Creates a Console compatible logger with basic decorations
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `reference` | *any* | a reference object to get the name from |
-| `options` | LoggerOptions | the logger options |
+| `reference` | `any` | a reference object to get the name from |
+| `options` | `LoggerOptions` | the logger options |
 
-**Returns:** Logger
+#### Returns
+
+`Logger`
 
 a Console compatible logger
 
-Defined in: [index.ts:151](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/logger/src/index.ts#L151)
+#### Defined in
+
+[index.ts:151](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L151)

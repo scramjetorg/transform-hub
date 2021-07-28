@@ -17,32 +17,38 @@
 
 ### constructor
 
-\+ **new IDProvider**(): [*IDProvider*](idprovider.md)
-
-**Returns:** [*IDProvider*](idprovider.md)
+• **new IDProvider**()
 
 ## Methods
 
 ### generate
 
-▸ `Static` **generate**(): *string*
+▸ `Static` **generate**(): `string`
 
-**Returns:** *string*
+#### Returns
 
-Defined in: [packages/model/src/utils/id-provider.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/id-provider.ts#L4)
+`string`
+
+#### Defined in
+
+[packages/model/src/utils/id-provider.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/utils/id-provider.ts#L4)
 
 ___
 
 ### isValid
 
-▸ `Static` **isValid**(`id`: *string*): *boolean*
+▸ `Static` **isValid**(`id`): `boolean`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `id` | *string* |
+| `id` | `string` |
 
-**Returns:** *boolean*
+#### Returns
 
-Defined in: [packages/model/src/utils/id-provider.ts:8](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/model/src/utils/id-provider.ts#L8)
+`boolean`
+
+#### Defined in
+
+[packages/model/src/utils/id-provider.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/model/src/utils/id-provider.ts#L8)

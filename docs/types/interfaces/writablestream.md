@@ -14,9 +14,9 @@ Writable stream representation with generic chunks.
 
 ## Hierarchy
 
-- *Writable*
+- `Writable`
 
-  ↳ **WritableStream**
+  ↳ **`WritableStream`**
 
 ## Table of contents
 
@@ -34,6 +34,7 @@ Writable stream representation with generic chunks.
 
 ### Methods
 
+- [\_construct](writablestream.md#_construct)
 - [\_destroy](writablestream.md#_destroy)
 - [\_final](writablestream.md#_final)
 - [\_write](writablestream.md#_write)
@@ -65,11 +66,15 @@ Writable stream representation with generic chunks.
 
 ### destroyed
 
-• **destroyed**: *boolean*
+• **destroyed**: `boolean`
 
-Inherited from: Writable.destroyed
+#### Inherited from
 
-Defined in: node_modules/@types/node/stream.d.ts:148
+Writable.destroyed
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:150
 
 ___
 
@@ -77,159 +82,237 @@ ___
 
 • `Optional` **objectMode**: ``true``
 
-Defined in: [packages/types/src/utils.ts:55](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L55)
+#### Defined in
+
+[packages/types/src/utils.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L55)
 
 ___
 
 ### writable
 
-• **writable**: *boolean*
+• **writable**: `boolean`
 
-Overrides: Writable.writable
+#### Overrides
 
-Defined in: [packages/types/src/utils.ts:56](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L56)
+Writable.writable
+
+#### Defined in
+
+[packages/types/src/utils.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L56)
 
 ___
 
 ### writableCorked
 
-• `Readonly` **writableCorked**: *number*
+• `Readonly` **writableCorked**: `number`
 
-Inherited from: Writable.writableCorked
+#### Inherited from
 
-Defined in: node_modules/@types/node/stream.d.ts:147
+Writable.writableCorked
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:149
 
 ___
 
 ### writableEnded
 
-• `Readonly` **writableEnded**: *boolean*
+• `Readonly` **writableEnded**: `boolean`
 
-Inherited from: Writable.writableEnded
+#### Inherited from
 
-Defined in: node_modules/@types/node/stream.d.ts:142
+Writable.writableEnded
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:144
 
 ___
 
 ### writableFinished
 
-• `Readonly` **writableFinished**: *boolean*
+• `Readonly` **writableFinished**: `boolean`
 
-Inherited from: Writable.writableFinished
+#### Inherited from
 
-Defined in: node_modules/@types/node/stream.d.ts:143
+Writable.writableFinished
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:145
 
 ___
 
 ### writableHighWaterMark
 
-• `Readonly` **writableHighWaterMark**: *number*
+• `Readonly` **writableHighWaterMark**: `number`
 
-Inherited from: Writable.writableHighWaterMark
+#### Inherited from
 
-Defined in: node_modules/@types/node/stream.d.ts:144
+Writable.writableHighWaterMark
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:146
 
 ___
 
 ### writableLength
 
-• `Readonly` **writableLength**: *number*
+• `Readonly` **writableLength**: `number`
 
-Inherited from: Writable.writableLength
+#### Inherited from
 
-Defined in: node_modules/@types/node/stream.d.ts:145
+Writable.writableLength
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:147
 
 ___
 
 ### writableObjectMode
 
-• `Readonly` **writableObjectMode**: *boolean*
+• `Readonly` **writableObjectMode**: `boolean`
 
-Inherited from: Writable.writableObjectMode
+#### Inherited from
 
-Defined in: node_modules/@types/node/stream.d.ts:146
+Writable.writableObjectMode
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:148
 
 ## Methods
 
-### \_destroy
+### \_construct
 
-▸ **_destroy**(`error`: ``null`` \| Error, `callback`: (`error?`: ``null`` \| Error) => *void*): *void*
+▸ `Optional` **_construct**(`callback`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `error` | ``null`` \| Error |
-| `callback` | (`error?`: ``null`` \| Error) => *void* |
+| `callback` | (`error?`: ``null`` \| `Error`) => `void` |
 
-**Returns:** *void*
+#### Returns
 
-Inherited from: Writable.\_destroy
+`void`
 
-Defined in: node_modules/@types/node/stream.d.ts:152
+#### Inherited from
+
+Writable.\_construct
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:154
+
+___
+
+### \_destroy
+
+▸ **_destroy**(`error`, `callback`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `error` | ``null`` \| `Error` |
+| `callback` | (`error?`: ``null`` \| `Error`) => `void` |
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+Writable.\_destroy
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:155
 
 ___
 
 ### \_final
 
-▸ **_final**(`callback`: (`error?`: ``null`` \| Error) => *void*): *void*
+▸ **_final**(`callback`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `callback` | (`error?`: ``null`` \| Error) => *void* |
+| `callback` | (`error?`: ``null`` \| `Error`) => `void` |
 
-**Returns:** *void*
+#### Returns
 
-Inherited from: Writable.\_final
+`void`
 
-Defined in: node_modules/@types/node/stream.d.ts:153
+#### Inherited from
+
+Writable.\_final
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:156
 
 ___
 
 ### \_write
 
-▸ **_write**(`chunk`: *any*, `encoding`: BufferEncoding, `callback`: (`error?`: ``null`` \| Error) => *void*): *void*
+▸ **_write**(`chunk`, `encoding`, `callback`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `chunk` | *any* |
-| `encoding` | BufferEncoding |
-| `callback` | (`error?`: ``null`` \| Error) => *void* |
+| `chunk` | `any` |
+| `encoding` | `BufferEncoding` |
+| `callback` | (`error?`: ``null`` \| `Error`) => `void` |
 
-**Returns:** *void*
+#### Returns
 
-Inherited from: Writable.\_write
+`void`
 
-Defined in: node_modules/@types/node/stream.d.ts:150
+#### Inherited from
+
+Writable.\_write
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:152
 
 ___
 
 ### \_writev
 
-▸ `Optional` **_writev**(`chunks`: { `chunk`: *any* ; `encoding`: BufferEncoding  }[], `callback`: (`error?`: ``null`` \| Error) => *void*): *void*
+▸ `Optional` **_writev**(`chunks`, `callback`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `chunks` | { `chunk`: *any* ; `encoding`: BufferEncoding  }[] |
-| `callback` | (`error?`: ``null`` \| Error) => *void* |
+| `chunks` | { `chunk`: `any` ; `encoding`: `BufferEncoding`  }[] |
+| `callback` | (`error?`: ``null`` \| `Error`) => `void` |
 
-**Returns:** *void*
+#### Returns
 
-Inherited from: Writable.\_writev
+`void`
 
-Defined in: node_modules/@types/node/stream.d.ts:151
+#### Inherited from
+
+Writable.\_writev
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:153
 
 ___
 
 ### addListener
 
-▸ **addListener**(`event`: ``"close"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **addListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 Event emitter
 The defined events on documents including:
@@ -245,133 +328,187 @@ The defined events on documents including:
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"close"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.addListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:174
+#### Inherited from
 
-▸ **addListener**(`event`: ``"drain"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.addListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:177
+
+▸ **addListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"drain"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.addListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:175
+#### Inherited from
 
-▸ **addListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.addListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:178
+
+▸ **addListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"error"`` |
-| `listener` | (`err`: Error) => *void* |
+| `listener` | (`err`: `Error`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.addListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:176
+#### Inherited from
 
-▸ **addListener**(`event`: ``"finish"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.addListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:179
+
+▸ **addListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"finish"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.addListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:177
+#### Inherited from
 
-▸ **addListener**(`event`: ``"pipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.addListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:180
+
+▸ **addListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"pipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.addListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:178
+#### Inherited from
 
-▸ **addListener**(`event`: ``"unpipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.addListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:181
+
+▸ **addListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"unpipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.addListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:179
+#### Inherited from
 
-▸ **addListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.addListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:182
+
+▸ **addListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `listener` | (...`args`: *any*[]) => *void* |
+| `event` | `string` \| `symbol` |
+| `listener` | (...`args`: `any`[]) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.addListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:180
+#### Inherited from
+
+Writable.addListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:183
 
 ___
 
 ### cork
 
-▸ **cork**(): *void*
+▸ **cork**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Inherited from: Writable.cork
+`void`
 
-Defined in: node_modules/@types/node/stream.d.ts:160
+#### Inherited from
+
+Writable.cork
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:163
 
 ___
 
 ### destroy
 
-▸ **destroy**(): *void*
+▸ **destroy**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Overrides: Writable.destroy
+`void`
 
-Defined in: [packages/types/src/utils.ts:57](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L57)
+#### Overrides
+
+Writable.destroy
+
+#### Defined in
+
+[packages/types/src/utils.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L57)
 
 ___
 
 ### emit
 
-▸ **emit**(`event`: ``"close"``): *boolean*
+▸ **emit**(`event`): `boolean`
 
 #### Parameters
 
@@ -379,13 +516,19 @@ ___
 | :------ | :------ |
 | `event` | ``"close"`` |
 
-**Returns:** *boolean*
+#### Returns
 
-Inherited from: Writable.emit
+`boolean`
 
-Defined in: node_modules/@types/node/stream.d.ts:182
+#### Inherited from
 
-▸ **emit**(`event`: ``"drain"``): *boolean*
+Writable.emit
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:185
+
+▸ **emit**(`event`): `boolean`
 
 #### Parameters
 
@@ -393,28 +536,40 @@ Defined in: node_modules/@types/node/stream.d.ts:182
 | :------ | :------ |
 | `event` | ``"drain"`` |
 
-**Returns:** *boolean*
+#### Returns
 
-Inherited from: Writable.emit
+`boolean`
 
-Defined in: node_modules/@types/node/stream.d.ts:183
+#### Inherited from
 
-▸ **emit**(`event`: ``"error"``, `err`: Error): *boolean*
+Writable.emit
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:186
+
+▸ **emit**(`event`, `err`): `boolean`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"error"`` |
-| `err` | Error |
+| `err` | `Error` |
 
-**Returns:** *boolean*
+#### Returns
 
-Inherited from: Writable.emit
+`boolean`
 
-Defined in: node_modules/@types/node/stream.d.ts:184
+#### Inherited from
 
-▸ **emit**(`event`: ``"finish"``): *boolean*
+Writable.emit
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:187
+
+▸ **emit**(`event`): `boolean`
 
 #### Parameters
 
@@ -422,871 +577,1201 @@ Defined in: node_modules/@types/node/stream.d.ts:184
 | :------ | :------ |
 | `event` | ``"finish"`` |
 
-**Returns:** *boolean*
+#### Returns
 
-Inherited from: Writable.emit
+`boolean`
 
-Defined in: node_modules/@types/node/stream.d.ts:185
+#### Inherited from
 
-▸ **emit**(`event`: ``"pipe"``, `src`: *Readable*): *boolean*
+Writable.emit
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:188
+
+▸ **emit**(`event`, `src`): `boolean`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"pipe"`` |
-| `src` | *Readable* |
+| `src` | `Readable` |
 
-**Returns:** *boolean*
+#### Returns
 
-Inherited from: Writable.emit
+`boolean`
 
-Defined in: node_modules/@types/node/stream.d.ts:186
+#### Inherited from
 
-▸ **emit**(`event`: ``"unpipe"``, `src`: *Readable*): *boolean*
+Writable.emit
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:189
+
+▸ **emit**(`event`, `src`): `boolean`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"unpipe"`` |
-| `src` | *Readable* |
+| `src` | `Readable` |
 
-**Returns:** *boolean*
+#### Returns
 
-Inherited from: Writable.emit
+`boolean`
 
-Defined in: node_modules/@types/node/stream.d.ts:187
+#### Inherited from
 
-▸ **emit**(`event`: *string* \| *symbol*, ...`args`: *any*[]): *boolean*
+Writable.emit
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:190
+
+▸ **emit**(`event`, ...`args`): `boolean`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `...args` | *any*[] |
+| `event` | `string` \| `symbol` |
+| `...args` | `any`[] |
 
-**Returns:** *boolean*
+#### Returns
 
-Inherited from: Writable.emit
+`boolean`
 
-Defined in: node_modules/@types/node/stream.d.ts:188
+#### Inherited from
+
+Writable.emit
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:191
 
 ___
 
 ### end
 
-▸ **end**(`cb?`: () => *void*): *void*
+▸ **end**(`cb?`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `cb?` | () => *void* |
+| `cb?` | () => `void` |
 
-**Returns:** *void*
+#### Returns
 
-Overrides: Writable.end
+`void`
 
-Defined in: [packages/types/src/utils.ts:60](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L60)
+#### Overrides
 
-▸ **end**(`data`: Consumes, `cb?`: () => *void*): *void*
+Writable.end
 
-#### Parameters
+#### Defined in
 
-| Name | Type |
-| :------ | :------ |
-| `data` | Consumes |
-| `cb?` | () => *void* |
+[packages/types/src/utils.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L60)
 
-**Returns:** *void*
-
-Overrides: Writable.end
-
-Defined in: [packages/types/src/utils.ts:61](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L61)
-
-▸ **end**(`str`: *never*, `encoding`: *never*, `cb?`: () => *void*): *void*
+▸ **end**(`data`, `cb?`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `str` | *never* |
-| `encoding` | *never* |
-| `cb?` | () => *void* |
+| `data` | `Consumes` |
+| `cb?` | () => `void` |
 
-**Returns:** *void*
+#### Returns
 
-Overrides: Writable.end
+`void`
 
-Defined in: [packages/types/src/utils.ts:62](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L62)
+#### Overrides
+
+Writable.end
+
+#### Defined in
+
+[packages/types/src/utils.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L61)
+
+▸ **end**(`str`, `encoding`, `cb?`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `str` | `never` |
+| `encoding` | `never` |
+| `cb?` | () => `void` |
+
+#### Returns
+
+`void`
+
+#### Overrides
+
+Writable.end
+
+#### Defined in
+
+[packages/types/src/utils.ts:62](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L62)
 
 ___
 
 ### eventNames
 
-▸ **eventNames**(): (*string* \| *symbol*)[]
+▸ **eventNames**(): (`string` \| `symbol`)[]
 
-**Returns:** (*string* \| *symbol*)[]
+#### Returns
 
-Inherited from: Writable.eventNames
+(`string` \| `symbol`)[]
 
-Defined in: node_modules/@types/node/events.d.ts:72
+#### Inherited from
+
+Writable.eventNames
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:87
 
 ___
 
 ### getMaxListeners
 
-▸ **getMaxListeners**(): *number*
+▸ **getMaxListeners**(): `number`
 
-**Returns:** *number*
+#### Returns
 
-Inherited from: Writable.getMaxListeners
+`number`
 
-Defined in: node_modules/@types/node/events.d.ts:64
+#### Inherited from
+
+Writable.getMaxListeners
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:79
 
 ___
 
 ### listenerCount
 
-▸ **listenerCount**(`event`: *string* \| *symbol*): *number*
+▸ **listenerCount**(`event`): `number`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
+| `event` | `string` \| `symbol` |
 
-**Returns:** *number*
+#### Returns
 
-Inherited from: Writable.listenerCount
+`number`
 
-Defined in: node_modules/@types/node/events.d.ts:68
+#### Inherited from
+
+Writable.listenerCount
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:83
 
 ___
 
 ### listeners
 
-▸ **listeners**(`event`: *string* \| *symbol*): Function[]
+▸ **listeners**(`event`): `Function`[]
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
+| `event` | `string` \| `symbol` |
 
-**Returns:** Function[]
+#### Returns
 
-Inherited from: Writable.listeners
+`Function`[]
 
-Defined in: node_modules/@types/node/events.d.ts:65
+#### Inherited from
+
+Writable.listeners
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:80
 
 ___
 
 ### off
 
-▸ **off**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **off**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `listener` | (...`args`: *any*[]) => *void* |
+| `event` | `string` \| `symbol` |
+| `listener` | (...`args`: `any`[]) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.off
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/events.d.ts:61
+#### Inherited from
+
+Writable.off
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:76
 
 ___
 
 ### on
 
-▸ **on**(`event`: ``"close"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **on**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"close"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.on
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:190
+#### Inherited from
 
-▸ **on**(`event`: ``"drain"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.on
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:193
+
+▸ **on**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"drain"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.on
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:191
+#### Inherited from
 
-▸ **on**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.on
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:194
+
+▸ **on**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"error"`` |
-| `listener` | (`err`: Error) => *void* |
+| `listener` | (`err`: `Error`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.on
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:192
+#### Inherited from
 
-▸ **on**(`event`: ``"finish"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.on
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:195
+
+▸ **on**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"finish"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.on
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:193
+#### Inherited from
 
-▸ **on**(`event`: ``"pipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.on
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:196
+
+▸ **on**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"pipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.on
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:194
+#### Inherited from
 
-▸ **on**(`event`: ``"unpipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.on
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:197
+
+▸ **on**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"unpipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.on
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:195
+#### Inherited from
 
-▸ **on**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.on
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:198
+
+▸ **on**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `listener` | (...`args`: *any*[]) => *void* |
+| `event` | `string` \| `symbol` |
+| `listener` | (...`args`: `any`[]) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.on
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:196
+#### Inherited from
+
+Writable.on
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:199
 
 ___
 
 ### once
 
-▸ **once**(`event`: ``"close"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **once**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"close"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.once
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:198
+#### Inherited from
 
-▸ **once**(`event`: ``"drain"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.once
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:201
+
+▸ **once**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"drain"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.once
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:199
+#### Inherited from
 
-▸ **once**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.once
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:202
+
+▸ **once**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"error"`` |
-| `listener` | (`err`: Error) => *void* |
+| `listener` | (`err`: `Error`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.once
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:200
+#### Inherited from
 
-▸ **once**(`event`: ``"finish"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.once
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:203
+
+▸ **once**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"finish"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.once
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:201
+#### Inherited from
 
-▸ **once**(`event`: ``"pipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.once
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:204
+
+▸ **once**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"pipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.once
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:202
+#### Inherited from
 
-▸ **once**(`event`: ``"unpipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.once
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:205
+
+▸ **once**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"unpipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.once
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:203
+#### Inherited from
 
-▸ **once**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.once
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:206
+
+▸ **once**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `listener` | (...`args`: *any*[]) => *void* |
+| `event` | `string` \| `symbol` |
+| `listener` | (...`args`: `any`[]) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.once
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:204
+#### Inherited from
+
+Writable.once
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:207
 
 ___
 
 ### pipe
 
-▸ **pipe**<T\>(`destination`: T, `options?`: { `end?`: *boolean*  }): T
+▸ **pipe**<`T`\>(`destination`, `options?`): `T`
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | *WritableStream*<T\> |
+| `T` | extends `WritableStream`<`T`\> |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `destination` | T |
-| `options?` | *object* |
-| `options.end?` | *boolean* |
+| `destination` | `T` |
+| `options?` | `Object` |
+| `options.end?` | `boolean` |
 
-**Returns:** T
+#### Returns
 
-Inherited from: Writable.pipe
+`T`
 
-Defined in: node_modules/@types/node/stream.d.ts:5
+#### Inherited from
+
+Writable.pipe
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:6
 
 ___
 
 ### prependListener
 
-▸ **prependListener**(`event`: ``"close"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **prependListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"close"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:206
+#### Inherited from
 
-▸ **prependListener**(`event`: ``"drain"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:209
+
+▸ **prependListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"drain"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:207
+#### Inherited from
 
-▸ **prependListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:210
+
+▸ **prependListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"error"`` |
-| `listener` | (`err`: Error) => *void* |
+| `listener` | (`err`: `Error`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:208
+#### Inherited from
 
-▸ **prependListener**(`event`: ``"finish"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:211
+
+▸ **prependListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"finish"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:209
+#### Inherited from
 
-▸ **prependListener**(`event`: ``"pipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:212
+
+▸ **prependListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"pipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:210
+#### Inherited from
 
-▸ **prependListener**(`event`: ``"unpipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:213
+
+▸ **prependListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"unpipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:211
+#### Inherited from
 
-▸ **prependListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:214
+
+▸ **prependListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `listener` | (...`args`: *any*[]) => *void* |
+| `event` | `string` \| `symbol` |
+| `listener` | (...`args`: `any`[]) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:212
+#### Inherited from
+
+Writable.prependListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:215
 
 ___
 
 ### prependOnceListener
 
-▸ **prependOnceListener**(`event`: ``"close"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **prependOnceListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"close"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependOnceListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:214
+#### Inherited from
 
-▸ **prependOnceListener**(`event`: ``"drain"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependOnceListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:217
+
+▸ **prependOnceListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"drain"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependOnceListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:215
+#### Inherited from
 
-▸ **prependOnceListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependOnceListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:218
+
+▸ **prependOnceListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"error"`` |
-| `listener` | (`err`: Error) => *void* |
+| `listener` | (`err`: `Error`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependOnceListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:216
+#### Inherited from
 
-▸ **prependOnceListener**(`event`: ``"finish"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependOnceListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:219
+
+▸ **prependOnceListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"finish"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependOnceListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:217
+#### Inherited from
 
-▸ **prependOnceListener**(`event`: ``"pipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependOnceListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:220
+
+▸ **prependOnceListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"pipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependOnceListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:218
+#### Inherited from
 
-▸ **prependOnceListener**(`event`: ``"unpipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependOnceListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:221
+
+▸ **prependOnceListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"unpipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependOnceListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:219
+#### Inherited from
 
-▸ **prependOnceListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.prependOnceListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:222
+
+▸ **prependOnceListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `listener` | (...`args`: *any*[]) => *void* |
+| `event` | `string` \| `symbol` |
+| `listener` | (...`args`: `any`[]) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.prependOnceListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:220
+#### Inherited from
+
+Writable.prependOnceListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:223
 
 ___
 
 ### rawListeners
 
-▸ **rawListeners**(`event`: *string* \| *symbol*): Function[]
+▸ **rawListeners**(`event`): `Function`[]
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
+| `event` | `string` \| `symbol` |
 
-**Returns:** Function[]
+#### Returns
 
-Inherited from: Writable.rawListeners
+`Function`[]
 
-Defined in: node_modules/@types/node/events.d.ts:66
+#### Inherited from
+
+Writable.rawListeners
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:81
 
 ___
 
 ### removeAllListeners
 
-▸ **removeAllListeners**(`event?`: *string* \| *symbol*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **removeAllListeners**(`event?`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event?` | *string* \| *symbol* |
+| `event?` | `string` \| `symbol` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeAllListeners
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/events.d.ts:62
+#### Inherited from
+
+Writable.removeAllListeners
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:77
 
 ___
 
 ### removeListener
 
-▸ **removeListener**(`event`: ``"close"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **removeListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"close"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:222
+#### Inherited from
 
-▸ **removeListener**(`event`: ``"drain"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.removeListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:225
+
+▸ **removeListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"drain"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:223
+#### Inherited from
 
-▸ **removeListener**(`event`: ``"error"``, `listener`: (`err`: Error) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.removeListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:226
+
+▸ **removeListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"error"`` |
-| `listener` | (`err`: Error) => *void* |
+| `listener` | (`err`: `Error`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:224
+#### Inherited from
 
-▸ **removeListener**(`event`: ``"finish"``, `listener`: () => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.removeListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:227
+
+▸ **removeListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"finish"`` |
-| `listener` | () => *void* |
+| `listener` | () => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:225
+#### Inherited from
 
-▸ **removeListener**(`event`: ``"pipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.removeListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:228
+
+▸ **removeListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"pipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:226
+#### Inherited from
 
-▸ **removeListener**(`event`: ``"unpipe"``, `listener`: (`src`: *Readable*) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.removeListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:229
+
+▸ **removeListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `event` | ``"unpipe"`` |
-| `listener` | (`src`: *Readable*) => *void* |
+| `listener` | (`src`: `Readable`) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:227
+#### Inherited from
 
-▸ **removeListener**(`event`: *string* \| *symbol*, `listener`: (...`args`: *any*[]) => *void*): [*WritableStream*](writablestream.md)<Consumes\>
+Writable.removeListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:230
+
+▸ **removeListener**(`event`, `listener`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | *string* \| *symbol* |
-| `listener` | (...`args`: *any*[]) => *void* |
+| `event` | `string` \| `symbol` |
+| `listener` | (...`args`: `any`[]) => `void` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.removeListener
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:228
+#### Inherited from
+
+Writable.removeListener
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:231
 
 ___
 
 ### setDefaultEncoding
 
-▸ **setDefaultEncoding**(`encoding`: BufferEncoding): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **setDefaultEncoding**(`encoding`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `encoding` | BufferEncoding |
+| `encoding` | `BufferEncoding` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.setDefaultEncoding
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/stream.d.ts:156
+#### Inherited from
+
+Writable.setDefaultEncoding
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:159
 
 ___
 
 ### setMaxListeners
 
-▸ **setMaxListeners**(`n`: *number*): [*WritableStream*](writablestream.md)<Consumes\>
+▸ **setMaxListeners**(`n`): [`WritableStream`](writablestream.md)<`Consumes`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `n` | *number* |
+| `n` | `number` |
 
-**Returns:** [*WritableStream*](writablestream.md)<Consumes\>
+#### Returns
 
-Inherited from: Writable.setMaxListeners
+[`WritableStream`](writablestream.md)<`Consumes`\>
 
-Defined in: node_modules/@types/node/events.d.ts:63
+#### Inherited from
+
+Writable.setMaxListeners
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:78
 
 ___
 
 ### uncork
 
-▸ **uncork**(): *void*
+▸ **uncork**(): `void`
 
-**Returns:** *void*
+#### Returns
 
-Inherited from: Writable.uncork
+`void`
 
-Defined in: node_modules/@types/node/stream.d.ts:161
+#### Inherited from
+
+Writable.uncork
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:164
 
 ___
 
 ### write
 
-▸ **write**(`item`: Consumes, `cb?`: (`err?`: ``null`` \| Error) => *void*): *boolean*
+▸ **write**(`item`, `cb?`): `boolean`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `item` | Consumes |
-| `cb?` | (`err?`: ``null`` \| Error) => *void* |
+| `item` | `Consumes` |
+| `cb?` | (`err?`: ``null`` \| `Error`) => `void` |
 
-**Returns:** *boolean*
+#### Returns
 
-Overrides: Writable.write
+`boolean`
 
-Defined in: [packages/types/src/utils.ts:58](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L58)
+#### Overrides
 
-▸ **write**(`str`: *never*, `encoding`: *never*, `cb?`: (`err?`: ``null`` \| Error) => *void*): *boolean*
+Writable.write
+
+#### Defined in
+
+[packages/types/src/utils.ts:58](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L58)
+
+▸ **write**(`str`, `encoding`, `cb?`): `boolean`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `str` | *never* |
-| `encoding` | *never* |
-| `cb?` | (`err?`: ``null`` \| Error) => *void* |
+| `str` | `never` |
+| `encoding` | `never` |
+| `cb?` | (`err?`: ``null`` \| `Error`) => `void` |
 
-**Returns:** *boolean*
+#### Returns
 
-Overrides: Writable.write
+`boolean`
 
-Defined in: [packages/types/src/utils.ts:59](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/utils.ts#L59)
+#### Overrides
+
+Writable.write
+
+#### Defined in
+
+[packages/types/src/utils.ts:59](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/utils.ts#L59)

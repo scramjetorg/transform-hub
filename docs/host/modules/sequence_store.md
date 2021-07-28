@@ -6,4 +6,4 @@
 
 ### Classes
 
-- [SequenceStore](../classes/sequence_store.sequencestore.md)
+- [SequenceStore](../classes/sequence_store.SequenceStore.md)

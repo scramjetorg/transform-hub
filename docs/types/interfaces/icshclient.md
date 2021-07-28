@@ -4,9 +4,9 @@
 
 ## Hierarchy
 
-- [*IComponent*](icomponent.md)
+- [`IComponent`](icomponent.md)
 
-  ↳ **ICSHClient**
+  ↳ **`ICSHClient`**
 
 ## Table of contents
 
@@ -24,29 +24,37 @@
 
 ### logger
 
-• **logger**: Console
+• **logger**: `Console`
 
-Inherited from: [IComponent](icomponent.md).[logger](icomponent.md#logger)
+#### Inherited from
 
-Defined in: [packages/types/src/component.ts:2](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/component.ts#L2)
+[IComponent](icomponent.md).[logger](icomponent.md#logger)
+
+#### Defined in
+
+[packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/component.ts#L2)
 
 ## Methods
 
 ### disconnect
 
-▸ **disconnect**(): *Promise*<void\>
+▸ **disconnect**(): `Promise`<`void`\>
 
 Disconnects from a host server.
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [packages/types/src/csh-connector.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/csh-connector.ts#L26)
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/types/src/csh-connector.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/csh-connector.ts#L26)
 
 ___
 
 ### hookCommunicationHandler
 
-▸ **hookCommunicationHandler**(`communicationHandler`: [*ICommunicationHandler*](icommunicationhandler.md)): *MaybePromise*<void\>
+▸ **hookCommunicationHandler**(`communicationHandler`): `MaybePromise`<`void`\>
 
 Create array of streams on LCC demand than hook streams.
 
@@ -54,17 +62,21 @@ Create array of streams on LCC demand than hook streams.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `communicationHandler` | [*ICommunicationHandler*](icommunicationhandler.md) | Temporary log streams to the console. |
+| `communicationHandler` | [`ICommunicationHandler`](icommunicationhandler.md) | Temporary log streams to the console. |
 
-**Returns:** *MaybePromise*<void\>
+#### Returns
 
-Defined in: [packages/types/src/csh-connector.ts:21](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/csh-connector.ts#L21)
+`MaybePromise`<`void`\>
+
+#### Defined in
+
+[packages/types/src/csh-connector.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/csh-connector.ts#L21)
 
 ___
 
 ### init
 
-▸ **init**(`id`: *string*): *MaybePromise*<void\>
+▸ **init**(`id`): `MaybePromise`<`void`\>
 
 Initializes the client
 
@@ -72,8 +84,12 @@ Initializes the client
 
 | Name | Type |
 | :------ | :------ |
-| `id` | *string* |
+| `id` | `string` |
 
-**Returns:** *MaybePromise*<void\>
+#### Returns
 
-Defined in: [packages/types/src/csh-connector.ts:14](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/csh-connector.ts#L14)
+`MaybePromise`<`void`\>
+
+#### Defined in
+
+[packages/types/src/csh-connector.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/csh-connector.ts#L14)

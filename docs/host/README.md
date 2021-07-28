@@ -6,10 +6,10 @@
 
 ### Modules
 
+- [cpm-connector](modules/cpm_connector.md)
 - [csi-controller](modules/csi_controller.md)
 - [host](modules/host.md)
 - [instance-store](modules/instance_store.md)
-- [load-check](modules/load_check.md)
 - [sequence](modules/sequence.md)
 - [sequence-store](modules/sequence_store.md)
 - [socket-server](modules/socket_server.md)

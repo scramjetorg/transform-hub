@@ -15,56 +15,72 @@
 
 ### add
 
-▸ **add**(`sequence`: [*ISequence*](isequence.md)): *void*
+▸ **add**(`sequence`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `sequence` | [*ISequence*](isequence.md) |
+| `sequence` | [`ISequence`](isequence.md) |
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [packages/types/src/sequence-store.ts:25](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L25)
+`void`
+
+#### Defined in
+
+[packages/types/src/sequence-store.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/sequence-store.ts#L25)
 
 ___
 
 ### delete
 
-▸ **delete**(`id`: *string*): *void*
+▸ **delete**(`id`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `id` | *string* |
+| `id` | `string` |
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [packages/types/src/sequence-store.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L26)
+`void`
+
+#### Defined in
+
+[packages/types/src/sequence-store.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/sequence-store.ts#L26)
 
 ___
 
 ### getById
 
-▸ **getById**(`id`: *string*): [*ISequence*](isequence.md)
+▸ **getById**(`id`): [`ISequence`](isequence.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `id` | *string* |
+| `id` | `string` |
 
-**Returns:** [*ISequence*](isequence.md)
+#### Returns
 
-Defined in: [packages/types/src/sequence-store.ts:24](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L24)
+[`ISequence`](isequence.md)
+
+#### Defined in
+
+[packages/types/src/sequence-store.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/sequence-store.ts#L24)
 
 ___
 
 ### getSequences
 
-▸ **getSequences**(): [*ISequence*](isequence.md)[]
+▸ **getSequences**(): [`ISequence`](isequence.md)[]
 
-**Returns:** [*ISequence*](isequence.md)[]
+#### Returns
 
-Defined in: [packages/types/src/sequence-store.ts:23](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/sequence-store.ts#L23)
+[`ISequence`](isequence.md)[]
+
+#### Defined in
+
+[packages/types/src/sequence-store.ts:23](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/sequence-store.ts#L23)

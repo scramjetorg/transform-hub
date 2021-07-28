@@ -16,23 +16,25 @@
 
 ### constructor
 
-\+ **new MessageUtils**(): [*MessageUtils*](messageutils.md)
-
-**Returns:** [*MessageUtils*](messageutils.md)
+• **new MessageUtils**()
 
 ## Methods
 
 ### writeMessageOnStream
 
-▸ `Static` **writeMessageOnStream**(`__namedParameters`: *EncodedMessage*<MonitoringMessageCode\>, `streamToWrite?`: *WritableStream*<any\>): *void*
+▸ `Static` **writeMessageOnStream**(`__namedParameters`, `streamToWrite?`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `__namedParameters` | *EncodedMessage*<MonitoringMessageCode\> |
-| `streamToWrite?` | *WritableStream*<any\> |
+| `__namedParameters` | `EncodedMonitoringMessage` |
+| `streamToWrite?` | `WritableStream`<`any`\> |
 
-**Returns:** *void*
+#### Returns
 
-Defined in: [message-utils.ts:4](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/runner/src/message-utils.ts#L4)
+`void`
+
+#### Defined in
+
+[message-utils.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/runner/src/message-utils.ts#L4)

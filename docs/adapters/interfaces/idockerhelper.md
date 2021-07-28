@@ -4,7 +4,7 @@
 
 ## Implemented by
 
-- [*DockerodeDockerHelper*](../classes/dockerodedockerhelper.md)
+- [`DockerodeDockerHelper`](../classes/dockerodedockerhelper.md)
 
 ## Table of contents
 
@@ -30,268 +30,274 @@
 
 ### createContainer
 
-• **createContainer**: (`containerCfg`: { `autoRemove`: *boolean* ; `binds`: *string*[] ; `dockerImage`: *string* ; `envs`: *string*[] ; `maxMem`: *number* ; `ports`: *any* ; `volumes`: [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[]  }) => *Promise*<string\>
-
-Creates Docker container from provided image with attached volumes and local directories.
-
-**`param`** Docker image name.
-
-**`param`** Volumes to be mounted to container.
-
-**`param`** Directories to be mounted.
-
-**`param`** Environment variables.
-
-**`param`** If true, container will be removed when finished.
-
-**`returns`** Created container.
+• **createContainer**: (`containerCfg`: { `autoRemove`: `boolean` ; `binds`: `string`[] ; `dockerImage`: `string` ; `envs`: `string`[] ; `maxMem`: `number` ; `ports`: `any` ; `volumes`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]  }) => `Promise`<`string`\>
 
 #### Type declaration
 
-▸ (`containerCfg`: { `autoRemove`: *boolean* ; `binds`: *string*[] ; `dockerImage`: *string* ; `envs`: *string*[] ; `maxMem`: *number* ; `ports`: *any* ; `volumes`: [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[]  }): *Promise*<string\>
+▸ (`containerCfg`): `Promise`<`string`\>
 
-#### Parameters
+Creates Docker container from provided image with attached volumes and local directories.
+
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `containerCfg` | *object* |
-| `containerCfg.autoRemove` | *boolean* |
-| `containerCfg.binds` | *string*[] |
-| `containerCfg.dockerImage` | *string* |
-| `containerCfg.envs` | *string*[] |
-| `containerCfg.maxMem` | *number* |
-| `containerCfg.ports` | *any* |
-| `containerCfg.volumes` | [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[] |
+| `containerCfg` | `Object` |
+| `containerCfg.autoRemove` | `boolean` |
+| `containerCfg.binds` | `string`[] |
+| `containerCfg.dockerImage` | `string` |
+| `containerCfg.envs` | `string`[] |
+| `containerCfg.maxMem` | `number` |
+| `containerCfg.ports` | `any` |
+| `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] |
 
-**Returns:** *Promise*<string\>
+##### Returns
 
-Defined in: [types.ts:174](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L174)
+`Promise`<`string`\>
+
+Created container.
+
+#### Defined in
+
+[types.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L174)
 
 ___
 
 ### createVolume
 
-• **createVolume**: (`name?`: *string*) => *Promise*<string\>
-
-Creates volume.
-
-**`param`** Volume name.
-
-**`returns`** Created volume.
+• **createVolume**: (`name?`: `string`) => `Promise`<`string`\>
 
 #### Type declaration
 
-▸ (`name?`: *string*): *Promise*<string\>
+▸ (`name?`): `Promise`<`string`\>
 
-#### Parameters
+Creates volume.
 
-| Name | Type |
-| :------ | :------ |
-| `name?` | *string* |
+##### Parameters
 
-**Returns:** *Promise*<string\>
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `name?` | `string` | Volume name. |
 
-Defined in: [types.ts:227](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L227)
+##### Returns
+
+`Promise`<`string`\>
+
+Created volume.
+
+#### Defined in
+
+[types.ts:227](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L227)
 
 ___
 
 ### listVolumes
 
-• **listVolumes**: () => *Promise*<string[]\>
-
-Lists exisiting volumes
-
-**`returns`** List of existing volumes
+• **listVolumes**: () => `Promise`<`string`[]\>
 
 #### Type declaration
 
-▸ (): *Promise*<string[]\>
+▸ (): `Promise`<`string`[]\>
 
-**Returns:** *Promise*<string[]\>
+Lists exisiting volumes
 
-Defined in: [types.ts:218](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L218)
+##### Returns
+
+`Promise`<`string`[]\>
+
+List of existing volumes
+
+#### Defined in
+
+[types.ts:218](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L218)
 
 ___
 
 ### removeContainer
 
-• **removeContainer**: (`containerId`: *string*) => *Promise*<void\>
-
-Removes container.
-
-**`param`** Container id.
-
-**`returns`**
+• **removeContainer**: (`containerId`: `string`) => `Promise`<`void`\>
 
 #### Type declaration
 
-▸ (`containerId`: *string*): *Promise*<void\>
+▸ (`containerId`): `Promise`<`void`\>
 
-#### Parameters
+Removes container.
 
-| Name | Type |
-| :------ | :------ |
-| `containerId` | *string* |
+##### Parameters
 
-**Returns:** *Promise*<void\>
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerId` | `string` | Container id. |
 
-Defined in: [types.ts:211](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L211)
+##### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L211)
 
 ___
 
 ### removeVolume
 
-• **removeVolume**: (`volumeId`: *string*) => *Promise*<void\>
-
-Removes volume.
-
-**`param`**
-
-**`returns`**
+• **removeVolume**: (`volumeId`: `string`) => `Promise`<`void`\>
 
 #### Type declaration
 
-▸ (`volumeId`: *string*): *Promise*<void\>
+▸ (`volumeId`): `Promise`<`void`\>
 
-#### Parameters
+Removes volume.
+
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `volumeId` | *string* |
+| `volumeId` | `string` |
 
-**Returns:** *Promise*<void\>
+##### Returns
 
-Defined in: [types.ts:236](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L236)
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:236](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L236)
 
 ___
 
 ### run
 
-• **run**: (`config`: [*DockerAdapterRunConfig*](../README.md#dockeradapterrunconfig)) => *Promise*<[*DockerAdapterRunResponse*](../README.md#dockeradapterrunresponse)\>
-
-Executes command in container.
-
-**`param`** Execution configuration.
-
-**`returns`**
+• **run**: (`config`: [`DockerAdapterRunConfig`](../README.md#dockeradapterrunconfig)) => `Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
 
 #### Type declaration
 
-▸ (`config`: [*DockerAdapterRunConfig*](../README.md#dockeradapterrunconfig)): *Promise*<[*DockerAdapterRunResponse*](../README.md#dockeradapterrunresponse)\>
+▸ (`config`): `Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
 
-#### Parameters
+Executes command in container.
 
-| Name | Type |
-| :------ | :------ |
-| `config` | [*DockerAdapterRunConfig*](../README.md#dockeradapterrunconfig) |
+##### Parameters
 
-**Returns:** *Promise*<[*DockerAdapterRunResponse*](../README.md#dockeradapterrunresponse)\>
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `config` | [`DockerAdapterRunConfig`](../README.md#dockeradapterrunconfig) | Execution configuration. |
 
-Defined in: [types.ts:245](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L245)
+##### Returns
+
+`Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+
+#### Defined in
+
+[types.ts:245](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L245)
 
 ___
 
 ### startContainer
 
-• **startContainer**: (`containerId`: *string*) => *Promise*<void\>
-
-Starts container.
-
-**`param`** Container to be started.
-
-**`returns`**
+• **startContainer**: (`containerId`: `string`) => `Promise`<`void`\>
 
 #### Type declaration
 
-▸ (`containerId`: *string*): *Promise*<void\>
+▸ (`containerId`): `Promise`<`void`\>
 
-#### Parameters
+Starts container.
 
-| Name | Type |
-| :------ | :------ |
-| `containerId` | *string* |
+##### Parameters
 
-**Returns:** *Promise*<void\>
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerId` | `string` | Container to be started. |
 
-Defined in: [types.ts:192](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L192)
+##### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L192)
 
 ___
 
 ### stats
 
-• **stats**: (`containerId`: *string*) => *Promise*<ContainerStats\>
+• **stats**: (`containerId`: `string`) => `Promise`<`ContainerStats`\>
 
 #### Type declaration
 
-▸ (`containerId`: *string*): *Promise*<ContainerStats\>
+▸ (`containerId`): `Promise`<`ContainerStats`\>
 
-#### Parameters
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `containerId` | *string* |
+| `containerId` | `string` |
 
-**Returns:** *Promise*<ContainerStats\>
+##### Returns
 
-Defined in: [types.ts:203](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L203)
+`Promise`<`ContainerStats`\>
+
+#### Defined in
+
+[types.ts:203](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L203)
 
 ___
 
 ### stopContainer
 
-• **stopContainer**: (`containerId`: *string*) => *Promise*<void\>
-
-Stops container.
-
-**`param`** Container id to be stopped.
-
-**`returns`**
+• **stopContainer**: (`containerId`: `string`) => `Promise`<`void`\>
 
 #### Type declaration
 
-▸ (`containerId`: *string*): *Promise*<void\>
+▸ (`containerId`): `Promise`<`void`\>
 
-#### Parameters
+Stops container.
 
-| Name | Type |
-| :------ | :------ |
-| `containerId` | *string* |
+##### Parameters
 
-**Returns:** *Promise*<void\>
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `containerId` | `string` | Container id to be stopped. |
 
-Defined in: [types.ts:201](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L201)
+##### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:201](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L201)
 
 ___
 
 ### translateVolumesConfig
 
-• **translateVolumesConfig**: (`volumeConfigs`: [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[]) => *any*
-
-Converts pairs of mount path and volume name to DockerHelper specific volume configuration.
-
-**`param`** Volume configuration objects.
-
-**`returns`** DockerHelper volume configuration.
+• **translateVolumesConfig**: (`volumeConfigs`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]) => `any`
 
 #### Type declaration
 
-▸ (`volumeConfigs`: [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[]): *any*
+▸ (`volumeConfigs`): `any`
 
-#### Parameters
+Converts pairs of mount path and volume name to DockerHelper specific volume configuration.
+
+##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `volumeConfigs` | [*DockerAdapterVolumeConfig*](../README.md#dockeradaptervolumeconfig)[] |
+| `volumeConfigs` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] |
 
-**Returns:** *any*
+##### Returns
 
-Defined in: [types.ts:161](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L161)
+`any`
+
+DockerHelper volume configuration.
+
+#### Defined in
+
+[types.ts:161](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L161)
 
 ## Methods
 
 ### pullImage
 
-▸ **pullImage**(`name`: *string*, `ifNeeded`: *boolean*): *Promise*<void\>
+▸ **pullImage**(`name`, `ifNeeded`): `Promise`<`void`\>
 
 Fetches the image from repo
 
@@ -299,18 +305,22 @@ Fetches the image from repo
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `name` | *string* | the name of the image, eg. ubuntu:latest |
-| `ifNeeded` | *boolean* | fetch only if not exists (defaults to true) |
+| `name` | `string` | the name of the image, eg. ubuntu:latest |
+| `ifNeeded` | `boolean` | fetch only if not exists (defaults to true) |
 
-**Returns:** *Promise*<void\>
+#### Returns
 
-Defined in: [types.ts:262](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L262)
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:262](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L262)
 
 ___
 
 ### wait
 
-▸ **wait**(`container`: *string*, `options?`: [*DockerAdapterWaitOptions*](../README.md#dockeradapterwaitoptions)): *Promise*<[*ExitData*](../README.md#exitdata)\>
+▸ **wait**(`container`, `options?`): `Promise`<[`ExitData`](../README.md#exitdata)\>
 
 Waits until containter exits
 
@@ -318,9 +328,13 @@ Waits until containter exits
 
 | Name | Type |
 | :------ | :------ |
-| `container` | *string* |
-| `options?` | [*DockerAdapterWaitOptions*](../README.md#dockeradapterwaitoptions) |
+| `container` | `string` |
+| `options?` | [`DockerAdapterWaitOptions`](../README.md#dockeradapterwaitoptions) |
 
-**Returns:** *Promise*<[*ExitData*](../README.md#exitdata)\>
+#### Returns
 
-Defined in: [types.ts:254](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/adapters/src/types.ts#L254)
+`Promise`<[`ExitData`](../README.md#exitdata)\>
+
+#### Defined in
+
+[types.ts:254](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L254)

@@ -10,8 +10,8 @@ interruption.
 
 | Name | Type |
 | :------ | :------ |
-| `AppConfigType` | [*AppConfig*](../README.md#appconfig) |
-| `State` | *any* |
+| `AppConfigType` | extends [`AppConfig`](../README.md#appconfig) |
+| `State` | extends `any` |
 
 ## Table of contents
 
@@ -40,52 +40,62 @@ interruption.
 
 ### AppError
 
-• `Readonly` **AppError**: [*AppErrorConstructor*](../README.md#apperrorconstructor)
+• `Readonly` **AppError**: [`AppErrorConstructor`](../README.md#apperrorconstructor)
 
-Defined in: [packages/types/src/app-context.ts:178](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L178)
+#### Defined in
+
+[packages/types/src/app-context.ts:178](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L178)
 
 ___
 
 ### config
 
-• `Readonly` **config**: AppConfigType
+• `Readonly` **config**: `AppConfigType`
 
-Defined in: [packages/types/src/app-context.ts:177](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L177)
+#### Defined in
+
+[packages/types/src/app-context.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L177)
 
 ___
 
 ### definition
 
-• **definition**: [*FunctionDefinition*](../README.md#functiondefinition)
+• **definition**: [`FunctionDefinition`](../README.md#functiondefinition)
 
 Provides automated definition as understood by the system
 
-Defined in: [packages/types/src/app-context.ts:168](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L168)
+#### Defined in
+
+[packages/types/src/app-context.ts:168](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L168)
 
 ___
 
 ### initialState
 
-• `Optional` **initialState**: State
+• `Optional` **initialState**: `State`
 
 Holds the previous state if there was a previous process in existance and it called the
 {@link this#save}.
 
-Defined in: [packages/types/src/app-context.ts:144](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L144)
+#### Defined in
+
+[packages/types/src/app-context.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L144)
 
 ___
 
 ### logger
 
-• **logger**: Console
+• **logger**: `Console`
 
-Defined in: [packages/types/src/app-context.ts:38](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L38)
+#### Defined in
+
+[packages/types/src/app-context.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L38)
 
 ## Methods
 
 ### addKillHandler
 
-▸ **addKillHandler**(`handler`: [*KillHandler*](../README.md#killhandler)): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **addKillHandler**(`handler`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 This method can be overridden to handle the kill signal from the Runner and perform
 the final cleanup. This method is synchroneous and once it's exits the process will be
@@ -101,17 +111,21 @@ and the data will be lost.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `handler` | [*KillHandler*](../README.md#killhandler) | the handler callback |
+| `handler` | [`KillHandler`](../README.md#killhandler) | the handler callback |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:80](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L80)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L80)
 
 ___
 
 ### addMonitoringHandler
 
-▸ **addMonitoringHandler**(`handler`: [*MonitoringHandler*](../README.md#monitoringhandler)): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **addMonitoringHandler**(`handler`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 This method should be overridden by the Sequence if auto detection of the Sequence
 state is not precise enough.
@@ -126,17 +140,21 @@ return value from the Sequence.
 
 | Name | Type |
 | :------ | :------ |
-| `handler` | [*MonitoringHandler*](../README.md#monitoringhandler) |
+| `handler` | [`MonitoringHandler`](../README.md#monitoringhandler) |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:49](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L49)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L49)
 
 ___
 
 ### addStopHandler
 
-▸ **addStopHandler**(`item`: [*StopHandler*](../README.md#stophandler)): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **addStopHandler**(`item`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 This method can be overridden to handle the stop signal from the Runner and perform
 a graceful shutdown. The platform will provide a grace period in order to save current
@@ -153,17 +171,21 @@ last call will be made sure to be saved before the process will be terminated.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `item` | [*StopHandler*](../README.md#stophandler) | the handler callback |
+| `item` | [`StopHandler`](../README.md#stophandler) | the handler callback |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:65](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L65)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L65)
 
 ___
 
 ### describe
 
-▸ **describe**(`definition`: [*FunctionDefinition*](../README.md#functiondefinition)): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **describe**(`definition`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 Allows overriding the function definition from within the code
 
@@ -171,17 +193,21 @@ Allows overriding the function definition from within the code
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `definition` | [*FunctionDefinition*](../README.md#functiondefinition) | the actual definition |
+| `definition` | [`FunctionDefinition`](../README.md#functiondefinition) | the actual definition |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:175](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L175)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:175](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L175)
 
 ___
 
 ### destroy
 
-▸ **destroy**(`error?`: [*AppError*](../README.md#apperror)): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **destroy**(`error?`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 Calling this method will inform the Instance that the Sequence has enountered a fatal
 exception and should not be kept alive.
@@ -198,17 +224,21 @@ out.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `error?` | [*AppError*](../README.md#apperror) | optional error object for inspection |
+| `error?` | [`AppError`](../README.md#apperror) | optional error object for inspection |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:127](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L127)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:127](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L127)
 
 ___
 
 ### emit
 
-▸ **emit**(`ev`: *string*, `message?`: *any*): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **emit**(`ev`, `message?`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 Sends events to the Instance that can be received by CLI and configured actions
 
@@ -216,31 +246,39 @@ Sends events to the Instance that can be received by CLI and configured actions
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `ev` | *string* | event name |
-| `message?` | *any* | any serializable object |
+| `ev` | `string` | event name |
+| `message?` | `any` | any serializable object |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:162](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L162)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
-▸ **emit**(`ev`: ``"error"``, `message`: [*AppError*](../README.md#apperror)): [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Defined in
+
+[packages/types/src/app-context.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L162)
+
+▸ **emit**(`ev`, `message`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `ev` | ``"error"`` |
-| `message` | [*AppError*](../README.md#apperror) |
+| `message` | [`AppError`](../README.md#apperror) |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:163](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L163)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:163](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L163)
 
 ___
 
 ### end
 
-▸ **end**(): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **end**(): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 Calling this method will inform the Instance that the Sequence has completed the
 operation and can be gracefully terminated.
@@ -251,15 +289,19 @@ data is passed to the neighours.
 
 This method will be called automatically when the readable side of the sequence ends.
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:111](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L111)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L111)
 
 ___
 
 ### keepAlive
 
-▸ **keepAlive**(`milliseconds?`: *number*): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **keepAlive**(`milliseconds?`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 The Sequence may call this process in order to confirm continued operation and provide
 an information on how long the Sequence should not be considered stale.
@@ -274,17 +316,21 @@ stop it.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `milliseconds?` | *number* | provides information on how long the process should wait before assuming that the sequence is stale and attempt to kill it.  If the method is called after {@link AutoAppContext.addStopHandler \| stop has been issued} this parameter value should not exceed the given timeout and another stop command will be called again when the lower |
+| `milliseconds?` | `number` | provides information on how long the process should wait before assuming that the sequence is stale and attempt to kill it.  If the method is called after {@link AutoAppContext.addStopHandler \| stop has been issued} this parameter value should not exceed the given timeout and another stop command will be called again when the lower |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:99](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L99)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L99)
 
 ___
 
 ### on
 
-▸ **on**(`ev`: *string*, `handler`: (`message?`: *any*) => *void*): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **on**(`ev`, `handler`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 Receives events sent by the Instance that can be triggered via CLI and configured
 actions.
@@ -293,31 +339,39 @@ actions.
 
 | Name | Type |
 | :------ | :------ |
-| `ev` | *string* |
-| `handler` | (`message?`: *any*) => *void* |
+| `ev` | `string` |
+| `handler` | (`message?`: `any`) => `void` |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:153](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L153)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
-▸ **on**(`ev`: ``"error"``, `handler`: (`message`: Error) => *void*): [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Defined in
+
+[packages/types/src/app-context.ts:153](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L153)
+
+▸ **on**(`ev`, `handler`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `ev` | ``"error"`` |
-| `handler` | (`message`: Error) => *void* |
+| `handler` | (`message`: `Error`) => `void` |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:154](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L154)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L154)
 
 ___
 
 ### save
 
-▸ **save**(`state`: State): [*AppContext*](appcontext.md)<AppConfigType, State\>
+▸ **save**(`state`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
 This method can be used to ensure that the data is passed here will be stored for
 another process. The operation is synchroneous and blocking.
@@ -329,8 +383,12 @@ passed to the process that will take over after this one is terminated.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `state` | State | any serializable value |
+| `state` | `State` | any serializable value |
 
-**Returns:** [*AppContext*](appcontext.md)<AppConfigType, State\>
+#### Returns
 
-Defined in: [packages/types/src/app-context.ts:138](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/app-context.ts#L138)
+[`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
+
+#### Defined in
+
+[packages/types/src/app-context.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L138)

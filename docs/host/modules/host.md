@@ -6,7 +6,7 @@
 
 ### Classes
 
-- [Host](../classes/host.host-1.md)
+- [Host](../classes/host.Host.md)
 
 ### Type aliases
 
@@ -16,6 +16,8 @@
 
 ### HostOptions
 
-Ƭ **HostOptions**: *Partial*<{ `identifyExisting`: *boolean*  }\>
+Ƭ **HostOptions**: `Partial`<`Object`\>
 
-Defined in: [packages/host/src/lib/host.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/host/src/lib/host.ts#L26)
+#### Defined in
+
+[packages/host/src/lib/host.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/host.ts#L31)

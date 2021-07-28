@@ -17,26 +17,36 @@
 
 ### configService
 
-• `Const` **configService**: *ConfigService*
+• `Const` **configService**: `ConfigService`
 
-Defined in: [config-service.ts:70](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/sth-config/src/config-service.ts#L70)
+#### Defined in
+
+[config-service.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/sth-config/src/config-service.ts#L61)
 
 ## Functions
 
 ### config
 
-▸ **config**(): *Promise*<STHConfiguration\>
+▸ **config**(): `Promise`<`STHConfiguration`\>
 
-**Returns:** *Promise*<STHConfiguration\>
+#### Returns
 
-Defined in: [index.ts:10](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/sth-config/src/index.ts#L10)
+`Promise`<`STHConfiguration`\>
+
+#### Defined in
+
+[index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/sth-config/src/index.ts#L10)
 
 ___
 
 ### development
 
-▸ **development**(): *boolean*
+▸ **development**(): `boolean`
 
-**Returns:** *boolean*
+#### Returns
 
-Defined in: [index.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/sth-config/src/index.ts#L6)
+`boolean`
+
+#### Defined in
+
+[index.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/sth-config/src/index.ts#L6)

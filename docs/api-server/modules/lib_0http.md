@@ -13,42 +13,50 @@
 
 ### cero
 
-▸ `Const` **cero**<T, S\>(`config?`: *Partial*<{ `prioRequestsProcessing`: *boolean* ; `router`: S ; `server`: T  }\>): *object*
+▸ `Const` **cero**<`T`, `S`\>(`config?`): `Object`
 
 #### Type parameters
 
-| Name | Type | Default |
-| :------ | :------ | :------ |
-| `T` | *Server*<T\> | *Server* |
-| `S` | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md)<S\> | [*CeroRouter*](../interfaces/lib_definitions.cerorouter.md) |
+| Name | Type |
+| :------ | :------ |
+| `T` | extends `Server`<`T`\>`Server` |
+| `S` | extends [`CeroRouter`](../interfaces/lib_definitions.CeroRouter.md)<`S`\>[`CeroRouter`](../interfaces/lib_definitions.CeroRouter.md) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `config?` | *Partial*<{ `prioRequestsProcessing`: *boolean* ; `router`: S ; `server`: T  }\> |
+| `config?` | `Partial`<`Object`\> |
 
-**Returns:** *object*
+#### Returns
+
+`Object`
 
 | Name | Type |
 | :------ | :------ |
-| `router` | S |
-| `server` | T |
+| `router` | `S` |
+| `server` | `T` |
 
-Defined in: [packages/api-server/src/lib/0http.ts:7](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/0http.ts#L7)
+#### Defined in
+
+[packages/api-server/src/lib/0http.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/0http.ts#L7)
 
 ___
 
 ### sequentialRouter
 
-▸ `Const` **sequentialRouter**(`config`: *Partial*<{ `cacheSize`: *number* ; `defaultRoute`: Middleware ; `errorHandler`: [*CeroErrorHandler*](lib_definitions.md#ceroerrorhandler) ; `id`: *string*  }\>): [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md)
+▸ `Const` **sequentialRouter**(`config`): [`SequentialCeroRouter`](../interfaces/lib_definitions.SequentialCeroRouter.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `config` | *Partial*<{ `cacheSize`: *number* ; `defaultRoute`: Middleware ; `errorHandler`: [*CeroErrorHandler*](lib_definitions.md#ceroerrorhandler) ; `id`: *string*  }\> |
+| `config` | `Partial`<`Object`\> |
 
-**Returns:** [*SequentialCeroRouter*](../interfaces/lib_definitions.sequentialcerorouter.md)
+#### Returns
 
-Defined in: [packages/api-server/src/lib/0http.ts:6](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/api-server/src/lib/0http.ts#L6)
+[`SequentialCeroRouter`](../interfaces/lib_definitions.SequentialCeroRouter.md)
+
+#### Defined in
+
+[packages/api-server/src/lib/0http.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/0http.ts#L6)

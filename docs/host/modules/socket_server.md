@@ -6,4 +6,4 @@
 
 ### Classes
 
-- [SocketServer](../classes/socket_server.socketserver.md)
+- [SocketServer](../classes/socket_server.SocketServer.md)

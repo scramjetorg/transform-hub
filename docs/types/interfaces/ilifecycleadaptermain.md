@@ -4,11 +4,11 @@
 
 ## Hierarchy
 
-- **ILifeCycleAdapterMain**
+- **`ILifeCycleAdapterMain`**
 
-  ↳ [*ILifeCycleAdapterIdentify*](ilifecycleadapteridentify.md)
+  ↳ [`ILifeCycleAdapterIdentify`](ilifecycleadapteridentify.md)
 
-  ↳ [*ILifeCycleAdapterRun*](ilifecycleadapterrun.md)
+  ↳ [`ILifeCycleAdapterRun`](ilifecycleadapterrun.md)
 
 ## Table of contents
 
@@ -22,32 +22,44 @@
 
 ### cleanup
 
-▸ **cleanup**(): *MaybePromise*<void\>
+▸ **cleanup**(): `MaybePromise`<`void`\>
 
 Removes resources.
 
-**Returns:** *MaybePromise*<void\>
+#### Returns
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L26)
+`MaybePromise`<`void`\>
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle-adapters.ts#L26)
 
 ___
 
 ### init
 
-▸ **init**(): *MaybePromise*<void\>
+▸ **init**(): `MaybePromise`<`void`\>
 
 Initializes Lifecycle adapter.
 
-**Returns:** *MaybePromise*<void\>
+#### Returns
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L21)
+`MaybePromise`<`void`\>
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle-adapters.ts#L21)
 
 ___
 
 ### remove
 
-▸ **remove**(): *MaybePromise*<void\>
+▸ **remove**(): `MaybePromise`<`void`\>
 
-**Returns:** *MaybePromise*<void\>
+#### Returns
 
-Defined in: [packages/types/src/lifecycle-adapters.ts:29](https://github.com/scramjetorg/transform-hub/blob/8f44413a/packages/types/src/lifecycle-adapters.ts#L29)
+`MaybePromise`<`void`\>
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/lifecycle-adapters.ts#L29)
