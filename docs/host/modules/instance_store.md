@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[packages/host/src/lib/instance-store.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/instance-store.ts#L4)
+[packages/host/src/lib/instance-store.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/instance-store.ts#L4)

@@ -21,7 +21,7 @@
 
 #### Defined in
 
-[config-service.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/sth-config/src/config-service.ts#L61)
+[config-service.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/sth-config/src/config-service.ts#L61)
 
 ## Functions
 
@@ -35,7 +35,7 @@
 
 #### Defined in
 
-[index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/sth-config/src/index.ts#L10)
+[index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/sth-config/src/index.ts#L10)
 
 ___
 
@@ -49,4 +49,4 @@ ___
 
 #### Defined in
 
-[index.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/sth-config/src/index.ts#L6)
+[index.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/sth-config/src/index.ts#L6)

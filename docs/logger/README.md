@@ -44,7 +44,7 @@
 
 #### Defined in
 
-[index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L9)
+[index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L9)
 
 ## Functions
 
@@ -67,7 +67,7 @@ Pipes log streams to the provided outputs in serialized format
 
 #### Defined in
 
-[index.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L138)
+[index.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L138)
 
 ___
 
@@ -81,7 +81,7 @@ ___
 
 #### Defined in
 
-[index.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L128)
+[index.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L128)
 
 ___
 
@@ -106,4 +106,4 @@ a Console compatible logger
 
 #### Defined in
 
-[index.ts:151](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/logger/src/index.ts#L151)
+[index.ts:151](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L151)

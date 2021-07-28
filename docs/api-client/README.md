@@ -34,7 +34,7 @@
 
 #### Defined in
 
-[packages/api-client/src/client-error.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-error.ts#L3)
+[packages/api-client/src/client-error.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-error.ts#L3)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/instance-client.ts#L8)
+[packages/api-client/src/instance-client.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/instance-client.ts#L8)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/instance-client.ts#L9)
+[packages/api-client/src/instance-client.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/instance-client.ts#L9)
 
 ___
 
@@ -71,7 +71,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/types/index.ts#L24)
+[packages/api-client/src/types/index.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/types/index.ts#L24)
 
 ___
 
@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/types/index.ts#L5)
+[packages/api-client/src/types/index.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/types/index.ts#L5)
 
 ___
 
@@ -105,4 +105,4 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/types/index.ts#L10)
+[packages/api-client/src/types/index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/types/index.ts#L10)

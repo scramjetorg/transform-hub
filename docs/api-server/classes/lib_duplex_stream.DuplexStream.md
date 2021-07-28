@@ -106,7 +106,7 @@ Duplex.constructor
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/duplex-stream.ts#L7)
+[packages/api-server/src/lib/duplex-stream.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L7)
 
 ## Properties
 
@@ -130,7 +130,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/duplex-stream.ts#L4)
+[packages/api-server/src/lib/duplex-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L4)
 
 ___
 
@@ -140,7 +140,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/duplex-stream.ts#L5)
+[packages/api-server/src/lib/duplex-stream.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L5)
 
 ___
 
@@ -511,7 +511,7 @@ Duplex.\_read
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/duplex-stream.ts#L33)
+[packages/api-server/src/lib/duplex-stream.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L33)
 
 ___
 
@@ -537,7 +537,7 @@ Duplex.\_write
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/duplex-stream.ts#L20)
+[packages/api-server/src/lib/duplex-stream.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L20)
 
 ___
 

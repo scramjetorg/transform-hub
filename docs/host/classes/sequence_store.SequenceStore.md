@@ -49,7 +49,7 @@ or, we could just try to reconnect instances after host restart.
 
 #### Defined in
 
-[packages/host/src/lib/sequence-store.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence-store.ts#L20)
+[packages/host/src/lib/sequence-store.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence-store.ts#L20)
 
 ___
 
@@ -63,7 +63,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sequence-store.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence-store.ts#L22)
+[packages/host/src/lib/sequence-store.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence-store.ts#L22)
 
 ## Methods
 
@@ -87,7 +87,7 @@ ISequenceStore.add
 
 #### Defined in
 
-[packages/host/src/lib/sequence-store.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence-store.ts#L35)
+[packages/host/src/lib/sequence-store.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence-store.ts#L35)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/sequence-store.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence-store.ts#L89)
+[packages/host/src/lib/sequence-store.ts:89](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence-store.ts#L89)
 
 ___
 
@@ -125,7 +125,7 @@ ISequenceStore.delete
 
 #### Defined in
 
-[packages/host/src/lib/sequence-store.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence-store.ts#L43)
+[packages/host/src/lib/sequence-store.ts:43](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence-store.ts#L43)
 
 ___
 
@@ -149,7 +149,7 @@ ISequenceStore.getById
 
 #### Defined in
 
-[packages/host/src/lib/sequence-store.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence-store.ts#L31)
+[packages/host/src/lib/sequence-store.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence-store.ts#L31)
 
 ___
 
@@ -167,4 +167,4 @@ ISequenceStore.getSequences
 
 #### Defined in
 
-[packages/host/src/lib/sequence-store.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence-store.ts#L27)
+[packages/host/src/lib/sequence-store.ts:27](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence-store.ts#L27)

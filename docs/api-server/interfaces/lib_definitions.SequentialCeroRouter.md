@@ -234,7 +234,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/definitions.ts#L10)
+[packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L10)
 
 ___
 
@@ -384,4 +384,4 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/definitions.ts#L9)
+[packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L9)

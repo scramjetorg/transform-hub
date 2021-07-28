@@ -28,7 +28,7 @@
 
 #### Defined in
 
-[packages/api-server/src/lib/mime.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/mime.ts#L19)
+[packages/api-server/src/lib/mime.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/mime.ts#L19)
 
 ___
 
@@ -49,4 +49,4 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/mime.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/mime.ts#L3)
+[packages/api-server/src/lib/mime.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/mime.ts#L3)

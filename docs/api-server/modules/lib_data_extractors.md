@@ -29,7 +29,7 @@
 
 #### Defined in
 
-[packages/api-server/src/lib/data-extractors.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/data-extractors.ts#L6)
+[packages/api-server/src/lib/data-extractors.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/data-extractors.ts#L6)
 
 ___
 
@@ -51,7 +51,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/data-extractors.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/data-extractors.ts#L22)
+[packages/api-server/src/lib/data-extractors.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/data-extractors.ts#L22)
 
 ___
 
@@ -73,4 +73,4 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/data-extractors.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/lib/data-extractors.ts#L14)
+[packages/api-server/src/lib/data-extractors.ts:14](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/data-extractors.ts#L14)

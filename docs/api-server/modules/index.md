@@ -116,7 +116,7 @@ Re-exports: [sequentialRouter](lib_0http.md#sequentialrouter)
 
 #### Defined in
 
-[packages/api-server/src/index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/index.ts#L10)
+[packages/api-server/src/index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/index.ts#L10)
 
 ## Functions
 
@@ -136,7 +136,7 @@ Re-exports: [sequentialRouter](lib_0http.md#sequentialrouter)
 
 #### Defined in
 
-[packages/api-server/src/index.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/index.ts#L34)
+[packages/api-server/src/index.ts:34](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/index.ts#L34)
 
 ___
 
@@ -150,4 +150,4 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/index.ts#L18)
+[packages/api-server/src/index.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/index.ts#L18)

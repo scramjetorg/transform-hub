@@ -34,7 +34,7 @@
 
 #### Defined in
 
-[packages/host/src/lib/sequence.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence.ts#L8)
+[packages/host/src/lib/sequence.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence.ts#L8)
 
 ## Properties
 
@@ -48,7 +48,7 @@ ISequence.config
 
 #### Defined in
 
-[packages/host/src/lib/sequence.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence.ts#L5)
+[packages/host/src/lib/sequence.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence.ts#L5)
 
 ___
 
@@ -62,7 +62,7 @@ ISequence.id
 
 #### Defined in
 
-[packages/host/src/lib/sequence.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence.ts#L4)
+[packages/host/src/lib/sequence.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence.ts#L4)
 
 ___
 
@@ -76,4 +76,4 @@ ISequence.instances
 
 #### Defined in
 
-[packages/host/src/lib/sequence.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/host/src/lib/sequence.ts#L6)
+[packages/host/src/lib/sequence.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/sequence.ts#L6)

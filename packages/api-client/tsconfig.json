@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-      "outDir": "./dist"
+    "outDir": "./dist"
   },
   "extends": "../../tsconfig.base.json",
   "include": [
@@ -8,13 +8,16 @@
     "./test"
   ],
   "exclude": [
-      "node_modules"
+    "node_modules"
   ],
   "typedocOptions": {
-    "entryPoints": ["src/api-client.ts"],
-    "out": "../../docs/index",
+    "entryPoints": [
+      "src/index.ts"
+    ],
+    "out": "../../docs/api-client",
     "plugin": "typedoc-plugin-markdown",
     "readme": "none",
-    "toc": "true"
+    "toc": "true",
+    "gitRevision": "HEAD"
   }
 }

@@ -41,7 +41,7 @@
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L12)
+[packages/api-client/src/client-utils.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L12)
 
 ## Properties
 
@@ -51,7 +51,7 @@
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L9)
+[packages/api-client/src/client-utils.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L9)
 
 ___
 
@@ -61,7 +61,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L10)
+[packages/api-client/src/client-utils.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L10)
 
 ## Methods
 
@@ -85,7 +85,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L16)
+[packages/api-client/src/client-utils.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L16)
 
 ___
 
@@ -109,7 +109,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L72)
+[packages/api-client/src/client-utils.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L72)
 
 ___
 
@@ -133,7 +133,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L35)
+[packages/api-client/src/client-utils.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L35)
 
 ___
 
@@ -157,7 +157,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L41)
+[packages/api-client/src/client-utils.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L41)
 
 ___
 
@@ -185,7 +185,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L53)
+[packages/api-client/src/client-utils.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L53)
 
 ___
 
@@ -205,7 +205,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L20)
+[packages/api-client/src/client-utils.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L20)
 
 ___
 
@@ -231,4 +231,4 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:86](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-client/src/client-utils.ts#L86)
+[packages/api-client/src/client-utils.ts:86](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-utils.ts#L86)

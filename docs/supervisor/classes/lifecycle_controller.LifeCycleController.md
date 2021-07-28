@@ -56,7 +56,7 @@ initiates Supervisor's lifecycle by calling its start() method.
 
 #### Defined in
 
-[lifecycle-controller.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L74)
+[lifecycle-controller.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L74)
 
 ## Properties
 
@@ -66,7 +66,7 @@ initiates Supervisor's lifecycle by calling its start() method.
 
 #### Defined in
 
-[lifecycle-controller.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L53)
+[lifecycle-controller.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L53)
 
 ___
 
@@ -78,7 +78,7 @@ ___
 
 #### Defined in
 
-[lifecycle-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L20)
+[lifecycle-controller.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L20)
 
 ___
 
@@ -92,7 +92,7 @@ IComponent.logger
 
 #### Defined in
 
-[lifecycle-controller.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L51)
+[lifecycle-controller.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L51)
 
 ## Accessors
 
@@ -106,7 +106,7 @@ IComponent.logger
 
 #### Defined in
 
-[lifecycle-controller.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L55)
+[lifecycle-controller.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L55)
 
 • `set` **endOfSequence**(`prm`): `void`
 
@@ -122,7 +122,7 @@ IComponent.logger
 
 #### Defined in
 
-[lifecycle-controller.ts:63](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L63)
+[lifecycle-controller.ts:63](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L63)
 
 ## Methods
 
@@ -136,7 +136,7 @@ IComponent.logger
 
 #### Defined in
 
-[lifecycle-controller.ts:253](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L253)
+[lifecycle-controller.ts:253](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L253)
 
 ___
 
@@ -156,7 +156,7 @@ ___
 
 #### Defined in
 
-[lifecycle-controller.ts:322](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L322)
+[lifecycle-controller.ts:322](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L322)
 
 ___
 
@@ -176,7 +176,7 @@ ___
 
 #### Defined in
 
-[lifecycle-controller.ts:267](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L267)
+[lifecycle-controller.ts:267](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L267)
 
 ___
 
@@ -196,7 +196,7 @@ ___
 
 #### Defined in
 
-[lifecycle-controller.ts:299](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L299)
+[lifecycle-controller.ts:299](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L299)
 
 ___
 
@@ -229,7 +229,7 @@ resolves when Supervisor completed lifecycle without errors.
 
 #### Defined in
 
-[lifecycle-controller.ts:106](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L106)
+[lifecycle-controller.ts:106](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L106)
 
 ___
 
@@ -250,4 +250,4 @@ ___
 
 #### Defined in
 
-[lifecycle-controller.ts:288](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/supervisor/src/lib/lifecycle-controller.ts#L288)
+[lifecycle-controller.ts:288](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/supervisor/src/lib/lifecycle-controller.ts#L288)

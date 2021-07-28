@@ -46,4 +46,4 @@
 
 #### Defined in
 
-[packages/api-server/src/handlers/get.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/handlers/get.ts#L6)
+[packages/api-server/src/handlers/get.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/handlers/get.ts#L6)

@@ -59,7 +59,7 @@ Created container.
 
 #### Defined in
 
-[types.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L174)
+[types.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L174)
 
 ___
 
@@ -87,7 +87,7 @@ Created volume.
 
 #### Defined in
 
-[types.ts:227](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L227)
+[types.ts:227](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L227)
 
 ___
 
@@ -109,7 +109,7 @@ List of existing volumes
 
 #### Defined in
 
-[types.ts:218](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L218)
+[types.ts:218](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L218)
 
 ___
 
@@ -135,7 +135,7 @@ Removes container.
 
 #### Defined in
 
-[types.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L211)
+[types.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L211)
 
 ___
 
@@ -161,7 +161,7 @@ Removes volume.
 
 #### Defined in
 
-[types.ts:236](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L236)
+[types.ts:236](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L236)
 
 ___
 
@@ -187,7 +187,7 @@ Executes command in container.
 
 #### Defined in
 
-[types.ts:245](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L245)
+[types.ts:245](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L245)
 
 ___
 
@@ -213,7 +213,7 @@ Starts container.
 
 #### Defined in
 
-[types.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L192)
+[types.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L192)
 
 ___
 
@@ -237,7 +237,7 @@ ___
 
 #### Defined in
 
-[types.ts:203](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L203)
+[types.ts:203](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L203)
 
 ___
 
@@ -263,7 +263,7 @@ Stops container.
 
 #### Defined in
 
-[types.ts:201](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L201)
+[types.ts:201](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L201)
 
 ___
 
@@ -291,7 +291,7 @@ DockerHelper volume configuration.
 
 #### Defined in
 
-[types.ts:161](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L161)
+[types.ts:161](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L161)
 
 ## Methods
 
@@ -314,7 +314,7 @@ Fetches the image from repo
 
 #### Defined in
 
-[types.ts:262](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L262)
+[types.ts:262](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L262)
 
 ___
 
@@ -337,4 +337,4 @@ Waits until containter exits
 
 #### Defined in
 
-[types.ts:254](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/adapters/src/types.ts#L254)
+[types.ts:254](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L254)

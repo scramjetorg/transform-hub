@@ -49,4 +49,4 @@ Simple POST request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/api-server/src/handlers/op.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/api-server/src/handlers/op.ts#L12)
+[packages/api-server/src/handlers/op.ts:12](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/handlers/op.ts#L12)

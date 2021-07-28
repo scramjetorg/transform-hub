@@ -44,7 +44,7 @@ interruption.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:178](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L178)
+[packages/types/src/app-context.ts:178](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L178)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/app-context.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L177)
+[packages/types/src/app-context.ts:177](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L177)
 
 ___
 
@@ -66,7 +66,7 @@ Provides automated definition as understood by the system
 
 #### Defined in
 
-[packages/types/src/app-context.ts:168](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L168)
+[packages/types/src/app-context.ts:168](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L168)
 
 ___
 
@@ -79,7 +79,7 @@ Holds the previous state if there was a previous process in existance and it cal
 
 #### Defined in
 
-[packages/types/src/app-context.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L144)
+[packages/types/src/app-context.ts:144](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L144)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/app-context.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L38)
+[packages/types/src/app-context.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L38)
 
 ## Methods
 
@@ -119,7 +119,7 @@ and the data will be lost.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L80)
+[packages/types/src/app-context.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L80)
 
 ___
 
@@ -148,7 +148,7 @@ return value from the Sequence.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L49)
+[packages/types/src/app-context.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L49)
 
 ___
 
@@ -179,7 +179,7 @@ last call will be made sure to be saved before the process will be terminated.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L65)
+[packages/types/src/app-context.ts:65](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L65)
 
 ___
 
@@ -201,7 +201,7 @@ Allows overriding the function definition from within the code
 
 #### Defined in
 
-[packages/types/src/app-context.ts:175](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L175)
+[packages/types/src/app-context.ts:175](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L175)
 
 ___
 
@@ -232,7 +232,7 @@ out.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:127](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L127)
+[packages/types/src/app-context.ts:127](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L127)
 
 ___
 
@@ -255,7 +255,7 @@ Sends events to the Instance that can be received by CLI and configured actions
 
 #### Defined in
 
-[packages/types/src/app-context.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L162)
+[packages/types/src/app-context.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L162)
 
 ▸ **emit**(`ev`, `message`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
@@ -272,7 +272,7 @@ Sends events to the Instance that can be received by CLI and configured actions
 
 #### Defined in
 
-[packages/types/src/app-context.ts:163](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L163)
+[packages/types/src/app-context.ts:163](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L163)
 
 ___
 
@@ -295,7 +295,7 @@ This method will be called automatically when the readable side of the sequence 
 
 #### Defined in
 
-[packages/types/src/app-context.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L111)
+[packages/types/src/app-context.ts:111](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L111)
 
 ___
 
@@ -324,7 +324,7 @@ stop it.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L99)
+[packages/types/src/app-context.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L99)
 
 ___
 
@@ -348,7 +348,7 @@ actions.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:153](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L153)
+[packages/types/src/app-context.ts:153](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L153)
 
 ▸ **on**(`ev`, `handler`): [`AppContext`](appcontext.md)<`AppConfigType`, `State`\>
 
@@ -365,7 +365,7 @@ actions.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L154)
+[packages/types/src/app-context.ts:154](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L154)
 
 ___
 
@@ -391,4 +391,4 @@ passed to the process that will take over after this one is terminated.
 
 #### Defined in
 
-[packages/types/src/app-context.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/types/src/app-context.ts#L138)
+[packages/types/src/app-context.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/app-context.ts#L138)

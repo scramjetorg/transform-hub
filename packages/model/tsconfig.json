@@ -1,19 +1,22 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist"
-    },
-    "extends": "../../tsconfig.base.json",
-    "include": [
-      "./src",
-      "./test"
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "./src",
+    "./test"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "typedocOptions": {
+    "entryPoints": [
+      "src/index.ts"
     ],
-    "exclude": [
-        "node_modules"
-    ],
-    "typedocOptions": {
-        "entryPoints": ["src/index.ts"],
-        "out": "../../docs/model",
-        "plugin": "typedoc-plugin-markdown",
-        "readme": "none"
-    }
+    "out": "../../docs/model",
+    "plugin": "typedoc-plugin-markdown",
+    "readme": "none",
+    "gitRevision": "HEAD"
+  }
 }

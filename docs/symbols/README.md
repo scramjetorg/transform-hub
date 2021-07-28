@@ -23,4 +23,4 @@
 
 #### Defined in
 
-[symbols.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/d294535a/packages/symbols/src/symbols.ts#L1)
+[symbols.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/symbols.ts#L1)

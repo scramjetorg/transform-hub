@@ -1,14 +1,17 @@
 {
-    "compilerOptions": {
-        "outDir": "./dist",
-        "skipLibCheck": true
-    },
-    "extends": "../tsconfig.base.json",
-    "include": [
-      "./step-definitions",
-      "./lib"
-    ],
-    "exclude": [
-        "../node_modules"
-    ]
+  "compilerOptions": {
+    "outDir": "./dist",
+    "skipLibCheck": true
+  },
+  "extends": "../tsconfig.base.json",
+  "include": [
+    "./step-definitions",
+    "./lib"
+  ],
+  "exclude": [
+    "../node_modules"
+  ],
+  "typedocOptions": {
+    "gitRevision": "HEAD"
+  }
 }
