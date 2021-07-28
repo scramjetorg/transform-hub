@@ -307,25 +307,21 @@ IComponent {
         });
     }
 
-    cleanup(): MaybePromise<void> {
-        return new Promise(async (resolve) => {
-            if (this.resources.volumeId) {
-                this.logger.log("Volume will be removed in 1 sec");
+    async cleanup(): Promise<void> {
+        if (this.resources.volumeId) {
+            this.logger.log("Volume will be removed in 1 sec");
 
-                await defer(1000);
-                await this.dockerHelper.removeVolume(this.resources.volumeId);
+            await defer(1000);
+            await this.dockerHelper.removeVolume(this.resources.volumeId);
 
-                this.logger.log("Volume removed");
-            }
+            this.logger.log("Volume removed");
+        }
 
-            if (this.resources.fifosDir) {
-                await rmdir(this.resources.fifosDir, { recursive: true });
+        if (this.resources.fifosDir) {
+            await rmdir(this.resources.fifosDir, { recursive: true });
 
-                this.logger.log("Fifo folder removed");
-            }
-
-            resolve();
-        });
+            this.logger.log("Fifo folder removed");
+        }
     }
 
     // returns url identifier of made snapshot
