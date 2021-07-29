@@ -162,7 +162,7 @@ Feature: CLI tests
         Then I get instance info
         Then I send an event named "test-event" with event message "test message" to Instance
         And the exit status is 0
-        And wait for "5000" ms
+        And wait for "4000" ms
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
         And the exit status is 0
 
@@ -181,14 +181,14 @@ Feature: CLI tests
         And host is still running
 
     @ci
-    Scenario: E2E-010 TC-013 Package and send with stdout
+    Scenario: E2E-010 TC-017
         Given host is running
-        When I execute CLI with bash command "$SI pack ../packages/reference-apps/transform-function -c | $SI send --format json"
+        When I execute CLI with bash command "$SI seq send ../packages/reference-apps/inert-function.tar.gz --format json"
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence
         And the exit status is 0
-        Then I get list of instances
-        And the exit status is 0
+        Then I get instance health
+        Then wait for "5000" ms
+        Then health outputs 404
         And host is still running
-
