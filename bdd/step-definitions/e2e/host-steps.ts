@@ -405,13 +405,6 @@ When("kept instance stream {string} should store {int} items divided by {string}
     assert.equal(nrOfItems, expectedCount);
 });
 
-// not in use, getStatus() does not work
-When("get status", async () => {
-    const getStatus = await instance?.getStatus();
-
-    console.log("Status: ", getStatus);
-});
-
 When("delete sequence and volumes", async () => {
     const sequenceId = sequence.id;
 
@@ -473,11 +466,4 @@ Then("output is {string}", async (str) => {
     console.log("outputString: " + outputString);
 
     assert(outputString, str);
-
 });
-
-// When("get instance status", async () => {
-//     actualResponse = await apiClient.getStatus(instanceId);
-//     console.log("-----actualResponse: ", actualResponse);
-//     assert.equal(actualResponse.status, 200);
-// });
