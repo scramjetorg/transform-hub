@@ -6,8 +6,9 @@ on:
 
 jobs:
   build-test-sth:
+    name: Build and test STH (Nodejs ${{ matrix.node-version }})
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     strategy:
       matrix:
