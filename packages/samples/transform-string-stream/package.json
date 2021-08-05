@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/example2",
+  "name": "@scramjet/transform-string-stream",
   "version": "0.11.0-0",
   "main": "index",
   "types": "dist/index",
