@@ -19,7 +19,7 @@ import { defer } from "../../lib/utils";
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
 const hostUtils = new HostUtils();
-const testPath = "../dist/samples/hello-alice-out/";
+const testPath = "../dist/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
 
 let hostClient: HostClient;
