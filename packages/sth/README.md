@@ -39,7 +39,7 @@ module.exports = function(_stream, apikey, fr, to) {
         .run();
 };
 ```
-
+[//]: <> (@TODO fix this example)
 Copy a [package.json from here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/sth/packages/samples/currency-js/package.json).
 
 Open a terminal run your program on the hub:

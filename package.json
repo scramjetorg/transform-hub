@@ -51,7 +51,7 @@
     "bump:version:patch": "VERSION_LEVEL=patch yarn bump:packages",
     "bump:version": "yarn bump:packages --no-git-tag-version",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags",
-    "align": "syncpack fix-mismatches --source aaa/package.json --source bdd/package.json --source='packages/**[!node_modules]/package.json' --source='packages/samples/**[!node_modules]/package.json' --source='packages/reference-apps/**[!node_modules]/package.json' --source='template/package.json'",
+    "align": "syncpack fix-mismatches --source aaa/package.json --source bdd/package.json --source='packages/**[!node_modules]/package.json' --source='packages/reference-apps/**[!node_modules]/package.json' --source='template/package.json'",
     "update-aaa": "node scripts/make-aaa-package.js && rm -rf aaa/node_modules aaa/yarn.lock && ( cd ./aaa && yarn install && npx yarn-upgrade-minor )",
     "upgrade:all": "yarn update-aaa && yarn align && yarn install"
   },

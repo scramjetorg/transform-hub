@@ -32,7 +32,8 @@ if (!fs.existsSync(sequencePath)) {
  * SEQUENCE_PATH=dist/reference-apps/inert-sequence-2/index.js \
     node dist/runner/bin/start-runner-local.js
  *
- * SEQUENCE_PATH=dist/samples/example APP_ARGUMENTS="dist/samples/example/data.json output.txt" \
+ * SEQUENCE_PATH=dist/reference-apps/hello-alice-out \
+ *     APP_ARGUMENTS="dist/reference-apps/hello-alice-out/data.json output.txt" \
  *     node dist/runner/bin/start-runner-local.js
  *
  * INPUT_PATH=.work/input.txt OUTPUT_PATH=.work/output.txt

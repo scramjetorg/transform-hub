@@ -42,7 +42,7 @@ module.exports = function(_stream, apikey, fr, to) {
         .run();
 };
 ```
-
+[//]: <> (@TODO fix this example)
 Copy a [package.json from here](./packages/samples/currency-js/package.json).
 
 Open a terminal run your program on the hub:
