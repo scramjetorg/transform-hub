@@ -6,12 +6,10 @@
     "data.json"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\"",
-    "build": "tsc -p tsconfig.json",
-    "postbuild": "yarn prepack",
+    "build:refapps": "tsc -p tsconfig.json",
+    "postbuild:refapps": "yarn prepack",
     "clean": "rm -rf ./dist .bic_cache",
     "prepack": "node ../../../scripts/publish.js",
-    "start": "node dist/index.js",
     "packseq": "node ../../../scripts/packsequence.js"
   },
   "engines": {
