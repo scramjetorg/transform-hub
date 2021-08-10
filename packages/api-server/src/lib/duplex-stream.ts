@@ -14,6 +14,9 @@ export class DuplexStream extends Duplex {
             this.push(d);
         });
 
+        this.input.on("close", () => this.destroy());
+        this.output.on("close", () => this.destroy());
+
         this.input.resume();
     }
 
