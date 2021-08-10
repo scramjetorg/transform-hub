@@ -7,7 +7,7 @@
     "si": "./src/bin/index.ts"
   },
   "scripts": {
-    "start": "ts-node ./src/index",
+    "start": "ts-node ./src/bin/index",
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "echo no tests yet -- # npm run test:ava",

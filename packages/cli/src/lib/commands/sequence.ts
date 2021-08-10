@@ -14,7 +14,7 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("run [package] [args...]")
-        .description("Uploads a package and immediatelly executes it with given arguments")
+        .description("Uploads a package and immediately executes it with given arguments")
         .option("-d, --detached", "Don't attach to stdio")
         .option("-c, --config <path>", "Appconfig path location")
         .action(async (sequencePackage, args) => {
@@ -43,8 +43,8 @@ export const sequence: CommandDefinition = (program) => {
         .description("list the sequences")
         .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
-    // args for example '[10000, 2000]' | '["tcp"]'
-    sequenceCmd.command("start <id> [args...]")
+    sequenceCmd.command("start")
+        .arguments("<id> [args...]")
         .description("start the sequence")
         .option("-c, --config <config-path>")
         .option("-C, --config-json <config-string>")
@@ -53,7 +53,7 @@ export const sequence: CommandDefinition = (program) => {
             const sequenceClient = SequenceClient.from(id, getHostClient(program));
 
             return displayObject(program,
-                await sequenceClient.start(configJson || config ? JSON.parse(configJson || await readFile(config, "utf-8")) : {}, JSON.parse(args)));
+                await sequenceClient.start(configJson || config ? JSON.parse(configJson || await readFile(config, "utf-8")) : {}, args));
         });
 
     sequenceCmd.command("get <id>")
