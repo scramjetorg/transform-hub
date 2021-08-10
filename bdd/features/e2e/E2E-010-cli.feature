@@ -162,7 +162,7 @@ Feature: CLI tests
         Then I get instance info
         Then I send an event named "test-event" with event message "test message" to Instance
         And the exit status is 0
-        And wait for "4000" ms
+        And wait for "2000" ms
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
         And the exit status is 0
 

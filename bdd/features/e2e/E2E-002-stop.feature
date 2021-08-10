@@ -46,6 +46,6 @@ Feature: Stop e2e tests
         And get containerId
         And instance health is "true"
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
-        And wait for "2000" ms
+        And wait for "4000" ms
         And container is closed
         Then host is still running
