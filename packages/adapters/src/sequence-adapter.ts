@@ -10,7 +10,7 @@ import {
     RunnerConfig,
     ContainerConfiguration
 } from "@scramjet/types";
-import { rmdir } from "fs/promises";
+import { rm } from "fs/promises";
 import { StringDecoder } from "string_decoder";
 import { DataStream } from "scramjet";
 import { Readable } from "stream";
@@ -179,7 +179,7 @@ IComponent {
             }
 
             if (this.resources.fifosDir) {
-                await rmdir(this.resources.fifosDir, { recursive: true });
+                await rm(this.resources.fifosDir, { recursive: true });
 
                 this.logger.log("Fifo folder removed");
             }

@@ -20,6 +20,7 @@ let instanceId: string;
 When("I execute CLI with bash command {string}", { timeout: 30000 }, async function(cmd: string) {
     stdio = await getStreamsFromSpawn("/bin/bash", ["-c", `${cmd} ${connectionFlags().join(" ")}`], { ...process.env, SI: si.join(" ") });
 });
+
 When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
 });
