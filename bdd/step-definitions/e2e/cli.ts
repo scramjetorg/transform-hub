@@ -20,6 +20,7 @@ let instanceId: string;
 When("I execute CLI with bash command {string}", { timeout: 30000 }, async function(cmd: string) {
     stdio = await getStreamsFromSpawn("/bin/bash", ["-c", `${cmd} ${connectionFlags().join(" ")}`], { ...process.env, SI: si.join(" ") });
 });
+
 When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
 });
@@ -63,7 +64,7 @@ Then("I get array of information about sequences", function() {
 
 Then("I start Sequence", async function() {
     try {
-        stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, "-C", "{}", "[]", ...formatFlags(), ...connectionFlags()]);
+        stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, ...formatFlags(), ...connectionFlags()]);
         if (process.env.SCRAMJET_TEST_LOG) console.error(stdio[0]);
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 

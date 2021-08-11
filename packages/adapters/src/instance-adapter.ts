@@ -15,7 +15,7 @@ import {
 } from "@scramjet/types";
 import { exec } from "child_process";
 import { createReadStream, createWriteStream } from "fs";
-import { chmod, mkdtemp, rmdir } from "fs/promises";
+import { chmod, mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import * as path from "path";
 import * as shellescape from "shell-escape";
@@ -289,11 +289,12 @@ IComponent {
                 this.logger.debug("Container exited");
 
                 setTimeout(() => {
-                    if (statusCode > 0)
+                    if (statusCode > 0){
                         reject(new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode }));
-                    else
+                        console.error("-------message");
+                    } else
                         resolve(0);
-                }, 100);
+                }, 10000);
             } catch (error) {
                 if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
                     this.logger.debug("Container retunrned non-zero status code", error.data.statusCode);
@@ -318,7 +319,7 @@ IComponent {
         }
 
         if (this.resources.fifosDir) {
-            await rmdir(this.resources.fifosDir, { recursive: true });
+            await rm(this.resources.fifosDir, { recursive: true });
 
             this.logger.log("Fifo folder removed");
         }
