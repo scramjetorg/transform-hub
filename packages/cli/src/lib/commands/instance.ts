@@ -80,7 +80,7 @@ export const instance: CommandDefinition = (program) => {
             const instanceClient = getInstance(program, id);
 
             return displayEntity(program,
-                instanceClient.sendStdin(stream ? createReadStream(stream) : process.stdin));
+                instanceClient.sendInput(stream ? createReadStream(stream) : process.stdin));
         });
 
     instanceCmd.command("output <id>")
