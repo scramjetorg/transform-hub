@@ -19,7 +19,7 @@
     "scramjet": "^4.35.20",
     "shell-escape": "^0.2.0",
     "systeminformation": "^5.7.10",
-    "tar": "^6.1.0",
+    "tar": "^6.1.2",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
