@@ -63,7 +63,7 @@ Then("I get array of information about sequences", function() {
 
 Then("I start Sequence", async function() {
     try {
-        stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, "-C", "{}", "[]", ...formatFlags(), ...connectionFlags()]);
+        stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, ...formatFlags(), ...connectionFlags()]);
         if (process.env.SCRAMJET_TEST_LOG) console.error(stdio[0]);
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 
