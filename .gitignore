@@ -130,7 +130,6 @@ bdd/*-test-result.txt
 packages/pre-runner/sample-package/
 
 # sample packages
-packages/samples/*.tar.gz
 packages/reference-apps/*.tar.gz
 
 .bic_cache

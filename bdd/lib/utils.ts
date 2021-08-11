@@ -1,33 +1,15 @@
 /* eslint-disable no-loop-func */
-import * as fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
 import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 
 const lineByLine = require("n-readlines");
-const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
 export const defer = (timeout: number): Promise<void> =>
     new Promise(res => setTimeout(res, timeout));
-
-export async function file1ContainsLinesFromFile2(file1: any, greeting: any, file2: any, suffix: any) {
-    const output = new lineByLine(`${file1}`);
-    const input = JSON.parse(await promisify(fs.readFile)(`${testPath}${file2}`, "utf8"));
-
-    let line1;
-    let line2;
-    let i = 0;
-
-    for (i = 0; i < input.length && (line2 = output.next()); i++) {
-        line1 = input[i].name;
-        assert.equal(greeting + line1 + suffix, "" + line2);
-    }
-
-    assert.equal(i, input.length, "incorrect number of elements compared");
-}
 
 export const waitForValueTillTrue = async (valueToCheck: boolean, timeoutMs = 4000) => {
     const startTime: number = Date.now();

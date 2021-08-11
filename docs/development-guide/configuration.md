@@ -244,45 +244,6 @@ In the nut shell you can use:
 yarn clean && yarn build && yarn prepack
 ```
 
-## Configure your own sample
-
-To configure sample add a new folder to *src/samples/* directory and name it meaningfully. Then add index.ts and tsconfig.json.
-
-```json
-{
-  "compilerOptions": {"outDir": "../../../dist/samples/dir_name"}, // remember to change the *dir_name* here
-  "extends": "../../../conf/tsconfig.json",
-  "include": ["**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
-}
-```
-
-Now you can generate package.json.
-
-```bash
-npm init
-```
-
-If you need **typescript** and **ts-node** support remember to add them to the devDependencies.
-
-```json
-  "devDependencies": {
-    "@types/node": "^14.14.22",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.1.3"
-  }
-```
-
-As well as scripts.
-
-```json
-  "scripts": {
-    "start": "node ../../../dist/samples/test/index.js",
-    "build": "tsc -p tsconfig.json"
-  },
-// ...
-```
-
 ## Run the server
 
 Run server in development mode.

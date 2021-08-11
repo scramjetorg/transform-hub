@@ -27,7 +27,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-004 Send package
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         And the exit status is 0
@@ -44,7 +44,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-006 Start sequence
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence
@@ -56,7 +56,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-007 Kill instance
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence
@@ -68,7 +68,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-008 Delete sequence
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I delete sequence
@@ -78,7 +78,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-009 Get health from instance
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence
@@ -92,7 +92,7 @@ Feature: CLI tests
     @ignore
     Scenario: E2E-010 TC-010 Get log from instance
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence
@@ -117,7 +117,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-012 Stop instance
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence
@@ -142,7 +142,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-014 Get instance info
         Given host is running
-        When I execute CLI with "seq send ../packages/samples/hello-alice-out.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence

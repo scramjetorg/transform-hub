@@ -102,7 +102,7 @@ or
 ```bash
 SEQ_ID=$( \
     curl -H 'content-type: application/octet-stream' \
-    --data-binary '@packages/samples/hello-alice-out.tar.gz' \
+    --data-binary '@packages/reference-apps/hello-alice-out.tar.gz' \
     "http://localhost:8000/api/v1/sequence" | jq ".id" -r \
 )
 ```

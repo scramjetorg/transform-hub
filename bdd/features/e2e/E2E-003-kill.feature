@@ -3,7 +3,7 @@ Feature: Kill e2e tests
     @ci
     Scenario: E2E-003 TC-001 Kill instance
         Given host is running
-        When sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
         And wait for "4000" ms
         And instance started with arguments "/package/data.json"
         And wait for "5000" ms
