@@ -22,40 +22,71 @@ Depending on your machine this may take some time. When it's done the Hub should
 2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
 ```
 
-Now create an application, let's say you want to get the currency rates every 10 seconds and do something. In a clean folder save this as index.js:
+Now create an application, let's say you want to get the crypto prices every second. In a clean folder save this as `index.js`:
 
 ```js
-const { DataStream } = require("scramjet");
+const { PassThrough } = require("stream");
 const fetch = require("node-fetch");
 
-module.exports = function(_stream, apikey, fr, to) {
-    const idx = `${fr}_${to}`;
-    const get = () => fetch(`https://free.currconv.com/api/v7/convert?q=${idx}&compact=ultra&apiKey=${apikey}`).then(r => r.json());
-    const defer = (t = 10000) => new Promise((res) => setTimeout(res, t));
+const getData = async (baseCurrency, currency) =>
+    fetch(`https://api.coinbase.com/v2/prices/${baseCurrency}-${currency}/spot`)
+        .then(res => res.json());
 
-    return DataStream
-        .from(async function*() {
-            while (true)
-                yield await Promise.all([get(), defer()]).then(([data]) => data);
-        })
-        .do(async x => { console.log(x[idx]); }) // add some logic here
-        .run();
+module.exports = async function(_stream, baseCurrency = "BTC", currency = "USD") {
+    const outputStream = new PassThrough();
+
+    setInterval(async () => {
+        getData(baseCurrency, currency)
+            .then(data => {
+                outputStream.write(JSON.stringify(data) + "\r\n");
+            })
+            .catch(() => {
+                outputStream.write(JSON.stringify({ error: true }) + "\r\n");
+            });
+    }, 1000);
+
+    return outputStream;
 };
 ```
-[//]: <> (@TODO fix this example)
-Copy a [package.json from here](./packages/samples/currency-js/package.json).
 
-Open a terminal run your program on the hub:
-
-```bash
-si pack /path/to/my/folder -o ~/package.tar.gz # compress the app to a package
-SEQ_ID=$(si seq send ~/package.tar.gz)         # upload the package to the server SEQ_ID is now it's id
-INT_ID=$(si seq start $SEQ_ID -C "{}" $APIKEY BTC EUR)
-                                               # start the program on the host with arguments
-si inst stdout $INT_ID                         # see the output from the program.
+Save this as `package.json`
+```json
+{
+  "name": "@scramjet/crypto-prices",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  }
+}
 ```
 
-See `si help` for more information. Also you will need to get an [API key for this example](https://free.currencyconverterapi.com/).
+Open a terminal and run your program on the transform hub:
+
+```bash
+# install dependencies
+npm install
+
+# make a compressed package with sequence
+si pack . -o crypto-prices.tar.gz
+
+# send sequence to transform hub, this will output Sequence ID
+si seq send crypto-prices.tar.gz
+
+# start a sequence with parameters, this will output Instance ID
+si seq start <sequence-id> ETH USD
+
+# See output
+si inst output <instance-id>
+```
+For more information see `si help`.
 
 ## Table of contents <!-- omit in toc -->
 
