@@ -291,7 +291,6 @@ IComponent {
                 setTimeout(() => {
                     if (statusCode > 0){
                         reject(new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode }));
-                        console.error("-------message");
                     } else
                         resolve(0);
                 }, 10000);

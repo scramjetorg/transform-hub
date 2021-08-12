@@ -51,7 +51,7 @@ Feature: Host configuration
     @ci @starts-host
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
-        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And get runner container information
         Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
@@ -59,8 +59,8 @@ Feature: Host configuration
 
     @ci @starts-host
     Scenario: HUB-001 TC-010  Default runner image
-        When hub process is started with parameters ""
-        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        When hub process is started with parameters "''"
+        And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And wait for "2000" ms
         And get runner container information
@@ -70,7 +70,7 @@ Feature: Host configuration
     @ci @starts-host
     Scenario: HUB-001 TC-011  Set runner memory limit (--runner-max-mem)
         When hub process is started with parameters "--runner-max-mem 128"
-        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And wait for "2000" ms
         And get runner container information
