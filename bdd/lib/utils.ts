@@ -1,10 +1,12 @@
 /* eslint-disable no-loop-func */
+import * as fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
 import { exec, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
 
 const lineByLine = require("n-readlines");
+const testPath = "../dist/samples/example/";
 const timeoutShortMs = 100;
 const timeoutLongMs = 300;
 
