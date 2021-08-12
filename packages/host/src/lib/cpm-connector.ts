@@ -4,10 +4,15 @@ import { DuplexStream } from "@scramjet/api-server";
 import * as http from "http";
 
 import * as fs from "fs";
-import { EventEmitter, Readable } from "stream";
+import { Duplex, EventEmitter, Readable } from "stream";
 import { StringStream } from "scramjet";
 import { CPMMessageCode } from "@scramjet/symbols";
 import { networkInterfaces } from "systeminformation";
+import { Agent, request } from "http";
+import { URL } from "url";
+import { Socket } from "net";
+
+const BPMux = require("bpmux").BPMux;
 
 type STHInformation = {
     id?: string;
@@ -17,8 +22,10 @@ export class CPMConnector extends EventEmitter {
     MAX_RECONNECTION_ATTEMPTS = 10;
     RECONNECT_INTERVAL = 5000;
 
-    duplex?: DuplexStream;
+    apiServer?: http.Server;
+    tunnel?: Socket;
     communicationStream?: StringStream;
+    communicationChannel?: Duplex;
     logger: Logger = getLogger(this);
     infoFilePath: string;
     info: STHInformation = {};
@@ -33,6 +40,10 @@ export class CPMConnector extends EventEmitter {
         this.cpmURL = cpmUrl;
 
         this.infoFilePath = "/tmp/sth-id.json";
+    }
+
+    getId(): string | undefined {
+        return this.info.id;
     }
 
     async init() {
@@ -62,62 +73,85 @@ export class CPMConnector extends EventEmitter {
         }
     }
 
+    attachServer(server: http.Server) {
+        this.apiServer = server;
+    }
+
     connect() {
-        console.log("Connecting...");
+        console.log("Connecting to CPM...");
 
         this.isReconnecting = false;
 
-        const headers: http.OutgoingHttpHeaders = {
-            Expect: "100-continue",
-            "Transfer-Encoding": "chunked"
-        };
+        const cpmUrl = new URL("http://" + this.cpmURL);
+        const req = request({
+            port: cpmUrl.port,
+            host: cpmUrl.hostname,
+            method: "CONNECT",
+            agent: new Agent({ keepAlive: true })
+        }).on("connect", (_response, socket, head) => {
+            console.log("Tunnel established, head (id): ", head.toString());
 
-        if (this.info.id) {
-            headers["x-sth"] = this.info.id;
-        }
+            this.tunnel = socket;
+            this.tunnel.on("close", () => {
+                console.log("close");
+                this.reconnect();
+            });
 
-        this.connection = http.request("http://" + this.cpmURL + "/connect",
-            {
-                method: "POST",
-                headers
-            },
-            async (response) => {
-                this.wasConnected = true;
-                this.duplex = new DuplexStream({}, response, this.connection as http.ClientRequest);
+            new BPMux(socket)
+                .on("handshake", async (mSocket: Socket & { _chan: number }) => {
+                    console.log("handshake, channel:", mSocket._chan);
+                    if (mSocket._chan === 0) {
+                        this.communicationChannel = mSocket;
 
-                this.connection?.on("close", () => {
-                    console.log("Connection to CPM closed");
-                    this.emit("disconnected");
+                        StringStream.from(this.communicationChannel as Readable)
+                            .JSONParse()
+                            .map(async (message: EncodedControlMessage) => {
+                                this.logger.log("Received message:", message);
+
+                                if (message[0] === CPMMessageCode.STH_ID) {
+                                    // eslint-disable-next-line no-extra-parens
+                                    this.info.id = (message[1] as STHIDMessageData).id;
+                                    fs.writeFileSync(this.infoFilePath, JSON.stringify(this.info));
+                                }
+
+                                this.logger.log("Received id: ", this.info.id);
+                            }).catch(() => {
+                                /* TODO: handle error, CPM disconnected */
+                            });
+
+                        this.communicationStream = new StringStream();
+                        this.communicationStream.pipe(this.communicationChannel);
+
+                        await this.communicationStream?.whenWrote(
+                            JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
+                        );
+
+                        this.emit("connect", this.tunnel);
+                    } else {
+                        this.apiServer?.emit("connection", mSocket);
+                    }
+                })
+                .on("error", () => {
+                    /* ignore */
+                    // TODO: Error handling?
                 });
 
-                StringStream.from(this.duplex as Readable)
-                    .JSONParse()
-                    .map(async (message: EncodedControlMessage) => {
-                        this.logger.log("Received message:", message);
+            this.connectionAttempts = 0;
 
-                        if (message[0] === CPMMessageCode.STH_ID) {
-                            // eslint-disable-next-line no-extra-parens
-                            this.info.id = (message[1] as STHIDMessageData).id;
-                            fs.writeFileSync(this.infoFilePath, JSON.stringify(this.info));
-                        }
 
-                        this.logger.log("Received id: ", this.info.id);
-                    });
+        });
 
-                this.emit("connect", this.duplex);
-                this.connectionAttempts = 0;
+        if (this.info.id) {
+            req.write(this.info.id);
+        }
 
-                this.communicationStream = new StringStream();
-                this.communicationStream.pipe(this.duplex);
+        req.on("error", () => {
+            console.log("error");
+            this.reconnect();
+        });
 
-                await this.communicationStream?.whenWrote(
-                    JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
-                );
-            }
-        );
 
-        this.connection.on("error", () => this.reconnect());
-        this.connection.on("close", () => this.reconnect());
+        req.end();
     }
 
     reconnect() {

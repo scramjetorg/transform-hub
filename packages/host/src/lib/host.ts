@@ -20,9 +20,8 @@ import { configService } from "@scramjet/sth-config";
 import * as findPackage from "find-package-json";
 import { constants } from "fs";
 import { CPMConnector } from "./cpm-connector";
-import { DuplexStream } from "@scramjet/api-server";
+
 import { AddressInfo } from "net";
-import { StringStream } from "scramjet";
 import { CPMMessageCode } from "@scramjet/symbols";
 
 const version = findPackage().next().value?.version || "unknown";
@@ -115,6 +114,7 @@ export class Host implements IComponent {
 
         if (this.cpmConnector) {
             await this.connectToCPM();
+            //setClientTunnel(this.api.server, { head: "so" });
         }
     }
 
@@ -135,23 +135,21 @@ export class Host implements IComponent {
         let loadInterval: NodeJS.Timer;
 
         return new Promise<void>(async (resolve) => {
-            this.cpmConnector?.on("connect", async (duplex: DuplexStream) => {
-                const communicationStream = new StringStream();
+            this.cpmConnector?.attachServer(this.api.server);
 
-                communicationStream.pipe(duplex);
-
+            this.cpmConnector?.on("connect", async () => {
                 this.logger.log("Connected to CPM");
                 this.cpmConnected = true;
 
                 loadInterval = setInterval(async () => {
                     const load = await this.getLoad();
 
-                    await communicationStream?.whenWrote(
+                    await this.cpmConnector?.communicationStream?.whenWrote(
                         JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
                     );
                 }, 10000);
 
-                this.cpmConnector?.on("disconnected", () => {
+                this.cpmConnector?.once("disconnected", () => {
                     this.logger.info("STH connection ended");
                     this.cpmConnected = true;
                     clearInterval(loadInterval);
@@ -227,7 +225,7 @@ export class Host implements IComponent {
 
         this.logger.log("Deleting sequence: ", id);
 
-        return await this.sequencesStore.delete(id);
+        return this.sequencesStore.delete(id);
     }
 
     async identifyExistingSequences() {
