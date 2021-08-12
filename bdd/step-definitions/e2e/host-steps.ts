@@ -73,6 +73,9 @@ BeforeAll({ timeout: 10e3 }, async () => {
             }
         });
     }
+    if (!process.env.NO_HOST) {
+        await hostUtils.spawnHost();
+    }
 });
 
 AfterAll(async () => {
@@ -115,7 +118,15 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("sequence {string} loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
+When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string) => {
+    sequence = await hostClient.sendSequence(
+        createReadStream(packagePath)
+    );
+    console.log("Package successfuly loaded, sequence started.");
+});
+
+
+When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
 
     sequence = await hostClient.sendSequence(
