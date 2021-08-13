@@ -1,14 +1,12 @@
 import { getLogger } from "@scramjet/logger";
 import { EncodedControlMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
-import { DuplexStream } from "@scramjet/api-server";
-import * as http from "http";
 
 import * as fs from "fs";
 import { Duplex, EventEmitter, Readable } from "stream";
 import { StringStream } from "scramjet";
 import { CPMMessageCode } from "@scramjet/symbols";
 import { networkInterfaces } from "systeminformation";
-import { Agent, request } from "http";
+import { Agent, ClientRequest, Server, request } from "http";
 import { URL } from "url";
 import { Socket } from "net";
 
@@ -22,14 +20,14 @@ export class CPMConnector extends EventEmitter {
     MAX_RECONNECTION_ATTEMPTS = 10;
     RECONNECT_INTERVAL = 5000;
 
-    apiServer?: http.Server;
+    apiServer?: Server;
     tunnel?: Socket;
     communicationStream?: StringStream;
     communicationChannel?: Duplex;
     logger: Logger = getLogger(this);
     infoFilePath: string;
     info: STHInformation = {};
-    connection?: http.ClientRequest;
+    connection?: ClientRequest;
     isReconnecting: boolean = false;
     wasConnected: boolean = false;
     connectionAttempts = 0;
@@ -73,7 +71,7 @@ export class CPMConnector extends EventEmitter {
         }
     }
 
-    attachServer(server: http.Server) {
+    attachServer(server: Server) {
         this.apiServer = server;
     }
 
@@ -131,8 +129,8 @@ export class CPMConnector extends EventEmitter {
                         this.apiServer?.emit("connection", mSocket);
                     }
                 })
-                .on("error", () => {
-                    /* ignore */
+                .on("error", (err) => {
+                    this.logger.log(err);/* ignore */
                     // TODO: Error handling?
                 });
 
