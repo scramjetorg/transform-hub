@@ -10,7 +10,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { Readable } from "stream";
+import { PassThrough, Readable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -174,6 +174,22 @@ export class Host implements IComponent {
      * - intance
      */
     attachHostAPIs() {
+        this.api.use(`${this.apiBase}`, (req, res, next) => {
+            console.log("REQUEST", req.url, req.headers, req.method);
+
+            req.on("end", () => {
+                console.log("request end");
+            });
+            /*
+            req.on("data", (data) => {
+                console.log("REQUEST PAYLOAD:", data.toString());
+            });
+            req.socket.on("data", (data) => {
+                console.log("SOCKET PAYLOAD:", data.toString());
+            });
+            */
+            return next();
+        });
         this.api.downstream(`${this.apiBase}/sequence`,
             async (req) => this.handleNewSequence(req), { end: true }
         );
@@ -252,8 +268,15 @@ export class Host implements IComponent {
         this.logger.log("New sequence incoming...");
         const id = IDProvider.generate();
 
+        //stream.resume();
+        /*
+        stream.socket.pipe(new PassThrough()).on("data", (chunk) => {
+            console.log("STREAM ON DATA", chunk);
+        });
+*/
+
         try {
-            const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
+            const sequenceConfig: RunnerConfig = await this.identifySequence(stream.socket, id);
             const sequence = new Sequence(sequenceConfig);
 
             this.sequencesStore.add(sequence);
