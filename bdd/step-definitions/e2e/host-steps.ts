@@ -73,9 +73,7 @@ BeforeAll({ timeout: 10e3 }, async () => {
             }
         });
     }
-    if (!process.env.NO_HOST) {
-        await hostUtils.spawnHost();
-    }
+    await hostUtils.spawnHost();
 });
 
 AfterAll(async () => {
