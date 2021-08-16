@@ -48,7 +48,7 @@ Feature: Host configuration
         Then API starts with "0.0.0.0" server name
         * exit hub process
 
-
+    @ci @starts-host
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
