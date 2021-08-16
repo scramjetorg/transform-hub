@@ -48,10 +48,10 @@ Feature: Host configuration
         Then API starts with "0.0.0.0" server name
         * exit hub process
 
-    @ci @starts-host
+
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
-        And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
+        And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And get runner container information
         Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
@@ -60,7 +60,7 @@ Feature: Host configuration
     @ci @starts-host
     Scenario: HUB-001 TC-010  Default runner image
         When hub process is started with parameters "''"
-        And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
+        And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And wait for "2000" ms
         And get runner container information
