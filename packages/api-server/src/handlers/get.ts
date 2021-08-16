@@ -18,9 +18,12 @@ export function createGetterHandler(router: SequentialCeroRouter) {
 
             const out = JSON.stringify(data);
 
-            res.writeHead(200, "OK", {
+            res.writeHead(202, "OK", {
                 "content-type": "application/json"
             });
+
+            console.log("createGetterHandler, RES END", out);
+
             return res.end(out);
         } catch (e) {
             return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));

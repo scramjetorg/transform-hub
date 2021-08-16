@@ -47,7 +47,12 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
     const { server: srv, router } = cero({ server: conf.server, router: sequentialRouter(config) });
 
     router.use("/", async (req, res, next) => {
-        next();
+        console.log("MAIN ROUTER");
+        try {
+            next();
+        } catch (e) {
+            console.log("MAIN ROUTER", e);
+        }
         log.write({ date: Date.now(), method: req.method, url: req.url, status: await new Promise(s => res.on("finish", () => s(res.statusCode))) } as any);
     });
 

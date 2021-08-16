@@ -19,9 +19,9 @@ import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams,
 import { defer } from "@scramjet/utility";
 
 class LifecycleDockerAdapterSequence implements
-ILifeCycleAdapterMain,
-ILifeCycleAdapterIdentify,
-IComponent {
+    ILifeCycleAdapterMain,
+    ILifeCycleAdapterIdentify,
+    IComponent {
     private dockerHelper: IDockerHelper;
 
     private prerunnerConfig?: ContainerConfiguration;
@@ -56,7 +56,7 @@ IComponent {
             .toArray();
     }
 
-    async identifyOnly(volume: string): Promise<RunnerConfig|undefined> {
+    async identifyOnly(volume: string): Promise<RunnerConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
 
         try {
@@ -94,6 +94,7 @@ IComponent {
 
         for await (const chunk of readable) {
             out += decoder.write(chunk);
+
         }
 
         out += decoder.end();
