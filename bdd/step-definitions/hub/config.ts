@@ -87,7 +87,7 @@ Then("exit hub process", async function(this: CustomWorld) {
     });
 });
 
-Then("get runner container information", { timeout: 10000 }, async function(this: CustomWorld) {
+Then("get runner container information", { timeout: 20000 }, async function(this: CustomWorld) {
     const instance = this.resources.instance as InstanceClient;
     const resp = await instance.getHealth();
     const containerId = resp.data?.containerId;
