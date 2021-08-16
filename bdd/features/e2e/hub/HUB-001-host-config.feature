@@ -77,7 +77,6 @@ Feature: Host configuration
         Then container memory limit is 128
         * exit hub process
 
-    @ci @starts-host
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
         When hub process is started with parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers
