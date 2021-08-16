@@ -82,7 +82,7 @@ Feature: Host configuration
         When hub process is started with parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers
         And send fake stream as sequence
-        And wait for "5000" ms
+        And wait for "20000" ms
         And get last container info
         And last container uses "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7" image
         And end fake stream
@@ -93,7 +93,7 @@ Feature: Host configuration
         When hub process is started with parameters "--prerunner-max-mem 64"
         And get all containers
         And send fake stream as sequence
-        And wait for "5000" ms
+        And wait for "20000" ms
         And get last container info
         Then last container memory limit is 64
         And end fake stream
