@@ -44,7 +44,7 @@
     "test:packages": "lerna run test",
     "test:parallel": "lerna run test --concurrency=8",
     "test:bdd-ci": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"not @starts-host\"",
-    "test:bdd-ci-no-host": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"@starts-host\"",
+    "test:bdd-ci-no-host": "NO_HOST=true DEVELOPMENT=true SCRAMJET_TEST_LOG=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"@starts-host\"",
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
     "prebump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && git diff --exit-code --quiet && yarn bump:images && lerna version -y --force-publish --no-git-tag-version ${NEXT_VER} && git add .",
     "bump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && yarn version --new-version ${NEXT_VER}",
