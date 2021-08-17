@@ -128,10 +128,10 @@ class LifecycleDockerAdapterSequence implements
         try {
             const { streams, wait } = runResult;
 
-            /*
-            stream.on("data", (chunk) => {
+            /*stream.on("data", (chunk) => {
                 console.log("adapter chunk", chunk);
             });*/
+
             stream.pipe(streams.stdin);
             //stream.resume().pipe(process.stdout);
 

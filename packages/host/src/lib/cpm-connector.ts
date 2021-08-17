@@ -142,7 +142,8 @@ export class CPMConnector extends EventEmitter {
                         mSocket
                             .on("data", (chunk) => {
                                 console.log("mSocket data:", chunk.toString());
-                            })
+                            });
+
                             .on("end", () => { console.log("msocket end"); })
                             .on("pipe", (p) => { console.log("msocket pipe", p); })
                             .on("resume", () => { console.log("msocket resume"); })
@@ -173,8 +174,8 @@ export class CPMConnector extends EventEmitter {
                         //mSocket.write("HTTP/1.1 205 \r\n\r\nRESPONSE");
                         //mSocket.end();
                         // const serverSocket = new Duplex();
-
                         this.apiServer?.emit("connection", mSocket);
+
 
                         // server.emit("connection", mSocket);
 

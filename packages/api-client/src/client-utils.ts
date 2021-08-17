@@ -89,20 +89,19 @@ export class ClientUtils implements HttpClient {
         {
             type = "application/octet-stream",
             end
+
         }: SendStreamOptions = {}
     ): Promise<Response> {
         const headers: Headers = {
-            "transfer-encoding": "chunked",
-            "content-type": type,
-            expect: "100-continue"/*,
-            "content-length": "13166"*/
-
+            "content-type": type
         };
 
         if (typeof end !== "undefined") headers["x-end-stream"] = end ? "true" : "false";
+
         (stream as Stream).on("end", () => {
             console.log("package end");
         });
+
         return this.post(
             url,
             stream,

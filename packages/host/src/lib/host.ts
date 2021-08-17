@@ -179,11 +179,11 @@ export class Host implements IComponent {
             req.on("end", () => {
                 console.log("request end");
             });
-
-            /*req.on("data", (data) => {
-                console.log("REQUEST PAYLOAD:", data.toString());
-            });*/
-
+            /*
+                        req.on("data", (data) => {
+                            console.log("REQUEST PAYLOAD:", data.toString());
+                        });
+            */
             return next();
             console.log("REQUEST", req.url, req.headers, req.method);
 
@@ -296,12 +296,12 @@ export class Host implements IComponent {
         //
         //const ps = new PassThrough();
 
-        /*
+
         stream.on("data", (chunk) => {
             //ps.write(chunk);
             console.log("STREAM ON DATA", chunk);
         });
-*/
+
         try {
             const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
             const sequence = new Sequence(sequenceConfig);
