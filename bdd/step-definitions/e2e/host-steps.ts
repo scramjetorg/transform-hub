@@ -3,7 +3,7 @@ import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumb
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer } from "../../lib/utils";
 import * as fs from "fs";
-import { createReadStream } from "fs";
+import { createReadStream, readFileSync } from "fs";
 import { HostClient, SequenceClient, InstanceClient, InstanceOutputStream, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Stream } from "stream";
@@ -11,11 +11,8 @@ import * as crypto from "crypto";
 import { promisify } from "util";
 import * as Dockerode from "dockerode";
 import { CustomWorld } from "../world";
-
 import * as findPackage from "find-package-json";
-import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
-
 
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
@@ -157,6 +154,7 @@ When("instance started with arguments {string} and write stream to {string} and 
     const stream: any = (await instance?.getStream("stdout"))?.data;
     const writeStream = fs.createWriteStream(fileName);
 
+    stream.pipe(process.stdout);
     stream.pipe(writeStream);
 
     actualHealthResponse = await instance?.getHealth();
@@ -201,14 +199,6 @@ When("response in every line contains {string} followed by name from file {strin
     assert.equal(i, input.length, "incorrect number of elements compared");
 });
 
-//not in use
-// When("get output stream with long timeout", { timeout: 200000 }, async () => {
-//     const stream = await instance?.getStream("output");
-
-//     if (!stream?.data) assert.fail("No output!");
-//     actualLogResponse = await streamToString(stream.data as Stream);
-// });
-
 When("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);
 });
@@ -218,26 +208,17 @@ Given("file in the location {string} exists on hard drive", async (filename: any
 });
 
 When("compare checksums of content sent from file {string}", async (filePath: string) => {
-    const readStream = fs.createReadStream(filePath);
-    const hex: string = crypto.createHash("md5").update(await readFile(filePath)).digest("hex");
-
-    await instance?.sendStream("input", readStream, {
-        type: "application/octet-stream",
-        end: true
-    });
-
     const output = await instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");
 
-    const outputString = await streamToString(output.data);
+    const outputString = await streamToString(output?.data);
+    const jsonToString = readFileSync(filePath).toString();
+    const newData = JSON.stringify(jsonToString);
+    const hex = crypto.createHash("md5").update(newData).digest("hex");
 
-    console.log("outputString", outputString);
     assert.equal(output.status, 200);
-    assert.equal(
-        outputString,
-        hex
-    );
+    assert.equal(outputString, hex);
 
     await instance?.sendInput("null");
 });
