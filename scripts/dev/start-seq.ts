@@ -3,7 +3,7 @@ import { HostClient } from "@scramjet/api-client/";
 import { createReadStream } from "fs";
 import { resolve } from "path";
 
-const sth = "8987b759-41be-45bd-a867-a4c13f2cc7fe";
+const sth = "fake_host_id";
 
 const host = new HostClient("http://localhost:9000/api/v1/sth/" + sth);
 //const host = new HostClient("http://localhost:8000/api/v1");

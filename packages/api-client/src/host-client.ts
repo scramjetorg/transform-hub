@@ -27,7 +27,7 @@ export class HostClient implements ClientProvider {
     }
 
     async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
-        const response = await this.client.sendStream("sequence", sequencePackage);
+        const response = await this.client.sendStream("sequence", sequencePackage, { end: true });
 
         return SequenceClient.from(response.data?.id, this);
     }

@@ -176,12 +176,17 @@ export class Host implements IComponent {
     attachHostAPIs() {
 
         this.api.use(`${this.apiBase}`, (req, res, next) => {
-            return next();
-            console.log("REQUEST", req.url, req.headers, req.method);
-
             req.on("end", () => {
                 console.log("request end");
             });
+
+            /*req.on("data", (data) => {
+                console.log("REQUEST PAYLOAD:", data.toString());
+            });*/
+
+            return next();
+            console.log("REQUEST", req.url, req.headers, req.method);
+
 
 
 
@@ -190,9 +195,6 @@ export class Host implements IComponent {
 
 
             /*
-                 req.on("data", (data) => {
-                     console.log("REQUEST PAYLOAD:", data.toString());
-                 });
      
                  req.socket.on("data", (data) => {
                      console.log("SOCKET PAYLOAD:", data.toString());
@@ -297,8 +299,8 @@ export class Host implements IComponent {
         /*
         stream.on("data", (chunk) => {
             //ps.write(chunk);
-            //console.log("STREAM ON DATA", chunk);
-        }).on("end", () => { ps.end(); });
+            console.log("STREAM ON DATA", chunk);
+        });
 */
         try {
             const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
