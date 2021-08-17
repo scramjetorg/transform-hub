@@ -7,7 +7,7 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
      * @param _stream - dummy input
      * @returns data
      */
-    async function(_stream) {
+    async function*(_stream) {
         const data = this.initialState;
 
         let x = data?.x || 0;
@@ -16,13 +16,11 @@ const exp: [ReadableApp<{a: number}, [], {x: number}>, WritableApp<{a: number}, 
             console.log("-event sent and received-")
         );
 
-        return async function* () {
-            while (++x < 10) {
-                await new Promise(res => setTimeout(res, 1000));
+        while (++x < 10) {
+            await new Promise(res => setTimeout(res, 1000));
 
-                yield { a: x };
-            }
-        };
+            yield { a: x };
+        }
     },
     /**
      *
