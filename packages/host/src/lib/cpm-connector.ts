@@ -71,8 +71,10 @@ export class CPMConnector extends EventEmitter {
         }
     }
 
-    attachServer(server: Server) {
+    attachServer(server: Server & { httpAllowHalfOpen?: boolean }) {
         this.apiServer = server;
+        // TODO: unit tests every f'n day.
+        server.httpAllowHalfOpen = true;
     }
 
     connect() {
@@ -95,6 +97,7 @@ export class CPMConnector extends EventEmitter {
                 this.reconnect();
             });
 
+            /*
             const server = createServer((request2, response2) => {
                 console.log("FAKE SERVER URL:", request2.method, request2.url);
                 response2.writeHead(200, "OK");
@@ -102,7 +105,7 @@ export class CPMConnector extends EventEmitter {
             });
 
             server.listen(9900, () => console.error("Listening 9900"));
-
+                */
             new BPMux(socket)
                 .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
                     console.log("handshake, channel:", mSocket._chan);
@@ -135,6 +138,7 @@ export class CPMConnector extends EventEmitter {
 
                         this.emit("connect", this.tunnel);
                     } else {
+                        /*
                         mSocket
                             .on("data", (chunk) => {
                                 console.log("mSocket data:", chunk.toString());
@@ -147,7 +151,8 @@ export class CPMConnector extends EventEmitter {
                             .on("error", (err) => { console.log("msocket error", err); })
                             .on("finish", () => { console.log("msocket finish"); })
                             .on("drain", () => { console.log("msocket drain"); });
-
+*/
+                        /*
                         const originalSthChannelEnd = mSocket.end;
 
                         mSocket.end = ((...args: [BufferEncoding | undefined]) => {
@@ -164,7 +169,7 @@ export class CPMConnector extends EventEmitter {
                             }
                             return originalSthChannelPush.call(mSocket, ...args);
                         };
-
+                        */
                         //mSocket.write("HTTP/1.1 205 \r\n\r\nRESPONSE");
                         //mSocket.end();
                         // const serverSocket = new Duplex();

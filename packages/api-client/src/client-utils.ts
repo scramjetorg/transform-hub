@@ -92,11 +92,17 @@ export class ClientUtils implements HttpClient {
         }: SendStreamOptions = {}
     ): Promise<Response> {
         const headers: Headers = {
-            "content-type": type
+            "transfer-encoding": "chunked",
+            "content-type": type,
+            expect: "100-continue"/*,
+            "content-length": "13166"*/
+
         };
 
         if (typeof end !== "undefined") headers["x-end-stream"] = end ? "true" : "false";
-
+        (stream as Stream).on("end", () => {
+            console.log("package end");
+        });
         return this.post(
             url,
             stream,
