@@ -97,19 +97,10 @@ export class CPMConnector extends EventEmitter {
                 this.reconnect();
             });
 
-            /*
-            const server = createServer((request2, response2) => {
-                console.log("FAKE SERVER URL:", request2.method, request2.url);
-                response2.writeHead(200, "OK");
-                response2.end("EEEND");
-            });
-
-            server.listen(9900, () => console.error("Listening 9900"));
-                */
             new BPMux(socket)
                 .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
                     console.log("handshake, channel:", mSocket._chan);
-                    // console.log("handshake", mSocket);
+
                     if (mSocket._chan === 0) {
                         this.communicationChannel = mSocket;
 
@@ -138,46 +129,8 @@ export class CPMConnector extends EventEmitter {
 
                         this.emit("connect", this.tunnel);
                     } else {
-                        /*
-                        mSocket
-                            .on("data", (chunk) => {
-                                console.log("mSocket data:", chunk.toString());
-                            });
 
-                            .on("end", () => { console.log("msocket end"); })
-                            .on("pipe", (p) => { console.log("msocket pipe", p); })
-                            .on("resume", () => { console.log("msocket resume"); })
-                            .on("pause", () => { console.log("msocket pause"); })
-                            .on("close", () => { console.log("msocket close"); })
-                            .on("error", (err) => { console.log("msocket error", err); })
-                            .on("finish", () => { console.log("msocket finish"); })
-                            .on("drain", () => { console.log("msocket drain"); });
-*/
-                        /*
-                        const originalSthChannelEnd = mSocket.end;
-
-                        mSocket.end = ((...args: [BufferEncoding | undefined]) => {
-                            console.trace("STHChannel END", args.length);
-                            return originalSthChannelEnd.call(mSocket, ...args);
-                        }) as typeof Duplex.prototype.end;
-
-
-                        const originalSthChannelPush = mSocket.write as (...args: any[]) => boolean;
-
-                        mSocket.write = (...args) => {
-                            if (args[0]) {
-                                console.log("WRITE", args[0]?.toString());
-                            }
-                            return originalSthChannelPush.call(mSocket, ...args);
-                        };
-                        */
-                        //mSocket.write("HTTP/1.1 205 \r\n\r\nRESPONSE");
-                        //mSocket.end();
-                        // const serverSocket = new Duplex();
                         this.apiServer?.emit("connection", mSocket);
-
-
-                        // server.emit("connection", mSocket);
 
                     }
                 })
