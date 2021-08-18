@@ -1,6 +1,6 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { CommunicationHandler, HostError, IDProvider, MessageUtilities } from "@scramjet/model";
 import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, LoadCheckStatMessage } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
@@ -140,16 +140,16 @@ export class Host implements IComponent {
             this.cpmConnector?.on("connect", async () => {
                 this.logger.log("Connected to CPM");
                 this.cpmConnected = true;
-                /*
-                                loadInterval = setInterval(async () => {
-                                    const load = await this.getLoad();
 
-                                    await this.cpmConnector?.communicationStream?.whenWrote(
-                                        JSON.stringify(MessageUtilities
-                                            .serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
-                                    );
-                                }, 10000);
-                                */
+                loadInterval = setInterval(async () => {
+                    const load = await this.getLoad();
+
+                    await this.cpmConnector?.communicationStream?.whenWrote(
+                        JSON.stringify(MessageUtilities
+                            .serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
+                    );
+                }, 5000);
+
 
                 this.cpmConnector?.once("disconnected", () => {
                     this.logger.info("STH connection ended");
@@ -175,33 +175,6 @@ export class Host implements IComponent {
      * - intance
      */
     attachHostAPIs() {
-
-        this.api.use(`${this.apiBase}`, (req, res, next) => {
-            req.on("end", () => {
-                console.log("request end");
-            });
-            /*
-                        req.on("data", (data) => {
-                            console.log("REQUEST PAYLOAD:", data.toString());
-                        });
-            */
-            return next();
-            // console.log("REQUEST", req.url, req.headers, req.method);
-
-            // res.writeHead(206, "res write");
-            // res.end("bady");
-            /*
-                 req.socket.on("data", (data) => {
-                     console.log("SOCKET PAYLOAD:", data.toString());
-                 });
-
-                 res.on("data", (data) => {
-                     console.log("RESPONSE PAYLOAD:", data.toString());
-                 });
-                 */
-            //return next();
-        });
-
 
         this.api.downstream(`${this.apiBase}/sequence`,
             async (req) => this.handleNewSequence(req), { end: true }
@@ -286,16 +259,6 @@ export class Host implements IComponent {
         console.log(stream.headers);
 
         const id = IDProvider.generate();
-        //
-        //stream.resume();
-        //
-        //const ps = new PassThrough();
-
-
-        // stream.on("data", (chunk) => {
-        //     //ps.write(chunk);
-        //     console.log("STREAM ON DATA", chunk);
-        // });
 
         try {
             const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
