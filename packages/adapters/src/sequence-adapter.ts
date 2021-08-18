@@ -129,7 +129,6 @@ class LifecycleDockerAdapterSequence implements
             const { streams, wait } = runResult;
 
             stream.pipe(streams.stdin);
-            //stream.resume().pipe(process.stdout);
 
             return await this.parsePackage(streams, wait, volumeId);
         } catch {
