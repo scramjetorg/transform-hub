@@ -47,14 +47,14 @@ Feature: Host configuration
         When hub process is started with parameters "-H 0.0.0.0"
         Then API starts with "0.0.0.0" server name
         * exit hub process
-        
+
 
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
-        When hub process is started with parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
+        When hub process is started with parameters "--runner-image scramjetorg/runner:0.10.7"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And get runner container information
-        Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
+        Then container uses "scramjetorg/runner:0.10.7" image
         * exit hub process
 
     @ci @starts-host
@@ -78,12 +78,12 @@ Feature: Host configuration
         * exit hub process
 
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
-        When hub process is started with parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
+        When hub process is started with parameters "--prerunner-image scramjetorg/pre-runner:0.10.7"
         And get all containers
         And send fake stream as sequence
-        And wait for "20000" ms
+        And wait for "10000" ms
         And get last container info
-        And last container uses "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7" image
+        And last container uses "scramjetorg/pre-runner:0.10.7" image
         And end fake stream
         * exit hub process
 
