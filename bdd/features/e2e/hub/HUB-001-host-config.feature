@@ -48,7 +48,7 @@ Feature: Host configuration
         Then API starts with "0.0.0.0" server name
         * exit hub process
 
-
+    @ci @starts-host
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "--runner-image scramjetorg/runner:0.10.7"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
@@ -77,6 +77,7 @@ Feature: Host configuration
         Then container memory limit is 128
         * exit hub process
 
+    @ci @starts-host
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
         When hub process is started with parameters "--prerunner-image scramjetorg/pre-runner:0.10.7"
         And get all containers
