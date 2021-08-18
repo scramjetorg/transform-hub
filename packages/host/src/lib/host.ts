@@ -114,7 +114,6 @@ export class Host implements IComponent {
 
         if (this.cpmConnector) {
             await this.connectToCPM();
-            //setClientTunnel(this.api.server, { head: "so" });
         }
     }
 
@@ -175,24 +174,18 @@ export class Host implements IComponent {
      * - intance
      */
     attachHostAPIs() {
-
         this.api.downstream(`${this.apiBase}/sequence`,
             async (req) => this.handleNewSequence(req), { end: true }
         );
 
+        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
+        this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req));
+
         this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
-
-        this.api.op("post",
-            `${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req));
-        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
-
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
-        this.api.get(`${this.apiBase}/load-check`, () => {
-            console.log("GET LOAD CHECK");
-            return loadCheck.getLoadCheck();
-        });
+        this.api.get(`${this.apiBase}/load-check`, () => loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, () => ({ version }));
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
@@ -255,8 +248,6 @@ export class Host implements IComponent {
 
     async handleNewSequence(stream: IncomingMessage) {
         this.logger.log("New sequence incoming...");
-
-        console.log(stream.headers);
 
         const id = IDProvider.generate();
 
