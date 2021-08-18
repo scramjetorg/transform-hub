@@ -6,7 +6,7 @@ import { Duplex, EventEmitter, Readable } from "stream";
 import { StringStream } from "scramjet";
 import { CPMMessageCode } from "@scramjet/symbols";
 import { networkInterfaces } from "systeminformation";
-import { createServer, Agent, ClientRequest, Server, request } from "http";
+import { Agent, ClientRequest, Server, request } from "http";
 import { URL } from "url";
 import { Socket } from "net";
 

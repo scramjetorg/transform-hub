@@ -98,6 +98,7 @@ export class ClientUtils implements HttpClient {
 
         if (typeof end !== "undefined") headers["x-end-stream"] = end ? "true" : "false";
 
+        // eslint-disable-next-line no-extra-parens
         (stream as Stream).on("end", () => {
             console.log("package end");
         });

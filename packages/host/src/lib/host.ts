@@ -1,6 +1,6 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider, MessageUtilities } from "@scramjet/model";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, LoadCheckStatMessage } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
@@ -10,7 +10,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { PassThrough, Readable } from "stream";
+import { Readable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -143,9 +143,10 @@ export class Host implements IComponent {
                 /*
                                 loadInterval = setInterval(async () => {
                                     const load = await this.getLoad();
-                
+
                                     await this.cpmConnector?.communicationStream?.whenWrote(
-                                        JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
+                                        JSON.stringify(MessageUtilities
+                                            .serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
                                     );
                                 }, 10000);
                                 */
@@ -185,21 +186,15 @@ export class Host implements IComponent {
                         });
             */
             return next();
-            console.log("REQUEST", req.url, req.headers, req.method);
+            // console.log("REQUEST", req.url, req.headers, req.method);
 
-
-
-
-            res.writeHead(206, "res write");
-            res.end("bady");
-
-
+            // res.writeHead(206, "res write");
+            // res.end("bady");
             /*
-     
                  req.socket.on("data", (data) => {
                      console.log("SOCKET PAYLOAD:", data.toString());
                  });
-            
+
                  res.on("data", (data) => {
                      console.log("RESPONSE PAYLOAD:", data.toString());
                  });
@@ -297,10 +292,10 @@ export class Host implements IComponent {
         //const ps = new PassThrough();
 
 
-        stream.on("data", (chunk) => {
-            //ps.write(chunk);
-            console.log("STREAM ON DATA", chunk);
-        });
+        // stream.on("data", (chunk) => {
+        //     //ps.write(chunk);
+        //     console.log("STREAM ON DATA", chunk);
+        // });
 
         try {
             const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
@@ -314,6 +309,8 @@ export class Host implements IComponent {
                 id: sequence.id
             };
         } catch (error) {
+            this.logger.debug(error?.stack);
+
             return {
                 opStatus: 422,
                 error
@@ -363,8 +360,8 @@ export class Host implements IComponent {
                 }
 
                 resolve(identifyResult);
-            } catch {
-                reject();
+            } catch (e) {
+                reject(e);
             }
         });
     }
