@@ -18,7 +18,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
 
             const out = JSON.stringify(data);
 
-            res.writeHead(202, "OK", {
+            res.writeHead(200, "OK", {
                 "content-type": "application/json"
             });
 
