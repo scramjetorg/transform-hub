@@ -1,14 +1,15 @@
-import { getLogger } from "@scramjet/logger";
-import { EncodedControlMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
-
 import * as fs from "fs";
-import { Duplex, EventEmitter, Readable } from "stream";
-import { StringStream } from "scramjet";
-import { CPMMessageCode } from "@scramjet/symbols";
-import { networkInterfaces } from "systeminformation";
 import { Agent, ClientRequest, Server, request } from "http";
-import { URL } from "url";
 import { Socket } from "net";
+import { Duplex, EventEmitter, Readable } from "stream";
+import { URL } from "url";
+
+import { getLogger } from "@scramjet/logger";
+import { CPMMessageCode } from "@scramjet/symbols";
+import { EncodedControlMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
+import { StringStream } from "scramjet";
+
+import { networkInterfaces } from "systeminformation";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -66,19 +67,18 @@ export class CPMConnector extends EventEmitter {
             if (error.code === "ENOENT") {
                 this.logger.info("Info file not exists");
             } else {
-                console.log(error);
+                this.logger.error(error);
             }
         }
     }
 
     attachServer(server: Server & { httpAllowHalfOpen?: boolean }) {
         this.apiServer = server;
-        // TODO: unit tests every f'n day.
         server.httpAllowHalfOpen = true;
     }
 
     connect() {
-        console.log("Connecting to CPM...");
+        this.logger.log("Connecting to CPM...");
 
         this.isReconnecting = false;
 
@@ -89,18 +89,16 @@ export class CPMConnector extends EventEmitter {
             method: "CONNECT",
             agent: new Agent({ keepAlive: true })
         }).on("connect", (_response, socket, head) => {
-            console.log("Tunnel established, head (id): ", head.toString());
+            this.logger.log("Tunnel established", head.toString());
 
             this.tunnel = socket;
             this.tunnel.on("close", () => {
-                console.log("tunnel close");
+                this.logger.log("Tunnel closed", this.getId());
                 this.reconnect();
             });
 
             new BPMux(socket)
                 .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
-                    console.log("handshake, channel:", mSocket._chan);
-
                     if (mSocket._chan === 0) {
                         this.communicationChannel = mSocket;
 
@@ -117,7 +115,7 @@ export class CPMConnector extends EventEmitter {
 
                                 this.logger.log("Received id: ", this.info.id);
                             }).catch(() => {
-                                /* TODO: handle error, CPM disconnected */
+                                /* TODO: handle error, disconnected */
                             });
 
                         this.communicationStream = new StringStream();
@@ -129,30 +127,25 @@ export class CPMConnector extends EventEmitter {
 
                         this.emit("connect", this.tunnel);
                     } else {
-
                         this.apiServer?.emit("connection", mSocket);
-
                     }
                 })
                 .on("error", (err: Error) => {
-                    this.logger.log(err);/* ignore */
+                    this.logger.log(err);
                     // TODO: Error handling?
                 });
 
             this.connectionAttempts = 0;
-
-
         });
 
         if (this.info.id) {
             req.write(this.info.id);
         }
 
-        req.on("error", () => {
-            console.log("error");
+        req.on("error", (error) => {
+            this.logger.error("error", error);
             this.reconnect();
         });
-
 
         req.end();
     }
@@ -178,7 +171,7 @@ export class CPMConnector extends EventEmitter {
             this.isReconnecting = true;
 
             setTimeout(() => {
-                console.log("Connection lost, retrying...");
+                this.logger.log("Connection lost, retrying...");
                 this.connect();
             }, this.RECONNECT_INTERVAL);
         }
