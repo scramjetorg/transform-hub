@@ -2,6 +2,7 @@
 
 import pyfca
 import asyncio
+from pprint import pprint as pp
 
 # Use to change delays mocking async function execution
 SLOMO_FACTOR = 1
@@ -45,7 +46,7 @@ async def test_write_and_read_in_turn():
     reads = []
     for x in TEST_SEQUENCE:
         p.write(x)
-        reads.append(asyncio.create_task(p.read()))
+        reads.append(p.read())
     results = await asyncio.gather(*reads)
     print(f'Results: {results}')
 
@@ -62,16 +63,41 @@ async def test_multiple_reads_before_write():
 async def test_writes_exceeding_max_parallel():
     pass
 
+async def test_reads_that_wait_with_ones_that_dont():
+    pass
+
 async def test_reads_exceeding_max_parallel():
     pass
 
 async def test_reads_exceeding_writes():
+    p = pyfca.Pyfca(identity_with_proportional_delay)
+    for x in TEST_SEQUENCE:
+        p.write(x)
+    reads = [p.read(), p.read(), p.read(), p.read(),
+             p.read(), p.read(), p.read(), p.read()]
+    p.end()
+    results = await asyncio.gather(*reads)
+    print(f'Results: {results}')
+
+async def test_reads_after_end():
+    p = pyfca.Pyfca(identity_with_proportional_delay)
+    for x in TEST_SEQUENCE:
+        p.write(x)
+    p.end()
+    reads = [p.read(), p.read(), p.read(), p.read(),
+             p.read(), p.read(), p.read(), p.read()]
+    results = await asyncio.gather(*reads)
+    print(f'Results: {results}')
+
+async def test_reads_from_closed_pyfca():
     pass
 
 
 # Main test execution loop
 
 tests_to_run = [
+    test_reads_exceeding_writes,
+    test_reads_after_end,
     test_write_then_read_concurrently,
     test_write_then_read_sequentially,
     test_write_and_read_in_turn,
