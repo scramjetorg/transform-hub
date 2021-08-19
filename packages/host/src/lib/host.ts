@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider, MessageUtilities } from "@scramjet/model";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, LoadCheckStatMessage } from "@scramjet/types";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, LoadCheckStatMessage, ISequence } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -22,7 +22,6 @@ import { constants } from "fs";
 import { CPMConnector } from "./cpm-connector";
 
 import { AddressInfo } from "net";
-import { CPMMessageCode } from "@scramjet/symbols";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -41,7 +40,6 @@ export class Host implements IComponent {
 
     socketServer: SocketServer;
     cpmConnector?: CPMConnector;
-    cpmConnected = false;
 
     instancesStore = InstanceStore;
     sequencesStore: SequenceStore = new SequenceStore();
@@ -117,51 +115,20 @@ export class Host implements IComponent {
         }
     }
 
-    async getLoad(): Promise<LoadCheckStatMessage> {
-        const load = await loadCheck.getLoadCheck();
-
-        return {
-            msgCode: CPMMessageCode.LOAD,
-            avgLoad: load.avgLoad,
-            currentLoad: load.currentLoad,
-            memFree: load.memFree,
-            memUsed: load.memUsed,
-            fsSize: load.fsSize
-        };
-    }
-
     async connectToCPM() {
-        let loadInterval: NodeJS.Timer;
-
         return new Promise<void>(async (resolve) => {
             this.cpmConnector?.attachServer(this.api.server);
-
-            this.cpmConnector?.on("connect", async () => {
-                this.logger.log("Connected to CPM");
-                this.cpmConnected = true;
-
-                loadInterval = setInterval(async () => {
-                    const load = await this.getLoad();
-
-                    await this.cpmConnector?.communicationStream?.whenWrote(
-                        JSON.stringify(MessageUtilities
-                            .serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
-                    );
-                }, 5000);
-
-
-                this.cpmConnector?.once("disconnected", () => {
-                    this.logger.info("STH connection ended");
-                    this.cpmConnected = false;
-                    clearInterval(loadInterval);
-                });
-            });
             await this.cpmConnector?.init();
 
-            this.cpmConnector?.connect();
+            this.cpmConnector?.on("connect", () => {
+                this.cpmConnector?.sendSequencesInfo(this.getSequences());
+                this.cpmConnector?.sendInstancesInfo(this.getCSIControllers());
+            });
 
+            this.cpmConnector?.connect();
             resolve();
         });
+
     }
 
     /**
@@ -367,7 +334,7 @@ export class Host implements IComponent {
         return this.sequencesStore.getById(id);
     }
 
-    getSequences(): any {
+    getSequences(): ISequence[] {
         return this.sequencesStore.getSequences();
     }
 
