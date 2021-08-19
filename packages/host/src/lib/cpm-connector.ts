@@ -4,12 +4,15 @@ import { Socket } from "net";
 import { Duplex, EventEmitter, Readable } from "stream";
 import { URL } from "url";
 
+import { loadCheck } from "@scramjet/load-check";
 import { getLogger } from "@scramjet/logger";
+import { MessageUtilities } from "@scramjet/model";
 import { CPMMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
+import { EncodedControlMessage, FunctionDefinition, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
 import { StringStream } from "scramjet";
 
 import { networkInterfaces } from "systeminformation";
+import { Sequence } from "./sequence";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -23,6 +26,7 @@ export class CPMConnector extends EventEmitter {
 
     apiServer?: Server;
     tunnel?: Socket;
+    connected = false;
     communicationStream?: StringStream;
     communicationChannel?: Duplex;
     logger: Logger = getLogger(this);
@@ -33,6 +37,8 @@ export class CPMConnector extends EventEmitter {
     wasConnected: boolean = false;
     connectionAttempts = 0;
     cpmURL: string;
+
+    loadInterval?: NodeJS.Timeout;
 
     constructor(cpmUrl: string) {
         super();
@@ -92,10 +98,8 @@ export class CPMConnector extends EventEmitter {
             this.logger.log("Tunnel established", head.toString());
 
             this.tunnel = socket;
-            this.tunnel.on("close", () => {
-                this.logger.log("Tunnel closed", this.getId());
-                this.reconnect();
-            });
+            this.tunnel.on("close", () => { this.handleConnectionClose(); });
+            this.connected = true;
 
             new BPMux(socket)
                 .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
@@ -125,7 +129,8 @@ export class CPMConnector extends EventEmitter {
                             JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
                         );
 
-                        this.emit("connect", this.tunnel);
+                        this.emit("connect");
+                        this.setLoadCheckMessageSender();
                     } else {
                         this.apiServer?.emit("connection", mSocket);
                     }
@@ -148,6 +153,19 @@ export class CPMConnector extends EventEmitter {
         });
 
         req.end();
+    }
+
+    handleConnectionClose() {
+        this.connected = false;
+
+        this.logger.log("Tunnel closed", this.getId());
+        this.logger.info("STH connection ended");
+
+        if (this.loadInterval) {
+            clearInterval(this.loadInterval);
+        }
+
+        this.reconnect();
     }
 
     reconnect() {
@@ -189,5 +207,47 @@ export class CPMConnector extends EventEmitter {
 
             return info;
         });
+    }
+
+    setLoadCheckMessageSender() {
+        this.loadInterval = setInterval(async () => {
+            const load = await this.getLoad();
+
+            await this.communicationStream?.whenWrote(
+                JSON.stringify(MessageUtilities
+                    .serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
+            );
+        }, 5000);
+    }
+
+    async getLoad(): Promise<LoadCheckStatMessage> {
+        const load = await loadCheck.getLoadCheck();
+
+        return {
+            msgCode: CPMMessageCode.LOAD,
+            avgLoad: load.avgLoad,
+            currentLoad: load.currentLoad,
+            memFree: load.memFree,
+            memUsed: load.memUsed,
+            fsSize: load.fsSize
+        };
+    }
+
+    async sendSequencesInfo(sequences: ISequence[]): Promise<void> {
+        this.logger.log("sendSequencesInfo, total sequences", sequences.length);
+        await this.sendMessage([10000, sequences]);
+    }
+
+    async sendInstancesInfo(instances: {
+        id: string;
+        sequence: Sequence;
+        status: FunctionDefinition[] | undefined;
+    }[]): Promise<void> {
+        this.logger.log("sendInstancesInfo");
+        await this.sendMessage([20000, instances]);
+    }
+
+    async sendMessage(message: EncodedControlMessage) {
+        return this.communicationStream?.write(JSON.stringify(message) + "\n");
     }
 }
