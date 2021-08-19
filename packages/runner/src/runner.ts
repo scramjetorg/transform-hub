@@ -173,22 +173,40 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.loggerStream = createWriteStream(this.loggerFifoPath);
     }
 
+    private async readInputStreamHeaders(stream: Readable): Promise<Record<string, string>> {
+        let buff = Buffer.from([]);
+
+        for await (const chunk of stream) {
+            buff = Buffer.concat([buff, chunk as Buffer]);
+
+            const headersEndSeqIndex = buff.indexOf("\r\n\r\n");
+
+            if (headersEndSeqIndex === -1) {
+                continue;
+            }
+            const headersChunks = buff.slice(0, headersEndSeqIndex);
+            const bodyChunks = buff.slice(headersEndSeqIndex + 4);
+
+            stream.unshift(bodyChunks);
+            const headersMap = headersChunks
+                .toString()
+                .split("\r\n")
+                .map(headerStr => headerStr.split(": "))
+                .reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {});
+
+            return headersMap;
+        }
+
+        throw new Error("Oops sth weird happned while reading headers");
+    }
+
     async hookupInputStream() {
-        this.inputStream = createReadStream(this.inputFifoPath);
-        this.inputDataStream = StringStream
-            .from(this.inputStream as Readable, { encoding: "utf-8" })
-            .lines()
-            .parse(line => {
-                try {
-                    return JSON.parse(line);
-                } catch (e) {
-                    this.logger.error(`Parsing of input data ${e.stack}.`);
-                    return undefined;
-                }
-            })
-        ;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        // this.inputDataStream.run();
+        this.logger.log("Input stream HELLo");
+
+        const inputStream = createReadStream(this.inputFifoPath)!;
+        const headers = await this.readInputStreamHeaders(inputStream);
+
+        this.logger.log(headers);
     }
 
 
@@ -203,8 +221,10 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async hookupFifoStreams() {
+        // @TODO bring it back to normal
+        await this.hookupLoggerStream();
+        this.initializeLogger();
         return Promise.all([
-            this.hookupLoggerStream(),
             this.hookupControlStream(),
             this.hookupMonitorStream(),
             this.hookupInputStream(),
@@ -320,7 +340,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.log("Executing main..."); // TODO: this is not working (no logger yet)
 
         await this.hookupFifoStreams();
-        this.initializeLogger();
+        // this.initializeLogger();
 
         this.logger.log("Fifo and logger initialized, sending handshake...");
 
