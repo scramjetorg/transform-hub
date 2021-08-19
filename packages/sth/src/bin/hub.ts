@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { configService } from "@scramjet/sth-config";
 import { resolve } from "path";
+import { LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 
 const program = new Command();
 const options = program
@@ -43,9 +44,24 @@ configService.update({
 
 // before here we actually load the host and we have the config imported elsewhere
 // so the config is changed before compile time, not in runtime.
-require("@scramjet/host").startHost({}, configService.getConfig().host.socketPath, {
-    identifyExisting: options.identifyExisting as boolean
-})
+const startHost: typeof import("@scramjet/host").startHost = require("@scramjet/host").startHost;
+const logger: typeof import("@scramjet/logger") = require("@scramjet/logger");
+
+logger.addLoggerOutput(process.stderr);
+
+(async () => {
+    await Promise.all([
+        new LifecycleDockerAdapterSequence().init(),
+        new LifecycleDockerAdapterInstance().init()
+    ]);
+
+    await startHost({}, configService.getConfig().host.socketPath, {
+        identifyExisting: options.identifyExisting as boolean
+    }, {
+        Run: LifecycleDockerAdapterInstance,
+        Identify: LifecycleDockerAdapterSequence
+    });
+})()
     .catch((e: Error & { exitCode?: number }) => {
         console.error(e.stack);
         process.exitCode = e.exitCode || 1;

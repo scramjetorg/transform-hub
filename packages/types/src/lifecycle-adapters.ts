@@ -24,10 +24,6 @@ export interface ILifeCycleAdapterMain {
      * Removes resources.
      */
     cleanup(): MaybePromise<void>;
-
-    // TODO: THIS is forcefull removal - let's think about refactor.
-    remove(): MaybePromise<void>;
-
 }
 
 export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterMain {
@@ -44,6 +40,16 @@ export interface ILifeCycleAdapterIdentify extends ILifeCycleAdapterMain {
      * @returns {Promise<RunnerConfig>}
      */
     identify(stream: Readable, id: string): Promise<RunnerConfig>;
+
+    /**
+     * Removes a given Sequence
+     */
+    remove(id: RunnerConfig): MaybePromise<void>;
+
+    /**
+     * Fetches any image resources needed to execute a specific image
+     */
+    fetch(id: RunnerConfig): MaybePromise<void>
 }
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
@@ -72,6 +78,17 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     monitorRate(rps: number): this;
 
     stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
+
+    /**
+     * Removes current instance
+     */
+    remove(): MaybePromise<void>;
+
 }
 
 export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});
+
+export type LifeCycleAdatperDefinition = {
+    Identify: new () => ILifeCycleAdapterIdentify & ILifeCycleAdapterMain;
+    Run: new () => ILifeCycleAdapterRun & ILifeCycleAdapterMain;
+}

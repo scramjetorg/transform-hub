@@ -1,7 +1,6 @@
-import { DockerodeDockerHelper } from "@scramjet/adapters";
 import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
-import { ISequence, ISequenceStore } from "@scramjet/types";
+import { ILifeCycleAdapterIdentify, ISequence, ISequenceStore } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { Sequence } from "./sequence";
 import { InstanceStore } from "./instance-store";
@@ -17,12 +16,14 @@ import { InstanceStore } from "./instance-store";
  * or, we could just try to reconnect instances after host restart.
  */
 export class SequenceStore implements ISequenceStore {
-    dockerHelper: DockerodeDockerHelper = new DockerodeDockerHelper();
-
     instancesStore = InstanceStore;
 
     private logger = getLogger(this);
     private sequences: { [key: string]: Sequence } = {}
+
+    constructor(
+        private sequenceAdapter: ILifeCycleAdapterIdentify
+    ) {}
 
     getSequences(): ISequence[] {
         return Object.values(this.sequences);
@@ -68,12 +69,8 @@ export class SequenceStore implements ISequenceStore {
 
         try {
             this.logger.log("Removing volume...", volumeId);
-            await this.dockerHelper.removeVolume(volumeId).catch(reason => {
-                throw new HostError("CONTROLLER_ERROR", reason);
-            });
-
+            await this.sequenceAdapter.remove(this.sequences[id].config);
             delete this.sequences[id];
-
             this.logger.log("Volume removed:", volumeId);
 
             return {
@@ -82,7 +79,7 @@ export class SequenceStore implements ISequenceStore {
             };
         } catch (error: any) {
             this.logger.error("Error removing sequence!", error);
-            throw new HostError("CONTROLLER_ERROR");
+            throw new HostError("CONTROLLER_ERROR", error);
         }
     }
 

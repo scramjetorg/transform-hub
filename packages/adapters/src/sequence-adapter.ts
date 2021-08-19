@@ -9,13 +9,11 @@ import {
     RunnerConfig,
     ContainerConfiguration
 } from "@scramjet/types";
-import { rm } from "fs/promises";
 import { StringDecoder } from "string_decoder";
 import { DataStream } from "scramjet";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
-import { defer } from "@scramjet/utility";
+import { DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 
 class LifecycleDockerAdapterSequence implements
     ILifeCycleAdapterMain,
@@ -24,8 +22,6 @@ class LifecycleDockerAdapterSequence implements
     private dockerHelper: IDockerHelper;
 
     private prerunnerConfig?: ContainerConfiguration;
-
-    private resources: DockerAdapterResources = {};
 
     logger: Logger;
 
@@ -37,12 +33,14 @@ class LifecycleDockerAdapterSequence implements
     async init(): Promise<void> {
         this.logger.info("Docker sequence adapter init");
         this.prerunnerConfig = configService.getDockerConfig().prerunner;
-        await this.fetch(this.prerunnerConfig.image);
+        await this.dockerHelper.pullImage(this.prerunnerConfig.image, true);
         this.logger.info("Docker sequence adapter done");
     }
 
-    async fetch(name: string) {
-        await this.dockerHelper.pullImage(name, true);
+    async fetch(config: RunnerConfig) {
+        if (config.container.image) {
+            await this.dockerHelper.pullImage(config.container.image, true);
+        }
     }
 
     async list(): Promise<RunnerConfig[]> {
@@ -103,7 +101,6 @@ class LifecycleDockerAdapterSequence implements
     async identify(stream: Readable, id: string): Promise<RunnerConfig> {
         const volumeId = await this.createVolume(id);
 
-        this.resources.volumeId = volumeId;
         this.logger.log("Volume created. Id: ", volumeId);
 
         let runResult: DockerAdapterRunResponse;
@@ -151,7 +148,7 @@ class LifecycleDockerAdapterSequence implements
         const config = res.config ? { ...res.config } : {};
 
         if (res.error) {
-            await this.cleanup();
+            await this.remove({ packageVolumeId: volumeId });
             return res;
         }
 
@@ -166,33 +163,14 @@ class LifecycleDockerAdapterSequence implements
         };
     }
 
-    async cleanup(): Promise<void> {
-        if (this.resources.volumeId) {
-            this.logger.log("Volume will be removed in 1 sec");
-
-            await defer(1000);
-            await this.dockerHelper.removeVolume(this.resources.volumeId);
-
-            this.logger.log("Volume removed");
-        }
-
-        if (this.resources.fifosDir) {
-            await rm(this.resources.fifosDir, { recursive: true });
-
-            this.logger.log("Fifo folder removed");
-        }
+    cleanup() {
+        return;
     }
 
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async remove() {
-        if (this.resources.containerId) {
-            this.logger.info("Forcefully stopping containter", this.resources.containerId);
-
-            await this.dockerHelper.stopContainer(this.resources.containerId);
-
-            this.logger.info("Container removed");
-        }
+    async remove({ packageVolumeId }: {packageVolumeId: string}) {
+        this.logger.info("Removing sequence data", packageVolumeId);
+        await this.dockerHelper.removeVolume(packageVolumeId);
+        this.logger.info("Sequence data removed");
     }
 }
 

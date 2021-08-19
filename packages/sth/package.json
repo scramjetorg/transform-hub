@@ -20,6 +20,8 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/adapters": "^0.12.1",
+    "@scramjet/logger": "^0.12.1",
     "@scramjet/host": "^0.12.1",
     "@scramjet/sth-config": "^0.12.1",
     "commander": "^8.0.0"

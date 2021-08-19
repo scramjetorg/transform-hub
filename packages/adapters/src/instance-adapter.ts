@@ -1,7 +1,8 @@
-import { development } from "@scramjet/sth-config";
+import { configService, development } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
+    ContainerConfiguration,
     DownstreamStreamsConfig,
     ExitCode,
     ICommunicationHandler,
@@ -50,6 +51,7 @@ IComponent {
     private resources: DockerAdapterResources = {};
 
     logger: Logger;
+    private runnerConfig?: ContainerConfiguration;
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -67,6 +69,10 @@ IComponent {
     }
 
     async init(): Promise<void> {
+        this.logger.info("Docker instance adapter init");
+        this.runnerConfig = configService.getDockerConfig().runner;
+        await this.dockerHelper.pullImage(this.runnerConfig.image, true);
+        this.logger.info("Docker instance adapter done");
         // TODO: useless. config provided from sequence identify.
     }
 

@@ -1,8 +1,8 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
+import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence, LifeCycleAdatperDefinition } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -43,7 +43,7 @@ export class Host implements IComponent {
     cpmConnector?: CPMConnector;
 
     instancesStore = InstanceStore;
-    sequencesStore: SequenceStore = new SequenceStore();
+    sequencesStore: SequenceStore;
 
     logger: Logger;
 
@@ -55,8 +55,13 @@ export class Host implements IComponent {
         });
     }
 
-    constructor(apiServer: APIExpose, socketServer: SocketServer) {
+    constructor(
+        apiServer: APIExpose,
+        socketServer: SocketServer,
+        private LifecycleAdatpers: LifeCycleAdatperDefinition
+    ) {
         this.config = configService.getConfig();
+        this.sequencesStore = new SequenceStore(new this.LifecycleAdatpers.Identify());
 
         this.logger = getLogger(this);
 
@@ -76,7 +81,6 @@ export class Host implements IComponent {
     }
 
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
-        addLoggerOutput(process.stdout);
         this.api.log.each(
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
@@ -290,9 +294,7 @@ export class Host implements IComponent {
             throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", identifyResult.error);
         }
 
-        if (identifyResult.container.image) {
-            await ldas.fetch(identifyResult.container.image);
-        }
+        await ldas.fetch(identifyResult);
 
         return identifyResult;
     }
