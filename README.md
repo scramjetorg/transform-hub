@@ -188,8 +188,8 @@ Host can be started in multiple ways
 
 ```bash
 yarn start                          # Starts Host after it's been built
-node dist/host/bin/start            # This is the same as above
-ts-node packages/host/src/bin/start # This starts node from source code
+node dist/sth/bin/start             # This is the same as above
+ts-node packages/sth/src/bin/start  # This starts node from source code
 ```
 
 ### Lerna commands

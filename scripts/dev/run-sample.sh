@@ -5,6 +5,10 @@ TS=false
 INSTALL=false
 PREINSTALL=false
 
+echo "DEPRECATED: This isn't the script you're looking for."
+
+exit 10
+
 show_help () {
     printf \
 "

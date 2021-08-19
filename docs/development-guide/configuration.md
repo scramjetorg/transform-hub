@@ -249,7 +249,7 @@ yarn clean && yarn build && yarn prepack
 Run server in development mode.
 
 ```bash
-ts-node packages/host/src/bin/start.ts
+ts-node packages/sth/src/bin/start.ts
 ```
 
 ## Send package

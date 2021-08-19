@@ -39,19 +39,19 @@ yarn test:bdd --name "PT-003 TC-003"
 
 prepare sequence
 ```
-✘-INT ~/github/scramjet-csi-dev/packages/reference-apps/durability-preservation
+~/github/scramjet-csi-dev/packages/reference-apps/durability-preservation
 $ yarn build && yarn prepack && yarn packseq
 ```
 
 start host
 ```
-✘-INT ~/github/scramjet-csi-dev
-$ ts-node packages/host/src/bin/start.ts
+~/github/scramjet-csi-dev
+$ ts-node packages/sth/src/bin/start.ts
 ```
 
 send sequence
 ```
-✘-INT ~/github/scramjet-csi-dev/packages/reference-apps/durability-preservation
+~/github/scramjet-csi-dev/packages/reference-apps/durability-preservation
 $ SEQ_ID=$( \
     curl --location --request POST "http://localhost:8000/api/v1/sequence" \
     --header 'content-type: application/octet-stream' \

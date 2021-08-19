@@ -3,9 +3,6 @@
   "version": "0.12.1",
   "description": "This package is part of Scramjet Transform Hub. The package provides the main host subsystem of STH - starts API Servers, creates adapters etc.",
   "main": "./src/index.ts",
-  "bin": {
-    "scramjet-host": "bin/start.ts"
-  },
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "tsc -p tsconfig.build.json",
