@@ -33,6 +33,7 @@ const dockerHelperMock = {
     createVolume: sinon.stub(DockerodeDockerHelper.prototype, "createVolume"),
     run: sinon.stub(DockerodeDockerHelper.prototype, "run"),
     wait: sinon.stub(DockerodeDockerHelper.prototype, "wait"),
+    pullImage: sinon.stub(DockerodeDockerHelper.prototype, "pullImage").resolves(),
 };
 
 sinon.stub(DelayedStream.prototype, "run");
@@ -50,7 +51,7 @@ test("Constructor should create instance.", async (t: any) => {
 // TODO: Config is provided by PreRunner. No need to get it from global config.
 
 skip("Init should call imageConfig and set results locally.", async () => {
-    configStub.resolves(configFileContents);
+    configStub.returns(configFileContents);
 
     const lcdai = new LifecycleDockerAdapterInstance();
 
@@ -61,7 +62,7 @@ skip("Init should call imageConfig and set results locally.", async () => {
 
 // TODO: Useless till config is not provided with "require"
 skip("Init should reject on read file error.", async (t) => {
-    configStub.rejects(new Error("ENOENT: File not found"));
+    configStub.throws(new Error("ENOENT: File not found"));
 
     const lcdai = new LifecycleDockerAdapterInstance();
 
@@ -69,7 +70,7 @@ skip("Init should reject on read file error.", async (t) => {
 });
 
 test("CreateFifoStreams should create monitor, control logger, input and output streams.", async (t) => {
-    configStub.resolves();
+    configStub.returns(configFileContents);
 
     const lcda = new LifecycleDockerAdapterInstance();
 
@@ -126,7 +127,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         pipe: () => {}
     } as unknown as fs.ReadStream);
 
-    configStub.resolves(configFileContents);
+    configStub.returns(configFileContents);
 
     dockerHelperMock.wait.resolves({
         statusCode: 0
@@ -146,6 +147,8 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
 
     await lcdai.init();
 
+    t.true(dockerHelperMock.pullImage.calledOnceWith("runner-example-image", true));
+
     lcdai["monitorFifoPath"] = "path1";
     lcdai["controlFifoPath"] = "path2";
     lcdai["loggerFifoPath"] = "path3";
@@ -160,7 +163,8 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         "monitor.fifo",
         "logger.fifo",
         "input.fifo",
-        "output.fifo"));
+        "output.fifo"
+    ));
 });
 
 test("Identify should return parsed response from stream.", async (t) => {
