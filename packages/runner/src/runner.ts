@@ -16,6 +16,68 @@ type MaybeArray<T> = T | T[];
 
 const isPrimitive = (obj: any) => ["string", "number", "boolean"].includes(typeof obj);
 
+
+export function loopStream<T extends unknown>(
+    stream: Readable,
+    iter: (chunk: Buffer) => { action: "continue" } | { action: "end", data: T, unconsumedData?: Buffer }
+): Promise<T> {
+    return new Promise((res, rej) => {
+        const onReadable = () => {
+            let chunk;
+
+            while ((chunk = stream.read()) !== null) {
+                const result = iter(chunk);
+
+                if (result.action === "continue") {
+                    continue;
+                }
+
+                stream.off("error", rej);
+                stream.off("readable", onReadable);
+                if (result.unconsumedData?.length) {
+                    stream.unshift(result.unconsumedData);
+                }
+
+                res(result.data);
+                break;
+            }
+        };
+
+        stream.on("error", rej);
+        stream.on("readable", onReadable);
+    });
+}
+
+/**
+ *
+ * @param stream
+ * @returns object with header key/values (header names are lower case)
+ */
+function readInputStreamHeaders(stream: Readable): Promise<Record<string, string>> {
+    const HEADERS_ENDING_SEQ = "\r\n\r\n";
+
+    let buffer = "";
+
+    return loopStream<Record<string, string>>(stream, (chunk) => {
+        const str = chunk.toString("utf-8");
+
+        buffer += str;
+        const headEndSeqIndex = buffer.indexOf(HEADERS_ENDING_SEQ);
+
+        if (headEndSeqIndex === -1) {
+            return { action: "continue" };
+        }
+        const rawHeaders = buffer.slice(0, headEndSeqIndex);
+        const bodyBeginning = buffer.slice(headEndSeqIndex + HEADERS_ENDING_SEQ.length);
+        const headersMap: Record<string, string> = rawHeaders
+            .split("\r\n")
+            .map(headerStr => headerStr.split(": "))
+            .reduce((obj, [key, val]) => ({ ...obj, [key.toLowerCase()]: val }), {});
+
+
+        return { action: "end", data: headersMap, unconsumedData: Buffer.from(bodyBeginning, "utf8") };
+    });
+}
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private context?: RunnerAppContext<X, any>;
@@ -173,42 +235,36 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.loggerStream = createWriteStream(this.loggerFifoPath);
     }
 
-    private async readInputStreamHeaders(stream: Readable): Promise<Record<string, string>> {
-        let buff = Buffer.from([]);
-
-        for await (const chunk of stream) {
-            buff = Buffer.concat([buff, chunk as Buffer]);
-
-            const headersEndSeqIndex = buff.indexOf("\r\n\r\n");
-
-            if (headersEndSeqIndex === -1) {
-                continue;
-            }
-            const headersChunks = buff.slice(0, headersEndSeqIndex);
-            const bodyChunks = buff.slice(headersEndSeqIndex + 4);
-
-            stream.unshift(bodyChunks);
-            const headersMap = headersChunks
-                .toString()
-                .split("\r\n")
-                .map(headerStr => headerStr.split(": "))
-                .reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {});
-
-            return headersMap;
-        }
-
-        throw new Error("Oops sth weird happned while reading headers");
-    }
 
     async hookupInputStream() {
         this.logger.log("Input stream HELLo");
+        try {
 
-        const inputStream = createReadStream(this.inputFifoPath)!;
-        const headers = await this.readInputStreamHeaders(inputStream);
+            this.inputStream = createReadStream(this.inputFifoPath)!;
+            const headers = await readInputStreamHeaders(this.inputStream);
+            const contentType = headers["content-type"];
 
-        this.logger.log(headers);
+            if (contentType === undefined) {
+                throw new Error("Content-Type is undefined");
+            }
+
+            if (contentType.endsWith("x-ndjson")) {
+                this.inputDataStream = StringStream
+                    .from(this.inputStream, { encoding: "utf-8" })
+                    .lines()
+                    .JSONParse();
+            } else if (contentType === "text/plain") {
+                this.inputDataStream = StringStream.from(this.inputStream, { encoding: "utf-8" });
+            } else if (contentType === "application/octet-stream") {
+                this.inputDataStream = DataStream.from(this.inputStream);
+            } else {
+                throw new Error(`Content-Type does not match any supported value. The actual value is ${contentType}`);
+            }
+        } catch (e) {
+            this.logger.error("Error in input stream");
+            this.logger.error(e);
+        }
     }
-
 
     // echo -e '{"abc":1}\n{"abc":2}\n' | curl -v --data-binary "@-" -H "Content-Type: text/x-ndjson" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/input"
 
