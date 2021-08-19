@@ -235,7 +235,10 @@ export class CPMConnector extends EventEmitter {
 
     async sendSequencesInfo(sequences: ISequence[]): Promise<void> {
         this.logger.log("sendSequencesInfo, total sequences", sequences.length);
-        await this.sendMessage([10000, sequences]);
+
+        await this.communicationStream?.whenWrote(
+            JSON.stringify([CPMMessageCode.SEQUENCES, sequences]) + "\n"
+        );
     }
 
     async sendInstancesInfo(instances: {
@@ -244,10 +247,9 @@ export class CPMConnector extends EventEmitter {
         status: FunctionDefinition[] | undefined;
     }[]): Promise<void> {
         this.logger.log("sendInstancesInfo");
-        await this.sendMessage([20000, instances]);
-    }
 
-    async sendMessage(message: EncodedControlMessage) {
-        return this.communicationStream?.write(JSON.stringify(message) + "\n");
+        await this.communicationStream?.whenWrote(
+            JSON.stringify([CPMMessageCode.INSTANCES, instances]) + "\n"
+        );
     }
 }
