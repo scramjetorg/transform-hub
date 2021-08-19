@@ -253,7 +253,23 @@ export class CSIController extends EventEmitter {
             router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
             router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
-            router.downstream("/input", this.upStreams[CommunicationChannel.IN], { json: true, text: true, end: true, encoding: "utf-8" });
+
+
+            router.downstream("/input", (req) => {
+                try {
+                    const stream = this.upStreams![CommunicationChannel.IN];
+
+                    // @TODO handle content-type undefined
+                    stream.write(`Content-Type: ${req.headers["content-type"]}\r\n`);
+                    stream.write("\r\n");
+                    return stream;
+                } catch (err) {
+                    this.logger.error("Error in INPUT downstream");
+                    this.logger.error(err);
+                    // @TODO either use existing error type or create a new one
+                    return new PassThrough().end();
+                }
+            }, { json: true, text: true, end: true, encoding: "utf-8" });
 
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
