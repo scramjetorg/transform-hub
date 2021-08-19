@@ -152,7 +152,7 @@ export class Host implements IComponent {
 
                 this.cpmConnector?.once("disconnected", () => {
                     this.logger.info("STH connection ended");
-                    this.cpmConnected = true;
+                    this.cpmConnected = false;
                     clearInterval(loadInterval);
                 });
             });
