@@ -1,4 +1,4 @@
-import { Then, When } from "@cucumber/cucumber";
+import { Then, When, After } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
 import { HostClient, InstanceClient } from "@scramjet/api-client";
@@ -18,7 +18,8 @@ const SCRAMJET_TEST_LOG = process.env.SCRAMJET_TEST_LOG;
 When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
     await new Promise<void>((resolve, reject) => {
         this.resources.hub = spawn(
-            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params.split(" ")]
+            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params.split(" ")],
+            { detached: false }
         );
 
         this.resources.hub.on("error", reject);
@@ -27,8 +28,6 @@ When("hub process is started with parameters {string}", async function(this: Cus
 
         this.resources.hub.stdout.on("data", (data: Buffer) => {
             const decodedData = decoder.write(data);
-
-            if (SCRAMJET_TEST_LOG) console.log({ decodedData });
 
             if (decodedData.match(/API listening on port/)) {
                 this.resources.startOutput = decodedData;
@@ -82,7 +81,7 @@ Then("exit hub process", function(this: CustomWorld) {
     return new Promise<void>((resolve) => {
         const hub = this.resources.hub as ChildProcess;
 
-        hub.on("close", resolve);
+        hub.on("exit", resolve);
 
         hub.kill(SIGTERM);
     });
@@ -161,4 +160,14 @@ Then("last container memory limit is {int}", async function(this: CustomWorld, m
     if (inspect) {
         assert.equal(inspect.HostConfig?.Memory, maxMem * 1024 * 1024);
     }
+});
+
+After(async function(this: CustomWorld) {
+    const hub = this.resources.hub as ChildProcess;
+
+    if (hub.exitCode !== null) return;
+    await new Promise<void>(async (resolve) => {
+        hub.on("exit", resolve);
+        hub.kill(SIGTERM);
+    });
 });
