@@ -6,13 +6,14 @@ import * as Dockerode from "dockerode";
 
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
-import { SIGTERM } from "constants";
 import * as net from "net";
 import * as path from "path";
 import { StringDecoder } from "string_decoder";
 import { ReadStream } from "fs";
 import { PassThrough } from "stream";
+import { constants } from "os";
 
+const { SIGKILL, SIGTERM } = constants.signals;
 const SCRAMJET_TEST_LOG = process.env.SCRAMJET_TEST_LOG;
 
 When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
@@ -145,13 +146,13 @@ Then("end fake stream", async function(this: CustomWorld) {
 Then("get last container info", async function(this: CustomWorld) {
     const containers = await new Dockerode().listContainers();
 
-    this.resources.lastContainer = containers.filter(container =>
+    this.resources.lastContainer = containers.find(container =>
         !this.resources.containers.find((c: Dockerode.ContainerInfo) => c.Id === container.Id)
-    )[0];
+    );
 });
 
 When("last container uses {string} image", async function(this: CustomWorld, image: string) {
-    assert.equal(this.resources.lastContainer.Image, image);
+    assert.equal(this.resources.lastContainer?.Image, image);
 });
 
 Then("last container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
@@ -165,9 +166,10 @@ Then("last container memory limit is {int}", async function(this: CustomWorld, m
 After(async function(this: CustomWorld) {
     const hub = this.resources.hub as ChildProcess;
 
-    if (hub.exitCode !== null) return;
-    await new Promise<void>(async (resolve) => {
+    if (hub.exitCode === null) return;
+    await new Promise<void>((resolve) => {
         hub.on("exit", resolve);
-        hub.kill(SIGTERM);
+        hub.on("error", resolve);
+        hub.kill(SIGKILL);
     });
 });
