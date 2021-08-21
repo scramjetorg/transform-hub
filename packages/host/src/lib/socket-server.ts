@@ -100,6 +100,7 @@ export class SocketServer extends EventEmitter implements IComponent {
                         // TODO: Error handling?
                     });
 
+                // TODO: maybe we shouldn't use events but some other means we can catch?
                 this.emit("connect", {
                     id,
                     streams
