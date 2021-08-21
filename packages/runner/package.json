@@ -22,7 +22,7 @@
     "@scramjet/logger": "^0.12.0",
     "@scramjet/model": "^0.12.0",
     "@scramjet/symbols": "^0.12.0",
-    "scramjet": "^4.35.20"
+    "scramjet": "^4.35.21"
   },
   "devDependencies": {
     "@scramjet/types": "^0.12.0",

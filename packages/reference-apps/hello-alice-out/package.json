@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "JSONStream": "^1.3.5",
-    "scramjet": "^4.35.20"
+    "scramjet": "^4.35.21"
   },
   "repository": {
     "type": "git",

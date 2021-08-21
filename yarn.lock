@@ -6374,7 +6374,12 @@ scramjet-core@^4.31.19:
   resolved "https://registry.yarnpkg.com/scramjet-core/-/scramjet-core-4.31.19.tgz#ac69687c792abae40ab1a4bedc2cdca7a1f814ec"
   integrity sha512-/rmtiNw7CY2xLKCm7qBc7RwToltdZ+0MpLaS7XCdPAjMwheKT3+Jbu/r708DryySQypy2IKJQkUx5kx7b2qkeg==
 
-scramjet@4.35.20, scramjet@^4.35.20:
+scramjet-core@^4.31.20:
+  version "4.31.20"
+  resolved "https://registry.yarnpkg.com/scramjet-core/-/scramjet-core-4.31.20.tgz#1401f79ef7a052abb5098020cf5333cfd8705fa0"
+  integrity sha512-rgi+QkWyxwvVGQe7uYBuVGRaFuKVgeibGI9Omyt8CuZkn2rhS6rKlT1/0y7EO63gJhnWsIboZH2n7Ac54J6Sgw==
+
+scramjet@4.35.20:
   version "4.35.20"
   resolved "https://registry.yarnpkg.com/scramjet/-/scramjet-4.35.20.tgz#acce89a4d4419af3b8dd0d5dde95eaef2d839665"
   integrity sha512-Lnj3Js/y07VsaQM2vhMkNHl51jRHucnpAOPE55Ug3B6mo3CtPdO+DEpCsaV97u0ZBXcxWIbR9DN4SPftcAprDw==
@@ -6382,6 +6387,15 @@ scramjet@4.35.20, scramjet@^4.35.20:
     papaparse "^5.3.1"
     rereadable-stream "^1.4.12"
     scramjet-core "^4.31.19"
+
+scramjet@^4.35.21:
+  version "4.35.21"
+  resolved "https://registry.yarnpkg.com/scramjet/-/scramjet-4.35.21.tgz#51b784d137344198dce42abba133abc6a3396654"
+  integrity sha512-c+rX5eRHEVWf5ZR1rrLiTyLMJC0Bndo2BWkvR5tH1wpaMuB7FJVgNO2pNWq2/FmMSzTeWzAEzDVWubpnlmtDaA==
+  dependencies:
+    papaparse "^5.3.1"
+    rereadable-stream "^1.4.12"
+    scramjet-core "^4.31.20"
 
 seed-random@~2.2.0:
   version "2.2.0"
@@ -7315,10 +7329,10 @@ typedoc@0.21.2:
     shiki "^0.9.3"
     typedoc-default-themes "^0.12.10"
 
-typedoc@^0.21.5:
-  version "0.21.5"
-  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.21.5.tgz#45643618ede5c3d75e2040b964d05fcffed7ca58"
-  integrity sha512-uRDRmYheE5Iju9Zz0X50pTASTpBorIHFt02F5Y8Dt4eBt55h3mwk1CBSY2+EfwBxY16N4Xm7f8KXhnfFZ0AmBw==
+typedoc@^0.21.6:
+  version "0.21.6"
+  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.21.6.tgz#854bfa2d6b3ac818ac70aa4734a4d1ba93695595"
+  integrity sha512-+4u3PEBjQdaL5/yfus5WJbjIdQHv7E/FpZq3cNki9BBdGmZhqnTF6JLIXDQ2EfVggojOJG9/soB5QVFgXRYnIw==
   dependencies:
     glob "^7.1.7"
     handlebars "^4.7.7"

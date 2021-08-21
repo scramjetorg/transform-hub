@@ -27,7 +27,7 @@
     "shell-escape": "^0.2.0",
     "sinon": "^11.1.1",
     "ts-node": "^10.0.0",
-    "typedoc": "^0.21.5",
+    "typedoc": "^0.21.6",
     "typedoc-plugin-markdown": "^3.10.4",
     "typescript": "^4.3.4"
   },
@@ -49,7 +49,7 @@
     "@scramjet/utility": "^0.12.0",
     "bpmux": "^8.1.3",
     "dockerode": "^3.3.0",
-    "scramjet": "^4.35.20"
+    "scramjet": "^4.35.21"
   },
   "repository": {
     "type": "git",

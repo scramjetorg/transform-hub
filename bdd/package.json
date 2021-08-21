@@ -14,7 +14,7 @@
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
     "n-readlines": "^1.0.1",
-    "scramjet": "^4.35.20"
+    "scramjet": "^4.35.21"
   },
   "scripts": {
     "build:bdd": "tsc -p tsconfig.json",
