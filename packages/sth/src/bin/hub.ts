@@ -47,7 +47,7 @@ configService.update({
 const startHost: typeof import("@scramjet/host").startHost = require("@scramjet/host").startHost;
 const logger: typeof import("@scramjet/logger") = require("@scramjet/logger");
 
-logger.addLoggerOutput(process.stderr);
+logger.addLoggerOutput(process.stdout);
 
 (async () => {
     await Promise.all([

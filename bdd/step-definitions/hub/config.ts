@@ -2,30 +2,24 @@ import { Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
 import { HostClient, InstanceClient } from "@scramjet/api-client";
-import Dockerode = require("dockerode");
+import * as Dockerode from "dockerode";
 
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { SIGTERM } from "constants";
 import * as net from "net";
-import path = require("path");
+import * as path from "path";
 import { StringDecoder } from "string_decoder";
 import { ReadStream } from "fs";
 import { PassThrough } from "stream";
 
-When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
-    return new Promise<void>((resolve, reject) => {
-        this.resources.hub = spawn(
-            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params.split(" ")],
-            {
-                detached: true
-            }
-        );
+const SCRAMJET_TEST_LOG = process.env.SCRAMJET_TEST_LOG;
 
-        if (process.env.SCRAMJET_TEST_LOG) {
-            this.resources.hub?.stdout?.pipe(process.stdout);
-            this.resources.hub?.stderr?.pipe(process.stderr);
-        }
+When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
+    await new Promise<void>((resolve, reject) => {
+        this.resources.hub = spawn(
+            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params.split(" ")]
+        );
 
         this.resources.hub.on("error", reject);
 
@@ -34,11 +28,18 @@ When("hub process is started with parameters {string}", function(this: CustomWor
         this.resources.hub.stdout.on("data", (data: Buffer) => {
             const decodedData = decoder.write(data);
 
+            if (SCRAMJET_TEST_LOG) console.log({ decodedData });
+
             if (decodedData.match(/API listening on port/)) {
                 this.resources.startOutput = decodedData;
                 resolve();
             }
         });
+
+        if (SCRAMJET_TEST_LOG) {
+            this.resources.hub?.stdout?.pipe(process.stdout);
+            this.resources.hub?.stderr?.pipe(process.stderr);
+        }
     });
 });
 
