@@ -75,12 +75,17 @@ export const instance: CommandDefinition = (program) => {
         });
 
     instanceCmd.command("input <id> [<file>]")
+        .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .description("send file to input, if file not given the data will be read from stdin")
-        .action((id, stream) => {
+        .action((id, stream, { contentType }) => {
             const instanceClient = getInstance(program, id);
 
             return displayEntity(program,
-                instanceClient.sendInput(stream ? createReadStream(stream) : process.stdin));
+                instanceClient.sendInput(
+                    stream ? createReadStream(stream) : process.stdin,
+                    { type: contentType }
+                )
+            );
         });
 
     instanceCmd.command("output <id>")
