@@ -44,9 +44,14 @@ export function loopStream<T extends unknown>(
         };
 
         stream.on("error", rej);
+
+        // run it in case readable was already triggered
+        onReadable();
         stream.on("readable", onReadable);
     });
 }
+
+const HEADERS_ENDING_SEQ = "\r\n\r\n";
 
 /**
  *
@@ -54,8 +59,6 @@ export function loopStream<T extends unknown>(
  * @returns object with header key/values (header names are lower case)
  */
 function readInputStreamHeaders(stream: Readable): Promise<Record<string, string>> {
-    const HEADERS_ENDING_SEQ = "\r\n\r\n";
-
     let buffer = "";
 
     return loopStream<Record<string, string>>(stream, (chunk) => {
@@ -237,7 +240,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
 
     async hookupInputStream() {
-        this.logger.log("Input stream HELLo");
+        // @TODO handle closing and reopening input stream
         try {
 
             this.inputStream = createReadStream(this.inputFifoPath)!;
@@ -264,6 +267,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         } catch (e) {
             this.logger.error("Error in input stream");
             this.logger.error(e);
+            // @TODO think about how to handle errors in input stream
         }
     }
 
@@ -278,9 +282,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async hookupFifoStreams() {
-        // @TODO bring it back to normal
-        await this.hookupLoggerStream();
-        this.initializeLogger();
         return Promise.all([
             this.hookupControlStream(),
             this.hookupMonitorStream(),
@@ -396,8 +397,11 @@ export class Runner<X extends AppConfig> implements IComponent {
     async main() {
         this.logger.log("Executing main..."); // TODO: this is not working (no logger yet)
 
+        await this.hookupLoggerStream();
+
+        this.initializeLogger();
+
         await this.hookupFifoStreams();
-        // this.initializeLogger();
 
         this.logger.log("Fifo and logger initialized, sending handshake...");
 
