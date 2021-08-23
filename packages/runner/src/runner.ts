@@ -248,11 +248,12 @@ export class Runner<X extends AppConfig> implements IComponent {
                 throw new Error("Content-Type is undefined");
             }
 
+            this.logger.log(`Content-Type: ${contentType}`);
+
             if (contentType.endsWith("x-ndjson")) {
                 this.inputDataStream = StringStream
                     .from(this.inputStream, { encoding: "utf-8" })
-                    .lines()
-                    .JSONParse();
+                    .JSONParse(true);
             } else if (contentType === "text/plain") {
                 this.inputDataStream = StringStream.from(this.inputStream, { encoding: "utf-8" });
             } else if (contentType === "application/octet-stream") {
