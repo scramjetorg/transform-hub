@@ -11,76 +11,12 @@ import { createReadStream, createWriteStream } from "fs";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
 import { exec } from "child_process";
+import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 
 type MaybeArray<T> = T | T[];
 
 const isPrimitive = (obj: any) => ["string", "number", "boolean"].includes(typeof obj);
 
-
-export function loopStream<T extends unknown>(
-    stream: Readable,
-    iter: (chunk: Buffer) => { action: "continue" } | { action: "end", data: T, unconsumedData?: Buffer }
-): Promise<T> {
-    return new Promise((res, rej) => {
-        const onReadable = () => {
-            let chunk;
-
-            while ((chunk = stream.read()) !== null) {
-                const result = iter(chunk);
-
-                if (result.action === "continue") {
-                    continue;
-                }
-
-                stream.off("error", rej);
-                stream.off("readable", onReadable);
-                if (result.unconsumedData?.length) {
-                    stream.unshift(result.unconsumedData);
-                }
-
-                res(result.data);
-                break;
-            }
-        };
-
-        stream.on("error", rej);
-
-        // run it in case readable was already triggered
-        onReadable();
-        stream.on("readable", onReadable);
-    });
-}
-
-const HEADERS_ENDING_SEQ = "\r\n\r\n";
-
-/**
- *
- * @param stream
- * @returns object with header key/values (header names are lower case)
- */
-function readInputStreamHeaders(stream: Readable): Promise<Record<string, string>> {
-    let buffer = "";
-
-    return loopStream<Record<string, string>>(stream, (chunk) => {
-        const str = chunk.toString("utf-8");
-
-        buffer += str;
-        const headEndSeqIndex = buffer.indexOf(HEADERS_ENDING_SEQ);
-
-        if (headEndSeqIndex === -1) {
-            return { action: "continue" };
-        }
-        const rawHeaders = buffer.slice(0, headEndSeqIndex);
-        const bodyBeginning = buffer.slice(headEndSeqIndex + HEADERS_ENDING_SEQ.length);
-        const headersMap: Record<string, string> = rawHeaders
-            .split("\r\n")
-            .map(headerStr => headerStr.split(": "))
-            .reduce((obj, [key, val]) => ({ ...obj, [key.toLowerCase()]: val }), {});
-
-
-        return { action: "end", data: headersMap, unconsumedData: Buffer.from(bodyBeginning, "utf8") };
-    });
-}
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private context?: RunnerAppContext<X, any>;
@@ -247,23 +183,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             const headers = await readInputStreamHeaders(this.inputStream);
             const contentType = headers["content-type"];
 
-            if (contentType === undefined) {
-                throw new Error("Content-Type is undefined");
-            }
-
             this.logger.log(`Content-Type: ${contentType}`);
 
-            if (contentType.endsWith("x-ndjson")) {
-                this.inputDataStream = StringStream
-                    .from(this.inputStream, { encoding: "utf-8" })
-                    .JSONParse(true);
-            } else if (contentType === "text/plain") {
-                this.inputDataStream = StringStream.from(this.inputStream, { encoding: "utf-8" });
-            } else if (contentType === "application/octet-stream") {
-                this.inputDataStream = BufferStream.from(this.inputStream);
-            } else {
-                throw new Error(`Content-Type does not match any supported value. The actual value is ${contentType}`);
-            }
+            this.inputDataStream = mapToInputDataStream(this.inputStream, contentType);
         } catch (e) {
             this.logger.error("Error in input stream");
             this.logger.error(e);
