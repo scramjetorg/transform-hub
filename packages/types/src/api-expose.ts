@@ -38,6 +38,11 @@ export type StreamConfig = {
      * Encoding used in the stream
      */
     encoding?: BufferEncoding;
+
+    /**
+     * Perform stream content-type type checks
+     */
+    checkContentType?: boolean;
 };
 
 export interface APIError extends Error {
