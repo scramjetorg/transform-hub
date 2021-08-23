@@ -103,8 +103,8 @@ export class InstanceClient {
         return this.clientUtils.sendStream(`${this.instanceURL}/${streamId}`, stream, options);
     }
 
-    async sendInput(stream: Stream | string) {
-        return this.sendStream("input", stream);
+    async sendInput(stream: Stream | string, options ?: SendStreamOptions) {
+        return this.sendStream("input", stream, options);
     }
 
     async sendStdin(stream: Stream | string) {
