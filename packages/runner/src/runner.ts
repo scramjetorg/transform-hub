@@ -257,7 +257,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             } else if (contentType === "text/plain") {
                 this.inputDataStream = StringStream.from(this.inputStream, { encoding: "utf-8" });
             } else if (contentType === "application/octet-stream") {
-                this.inputDataStream = DataStream.from(this.inputStream);
+                this.inputDataStream = BufferStream.from(this.inputStream);
             } else {
                 throw new Error(`Content-Type does not match any supported value. The actual value is ${contentType}`);
             }
