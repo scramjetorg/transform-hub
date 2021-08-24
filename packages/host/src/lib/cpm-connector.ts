@@ -7,7 +7,7 @@ import { URL } from "url";
 import { loadCheck } from "@scramjet/load-check";
 import { getLogger } from "@scramjet/logger";
 import { MessageUtilities } from "@scramjet/model";
-import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage, FunctionDefinition, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
 import { StringStream } from "scramjet";
 
@@ -262,4 +262,17 @@ export class CPMConnector extends EventEmitter {
             JSON.stringify([CPMMessageCode.SEQUENCE, { sequence, status: seqStatus }]) + "\n"
         );
     }
+
+    async sendInstanceInfo(instance: {
+        id: string;
+        sequence: Sequence;
+        status?: FunctionDefinition[] | undefined;
+    }, instanceStatus: InstanceMessageCode): Promise<void> {
+        this.logger.log("Send sequence status update");
+
+        await this.communicationStream?.whenWrote(
+            JSON.stringify([CPMMessageCode.INSTANCE, { instance, status: instanceStatus }]) + "\n"
+        );
+    }
 }
+
