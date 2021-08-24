@@ -174,23 +174,23 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.loggerStream = createWriteStream(this.loggerFifoPath);
     }
 
-
     async hookupInputStream() {
         // @TODO handle closing and reopening input stream
-        try {
+        this.inputStream = createReadStream(this.inputFifoPath)!;
 
-            this.inputStream = createReadStream(this.inputFifoPath)!;
-            const headers = await readInputStreamHeaders(this.inputStream);
-            const contentType = headers["content-type"];
+        // do not await here, allow the rest of initialization in the caller to run
+        readInputStreamHeaders(this.inputStream)
+            .then(headers => {
+                const contentType = headers["content-type"];
 
-            this.logger.log(`Content-Type: ${contentType}`);
+                this.logger.log(`Content-Type: ${contentType}`);
 
-            this.inputDataStream = mapToInputDataStream(this.inputStream, contentType);
-        } catch (e) {
-            this.logger.error("Error in input stream");
-            this.logger.error(e);
-            // @TODO think about how to handle errors in input stream
-        }
+                this.inputDataStream = mapToInputDataStream(this.inputStream!, contentType);
+            }).catch(e => {
+                this.logger.error("Error in input stream");
+                this.logger.error(e);
+                // @TODO think about how to handle errors in input stream
+            });
     }
 
     // echo -e '{"abc":1}\n{"abc":2}\n' | curl -v --data-binary "@-" -H "Content-Type: text/x-ndjson" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/input"
