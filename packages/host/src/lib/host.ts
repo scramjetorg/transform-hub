@@ -1,6 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { InstanceMessageCode } from "@scramjet/symbols";
 import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
@@ -256,6 +257,9 @@ export class Host implements IComponent {
 
             const instanceId = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
+            this.cpmConnector?.sendInstanceInfo({
+                id: instanceId,
+                sequence: seqId }, InstanceMessageCode.INSTANCE_STARTED);
             return {
                 id: instanceId
             };
