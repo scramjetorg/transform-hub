@@ -1,7 +1,7 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { InstanceMessageCode } from "@scramjet/symbols";
+import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
@@ -191,7 +191,16 @@ export class Host implements IComponent {
 
         this.logger.log("Deleting sequence: ", id);
 
-        return this.sequencesStore.delete(id);
+        const result = await this.sequencesStore.delete(id);
+
+        if (result.opStatus === ReasonPhrases.OK) {
+
+            this.cpmConnector?.sendSequenceInfo({
+                id: id
+            }, SequenceMessageCode.SEQUENCE_DELETED);
+        }
+
+        return result;
     }
 
     async identifyExistingSequences() {
@@ -227,6 +236,8 @@ export class Host implements IComponent {
 
             this.logger.log("Sequence identified:", sequence.config);
 
+            await this.cpmConnector?.sendSequenceInfo(sequence, SequenceMessageCode.SEQUENCE_CREATED);
+
             return {
                 id: sequence.id
             };
@@ -255,13 +266,19 @@ export class Host implements IComponent {
         if (sequence) {
             this.logger.log("Starting sequence", sequence.id);
 
-            const instanceId = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
+            const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
             this.cpmConnector?.sendInstanceInfo({
-                id: instanceId,
-                sequence: seqId }, InstanceMessageCode.INSTANCE_STARTED);
+                id: csic.id,
+                appConfig: csic.appConfig,
+                sequenceArgs: csic.sequenceArgs,
+                sequence: seqId,
+                created: csic.info.created,
+                started: csic.info.started
+            }, InstanceMessageCode.INSTANCE_STARTED);
+
             return {
-                id: instanceId
+                id: csic.id
             };
         }
 
@@ -291,7 +308,7 @@ export class Host implements IComponent {
         });
     }
 
-    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {
+    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
         const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler);
@@ -315,9 +332,14 @@ export class Host implements IComponent {
             if (index > -1) {
                 sequence.instances.splice(index, 1);
             }
+
+            this.cpmConnector?.sendInstanceInfo({
+                id: csic.id,
+                sequence: sequence.id
+            }, InstanceMessageCode.INSTANCE_ENDED);
         });
 
-        return id;
+        return csic;
     }
 
     getCSIControllers() {
@@ -326,7 +348,7 @@ export class Host implements IComponent {
         return Object.values(this.instancesStore).map(csiController => {
             return {
                 id: csiController.id,
-                sequence: csiController.sequence,
+                sequence: csiController.sequence.id,
                 status: csiController.status
             };
         });

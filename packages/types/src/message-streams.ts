@@ -34,7 +34,11 @@ import {
     StatusMessageData,
     MonitoringMessage,
     LoadCheckStatMessage,
-    NetworkInfoMessage
+    NetworkInfoMessage,
+    InstanceBulkMessage,
+    SequenceBulkMessage,
+    SequenceMessage,
+    InstanceMessage
 } from "./messages";
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
@@ -79,6 +83,10 @@ export type MessageDataType<T> =
     T extends CPMMessageCode.STH_ID ? STHIDMessageData :
     T extends CPMMessageCode.LOAD ? LoadCheckStat :
     T extends CPMMessageCode.NETWORK_INFO ? NetworkInfo[] :
+    T extends CPMMessageCode.INSTANCES ? InstanceBulkMessage :
+    T extends CPMMessageCode.INSTANCE ? InstanceMessage :
+    T extends CPMMessageCode.SEQUENCES ? SequenceBulkMessage :
+    T extends CPMMessageCode.SEQUENCE ? SequenceMessage :
     never
     ;
 
