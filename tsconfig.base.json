@@ -11,8 +11,8 @@
     "experimentalDecorators": true,
     "sourceMap": true,
     "allowJs": true,
-    "target": "es6",
-    "lib": ["es7"],
+    "target": "es2019",
+    "lib": ["es2019", "es2020.promise", "es2020.bigint", "es2020.string"],
     "strict": true,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true
