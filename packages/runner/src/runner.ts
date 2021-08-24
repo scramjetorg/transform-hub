@@ -476,7 +476,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 out = func.call(
                     this.context,
-                    intermediate as unknown as ReadableStream<any>,
+                    stream,
                     ...args
                 );
 
@@ -512,7 +512,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 if (intermediate instanceof DataStream) {
                     stream = intermediate;
-                } else if (!isPrimitive(intermediate)) {
+                } else if (intermediate !== undefined && !isPrimitive(intermediate)) {
                     stream = DataStream.from(intermediate as Readable);
                 } else {
                     stream = undefined;
