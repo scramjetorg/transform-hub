@@ -19,6 +19,7 @@ export interface ISequence {
     config: RunnerConfig,
     instances: IInstance[]
 }
+
 export interface ISequenceStore {
     getSequences(): ISequence[];
     getById(id: string): ISequence;

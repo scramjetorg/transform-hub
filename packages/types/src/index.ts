@@ -20,4 +20,6 @@ export * from "./utils";
 export * from "./sth-configuration";
 export * from "./load-check-stat";
 export * from "./network-info";
+export * from "./instance-store";
+
 

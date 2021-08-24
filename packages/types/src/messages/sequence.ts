@@ -8,5 +8,5 @@ export type SequenceMessageData = {
 }
 
 export type SequenceMessage = { msgCode: CPMMessageCode.SEQUENCE } & SequenceMessageData;
-export type SequenceBulkMessage = { msgCode: CPMMessageCode.SEQUENCES } & [ SequenceMessageData ];
+export type SequenceBulkMessage = { msgCode: CPMMessageCode.SEQUENCES, sequences: SequenceMessageData[] };
 
