@@ -193,7 +193,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
     }
 
-    // echo -e '{"abc":1}\n{"abc":2}\n' | curl -v --data-binary "@-" -H "Content-Type: text/x-ndjson" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/input"
 
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);
