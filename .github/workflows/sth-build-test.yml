@@ -22,7 +22,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-          cache: yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -47,7 +46,7 @@ jobs:
 
       - name: Run BDD for HUB params
         run: yarn test:bdd-ci-no-host
-        
+
       - name: Run BDD tests
         run: yarn test:bdd-ci
 
