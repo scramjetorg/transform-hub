@@ -1,3 +1,4 @@
+import { IInstance } from "./instance-store";
 import { RunnerConfig } from "./runner-config";
 
 /**
@@ -16,9 +17,8 @@ import { RunnerConfig } from "./runner-config";
 export interface ISequence {
     id: string,
     config: RunnerConfig,
-    instances: any[]
+    instances: IInstance[]
 }
-
 export interface ISequenceStore {
     getSequences(): ISequence[];
     getById(id: string): ISequence;

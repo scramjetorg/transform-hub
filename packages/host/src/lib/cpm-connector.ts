@@ -7,7 +7,7 @@ import { URL } from "url";
 import { loadCheck } from "@scramjet/load-check";
 import { getLogger } from "@scramjet/logger";
 import { MessageUtilities } from "@scramjet/model";
-import { CPMMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage, FunctionDefinition, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
 import { StringStream } from "scramjet";
 
@@ -239,6 +239,8 @@ export class CPMConnector extends EventEmitter {
         await this.communicationStream?.whenWrote(
             JSON.stringify([CPMMessageCode.SEQUENCES, sequences]) + "\n"
         );
+
+        sequences.forEach(seq => this.sendSequenceInfo(seq, SequenceMessageCode.SEQUENCE_CREATED));
     }
 
     async sendInstancesInfo(instances: {
@@ -250,6 +252,14 @@ export class CPMConnector extends EventEmitter {
 
         await this.communicationStream?.whenWrote(
             JSON.stringify([CPMMessageCode.INSTANCES, instances]) + "\n"
+        );
+    }
+
+    async sendSequenceInfo(sequence: ISequence, seqStatus: SequenceMessageCode): Promise<void> {
+        this.logger.log("Send sequence status update");
+
+        await this.communicationStream?.whenWrote(
+            JSON.stringify([CPMMessageCode.SEQUENCE, { sequence, status: seqStatus }]) + "\n"
         );
     }
 }

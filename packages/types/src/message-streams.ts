@@ -105,6 +105,7 @@ export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;
 
 export type EncodedMonitoringMessage = EncodedMessage<MonitoringMessageCode>;
+export type EncodedCPMSTHMessage = EncodedMessage<CPMMessageCode>;
 
 export type DownstreamStreamsConfig<serialized extends boolean = true> = [
     stdin: WritableStream<string>,
