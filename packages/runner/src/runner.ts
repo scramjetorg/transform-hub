@@ -180,7 +180,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.inputStream = createReadStream(this.inputFifoPath)!;
         this.inputDataStream = new DataStream();
 
-        // do not wait for headers to be read, allow for the rest of initialization to continue
+        // do not await here, allow the rest of initialization in the caller to run
         readInputStreamHeaders(this.inputStream!)
             .then(headers => {
                 const contentType = headers["content-type"];
