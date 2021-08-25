@@ -174,23 +174,23 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.loggerStream = createWriteStream(this.loggerFifoPath);
     }
 
+
     async hookupInputStream() {
         // @TODO handle closing and reopening input stream
-        this.inputStream = createReadStream(this.inputFifoPath)!;
+        try {
 
-        // do not await here, allow the rest of initialization in the caller to run
-        readInputStreamHeaders(this.inputStream)
-            .then(headers => {
-                const contentType = headers["content-type"];
+            this.inputStream = createReadStream(this.inputFifoPath)!;
+            const headers = await readInputStreamHeaders(this.inputStream);
+            const contentType = headers["content-type"];
 
-                this.logger.log(`Content-Type: ${contentType}`);
+            this.logger.log(`Content-Type: ${contentType}`);
 
-                this.inputDataStream = mapToInputDataStream(this.inputStream!, contentType);
-            }).catch(e => {
-                this.logger.error("Error in input stream");
-                this.logger.error(e);
-                // @TODO think about how to handle errors in input stream
-            });
+            this.inputDataStream = mapToInputDataStream(this.inputStream, contentType);
+        } catch (e) {
+            this.logger.error("Error in input stream");
+            this.logger.error(e);
+            // @TODO think about how to handle errors in input stream
+        }
     }
 
 
