@@ -177,25 +177,21 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async hookupInputStream() {
         // @TODO handle closing and reopening input stream
-        try {
+        this.inputStream = createReadStream(this.inputFifoPath)!;
+        this.inputDataStream = new DataStream();
 
-            this.inputStream = createReadStream(this.inputFifoPath)!;
-            this.inputDataStream = new DataStream();
+        // do not wait for headers to be read, allow for the rest of initialization to continue
+        readInputStreamHeaders(this.inputStream!).then(headers => {
+            const contentType = headers["content-type"];
 
-            // do not wait for headers to be read, allow for the rest of initialization to continue
-            readInputStreamHeaders(this.inputStream!).then(headers => {
-                const contentType = headers["content-type"];
+            this.logger.log(`Content-Type: ${contentType}`);
 
-                this.logger.log(`Content-Type: ${contentType}`);
-
-                mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
-            }).catch(this.logger.error);
-
-        } catch (e) {
+            mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
+        }).catch(e => {
             this.logger.error("Error in input stream");
             this.logger.error(e);
             // @TODO think about how to handle errors in input stream
-        }
+        });
     }
 
 
@@ -471,8 +467,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         let itemsLeftInSequence = sequence.length;
         let intermediate: SynchronousStreamable<any> | void = stream;
 
-        itemsLeftInSequence--;
         for (const func of sequence) {
+            itemsLeftInSequence--;
 
             let out: MaybePromise<Streamable<any> | void>;
 
