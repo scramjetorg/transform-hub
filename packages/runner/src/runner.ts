@@ -181,17 +181,18 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.inputDataStream = new DataStream();
 
         // do not wait for headers to be read, allow for the rest of initialization to continue
-        readInputStreamHeaders(this.inputStream!).then(headers => {
-            const contentType = headers["content-type"];
+        readInputStreamHeaders(this.inputStream!)
+            .then(headers => {
+                const contentType = headers["content-type"];
 
-            this.logger.log(`Content-Type: ${contentType}`);
+                this.logger.log(`Content-Type: ${contentType}`);
 
-            mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
-        }).catch(e => {
-            this.logger.error("Error in input stream");
-            this.logger.error(e);
+                mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
+            }).catch(e => {
+                this.logger.error("Error in input stream");
+                this.logger.error(e);
             // @TODO think about how to handle errors in input stream
-        });
+            });
     }
 
 
