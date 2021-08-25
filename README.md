@@ -18,3 +18,7 @@ Usage
 Run test cases:
 
     python3 test-cases.py
+
+Run with debug output and 10x faster:
+
+    PYFCA_DEBUG=1 python3 test-cases.py 0.1

@@ -3,7 +3,13 @@
 import asyncio
 import sys
 from pprint import pprint
+
 import pyfca
+import utils
+from ansi_color_codes import *
+
+log = utils.LogWithTimer.log
+fmt = utils.print_formatted
 
 # Use to change delays mocking async function execution
 SLOMO_FACTOR = float(sys.argv[1]) if len(sys.argv) > 1 else 1
@@ -22,10 +28,10 @@ async def mock_delay(data):
     await asyncio.sleep(delay * SLOMO_FACTOR)
 
 async def identity_with_delay(x):
-    print(f'computing start: {x}')
+    log(f'{yellow}computing start:{reset} {x}')
     await mock_delay(x)
     result = x
-    print(f'computing end: {x} -> {result}')
+    log(f'{yellow}computing end:{reset} {x} -> {result}')
     return result
 
 
@@ -39,7 +45,7 @@ async def test_write_then_read_concurrently():
         p.write(x)
     reads = [p.read() for _ in TEST_SEQUENCE]
     results = await asyncio.gather(*reads)
-    print(f'Results: {results}')
+    log(f'Results: {results}')
     assert results == TEST_SEQUENCE
 
 async def test_write_then_read_sequentially():
@@ -47,7 +53,7 @@ async def test_write_then_read_sequentially():
     for x in TEST_SEQUENCE:
         p.write(x)
     results = [await p.read() for _ in TEST_SEQUENCE]
-    print(f'Results: {results}')
+    log(f'Results: {results}')
     assert results == TEST_SEQUENCE
 
 async def test_write_and_read_in_turn():
@@ -57,7 +63,7 @@ async def test_write_and_read_in_turn():
         p.write(x)
         reads.append(p.read())
     results = await asyncio.gather(*reads)
-    print(f'Results: {results}')
+    log(f'Results: {results}')
     assert results == TEST_SEQUENCE
 
 async def test_reads_before_write():
@@ -66,7 +72,7 @@ async def test_reads_before_write():
     for x in TEST_SEQUENCE:
         p.write(x)
     results = await asyncio.gather(*reads)
-    print(f'Results: {results}')
+    log(f'Results: {results}')
     assert results == TEST_SEQUENCE
 
 async def test_reads_exceeding_writes():
@@ -76,7 +82,7 @@ async def test_reads_exceeding_writes():
     reads = [p.read() for _ in TEST_SEQUENCE + [True]*4]
     p.end()
     results = await asyncio.gather(*reads)
-    print(f'Results: {results}')
+    log(f'Results: {results}')
     assert results == TEST_SEQUENCE + [None]*4
 
 async def test_reads_after_end():
@@ -86,7 +92,7 @@ async def test_reads_after_end():
     p.end()
     reads = [p.read() for _ in TEST_SEQUENCE + [True]*4]
     results = await asyncio.gather(*reads)
-    print(f'Results: {results}')
+    log(f'Results: {results}')
     assert results == TEST_SEQUENCE + [None]*4
 
 
@@ -103,6 +109,7 @@ tests_to_run = [
 
 import time
 for test in tests_to_run:
-    print(f"\n\nRunning {test.__name__}:\n")
+    print(f"\n\nRunning {strong}{test.__name__}{reset}:\n")
     asyncio.run(test())
     time.sleep(1*SLOMO_FACTOR)
+    utils.LogWithTimer.reset()
