@@ -162,9 +162,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
         if (this.pulledImages[name]) return this.pulledImages[name];
         const images = await this.dockerode.listImages();
 
-        if (images.find(imgInfo => {
-            imgInfo.RepoTags.includes(name);
-        })) {
+        if (images.find(imgInfo => imgInfo.RepoTags?.includes(name))) {
             this.pulledImages[name] = Promise.resolve();
             return this.pulledImages[name];
         }
