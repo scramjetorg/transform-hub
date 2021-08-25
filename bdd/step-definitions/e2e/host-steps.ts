@@ -3,7 +3,7 @@ import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumb
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer } from "../../lib/utils";
 import * as fs from "fs";
-import { createReadStream, readFileSync } from "fs";
+import { createReadStream } from "fs";
 import { HostClient, SequenceClient, InstanceClient, InstanceOutputStream, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Stream } from "stream";
@@ -90,7 +90,7 @@ Before(() => {
     streams = {};
 });
 
-const streamToString = async (stream: Stream): Promise<string> => {
+export const streamToString = async (stream: Stream): Promise<string> => {
     const chunks = [];
     const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
 
@@ -207,15 +207,41 @@ Given("file in the location {string} exists on hard drive", async (filename: any
     assert.ok(await promisify(fs.exists)(filename));
 });
 
+// When("compare checksums of content sent from file {string}", async (filePath: string) => {
+//     const output = await instance?.getStream("output");
+
+//     if (!output?.data) assert.fail("No output!");
+
+//     const outputString = await streamToString(output?.data);
+//     const jsonToString = readFileSync(filePath).toString();
+//     const newData = JSON.stringify(jsonToString);
+//     const hex = crypto.createHash("md5").update(newData).digest("hex");
+
+//     assert.equal(output.status, 200);
+//     assert.equal(outputString, hex);
+
+//     await instance?.sendInput("null");
+// });
+
 When("compare checksums of content sent from file {string}", async (filePath: string) => {
+    const readStream = fs.createReadStream(filePath);
+    const jsonToString = fs.readFileSync(filePath).toString();
+    const hex: string = crypto.createHash("md5").update(jsonToString).digest("hex");
+
+    await instance?.sendStream("input", readStream, {
+        type: "application/octet-stream",
+        end: true
+    });
+
     const output = await instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");
 
-    const outputString = await streamToString(output?.data);
-    const jsonToString = readFileSync(filePath).toString();
-    const newData = JSON.stringify(jsonToString);
-    const hex = crypto.createHash("md5").update(newData).digest("hex");
+    console.log("-----------output.data: ", output.data);
+
+    const outputString = await streamToString(output.data);
+
+    console.log("-----------outputString", outputString);
 
     assert.equal(output.status, 200);
     assert.equal(outputString, hex);

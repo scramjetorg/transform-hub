@@ -1,36 +1,24 @@
-/* eslint-disable no-loop-func */
 import { TransformApp } from "@scramjet/types";
+import { PassThrough } from "stream";
 // import { StringDecoder } from "string_decoder";
-import * as crypto from "crypto";
-import { readFileSync } from "fs";
+var crypto = require("crypto");
 // const decoder = new StringDecoder("utf-8");
 
-export = async function(_stream: any, ffrom = `${__dirname}/data.json`) {
+export = async function(_stream: any) {
     this.logger.info("Sequence Checksum is called.");
+    const strings = _stream.pipe(new PassThrough({ encoding: "utf-8" }));
 
-    const jsonToString = readFileSync(ffrom).toString();
-    const newData = JSON.stringify(jsonToString);
-    const hex = crypto.createHash("md5").update(newData).digest("hex");
+    this.logger.log("-----------strings: ", strings);
+    let out = "";
+
+    for await (const chunk of strings) {
+        out += chunk;
+        this.logger.log("------------chunk: ", chunk);
+    }
+    this.logger.log("-----------out: ", out);
+    const hex = crypto.createHash("md5").update("").digest("hex");
 
     this.logger.info("Sequence Checksum hex: " + hex);
     return hex;
 
 } as TransformApp;
-
-// export = async function(_stream: any) {
-
-//     this.logger.info("Sequence Checksum is called.");
-//     let out = "";
-
-//     for await (const chunk of _stream) {
-//         this.logger.info("Sequence Checksum received chunk: " + chunk.toString());
-//         out += decoder.write(chunk).toString();
-//         this.logger.info("--------OUTinLOOP: ", out);
-//     }
-//     out += decoder.end();
-//     const hex = crypto.createHash("md5").update(out).digest("hex");
-
-//     this.logger.info("-----------Sequence Checksum hex: " + hex);
-//     return hex;
-
-// } as TransformApp;
