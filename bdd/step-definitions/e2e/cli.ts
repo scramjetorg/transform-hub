@@ -115,14 +115,14 @@ Then("I stop instance {string} {string}", async function(timeout: string, canCal
 
 Then("I get list of instances", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls", ...formatFlags(), ...connectionFlags()]);
-    const sequences = JSON.parse(stdio[0].replace("\n", ""));
+    const instances = JSON.parse(stdio[0].replace("\n", ""));
 
     let instanceFound = false;
 
-    for (let i = 0; i < sequences.length; i++) {
-        const instances = sequences[i].sequence.instances;
+    for (let i = 0; i < instances.length; i++) {
+        const inst = instances[i];
 
-        if (instances.includes(instanceId))
+        if (inst.id === instanceId)
             instanceFound = true;
     }
     assert.equal(instanceFound, true);
