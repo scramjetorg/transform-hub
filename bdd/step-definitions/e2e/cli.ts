@@ -75,6 +75,21 @@ Then("I start Sequence", async function() {
     }
 });
 
+
+Then("I start Sequence with arguments {string}", async function(args) {
+    try {
+        stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, ...args.split(" "), ...formatFlags(), ...connectionFlags()]);
+        if (process.env.SCRAMJET_TEST_LOG) console.error(stdio[0]);
+        const instance = JSON.parse(stdio[0].replace("\n", ""));
+
+        instanceId = instance._id;
+    } catch (e) {
+        console.error(e.stack, stdio);
+        assert.fail("Error occurred");
+    }
+});
+
+
 Then("I get instance id", function() {
     assert.equal(typeof instanceId !== "undefined", true);
 });

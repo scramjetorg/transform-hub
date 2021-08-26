@@ -157,7 +157,7 @@ Feature: CLI tests
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
-        Then I start Sequence
+        Then I start Sequence with arguments "15"
         And the exit status is 0
         Then I get instance info
         Then I send an event named "test-event" with event message "test message" to Instance
