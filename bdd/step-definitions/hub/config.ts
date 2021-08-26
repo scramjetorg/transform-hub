@@ -15,11 +15,16 @@ import { constants } from "os";
 
 const { SIGKILL, SIGTERM } = constants.signals;
 const SCRAMJET_TEST_LOG = process.env.SCRAMJET_TEST_LOG;
+const sth = process.env.SCRAMJET_SPAWN_TS
+    ? ["npx", "ts-node", path.resolve(__dirname, "../../../packages/sth/src/bin/hub")]
+    : ["node", path.resolve(__dirname, "../../../dist/sth/bin/hub")]
+;
 
 When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
     await new Promise<void>((resolve, reject) => {
+        console.log(`spawining ${sth.join(" ")}`);
         this.resources.hub = spawn(
-            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params.split(" ")],
+            "/usr/bin/env", [...sth, ...params.split(" ")],
             { detached: false }
         );
 
