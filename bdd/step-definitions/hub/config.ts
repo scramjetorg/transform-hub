@@ -13,8 +13,8 @@ import { StringDecoder } from "string_decoder";
 import { ReadStream } from "fs";
 import { PassThrough } from "stream";
 
-When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
-    await new Promise<void>(async (resolve, reject) => {
+When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
+    return new Promise<void>((resolve, reject) => {
         this.resources.hub = spawn(
             "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params.split(" ")],
             {
@@ -77,8 +77,8 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
     assert.equal(new RegExp(server).test(apiURL), true);
 });
 
-Then("exit hub process", async function(this: CustomWorld) {
-    await new Promise<void>(async (resolve) => {
+Then("exit hub process", function(this: CustomWorld) {
+    return new Promise<void>((resolve) => {
         const hub = this.resources.hub as ChildProcess;
 
         hub.on("close", resolve);

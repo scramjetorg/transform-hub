@@ -2,7 +2,7 @@ import { getLogger } from "@scramjet/logger";
 import { CommunicationHandler, SupervisorError } from "@scramjet/model";
 import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import { ICSHClient, ICommunicationHandler, LifeCycleConfig, IComponent, Logger, EncodedMessage, ILifeCycleAdapterRun, RunnerConfig } from "@scramjet/types";
-import { promiseTimeout } from "@scramjet/utility";
+import { defer, promiseTimeout } from "@scramjet/utility";
 
 const stopTimeout = 7000; // where to config this?
 
@@ -343,16 +343,15 @@ class LifeCycleController implements IComponent {
         Promise<EncodedMessage<RunnerMessageCode.STOP>> {
         const [, { timeout }] = message;
 
-        return new Promise(async (resolve) => {
-            this.keepAliveRequested = false;
-            setTimeout(async () => {
-                if (!this.keepAliveRequested) {
-                    await this.kill();
-                }
+        this.keepAliveRequested = false;
 
-                resolve(message);
-            }, timeout);
-        });
+        await defer(timeout);
+
+        if (!this.keepAliveRequested) {
+            await this.kill();
+        }
+
+        return message;
     }
 }
 

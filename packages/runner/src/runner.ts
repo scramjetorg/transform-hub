@@ -99,36 +99,30 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
     }
 
-    async cleanup(): Promise<void> {
-        return new Promise(async (resolve) => {
-            this.logger.info("Cleaning up...");
+    async cleanup(): Promise<number> {
+        this.logger.info("Cleaning up...");
 
-            if (this.monitoringInterval) {
-                clearInterval(this.monitoringInterval);
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
 
-                this.logger.info("Monitoring interval removed.");
-            }
+            this.logger.info("Monitoring interval removed.");
+        }
 
-            await new Promise(async (res) => {
-                try {
-                    this.logger.info("Cleaning up streams...");
+        try {
+            this.logger.info("Cleaning up streams...");
 
-                    await this.cleanupStreams();
+            await this.cleanupStreams();
 
-                    this.logger.info("Streams clear.");
+            this.logger.info("Streams clear.");
 
-                    res(0);
-                } catch (e) {
-                    this.logger.error("Streams not clear, error.", e);
+            return 0;
+        } catch (e) {
+            this.logger.error("Streams not clear, error.", e);
 
-                    res(233);
-                }
-            });
-
+            return 233;
+        } finally {
             this.logger.info("Clean up completed!");
-
-            resolve();
-        });
+        }
     }
 
     async cleanupStreams(): Promise<any> {
@@ -283,7 +277,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         let sequenceError;
 
         try {
-            await this.context?.stopHandler?.call(this.context,
+            await this.context.stopHandler(
                 data.timeout,
                 data.canCallKeepalive
             );
@@ -433,7 +427,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         /* eslint-disable-next-line import/no-dynamic-require */
         const sequenceFromFile = require(this.sequencePath);
         const _sequence: MaybeArray<ApplicationFunction> =
-            sequenceFromFile.hasOwnProperty("default") ? sequenceFromFile.default : sequenceFromFile;
+            Object.prototype.hasOwnProperty.call(sequenceFromFile, "default")
+                ? sequenceFromFile.default
+                : sequenceFromFile;
 
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }

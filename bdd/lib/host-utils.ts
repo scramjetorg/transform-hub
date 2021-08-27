@@ -36,13 +36,9 @@ export class HostUtils {
             return;
         }
 
-        await new Promise<void>(async (resolve, reject) => {
-            if (this.host?.kill(SIGTERM)) {
-                resolve();
-            } else {
-                reject();
-            }
-        });
+        if (!this.host?.kill(SIGTERM)) {
+            throw new Error("Couldn't stop host");
+        }
     }
 
     async spawnHost() {

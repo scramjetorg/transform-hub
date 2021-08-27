@@ -117,19 +117,15 @@ export class Host implements IComponent {
     }
 
     async connectToCPM() {
-        return new Promise<void>(async (resolve) => {
-            this.cpmConnector?.attachServer(this.api.server);
-            await this.cpmConnector?.init();
+        this.cpmConnector?.attachServer(this.api.server);
+        await this.cpmConnector?.init();
 
-            this.cpmConnector?.on("connect", () => {
-                this.cpmConnector?.sendSequencesInfo(this.getSequences());
-                this.cpmConnector?.sendInstancesInfo(this.getCSIControllers());
-            });
-
-            this.cpmConnector?.connect();
-            resolve();
+        this.cpmConnector?.on("connect", () => {
+            this.cpmConnector?.sendSequencesInfo(this.getSequences());
+            this.cpmConnector?.sendInstancesInfo(this.getCSIControllers());
         });
 
+        this.cpmConnector?.connect();
     }
 
     /**
@@ -286,26 +282,20 @@ export class Host implements IComponent {
     }
 
     async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
-        return new Promise(async (resolve, reject) => {
-            const ldas = new LifecycleDockerAdapterSequence();
+        const ldas = new LifecycleDockerAdapterSequence();
 
-            try {
-                await ldas.init();
-                const identifyResult = await ldas.identify(stream, id);
+        await ldas.init();
+        const identifyResult = await ldas.identify(stream, id);
 
-                if (identifyResult.error) {
-                    throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", identifyResult.error);
-                }
+        if (identifyResult.error) {
+            throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", identifyResult.error);
+        }
 
-                if (identifyResult.container.image) {
-                    await ldas.fetch(identifyResult.container.image);
-                }
+        if (identifyResult.container.image) {
+            await ldas.fetch(identifyResult.container.image);
+        }
 
-                resolve(identifyResult);
-            } catch (e) {
-                reject(e);
-            }
-        });
+        return identifyResult;
     }
 
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
