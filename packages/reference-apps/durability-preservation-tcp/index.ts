@@ -77,7 +77,6 @@ export = async function(_stream: any, ...args: any) {
         lastItem = data;
     });
 
-
     setInterval(async () => {
         try {
             // eslint-disable-next-line no-extra-parens

@@ -5,7 +5,6 @@ import { Writable } from "stream";
 import { inspect, InspectOptions } from "util";
 import { getName } from "./lib/get-name";
 
-
 export type MessageFormatter = <Z extends any[]>(name: string, func: string, args: Z) => string;
 
 const loggerOutputs: {[key: string]: WritableStream<any[]>[]} = {

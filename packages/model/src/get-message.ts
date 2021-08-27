@@ -14,7 +14,6 @@ import {
     EventMessageData, EventMessage, InstanceConfigMessageData
 } from "@scramjet/types";
 
-
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
     if (typeof (data as StopSequenceMessageData).timeout !== "number") return false;
     if (typeof (data as StopSequenceMessageData).canCallKeepalive !== "boolean") return false;

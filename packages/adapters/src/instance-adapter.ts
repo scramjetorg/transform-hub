@@ -118,7 +118,6 @@ IComponent {
         return createdDir;
     }
 
-
     private async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
         if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
             const freePorts = exposed ? [] : await FreePortsFinder.getPorts(declaredPorts.length);
