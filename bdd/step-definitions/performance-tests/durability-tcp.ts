@@ -67,7 +67,6 @@ Then("check every {int} seconds if instances respond with correct data for {floa
                 });
             });
         }));
-
     }, seconds * 1000);
 
     assert.ok(await timePassedPromise);

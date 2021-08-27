@@ -105,7 +105,6 @@ class LifeCycleController implements IComponent {
      */
     async main(): Promise<void> {
         try {
-
             /**
              * The client that communicates with the CSH and
              * the LifeCycle Adapter Run are initiated.
@@ -213,7 +212,6 @@ class LifeCycleController implements IComponent {
             * Container snapshot is made if it was requested in LifeCycleConfig
             */
             if (this.lifecycleConfig.makeSnapshotOnError) {
-
                 const retUrl = await this.lifecycleAdapterRun.snapshot();
 
                 // TODO: we should mute this in the stream from Runner -
@@ -223,7 +221,6 @@ class LifeCycleController implements IComponent {
                 */
                 this.communicationHandler.addMonitoringHandler(RunnerMessageCode.SNAPSHOT_RESPONSE,
                     () => [RunnerMessageCode.SNAPSHOT_RESPONSE, { url: retUrl }]);
-
             }
 
             await this.lifecycleAdapterRun.cleanup();

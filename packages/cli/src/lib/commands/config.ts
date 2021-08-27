@@ -3,7 +3,6 @@ import { getConfig, setConfigValue } from "../config";
 import { displayObject } from "../output";
 
 export const config: CommandDefinition = (program) => {
-
     const configCmd = program
         .command("config [command]")
         .alias("c")

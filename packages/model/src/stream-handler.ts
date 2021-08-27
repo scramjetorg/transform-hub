@@ -271,6 +271,5 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         await this.controlPassThrough.whenWrote(encoded);
     }
-
 }
 

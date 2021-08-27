@@ -93,7 +93,6 @@ class LifecycleDockerAdapterSequence implements
 
         for await (const chunk of readable) {
             out += decoder.write(chunk);
-
         }
 
         out += decoder.end();
