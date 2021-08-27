@@ -171,7 +171,7 @@ Then("last container memory limit is {int}", async function(this: CustomWorld, m
 After(async function(this: CustomWorld) {
     const hub = this.resources.hub as ChildProcess;
 
-    if (hub.exitCode === null) return;
+    if (!hub || hub.exitCode === null) return;
     await new Promise<void>((resolve) => {
         hub.on("exit", resolve);
         hub.on("error", resolve);
