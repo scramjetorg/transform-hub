@@ -215,6 +215,9 @@
                 "ignoreTemplateLiterals": true,
                 "ignoreRegExpLiterals": true
             }
-        ]
+        ],
+        "no-prototype-builtins": 2,
+        "no-useless-call": 2,
+        "no-async-promise-executor": 2
     }
 }
