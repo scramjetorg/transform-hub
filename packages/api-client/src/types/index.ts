@@ -1,4 +1,4 @@
-import { Response as FetchResponse } from "node-fetch";
+import fetch, { Response as FetchResponse } from "node-fetch";
 import { Stream } from "stream";
 import { ClientError } from "../client-error";
 
@@ -22,6 +22,7 @@ export type Headers = {
 };
 
 export type RequestLogger = {
+    request: (...req: Parameters<typeof fetch>) => void;
     ok: (res: FetchResponse) => void;
     error: (res: ClientError) => void;
 };

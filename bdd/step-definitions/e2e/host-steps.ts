@@ -56,20 +56,23 @@ BeforeAll({ timeout: 10e3 }, async () => {
     hostClient = new HostClient(apiUrl);
     if (process.env.SCRAMJET_TEST_LOG) {
         hostClient.client.addLogger({
+            request(url) {
+                console.error(new Date().toISOString(), "Starting request to", url);
+            },
             ok(result) {
                 const {
                     status, statusText, url
                 } = result;
 
                 // eslint-disable-next-line no-console
-                console.error("Request ok:", url, `status: ${status} ${statusText}`);
+                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
                 // eslint-disable-next-line no-console
-                console.error(`Request failed with code "${code}" status: ${message}`);
+                console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
             }
         });
     }
@@ -341,12 +344,20 @@ When("flood the stdin stream with {int} kilobytes", async function(kbytes: numbe
     let i = 0;
 
     await new Promise<void>((res, rej) => {
-        instance?.sendStream("stdin", BufferStream.from(function* () {
+
+        const stream = BufferStream.from(function* () {
             while (i < kbytes) { yield Buffer.alloc(1024, 0xdeadbeef); i++; }
-        }).on("pause", () => {
-            console.log(`Stream paused, sent ${i}kb`);
-            res();
-        }).on("end", rej));
+        });
+
+        instance?.sendStream("stdin", stream)
+            .catch(() => 0); // ignore the outcome.
+
+        stream
+            .once("pause", () => {
+                console.log(`Stream paused, sent ${i}kb`);
+                res();
+            })
+            .once("end", rej);
     });
 
 });
