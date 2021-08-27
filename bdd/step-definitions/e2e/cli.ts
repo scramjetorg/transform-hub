@@ -25,7 +25,6 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
 });
 
-
 Then("I get a help information", function() {
 
     assert.equal(stdio[0].includes("Usage:"), true);
@@ -82,7 +81,6 @@ Then("I get instance id", function() {
 Then("I kill instance", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "kill", instanceId, ...formatFlags(), ...connectionFlags()]);
 });
-
 
 Then("I delete sequence", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "delete", sequenceId, ...formatFlags(), ...connectionFlags()]);

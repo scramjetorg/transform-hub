@@ -30,7 +30,6 @@ Then("check every {int} seconds if instances respond with correct data for {floa
     this.resources.interval = setInterval(async () => {
         logger.log("Start sending events...");
 
-
         await Promise.all(this.resources.instances.map(async (instance: InstanceClient) => {
             const hash = `${instance.id} ${crypto.randomBytes(20).toString("hex")}`;
 
@@ -68,7 +67,6 @@ Then("check every {int} seconds if instances respond with correct data for {floa
                 });
             });
         }));
-
 
     }, seconds * 1000);
 

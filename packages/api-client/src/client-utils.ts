@@ -4,7 +4,6 @@ import { Stream } from "stream";
 import { ClientError } from "./client-error";
 import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions } from "./types";
 
-
 export class ClientUtils implements HttpClient {
     apiBase: string = "";
     private log?: RequestLogger;

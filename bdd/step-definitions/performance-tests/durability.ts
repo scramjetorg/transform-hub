@@ -111,10 +111,8 @@ Then("check every {float} seconds if instances respond for {float} hours", { tim
         }
         ));
 
-
     }, seconds * 1000);
 
     assert.ok(await timePassedPromise);
 });
-
 

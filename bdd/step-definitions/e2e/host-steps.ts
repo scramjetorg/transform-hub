@@ -16,7 +16,6 @@ import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 
-
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
 const hostUtils = new HostUtils();
@@ -125,7 +124,6 @@ When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string)
     );
     console.log("Package successfuly loaded, sequence started.");
 });
-
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     hostClient = new HostClient("http://0.0.0.0:8000/api/v1");

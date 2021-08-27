@@ -11,7 +11,6 @@ export const sequence: CommandDefinition = (program) => {
         .alias("seq")
         .description("operations on sequence");
 
-
     sequenceCmd
         .command("run [package] [args...]")
         .description("Uploads a package and immediately executes it with given arguments")

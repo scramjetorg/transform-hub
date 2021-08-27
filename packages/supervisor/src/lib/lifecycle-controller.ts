@@ -277,7 +277,6 @@ class LifeCycleController implements IComponent {
             process.exitCode = 252;
         }
 
-
         return message;
     }
 

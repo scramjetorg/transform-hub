@@ -61,7 +61,6 @@ export function readInputStreamHeaders(stream: Readable): Promise<Record<string,
             .map(headerStr => headerStr.split(": "))
             .reduce((obj, [key, val]) => ({ ...obj, [key.toLowerCase()]: val }), {});
 
-
         return { action: "end", data: headersMap, unconsumedData: Buffer.from(bodyBeginning, "utf8") };
     });
 }

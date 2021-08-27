@@ -147,7 +147,7 @@
         "no-inline-comments" : 0,
         "no-lonely-if" : 1,
         "no-mixed-spaces-and-tabs" : 1,
-        "no-multiple-empty-lines" : 1,
+        "no-multiple-empty-lines" : [2, {"max": 1}],
         "no-nested-ternary" : 1,
         "no-negated-condition" : 0,
         "no-new-object" : 1,
@@ -218,6 +218,6 @@
         ],
         "no-prototype-builtins": 2,
         "no-useless-call": 2,
-        "no-async-promise-executor": 2
+        "no-async-promise-executor": 2,
     }
 }

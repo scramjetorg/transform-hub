@@ -2,7 +2,6 @@ import { CommandDefinition } from "../../types";
 import { getHostClient } from "../common";
 import { displayEntity } from "../output";
 
-
 export const host: CommandDefinition = (program) => {
 
     const hostCmd = program

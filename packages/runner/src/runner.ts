@@ -168,7 +168,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.loggerStream = createWriteStream(this.loggerFifoPath);
     }
 
-
     async hookupInputStream() {
         // @TODO handle closing and reopening input stream
         this.inputStream = createReadStream(this.inputFifoPath)!;
@@ -188,7 +187,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             // @TODO think about how to handle errors in input stream
             });
     }
-
 
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);

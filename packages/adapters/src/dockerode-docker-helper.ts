@@ -44,7 +44,6 @@ export class DockerodeDockerHelper implements IDockerHelper {
     dockerode: Dockerode = new Dockerode();
     logger: Logger = getLogger(this);
 
-
     /**
      * Translates DockerAdapterVolumeConfig to volumes configuration that Docker API can understand.
      *

@@ -254,7 +254,6 @@ export class CSIController extends EventEmitter {
 
             router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
 
-
             router.downstream("/input", (req) => {
                 const stream = this.upStreams![CommunicationChannel.IN];
                 const contentType = req.headers["content-type"];
