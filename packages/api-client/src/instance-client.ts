@@ -32,7 +32,6 @@ export class InstanceClient {
 
         this._id = id;
         this.instanceURL = `instance/${this._id}`;
-
     }
 
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {

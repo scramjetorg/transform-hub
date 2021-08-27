@@ -33,7 +33,6 @@ implements AppContext<AppConfigType, State> {
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
         emitter: EventEmitter, runner: RunnerProxy) {
-
         this.config = config;
         this.monitorStream = monitorStream;
         this.emitter = emitter;

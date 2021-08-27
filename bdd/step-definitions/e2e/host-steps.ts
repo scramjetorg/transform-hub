@@ -266,7 +266,6 @@ When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
 });
 
 When("container is closed", async () => {
-
     if (!containerId) assert.fail();
 
     const containers = await dockerode.listContainers();
@@ -281,7 +280,6 @@ When("container is closed", async () => {
 
     assert.equal(containerExist, false);
     console.log("Container is closed.");
-
 });
 
 When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
@@ -334,7 +332,6 @@ When("instance health is {string}", async (expectedResp: string) => {
 });
 
 When("send stdin to instance with contents of file {string}", async (filePath: string) => {
-
     await instance?.sendStream("stdin", createReadStream(filePath));
 });
 
@@ -357,7 +354,6 @@ When("flood the stdin stream with {int} kilobytes", async function(kbytes: numbe
             })
             .once("end", rej);
     });
-
 });
 
 When("keep instance streams {string}", async function(streamNames) {
@@ -418,7 +414,6 @@ Then("it returns a correct load check with required properties", function() {
     assert.strictEqual(typeof data.fsSize[0].mount, "string"); //: '/'
 
     return "skip";
-
 });
 
 When("kept instance stream {string} should store {int} items divided by {string}", async (streamName, expectedCount, separator) => {
@@ -474,7 +469,6 @@ When("stream sequence logs to stderr", async () => {
 });
 
 When("send data", async () => {
-
     const status = await instance?.sendStream("input", "{\"a\": 1}", {
         type: "application/x-ndjson",
         end: true
@@ -484,7 +478,6 @@ When("send data", async () => {
 });
 
 Then("output is {string}", async (str) => {
-
     const output = await instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");

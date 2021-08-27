@@ -190,7 +190,6 @@ export class Host implements IComponent {
         const result = await this.sequencesStore.delete(id);
 
         if (result.opStatus === ReasonPhrases.OK) {
-
             this.cpmConnector?.sendSequenceInfo({
                 id: id
             }, SequenceMessageCode.SEQUENCE_DELETED);

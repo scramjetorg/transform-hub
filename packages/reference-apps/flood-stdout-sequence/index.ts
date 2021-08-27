@@ -10,7 +10,6 @@ import { InertApp } from "@scramjet/types";
  * @param {number} timeout - time to keep Instance running after exceeding the buffer size.
  */
 module.exports = async function(_stream: any, kbytes: number, timeout: number) {
-
     this.logger.info("Sequence called with: ", kbytes, timeout);
 
     this.on("test-event", () =>
@@ -29,5 +28,4 @@ module.exports = async function(_stream: any, kbytes: number, timeout: number) {
         }
         i++;
     }
-
 } as InertApp;

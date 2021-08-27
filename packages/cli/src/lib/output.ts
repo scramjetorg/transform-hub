@@ -21,7 +21,6 @@ export async function displayStream(
     request: Promise<ResponseStream>,
     output = process.stdout
 ): Promise<void> {
-
     try {
         const req = await request;
 

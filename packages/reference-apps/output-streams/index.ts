@@ -22,5 +22,4 @@ module.exports = async function(_stream: any, count: any) {
     }
 
     return stream;
-
 } as ReadableApp;

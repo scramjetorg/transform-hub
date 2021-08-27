@@ -4,7 +4,6 @@ import { attachStdio, getHostClient, getInstance } from "../common";
 import { displayEntity, displayStream } from "../output";
 
 export const instance: CommandDefinition = (program) => {
-
     const instanceCmd = program
         .command("instance [command]")
         .alias("inst")
@@ -128,5 +127,4 @@ export const instance: CommandDefinition = (program) => {
         .action((id) => {
             return displayStream(program, getInstance(program, id).getStream("stdout"));
         });
-
 };

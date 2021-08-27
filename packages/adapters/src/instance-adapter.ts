@@ -195,7 +195,6 @@ IComponent {
 
             return data;
         });
-
     }
 
     // eslint-disable-next-line complexity

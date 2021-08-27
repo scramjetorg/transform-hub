@@ -81,7 +81,6 @@ class CSHClient implements ICSHClient {
                 ];
                 connectionChannels[CC.MONITORING].resume();
                 resolve();
-
             });
         });
     }

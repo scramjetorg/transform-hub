@@ -74,7 +74,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             } catch (e) {
                 return next(new CeroError("ERR_FAILED_FETCH_DATA", e));
             }
-
         });
     };
     const downstream = (
@@ -84,7 +83,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     ): void => {
         router.post(path, async (req, res, next) => {
             try {
-
                 if (checkContentType) {
                     checkAccepts(req.headers["content-type"], text, json);
                 }

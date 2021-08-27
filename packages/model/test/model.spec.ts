@@ -20,14 +20,12 @@ testModel("Deserialization must return a message of correct type", async t => {
 });
 
 testModel("Message after being serizalized --> deserialized --> serizalized must be equal to the orginally serizalized message", async t => {
-
     const stopMsg: StopSequenceMessage = { msgCode: RunnerMessageCode.STOP, timeout: 1000, canCallKeepalive: true };
     const serizalized = MessageUtilities.serializeMessage(stopMsg);
     const deserialized = MessageUtilities.deserializeMessage(JSON.stringify(serizalized));
     const serializedAgain = MessageUtilities.serializeMessage(deserialized);
 
     t.is(JSON.stringify(serizalized), JSON.stringify(serializedAgain));
-
 });
 
 testModel("Deserialization must throw an error when an incorrect message code is provided", t => {

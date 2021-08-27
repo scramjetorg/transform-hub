@@ -26,7 +26,6 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
 });
 
 Then("I get a help information", function() {
-
     assert.equal(stdio[0].includes("Usage:"), true);
 });
 
@@ -46,7 +45,6 @@ Then("I get Sequence id", function() {
 });
 
 Then("I get location {string} of compressed directory", function(filepath: string) {
-
     assert.equal(fs.existsSync(filepath), true);
 });
 
@@ -58,7 +56,6 @@ Then("I get array of information about sequences", function() {
     const arr = JSON.parse(stdio[0].replace("\n", ""));
 
     assert.equal(Array.isArray(arr), true);
-
 });
 
 Then("I start Sequence", async function() {
@@ -124,7 +121,6 @@ Then("I get list of instances", async function() {
             instanceFound = true;
     }
     assert.equal(instanceFound, true);
-
 });
 
 Then("I get instance info", async function() {

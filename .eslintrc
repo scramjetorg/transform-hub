@@ -161,7 +161,7 @@
         "one-var" : 0,
         "operator-assignment" : 1,
         "operator-linebreak" : 1,
-        "padded-blocks" : 0,
+        "padded-blocks": [2, "never"],
         "padding-line-between-statements": [2,
             { "blankLine": "always", "prev": ["const", "let"], "next": "*" },
             { "blankLine": "never", "prev": ["const"], "next": ["const"] },
