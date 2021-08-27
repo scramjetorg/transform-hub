@@ -4,7 +4,7 @@
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them throgh abstraction layer provided by adapters.",
   "main": "./src/bin/supervisor.ts",
   "scripts": {
-    "test": "nyc ava",
+    "test": "ava",
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",

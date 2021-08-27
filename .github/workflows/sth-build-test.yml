@@ -159,7 +159,7 @@ jobs:
         run: yarn build:packages
 
       - name: Run packages tests
-        run: yarn test:packages-no-concurrent
+        run: npx nyc -s yarn test:packages-no-concurrent
 
       - name: Create artifact
         run: tar --exclude=dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/.*
@@ -265,7 +265,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Run BDD for HUB params
-        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
+        run: npx nyc -s --clean=false yarn test:bdd-ci-no-host
 
   test-bdd-ci-sth:
     name: Test bdd-ci STH (Nodejs ${{ matrix.node-version }})
@@ -324,5 +324,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Run BDD tests
-        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci
+        run: npx nyc -s --clean=false yarn test:bdd-ci
 
+      - name: Get coverage
+        run: npx nyc report

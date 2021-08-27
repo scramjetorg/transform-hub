@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "nyc ava",
+    "test": "ava",
     "prepack": "node ../../scripts/publish.js",
     "postbuild": "yarn prepack"
   },

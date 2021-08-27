@@ -1,0 +1,17 @@
+{
+  "all": true,
+  "include": [
+    "packages/**/*.ts",
+    "packages/**/*.js"
+  ],
+  "exclude": [
+    "**/*.spec.ts",
+    "dist/",
+    "packages/reference-apps/**",
+    "packages/samples/**"
+  ],
+  "reporter": [
+    "lcovonly",
+    "text"
+  ]
+}

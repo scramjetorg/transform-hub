@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "test": "npm run test:ava",
-    "test:ava": "nyc ava",
+    "test:ava": "ava",
     "clean": "rm -rf ./dist .bic_cache",
     "prepack": "node ../../scripts/publish.js",
     "postbuild": "yarn prepack"
