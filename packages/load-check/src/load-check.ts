@@ -59,7 +59,7 @@ class LoadCheck implements IComponent {
 
     async getLoadCheckStream(): Promise<any> {
         return DataStream.from(
-            async function*(){
+            async function*() {
                 // eslint-disable-next-line no-constant-condition
                 while (true) {
                     const [load, disksInfo, memInfo] = await Promise.all([

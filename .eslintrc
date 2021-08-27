@@ -219,5 +219,10 @@
         "no-prototype-builtins": 2,
         "no-useless-call": 2,
         "no-async-promise-executor": 2,
+        "arrow-spacing": 2,
+        "func-call-spacing": 2,
+        "space-before-blocks": 2,
+        "rest-spread-spacing": 2,
+        "no-whitespace-before-property": 2
     }
 }
