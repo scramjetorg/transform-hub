@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import fetch, { FetchError, Response as FetchReponse } from "node-fetch";
+import fetch, { FetchError } from "node-fetch";
 import { Stream } from "stream";
 import { ClientError } from "./client-error";
 import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions } from "./types";
@@ -13,35 +13,43 @@ export class ClientUtils implements HttpClient {
         this.apiBase = apiBase;
     }
 
-    public addLogger(logger: RequestLogger) {
-        this.log = logger;
+    public addLogger(logger: Partial<RequestLogger>) {
+        this.log = {
+            request: () => 0,
+            ok: () => 0,
+            error: () => 0,
+            ...logger
+        };
     }
 
-    private safeRequest(_resp: Promise<FetchReponse>): typeof _resp {
-        const resp = _resp.catch((e: FetchError) => Promise.reject(ClientError.from(e)));
+    private safeRequest(...args: Parameters<typeof fetch>): ReturnType<typeof fetch> {
+        let resp = fetch(...args);
 
         if (this.log) {
             const log = this.log;
 
-            return resp.then(
-                res => { log.ok(res); return res; },
-                err => { log.error(err); throw err; }
-            );
+            log.request(...args);
+            resp = resp
+                .then(res => { log.ok(res); return res; })
+                .catch(err => { log.error(err); throw err; })
+            ;
         }
 
-        return resp;
+        const source = new Error();
+
+        return resp
+            .catch((e: FetchError) => {
+                throw ClientError.from(e, undefined, source);
+            });
     }
 
     async get(url: string): Promise<Response> {
-        return this.safeRequest(
-            fetch(`${this.apiBase}/${url}`)
-        ).then(async (response) => ({ data: await response.json(), status: response.status }));
+        return this.safeRequest(`${this.apiBase}/${url}`)
+            .then(async (response) => ({ data: await response.json(), status: response.status }));
     }
 
     async getStream(url: string): Promise<ResponseStream> {
-        return this.safeRequest(
-            fetch(`${this.apiBase}/${url}`)
-        )
+        return this.safeRequest(`${this.apiBase}/${url}`)
             .then((d) => {
                 return {
                     status: d.status,
@@ -57,11 +65,12 @@ export class ClientUtils implements HttpClient {
         }
 
         return this.safeRequest(
-            fetch(`${this.apiBase}/${url}`, {
+            `${this.apiBase}/${url}`,
+            {
                 method: "post",
                 body: data,
                 headers
-            })
+            }
         )
             .then(async (res) => ({
                 status: res.status,
@@ -71,12 +80,13 @@ export class ClientUtils implements HttpClient {
 
     async delete(url: string): Promise<Response> {
         return this.safeRequest(
-            fetch(`${this.apiBase}/${url}`, {
+            `${this.apiBase}/${url}`,
+            {
                 method: "delete",
                 headers: {
                     "Content-Type": "application/json"
                 }
-            })
+            }
         )
             .then((res) => ({
                 status: res.status
