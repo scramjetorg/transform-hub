@@ -96,7 +96,7 @@
     }
   },
   "dependencies": {
-    "scramjet": "4.36.0"
-    "@istanbuljs/nyc-config-typescript": "^1.0.1",
+    "scramjet": "4.36.0",
+    "@istanbuljs/nyc-config-typescript": "^1.0.1"
   }
 }
