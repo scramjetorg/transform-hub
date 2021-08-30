@@ -16,7 +16,7 @@ def log(*args):
 class Pyfca:
     def __init__(self, max_parallel, transformation):
         self.max_parallel = max_parallel
-        self.transformation = transformation
+        self.transform_chain = [transformation]
 
         self.processing = asyncio.Queue()
         self.ready = asyncio.Queue()
@@ -89,6 +89,11 @@ class Pyfca:
         self.ended = True
 
 
+    def add_transform(self, transformation):
+        self.transform_chain.append(transformation)
+        log(f'ADD_TRANSFORM chain: {self.transform_chain}')
+
+
     async def _resolve_overflow_readers(self):
         async def append_none():
             log(f'END waiting for last item: {self.last_chunk_status}')
@@ -101,8 +106,19 @@ class Pyfca:
             log(f'END add item for overflow reader: {nuller}')
 
 
+    async def _run_transform_chain(self, chunk):
+        result = chunk
+        for func in self.transform_chain:
+            result = func(result)
+            log(f'CHAIN {fmt(chunk)} function: {func}')
+            log(f'  -   {fmt(chunk)} yielded: {result}')
+            if hasattr(result, '__await__'):
+                result = await result
+        return result
+
+
     async def _process(self, chunk, chunk_status):
-        transform = self.transformation(chunk)
+        transform = self._run_transform_chain(chunk)
         previous = self.last_chunk_status
 
         if DEBUG:
