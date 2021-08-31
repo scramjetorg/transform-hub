@@ -114,6 +114,8 @@ class Pyfca:
             log(f'  -   {fmt(chunk)} yielded: {result}')
             if hasattr(result, '__await__'):
                 result = await result
+                log(f'CHAIN {fmt(chunk)} resolved: {result}')
+        log(f'  -   {fmt(chunk)} {pink}finished{reset}')
         return result
 
 
@@ -134,6 +136,6 @@ class Pyfca:
         if DEBUG:
             utils.update_status(chunk, 'ready')
             log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
-            log(f'   -    {fmt(chunk)} {green}result:{reset} {result}')
+            log(f'   -    {fmt(chunk)} {green}return:{reset} {result}')
 
         await self.ready.put(result)
