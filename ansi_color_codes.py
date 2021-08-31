@@ -3,6 +3,7 @@ green="\033[32m"
 yellow="\033[33m"
 blue="\033[34m"
 pink="\033[35m"
+cyan="\033[36m"
 grey="\033[37m"
 
 bold="\033[1m"
