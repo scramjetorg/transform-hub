@@ -339,7 +339,6 @@ When("flood the stdin stream with {int} kilobytes", async function(kbytes: numbe
     let i = 0;
 
     await new Promise<void>((res, rej) => {
-
         const stream = BufferStream.from(function* () {
             while (i < kbytes) { yield Buffer.alloc(1024, 0xdeadbeef); i++; }
         });
