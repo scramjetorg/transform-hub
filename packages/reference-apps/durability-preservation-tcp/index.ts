@@ -87,7 +87,7 @@ export = async function(_stream: any, ...args: any) {
                     chunk.copy(allocatedMem, ~~(Math.random() * (allocatedMem.length - chunk.length)));
                 });
             });
-        } catch (err) {
+        } catch (err: any) {
             console.log(err);
         }
     }, 1000);

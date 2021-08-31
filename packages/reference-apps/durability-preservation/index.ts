@@ -60,7 +60,7 @@ export = async function(_stream: any, allocMemSize: string, files: string[] = [
                     chunk.copy(allocatedMem, ~~(Math.random() * (allocatedMem.length - chunk.length)));
                 });
             });
-        } catch (err) {
+        } catch (err: any) {
             console.log(err);
         }
     }, 1000);
