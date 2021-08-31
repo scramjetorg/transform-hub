@@ -80,7 +80,7 @@ export class SequenceStore implements ISequenceStore {
                 opStatus: ReasonPhrases.OK,
                 id
             };
-        } catch (error) {
+        } catch (error: any) {
             this.logger.error("Error removing sequence!", error);
             throw new HostError("CONTROLLER_ERROR");
         }

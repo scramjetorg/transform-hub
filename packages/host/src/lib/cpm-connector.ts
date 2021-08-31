@@ -61,14 +61,14 @@ export class CPMConnector extends EventEmitter {
                         try {
                             this.logger.log("Config file", JSON.parse(data));
                             resolve(JSON.parse(data));
-                        } catch (error) {
+                        } catch (error: any) {
                             this.logger.log("Can't parse config file");
                             reject(error);
                         }
                     }
                 });
             });
-        } catch (error) {
+        } catch (error: any) {
             if (error.code === "ENOENT") {
                 this.logger.info("Info file not exists");
             } else {

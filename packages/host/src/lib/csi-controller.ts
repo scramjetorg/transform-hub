@@ -94,7 +94,7 @@ export class CSIController extends EventEmitter {
             code = await this.supervisorStopped();
 
             this.logger.log("Supervisor stopped.");
-        } catch (e) {
+        } catch (e: any) {
             code = e;
             this.logger.error("Supervisior caused error, code:", e);
         }
@@ -233,7 +233,7 @@ export class CSIController extends EventEmitter {
             await this.sendConfig();
 
             this.initResolver?.res();
-        } catch (e) {
+        } catch (e: any) {
             this.initResolver?.rej(e);
         }
     }

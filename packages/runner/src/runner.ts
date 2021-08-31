@@ -116,7 +116,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.info("Streams clear.");
 
             return 0;
-        } catch (e) {
+        } catch (e: any) {
             this.logger.error("Streams not clear, error.", e);
 
             return 233;
@@ -343,7 +343,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             sequence = this.getSequence();
 
             this.logger.log(`Sequence loaded, functions count: ${sequence.length}.`);
-        } catch (error) {
+        } catch (error: any) {
             if (error instanceof SyntaxError) {
                 this.logger.error("Sequence syntax error.", error.stack);
             } else {
@@ -367,7 +367,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.runSequence(sequence, args);
 
             this.logger.log("Sequence completed.");
-        } catch (error) {
+        } catch (error: any) {
             this.logger.error("Error occured during sequence execution: ", error.stack);
 
             await this.cleanup();
@@ -477,7 +477,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 );
 
                 this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
-            } catch (error) {
+            } catch (error: any) {
                 this.logger.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error.stack);
 
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
