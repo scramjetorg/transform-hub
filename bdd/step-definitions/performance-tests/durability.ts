@@ -102,7 +102,7 @@ Then("check every {float} seconds if instances respond for {float} hours", { tim
                 }
                 console.error(`${instance.id}, sent: ${hash}, received: ${JSON.stringify(response.data)}`);
                 rej(JSON.stringify({ id: instance.id, sent: hash, data: response.data, message: "not match" }));
-            } catch (err) {
+            } catch (err: any) {
                 console.error(err, instance.id);
                 throw new Error("event data not equal to the data sent");
             }

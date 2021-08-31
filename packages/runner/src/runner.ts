@@ -279,7 +279,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 data.timeout,
                 data.canCallKeepalive
             );
-        } catch (err) {
+        } catch (err: any) {
             sequenceError = err;
 
             this.logger.error("Following error ocurred during stopping sequence: ", err);

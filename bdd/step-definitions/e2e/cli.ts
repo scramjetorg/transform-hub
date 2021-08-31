@@ -65,7 +65,7 @@ Then("I start Sequence", async function() {
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 
         instanceId = instance._id;
-    } catch (e) {
+    } catch (e: any) {
         console.error(e.stack, stdio);
         assert.fail("Error occurred");
     }
