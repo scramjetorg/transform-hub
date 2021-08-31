@@ -96,6 +96,6 @@
     }
   },
   "dependencies": {
-    "scramjet": "4.35.20"
+    "scramjet": "4.36.0"
   }
 }
