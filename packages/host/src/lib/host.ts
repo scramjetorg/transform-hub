@@ -87,7 +87,7 @@ export class Host implements IComponent {
             if (await exists(this.config.host.socketPath)) {
                 await unlink(this.config.host.socketPath);
             }
-        } catch (error) {
+        } catch (error: any) {
             throw new HostError("SOCKET_TAKEN");
         }
 
@@ -213,7 +213,7 @@ export class Host implements IComponent {
                 this.sequencesStore.add(sequence);
                 this.logger.log("Sequence found:", sequence.config);
             }
-        } catch (e) {
+        } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences", e);
         }
     }
@@ -236,7 +236,7 @@ export class Host implements IComponent {
             return {
                 id: sequence.id
             };
-        } catch (error) {
+        } catch (error: any) {
             this.logger.debug(error?.stack);
 
             return {

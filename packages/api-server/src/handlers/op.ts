@@ -42,7 +42,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
             }
 
             return JSON.parse(out);
-        } catch (e) {
+        } catch (e: any) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
     };
@@ -101,7 +101,7 @@ export function createOperationHandler(router: SequentialCeroRouter) {
 
                 res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
                 return res.end();
-            } catch (e) {
+            } catch (e: any) {
                 return next(e);
             }
         };

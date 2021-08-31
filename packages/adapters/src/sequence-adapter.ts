@@ -137,7 +137,7 @@ class LifecycleDockerAdapterSequence implements
     private async createVolume(id: string): Promise<DockerVolume> {
         try {
             return await this.dockerHelper.createVolume(id);
-        } catch (error) {
+        } catch (error: any) {
             throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
         }
     }

@@ -23,7 +23,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             });
 
             return res.end(out);
-        } catch (e) {
+        } catch (e: any) {
             return next(new CeroError("ERR_FAILED_TO_SERIALIZE", e));
         }
     };
@@ -48,7 +48,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
                 await monitoringMessagePromise;
                 check(req);
                 return output(lastItem as object, res, next);
-            } catch (e) {
+            } catch (e: any) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
         });
@@ -59,7 +59,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             try {
                 check(req);
                 return output(await callback(req as ParsedMessage), res, next);
-            } catch (e) {
+            } catch (e: any) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
         });
