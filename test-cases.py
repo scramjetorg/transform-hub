@@ -146,6 +146,34 @@ async def test_reads_after_end(input_data):
     log_results(results)
     assert results == input_data + [None]*4
 
+# TODO: pass one round of actual data - right now we're checking placeholders
+async def test_synchronous_writing(input_data):
+    loop = asyncio.get_event_loop()
+    event_loop_ran = False
+
+    def update_event_loop_status():
+        nonlocal event_loop_ran
+        event_loop_ran = True
+
+    def check_event_loop(expected):
+        log(f'Did event loop run already? {cyan}{event_loop_ran}{reset}')
+        assert event_loop_ran == expected
+
+    loop.call_soon(update_event_loop_status)
+
+    p = pyfca.Pyfca(MAX_PARALLEL, identity)
+
+    # Writes up till MAX_PARALLEL-th should resolve immediately
+    for x in input_data[:MAX_PARALLEL-1]:
+        drain = p.write(x)
+        log_drain_status(drain, x)
+        assert drain.done() == True
+        await drain
+        check_event_loop(False)
+
+    # pass control to event loop
+    await asyncio.sleep(0)
+    check_event_loop(True)
 
 async def read_with_debug(pyfca, live_results=None):
     """Log received result and update result list immediately."""
@@ -264,6 +292,7 @@ tests_to_run = [
     (test_reads_before_write,                      objects_with_values),
     (test_reads_exceeding_writes,                  objects_with_values),
     (test_reads_after_end,                         objects_with_values),
+    (test_synchronous_writing,                     objects_with_values),
     (test_limit_waiting_until_items_are_processed, objects_with_delays),
     (test_limit_waiting_for_reads,                 objects_with_values),
     (test_multitransform,                          objects_with_values),
