@@ -264,6 +264,23 @@ async def test_limit_waiting_for_reads(input_data):
     await asyncio.sleep(0)
     check_drain(True)
 
+async def test_writing_above_limit(input_data):
+    p = pyfca.Pyfca(MAX_PARALLEL, identity)
+
+    # Writing shouldn't block if we exceed the limit.
+    writes = [p.write(x) for x in input_data]
+    assert len(writes) > MAX_PARALLEL
+
+    # First writes should report that they were below the limit
+    for drain in writes[:MAX_PARALLEL-1]:
+        assert drain.done() == True
+    # After reaching the limit write() should return an unresolved future
+    for drain in writes[MAX_PARALLEL-1:]:
+        assert drain.done() == False
+
+    # collect results to avoid CancelledError and "coroutine was never awaited"
+    reads = [p.read() for _ in input_data]
+    await asyncio.gather(*reads)
 
 
 async def test_multitransform(input_data):
@@ -322,6 +339,7 @@ tests_to_run = [
     (test_synchronous_draining,                    monotonic_sequence(2*MAX_PARALLEL)),
     (test_limit_waiting_until_items_are_processed, objects_with_delays),
     (test_limit_waiting_for_reads,                 objects_with_values),
+    (test_writing_above_limit,                     monotonic_sequence(2*MAX_PARALLEL)),
     (test_multitransform,                          objects_with_values),
     (test_sync_chain,                              objects_with_values),
 ]
