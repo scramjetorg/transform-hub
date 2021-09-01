@@ -40,6 +40,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
         },
         errorHandler: (err, req, res) => {
             res.writeHead(err.code || 500, err.httpMessage);
+            log.write({ date: Date.now(), method: req.method, url: req.url, error: err.stack } as any);
             if (conf.verbose) res.end(err.stack);
             else res.end();
         }
@@ -48,6 +49,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
 
     router.use("/", async (req, res, next) => {
         next();
+        // TODO: fix - this should log on errors.
         log.write({ date: Date.now(), method: req.method, url: req.url, status: await new Promise(s => res.on("finish", () => s(res.statusCode))) } as any);
     });
 

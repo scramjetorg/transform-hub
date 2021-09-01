@@ -56,7 +56,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 .on("unpipe", disconnect);
 
             return out.pipe(res);
-        } catch (e) {
+        } catch (e: any) {
             throw new CeroError("ERR_FAILED_TO_SERIALIZE", e);
         }
     };
@@ -71,21 +71,22 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 const data = await getStream(req, res, stream);
 
                 return decorator(data, type, encoding, res);
-            } catch (e) {
+            } catch (e: any) {
                 return next(new CeroError("ERR_FAILED_FETCH_DATA", e));
             }
-
         });
     };
     const downstream = (
         path: string | RegExp,
         stream: StreamOutput,
-        { json = false, text = false, end: _end = false, encoding = "utf-8" }: StreamConfig = {}
+        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true }: StreamConfig = {}
     ): void => {
         router.post(path, async (req, res, next) => {
             try {
+                if (checkContentType) {
+                    checkAccepts(req.headers["content-type"], text, json);
+                }
 
-                checkAccepts(req.headers["content-type"], text, json);
                 if (req.headers.expect === "100-continue") res.writeContinue();
 
                 const end = checkEndHeader(req, _end);
@@ -132,7 +133,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 }
 
                 res.end();
-            } catch (e) {
+            } catch (e: any) {
                 console.error(e);
                 next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
@@ -151,7 +152,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 const d = new DuplexStream({}, req, res);
 
                 callback(d, req.headers);
-            } catch (e) {
+            } catch (e: any) {
                 return next(new CeroError("ERR_FAILED_FETCH_DATA", e));
             }
 

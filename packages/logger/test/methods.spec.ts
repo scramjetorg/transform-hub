@@ -28,7 +28,6 @@ test.serial("error", async (t) => {
         err.end();
     }, 0);
 
-
     let [outArr, errArr]: [string[], string[]] = await Promise.all([out.toArray(), err.toArray()]);
 
     t.is(outArr.length, 0, "Does not log to out");
@@ -95,7 +94,6 @@ test.serial("out", async (t) => {
     t.is(outArr[1].substr(25), `info (object:${name}) b\n`, "Should push the message");
     t.is(outArr[2].substr(25), `debug (object:${name}) c\n`, "Should push the message");
 });
-
 
 test.serial("err", async (t) => {
     const name = randomId();

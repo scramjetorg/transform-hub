@@ -59,7 +59,6 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
             console.log("Total sequences started: ", this.resources.instances.length);
             break;
         }
-
     } while (!rejected);
 
     if (this.resources.instances.length < minNumber) {
@@ -89,34 +88,28 @@ Then("check every {float} seconds if instances respond for {float} hours", { tim
     this.resources.interval = setInterval(async () => {
         console.log("Start sending events...");
 
+        await Promise.all(this.resources.instances.map(async (instance: InstanceClient) => {
+            const hash = `${instance.id} ${crypto.randomBytes(20).toString("hex")}`;
 
-        await Promise.all(this.resources.instances.map((instance: InstanceClient) =>
-            new Promise<void>(async (resolve, reject) => {
-                const hash = `${instance.id} ${crypto.randomBytes(20).toString("hex")}`;
+            await instance.sendEvent("check", hash);
+            await defer(5000);
 
-                await instance.sendEvent("check", hash);
-                await defer(5000);
+            try {
+                const response = await instance.getEvent("check");
 
-                try {
-                    const response = await instance.getEvent("check");
-
-                    if (response.data?.message.asked === hash) {
-                        resolve();
-                    } else {
-                        console.error(`${instance.id}, sent: ${hash}, received: ${JSON.stringify(response.data)}`);
-                        rej(JSON.stringify({ id: instance.id, sent: hash, data: response.data, message: "not match" }));
-                    }
-                } catch (err) {
-                    console.error(err, instance.id);
-                    reject("event data not equal to the data sent");
+                if (response.data?.message.asked === hash) {
+                    return;
                 }
-            })
+                console.error(`${instance.id}, sent: ${hash}, received: ${JSON.stringify(response.data)}`);
+                rej(JSON.stringify({ id: instance.id, sent: hash, data: response.data, message: "not match" }));
+            } catch (err: any) {
+                console.error(err, instance.id);
+                throw new Error("event data not equal to the data sent");
+            }
+        }
         ));
-
-
     }, seconds * 1000);
 
     assert.ok(await timePassedPromise);
 });
-
 

@@ -189,6 +189,6 @@ Feature: CLI tests
         Then I start Sequence
         And the exit status is 0
         Then I get instance health
-        Then wait for "5000" ms
+        Then wait for "20000" ms
         Then health outputs 404
         And host is still running

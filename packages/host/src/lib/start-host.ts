@@ -7,7 +7,6 @@ export async function startHost(
     tcpSocketPath: string,
     hostOptions: HostOptions
 ) {
-
     const apiServer = createServer(apiServerConfig);
     const tcpServer = new SocketServer(tcpSocketPath);
     const host = new Host(apiServer, tcpServer);

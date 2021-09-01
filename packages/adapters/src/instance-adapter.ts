@@ -94,39 +94,29 @@ IComponent {
         inputFifo: string,
         outputFifo: string
     ): Promise<string> {
-        return new Promise(async (resolve, reject) => {
-            const dirPrefix: string = "fifos";
+        const dirPrefix: string = "fifos";
+        const createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
 
-            let createdDir: string;
+        this.logger.log("Directory for FiFo files created: ", createdDir);
 
-            try {
-                createdDir = await mkdtemp(path.join(tmpdir(), dirPrefix));
+        [
+            this.controlFifoPath,
+            this.monitorFifoPath,
+            this.loggerFifoPath,
+            this.inputFifoPath,
+            this.outputFifoPath
+        ] = await Promise.all([
+            this.createFifo(createdDir, controlFifo),
+            this.createFifo(createdDir, monitorFifo),
+            this.createFifo(createdDir, loggerFifo),
+            this.createFifo(createdDir, inputFifo),
+            this.createFifo(createdDir, outputFifo)
+        ]);
 
-                this.logger.log("Directory for FiFo files created: ", createdDir);
+        await chmod(createdDir, 0o750);
 
-                [
-                    this.controlFifoPath,
-                    this.monitorFifoPath,
-                    this.loggerFifoPath,
-                    this.inputFifoPath,
-                    this.outputFifoPath
-                ] = await Promise.all([
-                    this.createFifo(createdDir, controlFifo),
-                    this.createFifo(createdDir, monitorFifo),
-                    this.createFifo(createdDir, loggerFifo),
-                    this.createFifo(createdDir, inputFifo),
-                    this.createFifo(createdDir, outputFifo)
-                ]);
-
-                await chmod(createdDir, 0o750);
-
-                resolve(createdDir);
-            } catch (err) {
-                reject(err);
-            }
-        });
+        return createdDir;
     }
-
 
     private async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
         if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
@@ -192,7 +182,7 @@ IComponent {
                 const portsInfo = this.resources.ports?.PortBindings;
 
                 for (const port in portsInfo) {
-                    if (portsInfo.hasOwnProperty(port)) {
+                    if (Object.prototype.hasOwnProperty.call(portsInfo, port)) {
                         ports[port] = portsInfo[port][0].HostPort;
                     }
                 }
@@ -205,7 +195,6 @@ IComponent {
 
             return data;
         });
-
     }
 
     // eslint-disable-next-line complexity
@@ -257,55 +246,52 @@ IComponent {
             }
         }
 
-        return new Promise(async (resolve, reject) => {
-            this.logger.log("Starting Runner", config.container);
+        this.logger.log("Starting Runner", config.container);
 
-            const { streams, containerId } = await this.dockerHelper.run({
-                imageName: config.container.image || "",
-                volumes: [
-                    ...extraVolumes,
-                    { mountPoint: "/package", volume: config.packageVolumeId || "" }
-                ],
-                binds: [
-                    `${this.resources.fifosDir}:/pipes`
-                ],
-                ports: this.resources.ports,
-                envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
-                autoRemove: true,
-                maxMem: config.container.maxMem
-            });
-
-            this.resources.containerId = containerId;
-
-            this.runnerStdin.pipe(streams.stdin);
-            streams.stdout.pipe(this.runnerStdout);
-            streams.stderr.pipe(this.runnerStderr);
-
-            this.logger.debug(`Container is running (${containerId})`);
-
-            try {
-                const { statusCode } = await this.dockerHelper.wait(containerId);
-
-                this.logger.debug("Container exited");
-
-                setTimeout(() => {
-                    if (statusCode > 0){
-                        reject(new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode }));
-                        console.error("-------message");
-                    } else
-                        resolve(0);
-                }, 10000);
-            } catch (error) {
-                if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
-                    this.logger.debug("Container retunrned non-zero status code", error.data.statusCode);
-
-                    resolve(error.data.statusCode);
-                } else {
-                    this.logger.debug("Container errored", error);
-                    reject(error);
-                }
-            }
+        const { streams, containerId } = await this.dockerHelper.run({
+            imageName: config.container.image || "",
+            volumes: [
+                ...extraVolumes,
+                { mountPoint: "/package", volume: config.packageVolumeId || "" }
+            ],
+            binds: [
+                `${this.resources.fifosDir}:/pipes`
+            ],
+            ports: this.resources.ports,
+            envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
+            autoRemove: true,
+            maxMem: config.container.maxMem
         });
+
+        this.resources.containerId = containerId;
+
+        this.runnerStdin.pipe(streams.stdin);
+        streams.stdout.pipe(this.runnerStdout);
+        streams.stderr.pipe(this.runnerStderr);
+
+        this.logger.debug(`Container is running (${containerId})`);
+
+        try {
+            const { statusCode } = await this.dockerHelper.wait(containerId);
+
+            this.logger.debug("Container exited");
+
+            await defer(10000);
+
+            if (statusCode > 0) {
+                throw new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode });
+            } else {
+                return 0;
+            }
+        } catch (error: any) {
+            if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
+                this.logger.debug("Container retunrned non-zero status code", error.data.statusCode);
+
+                return error.data.statusCode;
+            }
+            this.logger.debug("Container errored", error);
+            throw error;
+        }
     }
 
     async cleanup(): Promise<void> {

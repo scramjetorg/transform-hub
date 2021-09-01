@@ -25,9 +25,7 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
 });
 
-
 Then("I get a help information", function() {
-
     assert.equal(stdio[0].includes("Usage:"), true);
 });
 
@@ -47,7 +45,6 @@ Then("I get Sequence id", function() {
 });
 
 Then("I get location {string} of compressed directory", function(filepath: string) {
-
     assert.equal(fs.existsSync(filepath), true);
 });
 
@@ -59,7 +56,6 @@ Then("I get array of information about sequences", function() {
     const arr = JSON.parse(stdio[0].replace("\n", ""));
 
     assert.equal(Array.isArray(arr), true);
-
 });
 
 Then("I start Sequence", async function() {
@@ -69,7 +65,7 @@ Then("I start Sequence", async function() {
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 
         instanceId = instance._id;
-    } catch (e) {
+    } catch (e: any) {
         console.error(e.stack, stdio);
         assert.fail("Error occurred");
     }
@@ -82,7 +78,6 @@ Then("I get instance id", function() {
 Then("I kill instance", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "kill", instanceId, ...formatFlags(), ...connectionFlags()]);
 });
-
 
 Then("I delete sequence", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "delete", sequenceId, ...formatFlags(), ...connectionFlags()]);
@@ -115,18 +110,17 @@ Then("I stop instance {string} {string}", async function(timeout: string, canCal
 
 Then("I get list of instances", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls", ...formatFlags(), ...connectionFlags()]);
-    const sequences = JSON.parse(stdio[0].replace("\n", ""));
+    const instances = JSON.parse(stdio[0].replace("\n", ""));
 
     let instanceFound = false;
 
-    for (let i = 0; i < sequences.length; i++) {
-        const instances = sequences[i].sequence.instances;
+    for (let i = 0; i < instances.length; i++) {
+        const inst = instances[i];
 
-        if (instances.includes(instanceId))
+        if (inst.id === instanceId)
             instanceFound = true;
     }
     assert.equal(instanceFound, true);
-
 });
 
 Then("I get instance info", async function() {

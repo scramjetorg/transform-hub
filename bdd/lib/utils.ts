@@ -121,7 +121,6 @@ export async function removeFile(filePath: any) {
 export async function getStreamsFromSpawn(
     command: string, options: string[], env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string, any]> {
-
     if (process.env.SCRAMJET_TEST_LOG) console.error("Spawning command", command, ...options);
 
     const child = spawn(command, options, {
@@ -137,7 +136,6 @@ export async function getStreamsFromSpawn(
     ]);
 
     return [stdout, stderr, statusCode];
-
 }
 
 export async function getStreamsFromSpawnSuccess(

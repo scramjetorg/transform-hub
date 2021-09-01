@@ -94,7 +94,7 @@ export class CSIController extends EventEmitter {
             code = await this.supervisorStopped();
 
             this.logger.log("Supervisor stopped.");
-        } catch (e) {
+        } catch (e: any) {
             code = e;
             this.logger.error("Supervisior caused error, code:", e);
         }
@@ -233,7 +233,7 @@ export class CSIController extends EventEmitter {
             await this.sendConfig();
 
             this.initResolver?.res();
-        } catch (e) {
+        } catch (e: any) {
             this.initResolver?.rej(e);
         }
     }
@@ -253,7 +253,19 @@ export class CSIController extends EventEmitter {
             router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
             router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
-            router.downstream("/input", this.upStreams[CommunicationChannel.IN], { json: true, text: true, end: true, encoding: "utf-8" });
+
+            router.downstream("/input", (req) => {
+                const stream = this.upStreams![CommunicationChannel.IN];
+                const contentType = req.headers["content-type"];
+
+                if (contentType === undefined) {
+                    throw new Error("Content-Type must be defined");
+                }
+
+                stream.write(`Content-Type: ${contentType}\r\n`);
+                stream.write("\r\n");
+                return stream;
+            }, { checkContentType: false, end: true, encoding: "utf-8" });
 
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);

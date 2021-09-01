@@ -17,13 +17,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
           cache: yarn
-      
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
@@ -33,6 +33,9 @@ jobs:
       - name: Build packages
         run: yarn build:packages
 
+      - name: Run packages tests
+        run: yarn test:packages-no-concurrent
+
       - name: Build refapps
         run: yarn build:refapps
 
@@ -41,9 +44,10 @@ jobs:
 
       - name: Build Docker images
         run: yarn build:docker
-      
-      - name: Run packages tests
-        run: yarn test:packages
+
+      - name: Run BDD for HUB params
+        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
 
       - name: Run BDD tests
-        run: yarn test:bdd-ci
+        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci
+

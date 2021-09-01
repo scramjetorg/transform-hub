@@ -30,18 +30,18 @@ Then("check every {int} seconds if instances respond with correct data for {floa
     this.resources.interval = setInterval(async () => {
         logger.log("Start sending events...");
 
+        await Promise.all(this.resources.instances.map(async (instance: InstanceClient) => {
+            const hash = `${instance.id} ${crypto.randomBytes(20).toString("hex")}`;
 
-        await Promise.all(this.resources.instances.map((instance: InstanceClient) =>
-            new Promise<void>(async (resolve) => {
-                const hash = `${instance.id} ${crypto.randomBytes(20).toString("hex")}`;
+            await instance.sendEvent("check", hash);
 
-                await instance.sendEvent("check", hash);
+            console.log("SENT:", hash);
 
-                console.log("SENT:", hash);
+            await defer(500);
 
-                await defer(500);
+            const instanceInfo = (await instance.getInfo()).data;
 
-                const instanceInfo = (await instance.getInfo()).data;
+            return new Promise<void>((resolve) => {
                 const chunks: Buffer[] = [];
 
                 let response = "";
@@ -65,10 +65,8 @@ Then("check every {int} seconds if instances respond with correct data for {floa
                             }
                         }).on("error", (err) => rej(err));
                 });
-            })
-        ));
-
-
+            });
+        }));
     }, seconds * 1000);
 
     assert.ok(await timePassedPromise);

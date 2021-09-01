@@ -147,7 +147,7 @@
         "no-inline-comments" : 0,
         "no-lonely-if" : 1,
         "no-mixed-spaces-and-tabs" : 1,
-        "no-multiple-empty-lines" : 1,
+        "no-multiple-empty-lines" : [2, {"max": 1}],
         "no-nested-ternary" : 1,
         "no-negated-condition" : 0,
         "no-new-object" : 1,
@@ -161,7 +161,7 @@
         "one-var" : 0,
         "operator-assignment" : 1,
         "operator-linebreak" : 1,
-        "padded-blocks" : 0,
+        "padded-blocks": [2, "never"],
         "padding-line-between-statements": [2,
             { "blankLine": "always", "prev": ["const", "let"], "next": "*" },
             { "blankLine": "never", "prev": ["const"], "next": ["const"] },
@@ -215,6 +215,14 @@
                 "ignoreTemplateLiterals": true,
                 "ignoreRegExpLiterals": true
             }
-        ]
+        ],
+        "no-prototype-builtins": 2,
+        "no-useless-call": 2,
+        "no-async-promise-executor": 2,
+        "arrow-spacing": 2,
+        "func-call-spacing": 2,
+        "space-before-blocks": 2,
+        "rest-spread-spacing": 2,
+        "no-whitespace-before-property": 2
     }
 }

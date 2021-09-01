@@ -42,7 +42,6 @@ export class CeroError extends Error implements APIError {
     private _oldStack: typeof Error.prototype.stack;
 
     constructor(errCode: CeroCode, cause?: Error, extraMessage?: string) {
-
         const [code, defaultMessage] = codelist[errCode] as [number, string];
 
         super(`${code}: ${defaultMessage}`);

@@ -39,7 +39,7 @@ test("Run main", async (t: any) => {
         // eslint-disable-next-line no-console
         runner["loggerStream"] = new DataStream().each(console.log);
         runner["monitorStream"] = new Writable();
-        return Promise.resolve([undefined, undefined, undefined, undefined, undefined]);
+        return Promise.resolve([undefined, undefined, undefined, undefined]);
     });
     const sendHandshakeMessage = sinon.stub(runner, "sendHandshakeMessage");
 
@@ -83,7 +83,7 @@ test("Stop sequence", async (t: any) => {
         runner["inputStream"] = new Readable();
         runner["outputStream"] = new Writable();
 
-        return Promise.resolve([undefined, undefined, undefined, undefined, undefined]);
+        return Promise.resolve([undefined, undefined, undefined, undefined]);
     });
 
     sinon.stub(runner, "sendHandshakeMessage");

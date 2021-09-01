@@ -3,7 +3,6 @@ import { MaybePromise, ReadableStream, Streamable } from "./utils";
 import { AppContext } from "./app-context";
 import { AppConfig } from "./app-config";
 
-
 export type ApplicationInterface =
     (this: AppContext<AppConfig, any>, source: ReadableStream<any>, ...argv: any[])
         => MaybePromise<Streamable<any>|void>;

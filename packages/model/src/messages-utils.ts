@@ -38,7 +38,7 @@ export function deserializeMessage(msg: string): MessageType<RunnerMessageCode> 
                 return getMessage(code, data);
         }
         throw new TypeError("Not a recognized array: " + obj);
-    } catch (e) {
+    } catch (e: any) {
         throw new TypeError("Error while parsing a message.");
     }
 }

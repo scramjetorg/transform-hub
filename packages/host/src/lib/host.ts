@@ -1,7 +1,8 @@
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider, MessageUtilities } from "@scramjet/model";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, LoadCheckStatMessage } from "@scramjet/types";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -20,10 +21,8 @@ import { configService } from "@scramjet/sth-config";
 import * as findPackage from "find-package-json";
 import { constants } from "fs";
 import { CPMConnector } from "./cpm-connector";
-import { DuplexStream } from "@scramjet/api-server";
+
 import { AddressInfo } from "net";
-import { StringStream } from "scramjet";
-import { CPMMessageCode } from "@scramjet/symbols";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -42,7 +41,6 @@ export class Host implements IComponent {
 
     socketServer: SocketServer;
     cpmConnector?: CPMConnector;
-    cpmConnected = false;
 
     instancesStore = InstanceStore;
     sequencesStore: SequenceStore = new SequenceStore();
@@ -89,7 +87,7 @@ export class Host implements IComponent {
             if (await exists(this.config.host.socketPath)) {
                 await unlink(this.config.host.socketPath);
             }
-        } catch (error) {
+        } catch (error: any) {
             throw new HostError("SOCKET_TAKEN");
         }
 
@@ -118,52 +116,16 @@ export class Host implements IComponent {
         }
     }
 
-    async getLoad(): Promise<LoadCheckStatMessage> {
-        const load = await loadCheck.getLoadCheck();
-
-        return {
-            msgCode: CPMMessageCode.LOAD,
-            avgLoad: load.avgLoad,
-            currentLoad: load.currentLoad,
-            memFree: load.memFree,
-            memUsed: load.memUsed,
-            fsSize: load.fsSize
-        };
-    }
-
     async connectToCPM() {
-        let loadInterval: NodeJS.Timer;
+        this.cpmConnector?.attachServer(this.api.server);
+        await this.cpmConnector?.init();
 
-        return new Promise<void>(async (resolve) => {
-            this.cpmConnector?.on("connect", async (duplex: DuplexStream) => {
-                const communicationStream = new StringStream();
-
-                communicationStream.pipe(duplex);
-
-                this.logger.log("Connected to CPM");
-                this.cpmConnected = true;
-
-                loadInterval = setInterval(async () => {
-                    const load = await this.getLoad();
-
-                    await communicationStream?.whenWrote(
-                        JSON.stringify(MessageUtilities.serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
-                    );
-                }, 10000);
-
-                this.cpmConnector?.on("disconnected", () => {
-                    this.logger.info("STH connection ended");
-                    this.cpmConnected = true;
-                    clearInterval(loadInterval);
-                });
-            });
-
-            await this.cpmConnector?.init();
-
-            this.cpmConnector?.connect();
-
-            resolve();
+        this.cpmConnector?.on("connect", () => {
+            this.cpmConnector?.sendSequencesInfo(this.getSequences());
+            this.cpmConnector?.sendInstancesInfo(this.getCSIControllers());
         });
+
+        this.cpmConnector?.connect();
     }
 
     /**
@@ -180,13 +142,11 @@ export class Host implements IComponent {
             async (req) => this.handleNewSequence(req), { end: true }
         );
 
+        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
+        this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req));
+
         this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
-
-        this.api.op("post",
-            `${this.apiBase}/sequence/:id/start`, async (req) => this.handleStartSequence(req));
-        this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
-
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
         this.api.get(`${this.apiBase}/load-check`, () => loadCheck.getLoadCheck());
@@ -227,7 +187,15 @@ export class Host implements IComponent {
 
         this.logger.log("Deleting sequence: ", id);
 
-        return await this.sequencesStore.delete(id);
+        const result = await this.sequencesStore.delete(id);
+
+        if (result.opStatus === ReasonPhrases.OK) {
+            this.cpmConnector?.sendSequenceInfo({
+                id: id
+            }, SequenceMessageCode.SEQUENCE_DELETED);
+        }
+
+        return result;
     }
 
     async identifyExistingSequences() {
@@ -245,13 +213,14 @@ export class Host implements IComponent {
                 this.sequencesStore.add(sequence);
                 this.logger.log("Sequence found:", sequence.config);
             }
-        } catch (e) {
+        } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences", e);
         }
     }
 
     async handleNewSequence(stream: IncomingMessage) {
         this.logger.log("New sequence incoming...");
+
         const id = IDProvider.generate();
 
         try {
@@ -262,10 +231,14 @@ export class Host implements IComponent {
 
             this.logger.log("Sequence identified:", sequence.config);
 
+            await this.cpmConnector?.sendSequenceInfo(sequence, SequenceMessageCode.SEQUENCE_CREATED);
+
             return {
                 id: sequence.id
             };
-        } catch (error) {
+        } catch (error: any) {
+            this.logger.debug(error?.stack);
+
             return {
                 opStatus: 422,
                 error
@@ -288,10 +261,19 @@ export class Host implements IComponent {
         if (sequence) {
             this.logger.log("Starting sequence", sequence.id);
 
-            const instanceId = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
+            const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
+
+            this.cpmConnector?.sendInstanceInfo({
+                id: csic.id,
+                appConfig: csic.appConfig,
+                sequenceArgs: csic.sequenceArgs,
+                sequence: seqId,
+                created: csic.info.created,
+                started: csic.info.started
+            }, InstanceMessageCode.INSTANCE_STARTED);
 
             return {
-                id: instanceId
+                id: csic.id
             };
         }
 
@@ -299,29 +281,23 @@ export class Host implements IComponent {
     }
 
     async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
-        return new Promise(async (resolve, reject) => {
-            const ldas = new LifecycleDockerAdapterSequence();
+        const ldas = new LifecycleDockerAdapterSequence();
 
-            try {
-                await ldas.init();
-                const identifyResult = await ldas.identify(stream, id);
+        await ldas.init();
+        const identifyResult = await ldas.identify(stream, id);
 
-                if (identifyResult.error) {
-                    throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", identifyResult.error);
-                }
+        if (identifyResult.error) {
+            throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", identifyResult.error);
+        }
 
-                if (identifyResult.container.image) {
-                    await ldas.fetch(identifyResult.container.image);
-                }
+        if (identifyResult.container.image) {
+            await ldas.fetch(identifyResult.container.image);
+        }
 
-                resolve(identifyResult);
-            } catch {
-                reject();
-            }
-        });
+        return identifyResult;
     }
 
-    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<string> {
+    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
         const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler);
@@ -345,9 +321,14 @@ export class Host implements IComponent {
             if (index > -1) {
                 sequence.instances.splice(index, 1);
             }
+
+            this.cpmConnector?.sendInstanceInfo({
+                id: csic.id,
+                sequence: sequence.id
+            }, InstanceMessageCode.INSTANCE_ENDED);
         });
 
-        return id;
+        return csic;
     }
 
     getCSIControllers() {
@@ -356,7 +337,7 @@ export class Host implements IComponent {
         return Object.values(this.instancesStore).map(csiController => {
             return {
                 id: csiController.id,
-                sequence: csiController.sequence,
+                sequence: csiController.sequence.id,
                 status: csiController.status
             };
         });
@@ -368,7 +349,7 @@ export class Host implements IComponent {
         return this.sequencesStore.getById(id);
     }
 
-    getSequences(): any {
+    getSequences(): ISequence[] {
         return this.sequencesStore.getSequences();
     }
 

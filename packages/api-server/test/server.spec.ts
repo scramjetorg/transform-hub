@@ -37,7 +37,6 @@ test("Methods don't throw", async t => {
     api.op("post", "/api/kill", RunnerMessageCode.KILL, comm);
     api.downstream("/api/send", new DataStream() as unknown as Writable);
     api.upstream("/api/send", new DataStream() as unknown as Readable);
-
 });
 
 after(() => sandbox.restore());

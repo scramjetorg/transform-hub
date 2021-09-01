@@ -14,7 +14,6 @@ const net = require("net");
 let protocol = "tcp";
 
 const createTCPServers = (logger: Logger): (Server | Socket)[] => {
-
     let server;
 
     portsTCP.forEach(function(port) {
@@ -50,7 +49,6 @@ const createTCPServers = (logger: Logger): (Server | Socket)[] => {
             socket.on("close", function(error: any) {
                 logger.info("Socket closed, error: " + error);
             });
-
         });
 
         server.listen(port, () => {
@@ -63,9 +61,7 @@ const createTCPServers = (logger: Logger): (Server | Socket)[] => {
     return servers;
 };
 const createUDPServers = (logger: Logger): (Server | Socket)[] => {
-
     portsUDP.forEach(function(port) {
-
         const server = dgram.createSocket("udp4");
 
         server.on("error", (error: any) => {
@@ -97,7 +93,6 @@ const createUDPServers = (logger: Logger): (Server | Socket)[] => {
  * @param _stream - input
  */
 const startServers: ReadableApp = async function(_stream: any, ...args: any) {
-
     this.logger.info("Sequence started with arguments: " + args);
 
     if (args.length > 0) protocol = args[0];

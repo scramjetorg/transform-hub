@@ -1,3 +1,18 @@
+# Introduction
+
+This repository is intended for developers that would like to:
+
+- participate in the Scramjet Transform Hub development community
+- register feature requests, issues and PRs for this product
+- build Transform Hub from source
+- dive into code
+
+For developers that would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
+
+- [Repository with Intoductory README and code samples](https://github.com/scramjetorg/scramjet-cloud-docs)
+- [NPM page for main scramjet/sth package](https://www.npmjs.com/package/@scramjet/sth)
+- [NPM page for scramjet/cli package](https://www.npmjs.com/package/@scramjet/cli)
+
 # Scramjet Transform Hub <!-- omit in toc -->
 
 Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Rasperry Pi or wherever else you'd like.

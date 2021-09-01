@@ -47,11 +47,11 @@ Feature: Host configuration
         When hub process is started with parameters "-H 0.0.0.0"
         Then API starts with "0.0.0.0" server name
         * exit hub process
+        
 
-    @ci @starts-host
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
-        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And get runner container information
         Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
@@ -59,8 +59,8 @@ Feature: Host configuration
 
     @ci @starts-host
     Scenario: HUB-001 TC-010  Default runner image
-        When hub process is started with parameters ""
-        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        When hub process is started with parameters "''"
+        And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And wait for "2000" ms
         And get runner container information
@@ -70,19 +70,18 @@ Feature: Host configuration
     @ci @starts-host
     Scenario: HUB-001 TC-011  Set runner memory limit (--runner-max-mem)
         When hub process is started with parameters "--runner-max-mem 128"
-        And sequence "../packages/samples/hello-alice-out.tar.gz" loaded
+        And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
         And instance started with arguments "/package/data.json"
         And wait for "2000" ms
         And get runner container information
         Then container memory limit is 128
         * exit hub process
 
-    @ci @starts-host
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
         When hub process is started with parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers
         And send fake stream as sequence
-        And wait for "5000" ms
+        And wait for "20000" ms
         And get last container info
         And last container uses "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7" image
         And end fake stream
@@ -93,7 +92,7 @@ Feature: Host configuration
         When hub process is started with parameters "--prerunner-max-mem 64"
         And get all containers
         And send fake stream as sequence
-        And wait for "5000" ms
+        And wait for "20000" ms
         And get last container info
         Then last container memory limit is 64
         And end fake stream

@@ -5,7 +5,6 @@ var crypto = require("crypto");
 const decoder = new StringDecoder("utf-8");
 
 export = async function(_stream: any) {
-
     this.logger.info("Sequence Checksum is called.");
     let out = "";
 
@@ -18,6 +17,5 @@ export = async function(_stream: any) {
 
     this.logger.info("Sequence Checksum hex: " + hex);
     return hex;
-
 } as TransformApp;
 

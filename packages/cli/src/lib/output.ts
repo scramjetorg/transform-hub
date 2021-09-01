@@ -21,13 +21,12 @@ export async function displayStream(
     request: Promise<ResponseStream>,
     output = process.stdout
 ): Promise<void> {
-
     try {
         const req = await request;
 
         req.data?.pipe(output);
         return new Promise((res, rej) => req.data?.on("finish", res).on("error", rej));
-    } catch (e) {
+    } catch (e: any) {
         console.error(e && e.stack || e);
         process.exitCode = e.exitCode || 1;
         return Promise.reject();

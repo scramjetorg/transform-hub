@@ -16,7 +16,6 @@ import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 
-
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
 const hostUtils = new HostUtils();
@@ -56,23 +55,27 @@ BeforeAll({ timeout: 10e3 }, async () => {
     hostClient = new HostClient(apiUrl);
     if (process.env.SCRAMJET_TEST_LOG) {
         hostClient.client.addLogger({
+            request(url) {
+                console.error(new Date().toISOString(), "Starting request to", url);
+            },
             ok(result) {
                 const {
                     status, statusText, url
                 } = result;
 
                 // eslint-disable-next-line no-console
-                console.error("Request ok:", url, `status: ${status} ${statusText}`);
+                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
                 // eslint-disable-next-line no-console
-                console.error(`Request failed with code "${code}" status: ${message}`);
+                console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
             }
         });
     }
+    await hostUtils.spawnHost();
 });
 
 AfterAll(async () => {
@@ -115,7 +118,14 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("sequence {string} loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
+When("sequence {string} loaded", { timeout: 15000 }, async (packagePath: string) => {
+    sequence = await hostClient.sendSequence(
+        createReadStream(packagePath)
+    );
+    console.log("Package successfuly loaded, sequence started.");
+});
+
+When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
 
     sequence = await hostClient.sendSequence(
@@ -256,7 +266,6 @@ When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
 });
 
 When("container is closed", async () => {
-
     if (!containerId) assert.fail();
 
     const containers = await dockerode.listContainers();
@@ -271,7 +280,6 @@ When("container is closed", async () => {
 
     assert.equal(containerExist, false);
     console.log("Container is closed.");
-
 });
 
 When("send event {string} to instance with message {string}", async (eventName, eventMessage) => {
@@ -324,7 +332,6 @@ When("instance health is {string}", async (expectedResp: string) => {
 });
 
 When("send stdin to instance with contents of file {string}", async (filePath: string) => {
-
     await instance?.sendStream("stdin", createReadStream(filePath));
 });
 
@@ -332,14 +339,20 @@ When("flood the stdin stream with {int} kilobytes", async function(kbytes: numbe
     let i = 0;
 
     await new Promise<void>((res, rej) => {
-        instance?.sendStream("stdin", BufferStream.from(function* () {
+        const stream = BufferStream.from(function* () {
             while (i < kbytes) { yield Buffer.alloc(1024, 0xdeadbeef); i++; }
-        }).on("pause", () => {
-            console.log(`Stream paused, sent ${i}kb`);
-            res();
-        }).on("end", rej));
-    });
+        });
 
+        instance?.sendStream("stdin", stream)
+            .catch(() => 0); // ignore the outcome.
+
+        stream
+            .once("pause", () => {
+                console.log(`Stream paused, sent ${i}kb`);
+                res();
+            })
+            .once("end", rej);
+    });
 });
 
 When("keep instance streams {string}", async function(streamNames) {
@@ -400,7 +413,6 @@ Then("it returns a correct load check with required properties", function() {
     assert.strictEqual(typeof data.fsSize[0].mount, "string"); //: '/'
 
     return "skip";
-
 });
 
 When("kept instance stream {string} should store {int} items divided by {string}", async (streamName, expectedCount, separator) => {
@@ -456,7 +468,6 @@ When("stream sequence logs to stderr", async () => {
 });
 
 When("send data", async () => {
-
     const status = await instance?.sendStream("input", "{\"a\": 1}", {
         type: "application/x-ndjson",
         end: true
@@ -466,7 +477,6 @@ When("send data", async () => {
 });
 
 Then("output is {string}", async (str) => {
-
     const output = await instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");

@@ -6,7 +6,6 @@ import {
     ILifeCycleAdapterMain,
     ILifeCycleAdapterIdentify,
     Logger,
-    MaybePromise,
     RunnerConfig,
     ContainerConfiguration
 } from "@scramjet/types";
@@ -19,9 +18,9 @@ import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams,
 import { defer } from "@scramjet/utility";
 
 class LifecycleDockerAdapterSequence implements
-ILifeCycleAdapterMain,
-ILifeCycleAdapterIdentify,
-IComponent {
+    ILifeCycleAdapterMain,
+    ILifeCycleAdapterIdentify,
+    IComponent {
     private dockerHelper: IDockerHelper;
 
     private prerunnerConfig?: ContainerConfiguration;
@@ -56,7 +55,7 @@ IComponent {
             .toArray();
     }
 
-    async identifyOnly(volume: string): Promise<RunnerConfig|undefined> {
+    async identifyOnly(volume: string): Promise<RunnerConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
 
         try {
@@ -138,7 +137,7 @@ IComponent {
     private async createVolume(id: string): Promise<DockerVolume> {
         try {
             return await this.dockerHelper.createVolume(id);
-        } catch (error) {
+        } catch (error: any) {
             throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
         }
     }
@@ -167,25 +166,21 @@ IComponent {
         };
     }
 
-    cleanup(): MaybePromise<void> {
-        return new Promise(async (resolve) => {
-            if (this.resources.volumeId) {
-                this.logger.log("Volume will be removed in 1 sec");
+    async cleanup(): Promise<void> {
+        if (this.resources.volumeId) {
+            this.logger.log("Volume will be removed in 1 sec");
 
-                await defer(1000);
-                await this.dockerHelper.removeVolume(this.resources.volumeId);
+            await defer(1000);
+            await this.dockerHelper.removeVolume(this.resources.volumeId);
 
-                this.logger.log("Volume removed");
-            }
+            this.logger.log("Volume removed");
+        }
 
-            if (this.resources.fifosDir) {
-                await rm(this.resources.fifosDir, { recursive: true });
+        if (this.resources.fifosDir) {
+            await rm(this.resources.fifosDir, { recursive: true });
 
-                this.logger.log("Fifo folder removed");
-            }
-
-            resolve();
-        });
+            this.logger.log("Fifo folder removed");
+        }
     }
 
     // @ts-ignore

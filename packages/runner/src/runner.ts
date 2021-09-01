@@ -11,6 +11,7 @@ import { createReadStream, createWriteStream } from "fs";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { MessageUtils } from "./message-utils";
 import { exec } from "child_process";
+import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 
 type MaybeArray<T> = T | T[];
 
@@ -98,36 +99,30 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
     }
 
-    async cleanup(): Promise<void> {
-        return new Promise(async (resolve) => {
-            this.logger.info("Cleaning up...");
+    async cleanup(): Promise<number> {
+        this.logger.info("Cleaning up...");
 
-            if (this.monitoringInterval) {
-                clearInterval(this.monitoringInterval);
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
 
-                this.logger.info("Monitoring interval removed.");
-            }
+            this.logger.info("Monitoring interval removed.");
+        }
 
-            await new Promise(async (res) => {
-                try {
-                    this.logger.info("Cleaning up streams...");
+        try {
+            this.logger.info("Cleaning up streams...");
 
-                    await this.cleanupStreams();
+            await this.cleanupStreams();
 
-                    this.logger.info("Streams clear.");
+            this.logger.info("Streams clear.");
 
-                    res(0);
-                } catch (e) {
-                    this.logger.error("Streams not clear, error.", e);
+            return 0;
+        } catch (e: any) {
+            this.logger.error("Streams not clear, error.", e);
 
-                    res(233);
-                }
-            });
-
+            return 233;
+        } finally {
             this.logger.info("Clean up completed!");
-
-            resolve();
-        });
+        }
     }
 
     async cleanupStreams(): Promise<any> {
@@ -174,25 +169,24 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async hookupInputStream() {
-        this.inputStream = createReadStream(this.inputFifoPath);
-        this.inputDataStream = StringStream
-            .from(this.inputStream as Readable, { encoding: "utf-8" })
-            .lines()
-            .parse(line => {
-                try {
-                    return JSON.parse(line);
-                } catch (e) {
-                    this.logger.error(`Parsing of input data ${e.stack}.`);
-                    return undefined;
-                }
-            })
-        ;
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        // this.inputDataStream.run();
+        // @TODO handle closing and reopening input stream
+        this.inputStream = createReadStream(this.inputFifoPath)!;
+        this.inputDataStream = new DataStream();
+
+        // do not await here, allow the rest of initialization in the caller to run
+        readInputStreamHeaders(this.inputStream!)
+            .then(headers => {
+                const contentType = headers["content-type"];
+
+                this.logger.log(`Content-Type: ${contentType}`);
+
+                mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
+            }).catch(e => {
+                this.logger.error("Error in input stream");
+                this.logger.error(e);
+            // @TODO think about how to handle errors in input stream
+            });
     }
-
-
-    // echo -e '{"abc":1}\n{"abc":2}\n' | curl -v --data-binary "@-" -H "Content-Type: text/x-ndjson" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/input"
 
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);
@@ -204,7 +198,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async hookupFifoStreams() {
         return Promise.all([
-            this.hookupLoggerStream(),
             this.hookupControlStream(),
             this.hookupMonitorStream(),
             this.hookupInputStream(),
@@ -282,11 +275,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         let sequenceError;
 
         try {
-            await this.context?.stopHandler?.call(this.context,
+            await this.context.stopHandler(
                 data.timeout,
                 data.canCallKeepalive
             );
-        } catch (err) {
+        } catch (err: any) {
             sequenceError = err;
 
             this.logger.error("Following error ocurred during stopping sequence: ", err);
@@ -319,8 +312,11 @@ export class Runner<X extends AppConfig> implements IComponent {
     async main() {
         this.logger.log("Executing main..."); // TODO: this is not working (no logger yet)
 
-        await this.hookupFifoStreams();
+        await this.hookupLoggerStream();
+
         this.initializeLogger();
+
+        await this.hookupFifoStreams();
 
         this.logger.log("Fifo and logger initialized, sending handshake...");
 
@@ -347,7 +343,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             sequence = this.getSequence();
 
             this.logger.log(`Sequence loaded, functions count: ${sequence.length}.`);
-        } catch (error) {
+        } catch (error: any) {
             if (error instanceof SyntaxError) {
                 this.logger.error("Sequence syntax error.", error.stack);
             } else {
@@ -371,7 +367,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.runSequence(sequence, args);
 
             this.logger.log("Sequence completed.");
-        } catch (error) {
+        } catch (error: any) {
             this.logger.error("Error occured during sequence execution: ", error.stack);
 
             await this.cleanup();
@@ -429,7 +425,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         /* eslint-disable-next-line import/no-dynamic-require */
         const sequenceFromFile = require(this.sequencePath);
         const _sequence: MaybeArray<ApplicationFunction> =
-            sequenceFromFile.hasOwnProperty("default") ? sequenceFromFile.default : sequenceFromFile;
+            Object.prototype.hasOwnProperty.call(sequenceFromFile, "default")
+                ? sequenceFromFile.default
+                : sequenceFromFile;
 
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
@@ -474,12 +472,12 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 out = func.call(
                     this.context,
-                    intermediate as unknown as ReadableStream<any>,
+                    stream,
                     ...args
                 );
 
                 this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
-            } catch (error) {
+            } catch (error: any) {
                 this.logger.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error.stack);
 
                 throw new RunnerError("SEQUENCE_RUNTIME_ERROR");
@@ -510,7 +508,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 if (intermediate instanceof DataStream) {
                     stream = intermediate;
-                } else if (!isPrimitive(intermediate)) {
+                } else if (intermediate !== undefined && !isPrimitive(intermediate)) {
                     stream = DataStream.from(intermediate as Readable);
                 } else {
                     stream = undefined;

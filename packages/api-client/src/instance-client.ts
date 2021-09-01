@@ -4,7 +4,6 @@ import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
 import { IDProvider } from "@scramjet/model";
 
-
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log"
 
@@ -33,7 +32,6 @@ export class InstanceClient {
 
         this._id = id;
         this.instanceURL = `instance/${this._id}`;
-
     }
 
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {
@@ -103,8 +101,8 @@ export class InstanceClient {
         return this.clientUtils.sendStream(`${this.instanceURL}/${streamId}`, stream, options);
     }
 
-    async sendInput(stream: Stream | string) {
-        return this.sendStream("input", stream);
+    async sendInput(stream: Stream | string, options ?: SendStreamOptions) {
+        return this.sendStream("input", stream, options);
     }
 
     async sendStdin(stream: Stream | string) {

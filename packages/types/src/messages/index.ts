@@ -19,3 +19,5 @@ export { InstanceConfigMessageData, InstanceConfigMessage } from "./instance-con
 export { LoadCheckStatMessage } from "./load";
 export { NetworkInfoMessage } from "./network-info";
 export { STHIDMessageData, CPMMessageSTHID } from "./sth-id";
+export { InstanceBulkMessage, InstanceMessage, InstanceMessageData } from "./instance";
+export { SequenceBulkMessage, SequenceMessage, SequenceMessageData } from "./sequence";

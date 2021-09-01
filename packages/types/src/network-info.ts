@@ -9,4 +9,3 @@ export type NetworkInfo = {
     dhcp: boolean;
 }
 
-
