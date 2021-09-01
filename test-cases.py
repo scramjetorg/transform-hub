@@ -15,7 +15,7 @@ random.seed('Pyfca')
 
 # Use to change delays mocking async function execution
 SLOMO_FACTOR = float(sys.argv[1]) if len(sys.argv) > 1 else 1
-MAX_DELAY = 3
+MAX_DELAY = 0.3
 
 
 # Transformation functions and utilities
@@ -79,7 +79,7 @@ async def async_double(x):
 
 TEST_SEQUENCE = [1,2,1,3,2,4]
 objects_with_delays = [
-    {'id': count, 'delay': value}
+    {'id': count, 'delay': 0.1 * value}
     for count, value
     in enumerate(TEST_SEQUENCE)
 ]
@@ -351,5 +351,5 @@ for test, data in tests_to_run:
     # make sure we use fresh copy of data for each test
     input_data = copy.deepcopy(data)
     asyncio.run(test(input_data))
-    time.sleep(1*SLOMO_FACTOR)
+    time.sleep(0.1 * SLOMO_FACTOR)
     utils.LogWithTimer.reset()
