@@ -23,6 +23,7 @@ import { constants } from "fs";
 import { CPMConnector } from "./cpm-connector";
 
 import { AddressInfo } from "net";
+import { ServiceDiscovery } from "./sd-adapter";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -46,6 +47,8 @@ export class Host implements IComponent {
     sequencesStore: SequenceStore = new SequenceStore();
 
     logger: Logger;
+
+    serviceDiscovery = new ServiceDiscovery();
 
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
@@ -309,6 +312,22 @@ export class Host implements IComponent {
         await csic.start();
 
         sequence.instances.push(id);
+
+        csic.once("pang", (data) => {
+            this.logger.log("PANG:", data);
+            this.serviceDiscovery.addData(csic.getOutputStream()!, data);
+/*
+            if (data.produces) {
+            }
+
+            if (data.consumes) {
+                this.serviceDiscovery.getData(sequence.config.consumes)
+                ?.pipe(
+                    csic.getInputStream()!
+                    );
+                }
+            */
+        });
 
         this.logger.log("CSIController started:", id);
 

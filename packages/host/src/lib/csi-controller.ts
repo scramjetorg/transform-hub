@@ -9,7 +9,7 @@ import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, Su
 import {
     APIRoute, AppConfig, DownstreamStreamsConfig, EventMessageData, ExitCode,
     FunctionDefinition, HandshakeAcknowledgeMessage, ICommunicationHandler,
-    InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig
+    InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig, ReadableStream, WritableStream
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
@@ -190,6 +190,11 @@ export class CSIController extends EventEmitter {
 
             return null;
         });
+
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message: any) => {
+            this.emit("pang", message[1]);
+        });
+
         this.upStreams[CC.MONITORING].resume();
     }
 
@@ -210,6 +215,7 @@ export class CSIController extends EventEmitter {
             this.startResolver?.res();
 
             this.info.started = new Date();
+            //this.emit("start", this.sequence);
         } else {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
@@ -252,20 +258,24 @@ export class CSIController extends EventEmitter {
 
             router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
-            router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
+            if (!this.sequence.config.produces) {
+                router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
+            }
 
-            router.downstream("/input", (req) => {
-                const stream = this.upStreams![CommunicationChannel.IN];
-                const contentType = req.headers["content-type"];
+            if (!this.sequence.config.consumes) {
+                router.downstream("/input", (req) => {
+                    const stream = this.upStreams![CommunicationChannel.IN];
+                    const contentType = req.headers["content-type"];
 
-                if (contentType === undefined) {
-                    throw new Error("Content-Type must be defined");
-                }
+                    if (contentType === undefined) {
+                        throw new Error("Content-Type must be defined");
+                    }
 
-                stream.write(`Content-Type: ${contentType}\r\n`);
-                stream.write("\r\n");
-                return stream;
-            }, { checkContentType: false, end: true, encoding: "utf-8" });
+                    stream.write(`Content-Type: ${contentType}\r\n`);
+                    stream.write("\r\n");
+                    return stream;
+                }, { checkContentType: false, end: true, encoding: "utf-8" });
+            }
 
             // monitoring data
             router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
@@ -342,5 +352,21 @@ export class CSIController extends EventEmitter {
             appConfig: this.appConfig,
             args: this.sequenceArgs
         };
+    }
+
+    getOutputStream(): ReadableStream<any> | undefined {
+        if (this.downStreams && this.downStreams[CC.OUT]) {
+            return this.downStreams[CC.OUT];
+        }
+
+        return undefined;
+    }
+
+    getInputStream(): WritableStream<any> | undefined {
+        if (this.downStreams && this.downStreams[CC.IN]) {
+            return this.downStreams[CC.IN];
+        }
+
+        return undefined;
     }
 }
