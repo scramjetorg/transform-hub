@@ -106,8 +106,9 @@ export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PING | RunnerMessageCode.SNAPSHOT_RESPONSE | RunnerMessageCode.SEQUENCE_STOPPED |
-    RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD | CPMMessageCode.NETWORK_INFO;
+    RunnerMessageCode.PING | RunnerMessageCode.PANG | RunnerMessageCode.SNAPSHOT_RESPONSE |
+    RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD |
+    CPMMessageCode.NETWORK_INFO;
 
 export type EncodedSerializedControlMessage = string;
 export type EncodedSerializedMonitoringMessage = string;

@@ -14,8 +14,11 @@ import { exec } from "child_process";
 import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 
 type MaybeArray<T> = T | T[];
+type Primitives = string | number | boolean | void | null;
 
-const isPrimitive = (obj: any) => ["string", "number", "boolean"].includes(typeof obj);
+export function isNotPrimitive(obj: SynchronousStreamable<any> | Primitives) : obj is SynchronousStreamable<any> {
+    return !(["string", "number", "boolean", "undefined", "null"].includes(typeof obj));
+}
 
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
@@ -191,7 +194,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);
         this.outputDataStream
-            .JSONStringify()
+            //JSONStringify()
             .pipe(this.outputStream)
         ;
     }
@@ -508,7 +511,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 if (intermediate instanceof DataStream) {
                     stream = intermediate;
-                } else if (intermediate !== undefined && !isPrimitive(intermediate)) {
+                } else if (intermediate !== undefined && isNotPrimitive(intermediate)) {
                     stream = DataStream.from(intermediate as Readable);
                 } else {
                     stream = undefined;
@@ -524,7 +527,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        if (isPrimitive(intermediate)) {
+        if (!isNotPrimitive(intermediate)) {
             this.logger.info("Primitive returned as last value");
 
             this.outputStream?.end(`${intermediate}`);
@@ -542,6 +545,12 @@ export class Runner<X extends AppConfig> implements IComponent {
                         ? this.outputStream
                         : this.outputDataStream
                 );
+
+            MessageUtils.writeMessageOnStream(
+                [RunnerMessageCode.PANG, {
+                    topic: intermediate.topic,
+                    contentType: intermediate.contentType
+                }], this.monitorStream);
         } else {
             // TODO: this should push a PANG message with the sequence description
             this.logger.info("Sequence did not output a stream");

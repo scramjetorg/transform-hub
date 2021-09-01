@@ -13,4 +13,6 @@ export type RunnerConfig = {
     sequencePath: string;
     packageVolumeId: string;
     error?: string;
+    produces: string,
+    consumes: string
 };

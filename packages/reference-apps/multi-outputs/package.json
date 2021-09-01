@@ -16,6 +16,12 @@
     "@scramjet/types": "^0.12.1",
     "@types/node": "15.12.5"
   },
+  "scramjet": {
+    "image": "node",
+    "config": {
+      "produces": "names"
+    }
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
