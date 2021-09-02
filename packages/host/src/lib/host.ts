@@ -313,20 +313,31 @@ export class Host implements IComponent {
 
         sequence.instances.push(id);
 
-        csic.once("pang", (data) => {
+        csic.on("pang", (data) => {
             this.logger.log("PANG:", data);
-            this.serviceDiscovery.addData(csic.getOutputStream()!, data);
-/*
-            if (data.produces) {
+
+            if (data.requires) {
+                this.logger.log("Sequence requires data: ", data);
+                this.serviceDiscovery.getData(
+                    {
+                        topic: data.requires,
+                        contentType: data.contentType
+                    },
+                    csic.getInputStream()!
+                );
+
+                csic.confirmInputHook().then(
+                    () => { /* noop */ },
+                    () => { /* noop */ },
+                );
             }
 
-            if (data.consumes) {
-                this.serviceDiscovery.getData(sequence.config.consumes)
-                ?.pipe(
-                    csic.getInputStream()!
-                    );
-                }
-            */
+            if (data.provides) {
+                this.logger.log("Sequence provides data: ", data);
+                this.serviceDiscovery.addData(
+                    csic.getOutputStream()!, { topic: data.provides, contentType: data.contentType }
+                );
+            }
         });
 
         this.logger.log("CSIController started:", id);
@@ -376,4 +387,3 @@ export class Host implements IComponent {
         return this.sequencesStore.getById(sequenceId).instances;
     }
 }
-

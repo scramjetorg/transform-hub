@@ -1,7 +1,5 @@
-import { ReadableApp, SynchronousStreamable } from "@scramjet/types";
+import { ReadableApp } from "@scramjet/types";
 import { PassThrough } from "stream";
-
-const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Basia", "Natalia", "Monika", "Wojtek", "Arek"];
 
 /**
  * Mutli output application.
@@ -12,8 +10,13 @@ export = async function(_stream) {
     const ps = new PassThrough();
 
     let cnt = 0;
+    let cnt2 = 0;
 
     setInterval(async () => {
+        // stdout
+        console.log(cnt);
+
+        // log
         this.logger.log(cnt);
 
         if (cnt === 0) {
@@ -28,16 +31,9 @@ export = async function(_stream) {
 
     setInterval(async () => {
         // output
-        const outputString = `{ "name": "${names[~~(Math.random() * (names.length - 1))]}" }\n`;
-
-        ps.write(outputString);
-        console.log(outputString);
+        ps.write(cnt2 + "\n");
+        cnt2++;
     }, 500);
-
-    // eslint-disable-next-line no-extra-parens
-    (ps as SynchronousStreamable<any>).topic = "abc";
-    // eslint-disable-next-line no-extra-parens
-    (ps as SynchronousStreamable<any>).contentType = "text/plain";
 
     return ps;
 } as ReadableApp<any>;

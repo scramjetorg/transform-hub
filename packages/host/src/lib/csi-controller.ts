@@ -369,4 +369,10 @@ export class CSIController extends EventEmitter {
 
         return undefined;
     }
+
+    async confirmInputHook(): Promise<void> {
+        await this.controlDataStream?.whenWrote(
+            [RunnerMessageCode.INPUT_CONTENT_TYPE, { connected: true }]
+        );
+    }
 }

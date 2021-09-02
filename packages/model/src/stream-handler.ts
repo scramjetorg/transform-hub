@@ -51,6 +51,7 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
     [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
+    [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
     [SupervisorMessageCode.CONFIG]: ConfiguredMessageHandler<SupervisorMessageCode.CONFIG>[];
     [CPMMessageCode.STH_ID]: ConfiguredMessageHandler<CPMMessageCode.STH_ID>[];
@@ -83,6 +84,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.STOP]: [],
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],
+            [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
             [SupervisorMessageCode.CONFIG]: [],
             [CPMMessageCode.STH_ID]: []
         };

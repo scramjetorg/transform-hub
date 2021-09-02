@@ -39,6 +39,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     private sequencePath: string;
     private keepAliveRequested?: boolean;
 
+    private inputResolver?: { res: Function, rej: Function };
+
     private stopExpected: boolean = false;
 
     handshakeResolver?: { res: Function, rej: Function };
@@ -80,6 +82,14 @@ export class Runner<X extends AppConfig> implements IComponent {
             const eventData = data as EventMessageData;
 
             this.emitter.emit(eventData.eventName, eventData.message);
+            break;
+        // [RunnerMessageCode.INPUT_CONTENT_TYPE, false
+        case RunnerMessageCode.INPUT_CONTENT_TYPE:
+            if ((data as any).connected) {
+                this.inputResolver?.res(data);
+            } else {
+                this.inputResolver?.rej(data);
+            }
             break;
         default:
             break;
@@ -177,18 +187,15 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.inputDataStream = new DataStream();
 
         // do not await here, allow the rest of initialization in the caller to run
-        readInputStreamHeaders(this.inputStream!)
-            .then(headers => {
-                const contentType = headers["content-type"];
+    }
 
-                this.logger.log(`Content-Type: ${contentType}`);
+    //readInputStreamHeaders(this.inputStream!)
+    async setInputContentType(headers: any) {
+        const contentType = headers["content-type"];
 
-                mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
-            }).catch(e => {
-                this.logger.error("Error in input stream");
-                this.logger.error(e);
-            // @TODO think about how to handle errors in input stream
-            });
+        this.logger.log(`Content-Type: ${contentType}`);
+
+        mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
     }
 
     async hookupOutputStream() {
@@ -344,6 +351,38 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             sequence = this.getSequence();
+
+            if (sequence.length && typeof sequence[0] !== "function") {
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        requires: sequence[0].requires,
+                        contentType: sequence[0].contentType
+                    }], this.monitorStream);
+
+                this.logger.log("Waiting for input stream");
+
+                const connected = await new Promise((res, rej) => {
+                    this.inputResolver = { res, rej };
+                });
+
+                if (connected) {
+                    this.logger.log("Input stream connected");
+
+                    await this.setInputContentType({
+                        "content-type": sequence[0].contentType
+                    });
+
+                    this.logger.log("Input ContentType set to", sequence[0].contentType);
+                } else {
+                    this.logger.log("No Input stream");
+                }
+
+                sequence.shift();
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                readInputStreamHeaders(this.inputStream!)
+                    .then((headers) => this.setInputContentType(headers));
+            }
 
             this.logger.log(`Sequence loaded, functions count: ${sequence.length}.`);
         } catch (error: any) {
@@ -546,11 +585,15 @@ export class Runner<X extends AppConfig> implements IComponent {
                         : this.outputDataStream
                 );
 
-            MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.PANG, {
-                    topic: intermediate.topic,
-                    contentType: intermediate.contentType
-                }], this.monitorStream);
+            if (intermediate.topic) {
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        provides: intermediate.topic,
+                        contentType: intermediate.contentType
+                    }],
+                    this.monitorStream
+                );
+            }
         } else {
             // TODO: this should push a PANG message with the sequence description
             this.logger.info("Sequence did not output a stream");

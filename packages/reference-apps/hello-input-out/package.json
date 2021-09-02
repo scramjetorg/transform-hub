@@ -13,10 +13,7 @@
     "node": ">=10"
   },
   "scramjet": {
-    "image": "node",
-    "config": {
-      "consumes": "names"
-    }
+    "image": "node"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "GPL-3.0",

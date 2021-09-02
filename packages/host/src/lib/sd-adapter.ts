@@ -1,24 +1,30 @@
-import { ReadableStream } from "@scramjet/types";
-import { PassThrough } from "stream";
+import { Logger, ReadableStream, WritableStream } from "@scramjet/types";
+import { getLogger } from "@scramjet/logger";
+export type dataType = {
+    topic: string;
+    contentType: string;
+}
 
 export class ServiceDiscovery {
-    dataMap = new Map<string, ReadableStream<any>>();
+    dataMap = new Map<string, { contentType: string, stream: ReadableStream<any> }>();
+    logger: Logger = getLogger(this);
 
-    addData(stream: ReadableStream<any>, config: { topic: string, contentType: string }) {
+    addData(outputStream: ReadableStream<any>, config: dataType) {
+        this.logger.log("Adding data:", config);
         if (!this.dataMap.has(config.topic)) {
-            this.dataMap.set(config.topic, stream);
+            this.dataMap.set(config.topic, {
+                contentType: config.contentType,
+                stream: outputStream
+            });
         }
     }
 
-    getData(id: string): ReadableStream<any> | undefined {
-        if (this.dataMap.has(id)) {
-            return this.dataMap.get(id);
+    getData(dataType: dataType, inputStream: WritableStream<any>): ReadableStream<any> | undefined {
+        this.logger.log("Get data:", dataType);
+        if (this.dataMap.has(dataType.topic)) {
+            this.dataMap.get(dataType.topic)?.stream.pipe(inputStream);
         }
 
-        const ps = new PassThrough();
-
-        this.dataMap.set(id, ps);
-
-        return ps;
+        return undefined;
     }
 }
