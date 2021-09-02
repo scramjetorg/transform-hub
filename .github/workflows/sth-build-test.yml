@@ -2,13 +2,13 @@ name: STH build and tests
 
 on:
   pull_request:
-    branches: [ release/*, main ]
+    branches: [ release/*, main, feature/gha-optimalization ]
 
 jobs:
   build-test-sth:
     name: Build and test STH (Nodejs ${{ matrix.node-version }})
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
 
     strategy:
       fail-fast: false
@@ -22,7 +22,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-          cache: yarn
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
@@ -42,8 +41,25 @@ jobs:
       - name: Pack sequences
         run: yarn packseq
 
+  build-docker:
+    name: Build docker image (Nodejs ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v2
+
       - name: Build Docker images
         run: yarn build:docker
+
+  run-bdd-tests:
+    name: Test STH (Nodejs ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: [ build-test-sth, build-docker ]
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v2
 
       - name: Run BDD for HUB params
         run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
