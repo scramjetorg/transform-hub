@@ -1,0 +1,30 @@
+name: Security check
+on:
+  schedule:
+    - cron: '0 10 * * 1'
+
+jobs:
+  security-check:
+    name: Analyze the source code
+
+    runs-on: ubuntu-latest 
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [14.x, 16.x]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Nodejs ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Checks for known security issues with the installed packages
+        run: yarn audit
