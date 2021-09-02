@@ -24,7 +24,7 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((resolve
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
     const host1 = "11111111-c201-4fe4-8309-111111111111";
-    const sequence1 = fs.createReadStream("../../../sth/packages/reference-apps/multi-outputs.tar.gz");
+    const sequence1 = fs.createReadStream("../../../sth/packages/reference-apps/endless-names-output.tar.gz");
     const sequence2 = fs.createReadStream("../../../sth/packages/reference-apps/hello-input-out.tar.gz");
 
     // host 1

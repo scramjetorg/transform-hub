@@ -99,7 +99,8 @@ export type ControlMessageCode =
     RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
     SupervisorMessageCode.CONFIG |
-    CPMMessageCode.STH_ID;
+    CPMMessageCode.STH_ID |
+    RunnerMessageCode.INPUT_CONTENT_TYPE;
 
 export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 

@@ -1,24 +1,18 @@
-import { TransformApp } from "@scramjet/types";
+import { Streamable, TransformApp } from "@scramjet/types";
 import { StringStream } from "scramjet";
 import { PassThrough } from "stream";
 
-// This method needs to expose a function that will be executed by the runner.
-const mod: TransformApp = function (input) {
-    const out = new PassThrough({ objectMode: true });
+const mod: (TransformApp | { requires: string, contentType: string})[] = [
+    { requires: "names", contentType: "application/x-ndjson" },
+    function (input: Streamable<any>) {
+        const out = new PassThrough({ objectMode: true });
 
-    console.log("from sequence!");
+        (input as StringStream)
+            .map((data: any) => "Name is: " + data.name + "\n")
+            .pipe(out);
 
-    // eslint-disable-next-line no-extra-parens
-    // eslint-disable-next-line
-    (input as unknown as StringStream)
-        .map((data: any) => {
-            console.log(data);
-
-            return "Name is: " + data.name + "\n";
-        })
-        .pipe(out);
-
-    return out;
-};
+        return out;
+    }
+];
 
 export default mod;
