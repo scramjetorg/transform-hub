@@ -35,6 +35,8 @@ export class CSIController extends EventEmitter {
         created?: Date,
         started?: Date
     } = {};
+    provides?: string;
+    requires?: string;
     initResolver?: { res: Function, rej: Function };
     startResolver?: { res: Function, rej: Function };
     startPromise: Promise<void>;
@@ -196,6 +198,9 @@ export class CSIController extends EventEmitter {
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message: any) => {
             const pangData = message[1];
+
+            this.provides = pangData.provides;
+            this.requires = pangData.requires;
 
             if (pangData.requires === "") {
                 this.apiInputEnabled = true;

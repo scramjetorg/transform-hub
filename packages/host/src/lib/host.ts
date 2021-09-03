@@ -356,6 +356,10 @@ export class Host implements IComponent {
                 id: csic.id,
                 sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);
+
+            if (csic.provides && csic.provides !== "") {
+                this.serviceDiscovery.removeData(csic.provides);
+            }
         });
 
         return csic;

@@ -27,4 +27,11 @@ export class ServiceDiscovery {
 
         return undefined;
     }
+
+    removeData(topic: string) {
+        if (this.dataMap.has(topic)) {
+            this.dataMap.get(topic)?.stream.unpipe();
+            this.dataMap.delete(topic);
+        }
+    }
 }
