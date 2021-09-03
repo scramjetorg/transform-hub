@@ -360,6 +360,13 @@ export class Host implements IComponent {
             if (csic.provides && csic.provides !== "") {
                 this.serviceDiscovery.removeData(csic.provides);
             }
+
+            if (csic.requires && csic.requires !== "") {
+            // TODO
+            // get topic stream from service discovery
+            // topic.stream.unpipe(csic.upStreams![CommunicationChannel.IN]) --upStreams is private property
+
+            }
         });
 
         return csic;
