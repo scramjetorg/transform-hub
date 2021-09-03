@@ -7,7 +7,7 @@ import { DataStream } from "scramjet";
 import { RunnerMessageCode } from "@scramjet/symbols";
 /* eslint-disable-next-line import/no-extraneous-dependencies */
 import { MessageUtils, Runner } from "@scramjet/runner";
-// const readInputHeaders = require("../src/input-stream");
+import { ReadableStream } from "@scramjet/types";
 const controlMockStream = new PassThrough() as unknown as fs.ReadStream;
 const monitorMockStream = new PassThrough() as unknown as fs.WriteStream;
 const createReadStreamStub = () => controlMockStream;
@@ -18,7 +18,6 @@ const sequence = [
     (input: Readable) => Promise.resolve(input)
 ];
 
-// sinon.stub(readInputHeaders, "readInputStreamHeaders").returns("");
 sinon.stub(fs, "createReadStream").returns(createReadStreamStub());
 sinon.stub(fs, "createWriteStream").returns(createWriteStreamStub());
 sinon.stub(MessageUtils, "writeMessageOnStream").callsFake(writeMessageOnStreamMock);
@@ -39,7 +38,7 @@ test("Run main", async (t: any) => {
         // eslint-disable-next-line no-console
         runner["loggerStream"] = new DataStream().each(console.log);
         runner["monitorStream"] = new Writable();
-        runner["inputStream"] = new Readable();
+        runner["inputStream"] = new DataStream() as unknown as ReadableStream<any>;
         return Promise.resolve([undefined, undefined, undefined, undefined]);
     });
     const sendHandshakeMessage = sinon.stub(runner, "sendHandshakeMessage");
@@ -51,7 +50,6 @@ test("Run main", async (t: any) => {
         appConfig: {},
         args: []
     });
-    // runner.setInputContentType = sinon.stub().resolves();
 
     await runner.main().catch((e) => {
         console.error(e);
@@ -81,7 +79,7 @@ test("Stop sequence", async (t: any) => {
         runner["loggerStream"] = new DataStream().each(console.log);
         runner["monitorStream"] = new Writable();
         runner["controlStream"] = new Readable();
-        runner["inputStream"] = new Readable();
+        runner["inputStream"] = new DataStream() as unknown as ReadableStream<any>;
         runner["outputStream"] = new Writable();
 
         return Promise.resolve([undefined, undefined, undefined, undefined]);
