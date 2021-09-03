@@ -39,6 +39,9 @@ export class CSIController extends EventEmitter {
     startResolver?: { res: Function, rej: Function };
     startPromise: Promise<void>;
 
+    apiOutput = new PassThrough();
+    apiInputEnabled = false;
+
     /**
      * Streams connected do API.
      */
@@ -192,6 +195,16 @@ export class CSIController extends EventEmitter {
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message: any) => {
+            const pangData = message[1];
+
+            if (pangData.requires === "") {
+                this.apiInputEnabled = true;
+            }
+
+            if (pangData.provides === "") {
+                this.upStreams![CommunicationChannel.OUT].pipe(this.apiOutput);
+            }
+
             this.emit("pang", message[1]);
         });
 
@@ -215,7 +228,6 @@ export class CSIController extends EventEmitter {
             this.startResolver?.res();
 
             this.info.started = new Date();
-            //this.emit("start", this.sequence);
         } else {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
@@ -246,35 +258,38 @@ export class CSIController extends EventEmitter {
 
     createInstanceAPIRouter() {
         if (this.upStreams) {
-            const router = getRouter();
+            this.router = getRouter();
 
-            router.get("/", () => {
+            this.router.get("/", () => {
                 return this.getInfo();
             });
 
-            router.upstream("/stdout", this.upStreams[CommunicationChannel.STDOUT]);
-            router.upstream("/stderr", this.upStreams[CommunicationChannel.STDERR]);
-            router.downstream("/stdin", this.upStreams[CommunicationChannel.STDIN], { end: true });
+            this.router.upstream("/stdout", this.upStreams[CommunicationChannel.STDOUT]);
+            this.router.upstream("/stderr", this.upStreams[CommunicationChannel.STDERR]);
+            this.router.downstream("/stdin", this.upStreams[CommunicationChannel.STDIN], { end: true });
 
-            router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
+            this.router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
-            router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
+            this.router.upstream("/output", this.apiOutput);
+            this.router.downstream("/input", (req) => {
+                if (this.apiInputEnabled) {
+                    const stream = this.upStreams![CommunicationChannel.IN];
+                    const contentType = req.headers["content-type"];
 
-            router.downstream("/input", (req) => {
-                const stream = this.upStreams![CommunicationChannel.IN];
-                const contentType = req.headers["content-type"];
+                    if (contentType === undefined) {
+                        throw new Error("Content-Type must be defined");
+                    }
 
-                if (contentType === undefined) {
-                    throw new Error("Content-Type must be defined");
+                    stream.write(`Content-Type: ${contentType}\r\n`);
+                    stream.write("\r\n");
+                    return stream;
                 }
 
-                stream.write(`Content-Type: ${contentType}\r\n`);
-                stream.write("\r\n");
-                return stream;
+                return { opStatus: 406, error: "Input provided in other way." };
             }, { checkContentType: false, end: true, encoding: "utf-8" });
 
             // monitoring data
-            router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
+            this.router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
 
             // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
             // router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
@@ -292,7 +307,7 @@ export class CSIController extends EventEmitter {
                 localEmitter.emit(event.eventName, event);
             });
 
-            router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
+            this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
                 const name = req.params?.name;
 
                 if (!name) throw new HostError("EVENT_NAME_MISSING");
@@ -320,20 +335,18 @@ export class CSIController extends EventEmitter {
                 localEmitter.once(name, res);
             });
 
-            router.get("/event/:name", async (req) => {
+            this.router.get("/event/:name", async (req) => {
                 if (req.params?.name && localEmitter.lastEvents[req.params?.name])
                     return localEmitter.lastEvents[req.params?.name];
                 return awaitEvent(req);
             });
-            router.get("/once/:name", awaitEvent);
+            this.router.get("/once/:name", awaitEvent);
 
             // operations
-            router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
-            router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
-            router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
-            router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
-
-            this.router = router;
+            this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+            this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
+            this.router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
+            this.router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
         } else {
             throw new AppError("UNATTACHED_STREAMS");
         }

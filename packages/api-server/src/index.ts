@@ -39,8 +39,8 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
             res.end();
         },
         errorHandler: (err, req, res) => {
-            res.writeHead(err.code || 500, err.httpMessage);
             log.write({ date: Date.now(), method: req.method, url: req.url, error: err.stack } as any);
+            res.writeHead(err.code || 500, err.httpMessage);
             if (conf.verbose) res.end(err.stack);
             else res.end();
         }
