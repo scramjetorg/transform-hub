@@ -379,9 +379,14 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 sequence.shift();
             } else {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        requires: ""
+                    }], this.monitorStream);
+
                 readInputStreamHeaders(this.inputStream!)
-                    .then((headers) => this.setInputContentType(headers));
+                    .then((headers) => this.setInputContentType(headers))
+                    .then(() => 1, () => 0);
             }
 
             this.logger.log(`Sequence loaded, functions count: ${sequence.length}.`);
@@ -585,15 +590,13 @@ export class Runner<X extends AppConfig> implements IComponent {
                         : this.outputDataStream
                 );
 
-            if (intermediate.topic) {
-                MessageUtils.writeMessageOnStream(
-                    [RunnerMessageCode.PANG, {
-                        provides: intermediate.topic,
-                        contentType: intermediate.contentType
-                    }],
-                    this.monitorStream
-                );
-            }
+            MessageUtils.writeMessageOnStream(
+                [RunnerMessageCode.PANG, {
+                    provides: intermediate.topic || "",
+                    contentType: intermediate.contentType || ""
+                }],
+                this.monitorStream
+            );
         } else {
             // TODO: this should push a PANG message with the sequence description
             this.logger.info("Sequence did not output a stream");
