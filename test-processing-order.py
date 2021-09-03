@@ -61,8 +61,13 @@ async def test_processing_order_without_waiting(input_data):
     results = await asyncio.gather(*reads)
     pprint(results)
     check_order(results)
-    print_some_helpful_info(function_calls)
+    incr_order, dbl_order, sqr_order = extract_ordering(function_calls)
 
+    # first transformation function should be called in the same order as input
+    assert incr_order == [0, 1, 2, 3, 4, 5]
+    # 2nd and 3rd functions should be called first on items with even id (as
+    # they are processed by first function immediately)
+    assert dbl_order == sqr_order == [0, 2, 4, 1, 3, 5]
     assert function_calls == [
         ('increment', 0),
         ('square', 0),
@@ -99,8 +104,15 @@ async def test_processing_order_with_waiting(input_data):
     results = await asyncio.gather(*reads)
     pprint(results)
     check_order(results)
-    print_some_helpful_info(function_calls)
+    incr_order, dbl_order, sqr_order = extract_ordering(function_calls)
 
+    # first transformation function should be called in the same order as input
+    assert incr_order == [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    # 2nd and 3rd functions should be called first on items with even id (as
+    # they are processed by first function immediately) and then with odd id,
+    # in batches of 4. Note that 0th element returns immediately so the first
+    # "batch" starts at 1.
+    assert dbl_order == sqr_order == [0, 2, 4, 1, 3, 6, 8, 5, 7]
     assert function_calls == [
         ('increment', 0),
         ('square', 0),
@@ -137,14 +149,14 @@ def check_order(results):
     print('Order of output items:', output_order)
     assert output_order == list(range(len(results)))
 
-def print_some_helpful_info(fcalls):
+def extract_ordering(fcalls):
     incrementing_order = [id for fname, id in fcalls if fname == 'increment']
     doubling_order = [id for fname, id in fcalls if fname == 'double']
     squaring_order = [id for fname, id in fcalls if fname == 'square']
     print('Order of "increment" calls:', incrementing_order)
     print('Order of "double" calls:', doubling_order)
     print('Order of "square" calls:', squaring_order)
-
+    return incrementing_order, doubling_order, squaring_order
 
 # run tests
 print(f"\n\nRunning {strong}test_processing_order_without_waiting{reset}:\n")
