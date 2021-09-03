@@ -15,7 +15,7 @@ random.seed('Pyfca')
 
 # Use to change delays mocking async function execution
 SLOMO_FACTOR = float(sys.argv[1]) if len(sys.argv) > 1 else 1
-MAX_DELAY = 3
+MAX_DELAY = 0.3
 
 
 # Transformation functions and utilities
@@ -79,7 +79,7 @@ async def async_double(x):
 
 TEST_SEQUENCE = [1,2,1,3,2,4]
 objects_with_delays = [
-    {'id': count, 'delay': value}
+    {'id': count, 'delay': 0.1 * value}
     for count, value
     in enumerate(TEST_SEQUENCE)
 ]
@@ -89,6 +89,8 @@ objects_with_values = [
     in enumerate(TEST_SEQUENCE)
 ]
 MAX_PARALLEL = 4
+def monotonic_sequence(n):
+    return [{'id': i} for i in range(n)]
 
 async def test_write_then_read_concurrently(input_data):
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -97,6 +99,7 @@ async def test_write_then_read_concurrently(input_data):
     reads = [p.read() for _ in input_data]
     results = await asyncio.gather(*reads)
     log_results(results)
+    # items should appear in the output unchanged and in the same order
     assert results == input_data
 
 async def test_write_then_read_sequentially(input_data):
@@ -105,6 +108,7 @@ async def test_write_then_read_sequentially(input_data):
         p.write(x)
     results = [await p.read() for _ in input_data]
     log_results(results)
+    # items should appear in the output unchanged and in the same order
     assert results == input_data
 
 async def test_write_and_read_in_turn(input_data):
@@ -115,6 +119,7 @@ async def test_write_and_read_in_turn(input_data):
         reads.append(p.read())
     results = await asyncio.gather(*reads)
     log_results(results)
+    # items should appear in the output unchanged and in the same order
     assert results == input_data
 
 async def test_reads_before_write(input_data):
@@ -124,16 +129,18 @@ async def test_reads_before_write(input_data):
         p.write(x)
     results = await asyncio.gather(*reads)
     log_results(results)
+    # items should appear in the output unchanged and in the same order
     assert results == input_data
 
 async def test_reads_exceeding_writes(input_data):
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
     for x in input_data:
         p.write(x)
-    reads = [p.read() for _ in input_data + [True]*4]
+    reads = [p.read() for _ in range(len(input_data) + 4)]
     p.end()
     results = await asyncio.gather(*reads)
     log_results(results)
+    # Reads exceeding writes should return None (if accepting input stops).
     assert results == input_data + [None]*4
 
 async def test_reads_after_end(input_data):
@@ -141,39 +148,67 @@ async def test_reads_after_end(input_data):
     for x in input_data:
         p.write(x)
     p.end()
-    reads = [p.read() for _ in input_data + [True]*4]
+    reads = [p.read() for _ in range(len(input_data) + 4)]
     results = await asyncio.gather(*reads)
     log_results(results)
+    # It should be possible to read after pyfca stopped accepting input.
+    # Reads exceeding writes should return None.
     assert results == input_data + [None]*4
 
-# TODO: pass one round of actual data - right now we're checking placeholders
-async def test_synchronous_writing(input_data):
-    loop = asyncio.get_event_loop()
-    event_loop_ran = False
-
-    def update_event_loop_status():
-        nonlocal event_loop_ran
-        event_loop_ran = True
-
-    def check_event_loop(expected):
-        log(f'Did event loop run already? {cyan}{event_loop_ran}{reset}')
-        assert event_loop_ran == expected
-
-    loop.call_soon(update_event_loop_status)
-
+# If the number of items being processed is below limit, write() should return
+# a future that resolves immediately (and therefore code that awaits it should
+# actually run synchronously).
+async def test_synchronous_draining(input_data):
     p = pyfca.Pyfca(MAX_PARALLEL, identity)
+    event_loop_flag = None
 
-    # Writes up till MAX_PARALLEL-th should resolve immediately
-    for x in input_data[:MAX_PARALLEL-1]:
-        drain = p.write(x)
-        log_drain_status(drain, x)
-        assert drain.done() == True
-        await drain
-        check_event_loop(False)
+    def start_sync_check():
+        log('The following sequence of instructions should be synchronous.')
+        nonlocal event_loop_flag
+        event_loop_flag = False
+        def update_flag():
+            log('Next event loop iteration.')
+            nonlocal event_loop_flag
+            event_loop_flag = True
+        # schedule for next event loop iteration
+        asyncio.get_event_loop().call_soon(update_flag)
 
-    # pass control to event loop
-    await asyncio.sleep(0)
-    check_event_loop(True)
+    def check_async(expected):
+        log(f'Did next iteration of event loop start already? '
+            f'{cyan}{event_loop_flag}{reset}')
+        assert event_loop_flag == expected
+
+    async def write_below_limit():
+        for _ in range(MAX_PARALLEL - 1):
+            item = input_data.pop(0)
+            drain = p.write(item)
+            log_drain_status(drain, item)
+            # Writes up till MAX_PARALLEL-1 should report below limit
+            assert drain.done() == True
+            # This should resolve synchronously
+            await drain
+
+    # Note that we run the test twice because the results may differ for the
+    # first MAX_PARALLEL items (e.g. the algorithm may return placeholders etc.)
+    for i in range(2):
+        log(f'Start batch #{i+1}')
+        start_sync_check()
+
+        # Writes up till MAX_PARALLEL-1 should resolve immediately
+        await write_below_limit()
+        check_async(False)
+
+        # Create readers so the queue won't get stuck. This is still synchronous.
+        reads = [p.read() for _ in range(MAX_PARALLEL)]
+        check_async(False)
+
+        # MAX_PARALLEL-th write should reach the limit and awaiting on it
+        # should trigger entering event loop and processing previous items
+        await p.write(input_data.pop(0))
+        check_async(True)
+
+        # clean up the queue.
+        await asyncio.gather(*reads)
 
 async def read_with_debug(pyfca, live_results=None):
     """Log received result and update result list immediately."""
@@ -184,28 +219,28 @@ async def read_with_debug(pyfca, live_results=None):
     return result
 
 async def test_limit_waiting_until_items_are_processed(input_data):
-    loop = asyncio.get_event_loop()
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
 
     results = []
     reads = [read_with_debug(p, results) for _ in input_data]
     read_futures = asyncio.gather(*reads)
 
-    def check_results(expected_len):
+    def check(written_count, expected_len):
+        log(f'Drain after {written_count} items written, '
+            f'at least {expected} results should be ready')
         assert len(results) >= expected_len
 
     for items_written, x in enumerate(input_data, start=1):
         drain = p.write(x)
         await drain
         log_drain_status(drain, x)
-        expected_results = items_written - MAX_PARALLEL + 1
-        log(f'Drain after {items_written} items written, '
-            f'at least {expected_results} results should be ready')
+        expected = items_written - MAX_PARALLEL + 1
         # wait one event loop iteration so that appropriate read is evaluated
-        loop.call_soon(check_results, expected_results)
+        asyncio.get_event_loop().call_soon(check, items_written, expected)
 
     await read_futures
-    log('Results:'); pprint(results)
+    log_results(results)
+    # items should appear in the output unchanged and in the same order
     assert results == input_data
 
 async def test_limit_waiting_for_reads(input_data):
@@ -222,6 +257,7 @@ async def test_limit_waiting_for_reads(input_data):
 
     next_item = input_data[MAX_PARALLEL-1]
     drain = p.write(next_item)
+    # Pyfca should report that the limit was reached.
     check_drain(False)
 
     # Wait until all items are processed (we need to first ensure that
@@ -237,6 +273,23 @@ async def test_limit_waiting_for_reads(input_data):
     await asyncio.sleep(0)
     check_drain(True)
 
+async def test_writing_above_limit(input_data):
+    p = pyfca.Pyfca(MAX_PARALLEL, identity)
+
+    # Writing shouldn't block if we exceed the limit.
+    writes = [p.write(x) for x in input_data]
+    assert len(writes) > MAX_PARALLEL
+
+    # First writes should report that they were below the limit
+    for drain in writes[:MAX_PARALLEL-1]:
+        assert drain.done() == True
+    # After reaching the limit write() should return an unresolved future
+    for drain in writes[MAX_PARALLEL-1:]:
+        assert drain.done() == False
+
+    # collect results to avoid CancelledError and "coroutine was never awaited"
+    reads = [p.read() for _ in input_data]
+    await asyncio.gather(*reads)
 
 
 async def test_multitransform(input_data):
@@ -247,11 +300,13 @@ async def test_multitransform(input_data):
         p.write(x)
     reads = [p.read() for _ in input_data]
     results = await asyncio.gather(*reads)
-    log('Results:'); pprint(results)
+    log_results(results)
     # remove debug information
     for r in results:
         if '_pyfca_status' in r:
              del r['_pyfca_status']
+    # multiple transformations should be applied to each element, and they
+    # should arrive in the same order they were written in.
     assert results == [
         {'id': 0, 'value': 3},
         {'id': 1, 'value': 5},
@@ -268,11 +323,12 @@ async def test_sync_chain(input_data):
         p.write(x)
     reads = [p.read() for _ in input_data]
     results = await asyncio.gather(*reads)
-    log('Results:'); pprint(results)
+    log_results(results)
     # remove debug information
     for r in results:
         if '_pyfca_status' in r:
              del r['_pyfca_status']
+    # Using synchronous functions as transformations should work.
     assert results == [
         {'id': 0, 'value': 4},
         {'id': 1, 'value': 6},
@@ -292,9 +348,10 @@ tests_to_run = [
     (test_reads_before_write,                      objects_with_values),
     (test_reads_exceeding_writes,                  objects_with_values),
     (test_reads_after_end,                         objects_with_values),
-    (test_synchronous_writing,                     objects_with_values),
+    (test_synchronous_draining,                    monotonic_sequence(2*MAX_PARALLEL)),
     (test_limit_waiting_until_items_are_processed, objects_with_delays),
     (test_limit_waiting_for_reads,                 objects_with_values),
+    (test_writing_above_limit,                     monotonic_sequence(2*MAX_PARALLEL)),
     (test_multitransform,                          objects_with_values),
     (test_sync_chain,                              objects_with_values),
 ]
@@ -306,5 +363,5 @@ for test, data in tests_to_run:
     # make sure we use fresh copy of data for each test
     input_data = copy.deepcopy(data)
     asyncio.run(test(input_data))
-    time.sleep(1*SLOMO_FACTOR)
+    time.sleep(0.1 * SLOMO_FACTOR)
     utils.LogWithTimer.reset()
