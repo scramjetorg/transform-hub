@@ -7,6 +7,7 @@ const mod: (TransformApp | { requires: string, contentType: string})[] = [
     function(input: Streamable<any>) {
         const out = new PassThrough({ objectMode: true });
 
+        console.log("Instance started");
         // eslint-disable-next-line no-extra-parens
         (input as StringStream)
             .map((data: any) => "Name is: " + data.name + "\n")
