@@ -107,6 +107,8 @@ export class ClientUtils implements HttpClient {
 
         if (typeof end !== "undefined") headers["x-end-stream"] = end ? "true" : "false";
 
+        console.log(url, headers);
+
         return this.post(
             url,
             stream,

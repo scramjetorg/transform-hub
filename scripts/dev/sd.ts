@@ -5,8 +5,10 @@ import { HostClient } from "@scramjet/api-client";
 import { StringDecoder } from "string_decoder";
 import { Stream } from "stream";
 import { resolve } from "path";
+
+const SCENARIO: number = 1;
 const execPromise = (cmd: string, args: string[]) => new Promise<ChildProcess>((res, _rej) => {
-    const proc = spawn(cmd, args);
+    const proc = spawn(cmd, args, { env: { DEVELOPMENT: "true" } });
 
     res(proc);
 });
@@ -46,18 +48,51 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
     console.log("Host 1 started");
 
     const hostClient = new HostClient("http://localhost:8000/api/v1");
-    const seq1 = await hostClient.sendSequence(sequence1);
-    const seq2 = await hostClient.sendSequence(sequence2);
-    //
 
-    await seq1.start({}, []);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let seq1, seq2, inst1, inst2;
 
-    const inst2 = await seq2.start({}, []);
-    //
-    //const inst1Output = (await inst1.getStream("output")).data;
+    switch (SCENARIO) {
+    case 1:
+        seq1 = await hostClient.sendSequence(sequence1);
+        seq2 = await hostClient.sendSequence(sequence2);
 
-    //await inst2.sendStream("input", inst1Output, { type: "application/x-ndjson", end: false });
+        await seq1.start({}, []);
 
-    (await inst2.getStream("output")).data?.pipe(process.stdout);
+        inst2 = await seq2.start({}, []);
+
+        (await inst2.getStream("output")).data?.pipe(process.stdout);
+
+        break;
+    case 2:
+        seq2 = await hostClient.sendSequence(sequence2);
+
+        await hostClient.sendNamedData(
+            "names",
+            fs.createReadStream(resolve(__dirname, "names.json")),
+            "application/x-ndjson"
+        ).then(() => {
+            console.log("resolved");
+        }).catch(e => {
+            console.error(e);
+        });
+
+        inst2 = await seq2.start({}, []);
+
+        (await inst2.getStream("output")).data?.pipe(process.stdout);
+
+        await hostClient.sendNamedData(
+            "names",
+            fs.createReadStream(resolve(__dirname, "names.json")),
+            "application/x-ndjson"
+        ).then(() => {
+            console.log("resolved");
+        }).catch(e => {
+            console.error(e);
+        });
+
+        break;
+    default:
+        break;
+    }
 })();
-

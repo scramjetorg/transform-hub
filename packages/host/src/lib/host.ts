@@ -2,7 +2,7 @@ import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
+import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence, WritableStream } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -154,6 +154,30 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
         this.api.get(`${this.apiBase}/load-check`, () => loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, () => ({ version }));
+
+        this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
+        this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
+            // eslint-disable-next-line no-extra-parens
+            const params = (req as ParsedMessage).params || {};
+            const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
+
+            if (sdTarget) {
+                req.pipe(sdTarget as WritableStream<any>);
+            } else {
+                this.serviceDiscovery.addData(
+                    req,
+                    { contentType: req.headers["content-type"] || "", topic: params.name }
+                );
+            }
+
+            return {};
+        }, { checkContentType: false, end: false });
+
+        this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
+            const params = req.params || {};
+
+            return this.serviceDiscovery.getByTopic(params.name)!.stream as Readable;
+        });
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
     }
