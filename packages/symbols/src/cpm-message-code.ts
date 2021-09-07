@@ -7,5 +7,7 @@ export enum CPMMessageCode {
     INSTANCES = 7003,
     SEQUENCES = 7004,
     INSTANCE = 7005,
-    SEQUENCE = 7006
+    SEQUENCE = 7006,
+
+    TOPIC = 7007
 }

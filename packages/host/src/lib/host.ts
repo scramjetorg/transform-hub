@@ -339,28 +339,37 @@ export class Host implements IComponent {
 
         csic.on("pang", (data) => {
             this.logger.log("PANG:", data);
+            let notifyCPM = false;
 
             if (data.requires) {
+                notifyCPM = true;
+
                 this.logger.log("Sequence requires data: ", data);
                 this.serviceDiscovery.getData(
                     {
                         topic: data.requires,
                         contentType: data.contentType
                     },
-                    csic.getInputStream()!
+                    csic.getInputStream()
                 );
 
                 csic.confirmInputHook().then(
                     () => { /* noop */ },
-                    () => { /* noop */ },
+                    (e: any) => { this.logger.error(e); },
                 );
             }
 
             if (data.provides) {
+                notifyCPM = true;
+
                 this.logger.log("Sequence provides data: ", data);
                 this.serviceDiscovery.addData(
                     csic.getOutputStream()!, { topic: data.provides, contentType: data.contentType }
                 );
+            }
+
+            if (notifyCPM) {
+                this.cpmConnector?.sendTopicInfo(data);
             }
         });
 
