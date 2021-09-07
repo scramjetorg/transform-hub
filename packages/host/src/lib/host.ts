@@ -175,8 +175,15 @@ export class Host implements IComponent {
 
         this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
             const params = req.params || {};
+            const contentType = req.headers["content-type"] || "application/x-ndjson"; //TODO: what should be the default content type and where to store this information?
 
-            return this.serviceDiscovery.getByTopic(params.name)!.stream as Readable;
+            return this.serviceDiscovery.getData(
+                {
+                    topic: params.name,
+                    contentType: contentType
+                },
+                _res
+            ) as Readable;
         });
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
