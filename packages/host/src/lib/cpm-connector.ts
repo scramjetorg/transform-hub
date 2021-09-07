@@ -269,5 +269,11 @@ export class CPMConnector extends EventEmitter {
             JSON.stringify([CPMMessageCode.INSTANCE, { ...instance, status: instanceStatus }]) + "\n"
         );
     }
+
+    async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string }) {
+        await this.communicationStream?.whenWrote(
+            JSON.stringify([CPMMessageCode.TOPIC, { ...data, status: "add" }]) + "\n"
+        );
+    }
 }
 
