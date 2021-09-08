@@ -75,6 +75,7 @@ export class Host implements IComponent {
 
         if (this.config.cpmUrl) {
             this.cpmConnector = new CPMConnector(this.config.cpmUrl);
+            this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
 
@@ -371,7 +372,9 @@ export class Host implements IComponent {
 
                 this.logger.log("Sequence provides data: ", data);
                 this.serviceDiscovery.addData(
-                    csic.getOutputStream()!, { topic: data.provides, contentType: data.contentType }
+                    csic.getOutputStream()!,
+                    { topic: data.provides, contentType: data.contentType },
+                    csic.id
                 );
             }
 
@@ -398,13 +401,15 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             if (csic.provides && csic.provides !== "") {
-                this.serviceDiscovery.removeData(csic.provides);
+                //this.serviceDiscovery.removeData(csic.provides);
+                csic.getOutputStream()!.unpipe();
+                this.serviceDiscovery.removeLocalProvider(csic.provides);
             }
 
             if (csic.requires && csic.requires !== "") {
-            // TODO
-            // get topic stream from service discovery
-            // topic.stream.unpipe(csic.upStreams![CommunicationChannel.IN]) --upStreams is private property
+                // TODO
+                // get topic stream from service discovery
+                // topic.stream.unpipe(csic.upStreams![CommunicationChannel.IN]) --upStreams is private property
 
             }
         });
