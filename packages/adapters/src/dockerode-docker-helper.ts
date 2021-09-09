@@ -156,7 +156,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
-    private pulledImages: {[key: string]: Promise<void>} = {};
+    private pulledImages: {[key: string]: Promise<void>|undefined} = {};
 
     async pullImage(name: string, ifNeeded: boolean) {
         if (this.pulledImages[name]) return this.pulledImages[name];
