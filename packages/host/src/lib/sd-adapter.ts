@@ -42,7 +42,9 @@ export class ServiceDiscovery {
             outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>);
         }
 
-        this.cpmConnector?.sendTopic(config.topic, this.dataMap.get(config.topic)!.stream as ReadableStream<any>);
+        if (localProvider) {
+            this.cpmConnector?.sendTopic(config.topic, this.dataMap.get(config.topic)!.stream as ReadableStream<any>);
+        }
     }
 
     getTopics() {

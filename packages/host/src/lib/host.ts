@@ -167,7 +167,8 @@ export class Host implements IComponent {
             } else {
                 this.serviceDiscovery.addData(
                     req,
-                    { contentType: req.headers["content-type"] || "", topic: params.name }
+                    { contentType: req.headers["content-type"] || "", topic: params.name },
+                    "api"
                 );
             }
 
@@ -182,8 +183,7 @@ export class Host implements IComponent {
                 {
                     topic: params.name,
                     contentType: contentType
-                },
-                _res
+                }
             ) as Readable;
         });
 

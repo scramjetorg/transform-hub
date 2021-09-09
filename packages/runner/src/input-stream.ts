@@ -73,10 +73,7 @@ export function mapToInputDataStream(stream: Readable, contentType: string): Dat
     if (contentType.endsWith("x-ndjson")) {
         return StringStream
             .from(stream, { encoding: "utf-8" })
-            .JSONParse(true)
-            .catch((error: any) => {
-                console.error("mapToInputDataStream", error);
-            });
+            .JSONParse(true);
     } else if (contentType === "text/plain") {
         return StringStream.from(stream, { encoding: "utf-8" });
     } else if (contentType === "application/octet-stream") {

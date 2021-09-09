@@ -1271,6 +1271,18 @@
   dependencies:
     "@octokit/openapi-types" "^10.0.0"
 
+"@scramjet/symbols@^0.11.0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.11.0.tgz#7d7444cbd05f1fadbd7652e841c4961285c85773"
+  integrity sha512-UTuQVFy3IuG+un1B//k9dDoZEngsP0irJtTQamhzx5cd7AQzJUfGpwPVfgMhjcyEBKVrrGOUJIBFXO0cg8B0jw==
+
+"@scramjet/types@^0.11.0-0":
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.11.0.tgz#3ac9842369c3ba31252155685799dd25825956af"
+  integrity sha512-Su84o3LxbsETCdm5I2LTYOaWjbsMM4XFPLzMSc4L2znAmnpZQf9D1q32frvPFb9vZRHHn9Cn3jkdyWAqC1eT0g==
+  dependencies:
+    "@scramjet/symbols" "^0.11.0"
+
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"
@@ -6430,7 +6442,7 @@ scramjet-core@^4.32.0:
   resolved "https://registry.yarnpkg.com/scramjet-core/-/scramjet-core-4.32.0.tgz#fe25081c5f80fc7f948c7dbe49a0d3291834a09c"
   integrity sha512-74F/2knCThhWuoh2Ucc0gLXyCN6MXve8kThS3dMFiJwIjgfE/FyislMIYmrtzDoPnzFCENo+dAcZXbqoGIi4CQ==
 
-scramjet@4.36.0, scramjet@^4.36.0:
+scramjet@4.36.0, scramjet@^4.35.20, scramjet@^4.36.0:
   version "4.36.0"
   resolved "https://registry.yarnpkg.com/scramjet/-/scramjet-4.36.0.tgz#d5e0365590fcc6d1afc5d483002e7f97c13d3711"
   integrity sha512-YQ2w3mtie5RmQQVIoj+NlNf+VwhxaTEsRhorAPC9pTsvbQhroa313E/jCoyCvWLfKxJg7PQkZJoU3t/sq7G5Yg==
