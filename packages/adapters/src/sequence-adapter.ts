@@ -1,6 +1,6 @@
 import { configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
-import { SupervisorError } from "@scramjet/model";
+import { HostError, SupervisorError } from "@scramjet/model";
 import {
     IComponent,
     ILifeCycleAdapterMain,
@@ -33,7 +33,14 @@ class LifecycleDockerAdapterSequence implements
     async init(): Promise<void> {
         this.logger.info("Docker sequence adapter init");
         this.prerunnerConfig = configService.getDockerConfig().prerunner;
-        await this.dockerHelper.pullImage(this.prerunnerConfig.image, true);
+        try {
+            await this.dockerHelper.pullImage(this.prerunnerConfig.image, true);
+        } catch (error) {
+            throw new HostError(
+                "ADAPTER_INTIALIZATION_ERROR",
+                { reason: "Docker pull image failed", error }
+            );
+        }
         this.logger.info("Docker sequence adapter done");
     }
 
