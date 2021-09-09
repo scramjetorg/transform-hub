@@ -282,7 +282,10 @@ export class CPMConnector extends EventEmitter {
             cpmUrl,
             {
                 method: "POST",
-                agent: new Agent({ keepAlive: true })
+                agent: new Agent({ keepAlive: true }),
+                headers: {
+                    "x-end-stream": "false"
+                }
             }
         );
 

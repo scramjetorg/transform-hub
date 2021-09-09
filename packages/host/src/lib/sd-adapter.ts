@@ -35,14 +35,15 @@ export class ServiceDiscovery {
         if (!this.dataMap.has(config.topic)) {
             this.dataMap.set(config.topic, {
                 contentType: config.contentType,
-                stream: outputStream.pipe(new PassThrough()),
+                stream: outputStream.pipe(new PassThrough(), { end: false }),
                 localProvider
             });
         } else {
-            outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>);
+            outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end: false });
         }
 
         if (localProvider) {
+            this.logger.log(`Local provider added data ${config.topic}, sending data to CPM`);
             this.cpmConnector?.sendTopic(config.topic, this.dataMap.get(config.topic)!.stream as ReadableStream<any>);
         }
     }

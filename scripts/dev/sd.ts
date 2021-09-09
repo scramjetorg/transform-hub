@@ -49,7 +49,7 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
 // eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
     scenario = await new Promise(res => {
-            require("readline").createInterface({
+        require("readline").createInterface({
             input: process.stdin,
             output: process.stdout
         }).question("Select scenario: ", (s) => {
@@ -118,6 +118,8 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
         } else {
             await waitForText(host2Process.stdout, "API listening");
         }
+
+        console.log("Host 2 started");
     };
     const cpmClient = new CPMClient("http://localhost:9000/api/v1");
 
