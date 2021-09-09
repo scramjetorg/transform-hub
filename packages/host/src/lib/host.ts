@@ -162,17 +162,20 @@ export class Host implements IComponent {
             const params = (req as ParsedMessage).params || {};
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
 
+            this.logger.log("Topic already exists");
+
             if (sdTarget) {
-                req.pipe(sdTarget as WritableStream<any>);
+                return sdTarget;//req.pipe(sdTarget as WritableStream<any>);
             } else {
                 this.serviceDiscovery.addData(
                     req,
                     { contentType: req.headers["content-type"] || "", topic: params.name },
                     "api"
                 );
+
+                return {};
             }
 
-            return {};
         }, { checkContentType: false, end: false });
 
         this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
