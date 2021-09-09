@@ -2,7 +2,7 @@ import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence, WritableStream } from "@scramjet/types";
+import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
 
 import { CSIController } from "./csi-controller";
 import { SequenceStore } from "./sequence-store";
@@ -165,7 +165,7 @@ export class Host implements IComponent {
             this.logger.log("Topic already exists");
 
             if (sdTarget) {
-                return sdTarget;//req.pipe(sdTarget as WritableStream<any>);
+                return sdTarget;
             } else {
                 this.serviceDiscovery.addData(
                     req,
