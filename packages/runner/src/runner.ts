@@ -195,7 +195,12 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.log(`Content-Type: ${contentType}`);
 
-        mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
+        mapToInputDataStream(this.inputStream!, contentType)
+            .catch((error: any) => {
+                this.logger.error("mapToInputDataStream", error);
+                // TODO: we should be doing some error handling here:
+                // TODO: remove the stream, mark as bad, kill the instance maybe?
+            }).pipe(this.inputDataStream!);
     }
 
     async hookupOutputStream() {

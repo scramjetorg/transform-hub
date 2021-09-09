@@ -299,11 +299,9 @@ export class CPMConnector extends EventEmitter {
                     method: "GET"
                 }
             ).on("response", (res: IncomingMessage) => {
-                this.logger.log("get topic request status:", res.statusCode);
-
                 resolve(res);
             }).on("error", (err: Error) => {
-                console.log("----", err);
+                this.logger.log("Topic request error:", err);
             }).end();
         });
     }

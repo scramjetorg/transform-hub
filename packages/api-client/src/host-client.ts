@@ -61,4 +61,8 @@ export class HostClient implements ClientProvider {
     async sendNamedData(topic: string, stream: Readable, contentType?: string) {
         return this.client.sendStream(`topic/${topic}`, stream, { type: contentType, end: true });
     }
+
+    async getNamedData(topic: string) {
+        return this.client.getStream(`topic/${topic}`);
+    }
 }
