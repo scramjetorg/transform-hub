@@ -20,7 +20,28 @@ const sth = process.env.SCRAMJET_SPAWN_TS
     : ["node", path.resolve(__dirname, "../../../dist/sth/bin/hub")]
 ;
 
+async function killHost(this: CustomWorld) {
+    const hub = this.resources.hub as ChildProcess;
+
+    if (!hub || hub.exitCode === null) return;
+    await new Promise<void>((resolve) => {
+        hub.on("exit", resolve);
+        hub.on("error", resolve);
+        hub.kill(SIGKILL);
+    });
+}
+
 When("hub process is started with parameters {string}", async function(this: CustomWorld, params: string) {
+    if (this.resources.hub) {
+        if (SCRAMJET_TEST_LOG) {
+            console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            console.error("!!!!!!!     Host was still running, kill!    !!!!!!");
+            console.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
+            await killHost.call(this);
+        }
+    }
+
     await new Promise<void>((resolve, reject) => {
         console.log(`spawining ${sth.join(" ")}`);
         this.resources.hub = spawn(
@@ -168,13 +189,4 @@ Then("last container memory limit is {int}", async function(this: CustomWorld, m
     }
 });
 
-After(async function(this: CustomWorld) {
-    const hub = this.resources.hub as ChildProcess;
-
-    if (!hub || hub.exitCode === null) return;
-    await new Promise<void>((resolve) => {
-        hub.on("exit", resolve);
-        hub.on("error", resolve);
-        hub.kill(SIGKILL);
-    });
-});
+After(killHost);
