@@ -5,7 +5,7 @@ export class IDProvider {
         return uuidv4.v4();
     }
 
-    public static isValid(_id: string) {
-        return true;//uuidv4.validate(id);
+    public static isValid(id: string) {
+        return uuidv4.validate(id);
     }
 }
