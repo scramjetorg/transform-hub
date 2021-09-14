@@ -477,6 +477,22 @@ When("send data", async () => {
     console.log(status);
 });
 
+Then("send data {string} named {string}", async (data: any, topic: string) => {
+    const dataOut = await hostClient.sendNamedData(
+        topic,
+        data,
+        "application/x-ndjson");
+
+    assert.equal(dataOut.status, 202);
+});
+
+When("get data named {string}", async (topic: string) => {
+    const dataIn = await hostClient.getNamedData(topic);
+
+    dataIn.data?.pipe(process.stdout);
+    assert.equal(dataIn.status, 200);
+});
+
 Then("output is {string}", async (str) => {
     const output = await instance?.getStream("output");
 
