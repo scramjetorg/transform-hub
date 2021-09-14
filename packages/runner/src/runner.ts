@@ -580,6 +580,15 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.info("Primitive returned as last value");
 
             this.outputStream?.end(`${intermediate}`);
+
+            MessageUtils.writeMessageOnStream(
+                [RunnerMessageCode.PANG, {
+                    provides: "",
+                    contentType: ""
+                }],
+                this.monitorStream
+            );
+
             this.endRunner();
         } else if (stream && this.outputStream && this.outputDataStream) {
             this.logger.info(`Piping sequence output (type ${typeof stream})`);
