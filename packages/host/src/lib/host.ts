@@ -166,16 +166,15 @@ export class Host implements IComponent {
 
             if (sdTarget) {
                 return sdTarget;
-            } else {
-                this.serviceDiscovery.addData(
-                    req,
-                    { contentType: req.headers["content-type"] || "", topic: params.name },
-                    "api"
-                );
-
-                return {};
             }
 
+            this.serviceDiscovery.addData(
+                req,
+                { contentType: req.headers["content-type"] || "", topic: params.name },
+                "api"
+            );
+
+            return {};
         }, { checkContentType: false, end: false });
 
         this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
