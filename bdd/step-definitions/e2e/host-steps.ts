@@ -176,6 +176,8 @@ When("get {string} in background with instanceId", { timeout: 500000 }, async (o
     const stream: Response = await instance?.getStream(outputStream) as Response;
     const out = stream.data;
 
+    out!.pipe(process.stdout);
+
     if (!out) assert.fail("No output!");
 
     actualLogResponse = await streamToString(out as Stream);
@@ -483,13 +485,17 @@ Then("send data {string} named {string}", async (data: any, topic: string) => {
         data,
         "application/x-ndjson");
 
+    console.log("------SEND DATA STATUS????", dataOut.status);
+
     assert.equal(dataOut.status, 202);
 });
 
 When("get data named {string}", async (topic: string) => {
     const dataIn = await hostClient.getNamedData(topic);
 
-    dataIn.data?.pipe(process.stdout);
+    console.log("------GET DATA STATUS????", dataIn.status);
+    
+    dataIn.data!.pipe(process.stdout);
     assert.equal(dataIn.status, 200);
 });
 
