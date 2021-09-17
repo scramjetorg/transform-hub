@@ -1,0 +1,30 @@
+{
+  "name": "@scramjet/avengers-names-output",
+  "version": "0.12.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build:refapps": "tsc -p tsconfig.json",
+    "postbuild:refapps": "yarn prepack",
+    "prepack": "node ../../../scripts/publish.js",
+    "packseq": "node ../../../scripts/packsequence.js",
+    "clean": "rm -rf ./dist .bic_cache"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "@scramjet/types": "^0.12.1",
+    "@types/node": "15.12.5"
+  },
+  "scramjet": {
+    "image": "node"
+  },
+  "dependencies": {
+    "JSONStream": "^1.3.5",
+    "scramjet": "^4.36.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
