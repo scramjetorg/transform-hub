@@ -28,8 +28,12 @@ let actualHealthResponse: any;
 let actualStatusResponse: any;
 let actualApiResponse: Response;
 let sequence: SequenceClient;
+let sequence1: SequenceClient;
+let sequence2: SequenceClient;
 let actualLogResponse: any;
 let instance: InstanceClient | undefined;
+let instance1: InstanceClient | undefined;
+let instance2: InstanceClient | undefined;
 let containerId: string;
 let streams: { [key: string]: Promise<string | undefined> } = {};
 
@@ -134,12 +138,34 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
     );
 
     this.resources.sequence = sequence;
+
     console.log("Package successfuly loaded, sequence started.");
+});
+
+When("sequences {string} {string} are loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath1: string, packagePath2: string) {
+    sequence1 = await hostClient.sendSequence(
+        createReadStream(packagePath1)
+    );
+    sequence2 = await hostClient.sendSequence(
+        createReadStream(packagePath2)
+    );
+
+    this.resources.sequence1 = sequence1;
+    this.resources.sequence1 = sequence2;
+
+    console.log("Packages successfuly loaded, sequences started.");
 });
 
 When("instance started", async function(this: CustomWorld) {
     instance = await sequence.start({}, ["/package/data.json"]);
     this.resources.instance = instance;
+});
+
+When("instances started", async function(this: CustomWorld) {
+    instance1 = await sequence1.start({}, ["/package/data.json"]);
+    this.resources.instance1 = instance1;
+    instance2 = await sequence1.start({}, ["/package/data.json"]);
+    this.resources.instance2 = instance2;
 });
 
 const startWith = async function(this: CustomWorld, instanceArg: string) {
@@ -479,26 +505,6 @@ When("send data", async () => {
     console.log(status);
 });
 
-Then("send data {string} named {string}", async (data: any, topic: string) => {
-    const dataOut = await hostClient.sendNamedData(
-        topic,
-        data,
-        "application/x-ndjson");
-
-    console.log("------SEND DATA STATUS????", dataOut.status);
-
-    assert.equal(dataOut.status, 202);
-});
-
-When("get data named {string}", async (topic: string) => {
-    const dataIn = await hostClient.getNamedData(topic);
-
-    console.log("------GET DATA STATUS????", dataIn.status);
-    
-    dataIn.data!.pipe(process.stdout);
-    assert.equal(dataIn.status, 200);
-});
-
 Then("output is {string}", async (str) => {
     const output = await instance?.getStream("output");
 
@@ -510,4 +516,55 @@ Then("output is {string}", async (str) => {
     console.log("outputString: " + outputString);
 
     assert(outputString, str);
+});
+
+Then("send data {string} named {string}", async (data: any, topic: string) => {
+    const dataOut = await hostClient.sendNamedData(
+        topic,
+        data,
+        "application/x-ndjson",
+    );
+
+    console.log("------SEND DATA STATUS????", dataOut.status);
+
+    assert.equal(dataOut.status, 202);
+});
+
+When("get data named {string}", async (topic: string) => {
+    const dataIn = await hostClient.getNamedData(topic);
+
+    // console.log("----dataIn", dataIn.data);
+    console.log("------GET DATA STATUS????", dataIn.status);
+
+    const outputString = await streamToString(dataIn.data!);
+
+    console.log("------outputString", outputString);
+
+    dataIn.data!.pipe(process.stdout);
+    assert.equal(dataIn.status, 200);
+});
+
+Then("get output", async () => {
+    const output = await instance?.getStream("output");
+
+    if (!output?.data) assert.fail("No output!");
+
+    const outputString = await streamToString(output.data);
+
+    console.log("outputString: " + outputString);
+
+    assert.equal(output.status, 200);
+});
+
+Then("get output from instance2", async () => {
+    const output = await instance2?.getStream("output");
+
+    if (!output?.data) assert.fail("No output!");
+
+    const outputString = await streamToString(output.data);
+
+    console.log("output.status: " + output.status);
+    console.log("outputString: " + outputString);
+
+    assert.equal(output.status, 200);
 });

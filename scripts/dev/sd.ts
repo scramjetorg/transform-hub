@@ -40,19 +40,19 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
         require("readline").createInterface({
             input: process.stdin,
             output: process.stdout
-        }).question("Select scenario: ", (s) => {
+        }).question("Select scenario: ", (s: any) => {
             res(parseInt(s, 10));
         });
     });
 
     const host1 = "11111111-c201-4fe4-8309-111111111111";
-    const sequence1 = fs.createReadStream(resolve(__dirname, "../../../sth/packages/reference-apps/endless-names-output.tar.gz"));
-    const sequence2 = fs.createReadStream(resolve(__dirname, "../../../sth/packages/reference-apps/hello-input-out.tar.gz"));
+    const sequence1 = fs.createReadStream(resolve(__dirname, "../../../transform-hub/packages/reference-apps/endless-names-output.tar.gz"));
+    const sequence2 = fs.createReadStream(resolve(__dirname, "../../../transform-hub/packages/reference-apps/hello-input-out.tar.gz"));
     //
     //
     const startHost1 = async (config: { cpm: boolean }) => {
         fs.writeFileSync("/tmp/sth-id.json", JSON.stringify({ id: host1 }));
-        let args = [resolve(__dirname, "../../../sth/packages/sth/src/bin/hub"), "-S", "/tmp/s1", "-P", "8001"];
+        let args = [resolve(__dirname, "../../../transform-hub/packages/sth/src/bin/hub"), "-S", "/tmp/s1", "-P", "8001"];
 
         if (config.cpm) {
             args = args.concat(["-C", "localhost:7000"]);
