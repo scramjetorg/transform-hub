@@ -11,7 +11,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { Readable } from "stream";
+import { Readable, Writable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -162,15 +162,16 @@ export class Host implements IComponent {
             const params = (req as ParsedMessage).params || {};
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
 
-            this.logger.log("Topic already exists");
-
             if (sdTarget) {
-                return sdTarget;
+                req.pipe(sdTarget as Writable, { end: req.headers["x-end-stream"] === "true" });
+
+                return {};
             }
 
             this.serviceDiscovery.addData(
                 req,
                 { contentType: req.headers["content-type"] || "", topic: params.name },
+                req.headers["x-end-stream"] === "true",
                 "api"
             );
 
@@ -360,6 +361,7 @@ export class Host implements IComponent {
                         topic: data.requires,
                         contentType: data.contentType
                     },
+                    true,
                     csic.getInputStream()
                 );
 
@@ -376,6 +378,7 @@ export class Host implements IComponent {
                 this.serviceDiscovery.addData(
                     csic.getOutputStream()!,
                     { topic: data.provides, contentType: data.contentType },
+                    true,
                     csic.id
                 );
             }

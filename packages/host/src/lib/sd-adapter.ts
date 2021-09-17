@@ -29,17 +29,17 @@ export class ServiceDiscovery {
         this.cpmConnector = cpmConnector;
     }
 
-    addData(outputStream: ReadableStream<any>, config: dataType, localProvider?: string) {
+    addData(outputStream: ReadableStream<any>, config: dataType, end: boolean, localProvider?: string) {
         this.logger.log("Adding data:", config);
 
         if (!this.dataMap.has(config.topic)) {
             this.dataMap.set(config.topic, {
                 contentType: config.contentType,
-                stream: outputStream.pipe(new PassThrough(), { end: false }),
+                stream: outputStream.pipe(new PassThrough(), { end: end }),
                 localProvider
             });
         } else {
-            outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end: false });
+            outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end: end });
         }
 
         if (localProvider) {
@@ -72,7 +72,7 @@ export class ServiceDiscovery {
         }
     }
 
-    getData(dataType: dataType, inputStream?: WritableStream<any>):
+    getData(dataType: dataType, end?: boolean, inputStream?: WritableStream<any>):
         ReadableStream<any> | WritableStream<any> | undefined {
         this.logger.log("Get data:", dataType);
 
@@ -105,9 +105,9 @@ export class ServiceDiscovery {
             return topicData?.stream;
         }
 
-        this.addData(new PassThrough(), dataType);
+        this.addData(new PassThrough(), dataType, end!);
 
-        return this.getData(dataType, inputStream);
+        return this.getData(dataType, end, inputStream);
     }
 
     removeData(topic: string) {
