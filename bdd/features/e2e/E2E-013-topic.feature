@@ -11,9 +11,10 @@ Scenario: E2E-013 TC-001 Send and get data from API STH
 @ci
 Scenario: E2E-013 TC-002 Send data via instance, get this data via API
     Given host is running
-    And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
+    And sequence "../packages/reference-apps/avengers-names-output.tar.gz" loaded
     And instance started
-    And get data named "names"
+    And wait for "5000" ms
+    And get data named "avengers"
     # Then confirm data "" recived
 
 @ci
@@ -26,7 +27,7 @@ Scenario: E2E-013 TC-003 Send data via API, get this data from the instance
     And get output
     # Then confirm data "" recived
 
-
+@ci
 Scenario: E2E-013 TC-004 Send data from instance to another instance on the same host
     Given host is running
     And sequences "../packages/reference-apps/hello-input-out.tar.gz" "../packages/reference-apps/endless-names-output.tar.gz" are loaded
