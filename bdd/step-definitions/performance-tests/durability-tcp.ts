@@ -35,7 +35,7 @@ Then("check every {int} seconds if instances respond with correct data for {floa
 
             await instance.sendEvent("check", hash);
 
-            console.log("SENT:", hash);
+            logger.log("SENT:", hash);
 
             await defer(500);
 
@@ -57,7 +57,7 @@ Then("check every {int} seconds if instances respond with correct data for {floa
                         .on("end", () => {
                             response = chunks.join("");
 
-                            console.log("RECV:", response);
+                            logger.log("RECV:", response);
                             if (response === hash) {
                                 resolve();
                             } else {

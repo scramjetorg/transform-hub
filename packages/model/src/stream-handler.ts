@@ -108,6 +108,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     safeHandle(promisePotentiallyRejects: MaybePromise<any>): void {
         Promise.resolve(promisePotentiallyRejects).catch(
+            // eslint-disable-next-line no-console
             (e: any) => console.error(e?.stack || e) // TODO: push this to log file
         );
     }

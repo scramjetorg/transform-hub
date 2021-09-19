@@ -43,6 +43,7 @@ export class HostUtils {
 
     async spawnHost() {
         if (this.hostUrl) {
+            // eslint-disable-next-line no-console
             console.error("Host is supposedly running at", this.hostUrl);
             const hostClient = new HostClient(this.hostUrl);
 
@@ -64,7 +65,10 @@ export class HostUtils {
 
             if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
             if (process.env.LOCAL_HOST_SOCKET_PATH) command.push("-S", process.env.LOCAL_HOST_SOCKET_PATH);
-            if (process.env.SCRAMJET_TEST_LOG) console.error("Spawning with command:", ...command);
+            if (process.env.SCRAMJET_TEST_LOG) {
+                // eslint-disable-next-line no-console
+                console.error("Spawning with command:", ...command);
+            }
 
             this.host = spawn("/usr/bin/env", command);
 
@@ -86,6 +90,7 @@ export class HostUtils {
             });
 
             this.host.on("exit", (code, signal) => {
+                // eslint-disable-next-line no-console
                 console.log("sequence process exited with code: ", code, " and signal: ", signal);
                 this.hostProcessStopped = true;
 

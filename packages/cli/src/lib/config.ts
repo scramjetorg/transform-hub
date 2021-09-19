@@ -16,12 +16,14 @@ let currentConfig: Config;
 
 export const getConfig = () => {
     if (currentConfig) return currentConfig;
+
     if (existsSync(location)) {
         try {
             const overlay = JSON.parse(readFileSync(location, "utf-8"));
 
             return { ...defaultConfig, ...overlay } as Config;
         } catch {
+            // eslint-disable-next-line no-console
             console.error(`WARN: Parse error in config at ${location}.`);
         }
     }

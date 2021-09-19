@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ReadableApp, SynchronousStreamable } from "@scramjet/types";
 import { PassThrough } from "stream";
 

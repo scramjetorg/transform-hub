@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ReadableApp } from "@scramjet/types";
 
 const scramjet = require("scramjet");
@@ -19,7 +20,6 @@ const mod: ReadableApp = function(_input, ffrom = `${__dirname}/data.json`) {
     return fs.createReadStream(ffrom)
         .on("end", () => {
             this.logger.info("File read end");
-            //this.end();
         })
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())

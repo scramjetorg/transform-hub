@@ -95,6 +95,7 @@ export async function streamToString(_stream: Readable): Promise<string> {
 
 export async function getOccurenceNumber(searchedValue: any, filePath: any) {
     try {
+        // eslint-disable-next-line no-console
         console.log(`${JSON.stringify(searchedValue)}`);
         return Number((await promisify(exec)(`sudo grep -oa ${JSON.stringify(searchedValue)}  ${filePath} | wc -l`)).stdout);
     } catch {
@@ -121,7 +122,10 @@ export async function removeFile(filePath: any) {
 export async function getStreamsFromSpawn(
     command: string, options: string[], env: NodeJS.ProcessEnv = process.env
 ): Promise<[string, string, any]> {
-    if (process.env.SCRAMJET_TEST_LOG) console.error("Spawning command", command, ...options);
+    if (process.env.SCRAMJET_TEST_LOG) {
+        // eslint-disable-next-line no-console
+        console.error("Spawning command", command, ...options);
+    }
 
     const child = spawn(command, options, {
         env
@@ -143,7 +147,11 @@ export async function getStreamsFromSpawnSuccess(
 ): Promise<[string, string]> {
     const [stdout, stderr, code] = await getStreamsFromSpawn(command, options, env);
 
-    if (process.env.SCRAMJET_TEST_LOG) console.error("Results", { stdout, stderr });
+    if (process.env.SCRAMJET_TEST_LOG) {
+        // eslint-disable-next-line no-console
+        console.error("Results", { stdout, stderr });
+    }
+
     if (code) throw new Error(`Non zero exit code: ${code}`);
 
     return [stdout, stderr];

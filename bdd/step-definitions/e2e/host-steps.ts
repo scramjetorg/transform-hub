@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";

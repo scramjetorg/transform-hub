@@ -68,7 +68,7 @@ export = async function(_stream: any, ...args: any) {
     const stream = new StringStream();
     const files = args[1];
 
-    console.log(`Args: MemAlloc: ${allocMemSize}, Files: ${files}]`);
+    this.logger.log(`Args: MemAlloc: ${allocMemSize}, Files: ${files}]`);
 
     startServer(this.logger);
 
@@ -88,7 +88,7 @@ export = async function(_stream: any, ...args: any) {
                 });
             });
         } catch (err: any) {
-            console.log(err);
+            this.logger.log(err);
         }
     }, 1000);
 

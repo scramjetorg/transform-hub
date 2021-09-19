@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { When } from "@cucumber/cucumber";
 import { InstanceClient, InstanceOutputStream } from "@scramjet/api-client";
 import * as net from "net";

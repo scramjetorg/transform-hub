@@ -1,4 +1,4 @@
-/* eslint-disable no-loop-func */
+/* eslint-disable no-loop-func, no-console */
 
 import { ReadableApp, TransformApp, WritableApp } from "@scramjet/types";
 
