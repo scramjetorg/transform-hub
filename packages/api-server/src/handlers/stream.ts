@@ -134,6 +134,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
                 res.end();
             } catch (e: any) {
+                // eslint-disable-next-line no-console
                 console.error(e);
                 next(new CeroError("ERR_INTERNAL_ERROR", e));
             }

@@ -1,4 +1,4 @@
-/* eslint-disable no-loop-func */
+/* eslint-disable no-loop-func, no-console */
 
 import { TransformApp } from "@scramjet/types";
 
@@ -8,6 +8,7 @@ const exp: [
     (stream) => {
         return async function* () {
             console.log("Sequence returning generator.");
+
             for await (const a of stream) {
                 console.log("Sequence loop on stream. Value of chunk is ", a);
                 yield { b: a };

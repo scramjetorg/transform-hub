@@ -31,6 +31,7 @@ Then("I get a help information", function() {
 
 Then("the exit status is {int}", function(status: number) {
     if (stdio[2] !== status) {
+        // eslint-disable-next-line no-console
         console.error(stdio);
         assert.equal(stdio[2], status);
     }
@@ -61,11 +62,17 @@ Then("I get array of information about sequences", function() {
 Then("I start Sequence", async function() {
     try {
         stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, ...formatFlags(), ...connectionFlags()]);
-        if (process.env.SCRAMJET_TEST_LOG) console.error(stdio[0]);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            // eslint-disable-next-line no-console
+            console.error(stdio[0]);
+        }
+
         const instance = JSON.parse(stdio[0].replace("\n", ""));
 
         instanceId = instance._id;
     } catch (e: any) {
+        // eslint-disable-next-line no-console
         console.error(e.stack, stdio);
         assert.fail("Error occurred");
     }

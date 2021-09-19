@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { createReadStream } from "fs";
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance } from "../common";
@@ -33,7 +34,9 @@ export const instance: CommandDefinition = (program) => {
 
     instanceCmd.command("status <id>")
         .description("status data about the instance")
-        .action(() => console.log("Not implemented"));
+        .action(() => {
+            console.log("Not implemented");
+        });
 
     instanceCmd.command("health <id>")
         .description("show the instance health status")

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { HostClient, InstanceClient } from "@scramjet/api-client";
 import { When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";

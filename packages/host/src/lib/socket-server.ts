@@ -118,7 +118,7 @@ export class SocketServer extends EventEmitter implements IComponent {
     close() {
         this.server?.close((err) => {
             if (err) {
-                console.error(err);
+                this.logger.error(err);
             }
         });
     }

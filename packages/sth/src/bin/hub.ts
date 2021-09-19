@@ -47,6 +47,7 @@ require("@scramjet/host").startHost({}, configService.getConfig().host.socketPat
     identifyExisting: options.identifyExisting as boolean
 })
     .catch((e: Error & { exitCode?: number }) => {
+        // eslint-disable-next-line no-console
         console.error(e.stack);
         process.exitCode = e.exitCode || 1;
         process.exit();

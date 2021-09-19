@@ -1,4 +1,5 @@
 #!/usr/bin/env ts-node
+/* eslint-disable no-console */
 
 import { Command } from "commander";
 import { ClientError } from "@scramjet/api-client";
