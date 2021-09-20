@@ -1,7 +1,7 @@
 {
   "bin": {},
   "name": "@scramjet/scripts",
-  "version": "0.11.0",
+  "version": "0.12.1",
   "description": "Scripts used by scramjet cloud platform",
   "scripts": {
     "test": "echo \"Error: no test specified\""
