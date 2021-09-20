@@ -1,11 +1,11 @@
 Feature: E2E test, where we send and receive data from /topic/:name endpoint by using api-client
 
+@ci
 Scenario: E2E-013 TC-001 Send and get data from API STH
     Given host is running
     Then send data "{ \"city\": \"New York\" }" named "cities"
     And get data named "cities"
-    # Then confirm data "{ \"city\": \"New York\" }" recived
-
+    Then confirm data "{ \"city\": \"New York\" }" received
 
 Scenario: E2E-013 TC-002 Send data via instance, get this data via API
     Given host is running

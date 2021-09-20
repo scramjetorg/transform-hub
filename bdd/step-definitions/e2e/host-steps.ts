@@ -36,6 +36,7 @@ let instance1: InstanceClient | undefined;
 let instance2: InstanceClient | undefined;
 let containerId: string;
 let streams: { [key: string]: Promise<string | undefined> } = {};
+let SDoutput: string;
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
@@ -533,12 +534,11 @@ Then("send data {string} named {string}", async (data: any, topic: string) => {
 When("get data named {string}", async (topic: string) => {
     const dataIn = await hostClient.getNamedData(topic);
 
-    // console.log("----dataIn", dataIn.data);
     console.log("------GET DATA STATUS????", dataIn.status);
 
-    const outputString = await streamToString(dataIn.data!);
+    SDoutput = await streamToString(dataIn.data!);
 
-    console.log("------outputString", outputString);
+    console.log("------outputString", SDoutput);
 
     dataIn.data!.pipe(process.stdout);
     assert.equal(dataIn.status, 200);
@@ -547,11 +547,13 @@ When("get data named {string}", async (topic: string) => {
 Then("get output", async () => {
     const output = await instance?.getStream("output");
 
+    // if (!output?.data) assert.fail("No output!");
+
     if (!output?.data) assert.fail("No output!");
 
-    const outputString = await streamToString(output.data);
+    SDoutput = await streamToString(output.data);
 
-    console.log("outputString: " + outputString);
+    console.log("outputString: " + SDoutput);
 
     assert.equal(output.status, 200);
 });
@@ -561,10 +563,14 @@ Then("get output from instance2", async () => {
 
     if (!output?.data) assert.fail("No output!");
 
-    const outputString = await streamToString(output.data);
+    SDoutput = await streamToString(output.data);
 
     console.log("output.status: " + output.status);
-    console.log("outputString: " + outputString);
+    console.log("outputString: " + SDoutput);
 
     assert.equal(output.status, 200);
+});
+
+Then("confirm data {string} received", async (data) => {
+    assert.equal(SDoutput, data);
 });
