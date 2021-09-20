@@ -14,9 +14,11 @@ def log(*args):
 
 
 class Pyfca:
-    def __init__(self, max_parallel, transformation):
+    def __init__(self, max_parallel, initial_transform=None):
         self.max_parallel = max_parallel
-        self.transform_chain = [transformation]
+        self.transform_chain = []
+        if initial_transform:
+            self.transform_chain.append(initial_transform)
 
         self.processing = asyncio.Queue()
         self.ready = asyncio.Queue()

@@ -292,6 +292,15 @@ async def test_writing_above_limit(input_data):
     await asyncio.gather(*reads)
 
 
+async def test_empty_transformation_chain(input_data):
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    for x in input_data:
+        p.write(x)
+    results = [await p.read() for _ in input_data]
+    log_results(results)
+    # items should appear in the output unchanged and in the same order
+    assert results == input_data
+
 async def test_multitransform(input_data):
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
     p.add_transform(async_double)
@@ -352,6 +361,7 @@ tests_to_run = [
     (test_limit_waiting_until_items_are_processed, objects_with_delays),
     (test_limit_waiting_for_reads,                 objects_with_values),
     (test_writing_above_limit,                     monotonic_sequence(2*MAX_PARALLEL)),
+    (test_empty_transformation_chain,              objects_with_values),
     (test_multitransform,                          objects_with_values),
     (test_sync_chain,                              objects_with_values),
 ]
