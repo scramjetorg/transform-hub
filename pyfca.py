@@ -56,7 +56,7 @@ class Pyfca:
             utils.update_status(chunk, 'writing')
             chunk_status.chunk = chunk
             task.set_name(f'process {utils.chunk_id_or_value(chunk)}')
-            log(f"WRITE {fmt(chunk)} r-w balance: {self.read_write_balance}")
+            log(f"WRITE {fmt(chunk)} r/w balance: {self.read_write_balance}")
             log(f"  -   {fmt(chunk)} scheduled: {task}")
             log(f"  -   {fmt(chunk)} return: {fmt(drain)}")
 
@@ -64,17 +64,17 @@ class Pyfca:
 
 
     def read(self):
-        log(f'READ r-w balance: {self.read_write_balance}')
+        self.read_write_balance -= 1
+        log(f'READ r/w balance: {self.read_write_balance}')
 
-        if self.read_write_balance == self.max_parallel:
+        if self.read_write_balance == self.max_parallel - 1:
             waiting = self.waiting_for_read.get_nowait()
             waiting.set_result(True)
 
-        if self.ended and self.read_write_balance <= 0:
+        if self.ended and self.read_write_balance < 0:
             log('  -  processing ended, return None')
             return self.no_more_items
 
-        self.read_write_balance -= 1
         awaitable = self.ready.get()
         log(f'  -  got: {awaitable}')
         return awaitable
