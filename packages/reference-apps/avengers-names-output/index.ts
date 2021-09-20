@@ -4,6 +4,7 @@ import { PassThrough } from "stream";
 import { createReadStream } from "fs";
 
 export = async function(_stream) {
+    // eslint-disable-next-line no-console
     console.log("Avengers sequence started");
 
     const ps = new PassThrough();
