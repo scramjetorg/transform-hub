@@ -91,7 +91,7 @@ class Pyfca:
 
     def add_transform(self, transformation):
         self.transform_chain.append(transformation)
-        log(f'ADD_TRANSFORM chain: {self.transform_chain}')
+        log(f'ADD_TRANSFORM current chain: {self.transform_chain}')
 
 
     async def _resolve_overflow_readers(self):
@@ -106,36 +106,32 @@ class Pyfca:
             log(f'END add item for overflow reader: {nuller}')
 
 
-    async def _run_transform_chain(self, chunk):
-        result = chunk
-        for func in self.transform_chain:
-            result = func(result)
-            log(f'CHAIN {fmt(chunk)} function: {func}')
-            log(f'  -   {fmt(chunk)} yielded: {result}')
-            if hasattr(result, '__await__'):
-                result = await result
-                log(f'CHAIN {fmt(chunk)} resolved: {result}')
-        log(f'  -   {fmt(chunk)} {pink}finished{reset}')
-        return result
-
-
     async def _process(self, chunk, chunk_status):
-        transform = self._run_transform_chain(chunk)
         previous = self.last_chunk_status
 
         if DEBUG:
             utils.update_status(chunk, 'processing')
-            log(f'PROCESS {fmt(chunk)} transformation: {transform}')
-            log(f'   -    {fmt(chunk)} previous item: {fmt(previous)}')
+            log(f'PROCESS {fmt(chunk)} previous item: {fmt(previous)}')
             log(f'   -    {fmt(chunk)} status: {fmt(chunk_status)}')
 
         self.last_chunk_status = chunk_status
-        result = (await asyncio.gather(transform, previous))[0]
+        result = chunk
+        for func in self.transform_chain:
+            result = func(result)
+            log(f'   -    {fmt(chunk)} function: {func}')
+            log(f'   -    {fmt(chunk)} yielded: {result}')
+            if hasattr(result, '__await__'):
+                result = await result
+                log(f'PROCESS {fmt(chunk)} resolved: {result}')
+
+        log(f'   -    {fmt(chunk)} processing {pink}finished{reset}')
+        log(f'   -    {fmt(chunk)} awaiting for previous chunk: {fmt(previous)}')
+        await previous
         chunk_status.set_result(True)
 
         if DEBUG:
             utils.update_status(chunk, 'ready')
             log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
-            log(f'   -    {fmt(chunk)} {green}return:{reset} {result}')
+            log(f'   -    {fmt(chunk)} {green}return{reset} (add to "ready"): {result}')
 
         await self.ready.put(result)
