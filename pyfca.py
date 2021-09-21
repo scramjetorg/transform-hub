@@ -66,6 +66,10 @@ class Pyfca:
 
 
     def read(self):
+        if self.ended and self.read_write_balance <= 0:
+            log('READ processing ended, return None')
+            return self.no_more_items
+
         self.read_write_balance -= 1
         log(f'READ r/w balance: {self.read_write_balance}')
 
@@ -73,22 +77,17 @@ class Pyfca:
             waiting = self.waiting_for_read.get_nowait()
             waiting.set_result(True)
 
-        if self.ended and self.read_write_balance < 0:
-            log('  -  processing ended, return None')
-            return self.no_more_items
-
         awaitable = self.ready.get()
         log(f'  -  got: {awaitable}')
         return awaitable
 
 
     def end(self):
-        log(f'END read-write balance: {self.read_write_balance}')
-        if self.read_write_balance < 0:
-            # schedule as a task to make sure it will run after any pending
-            # _process updates last_chunk_status
-            asyncio.create_task(self._resolve_overflow_readers())
+        log(f'END stop accepting input. r/w balance: {self.read_write_balance}')
         self.ended = True
+        # schedule as a task to make sure it will run after any pending
+        # _process updates last_chunk_status
+        asyncio.create_task(self._resolve_overflow_readers())
 
 
     def add_transform(self, transformation):
@@ -97,15 +96,13 @@ class Pyfca:
 
 
     async def _resolve_overflow_readers(self):
-        async def append_none():
-            log(f'END waiting for last item: {self.last_chunk_status}')
-            await self.last_chunk_status
-            await self.ready.put(None)
-            log(f'END appended None')
+        log(f'END waiting for last item: {self.last_chunk_status}')
+        await self.last_chunk_status
 
+        log(f'END final r/w balance: {self.read_write_balance}')
         for _ in range(-self.read_write_balance):
-            nuller = asyncio.create_task(append_none())
-            log(f'END add item for overflow reader: {nuller}')
+            self.ready.put_nowait(None)
+            log(f' -  appended None')
 
 
     async def _process(self, chunk, chunk_status):
@@ -125,15 +122,22 @@ class Pyfca:
             if hasattr(result, '__await__'):
                 result = await result
                 log(f'PROCESS {fmt(chunk)} resolved: {result}')
+            if result is None:
+                break
 
         log(f'   -    {fmt(chunk)} processing {pink}finished{reset}')
         log(f'   -    {fmt(chunk)} awaiting for previous chunk: {fmt(previous)}')
         await previous
         chunk_status.set_result(True)
+        log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
 
-        if DEBUG:
-            utils.update_status(chunk, 'ready')
-            log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
-            log(f'   -    {fmt(chunk)} {green}return{reset} (add to "ready"): {result}')
+        if result is not None:
+            if DEBUG:
+                utils.update_status(chunk, 'ready')
+                log(f'   -    {fmt(chunk)} {green}return{reset}: {result}')
+            await self.ready.put(result)
+        else:
+            log(f'   -    {fmt(chunk)} {cyan}remove{reset}')
+            self.read_write_balance -= 1
 
-        await self.ready.put(result)
+
