@@ -191,3 +191,52 @@ Feature: CLI tests
         Then wait for "20000" ms
         Then health outputs 404
         And host is still running
+
+
+    Scenario: E2E-010 TC-018 API to API
+        Given host is running
+        When I execute CLI with bash command "topic send test data.json"
+        Then I execute CLI with bash command "topic get test"
+        And the exit status is 0
+        And host is still running
+
+
+    Scenario: E2E-010 TC-019 instance to API
+        Given host is running
+        When I execute CLI with bash command "$SI seq send ../packages/reference-apps/endless-names-output.tar.gz"
+        And the exit status is 0
+        Then I get Sequence id
+        Then I start Sequence
+        And the exit status is 0
+        Then I get instance health
+        Then I execute CLI with bash command "topic get test"
+        And the exit status is 0
+        And host is still running
+
+
+    Scenario: E2E-010 TC-020 API to instance
+        Given host is running
+        When I execute CLI with bash command "topic send test data.json"
+        When I execute CLI with bash command "$SI seq send ../packages/reference-apps/hello-input-out.tar.gz"
+        And the exit status is 0
+        Then I get Sequence id
+        Then I start Sequence
+        And the exit status is 0
+        Then I get instance health
+        Then I get instance id
+        And I execute CLI with bash command "$SI instance output <instance_id>"
+        And host is still running
+
+    Scenario: E2E-010 TC-021 instance to instance
+        Given host is running
+        When I execute CLI with bash command "$SI seq send ../packages/reference-apps/endless-names-output.tar.gz"
+        When I execute CLI with bash command "$SI seq send ../packages/reference-apps/hello-input-out.tar.gz"
+        And the exit status is 0
+        Then I get Sequence1 id
+        Then I get Sequence2 id
+        Then I start Sequences
+        And the exit status is 0
+        Then I get instance2 id
+        And I execute CLI with bash command "$SI instance output <instance2_id>"
+        And the exit status is 0
+        And host is still running
