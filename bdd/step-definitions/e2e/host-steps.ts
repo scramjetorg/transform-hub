@@ -26,6 +26,7 @@ let actualApiResponse: Response;
 let actualLogResponse: any;
 let containerId: string;
 let streams: { [key: string]: Promise<string | undefined> } = {};
+let SDoutput: string;
 
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
@@ -127,6 +128,7 @@ Before(() => {
     actualStatusResponse = "";
     actualLogResponse = "";
     streams = {};
+    SDoutput = "";
 });
 
 const startHost = async () => {
@@ -193,7 +195,27 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
     this.resources.sequence = await hostClient.sendSequence(
         createReadStream(packagePath)
     );
-    console.log("Package successfully loaded, sequence started.");
+
+    this.resources.sequence = sequence;
+
+    console.log("Package successfuly loaded, sequence started.");
+});
+
+When("sequences {string} {string} are loaded", { timeout: 30000 }, async function(this: CustomWorld, packagePath1: string, packagePath2: string) {
+    sequence1 = await hostClient.sendSequence(
+        createReadStream(packagePath1)
+    );
+
+    //    await defer(10000);
+
+    sequence2 = await hostClient.sendSequence(
+        createReadStream(packagePath2)
+    );
+
+    this.resources.sequence1 = sequence1;
+    this.resources.sequence2 = sequence2;
+
+    console.log("Packages successfully loaded, sequences started.");
 });
 
 When("instance started", async function(this: CustomWorld) {
@@ -201,11 +223,20 @@ When("instance started", async function(this: CustomWorld) {
 });
 
 When("instances started", async function(this: CustomWorld) {
-    this.resources.instance1 = await this.resources.sequence1!.start({}, []);
-    this.resources.instance2 = await this.resources.sequence2!.start({}, []);
+    instance2 = await sequence2.start({}, []);
+    this.resources.instance2 = instance2;
 
-    console.log("Sequences started.");
+    instance1 = await sequence1.start({}, []);
+    this.resources.instance1 = instance1;
+
+    (await instance1.getStream("output")).data?.pipe(process.stdout);
 });
+
+const startWith = async function(this: CustomWorld, instanceArg: string) {
+    instance = await sequence.start({}, instanceArg.split(" "));
+    this.resources.instance = instance;
+};
+const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 
 When("instance started with url from assets argument {string}", { timeout: 25000 }, async function(this: CustomWorld, assetUrl: string) {
     return startWith.call(this, `${assetsLocation}${assetUrl}`);
