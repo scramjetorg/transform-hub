@@ -55,7 +55,6 @@ class Pyfca:
             drain = asyncio.gather(self.processing.get_nowait(), waiting)
 
         if DEBUG:
-            utils.update_status(chunk, 'writing')
             chunk_status.chunk = chunk
             task.set_name(f'process {utils.chunk_id_or_value(chunk)}')
             log(f"WRITE {fmt(chunk)} r/w balance: {self.read_write_balance}")
@@ -109,7 +108,6 @@ class Pyfca:
         previous = self.last_chunk_status
 
         if DEBUG:
-            utils.update_status(chunk, 'processing')
             log(f'PROCESS {fmt(chunk)} previous item: {fmt(previous)}')
             log(f'   -    {fmt(chunk)} status: {fmt(chunk_status)}')
 
@@ -132,9 +130,7 @@ class Pyfca:
         log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
 
         if result is not None:
-            if DEBUG:
-                utils.update_status(chunk, 'ready')
-                log(f'   -    {fmt(chunk)} {green}return{reset}: {result}')
+            log(f'   -    {fmt(chunk)} {green}return{reset}: {result}')
             await self.ready.put(result)
         else:
             log(f'   -    {fmt(chunk)} {cyan}remove{reset}')

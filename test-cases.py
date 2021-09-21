@@ -318,10 +318,6 @@ async def test_multitransform(input_data):
     reads = [p.read() for _ in input_data]
     results = await asyncio.gather(*reads)
     log_results(results)
-    # remove debug information
-    for r in results:
-        if '_pyfca_status' in r:
-             del r['_pyfca_status']
     # multiple transformations should be applied to each element, and they
     # should arrive in the same order they were written in.
     assert results == [
@@ -341,10 +337,6 @@ async def test_sync_chain(input_data):
     reads = [p.read() for _ in input_data]
     results = await asyncio.gather(*reads)
     log_results(results)
-    # remove debug information
-    for r in results:
-        if '_pyfca_status' in r:
-             del r['_pyfca_status']
     # Using synchronous functions as transformations should work.
     assert results == [
         {'id': 0, 'value': 4},
@@ -362,10 +354,6 @@ async def test_filtering_should_drop_items(input_data):
     p.end()
     results = [await p.read() for _ in input_data]
     log_results(results)
-    # remove debug information
-    for r in results:
-        if type(r) is dict and '_pyfca_status' in r:
-             del r['_pyfca_status']
     assert results == [
         {'id': 1, 'value': 2},
         {'id': 4, 'value': 2},
@@ -384,10 +372,6 @@ async def test_filtering_reads_before_end(input_data):
     p.end()
     results = await asyncio.gather(*reads)
     log_results(results)
-    # remove debug information
-    for r in results:
-        if type(r) is dict and '_pyfca_status' in r:
-             del r['_pyfca_status']
     # even though the reads were performed before .end(), they should return
     # Nones for filtered out items, and with correct ordering
     assert results == [
