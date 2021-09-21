@@ -10,7 +10,9 @@ export = async function(_stream) {
     const ps = new PassThrough();
     const readFile = createReadStream(resolve(__dirname, "avengers.json"));
 
-    ps.write(readFile);
+    // ps.write(readFile);
+
+    readFile.pipe(ps);
 
     // eslint-disable-next-line no-extra-parens
     (ps as SynchronousStreamable<any>).topic = "avengers";
