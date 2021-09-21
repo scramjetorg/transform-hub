@@ -33,11 +33,16 @@ export class ServiceDiscovery {
         this.logger.log("Adding data:", config);
 
         if (!this.dataMap.has(config.topic)) {
+            const ps = new PassThrough();
+
             this.dataMap.set(config.topic, {
                 contentType: config.contentType,
-                stream: outputStream.pipe(new PassThrough(), { end: end }),
+                stream: ps,
                 localProvider
             });
+            outputStream.pipe(ps, { end: end });
+            ps.pipe(process.stdout);
+            ps.resume();
         } else {
             outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end: end });
         }

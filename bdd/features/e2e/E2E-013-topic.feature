@@ -12,7 +12,8 @@ Scenario: E2E-013 TC-002 Send data via instance, get this data via API
     And sequence "../packages/reference-apps/avengers-names-output.tar.gz" loaded
     And instance started
     And wait for "5000" ms
-    And get data named "avengers"
+    And send kill message to instance
+    # And get data named "avengers"
     # Then confirm data "" recived
 
 Scenario: E2E-013 TC-003 Send data via API, get this data from the instance
