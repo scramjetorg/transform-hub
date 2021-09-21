@@ -29,8 +29,8 @@ Scenario: E2E-013 TC-004 Send data from instance to another instance on the same
     Given host is running
     And sequences "../packages/reference-apps/hello-input-out.tar.gz" "../packages/reference-apps/endless-names-output.tar.gz" are loaded
     And instances started
-    And get output from instance2
-    And wait for "10000" ms
+    #And get output from instance2
+    #And wait for "10000" ms
     # Then confirm data "" recived
 
 
