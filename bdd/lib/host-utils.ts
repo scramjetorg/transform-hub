@@ -65,6 +65,7 @@ export class HostUtils {
 
             if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
             if (process.env.LOCAL_HOST_SOCKET_PATH) command.push("-S", process.env.LOCAL_HOST_SOCKET_PATH);
+            if (process.env.CPM_URL) command.push("-C", process.env.CPM_URL);
             if (process.env.SCRAMJET_TEST_LOG) {
                 // eslint-disable-next-line no-console
                 console.error("Spawning with command:", ...command);
