@@ -4,7 +4,8 @@ import * as fs from "fs";
 import { StringDecoder } from "string_decoder";
 import { Stream } from "stream";
 import { resolve } from "path";
-import { HostClient } from "@scramjet/api-client";
+// eslint-disable-next-line import/no-relative-packages
+import { HostClient } from "../../packages/api-client/src/host-client";
 
 const scenarios = `
 /**
@@ -18,7 +19,7 @@ console.log(scenarios);
 
 //
 const execPromise = (cmd: string, args: string[]) => new Promise<ChildProcess>((res, _rej) => {
-    const proc = spawn(cmd, args, { env: { DEVELOPMENT: "true" } });
+    const proc = spawn(cmd, args, { env: { DEVELOPMENT: "true", PATH: process.env.PATH } });
 
     res(proc);
 });
@@ -46,13 +47,13 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
     });
 
     const host1 = "11111111-c201-4fe4-8309-111111111111";
-    const sequence1 = fs.createReadStream(resolve(__dirname, "../../../transform-hub/packages/reference-apps/endless-names-output.tar.gz"));
-    const sequence2 = fs.createReadStream(resolve(__dirname, "../../../transform-hub/packages/reference-apps/hello-input-out.tar.gz"));
+    const sequence1 = fs.createReadStream(resolve(__dirname, "../../packages/reference-apps/hello-input-out.tar.gz"));
+    const sequence2 = fs.createReadStream(resolve(__dirname, "../../packages/reference-apps/avengers-names-output.tar.gz"));
     //
     //
     const startHost1 = async (config: { cpm: boolean }) => {
         fs.writeFileSync("/tmp/sth-id.json", JSON.stringify({ id: host1 }));
-        let args = [resolve(__dirname, "../../../transform-hub/packages/sth/src/bin/hub"), "-S", "/tmp/s1", "-P", "8001"];
+        let args = [resolve(__dirname, "../../packages/sth/src/bin/hub.ts"), "-S", "/tmp/s1", "-P", "8001"];
 
         if (config.cpm) {
             args = args.concat(["-C", "localhost:7000"]);
