@@ -149,14 +149,14 @@ When("sequences {string} {string} are loaded", { timeout: 30000 }, async functio
         createReadStream(packagePath1)
     );
 
-    await defer(10000);
+    //    await defer(10000);
 
     sequence2 = await hostClient.sendSequence(
         createReadStream(packagePath2)
     );
 
     this.resources.sequence1 = sequence1;
-    this.resources.sequence1 = sequence2;
+    this.resources.sequence2 = sequence2;
 
     console.log("Packages successfully loaded, sequences started.");
 });
@@ -167,10 +167,13 @@ When("instance started", async function(this: CustomWorld) {
 });
 
 When("instances started", async function(this: CustomWorld) {
-    instance1 = await sequence1.start({}, ["/package/data.json"]);
-    this.resources.instance1 = instance1;
-    instance2 = await sequence1.start({}, ["/package/data.json"]);
+    instance2 = await sequence2.start({}, []);
     this.resources.instance2 = instance2;
+
+    instance1 = await sequence1.start({}, []);
+    this.resources.instance1 = instance1;
+
+    (await instance1.getStream("output")).data?.pipe(process.stdout);
 });
 
 const startWith = async function(this: CustomWorld, instanceArg: string) {
