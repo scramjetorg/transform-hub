@@ -107,6 +107,10 @@ Then("I get instance log", { timeout: 30000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "log", instanceId]);
 });
 
+Then("I get instance output", { timeout: 30000 }, async function() {
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", instanceId]);
+});
+
 Then("I send input data {string}", async function(pathToFile: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "input", instanceId, pathToFile, ...formatFlags(), ...connectionFlags()]);
 });

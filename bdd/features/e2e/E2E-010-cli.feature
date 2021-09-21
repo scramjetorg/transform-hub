@@ -195,7 +195,7 @@ Feature: CLI tests
 
     Scenario: E2E-010 TC-018 API to API
         Given host is running
-        When I execute CLI with bash command "topic send test data.json"
+        When I execute CLI with bash command "topic send test ../../data.json"
         Then I execute CLI with bash command "topic get test"
         And the exit status is 0
         And host is still running
@@ -209,7 +209,7 @@ Feature: CLI tests
         Then I start Sequence
         And the exit status is 0
         Then I get instance health
-        Then I execute CLI with bash command "topic get test"
+        Then I execute CLI with bash command "topic get names"
         And the exit status is 0
         And host is still running
 
@@ -224,9 +224,10 @@ Feature: CLI tests
         And the exit status is 0
         Then I get instance health
         Then I get instance id
-        And I execute CLI with bash command "$SI instance output <instance_id>"
+        And I get instance output
         And host is still running
 
+    # TODO - some steps are to be implemented
     Scenario: E2E-010 TC-021 instance to instance
         Given host is running
         When I execute CLI with bash command "$SI seq send ../packages/reference-apps/endless-names-output.tar.gz"
@@ -237,6 +238,6 @@ Feature: CLI tests
         Then I start Sequences
         And the exit status is 0
         Then I get instance2 id
-        And I execute CLI with bash command "$SI instance output <instance2_id>"
+        And I get instance2 output
         And the exit status is 0
         And host is still running
