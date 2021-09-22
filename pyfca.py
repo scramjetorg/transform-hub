@@ -117,7 +117,7 @@ class Pyfca:
             result = func(result)
             log(f'   -    {fmt(chunk)} function: {func}')
             log(f'   -    {fmt(chunk)} yielded: {result}')
-            if hasattr(result, '__await__'):
+            if asyncio.iscoroutine(result):
                 result = await result
                 log(f'PROCESS {fmt(chunk)} resolved: {result}')
             if result is None:
