@@ -9,18 +9,23 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
  *
  * @param _stream - dummy input stream
  */
-export = async function(_stream) {
+export = async function(_stream, max) {
     const ps = new PassThrough();
 
     let cnt = 0;
 
-    setInterval(async () => {
+    const interval = setInterval(async () => {
         // output
         const outputString = `{ "name": "${names[cnt % names.length]}" }\n`;
 
         ps.write(outputString);
         console.log(outputString);
         cnt++;
+
+        if (max && cnt > max) {
+            clearInterval(interval);
+            ps.end();
+        }
     }, 500);
 
     // eslint-disable-next-line no-extra-parens

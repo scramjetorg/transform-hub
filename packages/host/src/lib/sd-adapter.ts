@@ -30,7 +30,7 @@ export class ServiceDiscovery {
     }
 
     addData(outputStream: ReadableStream<any>, config: dataType, end: boolean, localProvider?: string) {
-        this.logger.log("Adding data:", config);
+        this.logger.log("Adding data:", config, "end:", end);
 
         if (!this.dataMap.has(config.topic)) {
             const ps = new PassThrough();
@@ -40,16 +40,21 @@ export class ServiceDiscovery {
                 stream: ps,
                 localProvider
             });
-            outputStream.pipe(ps, { end: end });
-            ps.pipe(process.stdout);
-            ps.resume();
+
+            outputStream.pipe(ps, { end });
         } else {
-            outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end: end });
+            outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end });
         }
 
         if (localProvider) {
-            this.logger.log(`Local provider added data ${config.topic}, sending data to CPM`);
-            this.cpmConnector?.sendTopic(config.topic, this.dataMap.get(config.topic)!.stream as ReadableStream<any>);
+            this.logger.log(`Local provider added ${config.topic}`);
+
+            if (this.cpmConnector) {
+                this.cpmConnector
+                    .sendTopic(config.topic, this.dataMap.get(config.topic)!.stream as ReadableStream<any>);
+
+                this.logger.log("Sending data to cpm");
+            }
         }
     }
 
@@ -85,26 +90,30 @@ export class ServiceDiscovery {
             const topicData = this.dataMap.get(dataType.topic)!;
 
             if (topicData?.localProvider) {
-                this.logger.log("LocalProvider found for topic", dataType.topic);
+                this.logger.log("LocalProvider found for topic", dataType.topic, topicData.localProvider);
 
                 if (inputStream) {
                     topicData?.stream.pipe(inputStream);
                 }
             } else {
-                this.logger.log("LocalProvider not found for topic", dataType.topic, "requesting CPM");
+                this.logger.log("LocalProvider not found for topic", dataType.topic);
 
-                this.cpmConnector?.getTopic(dataType.topic)
-                    .then(stream => {
-                        this.logger.log("-------------- CPM RESPONDED");
+                if (this.cpmConnector) {
+                    this.logger.log("Requesting CPM for topic", dataType.topic);
 
-                        if (inputStream) {
-                            topicData?.stream.pipe(inputStream);
-                        }
+                    this.cpmConnector?.getTopic(dataType.topic)
+                        .then(stream => {
+                            this.logger.log("-------------- CPM RESPONDED");
 
-                        stream.pipe(topicData?.stream as WritableStream<any>);
-                    });
+                            if (inputStream) {
+                                topicData?.stream.pipe(inputStream);
+                            }
 
-                this.dataMap.set(dataType.topic, { ...topicData, cpmRequest: true });
+                            stream.pipe(topicData?.stream as WritableStream<any>);
+                        });
+
+                    this.dataMap.set(dataType.topic, { ...topicData, cpmRequest: true });
+                }
             }
 
             return topicData?.stream;

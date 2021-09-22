@@ -16,6 +16,7 @@ import { CustomWorld } from "../world";
 import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
+import { expectedResponses } from "./expectedResponses";
 
 const freeport = require("freeport");
 const version = findPackage().next().value?.version || "unknown";
@@ -30,7 +31,6 @@ let actualApiResponse: Response;
 let actualLogResponse: any;
 let containerId: string;
 let streams: { [key: string]: Promise<string | undefined> } = {};
-let SDoutput: string;
 
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 
@@ -93,7 +93,6 @@ Before(() => {
     actualStatusResponse = "";
     actualLogResponse = "";
     streams = {};
-    SDoutput = "";
 });
 
 const streamToString = async (stream: Stream): Promise<string> => {
@@ -500,10 +499,15 @@ Then("output is {string}", async function(this: CustomWorld, str) {
 });
 
 Then("send data {string} named {string}", async (data: any, topic: string) => {
+    const ps = new PassThrough({ encoding: "utf-8" });
+
+    ps.end(data);
+
     const dataOut = await hostClient.sendNamedData(
         topic,
-        data,
+        ps,
         "application/x-ndjson",
+        true
     );
 
     console.log("------SEND DATA STATUS????", dataOut.status);
@@ -521,9 +525,10 @@ Then("send data {string} named {string}", async (data: any, topic: string) => {
 //     assert.equal(dataIn.status, 200);
 // });
 
-When("get data named {string}", async (topic: string) => {
-    (await hostClient.getNamedData(topic)).data!.pipe(process.stdout);
-    // const out = await streamToString(dataIn.data!);
+When("get data named {string}", async function (this: CustomWorld, topic: string)  {
+    const stream = (await hostClient.getNamedData(topic)).data;
+
+    this.resources.out = await streamToString(stream!);
 
     // SDoutput = out;
     // console.log("------outputString", out);
@@ -536,9 +541,7 @@ Then("get output", async function(this: CustomWorld) {
 
     if (!output?.data) assert.fail("No output!");
 
-    SDoutput = await streamToString(output.data);
-
-    console.log("------outputString: " + SDoutput);
+    this.resources.out = await streamToString(output.data);
 
     assert.equal(output.status, 200);
 });
@@ -558,6 +561,6 @@ Then("get output from instance1", async function(this: CustomWorld) {
     // assert.equal(output.status, 200);
 });
 
-Then("confirm data {string} received", async (data) => {
-    assert.equal(SDoutput, data);
+Then("confirm data defined as {string} received", async function(this: CustomWorld, data) {
+    assert.equal(this.resources.out, expectedResponses[data]);
 });
