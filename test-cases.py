@@ -55,7 +55,8 @@ async def async_identity(x):
 def transform_dict_or_num(description, data, function):
     if type(data) is dict and 'value' in data:
         data['value'] = function(data['value'])
-        result = data
+        # dropping value means dropping the whole chunk
+        result = data if data['value'] is not None else None
     else:
         result = function(data)
     log(f'{yellow}{description}:{reset} -> {result}')
@@ -74,6 +75,13 @@ def double(x):
 async def async_double(x):
     await mock_delay(x)
     return double(x)
+
+def keep_even(x):
+    return transform_dict_or_num('keep_even', x, lambda x: x if x % 2 == 0 else None)
+
+async def async_keep_even(x):
+    await mock_delay(x)
+    return keep_even(x)
 
 # Test cases
 
@@ -292,6 +300,15 @@ async def test_writing_above_limit(input_data):
     await asyncio.gather(*reads)
 
 
+async def test_empty_transformation_chain(input_data):
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    for x in input_data:
+        p.write(x)
+    results = [await p.read() for _ in input_data]
+    log_results(results)
+    # items should appear in the output unchanged and in the same order
+    assert results == input_data
+
 async def test_multitransform(input_data):
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
     p.add_transform(async_double)
@@ -301,10 +318,6 @@ async def test_multitransform(input_data):
     reads = [p.read() for _ in input_data]
     results = await asyncio.gather(*reads)
     log_results(results)
-    # remove debug information
-    for r in results:
-        if '_pyfca_status' in r:
-             del r['_pyfca_status']
     # multiple transformations should be applied to each element, and they
     # should arrive in the same order they were written in.
     assert results == [
@@ -324,10 +337,6 @@ async def test_sync_chain(input_data):
     reads = [p.read() for _ in input_data]
     results = await asyncio.gather(*reads)
     log_results(results)
-    # remove debug information
-    for r in results:
-        if '_pyfca_status' in r:
-             del r['_pyfca_status']
     # Using synchronous functions as transformations should work.
     assert results == [
         {'id': 0, 'value': 4},
@@ -338,6 +347,60 @@ async def test_sync_chain(input_data):
         {'id': 5, 'value': 10},
     ]
 
+async def test_filtering_should_drop_items(input_data):
+    p = pyfca.Pyfca(MAX_PARALLEL, async_keep_even)
+    for x in input_data:
+        p.write(x)
+    p.end()
+    results = [await p.read() for _ in input_data]
+    log_results(results)
+    assert results == [
+        {'id': 1, 'value': 2},
+        {'id': 4, 'value': 2},
+        {'id': 5, 'value': 4},
+        None,
+        None,
+        None,
+    ]
+
+
+async def test_filtering_reads_before_end(input_data):
+    p = pyfca.Pyfca(MAX_PARALLEL, async_keep_even)
+    for x in input_data:
+        p.write(x)
+    reads = [p.read() for _ in input_data]
+    p.end()
+    results = await asyncio.gather(*reads)
+    log_results(results)
+    # even though the reads were performed before .end(), they should return
+    # Nones for filtered out items, and with correct ordering
+    assert results == [
+        {'id': 1, 'value': 2},
+        {'id': 4, 'value': 2},
+        {'id': 5, 'value': 4},
+        None,
+        None,
+        None,
+    ]
+
+async def test_filtering_drops_everything(input_data):
+    p = pyfca.Pyfca(MAX_PARALLEL, async_keep_even)
+    for x in input_data:
+        p.write(x)
+    reads = [p.read() for _ in input_data]
+    p.end()
+    results = await asyncio.gather(*reads)
+    log_results(results)
+    # even though the reads were performed before .end(), they should return
+    # Nones for filtered out items, and with correct ordering
+    assert results == [
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ]
 
 # Main test execution loop
 
@@ -352,8 +415,12 @@ tests_to_run = [
     (test_limit_waiting_until_items_are_processed, objects_with_delays),
     (test_limit_waiting_for_reads,                 objects_with_values),
     (test_writing_above_limit,                     monotonic_sequence(2*MAX_PARALLEL)),
+    (test_empty_transformation_chain,              objects_with_values),
     (test_multitransform,                          objects_with_values),
     (test_sync_chain,                              objects_with_values),
+    (test_filtering_should_drop_items,             objects_with_values),
+    (test_filtering_reads_before_end,              objects_with_values),
+    (test_filtering_drops_everything,              [1,3,5,7,9,11]),
 ]
 
 import time

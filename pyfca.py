@@ -14,9 +14,11 @@ def log(*args):
 
 
 class Pyfca:
-    def __init__(self, max_parallel, transformation):
+    def __init__(self, max_parallel, initial_transform=None):
         self.max_parallel = max_parallel
-        self.transform_chain = [transformation]
+        self.transform_chain = []
+        if initial_transform:
+            self.transform_chain.append(initial_transform)
 
         self.processing = asyncio.Queue()
         self.ready = asyncio.Queue()
@@ -53,10 +55,9 @@ class Pyfca:
             drain = asyncio.gather(self.processing.get_nowait(), waiting)
 
         if DEBUG:
-            utils.update_status(chunk, 'writing')
             chunk_status.chunk = chunk
             task.set_name(f'process {utils.chunk_id_or_value(chunk)}')
-            log(f"WRITE {fmt(chunk)} r-w balance: {self.read_write_balance}")
+            log(f"WRITE {fmt(chunk)} r/w balance: {self.read_write_balance}")
             log(f"  -   {fmt(chunk)} scheduled: {task}")
             log(f"  -   {fmt(chunk)} return: {fmt(drain)}")
 
@@ -64,78 +65,75 @@ class Pyfca:
 
 
     def read(self):
-        log(f'READ r-w balance: {self.read_write_balance}')
-
-        if self.read_write_balance == self.max_parallel:
-            waiting = self.waiting_for_read.get_nowait()
-            waiting.set_result(True)
-
         if self.ended and self.read_write_balance <= 0:
-            log('  -  processing ended, return None')
+            log('READ processing ended, return None')
             return self.no_more_items
 
         self.read_write_balance -= 1
+        log(f'READ r/w balance: {self.read_write_balance}')
+
+        if self.read_write_balance == self.max_parallel - 1:
+            waiting = self.waiting_for_read.get_nowait()
+            waiting.set_result(True)
+
         awaitable = self.ready.get()
         log(f'  -  got: {awaitable}')
         return awaitable
 
 
     def end(self):
-        log(f'END read-write balance: {self.read_write_balance}')
-        if self.read_write_balance < 0:
-            # schedule as a task to make sure it will run after any pending
-            # _process updates last_chunk_status
-            asyncio.create_task(self._resolve_overflow_readers())
+        log(f'END stop accepting input. r/w balance: {self.read_write_balance}')
         self.ended = True
+        # schedule as a task to make sure it will run after any pending
+        # _process updates last_chunk_status
+        asyncio.create_task(self._resolve_overflow_readers())
 
 
     def add_transform(self, transformation):
         self.transform_chain.append(transformation)
-        log(f'ADD_TRANSFORM chain: {self.transform_chain}')
+        log(f'ADD_TRANSFORM current chain: {self.transform_chain}')
 
 
     async def _resolve_overflow_readers(self):
-        async def append_none():
-            log(f'END waiting for last item: {self.last_chunk_status}')
-            await self.last_chunk_status
-            await self.ready.put(None)
-            log(f'END appended None')
+        log(f'END waiting for last item: {self.last_chunk_status}')
+        await self.last_chunk_status
 
+        log(f'END final r/w balance: {self.read_write_balance}')
         for _ in range(-self.read_write_balance):
-            nuller = asyncio.create_task(append_none())
-            log(f'END add item for overflow reader: {nuller}')
-
-
-    async def _run_transform_chain(self, chunk):
-        result = chunk
-        for func in self.transform_chain:
-            result = func(result)
-            log(f'CHAIN {fmt(chunk)} function: {func}')
-            log(f'  -   {fmt(chunk)} yielded: {result}')
-            if hasattr(result, '__await__'):
-                result = await result
-                log(f'CHAIN {fmt(chunk)} resolved: {result}')
-        log(f'  -   {fmt(chunk)} {pink}finished{reset}')
-        return result
+            self.ready.put_nowait(None)
+            log(f' -  appended None')
 
 
     async def _process(self, chunk, chunk_status):
-        transform = self._run_transform_chain(chunk)
         previous = self.last_chunk_status
 
         if DEBUG:
-            utils.update_status(chunk, 'processing')
-            log(f'PROCESS {fmt(chunk)} transformation: {transform}')
-            log(f'   -    {fmt(chunk)} previous item: {fmt(previous)}')
+            log(f'PROCESS {fmt(chunk)} previous item: {fmt(previous)}')
             log(f'   -    {fmt(chunk)} status: {fmt(chunk_status)}')
 
         self.last_chunk_status = chunk_status
-        result = (await asyncio.gather(transform, previous))[0]
+        result = chunk
+        for func in self.transform_chain:
+            result = func(result)
+            log(f'   -    {fmt(chunk)} function: {func}')
+            log(f'   -    {fmt(chunk)} yielded: {result}')
+            if asyncio.iscoroutine(result):
+                result = await result
+                log(f'PROCESS {fmt(chunk)} resolved: {result}')
+            if result is None:
+                break
+
+        log(f'   -    {fmt(chunk)} processing {pink}finished{reset}')
+        log(f'   -    {fmt(chunk)} awaiting for previous chunk: {fmt(previous)}')
+        await previous
         chunk_status.set_result(True)
+        log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
 
-        if DEBUG:
-            utils.update_status(chunk, 'ready')
-            log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
-            log(f'   -    {fmt(chunk)} {green}return:{reset} {result}')
+        if result is not None:
+            log(f'   -    {fmt(chunk)} {green}return{reset}: {result}')
+            await self.ready.put(result)
+        else:
+            log(f'   -    {fmt(chunk)} {cyan}remove{reset}')
+            self.read_write_balance -= 1
 
-        await self.ready.put(result)
+
