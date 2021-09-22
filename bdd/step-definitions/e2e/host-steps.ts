@@ -18,12 +18,6 @@ import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
 
-const freeport = require("freeport");
-const version = findPackage().next().value?.version || "unknown";
-const hostUtils = new HostUtils();
-const testPath = "../dist/reference-apps/hello-alice-out/";
-const dockerode = new Dockerode();
-
 let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
@@ -32,7 +26,25 @@ let actualLogResponse: any;
 let containerId: string;
 let streams: { [key: string]: Promise<string | undefined> } = {};
 
+const freeport = require("freeport");
+const version = findPackage().next().value?.version || "unknown";
+const hostUtils = new HostUtils();
+const testPath = "../dist/reference-apps/hello-alice-out/";
+const dockerode = new Dockerode();
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
+const startWith = async function(this: CustomWorld, instanceArg: string) {
+    this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
+};
+const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
+const streamToString = async (stream: Stream): Promise<string> => {
+    const chunks = [];
+    const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
+
+    for await (const chunk of strings) {
+        chunks.push(chunk);
+    }
+    return chunks.join("");
+};
 
 process.env.LOCAL_HOST_BASE_URL = "";
 
@@ -95,16 +107,43 @@ Before(() => {
     streams = {};
 });
 
-const streamToString = async (stream: Stream): Promise<string> => {
-    const chunks = [];
-    const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
+Given("start host", async () => {
+    let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
-    for await (const chunk of strings) {
-        chunks.push(chunk);
+    if (!apiUrl) {
+        const port = await promisify(freeport)();
+
+        process.env.LOCAL_HOST_PORT = `${port}`;
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${port}/api/v1`;
+        process.env.LOCAL_HOST_SOCKET_PATH = `/tmp/scramjet-socket-server-path-${port}`;
+
+        console.error(`Starting host on port: ${port}`);
     }
+    hostClient = new HostClient(apiUrl);
+    if (process.env.SCRAMJET_TEST_LOG) {
+        hostClient.client.addLogger({
+            request(url) {
+                console.error(new Date().toISOString(), "Starting request to", url);
+            },
+            ok(result) {
+                const {
+                    status, statusText, url
+                } = result;
 
-    return chunks.join("");
-};
+                // eslint-disable-next-line no-console
+                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
+            },
+            error(error) {
+                const { code, reason: result } = error;
+                const { message } = result || {};
+
+                // eslint-disable-next-line no-console
+                console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
+            }
+        });
+    }
+    await hostUtils.spawnHost();
+});
 
 Given("host is running", async () => {
     assert.equal((await hostClient.getLoadCheck()).status, 200);
@@ -134,16 +173,6 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
     console.log("Package successfully loaded, sequence started.");
 });
 
-When("sequences {string} {string} are loaded", { timeout: 30000 }, async function(this: CustomWorld, packagePath1: string, packagePath2: string) {
-    this.resources.sequence1 = await hostClient.sendSequence(
-        createReadStream(packagePath1)
-    );
-
-    this.resources.sequence2 = await hostClient.sendSequence(
-        createReadStream(packagePath2)
-    );
-});
-
 When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({}, []);
 });
@@ -154,11 +183,6 @@ When("instances started", async function(this: CustomWorld) {
 
     console.log("Sequences started.");
 });
-
-const startWith = async function(this: CustomWorld, instanceArg: string) {
-    this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
-};
-const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 
 When("instance started with url from assets argument {string}", { timeout: 25000 }, async function(this: CustomWorld, assetUrl: string) {
     return startWith.call(this, `${assetsLocation}${assetUrl}`);
@@ -490,9 +514,6 @@ Then("output is {string}", async function(this: CustomWorld, str) {
 
     const outputString = await streamToString(output.data);
 
-    console.log("output.status: " + output.status);
-    console.log("outputString: " + outputString);
-
     assert(outputString, str);
 });
 
@@ -501,60 +522,33 @@ Then("send data {string} named {string}", async (data: any, topic: string) => {
 
     ps.end(data);
 
-    const dataOut = await hostClient.sendNamedData(
+    const sendData = await hostClient.sendNamedData(
         topic,
         ps,
         "application/x-ndjson",
         true
     );
 
-    console.log("------SEND DATA STATUS????", dataOut.status);
-
-    assert.equal(dataOut.status, 202);
+    assert.equal(sendData.status, 202);
 });
 
-// When("get data named {string}", async (topic: string) => {
-//     const dataIn = await hostClient.getNamedData(topic);
-//     const out = await streamToString(dataIn.data!);
+When("get data named {string}", async function(this: CustomWorld, topic: string) {
+    const stream = await hostClient.getNamedData(topic);
 
-//     console.log("------outputString", out);
-
-//     dataIn.data!.pipe(process.stdout);
-//     assert.equal(dataIn.status, 200);
-// });
-
-When("get data named {string}", async function (this: CustomWorld, topic: string)  {
-    const stream = (await hostClient.getNamedData(topic)).data;
-
-    this.resources.out = await streamToString(stream!);
-
-    // SDoutput = out;
-    // console.log("------outputString", out);
-
-    // assert.equal(dataIn.status, 200);
+    if (!stream?.data) assert.fail("No data!");
+    this.resources.out = await streamToString(stream!.data!);
+    assert.equal(stream.status, 200);
 });
 
 Then("get output", async function(this: CustomWorld) {
     const output = await this.resources.instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");
-
     this.resources.out = await streamToString(output.data);
-
     assert.equal(output.status, 200);
 });
 
-Then("get output from instance2", async function(this: CustomWorld) {
-    const output = await this.resources.instance2?.getStream("output");
-
-    this.resources.instance2output = await streamToString(output!.data!);
-
-    // console.log("output.status: " + output.status);
-    // console.log("outputString: " + SDoutput);
-
-    // assert.equal(output.status, 200);
-});
-
 Then("confirm data defined as {string} received", async function(this: CustomWorld, data) {
+    console.log("Received data: ", this.resources.out);
     assert.equal(this.resources.out, expectedResponses[data]);
 });
