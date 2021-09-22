@@ -105,7 +105,9 @@ export class ClientUtils implements HttpClient {
             "content-type": type
         };
 
-        if (typeof end !== "undefined") headers["x-end-stream"] = end ? "true" : "false";
+        if (typeof end !== "undefined") {
+            headers["x-end-stream"] = end ? "true" : "false";
+        }
 
         return this.post(
             url,
