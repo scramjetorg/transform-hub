@@ -1,21 +1,23 @@
 Feature: E2E test, where we send and receive data from /topic/:name endpoint by using api-client
 
-@ci
+@ci @starts-host
 Scenario: E2E-013 TC-001 Send and get data from API STH
-    Given host is running
+    Given start host
     Then send data "{ \"city\": \"New York\" }" named "cities"
     And get data named "cities"
     Then confirm data defined as "nyc-city" received
 
+@ci @starts-host
 Scenario: E2E-013 TC-002 Send data via instance, get this data via API
-    Given host is running
+    Given start host
     And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
     And instance started with arguments "10"
     And get data named "names"
     Then confirm data defined as "endless-names-10" received
 
+@ci @starts-host
 Scenario: E2E-013 TC-003 Send data via API, get this data from the instance
-    Given host is running
+    Given start host
     And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
     And instance started
     Then send data "{ \"name\": \"Hulk\" }" named "names"
@@ -23,8 +25,9 @@ Scenario: E2E-013 TC-003 Send data via API, get this data from the instance
     And get output
     Then confirm data defined as "hulkName" received
 
+@ci @starts-host
 Scenario: E2E-013 TC-004 Send data from instance to another instance on the same host
-    Given host is running
+    Given start host
     And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
     And instance started with arguments "10"
     And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
