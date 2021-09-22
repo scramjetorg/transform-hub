@@ -102,7 +102,7 @@ const streamToString = async (stream: Stream): Promise<string> => {
     for await (const chunk of strings) {
         chunks.push(chunk);
     }
-    console.log("-------chunks: ", chunks);
+
     return chunks.join("");
 };
 
@@ -139,13 +139,9 @@ When("sequences {string} {string} are loaded", { timeout: 30000 }, async functio
         createReadStream(packagePath1)
     );
 
-    //    await defer(10000);
-
     this.resources.sequence2 = await hostClient.sendSequence(
         createReadStream(packagePath2)
     );
-
-    console.log("Packages successfully loaded, sequences started.");
 });
 
 When("instance started", async function(this: CustomWorld) {
@@ -153,8 +149,10 @@ When("instance started", async function(this: CustomWorld) {
 });
 
 When("instances started", async function(this: CustomWorld) {
-    this.resources.instance2 = await this.resources.sequence2!.start({}, []);
     this.resources.instance1 = await this.resources.sequence1!.start({}, []);
+    this.resources.instance2 = await this.resources.sequence2!.start({}, []);
+
+    console.log("Sequences started.");
 });
 
 const startWith = async function(this: CustomWorld, instanceArg: string) {
@@ -546,14 +544,10 @@ Then("get output", async function(this: CustomWorld) {
     assert.equal(output.status, 200);
 });
 
-Then("get output from instance1", async function(this: CustomWorld) {
-    const output = await this.resources.instance1?.getStream("output");
+Then("get output from instance2", async function(this: CustomWorld) {
+    const output = await this.resources.instance2?.getStream("output");
 
-    // if (!output?.data) assert.fail("No output!");
-
-    output!.data?.pipe(process.stdout);
-
-    // SDoutput = await streamToString(output.data);
+    this.resources.instance2output = await streamToString(output!.data!);
 
     // console.log("output.status: " + output.status);
     // console.log("outputString: " + SDoutput);
