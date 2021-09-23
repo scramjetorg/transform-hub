@@ -312,7 +312,7 @@ When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
 
-    const containers = await dockerode.listContainers();
+    let containers = await dockerode.listContainers();
 
     if (containers.length === 0) {
         console.log("The list of containers is empty!");
@@ -320,22 +320,20 @@ const waitForContainerToClose = async () => {
         let containerExist = false;
 
         do {
-            containers.forEach(
+            containers = await dockerode.listContainers();
+
+            containerExist = containers.filter(
                 // eslint-disable-next-line no-loop-func
-                async containerInfo => {
-                    if (containerInfo.Id.includes(containerId)) {
-                        containerExist = true;
-                        console.log("----------------Container is open");
-                    }
-                    await defer(500);
-                });
+                containerInfo => containerInfo.Id === containerId
+            ).length > 0;
+            await defer(500);
         } while (!containerExist);
 
         console.log("----------------Container CLOSED");
     }
 };
 
-When("container is closed", async () => {
+When("container is closed" ,async () => {
     if (!containerId)assert.fail("There is no container ID");
 
     await waitForContainerToClose();
