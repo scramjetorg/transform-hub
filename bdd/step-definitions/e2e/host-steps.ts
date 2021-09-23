@@ -291,24 +291,6 @@ When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
     console.log("Container is identified.", containerId);
 });
 
-// TO BE REMOVED
-// When("container is closed", async () => {
-//     if (!containerId) assert.fail();
-
-//     const containers = await dockerode.listContainers();
-
-//     let containerExist = false;
-
-//     containers.forEach(containerInfo => {
-//         if (containerInfo.Id.includes(containerId)) {
-//             containerExist = true;
-//         }
-//     });
-
-//     assert.equal(containerExist, false);
-//     console.log("Container is closed.");
-// });
-
 const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
 
