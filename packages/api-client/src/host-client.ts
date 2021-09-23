@@ -58,11 +58,17 @@ export class HostClient implements ClientProvider {
         return this.client.get("version");
     }
 
-    async sendNamedData(topic: string, stream: Readable | any, contentType?: string, end?: boolean) {
-        return this.client.sendStream(`topic/${topic}`, stream, { type: contentType, end });
+    async sendNamedData(topic: string, stream: Readable, contentType?: string, end?: boolean) {
+        stream.on("end", function() {
+            // eslint-disable-next-line no-console
+            console.log("END EVENT ON SD STREAM IN CLI", end);
+        });
+
+        return this.client.sendStream(`topic/${topic}`, stream, { type: contentType, end: end });
     }
 
     async getNamedData(topic: string) {
         return this.client.getStream(`topic/${topic}`);
     }
 }
+

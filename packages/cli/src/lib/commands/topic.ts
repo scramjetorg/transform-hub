@@ -18,8 +18,7 @@ export const topic: CommandDefinition = (program) => {
                 topicName,
                 stream ? createReadStream(stream) : process.stdin,
                 contentType,
-                end
-            )
+                end)
         ));
 
     topicCmd.command("get <topic>")

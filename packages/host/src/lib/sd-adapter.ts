@@ -37,7 +37,7 @@ export class ServiceDiscovery {
 
             this.dataMap.set(config.topic, {
                 contentType: config.contentType,
-                stream: ps,
+                stream: outputStream,
                 localProvider
             });
 
@@ -118,8 +118,11 @@ export class ServiceDiscovery {
 
             return topicData?.stream;
         }
+        const ps = new PassThrough();
 
-        this.addData(new PassThrough(), dataType, end!);
+        // eslint-disable-next-line no-console
+        ps.on("end", () => console.log("END EVENT ON PASSTHROUGH IN SD ADAPTER IN HOST"));
+        this.addData(ps, dataType, end!);
 
         return this.getData(dataType, end, inputStream);
     }
