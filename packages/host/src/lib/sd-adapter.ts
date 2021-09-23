@@ -30,9 +30,8 @@ export class ServiceDiscovery {
     }
 
     addData(outputStream: ReadableStream<any>, config: dataType, end: boolean, localProvider?: string) {
-        this.logger.log("Adding data:", config, "end:", end);
-
         if (!this.dataMap.has(config.topic)) {
+            this.logger.log("Adding data:", config, "end:", end);
             const ps = new PassThrough();
 
             this.dataMap.set(config.topic, {
@@ -43,6 +42,7 @@ export class ServiceDiscovery {
 
             outputStream.pipe(ps, { end });
         } else {
+            this.logger.log("Routing data:", config, "end:", end);
             outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end });
         }
 
@@ -116,13 +116,11 @@ export class ServiceDiscovery {
                 }
             }
 
-            return topicData?.stream;
+            return topicData?.stream.on("end", () => this.logger.debug("Topic ended:", dataType));
         }
         const ps = new PassThrough();
 
-        // eslint-disable-next-line no-console
-        ps.on("end", () => console.log("END EVENT ON PASSTHROUGH IN SD ADAPTER IN HOST"));
-        this.addData(ps, dataType, end!);
+        this.addData(ps, dataType, !!end);
 
         return this.getData(dataType, end, inputStream);
     }

@@ -159,17 +159,11 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
         this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
-            // eslint-disable-next-line no-console
-            req.on("end", () => console.log("END EVENT ON SD STREAM IN HOST"));
-            // eslint-disable-next-line no-console
-            req.on("error", (err) => console.log("ERRROR EVENT ON SD STREAM IN HOST", err.stack));
             // eslint-disable-next-line no-extra-parens
             const params = (req as ParsedMessage).params || {};
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
             const end = req.headers["x-end-stream"] === "true";
 
-            // eslint-disable-next-line no-console
-            console.log("HOST: req.headers: ", end);
             if (sdTarget) {
                 req.pipe(sdTarget as Writable, { end });
 
@@ -188,13 +182,11 @@ export class Host implements IComponent {
 
         this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
             const params = req.params || {};
-            const contentType = req.headers["content-type"] || "application/x-ndjson"; //TODO: what should be the default content type and where to store this information?
+            const contentType = req.headers["content-type"] || "application/x-ndjson";
+            //TODO: what should be the default content type and where to store this information?
 
             return this.serviceDiscovery.getData(
-                {
-                    topic: params.name,
-                    contentType: contentType
-                },
+                { topic: params.name, contentType: contentType },
                 true
             ) as Readable;
         });

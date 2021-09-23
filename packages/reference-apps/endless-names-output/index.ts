@@ -8,6 +8,7 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
  * Mutli output application.
  *
  * @param _stream - dummy input stream
+ * @param max - how many items to print
  */
 
 export = async function(_stream, max) {
