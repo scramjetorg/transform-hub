@@ -11,7 +11,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { PassThrough, Readable, Writable } from "stream";
+import { Readable, Writable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -27,6 +27,7 @@ import { ServiceDiscovery } from "./sd-adapter";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
+//const whenStreamEnd = (req: IncomingMessage) => new Promise((res, rej) => req.once("end", res).once("error", rej));
 
 export type HostOptions = Partial<{
     identifyExisting: boolean
@@ -160,26 +161,23 @@ export class Host implements IComponent {
         this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
             // eslint-disable-next-line no-console
             req.on("end", () => console.log("END EVENT ON SD STREAM IN HOST"));
-
+            // eslint-disable-next-line no-console
+            req.on("error", (err) => console.log("ERRROR EVENT ON SD STREAM IN HOST", err.stack));
             // eslint-disable-next-line no-extra-parens
             const params = (req as ParsedMessage).params || {};
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
             const end = req.headers["x-end-stream"] === "true";
 
             // eslint-disable-next-line no-console
-            console.log("req.headers", req.headers);
+            console.log("HOST: req.headers: ", end);
             if (sdTarget) {
                 req.pipe(sdTarget as Writable, { end });
 
                 return {};
             }
 
-            const ps = new PassThrough();
-
-            req.on("end", () => ps.end());
-            req.pipe(ps);
             this.serviceDiscovery.addData(
-                ps,
+                req,
                 { contentType: req.headers["content-type"] || "", topic: params.name },
                 end,
                 "api"
