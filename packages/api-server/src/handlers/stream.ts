@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
 import { Writable, Readable, Duplex } from "stream";
@@ -90,7 +91,18 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 if (req.headers.expect === "100-continue") res.writeContinue();
 
                 const end = checkEndHeader(req, _end);
+
+                req.on("error", (err) => console.log("API SERVER", err.stack));
+                req.on("end", () => console.log("API SERVER REQ END"));
+                req.on("destroy", () => console.log("API SERVER REQ DESTROY"));
+                req.on("abort", () => console.log("API SERVER REQ ABORT"));
+                req.socket.on("disconnect", () => console.log("API SERVER REQ SOCKET DISCONNECT"));
+                req.socket.on("close", () => console.log("API SERVER REQ SOCKET CLOSE"));
+                req.socket.on("end", () => console.log("API SERVER REQ SOCKET END"));
+                console.log("API SERVER BEFORE await getWritable(stream, req, res)");
                 const data = await getWritable(stream, req, res);
+
+                console.log("API SERVER BEFORE await getWritable(stream, req, res)");
 
                 // eslint-disable-next-line no-extra-parens
                 if (typeof (data as Writable).writable !== "undefined") {
@@ -131,7 +143,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 } else {
                     res.writeHead(202, "Accepted");
                 }
-
                 res.end();
             } catch (e: any) {
                 // eslint-disable-next-line no-console
