@@ -542,6 +542,18 @@ Then("send data {string} named {string}", async (data: any, topic: string) => {
     assert.equal(sendData.status, 202);
 });
 
+Then("send data from file {string} named {string}", async (path: any, topic: string) => {
+    const readStream = fs.createReadStream(path);
+    const sendData = await hostClient.sendNamedData(
+        topic,
+        readStream,
+        "application/x-ndjson",
+        true
+    );
+
+    assert.equal(sendData.status, 202);
+});
+
 When("get data named {string}", async function(this: CustomWorld, topic: string) {
     const stream = await hostClient.getNamedData(topic);
 

@@ -34,3 +34,9 @@ Scenario: E2E-013 TC-004 Send data from instance to another instance on the same
     And instance started
     And get output
     Then confirm data defined as "hello-input-out-10" received
+
+@ci @starts-host
+    Scenario: E2E-013 TC-005 Send data from file to STH SD API and get it from STH SD API
+        Given start host
+        Then send data from file "../dist/reference-apps/avengers-names-output/avengers.json" named "marvel"
+        And get data named "marvel"
