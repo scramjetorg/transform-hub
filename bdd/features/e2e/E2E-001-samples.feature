@@ -9,9 +9,7 @@ Feature: Sample e2e tests
         And get instance health
         And get containerId
         And instance health is "true"
-        And wait for "2000" ms
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
-        And wait for "10000" ms
         And container is closed
         Then host is still running
 

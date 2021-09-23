@@ -13,7 +13,6 @@ Feature: Ports e2e tests
         And wait for "3000" ms
         And check stream for message sent
         And send "null" to "tcp" server
-        And wait for "5000" ms
         And container is closed
         Then host is still running
 
@@ -30,6 +29,5 @@ Feature: Ports e2e tests
         And wait for "3000" ms
         And check stream for message sent
         And send "null" to "udp" server
-        And wait for "5000" ms
         And container is closed
         Then host is still running

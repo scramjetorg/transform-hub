@@ -227,7 +227,6 @@ When("response in every line contains {string} followed by name from file {strin
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
     const lines: string[] = actualLogResponse.split("\n");
 
-    console.log(actualLogResponse);
     let i: number;
 
     for (i = 0; i < input.length; i++) {
@@ -264,12 +263,8 @@ When("compare checksums of content sent from file {string}", async function(this
 
     const outputString = await streamToString(output.data);
 
-    console.log("outputString", outputString);
     assert.equal(output.status, 200);
-    assert.equal(
-        outputString,
-        hex
-    );
+    assert.equal(outputString, hex);
 
     await this.resources.instance?.sendInput("null");
 });
@@ -296,20 +291,54 @@ When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
     console.log("Container is identified.", containerId);
 });
 
-When("container is closed", async () => {
+// TO BE REMOVED
+// When("container is closed", async () => {
+//     if (!containerId) assert.fail();
+
+//     const containers = await dockerode.listContainers();
+
+//     let containerExist = false;
+
+//     containers.forEach(containerInfo => {
+//         if (containerInfo.Id.includes(containerId)) {
+//             containerExist = true;
+//         }
+//     });
+
+//     assert.equal(containerExist, false);
+//     console.log("Container is closed.");
+// });
+
+const waitForContainerToClose = async () => {
     if (!containerId) assert.fail();
 
     const containers = await dockerode.listContainers();
 
-    let containerExist = false;
+    if (containers.length === 0) {
+        console.log("The list of containers is empty!");
+    } else {
+        let containerExist = false;
 
-    containers.forEach(containerInfo => {
-        if (containerInfo.Id.includes(containerId)) {
-            containerExist = true;
-        }
-    });
+        do {
+            containers.forEach(
+                // eslint-disable-next-line no-loop-func
+                async containerInfo => {
+                    if (containerInfo.Id.includes(containerId)) {
+                        containerExist = true;
+                        console.log("----------------Container is open");
+                    }
+                    await defer(500);
+                });
+        } while (!containerExist);
 
-    assert.equal(containerExist, false);
+        console.log("----------------Container CLOSED");
+    }
+};
+
+When("container is closed", async () => {
+    if (!containerId)assert.fail("There is no container ID");
+
+    await waitForContainerToClose();
     console.log("Container is closed.");
 });
 

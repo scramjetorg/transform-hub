@@ -19,7 +19,6 @@ Feature: Process large file test
         And get containerId
         And instance health is "true"
         When response data is equal "23435224"
-        And wait for "4000" ms
         And container is closed
         Then host is still running
 
@@ -32,6 +31,5 @@ Feature: Process large file test
         And get containerId
         And instance health is "true"
         When response data is equal "39996113"
-        And wait for "4000" ms
         And container is closed
         Then host is still running

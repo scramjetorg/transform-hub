@@ -24,7 +24,7 @@ const mod: ReadableApp = function(_input, ffrom = `${__dirname}/data.json`) {
         .pipe(JSONStream.parse("*"))
         .pipe(new scramjet.DataStream())
         .setOptions({ maxParallel: 1 })
-        .do(() => new Promise(res => setTimeout(res, 1500)))
+        .do(() => new Promise(res => setTimeout(res, 500)))
         .map(
             (names: Person) => {
                 return `Hello ${names.name}!\n`;
