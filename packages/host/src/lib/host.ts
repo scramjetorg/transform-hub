@@ -11,7 +11,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { Readable, Writable } from "stream";
+import { PassThrough, Readable, Writable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -158,20 +158,30 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
         this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
+            // eslint-disable-next-line no-console
+            req.on("end", () => console.log("END EVENT ON SD STREAM IN HOST"));
+
             // eslint-disable-next-line no-extra-parens
             const params = (req as ParsedMessage).params || {};
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
+            const end = req.headers["x-end-stream"] === "true";
 
+            // eslint-disable-next-line no-console
+            console.log("req.headers", req.headers);
             if (sdTarget) {
-                req.pipe(sdTarget as Writable, { end: req.headers["x-end-stream"] === "true" });
+                req.pipe(sdTarget as Writable, { end });
 
                 return {};
             }
 
+            const ps = new PassThrough();
+
+            req.on("end", () => ps.end());
+            req.pipe(ps);
             this.serviceDiscovery.addData(
-                req,
+                ps,
                 { contentType: req.headers["content-type"] || "", topic: params.name },
-                req.headers["x-end-stream"] === "true",
+                end,
                 "api"
             );
 
@@ -186,7 +196,8 @@ export class Host implements IComponent {
                 {
                     topic: params.name,
                     contentType: contentType
-                }
+                },
+                true
             ) as Readable;
         });
 
