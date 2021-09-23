@@ -9,6 +9,7 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
  *
  * @param _stream - dummy input stream
  */
+
 export = async function(_stream, max) {
     const ps = new PassThrough();
 
