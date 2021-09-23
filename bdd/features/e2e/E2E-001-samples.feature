@@ -1,6 +1,5 @@
 Feature: Sample e2e tests
 
-    @ci
     Scenario: E2E-001 TC-001 Execute hello-alice-out example for host
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
