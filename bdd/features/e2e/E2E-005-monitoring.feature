@@ -9,7 +9,6 @@ Feature: Monitoring e2e tests
         When get instance health
         And get containerId
         And instance health is "false"
-        And wait for "3000" ms
         And container is closed
         Then host is still running
 
@@ -22,6 +21,5 @@ Feature: Monitoring e2e tests
         And get instance health
         And get containerId
         And instance health is "true"
-        And wait for "3000" ms
         And container is closed
         Then host is still running

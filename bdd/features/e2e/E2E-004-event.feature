@@ -13,7 +13,6 @@ Feature: Event e2e tests
         Then wait for event "test-event-response" from instance
         When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
-        When wait for "10000" ms
         And container is closed
         Then host is still running
 
@@ -28,6 +27,5 @@ Feature: Event e2e tests
         And instance health is "true"
         Then get event "new-test-event" from instance
         Then instance response body is "{\"eventName\":\"new-test-event\",\"message\":\"event sent between functions in one sequence\"}"
-        When wait for "10000" ms
         And container is closed
         Then host is still running

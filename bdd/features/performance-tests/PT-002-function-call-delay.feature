@@ -9,7 +9,6 @@ Feature: Maintain efficiency within a host
         Then file "delay-test-result.txt" is generated
         When calculate average delay time from "delay-test-result.txt" of first "2000" function calls starting "2000"
         When calculated avereage delay time is lower than 0.1 ms
-        And wait for "2000" ms
         And container is closed
         Then host is still running
 
@@ -21,7 +20,6 @@ Feature: Maintain efficiency within a host
         Then file "delay-test-result.txt" is generated
         When calculate average delay time from "delay-test-result.txt" of first "10000" function calls starting "2000"
         When calculated avereage delay time is lower than 0.1 ms
-        And wait for "2000" ms
         And container is closed
         Then host is still running
 
@@ -33,7 +31,6 @@ Feature: Maintain efficiency within a host
         Then file "delay-test-result.txt" is generated
         When calculate average delay time from "delay-test-result.txt" of first "10000" function calls starting "2000"
         When calculated avereage delay time is lower than 0.1 ms
-        And wait for "2000" ms
         When container is closed
         And memory dump file "core.node.1" was created
         And search word "scramjetTest" and find 0 occurences in location "core.node.1" file
