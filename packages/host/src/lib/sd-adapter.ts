@@ -37,7 +37,7 @@ export class ServiceDiscovery {
 
             this.dataMap.set(config.topic, {
                 contentType: config.contentType,
-                stream: outputStream,
+                stream: ps,
                 localProvider
             });
 
@@ -47,7 +47,7 @@ export class ServiceDiscovery {
         }
 
         if (localProvider) {
-            this.logger.log(`Local provider added ${config.topic}`);
+            this.logger.log(`Local provider added topic:${config.topic}, provider:${localProvider}`);
 
             if (this.cpmConnector) {
                 this.cpmConnector
@@ -90,7 +90,7 @@ export class ServiceDiscovery {
             const topicData = this.dataMap.get(dataType.topic)!;
 
             if (topicData?.localProvider) {
-                this.logger.log("LocalProvider found for topic", dataType.topic, topicData.localProvider);
+                this.logger.log(`LocalProvider found topic:${dataType.topic}, provider:${topicData.localProvider}`);
 
                 if (inputStream) {
                     topicData?.stream.pipe(inputStream);
