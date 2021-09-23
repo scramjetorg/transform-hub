@@ -328,12 +328,10 @@ const waitForContainerToClose = async () => {
             ).length > 0;
             await defer(500);
         } while (!containerExist);
-
-        console.log("----------------Container CLOSED");
     }
 };
 
-When("container is closed" ,async () => {
+When("container is closed", async () => {
     if (!containerId)assert.fail("There is no container ID");
 
     await waitForContainerToClose();

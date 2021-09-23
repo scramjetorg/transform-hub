@@ -17,6 +17,7 @@ Feature: Process large file test
         And get "output" in background with instanceId
         When get instance health
         And get containerId
+        And wait for "2000" ms
         And instance health is "true"
         When response data is equal "23435224"
         And container is closed
