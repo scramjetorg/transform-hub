@@ -8,7 +8,7 @@ import { loadCheck } from "@scramjet/load-check";
 import { getLogger } from "@scramjet/logger";
 import { MessageUtilities } from "@scramjet/model";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, FunctionDefinition, IInstance, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
+import { EncodedControlMessage, FunctionDefinition, IInstance, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, STHIDMessageData, RunnerConfig } from "@scramjet/types";
 import { StringStream } from "scramjet";
 
 import { networkInterfaces } from "systeminformation";
@@ -244,7 +244,7 @@ export class CPMConnector extends EventEmitter {
 
     async sendInstancesInfo(instances: {
         id: string;
-        sequence: string;
+        sequence: RunnerConfig;
         status: FunctionDefinition[] | undefined;
     }[]): Promise<void> {
         this.logger.log("sendInstancesInfo");

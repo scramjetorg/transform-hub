@@ -3,6 +3,9 @@
   "version": "0.12.1",
   "description": "",
   "main": "index.js",
+  "keywords": [
+    "file"
+  ],
   "scripts": {
     "prepack": "node ../../../scripts/publish.js",
     "build:refapps": "tsc -p tsconfig.json",

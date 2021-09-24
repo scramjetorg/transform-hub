@@ -2,6 +2,11 @@
   "name": "@scramjet/hello-input-out",
   "version": "0.11.0-0",
   "main": "index",
+  "description": "lorem ipsum2",
+  "keywords": [
+    "test",
+    "test2"
+  ],
   "scripts": {
     "build:refapps": "tsc -p tsconfig.json",
     "postbuild:refapps": "yarn prepack",

@@ -4,8 +4,10 @@ import { ContainerConfiguration } from "./sth-configuration";
 
 export type RunnerConfig = {
     name: string;
+    description: string;
     container: ContainerConfiguration;
     version: string;
+    keywords: string[];
     engines: {
         [key: string]: string;
     };

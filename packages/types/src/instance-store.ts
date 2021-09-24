@@ -4,7 +4,7 @@ export interface IInstance {
     id: string,
     appConfig?: AppConfig,
     sequenceArgs?: any[],
-    sequence: string,
+    sequence: {},
     created?: Date,
     started?: Date
 }

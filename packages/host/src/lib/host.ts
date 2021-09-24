@@ -338,7 +338,8 @@ export class Host implements IComponent {
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
-        const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler);
+        const csic = new CSIController(
+            id, sequence, appConfig, sequenceArgs, communicationHandler);
 
         this.logger.log("New CSIController created: ", id);
 
@@ -428,7 +429,8 @@ export class Host implements IComponent {
         return Object.values(this.instancesStore).map(csiController => {
             return {
                 id: csiController.id,
-                sequence: csiController.sequence.id,
+                sequence: csiController.sequence.config,
+                config: csiController.appConfig,
                 status: csiController.status
             };
         });

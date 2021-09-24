@@ -158,6 +158,8 @@ class LifecycleDockerAdapterSequence implements
         return {
             container: configService.getDockerConfig().runner,
             name: res.name || "",
+            keywords: res.keywords || [""],
+            description: res.description || "",
             version: res.version || "",
             engines,
             config,

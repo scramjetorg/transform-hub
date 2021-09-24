@@ -2,6 +2,10 @@
   "name": "@scramjet/hello-alice-out",
   "version": "0.12.1",
   "main": "index",
+  "description": "lorem ipsum",
+  "keywords": [
+    "sample"
+  ],
   "assets": [
     "data.json"
   ],
