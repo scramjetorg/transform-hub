@@ -20,6 +20,7 @@ Feature: Process large file test
         And wait for "2000" ms
         And instance health is "true"
         When response data is equal "23435224"
+        And wait for "5000" ms
         And container is closed
         Then host is still running
 
