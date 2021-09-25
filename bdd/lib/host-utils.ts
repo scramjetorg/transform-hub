@@ -68,7 +68,7 @@ export class HostUtils {
             if (process.env.CPM_URL) command.push("-C", process.env.CPM_URL);
             if (process.env.SCRAMJET_TEST_LOG) {
                 // eslint-disable-next-line no-console
-                console.error("Spawning with command:", ...command);
+                console.log("Spawning with command:", ...command);
             }
 
             this.host = spawn("/usr/bin/env", command);
@@ -82,10 +82,10 @@ export class HostUtils {
 
             const decoder = new StringDecoder();
 
-            this.host?.stdout?.on("data", (data) => {
+            this.host.stdout?.on("data", (data) => {
                 const decodedData = decoder.write(data);
 
-                if (decodedData.match(/API listening on port/)) {
+                if (decodedData.match(/API listening on:/)) {
                     resolve();
                 }
             });

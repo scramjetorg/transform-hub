@@ -60,7 +60,7 @@ class CSHClient implements ICSHClient {
                 connectionChannels.forEach(
                     (channel) => {
                         channel.on("error", (e) => this.logger.warn(e.stack));
-                        channel.on("pipe", () => this.logger.debug(`stream ${i++} piped to output`));
+                        channel.on("pipe", () => this.logger.debug(`Stream ${i++} piped to output.`));
                     }
                 );
 

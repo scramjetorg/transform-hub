@@ -136,7 +136,7 @@ class LifeCycleController implements IComponent {
             this.communicationHandler.pipeStdio();
             this.communicationHandler.pipeDataStreams();
 
-            this.logger.log("Streams hooked and routed");
+            this.logger.log("Streams hooked and routed.");
 
             /**
              * Waiting for Runner configuration.
@@ -194,7 +194,7 @@ class LifeCycleController implements IComponent {
                 async message => this.handleStop(message)
             );
 
-            this.logger.log("Sequence initialized");
+            this.logger.info("Sequence initialized.");
 
             /**
             * LifeCycle Adapter Run runs Runner and starts Sequence in the container specified by provided configuration
@@ -202,9 +202,7 @@ class LifeCycleController implements IComponent {
             const exitcode = await this.endOfSequence;
 
             // TODO: if we have a non-zero exit code is this expected?
-            this.logger.log(`Sequence finished with ${exitcode} status`);
-
-            this.logger.log("Client disconnected");
+            this.logger.log(`Sequence finished with status: ${exitcode}`);
         } catch (error: any) {
             this.logger.error("Error caught", error.stack);
 
@@ -225,7 +223,7 @@ class LifeCycleController implements IComponent {
 
             await this.lifecycleAdapterRun.cleanup();
 
-            this.logger.error("Cleanup done (post error)");
+            this.logger.error("Cleanup done (post error).");
 
             this.scheduleExit(251, 50);
             return;
@@ -238,7 +236,7 @@ class LifeCycleController implements IComponent {
         */
         await this.lifecycleAdapterRun.cleanup();
 
-        this.logger.info("Cleanup done (normal execution)");
+        this.logger.info("Cleanup done (normal execution).");
 
         // TODO: investigate why process does not exits without above.
         this.scheduleExit(undefined, 50);
@@ -271,6 +269,7 @@ class LifeCycleController implements IComponent {
             this.logger.log("Sequence terminated itself.");
         } catch {
             await this.lifecycleAdapterRun.remove();
+            this.logger.log("Sequence doesn't terminated itself in expected time (%s).", stopTimeout);
             process.exitCode = 252;
         }
 
@@ -283,7 +282,10 @@ class LifeCycleController implements IComponent {
         setTimeout(() => {
             // TODO: this should not exit, but instead allow LCC::main to continue.
             // This should not be treated as a "good" outcome.
-            if (typeof exitCode !== "undefined") process.exitCode = exitCode;
+            if (typeof exitCode !== "undefined") {
+                process.exitCode = exitCode;
+            }
+
             process.exit();
         }, timeout).unref(); // Q: should this be configurable?
     }
@@ -298,6 +300,7 @@ class LifeCycleController implements IComponent {
         } catch {
             this.logger.warn("Sequence failed to terminate within timeout, sending kill...");
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+
             try {
                 await promiseTimeout(this.endOfSequence, stopTimeout);
                 this.logger.log("Terminated with kill.");

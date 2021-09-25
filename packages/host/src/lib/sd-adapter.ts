@@ -96,14 +96,14 @@ export class ServiceDiscovery {
                     topicData?.stream.pipe(inputStream);
                 }
             } else {
-                this.logger.log("LocalProvider not found for topic", dataType.topic);
+                this.logger.log("Local topic provider not found for:", dataType.topic);
 
                 if (this.cpmConnector) {
-                    this.logger.log("Requesting CPM for topic", dataType.topic);
+                    this.logger.log("Requesting CPM for:", dataType);
 
                     this.cpmConnector?.getTopic(dataType.topic)
                         .then(stream => {
-                            this.logger.log("-------------- CPM RESPONDED");
+                            this.logger.log("CPM connected for:", dataType);
 
                             if (inputStream) {
                                 topicData?.stream.pipe(inputStream);

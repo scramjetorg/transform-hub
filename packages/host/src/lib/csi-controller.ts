@@ -275,6 +275,10 @@ export class CSIController extends EventEmitter {
 
             this.router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
+            if (development()) {
+                this.router.upstream("/monitoring", this.upStreams[CommunicationChannel.MONITORING]);
+            }
+
             this.router.upstream("/output", this.apiOutput);
             this.router.downstream("/input", (req) => {
                 if (this.apiInputEnabled) {
@@ -315,7 +319,9 @@ export class CSIController extends EventEmitter {
             this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
                 const name = req.params?.name;
 
-                if (!name) throw new HostError("EVENT_NAME_MISSING");
+                if (!name) {
+                    throw new HostError("EVENT_NAME_MISSING");
+                }
 
                 const out = new DataStream();
                 const handler = (data: any) => res.write(data);
@@ -324,7 +330,7 @@ export class CSIController extends EventEmitter {
                     localEmitter.off(name, handler);
                 };
 
-                this.logger.debug(`Event stream "${name}" connected`);
+                this.logger.debug(`Event stream "${name}" connected.`);
                 localEmitter.on(name, handler);
                 res.on("error", clean);
                 res.on("end", clean);
@@ -335,14 +341,18 @@ export class CSIController extends EventEmitter {
             const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
                 const name = req.params?.name;
 
-                if (!name)
+                if (!name) {
                     throw new HostError("EVENT_NAME_MISSING");
+                }
+
                 localEmitter.once(name, res);
             });
 
             this.router.get("/event/:name", async (req) => {
-                if (req.params?.name && localEmitter.lastEvents[req.params?.name])
+                if (req.params?.name && localEmitter.lastEvents[req.params?.name]) {
                     return localEmitter.lastEvents[req.params?.name];
+                }
+
                 return awaitEvent(req);
             });
             this.router.get("/once/:name", awaitEvent);

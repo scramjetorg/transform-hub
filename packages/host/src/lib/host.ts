@@ -86,7 +86,7 @@ export class Host implements IComponent {
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
 
-        this.logger.info("Host main called.");
+        this.logger.log("Host main called.");
 
         try {
             if (await exists(this.config.host.socketPath)) {
@@ -108,7 +108,7 @@ export class Host implements IComponent {
             this.api?.server.once("listening", () => {
                 const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API listening on port:", `${serverInfo?.address}:${serverInfo.port}`);
+                this.logger.info("API listening on:", `${serverInfo?.address}:${serverInfo.port}`);
                 res();
             });
         });
@@ -224,7 +224,7 @@ export class Host implements IComponent {
     async handleDeleteSequence(req: ParsedMessage) {
         const id = req.params?.id;
 
-        this.logger.log("Deleting sequence: ", id);
+        this.logger.log("Deleting sequence...", id);
 
         const result = await this.sequencesStore.delete(id);
 
@@ -238,27 +238,28 @@ export class Host implements IComponent {
     }
 
     async identifyExistingSequences() {
-        this.logger.info("Listing exiting sequences");
+        this.logger.log("Listing exiting sequences.");
         const ldas = new LifecycleDockerAdapterSequence();
 
         try {
             await ldas.init();
-            this.logger.debug("LDAS initialized, listing");
+
+            this.logger.debug("LDAS initialized, listing...");
             const sequences = await ldas.list();
 
             for (const sequenceConfig of sequences) {
                 const sequence = new Sequence(sequenceConfig);
 
                 this.sequencesStore.add(sequence);
-                this.logger.log("Sequence found:", sequence.config);
+                this.logger.log("Sequence found", sequence.config);
             }
         } catch (e: any) {
-            this.logger.warn("Error while trying to identify existing sequences", e);
+            this.logger.warn("Error while trying to identify existing sequences.", e);
         }
     }
 
     async handleNewSequence(stream: IncomingMessage) {
-        this.logger.log("New sequence incoming...");
+        this.logger.info("New sequence incoming...");
 
         const id = IDProvider.generate();
 
@@ -268,7 +269,7 @@ export class Host implements IComponent {
 
             this.sequencesStore.add(sequence);
 
-            this.logger.log("Sequence identified:", sequence.config);
+            this.logger.info("Sequence identified:", sequence.config);
 
             await this.cpmConnector?.sendSequenceInfo(sequence, SequenceMessageCode.SEQUENCE_CREATED);
 
@@ -298,7 +299,7 @@ export class Host implements IComponent {
         const sequence = this.sequencesStore.getById(seqId);
 
         if (sequence) {
-            this.logger.log("Starting sequence", sequence.id);
+            this.logger.info("Starting sequence", sequence.id);
 
             const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
@@ -350,13 +351,12 @@ export class Host implements IComponent {
         sequence.instances.push(id);
 
         csic.on("pang", (data) => {
-            this.logger.log("PANG:", data);
+            this.logger.log("PANG message received:", data);
             let notifyCPM = false;
 
             if (data.requires) {
                 notifyCPM = true;
 
-                this.logger.log("Sequence requires data: ", data);
                 this.serviceDiscovery.getData(
                     {
                         topic: data.requires,
@@ -392,7 +392,8 @@ export class Host implements IComponent {
         this.logger.log("CSIController started:", id);
 
         csic.on("end", (code) => {
-            this.logger.log("CSIControlled ended, code:", code);
+            this.logger.log("CSIControlled ended with exit code:", code);
+
             delete InstanceStore[csic.id];
 
             const index = sequence.instances.indexOf(id);
@@ -416,7 +417,6 @@ export class Host implements IComponent {
                 // TODO
                 // get topic stream from service discovery
                 // topic.stream.unpipe(csic.upStreams![CommunicationChannel.IN]) --upStreams is private property
-
             }
         });
 
@@ -426,18 +426,18 @@ export class Host implements IComponent {
     getCSIControllers() {
         this.logger.log("List CSI controllers.");
 
-        return Object.values(this.instancesStore).map(csiController => {
-            return {
-                id: csiController.id,
-                sequence: csiController.sequence.id,
-                status: csiController.status
-            };
-        });
+        return Object.values(this.instancesStore).map(csiController => ({
+            id: csiController.id,
+            sequence: csiController.sequence.id,
+            status: csiController.status
+        }));
     }
 
     getSequence(id: string) {
-        if (!this.sequencesStore.getById(id))
+        if (!this.sequencesStore.getById(id)) {
             throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
+        }
+
         return this.sequencesStore.getById(id);
     }
 
