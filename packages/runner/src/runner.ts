@@ -118,11 +118,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
 
-            this.logger.info("Monitoring interval removed.");
+            this.logger.log("Monitoring interval removed.");
         }
 
         try {
-            this.logger.info("Cleaning up streams...");
+            this.logger.log("Cleaning up streams...");
 
             await this.cleanupStreams();
 
@@ -134,7 +134,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             return 233;
         } finally {
-            this.logger.info("Clean up completed!");
+            this.logger.info("Clean up completed.");
         }
     }
 
@@ -268,12 +268,12 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.context?.killHandler();
         await this.cleanup();
 
-        this.logger.log("Exiting ...");
-
         //TODO: investigate why we need to wait (process.tick - no all logs)
         if (!this.stopExpected) {
+            this.logger.log("Exiting... (unexpected, 137)");
             this.exit(137);
         } else {
+            this.logger.log("Exiting... (expected)");
             this.exit();
         }
     }
@@ -462,7 +462,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     sendHandshakeMessage() {
-        this.logger.info("Sending handshake.");
+        this.logger.log("Sending handshake.");
 
         MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
     }
@@ -520,7 +520,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             let out: MaybePromise<Streamable<any> | void>;
 
             try {
-                this.logger.info(`Processing function on index: ${sequence.length - itemsLeftInSequence - 1}`);
+                this.logger.log(`Processing function on index: ${sequence.length - itemsLeftInSequence - 1}.`);
 
                 out = func.call(
                     this.context,
@@ -528,7 +528,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     ...args
                 );
 
-                this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
+                this.logger.log(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
             } catch (error: any) {
                 this.logger.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error.stack);
 
@@ -545,10 +545,10 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
                 } else if (typeof intermediate === "object" && intermediate instanceof DataStream) {
-                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned DataStream`);
+                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned DataStream.`);
                     stream = intermediate;
                 } else {
-                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned readable`);
+                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned readable.`);
 
                     // TODO: what if this is not a DataStream, but BufferStream stream!!!!
                     stream = DataStream.from(intermediate as Readable);
@@ -591,11 +591,11 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             this.endRunner();
         } else if (stream && this.outputStream && this.outputDataStream) {
-            this.logger.info(`Piping sequence output (type ${typeof stream})`);
+            this.logger.log(`Piping sequence output (type ${typeof stream}).`);
 
             stream
                 .once("end", () => {
-                    this.logger.info("Sequence stream ended");
+                    this.logger.info("Sequence stream ended.");
                     this.endRunner();
                 })
                 .pipe(
@@ -613,7 +613,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             );
         } else {
             // TODO: this should push a PANG message with the sequence description
-            this.logger.info("Sequence did not output a stream");
+            this.logger.info("Sequence did not output a stream.");
             this.endRunner();
         }
     }

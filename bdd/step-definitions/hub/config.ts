@@ -31,10 +31,10 @@ When("hub process is started with parameters {string}", function(this: CustomWor
 
         const decoder = new StringDecoder();
 
-        this.resources.hub.stdout.on("data", (data: Buffer) => {
+        this.resources.hub.stdout?.on("data", (data: Buffer) => {
             const decodedData = decoder.write(data);
 
-            if (decodedData.match(/API listening on port/)) {
+            if (decodedData.match(/API listening on:/)) {
                 this.resources.startOutput = decodedData;
                 resolve();
             }
@@ -72,7 +72,7 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
 
     assert.equal(status, 200);
 
-    const apiURL = this.resources.startOutput.match(/port: \s*(.*)/)[1];
+    const apiURL = this.resources.startOutput.match(/on: \s*(.*)/)[1];
 
     assert.equal(new RegExp(server).test(apiURL), true);
 });

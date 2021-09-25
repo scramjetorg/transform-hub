@@ -35,10 +35,12 @@ class LifecycleDockerAdapterSequence implements
     }
 
     async init(): Promise<void> {
-        this.logger.info("Docker sequence adapter init");
+        this.logger.log("Docker sequence adapter init.");
+
         this.prerunnerConfig = configService.getDockerConfig().prerunner;
+
         await this.fetch(this.prerunnerConfig.image);
-        this.logger.info("Docker sequence adapter done");
+        this.logger.info("Docker sequence adapter done.");
     }
 
     async fetch(name: string) {
@@ -77,7 +79,7 @@ class LifecycleDockerAdapterSequence implements
                 return undefined;
             }
 
-            this.logger.info(`Identified volume ${volume} as to be run with ${ret.image}`);
+            this.logger.info(`Identified volume ${volume} as to be run with ${ret.container?.image}`);
 
             return ret;
         } catch {
@@ -168,18 +170,18 @@ class LifecycleDockerAdapterSequence implements
 
     async cleanup(): Promise<void> {
         if (this.resources.volumeId) {
-            this.logger.log("Volume will be removed in 1 sec");
+            this.logger.log("Volume will be removed in 1 sec...");
 
             await defer(1000);
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
-            this.logger.log("Volume removed");
+            this.logger.log("Volume removed.");
         }
 
         if (this.resources.fifosDir) {
             await rm(this.resources.fifosDir, { recursive: true });
 
-            this.logger.log("Fifo folder removed");
+            this.logger.log("Fifo folder removed.");
         }
     }
 
@@ -191,7 +193,7 @@ class LifecycleDockerAdapterSequence implements
 
             await this.dockerHelper.stopContainer(this.resources.containerId);
 
-            this.logger.info("Container removed");
+            this.logger.info("Container removed.");
         }
     }
 }

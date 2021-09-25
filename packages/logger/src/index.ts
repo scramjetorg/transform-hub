@@ -1,12 +1,22 @@
 import { LoggerOptions, PassThoughStream, WritableStream } from "@scramjet/types";
+
 import { Console } from "console";
-import { DataStream } from "scramjet";
 import { Writable } from "stream";
 import { inspect, InspectOptions } from "util";
+
+import { DataStream } from "scramjet";
+
 import { getName } from "./lib/get-name";
+import { COLORS } from "./lib/colors";
 
-export type MessageFormatter = <Z extends any[]>(name: string, func: string, args: Z) => string;
+export type MessageFormatter = <Z extends any[]>(
+    colors: boolean, ts: string, name: string, func: string, args: Z
+) => string;
 
+const inspectOpts: InspectOptions = {
+    colors: true,
+    depth: null,
+};
 const loggerOutputs: {[key: string]: WritableStream<any[]>[]} = {
     err: [],
     out: []
@@ -15,7 +25,7 @@ const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
     for (const logStream of loggerOutputs[streamSpec]) {
         const inspectedArgs = args.map(x => {
             if (typeof x === "object" || typeof x === "function")
-                return inspect(x);
+                return inspect(x, inspectOpts);
             return x;
         });
 
@@ -88,7 +98,7 @@ class Logger implements Console {
         writeLog("out", this.name, "log", ...args);
     }
     dir(obj: any, options?: InspectOptions): void {
-        writeLog("out", this.name, obj, options);
+        writeLog("out", this.name, "dir", obj, options);
     }
     debug(...args: any[]) {
         writeLog("out", this.name, "debug", ...args);
@@ -104,17 +114,33 @@ class Logger implements Console {
     groupCollapsed = this.group;
 }
 
-const defaultFormatMessage: MessageFormatter = (ts, name, func, ...args) => {
-    return `${[ts, func, `(${name})`, ...args].join(" ")}\n`;
+const withColor = (txt: string, color: COLORS) => `${color}${txt}${COLORS.Reset}`;
+const colorizeLogFunctionName = (func: string) => {
+    const m: { [key: string]: COLORS} = {
+        info: COLORS.FgCyan,
+        log: COLORS.FgBlue,
+        dir: COLORS.FgBlue,
+        trace: COLORS.FgBlue,
+        debug: COLORS.FgYellow,
+        error: COLORS.FgRed,
+        warn: COLORS.FgMagenta
+    };
+
+    return withColor(func, m[func] || COLORS.Reset);
+};
+const defaultFormatMessage: MessageFormatter = (colors, ts, name, func, ...args) => {
+    return `${[ts, colors ? colorizeLogFunctionName(func) : func, `(${name})`, ...args].join(" ")}\n`;
 };
 const addLoggerStream = (stream: WritableStream<any>, dest: WritableStream<any>[]) => {
     if (!stream.objectMode) {
+        // eslint-disable-next-line no-extra-parens
+        const colors = (stream as typeof stream & { hasColors?: Function }).hasColors?.();
         const lout = new DataStream();
 
         DataStream
             .from(lout)
             .stringify(
-                (msg: [string, string, any[]]) => defaultFormatMessage(...msg)
+                (msg: [string, string, string, any[]]) => defaultFormatMessage(colors, ...msg)
             )
             .pipe(stream);
 

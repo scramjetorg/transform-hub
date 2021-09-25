@@ -160,7 +160,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     async pullImage(name: string, ifNeeded: boolean) {
         this.pulledImages[name] ||= (async () => {
-            this.logger.debug("Checking image", name);
+            this.logger.log("Checking image", name);
 
             if (ifNeeded) {
                 const exists = await this.dockerode.getImage(name).get()
@@ -169,12 +169,12 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 if (exists) return;
             }
 
-            this.logger.log("Pulling image", name, "starts");
+            this.logger.log("Start pulling image", name);
 
             await this.dockerode.pull(name);
             await new Promise(res => setTimeout(res, 1000));
 
-            this.logger.log("Pulling image", name, "done");
+            this.logger.log("Pulling image", name, "done.");
         })();
 
         return this.pulledImages[name];

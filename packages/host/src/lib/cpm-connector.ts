@@ -158,7 +158,7 @@ export class CPMConnector extends EventEmitter {
         this.connected = false;
 
         this.logger.log("Tunnel closed", this.getId());
-        this.logger.info("STH connection ended");
+        this.logger.info("CPM connection closed.");
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);
@@ -188,7 +188,7 @@ export class CPMConnector extends EventEmitter {
             this.isReconnecting = true;
 
             setTimeout(() => {
-                this.logger.log("Connection lost, retrying...");
+                this.logger.info("Connection lost, retrying...");
                 this.connect();
             }, this.RECONNECT_INTERVAL);
         }
@@ -233,7 +233,7 @@ export class CPMConnector extends EventEmitter {
     }
 
     async sendSequencesInfo(sequences: ISequence[]): Promise<void> {
-        this.logger.log("sendSequencesInfo, total sequences", sequences.length);
+        this.logger.log("Sending sequences information, total sequences:", sequences.length);
 
         await this.communicationStream?.whenWrote(
             JSON.stringify([CPMMessageCode.SEQUENCES, { sequences }]) + "\n"
