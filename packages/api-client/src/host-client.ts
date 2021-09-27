@@ -59,11 +59,6 @@ export class HostClient implements ClientProvider {
     }
 
     async sendNamedData(topic: string, stream: Readable, contentType?: string, end?: boolean) {
-        stream.on("end", function() {
-            // eslint-disable-next-line no-console
-            console.log("END EVENT ON SD STREAM IN API-CLIENT, X-STREAM-END HEADER:", end);
-        });
-
         return this.client.sendStream(`topic/${topic}`, stream, { type: contentType, end: end });
     }
 

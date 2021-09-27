@@ -25,9 +25,6 @@ export async function displayStream(
     try {
         const req = await request;
 
-        req.data?.on("end", () => console.log("CLI: REQ END!"));
-        output.on("end", () => console.log("CLI OUTPUT STREAM END!"));
-
         req.data?.pipe(output);
         return new Promise((res, rej) => req.data?.on("finish", res).on("error", rej));
     } catch (e: any) {
