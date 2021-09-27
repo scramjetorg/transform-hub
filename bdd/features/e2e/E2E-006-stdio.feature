@@ -5,11 +5,9 @@ Feature: Stdio e2e tests
         Given host is running
         When sequence "../packages/reference-apps/stdio-sequence.tar.gz" loaded
         And instance started
-        And wait for "4000" ms
         And keep instance streams "stdout,stderr"
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         When send stdin to instance with contents of file "../packages/reference-apps/stdio-sequence/numbers.txt"
         When send kill message to instance
         And container is closed
