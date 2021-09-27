@@ -17,12 +17,9 @@ Feature: Process large file test
         And wait for instance healthy is "true"
         And get containerId
         And container is closed
-        And get containerId
         And get "output" in background with instanceId
         When response data is equal "23435224"
         Then host is still running
-        And wait for "5000" ms
-        And get containerId
 
     Scenario: PT-003 TC-003 Sequence processes JSON file larger than accesible RAM
         Given host is running

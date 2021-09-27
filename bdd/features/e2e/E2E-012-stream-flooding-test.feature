@@ -25,7 +25,6 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         And instance started with arguments "2000 10000"
         And wait for instance healthy is "true"
         And get containerId
-        # And wait for "6000" ms
         Then get event "test-event-response" from instance
         When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
