@@ -1,3 +1,4 @@
+/* eslint-disable no-loop-func */
 /* eslint-disable no-console */
 // eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumber";
@@ -44,6 +45,26 @@ const streamToString = async (stream: Stream): Promise<string> => {
         chunks.push(chunk);
     }
     return chunks.join("");
+};
+const waitForContainerToClose = async () => {
+    if (!containerId) assert.fail();
+
+    let containers = await dockerode.listContainers();
+
+    if (containers.length === 0) {
+        console.log("The list of containers is empty!");
+    } else {
+        let containerExist = false;
+
+        do {
+            containers = await dockerode.listContainers();
+            containerExist = containers.filter(
+                containerInfo => containerInfo.Id === containerId
+            ).length > 0;
+            console.log("Container exists: ", containerExist);
+            await defer(500);
+        } while (containerExist);
+    }
 };
 
 process.env.LOCAL_HOST_BASE_URL = "";
@@ -130,14 +151,12 @@ Given("start host", async () => {
                     status, statusText, url
                 } = result;
 
-                // eslint-disable-next-line no-console
                 console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
-                // eslint-disable-next-line no-console
                 console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
             }
         });
@@ -291,47 +310,6 @@ When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
     console.log("Container is identified.", containerId);
 });
 
-// TO BE REMOVED
-When("container closed", async () => {
-    if (!containerId) assert.fail();
-
-    const containers = await dockerode.listContainers();
-
-    let containerExist = false;
-
-    containers.forEach(containerInfo => {
-        if (containerInfo.Id.includes(containerId)) {
-            containerExist = true;
-        }
-    });
-
-    assert.equal(containerExist, false);
-    console.log("Container is closed.");
-});
-
-const waitForContainerToClose = async () => {
-    if (!containerId) assert.fail();
-
-    let containers = await dockerode.listContainers();
-
-    if (containers.length === 0) {
-        console.log("The list of containers is empty!");
-    } else {
-        let containerExist = false;
-
-        do {
-            containers = await dockerode.listContainers();
-            console.log("The list of containers: ", containers.length);
-            containerExist = containers.filter(
-                // eslint-disable-next-line no-loop-func
-                containerInfo => containerInfo.Id === containerId
-            ).length > 0;
-            console.log("------------containerExist: ", containerExist);
-            await defer(500);
-        } while (containerExist);
-    }
-};
-
 When("container is closed", async () => {
     if (!containerId)assert.fail("There is no container ID");
 
@@ -359,18 +337,6 @@ Then("get event {string} from instance", { timeout: 10000 }, async function(this
     assert.equal(actualStatusResponse?.status, expectedHttpCode);
 });
 
-// const waitForHealth = async function(this: CustomWorld, healthy: boolean) {
-//     do {
-//         actualHealthResponse = await this.resources.instance?.getHealth();
-//         healthy = actualHealthResponse.healthy;
-//         console.log("sth healthy: ", healthy);
-
-//         await defer(500);
-//     } while (!healthy);
-
-//     assert.equal(actualHealthResponse?.status, 200);
-// };
-
 When("wait for instance healthy is {string}", async function(this: CustomWorld, resp: string) {
     let healthy = "false";
 
@@ -394,10 +360,11 @@ When("wait for instance healthy is {string}", async function(this: CustomWorld, 
     assert.equal(healthy, resp);
 });
 
-When("get instance health", async function(this: CustomWorld) {
-    actualHealthResponse = await this.resources.instance?.getHealth();
-    assert.equal(actualHealthResponse?.status, 200);
-});
+// TO BE REMOVED
+// When("get instance health", async function(this: CustomWorld) {
+//     actualHealthResponse = await this.resources.instance?.getHealth();
+//     assert.equal(actualHealthResponse?.status, 200);
+// });
 
 Then("instance response body is {string}", async (expectedResp: string) => {
     const resp = JSON.stringify(actualResponse().data);
@@ -411,17 +378,18 @@ Then("instance response body is {string}", async (expectedResp: string) => {
     assert.equal(resp, expectedResp);
 });
 
-When("instance health is {string}", async (expectedResp: string) => {
-    const healthy = JSON.stringify(actualHealthResponse?.data?.healthy);
+// TO BE REMOVED
+// When("instance health is {string}", async (expectedResp: string) => {
+//     const healthy = JSON.stringify(actualHealthResponse?.data?.healthy);
 
-    if (typeof actualHealthResponse === "undefined") {
-        console.log("actualResponse is undefined");
-    } else {
-        console.log(`Response body is ${healthy}, instance is healthy and running.`);
-    }
+//     if (typeof actualHealthResponse === "undefined") {
+//         console.log("actualResponse is undefined");
+//     } else {
+//         console.log(`Response body is ${healthy}, instance is healthy and running.`);
+//     }
 
-    assert.equal(healthy, expectedResp);
-});
+//     assert.equal(healthy, expectedResp);
+// });
 
 When("send stdin to instance with contents of file {string}", async function(this: CustomWorld, filePath: string) {
     await this.resources.instance?.sendStream("stdin", createReadStream(filePath));
