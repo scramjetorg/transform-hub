@@ -13,8 +13,6 @@ Feature: Stop e2e tests
         And wait for instance healthy is "true"
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
         And container is closed
-        And wait for "8000" ms
-        And container is closed
         Then host is still running
 
     @ci
