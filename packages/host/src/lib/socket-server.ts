@@ -59,14 +59,16 @@ export class SocketServer extends EventEmitter implements IComponent {
                 this.logger.info("new connection");
 
                 const id = await new Promise((resolve) => {
-                    connection.once("data", (data) => resolve(data.toString()));
+                    connection.once("readable", () => {
+                        resolve(connection.read(36).toString());
+                    });
                 });
 
                 if (!id) {
                     throw new Error("Can't read supervisor id");
                 }
 
-                this.logger.log("Supervisor connected! ID: ", id);
+                this.logger.log("Supervisor connected! ID:", id);
 
                 connection
                     .on("error", () => {
