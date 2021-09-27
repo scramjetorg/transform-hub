@@ -360,12 +360,6 @@ When("wait for instance healthy is {string}", async function(this: CustomWorld, 
     assert.equal(healthy, resp);
 });
 
-// TO BE REMOVED
-// When("get instance health", async function(this: CustomWorld) {
-//     actualHealthResponse = await this.resources.instance?.getHealth();
-//     assert.equal(actualHealthResponse?.status, 200);
-// });
-
 Then("instance response body is {string}", async (expectedResp: string) => {
     const resp = JSON.stringify(actualResponse().data);
 
@@ -377,19 +371,6 @@ Then("instance response body is {string}", async (expectedResp: string) => {
 
     assert.equal(resp, expectedResp);
 });
-
-// TO BE REMOVED
-// When("instance health is {string}", async (expectedResp: string) => {
-//     const healthy = JSON.stringify(actualHealthResponse?.data?.healthy);
-
-//     if (typeof actualHealthResponse === "undefined") {
-//         console.log("actualResponse is undefined");
-//     } else {
-//         console.log(`Response body is ${healthy}, instance is healthy and running.`);
-//     }
-
-//     assert.equal(healthy, expectedResp);
-// });
 
 When("send stdin to instance with contents of file {string}", async function(this: CustomWorld, filePath: string) {
     await this.resources.instance?.sendStream("stdin", createReadStream(filePath));
