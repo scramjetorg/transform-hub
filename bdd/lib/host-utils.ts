@@ -61,7 +61,7 @@ export class HostUtils {
         }
 
         return new Promise<void>((resolve) => {
-            const command: string[] = hostExecutableCommand;
+            const command: string[] = [...hostExecutableCommand];
 
             if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
             if (process.env.LOCAL_HOST_SOCKET_PATH) command.push("-S", process.env.LOCAL_HOST_SOCKET_PATH);
