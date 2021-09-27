@@ -72,9 +72,12 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
 
     assert.equal(status, 200);
 
-    const apiURL = this.resources.startOutput.match(/on: \s*(.*)/)[1];
+    const apiURL = this.resources.startOutput.match(/API listening on:\s*(.*)/)[1];
 
-    assert.equal(new RegExp(server).test(apiURL), true);
+    // eslint-disable-next-line no-console
+    console.log(`API is available on ${apiURL}`);
+
+    assert.ok(new RegExp(server).test(apiURL));
 });
 
 Then("exit hub process", function(this: CustomWorld) {

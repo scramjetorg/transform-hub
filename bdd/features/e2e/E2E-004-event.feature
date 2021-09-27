@@ -3,13 +3,12 @@ Feature: Event e2e tests
     @ci
     Scenario: E2E-004 TC-001 Send test-event through API and get event emitted by sequence
         Given host is running
-        When sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
-        And instance started with arguments "10"
+        When sequence "../packages/reference-apps/event-sequence-v2.tar.gz" loaded
+        And instance started
         And wait for instance healthy is "true"
         And get containerId
         And send event "test-event" to instance with message "test message"
         Then wait for event "test-event-response" from instance
-        When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
         And container is closed
         Then host is still running

@@ -154,7 +154,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-015 Send event
         Given host is running
-        When I execute CLI with "seq send ../packages/reference-apps/event-sequence.tar.gz --format json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/event-sequence-v2.tar.gz --format json" arguments
         And the exit status is 0
         Then I get Sequence id
         Then I start Sequence
@@ -162,7 +162,6 @@ Feature: CLI tests
         Then I get instance info
         Then I send an event named "test-event" with event message "test message" to Instance
         And the exit status is 0
-        And wait for "2000" ms
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
         And the exit status is 0
 
