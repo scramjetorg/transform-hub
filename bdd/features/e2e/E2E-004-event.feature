@@ -5,10 +5,8 @@ Feature: Event e2e tests
         Given host is running
         When sequence "../packages/reference-apps/event-sequence.tar.gz" loaded
         And instance started with arguments "10"
-        And wait for "6000" ms
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         And send event "test-event" to instance with message "test message"
         Then wait for event "test-event-response" from instance
         When wait for "1000" ms
@@ -21,10 +19,8 @@ Feature: Event e2e tests
         Given host is running
         When sequence "../packages/reference-apps/event-sequence-2.tar.gz" loaded
         And instance started
-        And wait for "6000" ms
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         Then get event "new-test-event" from instance
         Then instance response body is "{\"eventName\":\"new-test-event\",\"message\":\"event sent between functions in one sequence\"}"
         And container is closed

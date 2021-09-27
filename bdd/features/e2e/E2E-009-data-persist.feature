@@ -6,9 +6,8 @@ Feature: Output streams persisting data E2E test
         And sequence "../packages/reference-apps/output-streams.tar.gz" loaded
         And instance started with arguments "1000"
         And keep instance streams "stdout,stderr,output"
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         When send kill message to instance
         And container is closed
         Then host is running

@@ -5,19 +5,15 @@ Feature: Stop e2e tests
         Given host is running
         When sequence "../packages/reference-apps/can-keep-alive.tar.gz" loaded
         And instance started with arguments "SEND_KEEPALIVE"
-        And wait for "4000" ms
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         And send stop message to instance with arguments timeout 5000 and canCallKeepAlive "true"
-        And wait for "3000" ms
-        And get instance health
-        And instance health is "true"
+        And wait for instance healthy is "true"
         And send stop message to instance with arguments timeout 5000 and canCallKeepAlive "true"
-        And wait for "3000" ms
-        And get instance health
-        And instance health is "true"
+        And wait for instance healthy is "true"
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
+        And container is closed
+        And wait for "8000" ms
         And container is closed
         Then host is still running
 
@@ -26,10 +22,8 @@ Feature: Stop e2e tests
         Given host is running
         When sequence "../packages/reference-apps/can-keep-alive.tar.gz" loaded
         And instance started with arguments ""
-        And wait for "4000" ms
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         And send stop message to instance with arguments timeout 2000 and canCallKeepAlive "true"
         And container is closed
         Then host is still running
@@ -39,10 +33,8 @@ Feature: Stop e2e tests
         Given host is running
         When sequence "../packages/reference-apps/can-keep-alive.tar.gz" loaded
         And instance started with arguments "SEND_KEEPALIVE"
-        And wait for "4000" ms
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
         And container is closed
         Then host is still running

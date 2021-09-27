@@ -321,13 +321,14 @@ const waitForContainerToClose = async () => {
 
         do {
             containers = await dockerode.listContainers();
-
+            console.log("The list of containers: ", containers.length);
             containerExist = containers.filter(
                 // eslint-disable-next-line no-loop-func
                 containerInfo => containerInfo.Id === containerId
             ).length > 0;
+            console.log("------------containerExist: ", containerExist);
             await defer(500);
-        } while (!containerExist);
+        } while (containerExist);
     }
 };
 
@@ -356,6 +357,41 @@ Then("get event {string} from instance", { timeout: 10000 }, async function(this
 
     actualStatusResponse = await this.resources.instance?.getEvent(event);
     assert.equal(actualStatusResponse?.status, expectedHttpCode);
+});
+
+// const waitForHealth = async function(this: CustomWorld, healthy: boolean) {
+//     do {
+//         actualHealthResponse = await this.resources.instance?.getHealth();
+//         healthy = actualHealthResponse.healthy;
+//         console.log("sth healthy: ", healthy);
+
+//         await defer(500);
+//     } while (!healthy);
+
+//     assert.equal(actualHealthResponse?.status, 200);
+// };
+
+When("wait for instance healthy is {string}", async function(this: CustomWorld, resp: string) {
+    let healthy = "false";
+
+    if (resp === "false") {
+        console.log(`Response body is ${healthy}`);
+    } else {
+        do {
+            actualHealthResponse = await this.resources.instance?.getHealth();
+            healthy = actualResponse().data.healthy.toString();
+
+            if (typeof actualResponse() === "undefined") {
+                console.log("actualResponse is undefined");
+            } else {
+                console.log(`Response body is ${healthy}`);
+            }
+
+            await defer(100);
+        } while (!healthy);
+    }
+
+    assert.equal(healthy, resp);
 });
 
 When("get instance health", async function(this: CustomWorld) {
