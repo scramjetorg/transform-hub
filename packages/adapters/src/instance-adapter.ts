@@ -275,6 +275,8 @@ IComponent {
 
             this.logger.log("Container exited.");
 
+            await defer(10000);
+
             if (statusCode > 0) {
                 throw new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode });
             } else {
