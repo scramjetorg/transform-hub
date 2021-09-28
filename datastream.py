@@ -26,9 +26,9 @@ class DataStream():
         asyncio.create_task(consume())
         return stream
 
-    def filter(self, func):
+    def filter(self, func, *args):
         async def run_filter(chunk):
-            decision = func(chunk)
+            decision = func(chunk, *args)
             if asyncio.iscoroutine(decision):
                 decision = await decision
             return chunk if decision else omit_chunk
@@ -36,9 +36,14 @@ class DataStream():
         new_stream.pyfca.add_transform(run_filter)
         return new_stream
 
-    def map(self, func):
+    def map(self, func, *args):
+        async def func_wrapper(chunk):
+            result = func(chunk, *args)
+            if asyncio.iscoroutine(result):
+                result = await result
+            return result
         new_stream = DataStream(upstream=self)
-        new_stream.pyfca.add_transform(func)
+        new_stream.pyfca.add_transform(func_wrapper)
         return new_stream
 
     async def to_list(self):

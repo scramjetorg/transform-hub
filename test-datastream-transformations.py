@@ -81,6 +81,12 @@ async def test_filtering_in_map_transformation():
     result = await stream.map(filtering_map).to_list()
     assert result == [2, 4, 8, 10, 14]
 
+async def test_variadic_args():
+    stream = DataStream.from_iterable(range(8))
+    # pow requires 2 arguments - base (chunk) and exponent (set to 2)
+    result = await stream.map(pow, 2).to_list()
+    assert result == [0, 1, 4, 9, 16, 25, 36, 49]
+
 
 # Main test execution loop
 
@@ -93,6 +99,7 @@ tests_to_run = [
     test_filter_creates_new_stream_instance,
     test_map_creates_new_stream_instance,
     test_filtering_in_map_transformation,
+    test_variadic_args,
 ]
 
 for test in tests_to_run:
