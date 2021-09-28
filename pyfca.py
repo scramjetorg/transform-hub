@@ -13,6 +13,11 @@ def log(*args):
         utils.LogWithTimer.log(f"{grey}pyfca{reset}", *args)
 
 
+# Use this class to tell pyfca to drop a chunk.
+class omit_chunk:
+    pass
+
+
 class Pyfca:
     def __init__(self, max_parallel, initial_transform=None):
         self.max_parallel = max_parallel
@@ -121,7 +126,7 @@ class Pyfca:
             if asyncio.iscoroutine(result):
                 result = await result
                 log(f'PROCESS {fmt(chunk)} resolved: {repr(result)}')
-            if result is None:
+            if result is omit_chunk:
                 break
 
         log(f'   -    {fmt(chunk)} processing {pink}finished{reset}')
@@ -130,11 +135,13 @@ class Pyfca:
         chunk_status.set_result(True)
         log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
 
-        if result is not None:
+        if result is not omit_chunk:
             log(f'   -    {fmt(chunk)} {green}return{reset}: {repr(result)}')
             await self.ready.put(result)
         else:
             log(f'   -    {fmt(chunk)} {cyan}remove{reset}')
             self.read_write_balance -= 1
-
+            if self.read_write_balance == self.max_parallel - 1:
+                waiting = self.waiting_for_read.get_nowait()
+                waiting.set_result(True)
 

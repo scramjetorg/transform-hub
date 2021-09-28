@@ -1,4 +1,4 @@
-from pyfca import Pyfca
+from pyfca import Pyfca, omit_chunk
 import asyncio
 
 class DataStream():
@@ -23,6 +23,21 @@ class DataStream():
         # processing elements
         asyncio.create_task(consume())
         return self
+
+    def filter(self, func):
+        async def run_filter(chunk):
+            decision = func(chunk)
+            if asyncio.iscoroutine(decision):
+                decision = await decision
+            return chunk if decision else omit_chunk
+        new_stream = DataStream(upstream=self)
+        new_stream.pyfca.add_transform(run_filter)
+        return new_stream
+
+    def map(self, func):
+        new_stream = DataStream(upstream=self)
+        new_stream.pyfca.add_transform(func)
+        return new_stream
 
     async def to_list(self):
         self._uncork()
