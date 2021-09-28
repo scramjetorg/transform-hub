@@ -82,7 +82,8 @@ class Pyfca:
 
 
     def end(self):
-        log(f'END stop accepting input. r/w balance: {self.read_write_balance}')
+        log(f'{red}END{reset} stop accepting input.')
+        log(f' -  r/w balance: {self.read_write_balance}')
         self.ended = True
         # schedule as a task to make sure it will run after any pending
         # _process updates last_chunk_status
@@ -116,10 +117,10 @@ class Pyfca:
         for func in self.transform_chain:
             result = func(result)
             log(f'   -    {fmt(chunk)} function: {func}')
-            log(f'   -    {fmt(chunk)} yielded: {result}')
+            log(f'   -    {fmt(chunk)} yielded: {repr(result)}')
             if asyncio.iscoroutine(result):
                 result = await result
-                log(f'PROCESS {fmt(chunk)} resolved: {result}')
+                log(f'PROCESS {fmt(chunk)} resolved: {repr(result)}')
             if result is None:
                 break
 
@@ -130,7 +131,7 @@ class Pyfca:
         log(f'PROCESS {fmt(chunk)} status: {fmt(chunk_status)}')
 
         if result is not None:
-            log(f'   -    {fmt(chunk)} {green}return{reset}: {result}')
+            log(f'   -    {fmt(chunk)} {green}return{reset}: {repr(result)}')
             await self.ready.put(result)
         else:
             log(f'   -    {fmt(chunk)} {cyan}remove{reset}')

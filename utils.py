@@ -20,10 +20,10 @@ def chunk_id_or_value(item):
     """For uniform debugging various types of test data."""
     if type(item) is dict and 'id' in item:
         return f'chunk_id={item["id"]}'
-    elif isinstance(item, object) and hasattr(item, 'id'):
+    elif hasattr(item, 'id'):
         return f'chunk_id={item.id}'
     else:
-        return f'<chunk: {item}>'
+        return f'<chunk: {repr(item)}>'
 
 class _LogWithTimer:
     """Simple logger with time counted from initialization -

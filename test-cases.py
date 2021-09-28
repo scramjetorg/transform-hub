@@ -31,7 +31,7 @@ def log_drain_status(drain, item):
 async def mock_delay(data):
     """Pretend that we run some async operations that take some time."""
     delay = 0
-    if isinstance(data, object) and hasattr(data, 'delay'):
+    if hasattr(data, 'delay'):
         delay = data.delay
     elif type(data) is dict:
         if 'delay' in data:
