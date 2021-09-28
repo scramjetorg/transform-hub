@@ -12,17 +12,19 @@ class DataStream():
         if self.upstream:
             self.upstream._uncork()
 
-    def from_iterable(self, iterable):
+    @staticmethod
+    def from_iterable(iterable, max_parallel=64):
+        stream = DataStream(max_parallel)
         async def consume():
-            await self.ready_to_start
+            await stream.ready_to_start
             for item in iterable:
-                await self.pyfca.write(item)
-            self.pyfca.end()
+                await stream.pyfca.write(item)
+            stream.pyfca.end()
 
         # run in background, as it will involve waiting for
         # processing elements
         asyncio.create_task(consume())
-        return self
+        return stream
 
     def filter(self, func):
         async def run_filter(chunk):
