@@ -7,6 +7,7 @@ import { displayEntity } from "./output";
 import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
+import { Readable } from "stream";
 
 const { F_OK, R_OK } = constants;
 
@@ -94,4 +95,14 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
         out.on("finish", res);
         out.on("error", rej);
     });
+};
+export const getReadStreamFromFile = async (file: string): Promise<Readable> => {
+    const resolvedFilePath = resolve(process.cwd(), file);
+
+    return access(resolvedFilePath, F_OK).then(
+        () => createReadStream(resolvedFilePath),
+        () => {
+            throw new Error(`File "${file}" not found`);
+        }
+    );
 };

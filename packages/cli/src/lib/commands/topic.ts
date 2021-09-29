@@ -1,6 +1,5 @@
-import { createReadStream } from "fs";
 import { CommandDefinition } from "../../types";
-import { getHostClient } from "../common";
+import { getHostClient, getReadStreamFromFile } from "../common";
 import { displayEntity, displayStream } from "../output";
 
 export const topic: CommandDefinition = (program) => {
@@ -12,11 +11,11 @@ export const topic: CommandDefinition = (program) => {
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .option("-e, --end", "x-end-stream", false)
         .description("send data to topic")
-        .action(async (topicName, stream, { contentType, end }) => displayEntity(
+        .action(async (topicName, filename, { contentType, end }) => displayEntity(
             program,
             getHostClient(program).sendNamedData(
                 topicName,
-                stream ? createReadStream(stream) : process.stdin,
+                await getReadStreamFromFile(filename) || process.stdin,
                 contentType,
                 end)
         ));
