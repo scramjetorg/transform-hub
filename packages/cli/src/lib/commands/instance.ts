@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { createReadStream } from "fs";
 import { CommandDefinition } from "../../types";
-import { attachStdio, getHostClient, getInstance } from "../common";
+import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
 import { displayEntity, displayStream } from "../output";
 
 export const instance: CommandDefinition = (program) => {
@@ -79,12 +79,12 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd.command("input <id> [<file>]")
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .description("send file to input, if file not given the data will be read from stdin")
-        .action((id, stream, { contentType }) => {
+        .action(async (id, filename, { contentType }) => {
             const instanceClient = getInstance(program, id);
 
             return displayEntity(program,
                 instanceClient.sendInput(
-                    stream ? createReadStream(stream) : process.stdin,
+                    await getReadStreamFromFile(filename) || process.stdin,
                     { type: contentType }
                 )
             );
