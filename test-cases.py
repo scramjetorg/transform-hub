@@ -31,7 +31,7 @@ def log_drain_status(drain, item):
 async def mock_delay(data):
     """Pretend that we run some async operations that take some time."""
     delay = 0
-    if isinstance(data, object) and hasattr(data, 'delay'):
+    if hasattr(data, 'delay'):
         delay = data.delay
     elif type(data) is dict:
         if 'delay' in data:
@@ -56,7 +56,7 @@ def transform_dict_or_num(description, data, function):
     if type(data) is dict and 'value' in data:
         data['value'] = function(data['value'])
         # dropping value means dropping the whole chunk
-        result = data if data['value'] is not None else None
+        result = data if data['value'] is not pyfca.omit_chunk else pyfca.omit_chunk
     else:
         result = function(data)
     log(f'{yellow}{description}:{reset} -> {result}')
@@ -77,7 +77,8 @@ async def async_double(x):
     return double(x)
 
 def keep_even(x):
-    return transform_dict_or_num('keep_even', x, lambda x: x if x % 2 == 0 else None)
+    func = lambda x: x if x % 2 == 0 else pyfca.omit_chunk
+    return transform_dict_or_num('keep_even', x, func)
 
 async def async_keep_even(x):
     await mock_delay(x)
@@ -392,7 +393,7 @@ async def test_filtering_drops_everything(input_data):
     results = await asyncio.gather(*reads)
     log_results(results)
     # even though the reads were performed before .end(), they should return
-    # Nones for filtered out items, and with correct ordering
+    # Nones for filtered out items
     assert results == [
         None,
         None,
