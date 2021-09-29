@@ -26,6 +26,21 @@ class DataStream():
         asyncio.create_task(consume())
         return stream
 
+    @staticmethod
+    def from_file(in_file, max_parallel=64, max_chunk_size=-1):
+        stream = DataStream(max_parallel)
+        async def consume():
+            await stream.ready_to_start
+            with open(in_file, 'rb') as f:
+                for chunk in iter(lambda: f.read1(max_chunk_size), b''):
+                    await stream.pyfca.write(chunk)
+                stream.pyfca.end()
+
+        # run in background, as it will involve waiting for
+        # processing elements
+        asyncio.create_task(consume())
+        return stream
+
     def filter(self, func, *args):
         async def run_filter(chunk):
             decision = func(chunk, *args)
@@ -54,3 +69,11 @@ class DataStream():
             result.append(chunk)
             chunk = await self.pyfca.read()
         return result
+
+    async def to_file(self, out_file):
+        self._uncork()
+        with open(out_file, 'wb') as f:
+            x = await self.pyfca.read()
+            while x is not None:
+                f.write(x)
+                x = await self.pyfca.read()
