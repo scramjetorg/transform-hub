@@ -1,3 +1,5 @@
+/* eslint-disable quotes */
+/* eslint-disable no-console */
 import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import * as fs from "fs";
@@ -12,10 +14,31 @@ const connectionFlags = () => process.env.LOCAL_HOST_BASE_URL
     : []
 ;
 const formatFlags = () => ["-L", "--format", "json"];
+const expectedResponses: { [key:string]: any} = {
+    "endless-names-10": `{ "name": "Aga" }\n{ "name": "Michał" }\n{ "name": "Patryk" }\n{ "name": "Rafał" }\n{ "name": "Aida" }\n{ "name": "Basia" }\n{ "name": "Natalia" }\n{ "name": "Monika" }\n{ "name": "Wojtek" }\n`,
+    "nyc-city": `{ \"city\": \"New York\" }`,
+    hulkName: "Name is: Hulk\n",
+    "hello-input-out-10": 'Name is: Aga\n' +
+       'Name is: Michał\n' +
+       'Name is: Patryk\n' +
+       'Name is: Rafał\n' +
+       'Name is: Aida\n' +
+       'Name is: Basia\n' +
+       'Name is: Natalia\n' +
+       'Name is: Monika\n' +
+       'Name is: Wojtek\n'
+};
 
 let stdio: [stdout: string, stderr: string, statusCode: any];
+let stdio1: [stdout: string, stderr: string, statusCode: any];
+let stdio2: [stdout: string, stderr: string, statusCode: any];
 let sequenceId: string;
+let sequence1Id: string;
+let sequence2Id: string;
 let instanceId: string;
+let instance1Id: string;
+let instance2Id: string;
+let sequences: any;
 
 When("I execute CLI with bash command {string}", { timeout: 30000 }, async function(cmd: string) {
     stdio = await getStreamsFromSpawn("/bin/bash", ["-c", `${cmd} ${connectionFlags().join(" ")}`], { ...process.env, SI: si.join(" ") });
@@ -33,11 +56,14 @@ Then("I get a help information", function() {
 
 Then("the exit status is {int}", function(status: number) {
     if (stdio[2] !== status) {
-        // eslint-disable-next-line no-console
         console.error(stdio);
         assert.equal(stdio[2], status);
     }
     assert.ok(true);
+});
+
+Then("I get location {string} of compressed directory", function(filepath: string) {
+    assert.equal(fs.existsSync(filepath), true);
 });
 
 Then("I get Sequence id", function() {
@@ -47,8 +73,54 @@ Then("I get Sequence id", function() {
     assert.equal(typeof sequenceId !== "undefined", true);
 });
 
-Then("I get location {string} of compressed directory", function(filepath: string) {
-    assert.equal(fs.existsSync(filepath), true);
+Then("I get id from both sequences", function() {
+    const seq1 = JSON.parse(stdio[0].replace("\n", ""))[0];
+    const seq2 = JSON.parse(stdio[0].replace("\n", ""))[1];
+
+    sequence1Id = seq1.id;
+    sequence2Id = seq2.id;
+
+    assert.equal(typeof sequence1Id && typeof sequence2Id !== "undefined", true);
+});
+
+Then("I start the first sequence", async function() {
+    try {
+        stdio1 = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequence1Id, ...formatFlags(), ...connectionFlags()]);
+        assert.equal(stdio1[2], 0);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            console.error(stdio1[0]);
+        }
+
+        const instance1 = JSON.parse(stdio1[0].replace("\n", ""));
+
+        instance1Id = instance1._id;
+
+        assert.equal(typeof instance1Id !== "undefined", true);
+    } catch (e: any) {
+        console.error(e.stack, stdio);
+        assert.fail("Error occurred");
+    }
+});
+
+Then("I start the second sequence", async function() {
+    try {
+        stdio2 = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequence2Id, ...formatFlags(), ...connectionFlags()]);
+        assert.equal(stdio2[2], 0);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            console.error(stdio2[0]);
+        }
+
+        const instance2 = JSON.parse(stdio2[0].replace("\n", ""));
+
+        instance2Id = instance2._id;
+
+        assert.equal(typeof instance2Id !== "undefined", true);
+    } catch (e: any) {
+        console.error(e.stack, stdio);
+        assert.fail("Error occurred");
+    }
 });
 
 Then("I get Host load information", function() {
@@ -67,7 +139,6 @@ Then("I start Sequence", async function() {
         assert.equal(stdio[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            // eslint-disable-next-line no-console
             console.error(stdio[0]);
         }
 
@@ -75,7 +146,6 @@ Then("I start Sequence", async function() {
 
         instanceId = instance._id;
     } catch (e: any) {
-        // eslint-disable-next-line no-console
         console.error(e.stack, stdio);
         assert.fail("Error occurred");
     }
@@ -105,7 +175,6 @@ Then("I get instance health", { timeout: 10000 }, async function() {
 
 Then("health outputs 404", async () => {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", instanceId, ...connectionFlags()]);
-    assert.equal(stdio[2], 0);
     assert.equal(stdio[1].includes("404"), true);
 });
 
@@ -119,6 +188,11 @@ Then("I get instance output", { timeout: 30000 }, async function() {
     assert.equal(stdio[2], 0);
 });
 
+Then("I get the second instance output", { timeout: 30000 }, async function() {
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", instance2Id, ...connectionFlags()]);
+    assert.equal(stdio[2], 0);
+});
+
 Then("I send input data {string}", async function(pathToFile: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "input", instanceId, pathToFile, ...formatFlags(), ...connectionFlags()]);
     assert.equal(stdio[2], 0);
@@ -127,6 +201,14 @@ Then("I send input data {string}", async function(pathToFile: string) {
 Then("I stop instance {string} {string}", async function(timeout: string, canCallKeepAlive: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "stop", instanceId, timeout, canCallKeepAlive, ...formatFlags(), ...connectionFlags()]);
     assert.equal(stdio[2], 0);
+});
+
+Then("I get list of sequences", async function() {
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls", ...formatFlags(), ...connectionFlags()]);
+    assert.equal(stdio[2], 0);
+    sequences = JSON.parse(stdio[0].replace("\n", ""));
+
+    assert.equal(sequences.length > 0, true);
 });
 
 Then("I get list of instances", async function() {
@@ -165,3 +247,7 @@ Then("I get event {string} with event message {string} from instance", async fun
     assert.equal(stdio[0].trim(), value);
 });
 
+Then("confirm data from {string} received", async function(data) {
+    console.log("Received data:\n", stdio[0]);
+    assert.equal(stdio[0], expectedResponses[data]);
+});
