@@ -1,24 +1,44 @@
 import * as net from "net";
+import * as dgram from "dgram";
 
 export class FreePortsFinder {
-    static async checkPort(port: number): Promise<boolean> {
+    static async checkTCPPort(port: number): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const server = net.createServer();
 
-            server.on("listening", () => {
-                server.close();
-                resolve(true);
-            });
+            server
+                .on("listening", () => {
+                    server.close();
+                    resolve(true);
+                })
+                .on("error", (error: any) => {
+                    if (error.code === "EADDRINUSE") {
+                        resolve(false);
+                    } else {
+                        reject(error);
+                    }
+                })
+                .listen(port);
+        });
+    }
 
-            server.on("error", (error: any) => {
-                if (error.code === "EADDRINUSE") {
-                    resolve(false);
-                } else {
-                    reject(error);
-                }
-            });
+    static async checkUDPPort(port: number): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            const server = dgram.createSocket("udp4");
 
-            server.listen(port, "127.0.0.1");
+            server
+                .on("listening", () => {
+                    server.close();
+                    resolve(true);
+                })
+                .on("error", (error: any) => {
+                    if (error.code === "EADDRINUSE") {
+                        resolve(false);
+                    } else {
+                        reject(error);
+                    }
+                })
+                .bind(port);
         });
     }
 
@@ -26,7 +46,7 @@ export class FreePortsFinder {
         const ports = [];
 
         for (let port = min; port <= max; port++) {
-            if (await this.checkPort(port)) {
+            if (await this.checkTCPPort(port) && await this.checkUDPPort(port)) {
                 ports.push(port);
 
                 if (ports.length === portsCount) {
