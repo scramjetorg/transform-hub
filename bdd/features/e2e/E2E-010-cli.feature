@@ -174,7 +174,7 @@ Feature: CLI tests
 
     Scenario: E2E-010 TC-020 API to instance
         Given host is running
-        When I execute CLI with "topic send names features/e2e/data.json" arguments
+        When I execute CLI with "topic send names features/e2e/data.json --end" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz --format json" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -183,14 +183,16 @@ Feature: CLI tests
         And I get instance output
         And host is still running
 
-    # TODO - some steps are to be implemented
+    @ci
     Scenario: E2E-010 TC-021 instance to instance
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz --format json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz --format json" arguments
-        Then I get Sequence1 id
-        Then I get Sequence2 id
-        Then I start Sequences
-        Then I get instance2 id
-        And I get instance2 output
+        And I get list of sequences
+        Then I get id from both sequences
+        Then I start the first sequence
+        And wait for "6000" ms
+        Then I start the second sequence
+        And I get the second instance output
+        Then confirm data from "hello-input-out-10" received
         And host is still running

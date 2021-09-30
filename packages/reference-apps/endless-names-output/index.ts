@@ -11,8 +11,8 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
  * @param max - how many items to print
  */
 
-export = async function(_stream, max) {
-    const ps = new PassThrough({ objectMode: true });
+export = async function(_stream, max = 10) {
+    const ps = new PassThrough();
 
     let cnt = 0;
 
