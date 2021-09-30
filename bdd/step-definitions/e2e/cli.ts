@@ -17,7 +17,6 @@ const formatFlags = () => ["-L", "--format", "json"];
 const expectedResponses: { [key:string]: any} = {
     "endless-names-10": `{ "name": "Aga" }\n{ "name": "Michał" }\n{ "name": "Patryk" }\n{ "name": "Rafał" }\n{ "name": "Aida" }\n{ "name": "Basia" }\n{ "name": "Natalia" }\n{ "name": "Monika" }\n{ "name": "Wojtek" }\n`,
     "nyc-city": `{ \"city\": \"New York\" }`,
-    hulkName: "Name is: Hulk\n",
     "hello-input-out-10": 'Name is: Aga\n' +
        'Name is: Michał\n' +
        'Name is: Patryk\n' +

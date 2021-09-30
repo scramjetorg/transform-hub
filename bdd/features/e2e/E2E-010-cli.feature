@@ -157,11 +157,11 @@ Feature: CLI tests
 
     Scenario: E2E-010 TC-018 API to API
         Given host is running
-        When I execute CLI with "topic send test features/e2e/data.json" arguments
+        When I execute CLI with "topic send test features/e2e/data.json --end" arguments
         Then I execute CLI with "topic get test" arguments
         And host is still running
 
-
+    @ci
     Scenario: E2E-010 TC-019 instance to API
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz --format json" arguments
@@ -169,6 +169,7 @@ Feature: CLI tests
         Then I start Sequence
         Then I get instance health
         Then I execute CLI with "topic get names" arguments
+        Then confirm data from "endless-names-10" received
         And host is still running
 
 
@@ -191,7 +192,7 @@ Feature: CLI tests
         And I get list of sequences
         Then I get id from both sequences
         Then I start the first sequence
-        And wait for "6000" ms
+        And wait for "2000" ms
         Then I start the second sequence
         And I get the second instance output
         Then confirm data from "hello-input-out-10" received
