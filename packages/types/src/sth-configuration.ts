@@ -37,6 +37,7 @@ export type STHConfiguration = {
     docker: {
         prerunner: ContainerConfiguration,
         runner: ContainerConfiguration,
+        exposePortsRange: [number, number]
     },
 
     /**
