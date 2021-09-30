@@ -1,4 +1,4 @@
-import { development } from "@scramjet/sth-config";
+import { development, config as sthConfig } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -121,7 +121,9 @@ IComponent {
 
     private async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
         if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
-            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(declaredPorts.length);
+            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(
+                declaredPorts.length, ...(await sthConfig()).docker.exposePortsRange
+            );
 
             return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
                 obj[entry] = exposed ? {} : [{ HostPort: freePorts?.pop()?.toString() }];

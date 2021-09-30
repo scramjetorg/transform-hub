@@ -135,7 +135,7 @@ export class CPMConnector extends EventEmitter {
                     }
                 })
                 .on("error", (err: Error) => {
-                    this.logger.log(err);
+                    this.logger.log("Mux error", err);
                     // TODO: Error handling?
                 });
 
@@ -147,7 +147,7 @@ export class CPMConnector extends EventEmitter {
         }
 
         req.on("error", (error) => {
-            this.logger.error("error", error);
+            this.logger.error("Request error:", error);
             this.reconnect();
         });
 
