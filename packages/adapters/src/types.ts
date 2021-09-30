@@ -92,7 +92,9 @@ export type DockerAdapterRunConfig = {
     /**
      * @property {number} maxMem Container memory limit (bytes).
      */
-    maxMem?: number
+    maxMem?: number,
+
+    publishAllPorts?: boolean,
 };
 
 /**
@@ -173,13 +175,15 @@ export interface IDockerHelper {
      */
     createContainer: (
         containerCfg: {
-        dockerImage: DockerImage,
-        volumes: DockerAdapterVolumeConfig[],
-        binds: string[],
-        ports: any,
-        envs: string[],
-        autoRemove: boolean,
-        maxMem: number}
+            dockerImage: DockerImage,
+            volumes: DockerAdapterVolumeConfig[],
+            binds: string[],
+            ports: any,
+            envs: string[],
+            autoRemove: boolean,
+            maxMem: number,
+            publishAllPorts: boolean
+        }
     ) => Promise<DockerContainer>;
 
     /**

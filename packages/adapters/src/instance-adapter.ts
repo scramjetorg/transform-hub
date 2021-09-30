@@ -259,6 +259,7 @@ IComponent {
                 `${this.resources.fifosDir}:/pipes`
             ],
             ports: this.resources.ports,
+            publishAllPorts: true,
             envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
             autoRemove: true,
             maxMem: config.container.maxMem

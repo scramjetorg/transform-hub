@@ -85,7 +85,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             envs: string[],
             autoRemove: boolean,
             maxMem: number, // TODO: Container configuration
-            command?: string[]
+            command?: string[],
+            publishAllPorts: boolean,
         }
     ): Promise<DockerContainer> {
         containerCfg.ports = { ...containerCfg.ports };
@@ -105,7 +106,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 AutoRemove: containerCfg.autoRemove || false,
                 Memory: containerCfg.maxMem,
                 MemorySwap: 0,
-                PortBindings: containerCfg.ports.PortBindings
+                PortBindings: containerCfg.ports.PortBindings,
+                PublishAllPorts: containerCfg.publishAllPorts || false,
             },
         };
 
@@ -248,7 +250,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 envs: config.envs || [],
                 autoRemove: config.autoRemove || false,
                 maxMem: (config.maxMem || 64) * 1024 * 1024,
-                command: config.command
+                command: config.command,
+                publishAllPorts: config.publishAllPorts || false
             }
         );
         // ------
