@@ -1,3 +1,4 @@
+/* eslint-disable quote-props */
 /* eslint-disable quotes */
 /* eslint-disable no-console */
 import { Then, When } from "@cucumber/cucumber";
@@ -15,17 +16,17 @@ const connectionFlags = () => process.env.LOCAL_HOST_BASE_URL
 ;
 const formatFlags = () => ["-L", "--format", "json"];
 const expectedResponses: { [key:string]: any} = {
+    "avengers": `{ "name": "Ant-Man" }\n{ "name": "Iron Man" }\n{ "name": "Hulk" }\n{ "name": "Hawkeye" }\n{ "name": "Black Widow" }\n{ "name": "Thor" }\n{ "name": "Captain America" }\n{ "name": "Spider-Man" }\n`,
     "endless-names-10": `{ "name": "Aga" }\n{ "name": "Michał" }\n{ "name": "Patryk" }\n{ "name": "Rafał" }\n{ "name": "Aida" }\n{ "name": "Basia" }\n{ "name": "Natalia" }\n{ "name": "Monika" }\n{ "name": "Wojtek" }\n`,
-    "nyc-city": `{ \"city\": \"New York\" }`,
     "hello-input-out-10": 'Name is: Aga\n' +
-       'Name is: Michał\n' +
-       'Name is: Patryk\n' +
-       'Name is: Rafał\n' +
-       'Name is: Aida\n' +
-       'Name is: Basia\n' +
-       'Name is: Natalia\n' +
-       'Name is: Monika\n' +
-       'Name is: Wojtek\n'
+        'Name is: Michał\n' +
+        'Name is: Patryk\n' +
+        'Name is: Rafał\n' +
+        'Name is: Aida\n' +
+        'Name is: Basia\n' +
+        'Name is: Natalia\n' +
+        'Name is: Monika\n' +
+        'Name is: Wojtek\n'
 };
 
 let stdio: [stdout: string, stderr: string, statusCode: any];
@@ -246,7 +247,7 @@ Then("I get event {string} with event message {string} from instance", async fun
     assert.equal(stdio[0].trim(), value);
 });
 
-Then("confirm data from {string} received", async function(data) {
+Then("confirm data named {string} received", async function(data) {
     console.log("Received data:\n", stdio[0]);
     assert.equal(stdio[0], expectedResponses[data]);
 });
