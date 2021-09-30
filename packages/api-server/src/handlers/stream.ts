@@ -48,6 +48,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             res.setHeader("transfer-encoding", "chunked");
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.writeHead(200);
+            res.flushHeaders();
 
             // Error handling on disconnect!
             const disconnect = () => out.unpipe(res);
