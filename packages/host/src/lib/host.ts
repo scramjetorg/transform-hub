@@ -11,7 +11,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { Readable, Writable } from "stream";
+import { Readable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -164,10 +164,10 @@ export class Host implements IComponent {
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
             const end = req.headers["x-end-stream"] === "true";
 
-            if (sdTarget) {
-                req.pipe(sdTarget as Writable, { end });
+            this.logger.log(`Incoming topic '${params.name}' request, end:${end}.`);
 
-                return {};
+            if (sdTarget) {
+                return sdTarget;
             }
 
             this.serviceDiscovery.addData(
@@ -177,7 +177,7 @@ export class Host implements IComponent {
                 "api"
             );
 
-            return {};
+            return this.serviceDiscovery.getByTopic(params.name)?.stream;
         }, { checkContentType: false, end: false });
 
         this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
