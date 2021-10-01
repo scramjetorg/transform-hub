@@ -32,7 +32,7 @@ export class SequenceClient {
 
     async start(appConfig: any, args: any): Promise<InstanceClient> {
         const response = await this.clientUtils.post(
-            `${this.sequenceURL}/start`, { appConfig, args }, {}, { json: true }
+            `${this.sequenceURL}/start`, { appConfig, args }, {}, { json: true, parseResponse: "json" }
         );
 
         if (response.data?.id) {

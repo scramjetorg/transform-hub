@@ -8,7 +8,7 @@ import * as fs from "fs";
 import { createReadStream } from "fs";
 import { HostClient, InstanceOutputStream, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
-import { PassThrough, Stream } from "stream";
+import { PassThrough, Readable, Stream } from "stream";
 import * as crypto from "crypto";
 import { promisify } from "util";
 import * as Dockerode from "dockerode";
@@ -528,18 +528,20 @@ Then("output is {string}", async function(this: CustomWorld, str) {
 });
 
 Then("send data {string} named {string}", async (data: any, topic: string) => {
-    const ps = new PassThrough({ encoding: "utf-8" });
-
-    ps.end(data);
-
-    const sendData = await hostClient.sendNamedData(
+    const ps = new Readable();
+    const sendDataP = hostClient.sendNamedData(
         topic,
         ps,
         "application/x-ndjson",
         true
     );
 
-    assert.equal(sendData.status, 202);
+    ps.push(data);
+    ps.push(null);
+
+    const sendData = await sendDataP;
+
+    assert.equal(sendData.status, 200);
 });
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
@@ -551,14 +553,14 @@ Then("send data from file {string} named {string}", async (path: any, topic: str
         true
     );
 
-    assert.equal(sendData.status, 202);
+    assert.equal(sendData.status, 200);
 });
 
 When("get data named {string}", async function(this: CustomWorld, topic: string) {
     const stream = await hostClient.getNamedData(topic);
 
     if (!stream?.data) assert.fail("No data!");
-    this.resources.out = await streamToString(stream!.data!);
+    this.resources.out = await streamToString(stream.data);
     assert.equal(stream.status, 200);
 });
 
