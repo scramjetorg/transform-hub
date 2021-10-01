@@ -86,18 +86,14 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true }: StreamConfig = {}
     ): void => {
         router.post(path, async (req, res, next) => {
-            req.on("close", () => { logger.debug("downstream request closed"); });
-            req.on("end", () => { logger.debug("downstream request end"); });
-
-            res.on("close", () => { logger.debug("downstream response closed"); });
-            res.on("end", () => { logger.debug("downstream response end"); });
-
             try {
                 if (checkContentType) {
                     checkAccepts(req.headers["content-type"], text, json);
                 }
 
-                if (req.headers.expect === "100-continue") res.writeContinue();
+                if (req.headers.expect === "100-continue") {
+                    res.writeContinue();
+                }
 
                 const end = checkEndHeader(req, _end);
                 const data = await getWritable(stream, req, res);
@@ -118,8 +114,13 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                         }
 
                         req
-                            .once("end", () => {
-                                logger.debug("downstream request end");
+                            .on("error", reject)
+                            .on("error", () => {
+                                logger.error("Downstream request error.");
+                                reject();
+                            })
+                            .on("end", () => {
+                                logger.debug("Downstream request end.");
                                 resolve();
                             })
                             .pipe(data as Writable, { end });

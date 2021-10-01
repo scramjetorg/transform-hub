@@ -15,6 +15,7 @@ export type ResponseStream = {
 export type SendStreamOptions = Partial<{
     type: string;
     end: boolean;
+    parseResponse? : "json" | "text"
 }>;
 
 export type Headers = {
@@ -27,11 +28,15 @@ export type RequestLogger = {
     error: (res: ClientError) => void;
 };
 
+export type PostRequestConfig = {
+    parseResponse? : "json" | "text"
+    json?: boolean;
+}
 export interface HttpClient {
     addLogger(logger: RequestLogger): void;
     get(url: string): Promise<Response>;
     getStream(url: string): Promise<ResponseStream>;
-    post(url: string, data: any, headers?: Headers, options?: { json: boolean }): Promise<Response>;
+    post(url: string, data: any, headers?: Headers, options?: { json: boolean } & PostRequestConfig): Promise<Response>;
     delete(url: string): Promise<Response>;
     sendStream(
         url: string,
