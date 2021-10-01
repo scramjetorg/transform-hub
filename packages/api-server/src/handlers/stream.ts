@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { StreamConfig, StreamInput, StreamOutput } from "@scramjet/types";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
 import { Writable, Readable, Duplex } from "stream";
@@ -6,6 +5,9 @@ import { DuplexStream } from "../lib/duplex-stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
+import { getLogger } from "@scramjet/logger";
+
+const logger = getLogger("ApiServer-stream");
 
 function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     const types = [];
@@ -84,6 +86,12 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
         { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true }: StreamConfig = {}
     ): void => {
         router.post(path, async (req, res, next) => {
+            req.on("close", () => { logger.debug("downstream request closed"); });
+            req.on("end", () => { logger.debug("downstream request end"); });
+
+            res.on("close", () => { logger.debug("downstream response closed"); });
+            res.on("end", () => { logger.debug("downstream response end"); });
+
             try {
                 if (checkContentType) {
                     checkAccepts(req.headers["content-type"], text, json);
@@ -95,21 +103,30 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                 const data = await getWritable(stream, req, res);
 
                 // eslint-disable-next-line no-extra-parens
-                if (typeof (data as Writable).writable !== "undefined") {
+                if (data && typeof (data as Writable).writable !== "undefined") {
+                    if (end) {
+                        res.writeHead(200, "OK");
+                    } else {
+                        res.writeHead(202, "Accepted");
+                    }
+
+                    res.flushHeaders();
+
                     await new Promise<void>((resolve, reject) => {
                         if (encoding) {
                             req.setEncoding(encoding);
                         }
 
-                        if (data) {
-                            req.pipe(data as Writable, { end });
-                            // eslint-disable-next-line no-extra-parens
-                            (data as Writable).once("error", reject);
-                        } else {
-                            resolve();
-                        }
+                        req
+                            .once("end", () => {
+                                logger.debug("downstream request end");
+                                resolve();
+                            })
+                            .pipe(data as Writable, { end });
 
-                        req.once("end", resolve);
+                        logger.debug("Request data piped");
+                        // eslint-disable-next-line no-extra-parens
+                        (data as Writable).once("error", reject);
                     });
                 } else {
                     let status = 202;
@@ -128,15 +145,9 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     return;
                 }
 
-                if (end) {
-                    res.writeHead(200, "OK");
-                } else {
-                    res.writeHead(202, "Accepted");
-                }
                 res.end();
             } catch (e: any) {
-                // eslint-disable-next-line no-console
-                console.error(e);
+                logger.error(e);
                 next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
         });
