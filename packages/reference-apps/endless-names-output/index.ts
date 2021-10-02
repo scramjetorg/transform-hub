@@ -12,15 +12,15 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
  */
 
 export = async function(_stream, max) {
-    const ps = new PassThrough();
+    const ps = new PassThrough({ objectMode: true });
 
-    ps.pipe(process.stdout);
     let cnt = 0;
 
     const interval = setInterval(async () => {
         // output
-        const outputString = `{ "name": "${names[cnt % names.length]}" }\n`;
+        const outputString = JSON.stringify({ name: names[cnt % names.length] }) + "\n";
 
+        console.log(outputString);
         ps.write(outputString);
 
         cnt++;

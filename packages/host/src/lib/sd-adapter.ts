@@ -82,7 +82,7 @@ export class ServiceDiscovery {
         }
     }
 
-    getData(dataType: dataType, end?: boolean, inputStream?: WritableStream<any>):
+    getData(dataType: dataType, end?: boolean):
         ReadableStream<any> | WritableStream<any> | undefined {
         this.logger.log("Get data:", dataType);
 
@@ -90,12 +90,9 @@ export class ServiceDiscovery {
             const topicData = this.dataMap.get(dataType.topic)!;
 
             this.logger.log("Topic exists");
+
             if (topicData?.localProvider) {
                 this.logger.log(`LocalProvider found topic:${dataType.topic}, provider:${topicData.localProvider}`);
-
-                if (inputStream) {
-                    topicData?.stream.pipe(inputStream);
-                }
             } else {
                 this.logger.log("Local topic provider not found for:", dataType.topic);
 
@@ -105,10 +102,6 @@ export class ServiceDiscovery {
                     this.cpmConnector?.getTopic(dataType.topic)
                         .then(stream => {
                             this.logger.log("CPM connected for:", dataType);
-
-                            if (inputStream) {
-                                topicData?.stream.pipe(inputStream);
-                            }
 
                             stream.pipe(topicData?.stream as WritableStream<any>);
                         });
@@ -122,7 +115,7 @@ export class ServiceDiscovery {
 
         this.addData(dataType, !!end);
 
-        return this.getData(dataType, end, inputStream);
+        return this.getData(dataType, end);
     }
 
     removeData(topic: string) {

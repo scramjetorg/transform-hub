@@ -42,7 +42,7 @@ export class CSIController extends EventEmitter {
     startPromise: Promise<void>;
 
     apiOutput = new PassThrough();
-    apiInputEnabled = false;
+    apiInputEnabled = true;
 
     /**
      * Streams connected do API.
@@ -199,16 +199,10 @@ export class CSIController extends EventEmitter {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message: any) => {
             const pangData = message[1];
 
-            this.provides = pangData.provides;
-            this.requires = pangData.requires;
+            this.provides ||= pangData.provides;
+            this.requires ||= pangData.requires;
 
-            if (pangData.requires === "") {
-                this.apiInputEnabled = true;
-            }
-
-            if (pangData.provides === "") {
-                this.upStreams![CommunicationChannel.OUT].pipe(this.apiOutput);
-            }
+            this.apiInputEnabled = pangData.requires === "";
 
             this.emit("pang", message[1]);
         });
@@ -229,13 +223,13 @@ export class CSIController extends EventEmitter {
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
-
-            this.startResolver?.res();
-
-            this.info.started = new Date();
         } else {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
+
+        this.startResolver?.res();
+
+        this.info.started = new Date();
     }
 
     async sendConfig() {
@@ -279,10 +273,10 @@ export class CSIController extends EventEmitter {
                 this.router.upstream("/monitoring", this.upStreams[CommunicationChannel.MONITORING]);
             }
 
-            this.router.upstream("/output", this.apiOutput);
+            this.router.upstream("/output", this.upStreams![CommunicationChannel.OUT]);
             this.router.downstream("/input", (req) => {
                 if (this.apiInputEnabled) {
-                    const stream = this.upStreams![CommunicationChannel.IN];
+                    const stream = this.downStreams![CommunicationChannel.IN];
                     const contentType = req.headers["content-type"];
 
                     if (contentType === undefined) {
@@ -379,14 +373,14 @@ export class CSIController extends EventEmitter {
     }
 
     getOutputStream(): ReadableStream<any> | undefined {
-        if (this.downStreams && this.downStreams[CC.OUT]) {
-            return this.downStreams[CC.OUT];
+        if (this.upStreams && this.upStreams[CC.OUT]) {
+            return this.upStreams[CC.OUT];
         }
 
         return undefined;
     }
 
-    getInputStream(): WritableStream<any> | undefined {
+    getInputStream(): WritableStream<any> | void {
         if (this.downStreams && this.downStreams[CC.IN]) {
             return this.downStreams[CC.IN];
         }
