@@ -44,6 +44,7 @@ const streamToString = async (stream: Stream): Promise<string> => {
     for await (const chunk of strings) {
         chunks.push(chunk);
     }
+
     return chunks.join("");
 };
 const waitForContainerToClose = async () => {
@@ -563,6 +564,7 @@ When("get data named {string}", async function(this: CustomWorld, topic: string)
 
     if (!stream?.data) assert.fail("No data!");
     this.resources.out = await streamToString(stream.data);
+    console.log("Received data:\n", this.resources.out);
     assert.equal(stream.status, 200);
 });
 

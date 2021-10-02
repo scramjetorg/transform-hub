@@ -27,7 +27,6 @@ import { ServiceDiscovery } from "./sd-adapter";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
-//const whenStreamEnd = (req: IncomingMessage) => new Promise((res, rej) => req.once("end", res).once("error", rej));
 
 export type HostOptions = Partial<{
     identifyExisting: boolean
@@ -356,18 +355,18 @@ export class Host implements IComponent {
             if (data.requires) {
                 notifyCPM = true;
 
+                this.logger.log("Sequence requires data: ");
                 this.serviceDiscovery.getData(
                     {
                         topic: data.requires,
                         contentType: data.contentType
                     },
-                    true,
-                    csic.getInputStream()
-                );
+                    true
+                )?.pipe(csic.getInputStream()!);
 
                 csic.confirmInputHook().then(
                     () => { /* noop */ },
-                    (e: any) => { this.logger.error(e); },
+                    (e: any) => { this.logger.error(e); }
                 );
             }
 
@@ -381,7 +380,7 @@ export class Host implements IComponent {
                     csic.id
                 );
 
-                csic.getOutputStream()!.pipe(topic!.stream as Writable, { end: true });
+                csic.getOutputStream()!.pipe(topic!.stream as Writable);
             }
 
             if (notifyCPM) {
@@ -406,18 +405,6 @@ export class Host implements IComponent {
                 id: csic.id,
                 sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);
-
-            if (csic.provides && csic.provides !== "") {
-                //this.serviceDiscovery.removeData(csic.provides);
-                csic.getOutputStream()!.unpipe();
-                this.serviceDiscovery.removeLocalProvider(csic.provides);
-            }
-
-            if (csic.requires && csic.requires !== "") {
-                // TODO
-                // get topic stream from service discovery
-                // topic.stream.unpipe(csic.upStreams![CommunicationChannel.IN]) --upStreams is private property
-            }
         });
 
         return csic;
