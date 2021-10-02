@@ -100,6 +100,15 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
                 // eslint-disable-next-line no-extra-parens
                 if (data && typeof (data as Writable).writable !== "undefined") {
+                    // eslint-disable-next-line no-extra-parens
+                    /*
+                    if ((data as Writable).writableEnded) {
+                        // TODO: remove ended?
+                        res.writeHead(406, "Not Acceptable");
+                        res.end();
+                        return;
+                    }*/
+
                     if (end) {
                         res.writeHead(200, "OK");
                     } else {
