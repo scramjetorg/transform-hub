@@ -194,6 +194,8 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 
 When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({}, []);
+
+    console.log(this.resources.instance);
 });
 
 When("instances started", async function(this: CustomWorld) {

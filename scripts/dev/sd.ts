@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ChildProcess, spawn } from "child_process";
 import * as fs from "fs";
 
@@ -47,8 +48,8 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
     });
 
     const host1 = "11111111-c201-4fe4-8309-111111111111";
-    const sequence1 = fs.createReadStream(resolve(__dirname, "../../packages/reference-apps/hello-input-out.tar.gz"));
-    const sequence2 = fs.createReadStream(resolve(__dirname, "../../packages/reference-apps/avengers-names-output.tar.gz"));
+    const sequence1 = fs.createReadStream(resolve(__dirname, "../../packages/reference-apps/endless-names-output.tar.gz"));
+    const sequence2 = fs.createReadStream(resolve(__dirname, "../../packages/reference-apps/hello-input-out.tar.gz"));
     //
     //
     const startHost1 = async (config: { cpm: boolean }) => {
@@ -90,8 +91,7 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
         seq1 = await hostCllient.sendSequence(sequence1);
         seq2 = await hostCllient.sendSequence(sequence2);
 
-        await seq1.start({}, []);
-
+        inst1 = await seq1.start({}, []);
         inst2 = await seq2.start({}, []);
 
         (await inst2.getStream("output")).data?.pipe(process.stdout);

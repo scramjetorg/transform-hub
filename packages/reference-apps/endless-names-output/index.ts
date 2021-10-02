@@ -14,6 +14,7 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
 export = async function(_stream, max) {
     const ps = new PassThrough();
 
+    ps.pipe(process.stdout);
     let cnt = 0;
 
     const interval = setInterval(async () => {
@@ -21,7 +22,7 @@ export = async function(_stream, max) {
         const outputString = `{ "name": "${names[cnt % names.length]}" }\n`;
 
         ps.write(outputString);
-        console.log(outputString);
+
         cnt++;
 
         if (max && cnt > max) {

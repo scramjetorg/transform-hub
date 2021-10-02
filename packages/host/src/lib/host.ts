@@ -11,7 +11,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { Readable } from "stream";
+import { Readable, Writable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -171,7 +171,6 @@ export class Host implements IComponent {
             }
 
             this.serviceDiscovery.addData(
-                req,
                 { contentType: req.headers["content-type"] || "", topic: params.name },
                 end,
                 "api"
@@ -376,12 +375,13 @@ export class Host implements IComponent {
                 notifyCPM = true;
 
                 this.logger.log("Sequence provides data: ", data);
-                this.serviceDiscovery.addData(
-                    csic.getOutputStream()!,
+                const topic = this.serviceDiscovery.addData(
                     { topic: data.provides, contentType: data.contentType },
                     true,
                     csic.id
                 );
+
+                csic.getOutputStream()!.pipe(topic!.stream as Writable, { end: true });
             }
 
             if (notifyCPM) {

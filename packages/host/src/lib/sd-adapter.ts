@@ -29,21 +29,20 @@ export class ServiceDiscovery {
         this.cpmConnector = cpmConnector;
     }
 
-    addData(outputStream: ReadableStream<any>, config: dataType, end: boolean, localProvider?: string) {
+    addData(config: dataType, end: boolean, localProvider?: string) {
         if (!this.dataMap.has(config.topic)) {
             this.logger.log("Adding data:", config, "end:", end);
-            const ps = new PassThrough();
+            const topicStream = new PassThrough();
 
             this.dataMap.set(config.topic, {
                 contentType: config.contentType,
-                stream: ps,
+                stream: topicStream,
                 localProvider
             });
 
-            outputStream.pipe(ps, { end });
+            this.logger.log("new ps is ended", topicStream.writableEnded);
         } else {
             this.logger.log("Routing data:", config, "end:", end);
-            outputStream.pipe(this.dataMap.get(config.topic)!.stream as WritableStream<any>, { end });
         }
 
         if (localProvider) {
@@ -56,6 +55,8 @@ export class ServiceDiscovery {
                 this.logger.log("Sending data to cpm");
             }
         }
+
+        return this.dataMap.get(config.topic);
     }
 
     getTopics() {
@@ -77,8 +78,7 @@ export class ServiceDiscovery {
 
         if (d) {
             this.dataMap.set(topic, { ...d, localProvider: undefined });
-
-            this.getData({ topic, contentType: d.contentType });
+            //this.getData({ topic, contentType: d.contentType });
         }
     }
 
@@ -89,6 +89,7 @@ export class ServiceDiscovery {
         if (this.dataMap.has(dataType.topic)) {
             const topicData = this.dataMap.get(dataType.topic)!;
 
+            this.logger.log("Topic exists");
             if (topicData?.localProvider) {
                 this.logger.log(`LocalProvider found topic:${dataType.topic}, provider:${topicData.localProvider}`);
 
@@ -118,9 +119,8 @@ export class ServiceDiscovery {
 
             return topicData?.stream.on("end", () => this.logger.debug("Topic ended:", dataType));
         }
-        const ps = new PassThrough();
 
-        this.addData(ps, dataType, !!end);
+        this.addData(dataType, !!end);
 
         return this.getData(dataType, end, inputStream);
     }
