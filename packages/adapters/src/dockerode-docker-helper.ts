@@ -11,7 +11,6 @@ import {
     DockerContainer,
     IDockerHelper, DockerImage, DockerVolume, ExitData
 } from "./types";
-import { defer } from "@scramjet/utility";
 
 /**
  * Configuration for volumes to be mounted to container.
@@ -36,18 +35,6 @@ type DockerodeVolumeMountConfig = {
      * Access mode.
      */
     ReadOnly: boolean
-}
-
-async function waitForSuccess(fn: () => boolean | Promise<boolean>, intervalMs: number) {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        const result = await fn();
-
-        if (result) {
-            return;
-        }
-        await defer(intervalMs);
-    }
 }
 
 /**
@@ -199,8 +186,10 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
             this.logger.log("Start pulling image", name);
 
-            await this.dockerode.pull(name);
-            await waitForSuccess(() => this.isImageInLocalRegistry(name), 1000);
+            const pullStream = await this.dockerode.pull(name);
+
+            // Wait for pull to finish
+            await new Promise(res => this.dockerode.modem.followProgress(pullStream, res));
 
             this.logger.log("Pulling image", name, "done.");
         })();
