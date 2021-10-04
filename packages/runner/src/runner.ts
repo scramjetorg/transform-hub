@@ -17,7 +17,7 @@ type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
 
 export function isNotPrimitive(obj: SynchronousStreamable<any> | Primitives) : obj is SynchronousStreamable<any> {
-    return !(["string", "number", "boolean", "undefined", "null"].includes(typeof obj));
+    return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
 export class Runner<X extends AppConfig> implements IComponent {

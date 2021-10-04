@@ -38,7 +38,7 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
         const loadCheck = await hostClient.getLoadCheck();
 
         // eslint-disable-next-line no-extra-parens
-        if ((loadCheck as any).status !== 200 || loadCheck.data?.memFree < (512 << 20)) {
+        if ((loadCheck as any).status !== 200 || loadCheck.data?.memFree < 512 << 20) {
             rejected = true;
         } else {
             const instance = await sequence.start(data.appConfig, data.args);
