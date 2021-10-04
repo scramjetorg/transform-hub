@@ -405,6 +405,11 @@ export class Host implements IComponent {
                 id: csic.id,
                 sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);
+
+            if (csic.provides && csic.provides !== "") {
+                csic.getOutputStream()!.unpipe();
+                this.serviceDiscovery.removeLocalProvider(csic.provides);
+            }
         });
 
         return csic;
