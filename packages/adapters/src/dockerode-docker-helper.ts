@@ -164,7 +164,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     private pulledImages: {[key: string]: Promise<void> | undefined } = {};
 
-    async pullImage(name: string, fetchOnlyIfNotExists: boolean) {
+    async pullImage(name: string, fetchOnlyIfNotExists = true) {
         if (fetchOnlyIfNotExists) {
             this.logger.log("Checking image", name);
 
