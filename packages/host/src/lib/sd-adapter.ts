@@ -39,8 +39,6 @@ export class ServiceDiscovery {
                 stream: topicStream,
                 localProvider
             });
-
-            this.logger.log("new ps is ended", topicStream.writableEnded);
         } else {
             this.logger.log("Routing data:", config, "end:", end);
         }
@@ -78,7 +76,6 @@ export class ServiceDiscovery {
 
         if (d) {
             this.dataMap.set(topic, { ...d, localProvider: undefined });
-            //this.getData({ topic, contentType: d.contentType });
         }
     }
 

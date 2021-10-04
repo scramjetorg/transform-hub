@@ -129,7 +129,7 @@ Before(() => {
     streams = {};
 });
 
-Given("start host", async () => {
+const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
     if (!apiUrl) {
@@ -163,7 +163,10 @@ Given("start host", async () => {
         });
     }
     await hostUtils.spawnHost();
-});
+};
+
+Given("start host", () => startHost());
+Then("stop host", () => hostUtils.stopHost());
 
 Given("host is running", async () => {
     assert.equal((await hostClient.getLoadCheck()).status, 200);
@@ -195,8 +198,6 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 
 When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({}, []);
-
-    console.log(this.resources.instance);
 });
 
 When("instances started", async function(this: CustomWorld) {
