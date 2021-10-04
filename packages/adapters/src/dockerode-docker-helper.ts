@@ -159,31 +159,24 @@ export class DockerodeDockerHelper implements IDockerHelper {
     }
 
     private async isImageInLocalRegistry(name: string): Promise<boolean> {
-        const images = await this.dockerode.listImages();
-
-        return !!images.find(imgInfo => imgInfo.RepoTags?.includes(name));
+        return this.dockerode.getImage(name).get().then(() => true, () => false);
     }
 
     private pulledImages: {[key: string]: Promise<void> | undefined } = {};
 
-    async pullImage(name: string, ifNeeded: boolean) {
-        if (this.pulledImages[name]) return this.pulledImages[name];
+    async pullImage(name: string, fetchOnlyIfNotExists: boolean) {
+        if (fetchOnlyIfNotExists) {
+            this.logger.log("Checking image", name);
 
-        if (await this.isImageInLocalRegistry(name)) {
-            this.pulledImages[name] = Promise.resolve();
-            return this.pulledImages[name];
+            if (this.pulledImages[name]) return this.pulledImages[name];
+
+            if (await this.isImageInLocalRegistry(name)) {
+                this.pulledImages[name] = Promise.resolve();
+                return this.pulledImages[name];
+            }
         }
 
         this.pulledImages[name] = (async () => {
-            this.logger.log("Checking image", name);
-
-            if (ifNeeded) {
-                const exists = await this.dockerode.getImage(name).get()
-                    .then(() => true, () => false);
-
-                if (exists) return;
-            }
-
             this.logger.log("Start pulling image", name);
 
             const pullStream = await this.dockerode.pull(name);
