@@ -154,28 +154,28 @@ Feature: CLI tests
         Then health outputs 404
         And host is still running
 
-
+    @ci @starts-host
     Scenario: E2E-010 TC-018 API to API
-        Given host is running
-        When I execute CLI with "topic send avengers features/e2e/data.json --end" arguments
-        Then I execute CLI with "topic get avengers" arguments
-        Then confirm data named "avengers" received
-        And host is still running
+        Given start host
+        When I execute CLI with "topic send cities features/e2e/cities.json --end" arguments
+        Then I execute CLI with "topic get cities" arguments
+        Then confirm data named "nyc-city-nl" received
+        * stop host
 
-    @ci
+    @ci @starts-host
     Scenario: E2E-010 TC-019 instance to API
-        Given host is running
+        Given start host
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz --format json" arguments
         Then I get Sequence id
         Then I start Sequence
         Then I get instance health
         Then I execute CLI with "topic get names" arguments
         Then confirm data named "endless-names-10" received
-        And host is still running
+        * stop host
 
-
+    @ci @starts-host
     Scenario: E2E-010 TC-020 API to instance
-        Given host is running
+        Given start host
         When I execute CLI with "topic send names features/e2e/data.json --end" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz --format json" arguments
         Then I get Sequence id
@@ -183,12 +183,12 @@ Feature: CLI tests
         Then I get instance health
         Then I get instance id
         And I get instance output
-        Then confirm data named "avengers" received
-        And host is still running
+        Then confirm data named "hello-avengers" received
+        * stop host
 
-    @ci
+    @ci @starts-host
     Scenario: E2E-010 TC-021 instance to instance
-        Given host is running
+        Given start host
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz --format json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz --format json" arguments
         And I get list of sequences
@@ -199,4 +199,4 @@ Feature: CLI tests
         And wait for "4000" ms
         And I get the second instance output
         Then confirm data named "hello-input-out-10" received
-        And host is still running
+        * stop host

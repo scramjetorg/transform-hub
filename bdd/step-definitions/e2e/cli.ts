@@ -5,6 +5,7 @@ import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import * as fs from "fs";
 import { getStreamsFromSpawn } from "../../lib/utils";
+import { expectedResponses } from "./expectedResponses";
 
 const si = process.env.SCRAMJET_SPAWN_TS
     ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
@@ -15,19 +16,6 @@ const connectionFlags = () => process.env.LOCAL_HOST_BASE_URL
     : []
 ;
 const formatFlags = () => ["-L", "--format", "json"];
-const expectedResponses: { [key:string]: any} = {
-    "avengers": `{ "name": "Ant-Man" }\n{ "name": "Iron Man" }\n{ "name": "Hulk" }\n{ "name": "Hawkeye" }\n{ "name": "Black Widow" }\n{ "name": "Thor" }\n{ "name": "Captain America" }\n{ "name": "Spider-Man" }\n`,
-    "endless-names-10": `{ "name": "Aga" }\n{ "name": "Michał" }\n{ "name": "Patryk" }\n{ "name": "Rafał" }\n{ "name": "Aida" }\n{ "name": "Basia" }\n{ "name": "Natalia" }\n{ "name": "Monika" }\n{ "name": "Wojtek" }\n`,
-    "hello-input-out-10": 'Name is: Aga\n' +
-        'Name is: Michał\n' +
-        'Name is: Patryk\n' +
-        'Name is: Rafał\n' +
-        'Name is: Aida\n' +
-        'Name is: Basia\n' +
-        'Name is: Natalia\n' +
-        'Name is: Monika\n' +
-        'Name is: Wojtek\n'
-};
 
 let stdio: [stdout: string, stderr: string, statusCode: any];
 let stdio1: [stdout: string, stderr: string, statusCode: any];
