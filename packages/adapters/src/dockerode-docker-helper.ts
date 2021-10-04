@@ -11,6 +11,7 @@ import {
     DockerContainer,
     IDockerHelper, DockerImage, DockerVolume, ExitData
 } from "./types";
+import { defer } from "@scramjet/utility";
 
 /**
  * Configuration for volumes to be mounted to container.
@@ -35,6 +36,18 @@ type DockerodeVolumeMountConfig = {
      * Access mode.
      */
     ReadOnly: boolean
+}
+
+async function waitForSuccess(fn: () => boolean | Promise<boolean>, intervalMs: number) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        const result = await fn();
+
+        if (result) {
+            return;
+        }
+        await defer(intervalMs);
+    }
 }
 
 /**
@@ -158,10 +171,23 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
-    private pulledImages: {[key: string]: Promise<void>} = {};
+    private async isImageInLocalRegistry(name: string): Promise<boolean> {
+        const images = await this.dockerode.listImages();
+
+        return !!images.find(imgInfo => imgInfo.RepoTags?.includes(name));
+    }
+
+    private pulledImages: {[key: string]: Promise<void> | undefined } = {};
 
     async pullImage(name: string, ifNeeded: boolean) {
-        this.pulledImages[name] ||= (async () => {
+        if (this.pulledImages[name]) return this.pulledImages[name];
+
+        if (await this.isImageInLocalRegistry(name)) {
+            this.pulledImages[name] = Promise.resolve();
+            return this.pulledImages[name];
+        }
+
+        this.pulledImages[name] = (async () => {
             this.logger.log("Checking image", name);
 
             if (ifNeeded) {
@@ -174,7 +200,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
             this.logger.log("Start pulling image", name);
 
             await this.dockerode.pull(name);
-            await new Promise(res => setTimeout(res, 1000));
+            await waitForSuccess(() => this.isImageInLocalRegistry(name), 1000);
 
             this.logger.log("Pulling image", name, "done.");
         })();
