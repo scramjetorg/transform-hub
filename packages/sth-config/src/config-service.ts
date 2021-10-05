@@ -12,6 +12,7 @@ const defaultConfig: STHConfiguration = {
             image: "",
             maxMem: 512
         },
+        exposePortsRange: [30000, 32767]
     },
     identifyExisting: false,
     host: {

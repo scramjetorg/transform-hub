@@ -1,12 +1,11 @@
-import { v4 as uuidv4, validate } from "uuid";
+import * as uuidv4 from "uuid";
 
 export class IDProvider {
     static generate() {
-        return uuidv4();
+        return uuidv4.v4();
     }
 
     public static isValid(id: string) {
-        return validate(id);
+        return uuidv4.validate(id);
     }
 }
-

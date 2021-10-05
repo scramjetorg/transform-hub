@@ -92,7 +92,9 @@ export type DockerAdapterRunConfig = {
     /**
      * @property {number} maxMem Container memory limit (bytes).
      */
-    maxMem?: number
+    maxMem?: number,
+
+    publishAllPorts?: boolean,
 };
 
 /**
@@ -173,13 +175,15 @@ export interface IDockerHelper {
      */
     createContainer: (
         containerCfg: {
-        dockerImage: DockerImage,
-        volumes: DockerAdapterVolumeConfig[],
-        binds: string[],
-        ports: any,
-        envs: string[],
-        autoRemove: boolean,
-        maxMem: number}
+            dockerImage: DockerImage,
+            volumes: DockerAdapterVolumeConfig[],
+            binds: string[],
+            ports: any,
+            envs: string[],
+            autoRemove: boolean,
+            maxMem: number,
+            publishAllPorts: boolean
+        }
     ) => Promise<DockerContainer>;
 
     /**
@@ -257,7 +261,7 @@ export interface IDockerHelper {
      * Fetches the image from repo
      *
      * @param name the name of the image, eg. ubuntu:latest
-     * @param ifNeeded fetch only if not exists (defaults to true)
+     * @param fetchOnlyIfNotExists fetch only if not exists (defaults to true)
      */
-    pullImage(name: string, ifNeeded: boolean): Promise<void>
+    pullImage(name: string, fetchOnlyIfNotExists?: boolean): Promise<void>
 }

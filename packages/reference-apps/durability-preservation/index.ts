@@ -1,3 +1,4 @@
+/* eslint-disable no-console, no-extra-parens */
 import * as http from "https";
 import { IncomingMessage } from "http";
 import { PassThrough } from "stream";
@@ -52,7 +53,6 @@ export = async function(_stream: any, allocMemSize: string, files: string[] = [
 
     setInterval(async () => {
         try {
-            // eslint-disable-next-line no-extra-parens
             (await Promise.all(
                 files.map(downloadFile)
             ) as IncomingMessage[]).map((file: IncomingMessage) => {

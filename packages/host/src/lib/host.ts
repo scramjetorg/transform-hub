@@ -11,7 +11,7 @@ import { SocketServer } from "./socket-server";
 
 import { unlink, access as access } from "fs/promises";
 import { IncomingMessage, ServerResponse } from "http";
-import { Readable } from "stream";
+import { Readable, Writable } from "stream";
 import { InstanceStore } from "./instance-store";
 
 import { loadCheck } from "@scramjet/load-check";
@@ -23,6 +23,7 @@ import { constants } from "fs";
 import { CPMConnector } from "./cpm-connector";
 
 import { AddressInfo } from "net";
+import { ServiceDiscovery } from "./sd-adapter";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -46,6 +47,8 @@ export class Host implements IComponent {
     sequencesStore: SequenceStore = new SequenceStore();
 
     logger: Logger;
+
+    serviceDiscovery = new ServiceDiscovery();
 
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
@@ -72,6 +75,7 @@ export class Host implements IComponent {
 
         if (this.config.cpmUrl) {
             this.cpmConnector = new CPMConnector(this.config.cpmUrl);
+            this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
 
@@ -81,7 +85,7 @@ export class Host implements IComponent {
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
 
-        this.logger.info("Host main called.");
+        this.logger.log("Host main called.");
 
         try {
             if (await exists(this.config.host.socketPath)) {
@@ -103,7 +107,7 @@ export class Host implements IComponent {
             this.api?.server.once("listening", () => {
                 const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.logger.info("API listening on port:", `${serverInfo?.address}:${serverInfo.port}`);
+                this.logger.info("API listening on:", `${serverInfo?.address}:${serverInfo.port}`);
                 res();
             });
         });
@@ -152,6 +156,39 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/load-check`, () => loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, () => ({ version }));
 
+        this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
+        this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
+            // eslint-disable-next-line no-extra-parens
+            const params = (req as ParsedMessage).params || {};
+            const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
+            const end = req.headers["x-end-stream"] === "true";
+
+            this.logger.log(`Incoming topic '${params.name}' request, end:${end}.`);
+
+            if (sdTarget) {
+                return sdTarget;
+            }
+
+            this.serviceDiscovery.addData(
+                { contentType: req.headers["content-type"] || "", topic: params.name },
+                end,
+                "api"
+            );
+
+            return this.serviceDiscovery.getByTopic(params.name)?.stream;
+        }, { checkContentType: false, end: false });
+
+        this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
+            const params = req.params || {};
+            const contentType = req.headers["content-type"] || "application/x-ndjson";
+            //TODO: what should be the default content type and where to store this information?
+
+            return this.serviceDiscovery.getData(
+                { topic: params.name, contentType: contentType },
+                true
+            ) as Readable;
+        });
+
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
     }
 
@@ -185,7 +222,7 @@ export class Host implements IComponent {
     async handleDeleteSequence(req: ParsedMessage) {
         const id = req.params?.id;
 
-        this.logger.log("Deleting sequence: ", id);
+        this.logger.log("Deleting sequence...", id);
 
         const result = await this.sequencesStore.delete(id);
 
@@ -199,27 +236,28 @@ export class Host implements IComponent {
     }
 
     async identifyExistingSequences() {
-        this.logger.info("Listing exiting sequences");
+        this.logger.log("Listing exiting sequences.");
         const ldas = new LifecycleDockerAdapterSequence();
 
         try {
             await ldas.init();
-            this.logger.debug("LDAS initialized, listing");
+
+            this.logger.debug("LDAS initialized, listing...");
             const sequences = await ldas.list();
 
             for (const sequenceConfig of sequences) {
                 const sequence = new Sequence(sequenceConfig);
 
                 this.sequencesStore.add(sequence);
-                this.logger.log("Sequence found:", sequence.config);
+                this.logger.log("Sequence found", sequence.config);
             }
         } catch (e: any) {
-            this.logger.warn("Error while trying to identify existing sequences", e);
+            this.logger.warn("Error while trying to identify existing sequences.", e);
         }
     }
 
     async handleNewSequence(stream: IncomingMessage) {
-        this.logger.log("New sequence incoming...");
+        this.logger.info("New sequence incoming...");
 
         const id = IDProvider.generate();
 
@@ -229,7 +267,7 @@ export class Host implements IComponent {
 
             this.sequencesStore.add(sequence);
 
-            this.logger.log("Sequence identified:", sequence.config);
+            this.logger.info("Sequence identified:", sequence.config);
 
             await this.cpmConnector?.sendSequenceInfo(sequence, SequenceMessageCode.SEQUENCE_CREATED);
 
@@ -259,7 +297,7 @@ export class Host implements IComponent {
         const sequence = this.sequencesStore.getById(seqId);
 
         if (sequence) {
-            this.logger.log("Starting sequence", sequence.id);
+            this.logger.info("Starting sequence", sequence.id);
 
             const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
@@ -310,10 +348,51 @@ export class Host implements IComponent {
 
         sequence.instances.push(id);
 
+        csic.on("pang", (data) => {
+            this.logger.log("PANG message received:", data);
+            let notifyCPM = false;
+
+            if (data.requires) {
+                notifyCPM = true;
+
+                this.logger.log("Sequence requires data: ");
+                this.serviceDiscovery.getData(
+                    {
+                        topic: data.requires,
+                        contentType: data.contentType
+                    },
+                    true
+                )?.pipe(csic.getInputStream()!);
+
+                csic.confirmInputHook().then(
+                    () => { /* noop */ },
+                    (e: any) => { this.logger.error(e); }
+                );
+            }
+
+            if (data.provides) {
+                notifyCPM = true;
+
+                this.logger.log("Sequence provides data: ", data);
+                const topic = this.serviceDiscovery.addData(
+                    { topic: data.provides, contentType: data.contentType },
+                    true,
+                    csic.id
+                );
+
+                csic.getOutputStream()!.pipe(topic!.stream as Writable);
+            }
+
+            if (notifyCPM) {
+                this.cpmConnector?.sendTopicInfo(data);
+            }
+        });
+
         this.logger.log("CSIController started:", id);
 
         csic.on("end", (code) => {
-            this.logger.log("CSIControlled ended, code:", code);
+            this.logger.log("CSIControlled ended with exit code:", code);
+
             delete InstanceStore[csic.id];
 
             const index = sequence.instances.indexOf(id);
@@ -326,6 +405,11 @@ export class Host implements IComponent {
                 id: csic.id,
                 sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);
+
+            if (csic.provides && csic.provides !== "") {
+                csic.getOutputStream()!.unpipe();
+                this.serviceDiscovery.removeLocalProvider(csic.provides);
+            }
         });
 
         return csic;
@@ -334,18 +418,18 @@ export class Host implements IComponent {
     getCSIControllers() {
         this.logger.log("List CSI controllers.");
 
-        return Object.values(this.instancesStore).map(csiController => {
-            return {
-                id: csiController.id,
-                sequence: csiController.sequence.id,
-                status: csiController.status
-            };
-        });
+        return Object.values(this.instancesStore).map(csiController => ({
+            id: csiController.id,
+            sequence: csiController.sequence.id,
+            status: csiController.status
+        }));
     }
 
     getSequence(id: string) {
-        if (!this.sequencesStore.getById(id))
+        if (!this.sequencesStore.getById(id)) {
             throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
+        }
+
         return this.sequencesStore.getById(id);
     }
 
@@ -357,4 +441,3 @@ export class Host implements IComponent {
         return this.sequencesStore.getById(sequenceId).instances;
     }
 }
-

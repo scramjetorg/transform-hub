@@ -5,7 +5,7 @@ Feature: Ports e2e tests
         When sequence "../packages/reference-apps/ports-sequence.tar.gz" loaded
         And instance started with arguments "tcp"
         And get instance info
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
         And start reading "log" stream
         And connect to instance on port 17006 using "tcp" server
@@ -13,7 +13,6 @@ Feature: Ports e2e tests
         And wait for "3000" ms
         And check stream for message sent
         And send "null" to "tcp" server
-        And wait for "5000" ms
         And container is closed
         Then host is still running
 
@@ -22,7 +21,7 @@ Feature: Ports e2e tests
         When sequence "../packages/reference-apps/ports-sequence.tar.gz" loaded
         And instance started with arguments "udp"
         And get instance info
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
         And start reading "log" stream
         And connect to instance on port 17008 using "udp" server
@@ -30,6 +29,5 @@ Feature: Ports e2e tests
         And wait for "3000" ms
         And check stream for message sent
         And send "null" to "udp" server
-        And wait for "5000" ms
         And container is closed
         Then host is still running

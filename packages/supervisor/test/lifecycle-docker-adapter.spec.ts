@@ -4,7 +4,7 @@
 import { configService } from "@scramjet/sth-config";
 import { DelayedStream } from "@scramjet/model";
 import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";
-import { RunnerConfig } from "@scramjet/types";
+import { RunnerConfig, STHConfiguration } from "@scramjet/types";
 import test, { skip } from "ava";
 import * as fs from "fs";
 import * as fsPromises from "fs/promises";
@@ -12,7 +12,7 @@ import * as sinon from "sinon";
 import { PassThrough } from "stream";
 
 const sandbox = sinon.createSandbox();
-const configFileContents = {
+const configFileContents: STHConfiguration["docker"] = {
     runner: {
         image: "runner-example-image",
         maxMem: 512
@@ -20,7 +20,8 @@ const configFileContents = {
     prerunner: {
         image: "pre-runner-example-image",
         maxMem: 16
-    }
+    },
+    exposePortsRange: [30000, 40000]
 };
 
 sinon.stub(fsPromises, "chmod").resolves();

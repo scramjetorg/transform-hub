@@ -14,8 +14,11 @@ import { exec } from "child_process";
 import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 
 type MaybeArray<T> = T | T[];
+type Primitives = string | number | boolean | void | null;
 
-const isPrimitive = (obj: any) => ["string", "number", "boolean"].includes(typeof obj);
+export function isNotPrimitive(obj: SynchronousStreamable<any> | Primitives) : obj is SynchronousStreamable<any> {
+    return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
+}
 
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
@@ -35,6 +38,8 @@ export class Runner<X extends AppConfig> implements IComponent {
     private outputFifoPath: string;
     private sequencePath: string;
     private keepAliveRequested?: boolean;
+
+    private inputResolver?: { res: Function, rej: Function };
 
     private stopExpected: boolean = false;
 
@@ -78,6 +83,14 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             this.emitter.emit(eventData.eventName, eventData.message);
             break;
+        // [RunnerMessageCode.INPUT_CONTENT_TYPE, false
+        case RunnerMessageCode.INPUT_CONTENT_TYPE:
+            if ((data as any).connected) {
+                this.inputResolver?.res(data);
+            } else {
+                this.inputResolver?.rej(data);
+            }
+            break;
         default:
             break;
         }
@@ -105,11 +118,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
 
-            this.logger.info("Monitoring interval removed.");
+            this.logger.log("Monitoring interval removed.");
         }
 
         try {
-            this.logger.info("Cleaning up streams...");
+            this.logger.log("Cleaning up streams...");
 
             await this.cleanupStreams();
 
@@ -121,7 +134,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             return 233;
         } finally {
-            this.logger.info("Clean up completed!");
+            this.logger.info("Clean up completed.");
         }
     }
 
@@ -174,24 +187,26 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.inputDataStream = new DataStream();
 
         // do not await here, allow the rest of initialization in the caller to run
-        readInputStreamHeaders(this.inputStream!)
-            .then(headers => {
-                const contentType = headers["content-type"];
+    }
 
-                this.logger.log(`Content-Type: ${contentType}`);
+    //readInputStreamHeaders(this.inputStream!)
+    async setInputContentType(headers: any) {
+        const contentType = headers["content-type"];
 
-                mapToInputDataStream(this.inputStream!, contentType).pipe(this.inputDataStream!);
-            }).catch(e => {
-                this.logger.error("Error in input stream");
-                this.logger.error(e);
-            // @TODO think about how to handle errors in input stream
-            });
+        this.logger.log(`Content-Type: ${contentType}`);
+
+        mapToInputDataStream(this.inputStream!, contentType)
+            .catch((error: any) => {
+                this.logger.error("mapToInputDataStream", error);
+                // TODO: we should be doing some error handling here:
+                // TODO: remove the stream, mark as bad, kill the instance maybe?
+            }).pipe(this.inputDataStream!);
     }
 
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);
         this.outputDataStream
-            .JSONStringify()
+            //JSONStringify()
             .pipe(this.outputStream)
         ;
     }
@@ -253,12 +268,12 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.context?.killHandler();
         await this.cleanup();
 
-        this.logger.log("Exiting ...");
-
         //TODO: investigate why we need to wait (process.tick - no all logs)
         if (!this.stopExpected) {
+            this.logger.log("Exiting... (unexpected, 137)");
             this.exit(137);
         } else {
+            this.logger.log("Exiting... (expected)");
             this.exit();
         }
     }
@@ -342,6 +357,43 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             sequence = this.getSequence();
 
+            if (sequence.length && typeof sequence[0] !== "function") {
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        requires: sequence[0].requires,
+                        contentType: sequence[0].contentType
+                    }], this.monitorStream);
+
+                this.logger.log("Waiting for input stream");
+
+                const connected = await new Promise((res, rej) => {
+                    this.inputResolver = { res, rej };
+                });
+
+                if (connected) {
+                    this.logger.log("Input stream connected");
+
+                    await this.setInputContentType({
+                        "content-type": sequence[0].contentType
+                    });
+
+                    this.logger.log("Input ContentType set to", sequence[0].contentType);
+                } else {
+                    this.logger.log("No Input stream");
+                }
+
+                sequence.shift();
+            } else {
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        requires: ""
+                    }], this.monitorStream);
+
+                readInputStreamHeaders(this.inputStream!)
+                    .then((headers) => this.setInputContentType(headers))
+                    .then(() => 1, () => 0);
+            }
+
             this.logger.log(`Sequence loaded, functions count: ${sequence.length}.`);
         } catch (error: any) {
             if (error instanceof SyntaxError) {
@@ -410,7 +462,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     sendHandshakeMessage() {
-        this.logger.info("Sending handshake.");
+        this.logger.log("Sending handshake.");
 
         MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
     }
@@ -468,7 +520,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             let out: MaybePromise<Streamable<any> | void>;
 
             try {
-                this.logger.info(`Processing function on index: ${sequence.length - itemsLeftInSequence - 1}`);
+                this.logger.log(`Processing function on index: ${sequence.length - itemsLeftInSequence - 1}.`);
 
                 out = func.call(
                     this.context,
@@ -476,7 +528,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     ...args
                 );
 
-                this.logger.info(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
+                this.logger.log(`Function on index: ${sequence.length - itemsLeftInSequence - 1} called.`);
             } catch (error: any) {
                 this.logger.error(`Sequence error (function index ${sequence.length - itemsLeftInSequence})`, error.stack);
 
@@ -493,10 +545,10 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                     throw new RunnerError("SEQUENCE_ENDED_PREMATURE");
                 } else if (typeof intermediate === "object" && intermediate instanceof DataStream) {
-                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned DataStream`);
+                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned DataStream.`);
                     stream = intermediate;
                 } else {
-                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned readable`);
+                    this.logger.debug(`Sequence function ${sequence.length - itemsLeftInSequence - 1} returned readable.`);
 
                     // TODO: what if this is not a DataStream, but BufferStream stream!!!!
                     stream = DataStream.from(intermediate as Readable);
@@ -508,7 +560,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 if (intermediate instanceof DataStream) {
                     stream = intermediate;
-                } else if (intermediate !== undefined && !isPrimitive(intermediate)) {
+                } else if (intermediate !== undefined && isNotPrimitive(intermediate)) {
                     stream = DataStream.from(intermediate as Readable);
                 } else {
                     stream = undefined;
@@ -524,17 +576,26 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        if (isPrimitive(intermediate)) {
+        if (!isNotPrimitive(intermediate)) {
             this.logger.info("Primitive returned as last value");
 
             this.outputStream?.end(`${intermediate}`);
+
+            MessageUtils.writeMessageOnStream(
+                [RunnerMessageCode.PANG, {
+                    provides: "",
+                    contentType: ""
+                }],
+                this.monitorStream
+            );
+
             this.endRunner();
         } else if (stream && this.outputStream && this.outputDataStream) {
-            this.logger.info(`Piping sequence output (type ${typeof stream})`);
+            this.logger.log(`Piping sequence output (type ${typeof stream}).`);
 
             stream
                 .once("end", () => {
-                    this.logger.info("Sequence stream ended");
+                    this.logger.info("Sequence stream ended.");
                     this.endRunner();
                 })
                 .pipe(
@@ -542,9 +603,17 @@ export class Runner<X extends AppConfig> implements IComponent {
                         ? this.outputStream
                         : this.outputDataStream
                 );
+
+            MessageUtils.writeMessageOnStream(
+                [RunnerMessageCode.PANG, {
+                    provides: intermediate.topic || "",
+                    contentType: intermediate.contentType || ""
+                }],
+                this.monitorStream
+            );
         } else {
             // TODO: this should push a PANG message with the sequence description
-            this.logger.info("Sequence did not output a stream");
+            this.logger.info("Sequence did not output a stream.");
             this.endRunner();
         }
     }

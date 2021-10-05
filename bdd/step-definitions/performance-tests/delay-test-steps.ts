@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { strict as assert, fail } from "assert";
 import { When } from "@cucumber/cucumber";
 import { getOccurenceNumber, removeFile, getOccurenceFileNumber } from "../../lib/utils";

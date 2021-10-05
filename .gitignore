@@ -123,7 +123,7 @@ dist
 
 # bdd
 bdd/.work/
-bdd/reports/
+bdd/reports/*.html
 bdd/*-test-result.txt
 
 # pre-runner sample-package
@@ -134,3 +134,4 @@ packages/reference-apps/*.tar.gz
 
 .bic_cache
 .dockerignores
+aaa/

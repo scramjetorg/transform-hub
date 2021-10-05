@@ -1,14 +1,23 @@
 import { setWorldConstructor, World, setDefaultTimeout } from "@cucumber/cucumber";
 import { ICreateAttachment, ICreateLog } from "@cucumber/cucumber/lib/runtime/attachment_manager";
+import { InstanceClient, SequenceClient } from "@scramjet/api-client";
 
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 20000;
 
 export class CustomWorld implements World {
     readonly attach: ICreateAttachment;
     readonly log: ICreateLog;
     readonly parameters: any;
 
-    resources: { [key: string]: any } = {}
+    resources: {
+        [key: string]: any,
+        instance?: InstanceClient,
+        instance1?: InstanceClient,
+        instance2?: InstanceClient,
+        sequence?: SequenceClient,
+        sequence1?: SequenceClient,
+        sequence2?: SequenceClient
+    } = {}
 
     constructor({ attach, log, parameters }: any) {
         this.attach = attach;

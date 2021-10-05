@@ -1,4 +1,4 @@
-import { development } from "@scramjet/sth-config";
+import { development, config as sthConfig } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -76,6 +76,7 @@ IComponent {
 
             exec(`mkfifo ${fifoPath}`, async (error) => {
                 if (error) {
+                    // eslint-disable-next-line no-console
                     console.error(`exec error: ${error}`);
                     reject(error);
                 }
@@ -120,7 +121,9 @@ IComponent {
 
     private async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
         if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
-            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(declaredPorts.length);
+            const freePorts = exposed ? [] : await FreePortsFinder.getPorts(
+                declaredPorts.length, ...(await sthConfig()).docker.exposePortsRange
+            );
 
             return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
                 obj[entry] = exposed ? {} : [{ HostPort: freePorts?.pop()?.toString() }];
@@ -143,20 +146,18 @@ IComponent {
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         if (this.resources.containerId) {
-            const stats = await this.dockerHelper.stats(this.resources.containerId);
+            const stats = await this.dockerHelper.stats(this.resources.containerId)!;
 
-            if (stats) {
-                return {
-                    cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
-                    healthy: msg.healthy,
-                    limit: stats.memory_stats?.limit,
-                    memoryMaxUsage: stats.memory_stats?.max_usage,
-                    memoryUsage: stats.memory_stats?.usage,
-                    networkRx: stats.networks?.eth0?.rx_bytes,
-                    networkTx: stats.networks?.eth0?.tx_bytes,
-                    containerId: this.resources.containerId
-                };
-            }
+            return {
+                cpuTotalUsage: stats.cpu_stats?.cpu_usage?.total_usage,
+                healthy: msg.healthy,
+                limit: stats.memory_stats?.limit,
+                memoryMaxUsage: stats.memory_stats?.max_usage,
+                memoryUsage: stats.memory_stats?.usage,
+                networkRx: stats.networks?.eth0?.rx_bytes,
+                networkTx: stats.networks?.eth0?.tx_bytes,
+                containerId: this.resources.containerId
+            };
         }
 
         return msg;
@@ -213,7 +214,7 @@ IComponent {
             config.config?.ports ? this.getPortsConfig(config.config.ports) : undefined,
         ]);
 
-        this.logger.info("Instance preparation done");
+        this.logger.info("Instance preparation done.");
 
         if (
             typeof this.monitorFifoPath === "undefined" ||
@@ -231,14 +232,14 @@ IComponent {
         this.inputStream.run(createWriteStream(this.inputFifoPath));
         this.outputStream.run(createReadStream(this.outputFifoPath));
 
-        this.logger.debug("Creating container");
-
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
         if (development()) {
-            this.logger.debug("Development mode on!");
+            this.logger.debug("Development mode on.");
+
             if (process.env.CSI_COREDUMP_VOLUME) {
-                this.logger.log("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
+                this.logger.debug("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
+
                 extraVolumes.push({
                     mountPoint: "/cores",
                     bind: process.env.CSI_COREDUMP_VOLUME
@@ -246,7 +247,7 @@ IComponent {
             }
         }
 
-        this.logger.log("Starting Runner", config.container);
+        this.logger.log("Starting Runner...", config.container);
 
         const { streams, containerId } = await this.dockerHelper.run({
             imageName: config.container.image || "",
@@ -258,6 +259,7 @@ IComponent {
                 `${this.resources.fifosDir}:/pipes`
             ],
             ports: this.resources.ports,
+            publishAllPorts: true,
             envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
             autoRemove: true,
             maxMem: config.container.maxMem
@@ -269,12 +271,12 @@ IComponent {
         streams.stdout.pipe(this.runnerStdout);
         streams.stderr.pipe(this.runnerStderr);
 
-        this.logger.debug(`Container is running (${containerId})`);
+        this.logger.log(`Container is running (${containerId}).`);
 
         try {
             const { statusCode } = await this.dockerHelper.wait(containerId);
 
-            this.logger.debug("Container exited");
+            this.logger.log("Container exited.");
 
             await defer(10000);
 
@@ -289,7 +291,8 @@ IComponent {
 
                 return error.data.statusCode;
             }
-            this.logger.debug("Container errored", error);
+
+            this.logger.debug("Container errored.", error);
             throw error;
         }
     }
@@ -307,7 +310,7 @@ IComponent {
         if (this.resources.fifosDir) {
             await rm(this.resources.fifosDir, { recursive: true });
 
-            this.logger.log("Fifo folder removed");
+            this.logger.log("Fifo folder removed.");
         }
     }
 
@@ -322,15 +325,13 @@ IComponent {
     monitorRate(rps: number): this {
     }
 
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async remove() {
         if (this.resources.containerId) {
-            this.logger.info("Forcefully stopping containter", this.resources.containerId);
+            this.logger.log("Forcefully stopping containter", this.resources.containerId);
 
             await this.dockerHelper.stopContainer(this.resources.containerId);
 
-            this.logger.info("Container removed");
+            this.logger.log("Container removed.");
         }
     }
 }

@@ -56,17 +56,19 @@ export class SocketServer extends EventEmitter implements IComponent {
 
         this.server
             .on("connection", async (connection) => {
-                this.logger.info("new connection");
+                this.logger.info("New connection.");
 
                 const id = await new Promise((resolve) => {
-                    connection.once("data", (data) => resolve(data.toString()));
+                    connection.once("readable", () => {
+                        resolve(connection.read(36).toString());
+                    });
                 });
 
                 if (!id) {
-                    throw new Error("Can't read supervisor id");
+                    throw new Error("Can't read supervisor id.");
                 }
 
-                this.logger.log("Supervisor connected! ID: ", id);
+                this.logger.log("Supervisor connected! ID:", id);
 
                 connection
                     .on("error", () => {
@@ -91,13 +93,13 @@ export class SocketServer extends EventEmitter implements IComponent {
                         this.handleStream(streams, stream);
 
                         stream.on("error", () => {
-                            /* ignore */
+                            this.logger.error("Muxed stream error.");
                             // TODO: Error handling?
                         });
                     })
                     .on("error", () => {
                         /* ignore */
-                        // TODO: Error handling?
+                        this.logger.error("Mux error.");
                     });
 
                 this.emit("connect", {
@@ -107,10 +109,11 @@ export class SocketServer extends EventEmitter implements IComponent {
             });
 
         return new Promise((res, rej) => {
-            this.server?.listen(this.address, () => {
-                this.logger.log("[SocketServer] Started at", this.server?.address());
-                res();
-            })
+            this.server!
+                .listen(this.address, () => {
+                    this.logger.info("Server on:", this.server?.address());
+                    res();
+                })
                 .on("error", rej);
         });
     }
@@ -118,7 +121,7 @@ export class SocketServer extends EventEmitter implements IComponent {
     close() {
         this.server?.close((err) => {
             if (err) {
-                console.error(err);
+                this.logger.error(err);
             }
         });
     }

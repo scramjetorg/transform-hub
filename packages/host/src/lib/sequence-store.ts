@@ -37,17 +37,17 @@ export class SequenceStore implements ISequenceStore {
             this.sequences[sequence.id] = sequence;
         }
 
-        this.logger.log("New sequence added:", sequence.id);
+        this.logger.info("New sequence added:", sequence.id);
     }
 
-    async delete(id: string): Promise<{ opStatus: ReasonPhrases, error?: string, id?:string }> {
-        if (!id) {
+    async delete(sequenceId: string): Promise<{ opStatus: ReasonPhrases, error?: string, id?:string }> {
+        if (!sequenceId) {
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST
             };
         }
 
-        const sequence = this.getById(id);
+        const sequence = this.getById(sequenceId);
 
         if (!sequence) {
             return {
@@ -56,29 +56,32 @@ export class SequenceStore implements ISequenceStore {
         }
 
         if (sequence.instances.length) {
-            this.logger.log("Can't remove sequence in use:", id);
+            this.logger.warn("Can't remove sequence in use:", sequenceId);
 
             return {
                 opStatus: ReasonPhrases.CONFLICT,
-                error: "Can't remove sequence in use"
+                error: "Can't remove sequence in use."
             };
         }
 
-        const volumeId = this.sequences[id].config.packageVolumeId;
+        const volumeId = this.sequences[sequenceId].config.packageVolumeId;
 
         try {
             this.logger.log("Removing volume...", volumeId);
+
             await this.dockerHelper.removeVolume(volumeId).catch(reason => {
                 throw new HostError("CONTROLLER_ERROR", reason);
             });
 
-            delete this.sequences[id];
-
             this.logger.log("Volume removed:", volumeId);
+
+            delete this.sequences[sequenceId];
+
+            this.logger.log("Sequence removed:", sequenceId);
 
             return {
                 opStatus: ReasonPhrases.OK,
-                id
+                id: sequenceId
             };
         } catch (error: any) {
             this.logger.error("Error removing sequence!", error);

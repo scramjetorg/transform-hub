@@ -1,43 +1,60 @@
 import * as net from "net";
+import * as dgram from "dgram";
 
 export class FreePortsFinder {
-    static async getPorts(ports: number): Promise<number[]> {
-        return Promise.all(
-            new Array(ports).fill(undefined)
-                .map(
-                    (): Promise<net.Server> => new Promise((resolve, reject) => {
-                        const server = net.createServer();
+    static async checkTCPPort(port: number): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            const server = net.createServer();
 
-                        server.on("listening", () => {
-                            resolve(server);
-                        });
+            server
+                .on("listening", () => {
+                    server.close();
+                    resolve(true);
+                })
+                .on("error", (error: any) => {
+                    if (error.code === "EADDRINUSE") {
+                        resolve(false);
+                    } else {
+                        reject(error);
+                    }
+                })
+                .listen(port);
+        });
+    }
 
-                        server.on("error", () => {
-                            reject();
-                        });
+    static async checkUDPPort(port: number): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            const server = dgram.createSocket("udp4");
 
-                        server.listen(0, "127.0.0.1");
-                    })
-                )
-        ).then(
-            (servers: net.Server[]) => Promise.all(
-                servers.map(
-                    (server: net.Server): Promise<number> => new Promise((resolve, reject) => {
-                        if (server.address()) {
-                            // eslint-disable-next-line no-extra-parens
-                            const port = (server?.address() as net.AddressInfo).port;
+            server
+                .on("listening", () => {
+                    server.close();
+                    resolve(true);
+                })
+                .on("error", (error: any) => {
+                    if (error.code === "EADDRINUSE") {
+                        resolve(false);
+                    } else {
+                        reject(error);
+                    }
+                })
+                .bind(port);
+        });
+    }
 
-                            server.on("close", () => {
-                                resolve(port);
-                            });
+    static async getPorts(portsCount: number, min: number, max: number): Promise<number[]> {
+        const ports = [];
 
-                            server.on("error", reject);
+        for (let port = min; port <= max; port++) {
+            if (await this.checkTCPPort(port) && await this.checkUDPPort(port)) {
+                ports.push(port);
 
-                            server.close();
-                        }
-                    })
-                )
-            )
-        );
+                if (ports.length === portsCount) {
+                    return ports;
+                }
+            }
+        }
+
+        throw new Error(`The required number of ports could not be found. Found ${ports.length} of ${portsCount}.`);
     }
 }

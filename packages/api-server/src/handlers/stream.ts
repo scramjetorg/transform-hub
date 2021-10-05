@@ -5,6 +5,9 @@ import { DuplexStream } from "../lib/duplex-stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
+import { getLogger } from "@scramjet/logger";
+
+const logger = getLogger("ApiServer-stream");
 
 function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     const types = [];
@@ -47,6 +50,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
             res.setHeader("transfer-encoding", "chunked");
             res.setHeader("Access-Control-Allow-Origin", "*");
             res.writeHead(200);
+            res.flushHeaders();
 
             // Error handling on disconnect!
             const disconnect = () => out.unpipe(res);
@@ -87,27 +91,43 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     checkAccepts(req.headers["content-type"], text, json);
                 }
 
-                if (req.headers.expect === "100-continue") res.writeContinue();
+                if (req.headers.expect === "100-continue") {
+                    res.writeContinue();
+                }
 
                 const end = checkEndHeader(req, _end);
                 const data = await getWritable(stream, req, res);
 
                 // eslint-disable-next-line no-extra-parens
-                if (typeof (data as Writable).writable !== "undefined") {
+                if (data && typeof (data as Writable).writable !== "undefined") {
+                    if (end) {
+                        res.writeHead(200, "OK");
+                    } else {
+                        res.writeHead(202, "Accepted");
+                    }
+
+                    res.flushHeaders();
+
                     await new Promise<void>((resolve, reject) => {
                         if (encoding) {
                             req.setEncoding(encoding);
                         }
 
-                        if (data) {
-                            req.pipe(data as Writable, { end });
-                            // eslint-disable-next-line no-extra-parens
-                            (data as Writable).once("error", reject);
-                        } else {
-                            resolve();
-                        }
+                        req
+                            .on("error", reject)
+                            .on("error", () => {
+                                logger.error("Downstream request error.");
+                                reject();
+                            })
+                            .on("end", () => {
+                                logger.debug("Downstream request end.");
+                                resolve();
+                            })
+                            .pipe(data as Writable, { end });
 
-                        req.once("end", resolve);
+                        logger.debug("Request data piped");
+                        // eslint-disable-next-line no-extra-parens
+                        (data as Writable).once("error", reject);
                     });
                 } else {
                     let status = 202;
@@ -126,15 +146,9 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     return;
                 }
 
-                if (end) {
-                    res.writeHead(200, "OK");
-                } else {
-                    res.writeHead(202, "Accepted");
-                }
-
                 res.end();
             } catch (e: any) {
-                console.error(e);
+                logger.error(e);
                 next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
         });

@@ -9,6 +9,8 @@ export enum RunnerMessageCode {
     ALIVE = 3010, // temporary message code
     ACKNOWLEDGE = 3004,
     SEQUENCE_COMPLETED = 3011,
+    PANG = 3012,
+    INPUT_CONTENT_TYPE = 3013,
 
     PONG = 4000,
     STOP = 4001,

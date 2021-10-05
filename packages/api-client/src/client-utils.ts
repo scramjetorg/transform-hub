@@ -2,7 +2,7 @@
 import fetch, { FetchError } from "node-fetch";
 import { Stream } from "stream";
 import { ClientError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions } from "./types";
+import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions, PostRequestConfig } from "./types";
 
 export class ClientUtils implements HttpClient {
     apiBase: string = "";
@@ -57,7 +57,11 @@ export class ClientUtils implements HttpClient {
             });
     }
 
-    async post(url: string, data: any, headers: Headers = {}, config = { json: false }): Promise<Response> {
+    async post(
+        url: string,
+        data: any,
+        headers: Headers = {},
+        config: PostRequestConfig = { json: false }): Promise<Response> {
         if (config.json) {
             headers["Content-Type"] = "application/json";
             data = JSON.stringify(data);
@@ -73,7 +77,9 @@ export class ClientUtils implements HttpClient {
         )
             .then(async (res) => ({
                 status: res.status,
-                data: await res.json().catch(() => { /**/ })
+                data: !config.parseResponse
+                    ? res
+                    : await res[config.parseResponse]().catch((e) => { this.log?.error(e); throw e; })
             }));
     }
 
@@ -97,20 +103,24 @@ export class ClientUtils implements HttpClient {
         stream: Stream | string,
         {
             type = "application/octet-stream",
-            end
-
+            end,
+            parseResponse
         }: SendStreamOptions = {}
     ): Promise<Response> {
         const headers: Headers = {
-            "content-type": type
+            "content-type": type,
+            expect: "100-continue"
         };
 
-        if (typeof end !== "undefined") headers["x-end-stream"] = end ? "true" : "false";
+        if (typeof end !== "undefined") {
+            headers["x-end-stream"] = end ? "true" : "false";
+        }
 
         return this.post(
             url,
             stream,
-            headers
+            headers,
+            { parseResponse }
         );
     }
 }

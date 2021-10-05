@@ -71,10 +71,15 @@ export type PassThoughStream<Passes> = DuplexStream<Passes, Passes>;
  * is second phase the stream is piped from external stream by running run() method.
  */
 
-export type SynchronousStreamable<Produces> =
+export type SynchronousStreamablePayload<Produces> =
     PipeableStream<Produces> | AsyncGen<Produces, Produces> |
     Gen<Produces, void> | Iterable<Produces> |
     AsyncIterable<Produces>;
+
+export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & {
+    contentType?: string,
+    topic?: string | string[]
+}
 
 /**
  * Represents all readable stream types that will be accepted as return values

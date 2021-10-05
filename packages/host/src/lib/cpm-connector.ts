@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { Agent, ClientRequest, Server, request } from "http";
+import { Agent, ClientRequest, Server, request, IncomingMessage } from "http";
 import { Socket } from "net";
 import { Duplex, EventEmitter, Readable } from "stream";
 import { URL } from "url";
@@ -135,7 +135,7 @@ export class CPMConnector extends EventEmitter {
                     }
                 })
                 .on("error", (err: Error) => {
-                    this.logger.log(err);
+                    this.logger.log("Mux error", err);
                     // TODO: Error handling?
                 });
 
@@ -147,7 +147,7 @@ export class CPMConnector extends EventEmitter {
         }
 
         req.on("error", (error) => {
-            this.logger.error("error", error);
+            this.logger.error("Request error:", error);
             this.reconnect();
         });
 
@@ -158,7 +158,7 @@ export class CPMConnector extends EventEmitter {
         this.connected = false;
 
         this.logger.log("Tunnel closed", this.getId());
-        this.logger.info("STH connection ended");
+        this.logger.info("CPM connection closed.");
 
         if (this.loadInterval) {
             clearInterval(this.loadInterval);
@@ -188,7 +188,7 @@ export class CPMConnector extends EventEmitter {
             this.isReconnecting = true;
 
             setTimeout(() => {
-                this.logger.log("Connection lost, retrying...");
+                this.logger.info("Connection lost, retrying...");
                 this.connect();
             }, this.RECONNECT_INTERVAL);
         }
@@ -233,7 +233,7 @@ export class CPMConnector extends EventEmitter {
     }
 
     async sendSequencesInfo(sequences: ISequence[]): Promise<void> {
-        this.logger.log("sendSequencesInfo, total sequences", sequences.length);
+        this.logger.log("Sending sequences information, total sequences:", sequences.length);
 
         await this.communicationStream?.whenWrote(
             JSON.stringify([CPMMessageCode.SEQUENCES, { sequences }]) + "\n"
@@ -255,7 +255,7 @@ export class CPMConnector extends EventEmitter {
     }
 
     async sendSequenceInfo(sequence: Partial<ISequence>, seqStatus: SequenceMessageCode): Promise<void> {
-        this.logger.log("Send sequence status update", sequence, seqStatus);
+        this.logger.log("Send sequence status update", sequence.id, seqStatus);
 
         await this.communicationStream?.whenWrote(
             JSON.stringify([CPMMessageCode.SEQUENCE, { ...sequence, status: seqStatus }]) + "\n"
@@ -268,6 +268,45 @@ export class CPMConnector extends EventEmitter {
         await this.communicationStream?.whenWrote(
             JSON.stringify([CPMMessageCode.INSTANCE, { ...instance, status: instanceStatus }]) + "\n"
         );
+    }
+
+    async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string }) {
+        await this.communicationStream?.whenWrote(
+            JSON.stringify([CPMMessageCode.TOPIC, { ...data, status: "add" }]) + "\n"
+        );
+    }
+
+    sendTopic(topic: string, stream: Readable) {
+        const cpmUrl = new URL("http://" + this.cpmURL + "/topic/" + topic);
+        const req = request(
+            cpmUrl,
+            {
+                method: "POST",
+                agent: new Agent({ keepAlive: true }),
+                headers: {
+                    "x-end-stream": "false"
+                }
+            }
+        );
+
+        stream.pipe(req);
+    }
+
+    async getTopic(topic: string): Promise<Readable> {
+        const cpmUrl = new URL("http://" + this.cpmURL + "/topic/" + topic);
+
+        return new Promise<Readable>((resolve, _reject) => {
+            request(
+                cpmUrl,
+                {
+                    method: "GET"
+                }
+            ).on("response", (res: IncomingMessage) => {
+                resolve(res);
+            }).on("error", (err: Error) => {
+                this.logger.log("Topic request error:", err);
+            }).end();
+        });
     }
 }
 

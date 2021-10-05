@@ -27,7 +27,7 @@ export class HostClient implements ClientProvider {
     }
 
     async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
-        const response = await this.client.sendStream("sequence", sequencePackage);
+        const response = await this.client.sendStream("sequence", sequencePackage, { parseResponse: "json" });
 
         return SequenceClient.from(response.data?.id, this);
     }
@@ -57,4 +57,13 @@ export class HostClient implements ClientProvider {
     async getVersion() {
         return this.client.get("version");
     }
+
+    async sendNamedData(topic: string, stream: Readable, contentType?: string, end?: boolean) {
+        return this.client.sendStream(`topic/${topic}`, stream, { type: contentType, end: end });
+    }
+
+    async getNamedData(topic: string) {
+        return this.client.getStream(`topic/${topic}`);
+    }
 }
+

@@ -85,7 +85,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             envs: string[],
             autoRemove: boolean,
             maxMem: number, // TODO: Container configuration
-            command?: string[]
+            command?: string[],
+            publishAllPorts: boolean,
         }
     ): Promise<DockerContainer> {
         containerCfg.ports = { ...containerCfg.ports };
@@ -105,7 +106,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 AutoRemove: containerCfg.autoRemove || false,
                 Memory: containerCfg.maxMem,
                 MemorySwap: 0,
-                PortBindings: containerCfg.ports.PortBindings
+                PortBindings: containerCfg.ports.PortBindings,
+                PublishAllPorts: containerCfg.publishAllPorts || false,
             },
         };
 
@@ -156,25 +158,33 @@ export class DockerodeDockerHelper implements IDockerHelper {
         return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
-    private pulledImages: {[key: string]: Promise<void>} = {};
+    private async isImageInLocalRegistry(name: string): Promise<boolean> {
+        return this.dockerode.getImage(name).get().then(() => true, () => false);
+    }
 
-    async pullImage(name: string, ifNeeded: boolean) {
-        this.pulledImages[name] ||= (async () => {
-            this.logger.debug("Checking image", name);
+    private pulledImages: {[key: string]: Promise<void> | undefined } = {};
 
-            if (ifNeeded) {
-                const exists = await this.dockerode.getImage(name).get()
-                    .then(() => true, () => false);
+    async pullImage(name: string, fetchOnlyIfNotExists = true) {
+        if (fetchOnlyIfNotExists) {
+            this.logger.log("Checking image", name);
 
-                if (exists) return;
+            if (this.pulledImages[name]) return this.pulledImages[name];
+
+            if (await this.isImageInLocalRegistry(name)) {
+                this.pulledImages[name] = Promise.resolve();
+                return this.pulledImages[name];
             }
+        }
 
-            this.logger.log("Pulling image", name, "starts");
+        this.pulledImages[name] = (async () => {
+            this.logger.log("Start pulling image", name);
 
-            await this.dockerode.pull(name);
-            await new Promise(res => setTimeout(res, 1000));
+            const pullStream = await this.dockerode.pull(name);
 
-            this.logger.log("Pulling image", name, "done");
+            // Wait for pull to finish
+            await new Promise(res => this.dockerode.modem.followProgress(pullStream, res));
+
+            this.logger.log("Pulling image", name, "done.");
         })();
 
         return this.pulledImages[name];
@@ -248,7 +258,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 envs: config.envs || [],
                 autoRemove: config.autoRemove || false,
                 maxMem: (config.maxMem || 64) * 1024 * 1024,
-                command: config.command
+                command: config.command,
+                publishAllPorts: config.publishAllPorts || false
             }
         );
         // ------

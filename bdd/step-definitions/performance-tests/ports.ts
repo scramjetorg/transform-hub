@@ -1,5 +1,6 @@
+/* eslint-disable no-console */
 import { When } from "@cucumber/cucumber";
-import { InstanceClient, InstanceOutputStream } from "@scramjet/api-client";
+import { InstanceOutputStream } from "@scramjet/api-client";
 import * as net from "net";
 import { strict as assert } from "assert";
 import { PassThrough, Stream } from "stream";
@@ -19,7 +20,7 @@ const streamToString = async (stream: Stream): Promise<string> => {
 };
 
 When("get instance info", async function(this: CustomWorld) {
-    this.resources.instanceInfo = (await this.resources.instance.getInfo()).data;
+    this.resources.instanceInfo = (await this.resources.instance!.getInfo()).data;
 
     console.log(this.resources.instanceInfo);
 });
@@ -79,8 +80,7 @@ When("send {string} to {string} server", async function(this: CustomWorld, str: 
 });
 
 When("start reading {string} stream", async function(this: CustomWorld, log: InstanceOutputStream) {
-    const instance: InstanceClient = this.resources.instance;
-    const stream = (await instance.getStream(log)).data;
+    const stream = (await this.resources.instance!.getStream(log)).data;
 
     this.resources.stream = new PassThrough();
     stream?.pipe(this.resources.stream);

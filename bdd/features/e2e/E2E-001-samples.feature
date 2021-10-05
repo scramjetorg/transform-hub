@@ -1,17 +1,13 @@
 Feature: Sample e2e tests
 
-    @ci
     Scenario: E2E-001 TC-001 Execute hello-alice-out example for host
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
         And get "output" in background with instanceId
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
-        And wait for "2000" ms
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
-        And wait for "10000" ms
         And container is closed
         Then host is still running
 
@@ -21,9 +17,8 @@ Feature: Sample e2e tests
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
         And get "output" in background with instanceId
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         And send kill message to instance
         And wait for "2000" ms
@@ -37,11 +32,11 @@ Feature: Sample e2e tests
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
         And get "output" in background with instanceId
-        And get instance health
+        And wait for instance healthy is "true"
         And get containerId
-        And instance health is "true"
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
-        And wait for "4000" ms
+        And send kill message to instance
+        And wait for "2000" ms
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         And container is closed

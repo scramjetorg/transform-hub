@@ -18,7 +18,7 @@
     "rules": {
         /* possible errors */
         "no-cond-assign" : 2,
-        // "no-console" : 2,
+        "no-console" : 2,
         "no-constant-condition" : 2,
         "no-control-regex" : 2,
         "no-debugger" : 2,
@@ -29,7 +29,7 @@
         "no-empty" : 2,
         "no-ex-assign" : 2,
         "no-extra-boolean-cast" : 2,
-        "no-extra-parens" : 1,
+        "no-extra-parens" : 0,
         "no-extra-semi" : 2,
         "no-func-assign" : 2,
         "no-inner-declarations" : 2,
@@ -189,6 +189,7 @@
         "@typescript-eslint/no-floating-promises": "error",
         "@typescript-eslint/no-useless-constructor": "error",
         "@typescript-eslint/no-shadow": ["error"],
+        "@typescript-eslint/no-extra-parens" : 1,
 
         "import/no-absolute-path": 2, // Forbid import of modules using absolute paths ()
         "import/no-dynamic-require": 2, // Forbid require() calls with expressions ()

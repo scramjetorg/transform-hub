@@ -36,6 +36,7 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.ERROR]: ConfiguredMessageHandler<RunnerMessageCode.ERROR>[];
     [RunnerMessageCode.MONITORING]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING>[];
     [RunnerMessageCode.PING]: ConfiguredMessageHandler<RunnerMessageCode.PING>[];
+    [RunnerMessageCode.PANG]: ConfiguredMessageHandler<RunnerMessageCode.PANG>[];
     [RunnerMessageCode.SNAPSHOT_RESPONSE]: ConfiguredMessageHandler<RunnerMessageCode.SNAPSHOT_RESPONSE>[];
     [RunnerMessageCode.SEQUENCE_STOPPED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
     [RunnerMessageCode.SEQUENCE_COMPLETED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_COMPLETED>[];
@@ -50,6 +51,7 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
     [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
+    [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
     [SupervisorMessageCode.CONFIG]: ConfiguredMessageHandler<SupervisorMessageCode.CONFIG>[];
     [CPMMessageCode.STH_ID]: ConfiguredMessageHandler<CPMMessageCode.STH_ID>[];
@@ -82,6 +84,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.STOP]: [],
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],
+            [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
             [SupervisorMessageCode.CONFIG]: [],
             [CPMMessageCode.STH_ID]: []
         };
@@ -94,6 +97,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.MONITORING]: [],
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PING]: [],
+            [RunnerMessageCode.PANG]: [],
             [RunnerMessageCode.SNAPSHOT_RESPONSE]: [],
             [RunnerMessageCode.SEQUENCE_STOPPED]: [],
             [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
@@ -104,6 +108,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     safeHandle(promisePotentiallyRejects: MaybePromise<any>): void {
         Promise.resolve(promisePotentiallyRejects).catch(
+            // eslint-disable-next-line no-console
             (e: any) => console.error(e?.stack || e) // TODO: push this to log file
         );
     }

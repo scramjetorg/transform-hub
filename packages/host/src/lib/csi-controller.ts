@@ -9,7 +9,7 @@ import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, Su
 import {
     APIRoute, AppConfig, DownstreamStreamsConfig, EventMessageData, ExitCode,
     FunctionDefinition, HandshakeAcknowledgeMessage, ICommunicationHandler,
-    InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig
+    InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig, ReadableStream, WritableStream
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
@@ -35,9 +35,14 @@ export class CSIController extends EventEmitter {
         created?: Date,
         started?: Date
     } = {};
+    provides?: string;
+    requires?: string;
     initResolver?: { res: Function, rej: Function };
     startResolver?: { res: Function, rej: Function };
     startPromise: Promise<void>;
+
+    apiOutput = new PassThrough();
+    apiInputEnabled = true;
 
     /**
      * Streams connected do API.
@@ -190,6 +195,18 @@ export class CSIController extends EventEmitter {
 
             return null;
         });
+
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message: any) => {
+            const pangData = message[1];
+
+            this.provides ||= pangData.provides;
+            this.requires ||= pangData.requires;
+
+            this.apiInputEnabled = pangData.requires === "";
+
+            this.emit("pang", message[1]);
+        });
+
         this.upStreams[CC.MONITORING].resume();
     }
 
@@ -206,13 +223,13 @@ export class CSIController extends EventEmitter {
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
-
-            this.startResolver?.res();
-
-            this.info.started = new Date();
         } else {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
+
+        this.startResolver?.res();
+
+        this.info.started = new Date();
     }
 
     async sendConfig() {
@@ -240,35 +257,42 @@ export class CSIController extends EventEmitter {
 
     createInstanceAPIRouter() {
         if (this.upStreams) {
-            const router = getRouter();
+            this.router = getRouter();
 
-            router.get("/", () => {
+            this.router.get("/", () => {
                 return this.getInfo();
             });
 
-            router.upstream("/stdout", this.upStreams[CommunicationChannel.STDOUT]);
-            router.upstream("/stderr", this.upStreams[CommunicationChannel.STDERR]);
-            router.downstream("/stdin", this.upStreams[CommunicationChannel.STDIN], { end: true });
+            this.router.upstream("/stdout", this.upStreams[CommunicationChannel.STDOUT]);
+            this.router.upstream("/stderr", this.upStreams[CommunicationChannel.STDERR]);
+            this.router.downstream("/stdin", this.upStreams[CommunicationChannel.STDIN], { end: true });
 
-            router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
+            this.router.upstream("/log", this.upStreams[CommunicationChannel.LOG]);
 
-            router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
+            if (development()) {
+                this.router.upstream("/monitoring", this.upStreams[CommunicationChannel.MONITORING]);
+            }
 
-            router.downstream("/input", (req) => {
-                const stream = this.upStreams![CommunicationChannel.IN];
-                const contentType = req.headers["content-type"];
+            this.router.upstream("/output", this.upStreams![CommunicationChannel.OUT]);
+            this.router.downstream("/input", (req) => {
+                if (this.apiInputEnabled) {
+                    const stream = this.downStreams![CommunicationChannel.IN];
+                    const contentType = req.headers["content-type"];
 
-                if (contentType === undefined) {
-                    throw new Error("Content-Type must be defined");
+                    if (contentType === undefined) {
+                        throw new Error("Content-Type must be defined");
+                    }
+
+                    stream.write(`Content-Type: ${contentType}\r\n`);
+                    stream.write("\r\n");
+                    return stream;
                 }
 
-                stream.write(`Content-Type: ${contentType}\r\n`);
-                stream.write("\r\n");
-                return stream;
+                return { opStatus: 406, error: "Input provided in other way." };
             }, { checkContentType: false, end: true, encoding: "utf-8" });
 
             // monitoring data
-            router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
+            this.router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
 
             // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
             // router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
@@ -286,10 +310,12 @@ export class CSIController extends EventEmitter {
                 localEmitter.emit(event.eventName, event);
             });
 
-            router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
+            this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
                 const name = req.params?.name;
 
-                if (!name) throw new HostError("EVENT_NAME_MISSING");
+                if (!name) {
+                    throw new HostError("EVENT_NAME_MISSING");
+                }
 
                 const out = new DataStream();
                 const handler = (data: any) => res.write(data);
@@ -298,7 +324,7 @@ export class CSIController extends EventEmitter {
                     localEmitter.off(name, handler);
                 };
 
-                this.logger.debug(`Event stream "${name}" connected`);
+                this.logger.debug(`Event stream "${name}" connected.`);
                 localEmitter.on(name, handler);
                 res.on("error", clean);
                 res.on("end", clean);
@@ -309,25 +335,27 @@ export class CSIController extends EventEmitter {
             const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
                 const name = req.params?.name;
 
-                if (!name)
+                if (!name) {
                     throw new HostError("EVENT_NAME_MISSING");
+                }
+
                 localEmitter.once(name, res);
             });
 
-            router.get("/event/:name", async (req) => {
-                if (req.params?.name && localEmitter.lastEvents[req.params?.name])
+            this.router.get("/event/:name", async (req) => {
+                if (req.params?.name && localEmitter.lastEvents[req.params?.name]) {
                     return localEmitter.lastEvents[req.params?.name];
+                }
+
                 return awaitEvent(req);
             });
-            router.get("/once/:name", awaitEvent);
+            this.router.get("/once/:name", awaitEvent);
 
             // operations
-            router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
-            router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
-            router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
-            router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
-
-            this.router = router;
+            this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+            this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
+            this.router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
+            this.router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
         } else {
             throw new AppError("UNATTACHED_STREAMS");
         }
@@ -342,5 +370,27 @@ export class CSIController extends EventEmitter {
             appConfig: this.appConfig,
             args: this.sequenceArgs
         };
+    }
+
+    getOutputStream(): ReadableStream<any> | undefined {
+        if (this.upStreams && this.upStreams[CC.OUT]) {
+            return this.upStreams[CC.OUT];
+        }
+
+        return undefined;
+    }
+
+    getInputStream(): WritableStream<any> | void {
+        if (this.downStreams && this.downStreams[CC.IN]) {
+            return this.downStreams[CC.IN];
+        }
+
+        return undefined;
+    }
+
+    async confirmInputHook(): Promise<void> {
+        await this.controlDataStream?.whenWrote(
+            [RunnerMessageCode.INPUT_CONTENT_TYPE, { connected: true }]
+        );
     }
 }
