@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/durability-preservation-tcp",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "",
   "main": "index.ts",
   "scripts": {
@@ -21,7 +21,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.12.1",
+    "@scramjet/types": "^0.12.2",
     "@types/node": "15.12.5"
   },
   "dependencies": {

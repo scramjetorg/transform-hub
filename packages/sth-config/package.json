@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/sth-config",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "This package is part of Scramjet Transform Hub. The package executes the sequences and controls the runner via the wired adapter.",
   "author": "Scramjet <open-source@scramjet.org>",
   "homepage": "https://github.com/scramjetorg/transform-hub#readme",
@@ -35,10 +35,10 @@
     "url": "https://github.com/scramjetorg/transform-hub/issues"
   },
   "dependencies": {
-    "@scramjet/utility": "^0.12.1"
+    "@scramjet/utility": "^0.12.2"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.12.1",
+    "@scramjet/types": "^0.12.2",
     "ava": "^3.15.0"
   }
 }
