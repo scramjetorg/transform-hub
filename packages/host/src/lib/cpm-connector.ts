@@ -19,9 +19,9 @@ type STHInformation = {
     id?: string;
 }
 export class CPMConnector extends EventEmitter {
-    MAX_CONNECTION_ATTEMPTS = 5;
-    MAX_RECONNECTION_ATTEMPTS = 10;
-    RECONNECT_INTERVAL = 5000;
+    MAX_CONNECTION_ATTEMPTS = 100;
+    MAX_RECONNECTION_ATTEMPTS = 100;
+    RECONNECT_INTERVAL = 2000;
 
     apiServer?: Server;
     tunnel?: Socket;
@@ -92,10 +92,12 @@ export class CPMConnector extends EventEmitter {
             port: cpmUrl.port,
             host: cpmUrl.hostname,
             method: "CONNECT",
-            agent: new Agent({ keepAlive: true })
-        }).on("connect", (_response, socket, head) => {
-            this.logger.log("Tunnel established", head.toString());
-
+            agent: new Agent({ keepAlive: true }),
+            headers: {
+                "x-sth-id": this.info.id
+            }
+        }).on("connect", (_response, socket) => {
+            this.logger.info("Connected to CPM.");
             this.tunnel = socket;
             this.tunnel.on("close", () => { this.handleConnectionClose(); });
             this.connected = true;
@@ -117,8 +119,8 @@ export class CPMConnector extends EventEmitter {
                                 }
 
                                 this.logger.log("Received id: ", this.info.id);
-                            }).catch(() => {
-                                /* TODO: handle error, disconnected */
+                            }).catch((e: any) => {
+                                this.logger.error("communicationChannel error", e.message);
                             });
 
                         this.communicationStream = new StringStream();
@@ -141,10 +143,6 @@ export class CPMConnector extends EventEmitter {
 
             this.connectionAttempts = 0;
         });
-
-        if (this.info.id) {
-            req.write(this.info.id);
-        }
 
         req.on("error", (error) => {
             this.logger.error("Request error:", error);
