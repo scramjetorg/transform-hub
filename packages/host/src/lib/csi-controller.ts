@@ -15,7 +15,7 @@ import { ChildProcess, spawn } from "child_process";
 import { EventEmitter } from "events";
 import { resolve as resolvePath } from "path";
 import { DataStream } from "scramjet";
-import { PassThrough } from "stream";
+import { PassThrough, Readable } from "stream";
 import { configService, development } from "@scramjet/sth-config";
 import { Sequence } from "./sequence";
 import { ServerResponse } from "http";
@@ -372,20 +372,16 @@ export class CSIController extends EventEmitter {
         };
     }
 
-    getOutputStream(): ReadableStream<any> | undefined {
-        if (this.upStreams && this.upStreams[CC.OUT]) {
-            return this.upStreams[CC.OUT];
-        }
-
-        return undefined;
+    getOutputStream(): ReadableStream<any> | void {
+        return this.upStreams?.[CC.OUT];
     }
 
     getInputStream(): WritableStream<any> | void {
-        if (this.downStreams && this.downStreams[CC.IN]) {
-            return this.downStreams[CC.IN];
-        }
+        return this.downStreams?.[CC.IN];
+    }
 
-        return undefined;
+    getLogStream(): Readable | void {
+        return this.upStreams?.[CC.LOG];
     }
 
     async confirmInputHook(): Promise<void> {

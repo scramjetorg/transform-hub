@@ -24,6 +24,7 @@ import { CPMConnector } from "./cpm-connector";
 
 import { AddressInfo } from "net";
 import { ServiceDiscovery } from "./sd-adapter";
+import { CommonLogsPipe } from "./common-logs-pipe";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -49,6 +50,8 @@ export class Host implements IComponent {
     logger: Logger;
 
     serviceDiscovery = new ServiceDiscovery();
+
+    commonLogsPipe = new CommonLogsPipe()
 
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
@@ -188,6 +191,8 @@ export class Host implements IComponent {
                 true
             ) as Readable;
         });
+
+        this.api.upstream(`${this.apiBase}/log`, this.commonLogsPipe.out);
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
     }
@@ -335,6 +340,16 @@ export class Host implements IComponent {
         return identifyResult;
     }
 
+    private attachInstanceToCommonLogsPipe(csic: CSIController) {
+        const logStream = csic.getLogStream();
+
+        if (logStream) {
+            this.commonLogsPipe.addInStream(csic.id, logStream);
+        } else {
+            this.logger.warn("Cannot add log stream to commonLogsPipe because it's undefined");
+        }
+    }
+
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
@@ -345,6 +360,8 @@ export class Host implements IComponent {
         this.instancesStore[id] = csic;
 
         await csic.start();
+
+        this.attachInstanceToCommonLogsPipe(csic);
 
         sequence.instances.push(id);
 
