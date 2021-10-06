@@ -40,8 +40,7 @@ export interface ICommunicationHandler {
      */
     getMonitorStream(): DataStream;
     /**
-     * @TODO below statement is possibly untrue
-     * Returns a copy of log stream for reading - does not interact with the fifo stream itself
+     * Returns a copy of log stream for writing
      */
     getLogOutput(): LoggerOutput;
 
