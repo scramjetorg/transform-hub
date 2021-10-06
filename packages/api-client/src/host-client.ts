@@ -21,9 +21,8 @@ export class HostClient implements ClientProvider {
         return this.client.get("instances");
     }
 
-    // TODO: Dedicated log stream for host not yet implemented.
     async getLogStream() {
-        return this.client.getStream("stream/log");
+        return this.client.getStream("log");
     }
 
     async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
