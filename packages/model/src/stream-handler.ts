@@ -61,7 +61,7 @@ export class CommunicationHandler implements ICommunicationHandler {
     upstreams?: UpstreamStreamsConfig;
     downstreams?: DownstreamStreamsConfig;
 
-    private loggerPassthough: PassThoughStream<string>;
+    private loggerPassThrough: PassThoughStream<string>;
     private controlPassThrough: DataStream;
     private monitoringPassThrough: DataStream;
 
@@ -76,7 +76,7 @@ export class CommunicationHandler implements ICommunicationHandler {
     constructor() {
         this.controlPassThrough = new DataStream();
         this.monitoringPassThrough = new DataStream();
-        this.loggerPassthough = new PassThrough();
+        this.loggerPassThrough = new PassThrough();
         this.controlHandlerHash = {
             [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: [],
             [RunnerMessageCode.KILL]: [],
@@ -148,7 +148,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             throw new Error("Streams not hooked");
         }
 
-        this.downstreams[CC.LOG].pipe(this.loggerPassthough, { end: false }).pipe(this.upstreams[CC.LOG]);
+        this.downstreams[CC.LOG].pipe(this.loggerPassThrough, { end: false }).pipe(this.upstreams[CC.LOG]);
 
         const monitoringOutput = StringStream.from(this.downstreams[CC.MONITORING] as Readable)
             .JSONParse()
@@ -205,7 +205,7 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     getLogOutput(): LoggerOutput {
-        return { out: this.loggerPassthough, err: this.loggerPassthough };
+        return { out: this.loggerPassThrough, err: this.loggerPassThrough };
     }
 
     pipeStdio(): this {
