@@ -1,6 +1,6 @@
 import { CommandDefinition } from "../../types";
 import { getHostClient } from "../common";
-import { displayEntity } from "../output";
+import { displayEntity, displayStream } from "../output";
 
 export const host: CommandDefinition = (program) => {
     const hostCmd = program
@@ -12,11 +12,10 @@ export const host: CommandDefinition = (program) => {
         .description("get version")
         .action(async () => displayEntity(program, getHostClient(program).getVersion()));
 
-    // response status 500
     hostCmd
         .command("logs")
-        .description("show all logs")
-        .action(async () => displayEntity(program, getHostClient(program).getLogStream()));
+        .description("show all instances logs")
+        .action(async () => displayStream(program, getHostClient(program).getLogStream()));
 
     hostCmd
         .command("load")
