@@ -40,7 +40,7 @@ export interface ICommunicationHandler {
      */
     getMonitorStream(): DataStream;
     /**
-     * Returns a copy of log stream for writing
+     * Returns log stream for writing
      */
     getLogOutput(): LoggerOutput;
 
