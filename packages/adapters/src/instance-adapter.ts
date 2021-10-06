@@ -255,6 +255,9 @@ IComponent {
                 ...extraVolumes,
                 { mountPoint: "/package", volume: config.packageVolumeId || "" }
             ],
+            labels: {
+                "scramjet.sequence.name": config.name
+            },
             binds: [
                 `${this.resources.fifosDir}:/pipes`
             ],
