@@ -95,6 +95,10 @@ export type DockerAdapterRunConfig = {
     maxMem?: number,
 
     publishAllPorts?: boolean,
+
+    labels?: {
+        [key: string]: string
+    }
 };
 
 /**
@@ -182,7 +186,10 @@ export interface IDockerHelper {
             envs: string[],
             autoRemove: boolean,
             maxMem: number,
-            publishAllPorts: boolean
+            publishAllPorts: boolean,
+            labels: {
+                [key: string]: string
+            }
         }
     ) => Promise<DockerContainer>;
 
