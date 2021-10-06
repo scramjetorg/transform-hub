@@ -12,7 +12,7 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
  */
 
 export = async function(_stream, max = 10) {
-    const ps = new PassThrough();
+    const ps = new PassThrough({ objectMode: true });
 
     let cnt = 0;
 

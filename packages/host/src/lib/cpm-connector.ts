@@ -8,7 +8,7 @@ import { loadCheck } from "@scramjet/load-check";
 import { getLogger } from "@scramjet/logger";
 import { MessageUtilities } from "@scramjet/model";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, FunctionDefinition, IInstance, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, STHIDMessageData } from "@scramjet/types";
+import { EncodedControlMessage, FunctionDefinition, IInstance, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
 import { StringStream } from "scramjet";
 
 import { networkInterfaces } from "systeminformation";
@@ -276,7 +276,7 @@ export class CPMConnector extends EventEmitter {
         );
     }
 
-    sendTopic(topic: string, stream: Readable) {
+    sendTopic(topic: string, topicCfg: { contentType: string, stream: ReadableStream<any> | WritableStream<any> }) {
         const cpmUrl = new URL("http://" + this.cpmURL + "/topic/" + topic);
         const req = request(
             cpmUrl,
@@ -284,12 +284,13 @@ export class CPMConnector extends EventEmitter {
                 method: "POST",
                 agent: new Agent({ keepAlive: true }),
                 headers: {
-                    "x-end-stream": "false"
+                    "x-end-stream": "true",
+                    "content-type": topicCfg.contentType || "application/x-ndjson"
                 }
             }
         );
 
-        stream.pipe(req);
+        topicCfg.stream.pipe(req);
     }
 
     async getTopic(topic: string): Promise<Readable> {
