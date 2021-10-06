@@ -48,7 +48,7 @@ export class ServiceDiscovery {
 
             if (this.cpmConnector) {
                 this.cpmConnector
-                    .sendTopic(config.topic, this.dataMap.get(config.topic)!.stream as ReadableStream<any>);
+                    .sendTopic(config.topic, this.dataMap.get(config.topic)!);
 
                 this.logger.log("Sending data to cpm");
             }
