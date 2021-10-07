@@ -32,7 +32,8 @@
     "http-status-codes": "^2.1.4",
     "minimist": "^1.2.5",
     "scramjet": "^4.36.0",
-    "systeminformation": "^5.7.10"
+    "systeminformation": "^5.7.10",
+    "rereadable-stream": "^1.4.12"
   },
   "devDependencies": {
     "@scramjet/types": "^0.12.2",
