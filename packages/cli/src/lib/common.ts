@@ -69,6 +69,9 @@ export const getIgnoreFunction = async (file: PathLike) => {
     return (f: string) => !rules.find(x => x(f, 0, fakeArr));
 };
 export const packAction = async (directory: string, { stdout, output }: { stdout: boolean, output: string }) => {
+    await access(directory, R_OK).catch(() => {
+        throw new Error(`File "${directory}" not found`);
+    });
     const cwd = resolve(process.cwd(), directory);
     const target = stdout ? process.stdout : createWriteStream(output
         ? resolve(process.cwd(), output)
