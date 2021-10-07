@@ -69,20 +69,19 @@ export const getIgnoreFunction = async (file: PathLike) => {
     return (f: string) => !rules.find(x => x(f, 0, fakeArr));
 };
 export const packAction = async (directory: string, { stdout, output }: { stdout: boolean, output: string }) => {
-    await access(directory, R_OK).catch(() => {
-        throw new Error(`File "${directory}" not found`);
-    });
     const cwd = resolve(process.cwd(), directory);
-    const target = stdout ? process.stdout : createWriteStream(output
-        ? resolve(process.cwd(), output)
-        : `${cwd}.tar.gz`);
     const packageLocation = resolve(cwd, "package.json");
-    const ignoreLocation = resolve(cwd, ".siignore");
 
-    await access(packageLocation, F_OK | R_OK);
     // TODO: error handling?
     // TODO: check package contents?
+    await access(packageLocation, F_OK | R_OK).catch(() => {
+        throw new Error(`${packageLocation} not found.`);
+    });
 
+    const target = stdout
+        ? process.stdout
+        : createWriteStream(output ? resolve(process.cwd(), output) : `${cwd}.tar.gz`);
+    const ignoreLocation = resolve(cwd, ".siignore");
     const filter = await getIgnoreFunction(ignoreLocation);
     const out = c(
         {
@@ -104,8 +103,7 @@ export const getReadStreamFromFile = async (file: string): Promise<Readable> => 
 
     return access(resolvedFilePath, F_OK).then(
         () => createReadStream(resolvedFilePath),
-        () => {
-            throw new Error(`File "${file}" not found`);
-        }
-    );
+    ).catch(() => {
+        throw new Error(`File "${file}" not found.`);
+    });
 };
