@@ -1,8 +1,7 @@
 import { SequenceClient } from "@scramjet/api-client";
-import { createReadStream } from "fs";
 import { readFile } from "fs/promises";
 import { CommandDefinition } from "../../types";
-import { attachStdio, getHostClient } from "../common";
+import { attachStdio, getHostClient, getReadStreamFromFile } from "../common";
 import { displayEntity, displayObject } from "../output";
 
 export const sequence: CommandDefinition = (program) => {
@@ -20,7 +19,7 @@ export const sequence: CommandDefinition = (program) => {
             const { config: configPath, detached } = sequenceCmd.opts();
             const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
             const seq = await getHostClient(program)
-                .sendSequence(sequencePackage ? createReadStream(sequencePackage) : process.stdin);
+                .sendSequence(sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin);
             const instance = await seq.start(config, args);
 
             if (!detached) {
@@ -33,7 +32,7 @@ export const sequence: CommandDefinition = (program) => {
         .description("send packed and compressed sequence file")
         .action(async (sequencePackage) =>
             displayObject(program, await getHostClient(program).sendSequence(
-                sequencePackage ? createReadStream(sequencePackage) : process.stdin
+                sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin
             ))
         );
 
