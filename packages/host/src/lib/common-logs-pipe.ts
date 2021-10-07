@@ -1,4 +1,5 @@
-import { PassThrough, Readable, Transform } from "stream";
+import { ReReadable } from "rereadable-stream";
+import { Readable, Transform } from "stream";
 
 const colors = ["[31m", "[32m", "[33m", "[34m", "[35m", "[36m", "[37m"];
 
@@ -22,7 +23,13 @@ const prefixWithInstanceId = (instanceId: string) => new Transform({
 });
 
 export class CommonLogsPipe {
-    private outStream = new PassThrough()
+    private outStream: ReReadable;
+
+    constructor(bufferLength = 1e6) {
+        this.outStream = new ReReadable({ length: bufferLength });
+        // drain the outStream so that it never pauses instances streams
+        this.outStream.rewind().resume();
+    }
 
     public addInStream(instanceId: string, stream: Readable): void {
         stream
@@ -31,6 +38,6 @@ export class CommonLogsPipe {
     }
 
     get out(): Readable {
-        return this.outStream;
+        return this.outStream.rewind();
     }
 }
