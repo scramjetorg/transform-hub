@@ -167,6 +167,7 @@
             // Function definitions using const should be able to have blankLines between them
             // but variable definitions shouldn't so let's trust the programmer here ;)
             { "blankLine": "any", "prev": ["const"], "next": ["const"] },
+            { "blankLine": "any", "prev": ["const", "let"], "next":["const", "let"] },
             { "blankLine": "never", "prev": ["let"], "next": ["let"] },
             { "blankLine": "always", "prev": "directive", "next": "*" },
             { "blankLine": "any", "prev": "directive", "next": "directive" }
