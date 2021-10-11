@@ -67,11 +67,12 @@ test("instances streams will automatically resume after a pause", async (t) => {
 
     const instances = [new PassThrough(), new PassThrough()];
 
+    const areStreamsPaused = [false, false];
+
     instances.forEach((instance, index) => {
         instance.on("data", (data) => /* consume data */ data);
-        // THIS NEVER GETS CALLED
-        instance.on("pause", () => console.log(`pause ${index}`));
-        instance.on("resume", () => console.log(`resume ${index}`));
+        instance.on("pause", () => { areStreamsPaused[index] = true; });
+        instance.on("resume", () => { areStreamsPaused[index] = false; });
         commonLogsPipe.addInStream(`${index}-${index}`, instance);
     });
 
@@ -90,4 +91,5 @@ test("instances streams will automatically resume after a pause", async (t) => {
         .run();
 
     t.assert(instances.every(instance => instance.isPaused() === false));
+    t.assert(areStreamsPaused.every(isPaused => isPaused === false));
 });
