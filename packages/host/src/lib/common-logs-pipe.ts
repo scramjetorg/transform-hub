@@ -1,29 +1,22 @@
 import { ReReadable } from "rereadable-stream";
-import { Readable, Transform } from "stream";
 
-const prefixWithInstanceId = (instanceId: string) => new Transform({
-    transform(chunk, encoding, done) {
-        const chunkStr: string = chunk.toString("utf-8");
-
-        chunkStr.trimEnd().split("\n").forEach((line: string) => {
-            this.push(instanceId + ": " + line + "\n");
-        });
-        done();
-    }
-});
+import { Readable } from "stream";
+import { StringStream } from "scramjet";
 
 export class CommonLogsPipe {
     private outStream: ReReadable;
 
     constructor(bufferLength = 1e6) {
         this.outStream = new ReReadable({ length: bufferLength });
-        // drain the outStream so that it never pauses instances streams
-        this.outStream.rewind().resume();
+        // drain the outStream so that it never pauses the participating inStreams from instances
+        this.outStream.rewind().on("data", () => {});
     }
 
     public addInStream(instanceId: string, stream: Readable): void {
-        stream
-            .pipe(prefixWithInstanceId(instanceId))
+        StringStream.from(stream)
+            .lines()
+            .prepend(`${instanceId}: `)
+            .append("\n")
             .pipe(this.outStream, { end: false });
     }
 
