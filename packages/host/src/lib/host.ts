@@ -1,30 +1,27 @@
-import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
-
-import { CSIController } from "./csi-controller";
-import { SequenceStore } from "./sequence-store";
-import { Sequence } from "./sequence";
-import { SocketServer } from "./socket-server";
-
-import { unlink, access as access } from "fs/promises";
-import { IncomingMessage, ServerResponse } from "http";
-import { Readable, Writable } from "stream";
-import { InstanceStore } from "./instance-store";
-
-import { loadCheck } from "@scramjet/load-check";
-import { ReasonPhrases } from "http-status-codes";
-import { configService } from "@scramjet/sth-config";
-
 import * as findPackage from "find-package-json";
-import { constants } from "fs";
-import { CPMConnector } from "./cpm-connector";
+
+import { APIExpose, AppConfig, IComponent, ISequence, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration } from "@scramjet/types";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { IncomingMessage, ServerResponse } from "http";
+import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { Readable, Writable } from "stream";
+import { access, unlink } from "fs/promises";
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
 
 import { AddressInfo } from "net";
-import { ServiceDiscovery } from "./sd-adapter";
+import { CPMConnector } from "./cpm-connector";
+import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
+import { InstanceStore } from "./instance-store";
+import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
+import { ReasonPhrases } from "http-status-codes";
+import { Sequence } from "./sequence";
+import { SequenceStore } from "./sequence-store";
+import { ServiceDiscovery } from "./sd-adapter";
+import { SocketServer } from "./socket-server";
+import { configService } from "@scramjet/sth-config";
+import { constants } from "fs";
+import { loadCheck } from "@scramjet/load-check";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -95,7 +92,7 @@ export class Host implements IComponent {
                 await unlink(this.config.host.socketPath);
             }
         } catch (error: any) {
-            throw new HostError("SOCKET_TAKEN");
+            throw new HostError("SOCKET_TAKEN", this.config.host.socketPath);
         }
 
         if (identifyExisiting) {
@@ -174,7 +171,6 @@ export class Host implements IComponent {
 
             this.serviceDiscovery.addData(
                 { contentType: req.headers["content-type"] || "", topic: params.name },
-                end,
                 "api"
             );
 
@@ -187,8 +183,7 @@ export class Host implements IComponent {
             //TODO: what should be the default content type and where to store this information?
 
             return this.serviceDiscovery.getData(
-                { topic: params.name, contentType: contentType },
-                true
+                { topic: params.name, contentType: contentType }
             ) as Readable;
         });
 
@@ -377,8 +372,7 @@ export class Host implements IComponent {
                     {
                         topic: data.requires,
                         contentType: data.contentType
-                    },
-                    true
+                    }
                 )?.pipe(csic.getInputStream()!);
 
                 csic.confirmInputHook().then(
@@ -393,11 +387,10 @@ export class Host implements IComponent {
                 this.logger.log("Sequence provides data: ", data);
                 const topic = this.serviceDiscovery.addData(
                     { topic: data.provides, contentType: data.contentType },
-                    true,
                     csic.id
                 );
 
-                csic.getOutputStream()!.pipe(topic!.stream as Writable);
+                csic.getOutputStream()!.pipe(topic.stream as Writable);//.pipe(process.stdout);
             }
 
             if (notifyCPM) {
@@ -424,8 +417,13 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             if (csic.provides && csic.provides !== "") {
-                csic.getOutputStream()!.unpipe();
-                this.serviceDiscovery.removeLocalProvider(csic.provides);
+                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
+                    {
+                        topic: csic.provides,
+                        contentType: ""
+                    }
+                ) as Writable);
+                //this.serviceDiscovery.removeLocalProvider(cssic.provides);
             }
         });
 
