@@ -1,17 +1,17 @@
+import { AppConfig, ApplicationFunction, ApplicationInterface, EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, Logger, MaybePromise, MonitoringMessageData, MonitoringRateMessageData, ReadableStream, StopSequenceMessageData, Streamable, SynchronousStreamable, WritableStream } from "@scramjet/types";
+import { BufferStream, DataStream, StringStream } from "scramjet";
+import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { createReadStream, createWriteStream } from "fs";
+import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
+
+import { EventEmitter } from "events";
+import { MessageUtils } from "./message-utils";
+import { Readable } from "stream";
 /* eslint-disable no-extra-parens */
 import { RunnerError } from "@scramjet/model";
-import { ApplicationFunction, ApplicationInterface, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, ReadableStream, WritableStream, AppConfig, EncodedControlMessage, SynchronousStreamable, Streamable, Logger, EncodedMonitoringMessage, MaybePromise, MonitoringMessageData, MonitoringRateMessageData, StopSequenceMessageData } from "@scramjet/types";
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
-
-import { BufferStream, DataStream, StringStream } from "scramjet";
-import { EventEmitter } from "events";
-import { Readable } from "stream";
-import { createReadStream, createWriteStream } from "fs";
-import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
-import { MessageUtils } from "./message-utils";
 import { exec } from "child_process";
-import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
@@ -29,7 +29,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     private controlStream?: ReadableStream<EncodedControlMessage>;
     private inputStream?: ReadableStream<string>; // TODO change any depend on appcontext
     private outputStream?: WritableStream<string>; // TODO change any depend on appcontext
-    private outputDataStream: DataStream = new DataStream();
+    private outputDataStream: DataStream;
     private inputDataStream?: DataStream;
     private monitorFifoPath: string;
     private controlFifoPath: string;
@@ -57,6 +57,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.inputFifoPath = `${fifosPath}/input.fifo`;
         this.outputFifoPath = `${fifosPath}/output.fifo`;
         this.sequencePath = sequencePath;
+
+        this.outputDataStream = new DataStream().catch((e: any) => {
+            this.logger.error("Error during output data stream.", e);
+            throw e;
+        });
     }
 
     async controlStreamHandler([code, data]: EncodedControlMessage) {
@@ -184,7 +189,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     async hookupInputStream() {
         // @TODO handle closing and reopening input stream
         this.inputStream = createReadStream(this.inputFifoPath)!;
-        this.inputDataStream = new DataStream();
+        this.inputDataStream = new DataStream().catch((e: any) => { this.logger.error("Error during input data stream.", e); throw e; });
 
         // do not await here, allow the rest of initialization in the caller to run
     }
@@ -356,22 +361,25 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             sequence = this.getSequence();
+            this.logger.log("Sequence: ", sequence);
 
             if (sequence.length && typeof sequence[0] !== "function") {
+                this.logger.info("First sequence object is not a function:", sequence[0]);
+
                 MessageUtils.writeMessageOnStream(
                     [RunnerMessageCode.PANG, {
                         requires: sequence[0].requires,
                         contentType: sequence[0].contentType
                     }], this.monitorStream);
 
-                this.logger.log("Waiting for input stream");
+                this.logger.log("Waiting for input stream...");
 
                 const connected = await new Promise((res, rej) => {
                     this.inputResolver = { res, rej };
                 });
 
                 if (connected) {
-                    this.logger.log("Input stream connected");
+                    this.logger.log("Input stream connected.");
 
                     await this.setInputContentType({
                         "content-type": sequence[0].contentType
@@ -379,7 +387,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                     this.logger.log("Input ContentType set to", sequence[0].contentType);
                 } else {
-                    this.logger.log("No Input stream");
+                    this.logger.log("No Input stream.");
                 }
 
                 sequence.shift();
@@ -391,7 +399,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 readInputStreamHeaders(this.inputStream!)
                     .then((headers) => this.setInputContentType(headers))
-                    .then(() => 1, () => 0);
+                    .catch((err) => this.logger.error("Error while reading input stream headers:", err));
             }
 
             this.logger.log(`Sequence loaded, functions count: ${sequence.length}.`);
@@ -510,7 +518,8 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream: DataStream | void = this.inputDataStream || DataStream.from([]);
+        let stream: DataStream | void = this.inputDataStream ||
+            DataStream.from([]).catch((e: any) => { this.logger.error(e); });
         let itemsLeftInSequence = sequence.length;
         let intermediate: SynchronousStreamable<any> | void = stream;
 
@@ -561,10 +570,13 @@ export class Runner<X extends AppConfig> implements IComponent {
                 if (intermediate instanceof DataStream) {
                     stream = intermediate;
                 } else if (intermediate !== undefined && isNotPrimitive(intermediate)) {
-                    stream = DataStream.from(intermediate as Readable);
+                    stream = DataStream.from(intermediate as Readable)
+                        .catch((e: any) => { this.logger.error(e); throw e; });
                 } else {
                     stream = undefined;
                 }
+
+                this.logger.debug(`Stream type is ${typeof stream}`);
             }
         }
 

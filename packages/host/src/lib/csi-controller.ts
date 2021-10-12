@@ -273,7 +273,7 @@ export class CSIController extends EventEmitter {
                 this.router.upstream("/monitoring", this.upStreams[CommunicationChannel.MONITORING]);
             }
 
-            this.router.upstream("/output", this.upStreams![CommunicationChannel.OUT]);
+            this.router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
             this.router.downstream("/input", (req) => {
                 if (this.apiInputEnabled) {
                     const stream = this.downStreams![CommunicationChannel.IN];
