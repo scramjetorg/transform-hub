@@ -81,6 +81,8 @@ export class Host implements IComponent {
 
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
         addLoggerOutput(process.stdout);
+        addLoggerOutput(this.commonLogsPipe.getIn());
+
         this.api.log.each(
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
@@ -187,7 +189,7 @@ export class Host implements IComponent {
             ) as Readable;
         });
 
-        this.api.upstream(`${this.apiBase}/log`, this.commonLogsPipe.out);
+        this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
 
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
     }
