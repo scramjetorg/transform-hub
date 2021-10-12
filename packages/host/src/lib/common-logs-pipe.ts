@@ -1,6 +1,6 @@
 import { ReReadable } from "rereadable-stream";
 
-import { Readable } from "stream";
+import { Readable, Writable } from "stream";
 import { StringStream } from "scramjet";
 
 export class CommonLogsPipe {
@@ -9,7 +9,7 @@ export class CommonLogsPipe {
     constructor(bufferLength = 1e6) {
         this.outStream = new ReReadable({ length: bufferLength });
         // drain the outStream so that it never pauses the participating inStreams from instances
-        this.outStream.rewind().on("data", () => {});
+        this.outStream.rewind().resume();
     }
 
     public addInStream(instanceId: string, stream: Readable): void {
@@ -20,7 +20,11 @@ export class CommonLogsPipe {
             .pipe(this.outStream, { end: false });
     }
 
-    get out(): Readable {
+    getIn(): Writable {
+        return this.outStream;
+    }
+
+    getOut(): Readable {
         return this.outStream.rewind();
     }
 }
