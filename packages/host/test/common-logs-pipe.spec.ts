@@ -9,7 +9,7 @@ const numberOfLogs = 1e4;
 const highWaterMark = lineLength * numberOfLogs / 4;
 const commonLogsBufferLength = numberOfLogs / 4;
 
-test("WORKING: 10k logs pauses instances streams if commonLogsPipe is a PassThrough", async (t) => {
+test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", async (t) => {
     const commonLogsPipe = { outStream: new PassThrough({ highWaterMark }) };
 
     const instances = [new PassThrough(), new PassThrough()];
@@ -36,8 +36,8 @@ test("WORKING: 10k logs pauses instances streams if commonLogsPipe is a PassThro
     t.assert(instances.every(instance => instance.isPaused() === true));
 });
 
-test("NOT WORKING: 10k logs pauses instances streams if commonLogsPipe is a PassThrough", async (t) => {
-    const commonLogsPipe = { outStream: new PassThrough({ highWaterMark }) };
+test("10k logs pauses instances streams if commonLogsPipe is a PassThrough", async (t) => {
+    const commonLogsPipe = { outStream: new PassThrough({ highWaterMark: 10, objectMode: true }) };
 
     const instances = [new PassThrough(), new PassThrough()];
 
