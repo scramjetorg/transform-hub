@@ -1,7 +1,9 @@
 import { Logger, ReadableStream, WritableStream } from "@scramjet/types";
-import { getLogger } from "@scramjet/logger";
 import { PassThrough, Stream } from "stream";
+
 import { CPMConnector } from "./cpm-connector";
+import { getLogger } from "@scramjet/logger";
+
 export type dataType = {
     topic: string;
     contentType: string;
@@ -11,16 +13,16 @@ export type streamType = {
     contentType: string;
     stream: Stream;
 }
-
+export type topicDataType = {
+    contentType: string,
+    stream: ReadableStream<any> | WritableStream<any>,
+    localProvider?: string,
+    cpmRequest?: boolean
+}
 export class ServiceDiscovery {
     dataMap = new Map<
         string,
-        {
-            contentType: string,
-            stream: ReadableStream<any> | WritableStream<any>,
-            localProvider?: string,
-            cpmRequest?: boolean
-        }
+        topicDataType
     >();
     logger: Logger = getLogger(this);
     cpmConnector?: CPMConnector;
@@ -29,9 +31,9 @@ export class ServiceDiscovery {
         this.cpmConnector = cpmConnector;
     }
 
-    addData(config: dataType, end: boolean, localProvider?: string) {
+    addData(config: dataType, localProvider?: string) {
         if (!this.dataMap.has(config.topic)) {
-            this.logger.log("Adding data:", config, "end:", end);
+            this.logger.log("Adding data:", config, localProvider);
             const topicStream = new PassThrough();
 
             this.dataMap.set(config.topic, {
@@ -40,7 +42,7 @@ export class ServiceDiscovery {
                 localProvider
             });
         } else {
-            this.logger.log("Routing data:", config, "end:", end);
+            this.logger.log("Routing data:", config);
         }
 
         if (localProvider) {
@@ -54,7 +56,7 @@ export class ServiceDiscovery {
             }
         }
 
-        return this.dataMap.get(config.topic);
+        return this.dataMap.get(config.topic)!;
     }
 
     getTopics() {
@@ -79,7 +81,7 @@ export class ServiceDiscovery {
         }
     }
 
-    getData(dataType: dataType, end?: boolean):
+    getData(dataType: dataType):
         ReadableStream<any> | WritableStream<any> | undefined {
         this.logger.log("Get data:", dataType);
 
@@ -110,9 +112,9 @@ export class ServiceDiscovery {
             return topicData?.stream.on("end", () => this.logger.debug("Topic ended:", dataType));
         }
 
-        this.addData(dataType, !!end);
+        this.addData(dataType);
 
-        return this.getData(dataType, end);
+        return this.getData(dataType);
     }
 
     removeData(topic: string) {
