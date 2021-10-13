@@ -1,4 +1,5 @@
 import { DeepPartial, STHConfiguration } from "@scramjet/types";
+
 import { merge } from "@scramjet/utility";
 
 const defaultConfig: STHConfiguration = {
@@ -19,7 +20,8 @@ const defaultConfig: STHConfiguration = {
         hostname: "localhost",
         port: 8000,
         apiBase: "/api/v1",
-        socketPath: "/tmp/scramjet-socket-server-path"
+        socketPath: "/tmp/scramjet-socket-server-path",
+        infoFilePath: "/tmp/sth-id.json"
     },
     instanceRequirements: {
         freeMem: 256,

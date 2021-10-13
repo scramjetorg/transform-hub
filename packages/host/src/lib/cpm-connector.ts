@@ -9,6 +9,7 @@ import { MessageUtilities } from "@scramjet/model";
 import { Socket } from "net";
 import { StringStream } from "scramjet";
 import { URL } from "url";
+import { configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { loadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
@@ -29,7 +30,7 @@ export class CPMConnector extends EventEmitter {
     communicationStream?: StringStream;
     communicationChannel?: Duplex;
     logger: Logger = getLogger(this);
-    infoFilePath: string;
+    customId = false;
     info: STHInformation = {};
     connection?: ClientRequest;
     isReconnecting: boolean = false;
@@ -42,38 +43,39 @@ export class CPMConnector extends EventEmitter {
     constructor(cpmUrl: string) {
         super();
         this.cpmURL = cpmUrl;
-
-        this.infoFilePath = "/tmp/sth-id.json";
     }
 
     getId(): string | undefined {
         return this.info.id;
     }
 
-    async init() {
+    init() {
+        this.info.id = configService.getConfig().host.id;
+
+        if (this.info.id) {
+            this.logger.info("Initialized with custom id:", this.info.id);
+            this.customId = true;
+        } else {
+            this.info.id = this.readInfoFile().id;
+            this.logger.info("Initialized with id:", this.info.id);
+        }
+    }
+
+    readInfoFile() {
+        let fileContents = "";
+
         try {
-            this.info = await new Promise((resolve, reject) => {
-                fs.readFile(this.infoFilePath, { encoding: "utf-8" }, (err, data) => {
-                    if (err) {
-                        this.logger.log("Can not read config file");
-                        reject(err);
-                    } else {
-                        try {
-                            this.logger.log("Config file", JSON.parse(data));
-                            resolve(JSON.parse(data));
-                        } catch (error: any) {
-                            this.logger.log("Can't parse config file");
-                            reject(error);
-                        }
-                    }
-                });
-            });
-        } catch (error: any) {
-            if (error.code === "ENOENT") {
-                this.logger.info("Info file not exists");
-            } else {
-                this.logger.error(error);
-            }
+            fileContents = fs.readFileSync(configService.getConfig().host.infoFilePath, { encoding: "utf-8" });
+        } catch (err) {
+            this.logger.warn("Can not read id file.", err);
+            return {};
+        }
+
+        try {
+            return JSON.parse(fileContents);
+        } catch (err) {
+            this.logger.error("Can not parse id file.", err);
+            return {};
         }
     }
 
@@ -119,10 +121,14 @@ export class CPMConnector extends EventEmitter {
                                 if (message[0] === CPMMessageCode.STH_ID) {
                                     // eslint-disable-next-line no-extra-parens
                                     this.info.id = (message[1] as STHIDMessageData).id;
-                                    fs.writeFileSync(this.infoFilePath, JSON.stringify(this.info));
+                                    fs.writeFileSync(
+                                        configService.getConfig().host.infoFilePath,
+                                        JSON.stringify(this.info)
+                                    );
                                 }
 
-                                this.logger.log("Received id: ", this.info.id);
+                                this.logger.log("Received id:", this.info.id);
+                                return message;
                             }).catch((e: any) => {
                                 this.logger.error("communicationChannel error", e.message);
                             });

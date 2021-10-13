@@ -13,6 +13,7 @@ const options = program
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
     .option("-C, --cpm-url <host:ip>")
+    .option("--id <id>")
     .option("--runner-image <image name>", "Image used by runner")
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
@@ -37,7 +38,8 @@ configService.update({
         apiBase: "/api/v1",
         socketPath: options.socketPath ? resolve(process.cwd(), options.socketPath) : undefined,
         port: options.port,
-        hostname: options.hostname
+        hostname: options.hostname,
+        id: options.id
     }
 });
 
