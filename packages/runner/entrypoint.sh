@@ -7,9 +7,9 @@ RUNNER_USER="${RUNNER_USER:-runner}"
 main() {
   if [ "$1" == "start-runner" ]; then
 
-    mkdir -p ${RUNNER_DIR} ${PIPES_DIR} ${PACKAGE_DIR}
-    chown -R ${RUNNER_USER}:${RUNNER_USER} ${RUNNER_DIR} ${PACKAGE_DIR}
-    chown -R :${RUNNER_USER} ${PIPES_DIR}
+    mkdir -p ${HUB_DIR} ${FIFOS_DIR} ${PACKAGE_DIR}
+    chown -R ${RUNNER_USER}:${RUNNER_USER} ${HUB_DIR} ${PACKAGE_DIR}
+    chown -R :${RUNNER_USER} ${FIFOS_DIR}
 
     exec gosu ${RUNNER_USER} \
                 node \
