@@ -14,18 +14,31 @@ export type HostConfig = {
      * Hostname.
      */
     hostname: string;
+
+    /**
+     * Custom host identifier.
+     */
+    id?: string;
+
     /**
      * API port.
      */
     port: number;
+
     /**
      * API URL.
      */
     apiBase: string;
+
     /**
      * Socket name for connecting supervisors.
      */
     socketPath: string;
+
+    /**
+     * Host information filepath.
+     */
+    infoFilePath: string;
 }
 
 export type STHConfiguration = {

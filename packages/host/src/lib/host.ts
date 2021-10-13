@@ -116,13 +116,13 @@ export class Host implements IComponent {
         this.attachHostAPIs();
 
         if (this.cpmConnector) {
-            await this.connectToCPM();
+            this.connectToCPM();
         }
     }
 
-    async connectToCPM() {
+    connectToCPM() {
         this.cpmConnector?.attachServer(this.api.server);
-        await this.cpmConnector?.init();
+        this.cpmConnector?.init();
 
         this.cpmConnector?.on("connect", () => {
             this.cpmConnector?.sendSequencesInfo(this.getSequences());
