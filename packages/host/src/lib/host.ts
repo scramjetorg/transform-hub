@@ -1,30 +1,27 @@
-import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { APIExpose, AppConfig, STHConfiguration, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, ISequence } from "@scramjet/types";
-
-import { CSIController } from "./csi-controller";
-import { SequenceStore } from "./sequence-store";
-import { Sequence } from "./sequence";
-import { SocketServer } from "./socket-server";
-
-import { unlink, access as access } from "fs/promises";
-import { IncomingMessage, ServerResponse } from "http";
-import { Readable, Writable } from "stream";
-import { InstanceStore } from "./instance-store";
-
-import { loadCheck } from "@scramjet/load-check";
-import { ReasonPhrases } from "http-status-codes";
-import { configService } from "@scramjet/sth-config";
-
 import * as findPackage from "find-package-json";
-import { constants } from "fs";
-import { CPMConnector } from "./cpm-connector";
+
+import { APIExpose, AppConfig, IComponent, ISequence, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration } from "@scramjet/types";
+import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
+import { IncomingMessage, ServerResponse } from "http";
+import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { Readable, Writable } from "stream";
+import { access, unlink } from "fs/promises";
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
 
 import { AddressInfo } from "net";
-import { ServiceDiscovery } from "./sd-adapter";
+import { CPMConnector } from "./cpm-connector";
+import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
+import { InstanceStore } from "./instance-store";
+import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
+import { ReasonPhrases } from "http-status-codes";
+import { Sequence } from "./sequence";
+import { SequenceStore } from "./sequence-store";
+import { ServiceDiscovery } from "./sd-adapter";
+import { SocketServer } from "./socket-server";
+import { configService } from "@scramjet/sth-config";
+import { constants } from "fs";
+import { loadCheck } from "@scramjet/load-check";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -119,13 +116,13 @@ export class Host implements IComponent {
         this.attachHostAPIs();
 
         if (this.cpmConnector) {
-            await this.connectToCPM();
+            this.connectToCPM();
         }
     }
 
-    async connectToCPM() {
+    connectToCPM() {
         this.cpmConnector?.attachServer(this.api.server);
-        await this.cpmConnector?.init();
+        this.cpmConnector?.init();
 
         this.cpmConnector?.on("connect", () => {
             this.cpmConnector?.sendSequencesInfo(this.getSequences());
