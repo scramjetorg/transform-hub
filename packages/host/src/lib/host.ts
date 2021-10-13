@@ -76,7 +76,7 @@ export class Host implements IComponent {
 
         if (this.config.cpmUrl) {
             this.cpmConnector = new CPMConnector(this.config.cpmUrl);
-            this.cpmConnector.on("log_connected", (channel: Duplex) => this.commonLogsPipe.getOut().pipe(channel));
+            this.cpmConnector.on("log_connect", (channel: Duplex) => this.commonLogsPipe.getOut().pipe(channel));
             this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
