@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { ChildProcess, spawn } from "child_process";
 import * as fs from "fs";
 
-import { StringDecoder } from "string_decoder";
-import { Stream } from "stream";
-import { resolve } from "path";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { ChildProcess, spawn } from "child_process";
+
 // eslint-disable-next-line import/no-relative-packages
 import { HostClient } from "../../packages/api-client/src/host-client";
+import { Stream } from "stream";
+import { StringDecoder } from "string_decoder";
+import { resolve } from "path";
 
 const scenarios = `
 /**
@@ -53,8 +54,7 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
     //
     //
     const startHost1 = async (config: { cpm: boolean }) => {
-        fs.writeFileSync("/tmp/sth-id.json", JSON.stringify({ id: host1 }));
-        let args = [resolve(__dirname, "../../packages/sth/src/bin/hub.ts"), "-S", "/tmp/s1", "-P", "8001"];
+        let args = [resolve(__dirname, "../../packages/sth/src/bin/hub.ts"), "-S", "/tmp/s1", "-P", "8001", "--id", host1];
 
         if (config.cpm) {
             args = args.concat(["-C", "localhost:7000"]);
