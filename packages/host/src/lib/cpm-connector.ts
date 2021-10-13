@@ -1,16 +1,16 @@
 import * as fs from "fs";
-import { Agent, ClientRequest, Server, request, IncomingMessage } from "http";
-import { Socket } from "net";
-import { Duplex, EventEmitter, Readable } from "stream";
-import { URL } from "url";
 
-import { loadCheck } from "@scramjet/load-check";
-import { getLogger } from "@scramjet/logger";
-import { MessageUtilities } from "@scramjet/model";
+import { Agent, ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { Duplex, EventEmitter, Readable } from "stream";
 import { EncodedControlMessage, FunctionDefinition, IInstance, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
-import { StringStream } from "scramjet";
 
+import { MessageUtilities } from "@scramjet/model";
+import { Socket } from "net";
+import { StringStream } from "scramjet";
+import { URL } from "url";
+import { getLogger } from "@scramjet/logger";
+import { loadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
 
 const BPMux = require("bpmux").BPMux;
@@ -88,14 +88,18 @@ export class CPMConnector extends EventEmitter {
         this.isReconnecting = false;
 
         const cpmUrl = new URL("http://" + this.cpmURL);
+        const headers: OutgoingHttpHeaders = {};
+
+        if (this.info.id) {
+            headers["x-sth-id"] = this.info.id;
+        }
+
         const req = request({
             port: cpmUrl.port,
             host: cpmUrl.hostname,
             method: "CONNECT",
             agent: new Agent({ keepAlive: true }),
-            headers: {
-                "x-sth-id": this.info.id
-            }
+            headers
         }).on("connect", (_response, socket) => {
             this.logger.info("Connected to CPM.");
             this.tunnel = socket;
