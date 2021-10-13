@@ -2,16 +2,16 @@ import * as findPackage from "find-package-json";
 
 import { APIExpose, AppConfig, IComponent, ISequence, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { IncomingMessage, ServerResponse } from "http";
-import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { Readable, Writable } from "stream";
-import { access, unlink } from "fs/promises";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 
 import { AddressInfo } from "net";
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
+
+import { unlink, access as access } from "fs/promises";
+import { IncomingMessage, ServerResponse } from "http";
+import { Duplex, Readable, Writable } from "stream";
 import { InstanceStore } from "./instance-store";
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
@@ -22,6 +22,7 @@ import { SocketServer } from "./socket-server";
 import { configService } from "@scramjet/sth-config";
 import { constants } from "fs";
 import { loadCheck } from "@scramjet/load-check";
+import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 const version = findPackage().next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -75,6 +76,7 @@ export class Host implements IComponent {
 
         if (this.config.cpmUrl) {
             this.cpmConnector = new CPMConnector(this.config.cpmUrl);
+            this.cpmConnector.on("log_connected", (channel: Duplex) => this.commonLogsPipe.getOut().pipe(channel));
             this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
