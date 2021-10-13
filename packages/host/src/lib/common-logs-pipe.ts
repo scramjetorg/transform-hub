@@ -12,7 +12,7 @@ export class CommonLogsPipe {
         this.pipe.rewind().resume();
     }
 
-    public addInstanceStream(instanceId: string, stream: Readable): void {
+    public addInStream(instanceId: string, stream: Readable): void {
         StringStream.from(stream)
             .lines()
             .prepend(`${instanceId}: `)
