@@ -139,7 +139,7 @@ export class CPMConnector extends EventEmitter {
                         this.setLoadCheckMessageSender();
                     } else if (mSocket._chan === 1) {
                         this.logChannel = mSocket;
-                        this.emit("log_connected", this.logChannel);
+                        this.emit("log_connect", this.logChannel);
                     } else {
                         this.apiServer?.emit("connection", mSocket);
                     }
