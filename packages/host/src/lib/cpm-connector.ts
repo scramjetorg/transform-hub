@@ -2,7 +2,7 @@ import * as fs from "fs";
 
 import { Agent, ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { Duplex, EventEmitter, Readable, Writable } from "stream";
+import { Duplex, EventEmitter, Readable } from "stream";
 import { EncodedControlMessage, FunctionDefinition, IInstance, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
 
 import { MessageUtilities } from "@scramjet/model";
@@ -29,7 +29,6 @@ export class CPMConnector extends EventEmitter {
     connected = false;
     communicationStream?: StringStream;
     communicationChannel?: Duplex;
-    private logChannel?: Writable;
     logger: Logger = getLogger(this);
     customId = false;
     info: STHInformation = {};
@@ -144,8 +143,10 @@ export class CPMConnector extends EventEmitter {
                         this.emit("connect");
                         this.setLoadCheckMessageSender();
                     } else if (mSocket._chan === 1) {
-                        this.logChannel = mSocket;
-                        this.emit("log_connect", this.logChannel);
+                        const logStream = StringStream.from(mSocket)
+                            .catch((err: Error) => this.logger.error(err.message));
+
+                        this.emit("log_connect", logStream);
                     } else {
                         this.apiServer?.emit("connection", mSocket);
                     }
