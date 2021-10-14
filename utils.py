@@ -2,8 +2,12 @@ import time
 import asyncio
 from os import environ
 from ansi_color_codes import *
+import random
 
-# Debugging helpers and logging utilities.
+# Debugging helpers, testing and logging utilities.
+
+random.seed('Pyfca')
+MAX_DELAY = 0.3
 
 def print_formatted(item):
     """Pretty-print for debugging."""
@@ -24,6 +28,16 @@ def chunk_id_or_value(item):
         return f'chunk_id={item.id}'
     else:
         return f'<chunk: {repr(item)}>'
+
+async def mock_delay(data):
+    """Pretend that we run some async operations that take some time."""
+    delay = 0
+    if type(data) is dict and 'delay' in data:
+        delay = data['delay']
+    else:
+        delay = random.uniform(0, MAX_DELAY)
+    if delay:
+        await asyncio.sleep(delay)
 
 class _LogWithTimer:
     """Simple logger with time counted from initialization -
