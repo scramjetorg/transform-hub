@@ -244,6 +244,44 @@ async def test_drain_resolved_when_drops_below_limit():
         print(await p.read())
 
 
+# Ending tests
+# ------------
+
+async def test_reading_from_empty_ifca():
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.end()
+    assert await p.read() == None
+
+async def test_end_with_pending_reads():
+    N = MAX_PARALLEL*2
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    reads = [p.read() for _ in range(N)]
+    p.end()
+    results = await asyncio.gather(*reads)
+    assert results == [None] * N
+
+async def test_write_after_end_errors():
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.end()
+    WriteAfterEnd_raised = False
+    try:
+        p.write('foo')
+    except pyfca.WriteAfterEnd:
+        WriteAfterEnd_raised = True
+    assert WriteAfterEnd_raised
+
+async def test_multiple_ends_error():
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.end()
+    multipleEnd_raised = False
+    try:
+        p.end()
+    except pyfca.MultipleEnd:
+        multipleEnd_raised = True
+    assert multipleEnd_raised
+
+
+
 # Main test execution loop
 # ------------------------
 
@@ -262,6 +300,10 @@ tests_to_run = [
     test_unrestricted_writing_below_limit,
     test_drain_pending_when_limit_reached,
     test_drain_resolved_when_drops_below_limit,
+    test_reading_from_empty_ifca,
+    test_end_with_pending_reads,
+    test_write_after_end_errors,
+    test_multiple_ends_error,
 ]
 
 for test in tests_to_run:

@@ -18,6 +18,14 @@ class omit_chunk:
     pass
 
 
+class WriteAfterEnd(Exception):
+    pass
+
+
+class MultipleEnd(Exception):
+    pass
+
+
 class Pyfca:
     def __init__(self, max_parallel, initial_transform=None):
         self.max_parallel = max_parallel
@@ -46,6 +54,8 @@ class Pyfca:
 
 
     def write(self, chunk):
+        if self.ended:
+            raise WriteAfterEnd
         self.read_write_balance += 1
 
         chunk_status = asyncio.Future()
@@ -89,6 +99,8 @@ class Pyfca:
 
 
     def end(self):
+        if self.ended:
+            raise MultipleEnd
         log(f'{red}END{reset} stop accepting input.')
         log(f' -  r/w balance: {self.read_write_balance}')
         self.ended = True
