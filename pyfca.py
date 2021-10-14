@@ -77,9 +77,11 @@ class Pyfca:
         self.read_write_balance -= 1
         log(f'READ r/w balance: {self.read_write_balance}')
 
-        if self.read_write_balance == self.max_parallel - 1:
+        try:
             waiting = self.waiting_for_read.get_nowait()
             waiting.set_result(True)
+        except asyncio.queues.QueueEmpty:
+            pass
 
         awaitable = self.ready.get()
         log(f'  -  got: {awaitable}')
