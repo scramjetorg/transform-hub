@@ -6,7 +6,7 @@
   "bin": "bin/start-runner.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "build:docker": "docker build -t ${SCRAMJET_INT_REPO_PATH}scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
+    "build:docker": "docker build -t scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
     "test": "nyc ava",

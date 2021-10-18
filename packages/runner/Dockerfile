@@ -5,13 +5,13 @@ ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub
 
 RUN groupadd -g 1200 runner \
-    && useradd -g 1200 -u 1200 -m -d ${HUB_DIR} -s /bin/bash runner \
+    && useradd -g 1200 -u 1200 -m -d ${HUB_DIR} -s /bin/false runner \
     && mkdir -p ${PACKAGE_DIR} ${FIFOS_DIR} \
     && chown runner:runner ${PACKAGE_DIR} ${FIFOS_DIR}
 
 RUN apt-get update \
-    && apt-get install -y gosu \
-    && rm -rf /var/lib/apt/lists/*;
+    && apt-get install -y gosu --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
    
 
 FROM node:lts-bullseye-slim AS builder
@@ -36,7 +36,7 @@ RUN LOCAL_PACKAGES=true NO_INSTALL=true yarn build:packages
 
 FROM target
 
-COPY --chown=runner:runner --from=builder /app/dist ${HUB_DIR}
+COPY --from=builder /app/dist ${HUB_DIR}
 
 WORKDIR ${HUB_DIR}/runner
 
@@ -44,6 +44,7 @@ RUN yarn install --frozen-lockfile --production --silent \
     && yarn cache clean \
     && chmod +x ./bin/start-runner.js
 
-COPY ./packages/runner/entrypoint.sh /
-ENTRYPOINT [ "/entrypoint.sh" ]
+COPY ./packages/runner/docker-entrypoint.sh /usr/local/bin/
+
+ENTRYPOINT [ "docker-entrypoint.sh" ]
 CMD [ "start-runner" ]
