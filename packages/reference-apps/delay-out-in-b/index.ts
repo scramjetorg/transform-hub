@@ -4,9 +4,11 @@ import { AppConfig, AppContext, Streamable } from "@scramjet/types";
 
 import { StringStream } from "scramjet";
 
+const rht = require("./real-hrtime.node");
+
 const CUTOFF = 2000;
 
-let diffs: { diff: bigint, i: number }[] = [];
+const diffs: bigint[] = [];
 let minDiff = BigInt(Number.MAX_SAFE_INTEGER);
 let maxDiff = BigInt(Number.MIN_SAFE_INTEGER);
 
@@ -29,31 +31,31 @@ const exp: [
 
         await (input as StringStream)
             .each(o => {
-                h = process.hrtime.bigint();
-                diff = h - BigInt(o.ts);
+                h = rht.bigint();
+                diff = h - BigInt(o);
 
                 if (diff < 0) {
                     this.logger.warn(`Package has been teleported in time! (${h} is less than ${BigInt(o.ts)} at entry ${o.i}: ${o}) or machines time mismatch.`);
                 }
 
-                diffs.push({ i: o.i, diff });
+                diffs.push(diff);
             })
             .catch((e: any) => { console.log(e); })
             .run();
 
         this.logger.log("Instance finished, total entries:", diffs.length);
 
-        diffs = diffs.filter(o => o.i > CUTOFF);
+        diffs.splice(0, CUTOFF);
 
         const sum = diffs
             .reduce(
                 (a, b) => {
-                    minDiff = bigIntMin(minDiff, b.diff);
-                    maxDiff = bigIntMax(maxDiff, b.diff);
+                    minDiff = bigIntMin(minDiff, b);
+                    maxDiff = bigIntMax(maxDiff, b);
 
-                    return { diff: b.diff + a.diff };
-                }, { diff: BigInt(0) }
-            ).diff;
+                    return b + a;
+                }, BigInt(0)
+            );
 
         this.logger.info(diffs);
 
