@@ -3,7 +3,7 @@
   "version": "0.12.2",
   "description": "This package is part of Scramjet Transform Hub. The package identifies the sequences and returns the information to back STH.",
   "scripts": {
-    "build:docker": "docker build -t ${SCRAMJET_INT_REPO_PATH}scramjetorg/pre-runner:$npm_package_version .",
+    "build:docker": "docker build -t scramjetorg/pre-runner:$npm_package_version .",
     "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../../dist/reference-apps/hello-alice-out .",
     "test": "echo \"Error: no test specified\"",
     "test:docker": "yarn prepare-sample-tar && cat sample-package/package.tar.gz | docker run -i --name pre-runner -v prerunner-$(git rev-parse --short HEAD):/package ${SCRAMJET_INT_REPO_PATH}scramjetorg/pre-runner:$npm_package_version",

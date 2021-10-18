@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pkg_dir="/package"
+pkg_dir="${PACKAGE_DIR:-/package}"
 pkg_file="package.json"
 
 die() {
