@@ -1,12 +1,21 @@
-FROM node:lts-buster-slim as builder
+FROM node:lts-bullseye-slim AS target
 
-RUN apt-get update && apt-get upgrade -y
+ENV HUB_DIR=/opt/transform-hub
+
+RUN groupadd -g 997 sth \
+  && useradd -g 997 -u 997 -m -d ${HUB_DIR} -s /bin/false sth
+
+RUN apt-get update \
+  && apt-get install -y gosu --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/*
+
+FROM node:lts-bullseye-slim AS builder
 
 WORKDIR /build
 
-COPY package.json yarn.lock lerna.json tsconfig.base.json ./
+COPY package.json yarn.lock lerna.json tsconfig.base.json LICENSE ./
 
-RUN yarn install --frozen-lock
+RUN yarn install --frozen-lock --silent --ignore-optional
 
 COPY packages/adapters ./packages/adapters
 COPY packages/api-server ./packages/api-server
@@ -23,22 +32,21 @@ COPY packages/utility ./packages/utility
 COPY scripts ./scripts
 COPY bin ./bin
 COPY conf ./conf
-COPY LICENSE ./
 
-RUN yarn install --frozen-lock \
-  && yarn build:packages
+RUN yarn install --frozen-lock --silent --ignore-optional
+RUN LOCAL_PACKAGES=true NO_INSTALL=true yarn build:packages
 
-FROM node:lts-buster-slim as release
+FROM target
 
-RUN apt-get update && apt-get upgrade -y
+COPY --from=builder /build/dist ${HUB_DIR}
 
-RUN set -xe \
-  && mkdir -p /app
+WORKDIR ${HUB_DIR}/sth
 
-WORKDIR /app
-COPY --from=builder /build/dist ./dist
+RUN yarn install --frozen-lockfile --production --silent \
+    && yarn cache clean --force
 
-RUN set -xe \
-    && npm install -g ./dist/sth
+COPY ./packages/sth/docker-entrypoint.sh /usr/local/bin/
 
+ENTRYPOINT [ "docker-entrypoint.sh" ]
+EXPOSE 8000
 CMD [ "scramjet-transform-hub" ]
