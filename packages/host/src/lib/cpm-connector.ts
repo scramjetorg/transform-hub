@@ -143,8 +143,7 @@ export class CPMConnector extends EventEmitter {
                         this.emit("connect");
                         this.setLoadCheckMessageSender();
                     } else if (mSocket._chan === 1) {
-                        const logStream = StringStream.from(mSocket)
-                            .catch((err: Error) => this.logger.error(err.message));
+                        const logStream = mSocket.on("error", (err: Error) => this.logger.error(err.message));
 
                         this.emit("log_connect", logStream);
                     } else {
