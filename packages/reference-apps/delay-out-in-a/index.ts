@@ -2,6 +2,8 @@ import { AppConfig, AppContext } from "@scramjet/types";
 
 import { DataStream } from "scramjet";
 
+const rht = require("./real-hrtime.node");
+
 export default [
     /**
      * @param {AppContext} this Application context
@@ -30,9 +32,8 @@ export default [
                     console.log("Done", x);
                 })
                 .map(
-                    ({ i }) => ({ i, ts: process.hrtime.bigint().toString() })
+                    () => rht.stringified() + "\n"
                 )
-                .JSONStringify("\n")
                 .on("error", (e) => { this.logger.log("ERR", e.message); }),
             { topic: "delay-test", contentType: "application/x-ndjson" }
         );
