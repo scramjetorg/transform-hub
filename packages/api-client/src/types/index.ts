@@ -8,7 +8,7 @@ export type Response = {
 };
 
 export type ResponseStream = {
-    data?: Stream;
+    data?: NodeJS.ReadableStream;
     status: number | undefined;
 };
 
