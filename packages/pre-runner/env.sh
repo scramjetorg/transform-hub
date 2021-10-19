@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 pkg_dir="${PACKAGE_DIR:-/package}"
 pkg_file="package.json"
