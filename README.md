@@ -296,13 +296,14 @@ docker-compose logs -f
 To run Hub without docker-compose:
 
 ```bash
-docker run -d --init \
+docker run \
+  -ti  \
   --name scramjet-hub \
   --init \
   -p 8000:8000 \
   -v /tmp/:/tmp/ \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  scramjetorg/sth:$(jq -r .version < package.json)
+  scramjetorg/sth:$(jq -r .version package.json)
 ```
 
 ## Run components
