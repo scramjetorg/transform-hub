@@ -1,0 +1,9 @@
+#!/usr/bin/env ts-node
+
+import mod from "../index";
+const { PassThrough } = require("stream");
+
+
+// here I call the function from index.ts out
+
+mod(new PassThrough(), "./data.json", "./dataOut.txt");
