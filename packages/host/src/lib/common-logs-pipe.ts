@@ -6,7 +6,7 @@ import { StringStream } from "scramjet";
 export class CommonLogsPipe {
     private pipe: ReReadable;
 
-    constructor(bufferLength = 1e6) {
+    constructor(bufferLength = 1e5) {
         this.pipe = new ReReadable({ length: bufferLength });
         // drain the outStream so that it never pauses the participating inStreams from instances
         this.pipe.rewind().resume();
