@@ -180,7 +180,7 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("sequence {string} loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
+When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
     this.resources.sequence = await hostClient.sendSequence(
         createReadStream(packagePath)
     );
@@ -314,7 +314,7 @@ When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
     console.log("Container is identified.", containerId);
 });
 
-When("container is closed", async () => {
+When("container is closed", { timeout: 500000 }, async () => {
     if (!containerId)assert.fail("There is no container ID");
 
     await waitForContainerToClose();
