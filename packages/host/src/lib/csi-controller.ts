@@ -1,25 +1,38 @@
-import { getRouter } from "@scramjet/api-server";
+import {
+    APIRoute,
+    AppConfig,
+    DownstreamStreamsConfig,
+    EventMessageData,
+    ExitCode,
+    FunctionDefinition,
+    HandshakeAcknowledgeMessage,
+    ICommunicationHandler,
+    InstanceConfigMessage,
+    Logger,
+    ParsedMessage,
+    PassThroughStreamsConfig,
+    ReadableStream,
+    WritableStream
+} from "@scramjet/types";
 import {
     AppError,
-    CommunicationHandler, CSIControllerError,
+    CSIControllerError,
+    CommunicationHandler,
     HostError,
     MessageUtilities
 } from "@scramjet/model";
 import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
-import {
-    APIRoute, AppConfig, DownstreamStreamsConfig, EventMessageData, ExitCode,
-    FunctionDefinition, HandshakeAcknowledgeMessage, ICommunicationHandler,
-    InstanceConfigMessage, Logger, ParsedMessage, PassThroughStreamsConfig, ReadableStream, WritableStream
-} from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
-import { EventEmitter } from "events";
-import { resolve as resolvePath } from "path";
-import { DataStream } from "scramjet";
 import { PassThrough, Readable } from "stream";
 import { configService, development } from "@scramjet/sth-config";
+
+import { DataStream } from "scramjet";
+import { EventEmitter } from "events";
 import { Sequence } from "./sequence";
 import { ServerResponse } from "http";
 import { getLogger } from "@scramjet/logger";
+import { getRouter } from "@scramjet/api-server";
+import { resolve as resolvePath } from "path";
 
 export class CSIController extends EventEmitter {
     id: string;
@@ -318,7 +331,7 @@ export class CSIController extends EventEmitter {
                 }
 
                 const out = new DataStream();
-                const handler = (data: any) => res.write(data);
+                const handler = (data: any) => out.write(data);
                 const clean = () => {
                     this.logger.debug(`Event stream "${name}" disconnected`);
                     localEmitter.off(name, handler);
