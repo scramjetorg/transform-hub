@@ -1,4 +1,4 @@
-from pyfca import Pyfca, omit_chunk
+from pyfca import Pyfca, DropChunk
 import asyncio
 
 class DataStream():
@@ -46,7 +46,7 @@ class DataStream():
             decision = func(chunk, *args)
             if asyncio.iscoroutine(decision):
                 decision = await decision
-            return chunk if decision else omit_chunk
+            return chunk if decision else DropChunk
         new_stream = DataStream(upstream=self)
         new_stream.pyfca.add_transform(run_filter)
         return new_stream

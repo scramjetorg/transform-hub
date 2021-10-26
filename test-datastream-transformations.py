@@ -1,5 +1,5 @@
 from datastream import DataStream
-from pyfca import omit_chunk
+from pyfca import DropChunk
 import asyncio
 from ansi_color_codes import *
 
@@ -15,7 +15,7 @@ async def async_square(x):
 
 def filtering_map(x):
     # map and filter elements in one step
-    return omit_chunk if x % 3 == 0 else x*2
+    return DropChunk if x % 3 == 0 else x*2
 
 
 # test cases

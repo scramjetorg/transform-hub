@@ -47,7 +47,7 @@ async def async_identity(x):
 
 async def async_keep_even(x):
     await utils.mock_delay(x)
-    return x if x % 2 == 0 else pyfca.omit_chunk
+    return x if x % 2 == 0 else pyfca.DropChunk
 
 
 
@@ -103,7 +103,7 @@ async def test_concurrent_processing():
 
     longest_item = max(processing_times)
     absolute_overhead = 0.02  # at most 20ms overhead
-    relative_overhead = 1.10  # at most 10% overhead
+    relative_overhead = 1.20  # at most 20% overhead
     assert total_processing_time < longest_item + absolute_overhead
     assert total_processing_time < longest_item * relative_overhead
 
@@ -186,14 +186,14 @@ async def test_dropping_chunks_in_the_middle_of_chain():
     def first(x):
         nonlocal first_func_called
         first_func_called = True
-        log(f'{yellow}Got:{reset} {x}, dropping')
-        return pyfca.omit_chunk
+        log(f'{yellow}drop all:{reset} {x} -> drop')
+        return pyfca.DropChunk
 
     second_func_called = False
     def second(x):
         nonlocal second_func_called
         second_func_called = True
-        log(f'{yellow}Got:{reset} {x}')
+        log(f'{yellow}never called:{reset} {x}')
         return x
 
     input_data = list(range(8))
