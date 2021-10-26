@@ -1,5 +1,5 @@
 import { getLogger } from "@scramjet/logger";
-import { APIExpose, APIRoute, Middleware } from "@scramjet/types";
+import { APIExpose, APIRoute } from "@scramjet/types";
 import { Server } from "http";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
@@ -17,6 +17,16 @@ export type ServerConfig = {
 export { cero, sequentialRouter };
 
 const logger = getLogger("ApiServer");
+
+function safeHandler<T extends unknown[]>(cb: (...args: T) => void) {
+    return async (...args: T) => {
+        try {
+            await cb(...args);
+        } catch (err) {
+            logger.error("Uncaught error in handler", err);
+        }
+    };
+}
 
 export function getRouter(): APIRoute {
     const router = sequentialRouter({});
@@ -73,17 +83,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
             return log.pause(); // if log is accessed then it should be read
         },
         use: (path, ...middlewares) => {
-            const middlewaresWithErrorsCaught = middlewares.map((cb) => {
-                return async (...args: Parameters<Middleware>) => {
-                    try {
-                        await cb(...args);
-                    } catch (err) {
-                        logger.error("Error in middleware", err);
-                    }
-                };
-            });
-
-            router.use(path, ...middlewaresWithErrorsCaught);
+            router.use(path, ...middlewares.map(safeHandler));
         }
     };
 }
