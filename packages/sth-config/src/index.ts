@@ -7,7 +7,7 @@ export function development() {
     return !PRODUCTION && DEVELOPMENT;
 }
 
-export async function config() {
+export function config() {
     return configService.getConfig();
 }
 

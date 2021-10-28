@@ -21,7 +21,8 @@ const configFileContents: STHConfiguration["docker"] = {
         image: "pre-runner-example-image",
         maxMem: 16
     },
-    exposePortsRange: [30000, 40000]
+    exposePortsRange: [30000, 40000],
+    hostIp: "0.0.0.0"
 };
 
 sinon.stub(fsPromises, "chmod").resolves();

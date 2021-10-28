@@ -13,7 +13,8 @@ const defaultConfig: STHConfiguration = {
             image: "",
             maxMem: 512
         },
-        exposePortsRange: [30000, 32767]
+        exposePortsRange: [30000, 32767],
+        hostIp: "0.0.0.0"
     },
     identifyExisting: false,
     host: {
@@ -38,7 +39,9 @@ class ConfigService {
         this.config = defaultConfig;
         this.updateImages();
 
-        if (config) merge(this.config, config);
+        if (config) {
+            merge(this.config, config);
+        }
     }
 
     updateImages() {
