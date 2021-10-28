@@ -43,7 +43,12 @@ async def async_identity(x):
 
 async def async_keep_even(x):
     await utils.mock_delay(x)
-    return x if x % 2 == 0 else pyfca.DropChunk
+    if x % 2 == 0:
+        log(f'{yellow}keep even:{reset} {x} -> {x}')
+        return x
+    else:
+        log(f'{yellow}keep even:{reset} {x} -> drop')
+        return pyfca.DropChunk
 
 
 
@@ -56,6 +61,8 @@ async def test_passthrough_by_default():
     for x in input_data:
         p.write(x)
     results = [await p.read() for _ in input_data]
+    for x in results:
+        log(f"Got: {x}")
     # Output should match the input exactly (both values and ordering).
     assert results == input_data
 
@@ -65,6 +72,8 @@ async def test_simple_transformation():
     for x in input_data:
         p.write(x)
     results = [await p.read() for _ in input_data]
+    for x in results:
+        log(f"Got: {x}")
     assert results == ['foo-a', 'foo-b', 'foo-c', 'foo-d', 'foo-e', 'foo-f']
 
 async def test_concurrent_processing():
@@ -75,9 +84,9 @@ async def test_concurrent_processing():
     async def transform(x):
         start = time.perf_counter()
         processing_items.append(x)
-        log(f'{yellow}start processing:{reset} {x}')
+        log(f'{yellow}processing start:{reset} {x}')
         await utils.mock_delay(x)
-        log(f'{yellow}finish processing:{reset} {x}')
+        log(f'{yellow}processing end:{reset} {x}')
         processing_times.append(time.perf_counter() - start)
         return x
 
@@ -221,7 +230,6 @@ async def test_drain_pending_when_limit_reached():
     input_data = copy.deepcopy(TEST_DATA_2)[:MAX_PARALLEL]
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
     writes = [p.write(x) for x in input_data]
-    print(writes[-1])
     assert writes[-1].done() == False
     [await p.read() for _ in input_data]
 
@@ -232,12 +240,12 @@ async def test_drain_resolved_when_drops_below_limit():
     for drain in writes[-3:]:
         assert drain.done() == False
     for _ in range(3):
-        print(await p.read())
+        await p.read()
     await asyncio.sleep(0)
     for drain in writes[-3:]:
         assert drain.done() == True
     for _ in range(3):
-        print(await p.read())
+        await p.read()
 
 
 # Ending tests
@@ -246,7 +254,9 @@ async def test_drain_resolved_when_drops_below_limit():
 async def test_reading_from_empty_ifca():
     p = pyfca.Pyfca(MAX_PARALLEL)
     p.end()
-    assert await p.read() == None
+    result = await p.read()
+    log(f"Got: {result}")
+    assert result == None
 
 async def test_end_with_pending_reads():
     N = MAX_PARALLEL*2
@@ -254,6 +264,7 @@ async def test_end_with_pending_reads():
     reads = [p.read() for _ in range(N)]
     p.end()
     results = await asyncio.gather(*reads)
+    log(f"Got: {results}")
     assert results == [None] * N
 
 async def test_write_after_end_errors():
@@ -263,6 +274,7 @@ async def test_write_after_end_errors():
     try:
         p.write('foo')
     except pyfca.WriteAfterEnd:
+        log('"WriteAfterEnd" raised')
         WriteAfterEnd_raised = True
     assert WriteAfterEnd_raised
 
@@ -273,6 +285,7 @@ async def test_multiple_ends_error():
     try:
         p.end()
     except pyfca.MultipleEnd:
+        log('"MultipleEnd" raised')
         multipleEnd_raised = True
     assert multipleEnd_raised
 

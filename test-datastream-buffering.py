@@ -4,10 +4,12 @@ import asyncio
 import os
 import time
 from ansi_color_codes import *
+import utils
 
+log = utils.LogWithTimer.log
 
 async def echo(x):
-    print(f"{yellow}Got:{reset} {repr(x)}")
+    log(f"{yellow}Processing:{reset} {repr(x)}")
     return x
 
 # test cases
@@ -54,7 +56,7 @@ async def test_reading_data_as_it_arrives():
         with open(path, 'w') as pipe:
             for chunk in data:
                 time.sleep(0.1)
-                print(f'Write into {repr(path)}:', repr(chunk))
+                log(f'{yellow}Write into{reset} {repr(path)}:', repr(chunk))
                 pipe.write(chunk)
                 pipe.flush()
 

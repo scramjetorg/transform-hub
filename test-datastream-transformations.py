@@ -2,6 +2,9 @@ from datastream import DataStream
 from pyfca import DropChunk
 import asyncio
 from ansi_color_codes import *
+import utils
+
+log = utils.LogWithTimer.log
 
 # transformations
 
@@ -14,7 +17,7 @@ async def async_square(x):
     return x**2
 
 async def echo(x):
-    print(f"{yellow}Processing:{reset} {repr(x)}")
+    log(f"{yellow}Processing:{reset} {repr(x)}")
     return x
 
 
@@ -23,7 +26,6 @@ async def echo(x):
 async def test_simple_filtering():
     stream = DataStream.from_iterable(range(12))
     result = await stream.filter(lambda x: x % 2 == 0).to_list()
-    print(result)
     assert result == [0, 2, 4, 6, 8, 10]
 
 async def test_simple_mapping():
