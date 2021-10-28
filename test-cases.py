@@ -26,7 +26,7 @@ def log_results(results):
 
 def log_drain_status(drain, item):
     log(f'Drain status: {blue}{drain.done()}{reset} '
-        f'{grey}(last write: {utils.chunk_id_or_value(item)}){reset}')
+        f'{grey}(last write: {utils.pprint_chunk(item)}){reset}')
 
 async def mock_delay(data):
     """Pretend that we run some async operations that take some time."""

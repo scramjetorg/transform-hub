@@ -52,13 +52,13 @@ class DataStream():
         return new_stream
 
     def map(self, func, *args):
-        async def func_wrapper(chunk):
+        async def run_mapper(chunk):
             result = func(chunk, *args)
             if asyncio.iscoroutine(result):
                 result = await result
             return result
         new_stream = DataStream(upstream=self)
-        new_stream.pyfca.add_transform(func_wrapper)
+        new_stream.pyfca.add_transform(run_mapper)
         return new_stream
 
     async def to_list(self):
@@ -73,7 +73,7 @@ class DataStream():
     async def to_file(self, out_file):
         self._uncork()
         with open(out_file, 'wb') as f:
-            x = await self.pyfca.read()
-            while x is not None:
-                f.write(x)
-                x = await self.pyfca.read()
+            chunk = await self.pyfca.read()
+            while chunk is not None:
+                f.write(chunk)
+                chunk = await self.pyfca.read()

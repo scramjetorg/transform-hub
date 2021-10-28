@@ -44,6 +44,10 @@ async def test_creating_stream_from_file_object():
         stream = DataStream.from_iterable(f)
         assert ['foo\n', 'bar baz\n', 'qux'] == await stream.to_list()
 
+async def test_creating_stream_from_file():
+    stream = DataStream.from_file('sample_text_1.txt')
+    assert [b'foo\nbar baz\nqux'] == await stream.to_list()
+
 
 # Main test execution loop
 
@@ -57,6 +61,7 @@ tests_to_run = [
     test_creating_stream_from_dict_items,
     test_creating_stream_from_generator,
     test_creating_stream_from_file_object,
+    test_creating_stream_from_file,
 ]
 
 for test in tests_to_run:

@@ -9,25 +9,35 @@ import random
 random.seed('Pyfca')
 MAX_DELAY = 0.3
 
+
+def print_trimmed(item, color=grey):
+    """For logging data that may be very long."""
+    if (type(item) is str or type(item) is bytes) and len(item) > 32:
+        result = f'{repr(item[:16])}..(length: {len(item)})'
+    else:
+        result = repr(item)
+    return f'{color}{result}{reset}' if color else result
+
+
+def pprint_chunk(item):
+    """Print only the essential part of the chunk. For debugging."""
+    if type(item) is dict and 'id' in item:
+        return f'chunk_id={item["id"]}'
+    else:
+        return f'<chunk: {print_trimmed(item, color=False)}>'
+
+
 def print_formatted(item):
-    """Pretty-print for debugging."""
+    """Pretty-print for debugging various object types."""
     if isinstance(item, asyncio.Future):
         if hasattr(item, 'chunk'):
             default_info = item.__str__()[1:-1]  # trim < >
-            return f'<{default_info} {chunk_id_or_value(item.chunk)}>'
+            return f'<{default_info} {pprint_chunk(item.chunk)}>'
         else:
             return item.__str__()
     else:  # most probably chunk
-        return f'{grey}{chunk_id_or_value(item)}{reset}'
+        return f'{grey}{pprint_chunk(item)}{reset}'
 
-def chunk_id_or_value(item):
-    """For uniform debugging various types of test data."""
-    if type(item) is dict and 'id' in item:
-        return f'chunk_id={item["id"]}'
-    elif hasattr(item, 'id'):
-        return f'chunk_id={item.id}'
-    else:
-        return f'<chunk: {repr(item)}>'
 
 async def mock_delay(data):
     """Pretend that we run some async operations that take some time."""
@@ -38,6 +48,7 @@ async def mock_delay(data):
         delay = random.uniform(0, MAX_DELAY)
     if delay:
         await asyncio.sleep(delay)
+
 
 class _LogWithTimer:
     """Simple logger with time counted from initialization -

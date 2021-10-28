@@ -35,10 +35,6 @@ TEST_DATA_2 = [
 
 # Transformation functions and utilities
 
-def prepend_foo(s):
-    log(f'{yellow}prepend foo:{reset} {s}')
-    return 'foo-' + s
-
 async def async_identity(x):
     log(f'{yellow}identity start:{reset} {x}')
     await utils.mock_delay(x)
