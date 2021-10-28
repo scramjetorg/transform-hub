@@ -7,7 +7,7 @@ import {
     ILifeCycleAdapterIdentify,
     Logger,
     RunnerConfig,
-    ContainerConfiguration
+    PreRunnerContainerConfiguration
 } from "@scramjet/types";
 import { rm } from "fs/promises";
 import { StringDecoder } from "string_decoder";
@@ -23,7 +23,7 @@ class LifecycleDockerAdapterSequence implements
     IComponent {
     private dockerHelper: IDockerHelper;
 
-    private prerunnerConfig?: ContainerConfiguration;
+    private prerunnerConfig?: PreRunnerContainerConfiguration;
 
     private resources: DockerAdapterResources = {};
 

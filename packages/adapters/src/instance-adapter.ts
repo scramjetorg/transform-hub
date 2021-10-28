@@ -1,7 +1,9 @@
-import { development, configService } from "@scramjet/sth-config";
+import { development } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
+    ContainerConfiguration,
+    ContainerConfigurationWithExposedPorts,
     DownstreamStreamsConfig,
     ExitCode,
     ICommunicationHandler,
@@ -11,7 +13,8 @@ import {
     Logger,
     MaybePromise,
     MonitoringMessageData,
-    RunnerConfig
+    RunnerConfig,
+    RunnerContainerConfiguration
 } from "@scramjet/types";
 import { exec } from "child_process";
 import { createReadStream, createWriteStream } from "fs";
@@ -119,18 +122,22 @@ IComponent {
         return createdDir;
     }
 
-    private async preparePortBindingsConfig(declaredPorts: string[], hostIp: string, exposed = false) {
+    private async preparePortBindingsConfig(
+        declaredPorts: string[],
+        containerConfig: ContainerConfiguration & ContainerConfigurationWithExposedPorts,
+        exposed = false) {
         if (declaredPorts.every(entry => (/^\d{3,5}\/(tcp|udp)$/).test(entry))) {
             const freePorts = exposed ? [] : await FreePortsFinder.getPorts(
-                declaredPorts.length, ...configService.getConfig().docker.exposePortsRange
+                declaredPorts.length, ...containerConfig.exposePortsRange
             );
 
             return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
                 if (entry) {
                     const { port, protocol } = entry.match(/^(?<port>\d{3,5})\/(?<protocol>(tcp|udp))$/)?.groups as { port: string, protocol: string };
 
-                    obj[`${port}/${protocol}`] = exposed ? {} : [{ HostIp: hostIp, HostPort: freePorts?.pop()?.toString() }];
+                    obj[`${port}/${protocol}`] = exposed ? {} : [{ HostIp: containerConfig.hostIp, HostPort: freePorts?.pop()?.toString() }];
                 }
+
                 return obj;
             }, {});
         }
@@ -138,12 +145,12 @@ IComponent {
         throw new SupervisorError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
     }
 
-    async getPortsConfig(ports: string[]): Promise<DockerAdapterRunPortsConfig> {
-        const { hostIp } = configService.getConfig().docker;
-
+    async getPortsConfig(
+        ports: string[], containerConfig: RunnerContainerConfiguration
+    ): Promise<DockerAdapterRunPortsConfig> {
         const [ExposedPorts, PortBindings] = await Promise.all([
-            this.preparePortBindingsConfig(ports, hostIp, true),
-            this.preparePortBindingsConfig(ports, hostIp, false)
+            this.preparePortBindingsConfig(ports, containerConfig, true),
+            this.preparePortBindingsConfig(ports, containerConfig, false)
         ]);
 
         return { ExposedPorts, PortBindings };
@@ -216,7 +223,7 @@ IComponent {
                 "input.fifo",
                 "output.fifo"
             ),
-            config.config?.ports ? this.getPortsConfig(config.config.ports) : undefined,
+            config.config?.ports ? this.getPortsConfig(config.config.ports, config.container) : undefined,
         ]);
 
         this.logger.info("Instance preparation done.");
