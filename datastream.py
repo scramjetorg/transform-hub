@@ -24,7 +24,7 @@ class DataStream():
         self.ready_to_start.set_result(True)
         log(self, f'{green}uncorked{reset}')
         if self.upstream:
-            log(self, f'uncorking upstream: {self.upstream}')
+            log(self, f'uncorking upstream: {self.upstream.name}')
             self.upstream._uncork()
 
     @staticmethod
@@ -64,6 +64,28 @@ class DataStream():
         asyncio.create_task(consume())
         log(stream, f'source: {repr(in_file)}')
         return stream
+
+    def flatmap(self, func, *args):
+        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+fm')
+        async def consume():
+            self._uncork()
+            while True:
+                chunk = await self.pyfca.read()
+                log(self, f'got: {tr(chunk)}')
+                if chunk is None:
+                    break
+                results = func(chunk, *args)
+                if asyncio.iscoroutine(results):
+                    results = await results
+                log(self, f'{cyan}split:{reset} -> {repr(results)}')
+                for item in results:
+                    log(new_stream, f'put: {tr(item)}')
+                    await new_stream.pyfca.write(item)
+                    log(new_stream, f'{blue}drained{reset}')
+            log(new_stream, f'ending pyfca {new_stream.pyfca}')
+            new_stream.pyfca.end()
+        asyncio.create_task(consume())
+        return new_stream
 
     def filter(self, func, *args):
         new_stream = DataStream(upstream=self, name=f'{self.name}+f')
