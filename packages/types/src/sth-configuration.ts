@@ -9,6 +9,21 @@ export type ContainerConfiguration = {
     maxMem: number;
 }
 
+export type ContainerConfigurationWithExposedPorts = {
+    /**
+     * Host IP address that the container's port is mapped to.
+     */
+    hostIp: string;
+
+    /**
+    * Host port number that the container's port is mapped to.
+    */
+    exposePortsRange: [number, number]
+}
+
+export type PreRunnerContainerConfiguration = ContainerConfiguration;
+export type RunnerContainerConfiguration = ContainerConfiguration & ContainerConfigurationWithExposedPorts;
+
 export type HostConfig = {
     /**
      * Hostname.
@@ -48,10 +63,8 @@ export type STHConfiguration = {
      * Docker related configuration.
      */
     docker: {
-        prerunner: ContainerConfiguration,
-        runner: ContainerConfiguration,
-        exposePortsRange: [number, number],
-        hostIp: string,
+        prerunner: PreRunnerContainerConfiguration,
+        runner: RunnerContainerConfiguration,
     },
 
     /**

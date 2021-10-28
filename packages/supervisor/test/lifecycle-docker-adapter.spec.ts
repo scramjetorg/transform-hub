@@ -15,14 +15,14 @@ const sandbox = sinon.createSandbox();
 const configFileContents: STHConfiguration["docker"] = {
     runner: {
         image: "runner-example-image",
-        maxMem: 512
+        maxMem: 512,
+        exposePortsRange: [30000, 40000],
+        hostIp: "0.0.0.0"
     },
     prerunner: {
         image: "pre-runner-example-image",
         maxMem: 16
-    },
-    exposePortsRange: [30000, 40000],
-    hostIp: "0.0.0.0"
+    }
 };
 
 sinon.stub(fsPromises, "chmod").resolves();
@@ -110,7 +110,7 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
     const config: RunnerConfig = {
         name: "abc",
-        container: { image: "image", maxMem: 2 },
+        container: { image: "image", maxMem: 2, exposePortsRange: [30000, 40000], hostIp: "0.0.0.0" },
         version: "",
         engines: {
             [""]: ""

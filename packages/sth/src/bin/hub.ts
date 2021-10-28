@@ -18,6 +18,7 @@ const options = program
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
+    .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .parse(process.argv)
     .opts()
 ;
@@ -31,7 +32,8 @@ configService.update({
         },
         runner: {
             image: options.runnerImage,
-            maxMem: options.runnerMaxMem
+            maxMem: options.runnerMaxMem,
+            hostIp: options.exposeHostIp
         }
     },
     host: {
