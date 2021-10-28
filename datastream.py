@@ -136,3 +136,22 @@ class DataStream():
                 log(self, f'got: {tr(chunk)}')
                 f.write(chunk)
                 chunk = await self.pyfca.read()
+
+    async def reduce(self, func, initial=None):
+        self._uncork()
+        if initial is None:
+            accumulator = await self.pyfca.read()
+            log(self, f'got: {tr(accumulator)}')
+        else:
+            accumulator = initial
+            log(self, f'reducer: initialized accumulator with {initial}')
+        while True:
+            chunk = await self.pyfca.read()
+            log(self, f'got: {tr(chunk)}')
+            if chunk is None:
+                break
+            accumulator = func(accumulator, chunk)
+            if asyncio.iscoroutine(accumulator):
+                accumulator = await accumulator
+            log(self, f'reduce - intermediate result: {accumulator}')
+        return accumulator
