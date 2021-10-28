@@ -4,32 +4,15 @@ import asyncio
 import os
 import time
 from ansi_color_codes import *
+import utils
 
+log = utils.LogWithTimer.log
 
 async def echo(x):
-    print(f"{yellow}Got:{reset} {repr(x)}")
+    log(f"{yellow}Processing:{reset} {repr(x)}")
     return x
 
 # test cases
-
-# this doesn't deal with buffering, but is here for comparison
-async def test_transformations_on_data_from_file_object():
-    with open("sample_numbers_1.txt") as f:
-        stream = DataStream.from_iterable(f, max_parallel=4)
-        result = await (
-            stream
-                .map(echo)
-                .map(lambda s: int(s.strip()))
-                .filter(lambda x: x % 2 == 0)
-                .map(lambda x: x**2)
-                .map(lambda x: str(x))
-                .to_list()
-        )
-        assert result == ['64', '196', '400', '256']
-
-async def test_reading_from_file():
-    stream = DataStream.from_file('sample_text_1.txt').map(echo)
-    assert [b'foo\nbar baz\nqux'] == await stream.to_list()
 
 async def test_reading_and_writing_to_file():
     await DataStream.from_file('sample_text_1.txt').to_file('test_output')
@@ -73,7 +56,7 @@ async def test_reading_data_as_it_arrives():
         with open(path, 'w') as pipe:
             for chunk in data:
                 time.sleep(0.1)
-                print(f'Write into {repr(path)}:', repr(chunk))
+                log(f'{yellow}Write into{reset} {repr(path)}:', repr(chunk))
                 pipe.write(chunk)
                 pipe.flush()
 
@@ -90,8 +73,6 @@ async def test_reading_data_as_it_arrives():
 # Main test execution loop
 
 tests_to_run = [
-    test_transformations_on_data_from_file_object,
-    test_reading_from_file,
     test_reading_and_writing_to_file,
     test_reading_text_with_newlines,
     test_reading_large_file_in_default_chunks,

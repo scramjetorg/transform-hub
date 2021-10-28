@@ -14,7 +14,7 @@ fmt = utils.print_formatted
 random.seed('Pyfca')
 
 # Use to change delays mocking async function execution
-SLOMO_FACTOR = float(sys.argv[1]) if len(sys.argv) > 1 else 1
+SLOMO_FACTOR = float(sys.argv[1]) if len(sys.argv) > 1 else 0.01
 MAX_DELAY = 0.3
 
 
@@ -26,7 +26,7 @@ def log_results(results):
 
 def log_drain_status(drain, item):
     log(f'Drain status: {blue}{drain.done()}{reset} '
-        f'{grey}(last write: {utils.chunk_id_or_value(item)}){reset}')
+        f'{grey}(last write: {utils.pprint_chunk(item)}){reset}')
 
 async def mock_delay(data):
     """Pretend that we run some async operations that take some time."""
@@ -56,7 +56,7 @@ def transform_dict_or_num(description, data, function):
     if type(data) is dict and 'value' in data:
         data['value'] = function(data['value'])
         # dropping value means dropping the whole chunk
-        result = data if data['value'] is not pyfca.omit_chunk else pyfca.omit_chunk
+        result = data if data['value'] is not pyfca.DropChunk else pyfca.DropChunk
     else:
         result = function(data)
     log(f'{yellow}{description}:{reset} -> {result}')
@@ -77,7 +77,7 @@ async def async_double(x):
     return double(x)
 
 def keep_even(x):
-    func = lambda x: x if x % 2 == 0 else pyfca.omit_chunk
+    func = lambda x: x if x % 2 == 0 else pyfca.DropChunk
     return transform_dict_or_num('keep_even', x, func)
 
 async def async_keep_even(x):

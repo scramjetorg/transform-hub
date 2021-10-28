@@ -1,7 +1,10 @@
 from datastream import DataStream
-from pyfca import omit_chunk
+from pyfca import DropChunk
 import asyncio
 from ansi_color_codes import *
+import utils
+
+log = utils.LogWithTimer.log
 
 # transformations
 
@@ -13,9 +16,9 @@ async def async_square(x):
     await asyncio.sleep((x%5)/10)
     return x**2
 
-def filtering_map(x):
-    # map and filter elements in one step
-    return omit_chunk if x % 3 == 0 else x*2
+async def echo(x):
+    log(f"{yellow}Processing:{reset} {repr(x)}")
+    return x
 
 
 # test cases
@@ -23,7 +26,6 @@ def filtering_map(x):
 async def test_simple_filtering():
     stream = DataStream.from_iterable(range(12))
     result = await stream.filter(lambda x: x % 2 == 0).to_list()
-    print(result)
     assert result == [0, 2, 4, 6, 8, 10]
 
 async def test_simple_mapping():
@@ -78,6 +80,9 @@ async def test_map_creates_new_stream_instance():
 async def test_filtering_in_map_transformation():
     stream = DataStream.from_iterable(range(8), max_parallel=4)
     # It should be possible to do filteing and mapping in one step.
+    def filtering_map(x):
+        # map and filter elements in one step
+        return DropChunk if x % 3 == 0 else x*2
     result = await stream.map(filtering_map).to_list()
     assert result == [2, 4, 8, 10, 14]
 
@@ -86,6 +91,20 @@ async def test_variadic_args():
     # pow requires 2 arguments - base (chunk) and exponent (set to 2)
     result = await stream.map(pow, 2).to_list()
     assert result == [0, 1, 4, 9, 16, 25, 36, 49]
+
+async def test_transformations_on_data_from_file_object():
+    with open("sample_numbers_1.txt") as f:
+        stream = DataStream.from_iterable(f, max_parallel=4)
+        result = await (
+            stream
+                .map(echo)
+                .map(lambda s: int(s.strip()))
+                .filter(lambda x: x % 2 == 0)
+                .map(lambda x: x**2)
+                .map(lambda x: str(x))
+                .to_list()
+        )
+        assert result == ['64', '196', '400', '256']
 
 
 # Main test execution loop
@@ -100,6 +119,7 @@ tests_to_run = [
     test_map_creates_new_stream_instance,
     test_filtering_in_map_transformation,
     test_variadic_args,
+    test_transformations_on_data_from_file_object,
 ]
 
 for test in tests_to_run:
