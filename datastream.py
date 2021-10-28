@@ -101,6 +101,36 @@ class DataStream():
         new_stream.pyfca.add_transform(run_filter)
         return new_stream
 
+    def sequence(self, sequencer, initialPartial=None):
+        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+s')
+        async def consume():
+            self._uncork()
+            partial = initialPartial
+
+            while True:
+                chunk = await self.pyfca.read()
+                log(self, f'got: {tr(chunk)}')
+                if chunk is None:
+                    break
+                chunks = sequencer(partial, chunk)
+                if asyncio.iscoroutine(chunks):
+                    chunks = await chunks
+                log(new_stream, f'{blue}{len(chunks)} chunks:{reset} {chunks}')
+                for chunk in chunks[:-1]:
+                    log(new_stream, f'put: {tr(chunk)}')
+                    await new_stream.pyfca.write(chunk)
+                log(new_stream, f'carrying over partial result: {tr(chunks[-1])}')
+                partial = chunks[-1]
+
+            log(new_stream, f'leftover: {tr(partial)}')
+            if partial:
+                log(new_stream, f'put: {tr(partial)}')
+                await new_stream.pyfca.write(partial)
+            log(new_stream, f'ending pyfca {new_stream.pyfca}')
+            new_stream.pyfca.end()
+        asyncio.create_task(consume())
+        return new_stream
+
     def map(self, func, *args):
         new_stream = DataStream(upstream=self, name=f'{self.name}+m')
         async def run_mapper(chunk):
