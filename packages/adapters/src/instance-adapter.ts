@@ -1,4 +1,4 @@
-import { development, config as sthConfig } from "@scramjet/sth-config";
+import { development, configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -119,15 +119,18 @@ IComponent {
         return createdDir;
     }
 
-    private async preparePortBindingsConfig(declaredPorts: string[], exposed = false) {
-        if (declaredPorts.every(entry => (/^[0-9]{3,5}\/(tcp|udp)$/).test(entry))) {
+    private async preparePortBindingsConfig(declaredPorts: string[], hostIp: string, exposed = false) {
+        if (declaredPorts.every(entry => (/^\d{3,5}\/(tcp|udp)$/).test(entry))) {
             const freePorts = exposed ? [] : await FreePortsFinder.getPorts(
-                declaredPorts.length, ...(await sthConfig()).docker.exposePortsRange
+                declaredPorts.length, ...configService.getConfig().docker.exposePortsRange
             );
 
             return declaredPorts.reduce((obj: { [ key: string ]: any }, entry: string) => {
-                obj[entry] = exposed ? {} : [{ HostPort: freePorts?.pop()?.toString() }];
+                if (entry) {
+                    const { port, protocol } = entry.match(/^(?<port>\d{3,5})\/(?<protocol>(tcp|udp))$/)?.groups as { port: string, protocol: string };
 
+                    obj[`${port}/${protocol}`] = exposed ? {} : [{ HostIp: hostIp, HostPort: freePorts?.pop()?.toString() }];
+                }
                 return obj;
             }, {});
         }
@@ -136,9 +139,11 @@ IComponent {
     }
 
     async getPortsConfig(ports: string[]): Promise<DockerAdapterRunPortsConfig> {
+        const { hostIp } = configService.getConfig().docker;
+
         const [ExposedPorts, PortBindings] = await Promise.all([
-            this.preparePortBindingsConfig(ports, true),
-            this.preparePortBindingsConfig(ports, false)
+            this.preparePortBindingsConfig(ports, hostIp, true),
+            this.preparePortBindingsConfig(ports, hostIp, false)
         ]);
 
         return { ExposedPorts, PortBindings };
