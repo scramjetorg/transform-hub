@@ -385,16 +385,16 @@ export class CSIController extends EventEmitter {
         };
     }
 
-    getOutputStream(): ReadableStream<any> | void {
-        return this.upStreams?.[CC.OUT];
+    getOutputStream(): ReadableStream<any> {
+        return this.upStreams![CC.OUT];
     }
 
-    getInputStream(): WritableStream<any> | void {
-        return this.downStreams?.[CC.IN];
+    getInputStream(): WritableStream<any> {
+        return this.downStreams![CC.IN];
     }
 
-    getLogStream(): Readable | void {
-        return this.upStreams?.[CC.LOG];
+    getLogStream(): Readable {
+        return this.upStreams![CC.LOG];
     }
 
     async confirmInputHook(): Promise<void> {

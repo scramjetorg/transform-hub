@@ -7,14 +7,14 @@ const defaultConfig: STHConfiguration = {
     docker: {
         prerunner: {
             image: "",
-            maxMem: 128
+            maxMem: 128,
         },
         runner: {
             image: "",
-            maxMem: 512
+            maxMem: 512,
+            exposePortsRange: [30000, 32767],
+            hostIp: "0.0.0.0"
         },
-        exposePortsRange: [30000, 32767],
-        hostIp: "0.0.0.0"
     },
     identifyExisting: false,
     host: {
