@@ -23,7 +23,7 @@ import { configService } from "@scramjet/sth-config";
 import { constants } from "fs";
 import { loadCheck } from "@scramjet/load-check";
 
-const version = findPackage().next().value?.version || "unknown";
+const version = findPackage(__dirname).next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
 
 export type HostOptions = Partial<{
