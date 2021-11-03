@@ -115,6 +115,34 @@ class DataStream():
         new_stream.pyfca.add_transform(run_mapper)
         return new_stream
 
+    def batch(self, func, *args):
+        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+b')
+        async def consume():
+            self._uncork()
+            batch = []
+
+            while True:
+                chunk = await self.pyfca.read()
+                log(self, f'got: {tr(chunk)}')
+                if chunk is None:
+                    break
+                batch.append(chunk)
+                if args:
+                    log(new_stream, f'calling {func} with args: {chunk, *args}')
+                if func(chunk, *args):
+                    log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
+                    await new_stream.pyfca.write(batch)
+                    batch = []
+
+            if len(batch):
+                log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
+                await new_stream.pyfca.write(batch)
+
+            log(new_stream, f'ending pyfca {new_stream.pyfca}')
+            new_stream.pyfca.end()
+        asyncio.create_task(consume())
+        return new_stream
+
     async def to_list(self):
         self._uncork()
         result = []
