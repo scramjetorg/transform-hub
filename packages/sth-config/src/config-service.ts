@@ -29,7 +29,8 @@ const defaultConfig: STHConfiguration = {
         cpuLoad: 10,
         freeSpace: 128
     },
-    safeOperationLimit: 512
+    safeOperationLimit: 512,
+    instanceAdapterExitDelay: 9000
 };
 
 class ConfigService {

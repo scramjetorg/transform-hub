@@ -3,8 +3,9 @@ export type ContainerConfiguration = {
      * Docker image to use.
      */
     image: string;
+
     /**
-     * Maximum memory container can allocate (megabytes)
+     * Maximum memory container can allocate (megabytes).
      */
     maxMem: number;
 }
@@ -21,9 +22,19 @@ export type ContainerConfigurationWithExposedPorts = {
     exposePortsRange: [number, number]
 }
 
+/**
+ * PreRunner container configuraion.
+ */
 export type PreRunnerContainerConfiguration = ContainerConfiguration;
+
+/**
+ * Runner container configuration.
+ */
 export type RunnerContainerConfiguration = ContainerConfiguration & ContainerConfigurationWithExposedPorts;
 
+/**
+ * Host process configuration.
+ */
 export type HostConfig = {
     /**
      * Hostname.
@@ -57,13 +68,23 @@ export type HostConfig = {
 }
 
 export type STHConfiguration = {
+    /**
+     * CPM url.
+     */
     cpmUrl: string;
 
     /**
      * Docker related configuration.
      */
     docker: {
+        /**
+         * PreRunner container configuration.
+         */
         prerunner: PreRunnerContainerConfiguration,
+
+        /**
+         * Runner container configuration.
+         */
         runner: RunnerContainerConfiguration,
     },
 
@@ -72,15 +93,20 @@ export type STHConfiguration = {
      */
     host: HostConfig;
 
+    /**
+     * Minimum requirements to start new instance.
+     */
     instanceRequirements: {
         /**
          * Free memory required to start instance. In megabytes.
          */
         freeMem: number;
+
         /**
          * Required free CPU. In percentage.
          */
         cpuLoad: number;
+
         /**
          * Free disk space required to start instance. In megabytes.
          */
@@ -93,7 +119,13 @@ export type STHConfiguration = {
     safeOperationLimit: number;
 
     /**
-     * Should we identify existing sequences
+     * Should we identify existing sequences.
      */
     identifyExisting: boolean;
+
+    /**
+     * Time to wait after Runner container exit.
+     * In this additional time instance API is still available.
+     */
+    instanceAdapterExitDelay: number;
 }
