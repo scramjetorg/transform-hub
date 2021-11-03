@@ -1,4 +1,4 @@
-import { development } from "@scramjet/sth-config";
+import { development, configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -293,7 +293,7 @@ IComponent {
 
             this.logger.log("Container exited.");
 
-            await defer(10000);
+            await defer(configService.getConfig().instanceAdapterExitDelay);
 
             if (statusCode > 0) {
                 throw new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode });
@@ -331,13 +331,13 @@ IComponent {
 
     // returns url identifier of made snapshot
     // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     snapshot(): MaybePromise<string> {
+        /** ignore */
     }
 
     // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    monitorRate(rps: number): this {
+    monitorRate(_rps: number): this {
+        /** ignore */
     }
 
     async remove() {
