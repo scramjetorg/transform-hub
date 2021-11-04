@@ -1,3 +1,5 @@
+import * as STHRestAPI from "./sth-rest-api";
+
 export * from "./api-expose";
 export * from "./error-codes";
 export * from "./app-config";
@@ -22,3 +24,4 @@ export * from "./load-check-stat";
 export * from "./network-info";
 export * from "./instance-store";
 
+export { STHRestAPI };
