@@ -222,7 +222,7 @@ export class Host implements IComponent {
         return next();
     }
 
-    async handleDeleteSequence(req: ParsedMessage) {
+    async handleDeleteSequence(req: ParsedMessage): Promise<STHRestAPI.DeleteSequenceResponse> {
         const id = req.params?.id;
 
         this.logger.log("Deleting sequence...", id);
