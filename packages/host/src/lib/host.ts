@@ -1,6 +1,6 @@
 import * as findPackage from "find-package-json";
 
-import { APIExpose, AppConfig, IComponent, ISequence, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, ISequence, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -443,7 +443,7 @@ export class Host implements IComponent {
         }));
     }
 
-    getSequence(id: string) {
+    getSequence(id: string): STHRestAPI.GetSequenceResponse {
         if (!this.sequencesStore.getById(id)) {
             throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
         }
