@@ -1,7 +1,7 @@
 import { Readable } from "stream";
 import { ClientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
-import { ClientProvider } from "./types";
+import { ClientProvider, Response } from "./types";
 
 export class HostClient implements ClientProvider {
     apiBase: string;
@@ -35,7 +35,7 @@ export class HostClient implements ClientProvider {
         return this.client.get(`sequence/${sequenceId}`);
     }
 
-    async deleteSequence(sequenceId: string) {
+    async deleteSequence(sequenceId: string): Promise<Response> {
         const response = await this.client.delete(`sequence/${sequenceId}`);
 
         return {

@@ -4,12 +4,12 @@ import { ClientError } from "../client-error";
 
 export type Response = {
     data?: { [key: string]: any };
-    status: number | undefined;
+    status: number;
 };
 
 export type ResponseStream = {
     data?: NodeJS.ReadableStream;
-    status: number | undefined;
+    status: number;
 };
 
 export type SendStreamOptions = Partial<{

@@ -14,7 +14,7 @@ const defaultConfig = {
  * @returns defaultConfig
  */
 type Config = typeof defaultConfig;
-const location = resolve(homedir(), ".scramjetrc");
+const location = resolve(homedir(), ".scramjet_sth_cli_rc");
 
 let currentConfig: Config;
 
