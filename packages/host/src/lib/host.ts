@@ -259,7 +259,7 @@ export class Host implements IComponent {
         }
     }
 
-    async handleNewSequence(stream: IncomingMessage) {
+    async handleNewSequence(stream: IncomingMessage): Promise<STHRestAPI.SendSequenceResponse> {
         this.logger.info("New sequence incoming...");
 
         const id = IDProvider.generate();
