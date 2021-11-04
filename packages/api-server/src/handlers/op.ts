@@ -82,8 +82,6 @@ export function createOperationHandler(router: SequentialCeroRouter) {
                             { "content-type": "application/json" }
                         );
 
-                        delete result.opStatus;
-
                         if (Object.keys(result).length) {
                             response = JSON.stringify(result);
                         }
