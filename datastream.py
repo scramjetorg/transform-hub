@@ -24,7 +24,7 @@ class DataStream():
         self.ready_to_start.set_result(True)
         log(self, f'{green}uncorked{reset}')
         if self.upstream:
-            log(self, f'uncorking upstream: {self.upstream}')
+            log(self, f'uncorking upstream: {self.upstream.name}')
             self.upstream._uncork()
 
     @staticmethod
@@ -65,6 +65,28 @@ class DataStream():
         log(stream, f'source: {repr(in_file)}')
         return stream
 
+    def flatmap(self, func, *args):
+        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+fm')
+        async def consume():
+            self._uncork()
+            while True:
+                chunk = await self.pyfca.read()
+                log(self, f'got: {tr(chunk)}')
+                if chunk is None:
+                    break
+                results = func(chunk, *args)
+                if asyncio.iscoroutine(results):
+                    results = await results
+                log(self, f'{cyan}split:{reset} -> {repr(results)}')
+                for item in results:
+                    log(new_stream, f'put: {tr(item)}')
+                    await new_stream.pyfca.write(item)
+                    log(new_stream, f'{blue}drained{reset}')
+            log(new_stream, f'ending pyfca {new_stream.pyfca}')
+            new_stream.pyfca.end()
+        asyncio.create_task(consume())
+        return new_stream
+
     def filter(self, func, *args):
         new_stream = DataStream(upstream=self, name=f'{self.name}+f')
         async def run_filter(chunk):
@@ -93,6 +115,34 @@ class DataStream():
         new_stream.pyfca.add_transform(run_mapper)
         return new_stream
 
+    def batch(self, func, *args):
+        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+b')
+        async def consume():
+            self._uncork()
+            batch = []
+
+            while True:
+                chunk = await self.pyfca.read()
+                log(self, f'got: {tr(chunk)}')
+                if chunk is None:
+                    break
+                batch.append(chunk)
+                if args:
+                    log(new_stream, f'calling {func} with args: {chunk, *args}')
+                if func(chunk, *args):
+                    log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
+                    await new_stream.pyfca.write(batch)
+                    batch = []
+
+            if len(batch):
+                log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
+                await new_stream.pyfca.write(batch)
+
+            log(new_stream, f'ending pyfca {new_stream.pyfca}')
+            new_stream.pyfca.end()
+        asyncio.create_task(consume())
+        return new_stream
+
     async def to_list(self):
         self._uncork()
         result = []
@@ -114,3 +164,22 @@ class DataStream():
                 log(self, f'got: {tr(chunk)}')
                 f.write(chunk)
                 chunk = await self.pyfca.read()
+
+    async def reduce(self, func, initial=None):
+        self._uncork()
+        if initial is None:
+            accumulator = await self.pyfca.read()
+            log(self, f'got: {tr(accumulator)}')
+        else:
+            accumulator = initial
+            log(self, f'reducer: initialized accumulator with {initial}')
+        while True:
+            chunk = await self.pyfca.read()
+            log(self, f'got: {tr(chunk)}')
+            if chunk is None:
+                break
+            accumulator = func(accumulator, chunk)
+            if asyncio.iscoroutine(accumulator):
+                accumulator = await accumulator
+            log(self, f'reduce - intermediate result: {accumulator}')
+        return accumulator
