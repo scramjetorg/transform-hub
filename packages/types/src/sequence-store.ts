@@ -13,7 +13,7 @@ import { RunnerConfig } from "./runner-config";
  * Question: this should probably moved to @scramjet/model, right?
  *
  */
-export interface Sequence {
+export type Sequence = {
     id: string,
     config: RunnerConfig,
     instances: string[]

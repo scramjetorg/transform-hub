@@ -1,6 +1,6 @@
 import { AppConfig } from "./app-config";
 
-export interface Instance {
+export type Instance = {
     id: string,
     appConfig?: AppConfig,
     sequenceArgs?: any[],
