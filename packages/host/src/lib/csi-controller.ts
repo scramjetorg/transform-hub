@@ -4,7 +4,6 @@ import {
     DownstreamStreamsConfig,
     EventMessageData,
     ExitCode,
-    FunctionDefinition,
     HandshakeAcknowledgeMessage,
     ICommunicationHandler,
     InstanceConfigMessage,
@@ -12,6 +11,7 @@ import {
     ParsedMessage,
     PassThroughStreamsConfig,
     ReadableStream,
+    Sequence,
     WritableStream
 } from "@scramjet/types";
 import {
@@ -28,7 +28,6 @@ import { configService, development } from "@scramjet/sth-config";
 
 import { DataStream } from "scramjet";
 import { EventEmitter } from "events";
-import { Sequence } from "./sequence";
 import { ServerResponse } from "http";
 import { getLogger } from "@scramjet/logger";
 import { getRouter } from "@scramjet/api-server";
@@ -40,7 +39,6 @@ export class CSIController extends EventEmitter {
     appConfig: AppConfig;
     superVisorProcess?: ChildProcess;
     sequenceArgs: Array<any> | undefined;
-    status?: FunctionDefinition[];
     controlDataStream?: DataStream;
     router?: APIRoute;
     info: {

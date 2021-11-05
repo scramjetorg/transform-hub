@@ -1,10 +1,8 @@
 import { CPMMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { ISequence } from "../sequence-store";
 
 export type SequenceMessageData = {
-
-    sequence: ISequence,
-    status: SequenceMessageCode;
+    id: string,
+    status: SequenceMessageCode
 }
 
 export type SequenceMessage = { msgCode: CPMMessageCode.SEQUENCE } & SequenceMessageData;
