@@ -22,13 +22,13 @@ export class SequenceStore implements ISequenceStore {
     instancesStore = InstanceStore;
 
     private logger = getLogger(this);
-    private sequences: { [key: string]: Sequence } = {}
+    private sequences: Partial<Record<string, Sequence>> = {}
 
     getSequences(): ISequence[] {
-        return Object.values(this.sequences);
+        return Object.values(this.sequences) as ISequence[];
     }
 
-    getById(key: string): ISequence {
+    getById(key: string): ISequence | undefined {
         return this.sequences[key];
     }
 
@@ -64,7 +64,7 @@ export class SequenceStore implements ISequenceStore {
             };
         }
 
-        const volumeId = this.sequences[sequenceId].config.packageVolumeId;
+        const volumeId = sequence.config.packageVolumeId;
 
         try {
             this.logger.log("Removing volume...", volumeId);
@@ -91,7 +91,7 @@ export class SequenceStore implements ISequenceStore {
 
     close() {
         return Promise.all(
-            Object.values(this.sequences).map(seq => {
+            this.getSequences().map(seq => {
                 return this.delete(seq.id);
             })
         );
