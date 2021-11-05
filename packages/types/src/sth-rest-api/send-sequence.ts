@@ -1,6 +1,3 @@
-// @TODO this type should allow for differentiating easily between success and error
-// like { type: 'success', payload: { id: string } } | { type: 'error', code: number, message: string }
+import { OpResponse } from "./common";
 
-export type SendSequenceResponse =
-| { id: string }
-| { opStatus: number, error: unknown }
+export type SendSequenceResponse = OpResponse<{ id: string }>
