@@ -314,11 +314,14 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_STARTED);
 
             return {
+                opStatus: ReasonPhrases.OK,
                 id: csic.id
             };
         }
 
-        return undefined;
+        return {
+            opStatus: ReasonPhrases.NOT_FOUND
+        };
     }
 
     async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
