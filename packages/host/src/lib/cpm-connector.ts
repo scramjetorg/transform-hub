@@ -3,7 +3,7 @@ import * as fs from "fs";
 import { Agent, ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, EventEmitter, Readable } from "stream";
-import { EncodedControlMessage, FunctionDefinition, IInstance, ISequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
+import { EncodedControlMessage, Instance, Sequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
 
 import { MessageUtilities } from "@scramjet/model";
 import { Socket } from "net";
@@ -244,7 +244,7 @@ export class CPMConnector extends EventEmitter {
         };
     }
 
-    async sendSequencesInfo(sequences: ISequence[]): Promise<void> {
+    async sendSequencesInfo(sequences: Sequence[]): Promise<void> {
         this.logger.log("Sending sequences information, total sequences:", sequences.length);
 
         await this.communicationStream!.whenWrote(
@@ -254,11 +254,7 @@ export class CPMConnector extends EventEmitter {
         this.logger.log("Sequences information sent.");
     }
 
-    async sendInstancesInfo(instances: {
-        id: string;
-        sequence: string;
-        status: FunctionDefinition[] | undefined;
-    }[]): Promise<void> {
+    async sendInstancesInfo(instances: Instance[]): Promise<void> {
         this.logger.log("Sending instances information...");
 
         await this.communicationStream?.whenWrote(
@@ -268,15 +264,15 @@ export class CPMConnector extends EventEmitter {
         this.logger.log("Instances information sent.");
     }
 
-    async sendSequenceInfo(sequence: Partial<ISequence>, seqStatus: SequenceMessageCode): Promise<void> {
-        this.logger.log("Send sequence status update", sequence.id, seqStatus);
+    async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode): Promise<void> {
+        this.logger.log("Send sequence status update", sequenceId, seqStatus);
 
         await this.communicationStream?.whenWrote(
-            JSON.stringify([CPMMessageCode.SEQUENCE, { ...sequence, status: seqStatus }]) + "\n"
+            JSON.stringify([CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus }]) + "\n"
         );
     }
 
-    async sendInstanceInfo(instance: IInstance, instanceStatus: InstanceMessageCode): Promise<void> {
+    async sendInstanceInfo(instance: Instance, instanceStatus: InstanceMessageCode): Promise<void> {
         this.logger.log("Send instance status update", instanceStatus);
 
         await this.communicationStream?.whenWrote(

@@ -27,7 +27,7 @@ export type FunctionDefinition = {
      */
     name?: string;
     /**
-     * Addtional description of the function
+     * Additional description of the function
      */
     description?: string;
     /**

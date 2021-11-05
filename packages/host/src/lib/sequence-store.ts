@@ -1,9 +1,8 @@
 import { DockerodeDockerHelper } from "@scramjet/adapters";
 import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
-import { ISequence, ISequenceStore, STHRestAPI } from "@scramjet/types";
+import { Sequence, ISequenceStore, STHRestAPI } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
-import { Sequence } from "./sequence";
 import { InstanceStore } from "./instance-store";
 
 /**
@@ -24,15 +23,15 @@ export class SequenceStore implements ISequenceStore {
     private logger = getLogger(this);
     private sequences: Partial<Record<string, Sequence>> = {}
 
-    getSequences(): ISequence[] {
-        return Object.values(this.sequences) as ISequence[];
+    getSequences(): Sequence[] {
+        return Object.values(this.sequences) as Sequence[];
     }
 
-    getById(key: string): ISequence | undefined {
+    getById(key: string): Sequence | undefined {
         return this.sequences[key];
     }
 
-    add(sequence: ISequence) {
+    add(sequence: Sequence) {
         if (sequence) {
             this.sequences[sequence.id] = sequence;
         }
