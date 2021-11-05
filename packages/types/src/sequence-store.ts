@@ -22,7 +22,7 @@ export interface ISequence {
 
 export interface ISequenceStore {
     getSequences(): ISequence[];
-    getById(id: string): ISequence;
+    getById(id: string): ISequence | undefined;
     add(sequence: ISequence): void;
     delete(id: string): void;
 }

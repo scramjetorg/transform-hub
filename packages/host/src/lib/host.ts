@@ -459,6 +459,7 @@ export class Host implements IComponent {
     }
 
     getSequenceInstances(sequenceId: string) {
-        return this.sequencesStore.getById(sequenceId).instances;
+        // @TODO this should probably return error response when there's not corresponding Sequence
+        return this.sequencesStore.getById(sequenceId)?.instances;
     }
 }
