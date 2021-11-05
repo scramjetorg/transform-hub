@@ -1,11 +1,3 @@
-import { ReasonPhrases } from "http-status-codes";
+import { OpResponse } from "./common";
 
-export type DeleteSequenceResponse =
-| {
-    opStatus: ReasonPhrases.OK,
-    id: number
-}
-| {
-    opStatus: Omit<ReasonPhrases, ReasonPhrases.OK>,
-    error?: string;
-}
+export type DeleteSequenceResponse = OpResponse<{id: string}>

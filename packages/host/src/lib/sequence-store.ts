@@ -1,7 +1,7 @@
 import { DockerodeDockerHelper } from "@scramjet/adapters";
 import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
-import { ISequence, ISequenceStore } from "@scramjet/types";
+import { ISequence, ISequenceStore, STHRestAPI } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
 import { Sequence } from "./sequence";
 import { InstanceStore } from "./instance-store";
@@ -40,7 +40,7 @@ export class SequenceStore implements ISequenceStore {
         this.logger.info("New sequence added:", sequence.id);
     }
 
-    async delete(sequenceId: string): Promise<{ opStatus: ReasonPhrases, error?: string, id?:string }> {
+    async delete(sequenceId: string): Promise<STHRestAPI.DeleteSequenceResponse> {
         if (!sequenceId) {
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST
