@@ -1,6 +1,6 @@
 import * as findPackage from "find-package-json";
 
-import { APIExpose, AppConfig, IComponent, ISequence, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration, STHRestAPI, Sequence } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -15,7 +15,6 @@ import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
-import { Sequence } from "./sequence";
 import { SequenceStore } from "./sequence-store";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
@@ -129,7 +128,7 @@ export class Host implements IComponent {
 
         this.cpmConnector?.on("connect", async () => {
             await this.cpmConnector?.sendSequencesInfo(this.getSequences());
-            await this.cpmConnector?.sendInstancesInfo(this.getCSIControllers());
+            await this.cpmConnector?.sendInstancesInfo(this.getInstances());
         });
 
         this.cpmConnector?.connect();
@@ -155,7 +154,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
-        this.api.get(`${this.apiBase}/instances`, () => this.getCSIControllers());
+        this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
         this.api.get(`${this.apiBase}/load-check`, () => loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, () => ({ version }));
 
@@ -230,12 +229,18 @@ export class Host implements IComponent {
         const result = await this.sequencesStore.delete(id);
 
         if (result.opStatus === ReasonPhrases.OK) {
-            this.cpmConnector?.sendSequenceInfo({
-                id: id
-            }, SequenceMessageCode.SEQUENCE_DELETED);
+            this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
         }
 
         return result;
+    }
+
+    private runnerConfigToNewSequence(config: RunnerConfig): Sequence {
+        return {
+            id: config.packageVolumeId,
+            config,
+            instances: []
+        };
     }
 
     async identifyExistingSequences() {
@@ -249,7 +254,7 @@ export class Host implements IComponent {
             const sequences = await ldas.list();
 
             for (const sequenceConfig of sequences) {
-                const sequence = new Sequence(sequenceConfig);
+                const sequence = this.runnerConfigToNewSequence(sequenceConfig);
 
                 this.sequencesStore.add(sequence);
                 this.logger.log("Sequence found", sequence.config);
@@ -266,13 +271,13 @@ export class Host implements IComponent {
 
         try {
             const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
-            const sequence = new Sequence(sequenceConfig);
+            const sequence = this.runnerConfigToNewSequence(sequenceConfig);
 
             this.sequencesStore.add(sequence);
 
             this.logger.info("Sequence identified:", sequence.config);
 
-            await this.cpmConnector?.sendSequenceInfo(sequence, SequenceMessageCode.SEQUENCE_CREATED);
+            await this.cpmConnector?.sendSequenceInfo(sequence.id, SequenceMessageCode.SEQUENCE_CREATED);
 
             return {
                 id: sequence.id
@@ -436,13 +441,12 @@ export class Host implements IComponent {
         return csic;
     }
 
-    getCSIControllers() {
+    getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.log("List CSI controllers.");
 
         return Object.values(this.instancesStore).map(csiController => ({
             id: csiController.id,
             sequence: csiController.sequence.id,
-            status: csiController.status
         }));
     }
 
@@ -454,11 +458,11 @@ export class Host implements IComponent {
         return this.sequencesStore.getById(id);
     }
 
-    getSequences(): ISequence[] {
+    getSequences(): STHRestAPI.GetSequencesResponse {
         return this.sequencesStore.getSequences();
     }
 
-    getSequenceInstances(sequenceId: string) {
+    getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
         // @TODO this should probably return error response when there's not corresponding Sequence
         return this.sequencesStore.getById(sequenceId)?.instances;
     }

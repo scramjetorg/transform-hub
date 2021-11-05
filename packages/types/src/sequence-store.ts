@@ -1,4 +1,3 @@
-import { IInstance } from "./instance-store";
 import { RunnerConfig } from "./runner-config";
 
 /**
@@ -14,15 +13,15 @@ import { RunnerConfig } from "./runner-config";
  * Question: this should probably moved to @scramjet/model, right?
  *
  */
-export interface ISequence {
+export interface Sequence {
     id: string,
     config: RunnerConfig,
-    instances: IInstance[]
+    instances: string[]
 }
 
 export interface ISequenceStore {
-    getSequences(): ISequence[];
-    getById(id: string): ISequence | undefined;
-    add(sequence: ISequence): void;
+    getSequences(): Sequence[];
+    getById(id: string): Sequence | undefined;
+    add(sequence: Sequence): void;
     delete(id: string): void;
 }

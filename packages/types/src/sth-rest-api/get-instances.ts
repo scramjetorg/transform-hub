@@ -1,3 +1,3 @@
-import { IInstance } from "../instance-store";
+import { Instance } from "../instance-store";
 
-export type GetInstancesResponse = IInstance[] | undefined;
+export type GetInstancesResponse = Instance[];
