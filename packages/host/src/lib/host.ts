@@ -280,14 +280,13 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(sequence.id, SequenceMessageCode.SEQUENCE_CREATED);
 
             return {
-                opStatus: ReasonPhrases.OK,
                 id: sequence.id
             };
         } catch (error: any) {
             this.logger.debug(error?.stack);
 
             return {
-                opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
+                opStatus: 422,
                 error
             };
         }
