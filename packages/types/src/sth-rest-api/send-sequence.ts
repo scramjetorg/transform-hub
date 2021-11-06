@@ -1,3 +1,2 @@
-import { OpResponse } from "./common";
 
-export type SendSequenceResponse = OpResponse<{ id: string }>
+export type SendSequenceResponse = { id: string } | { opStatus: number, error?: unknown }
