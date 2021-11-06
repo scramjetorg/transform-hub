@@ -292,7 +292,7 @@ export class Host implements IComponent {
         }
     }
 
-    async handleStartSequence(req: ParsedMessage) {
+    async handleStartSequence(req: ParsedMessage): Promise<STHRestAPI.StartSequenceResponse> {
         if (await loadCheck.overloaded()) {
             return {
                 opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
