@@ -9,7 +9,7 @@ DEBUG = 'DATASTREAM_DEBUG' in environ or 'SCRAMJET_DEBUG' in environ
 tr = utils.print_trimmed
 
 def log(stream, *args):
-    if DEBUG:
+    if DEBUG:  # pragma: no cover
         utils.LogWithTimer.log(f"{grey}{stream.name}{reset}", *args)
 
 

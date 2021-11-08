@@ -9,7 +9,7 @@ DEBUG = 'PYFCA_DEBUG' in environ or 'SCRAMJET_DEBUG' in environ
 fmt = utils.print_formatted
 
 def log(pyfca, *args):
-    if DEBUG:
+    if DEBUG:  # pragma: no cover
         utils.LogWithTimer.log(f"{grey}{pyfca.name}{reset}", *args)
 
 
@@ -70,7 +70,7 @@ class Pyfca:
             self._waiting_for_read.put_nowait(waiting)
             drain = asyncio.gather(self._processing.get_nowait(), waiting)
 
-        if DEBUG:
+        if DEBUG:  # pragma: no cover
             chunk_status.chunk = chunk
             task.set_name(f'process {utils.pprint_chunk(chunk)}')
             log(self, f"WRITE {fmt(chunk)} r/w balance: {self.read_write_balance}")
@@ -128,7 +128,7 @@ class Pyfca:
     async def _process(self, chunk, chunk_status):
         previous = self.last_chunk_status
 
-        if DEBUG:
+        if DEBUG:  # pragma: no cover
             log(self, f'PROCESS {fmt(chunk)} previous item: {fmt(previous)}')
             log(self, f'   -    {fmt(chunk)} status: {fmt(chunk_status)}')
 
