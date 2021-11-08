@@ -3,10 +3,17 @@ import asyncio
 import pyfca
 import utils
 from ansi_color_codes import *
+import pytest
 
 log = utils.LogWithTimer.log
 fmt = utils.print_formatted
 
+@pytest.fixture(autouse=True)
+def reset_timer():
+    utils.LogWithTimer.reset()
+
+
+@pytest.mark.asyncio
 async def test_sequencing_text_into_lines():
     data = ["foo\nbar", " ", "b", "az", "\nqux\n", "plox"]
     result = await (
@@ -19,6 +26,7 @@ async def test_sequencing_text_into_lines():
     assert result == ['foo', 'bar baz', 'qux', 'plox']
 
 # I know, this could be done using flatmap+batch
+@pytest.mark.asyncio
 async def test_sequencing_lists_into_batches():
     data = [[1, 2, 3], [4, 5], [6, 7, 8, 9, 10]]
     def split_into_pairs(part, li):
@@ -33,14 +41,3 @@ async def test_sequencing_lists_into_batches():
     )
     print(result)
     assert result == [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
-
-tests_to_run = [
-    test_sequencing_text_into_lines,
-    test_sequencing_lists_into_batches,
-]
-
-for test in tests_to_run:
-    print(f"\n\nRunning {strong}{test.__name__}{reset}:\n")
-    asyncio.run(test())
-    utils.LogWithTimer.reset()
-

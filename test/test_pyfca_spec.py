@@ -6,6 +6,7 @@ https://github.com/scramjetorg/scramjet-framework-shared/blob/main/tests/spec/if
 import asyncio
 import time
 import copy
+import pytest
 
 import pyfca
 import utils
@@ -17,6 +18,9 @@ MAX_PARALLEL = 4
 SPEED = 100
 log = utils.LogWithTimer.log
 
+@pytest.fixture(autouse=True)
+def reset_timer():
+    utils.LogWithTimer.reset()
 
 # Input data
 
@@ -55,6 +59,7 @@ async def async_keep_even(x):
 # Basic tests
 # -----------
 
+@pytest.mark.asyncio
 async def test_passthrough_by_default():
     input_data = copy.deepcopy(TEST_DATA_2)
     p = pyfca.Pyfca(MAX_PARALLEL)
@@ -66,6 +71,7 @@ async def test_passthrough_by_default():
     # Output should match the input exactly (both values and ordering).
     assert results == input_data
 
+@pytest.mark.asyncio
 async def test_simple_transformation():
     input_data = ['a', 'b', 'c', 'd', 'e', 'f']
     p = pyfca.Pyfca(MAX_PARALLEL, lambda s: 'foo-' + s)
@@ -76,6 +82,7 @@ async def test_simple_transformation():
         log(f"Got: {x}")
     assert results == ['foo-a', 'foo-b', 'foo-c', 'foo-d', 'foo-e', 'foo-f']
 
+@pytest.mark.asyncio
 async def test_concurrent_processing():
     input_data = copy.deepcopy(TEST_DATA_2)
     processing_times = []
@@ -116,6 +123,7 @@ async def test_concurrent_processing():
 # Ordering tests
 # --------------
 
+@pytest.mark.asyncio
 async def test_result_order_with_odd_chunks_delayed():
     input_data = copy.deepcopy(TEST_DATA_1)
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -125,6 +133,7 @@ async def test_result_order_with_odd_chunks_delayed():
     # items should appear in the output unchanged and in the same order
     assert results == input_data
 
+@pytest.mark.asyncio
 async def test_result_order_with_varying_processing_time():
     input_data = copy.deepcopy(TEST_DATA_2)
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -134,6 +143,7 @@ async def test_result_order_with_varying_processing_time():
     # items should appear in the output unchanged and in the same order
     assert results == input_data
 
+@pytest.mark.asyncio
 async def test_write_and_read_in_turn():
     input_data = copy.deepcopy(TEST_DATA_2)
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -145,6 +155,7 @@ async def test_write_and_read_in_turn():
     # items should appear in the output unchanged and in the same order
     assert results == input_data
 
+@pytest.mark.asyncio
 async def test_multiple_concurrent_reads():
     input_data = copy.deepcopy(TEST_DATA_2)
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -155,6 +166,7 @@ async def test_multiple_concurrent_reads():
     # items should appear in the output unchanged and in the same order
     assert results == input_data
 
+@pytest.mark.asyncio
 async def test_reads_before_write():
     input_data = copy.deepcopy(TEST_DATA_2)
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -169,6 +181,7 @@ async def test_reads_before_write():
 # Filtering tests
 # ---------------
 
+@pytest.mark.asyncio
 async def test_support_for_dropping_chunks():
     input_data = list(range(8))
     p = pyfca.Pyfca(MAX_PARALLEL, async_keep_even)
@@ -177,6 +190,7 @@ async def test_support_for_dropping_chunks():
     results = [await p.read() for _ in range(4)]
     assert results == [0, 2, 4, 6]
 
+@pytest.mark.asyncio
 async def test_reads_before_filtering():
     input_data = list(range(8))
     p = pyfca.Pyfca(MAX_PARALLEL, async_keep_even)
@@ -186,6 +200,7 @@ async def test_reads_before_filtering():
     results = await asyncio.gather(*reads)
     assert results == [0, 2, 4, 6]
 
+@pytest.mark.asyncio
 async def test_dropping_chunks_in_the_middle_of_chain():
     first_func_called = False
     def first(x):
@@ -218,6 +233,7 @@ async def test_dropping_chunks_in_the_middle_of_chain():
 # Limits tests
 # ------------
 
+@pytest.mark.asyncio
 async def test_unrestricted_writing_below_limit():
     input_data = copy.deepcopy(TEST_DATA_2)[:MAX_PARALLEL-1]
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -226,6 +242,7 @@ async def test_unrestricted_writing_below_limit():
         assert drain.done() == True
     [await p.read() for _ in input_data]
 
+@pytest.mark.asyncio
 async def test_drain_pending_when_limit_reached():
     input_data = copy.deepcopy(TEST_DATA_2)[:MAX_PARALLEL]
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -233,6 +250,7 @@ async def test_drain_pending_when_limit_reached():
     assert writes[-1].done() == False
     [await p.read() for _ in input_data]
 
+@pytest.mark.asyncio
 async def test_drain_resolved_when_drops_below_limit():
     input_data = copy.deepcopy(TEST_DATA_2)[:MAX_PARALLEL+2]
     p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
@@ -251,6 +269,7 @@ async def test_drain_resolved_when_drops_below_limit():
 # Ending tests
 # ------------
 
+@pytest.mark.asyncio
 async def test_reading_from_empty_ifca():
     p = pyfca.Pyfca(MAX_PARALLEL)
     p.end()
@@ -258,6 +277,7 @@ async def test_reading_from_empty_ifca():
     log(f"Got: {result}")
     assert result == None
 
+@pytest.mark.asyncio
 async def test_end_with_pending_reads():
     N = MAX_PARALLEL*2
     p = pyfca.Pyfca(MAX_PARALLEL)
@@ -267,55 +287,16 @@ async def test_end_with_pending_reads():
     log(f"Got: {results}")
     assert results == [None] * N
 
+@pytest.mark.asyncio
 async def test_write_after_end_errors():
     p = pyfca.Pyfca(MAX_PARALLEL)
     p.end()
-    WriteAfterEnd_raised = False
-    try:
+    with pytest.raises(pyfca.WriteAfterEnd):
         p.write('foo')
-    except pyfca.WriteAfterEnd:
-        log('"WriteAfterEnd" raised')
-        WriteAfterEnd_raised = True
-    assert WriteAfterEnd_raised
 
+@pytest.mark.asyncio
 async def test_multiple_ends_error():
     p = pyfca.Pyfca(MAX_PARALLEL)
     p.end()
-    multipleEnd_raised = False
-    try:
+    with pytest.raises(pyfca.MultipleEnd):
         p.end()
-    except pyfca.MultipleEnd:
-        log('"MultipleEnd" raised')
-        multipleEnd_raised = True
-    assert multipleEnd_raised
-
-
-
-# Main test execution loop
-# ------------------------
-
-tests_to_run = [
-    test_passthrough_by_default,
-    test_simple_transformation,
-    test_concurrent_processing,
-    test_result_order_with_odd_chunks_delayed,
-    test_result_order_with_varying_processing_time,
-    test_write_and_read_in_turn,
-    test_multiple_concurrent_reads,
-    test_reads_before_write,
-    test_support_for_dropping_chunks,
-    test_reads_before_filtering,
-    test_dropping_chunks_in_the_middle_of_chain,
-    test_unrestricted_writing_below_limit,
-    test_drain_pending_when_limit_reached,
-    test_drain_resolved_when_drops_below_limit,
-    test_reading_from_empty_ifca,
-    test_end_with_pending_reads,
-    test_write_after_end_errors,
-    test_multiple_ends_error,
-]
-
-for test in tests_to_run:
-    print(f"\n\nRunning {strong}{test.__name__}{reset}:\n")
-    asyncio.run(test())
-    utils.LogWithTimer.reset()

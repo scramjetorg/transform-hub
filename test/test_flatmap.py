@@ -4,11 +4,17 @@ import pyfca
 import utils
 from ansi_color_codes import *
 from pprint import pprint
+import pytest
 
 log = utils.LogWithTimer.log
 fmt = utils.print_formatted
 
+@pytest.fixture(autouse=True)
+def reset_timer():
+    utils.LogWithTimer.reset()
 
+
+@pytest.mark.asyncio
 async def test_flattening_lists():
     data = ["foo\nbar", "cork", "qux\nbarf ploxx\n", "baz"]
     stream = DataStream.from_iterable(data, max_parallel=4)
@@ -16,6 +22,7 @@ async def test_flattening_lists():
     print('result:', result)
     assert result == ['foo', 'bar', 'cork', 'qux', 'barf', 'ploxx', 'baz']
 
+@pytest.mark.asyncio
 async def test_flattening_strings():
     data = ["a", "flatmap"]
     stream = DataStream.from_iterable(data, max_parallel=4)
@@ -23,6 +30,7 @@ async def test_flattening_strings():
     print('result:', result)
     assert result == ['a', 'f', 'l', 'a', 't', 'm', 'a', 'p']
 
+@pytest.mark.asyncio
 async def test_empty_iterables():
     data = [1, 2, 3, 4]
     stream = DataStream.from_iterable(data, max_parallel=4)
@@ -30,29 +38,12 @@ async def test_empty_iterables():
     print('result:', result)
     assert result == []
 
+@pytest.mark.asyncio
 async def test_flattening_non_iterables_errors():
     data = [1, 2, 3, 4]
     DataStream.from_iterable(data).flatmap(lambda x: x)
     # find flatmap task and see if it errored as expected
     for task in asyncio.all_tasks():
         if task.get_name() == 'flatmap-consumer':
-            error_raised = False
-            try:
+            with pytest.raises(TypeError):
                 await task
-            except TypeError:
-                log('"TypeError" raised')
-                error_raised = True
-            assert error_raised
-
-
-tests_to_run = [
-    test_flattening_lists,
-    test_flattening_strings,
-    test_empty_iterables,
-    test_flattening_non_iterables_errors,
-]
-
-for test in tests_to_run:
-    print(f"\n\nRunning {strong}{test.__name__}{reset}:\n")
-    asyncio.run(test())
-    utils.LogWithTimer.reset()

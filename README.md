@@ -6,22 +6,35 @@ Environment setup
 
 _Tested with Python 3.8.10 and Ubuntu 20.04._
 
+Create and activate a virtualenv:
+
+    virtualenv -p python3 venv
+    . venv/bin/activate
+
 Check Python version:
 
-    $ python3 --version
+    $ python --version
     Python 3.8.10
+
+Install libraries:
+
+    pip install -r dev-requirements.txt
 
 
 Usage
 -----
 
-Run test cases:
+Run test cases (with activated virtualenv):
 
-    python3 test-cases.py
+    python -m pytest
 
-Run with debug output and 10x faster:
+(add a filename if you want to limit which tests are ran)
 
-    PYFCA_DEBUG=1 python3 test-cases.py 0.1
+If you want to enable detailed debug logging, set one of the following env variables:
+
+    PYFCA_DEBUG=1       # debug pyfca
+    DATASTREAM_DEBUG=1  # debug datastream
+    SCRAMJET_DEBUG=1    # debug both
 
 
 Proof of correctness

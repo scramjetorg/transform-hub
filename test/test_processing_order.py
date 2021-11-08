@@ -3,6 +3,7 @@
 import asyncio
 import sys
 from pprint import pprint
+import pytest
 
 import pyfca
 import utils
@@ -12,7 +13,7 @@ log = utils.LogWithTimer.log
 fmt = utils.print_formatted
 
 # Use to change delays mocking async function execution
-SLOMO_FACTOR = float(sys.argv[1]) if len(sys.argv) > 1 else 1
+SLOMO_FACTOR = 1
 
 MAX_PARALLEL = 4
 
@@ -46,7 +47,9 @@ def square(chunk):
     return chunk
 
 
-async def test_processing_order_without_waiting(input_data):
+@pytest.mark.asyncio
+async def test_processing_order_without_waiting():
+    input_data = make_sequence(6)
     function_calls.clear()
     utils.LogWithTimer.reset()
     p = pyfca.Pyfca(MAX_PARALLEL, increment)
@@ -90,7 +93,9 @@ async def test_processing_order_without_waiting(input_data):
     ]
 
 
-async def test_processing_order_with_waiting(input_data):
+@pytest.mark.asyncio
+async def test_processing_order_with_waiting():
+    input_data = make_sequence(9)
     function_calls.clear()
     utils.LogWithTimer.reset()
     p = pyfca.Pyfca(MAX_PARALLEL, increment)
@@ -157,10 +162,3 @@ def extract_ordering(fcalls):
     print('Order of "double" calls:', doubling_order)
     print('Order of "square" calls:', squaring_order)
     return incrementing_order, doubling_order, squaring_order
-
-# run tests
-print(f"\n\nRunning {strong}test_processing_order_without_waiting{reset}:\n")
-asyncio.run(test_processing_order_without_waiting(make_sequence(6)))
-
-print(f"\n\nRunning {strong}test_processing_order_with_waiting{reset}:\n")
-asyncio.run(test_processing_order_with_waiting(make_sequence(9)))
