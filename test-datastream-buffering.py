@@ -60,7 +60,10 @@ async def test_reading_data_as_it_arrives():
                 pipe.write(chunk)
                 pipe.flush()
 
-    os.remove(path)
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        pass
     os.mkfifo(path)
     # Run in a separate process to avoid having to juggle reads and writes
     write = Process(target=write_to_pipe)

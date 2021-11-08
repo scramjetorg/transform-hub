@@ -84,7 +84,7 @@ class DataStream():
                     log(new_stream, f'{blue}drained{reset}')
             log(new_stream, f'ending pyfca {new_stream.pyfca}')
             new_stream.pyfca.end()
-        asyncio.create_task(consume())
+        asyncio.create_task(consume(), name='flatmap-consumer')
         return new_stream
 
     def filter(self, func, *args):

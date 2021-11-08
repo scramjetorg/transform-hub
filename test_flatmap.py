@@ -32,21 +32,17 @@ async def test_empty_iterables():
 
 async def test_flattening_non_iterables_errors():
     data = [1, 2, 3, 4]
-    stream = DataStream.from_iterable(data, max_parallel=4)
-
-    # catch and check exception from the async task
-    def handle_exception(loop, context):
-        msg = context.get("exception", context["message"])
-        print(f"Caught exception: {repr(msg)}")
-        assert isinstance(context['exception'], TypeError)
-        assert context["exception"].__str__() == "'int' object is not iterable"
-        loop.stop() # this raises RuntimeError, I don't know how to stop it
-
-    loop = asyncio.get_event_loop()
-    loop.set_exception_handler(handle_exception)
-
-    await stream.flatmap(lambda x: x).to_list()
-    assert False
+    DataStream.from_iterable(data).flatmap(lambda x: x)
+    # find flatmap task and see if it errored as expected
+    for task in asyncio.all_tasks():
+        if task.get_name() == 'flatmap-consumer':
+            error_raised = False
+            try:
+                await task
+            except TypeError:
+                log('"TypeError" raised')
+                error_raised = True
+            assert error_raised
 
 
 tests_to_run = [
@@ -58,8 +54,5 @@ tests_to_run = [
 
 for test in tests_to_run:
     print(f"\n\nRunning {strong}{test.__name__}{reset}:\n")
-    try:
-        asyncio.run(test())
-    except RuntimeError:
-        pass
+    asyncio.run(test())
     utils.LogWithTimer.reset()
