@@ -1,7 +1,7 @@
 Feature: Event e2e tests
 
     @ci
-    Scenario: E2E-004 TC-001 Send test-event through API and get event emitted by sequence
+    Scenario: E2E-004 TC-001 API test - Send test-event through API and get event emitted by sequence
         Given host is running
         When sequence "../packages/reference-apps/event-sequence-v2.tar.gz" loaded
         And instance started

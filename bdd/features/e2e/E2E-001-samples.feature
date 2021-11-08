@@ -12,7 +12,7 @@ Feature: Sample e2e tests
         Then host is still running
 
     @ci
-    Scenario: E2E-001 TC-002 - KM4_Cloud Server Instance Component
+    Scenario: E2E-001 TC-002 API test - Get instance output
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"

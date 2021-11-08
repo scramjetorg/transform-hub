@@ -1,6 +1,6 @@
 Feature: Monitoring e2e tests
 
-    Scenario: E2E-005 TC-001 Get monitoring from sequence where new handler method is added and returning: healthy false
+    Scenario: E2E-005 TC-001 API test - Get monitoring from sequence where new handler method is added and returning: healthy false
         Given host is running
         When sequence "../packages/reference-apps/unhealthy-sequence.tar.gz" loaded
         And instance started with arguments "/package/data.json"
