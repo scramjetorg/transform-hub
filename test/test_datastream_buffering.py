@@ -9,11 +9,6 @@ import pytest
 
 log = utils.LogWithTimer.log
 
-@pytest.fixture(autouse=True)
-def reset_timer():
-    utils.LogWithTimer.reset()
-
-
 async def echo(x):
     log(f"{yellow}Processing:{reset} {repr(x)}")
     return x

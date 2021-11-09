@@ -18,10 +18,6 @@ MAX_PARALLEL = 4
 SPEED = 100
 log = utils.LogWithTimer.log
 
-@pytest.fixture(autouse=True)
-def reset_timer():
-    utils.LogWithTimer.reset()
-
 # Input data
 
 TEST_DATA_1 = [

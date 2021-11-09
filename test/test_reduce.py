@@ -8,11 +8,6 @@ import pytest
 log = utils.LogWithTimer.log
 fmt = utils.print_formatted
 
-@pytest.fixture(autouse=True)
-def reset_timer():
-    utils.LogWithTimer.reset()
-
-
 @pytest.mark.asyncio
 async def test_reduce_adding_numbers():
     data = [1, 2, 3, 4, 5, 6]

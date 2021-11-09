@@ -9,11 +9,6 @@ import pytest
 log = utils.LogWithTimer.log
 fmt = utils.print_formatted
 
-@pytest.fixture(autouse=True)
-def reset_timer():
-    utils.LogWithTimer.reset()
-
-
 @pytest.mark.asyncio
 async def test_flattening_lists():
     data = ["foo\nbar", "cork", "qux\nbarf ploxx\n", "baz"]

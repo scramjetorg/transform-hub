@@ -7,11 +7,6 @@ import pytest
 
 log = utils.LogWithTimer.log
 
-@pytest.fixture(autouse=True)
-def reset_timer():
-    utils.LogWithTimer.reset()
-
-
 # transformations
 
 async def async_is_even(x):
