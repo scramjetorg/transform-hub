@@ -5,6 +5,7 @@ import os
 import time
 from ansi_color_codes import *
 import utils
+import pytest
 
 log = utils.LogWithTimer.log
 
@@ -14,12 +15,14 @@ async def echo(x):
 
 # test cases
 
+@pytest.mark.asyncio
 async def test_reading_and_writing_to_file():
     await DataStream.from_file('sample_text_1.txt').to_file('test_output')
     with open('sample_text_1.txt') as source, open('test_output') as dest:
         assert source.read() == dest.read()
 
 # Newlines in input shouldn't trigger splitting into chunks.
+@pytest.mark.asyncio
 async def test_reading_text_with_newlines():
     # verify that input file is suitable for this test
     with open('sample_text_1.txt') as source:
@@ -28,6 +31,7 @@ async def test_reading_text_with_newlines():
     assert len(chunks) == 1
 
 # Files that exceed read size should be processed in chunks.
+@pytest.mark.asyncio
 async def test_reading_large_file_in_default_chunks():
     FILE = 'sample_text_2.txt'
     # verify that input file is suitable for this test
@@ -37,6 +41,7 @@ async def test_reading_large_file_in_default_chunks():
     assert len(chunks) > 1
 
 # Chunk size can be controlled, and newlines don't affect it.
+@pytest.mark.asyncio
 async def test_controlling_chunk_size():
     SIZE = 32
     FILE = 'sample_text_3.txt'
@@ -48,6 +53,7 @@ async def test_controlling_chunk_size():
     chunks = await DataStream.from_file(FILE, max_chunk_size=SIZE).to_list()
     assert len(chunks) > 2
 
+@pytest.mark.asyncio
 async def test_reading_data_as_it_arrives():
     data = ['f', 'oo', '\n', 'bar', ' ', 'baz\nqux']
     path = 'test_pipe'
@@ -60,7 +66,10 @@ async def test_reading_data_as_it_arrives():
                 pipe.write(chunk)
                 pipe.flush()
 
-    os.remove(path)
+    try:
+        os.remove(path)
+    except FileNotFoundError:
+        pass
     os.mkfifo(path)
     # Run in a separate process to avoid having to juggle reads and writes
     write = Process(target=write_to_pipe)
@@ -69,17 +78,3 @@ async def test_reading_data_as_it_arrives():
     # Each piece of data written into the pipe should become a separate chunk.
     assert len(result) == len(data)
     write.join()
-
-# Main test execution loop
-
-tests_to_run = [
-    test_reading_and_writing_to_file,
-    test_reading_text_with_newlines,
-    test_reading_large_file_in_default_chunks,
-    test_controlling_chunk_size,
-    test_reading_data_as_it_arrives,
-]
-
-for test in tests_to_run:
-    print(f"\n\nRunning {strong}{test.__name__}{reset}:\n")
-    asyncio.run(test())
