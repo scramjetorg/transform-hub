@@ -22,9 +22,12 @@ class StreamAlreadyConsumed(Exception):
 
 
 class DataStream():
-    def __init__(self, max_parallel=64, upstream=None, name="datastream"):
+    def __init__(self, max_parallel=64, upstream=None, origin=None, name="datastream"):
         self._upstream = upstream
+        self._origin = origin if origin else self
         self.name = name
+        # whether we can write to the stream instance
+        self._writable = True
         # whether the stream was already "used" (transformed/read from)
         self._consumed = False
         self._pyfca = upstream._pyfca if upstream else Pyfca(max_parallel)
@@ -47,11 +50,12 @@ class DataStream():
             yield chunk
 
     def _uncork(self):
-        self._ready_to_start.set_result(True)
-        log(self, f'{green}uncorked{reset}')
-        if self._upstream:
-            log(self, f'uncorking upstream: {self._upstream.name}')
-            self._upstream._uncork()
+        if not self._ready_to_start.done():
+            self._ready_to_start.set_result(True)
+            log(self, f'{green}uncorked{reset}')
+            if self._upstream:
+                log(self, f'uncorking upstream: {self._upstream.name}')
+                self._upstream._uncork()
 
     def _mark_consumed(self):
         if self._consumed:  # cannot consume the same stream twice
@@ -98,6 +102,7 @@ class DataStream():
             stream._pyfca.end()
 
         asyncio.create_task(consume())
+        stream._writable = False
         return stream
 
     @classmethod
@@ -117,13 +122,30 @@ class DataStream():
             stream._pyfca.end()
 
         asyncio.create_task(consume())
+        stream._writable = False
         return stream
+
+    def write(self, chunk):
+        """Write a single item to the datastream."""
+        return self._origin._pyfca.write(chunk)
+
+    async def read(self):
+        """Read a single item from the datastream."""
+        # cannot read from stream consumed by something else
+        if self._consumed:
+            raise StreamAlreadyConsumed
+        self._uncork()
+        return await self._pyfca.read()
+
+    def end(self):
+        """Mark the end of input to the datastream."""
+        self._pyfca.end()
 
     def flatmap(self, func, *args):
         """Run func on each chunk and return all results as separate chunks."""
         self._mark_consumed()
         new_stream = self.__class__(
-            max_parallel=self._pyfca.max_parallel, name=f'{self.name}+fm'
+            max_parallel=self._pyfca.max_parallel, origin=self._origin, name=f'{self.name}+fm'
         )
         async def consume():
             self._uncork()
@@ -148,7 +170,7 @@ class DataStream():
     def filter(self, func, *args):
         """Keep only chunks for which func evaluates to True."""
         self._mark_consumed()
-        new_stream = self.__class__(upstream=self, name=f'{self.name}+f')
+        new_stream = self.__class__(upstream=self, origin=self._origin, name=f'{self.name}+f')
         async def run_filter(chunk):
             if args:
                 log(new_stream, f'calling filter {func} with args: {chunk, *args}')
@@ -172,7 +194,7 @@ class DataStream():
         """
         self._mark_consumed()
         new_stream = self.__class__(
-            max_parallel=self._pyfca.max_parallel, name=f'{self.name}+s'
+            max_parallel=self._pyfca.max_parallel, origin=self._origin, name=f'{self.name}+s'
         )
         async def consume():
             self._uncork()
@@ -205,7 +227,7 @@ class DataStream():
     def map(self, func, *args):
         """Transform each chunk using a function."""
         self._mark_consumed()
-        new_stream = self.__class__(upstream=self, name=f'{self.name}+m')
+        new_stream = self.__class__(upstream=self, origin=self._origin, name=f'{self.name}+m')
         async def run_mapper(chunk):
             if args:
                 log(new_stream, f'calling mapper {func} with args: {chunk, *args}')
@@ -226,7 +248,7 @@ class DataStream():
         """
         self._mark_consumed()
         new_stream = self.__class__(
-            max_parallel=self._pyfca.max_parallel, name=f'{self.name}+b'
+            max_parallel=self._pyfca.max_parallel, origin=self._origin, name=f'{self.name}+b'
         )
         async def consume():
             self._uncork()
@@ -356,8 +378,8 @@ class DataStream():
 
 
 class StringStream(DataStream):
-    def __init__(self, max_parallel=64, upstream=None, name="stringstream"):
-        super().__init__(max_parallel=max_parallel, upstream=upstream, name=name)
+    def __init__(self, max_parallel=64, upstream=None, origin=None, name="stringstream"):
+        super().__init__(max_parallel=max_parallel, upstream=upstream, origin=origin, name=name)
 
     def parse(self, func, *args):
         """Transform StringStream into DataStream."""
