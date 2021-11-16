@@ -10,7 +10,7 @@ const defaultConfig = {
 };
 
 type Config = typeof defaultConfig;
-const location = resolve(homedir(), ".scramjet_sth_cli_rc");
+const location = resolve(homedir(), "sth-cli-rc.json");
 
 let currentConfig: Config;
 
