@@ -1,3 +1,18 @@
+# Scramjet Transform Hub
+
+<p align="center">
+<a><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
+<a><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
+<a><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
+<a><img src="https://img.shields.io/tokei/lines/github/scramjetorg/transform-hub?color=yellow&style=plastic" alt="GitHub total lines" /></a>
+</p>
+<p align="center">:star: Star us on GitHub — it motivates us a lot! :rocket: </p>
+<p align="center">
+<img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
+</p>
+
+:star: Star us on GitHub — it motivates us a lot! :rocket:
+
 # Introduction
 
 This repository is intended for developers that would like to:
@@ -5,15 +20,24 @@ This repository is intended for developers that would like to:
 - participate in the Scramjet Transform Hub development community
 - register feature requests, issues and PRs for this product
 - build Transform Hub from source
-- dive into code
+- dive into code and see how it works
+
+# Table of contents
+
+- [Introduction](README.md#introduction)
+- Usage
+- Installation
+- Configuration
+- Known issues and limitations
+- Getting help
 
 For developers that would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
 
-- [Repository with Intoductory README and code samples](https://github.com/scramjetorg/scramjet-cloud-docs)
+- [Repository with Introductory README and code samples](https://github.com/scramjetorg/scramjet-cloud-docs)
 - [NPM page for main scramjet/sth package](https://www.npmjs.com/package/@scramjet/sth)
 - [NPM page for scramjet/cli package](https://www.npmjs.com/package/@scramjet/cli)
 
-# Scramjet Transform Hub <!-- omit in toc -->
+# Usage
 
 Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Rasperry Pi or wherever else you'd like.
 
@@ -33,7 +57,7 @@ git clone https://github.com/scramjetorg/transform-hub.git && \
 
 Depending on your machine this may take some time. When it's done the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
-```
+```bash
 2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
 ```
 
@@ -65,6 +89,7 @@ module.exports = async function(_stream, baseCurrency = "BTC", currency = "USD")
 ```
 
 Save this as `package.json`
+
 ```json
 {
   "name": "@scramjet/crypto-prices",
@@ -540,7 +565,7 @@ yarn bump:postversion      # prepare dist folder, publish packages from dist, pu
 
 ## License and contributions
 
-This project is licensed dual licensed under the AGPL-3.0 and MIT licences. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
+This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
 We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
 
