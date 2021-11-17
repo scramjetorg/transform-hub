@@ -31,12 +31,33 @@ const errorHandler = (err: ClientError) => {
     process.exit();
 };
 
+/**
+ * Start commander using defined config {@link Apple.seeds}
+ */
 (async () => {
     const conf = getConfig();
 
+    /**
+     * Commands
+     * ```
+     * pack [options] [<directory>]
+     * host [command]                something
+     * config|c [command]            configuration file operations
+     * sequence|seq [command]        operations on sequence
+     * instance|inst [command]       operations on instance
+     * help [command]                display help for command
+     */
     for (const command of Object.values(commands))
         command(program);
 
+    /**
+     * Options
+     * ```json
+     * -L, --log-level <level>       Specify log level (default: "trace")
+     * -a, --api-url <url>           Specify base API url (default: "http://127.0.0.1:8000/api/v1")
+     * -h, --help                    display help for command
+     * ```
+     */
     program
         // .version(version)
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
