@@ -11,7 +11,7 @@ export class STH {
     start(options: HostOptions = {}) {
         startHost(
             {},
-            this.config.host.socketPath,
+            this.config,
             {
                 identifyExisting: options.identifyExisting
             })

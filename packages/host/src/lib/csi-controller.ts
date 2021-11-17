@@ -1,6 +1,7 @@
 import {
     APIRoute,
     AppConfig,
+    CSIConfig,
     DownstreamStreamsConfig,
     EventMessageData,
     ExitCode,
@@ -24,7 +25,7 @@ import {
 import { CommunicationChannel as CC, CommunicationChannel, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import { ChildProcess, spawn } from "child_process";
 import { PassThrough, Readable } from "stream";
-import { configService, development } from "@scramjet/sth-config";
+import { development } from "@scramjet/sth-config";
 
 import { DataStream } from "scramjet";
 import { EventEmitter } from "events";
@@ -34,6 +35,7 @@ import { getRouter } from "@scramjet/api-server";
 import { resolve as resolvePath } from "path";
 
 export class CSIController extends EventEmitter {
+    config: CSIConfig;
     id: string;
     sequence: Sequence;
     appConfig: AppConfig;
@@ -63,24 +65,24 @@ export class CSIController extends EventEmitter {
 
     communicationHandler: ICommunicationHandler;
     logger: Logger;
-    private socketServerPath: string;
 
     constructor(
         id: string,
         sequence: Sequence,
         appConfig: AppConfig,
         sequenceArgs: any[] | undefined,
-        communicationHandler: CommunicationHandler
+        communicationHandler: CommunicationHandler,
+        csiConfig: CSIConfig
     ) {
         super();
 
         this.id = id;
         this.sequence = sequence;
         this.appConfig = appConfig;
+        this.config = csiConfig;
         this.sequenceArgs = sequenceArgs;
         this.logger = getLogger(this);
         this.communicationHandler = communicationHandler;
-        this.socketServerPath = configService.getConfig().host.socketPath;
 
         this.startPromise = new Promise((res, rej) => {
             this.startResolver = { res, rej };
@@ -130,7 +132,7 @@ export class CSIController extends EventEmitter {
         }
 
         const path = resolvePath(__dirname, supervisorPath);
-        const command: string[] = [path, this.id, this.socketServerPath];
+        const command: string[] = [path, this.id, this.config.socketPath];
 
         this.superVisorProcess = spawn(executable, command);
 

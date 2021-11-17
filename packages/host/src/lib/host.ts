@@ -18,9 +18,8 @@ import { ReasonPhrases } from "http-status-codes";
 import { SequenceStore } from "./sequence-store";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
-import { configService } from "@scramjet/sth-config";
 import { constants } from "fs";
-import { loadCheck } from "@scramjet/load-check";
+import { LoadCheck } from "@scramjet/load-check";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
@@ -44,6 +43,7 @@ export class Host implements IComponent {
     sequencesStore: SequenceStore = new SequenceStore();
 
     logger: Logger;
+    loadCheck: LoadCheck;
 
     serviceDiscovery = new ServiceDiscovery();
 
@@ -57,10 +57,14 @@ export class Host implements IComponent {
         });
     }
 
-    constructor(apiServer: APIExpose, socketServer: SocketServer) {
-        this.config = configService.getConfig();
+    constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
+        this.config = sthConfig;
 
         this.logger = getLogger(this);
+
+        const { safeOperationLimit, instanceRequirements } = this.config;
+
+        this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements });
 
         this.socketServer = socketServer;
         this.api = apiServer;
@@ -73,7 +77,11 @@ export class Host implements IComponent {
         }
 
         if (this.config.cpmUrl) {
-            this.cpmConnector = new CPMConnector(this.config.cpmUrl);
+            this.cpmConnector = new CPMConnector(
+                this.config.cpmUrl,
+                { id: this.config.host.id, infoFilePath: this.config.host.infoFilePath }
+            );
+            this.cpmConnector.setLoadCheck(this.loadCheck);
             this.cpmConnector.on("log_connect", (channel: Duplex) => this.commonLogsPipe.getOut().pipe(channel));
             this.serviceDiscovery.setConnector(this.cpmConnector);
         }
@@ -155,7 +163,8 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
-        this.api.get(`${this.apiBase}/load-check`, () => loadCheck.getLoadCheck());
+
+        this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, () => ({ version }));
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
@@ -245,7 +254,7 @@ export class Host implements IComponent {
 
     async identifyExistingSequences() {
         this.logger.log("Listing exiting sequences.");
-        const ldas = new LifecycleDockerAdapterSequence();
+        const ldas = new LifecycleDockerAdapterSequence(this.config.docker.prerunner);
 
         try {
             await ldas.init();
@@ -293,7 +302,7 @@ export class Host implements IComponent {
     }
 
     async handleStartSequence(req: ParsedMessage): Promise<STHRestAPI.StartSequenceResponse> {
-        if (await loadCheck.overloaded()) {
+        if (await this.loadCheck.overloaded()) {
             return {
                 opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
             };
@@ -330,7 +339,7 @@ export class Host implements IComponent {
     }
 
     async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
-        const ldas = new LifecycleDockerAdapterSequence();
+        const ldas = new LifecycleDockerAdapterSequence(this.config.docker.prerunner);
 
         await ldas.init();
         const identifyResult = await ldas.identify(stream, id);
@@ -359,7 +368,14 @@ export class Host implements IComponent {
     async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
-        const csic = new CSIController(id, sequence, appConfig, sequenceArgs, communicationHandler);
+        const csic = new CSIController(
+            id,
+            sequence,
+            appConfig,
+            sequenceArgs,
+            communicationHandler,
+            { exitDelay: this.config.instanceAdapterExitDelay, socketPath: this.config.host.socketPath }
+        );
 
         this.logger.log("New CSIController created: ", id);
 
