@@ -5,6 +5,8 @@ export * from "./error-codes";
 export * from "./app-config";
 export * from "./app-context";
 export * from "./application";
+export * from "./cpm-connector";
+export * from "./csi-config";
 export * from "./communication-handler";
 export * from "./component";
 export * from "./csh-connector";

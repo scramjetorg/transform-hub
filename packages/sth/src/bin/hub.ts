@@ -1,7 +1,7 @@
 #!/usr/bin/env ts-node
 
 import { Command } from "commander";
-import { configService } from "@scramjet/sth-config";
+import { ConfigService } from "@scramjet/sth-config";
 import { resolve } from "path";
 
 const program = new Command();
@@ -20,8 +20,9 @@ const options = program
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .parse(process.argv)
-    .opts()
-;
+    .opts();
+
+const configService = new ConfigService();
 
 configService.update({
     cpmUrl: options.cpmUrl,
@@ -47,7 +48,7 @@ configService.update({
 
 // before here we actually load the host and we have the config imported elsewhere
 // so the config is changed before compile time, not in runtime.
-require("@scramjet/host").startHost({}, configService.getConfig().host.socketPath, {
+require("@scramjet/host").startHost({}, configService.getConfig(), {
     identifyExisting: options.identifyExisting as boolean
 })
     .catch((e: Error & { exitCode?: number }) => {

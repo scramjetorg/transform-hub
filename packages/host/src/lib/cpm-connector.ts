@@ -3,15 +3,13 @@ import * as fs from "fs";
 import { Agent, ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, EventEmitter, Readable } from "stream";
-import { EncodedControlMessage, Instance, Sequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
-
+import { CPMConnectorOptions, EncodedControlMessage, Instance, Sequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
 import { MessageUtilities } from "@scramjet/model";
 import { Socket } from "net";
 import { StringStream } from "scramjet";
 import { URL } from "url";
-import { configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
-import { loadCheck } from "@scramjet/load-check";
+import { LoadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
 
 const BPMux = require("bpmux").BPMux;
@@ -24,6 +22,8 @@ export class CPMConnector extends EventEmitter {
     MAX_RECONNECTION_ATTEMPTS = 100;
     RECONNECT_INTERVAL = 2000;
 
+    loadCheck?: LoadCheck;
+    config: CPMConnectorOptions;
     apiServer?: Server;
     tunnel?: Socket;
     connected = false;
@@ -40,9 +40,14 @@ export class CPMConnector extends EventEmitter {
 
     loadInterval?: NodeJS.Timeout;
 
-    constructor(cpmUrl: string) {
+    constructor(cpmUrl: string, config: CPMConnectorOptions) {
         super();
+        this.config = config;
         this.cpmURL = cpmUrl;
+    }
+
+    setLoadCheck(loadCheck: LoadCheck) {
+        this.loadCheck = loadCheck;
     }
 
     getId(): string | undefined {
@@ -50,7 +55,7 @@ export class CPMConnector extends EventEmitter {
     }
 
     init() {
-        this.info.id = configService.getConfig().host.id;
+        this.info.id = this.config.id;
 
         if (this.info.id) {
             this.logger.info("Initialized with custom id:", this.info.id);
@@ -65,7 +70,7 @@ export class CPMConnector extends EventEmitter {
         let fileContents = "";
 
         try {
-            fileContents = fs.readFileSync(configService.getConfig().host.infoFilePath, { encoding: "utf-8" });
+            fileContents = fs.readFileSync(this.config.infoFilePath, { encoding: "utf-8" });
         } catch (err) {
             this.logger.warn("Can not read id file.", err);
             return {};
@@ -122,7 +127,7 @@ export class CPMConnector extends EventEmitter {
                                     // eslint-disable-next-line no-extra-parens
                                     this.info.id = (message[1] as STHIDMessageData).id;
                                     fs.writeFileSync(
-                                        configService.getConfig().host.infoFilePath,
+                                        this.config.infoFilePath,
                                         JSON.stringify(this.info)
                                     );
                                 }
@@ -232,7 +237,7 @@ export class CPMConnector extends EventEmitter {
     }
 
     async getLoad(): Promise<LoadCheckStatMessage> {
-        const load = await loadCheck.getLoadCheck();
+        const load = await this.loadCheck!.getLoadCheck();
 
         return {
             msgCode: CPMMessageCode.LOAD,

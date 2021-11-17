@@ -1,8 +1,7 @@
 import { DeepPartial, STHConfiguration } from "@scramjet/types";
-
 import { merge } from "@scramjet/utility";
 
-const defaultConfig: STHConfiguration = {
+export const defaultConfig: STHConfiguration = {
     cpmUrl: "",
     docker: {
         prerunner: {
@@ -33,7 +32,7 @@ const defaultConfig: STHConfiguration = {
     instanceAdapterExitDelay: 9000
 };
 
-class ConfigService {
+export class ConfigService {
     private config: STHConfiguration;
 
     constructor(config?: DeepPartial<STHConfiguration>) {
@@ -64,5 +63,3 @@ class ConfigService {
         merge(this.config, config);
     }
 }
-
-export const configService = new ConfigService();

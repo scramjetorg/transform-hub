@@ -272,3 +272,7 @@ export interface IDockerHelper {
      */
     pullImage(name: string, fetchOnlyIfNotExists?: boolean): Promise<void>
 }
+
+export type InstanceAdapterOptions = {
+    exitDelay: number;
+}

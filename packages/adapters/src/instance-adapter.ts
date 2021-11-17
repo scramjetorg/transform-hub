@@ -1,4 +1,4 @@
-import { development, configService } from "@scramjet/sth-config";
+import { development } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -293,7 +293,7 @@ IComponent {
 
             this.logger.log("Container exited.");
 
-            await defer(configService.getConfig().instanceAdapterExitDelay);
+            await defer(config.adapterExitDelay);
 
             if (statusCode > 0) {
                 throw new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode });

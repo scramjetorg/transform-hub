@@ -1,23 +1,29 @@
 import { getLogger } from "@scramjet/logger";
-import { IComponent, Logger, LoadCheckStat } from "@scramjet/types";
+import { IComponent, Logger, LoadCheckStat, LoadCheckConfig, LoadCheckContstants } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 
 import * as sysinfo from "systeminformation";
-import { configService } from "@scramjet/sth-config";
 import { DataStream } from "scramjet";
 
-const { safeOperationLimit, instanceRequirements } = configService.getConfig();
 const MB = 1024 * 1024;
-const SAFE_OPERATION_LIMIT = safeOperationLimit * MB;
-const MIN_INSTANCE_REQUIREMENTS = {
-    freeMem: instanceRequirements.freeMem * MB,
-    cpuLoad: instanceRequirements.cpuLoad,
-    freeSpace: instanceRequirements.freeSpace * MB
-};
 
-class LoadCheck implements IComponent {
+export class LoadCheck implements IComponent {
+    config: LoadCheckConfig;
+    constants: LoadCheckContstants;
+
     logger: Logger = getLogger(this);
 
+    constructor(config: LoadCheckConfig) {
+        this.config = config;
+        this.constants = {
+            SAFE_OPERATION_LIMIT: this.config.safeOperationLimit * MB,
+            MIN_INSTANCE_REQUIREMENTS: {
+                freeMem: this.config.instanceRequirements.freeMem * MB,
+                cpuLoad: this.config.instanceRequirements.cpuLoad,
+                freeSpace: this.config.instanceRequirements.freeSpace * MB
+            }
+        };
+    }
     async getLoadCheck(): Promise<LoadCheckStat> {
         const [load, disksInfo, memInfo] = await Promise.all([
             sysinfo.currentLoad(),
@@ -28,7 +34,7 @@ class LoadCheck implements IComponent {
         return {
             avgLoad: load.avgLoad,
             currentLoad: load.currentLoad || 85,
-            memFree: memInfo.free + Math.max(0, memInfo.buffcache - SAFE_OPERATION_LIMIT),
+            memFree: memInfo.free + Math.max(0, memInfo.buffcache - this.constants.SAFE_OPERATION_LIMIT),
             memUsed: memInfo.used,
             fsSize: disksInfo
         };
@@ -41,9 +47,9 @@ class LoadCheck implements IComponent {
         this.logger.log(check);
 
         const conditionsMet = {
-            cpu: check.avgLoad < 100 - MIN_INSTANCE_REQUIREMENTS.cpuLoad,
-            mem: check.memFree > MIN_INSTANCE_REQUIREMENTS.freeMem,
-            dsk: check.fsSize[0].available > MIN_INSTANCE_REQUIREMENTS.freeSpace
+            cpu: check.avgLoad < 100 - this.constants.MIN_INSTANCE_REQUIREMENTS.cpuLoad,
+            mem: check.memFree > this.constants.MIN_INSTANCE_REQUIREMENTS.freeMem,
+            dsk: check.fsSize[0].available > this.constants.MIN_INSTANCE_REQUIREMENTS.freeSpace
         };
 
         this.logger.log(conditionsMet);
@@ -58,6 +64,8 @@ class LoadCheck implements IComponent {
     }
 
     async getLoadCheckStream(): Promise<any> {
+        const loadCheckInstance = this;
+
         return DataStream.from(
             async function*() {
                 // eslint-disable-next-line no-constant-condition
@@ -71,7 +79,10 @@ class LoadCheck implements IComponent {
                     yield {
                         avgLoad: load.avgLoad,
                         currentLoad: load.currentLoad || 85,
-                        memFree: memInfo.free + Math.max(0, memInfo.buffcache - SAFE_OPERATION_LIMIT),
+                        memFree: memInfo.free + Math.max(
+                            0,
+                            memInfo.buffcache - loadCheckInstance.constants.SAFE_OPERATION_LIMIT
+                        ),
                         memUsed: memInfo.used,
                         fsSize: disksInfo
                     };
@@ -82,5 +93,3 @@ class LoadCheck implements IComponent {
         ).JSONStringify();
     }
 }
-
-export const loadCheck = new LoadCheck();

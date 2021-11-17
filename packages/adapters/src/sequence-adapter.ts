@@ -1,4 +1,3 @@
-import { configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { SupervisorError } from "@scramjet/model";
 import {
@@ -21,6 +20,7 @@ class LifecycleDockerAdapterSequence implements
     ILifeCycleAdapterMain,
     ILifeCycleAdapterIdentify,
     IComponent {
+    private configuration: PreRunnerContainerConfiguration;
     private dockerHelper: IDockerHelper;
 
     private prerunnerConfig?: PreRunnerContainerConfiguration;
@@ -29,18 +29,18 @@ class LifecycleDockerAdapterSequence implements
 
     logger: Logger;
 
-    constructor() {
+    constructor(config: PreRunnerContainerConfiguration) {
+        this.configuration = config;
         this.dockerHelper = new DockerodeDockerHelper();
         this.logger = getLogger(this);
     }
 
     async init(): Promise<void> {
-        this.logger.log("Docker sequence adapter init.");
+        this.logger.log("DockerSequenceAdapter init.");
 
-        this.prerunnerConfig = configService.getDockerConfig().prerunner;
+        await this.fetch(this.configuration.image);
 
-        await this.fetch(this.prerunnerConfig.image);
-        this.logger.info("Docker sequence adapter done.");
+        this.logger.info("DockerSequenceAdapter initiazation done.");
     }
 
     async fetch(name: string) {
@@ -158,7 +158,7 @@ class LifecycleDockerAdapterSequence implements
         }
 
         return {
-            container: configService.getDockerConfig().runner,
+            container: this.configuration,
             name: res.name || "",
             version: res.version || "",
             engines,
