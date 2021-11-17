@@ -1,5 +1,5 @@
 import { STHConfiguration } from "@scramjet/types";
-import { startHost } from "@scramjet/host";
+import { HostOptions, startHost } from "@scramjet/host";
 
 export class STH {
     config: STHConfiguration;
@@ -8,10 +8,11 @@ export class STH {
         this.config = config;
     }
 
-    start(options: any) {
+    start(options: HostOptions = {}) {
         startHost(
             {},
-            this.config.host.socketPath, {
+            this.config.host.socketPath,
+            {
                 identifyExisting: options.identifyExisting
             })
             .catch((e: Error & { exitCode?: number }) => {
