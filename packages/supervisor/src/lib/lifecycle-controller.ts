@@ -72,7 +72,11 @@ class LifeCycleController implements IComponent {
      * @param {ICSHClient} client that communicates with the CSH via TCP connection
      */
     constructor(
-        id: string, lifecycleAdapterRun: ILifeCycleAdapterRun, lifecycleConfig: LifeCycleConfig, client: ICSHClient) {
+        id: string,
+        lifecycleAdapterRun: ILifeCycleAdapterRun,
+        lifecycleConfig: LifeCycleConfig,
+        client: ICSHClient
+    ) {
         this.id = id;
         this.lifecycleAdapterRun = lifecycleAdapterRun;
         this.lifecycleConfig = lifecycleConfig;
