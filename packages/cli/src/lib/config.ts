@@ -9,6 +9,10 @@ const defaultConfig = {
     format: "pretty"
 };
 
+/**
+ *
+ * @returns defaultConfig
+ */
 type Config = typeof defaultConfig;
 const location = resolve(homedir(), ".scramjetrc");
 
@@ -31,6 +35,12 @@ export const getConfig = () => {
     return defaultConfig;
 };
 
+/**
+ * Set custom value for config and write it to JSON file.
+ * @param key {defaultConfig} key
+ * @param value {defaultConfig} value |
+ * {defaultConfig.configVersion}, {defaultConfig.apiUrl}, {defaultConfig.logLevel}, {defaultConfig.format}
+*/
 export const setConfigValue = (key: keyof Config, value: number | string | boolean) => {
     const conf = getConfig();
 
