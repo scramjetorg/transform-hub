@@ -1,37 +1,58 @@
 # Scramjet Transform Hub
 
 <p align="center">
-<a><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
-<a><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
-<a><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
-<a><img src="https://img.shields.io/tokei/lines/github/scramjetorg/transform-hub?color=yellow&style=plastic" alt="GitHub total lines" /></a>
+    <a><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
+    <a><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
+    <a><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
+    <a><img src="https://img.shields.io/tokei/lines/github/scramjetorg/transform-hub?color=yellow&style=plastic" alt="GitHub total lines" /></a>
+    <a><img alt="npm" src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic"></a>
 </p>
-<p align="center">:star: Star us on GitHub — it motivates us a lot! :rocket: </p>
+<p align="center">:mario_star: Star us on GitHub — it motivates us a lot! :rocket: </p>
 <p align="center">
-<img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
+    <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
 </p>
 
-:star: Star us on GitHub — it motivates us a lot! :rocket:
+# Table of contents
+
+- [Introduction](#introduction)
+- [Usage](#usage)
+- [Installation and sample usage](#installation-and-sample-usage)
+- [The Basics](#the-basics)
+- [How to start development](#how-to-start-development)
+  - [Development commands](#development-commands)
+  - [Start host](#start-host)
+  - [Lerna commands](#lerna-commands)
+  - [Clean build](#clean-build)
+  - [Docker commands](#docker-commands)
+  - [Install Host and execute](#install-host-and-execute)
+  - [Install CLI and execute](#install-cli-and-execute)
+  - [Build Host on Docker](#build-host-on-docker)
+  - [Run Transform Hub in Docker](#run-transform-hub-in-docker)
+- [Run components](#run-components)
+  - [Runner](#runner)
+- [Sequences and samples](#sequences-and-samples)
+  - [Compress the package](#compress-the-package)
+  - ["Hello Alice" sample](#hello-alice-sample)
+- [How to run tests](#how-to-run-tests) <!-- I think it is not needed here move elsewhere -->
+  - [Unit tests](#unit-tests) <!-- I think it is not needed here move elsewhere -->
+  - [BDD tests](#bdd-tests) <!-- I think it is not needed here move elsewhere -->
+- [Publishing](#publishing) <!-- I think it is not needed here move elsewhere -->
+- [License and contributions](#license-and-contributions)
+
+- Configuration
+- Known issues and limitations
+- Getting help
 
 # Introduction
 
-This repository is intended for developers that would like to:
+This repository is intended for developers who would like to:
 
 - participate in the Scramjet Transform Hub development community
 - register feature requests, issues and PRs for this product
 - build Transform Hub from source
 - dive into code and see how it works
 
-# Table of contents
-
-- [Introduction](README.md#introduction)
-- Usage
-- Installation
-- Configuration
-- Known issues and limitations
-- Getting help
-
-For developers that would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
+The developers who would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
 
 - [Repository with Introductory README and code samples](https://github.com/scramjetorg/scramjet-cloud-docs)
 - [NPM page for main scramjet/sth package](https://www.npmjs.com/package/@scramjet/sth)
@@ -39,13 +60,13 @@ For developers that would like to simply use Scramjet Transform Hub to run data 
 
 # Usage
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Rasperry Pi or wherever else you'd like.
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
 There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Slack](https://join.slack.com/t/scramjetframework/shared_invite/enQtODg2MDIyMTQ5MzUxLTVlNTIwMmFlYWU0YTg2ZTg1YmFiOTZkZTdhNzNmNjE2ZmQ3ZWQzZjI5MGQyZDAyOWM2NDc5YzdmZGQzNGI3YTU)!
 
-This is the STH development repo. In order to use it, you need to have linux based os, for instance [Ubuntu](https://ubuntu.com/download/server), [docker](https://www.docker.com/get-started) and [node.js v14.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows and node.js v16.x compatibility. A docker install will also be shortly available.
+This is the STH development repo. In order to use it, you need to have linux based os, for instance [Ubuntu](https://ubuntu.com/download/server), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows.
 
-## TL;DR
+## Installation and sample usage
 
 First clone build and start the hub, copy the following commands to the terminal:
 
@@ -126,37 +147,8 @@ si seq start <sequence-id> ETH USD
 # See output
 si inst output <instance-id>
 ```
+
 For more information see `si help`.
-
-## Table of contents <!-- omit in toc -->
-
-- [TL;DR](#tldr)
-- [Intro](#intro)
-- [The Basics](#the-basics)
-- [How to start development](#how-to-start-development)
-  - [Development commands](#development-commands)
-  - [Start host](#start-host)
-  - [Lerna commands](#lerna-commands)
-  - [Clean build](#clean-build)
-  - [Docker commands](#docker-commands)
-  - [Install Host and execute](#install-host-and-execute)
-  - [Install CLI and execute](#install-cli-and-execute)
-  - [Build Host on Docker](#build-host-on-docker)
-  - [Run Transform Hub in Docker](#run-transform-hub-in-docker)
-- [Run components](#run-components)
-  - [Runner](#runner)
-- [Sequences and samples](#sequences-and-samples)
-  - [Compress the package](#compress-the-package)
-  - ["Hello Alice" sample](#hello-alice-sample)
-- [How to run tests](#how-to-run-tests)
-  - [Unit tests](#unit-tests)
-  - [BDD tests](#bdd-tests)
-- [Publishing](#publishing)
-- [License and contributions](#license-and-contributions)
-
-## Intro
-
-The readme file contains information about the development process of the STH. It is focused mainly on a day by day commands. Commands won't work as long as you don't set up the environment correctly. You can [find setup instructions in the docs.](docs/development-guide/README.md)
 
 ## The basics
 
@@ -235,7 +227,7 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
     # Run script in more packages
 ```
 
-### Clean build
+### Clean build :building_construction:
 
 This is how to perform a clean build
 
@@ -244,7 +236,7 @@ yarn install:clean        # this command will perform yarn clean && yarn clean:m
 yarn build:all-packages   # optionally build:all if you want all dockerfiles.
 ```
 
-### Docker commands
+### Docker commands :docker:
 
 During development some artifact may be left over in docker, here's how to clean them
 
@@ -291,7 +283,7 @@ si help                # show CLI commands
 
 > **HINT:** If something goes wrong make clean, install, build.
 
-### Build Host on Docker
+### Build Host on Docker :docker:
 
 Build from current source:
 
@@ -307,7 +299,7 @@ cd ./packages/host/
 yarn build:docker-release
 ```
 
-### Run Transform Hub in Docker
+### Run Transform Hub in Docker :docker:
 
 ```bash
 cd ./packages/sth/
@@ -333,7 +325,7 @@ docker run \
 
 ## Run components
 
-### Runner
+### Runner :runner:
 
 Starting `Runner` script: `./packages/runner/src/bin/start-runner.ts`
 
@@ -343,13 +335,13 @@ Example of usage:
 node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
 ```
 
-## Sequences and samples
+## Sequences and samples :test_tube:
 
 To run sequence / sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute), compress the package, and then you're good to go and use curl commands.
 
-> **HINT:** The following instructions apply to the state of the repository from the `release/0.10`.
+> :bulb: **HINT:** The following instructions apply to the state of the repository from the `release/0.12`.
 
-### Compress the package
+### Compress the package :compression:
 
 The sequence in a `tar.gz` file format with package.js (aka package) can be generated in different ways.
 
@@ -381,7 +373,7 @@ If the sequence is not packed:
 lerna run prepare-sample-tar
 ```
 
-> HINT: remember that to use curl commands host must be running.  [See how to execute host =>](#install-host-and-execute)
+> **:bulb: HINT**: remember that to use curl commands host must be running.  [See how to execute host =>](#install-host-and-execute)
 
 Now upload the package:
 
@@ -401,7 +393,7 @@ SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r)
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
-> **HINT:** INSTANCE_ID and SEQ_ID are shell variables.
+> **:bulb: HINT:** INSTANCE_ID and SEQ_ID are shell variables.
 
 Start the sequence and see the output from it.
 
@@ -437,7 +429,7 @@ sequence: kill
 
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
-> **HINT:** If something goes wrong run clean, build.
+> **:bulb: HINT:** If something goes wrong run clean, build.
 
 Copy and paste 🤞
 
@@ -445,140 +437,22 @@ Copy and paste 🤞
 yarn clean && yarn build
 ```
 
-## How to run tests
-
-Make unit and bdd tests via command:
-
-```bash
-yarn test
-```
-
-It will execute:
-
-```bash
-yarn test:parallel && yarn test:bdd
-```
-
-### Unit tests
-
-```bash
-yarn test:packages
-```
-
-If you want to run a particular test file, go to directory where the test file is and run command:
-
-```bash
-npx ava name-of-the-file.spec.ts
-```
-
-If you want to run one particular test in the file, go to directory where the test file is and run command:
-
-```bash
-npx ava name-of-the-file.spec.ts -m "Name-of-the-unit-test"
-```
-
-If you add `-w` a the end of the command above the test will run automaticaly after every change you make in the test, eg.:
-
-```bash
-npx ava runner.spec.ts -m "Stop sequence" -w
-```
-
-### BDD tests
-
-The following instructions apply to the state of the repository from the `release/0.10`.
-BDD tests are located in a `bdd` folder, to execute them simply follow the steps below:
-
-- start with:
-
-```bash
-yarn clean && yarn install && yarn build:all && yarn packseq
-```
-
-Remeber if you want to test core dump file you must set ```echo '/cores/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern``` on your linux machine.
-
-- execute all bdd test from the command line:
-
-```bash
-yarn test:bdd
-```
-
-- or execute a particular bdd scenario by adding the scenario title after a `--name` flag:
-
-```bash
-yarn test:bdd --name="Execute example HelloAlice"
-```
-
-When you want to execute a group of tests you can do it using the substring of their name, for example, to execute all E2E tests:
-
-```bash
-yarn test:bdd --name="E2E"
-```
-
-You can also execute tests based on their tag name, for example:
-
-```bash
-yarn test:bdd --tags '@ci'
-```
-
-Results of the performed test will be displayed in the console. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a bdd test, those html's are saved in `bdd/reports` folder.
-
-In a result of running all the test, both unit and bdd (command: `yarn test`), Lerna goes through all the packages and runs unit tests and also checks the `bdd` directory and runs all bdd scenarios.
-
-If you see the error along the way, that means some tests were not passed.
-
-Below you can see an example, which shows the result of all passed unit test in all the packages:
-
-```bash
-lerna success run Ran npm script 'test' in 17 packages in 26.1s:
-lerna success - @scramjet/adapters
-lerna success - @scramjet/api-client
-lerna success - @scramjet/api-server
-lerna success - @scramjet/sth-config
-lerna success - @scramjet/host
-lerna success - @scramjet/logger
-lerna success - @scramjet/model
-lerna success - @scramjet/pre-runner
-lerna success - @scramjet/runner
-lerna success - @scramjet/example
-lerna success - @scramjet/example2
-lerna success - @scramjet/hello-alice-out
-lerna success - @scramjet/supervisor
-lerna success - @scramjet/symbols
-lerna success - @scramjet/test-ava-ts-node
-lerna success - @scramjet/types
-Done in 26.66s.
-```
-
-## Publishing
-
-To perform full publishing of packages with build and install, perform
-the following commands:
-
-```bash
-# <clone>
-yarn cache clean           # optional clean cache
-yarn install               # install dependencies
-yarn build:all-packages    # build all packages
-yarn bump:version          # bump version and docker images prior to publishing
-yarn bump:postversion      # prepare dist folder, publish packages from dist, push git tags
-```
-
-## License and contributions
+## License and contributions :receipt:
 
 This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
-We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
+We accept valid contributions and we will be publishing a more specific project   road map so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
 
 We provide support for contributions via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in [`bdd` directory](./bdd).
 
-### Help wanted
+### Help wanted :handshake:
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](opensource@scramjet.org).
 
-### Donation
+### Donation :moeny_with_wings:
 
 Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ;)
 
-[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
+* [You can sponsor us on github](https://github.com/sponsors/scramjetorg) :github:
 
 * There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
