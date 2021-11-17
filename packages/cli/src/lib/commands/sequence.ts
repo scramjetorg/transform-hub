@@ -36,11 +36,22 @@ export const sequence: CommandDefinition = (program) => {
             ))
         );
 
+    /**
+     * Command `si sequence list`
+     * @returns {Object} with response or error
+     */
     sequenceCmd.command("list")
         .alias("ls")
         .description("list the sequences")
         .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
+    /**
+    * Command `si sequence start`
+    * @param id sequence
+    * @param appConfig
+    * @param args for example '[10000, 2000]' | '["tcp"]'
+    * @returns {Object} with response or error
+    */
     sequenceCmd.command("start")
         .arguments("<id> [args...]")
         .description("start the sequence")
@@ -54,10 +65,21 @@ export const sequence: CommandDefinition = (program) => {
                 await sequenceClient.start(configJson || config ? JSON.parse(configJson || await readFile(config, "utf-8")) : {}, args));
         });
 
+    /**
+    * Command `si sequence start`
+    * @param id sequence
+    * @param appConfig
+    * @param args for example '[10000, 2000]' | '["tcp"]'
+    * @returns {Object} with response or error
+    */
     sequenceCmd.command("get <id>")
         .description("get data about the sequence")
         .action(async (id) => displayEntity(program, getHostClient(program).getSequence(id)));
 
+    /**
+    * Command `si sequence delete`
+    * @param id sequence
+    */
     sequenceCmd.command("delete <id>")
         .alias("rm")
         .description("delete the sequence")
