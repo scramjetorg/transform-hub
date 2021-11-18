@@ -7,45 +7,50 @@
     <a><img src="https://img.shields.io/tokei/lines/github/scramjetorg/transform-hub?color=yellow&style=plastic" alt="GitHub total lines" /></a>
     <a><img alt="npm" src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic"></a>
 </p>
-<p align="center">:mario_star: Star us on GitHub — it motivates us a lot! :rocket: </p>
+<p align="center">⭐ Star us on GitHub — it motivates us a lot! 🚀 </p>
 <p align="center">
     <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
 </p>
 
+---
+
 # Table of contents
 
-- [Introduction](#introduction)
-- [Usage](#usage)
-- [Installation and sample usage](#installation-and-sample-usage)
-- [The Basics](#the-basics)
-- [How to start development](#how-to-start-development)
-  - [Development commands](#development-commands)
-  - [Start host](#start-host)
-  - [Lerna commands](#lerna-commands)
-  - [Clean build](#clean-build)
-  - [Docker commands](#docker-commands)
-  - [Install Host and execute](#install-host-and-execute)
-  - [Install CLI and execute](#install-cli-and-execute)
-  - [Build Host on Docker](#build-host-on-docker)
-  - [Run Transform Hub in Docker](#run-transform-hub-in-docker)
-- [Run components](#run-components)
-  - [Runner](#runner)
-- [Sequences and samples](#sequences-and-samples)
-  - [Compress the package](#compress-the-package)
-  - ["Hello Alice" sample](#hello-alice-sample)
-- [How to run tests](#how-to-run-tests) <!-- I think it is not needed here move elsewhere -->
-  - [Unit tests](#unit-tests) <!-- I think it is not needed here move elsewhere -->
-  - [BDD tests](#bdd-tests) <!-- I think it is not needed here move elsewhere -->
-- [Publishing](#publishing) <!-- I think it is not needed here move elsewhere -->
-- [License and contributions](#license-and-contributions)
+1. [Introduction](#introduction-🤝)
+2. [Usage](#usage-💡)
+3. [Installation](#installation-🗜️)
+4. [Sample usage](#sample-usage-😎)
+5. [The Basics](#the-basics-🔤)
+6. [How to start development](#how-to-start-development-🖥️)
+    - [Start host](#start-host-🏁 )
+    - [Lerna commands](#lerna-commands-📝)
+    - [Clean build](#clean-build-🏗️)
+    - [Docker commands](#docker-commands-🐳)
+    - [Install Host and execute](#install-host-and-execute-✅)
+    - [Install CLI and execute](#install-cli-and-execute-✅)
+    - [Build Host on Docker](#build-host-on-docker-🏗️)
+    - [Run Transform Hub in Docker](#run-transform-hub-in-docker-🤖)
+7. [Run components](#run-components-🤹‍♀️)
+    - [Runner](#runner-🏃‍♂️💨)
+8. [Sequences and samples](#sequences-and-samples-🌀)
+    - [Compress the package](#compress-the-package-📦)
+    - ["Hello Alice" sample](#hello-alice-sample)
+9. [Publishing](#publishing) <!-- I think it is not needed here move elsewhere -->
+10. [License and contributions](#license-and-contributions-📃)
 
 - Configuration
 - Known issues and limitations
 - Getting help
 
-# Introduction
+---
 
-This repository is intended for developers who would like to:
+# Introduction 🤝
+
+This repository contains the source code for https://scramjet.org/docs (🚧404🚧 website under construction 👷).
+
+If you want to read the docs, go there. ☝🏼
+
+What's more, this repository is intended for developers who would like to:
 
 - participate in the Scramjet Transform Hub development community
 - register feature requests, issues and PRs for this product
@@ -58,15 +63,19 @@ The developers who would like to simply use Scramjet Transform Hub to run data p
 - [NPM page for main scramjet/sth package](https://www.npmjs.com/package/@scramjet/sth)
 - [NPM page for scramjet/cli package](https://www.npmjs.com/package/@scramjet/cli)
 
-# Usage
+---
+
+# Usage 💡
 
 Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
-There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Slack](https://join.slack.com/t/scramjetframework/shared_invite/enQtODg2MDIyMTQ5MzUxLTVlNTIwMmFlYWU0YTg2ZTg1YmFiOTZkZTdhNzNmNjE2ZmQ3ZWQzZjI5MGQyZDAyOWM2NDc5YzdmZGQzNGI3YTU)!
+There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) 📧 or hop on our [Scramjet Slack](https://join.slack.com/t/scramjetframework/shared_invite/enQtODg2MDIyMTQ5MzUxLTVlNTIwMmFlYWU0YTg2ZTg1YmFiOTZkZTdhNzNmNjE2ZmQ3ZWQzZjI5MGQyZDAyOWM2NDc5YzdmZGQzNGI3YTU) ![slack](./images/slack.png)
 
-This is the STH development repo. In order to use it, you need to have linux based os, for instance [Ubuntu](https://ubuntu.com/download/server), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows.
+This is the STH development repo. In order to use it, you need to have linux based os, for instance [Ubuntu](https://ubuntu.com/download/server), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
 
-## Installation and sample usage
+---
+
+# Installation 🗜️
 
 First clone build and start the hub, copy the following commands to the terminal:
 
@@ -76,13 +85,21 @@ git clone https://github.com/scramjetorg/transform-hub.git && \
   yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
 ```
 
-Depending on your machine this may take some time. When it's done the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
+Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
 ```bash
 2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
 ```
 
-Now create an application, let's say you want to get the crypto prices every second. In a clean folder save this as `index.js`:
+Hub is all set and ready to go.
+
+---
+
+# Sample usage 😎
+
+Now you can either use one of our ready-to-go samples, which you will find in a separate repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples) or you can create an application by yourself using the following steps below. Maybe let's try to create something on one of the hottest topics lately, which is cryptocurrency. Let's say you want to get the crypto prices every second.
+
+In a clean folder save this as `index.js`:
 
 ```js
 const { PassThrough } = require("stream");
@@ -109,7 +126,7 @@ module.exports = async function(_stream, baseCurrency = "BTC", currency = "USD")
 };
 ```
 
-Save this as `package.json`
+Save this as `package.json` in the same folder:
 
 ```json
 {
@@ -148,16 +165,18 @@ si seq start <sequence-id> ETH USD
 si inst output <instance-id>
 ```
 
-For more information see `si help`.
+For more CLI functionalities see `si help` or dive into our CLI [docs](./packages/cli/README.md).
 
-## The basics
+---
+
+# The basics 🔤
 
 Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
 
 * The program should consist of a function or an array of functions, such a program is called a **Transform Sequence**.
-* The sequence will be executed within a separate docker instance (we're working on other execution environment integrations - help will be appreciated).
+* The sequence will be executed within a separate docker instance (🔜 we're working on other execution environment integrations - help will be appreciated 🦾).
 * The sequence function will receive a stream as input in the first argument - you can send the data to it via the command `si instance input`.
-* If your sequence contains more than one function, then the output from the previous one is passed to the next one. The first function in sequence receives the input from API.
+* If your sequence contains more than one function, then the output from the first function is passed to the next one. Also, the first function in sequence receives the input from API.
 * The last (or the only) function in sequence can return a `Promise` or a `Stream` - based on this, STH will know when processing is done.
 * Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the sequence and remove its container.
 * You can communicate with the server via API, command line client `si` which we wrote for your convenience.
@@ -166,7 +185,7 @@ Scramjet Transform Hub allows you to deploy and execute programs that you build 
 * The program does not leave your server and doesn't use any external systems. It runs on the server you install the host on.
 * Currently STH supports node.js runner only, we're working on bringing you runners for other languages, with Python and C++ as the first ones.
 
-Some important links:
+Some important links 👀:
 
 * Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
 * You can see the [Scramjet Transform Hub API docs here](./docs/development-guide/stream-and-api.md)
@@ -174,7 +193,9 @@ Some important links:
 * Don't forget to `star` this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
-## How to start development
+---
+
+# How to start development 🖥️
 
 If you want to help out, we're happy to accept your pull requests. Please follow the below information to start development.
 
@@ -199,7 +220,7 @@ INT_ID=$(si seq start $SEQ_ID -C "{}" $APIKEY BTC EUR)
 si inst stdout $INT_ID                         # see the output from the program.
 ```
 
-### Start host
+## Start host 🏁
 
 Host can be started in multiple ways
 
@@ -209,7 +230,7 @@ node dist/host/bin/start            # This is the same as above
 ts-node packages/host/src/bin/start # This starts node from source code
 ```
 
-### Lerna commands
+## Lerna commands 📝
 
 We use Lerna to control our monorepo. Here's a couple of helpful commands:
 
@@ -227,7 +248,7 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
     # Run script in more packages
 ```
 
-### Clean build :building_construction:
+## Clean build 🏗️
 
 This is how to perform a clean build
 
@@ -236,7 +257,7 @@ yarn install:clean        # this command will perform yarn clean && yarn clean:m
 yarn build:all-packages   # optionally build:all if you want all dockerfiles.
 ```
 
-### Docker commands :docker:
+## Docker commands 🐳
 
 During development some artifact may be left over in docker, here's how to clean them
 
@@ -249,7 +270,7 @@ docker stop $(docker ps -a -q) # stops all running containers
 
 > *(`-f`) -  don't prompt confirmation
 
-### Install Host and execute
+## Install Host and execute ✅
 
 After build is done, you can install and run Hub globally:
 
@@ -265,7 +286,7 @@ npm install -g @scramjet/hub
 scramjet-transform-hub
 ```
 
-### Install CLI and execute
+## Install CLI and execute ✅
 
 In the root folder, after building run the following commands:
 
@@ -281,9 +302,9 @@ npm i -g @scramjet/cli # install CLI globally
 si help                # show CLI commands
 ```
 
-> **HINT:** If something goes wrong make clean, install, build.
+> **💡 HINT:** If something goes wrong make clean, install, build.
 
-### Build Host on Docker :docker:
+## Build Host on Docker 🏗️
 
 Build from current source:
 
@@ -299,7 +320,7 @@ cd ./packages/host/
 yarn build:docker-release
 ```
 
-### Run Transform Hub in Docker :docker:
+## Run Transform Hub in Docker 🤖
 
 ```bash
 cd ./packages/sth/
@@ -323,9 +344,11 @@ docker run \
   scramjetorg/sth:$(jq -r .version package.json)
 ```
 
-## Run components
+---
 
-### Runner :runner:
+# Run components 🤹‍♀️
+
+## Runner 🏃‍♂️💨
 
 Starting `Runner` script: `./packages/runner/src/bin/start-runner.ts`
 
@@ -335,13 +358,13 @@ Example of usage:
 node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
 ```
 
-## Sequences and samples :test_tube:
+## Sequences and samples 🌀
 
-To run sequence / sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute), compress the package, and then you're good to go and use curl commands.
+To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute), compress the package, and then you're good to go and use curl commands.
 
-> :bulb: **HINT:** The following instructions apply to the state of the repository from the `release/0.12`.
+> 💡 **HINT:** The following instructions apply to the state of the repository from the `release/0.12`.
 
-### Compress the package :compression:
+### Compress the package 📦
 
 The sequence in a `tar.gz` file format with package.js (aka package) can be generated in different ways.
 
@@ -373,7 +396,7 @@ If the sequence is not packed:
 lerna run prepare-sample-tar
 ```
 
-> **:bulb: HINT**: remember that to use curl commands host must be running.  [See how to execute host =>](#install-host-and-execute)
+> **💡 HINT**: remember that to use curl commands host must be running.  [See how to execute host =>](#install-host-and-execute)
 
 Now upload the package:
 
@@ -393,7 +416,7 @@ SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r)
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
-> **:bulb: HINT:** INSTANCE_ID and SEQ_ID are shell variables.
+> **💡 HINT:** INSTANCE_ID and SEQ_ID are shell variables.
 
 Start the sequence and see the output from it.
 
@@ -429,7 +452,7 @@ sequence: kill
 
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
-> **:bulb: HINT:** If something goes wrong run clean, build.
+> **💡 HINT:** If something goes wrong run clean, build.
 
 Copy and paste 🤞
 
@@ -437,7 +460,8 @@ Copy and paste 🤞
 yarn clean && yarn build
 ```
 
-## License and contributions :receipt:
+---
+# License and contributions 📃
 
 This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
@@ -445,13 +469,16 @@ We accept valid contributions and we will be publishing a more specific project 
 
 We provide support for contributions via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in [`bdd` directory](./bdd).
 
-### Help wanted :handshake:
+---
+
+# Help wanted 💁🏻💁‍♀️💁🏼‍♂️
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](opensource@scramjet.org).
 
-### Donation :moeny_with_wings:
+---
+# Donation 💸
 
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ;)
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee:
 
 * [You can sponsor us on github](https://github.com/sponsors/scramjetorg) :github:
 
