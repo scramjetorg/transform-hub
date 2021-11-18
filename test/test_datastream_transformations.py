@@ -10,11 +10,11 @@ log = utils.LogWithTimer.log
 # transformations
 
 async def async_is_even(x):
-    await asyncio.sleep((x%5)/10)
+    await asyncio.sleep((x%5)/100)
     return x % 2 == 0
 
 async def async_square(x):
-    await asyncio.sleep((x%5)/10)
+    await asyncio.sleep((x%5)/100)
     return x**2
 
 async def echo(x):

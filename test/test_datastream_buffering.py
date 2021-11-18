@@ -61,7 +61,7 @@ async def test_reading_data_as_it_arrives():
     def write_to_pipe():
         with open(path, 'w') as pipe:
             for chunk in data:
-                time.sleep(0.1)
+                time.sleep(0.02)
                 log(f'{yellow}Write into{reset} {repr(path)}:', repr(chunk))
                 pipe.write(chunk)
                 pipe.flush()

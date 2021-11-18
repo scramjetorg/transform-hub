@@ -13,7 +13,7 @@ log = utils.LogWithTimer.log
 fmt = utils.print_formatted
 
 # Use to change delays mocking async function execution
-SLOMO_FACTOR = 1
+SLOMO_FACTOR = 0.2
 
 MAX_PARALLEL = 4
 

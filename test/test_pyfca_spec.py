@@ -15,7 +15,7 @@ from ansi_color_codes import *
 
 MAX_PARALLEL = 4
 # Use to change delays mocking async function execution
-SPEED = 100
+SPEED = 200
 log = utils.LogWithTimer.log
 
 # Input data
