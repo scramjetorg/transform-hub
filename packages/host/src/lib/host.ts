@@ -254,7 +254,7 @@ export class Host implements IComponent {
 
     async identifyExistingSequences() {
         this.logger.log("Listing exiting sequences.");
-        const ldas = new LifecycleDockerAdapterSequence(this.config.docker.prerunner);
+        const ldas = new LifecycleDockerAdapterSequence(this.config.docker);
 
         try {
             await ldas.init();
@@ -339,7 +339,7 @@ export class Host implements IComponent {
     }
 
     async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
-        const ldas = new LifecycleDockerAdapterSequence(this.config.docker.prerunner);
+        const ldas = new LifecycleDockerAdapterSequence(this.config.docker);
 
         await ldas.init();
         const identifyResult = await ldas.identify(stream, id);
