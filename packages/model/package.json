@@ -16,7 +16,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/symbols": "^0.12.2",
-    "scramjet": "4.36.0",
+    "scramjet": "^4.36.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
