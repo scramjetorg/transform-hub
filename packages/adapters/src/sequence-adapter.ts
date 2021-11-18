@@ -6,7 +6,8 @@ import {
     ILifeCycleAdapterIdentify,
     Logger,
     RunnerConfig,
-    PreRunnerContainerConfiguration
+    PreRunnerContainerConfiguration,
+    STHConfiguration
 } from "@scramjet/types";
 import { rm } from "fs/promises";
 import { StringDecoder } from "string_decoder";
@@ -20,7 +21,7 @@ class LifecycleDockerAdapterSequence implements
     ILifeCycleAdapterMain,
     ILifeCycleAdapterIdentify,
     IComponent {
-    private configuration: PreRunnerContainerConfiguration;
+    private containersConfiguration: STHConfiguration["docker"];
     private dockerHelper: IDockerHelper;
 
     private prerunnerConfig?: PreRunnerContainerConfiguration;
@@ -29,8 +30,9 @@ class LifecycleDockerAdapterSequence implements
 
     logger: Logger;
 
-    constructor(config: PreRunnerContainerConfiguration) {
-        this.configuration = config;
+    constructor(config: STHConfiguration["docker"]) {
+        this.containersConfiguration = config;
+        this.prerunnerConfig = config.prerunner;
         this.dockerHelper = new DockerodeDockerHelper();
         this.logger = getLogger(this);
     }
@@ -38,7 +40,7 @@ class LifecycleDockerAdapterSequence implements
     async init(): Promise<void> {
         this.logger.log("DockerSequenceAdapter init.");
 
-        await this.fetch(this.configuration.image);
+        await this.fetch(this.containersConfiguration.prerunner.image);
 
         this.logger.info("DockerSequenceAdapter initiazation done.");
     }
@@ -158,7 +160,7 @@ class LifecycleDockerAdapterSequence implements
         }
 
         return {
-            container: this.configuration,
+            container: this.containersConfiguration.runner,
             name: res.name || "",
             version: res.version || "",
             engines,
