@@ -16,6 +16,7 @@ type: "docs"
 - [Sequence operations](#sequence-operations)
 - [Instance basic operations](#instance-basic-operations)
 - [Instance advanced operation](#instance-advanced-operation)
+- [Data management](#data-management)
 - [Host operations](#host-operations)
 
 ## Sequence operations
@@ -139,7 +140,7 @@ No parameters
 
 <details open>
 <summary>
-    <strong>[ GET ]</strong> <code>/api/v1/instances/</code> <small>- list all instances</small>
+    <strong>[ GET ]</strong> <code>/api/v1/instances</code> <small>- list all instances</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
@@ -251,9 +252,7 @@ No body returned
 
 <br> <strong>**Parameters**</strong>
 
-| Name | Description | Type | Required |
-| ---- | ----------- | ---- | -------- |
-|      |             |      |          |
+No parameters
 
 <strong>Responses</strong>
 
@@ -261,13 +260,14 @@ No body returned
 
 ```json
 {
-    "healthy": true,
-    "sequences": [{
-        "throughput": 0.1,
-        "buffer": 0,
-        "processing": 3,
-        "pressure": 30
-    }]
+  "cpuTotalUsage": 529325247,
+  "healthy": true,
+  "limit": 536870912,
+  "memoryMaxUsage": 16117760,
+  "memoryUsage": 14155776,
+  "networkRx": 1086,
+  "networkTx": 0,
+  "containerId": "1c993c4ff774fac06185aa9554cf40c23b03e1479a7e0d14827708161b08ae51"
 }
 ```
 
@@ -281,32 +281,42 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <details>
 <summary>
-    <strong>[ POST ]</strong>  <code>api/v1/instance/:id/_kill</code> <small>- end instance gracefully waiting for unfinished tasks</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- send event</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
 
-| Name | Description | Type | Required |
-| ---- | ----------- | ---- | -------- |
-|      |             |      |          |
+| Name        | Type     | Description | Required |
+| :---------- | :------- | ----------- | -------- |
+| `eventName` | `string` |             |          |
+| `message`   | `string` |             |          |
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- get last event</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
 
 <strong>Responses</strong>
 
 <small>Successful operation code: **200**</small>
 
 ```json
-{
-   "code": 0,
-   "type": "string",
-   "message": "string"
-}
+
 ```
 
 </details>
 
 <details>
 <summary>
-    <strong>[ POST ]</strong>  <code>api/v1/instance/:id/_kill</code> <small>- end instance gracefully waiting for unfinished tasks</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/stdin​</code> <small>- ...</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
@@ -317,21 +327,13 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <strong>Responses</strong>
 
-<small>Successful operation code: **200**</small>
-
-```json
-{
-   "code": 0,
-   "type": "string",
-   "message": "string"
-}
-```
+<small>Content-type: application/octet-stream</small>
 
 </details>
 
 <details>
 <summary>
-    <strong>[ POST ]</strong>  <code>api/v1/instance/:id/_kill</code> <small>- end instance gracefully waiting for unfinished tasks</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stdout</code> <small>- ...</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
@@ -342,17 +344,30 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <strong>Responses</strong>
 
-<small>Successful operation code: **200**</small>
-
-```json
-{
-   "code": 0,
-   "type": "string",
-   "message": "string"
-}
-```
+<small>Content-type: application/octet-stream</small>
 
 </details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stderr</code> <small>- ...</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+| Name | Description | Type | Required |
+| ---- | ----------- | ---- | -------- |
+|      |             |      |          |
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
+
+## Data management
+
+<!-- ToDo: Topics -->
 
 ## Host operations
 
@@ -369,22 +384,6 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <strong>Responses</strong>
 
-<small>Successful operation code: **200**</small>
-
-```json
-{
-    "healthy": true,
-    "sequences": [{
-        "throughput": 0.1,
-        "buffer": 0,
-        "processing": 3,
-        "pressure": 30
-    }]
-}
-```
+<small>Content-type: application/octet-stream</small>
 
 </details>
-
-- POST /api/v1/stream/stdin​
-- GET /api/v1/stream/stderr​
-- GET /api/v1/stream/stdout​
