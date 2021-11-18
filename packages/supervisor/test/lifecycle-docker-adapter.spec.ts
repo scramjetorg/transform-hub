@@ -1,7 +1,7 @@
 // TODO: Move this file to @scramjet/adapters
 
 /* eslint-disable import/no-named-as-default-member, no-extra-parens, dot-notation */
-import { configService } from "@scramjet/sth-config";
+import { ConfigService } from "@scramjet/sth-config";
 import { DelayedStream } from "@scramjet/model";
 import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";
 import { RunnerConfig, STHConfiguration } from "@scramjet/types";
@@ -24,6 +24,8 @@ const configFileContents: STHConfiguration["docker"] = {
         maxMem: 16
     }
 };
+
+const configService = new ConfigService();
 
 sinon.stub(fsPromises, "chmod").resolves();
 sinon.stub(fs, "createWriteStream");
@@ -116,7 +118,8 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
             [""]: ""
         },
         sequencePath: "sequence.js",
-        packageVolumeId: "abc-123"
+        packageVolumeId: "abc-123",
+        adapterExitDelay: 0
     };
     const lcdai = new LifecycleDockerAdapterInstance();
 
@@ -187,15 +190,17 @@ test("Identify should return parsed response from stream.", async (t) => {
         wait
     });
 
-    const lcdas = new LifecycleDockerAdapterSequence();
+    configStub.returns(configFileContents);
+
+    const lcdas = new LifecycleDockerAdapterSequence(configService.getDockerConfig());
     const res = lcdas.identify(streams.stdin, "abc-123");
 
     streams.stdout.push(JSON.stringify(preRunnerResponse), "utf-8");
     streams.stdout.end();
 
-    configStub.returns(configFileContents);
-
     const identifyResponse = await res;
+
+    identifyResponse.adapterExitDelay = 0;
 
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
@@ -206,7 +211,8 @@ test("Identify should return parsed response from stream.", async (t) => {
         version: preRunnerResponse.version,
         packageVolumeId: createdVolumeId,
         container: configFileContents.runner,
-        sequencePath: preRunnerResponse.main
+        sequencePath: preRunnerResponse.main,
+        adapterExitDelay: 0
     };
 
     t.deepEqual(identifyResponse, expectedResponse);
