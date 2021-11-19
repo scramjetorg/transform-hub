@@ -374,7 +374,7 @@ export class Host implements IComponent {
             appConfig,
             sequenceArgs,
             communicationHandler,
-            { exitDelay: this.config.instanceAdapterExitDelay, socketPath: this.config.host.socketPath }
+            { instanceAdapterExitDelay: this.config.instanceAdapterExitDelay, socketPath: this.config.host.socketPath }
         );
 
         this.logger.log("New CSIController created: ", id);
