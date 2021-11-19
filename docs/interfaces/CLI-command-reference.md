@@ -5,25 +5,10 @@ Scramjet Interface <!-- omit in toc -->
   - [Download CLI](#download-cli)
   - [Download SDK](#download-sdk)
 - [CLI base usage](#cli-base-usage)
-  - [Login](#login)
   - [Set up config](#set-up-config)
 - [Create a package](#create-a-package)
 - [Sequence operations](#sequence-operations)
-  - [Post](#post)
-  - [List](#list)
-  - [Start](#start)
-  - [Delete](#delete)
-  - [Seq help](#seq-help)
 - [Instance operations](#instance-operations)
-  - [List inst](#list-inst)
-  - [Show inst data](#show-inst-data)
-  - [Stop](#stop)
-  - [Kill](#kill)
-  - [Health status](#health-status)
-  - [Instance events](#instance-events)
-  - [Inst logs](#inst-logs)
-- [Stdio](#stdio)
-  - [Inst help](#inst-help)
 - [CLI troubleshooting](#cli-troubleshooting)
   - [linux](#linux)
   - [windows](#windows)
@@ -196,4 +181,3 @@ si inst help [command]                                # display help for command
 | Problem | Possible solution|
 | When I run `si` nothing is happening | ... |
 | `'si' is not recognized` | ... |
-
