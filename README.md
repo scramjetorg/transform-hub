@@ -21,7 +21,7 @@
 3. [Installation](#installation-🗜️)
 4. [Sample usage](#sample-usage-😎)
 5. [The Basics](#the-basics-🔤)
-6. [How to start development](#how-to-start-development-🖥️)
+6. [How to start development](#how-to-start-development-👨‍💻)
     - [Start host](#start-host-🏁 )
     - [Lerna commands](#lerna-commands-📝)
     - [Clean build](#clean-build-🏗️)
@@ -31,24 +31,22 @@
     - [Build Host on Docker](#build-host-on-docker-🏗️)
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-🤖)
 7. [Run components](#run-components-🤹‍♀️)
-    - [Runner](#runner-🏃‍♂️💨)
+    - [Runner](#runner-🏃‍♂️)
 8. [Sequences and samples](#sequences-and-samples-🌀)
     - [Compress the package](#compress-the-package-📦)
     - ["Hello Alice" sample](#hello-alice-sample)
-9. [Publishing](#publishing) <!-- I think it is not needed here move elsewhere -->
-10. [License and contributions](#license-and-contributions-📃)
+9. [License and contributions](#license-and-contributions-📃)
 
 - Configuration
 - Known issues and limitations
 - Getting help
 
 ---
-
 # Introduction 🤝
 
 This repository contains the source code for https://scramjet.org/docs (🚧404🚧 website under construction 👷).
 
-If you want to read the docs, go there. ☝🏼
+If you want to read the docs, go there ☝🏼
 
 What's more, this repository is intended for developers who would like to:
 
@@ -77,21 +75,112 @@ This is the STH development repo. In order to use it, you need to have linux bas
 
 # Installation 🗜️
 
-First clone build and start the hub, copy the following commands to the terminal:
+Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
+We will guide you step by step through the installation process.
 
-```bash
-git clone https://github.com/scramjetorg/transform-hub.git && \
-  cd transform-hub && sudo gpasswd -a $USER docker && \
-  yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
-```
+There are several installations you need to perform to get the hub up and running, and event more to start developing with us. If may already have some of these installed, but we'll show you how to install them if you don't.
+
+- NPM
+- node.js
+- lerna
+- yarn
+- typescript
+- ts-node
+
+### Install Node.js and configure Scramjet NPM Registry
+
+1. To check if you already have Node.js(v16.xx.x) and npm installed, please check the installed version, run the following commands in your console:
+
+        node -v
+        npm -v
+
+If none of the above commands is found, please proceed with the installation.
+
+2. It is recommend to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. To install or update nvm, you should run the install script, to do that use the following cURL command in your console:
+
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
+
+After executing the above command you should get in the console this info:
+
+![nvm_installation_output](./images/nvm_installation_output.png)
+
+Which means that you need to run those two more commands to finish the installation:
+
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+Export lines from above will be saved in your ~/.bashrc file so that you will not need to run it every session start.
+After that you can check nvm version just to confirm that you have successfully installed nvm.
+
+command: `nvm --version`
+
+output: `v0.37.2`
+
+![nvm_version](./images/nvm_version.png)
+
+
+3. Now you are ready to install node.js, simply type in your console:
+
+        nvm install 16 # command will install latest LTS Version of Node.js
+
+
+> 📝 **Note**:
+The project is working on Node Long Term Support (LTS) Version. Witch contains Node Package Manager (NPM) in `^8.1.0` version.
+NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
+
+🤓 For more info you can check out the node.js official [webpage](https://nodejs.org/en/download/)
+
+Now you can check the installed version of node.js and npm, run the following command in your console:
+
+command: `node -v`
+
+output: `v16.13.0`
+
+command: `npm -v`
+
+output: `8.1.0`
+
+![node&npm_version](./images/node&npm_version.png)
+
+OK! It looks like you have successfully installed node.js and npm. There are few more installations you need to perform, run the following commands in your console one after another:
+
+        npm install -g lerna
+        npm install -g yarn
+        npm install -g typescript
+        npm install -g ts-node
+
+![installations](./images/installations.png)
+
+The same as before the installations can be confirmed by checking the installed versions:
+
+![versions](./images/versions.png)
+
+OK! You have successfully installed all the required packages 🎉 🎆
+
+We also work with Docker ![docker](./images/docker.png), we are currently working on solution where using Docker will be optional, but until then please continue with the installation procedure.
+Run the following command in your console:
+
+        sudo apt install -y docker.io docker-compose
+
+Verify that Docker and Docker-Compose are installed by getting their versions:
+
+        sudo docker version
+        docker-compose version
+
+Now let's clone build and start the hub. Please copy the following commands to the terminal:
+
+    git clone https://github.com/scramjetorg/transform-hub.git && \
+    cd transform-hub && sudo gpasswd -a $USER docker && \
+    yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
 
 Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
-```bash
-2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
-```
+    2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
 
-Hub is all set and ready to go.
+Hub is all set and ready to work with.
+
+![hub_start](./images/hub_start.png)
 
 ---
 
@@ -195,9 +284,11 @@ Some important links 👀:
 
 ---
 
-# How to start development 🖥️
+# How to start development 👨‍💻
 
 If you want to help out, we're happy to accept your pull requests. Please follow the below information to start development.
+
+>>>>>>>info o lernie i yarnie
 
 ```bash
 git clone git@github.com:scramjetorg/transform-hub.git      # clone the repo
@@ -206,7 +297,7 @@ yarn install                                                # install dependenci
 yarn build:all                                              # build all packages
                                                             #    -> modules, samples and docker images
 yarn global add file:$(pwd)/dist/cli                        # install the cli
-yarn packseq                                                # packs the sequencees
+yarn packseq                                                # packs the sequences
 yarn start                                                  # start the hub
 ```
 
@@ -348,7 +439,7 @@ docker run \
 
 # Run components 🤹‍♀️
 
-## Runner 🏃‍♂️💨
+## Runner 🏃‍♂️
 
 Starting `Runner` script: `./packages/runner/src/bin/start-runner.ts`
 
@@ -416,7 +507,7 @@ SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r)
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
-> **💡 HINT:** INSTANCE_ID and SEQ_ID are shell variables.
+> **💡 HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
 Start the sequence and see the output from it.
 
