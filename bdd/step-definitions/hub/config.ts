@@ -2,6 +2,7 @@ import { Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
 import { HostClient, InstanceClient } from "@scramjet/api-client";
+import { defaultConfig } from "@scramjet/sth-config";
 import Dockerode = require("dockerode");
 
 import { strict as assert } from "assert";
@@ -114,8 +115,10 @@ Then("container uses {string} image", async function(this: CustomWorld, image: s
 });
 
 Then("container uses image defined in sth-config", async function(this: CustomWorld) {
-    const defaultRunnerImage = require("@scramjet/sth-config").defaultConfig.docker.runner.image;
+    const defaultRunnerImage = defaultConfig.docker.runner.image;
 
+    // eslint-disable-next-line no-console
+    console.log("---------------------", defaultConfig);
     assert.equal(this.resources.containerInfo.Image, defaultRunnerImage);
 });
 

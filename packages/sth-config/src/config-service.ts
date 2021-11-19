@@ -1,7 +1,9 @@
 import { DeepPartial, STHConfiguration } from "@scramjet/types";
 import { merge } from "@scramjet/utility";
 
-export const defaultConfig: STHConfiguration = {
+const imageConfig = require("./image-config.json");
+
+const _defaultConfig: STHConfiguration = {
     cpmUrl: "",
     docker: {
         prerunner: {
@@ -32,12 +34,20 @@ export const defaultConfig: STHConfiguration = {
     instanceAdapterExitDelay: 9000
 };
 
+merge(_defaultConfig, {
+    docker: {
+        prerunner: { image: imageConfig.prerunner },
+        runner: { image: imageConfig.runner },
+    }
+});
+
+export const defaultConfig = _defaultConfig;
+
 export class ConfigService {
     private config: STHConfiguration;
 
     constructor(config?: DeepPartial<STHConfiguration>) {
         this.config = defaultConfig;
-        this.updateImages();
 
         if (config) {
             merge(this.config, config);
@@ -45,8 +55,6 @@ export class ConfigService {
     }
 
     updateImages() {
-        const imageConfig = require("./image-config.json");
-
         this.config.docker.prerunner.image = imageConfig.prerunner;
         this.config.docker.runner.image = imageConfig.runner;
     }
