@@ -19,9 +19,8 @@
 1. [Introduction](#introduction-🤝)
 2. [Usage](#usage-💡)
 3. [Installation](#installation-🗜️)
-4. [Sample usage](#sample-usage-😎)
-5. [The Basics](#the-basics-🔤)
-6. [How to start development](#how-to-start-development-👨‍💻)
+4. [The Basics](#the-basics-🔤)
+5. [Development instructions](#development-instructions-👨‍💻)
     - [Start host](#start-host-🏁 )
     - [Lerna commands](#lerna-commands-📝)
     - [Clean build](#clean-build-🏗️)
@@ -30,16 +29,18 @@
     - [Install CLI and execute](#install-cli-and-execute-✅)
     - [Build Host on Docker](#build-host-on-docker-🏗️)
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-🤖)
-7. [Run components](#run-components-🤹‍♀️)
+6. [Run components](#run-components-🤹‍♀️)
     - [Runner](#runner-🏃‍♂️)
-8. [Sequences and samples](#sequences-and-samples-🌀)
+7. [Sequences and samples](#sequences-and-samples-🌀)
     - [Compress the package](#compress-the-package-📦)
     - ["Hello Alice" sample](#hello-alice-sample)
+8. [Troubleshooting](#troubleshooting-💥)
+    - Known issues and limitations
 9. [License and contributions](#license-and-contributions-📃)
+10. [Work with us](#help-wanted-💁🏻💁‍♀️💁🏼‍♂️)
+11. [Donation](#donation-💸)
 
-- Configuration
-- Known issues and limitations
-- Getting help
+4. [Sample usage](#sample-usage-😎)
 
 ---
 # Introduction 🤝
@@ -80,23 +81,22 @@ We will guide you step by step through the installation process.
 
 There are several installations you need to perform to get the hub up and running, and event more to start developing with us. If may already have some of these installed, but we'll show you how to install them if you don't.
 
-- NPM
+- nvm
 - node.js
 - lerna
 - yarn
 - typescript
 - ts-node
+- docker
 
-### Install Node.js and configure Scramjet NPM Registry
-
-1. To check if you already have Node.js(v16.xx.x) and npm installed, please check the installed version, run the following commands in your console:
+To check if you already have Node.js(v16.xx.x) and npm installed, please check the installed version, run the following commands in your console:
 
         node -v
         npm -v
 
 If none of the above commands is found, please proceed with the installation.
 
-2. It is recommend to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. To install or update nvm, you should run the install script, to do that use the following cURL command in your console:
+It is recommend to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. To install or update nvm, you should run the install script, to do that use the following cURL command in your console:
 
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
 
@@ -124,12 +124,11 @@ output: `v0.37.2`
 
         nvm install 16 # command will install latest LTS Version of Node.js
 
-
 > 📝 **Note**:
 The project is working on Node Long Term Support (LTS) Version. Witch contains Node Package Manager (NPM) in `^8.1.0` version.
 NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
 
-🤓 For more info you can check out the node.js official [webpage](https://nodejs.org/en/download/)
+🤓 For more info you can check out the node.js official [webpage](https://nodejs.org).
 
 Now you can check the installed version of node.js and npm, run the following command in your console:
 
@@ -158,7 +157,7 @@ The same as before the installations can be confirmed by checking the installed 
 
 OK! You have successfully installed all the required packages 🎉 🎆
 
-We also work with Docker ![docker](./images/docker.png), we are currently working on solution where using Docker will be optional, but until then please continue with the installation procedure.
+We also work with Docker ![docker](./images/docker.png),currently we are working on solution where using Docker will be optional, but until then please continue with the installation procedure.
 Run the following command in your console:
 
         sudo apt install -y docker.io docker-compose
@@ -181,80 +180,6 @@ Depending on your machine this may take some time, so it is a perfect time for a
 Hub is all set and ready to work with.
 
 ![hub_start](./images/hub_start.png)
-
----
-
-# Sample usage 😎
-
-Now you can either use one of our ready-to-go samples, which you will find in a separate repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples) or you can create an application by yourself using the following steps below. Maybe let's try to create something on one of the hottest topics lately, which is cryptocurrency. Let's say you want to get the crypto prices every second.
-
-In a clean folder save this as `index.js`:
-
-```js
-const { PassThrough } = require("stream");
-const fetch = require("node-fetch");
-
-const getData = async (baseCurrency, currency) =>
-    fetch(`https://api.coinbase.com/v2/prices/${baseCurrency}-${currency}/spot`)
-        .then(res => res.json());
-
-module.exports = async function(_stream, baseCurrency = "BTC", currency = "USD") {
-    const outputStream = new PassThrough();
-
-    setInterval(async () => {
-        getData(baseCurrency, currency)
-            .then(data => {
-                outputStream.write(JSON.stringify(data) + "\r\n");
-            })
-            .catch(() => {
-                outputStream.write(JSON.stringify({ error: true }) + "\r\n");
-            });
-    }, 1000);
-
-    return outputStream;
-};
-```
-
-Save this as `package.json` in the same folder:
-
-```json
-{
-  "name": "@scramjet/crypto-prices",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "author": "",
-  "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/scramjetorg/transform-hub.git"
-  },
-  "dependencies": {
-    "node-fetch": "^2.6.1"
-  }
-}
-```
-
-Open a terminal and run your program on the transform hub:
-
-```bash
-# install dependencies
-npm install
-
-# make a compressed package with sequence
-si pack . -o crypto-prices.tar.gz
-
-# send sequence to transform hub, this will output Sequence ID
-si seq send crypto-prices.tar.gz
-
-# start a sequence with parameters, this will output Instance ID
-si seq start <sequence-id> ETH USD
-
-# See output
-si inst output <instance-id>
-```
-
-For more CLI functionalities see `si help` or dive into our CLI [docs](./packages/cli/README.md).
 
 ---
 
@@ -284,32 +209,15 @@ Some important links 👀:
 
 ---
 
-# How to start development 👨‍💻
+# Development instructions 👨‍💻
+
+In this section we will show you some useful commands, tools and functionalities that you can use to develop your own programs.
 
 If you want to help out, we're happy to accept your pull requests. Please follow the below information to start development.
 
->>>>>>>info o lernie i yarnie
+You should already have node.js, npm and other necessary packages installed, also transform-hub repo should be cloned by now. If not and you skipped the installation section, then please go back and follow the instructions, they are initial for development.
 
-```bash
-git clone git@github.com:scramjetorg/transform-hub.git      # clone the repo
-cd transform-hub/                                           # enter the cloned directory
-yarn install                                                # install dependencies
-yarn build:all                                              # build all packages
-                                                            #    -> modules, samples and docker images
-yarn global add file:$(pwd)/dist/cli                        # install the cli
-yarn packseq                                                # packs the sequences
-yarn start                                                  # start the hub
-```
-
-Now in another window:
-
-```bash
-si pack /path/to/my/folder -o ~/package.tar.gz # compress the app to a package
-SEQ_ID=$(si seq send ~/package.tar.gz)         # upload the package to the server SEQ_ID is now it's id
-INT_ID=$(si seq start $SEQ_ID -C "{}" $APIKEY BTC EUR)
-                                               # start the program on the host with arguments
-si inst stdout $INT_ID                         # see the output from the program.
-```
+In [#Installation](#installation) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning that the hub can be started on any port number, and it can be started in several ways, which is described in the next section.
 
 ## Start host 🏁
 
@@ -327,8 +235,8 @@ We use Lerna to control our monorepo. Here's a couple of helpful commands:
 
 ```bash
 lerna create package_name # Add new package:
-lerna ls # List all of the public packages in the current Lerna repo:
-lerna run [script] # Run an npm script in each package that contains that script.
+lerna ls                  # List all of the public packages in the current Lerna repo:
+lerna run [script]        # Run an npm script in each package that contains that script.
 lerna run --ignore @scramjet/<package_name> <script-name>
     # Run script in all packages excluding one package:
 lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
@@ -341,7 +249,7 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 
 ## Clean build 🏗️
 
-This is how to perform a clean build
+This is how to perform a clean build of the packages:
 
 ```bash
 yarn install:clean        # this command will perform yarn clean && yarn clean:modules && yarn install at once
@@ -379,19 +287,23 @@ scramjet-transform-hub
 
 ## Install CLI and execute ✅
 
-In the root folder, after building run the following commands:
+This command was already done at the end the [#Installation](#installation) section, just before starting the hub. There are two ways to install the CLI:
+
+- in the root folder, after building, run the following commands:
 
 ```bash
 npm i -g ./dist/cli # install CLI globally
 si help             # show CLI commands
 ```
 
-You can also install the package from NPM.
+- you can also install the package from NPM.
 
 ```bash
 npm i -g @scramjet/cli # install CLI globally
 si help                # show CLI commands
 ```
+
+We will use CLI later on to execute the sequence.
 
 > **💡 HINT:** If something goes wrong make clean, install, build.
 
@@ -574,3 +486,77 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 * [You can sponsor us on github](https://github.com/sponsors/scramjetorg) :github:
 
 * There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
+
+# Sample usage 😎
+
+Now you can either use one of our ready-to-go samples, which you will find in a separate repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples) or you can create an application by yourself using the following steps below. Maybe let's try to create something on one of the hottest topics lately, which is cryptocurrency. Let's say you want to get the crypto prices every second.
+
+In a clean folder save this as `index.js`:
+
+```js
+const { PassThrough } = require("stream");
+const fetch = require("node-fetch");
+
+const getData = async (baseCurrency, currency) =>
+    fetch(`https://api.coinbase.com/v2/prices/${baseCurrency}-${currency}/spot`)
+        .then(res => res.json());
+
+module.exports = async function(_stream, baseCurrency = "BTC", currency = "USD") {
+    const outputStream = new PassThrough();
+
+    setInterval(async () => {
+        getData(baseCurrency, currency)
+            .then(data => {
+                outputStream.write(JSON.stringify(data) + "\r\n");
+            })
+            .catch(() => {
+                outputStream.write(JSON.stringify({ error: true }) + "\r\n");
+            });
+    }, 1000);
+
+    return outputStream;
+};
+```
+
+Save this as `package.json` in the same folder:
+
+```json
+{
+  "name": "@scramjet/crypto-prices",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.1"
+  }
+}
+```
+
+Open a terminal and run your program on the transform hub:
+
+```bash
+# install dependencies
+npm install
+
+# make a compressed package with sequence
+si pack . -o crypto-prices.tar.gz
+
+# send sequence to transform hub, this will output Sequence ID
+si seq send crypto-prices.tar.gz
+
+# start a sequence with parameters, this will output Instance ID
+si seq start <sequence-id> ETH USD
+
+# See output
+si inst output <instance-id>
+```
+
+For more CLI functionalities see `si help` or dive into our CLI [docs](./packages/cli/README.md).
+
+---
