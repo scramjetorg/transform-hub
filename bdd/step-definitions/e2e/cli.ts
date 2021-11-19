@@ -155,6 +155,7 @@ Then("I delete sequence", { timeout: 10000 }, async function() {
 
 Then("I get instance health", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", instanceId, ...formatFlags(), ...connectionFlags()]);
+
     assert.equal(stdio[2], 0);
     const msg = JSON.parse(stdio[0].replace("\n", ""));
 
