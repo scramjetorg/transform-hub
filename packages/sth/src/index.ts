@@ -22,4 +22,8 @@ export class STH {
                 process.exit();
             });
     }
+
+    stop() {
+        throw new Error("Not implemented");
+    }
 }

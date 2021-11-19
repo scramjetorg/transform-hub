@@ -54,11 +54,6 @@ export class ConfigService {
         }
     }
 
-    updateImages() {
-        this.config.docker.prerunner.image = imageConfig.prerunner;
-        this.config.docker.runner.image = imageConfig.runner;
-    }
-
     getConfig() {
         return this.config;
     }

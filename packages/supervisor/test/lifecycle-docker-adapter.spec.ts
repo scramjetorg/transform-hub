@@ -119,7 +119,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         },
         sequencePath: "sequence.js",
         packageVolumeId: "abc-123",
-        adapterExitDelay: 0
+        instanceAdapterExitDelay: 0
     };
     const lcdai = new LifecycleDockerAdapterInstance();
 
@@ -200,7 +200,7 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     const identifyResponse = await res;
 
-    identifyResponse.adapterExitDelay = 0;
+    identifyResponse.instanceAdapterExitDelay = 0;
 
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
@@ -212,7 +212,7 @@ test("Identify should return parsed response from stream.", async (t) => {
         packageVolumeId: createdVolumeId,
         container: configFileContents.runner,
         sequencePath: preRunnerResponse.main,
-        adapterExitDelay: 0
+        instanceAdapterExitDelay: 0
     };
 
     t.deepEqual(identifyResponse, expectedResponse);

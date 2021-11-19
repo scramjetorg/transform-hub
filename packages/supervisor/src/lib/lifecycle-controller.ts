@@ -205,6 +205,8 @@ class LifeCycleController implements IComponent {
             */
             const exitcode = await this.endOfSequence;
 
+            await defer(config.instanceAdapterExitDelay);
+
             // TODO: if we have a non-zero exit code is this expected?
             this.logger.log(`Sequence finished with status: ${exitcode}`);
         } catch (error: any) {

@@ -246,9 +246,14 @@ export class CSIController extends EventEmitter {
     }
 
     async sendConfig() {
+        const sequenceConfig = {
+            ...this.sequence.config,
+            instanceAdapterExitDelay: this.config.instanceAdapterExitDelay
+        };
+
         const configMsg: InstanceConfigMessage = {
             msgCode: SupervisorMessageCode.CONFIG,
-            config: this.sequence.config
+            config: sequenceConfig
         };
 
         await this.controlDataStream?.whenWrote(

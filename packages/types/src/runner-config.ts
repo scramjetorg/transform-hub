@@ -13,5 +13,5 @@ export type RunnerConfig = {
     sequencePath: string;
     packageVolumeId: string;
     error?: string;
-    adapterExitDelay: number
+    instanceAdapterExitDelay: number
 };
