@@ -23,7 +23,7 @@ type: "docs"
 
 <details open>
 <summary>
-    <strong>[ POST ]</strong> <code>/api/v1/sequence</code> <small>- create a new sequence</small>
+    <strong>[ POST ]</strong> <code>/api/v1/sequence</code> <small>- add new sequence</small>
 </summary>
 
 <br><strong>**Parameters**</strong>
@@ -126,7 +126,7 @@ No parameters
 }
 ```
 
-<small>*Status*: 409 Conflict</small>
+<small>*Status*: 409 Conflict - the instance is still running</small>
 
 ```json
 {
@@ -191,7 +191,7 @@ No parameters
 }
 ```
 
-<small>Status*: ??</small>
+<small>*Status*: 500 (?)</small>
 
 ```json
 {
@@ -208,9 +208,10 @@ No parameters
 
 <br> <strong>**Parameters**</strong>
 
-| Name | Description | Type | Required |
-| ---- | ----------- | ---- | -------- |
-|      |             |      |          |
+| Name             | Description                                                                     | Type    | Required |
+| ---------------- | ------------------------------------------------------------------------------- | ------- | -------- |
+| timeout          | The number of milliseconds before the Instance will be killed. Default: 7000ms. | number  | no       |
+| canCallKeepalive | If set to true, the instance will prolong the running. Default: false.          | boolean | no       |
 
 <strong>Responses</strong>
 
@@ -286,10 +287,10 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <br> <strong>**Parameters**</strong>
 
-| Name        | Type     | Description | Required |
-| :---------- | :------- | ----------- | -------- |
-| `eventName` | `string` |             |          |
-| `message`   | `string` |             |          |
+| Name        | Type     | Description                  | Required |
+| :---------- | :------- | ---------------------------- | -------- |
+| `eventName` | `string` | Name of an event             | true     |
+| `message`   | `string` | JSON formatted event payload | false    |
 
 <strong>Responses</strong>
 
@@ -299,31 +300,12 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <details>
 <summary>
-    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- get last event</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- get data stream with events till the instance stop running</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
 
-<strong>Responses</strong>
-
-<small>Successful operation code: **200**</small>
-
-```json
-
-```
-
-</details>
-
-<details>
-<summary>
-    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/stdin​</code> <small>- ...</small>
-</summary>
-
-<br> <strong>**Parameters**</strong>
-
-| Name | Description | Type | Required |
-| ---- | ----------- | ---- | -------- |
-|      |             |      |          |
+No parameters
 
 <strong>Responses</strong>
 
@@ -333,14 +315,12 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <details>
 <summary>
-    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stdout</code> <small>- ...</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/once</code> <small>- get last event</small>
 </summary>
-
+<!-- ToDo: think about the name -->
 <br> <strong>**Parameters**</strong>
 
-| Name | Description | Type | Required |
-| ---- | ----------- | ---- | -------- |
-|      |             |      |          |
+No parameters
 
 <strong>Responses</strong>
 
@@ -350,14 +330,57 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <details>
 <summary>
-    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stderr</code> <small>- ...</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/stdin​</code> <small>- process.stdin</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
 
-| Name | Description | Type | Required |
-| ---- | ----------- | ---- | -------- |
-|      |             |      |          |
+No parameters
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stdout</code> <small>- process.stdout</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/stderr</code> <small>- process.stderr</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/log</code> <small>- stream all instance logs</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
 
 <strong>Responses</strong>
 
@@ -371,19 +394,4 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 ## Host operations
 
-<details>
-<summary>
-    <strong>[ GET ]</strong>  <code>/api/v1/stream/log</code> <small>- stream all host logs</small>
-</summary>
-
-<br> <strong>**Parameters**</strong>
-
-| Name | Description | Type | Required |
-| ---- | ----------- | ---- | -------- |
-|      |             |      |          |
-
-<strong>Responses</strong>
-
-<small>Content-type: application/octet-stream</small>
-
-</details>
+<!-- ToDo: Host -->
