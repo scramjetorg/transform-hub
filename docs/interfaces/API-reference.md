@@ -16,9 +16,8 @@ type: "docs"
 - [Sequence operations](#sequence-operations)
 - [Instance basic operations](#instance-basic-operations)
 - [Instance advanced operation](#instance-advanced-operation)
-- [Data management](#data-management)
+- [Service Discovery: Topics](#service-discovery-topics)
 - [Host operations](#host-operations)
-- [Host operations](#host-operations-1)
 
 ## Sequence operations
 
@@ -387,13 +386,78 @@ No parameters
 
 <small>Content-type: application/octet-stream</small>
 
+<small>Successful operation code: **200**</small>
+
+```
+2021-11-19T16:12:22.948Z log (Sequence) 42
+2021-11-19T16:12:23.949Z log (Sequence) 41
+2021-11-19T16:12:24.950Z log (Sequence) 40
+2021-11-19T16:12:25.951Z log (Sequence) 39
+2021-11-19T16:12:26.952Z log (Sequence) 38
+2021-11-19T16:12:27.952Z log (Sequence) 37
+2021-11-19T16:12:28.953Z log (Sequence) 36
+2021-11-19T16:12:29.953Z log (Sequence) 35
+```
+
 </details>
 
-## Data management
+## Service Discovery: Topics
 
-<!-- ToDo: Topics -->
+<details>
+<summary>
+    <strong>[ POST ]</strong>  <code>/api/v1/topics/:name​</code> <small>- sends data to the topic</small>
+</summary>
 
-## Host operations
+<small>If a given topic does not exist, Transform-Hub creates it and stores the sent data in the newly created topic. The data is stored in the topic until the data is not consumed (either by the Topic API or by the Instances subscribing to this topic).​</small>
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Request Headers</strong>
+
+<small>"x-end-stream"</small> <small>- close topic stream [optional, boolean]. If x-end-stream header value is true, the topic stream is closed after processing this request. The default value is false. </small>
+
+<small>"content-type"</small> <small>-specify stream content type [optional, boolean]. The content-type header specifies data type of this topic.
+The recognized values are: text/x-ndjson, application/x-ndjson, application/x-ndjson, text/plain, application/octet-stream. The default value is application/x-ndjson.​ </small>
+
+<strong>Responses</strong>
+
+<small>Successful operation code: **200**</small> <small>- when data to topic is sent with the header indicating the end of data</small>
+<br> <small>Successful operation code: **202**</small> <small>- when data to topic is sent without the header indicating the end of data (default)</small>
+
+</details>
+
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/topics/:name​</code> <small>- get data from the topic</small>
+</summary>
+
+<small>If a given topic does not exist, Transform-Hub creates it and returns a new stream. When the data are sent to the topic they are written to the returned stream.</small>
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Topic data stream.</small>
+
+<small>Successful operation code: **200**</small>
+
+```json
+{
+  "source": "Twitter",
+  "id": "850006245121695778",
+  "content": "Natural wetlands make up ~30% of global total CH4 emissions",
+  "user": {
+    "id": 1234994945,
+    "name": "Climate Change Conference",
+    "screen_name": "Climate Change",
+  }
+}
+```
+
+</details>
 
 ## Host operations
 
@@ -569,5 +633,36 @@ No parameters
 <strong>Responses</strong>
 
 <small>Content-type: application/octet-stream</small>
+
+<small>Successful operation code: **200**</small>
+
+```
+2021-11-19T16:04:47.094Z log (object:Host) Host main called.
+2021-11-19T16:04:47.100Z info (object:SocketServer) Server on: /tmp/scramjet-socket-server-path
+2021-11-19T16:04:47.104Z info (object:Host) API listening on: 127.0.0.1:8000
+2021-11-19T16:05:08.228Z info (object:Host) New sequence incoming...
+2021-11-19T16:05:08.229Z log (object:LifecycleDockerAdapterSequence) Docker sequence adapter init.
+2021-11-19T16:05:08.229Z log (object:DockerodeDockerHelper) Checking image scramjetorg/pre-runner:0.12.2
+2021-11-19T16:05:12.234Z info (object:LifecycleDockerAdapterSequence) Docker sequence adapter done.
+2021-11-19T16:05:12.246Z log (object:LifecycleDockerAdapterSequence) Volume created. Id:  c50fe4d3-89cc-4685-a82a-16cbc744733d
+2021-11-19T16:05:12.246Z log (object:LifecycleDockerAdapterSequence) Starting PreRunner { image: 'scramjetorg/pre-runner:0.12.2', maxMem: 128 }
+2021-11-19T16:05:13.536Z log (object:DockerodeDockerHelper) Checking image scramjetorg/runner:0.12.2
+2021-11-19T16:05:16.670Z info (object:SequenceStore) New sequence added: c50fe4d3-89cc-4685-a82a-16cbc744733d
+2021-11-19T16:05:16.672Z info (object:Host) Sequence identified: {
+  container: {
+    image: 'scramjetorg/runner:0.12.2',
+    maxMem: 512,
+    exposePortsRange: [ 30000, 32767 ],
+    hostIp: '0.0.0.0'
+  },
+  name: '@scramjet/multi-outputs',
+  version: '0.12.2',
+  engines: {},
+  config: {},
+  sequencePath: 'index.js',
+  packageVolumeId: 'c50fe4d3-89cc-4685-a82a-16cbc744733d'
+}
+2021-11-19T16:05:16.691Z debug (object:Host) Request date: 2021-11-19T16:05:08.239Z, method: POST, url: /api/v1/sequence, status: 202
+```
 
 </details>
