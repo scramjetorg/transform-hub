@@ -18,6 +18,7 @@ type: "docs"
 - [Instance advanced operation](#instance-advanced-operation)
 - [Data management](#data-management)
 - [Host operations](#host-operations)
+- [Host operations](#host-operations-1)
 
 ## Sequence operations
 
@@ -394,4 +395,179 @@ No parameters
 
 ## Host operations
 
-<!-- ToDo: Host -->
+## Host operations
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/version</code> <small>- show the Host version</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Successful operation code: **200**</small>
+
+```json
+{ "version" : "0.12.2" }
+```
+
+</details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/sequences</code> <small>- show all Sequences saved on the Host</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Successful operation code: **200**</small>
+
+```json
+[
+  {
+    "instances": [], // a list of all running Instances of this Sequence
+    "id": "eea8bc33-440f-4a17-8931-eb22a17d5d56", // Sequence ID
+    "config": {
+      "container": {
+        "image": "scramjetorg/runner:0.12.2",
+        "maxMem": 512,
+        "exposePortsRange": [
+          30000,
+          32767
+        ],
+        "hostIp": "0.0.0.0"
+      },
+      "name": "@scramjet/hello-alice-out",
+      "version": "0.12.2",
+      "engines": {
+        "node": ">=10"
+      },
+      "config": {},
+      "sequencePath": "index", // a path to file with a main function
+      "packageVolumeId": "eea8bc33-440f-4a17-8931-eb22a17d5d56"
+    }
+  },
+  {
+    "instances": [
+      "02381acf-cb16-4cff-aa9b-f22f04ada94f"
+    ],
+    "id": "3ec02b93-4ca9-4d23-baab-048dab5ffda4",
+    "config": {
+      "container": {
+        "image": "scramjetorg/runner:0.12.2",
+        "maxMem": 512,
+        "exposePortsRange": [
+          30000,
+          32767
+        ],
+        "hostIp": "0.0.0.0"
+      },
+      "name": "@scramjet/checksum-sequence",
+      "version": "0.12.2",
+      "engines": {},
+      "config": {},
+      "sequencePath": "index.js",
+      "packageVolumeId": "3ec02b93-4ca9-4d23-baab-048dab5ffda4"
+    }
+  }
+]
+```
+
+</details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/instances</code> <small>- show all Instances running on the Host</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Successful operation code: **200**</small>
+
+```json
+[
+  {
+    "id": "02381acf-cb16-4cff-aa9b-f22f04ada94f", // Instance ID
+    "sequence": "3ec02b93-4ca9-4d23-baab-048dab5ffda4" // Sequence ID
+  },
+  {
+    "id": "ab0272d8-c9b0-43f7-9e7e-bcac9ec0f21f",
+    "sequence": "e4ca555c-ced1-4a13-b531-f43016eaf4ed"
+  }
+]
+```
+
+</details>
+
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/load-check</code> <small>- monitor CPU, memory and disk usage metrics on the Host machine</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Successful operation code: **200**</small>
+
+```json
+{
+  "avgLoad": 0.08,
+  "currentLoad": 5.190776257704936,
+  "memFree": 4634816512,
+  "memUsed": 8050364416,
+  "fsSize": [
+    {
+      "fs": "/dev/sda1",
+      "type": "ext4",
+      "size": 20838993920,
+      "used": 14939455488,
+      "available": 5882761216,
+      "use": 71.75,
+      "mount": "/"
+    },
+    {
+      "fs": "/dev/sda15",
+      "type": "vfat",
+      "size": 109422592,
+      "used": 9621504,
+      "available": 99801088,
+      "use": 8.79,
+      "mount": "/boot/efi"
+    }
+  ]
+}
+
+```
+
+</details>
+
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/log</code> <small>- monitor CPU, memory and disk usage metrics on the Host machine</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
