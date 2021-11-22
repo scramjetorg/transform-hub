@@ -330,6 +330,36 @@ No parameters
 
 <details>
 <summary>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/input</code> <small>- send data to the Instance. The data is sent to the input stream of the Instance where it can be consumed.</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
+
+<details>
+<summary>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/output</code> <small>- get the output stream from the Instance. Everything the Instance writes to its output stream can be consumed through this endpoint.</small>
+</summary>
+
+<br> <strong>**Parameters**</strong>
+
+No parameters
+
+<strong>Responses</strong>
+
+<small>Content-type: application/octet-stream</small>
+
+</details>
+
+<details>
+<summary>
     <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/stdin​</code> <small>- process.stdin</small>
 </summary>
 
