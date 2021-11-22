@@ -29,9 +29,7 @@
     - [Install CLI and execute](#install-cli-and-execute-✅)
     - [Build Host on Docker](#build-host-on-docker-🏗️)
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-🤖)
-6. [Run components](#run-components-🤹‍♀️)
-    - [Runner](#runner-🏃‍♂️)
-7. [Sequences and samples](#sequences-and-samples-🌀)
+7. [Sequences and samples](#sequences-and-samples-🤹‍♀️)
     - [Compress the package](#compress-the-package-📦)
     - ["Hello Alice" sample](#hello-alice-sample)
 8. [Troubleshooting](#troubleshooting-💥)
@@ -44,6 +42,8 @@
 
 ---
 # Introduction 🤝
+
+This is a development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.
 
 This repository contains the source code for https://scramjet.org/docs (🚧404🚧 website under construction 👷).
 
@@ -79,7 +79,7 @@ This is the STH development repo. In order to use it, you need to have linux bas
 Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
 We will guide you step by step through the installation process.
 
-There are several installations you need to perform to get the hub up and running, and event more to start developing with us. If may already have some of these installed, but we'll show you how to install them if you don't.
+There are several installations you need to perform to get the hub up and running, and event more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
 
 - nvm
 - node.js
@@ -122,7 +122,9 @@ output: `v0.37.2`
 
 3. Now you are ready to install node.js, simply type in your console:
 
-        nvm install 16 # command will install latest LTS Version of Node.js
+```bash
+nvm install 16     # command will install latest LTS Version of Node.js
+```
 
 > 📝 **Note**:
 The project is working on Node Long Term Support (LTS) Version. Witch contains Node Package Manager (NPM) in `^8.1.0` version.
@@ -142,12 +144,10 @@ output: `8.1.0`
 
 ![node&npm_version](./images/node&npm_version.png)
 
-OK! It looks like you have successfully installed node.js and npm. There are few more installations you need to perform, run the following commands in your console one after another:
+OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
         npm install -g lerna
         npm install -g yarn
-        npm install -g typescript
-        npm install -g ts-node
 
 ![installations](./images/installations.png)
 
@@ -155,9 +155,9 @@ The same as before the installations can be confirmed by checking the installed 
 
 ![versions](./images/versions.png)
 
-OK! You have successfully installed all the required packages 🎉 🎆
+OK! The installation was successful. 🎉 🎆
 
-We also work with Docker ![docker](./images/docker.png),currently we are working on solution where using Docker will be optional, but until then please continue with the installation procedure.
+We also work with Docker ![docker](./images/docker.png),currently we are working on a solution where using Docker will be optional, but until then please continue with the installation procedure.
 Run the following command in your console:
 
         sudo apt install -y docker.io docker-compose
@@ -173,7 +173,19 @@ Now let's clone build and start the hub. Please copy the following commands to t
     cd transform-hub && sudo gpasswd -a $USER docker && \
     yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
 
-Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
+Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 Meantime let me describe you what is happening in the command you have just pasted into the console:
+
+- `git clone https://github.com/scramjetorg/transform-hub.git` is cloning the hub repository.
+- `cd transform-hub` is changing the directory to the hub repository.
+- `sudo gpasswd -a $USER docker` is adding the current user to the docker group.
+- `yarn install` is installing all the dependencies of the hub.
+- `yarn build:all` is building all the hub packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
+- `npm i -g ./dist/cli` is installing the hub CLI as a global command.
+- `yarn start -P 8000` is starting the hub with parameter `-P`, which makes the hub listen on port 8000.
+
+> :bulb: **NOTE:**  *If you skip parameter `-P` the hub will listen on port 8000 anyway, this port is set as a default value in the hub configuration file.*
+
+ When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
     2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
 
@@ -217,61 +229,11 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 
 You should already have node.js, npm and other necessary packages installed, also transform-hub repo should be cloned by now. If not and you skipped the installation section, then please go back and follow the instructions, they are initial for development.
 
-In [#Installation](#installation) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning that the hub can be started on any port number, and it can be started in several ways, which is described in the next section.
+In [#Installation](#installation-🗜️) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
 
-## Start host 🏁
+## Install hub globally ✅
 
-Host can be started in multiple ways
-
-```bash
-yarn start                          # Starts Host after it's been built
-node dist/host/bin/start            # This is the same as above
-ts-node packages/host/src/bin/start # This starts node from source code
-```
-
-## Lerna commands 📝
-
-We use Lerna to control our monorepo. Here's a couple of helpful commands:
-
-```bash
-lerna create package_name # Add new package:
-lerna ls                  # List all of the public packages in the current Lerna repo:
-lerna run [script]        # Run an npm script in each package that contains that script.
-lerna run --ignore @scramjet/<package_name> <script-name>
-    # Run script in all packages excluding one package:
-lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
-    # ... or run script excluding more packages
-lerna run --scope @scramjet/<package_name> <script-name>
-    # Run script only in one package
-lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
-    # Run script in more packages
-```
-
-## Clean build 🏗️
-
-This is how to perform a clean build of the packages:
-
-```bash
-yarn install:clean        # this command will perform yarn clean && yarn clean:modules && yarn install at once
-yarn build:all-packages   # optionally build:all if you want all dockerfiles.
-```
-
-## Docker commands 🐳
-
-During development some artifact may be left over in docker, here's how to clean them
-
-```bash
-docker ps                      # list containers
-docker volume prune -f         # remove all unused local volumes
-docker system prune --all -f   # remove all unused images not just dangling ones
-docker stop $(docker ps -a -q) # stops all running containers
-```
-
-> *(`-f`) -  don't prompt confirmation
-
-## Install Host and execute ✅
-
-After build is done, you can install and run Hub globally:
+After build is done, you can install and run hub globally:
 
 ```bash
 npm install -g ./dist/hub  # installs packages globally
@@ -285,9 +247,19 @@ npm install -g @scramjet/hub
 scramjet-transform-hub
 ```
 
+## Start the hub 🏁
+
+Hub can be started in multiple ways
+
+```bash
+yarn start                          # Starts Host after it's been built
+node dist/host/bin/start            # This is the same as above
+ts-node packages/host/src/bin/start # This starts node from source code
+```
+
 ## Install CLI and execute ✅
 
-This command was already done at the end the [#Installation](#installation) section, just before starting the hub. There are two ways to install the CLI:
+This command was already done at the end the [#Installation](#installation-🗜️) section, just before starting the hub. There are two ways to install the CLI:
 
 - in the root folder, after building, run the following commands:
 
@@ -303,9 +275,37 @@ npm i -g @scramjet/cli # install CLI globally
 si help                # show CLI commands
 ```
 
+Please run `si help` command to confirm that the installation went properly and also to see the list of available commands:
+
+![si_help](./images/si_help.png)
+
 We will use CLI later on to execute the sequence.
 
 > **💡 HINT:** If something goes wrong make clean, install, build.
+
+## Clean build 🏗️
+
+This is how to perform a clean build of the packages:
+
+```bash
+yarn install:clean        # this command will perform yarn clean && yarn clean:modules && yarn install at once
+yarn build:all-packages   # optionally build:all if you want all dockerfiles.
+```
+
+![build_clean](./images/clean_install.png)
+
+## Docker commands 🐳
+
+During development some artifact may be left over in docker, here's how to clean them:
+
+```bash
+docker ps                      # list containers
+docker volume prune -f         # remove all unused local volumes
+docker system prune --all -f   # remove all unused images not just dangling ones
+docker stop $(docker ps -a -q) # stops all running containers
+```
+
+> ***(`-f`)** -  doesn't prompt confirmation
 
 ## Build Host on Docker 🏗️
 
@@ -347,34 +347,46 @@ docker run \
   scramjetorg/sth:$(jq -r .version package.json)
 ```
 
----
+## Lerna commands 📝
 
-# Run components 🤹‍♀️
-
-## Runner 🏃‍♂️
-
-Starting `Runner` script: `./packages/runner/src/bin/start-runner.ts`
-
-Example of usage:
+We use Lerna to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
 
 ```bash
-node dist/runner/bin/start-runner.js sequence-file-path fifo-files-path
+lerna create package_name # Add new package:
+lerna ls                  # List all of the public packages in the current Lerna repo:
+lerna run [script]        # Run an npm script in each package that contains that script.
+lerna run --ignore @scramjet/<package_name> <script-name>
+    # Run script in all packages excluding one package:
+lerna run --ignore @scramjet/<package_name> --ignore @scramjet/<package_name> <script-name>
+    # ... or run script excluding more packages
+lerna run --scope @scramjet/<package_name> <script-name>
+    # Run script only in one package
+lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
+    # Run script in more packages
 ```
 
-## Sequences and samples 🌀
+---
+## Sequences and samples 🤹‍♀️
 
-To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute), compress the package, and then you're good to go and use curl commands.
+This sample will work only if you have properly configured your environment,installed hub and build all the packages.
+To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute-✅), compress the package, and then you're good to go and use curl commands or [CLI commands](#install-CLI-and-execute-✅) to execute the sequence, we will show you both ways.
 
 > 💡 **HINT:** The following instructions apply to the state of the repository from the `release/0.12`.
+### "Hello Alice" sample
+To start the "Hello Alice" sample we will need these basic steps:
+- [start the hub](#start-the-hub-🏗️)
+- compress the package
+- send compressed package(sequence) to hub
+- start sequence
 
 ### Compress the package 📦
 
 The sequence in a `tar.gz` file format with package.js (aka package) can be generated in different ways.
 
-Assuming that you have the [host running](#install-host-and-execute) use command:
+Assuming that you have the [host running](#install-host-and-execute-✅) use command:
 
 ```bash
-yarn packseq # this creates tar.gz for all packages in the repo
+yarn packseq    # this creates tar.gz for all packages in the repo
 ```
 
 When the host is not running you can use a script:
@@ -389,25 +401,19 @@ To compress specific package use linux tar command:
 tar -C /path/to/package/dir czf <package-name.tar.gz> .
 ```
 
-### "Hello Alice" sample
+### Execute sample
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-If the sequence is not packed:
+> **💡 HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-✅)
+
+⬆️ **Upload the package:**
 
 ```bash
-lerna run prepare-sample-tar
-```
-
-> **💡 HINT**: remember that to use curl commands host must be running.  [See how to execute host =>](#install-host-and-execute)
-
-Now upload the package:
-
-```bash
-SEQ_ID=$(
-    curl -H 'content-type: application/octet-stream' \
-    --data-binary '@packages/reference-apps/hello-alice-out.tar.gz' \
-    "http://localhost:8000/api/v1/sequence" | jq ".id" -r
+SEQ_ID=$( \
+    curl --location --request POST "http://localhost:8000/api/v1/sequence" \
+    --header 'content-type: application/octet-stream' \
+    --data-binary '@packages/reference-apps/hello-alice-out.tar.gz' | jq ".id" -r \
 )
 ```
 
@@ -421,49 +427,88 @@ SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want 
 
 > **💡 HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
-Start the sequence and see the output from it.
+➡️ **Start the sequence**
 
 ```bash
-INSTANCE_ID=$(curl -H "Content-Type: application/json" --data-raw '{"appConfig": {},"args": ["/package/data.json"]}' http://localhost:8000/api/v1/sequence/$SEQ_ID/start | jq ".id" -r)
-curl -X GET -H "Content-Type: application/octet-stream" "http://localhost:8000/api/v1/instance/$INSTANCE_ID/stdout"
+INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/sequence/$SEQ_ID/start" \
+--header 'content-type: application/json' \
+--data-raw '{
+    "appConfig": {},
+    "args": ["/package/data.json"]
+}' | jq ".id" -r)
 ```
 
-as a result you should see something like this in the console:
+⬇️  **GET the output**
 
+To get the output we need to send GET request to `/stdout` endpoint:
 ```bash
-Hello Alice!
-Hello Ada!
-Hello Aga!
-Hello Michał!
-Hello Maciek!
-Hello Marcin!
-Hello Patryk!
-Hello Rafał!
-Hello Aida!
-Hello Basia!
-Hello Natalia!
-Hello Monika!
-Hello Wojtek!
-Hello Arek!
+curl --location --request GET "http://localhost:8000/api/v1/instance/$INSTANCE_ID/stdout" \
+--header 'Transfer-Encoding: chunked' \
+--header 'content-type: application/octet-stream'
 ```
 
-after that hit enter and type kill to exit the process:
+This is what you should get as a result:
 
-```bash
-sequence: kill
-```
+![hello_alice](./images/hello_alice.png)
 
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
-> **💡 HINT:** If something goes wrong run clean, build.
+---
+## Configure your own sample 📝
 
-Copy and paste 🤞
+To configure a sample add a new folder to *src/samples/* directory and name it meaningfully. Then add index.ts and tsconfig.json.
 
-```bash
-yarn clean && yarn build
+```json
+{
+  "compilerOptions": {"outDir": "../../../dist/samples/dir_name"}, // remember to change the *dir_name* here
+  "extends": "../../../conf/tsconfig.json",
+  "include": ["**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
 ```
 
----
+Now you can generate package.json.
+
+```bash
+npm init
+```
+
+If you need **typescript** and **ts-node** support remember to add them to the devDependencies.
+
+```json
+  "devDependencies": {
+    "@types/node": "^14.14.22",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
+  }
+```
+
+As well as scripts.
+
+```json
+  "scripts": {
+    "start": "node ../../../dist/samples/test/index.js",
+    "build": "tsc -p tsconfig.json"
+  },
+// ...
+```
+
+## Run the server
+
+```bash
+ts-node packages/host/src/bin/start.ts
+```
+
+## Send package
+
+To send a package use below command.
+
+```bash
+curl -H "Content-Type: application/octet-stream" --data-binary "@home/user/package.tar.gz" http://localhost:8000/api/v1/sequence -v
+```
+
+See other commands to manage and communicate with sequence / instance [go to CSH stream protocol description](../architecture/Stream-protocol-and-API-usage.md)
+
 # License and contributions 📃
 
 This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
@@ -472,8 +517,20 @@ We accept valid contributions and we will be publishing a more specific project 
 
 We provide support for contributions via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in [`bdd` directory](./bdd).
 
+More ino about bdd tests can be found [here](./bdd/README.md).
+
 ---
 
+# Troubleshooting 💥
+
+> **💡 HINT:** If something goes wrong run clean, build.
+
+Copy and paste 🤞
+
+```bash
+yarn clean && yarn build
+```
+---
 # Help wanted 💁🏻💁‍♀️💁🏼‍♂️
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](opensource@scramjet.org).
