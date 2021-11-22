@@ -3,7 +3,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 /**
  * Defines scalability options for writable or readable side of the Function:
  *
- * * C - Concurrency - the funcion accepts and processes more than one item at the
+ * * C - Concurrency - the function accepts and processes more than one item at the
  *   same time, and therefore can be composed with consecutive ones.
  * * S - Sequentiality - the function can be executed on a different host to it's neighbours.
  * * P - Parallelism - the function can be spawned to multiple hosts at the same time
