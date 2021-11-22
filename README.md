@@ -16,9 +16,9 @@
 
 # Table of contents
 
-1. [Introduction](#introduction-🤝)
-2. [Usage](#usage-💡)
-3. [Installation](#installation-🗜️)
+1. [Introduction](#introduction-:handshake:)
+2. [Usage](#usage-:bulb:)
+3. [Installation](#installation-:clapm:)
 4. [The basics](#the-basics-🔤)
 5. [Development instructions](#development-instructions-👨‍💻)
     - [Install hub globally](#install-hub-globally-✅)
@@ -43,7 +43,7 @@
 10. [Donation](#donation-💸)
 
 ---
-# Introduction 🤝
+# Introduction :handshake:
 
 This is a development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.
 
@@ -66,7 +66,7 @@ The developers who would like to simply use Scramjet Transform Hub to run data p
 
 ---
 
-# Usage 💡
+# Usage :bulb:
 
 Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
@@ -76,7 +76,7 @@ This is the STH development repo. In order to use it, you need to have linux bas
 
 ---
 
-# Installation 🗜️
+# Installation :clapm:
 
 Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
 We will guide you step by step through the installation process.
@@ -231,7 +231,7 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 
 You should already have node.js, npm and other necessary packages installed, also transform-hub repo should be cloned by now. If not and you skipped the installation section, then please go back and follow the instructions, they are initial for development.
 
-In [#Installation](#installation-🗜️) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
+In [#Installation](#installation-:clapm:) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
 
 ## Install hub globally ✅
 
@@ -261,7 +261,7 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 ## Install CLI and execute ✅
 
-This command was already done at the end the [#Installation](#installation-🗜️) section, just before starting the hub. There are two ways to install the CLI:
+This command was already done at the end the [#Installation](#installation-:clapm:) section, just before starting the hub. There are two ways to install the CLI:
 
 - in the root folder, after building, run the following commands:
 
@@ -283,7 +283,7 @@ Please run `si help` command to confirm that the installation went properly and 
 
 We will use CLI later on to execute the sequence.
 
-> **💡 HINT:** If something goes wrong make clean, install, build.
+> **:bulb: HINT:** If something goes wrong make clean, install, build.
 
 ## Clean build 🏗️
 
@@ -375,7 +375,7 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 The sample will work only if you have properly configured your environment,installed hub and build all the packages.
 To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute-✅), compress the package, and then you're good to go and use curl commands or [CLI commands](#install-CLI-and-execute-✅) to execute the sequence, we will show you both ways.
 
-> 💡 **HINT:** *The following instructions apply to the state of the repository from the `release/0.12`.*
+> :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.12`.*
 
 To start the "Hello Alice" sample we will need these basic steps:
 - [start the hub](#start-the-hub-🏁)
@@ -410,7 +410,7 @@ tar -C /path/to/package/dir czf <package-name.tar.gz> .
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **💡 HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-✅)
+> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-✅)
 
 #### ⬆️ **Upload the package**
 
@@ -430,7 +430,7 @@ SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r)
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
-> **💡 HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
+> **:bulb: HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
 #### ➡️ **Start the sequence**
 
@@ -468,7 +468,7 @@ We have also prepared a template for you to use. You can use it as a base for yo
 
 # Troubleshooting 💥
 
-> **💡 HINT:** If something goes wrong, any errors occur, please try to run clean build, which will remove all the packages and rebuild them.
+> **:bulb: HINT:** If something goes wrong, any errors occur, please try to run clean build, which will remove all the packages and rebuild them.
 
 Copy and paste 🤞
 
@@ -476,7 +476,7 @@ Copy and paste 🤞
 yarn clean && yarn build
 ```
 
-> **💡 HINT:** Remember to build your sample package before compressing it.
+> **:bulb: HINT:** Remember to build your sample package before compressing it.
 
 If you create your sample in `packages/reference-apps` folder, you can use the following command to build it:
 
@@ -485,11 +485,11 @@ yarn build:reference-apps
 ```
 It will build all the packages in the `packages/reference-apps` folder.
 
-> **💡 HINT:** Remember to run `yarn packseq` to generate the tar.gz file.
+> **:bulb: HINT:** Remember to run `yarn packseq` to generate the tar.gz file.
 
-> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run. You may find them useful.
+> **:bulb: HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run. You may find them useful.
 
-> **💡 HINT:** Log an issue every time you encounter a problem or you find that some feature is missing.
+> **:bulb: HINT:** Log an issue every time you encounter a problem or you find that some feature is missing.
 
 - [bug report](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=bug_report.md&title=)
 - [feature request](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=feature_request.md&title=)
