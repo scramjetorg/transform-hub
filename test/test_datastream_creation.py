@@ -80,3 +80,16 @@ class AsyncCountUntil():
 async def test_creating_stream_from_async_iterable():
     stream = DataStream.read_from(AsyncCountUntil(8))
     assert [1, 2, 3, 4, 5, 6, 7, 8] == await stream.to_list()
+
+@pytest.mark.asyncio
+async def test_creating_stream_from_another_stream():
+    s1 = DataStream.read_from(range(8))
+    s2 = DataStream.read_from(s1).map(lambda x: x*2)
+    s3 = DataStream.read_from(s2)
+    assert [0, 2, 4, 6, 8, 10, 12, 14] == await s3.to_list()
+
+@pytest.mark.asyncio
+async def test_iterating_over_a_stream():
+    stream = DataStream.read_from(range(8))
+    result = [chunk async for chunk in stream]
+    assert [0, 1, 2, 3, 4, 5, 6, 7] == result

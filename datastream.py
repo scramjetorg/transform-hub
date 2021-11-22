@@ -25,6 +25,14 @@ class DataStream():
         self.ready_to_start = asyncio.Future()
         log(self, f'INIT stream created with pyfca {self.pyfca}')
 
+    async def __aiter__(self):
+        self._uncork()
+        while True:
+            chunk = await self.pyfca.read()
+            if chunk is None:
+                break
+            yield chunk
+
     def _uncork(self):
         self.ready_to_start.set_result(True)
         log(self, f'{green}uncorked{reset}')
