@@ -697,7 +697,7 @@ Definition that informs the platform of the details of a single function.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `description?` | `string` | Addtional description of the function |
+| `description?` | `string` | Additional description of the function |
 | `mode` | ``"buffer"`` \| ``"object"`` \| ``"reference"`` | Stream mode:  * buffer - carries binary/string chunks that have no fixed size chunks and can be passed through sockets * object - carries any type of object, that is serializable via JSON or analogue * reference - carries non-serializable object references that should not be passed outside of a single process |
 | `name?` | `string` | Optional name for the function (which will be shown in UI/CLI) |
 | `scalability?` | `Object` | Describes how head (readable side) and tail (writable side) of this Function can be scaled to other machines. |
