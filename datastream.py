@@ -3,7 +3,7 @@ import asyncio
 from ansi_color_codes import *
 from os import environ
 import utils
-from collections.abc import Iterable
+from collections.abc import Iterable, AsyncIterable
 
 DEBUG = 'DATASTREAM_DEBUG' in environ or 'SCRAMJET_DEBUG' in environ
 tr = utils.print_trimmed
@@ -43,7 +43,7 @@ class DataStream():
                         "does not implement read() method.")
                 raise UnsupportedOperation(msg)
         else:
-            if isinstance(source, Iterable):
+            if isinstance(source, (Iterable, AsyncIterable)):
                 return DataStream.from_iterable(
                     source, max_parallel=max_parallel)
             else:
@@ -57,8 +57,12 @@ class DataStream():
         stream = DataStream(max_parallel)
         async def consume():
             await stream.ready_to_start
-            for item in iterable:
-                await stream.pyfca.write(item)
+            if isinstance(iterable, Iterable):
+                for item in iterable:
+                    await stream.pyfca.write(item)
+            elif isinstance(iterable, AsyncIterable):
+                async for item in iterable:
+                    await stream.pyfca.write(item)
             stream.pyfca.end()
 
         asyncio.create_task(consume())

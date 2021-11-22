@@ -66,3 +66,17 @@ async def test_non_iterable_source_without_chunk_size():
 
     with pytest.raises(UnsupportedOperation):
         DataStream.read_from(Foo())
+
+class AsyncCountUntil():
+    def __init__(self, max) -> None:
+        self.limit = max
+
+    async def __aiter__(self):
+        for i in range(self.limit):
+            await asyncio.sleep(0.01)
+            yield i+1
+
+@pytest.mark.asyncio
+async def test_creating_stream_from_async_iterable():
+    stream = DataStream.read_from(AsyncCountUntil(8))
+    assert [1, 2, 3, 4, 5, 6, 7, 8] == await stream.to_list()
