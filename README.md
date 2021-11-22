@@ -16,7 +16,7 @@
 
 # Table of contents
 
-1. [Introduction](#introduction-:handshake:)
+1. [Introduction](#introduction-handshake)
 2. [Usage](#usage-:bulb:)
 3. [Installation](#installation-:clapm:)
 4. [The basics](#the-basics-🔤)
