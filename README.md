@@ -19,26 +19,28 @@
 1. [Introduction](#introduction-🤝)
 2. [Usage](#usage-💡)
 3. [Installation](#installation-🗜️)
-4. [The Basics](#the-basics-🔤)
+4. [The basics](#the-basics-🔤)
 5. [Development instructions](#development-instructions-👨‍💻)
-    - [Start host](#start-host-🏁 )
-    - [Lerna commands](#lerna-commands-📝)
+    - [Install hub globally](#install-hub-globally-✅)
+    - [Start the hub](#start-the-hub-🏁)
+    - [Install CLI and execute](#install-cli-and-execute-✅)
     - [Clean build](#clean-build-🏗️)
     - [Docker commands](#docker-commands-🐳)
-    - [Install Host and execute](#install-host-and-execute-✅)
-    - [Install CLI and execute](#install-cli-and-execute-✅)
-    - [Build Host on Docker](#build-host-on-docker-🏗️)
+    - [Build hub on Docker](#build-host-on-docker-🏗️)
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-🤖)
-7. [Sequences and samples](#sequences-and-samples-🤹‍♀️)
-    - [Compress the package](#compress-the-package-📦)
-    - ["Hello Alice" sample](#hello-alice-sample)
-8. [Troubleshooting](#troubleshooting-💥)
+    - [Lerna commands](#lerna-commands-📝)
+6. [Sample usage](#sample-usage-😎)
+    - ["Hello Alice" sample](#"hello-alice"-sample-🤹‍♀️)
+    - [More samples](#more-samples-📚)
+    - [Configure your own sample](#configure-your-own-sample-📝)<!--section to be improved-->
+7. [Troubleshooting](#troubleshooting-💥)
+    <!--
+    Section to be added:
     - Known issues and limitations
-9. [License and contributions](#license-and-contributions-📃)
-10. [Work with us](#help-wanted-💁🏻💁‍♀️💁🏼‍♂️)
-11. [Donation](#donation-💸)
-
-4. [Sample usage](#sample-usage-😎)
+    -->
+8. [License and contributions](#license-and-contributions-📃)
+9. [Work with us](#help-wanted-💁🏻💁‍♀️💁🏼‍♂️)
+10. [Donation](#donation-💸)
 
 ---
 # Introduction 🤝
@@ -366,18 +368,21 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 ```
 
 ---
-## Sequences and samples 🤹‍♀️
 
-This sample will work only if you have properly configured your environment,installed hub and build all the packages.
+# Sample usage 😎
+## "Hello Alice" sample 🤹‍♀️
+
+The sample will work only if you have properly configured your environment,installed hub and build all the packages.
 To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute-✅), compress the package, and then you're good to go and use curl commands or [CLI commands](#install-CLI-and-execute-✅) to execute the sequence, we will show you both ways.
 
-> 💡 **HINT:** The following instructions apply to the state of the repository from the `release/0.12`.
-### "Hello Alice" sample
+> 💡 **HINT:** *The following instructions apply to the state of the repository from the `release/0.12`.*
+
 To start the "Hello Alice" sample we will need these basic steps:
-- [start the hub](#start-the-hub-🏗️)
-- compress the package
-- send compressed package(sequence) to hub
-- start sequence
+- [start the hub](#start-the-hub-🏁)
+- [compress the package](#compress-the-package-📦)
+- [send compressed package (sequence) to hub](#⬆️-upload-the-package)
+- [start sequence](#➡️-start-the-sequence)
+- [get the result](#⬇️-get-the-output)
 
 ### Compress the package 📦
 
@@ -407,7 +412,7 @@ To execute the sample run the commands listed below from the level of the main f
 
 > **💡 HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-✅)
 
-⬆️ **Upload the package:**
+#### ⬆️ **Upload the package**
 
 ```bash
 SEQ_ID=$( \
@@ -427,7 +432,7 @@ SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want 
 
 > **💡 HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
-➡️ **Start the sequence**
+#### ➡️ **Start the sequence**
 
 ```bash
 INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/sequence/$SEQ_ID/start" \
@@ -438,7 +443,7 @@ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seque
 }' | jq ".id" -r)
 ```
 
-⬇️  **GET the output**
+#### ⬇️ **GET the output**
 
 To get the output we need to send GET request to `/stdout` endpoint:
 ```bash
@@ -453,62 +458,43 @@ This is what you should get as a result:
 
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
----
+## More samples 📚
+
+To check out more of our ready-to-go samples, please go to our repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs) "samples" directory.
+
 ## Configure your own sample 📝
 
-To configure a sample add a new folder to *src/samples/* directory and name it meaningfully. Then add index.ts and tsconfig.json.
+We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/transform-hub/tree/release/0.12/template).
 
-```json
-{
-  "compilerOptions": {"outDir": "../../../dist/samples/dir_name"}, // remember to change the *dir_name* here
-  "extends": "../../../conf/tsconfig.json",
-  "include": ["**/*"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
-}
-```
+# Troubleshooting 💥
 
-Now you can generate package.json.
+> **💡 HINT:** If something goes wrong, any errors occur, please try to run clean build, which will remove all the packages and rebuild them.
+
+Copy and paste 🤞
 
 ```bash
-npm init
+yarn clean && yarn build
 ```
 
-If you need **typescript** and **ts-node** support remember to add them to the devDependencies.
+> **💡 HINT:** Remember to build your sample package before compressing it.
 
-```json
-  "devDependencies": {
-    "@types/node": "^14.14.22",
-    "ts-node": "^9.1.1",
-    "typescript": "^4.1.3"
-  }
-```
-
-As well as scripts.
-
-```json
-  "scripts": {
-    "start": "node ../../../dist/samples/test/index.js",
-    "build": "tsc -p tsconfig.json"
-  },
-// ...
-```
-
-## Run the server
+If you create your sample in `packages/reference-apps` folder, you can use the following command to build it:
 
 ```bash
-ts-node packages/host/src/bin/start.ts
+yarn build:reference-apps
 ```
+It will build all the packages in the `packages/reference-apps` folder.
 
-## Send package
+> **💡 HINT:** Remember to run `yarn packseq` to generate the tar.gz file.
 
-To send a package use below command.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run. You may find them useful.
 
-```bash
-curl -H "Content-Type: application/octet-stream" --data-binary "@home/user/package.tar.gz" http://localhost:8000/api/v1/sequence -v
-```
+> **💡 HINT:** Log an issue every time you encounter a problem or you find that some feature is missing.
 
-See other commands to manage and communicate with sequence / instance [go to CSH stream protocol description](../architecture/Stream-protocol-and-API-usage.md)
+- [bug report](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=bug_report.md&title=)
+- [feature request](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=feature_request.md&title=)
 
+---
 # License and contributions 📃
 
 This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
@@ -519,17 +505,6 @@ We provide support for contributions via test cases. If you expect a certain typ
 
 More ino about bdd tests can be found [here](./bdd/README.md).
 
----
-
-# Troubleshooting 💥
-
-> **💡 HINT:** If something goes wrong run clean, build.
-
-Copy and paste 🤞
-
-```bash
-yarn clean && yarn build
-```
 ---
 # Help wanted 💁🏻💁‍♀️💁🏼‍♂️
 
@@ -544,76 +519,3 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 
 * There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
 
-# Sample usage 😎
-
-Now you can either use one of our ready-to-go samples, which you will find in a separate repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples) or you can create an application by yourself using the following steps below. Maybe let's try to create something on one of the hottest topics lately, which is cryptocurrency. Let's say you want to get the crypto prices every second.
-
-In a clean folder save this as `index.js`:
-
-```js
-const { PassThrough } = require("stream");
-const fetch = require("node-fetch");
-
-const getData = async (baseCurrency, currency) =>
-    fetch(`https://api.coinbase.com/v2/prices/${baseCurrency}-${currency}/spot`)
-        .then(res => res.json());
-
-module.exports = async function(_stream, baseCurrency = "BTC", currency = "USD") {
-    const outputStream = new PassThrough();
-
-    setInterval(async () => {
-        getData(baseCurrency, currency)
-            .then(data => {
-                outputStream.write(JSON.stringify(data) + "\r\n");
-            })
-            .catch(() => {
-                outputStream.write(JSON.stringify({ error: true }) + "\r\n");
-            });
-    }, 1000);
-
-    return outputStream;
-};
-```
-
-Save this as `package.json` in the same folder:
-
-```json
-{
-  "name": "@scramjet/crypto-prices",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "author": "",
-  "license": "ISC",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/scramjetorg/transform-hub.git"
-  },
-  "dependencies": {
-    "node-fetch": "^2.6.1"
-  }
-}
-```
-
-Open a terminal and run your program on the transform hub:
-
-```bash
-# install dependencies
-npm install
-
-# make a compressed package with sequence
-si pack . -o crypto-prices.tar.gz
-
-# send sequence to transform hub, this will output Sequence ID
-si seq send crypto-prices.tar.gz
-
-# start a sequence with parameters, this will output Instance ID
-si seq start <sequence-id> ETH USD
-
-# See output
-si inst output <instance-id>
-```
-
-For more CLI functionalities see `si help` or dive into our CLI [docs](./packages/cli/README.md).
-
----
