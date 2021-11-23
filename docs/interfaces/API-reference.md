@@ -191,13 +191,7 @@ No parameters
 }
 ```
 
-<small>*Status*: 500 (?)</small>
-
-```json
-{
- // Bug: a query is hanging, when the instance was stopped or the program execution ended
-}
-```
+<small>*Status*: 404 Not Found</small>  <small>- when the Instance is not found, for example: the Instance was already stopped.</small>
 
 </details>
 
@@ -282,7 +276,7 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <details>
 <summary>
-    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- send event</small>
+    <strong>[ POST ]</strong>  <code>/api/v1/instance/:id/_event</code> <small>- send event to the Instance</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
@@ -300,7 +294,7 @@ Event contains <eventName>, <handler> with optional <message> of any type: strin
 
 <details>
 <summary>
-    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- get data stream with events till the instance stop running</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/event</code> <small>- get the data stream with the events from the Instance</small>
 </summary>
 
 <br> <strong>**Parameters**</strong>
@@ -315,7 +309,7 @@ No parameters
 
 <details>
 <summary>
-    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/once</code> <small>- get last event</small>
+    <strong>[ GET ]</strong>  <code>/api/v1/instance/:id/once</code> <small>- get the last event sent by the Instance</small>
 </summary>
 <!-- ToDo: think about the name -->
 <br> <strong>**Parameters**</strong>
@@ -339,7 +333,9 @@ No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: application/octet-stream</small>
+<small>Successful operation code: **200**</small>
+
+<small>Operation code: **406 Not Acceptable**</small> <small>- with an error message "Input provided in other way." This status code is returned when the Instance expects the input to be provided from the Topic API.</small>
 
 </details>
 
@@ -369,7 +365,7 @@ No parameters
 
 <strong>Responses</strong>
 
-<small>Content-type: application/octet-stream</small>
+<small>Successful operation code: **200**</small>
 
 </details>
 
