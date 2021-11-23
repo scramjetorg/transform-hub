@@ -60,9 +60,11 @@ What's more, this repository is intended for developers who would like to:
 
 The developers who would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
 
-- [Repository with Introductory README and code samples](https://github.com/scramjetorg/scramjet-cloud-docs)
-- [NPM page for main scramjet/sth package](https://www.npmjs.com/package/@scramjet/sth)
-- [NPM page for scramjet/cli package](https://www.npmjs.com/package/@scramjet/cli)
+![gh_logo](./images/gh_logo.png) [Repository with Introductory README and code samples](https://github.com/scramjetorg/scramjet-cloud-docs)
+
+![npm_logo](./images/npm_logo.png) [NPM page for main scramjet/sth package](https://www.npmjs.com/package/@scramjet/sth)
+
+![npm_logo](./images/npm_logo.png) [NPM page for scramjet/cli package](https://www.npmjs.com/package/@scramjet/cli)
 
 ---
 
@@ -199,6 +201,10 @@ You can also install the hub using npm [@scramjet/sth](https://www.npmjs.com/pac
 
     npm i @scramjet/sth
 
+and start the hub:
+
+    scramjet-transform-hub
+
 ![npm_package](./images/npm_package.png)
 
 ---
@@ -276,12 +282,14 @@ npm i -g ./dist/cli # install CLI globally
 si help             # show CLI commands
 ```
 
-- you can also install the package from NPM.
+- you can also install the @scramjet/cli package from [npm](https://www.npmjs.com/package/@scramjet/cli).
 
 ```bash
 npm i -g @scramjet/cli # install CLI globally
 si help                # show CLI commands
 ```
+
+![cli_npm](./images/cli_npm.png)
 
 Please run `si help` command to confirm that the installation went properly and also to see the list of available commands:
 
