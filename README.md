@@ -26,7 +26,7 @@
     - [Install CLI and execute](#install-cli-and-execute-white_check_mark)
     - [Clean build](#clean-build-building_construction)
     - [Docker commands](#docker-commands-whale)
-    - [Build hub on Docker](#build-host-on-docker-building_construction)
+    - [Build Hub on Docker](#build-hub-on-docker-building_construction)
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-robot)
     - [Lerna commands](#lerna-commands-pencil)
 6. [Sample usage](#sample-usage-sunglasses)
@@ -195,6 +195,12 @@ Hub is all set and ready to work with.
 
 ![hub_start](./images/hub_start.png)
 
+You can also install the hub using npm [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth) package:
+
+    npm i @scramjet/sth
+
+![npm_package](./images/npm_package.png)
+
 ---
 
 # The basics :abcd:
@@ -309,7 +315,7 @@ docker stop $(docker ps -a -q) # stops all running containers
 
 > ***(`-f`)** -  doesn't prompt confirmation
 
-## Build Host on Docker :building_construction:
+## Build Hub on Docker :building_construction:
 
 Build from current source:
 
@@ -515,7 +521,7 @@ The project need's your help! There's lots of work to do and we have a lot of pl
 
 Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee:
 
-* [You can sponsor us on github](https://github.com/sponsors/scramjetorg) :github:
+* [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
 * There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
 
