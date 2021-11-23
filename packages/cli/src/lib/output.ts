@@ -3,7 +3,7 @@ import { Response, ResponseStream } from "@scramjet/api-client";
 import { Command } from "commander";
 
 /**
- * Command form commander contains obj with whole params, that user provide to the console.
+ * Command from commander contains obj with whole params, that user provides to the console.
  */
 
 /**
