@@ -19,7 +19,7 @@ export const host: CommandDefinition = (program) => {
 
     /**
     * Command `si host logs`
-    * Show whole logs form host
+    * Show whole logs from host
     * Not fully implemented
     * Current log: status 500
     * Desired log: object in format
