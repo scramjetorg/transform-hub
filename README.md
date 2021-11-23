@@ -17,30 +17,30 @@
 # Table of contents
 
 1. [Introduction](#introduction-handshake)
-2. [Usage](#usage-:bulb:)
-3. [Installation](#installation-:clapm:)
-4. [The basics](#the-basics-🔤)
-5. [Development instructions](#development-instructions-👨‍💻)
-    - [Install hub globally](#install-hub-globally-✅)
-    - [Start the hub](#start-the-hub-🏁)
-    - [Install CLI and execute](#install-cli-and-execute-✅)
-    - [Clean build](#clean-build-🏗️)
-    - [Docker commands](#docker-commands-🐳)
-    - [Build hub on Docker](#build-host-on-docker-🏗️)
-    - [Run Transform Hub in Docker](#run-transform-hub-in-docker-🤖)
-    - [Lerna commands](#lerna-commands-📝)
-6. [Sample usage](#sample-usage-😎)
-    - ["Hello Alice" sample](#"hello-alice"-sample-🤹‍♀️)
-    - [More samples](#more-samples-📚)
-    - [Configure your own sample](#configure-your-own-sample-📝)<!--section to be improved-->
-7. [Troubleshooting](#troubleshooting-💥)
+2. [Usage](#usage-bulb)
+3. [Installation](#installation-clamp)
+4. [The basics](#the-basics-abcd)
+5. [Development instructions](#development-instructions-construction_worker)
+    - [Install hub globally](#install-hub-globally-white_check_mark)
+    - [Start the hub](#start-the-hub-checkered_flag)
+    - [Install CLI and execute](#install-cli-and-execute-white_check_mark)
+    - [Clean build](#clean-build-building_construction)
+    - [Docker commands](#docker-commands-whale)
+    - [Build hub on Docker](#build-host-on-docker-building_construction)
+    - [Run Transform Hub in Docker](#run-transform-hub-in-docker-robot)
+    - [Lerna commands](#lerna-commands-pencil)
+6. [Sample usage](#sample-usage-sunglasses)
+    - ["Hello Alice" sample](#"hello-alice"-sample-wave)
+    - [More samples](#more-samples-books)
+    - [Configure your own sample](#configure-your-own-sample-pencil)<!--section to be improved-->
+7. [Troubleshooting](#troubleshooting-collision)
     <!--
     Section to be added:
     - Known issues and limitations
     -->
-8. [License and contributions](#license-and-contributions-📃)
-9. [Work with us](#help-wanted-💁🏻💁‍♀️💁🏼‍♂️)
-10. [Donation](#donation-💸)
+8. [License and contributions](#license-and-contributions-page_with_curl)
+9. [Work with us](#help-wanted-information_desk_person)
+10. [Donation](#donation-money_with_wings)
 
 ---
 # Introduction :handshake:
@@ -76,7 +76,7 @@ This is the STH development repo. In order to use it, you need to have linux bas
 
 ---
 
-# Installation :clapm:
+# Installation :clamp:
 
 Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
 We will guide you step by step through the installation process.
@@ -128,7 +128,7 @@ output: `v0.37.2`
 nvm install 16     # command will install latest LTS Version of Node.js
 ```
 
-> 📝 **Note**:
+> :pencil **Note**:
 The project is working on Node Long Term Support (LTS) Version. Witch contains Node Package Manager (NPM) in `^8.1.0` version.
 NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
 
@@ -197,7 +197,7 @@ Hub is all set and ready to work with.
 
 ---
 
-# The basics 🔤
+# The basics :abcd:
 
 Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
 
@@ -223,7 +223,7 @@ Some important links 👀:
 
 ---
 
-# Development instructions 👨‍💻
+# Development instructions :construction_worker:
 
 In this section we will show you some useful commands, tools and functionalities that you can use to develop your own programs.
 
@@ -233,7 +233,7 @@ You should already have node.js, npm and other necessary packages installed, als
 
 In [#Installation](#installation-:clapm:) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
 
-## Install hub globally ✅
+## Install hub globally :white_check_mark:
 
 After build is done, you can install and run hub globally:
 
@@ -249,7 +249,7 @@ npm install -g @scramjet/hub
 scramjet-transform-hub
 ```
 
-## Start the hub 🏁
+## Start the hub checkered_flag
 
 Hub can be started in multiple ways
 
@@ -259,7 +259,7 @@ node dist/host/bin/start            # This is the same as above
 ts-node packages/host/src/bin/start # This starts node from source code
 ```
 
-## Install CLI and execute ✅
+## Install CLI and execute :white_check_mark:
 
 This command was already done at the end the [#Installation](#installation-:clapm:) section, just before starting the hub. There are two ways to install the CLI:
 
@@ -285,7 +285,7 @@ We will use CLI later on to execute the sequence.
 
 > **:bulb: HINT:** If something goes wrong make clean, install, build.
 
-## Clean build 🏗️
+## Clean build :building_construction:
 
 This is how to perform a clean build of the packages:
 
@@ -296,7 +296,7 @@ yarn build:all-packages   # optionally build:all if you want all dockerfiles.
 
 ![build_clean](./images/clean_install.png)
 
-## Docker commands 🐳
+## Docker commands :whale:
 
 During development some artifact may be left over in docker, here's how to clean them:
 
@@ -309,7 +309,7 @@ docker stop $(docker ps -a -q) # stops all running containers
 
 > ***(`-f`)** -  doesn't prompt confirmation
 
-## Build Host on Docker 🏗️
+## Build Host on Docker :building_construction:
 
 Build from current source:
 
@@ -325,7 +325,7 @@ cd ./packages/host/
 yarn build:docker-release
 ```
 
-## Run Transform Hub in Docker 🤖
+## Run Transform Hub in Docker :robot:
 
 ```bash
 cd ./packages/sth/
@@ -349,7 +349,7 @@ docker run \
   scramjetorg/sth:$(jq -r .version package.json)
 ```
 
-## Lerna commands 📝
+## Lerna commands :pencil:
 
 We use Lerna to control our monorepo. Here's a couple of helpful commands, which might be useful during development:
 
@@ -369,26 +369,26 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 
 ---
 
-# Sample usage 😎
-## "Hello Alice" sample 🤹‍♀️
+# Sample usage :sunglasses:
+## "Hello Alice" sample :wave:
 
 The sample will work only if you have properly configured your environment,installed hub and build all the packages.
-To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute-✅), compress the package, and then you're good to go and use curl commands or [CLI commands](#install-CLI-and-execute-✅) to execute the sequence, we will show you both ways.
+To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute-:white_check_mark:), compress the package, and then you're good to go and use curl commands or [CLI commands](#install-CLI-and-execute-:white_check_mark:) to execute the sequence, we will show you both ways.
 
 > :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.12`.*
 
 To start the "Hello Alice" sample we will need these basic steps:
-- [start the hub](#start-the-hub-🏁)
-- [compress the package](#compress-the-package-📦)
-- [send compressed package (sequence) to hub](#⬆️-upload-the-package)
-- [start sequence](#➡️-start-the-sequence)
-- [get the result](#⬇️-get-the-output)
+- [start the hub](#start-the-hub-checkered_flag)
+- [compress the package](#compress-the-package-package)
+- [send compressed package (sequence) to hub](#arrow_up-upload-the-package)
+- [start sequence](#arrow_right-start-the-sequence)
+- [get the result](#arrow_down-get-the-output)
 
-### Compress the package 📦
+### Compress the package :package:
 
 The sequence in a `tar.gz` file format with package.js (aka package) can be generated in different ways.
 
-Assuming that you have the [host running](#install-host-and-execute-✅) use command:
+Assuming that you have the [host running](#install-host-and-execute-:white_check_mark:) use command:
 
 ```bash
 yarn packseq    # this creates tar.gz for all packages in the repo
@@ -406,13 +406,13 @@ To compress specific package use linux tar command:
 tar -C /path/to/package/dir czf <package-name.tar.gz> .
 ```
 
-### Execute sample
+### Execute sample :fire:
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-✅)
+> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-:white_check_mark:)
 
-#### ⬆️ **Upload the package**
+#### :arrow_up: **Upload the package**
 
 ```bash
 SEQ_ID=$( \
@@ -432,7 +432,7 @@ SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want 
 
 > **:bulb: HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
-#### ➡️ **Start the sequence**
+#### :arrow_right: **Start the sequence**
 
 ```bash
 INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/sequence/$SEQ_ID/start" \
@@ -443,7 +443,7 @@ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seque
 }' | jq ".id" -r)
 ```
 
-#### ⬇️ **GET the output**
+#### :arrow_down: **GET the output**
 
 To get the output we need to send GET request to `/stdout` endpoint:
 ```bash
@@ -458,15 +458,15 @@ This is what you should get as a result:
 
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
-## More samples 📚
+## More samples :books:
 
 To check out more of our ready-to-go samples, please go to our repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs) "samples" directory.
 
-## Configure your own sample 📝
+## Configure your own sample :pencil:
 
 We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/transform-hub/tree/release/0.12/template).
 
-# Troubleshooting 💥
+# Troubleshooting :collision:
 
 > **:bulb: HINT:** If something goes wrong, any errors occur, please try to run clean build, which will remove all the packages and rebuild them.
 
@@ -495,7 +495,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 - [feature request](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=feature_request.md&title=)
 
 ---
-# License and contributions 📃
+# License and contributions :page_with_curl:
 
 This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
@@ -506,12 +506,12 @@ We provide support for contributions via test cases. If you expect a certain typ
 More ino about bdd tests can be found [here](./bdd/README.md).
 
 ---
-# Help wanted 💁🏻💁‍♀️💁🏼‍♂️
+# Help wanted :information_desk_person:
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](opensource@scramjet.org).
 
 ---
-# Donation 💸
+# Donation :money_with_wings:
 
 Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee:
 
