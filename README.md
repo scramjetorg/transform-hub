@@ -30,7 +30,7 @@
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-robot)
     - [Lerna commands](#lerna-commands-pencil)
 6. [Sample usage](#sample-usage-sunglasses)
-    - ["Hello Alice" sample](#"hello-alice"-sample-wave)
+    - ["Hello Alice" sample](#hello-alice-sample-wave)
     - [More samples](#more-samples-books)
     - [Configure your own sample](#configure-your-own-sample-pencil)<!--section to be improved-->
 7. [Troubleshooting](#troubleshooting-collision)
@@ -128,7 +128,7 @@ output: `v0.37.2`
 nvm install 16     # command will install latest LTS Version of Node.js
 ```
 
-> :pencil **Note**:
+> :pencil: **Note**:
 The project is working on Node Long Term Support (LTS) Version. Witch contains Node Package Manager (NPM) in `^8.1.0` version.
 NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
 
@@ -231,7 +231,7 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 
 You should already have node.js, npm and other necessary packages installed, also transform-hub repo should be cloned by now. If not and you skipped the installation section, then please go back and follow the instructions, they are initial for development.
 
-In [#Installation](#installation-:clapm:) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
+In [#Installation](#installation-:clamp:) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
 
 ## Install hub globally :white_check_mark:
 
@@ -249,7 +249,7 @@ npm install -g @scramjet/hub
 scramjet-transform-hub
 ```
 
-## Start the hub checkered_flag
+## Start the hub :checkered_flag:
 
 Hub can be started in multiple ways
 
@@ -261,7 +261,7 @@ ts-node packages/host/src/bin/start # This starts node from source code
 
 ## Install CLI and execute :white_check_mark:
 
-This command was already done at the end the [#Installation](#installation-:clapm:) section, just before starting the hub. There are two ways to install the CLI:
+This command was already done at the end the [#Installation](#installation-:clamp:) section, just before starting the hub. There are two ways to install the CLI:
 
 - in the root folder, after building, run the following commands:
 
@@ -460,7 +460,7 @@ This is what you should get as a result:
 
 ## More samples :books:
 
-To check out more of our ready-to-go samples, please go to our repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs) "samples" directory.
+To check out more of our ready-to-go samples, please go to our repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs), "samples" directory.
 
 ## Configure your own sample :pencil:
 
