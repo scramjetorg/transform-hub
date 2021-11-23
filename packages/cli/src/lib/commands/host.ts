@@ -9,7 +9,7 @@ export const host: CommandDefinition = (program) => {
 
     /**
     * Command `si host version`
-    * Get STH version number form package.json file
+    * Get STH version number from package.json file
     * Log: version number
     */
     hostCmd
