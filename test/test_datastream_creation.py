@@ -1,4 +1,4 @@
-from datastream import DataStream
+from datastream import DataStream, UnsupportedOperation
 import asyncio
 from ansi_color_codes import *
 import pytest
@@ -54,6 +54,15 @@ async def test_creating_stream_from_file_object():
         assert ['foo\n', 'bar baz\n', 'qux'] == await stream.to_list()
 
 @pytest.mark.asyncio
-async def test_creating_stream_from_file():
-    stream = DataStream.from_file('sample_text_1.txt')
-    assert [b'foo\nbar baz\nqux'] == await stream.to_list()
+async def test_specifying_chunk_size_on_plain_iterable():
+    with pytest.raises(UnsupportedOperation):
+        result = DataStream.read_from([1, 2, 3, 4], chunk_size=2)
+
+@pytest.mark.asyncio
+async def test_non_iterable_source_without_chunk_size():
+    class Foo():
+        def read(self, how_many):
+            return "" + "foo"*how_many
+
+    with pytest.raises(UnsupportedOperation):
+        DataStream.read_from(Foo())

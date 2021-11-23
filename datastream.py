@@ -3,6 +3,7 @@ import asyncio
 from ansi_color_codes import *
 from os import environ
 import utils
+from collections.abc import Iterable
 
 DEBUG = 'DATASTREAM_DEBUG' in environ or 'SCRAMJET_DEBUG' in environ
 tr = utils.print_trimmed
@@ -10,6 +11,10 @@ tr = utils.print_trimmed
 def log(stream, *args):
     if DEBUG:
         utils.LogWithTimer.log(f"{grey}{stream.name}{reset}", *args)
+
+
+class UnsupportedOperation(Exception):
+    pass
 
 
 class DataStream():
@@ -28,41 +33,53 @@ class DataStream():
             self.upstream._uncork()
 
     @staticmethod
+    def read_from(source, max_parallel=64, chunk_size=None):
+        if chunk_size:
+            if hasattr(source, 'read'):
+                return DataStream.from_callback(
+                    max_parallel, source.read, chunk_size)
+            else:
+                msg = (f"chunk_size was specified, but source {source} "
+                        "does not implement read() method.")
+                raise UnsupportedOperation(msg)
+        else:
+            if isinstance(source, Iterable):
+                return DataStream.from_iterable(
+                    source, max_parallel=max_parallel)
+            else:
+                msg = (f"Source {source} is not iterable. It cannot be used "
+                       "unless it exposes read() method and chunk_size "
+                       "is specified.")
+                raise UnsupportedOperation(msg)
+
+    @staticmethod
     def from_iterable(iterable, max_parallel=64):
         stream = DataStream(max_parallel)
         async def consume():
-            log(stream, f'waiting for uncork: {stream.ready_to_start}')
             await stream.ready_to_start
             for item in iterable:
-                log(stream, f'put: {tr(item)}')
                 await stream.pyfca.write(item)
-            log(stream, f'ending pyfca {stream.pyfca}')
             stream.pyfca.end()
 
-        # run in background, as it will involve waiting for
-        # processing elements
         asyncio.create_task(consume())
-        log(stream, f'source: {iterable}')
         return stream
 
     @staticmethod
-    def from_file(in_file, max_parallel=64, max_chunk_size=-1):
+    def from_callback(max_parallel, callback, *args):
         stream = DataStream(max_parallel)
-        async def consume():
-            log(stream, f'waiting for uncork: {stream.ready_to_start}')
-            await stream.ready_to_start
-            with open(in_file, 'rb') as f:
-                log(stream, f'reading from {f}')
-                for chunk in iter(lambda: f.read1(max_chunk_size), b''):
-                    log(stream, f'put: {tr(chunk)}')
-                    await stream.pyfca.write(chunk)
-                log(stream, f'ending pyfca {stream.pyfca}')
-                stream.pyfca.end()
 
-        # run in background, as it will involve waiting for
-        # processing elements
+        async def consume():
+            await stream.ready_to_start
+            while True:
+                chunk = callback(*args)
+                if asyncio.iscoroutine(chunk):
+                    chunk = await chunk
+                if chunk == '' or chunk == b'':
+                    break
+                await stream.pyfca.write(chunk)
+            stream.pyfca.end()
+
         asyncio.create_task(consume())
-        log(stream, f'source: {repr(in_file)}')
         return stream
 
     def flatmap(self, func, *args):
