@@ -41,7 +41,7 @@ const errorHandler = (err: ClientError) => {
      * Commands
      * ```
      * pack [options] [<directory>]
-     * host [command]                something
+     * host [command]                operations on host
      * config|c [command]            configuration file operations
      * sequence|seq [command]        operations on sequence
      * instance|inst [command]       operations on instance
