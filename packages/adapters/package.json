@@ -22,10 +22,10 @@
     "@scramjet/utility": "^0.12.2",
     "dockerode": "^3.3.0",
     "scramjet": "^4.36.0",
-    "shell-escape": "^0.2.0",
-    "@scramjet/types": "^0.12.2"
+    "shell-escape": "^0.2.0"
   },
   "devDependencies": {
+    "@scramjet/types": "^0.12.2",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.0.0",

@@ -4,14 +4,15 @@ import {
     ProcessSequenceConfig,
     ISequenceAdapter,
     ISequenceInfo,
-    isValidSequencePackageJSON } from "@scramjet/types";
+} from "@scramjet/types";
 import { Readable } from "stream";
-import { createReadStream, createWriteStream, existsSync } from "fs";
+import { createReadStream, existsSync } from "fs";
 import { mkdir, readdir, rm } from "fs/promises";
 import * as path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { SequenceInfo } from "./sequence-info";
+import { isValidSequencePackageJSON } from "./validate-sequence-pacakge-json";
 
 const HOME_DIR = require("os").homedir();
 const SEQUENCES_DIR = path.join(HOME_DIR, ".scramjet_sequences");
@@ -85,14 +86,9 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         await mkdir(sequenceDir);
 
-        const compressedPath = path.join(sequenceDir, "compressed.tar.gz");
-        const savingFileStream = stream.pipe(createWriteStream(compressedPath));
+        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir}`);
 
-        this.logger.log(`Writing compressed sequence to ${compressedPath}`);
-        await new Promise(res => savingFileStream.on("close", res));
-
-        // @TODO pass input stream
-        const uncompressingProc = exec(`tar xvf ${compressedPath}  -C ${sequenceDir}`);
+        stream.pipe(uncompressingProc.stdin!);
 
         await new Promise(res => uncompressingProc.on("close", res));
 
