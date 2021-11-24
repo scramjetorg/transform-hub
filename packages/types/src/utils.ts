@@ -78,7 +78,7 @@ export type SynchronousStreamablePayload<Produces> =
 
 export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & {
     contentType?: string,
-    topic?: string | string[]
+    topic?: string
 }
 
 /**

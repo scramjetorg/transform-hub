@@ -38,7 +38,11 @@ import {
     InstanceBulkMessage,
     SequenceBulkMessage,
     SequenceMessage,
-    InstanceMessage
+    InstanceMessage,
+    PingMessageData,
+    SequenceStoppedMessageData,
+    PangMessageData,
+    EventMessageData
 } from "./messages";
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
@@ -76,9 +80,12 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.MONITORING ? MonitoringMessageData :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
-    T extends RunnerMessageCode.PING ? EmptyMessageData :
+    T extends RunnerMessageCode.PING ? PingMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
+    T extends RunnerMessageCode.PANG ? PangMessageData :
     T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
+    T extends RunnerMessageCode.SEQUENCE_STOPPED ? SequenceStoppedMessageData :
+    T extends RunnerMessageCode.EVENT ? EventMessageData :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
     T extends CPMMessageCode.STH_ID ? STHIDMessageData :
     T extends CPMMessageCode.LOAD ? LoadCheckStat :

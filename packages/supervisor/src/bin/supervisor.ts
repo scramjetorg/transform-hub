@@ -1,7 +1,7 @@
 import { LifeCycleConfig } from "@scramjet/types";
 
 import { CSHClient } from "../lib/csh-client";
-import { LifecycleDockerAdapterInstance } from "@scramjet/adapters";
+import { LifecycleProcessAdapterInstance } from "@scramjet/adapters";
 import { LifeCycleController } from "../lib/lifecycle-controller";
 
 /**
@@ -16,10 +16,10 @@ import { LifeCycleController } from "../lib/lifecycle-controller";
 const config: LifeCycleConfig = {
     makeSnapshotOnError: false
 };
-const lcdai: LifecycleDockerAdapterInstance = new LifecycleDockerAdapterInstance();
+const lcai = new LifecycleProcessAdapterInstance();
 const id: string = process.argv[2];
 const cshc: CSHClient = new CSHClient(process.argv[3]);
-const lcc: LifeCycleController = new LifeCycleController(id, lcdai, config, cshc);
+const lcc = new LifeCycleController(id, lcai, config, cshc);
 
 lcc.main()
     .catch(e => {

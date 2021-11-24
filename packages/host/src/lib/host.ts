@@ -1,6 +1,6 @@
 import * as findPackage from "find-package-json";
 
-import { APIExpose, AppConfig, IComponent, Logger, NextCallback, ParsedMessage, RunnerConfig, STHConfiguration, STHRestAPI, Sequence } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, ISequenceAdapter, ISequenceInfo, Logger, NextCallback, ParsedMessage, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -13,7 +13,7 @@ import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
-import { LifecycleDockerAdapterSequence } from "@scramjet/adapters";
+import { ProcessSequenceAdapter } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
 import { SequenceStore } from "./sequence-store";
 import { ServiceDiscovery } from "./sd-adapter";
@@ -246,29 +246,19 @@ export class Host implements IComponent {
         return result;
     }
 
-    private runnerConfigToNewSequence(config: RunnerConfig): Sequence {
-        return {
-            id: config.packageVolumeId,
-            config,
-            instances: []
-        };
-    }
-
     async identifyExistingSequences() {
         this.logger.log("Listing exiting sequences.");
-        const ldas = new LifecycleDockerAdapterSequence(this.config.docker);
+        const sequenceAdapter = new ProcessSequenceAdapter();
 
         try {
-            await ldas.init();
+            await sequenceAdapter.init();
 
-            this.logger.debug("LDAS initialized, listing...");
-            const sequences = await ldas.list();
+            this.logger.debug("SequenceAdapater initialized, listing...");
+            const sequences = await sequenceAdapter.list();
 
-            for (const sequenceConfig of sequences) {
-                const sequence = this.runnerConfigToNewSequence(sequenceConfig);
-
+            for (const sequence of sequences) {
                 this.sequencesStore.add(sequence);
-                this.logger.log("Sequence found", sequence.config);
+                this.logger.log("Sequence found", sequence.info.getConfig());
             }
         } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences.", e);
@@ -281,17 +271,18 @@ export class Host implements IComponent {
         const id = IDProvider.generate();
 
         try {
-            const sequenceConfig: RunnerConfig = await this.identifySequence(stream, id);
-            const sequence = this.runnerConfigToNewSequence(sequenceConfig);
+            const sequence = new ProcessSequenceAdapter();
+            await sequence.init();
+            await sequence.identify(stream, id);
 
             this.sequencesStore.add(sequence);
 
-            this.logger.info("Sequence identified:", sequence.config);
+            this.logger.info("Sequence identified:", sequence.info.getConfig());
 
-            await this.cpmConnector?.sendSequenceInfo(sequence.id, SequenceMessageCode.SEQUENCE_CREATED);
+            await this.cpmConnector?.sendSequenceInfo(sequence.info.getId(), SequenceMessageCode.SEQUENCE_CREATED);
 
             return {
-                id: sequence.id
+                id: sequence.info.getId()
             };
         } catch (error: any) {
             this.logger.debug(error?.stack);
@@ -316,7 +307,7 @@ export class Host implements IComponent {
         const sequence = this.sequencesStore.getById(seqId);
 
         if (sequence) {
-            this.logger.info("Starting sequence", sequence.id);
+            this.logger.info("Starting sequence", sequence.info.getId());
 
             const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
@@ -340,23 +331,6 @@ export class Host implements IComponent {
         };
     }
 
-    async identifySequence(stream: Readable, id: string): Promise<RunnerConfig> {
-        const ldas = new LifecycleDockerAdapterSequence(this.config.docker);
-
-        await ldas.init();
-        const identifyResult = await ldas.identify(stream, id);
-
-        if (identifyResult.error) {
-            throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", identifyResult.error);
-        }
-
-        if (identifyResult.container.image) {
-            await ldas.fetch(identifyResult.container.image);
-        }
-
-        return identifyResult;
-    }
-
     private attachInstanceToCommonLogsPipe(csic: CSIController) {
         const logStream = csic.getLogStream();
 
@@ -367,12 +341,12 @@ export class Host implements IComponent {
         }
     }
 
-    async startCSIController(sequence: Sequence, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
+    async startCSIController(sequence: ISequenceAdapter, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
         const csic = new CSIController(
             id,
-            sequence,
+            sequence.info,
             appConfig,
             sequenceArgs,
             communicationHandler,
@@ -387,7 +361,7 @@ export class Host implements IComponent {
 
         this.attachInstanceToCommonLogsPipe(csic);
 
-        sequence.instances.push(id);
+        sequence.info.addInstance(id);
 
         csic.on("pang", (data) => {
             this.logger.log("PANG message received:", data);
@@ -434,15 +408,11 @@ export class Host implements IComponent {
 
             delete InstanceStore[csic.id];
 
-            const index = sequence.instances.indexOf(id);
-
-            if (index > -1) {
-                sequence.instances.splice(index, 1);
-            }
+            sequence.info.removeInstance(id);
 
             this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
-                sequence: sequence.id
+                sequence: sequence.info.getId()
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             if (csic.provides && csic.provides !== "") {
@@ -464,25 +434,33 @@ export class Host implements IComponent {
 
         return Object.values(this.instancesStore).map(csiController => ({
             id: csiController.id,
-            sequence: csiController.sequence.id,
+            sequence: csiController.sequence.getId(),
         }));
     }
+
 
     getSequence(id: string): STHRestAPI.GetSequenceResponse {
         if (!this.sequencesStore.getById(id)) {
             throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
         }
 
-        return this.sequencesStore.getById(id);
+        const sequence = this.sequencesStore.getById(id)
+
+        if(!sequence) {
+            return undefined;
+        }
+
+        return createSequenceDTO(sequence.info);
     }
 
     getSequences(): STHRestAPI.GetSequencesResponse {
-        return this.sequencesStore.getSequences();
+        return this.sequencesStore.getSequences()
+            .map(sequence => createSequenceDTO(sequence.info));
     }
 
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
         // @TODO this should probably return error response when there's not corresponding Sequence
-        return this.sequencesStore.getById(sequenceId)?.instances;
+        return this.sequencesStore.getById(sequenceId)?.info.instances;
     }
 
     async stop() {
@@ -515,5 +493,13 @@ export class Host implements IComponent {
         });
 
         this.logger.log("Cleanup done.");
+    }
+}
+
+function createSequenceDTO(sequence: ISequenceInfo): STHRestAPI.SequenceDTO {
+    return {
+        instances: sequence.instances,
+        id: sequence.getId(),
+        config: sequence.getConfig()
     }
 }

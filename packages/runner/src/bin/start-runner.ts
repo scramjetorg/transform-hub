@@ -4,7 +4,7 @@ import { Runner } from "../runner";
 import * as fs from "fs";
 import { AppConfig } from "@scramjet/types";
 
-const sequencePath: string = "/package/" + process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
+const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const fifosPath: string = process.env.FIFOS_DIR || "";
 
 if (!fs.existsSync(fifosPath)) {

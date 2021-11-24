@@ -3,7 +3,18 @@ import * as fs from "fs";
 import { Agent, ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, EventEmitter, Readable } from "stream";
-import { CPMConnectorOptions, EncodedControlMessage, Instance, Sequence, LoadCheckStatMessage, Logger, NetworkInfo, ReadableStream, STHIDMessageData, WritableStream } from "@scramjet/types";
+import {
+    STHRestAPI,
+    CPMConnectorOptions,
+    EncodedControlMessage,
+    Instance,
+    LoadCheckStatMessage,
+    Logger,
+    NetworkInfo,
+    ReadableStream,
+    STHIDMessageData,
+    WritableStream
+} from "@scramjet/types";
 import { MessageUtilities } from "@scramjet/model";
 import { Socket } from "net";
 import { StringStream } from "scramjet";
@@ -249,7 +260,7 @@ export class CPMConnector extends EventEmitter {
         };
     }
 
-    async sendSequencesInfo(sequences: Sequence[]): Promise<void> {
+    async sendSequencesInfo(sequences: STHRestAPI.SequenceDTO[]): Promise<void> {
         this.logger.log("Sending sequences information, total sequences:", sequences.length);
 
         await this.communicationStream!.whenWrote(
