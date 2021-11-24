@@ -230,7 +230,7 @@ Scramjet Transform Hub allows you to deploy and execute programs that you build 
 Some important links 👀:
 
 * Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
-* You can see the [Scramjet Transform Hub API docs here](./docs/development-guide/stream-and-api.md)
+* You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
 * You can see the [CLI documentation here](./docs/development-guide/scramjet-interface-cli.md), but `si help` should also be quite effective.
 * Don't forget to `star` this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
