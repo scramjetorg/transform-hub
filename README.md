@@ -297,7 +297,7 @@ Please run `si help` command to confirm that the installation went properly and 
 
 ![si_help](./images/si_help.png)
 
-We will use CLI later on to execute the sequence.
+We will use CLI later on to execute the sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/release/0.12/docs/interfaces/API-reference.md).
 
 > **:bulb: HINT:** If something goes wrong make clean, install, build.
 
