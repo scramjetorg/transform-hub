@@ -6,8 +6,6 @@ import {
     SequenceConfig,
     PreRunnerContainerConfiguration,
     STHConfiguration,
-    // @TODO possibly move this validator to adapters package
-    isValidSequencePackageJSON,
     ISequenceInfo,
     DockerSequenceConfig,
 } from "@scramjet/types";
@@ -16,6 +14,7 @@ import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { SequenceInfo } from "./sequence-info";
+import { isValidSequencePackageJSON } from "./validate-sequence-pacakge-json";
 
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;

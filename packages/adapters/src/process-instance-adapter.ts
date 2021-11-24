@@ -119,7 +119,7 @@ IComponent {
     }
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
-        // @TODO implement
+        // @TODO implement stats
         const { runnerProcess } = this;
 
         if (!runnerProcess) {
@@ -226,8 +226,14 @@ IComponent {
     }
 
     async cleanup(): Promise<void> {
-        // @TODO error handling
-        await rm(this.fifosDir!, { recursive: true });
+        const { fifosDir } = this;
+
+        if (!fifosDir) {
+            this.logger.warn("Trying to remove fifos dir that wasn't initialized");
+            return;
+        }
+
+        await rm(fifosDir, { recursive: true });
     }
     // @ts-ignore
     snapshot(): MaybePromise<string> {
