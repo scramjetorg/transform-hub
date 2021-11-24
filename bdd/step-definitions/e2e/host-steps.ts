@@ -255,7 +255,7 @@ When("response in every line contains {string} followed by name from file {strin
     for (i = 0; i < input.length; i++) {
         const line1: string = input[i].name;
 
-        console.log(removeBoundaryQuotes(lines[i]));
+        // console.log(removeBoundaryQuotes(lines[i]));
 
         assert.deepEqual(greeting + line1 + suffix, removeBoundaryQuotes(lines[i]));
     }

@@ -104,7 +104,7 @@ If none of the above commands is found, please proceed with the installation.
 
 It is recommend to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. To install or update nvm, you should run the install script, to do that use the following cURL command in your console:
 
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.37.2/install.sh | bash
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
 
 After executing the above command you should get in the console this info:
 
@@ -112,9 +112,9 @@ After executing the above command you should get in the console this info:
 
 Which means that you need to run those two more commands to finish the installation:
 
-        export NVM_DIR="$HOME/.nvm"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-        [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 Export lines from above will be saved in your ~/.bashrc file so that you will not need to run it every session start.
 After that you can check nvm version just to confirm that you have successfully installed nvm.
@@ -152,8 +152,8 @@ output: `8.1.0`
 
 OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
-        npm install -g lerna
-        npm install -g yarn
+    npm install -g lerna
+    npm install -g yarn
 
 ![installations](./images/installations.png)
 
@@ -163,15 +163,13 @@ The same as before the installations can be confirmed by checking the installed 
 
 OK! The installation was successful. 🎉 🎆
 
-We also work with Docker ![docker](./images/docker.png),currently we are working on a solution where using Docker will be optional, but until then please continue with the installation procedure.
+We also work with Docker ![docker](./images/docker.png). Currently we are working on a solution where using Docker will be optional, but until then please continue with the installation procedure.
 Run the following command in your console:
 
-        sudo apt install -y docker.io docker-compose
+    sudo apt install -y docker.io docker-compose
 
 Verify that Docker and Docker-Compose are installed by getting their versions:
 
-        sudo docker version
-        docker-compose version
 
 Now let's clone build and start the hub. Please copy the following commands to the terminal:
 
