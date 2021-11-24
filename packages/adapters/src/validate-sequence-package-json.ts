@@ -1,7 +1,7 @@
 import { SequencePackageJSON } from "@scramjet/types";
 
 function isOptionalString(value: unknown): value is string | undefined {
-    return typeof value === "undefined" || typeof value === "string";
+    return !value || typeof value === "string";
 }
 
 function isValidPortsConfiguration(ports: unknown): ports is `${number}/${"tcp" | "udp"}`[] {
@@ -21,13 +21,13 @@ export function isValidSequencePackageJSON(value: unknown): value is SequencePac
 
     const v = value as SequencePackageJSON;
 
-    const enginesAreValid = v.engines === undefined ||
+    const enginesAreValid = !v.engines ||
         typeof v.engines === "object" &&
         Object.values(v.engines).every(val => typeof val === "string");
 
-    const scramjetConfigIsValid = v.scramjet === undefined ||
+    const scramjetConfigIsValid = !v.scramjet ||
         isOptionalString(v.scramjet.image) &&
-        (v.scramjet.config === undefined ||
+        (!v.scramjet.config ||
             typeof v.scramjet.config.ports === "object" &&
             isValidPortsConfiguration(v.scramjet.config.ports)
         );

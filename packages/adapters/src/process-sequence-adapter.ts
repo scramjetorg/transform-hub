@@ -12,7 +12,7 @@ import * as path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { SequenceInfo } from "./sequence-info";
-import { isValidSequencePackageJSON } from "./validate-sequence-pacakge-json";
+import { isValidSequencePackageJSON } from "./validate-sequence-package-json";
 
 const HOME_DIR = require("os").homedir();
 const SEQUENCES_DIR = path.join(HOME_DIR, ".scramjet_sequences");

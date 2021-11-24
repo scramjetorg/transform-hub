@@ -136,7 +136,11 @@ export class CSIController extends EventEmitter {
         const path = resolvePath(__dirname, supervisorPath);
         const command: string[] = [path, this.id, this.config.socketPath];
 
-        this.superVisorProcess = spawn(executable, command);
+        this.superVisorProcess = spawn(executable, command, {
+            env: {
+                RUN_WITHOUT_DOCKER: this.config.runWithoutDocker.toString()
+            }
+        });
 
         this.logger.info("Spawning supervisor with command:", command);
 

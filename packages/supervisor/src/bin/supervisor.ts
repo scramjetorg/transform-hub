@@ -1,7 +1,7 @@
 import { LifeCycleConfig } from "@scramjet/types";
 
 import { CSHClient } from "../lib/csh-client";
-import { LifecycleProcessAdapterInstance } from "@scramjet/adapters";
+import { getInstanceAdapter } from "@scramjet/adapters";
 import { LifeCycleController } from "../lib/lifecycle-controller";
 
 /**
@@ -16,10 +16,10 @@ import { LifeCycleController } from "../lib/lifecycle-controller";
 const config: LifeCycleConfig = {
     makeSnapshotOnError: false
 };
-const lcai = new LifecycleProcessAdapterInstance();
+const instanceAdapter = getInstanceAdapter(process.env.RUN_WITHOUT_DOCKER === "true");
 const id: string = process.argv[2];
 const cshc: CSHClient = new CSHClient(process.argv[3]);
-const lcc = new LifeCycleController(id, lcai, config, cshc);
+const lcc = new LifeCycleController(id, instanceAdapter, config, cshc);
 
 lcc.main()
     .catch(e => {

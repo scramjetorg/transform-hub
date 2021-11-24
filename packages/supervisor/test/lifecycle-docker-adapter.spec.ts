@@ -3,7 +3,7 @@
 /* eslint-disable import/no-named-as-default-member, no-extra-parens, dot-notation */
 import { ConfigService } from "@scramjet/sth-config";
 import { DelayedStream } from "@scramjet/model";
-import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, DockerSequenceAdapter } from "@scramjet/adapters";
+import { DockerodeDockerHelper, DockerInstanceAdapter, DockerSequenceAdapter } from "@scramjet/adapters";
 import { SequenceConfig } from "@scramjet/types";
 import test, { skip } from "ava";
 import * as fs from "fs";
@@ -46,7 +46,7 @@ test.beforeEach(() => {
 });
 
 test("Constructor should create instance.", async (t: any) => {
-    const lcdai = new LifecycleDockerAdapterInstance(); // Main?
+    const lcdai = new DockerInstanceAdapter(); // Main?
 
     t.not(lcdai, null);
 });
@@ -54,7 +54,7 @@ test("Constructor should create instance.", async (t: any) => {
 // TODO: Config is provided by PreRunner. No need to get it from global config.
 
 skip("Init should call imageConfig and set results locally.", async () => {
-    const lcdai = new LifecycleDockerAdapterInstance();
+    const lcdai = new DockerInstanceAdapter();
 
     await lcdai.init();
 
@@ -62,7 +62,7 @@ skip("Init should call imageConfig and set results locally.", async () => {
 });
 
 test("CreateFifoStreams should create monitor, control logger, input and output streams.", async (t) => {
-    const lcda = new LifecycleDockerAdapterInstance();
+    const lcda = new DockerInstanceAdapter();
 
     lcda["monitorFifoPath"] = "mfp";
     lcda["controlFifoPath"] = "cfp";
@@ -108,7 +108,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         id: "abc-123",
         type: "docker"
     };
-    const lcdai = new LifecycleDockerAdapterInstance();
+    const lcdai = new DockerInstanceAdapter();
 
     lcdai["monitorFifoPath"] = "mfPath";
     lcdai["controlFifoPath"] = "cfPath";

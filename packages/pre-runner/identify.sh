@@ -7,4 +7,4 @@ if [ ! -r "${pkg_dir}/${pkg_file}" ]; then
 fi
 
 cat ${pkg_dir}/${pkg_file} \
-  | jq -c '{ name, version, main, engines, config: .scramjet.config, image: .scramjet.image }'
+  | jq -c '{ name, version, main, engines, scramjet }'

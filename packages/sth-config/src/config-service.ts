@@ -31,7 +31,8 @@ const _defaultConfig: STHConfiguration = {
         freeSpace: 128
     },
     safeOperationLimit: 512,
-    instanceAdapterExitDelay: 9000
+    instanceAdapterExitDelay: 9000,
+    runWithoutDocker: false
 };
 
 merge(_defaultConfig, {
