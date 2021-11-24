@@ -18,7 +18,7 @@ import { SequenceInfo } from "./sequence-info";
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
 
-    private prerunnerConfig?: PreRunnerContainerConfiguration;
+    private prerunnerConfig: PreRunnerContainerConfiguration;
 
     private resources: DockerAdapterResources = {};
 
@@ -119,12 +119,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         try {
             runResult = await this.dockerHelper.run({
-                imageName: this.prerunnerConfig?.image || "",
+                imageName: this.prerunnerConfig.image || "",
                 volumes: [
                     { mountPoint: "/package", volume: volumeId }
                 ],
                 autoRemove: true,
-                maxMem: this.prerunnerConfig?.maxMem || 0
+                maxMem: this.prerunnerConfig.maxMem || 0
             });
         } catch {
             throw new SupervisorError("DOCKER_ERROR");
@@ -144,8 +144,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             await this.fetch(runnerConfig.container.image);
 
             this.computedInfo = new SequenceInfo(runnerConfig);
-        } catch {
-            throw new SupervisorError("PRERUNNER_ERROR", "Unable to parse data from pre-runner");
+        } catch (err) {
+            throw new SupervisorError("PRERUNNER_ERROR", err);
         }
     }
 
