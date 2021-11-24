@@ -29,7 +29,7 @@ import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolum
 import { FreePortsFinder } from "./utils";
 import { defer } from "@scramjet/utility";
 
-class LifecycleDockerAdapterInstance implements
+class DockerInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
@@ -353,4 +353,4 @@ IComponent {
     }
 }
 
-export { LifecycleDockerAdapterInstance };
+export { DockerInstanceAdapter };

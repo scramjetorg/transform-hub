@@ -64,8 +64,13 @@ Used in starting runner locally only. Path to input FIFO file.
 `OUTPUT_PATH: string`
 Used in starting runner locally only. Path to output FIFO file.
 
-### Scripts
+### Supervisor
 
+---
+`RUN_WITHOUT_DOCKER: boolean (default: false)`
+
+### Scripts
+---
 #### packsequence.js
 `OUT_DIR: string (default: dist)`
 Used to find built sourcecode.

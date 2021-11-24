@@ -14,7 +14,7 @@ import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { SequenceInfo } from "./sequence-info";
-import { isValidSequencePackageJSON } from "./validate-sequence-pacakge-json";
+import { isValidSequencePackageJSON } from "./validate-sequence-package-json";
 
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
@@ -127,7 +127,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
                 autoRemove: true,
                 maxMem: this.prerunnerConfig.maxMem || 0
             });
-        } catch {
+        } catch (err) {
+            this.logger.error(err);
             throw new SupervisorError("DOCKER_ERROR");
         }
 
@@ -146,6 +147,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             this.computedInfo = new SequenceInfo(runnerConfig);
         } catch (err) {
+            this.logger.error(err);
             throw new SupervisorError("PRERUNNER_ERROR", err);
         }
     }
