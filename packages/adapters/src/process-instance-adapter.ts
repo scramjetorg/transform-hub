@@ -21,7 +21,7 @@ import { PassThrough } from "stream";
 import * as path from "path";
 import { getSequenceDir } from "./process-sequence-adapter";
 
-class LifecycleProcessAdapterInstance implements
+class ProcessInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
@@ -250,4 +250,4 @@ IComponent {
     }
 }
 
-export { LifecycleProcessAdapterInstance };
+export { ProcessInstanceAdapter };

@@ -1,6 +1,6 @@
 import * as findPackage from "find-package-json";
 
-import { APIExpose, AppConfig, IComponent, ISequenceAdapter, ISequenceInfo, Logger, NextCallback, ParsedMessage, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, CSIConfig, IComponent, ISequenceAdapter, ISequenceInfo, Logger, NextCallback, ParsedMessage, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -13,7 +13,7 @@ import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
-import { ProcessSequenceAdapter } from "@scramjet/adapters";
+import { getSequenceAdapter } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
 import { SequenceStore } from "./sequence-store";
 import { ServiceDiscovery } from "./sd-adapter";
@@ -256,7 +256,7 @@ export class Host implements IComponent {
 
     async identifyExistingSequences() {
         this.logger.log("Listing exiting sequences.");
-        const sequenceAdapter = new ProcessSequenceAdapter();
+        const sequenceAdapter = getSequenceAdapter(this.config);
 
         try {
             await sequenceAdapter.init();
@@ -279,7 +279,7 @@ export class Host implements IComponent {
         const id = IDProvider.generate();
 
         try {
-            const sequence = new ProcessSequenceAdapter();
+            const sequence = getSequenceAdapter(this.config);
 
             await sequence.init();
             await sequence.identify(stream, id);
@@ -357,13 +357,18 @@ export class Host implements IComponent {
     ): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
+        const csiConfig: CSIConfig = {
+            instanceAdapterExitDelay: this.config.instanceAdapterExitDelay,
+            socketPath: this.config.host.socketPath,
+            runWithoutDocker: this.config.runWithoutDocker
+        };
         const csic = new CSIController(
             id,
             sequence.info,
             appConfig,
             sequenceArgs,
             communicationHandler,
-            { instanceAdapterExitDelay: this.config.instanceAdapterExitDelay, socketPath: this.config.host.socketPath }
+            csiConfig
         );
 
         this.logger.log("New CSIController created: ", id);

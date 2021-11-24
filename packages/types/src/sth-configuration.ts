@@ -128,4 +128,11 @@ export type STHConfiguration = {
      * In this additional time instance API is still available.
      */
     instanceAdapterExitDelay: number;
+
+    /**
+     * Whether host should run all the instances on the host machine,
+     * instead of in docker containers
+     * **UNSAFE FOR RUNNING ARBITRARY CODE (e.g. user submitted)**
+     */
+    runWithoutDocker: boolean;
 }

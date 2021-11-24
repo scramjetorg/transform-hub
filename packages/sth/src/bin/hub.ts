@@ -19,6 +19,7 @@ const options = program
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
+    .option("--run-without-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .parse(process.argv)
     .opts();
 
@@ -43,7 +44,8 @@ configService.update({
         port: options.port,
         hostname: options.hostname,
         id: options.id
-    }
+    },
+    runWithoutDocker: options.runWithoutDocker
 });
 
 // before here we actually load the host and we have the config imported elsewhere
