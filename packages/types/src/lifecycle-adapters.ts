@@ -1,7 +1,7 @@
 import { MonitoringMessageData } from "./messages";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
-import { RunnerConfig } from "./runner-config";
+import { InstanceConifg } from ".";
 
 export type LifeCycleConfig = {
     makeSnapshotOnError: boolean;
@@ -28,10 +28,10 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     /**
       * Starts Runner.
       *
-      * @param {RunnerConfig} Runner configuration.
+      * @param {InstanceConifg} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    run(config: RunnerConfig): Promise<ExitCode>;
+    run(config: InstanceConifg): Promise<ExitCode>;
 
     /**
      * Request snapshot and returns snapshot url.\

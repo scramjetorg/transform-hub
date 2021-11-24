@@ -14,7 +14,8 @@ import {
     PassThroughStreamsConfig,
     ReadableStream,
     ISequenceInfo,
-    WritableStream
+    WritableStream,
+    InstanceConifg
 } from "@scramjet/types";
 import {
     AppError,
@@ -251,14 +252,14 @@ export class CSIController extends EventEmitter {
     }
 
     async sendConfig() {
-        const sequenceConfig = {
+        const instanceConfig: InstanceConifg = {
             ...this.sequence.getConfig(),
             instanceAdapterExitDelay: this.config.instanceAdapterExitDelay
         };
 
         const configMsg: InstanceConfigMessage = {
             msgCode: SupervisorMessageCode.CONFIG,
-            config: sequenceConfig
+            config: instanceConfig
         };
 
         await this.controlDataStream?.whenWrote(

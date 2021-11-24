@@ -1,10 +1,10 @@
 import { ILifeCycleAdapterMain } from ".";
-import { RunnerConfig } from "./runner-config";
+import { SequenceConfig } from "./runner-config";
 import { Readable } from "stream";
 
 export interface ISequenceInfo {
     getId(): string;
-    getConfig(): RunnerConfig;
+    getConfig(): SequenceConfig;
     addInstance(id: string): void;
     removeInstance(id: string): void;
     hasInstances(): boolean;

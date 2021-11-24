@@ -1,15 +1,15 @@
-import { ISequenceInfo, RunnerConfig } from "@scramjet/types";
+import { ISequenceInfo, SequenceConfig } from "@scramjet/types";
 
 export class SequenceInfo implements ISequenceInfo {
     private instancesSet = new Set<string>();
 
-    constructor(private readonly config: RunnerConfig) {}
+    constructor(private readonly config: SequenceConfig) {}
 
     getId(): string {
         return this.config.id;
     }
     
-    getConfig(): RunnerConfig {
+    getConfig(): SequenceConfig {
         return this.config;
     }
 
