@@ -4,7 +4,7 @@
 import { ConfigService } from "@scramjet/sth-config";
 import { DelayedStream } from "@scramjet/model";
 import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, DockerSequenceAdapter } from "@scramjet/adapters";
-import { InstanceConifg, STHConfiguration } from "@scramjet/types";
+import { SequenceConfig } from "@scramjet/types";
 import test, { skip } from "ava";
 import * as fs from "fs";
 import * as fsPromises from "fs/promises";
@@ -12,25 +12,25 @@ import * as sinon from "sinon";
 import { PassThrough } from "stream";
 
 const sandbox = sinon.createSandbox();
-const configFileContents: STHConfiguration["docker"] = {
-    runner: {
-        image: "runner-example-image",
-        maxMem: 512,
-        exposePortsRange: [30000, 40000],
-        hostIp: "0.0.0.0"
-    },
-    prerunner: {
-        image: "pre-runner-example-image",
-        maxMem: 16
-    }
-};
 
-const configService = new ConfigService();
+const configService = new ConfigService({
+    docker: {
+        runner: {
+            image: "runner-example-image",
+            maxMem: 512,
+            exposePortsRange: [30000, 40000],
+            hostIp: "0.0.0.0"
+        },
+        prerunner: {
+            image: "pre-runner-example-image",
+            maxMem: 16
+        }
+    }
+});
 
 sinon.stub(fsPromises, "chmod").resolves();
 sinon.stub(fs, "createWriteStream");
 
-const configStub = sinon.stub(configService, "getDockerConfig").returns(configFileContents);
 const createReadStreamStub = sinon.stub(fs, "createReadStream");
 const mkdtempStub = sinon.stub(fsPromises, "mkdtemp").resolves();
 const dockerHelperMock = {
@@ -54,8 +54,6 @@ test("Constructor should create instance.", async (t: any) => {
 // TODO: Config is provided by PreRunner. No need to get it from global config.
 
 skip("Init should call imageConfig and set results locally.", async () => {
-    configStub.resolves(configFileContents);
-
     const lcdai = new LifecycleDockerAdapterInstance();
 
     await lcdai.init();
@@ -63,18 +61,7 @@ skip("Init should call imageConfig and set results locally.", async () => {
     // t.deepEqual(lcdai["imageConfig"], configFileContents);
 });
 
-// TODO: Useless till config is not provided with "require"
-skip("Init should reject on read file error.", async (t) => {
-    configStub.rejects(new Error("ENOENT: File not found"));
-
-    const lcdai = new LifecycleDockerAdapterInstance();
-
-    await t.throwsAsync(lcdai.init());
-});
-
 test("CreateFifoStreams should create monitor, control logger, input and output streams.", async (t) => {
-    configStub.resolves();
-
     const lcda = new LifecycleDockerAdapterInstance();
 
     lcda["monitorFifoPath"] = "mfp";
@@ -110,7 +97,7 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
 });
 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
-    const config: InstanceConifg = {
+    const config: SequenceConfig = {
         name: "abc",
         container: { image: "image", maxMem: 2, exposePortsRange: [30000, 40000], hostIp: "0.0.0.0" },
         version: "",
@@ -118,7 +105,6 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
             [""]: ""
         },
         sequencePath: "sequence.js",
-        instanceAdapterExitDelay: 0,
         id: "abc-123",
         type: "docker"
     };
@@ -131,8 +117,6 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
     createReadStreamStub.returns({
         pipe: () => {}
     } as unknown as fs.ReadStream);
-
-    configStub.resolves(configFileContents);
 
     dockerHelperMock.wait.resolves({
         statusCode: 0
@@ -192,12 +176,13 @@ test("Identify should return parsed response from stream.", async (t) => {
     });
 
     const lcdas = new DockerSequenceAdapter(configService.getDockerConfig());
+
+    sinon.stub(lcdas, "fetch").resolves();
+
     const res = lcdas.identify(streams.stdin, "abc-123");
 
     streams.stdout.push(JSON.stringify(preRunnerResponse), "utf-8");
     streams.stdout.end();
-
-    configStub.returns(configFileContents);
 
     await res;
 
@@ -205,16 +190,15 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
-    const expectedResponse: InstanceConifg = {
+    const expectedResponse: SequenceConfig = {
         type: "docker",
         config: {},
         name: preRunnerResponse.name,
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,
         id: createdVolumeId,
-        container: configFileContents.runner,
+        container: configService.getDockerConfig().runner,
         sequencePath: preRunnerResponse.main,
-        instanceAdapterExitDelay: 0
     };
 
     t.deepEqual(identifyResponse, expectedResponse);
