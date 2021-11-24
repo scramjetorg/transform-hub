@@ -14,11 +14,11 @@ export async function startHost(
     apiServerConfig: ServerConfig,
     sthConfig: STHConfiguration,
     hostOptions: HostOptions
-) {
+): Promise<Host> {
     const apiServer = createServer(apiServerConfig);
     const tcpServer = new SocketServer(sthConfig.host.socketPath);
     const host = new Host(apiServer, tcpServer, sthConfig);
 
-    await host.main(hostOptions);
+    return host.main(hostOptions);
 }
 
