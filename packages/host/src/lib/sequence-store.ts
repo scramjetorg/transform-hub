@@ -60,10 +60,9 @@ export class SequenceStore implements ISequenceStore {
             };
         }
 
-
         try {
-            await sequence.remove()
-            await sequence.cleanup()
+            await sequence.remove();
+            await sequence.cleanup();
 
             delete this.sequences[sequenceId];
 

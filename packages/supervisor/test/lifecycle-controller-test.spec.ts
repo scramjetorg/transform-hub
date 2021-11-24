@@ -1,7 +1,7 @@
 /* eslint-disable */
 import test from "ava";
 import * as sinon from "sinon";
-import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, RunnerConfig } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, ILifeCycleAdapter, InstanceConifg } from "@scramjet/types";
 import { PassThrough } from "stream";
 import { DataStream } from "scramjet";
 
@@ -79,7 +79,7 @@ test("LCC main method should call sub methods", async (t) => {
 
     lcc["communicationHandler"] = streamHandlerInstance;
 
-    const config = { container: { image: "example-image" }} as RunnerConfig;
+    const config = { container: { image: "example-image" }} as InstanceConifg;
 
     sinon.stub(lcc, "configMessageReceived").resolves(config);
 

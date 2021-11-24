@@ -8,7 +8,7 @@ export class SequenceInfo implements ISequenceInfo {
     getId(): string {
         return this.config.id;
     }
-    
+
     getConfig(): SequenceConfig {
         return this.config;
     }
@@ -26,6 +26,6 @@ export class SequenceInfo implements ISequenceInfo {
     }
 
     get instances(): readonly string[] {
-        return [...this.instancesSet.values()]
+        return [...this.instancesSet.values()];
     }
 }

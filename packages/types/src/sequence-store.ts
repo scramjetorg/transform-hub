@@ -15,7 +15,6 @@ import { ISequenceAdapter } from "./sequence-adapter";
  *
  */
 
-
 export interface ISequenceStore {
     getSequences(): ISequenceAdapter[];
     getById(id: string): ISequenceAdapter | null;

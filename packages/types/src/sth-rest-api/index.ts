@@ -6,4 +6,4 @@ export * from "./get-sequences";
 export * from "./get-instances";
 export * from "./start-sequence";
 
-export * from './data-transfer-objects'
+export * from "./data-transfer-objects";
