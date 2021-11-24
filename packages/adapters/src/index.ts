@@ -1,4 +1,6 @@
 export * from "./dockerode-docker-helper";
+export * from "./docker-instance-adapter";
+export * from "./docker-sequence-adapter";
 export * from "./types";
 export * from "./utils";
 
