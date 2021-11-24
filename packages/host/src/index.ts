@@ -1,2 +1,2 @@
 export { startHost } from "./lib/start-host";
-export { HostOptions } from "./lib/host";
+export { Host, HostOptions } from "./lib/host";

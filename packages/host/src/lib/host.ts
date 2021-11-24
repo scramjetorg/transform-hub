@@ -4,7 +4,7 @@ import { APIExpose, AppConfig, IComponent, Logger, NextCallback, ParsedMessage, 
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
-import { InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { access, unlink } from "fs/promises";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 
@@ -87,7 +87,7 @@ export class Host implements IComponent {
         }
     }
 
-    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}) {
+    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<Host> {
         addLoggerOutput(process.stdout);
         addLoggerOutput(this.commonLogsPipe.getIn());
 
@@ -128,6 +128,8 @@ export class Host implements IComponent {
         if (this.cpmConnector) {
             this.connectToCPM();
         }
+
+        return this;
     }
 
     connectToCPM() {
@@ -481,5 +483,37 @@ export class Host implements IComponent {
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
         // @TODO this should probably return error response when there's not corresponding Sequence
         return this.sequencesStore.getById(sequenceId)?.instances;
+    }
+
+    async stop() {
+        this.logger.log("Stopping instances...");
+
+        await Promise.all(
+            Object.values(this.instancesStore)
+                .map((csiController) =>
+                    csiController.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {}))
+        );
+
+        this.logger.log("Instances stopped.");
+    }
+
+    async cleanup() {
+        this.logger.log("Cleaning up...");
+
+        this.instancesStore = {};
+        this.sequencesStore = new SequenceStore();
+
+        this.logger.log("Stopping API server...");
+
+        await new Promise<void>((res, _rej) => {
+            this.api.server
+                .once("close", () => {
+                    this.logger.log("API server stopped.");
+                    res();
+                })
+                .close();
+        });
+
+        this.logger.log("Cleanup done.");
     }
 }
