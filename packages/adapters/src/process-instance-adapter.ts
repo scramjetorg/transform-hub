@@ -19,7 +19,7 @@ import { tmpdir } from "os";
 import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
 import * as path from "path";
-import { getSequenceDir } from "./proces-sequence-adapter";
+import { getSequenceDir } from "./process-sequence-adapter";
 
 class LifecycleProcessAdapterInstance implements
 ILifeCycleAdapterMain,
@@ -79,7 +79,6 @@ IComponent {
             });
         });
     }
-    // eslint-disable-next-line valid-jsdoc
     private async createFifoStreams(
         controlFifo: string,
         monitorFifo: string,
@@ -146,8 +145,6 @@ IComponent {
         communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);
     }
 
-
-    // eslint-disable-next-line complexity
     async run(config: SequenceConfig): Promise<ExitCode> {
         if(config.type !== 'process') {
             throw new Error('Process instance adapter run with invalid runner config')

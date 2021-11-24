@@ -82,7 +82,6 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
             .map((info) => new ProcessSequenceAdapter(info))
     }
 
-
     async identify(stream: Readable, id: string): Promise<void> {
         const sequenceDir = getSequenceDir(id)
         await mkdir(sequenceDir)
