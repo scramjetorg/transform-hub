@@ -3,7 +3,7 @@ import { SupervisorError } from "@scramjet/model";
 import {
     ISequenceAdapter,
     Logger,
-    RunnerConfig,
+    SequenceConfig,
     PreRunnerContainerConfiguration,
     STHConfiguration,
     isValidSequencePackageJSON,
@@ -13,7 +13,7 @@ import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { DockerRunnerConfig } from "@scramjet/types";
+import { DockerSequenceConfig } from "@scramjet/types";
 import { SequenceInfo } from "./sequence-info";
 
 class DockerSequenceAdapter implements ISequenceAdapter {
@@ -78,7 +78,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             .map((info) => new DockerSequenceAdapter(this.containersConfiguration, info))
     }
 
-    private async identifyOnly(volume: string): Promise<RunnerConfig | undefined> {
+    private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
 
         try {
@@ -159,7 +159,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         }
     }
 
-    private async parsePackage(streams: DockerAdapterStreams, wait: Function, volumeId: DockerVolume): Promise<DockerRunnerConfig> {
+    private async parsePackage(streams: DockerAdapterStreams, wait: Function, volumeId: DockerVolume): Promise<DockerSequenceConfig> {
         const [packageJson] = await Promise.all([
             readStreamedJSON(streams.stdout as Readable),
             wait
@@ -181,7 +181,6 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             config,
             sequencePath: packageJson.main,
             id: volumeId,
-            instanceAdapterExitDelay: 0
         };
     }
 

@@ -1,7 +1,7 @@
 import { getLogger } from "@scramjet/logger";
 import {
     Logger,
-    ProcessRunnerConfig,
+    ProcessSequenceConfig,
     ISequenceAdapter,
     ISequenceInfo,
 } from "@scramjet/types";
@@ -17,7 +17,7 @@ import { SequenceInfo } from "./sequence-info";
 const HOME_DIR = require('os').homedir();
 const SEQUENCES_DIR = path.join(HOME_DIR, '.scramjet_sequences')
 
-async function getRunnerConfigForStoredSequence(id: string): Promise<ProcessRunnerConfig> {
+async function getRunnerConfigForStoredSequence(id: string): Promise<ProcessSequenceConfig> {
     const packageJsonPath = path.join(SEQUENCES_DIR, id, 'package.json')
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath))
 
@@ -30,7 +30,7 @@ async function getRunnerConfigForStoredSequence(id: string): Promise<ProcessRunn
         sequencePath: packageJson.main,
         version: packageJson.version ?? '',
         name: packageJson.name ?? '',
-        id   
+        id
     }
 }
 
