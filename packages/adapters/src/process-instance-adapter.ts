@@ -1,4 +1,3 @@
-import { configService } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
 import { DelayedStream, SupervisorError } from "@scramjet/model";
 import {
@@ -11,7 +10,7 @@ import {
     Logger,
     MaybePromise,
     MonitoringMessageData,
-    RunnerConfig,
+    SequenceConfig,
 } from "@scramjet/types";
 import { ChildProcess, exec, spawn } from "child_process";
 import { createReadStream, createWriteStream } from "fs";
@@ -19,7 +18,6 @@ import { chmod, mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
-import { defer } from "@scramjet/utility";
 import * as path from "path";
 import { getSequenceDir } from "./proces-sequence-adapter";
 
@@ -61,7 +59,7 @@ IComponent {
     }
 
     async init(): Promise<void> {
-        // TODO: useless. config provided from sequence identify.
+        // noop
     }
 
     private async createFifo(dir: string, fifoName: string): Promise<string> {
@@ -150,7 +148,7 @@ IComponent {
 
 
     // eslint-disable-next-line complexity
-    async run(config: RunnerConfig): Promise<ExitCode> {
+    async run(config: SequenceConfig): Promise<ExitCode> {
         if(config.type !== 'process') {
             throw new Error('Process instance adapter run with invalid runner config')
         }
@@ -218,8 +216,6 @@ IComponent {
         );
 
         this.logger.log("Process exited.");
-
-        await defer(configService.getConfig().instanceAdapterExitDelay);
 
         if (statusCode === null) {
             throw new Error(`Runner was killed by a signal ${signal}, and didn't return a status code`);

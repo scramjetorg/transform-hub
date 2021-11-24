@@ -13,7 +13,7 @@ import {
     Logger,
     MaybePromise,
     MonitoringMessageData,
-    RunnerConfig,
+    SequenceConfig,
     RunnerContainerConfiguration
 } from "@scramjet/types";
 import { exec } from "child_process";
@@ -210,7 +210,7 @@ IComponent {
         });
     }
 
-    async run(config: RunnerConfig): Promise<ExitCode> {
+    async run(config: SequenceConfig): Promise<ExitCode> {
         if(config.type !== 'docker') {
             throw new Error('Docker instance adapter run with invalid runner config')
         }

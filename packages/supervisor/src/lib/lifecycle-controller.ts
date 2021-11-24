@@ -1,7 +1,7 @@
 import { getLogger } from "@scramjet/logger";
 import { CommunicationHandler, SupervisorError } from "@scramjet/model";
 import { RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
-import { ICSHClient, ICommunicationHandler, LifeCycleConfig, IComponent, Logger, EncodedMessage, ILifeCycleAdapterRun, RunnerConfig } from "@scramjet/types";
+import { ICSHClient, ICommunicationHandler, LifeCycleConfig, IComponent, Logger, EncodedMessage, ILifeCycleAdapterRun, InstanceConifg } from "@scramjet/types";
 import { defer, promiseTimeout } from "@scramjet/utility";
 
 const stopTimeout = 7000; // where to config this?
@@ -145,7 +145,7 @@ class LifeCycleController implements IComponent {
             /**
              * Waiting for Runner configuration.
              */
-            const config: RunnerConfig = await this.configMessageReceived();
+            const config = await this.configMessageReceived();
 
             this.logger.log("Received Runner configuration:", config);
 
@@ -248,7 +248,7 @@ class LifeCycleController implements IComponent {
         this.scheduleExit(undefined, 50);
     }
 
-    async configMessageReceived(): Promise<RunnerConfig> {
+    async configMessageReceived(): Promise<InstanceConifg> {
         return new Promise(resolve => {
             this.communicationHandler.addControlHandler(
                 SupervisorMessageCode.CONFIG,

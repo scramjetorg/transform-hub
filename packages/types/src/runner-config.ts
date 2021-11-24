@@ -2,15 +2,14 @@
 
 import { RunnerContainerConfiguration } from "./sth-configuration";
 
-type CommonRunnerConfig = {
+type CommonSequenceConfig = {
     id: string;
     sequencePath: string;
     name: string;
     version: string;
-    instanceAdapterExitDelay: number
 }
 
-export type DockerRunnerConfig = CommonRunnerConfig & {
+export type DockerSequenceConfig = CommonSequenceConfig & {
     type: 'docker',
     container: RunnerContainerConfiguration;
     engines: {
@@ -22,8 +21,10 @@ export type DockerRunnerConfig = CommonRunnerConfig & {
     };
 };
 
-export type ProcessRunnerConfig = CommonRunnerConfig & {
+export type ProcessSequenceConfig = CommonSequenceConfig & {
     type: 'process',
 }
 
-export type RunnerConfig = DockerRunnerConfig | ProcessRunnerConfig
+export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig
+
+export type InstanceConifg = SequenceConfig & { instanceAdapterExitDelay: number }
