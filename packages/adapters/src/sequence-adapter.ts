@@ -8,12 +8,11 @@ import {
     STHConfiguration,
     isValidSequencePackageJSON,
     ISequenceInfo
-} from "@scramjet/types";
+    , DockerSequenceConfig } from "@scramjet/types";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { DockerSequenceConfig } from "@scramjet/types";
 import { SequenceInfo } from "./sequence-info";
 
 class DockerSequenceAdapter implements ISequenceAdapter {
@@ -33,8 +32,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         this.containersConfiguration = config;
         this.prerunnerConfig = config.prerunner;
 
-        if(info && info.getConfig().type !== 'docker') {
-            throw new Error('Invalid info config for DockerSequenceAdapter')
+        if (info && info.getConfig().type !== "docker") {
+            throw new Error("Invalid info config for DockerSequenceAdapter");
         }
         this.computedInfo = info ?? null;
 
@@ -42,13 +41,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         this.logger = getLogger(this);
     }
 
-
     public get info(): ISequenceInfo {
-        if(!this.computedInfo) {
-            throw new Error('Sequence not identified yet');
+        if (!this.computedInfo) {
+            throw new Error("Sequence not identified yet");
         }
 
-        return this.computedInfo
+        return this.computedInfo;
     }
 
     async init(): Promise<void> {
@@ -70,12 +68,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             potentialVolumes
                 .map((volume) => this.identifyOnly(volume))
                 .map((configPromised) => configPromised.catch(() => null))
-        )
+        );
 
-        return configs  
+        return configs
             .filter(isDefined)
             .map((config) => new SequenceInfo(config))
-            .map((info) => new DockerSequenceAdapter(this.containersConfiguration, info))
+            .map((info) => new DockerSequenceAdapter(this.containersConfiguration, info));
     }
 
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
@@ -143,9 +141,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             this.resources.containerId = undefined;
 
-            await this.fetch(runnerConfig.container.image)
+            await this.fetch(runnerConfig.container.image);
 
-            this.computedInfo = new SequenceInfo(runnerConfig)
+            this.computedInfo = new SequenceInfo(runnerConfig);
         } catch {
             throw new SupervisorError("PRERUNNER_ERROR", "Unable to parse data from pre-runner");
         }
@@ -159,21 +157,25 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         }
     }
 
-    private async parsePackage(streams: DockerAdapterStreams, wait: Function, volumeId: DockerVolume): Promise<DockerSequenceConfig> {
+    private async parsePackage(
+        streams: DockerAdapterStreams,
+        wait: Function,
+        volumeId: DockerVolume
+    ): Promise<DockerSequenceConfig> {
         const [packageJson] = await Promise.all([
             readStreamedJSON(streams.stdout as Readable),
             wait
         ]);
-   
-        if(!isValidSequencePackageJSON(packageJson)) {
-            throw new Error('Invalid Scramjet sequence package.json')
+
+        if (!isValidSequencePackageJSON(packageJson)) {
+            throw new Error("Invalid Scramjet sequence package.json");
         }
 
         const engines = packageJson.engines ? { ...packageJson.engines } : {};
         const config = packageJson.scramjet?.config ? { ...packageJson.scramjet.config } : {};
 
         return {
-            type: 'docker',
+            type: "docker",
             container: this.containersConfiguration.runner,
             name: packageJson.name || "",
             version: packageJson.version || "",

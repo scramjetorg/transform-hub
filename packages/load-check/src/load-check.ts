@@ -64,6 +64,7 @@ export class LoadCheck implements IComponent {
     }
 
     async getLoadCheckStream(): Promise<any> {
+        // eslint-disable-next-line consistent-this
         const loadCheckInstance = this;
 
         return DataStream.from(

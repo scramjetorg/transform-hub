@@ -10,19 +10,19 @@ type CommonSequenceConfig = {
 }
 
 export type DockerSequenceConfig = CommonSequenceConfig & {
-    type: 'docker',
+    type: "docker",
     container: RunnerContainerConfiguration;
     engines: {
         [key: string]: string;
     };
     config?: {
         image?: string,
-        ports?: `${number}/${'tcp' | 'udp'}`[]
+        ports?: `${number}/${"tcp" | "udp"}`[]
     };
 };
 
 export type ProcessSequenceConfig = CommonSequenceConfig & {
-    type: 'process',
+    type: "process",
 }
 
 export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig

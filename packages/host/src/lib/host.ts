@@ -24,6 +24,14 @@ import { LoadCheck } from "@scramjet/load-check";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
 
+function createSequenceDTO(sequence: ISequenceInfo): STHRestAPI.SequenceDTO {
+    return {
+        instances: sequence.instances,
+        id: sequence.getId(),
+        config: sequence.getConfig()
+    };
+}
+
 export type HostOptions = Partial<{
     identifyExisting: boolean
 }>;
@@ -272,6 +280,7 @@ export class Host implements IComponent {
 
         try {
             const sequence = new ProcessSequenceAdapter();
+
             await sequence.init();
             await sequence.identify(stream, id);
 
@@ -341,7 +350,11 @@ export class Host implements IComponent {
         }
     }
 
-    async startCSIController(sequence: ISequenceAdapter, appConfig: AppConfig, sequenceArgs?: any[]): Promise<CSIController> {
+    async startCSIController(
+        sequence: ISequenceAdapter,
+        appConfig: AppConfig,
+        sequenceArgs?: any[]
+    ): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
         const csic = new CSIController(
@@ -438,15 +451,14 @@ export class Host implements IComponent {
         }));
     }
 
-
     getSequence(id: string): STHRestAPI.GetSequenceResponse {
         if (!this.sequencesStore.getById(id)) {
             throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
         }
 
-        const sequence = this.sequencesStore.getById(id)
+        const sequence = this.sequencesStore.getById(id);
 
-        if(!sequence) {
+        if (!sequence) {
             return undefined;
         }
 
@@ -493,13 +505,5 @@ export class Host implements IComponent {
         });
 
         this.logger.log("Cleanup done.");
-    }
-}
-
-function createSequenceDTO(sequence: ISequenceInfo): STHRestAPI.SequenceDTO {
-    return {
-        instances: sequence.instances,
-        id: sequence.getId(),
-        config: sequence.getConfig()
     }
 }

@@ -1,7 +1,7 @@
 import { MonitoringMessageData } from "./messages";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
-import { InstanceConifg } from ".";
+import { InstanceConifg } from "./runner-config";
 
 export type LifeCycleConfig = {
     makeSnapshotOnError: boolean;

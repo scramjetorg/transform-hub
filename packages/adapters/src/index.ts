@@ -5,4 +5,4 @@ export * from "./types";
 export * from "./utils";
 
 export * from "./process-instance-adapter";
-export * from './process-sequence-adapter'
+export * from "./process-sequence-adapter";

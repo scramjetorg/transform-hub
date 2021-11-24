@@ -1,4 +1,4 @@
-import { ILifeCycleAdapterMain } from ".";
+import { ILifeCycleAdapterMain } from "./lifecycle-adapters";
 import { SequenceConfig } from "./runner-config";
 import { Readable } from "stream";
 
@@ -10,7 +10,6 @@ export interface ISequenceInfo {
     hasInstances(): boolean;
     instances: readonly string[];
 }
-
 
 export interface ISequenceAdapter extends ILifeCycleAdapterMain {
     info: ISequenceInfo;
