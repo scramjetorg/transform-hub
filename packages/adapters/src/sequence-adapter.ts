@@ -1,40 +1,54 @@
 import { getLogger } from "@scramjet/logger";
 import { SupervisorError } from "@scramjet/model";
 import {
-    IComponent,
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterIdentify,
+    ISequenceAdapter,
     Logger,
     RunnerConfig,
     PreRunnerContainerConfiguration,
-    STHConfiguration
+    STHConfiguration,
+    isValidSequencePackageJSON,
+    ISequenceInfo
 } from "@scramjet/types";
-import { rm } from "fs/promises";
-import { StringDecoder } from "string_decoder";
-import { DataStream } from "scramjet";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
-import { defer } from "@scramjet/utility";
+import { isDefined, readStreamedJSON } from "@scramjet/utility";
+import { DockerRunnerConfig } from "@scramjet/types";
+import { SequenceInfo } from "./sequence-info";
 
-class LifecycleDockerAdapterSequence implements
-    ILifeCycleAdapterMain,
-    ILifeCycleAdapterIdentify,
-    IComponent {
-    private containersConfiguration: STHConfiguration["docker"];
+class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
 
     private prerunnerConfig?: PreRunnerContainerConfiguration;
 
     private resources: DockerAdapterResources = {};
 
-    logger: Logger;
+    private containersConfiguration: STHConfiguration["docker"];
 
-    constructor(config: STHConfiguration["docker"]) {
+    private logger: Logger;
+
+    private computedInfo: ISequenceInfo | null = null
+
+    constructor(config: STHConfiguration["docker"], info?: ISequenceInfo) {
         this.containersConfiguration = config;
         this.prerunnerConfig = config.prerunner;
+
+        if(info && info.getConfig().type !== 'docker') {
+            throw new Error('Invalid info config for DockerSequenceAdapter')
+        }
+        this.computedInfo = info ?? null;
+
         this.dockerHelper = new DockerodeDockerHelper();
         this.logger = getLogger(this);
+    }
+
+
+    public get info(): ISequenceInfo {
+        if(!this.computedInfo) {
+            throw new Error('Sequence not identified yet');
+        }
+
+        return this.computedInfo
     }
 
     async init(): Promise<void> {
@@ -49,17 +63,22 @@ class LifecycleDockerAdapterSequence implements
         await this.dockerHelper.pullImage(name, true);
     }
 
-    async list(): Promise<RunnerConfig[]> {
+    async list(): Promise<DockerSequenceAdapter[]> {
         const potentialVolumes = await this.dockerHelper.listVolumes();
 
-        return DataStream.from(potentialVolumes)
-            .setOptions({ maxParallel: 8 }) // config?
-            .map(volumeName => this.identifyOnly(volumeName))
-            .catch(() => undefined)
-            .toArray();
+        const configs = await Promise.all(
+            potentialVolumes
+                .map((volume) => this.identifyOnly(volume))
+                .map((configPromised) => configPromised.catch(() => null))
+        )
+
+        return configs  
+            .filter(isDefined)
+            .map((config) => new SequenceInfo(config))
+            .map((info) => new DockerSequenceAdapter(this.containersConfiguration, info))
     }
 
-    async identifyOnly(volume: string): Promise<RunnerConfig | undefined> {
+    private async identifyOnly(volume: string): Promise<RunnerConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
 
         try {
@@ -77,7 +96,7 @@ class LifecycleDockerAdapterSequence implements
 
             const ret = await this.parsePackage(streams, wait, volume);
 
-            if (!ret.packageVolumeId) {
+            if (!ret.id) {
                 return undefined;
             }
 
@@ -90,21 +109,7 @@ class LifecycleDockerAdapterSequence implements
         }
     }
 
-    private async readStreamedJSON(readable: Readable): Promise<any> {
-        const decoder = new StringDecoder("utf-8");
-
-        let out = "";
-
-        for await (const chunk of readable) {
-            out += decoder.write(chunk);
-        }
-
-        out += decoder.end();
-
-        return JSON.parse(out);
-    }
-
-    async identify(stream: Readable, id: string): Promise<RunnerConfig> {
+    async identify(stream: Readable, id: string): Promise<void> {
         const volumeId = await this.createVolume(id);
 
         this.resources.volumeId = volumeId;
@@ -128,11 +133,19 @@ class LifecycleDockerAdapterSequence implements
         }
 
         try {
-            const { streams, wait } = runResult;
+            const { streams, wait, containerId } = runResult;
+
+            this.resources.containerId = containerId;
 
             stream.pipe(streams.stdin);
 
-            return await this.parsePackage(streams, wait, volumeId);
+            const runnerConfig = await this.parsePackage(streams, wait, volumeId);
+
+            this.resources.containerId = undefined;
+
+            await this.fetch(runnerConfig.container.image)
+
+            this.computedInfo = new SequenceInfo(runnerConfig)
         } catch {
             throw new SupervisorError("PRERUNNER_ERROR", "Unable to parse data from pre-runner");
         }
@@ -146,49 +159,38 @@ class LifecycleDockerAdapterSequence implements
         }
     }
 
-    private async parsePackage(streams: DockerAdapterStreams, wait: Function, volumeId: DockerVolume) {
-        const [res] = await Promise.all([
-            this.readStreamedJSON(streams.stdout as Readable),
+    private async parsePackage(streams: DockerAdapterStreams, wait: Function, volumeId: DockerVolume): Promise<DockerRunnerConfig> {
+        const [packageJson] = await Promise.all([
+            readStreamedJSON(streams.stdout as Readable),
             wait
         ]);
-        const engines = res.engines ? { ...res.engines } : {};
-        const config = res.config ? { ...res.config } : {};
-
-        if (res.error) {
-            await this.cleanup();
-            return res;
+   
+        if(!isValidSequencePackageJSON(packageJson)) {
+            throw new Error('Invalid Scramjet sequence package.json')
         }
 
+        const engines = packageJson.engines ? { ...packageJson.engines } : {};
+        const config = packageJson.scramjet?.config ? { ...packageJson.scramjet.config } : {};
+
         return {
+            type: 'docker',
             container: this.containersConfiguration.runner,
-            name: res.name || "",
-            version: res.version || "",
+            name: packageJson.name || "",
+            version: packageJson.version || "",
             engines,
             config,
-            sequencePath: res.main,
-            packageVolumeId: volumeId
+            sequencePath: packageJson.main,
+            id: volumeId,
+            instanceAdapterExitDelay: 0
         };
     }
 
     async cleanup(): Promise<void> {
-        if (this.resources.volumeId) {
-            this.logger.log("Volume will be removed in 1 sec...");
+        await this.dockerHelper.removeVolume(this.info.getId());
 
-            await defer(1000);
-            await this.dockerHelper.removeVolume(this.resources.volumeId);
-
-            this.logger.log("Volume removed.");
-        }
-
-        if (this.resources.fifosDir) {
-            await rm(this.resources.fifosDir, { recursive: true });
-
-            this.logger.log("Fifo folder removed.");
-        }
+        this.logger.debug("Volume removed.");
     }
 
-    // @ts-ignore
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async remove() {
         if (this.resources.containerId) {
             this.logger.info("Forcefully stopping containter", this.resources.containerId);
@@ -200,4 +202,4 @@ class LifecycleDockerAdapterSequence implements
     }
 }
 
-export { LifecycleDockerAdapterSequence };
+export { DockerSequenceAdapter };

@@ -27,3 +27,6 @@ export * from "./network-info";
 export * from "./instance-store";
 
 export { STHRestAPI };
+export * from './sequence-package-json'
+
+export * from './sequence-adapter'

@@ -145,7 +145,7 @@ IComponent {
         throw new SupervisorError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
     }
 
-    async getPortsConfig(
+    private async getPortsConfig(
         ports: string[], containerConfig: RunnerContainerConfiguration
     ): Promise<DockerAdapterRunPortsConfig> {
         const [ExposedPorts, PortBindings] = await Promise.all([
@@ -210,8 +210,11 @@ IComponent {
         });
     }
 
-    // eslint-disable-next-line complexity
     async run(config: RunnerConfig): Promise<ExitCode> {
+        if(config.type !== 'docker') {
+            throw new Error('Docker instance adapter run with invalid runner config')
+        }
+
         [
             this.resources.fifosDir,
             this.resources.ports
@@ -262,10 +265,10 @@ IComponent {
         this.logger.log("Starting Runner...", config.container);
 
         const { streams, containerId } = await this.dockerHelper.run({
-            imageName: config.container.image || "",
+            imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
-                { mountPoint: "/package", volume: config.packageVolumeId || "" }
+                { mountPoint: "/package", volume: config.id }
             ],
             labels: {
                 "scramjet.sequence.name": config.name
@@ -275,7 +278,7 @@ IComponent {
             ],
             ports: this.resources.ports,
             publishAllPorts: true,
-            envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${config.sequencePath}`],
+            envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=/package/${config.sequencePath}`],
             autoRemove: true,
             maxMem: config.container.maxMem
         });

@@ -2,16 +2,28 @@
 
 import { RunnerContainerConfiguration } from "./sth-configuration";
 
-export type RunnerConfig = {
+type CommonRunnerConfig = {
+    id: string;
+    sequencePath: string;
     name: string;
-    container: RunnerContainerConfiguration;
     version: string;
+    instanceAdapterExitDelay: number
+}
+
+export type DockerRunnerConfig = CommonRunnerConfig & {
+    type: 'docker',
+    container: RunnerContainerConfiguration;
     engines: {
         [key: string]: string;
     };
-    config?: any;
-    sequencePath: string;
-    packageVolumeId: string;
-    error?: string;
-    instanceAdapterExitDelay: number
+    config?: {
+        image?: string,
+        ports?: `${number}/${'tcp' | 'udp'}`[]
+    };
 };
+
+export type ProcessRunnerConfig = CommonRunnerConfig & {
+    type: 'process',
+}
+
+export type RunnerConfig = DockerRunnerConfig | ProcessRunnerConfig

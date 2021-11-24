@@ -1,3 +1,3 @@
-import { Sequence } from "../sequence-store";
+import { SequenceDTO } from "./data-transfer-objects";
 
-export type GetSequencesResponse = Sequence[]
+export type GetSequencesResponse = SequenceDTO[]

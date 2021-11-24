@@ -3,7 +3,7 @@
 /* eslint-disable import/no-named-as-default-member, no-extra-parens, dot-notation */
 import { ConfigService } from "@scramjet/sth-config";
 import { DelayedStream } from "@scramjet/model";
-import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, LifecycleDockerAdapterSequence } from "@scramjet/adapters";
+import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, DockerSequenceAdapter } from "@scramjet/adapters";
 import { RunnerConfig, STHConfiguration } from "@scramjet/types";
 import test, { skip } from "ava";
 import * as fs from "fs";
@@ -118,8 +118,9 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
             [""]: ""
         },
         sequencePath: "sequence.js",
-        packageVolumeId: "abc-123",
-        instanceAdapterExitDelay: 0
+        instanceAdapterExitDelay: 0,
+        id: "abc-123",
+        type: 'docker'
     };
     const lcdai = new LifecycleDockerAdapterInstance();
 
@@ -190,26 +191,26 @@ test("Identify should return parsed response from stream.", async (t) => {
         wait
     });
 
-    configStub.returns(configFileContents);
-
-    const lcdas = new LifecycleDockerAdapterSequence(configService.getDockerConfig());
+    const lcdas = new DockerSequenceAdapter(configService.getDockerConfig());
     const res = lcdas.identify(streams.stdin, "abc-123");
 
     streams.stdout.push(JSON.stringify(preRunnerResponse), "utf-8");
     streams.stdout.end();
 
-    const identifyResponse = await res;
+    configStub.returns(configFileContents);
 
-    identifyResponse.instanceAdapterExitDelay = 0;
+    await res;
 
+    const identifyResponse = lcdas.info.getConfig()
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
     const expectedResponse: RunnerConfig = {
+        type: 'docker',
         config: {},
         name: preRunnerResponse.name,
         engines: preRunnerResponse.engines,
         version: preRunnerResponse.version,
-        packageVolumeId: createdVolumeId,
+        id: createdVolumeId,
         container: configFileContents.runner,
         sequencePath: preRunnerResponse.main,
         instanceAdapterExitDelay: 0

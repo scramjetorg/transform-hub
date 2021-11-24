@@ -3,6 +3,7 @@ import {
     AppConfig,
     CSIConfig,
     DownstreamStreamsConfig,
+    EncodedMessage,
     EventMessageData,
     ExitCode,
     HandshakeAcknowledgeMessage,
@@ -12,7 +13,7 @@ import {
     ParsedMessage,
     PassThroughStreamsConfig,
     ReadableStream,
-    Sequence,
+    ISequenceInfo,
     WritableStream
 } from "@scramjet/types";
 import {
@@ -37,7 +38,7 @@ import { resolve as resolvePath } from "path";
 export class CSIController extends EventEmitter {
     config: CSIConfig;
     id: string;
-    sequence: Sequence;
+    sequence: ISequenceInfo;
     appConfig: AppConfig;
     superVisorProcess?: ChildProcess;
     sequenceArgs: Array<any> | undefined;
@@ -68,7 +69,7 @@ export class CSIController extends EventEmitter {
 
     constructor(
         id: string,
-        sequence: Sequence,
+        sequence: ISequenceInfo,
         appConfig: AppConfig,
         sequenceArgs: any[] | undefined,
         communicationHandler: CommunicationHandler,
@@ -203,13 +204,13 @@ export class CSIController extends EventEmitter {
             .JSONStringify()
             .pipe(this.upStreams[CC.CONTROL]);
 
-        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message: any) => {
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PING, async (message) => {
             await this.handleHandshake(message);
 
             return null;
         });
 
-        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message: any) => {
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
             const pangData = message[1];
 
             this.provides ||= pangData.provides;
@@ -223,10 +224,14 @@ export class CSIController extends EventEmitter {
         this.upStreams[CC.MONITORING].resume();
     }
 
-    async handleHandshake(message: any) {
+    async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
         this.logger.log("PING RECEIVED", message);
 
-        Object.assign(this.info, message[1]);
+        if (!message[1].ports) {
+            this.logger.warn("Received a PING message but didn't receive ports config");
+        }
+
+        this.info.ports = message[1].ports;
 
         if (this.controlDataStream) {
             const pongMsg: HandshakeAcknowledgeMessage = {
@@ -247,7 +252,7 @@ export class CSIController extends EventEmitter {
 
     async sendConfig() {
         const sequenceConfig = {
-            ...this.sequence.config,
+            ...this.sequence.getConfig(),
             instanceAdapterExitDelay: this.config.instanceAdapterExitDelay
         };
 
@@ -384,7 +389,7 @@ export class CSIController extends EventEmitter {
 
         return {
             ...this.info,
-            sequenceId: this.sequence.id,
+            sequenceId: this.sequence.getId(),
             appConfig: this.appConfig,
             args: this.sequenceArgs
         };

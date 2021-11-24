@@ -1,4 +1,4 @@
-import { AppConfig, ApplicationFunction, ApplicationInterface, EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, Logger, MaybePromise, MonitoringMessageData, MonitoringRateMessageData, ReadableStream, StopSequenceMessageData, Streamable, SynchronousStreamable, WritableStream } from "@scramjet/types";
+import { AppConfig, ApplicationFunction, ApplicationInterface, EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, Logger, MaybePromise, MonitoringRateMessageData, ReadableStream, StopSequenceMessageData, Streamable, SynchronousStreamable, WritableStream } from "@scramjet/types";
 import { BufferStream, DataStream, StringStream } from "scramjet";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
@@ -262,9 +262,17 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async reportHealth() {
-        const message: MonitoringMessageData = await this.context?.monitor() || { healthy: true };
+        const { context } = this;
 
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, message], this.monitorStream);
+        if (!context) {
+            // Context is not yet defined
+            this.logger.warn("Undefined context while reporting health");
+            return;
+        }
+
+        const { healthy } = await context.monitor();
+
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, { healthy }], this.monitorStream);
     }
 
     async handleKillRequest(): Promise<void> {
@@ -452,7 +460,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
             sendStop: (err?: Error) => {
-                this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { err }]);
+                this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: err }]);
                 this.stopExpected = true;
             },
             sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
