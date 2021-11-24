@@ -183,7 +183,7 @@ IComponent {
             config.sequencePath
         );
 
-        const runnerPath = path.resolve(__dirname, "../../../dist/runner/bin/start-runner.js");
+        const runnerPath = path.resolve(__dirname, "../../dist/runner/bin/start-runner.js");
 
         this.logger.log("Spawning Runner process with command", [
             runnerPath
