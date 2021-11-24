@@ -4,7 +4,7 @@
 import { ConfigService } from "@scramjet/sth-config";
 import { DelayedStream } from "@scramjet/model";
 import { DockerodeDockerHelper, LifecycleDockerAdapterInstance, DockerSequenceAdapter } from "@scramjet/adapters";
-import { RunnerConfig, STHConfiguration } from "@scramjet/types";
+import { InstanceConifg, STHConfiguration } from "@scramjet/types";
 import test, { skip } from "ava";
 import * as fs from "fs";
 import * as fsPromises from "fs/promises";
@@ -110,7 +110,7 @@ test("CreateFifoStreams should create monitor, control logger, input and output 
 });
 
 test("Run should call createFifoStreams with proper parameters.", async (t) => {
-    const config: RunnerConfig = {
+    const config: InstanceConifg = {
         name: "abc",
         container: { image: "image", maxMem: 2, exposePortsRange: [30000, 40000], hostIp: "0.0.0.0" },
         version: "",
@@ -120,7 +120,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         sequencePath: "sequence.js",
         instanceAdapterExitDelay: 0,
         id: "abc-123",
-        type: 'docker'
+        type: "docker"
     };
     const lcdai = new LifecycleDockerAdapterInstance();
 
@@ -201,11 +201,12 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     await res;
 
-    const identifyResponse = lcdas.info.getConfig()
+    const identifyResponse = lcdas.info.getConfig();
+
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
-    const expectedResponse: RunnerConfig = {
-        type: 'docker',
+    const expectedResponse: InstanceConifg = {
+        type: "docker",
         config: {},
         name: preRunnerResponse.name,
         engines: preRunnerResponse.engines,

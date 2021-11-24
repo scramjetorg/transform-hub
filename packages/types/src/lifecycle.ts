@@ -4,7 +4,7 @@ import { Readable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
 import { ExitCode } from "./lifecycle-adapters";
-import { InstanceConifg } from ".";
+import { InstanceConifg } from "./runner-config";
 
 // TODO: Rename. it is not a runner config but response from Pre-runner.
 export interface ILifeCycleAdapter {

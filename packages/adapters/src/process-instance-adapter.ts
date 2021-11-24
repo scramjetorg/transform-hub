@@ -98,13 +98,13 @@ IComponent {
             this.inputFifoPath,
             this.outputFifoPath
         ] = [
-           path.join(createdDir, controlFifo),
-           path.join(createdDir, monitorFifo),
-           path.join(createdDir, loggerFifo),
-           path.join(createdDir, inputFifo),
-           path.join(createdDir, outputFifo)
-        ]
-        
+            path.join(createdDir, controlFifo),
+            path.join(createdDir, monitorFifo),
+            path.join(createdDir, loggerFifo),
+            path.join(createdDir, inputFifo),
+            path.join(createdDir, outputFifo)
+        ];
+
         await Promise.all([
             this.createFifo(createdDir, controlFifo),
             this.createFifo(createdDir, monitorFifo),
@@ -146,8 +146,8 @@ IComponent {
     }
 
     async run(config: SequenceConfig): Promise<ExitCode> {
-        if(config.type !== 'process') {
-            throw new Error('Process instance adapter run with invalid runner config')
+        if (config.type !== "process") {
+            throw new Error("Process instance adapter run with invalid runner config");
         }
 
         this.fifosDir = await this.createFifoStreams(
@@ -181,7 +181,7 @@ IComponent {
         const sequencePath = path.join(
             getSequenceDir(config.id),
             config.sequencePath
-        )
+        );
 
         const runnerPath = path.resolve(__dirname, "../../../dist/runner/bin/start-runner.js");
 

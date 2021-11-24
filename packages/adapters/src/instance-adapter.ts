@@ -210,9 +210,10 @@ IComponent {
         });
     }
 
+    // eslint-disable-next-line complexity
     async run(config: SequenceConfig): Promise<ExitCode> {
-        if(config.type !== 'docker') {
-            throw new Error('Docker instance adapter run with invalid runner config')
+        if (config.type !== "docker") {
+            throw new Error("Docker instance adapter run with invalid runner config");
         }
 
         [

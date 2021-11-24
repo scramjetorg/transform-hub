@@ -1,5 +1,5 @@
 import { SupervisorMessageCode } from "@scramjet/symbols";
-import { InstanceConifg } from "..";
+import { InstanceConifg } from "../runner-config";
 
 export type InstanceConfigMessageData = {
     config: InstanceConifg;

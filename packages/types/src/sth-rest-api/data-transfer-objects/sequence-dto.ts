@@ -1,4 +1,4 @@
-import { SequenceConfig } from "../..";
+import { SequenceConfig } from "../../runner-config";
 
 export type SequenceDTO = {
     instances: readonly string[];
