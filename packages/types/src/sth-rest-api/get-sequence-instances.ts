@@ -1,1 +1,1 @@
-export type GetSequenceInstancesResponse = string[] | undefined;
+export type GetSequenceInstancesResponse = readonly string[] | undefined;

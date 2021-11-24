@@ -1,9 +1,8 @@
 import { DockerodeDockerHelper } from "@scramjet/adapters";
 import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
-import { Sequence, ISequenceStore, STHRestAPI } from "@scramjet/types";
+import { ISequenceAdapter, ISequenceStore, STHRestAPI } from "@scramjet/types";
 import { ReasonPhrases } from "http-status-codes";
-import { InstanceStore } from "./instance-store";
 
 /**
  *
@@ -18,25 +17,23 @@ import { InstanceStore } from "./instance-store";
 export class SequenceStore implements ISequenceStore {
     dockerHelper: DockerodeDockerHelper = new DockerodeDockerHelper();
 
-    instancesStore = InstanceStore;
-
     private logger = getLogger(this);
-    private sequences: Partial<Record<string, Sequence>> = {}
+    private sequences: Partial<Record<string, ISequenceAdapter>> = {}
 
-    getSequences(): Sequence[] {
-        return Object.values(this.sequences) as Sequence[];
+    getSequences(): ISequenceAdapter[] {
+        return Object.values(this.sequences) as ISequenceAdapter[];
     }
 
-    getById(key: string): Sequence | undefined {
-        return this.sequences[key];
+    getById(key: string): ISequenceAdapter | null {
+        return this.sequences[key] ?? null;
     }
 
-    add(sequence: Sequence) {
+    add(sequence: ISequenceAdapter) {
         if (sequence) {
-            this.sequences[sequence.id] = sequence;
+            this.sequences[sequence.info.getId()] = sequence;
         }
 
-        this.logger.info("New sequence added:", sequence.id);
+        this.logger.info("New sequence added:", sequence.info.getId());
     }
 
     async delete(sequenceId: string): Promise<STHRestAPI.DeleteSequenceResponse> {
@@ -54,7 +51,7 @@ export class SequenceStore implements ISequenceStore {
             };
         }
 
-        if (sequence.instances.length) {
+        if (sequence.info.hasInstances()) {
             this.logger.warn("Can't remove sequence in use:", sequenceId);
 
             return {
@@ -63,16 +60,10 @@ export class SequenceStore implements ISequenceStore {
             };
         }
 
-        const volumeId = sequence.config.packageVolumeId;
 
         try {
-            this.logger.log("Removing volume...", volumeId);
-
-            await this.dockerHelper.removeVolume(volumeId).catch(reason => {
-                throw new HostError("CONTROLLER_ERROR", reason);
-            });
-
-            this.logger.log("Volume removed:", volumeId);
+            await sequence.remove()
+            await sequence.cleanup()
 
             delete this.sequences[sequenceId];
 
@@ -86,13 +77,5 @@ export class SequenceStore implements ISequenceStore {
             this.logger.error("Error removing sequence!", error);
             throw new HostError("CONTROLLER_ERROR");
         }
-    }
-
-    close() {
-        return Promise.all(
-            this.getSequences().map(seq => {
-                return this.delete(seq.id);
-            })
-        );
     }
 }
