@@ -40,11 +40,11 @@ class DataStream():
             log(self, f'uncorking upstream: {self.upstream.name}')
             self.upstream._uncork()
 
-    @staticmethod
-    def read_from(source, max_parallel=64, chunk_size=None):
+    @classmethod
+    def read_from(cls, source, max_parallel=64, chunk_size=None):
         if chunk_size:
             if hasattr(source, 'read'):
-                return DataStream.from_callback(
+                return cls.from_callback(
                     max_parallel, source.read, chunk_size)
             else:
                 msg = (f"chunk_size was specified, but source {source} "
@@ -52,7 +52,7 @@ class DataStream():
                 raise UnsupportedOperation(msg)
         else:
             if isinstance(source, (Iterable, AsyncIterable)):
-                return DataStream.from_iterable(
+                return cls.from_iterable(
                     source, max_parallel=max_parallel)
             else:
                 msg = (f"Source {source} is not iterable. It cannot be used "
@@ -60,9 +60,9 @@ class DataStream():
                        "is specified.")
                 raise UnsupportedOperation(msg)
 
-    @staticmethod
-    def from_iterable(iterable, max_parallel=64):
-        stream = DataStream(max_parallel)
+    @classmethod
+    def from_iterable(cls, iterable, max_parallel=64):
+        stream = cls(max_parallel)
         async def consume():
             await stream.ready_to_start
             if isinstance(iterable, Iterable):
@@ -76,9 +76,9 @@ class DataStream():
         asyncio.create_task(consume())
         return stream
 
-    @staticmethod
-    def from_callback(max_parallel, callback, *args):
-        stream = DataStream(max_parallel)
+    @classmethod
+    def from_callback(cls, max_parallel, callback, *args):
+        stream = cls(max_parallel)
 
         async def consume():
             await stream.ready_to_start
@@ -95,7 +95,9 @@ class DataStream():
         return stream
 
     def flatmap(self, func, *args):
-        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+fm')
+        new_stream = self.__class__(
+            max_parallel=self.pyfca.max_parallel, name=f'{self.name}+fm'
+        )
         async def consume():
             self._uncork()
             while True:
@@ -117,7 +119,7 @@ class DataStream():
         return new_stream
 
     def filter(self, func, *args):
-        new_stream = DataStream(upstream=self, name=f'{self.name}+f')
+        new_stream = self.__class__(upstream=self, name=f'{self.name}+f')
         async def run_filter(chunk):
             if args:
                 log(new_stream, f'calling filter {func} with args: {chunk, *args}')
@@ -131,7 +133,9 @@ class DataStream():
         return new_stream
 
     def sequence(self, sequencer, initialPartial=None):
-        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+s')
+        new_stream = self.__class__(
+            max_parallel=self.pyfca.max_parallel, name=f'{self.name}+s'
+        )
         async def consume():
             self._uncork()
             partial = initialPartial
@@ -161,7 +165,7 @@ class DataStream():
         return new_stream
 
     def map(self, func, *args):
-        new_stream = DataStream(upstream=self, name=f'{self.name}+m')
+        new_stream = self.__class__(upstream=self, name=f'{self.name}+m')
         async def run_mapper(chunk):
             if args:
                 log(new_stream, f'calling mapper {func} with args: {chunk, *args}')
@@ -175,7 +179,9 @@ class DataStream():
         return new_stream
 
     def batch(self, func, *args):
-        new_stream = DataStream(max_parallel=self.pyfca.max_parallel, name=f'{self.name}+b')
+        new_stream = self.__class__(
+            max_parallel=self.pyfca.max_parallel, name=f'{self.name}+b'
+        )
         async def consume():
             self._uncork()
             batch = []
@@ -243,9 +249,24 @@ class DataStream():
             log(self, f'reduce - intermediate result: {accumulator}')
         return accumulator
 
+
+    def _as(self, target_class):
+        return target_class(
+            upstream=self,
+            max_parallel=self.pyfca.max_parallel,
+            name=f'{self.name}+_'
+        )
+
     def decode(self, encoding):
         import codecs
         # Incremental decoders handle characters split across inputs.
         # Input with only partial data yields empty string - drop these.
         decoder = codecs.getincrementaldecoder(encoding)()
-        return self.map(lambda chunk: decoder.decode(chunk) or DropChunk)
+        return self._as(StringStream).map(
+            lambda chunk: decoder.decode(chunk) or DropChunk
+        )
+
+
+class StringStream(DataStream):
+    def __init__(self, max_parallel=64, upstream=None, name="stringstream"):
+        super().__init__(max_parallel=max_parallel, upstream=upstream, name=name)
