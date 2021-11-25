@@ -77,7 +77,9 @@ implements AppContext<AppConfigType, State> {
 
     private _monitoringHandlers: MonitoringHandler[] = [];
 
-    async monitor(initialMessage: MonitoringMessageFromRunnerData = { healthy: true }): Promise<{healthy: boolean}> {
+    async monitor(
+        initialMessage: MonitoringMessageFromRunnerData = { healthy: true }
+    ): Promise<MonitoringMessageFromRunnerData> {
         let message = initialMessage;
 
         for (const handler of this._monitoringHandlers) {
