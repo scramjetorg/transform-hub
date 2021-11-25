@@ -43,7 +43,7 @@ si config apiUrl "http://url.to.host:8000"
 See the current config (including default values):
 
 ```bash
-> si config print
+si config print
 ```
 
 ## Create a package
@@ -87,6 +87,15 @@ si inst stdin <id> [<file>]                           # send file to stdin, if f
 si inst stderr <id>                                   # show stream on stderr
 si inst stdout <id>                                   # show stream on stdout
 si inst help [command]                                # display help for command
+```
+
+## Host operations
+
+```bash
+si host version # display the Host version
+si host load    # monitor CPU, memory and disk usage on the Host
+si host logs    # display the logs of the Host. 
+
 ```
 
 ## Extra reading
