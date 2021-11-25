@@ -41,7 +41,7 @@
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "lerna link",
     "prepare": "npx husky install",
-    "test": "yarn test:parallel && yarn test:bdd",
+    "test": "lerna run test",
     "test:packages": "lerna run test",
     "test:packages-no-concurrent": "lerna run test --concurrency=1",
     "test:bdd-ci": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"not @starts-host\"",
