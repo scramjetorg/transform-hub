@@ -104,7 +104,7 @@ test("Run should call createFifoStreams with proper parameters.", async (t) => {
         engines: {
             [""]: ""
         },
-        sequencePath: "sequence.js",
+        entrypointPath: "sequence.js",
         id: "abc-123",
         type: "docker"
     };
@@ -198,7 +198,7 @@ test("Identify should return parsed response from stream.", async (t) => {
         version: preRunnerResponse.version,
         id: createdVolumeId,
         container: configService.getDockerConfig().runner,
-        sequencePath: preRunnerResponse.main,
+        entrypointPath: preRunnerResponse.main,
     };
 
     t.deepEqual(identifyResponse, expectedResponse);
