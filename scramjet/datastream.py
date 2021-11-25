@@ -16,11 +16,16 @@ def log(stream, *args):
 class UnsupportedOperation(Exception):
     pass
 
+class StreamAlreadyConsumed(Exception):
+    pass
+
 
 class DataStream():
     def __init__(self, max_parallel=64, upstream=None, name="datastream"):
         self.upstream = upstream
         self.name = name
+        # whether the stream was already "used" (transformed/read from)
+        self._consumed = False
         self.pyfca = upstream.pyfca if upstream else Pyfca(max_parallel)
         self.ready_to_start = asyncio.Future()
         log(self, f'INIT stream created with pyfca {self.pyfca}')
@@ -39,6 +44,12 @@ class DataStream():
         if self.upstream:
             log(self, f'uncorking upstream: {self.upstream.name}')
             self.upstream._uncork()
+
+    def _mark_consumed(self):
+        if self._consumed:  # cannot consume the same stream twice
+            raise StreamAlreadyConsumed
+        else:
+            self._consumed = True
 
     @classmethod
     def read_from(cls, source, max_parallel=64, chunk_size=None):
@@ -95,6 +106,7 @@ class DataStream():
         return stream
 
     def flatmap(self, func, *args):
+        self._mark_consumed()
         new_stream = self.__class__(
             max_parallel=self.pyfca.max_parallel, name=f'{self.name}+fm'
         )
@@ -119,6 +131,7 @@ class DataStream():
         return new_stream
 
     def filter(self, func, *args):
+        self._mark_consumed()
         new_stream = self.__class__(upstream=self, name=f'{self.name}+f')
         async def run_filter(chunk):
             if args:
@@ -133,6 +146,7 @@ class DataStream():
         return new_stream
 
     def sequence(self, sequencer, initialPartial=None):
+        self._mark_consumed()
         new_stream = self.__class__(
             max_parallel=self.pyfca.max_parallel, name=f'{self.name}+s'
         )
@@ -165,6 +179,7 @@ class DataStream():
         return new_stream
 
     def map(self, func, *args):
+        self._mark_consumed()
         new_stream = self.__class__(upstream=self, name=f'{self.name}+m')
         async def run_mapper(chunk):
             if args:
@@ -179,6 +194,7 @@ class DataStream():
         return new_stream
 
     def batch(self, func, *args):
+        self._mark_consumed()
         new_stream = self.__class__(
             max_parallel=self.pyfca.max_parallel, name=f'{self.name}+b'
         )
@@ -209,6 +225,7 @@ class DataStream():
         return new_stream
 
     async def to_list(self):
+        self._mark_consumed()
         self._uncork()
         result = []
         log(self, f'sink: {repr(result)}')
@@ -220,6 +237,7 @@ class DataStream():
         return result
 
     async def to_file(self, out_file):
+        self._mark_consumed()
         self._uncork()
         log(self, f'sink: {repr(out_file)}')
         with open(out_file, 'wb') as f:
@@ -231,6 +249,7 @@ class DataStream():
                 chunk = await self.pyfca.read()
 
     async def reduce(self, func, initial=None):
+        self._mark_consumed()
         self._uncork()
         if initial is None:
             accumulator = await self.pyfca.read()
