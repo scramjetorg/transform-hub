@@ -4,7 +4,7 @@ export { FunctionDefinition, DescribeSequenceMessage, DescribeSequenceMessageDat
 export { StatusMessageData, StatusMessage } from "./status";
 export { ErrorMessage, ErrorMessageData } from "./error";
 export { EventMessage, EventMessageData } from "./event";
-export * from "./handshake";
+export { PangMessageData, PingMessageData, HandshakeMessage } from "./handshake";
 export { HandshakeAcknowledgeMessage, HandshakeAcknowledgeMessageData } from "./handshake-acknowledge";
 export { KeepAliveMessage, KeepAliveMessageData } from "./keep-alive";
 export { KillSequenceMessage } from "./kill-sequence";
@@ -21,4 +21,4 @@ export { NetworkInfoMessage } from "./network-info";
 export { STHIDMessageData, CPMMessageSTHID } from "./sth-id";
 export { InstanceBulkMessage, InstanceMessage, InstanceMessageData } from "./instance";
 export { SequenceBulkMessage, SequenceMessage, SequenceMessageData } from "./sequence";
-export * from "./sequence-stopped";
+export { SequenceStoppedMessageData } from "./sequence-stopped";
