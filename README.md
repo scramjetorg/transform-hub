@@ -535,7 +535,7 @@ We accept valid contributions and we will be publishing a more specific project 
 
 We provide support for contributions via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in [`bdd` directory](./bdd).
 
-More ino about bdd tests can be found [here](./bdd/README.md).
+More info about bdd tests can be found [here](./bdd/README.md).
 
 ---
 # Help wanted :information_desk_person:
