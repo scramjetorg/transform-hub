@@ -3,6 +3,7 @@
 import { RunnerContainerConfiguration } from "./sth-configuration";
 
 type CommonSequenceConfig = {
+    type: string;
     id: string;
     sequencePath: string;
     name: string;
