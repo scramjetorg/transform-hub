@@ -4,6 +4,7 @@ import {
     ProcessSequenceConfig,
     ISequenceAdapter,
     SequenceInfo,
+    STHConfiguration,
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { createReadStream } from "fs";
@@ -13,11 +14,8 @@ import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { isValidSequencePackageJSON } from "./validate-sequence-package-json";
 
-const HOME_DIR = require("os").homedir();
-const SEQUENCES_DIR = path.join(HOME_DIR, ".scramjet_sequences");
-
-async function getRunnerConfigForStoredSequence(id: string): Promise<ProcessSequenceConfig> {
-    const packageJsonPath = path.join(SEQUENCES_DIR, id, "package.json");
+async function getRunnerConfigForStoredSequence(sequencesDir: string, id: string): Promise<ProcessSequenceConfig> {
+    const packageJsonPath = path.join(sequencesDir, id, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
 
     if (!isValidSequencePackageJSON(packageJson)) {
@@ -26,22 +24,19 @@ async function getRunnerConfigForStoredSequence(id: string): Promise<ProcessSequ
 
     return {
         type: "process",
-        sequencePath: packageJson.main,
+        entrypointPath: packageJson.main,
         version: packageJson.version ?? "",
         name: packageJson.name ?? "",
-        id
+        id,
+        sequencesDir
     };
-}
-
-export function getSequenceDir(id: string): string {
-    return path.join(SEQUENCES_DIR, id);
 }
 
 class ProcessSequenceAdapter implements ISequenceAdapter {
     private logger: Logger;
     private computedInfo: SequenceInfo | null = null
 
-    constructor(info?: SequenceInfo) {
+    constructor(private config: STHConfiguration, info?: SequenceInfo) {
         if (info && info.config.type !== "process") {
             throw new Error("Invalid info config for ProcessSequenceAdapter");
         }
@@ -59,15 +54,15 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
     }
 
     async init(): Promise<void> {
-        return fs.access(SEQUENCES_DIR)
-            .catch(() => fs.mkdir(SEQUENCES_DIR));
+        return fs.access(this.config.sequencesDir)
+            .catch(() => fs.mkdir(this.config.sequencesDir));
     }
 
     async list(): Promise<ProcessSequenceAdapter[]> {
-        const storedSequencesIds = await fs.readdir(SEQUENCES_DIR);
+        const storedSequencesIds = await fs.readdir(this.config.sequencesDir);
         const sequencesConfigs = await Promise.all(
             storedSequencesIds
-                .map(getRunnerConfigForStoredSequence)
+                .map((id) => getRunnerConfigForStoredSequence(this.config.sequencesDir, id))
                 .map((configPromised) => configPromised.catch(() => null))
         );
 
@@ -76,11 +71,11 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         return sequencesConfigs
             .filter(isDefined)
             .map((config): SequenceInfo => ({ id: config.id, config, instances: new Set() }))
-            .map((info) => new ProcessSequenceAdapter(info));
+            .map((info) => new ProcessSequenceAdapter(this.config, info));
     }
 
     async identify(stream: Readable, id: string): Promise<void> {
-        const sequenceDir = getSequenceDir(id);
+        const sequenceDir = path.join(this.config.sequencesDir, id);
 
         await fs.mkdir(sequenceDir);
 
@@ -90,16 +85,15 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         await new Promise(res => uncompressingProc.on("close", res));
 
-        const config = await getRunnerConfigForStoredSequence(id);
+        const config = await getRunnerConfigForStoredSequence(sequenceDir, id);
 
         this.computedInfo = { id: config.id, config, instances: new Set() };
     }
 
-    async cleanup(): Promise<void> {
-    }
-
     async remove() {
-        return fs.rm(getSequenceDir(this.info.id), { recursive: true });
+        const sequenceDir = path.join(this.config.sequencesDir, this.info.id);
+
+        return fs.rm(sequenceDir, { recursive: true });
     }
 }
 

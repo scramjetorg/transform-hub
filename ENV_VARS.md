@@ -67,7 +67,7 @@ Used in starting runner locally only. Path to output FIFO file.
 ### Supervisor
 
 ---
-`RUN_WITHOUT_DOCKER: boolean (default: false)`
+`NO_DOCKER: boolean (default: false)`
 
 ### Scripts
 ---
