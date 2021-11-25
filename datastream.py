@@ -242,3 +242,10 @@ class DataStream():
                 accumulator = await accumulator
             log(self, f'reduce - intermediate result: {accumulator}')
         return accumulator
+
+    def decode(self, encoding):
+        import codecs
+        # Incremental decoders handle characters split across inputs.
+        # Input with only partial data yields empty string - drop these.
+        decoder = codecs.getincrementaldecoder(encoding)()
+        return self.map(lambda chunk: decoder.decode(chunk) or DropChunk)
