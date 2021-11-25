@@ -260,7 +260,7 @@ export class CPMConnector extends EventEmitter {
         };
     }
 
-    async sendSequencesInfo(sequences: STHRestAPI.SequenceDTO[]): Promise<void> {
+    async sendSequencesInfo(sequences: STHRestAPI.GetSequencesResponse): Promise<void> {
         this.logger.log("Sending sequences information, total sequences:", sequences.length);
 
         await this.communicationStream!.whenWrote(

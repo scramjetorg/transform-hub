@@ -1,3 +1,7 @@
-import { SequenceDTO } from "./data-transfer-objects";
+import { SequenceConfig } from "../runner-config";
 
-export type GetSequencesResponse = SequenceDTO[]
+export type GetSequencesResponse = {
+    instances: readonly string[];
+    id: string;
+    config: SequenceConfig;
+}[]
