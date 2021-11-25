@@ -16,7 +16,15 @@ import { LifeCycleController } from "../lib/lifecycle-controller";
 const config: LifeCycleConfig = {
     makeSnapshotOnError: false
 };
-const instanceAdapter = getInstanceAdapter(process.env.RUN_WITHOUT_DOCKER === "true");
+
+const { RUN_WITHOUT_DOCKER } = process.env;
+
+if (!["true", "false"].includes(RUN_WITHOUT_DOCKER!)) {
+    throw new Error(`Invalid value for RUN_WITHOUT_DOCKER: ${RUN_WITHOUT_DOCKER}`);
+}
+
+const runWithoutDocker = RUN_WITHOUT_DOCKER === "true";
+const instanceAdapter = getInstanceAdapter(runWithoutDocker);
 const id: string = process.argv[2];
 const cshc: CSHClient = new CSHClient(process.argv[3]);
 const lcc = new LifeCycleController(id, instanceAdapter, config, cshc);

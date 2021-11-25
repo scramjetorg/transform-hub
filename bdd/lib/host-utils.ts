@@ -5,7 +5,7 @@ import { SIGTERM } from "constants";
 import { StringDecoder } from "string_decoder";
 
 const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
-    ? ["ts-node", "../packages/sth/src/bin/hub.ts"]
+    ? ["npx", "ts-node", "../packages/sth/src/bin/hub.ts"]
     : ["node", "../dist/sth/bin/hub.js"]
 ;
 

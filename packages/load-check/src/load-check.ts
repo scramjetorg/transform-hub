@@ -64,8 +64,7 @@ export class LoadCheck implements IComponent {
     }
 
     async getLoadCheckStream(): Promise<any> {
-        // eslint-disable-next-line consistent-this
-        const loadCheckInstance = this;
+        const safeOperationsLimit = this.constants.SAFE_OPERATION_LIMIT;
 
         return DataStream.from(
             async function*() {
@@ -82,7 +81,7 @@ export class LoadCheck implements IComponent {
                         currentLoad: load.currentLoad || 85,
                         memFree: memInfo.free + Math.max(
                             0,
-                            memInfo.buffcache - loadCheckInstance.constants.SAFE_OPERATION_LIMIT
+                            memInfo.buffcache - safeOperationsLimit
                         ),
                         memUsed: memInfo.used,
                         fsSize: disksInfo

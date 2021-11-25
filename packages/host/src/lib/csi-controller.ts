@@ -13,7 +13,7 @@ import {
     ParsedMessage,
     PassThroughStreamsConfig,
     ReadableStream,
-    ISequenceInfo,
+    SequenceInfo,
     WritableStream,
     InstanceConifg
 } from "@scramjet/types";
@@ -39,7 +39,7 @@ import { resolve as resolvePath } from "path";
 export class CSIController extends EventEmitter {
     config: CSIConfig;
     id: string;
-    sequence: ISequenceInfo;
+    sequence: SequenceInfo;
     appConfig: AppConfig;
     superVisorProcess?: ChildProcess;
     sequenceArgs: Array<any> | undefined;
@@ -70,7 +70,7 @@ export class CSIController extends EventEmitter {
 
     constructor(
         id: string,
-        sequence: ISequenceInfo,
+        sequence: SequenceInfo,
         appConfig: AppConfig,
         sequenceArgs: any[] | undefined,
         communicationHandler: CommunicationHandler,
@@ -257,7 +257,7 @@ export class CSIController extends EventEmitter {
 
     async sendConfig() {
         const instanceConfig: InstanceConifg = {
-            ...this.sequence.getConfig(),
+            ...this.sequence.config,
             instanceAdapterExitDelay: this.config.instanceAdapterExitDelay
         };
 
@@ -394,7 +394,7 @@ export class CSIController extends EventEmitter {
 
         return {
             ...this.info,
-            sequenceId: this.sequence.getId(),
+            sequenceId: this.sequence.config,
             appConfig: this.appConfig,
             args: this.sequenceArgs
         };
