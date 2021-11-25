@@ -28,6 +28,7 @@ class DataStream():
         self._consumed = False
         self.pyfca = upstream.pyfca if upstream else Pyfca(max_parallel)
         self.ready_to_start = asyncio.Future()
+        self.sinks = []
         log(self, f'INIT stream created with pyfca {self.pyfca}')
 
     async def __aiter__(self):
@@ -247,6 +248,23 @@ class DataStream():
                 log(self, f'got: {tr(chunk)}')
                 f.write(chunk)
                 chunk = await self.pyfca.read()
+
+    def pipe(self, target):
+        self._consumed = True
+        self.sinks.append(target)
+        async def consume():
+            self._uncork()
+            while True:
+                chunk = await self.pyfca.read()
+                if chunk is None:
+                    break
+                drains = [target.pyfca.write(chunk) for target in self.sinks]
+                await asyncio.gather(*drains)
+            for target in self.sinks:
+                target.pyfca.end()
+        if len(self.sinks) == 1:
+            asyncio.create_task(consume(), name='pipe-consumer')
+        return target
 
     async def reduce(self, func, initial=None):
         self._mark_consumed()
