@@ -102,7 +102,7 @@ To check if you already have Node.js(v16.xx.x) and npm installed, please check t
 
 If none of the above commands is found, please proceed with the installation.
 
-It is recommend to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. To install or update nvm, you should run the install script, to do that use the following cURL command in your console:
+It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.2 with the latest version of nvm.
 
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
 
