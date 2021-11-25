@@ -186,7 +186,7 @@ test("Identify should return parsed response from stream.", async (t) => {
 
     await res;
 
-    const identifyResponse = lcdas.info.getConfig();
+    const identifyResponse = lcdas.info.config;
 
     t.is(dockerHelperMock.createVolume.calledOnce, true);
 
