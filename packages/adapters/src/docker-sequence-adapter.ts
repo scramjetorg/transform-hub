@@ -6,14 +6,13 @@ import {
     SequenceConfig,
     PreRunnerContainerConfiguration,
     STHConfiguration,
-    ISequenceInfo,
+    SequenceInfo,
     DockerSequenceConfig,
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { SequenceInfo } from "./sequence-info";
 import { isValidSequencePackageJSON } from "./validate-sequence-package-json";
 
 class DockerSequenceAdapter implements ISequenceAdapter {
@@ -27,13 +26,13 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
     private logger: Logger;
 
-    private computedInfo: ISequenceInfo | null = null
+    private computedInfo: SequenceInfo | null = null
 
-    constructor(config: STHConfiguration["docker"], info?: ISequenceInfo) {
+    constructor(config: STHConfiguration["docker"], info?: SequenceInfo) {
         this.containersConfiguration = config;
         this.prerunnerConfig = config.prerunner;
 
-        if (info && info.getConfig().type !== "docker") {
+        if (info && info.config.type !== "docker") {
             throw new Error("Invalid info config for DockerSequenceAdapter");
         }
         this.computedInfo = info ?? null;
@@ -42,7 +41,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         this.logger = getLogger(this);
     }
 
-    public get info(): ISequenceInfo {
+    public get info(): SequenceInfo {
         if (!this.computedInfo) {
             throw new Error("Sequence not identified yet");
         }
@@ -73,7 +72,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         return configs
             .filter(isDefined)
-            .map((config) => new SequenceInfo(config))
+            .map((config): SequenceInfo => ({ id: config.id, config, instances: new Set() }))
             .map((info) => new DockerSequenceAdapter(this.containersConfiguration, info));
     }
 
@@ -139,13 +138,13 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             stream.pipe(streams.stdin);
 
-            const runnerConfig = await this.parsePackage(streams, wait, volumeId);
+            const config = await this.parsePackage(streams, wait, volumeId);
 
             this.resources.containerId = undefined;
 
-            await this.fetch(runnerConfig.container.image);
+            await this.fetch(config.container.image);
 
-            this.computedInfo = new SequenceInfo(runnerConfig);
+            this.computedInfo = { id: config.id, config, instances: new Set() };
         } catch (err) {
             this.logger.error(err);
             throw new SupervisorError("PRERUNNER_ERROR", err);
@@ -189,12 +188,6 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         };
     }
 
-    async cleanup(): Promise<void> {
-        await this.dockerHelper.removeVolume(this.info.getId());
-
-        this.logger.debug("Volume removed.");
-    }
-
     async remove() {
         if (this.resources.containerId) {
             this.logger.info("Forcefully stopping containter", this.resources.containerId);
@@ -203,6 +196,10 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             this.logger.info("Container removed.");
         }
+
+        await this.dockerHelper.removeVolume(this.info.id);
+
+        this.logger.debug("Volume removed.");
     }
 }
 

@@ -1,30 +1,27 @@
-import { ILifeCycleAdapterMain } from "./lifecycle-adapters";
 import { SequenceConfig } from "./runner-config";
 import { Readable } from "stream";
+import { InstanceId } from "./instance";
 
-export interface ISequenceInfo {
-    getId(): string;
-    getConfig(): SequenceConfig;
-    addInstance(id: string): void;
-    removeInstance(id: string): void;
-    hasInstances(): boolean;
-    instances: readonly string[];
+export type SequenceInfo = {
+    id: string;
+    config: SequenceConfig;
+    instances: Set<InstanceId>;
 }
 
-export interface ISequenceAdapter extends ILifeCycleAdapterMain {
-    info: ISequenceInfo;
+export interface ISequenceAdapter {
+    info: SequenceInfo;
+
+    init(): Promise<void>;
 
     /**
      * Identifies existing sequences
-     *
-     * @returns {Promise<ISequenceAdapter[]>} found packages
      */
     list(): Promise<ISequenceAdapter[]>;
+
     /**
-     * Passes stream to PreRunner and resolves with PreRunner's results.
-     *
-     * @param {Readable} stream Stream with package.
-     * @returns {Promise<void>}
+     * Identifies new sequence
      */
     identify(stream: Readable, id: string): Promise<void>;
+
+    remove(): Promise<void>
 }

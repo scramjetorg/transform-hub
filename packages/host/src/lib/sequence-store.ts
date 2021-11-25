@@ -29,11 +29,9 @@ export class SequenceStore implements ISequenceStore {
     }
 
     add(sequence: ISequenceAdapter) {
-        if (sequence) {
-            this.sequences[sequence.info.getId()] = sequence;
-        }
+        this.sequences[sequence.info.id] = sequence;
 
-        this.logger.info("New sequence added:", sequence.info.getId());
+        this.logger.info("New sequence added:", sequence.info.id);
     }
 
     async delete(sequenceId: string): Promise<STHRestAPI.DeleteSequenceResponse> {
@@ -51,7 +49,7 @@ export class SequenceStore implements ISequenceStore {
             };
         }
 
-        if (sequence.info.hasInstances()) {
+        if (sequence.info.instances.size > 0) {
             this.logger.warn("Can't remove sequence in use:", sequenceId);
 
             return {
@@ -62,7 +60,6 @@ export class SequenceStore implements ISequenceStore {
 
         try {
             await sequence.remove();
-            await sequence.cleanup();
 
             delete this.sequences[sequenceId];
 
