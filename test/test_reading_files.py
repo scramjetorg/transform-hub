@@ -1,11 +1,13 @@
+from collections import namedtuple
 from datastream import DataStream
 import asyncio
 import pytest
-from multiprocessing import Process
+from multiprocessing import Process, Value
 import os
 import math
 import test.large_test_files
 import time
+import aiofiles
 
 @pytest.mark.asyncio
 async def test_stream_from_file_opened_as_text_carries_strings():
@@ -90,8 +92,9 @@ async def test_reading_large_file_without_newlines():
 
 # Run in a separate process to avoid influence on tested code
 class WriteInIntervals():
-    def __init__(self, path, data, interval=0.01):
-        self.path, self.data, self.interval = path, data, interval
+    def __init__(self, path, data, counter=None, interval=0.01):
+        self.path, self.data = path, data
+        self.counter, self.interval = counter, interval
         self.writer = Process(target=self.write)
 
     def __enter__(self):
@@ -106,6 +109,8 @@ class WriteInIntervals():
             for chunk in self.data:
                 time.sleep(self.interval)
                 print(f'Write into {repr(self.path)}: {repr(chunk)}')
+                if self.counter:
+                    self.counter.value += 1
                 pipe.write(chunk)
                 pipe.flush()
 
@@ -119,3 +124,51 @@ async def test_waiting_for_complete_chunk():
             # all except last chunk should have specified size,
             # even though some data will be available for reading earlier.
             assert result == ['foo\nbar ', 'baz bax\n', 'qux']
+
+@pytest.mark.asyncio
+async def test_processing_start_with_sync_source():
+    pipe_path = 'test_pipe'
+    data = ['foo\n', 'bar\n', 'baz\n', 'bax\n', 'qux\n']
+    chunks_written = Value('i', 0)
+    write_counts = []
+
+    def log_how_many_written(chunk):
+        write_counts.append(chunks_written.value)
+        return chunk
+
+    with WriteInIntervals(pipe_path, data, chunks_written):
+        with open(pipe_path) as file:
+            max_parallel = 3
+            s = DataStream.read_from(file, max_parallel=max_parallel)
+            result = await s.map(log_how_many_written).to_list()
+            # Since input is sync, processing of the first chunk should start
+            # only after max_parallel chunks are read from (and written to)
+            # the pipe (but it should not wait until all data is read).
+            assert write_counts[0] == max_parallel < len(data)
+            assert result == data
+
+@pytest.mark.asyncio
+async def test_processing_start_with_async_source():
+    pipe_path = 'test_pipe'
+    data = ['foo\n', 'bar\n', 'baz\n', 'bax\n', 'qux\n']
+    chunks_written = Value('i', 0)
+    chunks_read = Value('i', 0)
+    read_vs_written = []
+    record = namedtuple('record', ['read', 'written'])
+
+    def log_read_vs_written(chunk):
+        chunks_read.value += 1
+        read_vs_written.append(
+            record(chunks_read.value, chunks_written.value)
+        )
+        return chunk
+
+    with WriteInIntervals(pipe_path, data, chunks_written):
+        async with aiofiles.open(pipe_path) as file:
+            s = DataStream.read_from(file)
+            result = await s.map(log_read_vs_written).to_list()
+            # Since input is async, processing of each chunk should start
+            # immediately after it is written to the pipe.
+            for record in read_vs_written:
+                assert record.read == record.written
+            assert result == data
