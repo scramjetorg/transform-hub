@@ -170,6 +170,8 @@ Run the following command in your console:
 
 Verify that Docker and Docker-Compose are installed by getting their versions:
 
+    sudo docker version
+    docker-compose version
 
 Now let's clone build and start the hub. Please copy the following commands to the terminal:
 
