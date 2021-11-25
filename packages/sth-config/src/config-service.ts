@@ -1,5 +1,6 @@
 import { DeepPartial, STHConfiguration } from "@scramjet/types";
 import { merge } from "@scramjet/utility";
+import * as path from "path";
 
 const imageConfig = require("./image-config.json");
 
@@ -32,7 +33,8 @@ const _defaultConfig: STHConfiguration = {
     },
     safeOperationLimit: 512,
     instanceAdapterExitDelay: 9000,
-    runWithoutDocker: false
+    noDocker: false,
+    sequencesDir: path.join(require("os").homedir(), ".scramjet_sequences")
 };
 
 merge(_defaultConfig, {

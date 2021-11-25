@@ -4,7 +4,6 @@ import {
     ISequenceAdapter,
     Logger,
     SequenceConfig,
-    PreRunnerContainerConfiguration,
     STHConfiguration,
     SequenceInfo,
     DockerSequenceConfig,
@@ -17,21 +16,13 @@ import { isValidSequencePackageJSON } from "./validate-sequence-package-json";
 
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
-
-    private prerunnerConfig: PreRunnerContainerConfiguration;
-
     private resources: DockerAdapterResources = {};
-
-    private containersConfiguration: STHConfiguration["docker"];
 
     private logger: Logger;
 
     private computedInfo: SequenceInfo | null = null
 
-    constructor(config: STHConfiguration["docker"], info?: SequenceInfo) {
-        this.containersConfiguration = config;
-        this.prerunnerConfig = config.prerunner;
-
+    constructor(private config: STHConfiguration, info?: SequenceInfo) {
         if (info && info.config.type !== "docker") {
             throw new Error("Invalid info config for DockerSequenceAdapter");
         }
@@ -52,7 +43,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     async init(): Promise<void> {
         this.logger.log("DockerSequenceAdapter init.");
 
-        await this.fetch(this.containersConfiguration.prerunner.image);
+        await this.fetch(this.config.docker.prerunner.image);
 
         this.logger.info("DockerSequenceAdapter initiazation done.");
     }
@@ -73,7 +64,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         return configs
             .filter(isDefined)
             .map((config): SequenceInfo => ({ id: config.id, config, instances: new Set() }))
-            .map((info) => new DockerSequenceAdapter(this.containersConfiguration, info));
+            .map((info) => new DockerSequenceAdapter(this.config, info));
     }
 
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
@@ -81,13 +72,13 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         try {
             const { streams, wait } = await this.dockerHelper.run({
-                imageName: this.prerunnerConfig?.image || "",
+                imageName: this.config.docker.prerunner?.image || "",
                 volumes: [
                     { mountPoint: "/package", volume },
                 ],
                 command: ["/app/identify.sh"],
                 autoRemove: true,
-                maxMem: this.prerunnerConfig?.maxMem || 0
+                maxMem: this.config.docker.prerunner?.maxMem || 0
             });
 
             this.logger.debug(`Prerunner identify started for: ${volume}`);
@@ -115,16 +106,16 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         let runResult: DockerAdapterRunResponse;
 
-        this.logger.log("Starting PreRunner", this.prerunnerConfig);
+        this.logger.log("Starting PreRunner", this.config);
 
         try {
             runResult = await this.dockerHelper.run({
-                imageName: this.prerunnerConfig.image || "",
+                imageName: this.config.docker.prerunner.image || "",
                 volumes: [
                     { mountPoint: "/package", volume: volumeId }
                 ],
                 autoRemove: true,
-                maxMem: this.prerunnerConfig.maxMem || 0
+                maxMem: this.config.docker.prerunner.maxMem || 0
             });
         } catch (err) {
             this.logger.error(err);
@@ -178,12 +169,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         return {
             type: "docker",
-            container: this.containersConfiguration.runner,
+            container: this.config.docker.runner,
             name: packageJson.name || "",
             version: packageJson.version || "",
             engines,
             config,
-            sequencePath: packageJson.main,
+            entrypointPath: packageJson.main,
             id: volumeId,
         };
     }

@@ -175,7 +175,7 @@ test("Identify should return parsed response from stream.", async (t) => {
         wait
     });
 
-    const lcdas = new DockerSequenceAdapter(configService.getDockerConfig());
+    const lcdas = new DockerSequenceAdapter(configService.getConfig());
 
     sinon.stub(lcdas, "fetch").resolves();
 

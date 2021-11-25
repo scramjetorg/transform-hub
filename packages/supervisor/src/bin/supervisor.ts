@@ -17,13 +17,13 @@ const config: LifeCycleConfig = {
     makeSnapshotOnError: false
 };
 
-const { RUN_WITHOUT_DOCKER } = process.env;
+const { NO_DOCKER } = process.env;
 
-if (!["true", "false"].includes(RUN_WITHOUT_DOCKER!)) {
-    throw new Error(`Invalid value for RUN_WITHOUT_DOCKER: ${RUN_WITHOUT_DOCKER}`);
+if (!["true", "false"].includes(NO_DOCKER!)) {
+    throw new Error(`Invalid value for NO_DOCKER: ${NO_DOCKER}`);
 }
 
-const runWithoutDocker = RUN_WITHOUT_DOCKER === "true";
+const runWithoutDocker = NO_DOCKER === "true";
 const instanceAdapter = getInstanceAdapter(runWithoutDocker);
 const id: string = process.argv[2];
 const cshc: CSHClient = new CSHClient(process.argv[3]);
