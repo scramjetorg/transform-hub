@@ -19,7 +19,6 @@ import { tmpdir } from "os";
 import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
 import * as path from "path";
-import { getSequenceDir } from "./process-sequence-adapter";
 
 class ProcessInstanceAdapter implements
 ILifeCycleAdapterMain,
@@ -179,8 +178,9 @@ IComponent {
         this.logger.log("Starting Runner...", config.id);
 
         const sequencePath = path.join(
-            getSequenceDir(config.id),
-            config.sequencePath
+            config.sequencesDir,
+            config.id,
+            config.entrypointPath
         );
 
         const runnerPath = path.resolve(__dirname, "../../dist/runner/bin/start-runner.js");

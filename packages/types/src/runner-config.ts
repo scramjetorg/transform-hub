@@ -5,7 +5,10 @@ import { RunnerContainerConfiguration } from "./sth-configuration";
 type CommonSequenceConfig = {
     type: string;
     id: string;
-    sequencePath: string;
+    /**
+     * Relative path from sequence package root to JS file 
+     */
+    entrypointPath: string;
     name: string;
     version: string;
 }
@@ -24,6 +27,7 @@ export type DockerSequenceConfig = CommonSequenceConfig & {
 
 export type ProcessSequenceConfig = CommonSequenceConfig & {
     type: "process",
+    sequencesDir: string
 }
 
 export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig

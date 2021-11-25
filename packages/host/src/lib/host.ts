@@ -352,7 +352,7 @@ export class Host implements IComponent {
         const csiConfig: CSIConfig = {
             instanceAdapterExitDelay: this.config.instanceAdapterExitDelay,
             socketPath: this.config.host.socketPath,
-            runWithoutDocker: this.config.runWithoutDocker
+            noDocker: this.config.noDocker
         };
         const csic = new CSIController(
             id,

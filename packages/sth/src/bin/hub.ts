@@ -19,7 +19,8 @@ const options = program
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
-    .option("--run-without-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
+    .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
+    .option("--sequences-dir", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
     .parse(process.argv)
     .opts();
 
@@ -45,7 +46,8 @@ configService.update({
         hostname: options.hostname,
         id: options.id
     },
-    runWithoutDocker: options.runWithoutDocker
+    noDocker: options.noDocker,
+    sequencesDir: options.sequencesDir
 });
 
 // before here we actually load the host and we have the config imported elsewhere

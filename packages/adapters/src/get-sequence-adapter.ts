@@ -3,9 +3,9 @@ import { DockerSequenceAdapter } from "./docker-sequence-adapter";
 import { ISequenceAdapter, STHConfiguration } from "@scramjet/types";
 
 export function getSequenceAdapter(config: STHConfiguration): ISequenceAdapter {
-    if (config.runWithoutDocker) {
-        return new ProcessSequenceAdapter();
+    if (config.noDocker) {
+        return new ProcessSequenceAdapter(config);
     }
 
-    return new DockerSequenceAdapter(config.docker);
+    return new DockerSequenceAdapter(config);
 }

@@ -134,5 +134,11 @@ export type STHConfiguration = {
      * instead of in docker containers
      * **UNSAFE FOR RUNNING ARBITRARY CODE (e.g. user submitted)**
      */
-    runWithoutDocker: boolean;
+    noDocker: boolean;
+
+    /**
+     * Only used when `noDocker` is true
+     * Where should ProcessSequenceAdapter save new sequences
+     */
+    sequencesDir: string
 }
