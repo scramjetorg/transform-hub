@@ -9,7 +9,7 @@ def echo(x):
 async def simple_stream_example():
     data = ['8', '25', '3', '14', '20', '9', '13', '16']
     print("Input:", data)
-    stream = DataStream.from_iterable(data, max_parallel=4)
+    stream = DataStream.read_from(data, max_parallel=4)
     result = await (
         stream
             .map(echo)
@@ -41,7 +41,7 @@ async def async_square(x):
 async def async_stream_example():
     result = await (
         DataStream
-            .from_iterable(range(10), max_parallel=4)
+            .read_from(range(10), max_parallel=4)
             .map(async_square)
             .map(echo)
             .to_list()
@@ -54,18 +54,18 @@ asyncio.run(async_stream_example())
 
 # Chunk size can be controlled, and newlines don't affect it.
 async def stream_from_file_example():
-    file = 'sample_text_3.txt'
-    with open(file) as f:
-        print("Input:", f.read())
-    result = await (
-        DataStream
-            .from_file(file, max_chunk_size=32)
-            .map(lambda b: b.decode("UTF-8"))
-            .map(echo)
-            .flatmap(lambda line: line.split())
-            .to_list()
-    )
-    print("Output:", result)
+    path = 'sample_text_3.txt'
+    with open(path) as file:
+        print("Input:", file.read())
+    with open(path) as file:
+        result = await (
+            DataStream
+                .read_from(file, chunk_size=32)
+                .map(echo)
+                .flatmap(lambda line: line.split())
+                .to_list()
+        )
+        print("Output:", result)
 
 print(f"\n{strong}Running stream_from_file_example:{reset}")
 asyncio.run(stream_from_file_example())
