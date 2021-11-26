@@ -1,8 +1,6 @@
-from datastream import DataStream
-import asyncio
-import pyfca
-import utils
-from ansi_color_codes import *
+from scramjet.datastream import DataStream
+import scramjet.utils as utils
+from scramjet.ansi_color_codes import *
 import pytest
 
 log = utils.LogWithTimer.log

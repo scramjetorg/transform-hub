@@ -1,6 +1,6 @@
-from datastream import DataStream
+from scramjet.datastream import DataStream
 import asyncio
-from ansi_color_codes import *
+from scramjet.ansi_color_codes import *
 
 def echo(x):
     print(f"{yellow}Echo:{reset} {repr(x)}")
@@ -54,7 +54,7 @@ asyncio.run(async_stream_example())
 
 # Chunk size can be controlled, and newlines don't affect it.
 async def stream_from_file_example():
-    path = 'sample_text_3.txt'
+    path = 'test/sample_text_3.txt'
     with open(path) as file:
         print("Input:", file.read())
     with open(path) as file:

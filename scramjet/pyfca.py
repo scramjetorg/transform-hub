@@ -2,8 +2,8 @@
 
 import asyncio
 from os import environ
-from ansi_color_codes import *
-import utils
+from scramjet.ansi_color_codes import *
+import scramjet.utils as utils
 
 DEBUG = 'PYFCA_DEBUG' in environ or 'SCRAMJET_DEBUG' in environ
 fmt = utils.print_formatted

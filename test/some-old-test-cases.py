@@ -6,8 +6,8 @@ from pprint import pprint
 import random
 
 import pyfca
-import utils
-from ansi_color_codes import *
+import scramjet.utils as utils
+from scramjet.ansi_color_codes import *
 
 log = utils.LogWithTimer.log
 fmt = utils.print_formatted

@@ -1,12 +1,10 @@
-from datastream import DataStream
+from scramjet.datastream import DataStream
 import asyncio
 import pytest
 from multiprocessing import Process
 import os
 import math
 import test.large_test_files
-import time
-
 
 # Run in a separate process to avoid influence on tested code
 class ServeOverTCP():
@@ -40,7 +38,7 @@ async def test_reading_from_tcp_connection():
 
 @pytest.mark.asyncio
 async def test_reading_from_tcp_connection_without_chunk_size():
-    path = "sample_text_1.txt"
+    path = "test/sample_text_1.txt"
     with ServeOverTCP(path, 9999):
         reader, writer = await asyncio.open_connection('localhost', 9999)
         result = await DataStream.read_from(reader).to_list()

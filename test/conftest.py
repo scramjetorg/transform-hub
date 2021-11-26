@@ -1,5 +1,5 @@
 import pytest
-import utils
+import scramjet.utils as utils
 
 @pytest.fixture(autouse=True)
 def setup():

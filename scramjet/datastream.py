@@ -1,8 +1,8 @@
-from pyfca import Pyfca, DropChunk
+from scramjet.pyfca import Pyfca, DropChunk
 import asyncio
-from ansi_color_codes import *
+from scramjet.ansi_color_codes import *
 from os import environ
-import utils
+import scramjet.utils as utils
 from collections.abc import Iterable, AsyncIterable
 
 DEBUG = 'DATASTREAM_DEBUG' in environ or 'SCRAMJET_DEBUG' in environ

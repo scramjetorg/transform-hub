@@ -1,7 +1,6 @@
 import time
 import asyncio
-from os import environ
-from ansi_color_codes import *
+from scramjet.ansi_color_codes import *
 import random
 
 # Debugging helpers, testing and logging utilities.

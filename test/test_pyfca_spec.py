@@ -8,9 +8,9 @@ import time
 import copy
 import pytest
 
-import pyfca
-import utils
-from ansi_color_codes import *
+from scramjet import pyfca
+import scramjet.utils as utils
+from scramjet.ansi_color_codes import *
 
 
 MAX_PARALLEL = 4

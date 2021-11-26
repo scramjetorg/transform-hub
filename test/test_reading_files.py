@@ -1,9 +1,7 @@
 from collections import namedtuple
-from datastream import DataStream
-import asyncio
+from scramjet.datastream import DataStream
 import pytest
 from multiprocessing import Process, Value
-import os
 import math
 import test.large_test_files
 import time
@@ -11,32 +9,32 @@ import aiofiles
 
 @pytest.mark.asyncio
 async def test_stream_from_file_opened_as_text_carries_strings():
-    with open("sample_text_0.txt") as file:
+    with open("test/sample_text_0.txt") as file:
         result = await DataStream.read_from(file).to_list()
         assert result == ['foo\n']
 
 @pytest.mark.asyncio
 async def test_stream_from_file_opened_as_binary_carries_bytes():
-    with open("sample_text_0.txt", 'rb') as file:
+    with open("test/sample_text_0.txt", 'rb') as file:
         result = await DataStream.read_from(file).to_list()
         assert result == [b'foo\n']
 
 @pytest.mark.asyncio
 async def test_no_chunk_size_in_text_mode():
-    with open("sample_text_1.txt") as file:
+    with open("test/sample_text_1.txt") as file:
         result = await DataStream.read_from(file).to_list()
         assert result == ['foo\n', 'bar baz\n', 'qux']
 
 @pytest.mark.asyncio
 async def test_no_chunk_size_in_binary_mode():
-    with open("sample_text_1.txt", 'rb') as file:
+    with open("test/sample_text_1.txt", 'rb') as file:
         result = await DataStream.read_from(file).to_list()
         assert result == [b'foo\n', b'bar baz\n', b'qux']
 
 @pytest.mark.asyncio
 async def test_specifying_chunk_size_in_text_mode():
     SIZE = 32
-    with open("sample_text_3.txt") as file:
+    with open("test/sample_text_3.txt") as file:
         result = await DataStream.read_from(file, chunk_size=SIZE).to_list()
         for chunk in result[:-1]:  # last one may be smaller
             assert len(chunk) == SIZE
@@ -45,7 +43,7 @@ async def test_specifying_chunk_size_in_text_mode():
 @pytest.mark.asyncio
 async def test_specifying_chunk_size_in_binary_mode():
     SIZE = 32
-    with open("sample_text_3.txt", 'rb') as file:
+    with open("test/sample_text_3.txt", 'rb') as file:
         result = await DataStream.read_from(file, chunk_size=SIZE).to_list()
         for chunk in result[:-1]:  # last one may be smaller
             assert len(chunk) == SIZE
@@ -53,18 +51,18 @@ async def test_specifying_chunk_size_in_binary_mode():
 
 @pytest.mark.asyncio
 async def test_chunk_size_with_multibyte_chars_in_text_mode():
-    with open('sample_multibyte_text.txt') as file:
+    with open('test/sample_multibyte_text.txt') as file:
         individual_letters = [c for c in file.read()]
-    with open('sample_multibyte_text.txt') as file:
+    with open('test/sample_multibyte_text.txt') as file:
         # each chunk should be a complete unicode character
         result = await DataStream.read_from(file, chunk_size=1).to_list()
         assert result == individual_letters
 
 @pytest.mark.asyncio
 async def test_chunk_size_with_multibyte_chars_in_binary_mode():
-    with open('sample_multibyte_text.txt') as file:
+    with open('test/sample_multibyte_text.txt') as file:
         individual_letters = [c for c in file.read()]
-    with open('sample_multibyte_text.txt', 'rb') as file:
+    with open('test/sample_multibyte_text.txt', 'rb') as file:
         # with chunk_size=1 each byte should become separate chunk,
         # yielding chunks that are not valid UTF.
         result = await DataStream.read_from(file, chunk_size=1).to_list()

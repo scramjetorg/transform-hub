@@ -1,6 +1,6 @@
-from datastream import DataStream, UnsupportedOperation
+from scramjet.datastream import DataStream, UnsupportedOperation
 import asyncio
-from ansi_color_codes import *
+from scramjet.ansi_color_codes import *
 import pytest
 
 # test cases
@@ -49,7 +49,7 @@ async def test_creating_stream_from_generator():
 
 @pytest.mark.asyncio
 async def test_creating_stream_from_file_object():
-    with open("sample_text_1.txt") as f:
+    with open("test/sample_text_1.txt") as f:
         stream = DataStream.from_iterable(f)
         assert ['foo\n', 'bar baz\n', 'qux'] == await stream.to_list()
 

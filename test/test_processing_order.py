@@ -1,13 +1,12 @@
 #!/bin/env python3
 
 import asyncio
-import sys
 from pprint import pprint
 import pytest
 
-import pyfca
-import utils
-from ansi_color_codes import *
+from scramjet import pyfca
+import scramjet.utils as utils
+from scramjet.ansi_color_codes import *
 
 log = utils.LogWithTimer.log
 fmt = utils.print_formatted
