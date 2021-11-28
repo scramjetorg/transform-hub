@@ -12,6 +12,22 @@
     <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
 </p>
 
+# The Idea
+
+Scramjet Transform Hub is a serverless systems that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to the cloud just as easily... Oh and the app is incredibly simple too:
+
+```js
+export (input: Readable) => async function*() { 
+     for (const post of input) {
+         if (!cache.has(post.id)) {
+             yield await slack.note(`New post titled "${post.title}" from ${post.author}`);
+         }
+     }
+}
+```
+
+It currently supports Node.js based apps, but Python and other languages are coming.
+
 ---
 
 # Table of contents
