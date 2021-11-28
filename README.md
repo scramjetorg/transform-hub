@@ -26,7 +26,7 @@ export (input: Readable) => async function*() {
 }
 ```
 
-It currently supports Node.js based apps, but Python and other languages are coming.
+It currently supports Node.js based apps, but Python and other languages are coming. Like that? [Get Scramjet Transform Hub straight from NPM](https://www.npmjs.com/package/@scramjet/sth)
 
 ---
 
