@@ -4,8 +4,10 @@
     <a><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
     <a><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
     <a><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
-    <a><img src="https://img.shields.io/tokei/lines/github/scramjetorg/transform-hub?color=yellow&style=plastic" alt="GitHub total lines" /></a>
-    <a><img alt="npm" src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic"></a>
+    <a><img src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic" alt="npm" /></a>
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW">
+        <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?color=yellow&style=plastic" alt="Donate" />
+    </a>
 </p>
 <p align="center">⭐ Star us on GitHub — it motivates us a lot! 🚀 </p>
 <p align="center">
@@ -17,7 +19,7 @@
 Scramjet Transform Hub is a serverless system that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long-running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to the cloud just as easily... Oh, and the app is incredibly simple too:
 
 ```js
-export (input: Readable) => async function*() { 
+export (input: Readable) => async function*() {
      for (const post of input) {
          if (!cache.has(post.id)) {
              yield await slack.note(`New post titled "${post.title}" from ${post.author}`);
