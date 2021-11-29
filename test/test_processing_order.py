@@ -51,7 +51,8 @@ async def test_processing_order_without_waiting():
     input_data = make_sequence(6)
     function_calls.clear()
     utils.LogWithTimer.reset()
-    p = pyfca.Pyfca(MAX_PARALLEL, increment)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(increment)
     p.add_transform(square)
     p.add_transform(double)
 
@@ -97,7 +98,8 @@ async def test_processing_order_with_waiting():
     input_data = make_sequence(9)
     function_calls.clear()
     utils.LogWithTimer.reset()
-    p = pyfca.Pyfca(MAX_PARALLEL, increment)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(increment)
     p.add_transform(square)
     p.add_transform(double)
 
