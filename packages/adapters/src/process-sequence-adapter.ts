@@ -3,8 +3,8 @@ import {
     Logger,
     ProcessSequenceConfig,
     ISequenceAdapter,
-    SequenceInfo,
     STHConfiguration,
+    SequenceConfig,
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { createReadStream } from "fs";
@@ -34,23 +34,9 @@ async function getRunnerConfigForStoredSequence(sequencesDir: string, id: string
 
 class ProcessSequenceAdapter implements ISequenceAdapter {
     private logger: Logger;
-    private computedInfo: SequenceInfo | null = null
 
-    constructor(private config: STHConfiguration, info?: SequenceInfo) {
-        if (info && info.config.type !== "process") {
-            throw new Error("Invalid info config for ProcessSequenceAdapter");
-        }
-
-        this.computedInfo = info ?? null;
+    constructor(private config: STHConfiguration) {
         this.logger = getLogger(this);
-    }
-
-    public get info(): SequenceInfo {
-        if (!this.computedInfo) {
-            throw new Error("Sequence not identified yet");
-        }
-
-        return this.computedInfo;
     }
 
     async init(): Promise<void> {
@@ -58,7 +44,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
             .catch(() => fs.mkdir(this.config.sequencesDir));
     }
 
-    async list(): Promise<ProcessSequenceAdapter[]> {
+    async list(): Promise<SequenceConfig[]> {
         const storedSequencesIds = await fs.readdir(this.config.sequencesDir);
         const sequencesConfigs = await Promise.all(
             storedSequencesIds
@@ -69,12 +55,10 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         this.logger.debug("Listed stored sequences", sequencesConfigs);
 
         return sequencesConfigs
-            .filter(isDefined)
-            .map((config): SequenceInfo => ({ id: config.id, config, instances: new Set() }))
-            .map((info) => new ProcessSequenceAdapter(this.config, info));
+            .filter(isDefined);
     }
 
-    async identify(stream: Readable, id: string): Promise<void> {
+    async identify(stream: Readable, id: string): Promise<SequenceConfig> {
         const sequenceDir = path.join(this.config.sequencesDir, id);
 
         await fs.mkdir(sequenceDir);
@@ -85,13 +69,15 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         await new Promise(res => uncompressingProc.on("close", res));
 
-        const config = await getRunnerConfigForStoredSequence(sequenceDir, id);
-
-        this.computedInfo = { id: config.id, config, instances: new Set() };
+        return getRunnerConfigForStoredSequence(sequenceDir, id);
     }
 
-    async remove() {
-        const sequenceDir = path.join(this.config.sequencesDir, this.info.id);
+    async remove(config: SequenceConfig) {
+        if (config.type !== "process") {
+            throw new Error(`Incorrect SequenceConfig pased to ProcessSequenceAdapter: ${config.type}`);
+        }
+
+        const sequenceDir = path.join(this.config.sequencesDir, config.id);
 
         return fs.rm(sequenceDir, { recursive: true });
     }
