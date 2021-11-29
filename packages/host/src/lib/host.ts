@@ -525,7 +525,7 @@ export class Host implements IComponent {
         this.logger.log("Cleaning up...");
 
         this.instancesStore = {};
-        this.sequencesStore = new SequenceStore();
+        this.sequencesStore = new Map();
 
         this.logger.log("Stopping API server...");
 
