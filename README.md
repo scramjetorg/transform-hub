@@ -14,7 +14,7 @@
 
 # The Idea
 
-Scramjet Transform Hub is a serverless systems that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to the cloud just as easily... Oh and the app is incredibly simple too:
+Scramjet Transform Hub is a serverless system that allows you to easily deploy, run and interconnect programs that process repetitive data tasks in long-running processes. STH can be run just as well on a Raspberry Pi as it can on a massive 128 core Epyc bare metal server. It installs in one simple command and deploys your app to the cloud just as easily... Oh, and the app is incredibly simple too:
 
 ```js
 export (input: Readable) => async function*() { 
