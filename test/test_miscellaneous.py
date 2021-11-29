@@ -1,8 +1,8 @@
-from datastream import DataStream
+from scramjet.datastream import DataStream
 import pytest
 
 async def read_as_binary_and_decode(size, expected):
-    with open('sample_multibyte_text.txt', 'rb') as file:
+    with open('test/sample_multibyte_text.txt', 'rb') as file:
         bytes = await DataStream.read_from(file, chunk_size=size).to_list()
 
         # ensure that we really have characters split across chunks

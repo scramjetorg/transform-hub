@@ -1,8 +1,8 @@
-from datastream import DataStream
-from pyfca import DropChunk
+from scramjet.datastream import DataStream
+from scramjet.pyfca import DropChunk
 import asyncio
-from ansi_color_codes import *
-import utils
+from scramjet.ansi_color_codes import *
+import scramjet.utils as utils
 import pytest
 
 log = utils.LogWithTimer.log
@@ -104,7 +104,7 @@ async def test_variadic_args():
 
 @pytest.mark.asyncio
 async def test_transformations_on_data_from_file_object():
-    with open("sample_numbers_1.txt") as f:
+    with open("test/sample_numbers_1.txt") as f:
         stream = DataStream.from_iterable(f, max_parallel=4)
         result = await (
             stream

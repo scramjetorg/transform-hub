@@ -5,9 +5,9 @@ import sys
 from pprint import pprint
 import random
 
-import pyfca
-import utils
-from ansi_color_codes import *
+from scramjet import pyfca
+import scramjet.utils as utils
+from scramjet.ansi_color_codes import *
 
 log = utils.LogWithTimer.log
 random.seed('Pyfca')
