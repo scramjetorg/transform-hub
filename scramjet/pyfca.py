@@ -30,13 +30,13 @@ class Pyfca:
     def __init__(self, max_parallel, initial_transform=None, name="pyfca"):
         self.max_parallel = max_parallel
         self.name = name
-        self.transform_chain = []
+        self._transform_chain = []
         if initial_transform:
-            self.transform_chain.append(initial_transform)
+            self._transform_chain.append(initial_transform)
 
-        self.processing = asyncio.Queue()
-        self.ready = asyncio.Queue()
-        self.waiting_for_read = asyncio.Queue()
+        self._processing = asyncio.Queue()
+        self._ready = asyncio.Queue()
+        self._waiting_for_read = asyncio.Queue()
         self.ended = False
         # increment on write, decrement on read
         self.read_write_balance = 0
@@ -46,10 +46,10 @@ class Pyfca:
         self.last_chunk_status.set_result(True)
         self.last_chunk_status.chunk = {'id': 'start-sentinel'}
         for _ in range(max_parallel - 1):
-            self.processing.put_nowait(self.last_chunk_status)
+            self._processing.put_nowait(self.last_chunk_status)
 
-        self.no_more_items = asyncio.Future()
-        self.no_more_items.set_result(None)
+        self._no_more_items = asyncio.Future()
+        self._no_more_items.set_result(None)
 
         log(self, 'INIT finished')
 
@@ -60,15 +60,15 @@ class Pyfca:
         self.read_write_balance += 1
 
         chunk_status = asyncio.Future()
-        self.processing.put_nowait(chunk_status)
+        self._processing.put_nowait(chunk_status)
         task = asyncio.create_task(self._process(chunk, chunk_status))
         if self.read_write_balance < self.max_parallel:
             # if we always returned gather, we would loose sync
-            drain = self.processing.get_nowait()
+            drain = self._processing.get_nowait()
         else:
             waiting = asyncio.Future()
-            self.waiting_for_read.put_nowait(waiting)
-            drain = asyncio.gather(self.processing.get_nowait(), waiting)
+            self._waiting_for_read.put_nowait(waiting)
+            drain = asyncio.gather(self._processing.get_nowait(), waiting)
 
         if DEBUG:
             chunk_status.chunk = chunk
@@ -83,18 +83,18 @@ class Pyfca:
     def read(self):
         if self.ended and self.read_write_balance <= 0:
             log(self, 'READ processing ended, return None')
-            return self.no_more_items
+            return self._no_more_items
 
         self.read_write_balance -= 1
         log(self, f'READ r/w balance: {self.read_write_balance}')
 
         try:
-            waiting = self.waiting_for_read.get_nowait()
+            waiting = self._waiting_for_read.get_nowait()
             waiting.set_result(True)
         except asyncio.queues.QueueEmpty:
             pass
 
-        awaitable = self.ready.get()
+        awaitable = self._ready.get()
         log(self, f'  -  return: {awaitable}')
         return awaitable
 
@@ -111,8 +111,8 @@ class Pyfca:
 
 
     def add_transform(self, transformation):
-        self.transform_chain.append(transformation)
-        log(self, f'ADD_TRANSFORM current chain: {self.transform_chain}')
+        self._transform_chain.append(transformation)
+        log(self, f'ADD_TRANSFORM current chain: {self._transform_chain}')
 
 
     async def _resolve_overflow_readers(self):
@@ -121,7 +121,7 @@ class Pyfca:
 
         log(self, f'END final r/w balance: {self.read_write_balance}')
         for _ in range(-self.read_write_balance):
-            self.ready.put_nowait(None)
+            self._ready.put_nowait(None)
             log(self, f' -  appended None')
 
 
@@ -134,7 +134,7 @@ class Pyfca:
 
         self.last_chunk_status = chunk_status
         result = chunk
-        for func in self.transform_chain:
+        for func in self._transform_chain:
             result = func(result)
             log(self, f'   -    {fmt(chunk)} function: {func}')
             log(self, f'   -    {fmt(chunk)} yielded: {repr(result)}')
@@ -153,11 +153,11 @@ class Pyfca:
         if result is not DropChunk:
             log(self, f'   -    {fmt(chunk)} {green}return{reset}: '
                      f' {utils.print_trimmed(result, color=False)}')
-            await self.ready.put(result)
+            await self._ready.put(result)
         else:
             log(self, f'   -    {fmt(chunk)} {cyan}drop chunk{reset}')
             self.read_write_balance -= 1
             if self.read_write_balance == self.max_parallel - 1:
-                waiting = self.waiting_for_read.get_nowait()
+                waiting = self._waiting_for_read.get_nowait()
                 waiting.set_result(True)
 

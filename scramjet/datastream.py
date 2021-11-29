@@ -22,29 +22,29 @@ class StreamAlreadyConsumed(Exception):
 
 class DataStream():
     def __init__(self, max_parallel=64, upstream=None, name="datastream"):
-        self.upstream = upstream
+        self._upstream = upstream
         self.name = name
         # whether the stream was already "used" (transformed/read from)
         self._consumed = False
-        self.pyfca = upstream.pyfca if upstream else Pyfca(max_parallel)
-        self.ready_to_start = asyncio.Future()
-        self.sinks = []
-        log(self, f'INIT stream created with pyfca {self.pyfca}')
+        self._pyfca = upstream._pyfca if upstream else Pyfca(max_parallel)
+        self._ready_to_start = asyncio.Future()
+        self._sinks = []
+        log(self, f'INIT stream created with pyfca {self._pyfca}')
 
     async def __aiter__(self):
         self._uncork()
         while True:
-            chunk = await self.pyfca.read()
+            chunk = await self._pyfca.read()
             if chunk is None:
                 break
             yield chunk
 
     def _uncork(self):
-        self.ready_to_start.set_result(True)
+        self._ready_to_start.set_result(True)
         log(self, f'{green}uncorked{reset}')
-        if self.upstream:
-            log(self, f'uncorking upstream: {self.upstream.name}')
-            self.upstream._uncork()
+        if self._upstream:
+            log(self, f'uncorking upstream: {self._upstream.name}')
+            self._upstream._uncork()
 
     def _mark_consumed(self):
         if self._consumed:  # cannot consume the same stream twice
@@ -76,14 +76,14 @@ class DataStream():
     def from_iterable(cls, iterable, max_parallel=64):
         stream = cls(max_parallel)
         async def consume():
-            await stream.ready_to_start
+            await stream._ready_to_start
             if isinstance(iterable, Iterable):
                 for item in iterable:
-                    await stream.pyfca.write(item)
+                    await stream._pyfca.write(item)
             elif isinstance(iterable, AsyncIterable):
                 async for item in iterable:
-                    await stream.pyfca.write(item)
-            stream.pyfca.end()
+                    await stream._pyfca.write(item)
+            stream._pyfca.end()
 
         asyncio.create_task(consume())
         return stream
@@ -93,15 +93,15 @@ class DataStream():
         stream = cls(max_parallel)
 
         async def consume():
-            await stream.ready_to_start
+            await stream._ready_to_start
             while True:
                 chunk = callback(*args)
                 if asyncio.iscoroutine(chunk):
                     chunk = await chunk
                 if chunk == '' or chunk == b'':
                     break
-                await stream.pyfca.write(chunk)
-            stream.pyfca.end()
+                await stream._pyfca.write(chunk)
+            stream._pyfca.end()
 
         asyncio.create_task(consume())
         return stream
@@ -109,12 +109,12 @@ class DataStream():
     def flatmap(self, func, *args):
         self._mark_consumed()
         new_stream = self.__class__(
-            max_parallel=self.pyfca.max_parallel, name=f'{self.name}+fm'
+            max_parallel=self._pyfca.max_parallel, name=f'{self.name}+fm'
         )
         async def consume():
             self._uncork()
             while True:
-                chunk = await self.pyfca.read()
+                chunk = await self._pyfca.read()
                 log(self, f'got: {tr(chunk)}')
                 if chunk is None:
                     break
@@ -124,10 +124,10 @@ class DataStream():
                 log(self, f'{cyan}split:{reset} -> {repr(results)}')
                 for item in results:
                     log(new_stream, f'put: {tr(item)}')
-                    await new_stream.pyfca.write(item)
+                    await new_stream._pyfca.write(item)
                     log(new_stream, f'{blue}drained{reset}')
-            log(new_stream, f'ending pyfca {new_stream.pyfca}')
-            new_stream.pyfca.end()
+            log(new_stream, f'ending pyfca {new_stream._pyfca}')
+            new_stream._pyfca.end()
         asyncio.create_task(consume(), name='flatmap-consumer')
         return new_stream
 
@@ -143,20 +143,20 @@ class DataStream():
             log(new_stream, f'filter result: {tr(chunk)} -> {cyan}{decision}{reset}')
             return chunk if decision else DropChunk
         log(new_stream, f'adding filter: {func}')
-        new_stream.pyfca.add_transform(run_filter)
+        new_stream._pyfca.add_transform(run_filter)
         return new_stream
 
     def sequence(self, sequencer, initialPartial=None):
         self._mark_consumed()
         new_stream = self.__class__(
-            max_parallel=self.pyfca.max_parallel, name=f'{self.name}+s'
+            max_parallel=self._pyfca.max_parallel, name=f'{self.name}+s'
         )
         async def consume():
             self._uncork()
             partial = initialPartial
 
             while True:
-                chunk = await self.pyfca.read()
+                chunk = await self._pyfca.read()
                 log(self, f'got: {tr(chunk)}')
                 if chunk is None:
                     break
@@ -166,16 +166,16 @@ class DataStream():
                 log(new_stream, f'{blue}{len(chunks)} chunks:{reset} {chunks}')
                 for chunk in chunks[:-1]:
                     log(new_stream, f'put: {tr(chunk)}')
-                    await new_stream.pyfca.write(chunk)
+                    await new_stream._pyfca.write(chunk)
                 log(new_stream, f'carrying over partial result: {tr(chunks[-1])}')
                 partial = chunks[-1]
 
             log(new_stream, f'leftover: {tr(partial)}')
             if partial:
                 log(new_stream, f'put: {tr(partial)}')
-                await new_stream.pyfca.write(partial)
-            log(new_stream, f'ending pyfca {new_stream.pyfca}')
-            new_stream.pyfca.end()
+                await new_stream._pyfca.write(partial)
+            log(new_stream, f'ending pyfca {new_stream._pyfca}')
+            new_stream._pyfca.end()
         asyncio.create_task(consume())
         return new_stream
 
@@ -191,20 +191,20 @@ class DataStream():
             log(new_stream, f'mapper result: {tr(chunk)} -> {tr(result)}')
             return result
         log(new_stream, f'adding mapper: {func}')
-        new_stream.pyfca.add_transform(run_mapper)
+        new_stream._pyfca.add_transform(run_mapper)
         return new_stream
 
     def batch(self, func, *args):
         self._mark_consumed()
         new_stream = self.__class__(
-            max_parallel=self.pyfca.max_parallel, name=f'{self.name}+b'
+            max_parallel=self._pyfca.max_parallel, name=f'{self.name}+b'
         )
         async def consume():
             self._uncork()
             batch = []
 
             while True:
-                chunk = await self.pyfca.read()
+                chunk = await self._pyfca.read()
                 log(self, f'got: {tr(chunk)}')
                 if chunk is None:
                     break
@@ -213,15 +213,15 @@ class DataStream():
                     log(new_stream, f'calling {func} with args: {chunk, *args}')
                 if func(chunk, *args):
                     log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
-                    await new_stream.pyfca.write(batch)
+                    await new_stream._pyfca.write(batch)
                     batch = []
 
             if len(batch):
                 log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
-                await new_stream.pyfca.write(batch)
+                await new_stream._pyfca.write(batch)
 
-            log(new_stream, f'ending pyfca {new_stream.pyfca}')
-            new_stream.pyfca.end()
+            log(new_stream, f'ending pyfca {new_stream._pyfca}')
+            new_stream._pyfca.end()
         asyncio.create_task(consume())
         return new_stream
 
@@ -230,11 +230,11 @@ class DataStream():
         self._uncork()
         result = []
         log(self, f'sink: {repr(result)}')
-        chunk = await self.pyfca.read()
+        chunk = await self._pyfca.read()
         while chunk is not None:
             log(self, f'got: {tr(chunk)}')
             result.append(chunk)
-            chunk = await self.pyfca.read()
+            chunk = await self._pyfca.read()
         return result
 
     async def to_file(self, out_file):
@@ -243,26 +243,26 @@ class DataStream():
         log(self, f'sink: {repr(out_file)}')
         with open(out_file, 'wb') as f:
             log(self, f'writing to {f}')
-            chunk = await self.pyfca.read()
+            chunk = await self._pyfca.read()
             while chunk is not None:
                 log(self, f'got: {tr(chunk)}')
                 f.write(chunk)
-                chunk = await self.pyfca.read()
+                chunk = await self._pyfca.read()
 
     def pipe(self, target):
         self._consumed = True
-        self.sinks.append(target)
+        self._sinks.append(target)
         async def consume():
             self._uncork()
             while True:
-                chunk = await self.pyfca.read()
+                chunk = await self._pyfca.read()
                 if chunk is None:
                     break
-                drains = [target.pyfca.write(chunk) for target in self.sinks]
+                drains = [target._pyfca.write(chunk) for target in self._sinks]
                 await asyncio.gather(*drains)
-            for target in self.sinks:
-                target.pyfca.end()
-        if len(self.sinks) == 1:
+            for target in self._sinks:
+                target._pyfca.end()
+        if len(self._sinks) == 1:
             asyncio.create_task(consume(), name='pipe-consumer')
         return target
 
@@ -270,13 +270,13 @@ class DataStream():
         self._mark_consumed()
         self._uncork()
         if initial is None:
-            accumulator = await self.pyfca.read()
+            accumulator = await self._pyfca.read()
             log(self, f'got: {tr(accumulator)}')
         else:
             accumulator = initial
             log(self, f'reducer: initialized accumulator with {initial}')
         while True:
-            chunk = await self.pyfca.read()
+            chunk = await self._pyfca.read()
             log(self, f'got: {tr(chunk)}')
             if chunk is None:
                 break
@@ -290,7 +290,7 @@ class DataStream():
     def _as(self, target_class):
         return target_class(
             upstream=self,
-            max_parallel=self.pyfca.max_parallel,
+            max_parallel=self._pyfca.max_parallel,
             name=f'{self.name}+_'
         )
 

@@ -54,4 +54,4 @@ async def test_decoding_datastream_produces_stringstream():
 async def test_converting_streams_does_not_break_pyfca():
     s1 = DataStream.read_from(['a', 'b', 'c', 'd']).map(lambda x: x*2)
     s2 = s1._as(StringStream).map(lambda x: 'foo '+x)
-    assert s2.pyfca == s1.pyfca
+    assert s2._pyfca == s1._pyfca
