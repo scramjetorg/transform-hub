@@ -1,6 +1,6 @@
 import * as findPackage from "find-package-json";
 
-import { APIExpose, AppConfig, CSIConfig, IComponent, ISequenceAdapter, Logger, NextCallback, ParsedMessage, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, CSIConfig, IComponent, Logger, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -15,7 +15,6 @@ import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 import { getSequenceAdapter } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
-import { SequenceStore } from "./sequence-store";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { constants } from "fs";
@@ -40,7 +39,7 @@ export class Host implements IComponent {
     cpmConnector?: CPMConnector;
 
     instancesStore = InstanceStore;
-    sequencesStore: SequenceStore = new SequenceStore();
+    sequencesStore = new Map<string, SequenceInfo>();
 
     logger: Logger;
     loadCheck: LoadCheck;
@@ -237,13 +236,41 @@ export class Host implements IComponent {
 
         this.logger.log("Deleting sequence...", id);
 
-        const result = await this.sequencesStore.delete(id);
+        const sequenceInfo = this.sequencesStore.get(id);
 
-        if (result.opStatus === ReasonPhrases.OK) {
-            this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
+        if (!sequenceInfo) {
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND
+            };
         }
 
-        return result;
+        if (sequenceInfo.instances.size > 0) {
+            this.logger.warn("Can't remove sequence in use:", id);
+
+            return {
+                opStatus: ReasonPhrases.CONFLICT,
+                error: "Can't remove sequence in use."
+            };
+        }
+
+        try {
+            const sequenceAdapter = getSequenceAdapter(this.config);
+
+            await sequenceAdapter.remove(sequenceInfo.config);
+            this.sequencesStore.delete(id);
+
+            this.logger.log("Sequence removed:", id);
+
+            this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
+
+            return {
+                opStatus: ReasonPhrases.OK,
+                id
+            };
+        } catch (error: any) {
+            this.logger.error("Error removing sequence!", error);
+            throw new HostError("CONTROLLER_ERROR");
+        }
     }
 
     async identifyExistingSequences() {
@@ -254,11 +281,11 @@ export class Host implements IComponent {
             await sequenceAdapter.init();
 
             this.logger.debug("SequenceAdapater initialized, listing...");
-            const sequences = await sequenceAdapter.list();
+            const configs = await sequenceAdapter.list();
 
-            for (const sequence of sequences) {
-                this.sequencesStore.add(sequence);
-                this.logger.log("Sequence found", sequence.info.config);
+            for (const config of configs) {
+                this.sequencesStore.set(config.id, { id: config.id, config: config, instances: new Set() });
+                this.logger.log("Sequence found", config);
             }
         } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences.", e);
@@ -274,16 +301,16 @@ export class Host implements IComponent {
             const sequence = getSequenceAdapter(this.config);
 
             await sequence.init();
-            await sequence.identify(stream, id);
+            const config = await sequence.identify(stream, id);
 
-            this.sequencesStore.add(sequence);
+            this.sequencesStore.set(config.id, { id: config.id, config, instances: new Set() });
 
-            this.logger.info("Sequence identified:", sequence.info.config);
+            this.logger.info("Sequence identified:", config);
 
-            await this.cpmConnector?.sendSequenceInfo(sequence.info.id, SequenceMessageCode.SEQUENCE_CREATED);
+            await this.cpmConnector?.sendSequenceInfo(config.id, SequenceMessageCode.SEQUENCE_CREATED);
 
             return {
-                id: sequence.info.id
+                id: config.id
             };
         } catch (error: any) {
             this.logger.debug(error?.stack);
@@ -305,10 +332,10 @@ export class Host implements IComponent {
         // eslint-disable-next-line no-extra-parens
         const seqId = req.params?.id;
         const payload = req.body || {};
-        const sequence = this.sequencesStore.getById(seqId);
+        const sequence = this.sequencesStore.get(seqId);
 
         if (sequence) {
-            this.logger.info("Starting sequence", sequence.info.id);
+            this.logger.info("Starting sequence", sequence.id);
 
             const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
@@ -343,7 +370,7 @@ export class Host implements IComponent {
     }
 
     async startCSIController(
-        sequence: ISequenceAdapter,
+        sequence: SequenceInfo,
         appConfig: AppConfig,
         sequenceArgs?: any[]
     ): Promise<CSIController> {
@@ -356,7 +383,7 @@ export class Host implements IComponent {
         };
         const csic = new CSIController(
             id,
-            sequence.info,
+            sequence,
             appConfig,
             sequenceArgs,
             communicationHandler,
@@ -371,7 +398,7 @@ export class Host implements IComponent {
 
         this.attachInstanceToCommonLogsPipe(csic);
 
-        sequence.info.instances.add(id);
+        sequence.instances.add(id);
 
         csic.on("pang", (data) => {
             this.logger.log("PANG message received:", data);
@@ -418,11 +445,11 @@ export class Host implements IComponent {
 
             delete InstanceStore[csic.id];
 
-            sequence.info.instances.delete(id);
+            sequence.instances.delete(id);
 
             this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
-                sequence: sequence.info.id
+                sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             if (csic.provides && csic.provides !== "") {
@@ -449,41 +476,37 @@ export class Host implements IComponent {
     }
 
     getSequence(id: string): STHRestAPI.GetSequenceResponse {
-        if (!this.sequencesStore.getById(id)) {
+        const sequence = this.sequencesStore.get(id);
+
+        if (!sequence) {
             throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
         }
 
-        const sequence = this.sequencesStore.getById(id);
-
-        if (!sequence) {
-            return undefined;
-        }
-
         return {
-            id: sequence.info.id,
-            config: sequence.info.config,
-            instances: Array.from(sequence.info.instances.values())
+            id: sequence.id,
+            config: sequence.config,
+            instances: Array.from(sequence.instances.values())
         };
     }
 
     getSequences(): STHRestAPI.GetSequencesResponse {
-        return this.sequencesStore.getSequences()
+        return Array.from(this.sequencesStore.values())
             .map(sequence => ({
-                id: sequence.info.id,
-                config: sequence.info.config,
-                instances: Array.from(sequence.info.instances.values())
+                id: sequence.id,
+                config: sequence.config,
+                instances: Array.from(sequence.instances.values())
             }));
     }
 
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
         // @TODO this should probably return error response when there's not corresponding Sequence
-        const sequence = this.sequencesStore.getById(sequenceId);
+        const sequence = this.sequencesStore.get(sequenceId);
 
         if (!sequence) {
             return undefined;
         }
 
-        return Array.from(sequence.info.instances.values());
+        return Array.from(sequence.instances.values());
     }
 
     async stop() {
