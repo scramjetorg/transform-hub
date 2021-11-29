@@ -1,6 +1,6 @@
 # `@scramjet/utility`
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package holds utility functions used in places around Scramjet Tranform Hub.
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package holds utility functions used in places around Scramjet Transform Hub.
 
 This package includes **domain agnostic** utility **functions**, meaning there shouldn't be any business use-case specific code here. It's important since a package like this one tends to be a very common dependency for other packages. Ideally functions from this package should be written once, well tested and never changed.
 

@@ -1,8 +1,23 @@
 # Scramjet Transform Hub <!-- omit in toc -->
 
-![Scramjet Transform Hub](https://assets.scramjet.org/sth-logo.svg "Scramjet Transform Hub Logo")
+<p align="center">
+    <a><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
+    <a><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
+    <a><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
+    <a><img src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic" alt="npm" /></a>
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW">
+        <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?color=yellow&style=plastic" alt="Donate" />
+    </a>
+</p>
+<p align="center">⭐ Star us on GitHub — it motivates us a lot! 🚀 </p>
+<p align="center">
+    <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
+</p>
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Rasperry Pi or wherever else you'd like.
+---
+
+
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
 ## TL;DR
 
@@ -39,7 +54,7 @@ module.exports = function(_stream, apikey, fr, to) {
         .run();
 };
 ```
-[//]: <> (@TODO fix this example)
+
 Copy a [package.json from here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/sth/packages/samples/currency-js/package.json).
 
 Open a terminal run your program on the hub:
