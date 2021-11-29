@@ -63,9 +63,9 @@ It currently supports Node.js based apps, but Python and other languages are com
 
 This is a development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.
 
-This repository contains the source code for https://scramjet.org/docs (🚧404🚧 website under construction 👷).
+This repository contains the source code for https://hub.scramjet.org.
 
-If you want to read the docs, go there ☝🏼
+If you want to [read the usage docs, go here ☝🏼](https://github.com/scramjetorg/scramjet-cloud-docs)
 
 What's more, this repository is intended for developers who would like to:
 
