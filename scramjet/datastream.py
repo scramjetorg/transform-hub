@@ -31,6 +31,12 @@ class DataStream():
         self._sinks = []
         log(self, f'INIT stream created with pyfca {self._pyfca}')
 
+    def __await__(self):
+        raise TypeError(
+            "Stream objects cannot be awaited on. To get data from a stream, "
+            "use a sink method (such as .to_list()) and await on that."
+        )
+
     async def __aiter__(self):
         self._uncork()
         while True:
