@@ -26,11 +26,10 @@ export function isValidSequencePackageJSON(value: unknown): value is SequencePac
         Object.values(v.engines).every(val => typeof val === "string");
 
     const scramjetConfigIsValid = !v.scramjet ||
-        isOptionalString(v.scramjet.image) &&
-        (!v.scramjet.config ||
+         (!v.scramjet.config ||
             typeof v.scramjet.config.ports === "object" &&
             isValidPortsConfiguration(v.scramjet.config.ports)
-        );
+         );
 
     return enginesAreValid &&
         scramjetConfigIsValid &&
