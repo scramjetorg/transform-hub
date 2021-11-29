@@ -492,7 +492,7 @@ This is what you should get as a result:
 
 ## More samples :books:
 
-To check out more of our ready-to-go samples, please go to our repo on [GitHub](https://github.com/scramjetorg/scramjet-cloud-docs), ["samples" directory](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples).
+To check out more of our ready-to-go samples, please go to our repo on GitHub, [samples directory](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples).
 
 ## Configure your own sample :pencil:
 
