@@ -19,7 +19,6 @@ export * from "./messages";
 export * from "./runner-config";
 export * from "./runner";
 export * from "./sequence";
-export * from "./sequence-store";
 export * from "./utils";
 export * from "./sth-configuration";
 export * from "./load-check-stat";

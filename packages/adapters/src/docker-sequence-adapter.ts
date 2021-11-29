@@ -5,7 +5,6 @@ import {
     Logger,
     SequenceConfig,
     STHConfiguration,
-    SequenceInfo,
     DockerSequenceConfig,
 } from "@scramjet/types";
 import { Readable } from "stream";
@@ -20,24 +19,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
     private logger: Logger;
 
-    private computedInfo: SequenceInfo | null = null
-
-    constructor(private config: STHConfiguration, info?: SequenceInfo) {
-        if (info && info.config.type !== "docker") {
-            throw new Error("Invalid info config for DockerSequenceAdapter");
-        }
-        this.computedInfo = info ?? null;
-
+    constructor(private config: STHConfiguration) {
         this.dockerHelper = new DockerodeDockerHelper();
         this.logger = getLogger(this);
-    }
-
-    public get info(): SequenceInfo {
-        if (!this.computedInfo) {
-            throw new Error("Sequence not identified yet");
-        }
-
-        return this.computedInfo;
     }
 
     async init(): Promise<void> {
@@ -52,7 +36,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         await this.dockerHelper.pullImage(name, true);
     }
 
-    async list(): Promise<DockerSequenceAdapter[]> {
+    async list(): Promise<SequenceConfig[]> {
         const potentialVolumes = await this.dockerHelper.listVolumes();
 
         const configs = await Promise.all(
@@ -62,9 +46,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         );
 
         return configs
-            .filter(isDefined)
-            .map((config): SequenceInfo => ({ id: config.id, config, instances: new Set() }))
-            .map((info) => new DockerSequenceAdapter(this.config, info));
+            .filter(isDefined);
     }
 
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
@@ -98,7 +80,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         }
     }
 
-    async identify(stream: Readable, id: string): Promise<void> {
+    async identify(stream: Readable, id: string): Promise<SequenceConfig> {
         const volumeId = await this.createVolume(id);
 
         this.resources.volumeId = volumeId;
@@ -123,19 +105,15 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         }
 
         try {
-            const { streams, wait, containerId } = runResult;
-
-            this.resources.containerId = containerId;
+            const { streams, wait } = runResult;
 
             stream.pipe(streams.stdin);
 
             const config = await this.parsePackage(streams, wait, volumeId);
 
-            this.resources.containerId = undefined;
-
             await this.fetch(config.container.image);
 
-            this.computedInfo = { id: config.id, config, instances: new Set() };
+            return config;
         } catch (err) {
             this.logger.error(err);
             throw new SupervisorError("PRERUNNER_ERROR", err);
@@ -179,16 +157,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         };
     }
 
-    async remove() {
-        if (this.resources.containerId) {
-            this.logger.info("Forcefully stopping containter", this.resources.containerId);
-
-            await this.dockerHelper.stopContainer(this.resources.containerId);
-
-            this.logger.info("Container removed.");
+    async remove(config: SequenceConfig) {
+        if (config.type !== "docker") {
+            throw new Error(`Incorrect SequenceConfig pased to DockerSequenceAdapter: ${config.type}`);
         }
 
-        await this.dockerHelper.removeVolume(this.info.id);
+        await this.dockerHelper.removeVolume(config.id);
 
         this.logger.debug("Volume removed.");
     }

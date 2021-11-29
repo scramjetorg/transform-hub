@@ -9,19 +9,17 @@ export type SequenceInfo = {
 }
 
 export interface ISequenceAdapter {
-    info: SequenceInfo;
-
     init(): Promise<void>;
 
     /**
      * Identifies existing sequences
      */
-    list(): Promise<ISequenceAdapter[]>;
+    list(): Promise<SequenceConfig[]>;
 
     /**
      * Identifies new sequence
      */
-    identify(stream: Readable, id: string): Promise<void>;
+    identify(stream: Readable, id: string): Promise<SequenceConfig>;
 
-    remove(): Promise<void>
+    remove(conifg: SequenceConfig): Promise<void>
 }
