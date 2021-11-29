@@ -109,7 +109,7 @@ si inst help [command]                                # display help for command
 
 See more detailed docs here:
 
->!docs development-guide/CLI-command-reference.md &
+>!docs interfaces/CLI-command-reference.md &
 
 >@sth
 >@use-cases
