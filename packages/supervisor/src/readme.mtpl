@@ -1,6 +1,6 @@
 # `@scramjet/supervisor` <!-- omit in toc -->
 
-This package executes the remote runners and provides communication with them throgh abstraction layer provided by adapters.
+This package executes the remote runners and provides communication with them through abstraction layer provided by adapters.
 
 ## Docs
 

@@ -1,6 +1,22 @@
 # Scramjet Transform Hub Command Line Interface <!-- omit in toc -->
 
-![Scramjet Transform Hub](https://assets.scramjet.org/sth-logo.svg "Scramjet Transform Hub Logo")
+<p align="center">
+    <a><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
+    <a><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
+    <a><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
+    <a><img src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic" alt="npm" /></a>
+    <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW">
+        <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?color=yellow&style=plastic" alt="Donate" />
+    </a>
+</p>
+<p align="center">⭐ Star us on GitHub — it motivates us a lot! 🚀 </p>
+<p align="center">
+    <a href="https://www.npmjs.com/package/@scramjet/sth">
+        <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
+    </a>
+</p>
+
+---
 
 This package provides a CLI interface to communicate with Scramjet Transform Hub. You can install the CLI like this:
 
@@ -59,7 +75,7 @@ Options:
 ## Sequence operations
 
 ```bash
-si seq run [options] [package] [args...] # Uploads a package and immediatelly executes it with given arguments
+si seq run [options] [package] [args...] # Uploads a package and immediately executes it with given arguments
 si seq send [<sequencePackage>]          # send packed and compressed sequence file
 si seq list|ls                           # list the sequences
 si seq start [options] <id> [args...]    # start the sequence
@@ -78,7 +94,7 @@ si inst status <id>                                   # status data about the in
 si inst health <id>                                   # show the instance health status
 si inst info <id>                                     # show info about the instance
 si inst invokeEvent|emit <id> <eventName> [<payload>] # send event with eventName and a JSON formatted event payload
-si inst event|on [options] <id> <event>               # get the last event occurence (will wait for the first one if not yet retrieved)
+si inst event|on [options] <id> <event>               # get the last event occurrence (will wait for the first one if not yet retrieved)
 si inst input <id> [<file>]                           # send file to input, if file not given the data will be read from stdin
 si inst output <id>                                   # show stream on output
 si inst log <id>                                      # show instance log
@@ -93,13 +109,13 @@ si inst help [command]                                # display help for command
 
 See more detailed docs here:
 
-See the code documentation here: [scramjetorg/transform-hub/docs/development-guide/scramjet-interface-cli.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/development-guide/scramjet-interface-cli.md)
+See the code documentation here: [scramjetorg/transform-hub/docs/development-guide/CLI-command-reference.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/development-guide/CLI-command-reference.md)
 
 ## Scramjet Transform Hub
 
 This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Rasperry Pi or wherever else you'd like.
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
 ## Use cases
 
@@ -119,7 +135,7 @@ There's no limit what you can use it for. You want a stock checker? A chat bot? 
 
 This module is licensed under AGPL-3.0 license.
 
-The Scramjet Transform Hub project is licensed dual licensed under the AGPL-3.0 and MIT licences. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
+The Scramjet Transform Hub project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
 ## Contributions
 
