@@ -309,6 +309,16 @@ class DataStream():
             lambda chunk: decoder.decode(chunk) or DropChunk
         )
 
+    def each(self, func, *args):
+        def mapper(chunk):
+            func(chunk, *args)
+            return chunk
+        return self.map(mapper)
+
+    def use(self, func):
+        return func(self)
+
+
 
 class StringStream(DataStream):
     def __init__(self, max_parallel=64, upstream=None, name="stringstream"):
