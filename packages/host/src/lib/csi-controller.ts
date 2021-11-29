@@ -394,7 +394,7 @@ export class CSIController extends EventEmitter {
 
         return {
             ...this.info,
-            sequenceId: this.sequence.config,
+            sequenceId: this.sequence.id,
             appConfig: this.appConfig,
             args: this.sequenceArgs
         };
