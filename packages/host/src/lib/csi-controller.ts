@@ -331,7 +331,7 @@ export class CSIController extends EventEmitter {
             );
 
             this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
-                const event = data[1] as unknown as EventMessageData;
+                const event = data[1];
 
                 if (!event.eventName) return;
                 localEmitter.lastEvents[event.eventName] = event;
