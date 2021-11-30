@@ -4,7 +4,6 @@ import {
     CSIConfig,
     DownstreamStreamsConfig,
     EncodedMessage,
-    EventMessageData,
     ExitCode,
     HandshakeAcknowledgeMessage,
     ICommunicationHandler,
