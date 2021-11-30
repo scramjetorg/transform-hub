@@ -1,0 +1,15 @@
+# Scramjet Transform Hub Command Line Interface <!-- omit in toc -->
+
+![Scramjet Transform Hub](https://assets.scramjet.org/sth-logo.svg "Scramjet Transform Hub Logo")
+
+This package provides a reverse server functionality.
+
+```bash
+npm install -g @scramjet/verser
+```
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib
