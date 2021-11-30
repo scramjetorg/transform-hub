@@ -1,6 +1,6 @@
 # `@scramjet/runner` <!-- omit in toc -->
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package executes the Sequences and provides control mechanisms to them.
+This package executes the Sequences and provides control mechanisms to them.
 
 ## Docs
 

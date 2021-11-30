@@ -1,6 +1,6 @@
 # `@scramjet/load-check` <!-- omit in toc -->
 
-This package provides health info for STH.
+This package provides info about STH health and also some metrics such as CPU, memory and disk usage.
 
 ## Docs
 

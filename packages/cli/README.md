@@ -16,8 +16,6 @@
     </a>
 </p>
 
----
-
 This package provides a CLI interface to communicate with Scramjet Transform Hub. You can install the CLI like this:
 
 ```bash
@@ -106,8 +104,6 @@ si inst help [command]                                # display help for command
 ```
 
 ## Extra reading
-
-See more detailed docs here:
 
 See the code documentation here: [scramjetorg/transform-hub/docs/interfaces/CLI-command-reference.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/interfaces/CLI-command-reference.md)
 
