@@ -1,6 +1,6 @@
 import * as fs from "fs";
 
-import { Agent, ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server, request } from "http";
+import { Agent, ClientRequest, IncomingMessage, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, EventEmitter, Readable } from "stream";
 import {
@@ -22,6 +22,7 @@ import { URL } from "url";
 import { getLogger } from "@scramjet/logger";
 import { LoadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
+import { VerserClient } from "@scramjet/verser";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -48,6 +49,7 @@ export class CPMConnector extends EventEmitter {
     wasConnected: boolean = false;
     connectionAttempts = 0;
     cpmURL: string;
+    verserClient: VerserClient;
 
     loadInterval?: NodeJS.Timeout;
 
@@ -55,6 +57,15 @@ export class CPMConnector extends EventEmitter {
         super();
         this.config = config;
         this.cpmURL = cpmUrl;
+
+        const cpmAddress = new URL("http://" + this.cpmURL);
+
+        this.verserClient = new VerserClient({
+            remotePort: +cpmAddress.port,
+            remoteHost: cpmAddress.hostname,
+            headers: {},
+            server: this.apiServer
+        });
     }
 
     setLoadCheck(loadCheck: LoadCheck) {
@@ -100,89 +111,87 @@ export class CPMConnector extends EventEmitter {
         server.httpAllowHalfOpen = true;
     }
 
-    connect() {
+    async connect() {
         this.logger.log("Connecting to CPM...");
 
         this.isReconnecting = false;
 
-        const cpmUrl = new URL("http://" + this.cpmURL);
-        const headers: OutgoingHttpHeaders = {};
-
         if (this.info.id) {
-            headers["x-sth-id"] = this.info.id;
+            this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
         }
 
-        const req = request({
-            port: cpmUrl.port,
-            host: cpmUrl.hostname,
-            method: "CONNECT",
-            agent: new Agent({ keepAlive: true }),
-            headers
-        }).on("connect", (_response, socket) => {
-            this.logger.info("Connected to CPM.");
-            this.tunnel = socket;
-            this.tunnel.on("close", () => { this.handleConnectionClose(); });
-            this.connected = true;
+        let connection;
 
-            new BPMux(socket)
-                .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
-                    if (mSocket._chan === 0) {
-                        this.communicationChannel = mSocket;
+        try {
+            connection = await this.verserClient.connect();
+        } catch (err) {
+            this.logger.error("Can not connect to CPM.", err);
+            await this.reconnect();
+            return;
+        }
 
-                        StringStream.from(this.communicationChannel as Readable)
-                            .JSONParse()
-                            .map(async (message: EncodedControlMessage) => {
-                                this.logger.log("Received message:", message);
+        this.logger.info("Connected to CPM.");
+        this.tunnel = connection.socket;
+        this.tunnel.on("close", async () => { await this.handleConnectionClose(); });
+        this.connected = true;
 
-                                if (message[0] === CPMMessageCode.STH_ID) {
-                                    // eslint-disable-next-line no-extra-parens
-                                    this.info.id = (message[1] as STHIDMessageData).id;
-                                    fs.writeFileSync(
-                                        this.config.infoFilePath,
-                                        JSON.stringify(this.info)
-                                    );
-                                }
+        new BPMux(connection.socket)
+            .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
+                if (mSocket._chan === 0) {
+                    this.communicationChannel = mSocket;
 
-                                this.logger.log("Received id:", this.info.id);
-                                return message;
-                            }).catch((e: any) => {
-                                this.logger.error("communicationChannel error", e.message);
-                            });
+                    StringStream.from(this.communicationChannel as Readable)
+                        .JSONParse()
+                        .map(async (message: EncodedControlMessage) => {
+                            this.logger.log("Received message:", message);
 
-                        this.communicationStream = new StringStream();
-                        this.communicationStream.pipe(this.communicationChannel);
+                            if (message[0] === CPMMessageCode.STH_ID) {
+                                // eslint-disable-next-line no-extra-parens
+                                this.info.id = (message[1] as STHIDMessageData).id;
+                                this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
+                                fs.writeFileSync(
+                                    this.config.infoFilePath,
+                                    JSON.stringify(this.info)
+                                );
+                            }
 
-                        await this.communicationStream?.whenWrote(
-                            JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
-                        );
+                            this.logger.log("Received id:", this.info.id);
+                            return message;
+                        }).catch((e: any) => {
+                            this.logger.error("communicationChannel error", e.message);
+                        });
 
-                        this.emit("connect");
-                        this.setLoadCheckMessageSender();
-                    } else if (mSocket._chan === 1) {
-                        const logStream = mSocket.on("error", (err: Error) => this.logger.error(err.message));
+                    this.communicationStream = new StringStream();
+                    this.communicationStream.pipe(this.communicationChannel);
 
-                        this.emit("log_connect", logStream);
-                    } else {
-                        this.apiServer?.emit("connection", mSocket);
-                    }
-                })
-                .on("error", (err: Error) => {
-                    this.logger.log("Mux error", err);
-                    // TODO: Error handling?
-                });
+                    await this.communicationStream?.whenWrote(
+                        JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
+                    );
 
-            this.connectionAttempts = 0;
-        });
+                    this.emit("connect");
+                    this.setLoadCheckMessageSender();
+                } else if (mSocket._chan === 1) {
+                    const logStream = mSocket.on("error", (err: Error) => this.logger.error(err.message));
 
-        req.on("error", (error) => {
+                    this.emit("log_connect", logStream);
+                } else {
+                    this.verserClient.handleConnection(mSocket as unknown as Duplex);
+                }
+            })
+            .on("error", (err: Error) => {
+                this.logger.log("Mux error", err);
+                // TODO: Error handling?
+            });
+
+        this.connectionAttempts = 0;
+
+        connection.req.on("error", async (error: any) => {
             this.logger.error("Request error:", error);
-            this.reconnect();
+            await this.reconnect();
         });
-
-        req.end();
     }
 
-    handleConnectionClose() {
+    async handleConnectionClose() {
         this.connected = false;
 
         this.logger.log("Tunnel closed", this.getId());
@@ -192,10 +201,10 @@ export class CPMConnector extends EventEmitter {
             clearInterval(this.loadInterval);
         }
 
-        this.reconnect();
+        await this.reconnect();
     }
 
-    reconnect() {
+    async reconnect() {
         if (this.isReconnecting) {
             return;
         }
@@ -215,9 +224,9 @@ export class CPMConnector extends EventEmitter {
         if (shouldReconnect) {
             this.isReconnecting = true;
 
-            setTimeout(() => {
+            setTimeout(async () => {
                 this.logger.info("Connection lost, retrying...");
-                this.connect();
+                await this.connect();
             }, this.RECONNECT_INTERVAL);
         }
     }
