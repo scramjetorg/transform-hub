@@ -6,14 +6,14 @@ Feature: Ports e2e tests
         And instance started with arguments "tcp"
         And get instance info
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         And start reading "log" stream
         And connect to instance on port 17006 using "tcp" server
         And send "testMessage" to "tcp" server
         And wait for "3000" ms
         And check stream for message sent
         And send "null" to "tcp" server
-        And container is closed
+        And runner has ended execution
         Then host is still running
 
     Scenario: PT-005 TC-002 UDP Connection
@@ -22,12 +22,12 @@ Feature: Ports e2e tests
         And instance started with arguments "udp"
         And get instance info
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         And start reading "log" stream
         And connect to instance on port 17008 using "udp" server
         And send "testMessage" to "udp" server
         And wait for "3000" ms
         And check stream for message sent
         And send "null" to "udp" server
-        And container is closed
+        And runner has ended execution
         Then host is still running

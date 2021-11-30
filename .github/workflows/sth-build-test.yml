@@ -326,3 +326,122 @@ jobs:
       - name: Run BDD tests
         run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci
 
+  test-bdd-ci-no-host-no-docker-sth:
+    name: Test bdd-ci-no-host-no-docker STH (Nodejs ${{ matrix.node-version }})
+    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-pre-runner-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [14.x, 16.x]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --silent
+
+      - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+
+      - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+
+      - name: Download dockerSthImg artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+      - name: Download dockerImg artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+      - name: Download dockerPreRunnerImg artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerPreRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+      - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
+        run: pigz -d docker*Img*.tar.gz
+
+      - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
+        run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+
+      - name: Load Docker images
+        run: ls -1  docker*Img*.tar| while read line; do docker load -i $line; done
+
+      - name: Setup Nodejs ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Run BDD for HUB params
+        run: NO_DOCKER=1 SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
+
+
+  test-bdd-ci-sth-no-docker:
+      name: Test bdd-ci-no-docker STH (Nodejs ${{ matrix.node-version }})
+      needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-pre-runner-image]
+      runs-on: ubuntu-latest
+      timeout-minutes: 20
+
+      strategy:
+        fail-fast: true
+        matrix:
+          node-version: [14.x, 16.x]
+
+      steps:
+        - uses: actions/checkout@v2
+
+        - name: Install dependencies
+          run: yarn install --frozen-lockfile --silent
+
+        - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact 
+          uses: actions/download-artifact@v2
+          with:
+            name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+
+        - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact 
+          uses: actions/download-artifact@v2
+          with:
+            name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+
+        - name: Download dockerSthImg artifact 
+          uses: actions/download-artifact@v2
+          with:
+            name: dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+        - name: Download dockerImg artifact 
+          uses: actions/download-artifact@v2
+          with:
+            name: dockerRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+        - name: Download dockerPreRunnerImg artifact 
+          uses: actions/download-artifact@v2
+          with:
+            name: dockerPreRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+        - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
+          run: pigz -d docker*Img*.tar.gz
+
+        - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
+          run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+
+        - name: Load Docker images
+          run: ls -1  docker*Img*.tar| while read line; do docker load -i $line; done
+
+        - name: Setup Nodejs ${{ matrix.node-version }}
+          uses: actions/setup-node@v2
+          with:
+            node-version: ${{ matrix.node-version }}
+
+        - name: Run BDD tests
+          run: NO_DOCKER=1 SCRAMJET_TEST_LOG=1 yarn test:bdd-ci
+
