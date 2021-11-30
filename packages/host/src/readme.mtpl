@@ -1,6 +1,6 @@
 # `@scramjet/host` <!-- omit in toc -->
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package provides the main host subsystem of STH - starts API Servers, creates adapters etc.
+This package provides the main host subsystem of STH - starts API Servers, creates adapters etc.
 
 ## Docs
 
