@@ -3,7 +3,7 @@ Feature: Sample e2e tests
     Scenario: E2E-001 TC-001 Execute hello-alice-out example for host
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
-        And instance started with arguments "/package/data.json"
+        And instance started
         And get "output" in background with instanceId
         And wait for instance healthy is "true"
         And get runner PID
@@ -30,7 +30,7 @@ Feature: Sample e2e tests
     Scenario: E2E-001 TC-003 - KM5_Cloud Server Instance Component
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
-        And instance started with arguments "/package/data.json"
+        And instance started
         And get "output" in background with instanceId
         And wait for instance healthy is "true"
         And get runner PID
