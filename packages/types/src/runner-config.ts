@@ -27,7 +27,7 @@ export type DockerSequenceConfig = CommonSequenceConfig & {
 
 export type ProcessSequenceConfig = CommonSequenceConfig & {
     type: "process",
-    sequencesDir: string
+    sequenceDir: string
 }
 
 export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig

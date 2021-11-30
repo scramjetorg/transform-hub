@@ -6,13 +6,13 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         When sequence "../packages/reference-apps/event-sequence-v2.tar.gz" loaded
         And instance started with arguments "500"
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         When flood the stdin stream with 11000 kilobytes
         And wait for "3000" ms
         And send event "test-event" to instance with message "test message"
         Then get event "test-event-response" from instance
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
-        And container is closed
+        And runner has ended execution
         Then host is still running
 
     @ci
@@ -21,11 +21,11 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         When sequence "../packages/reference-apps/flood-stdout-sequence.tar.gz" loaded
         And instance started with arguments "2000 10000"
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         Then get event "test-event-response" from instance
         When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
         And send kill message to instance
-        And container is closed
+        And runner has ended execution
         Then host is still running
 

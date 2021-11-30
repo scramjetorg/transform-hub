@@ -18,6 +18,7 @@ import * as findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";
+import { exec } from "child_process";
 
 let hostClient: HostClient;
 let actualHealthResponse: any;
@@ -25,6 +26,7 @@ let actualStatusResponse: any;
 let actualApiResponse: Response;
 let actualLogResponse: any;
 let containerId: string;
+let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
 
 const freeport = require("freeport");
@@ -65,6 +67,20 @@ const waitForContainerToClose = async () => {
             console.log("Container exists: ", containerExist);
             await defer(500);
         } while (containerExist);
+    }
+};
+
+const waitForProcessToEnd = async (pid: number) => {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        const proc = await exec(`ps -p ${pid}`);
+
+        const exitCode = await new Promise<number>(res => proc.on("exit", res));
+
+        if (exitCode > 0) {
+            return;
+        }
+        await defer(500);
     }
 };
 
@@ -305,20 +321,36 @@ When("send kill message to instance", async function(this: CustomWorld) {
     assert.equal(resp?.status, 202);
 });
 
-When("get containerId", { timeout: 31000 }, async function(this: CustomWorld) {
-    const res = actualResponse()?.data?.containerId;
+When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
+    if (process.env.NO_DOCKER) {
+        const res = actualResponse()?.data?.processId;
 
-    if (!res) assert.fail();
+        if (!res) assert.fail();
 
-    containerId = res;
-    console.log("Container is identified.", containerId);
+        processId = res;
+        console.log("Process is identified.", processId);
+    } else {
+        const res = actualResponse()?.data?.containerId;
+
+        if (!res) assert.fail();
+
+        containerId = res;
+        console.log("Container is identified.", containerId);
+    }
 });
 
-When("container is closed", { timeout: 500000 }, async () => {
-    if (!containerId)assert.fail("There is no container ID");
+When("runner has ended execution", { timeout: 500000 }, async () => {
+    if (process.env.NO_DOCKER) {
+        if (!processId)assert.fail("There is no process ID");
 
-    await waitForContainerToClose();
-    console.log("Container is closed.");
+        await waitForProcessToEnd(processId);
+        console.log("Process has ended.");
+    } else {
+        if (!containerId)assert.fail("There is no container ID");
+
+        await waitForContainerToClose();
+        console.log("Container is closed.");
+    }
 });
 
 When("send event {string} to instance with message {string}", async function(this: CustomWorld, eventName, eventMessage) {

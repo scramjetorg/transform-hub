@@ -6,9 +6,9 @@ Feature: Kill e2e tests
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
         And instance started with arguments "/package/data.json"
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         And send kill message to instance
-        And container is closed
+        And runner has ended execution
         Then host is still running
 
     # This is a potential edge case so it's currently ignored.
@@ -18,9 +18,9 @@ Feature: Kill e2e tests
         When sequence "../packages/reference-apps/sequence-20s-kill-handler.tar.gz" loaded
         And instance started with arguments "/package/data.json"
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         Then get event "kill-handler-called" from instance
         When send kill message to instance
         Then instance response body is "{\"eventName\":\"kill-handler-called\",\"message\":\"\"}"
-        And container is closed
+        And runner has ended execution
         Then host is still running

@@ -7,8 +7,8 @@ Feature: Verify the checksums of payloads are correct
         When sequence "../packages/reference-apps/checksum-sequence.tar.gz" loaded
         And instance started
         When wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         And compare checksums of content sent from file "../dist/reference-apps/checksum-sequence/data.json"
-        When container is closed
+        When runner has ended execution
         Then host is still running
 

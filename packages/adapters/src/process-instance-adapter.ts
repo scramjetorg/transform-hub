@@ -126,7 +126,10 @@ IComponent {
             return msg;
         }
 
-        return msg;
+        return {
+            ...msg,
+            processId: this.runnerProcess?.pid
+        };
     }
 
     hookCommunicationHandler(communicationHandler: ICommunicationHandler): void {
@@ -178,8 +181,7 @@ IComponent {
         this.logger.log("Starting Runner...", config.id);
 
         const sequencePath = path.join(
-            config.sequencesDir,
-            config.id,
+            config.sequenceDir,
             config.entrypointPath
         );
 
@@ -215,7 +217,9 @@ IComponent {
         this.logger.log("Process exited.");
 
         if (statusCode === null) {
-            throw new Error(`Runner was killed by a signal ${signal}, and didn't return a status code`);
+            this.logger.warn(`Runner was killed by a signal ${signal}, and didn't return a status code`);
+            // Probably SIGKLL
+            return 137;
         }
 
         if (statusCode > 0) {
