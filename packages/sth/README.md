@@ -34,7 +34,7 @@ Depending on your machine this may take some time. When it's done the Hub should
 2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
 ```
 
-Now create an application, let's say you want to get the currency rates every 10 seconds and do something. In a clean folder save this as index.js:
+Now create an application, let's say you want to get the currency rates every 10 seconds and do something. In a clean folder save this as `index.js`:
 
 ```js
 const { DataStream } = require("scramjet");
@@ -55,7 +55,25 @@ module.exports = function(_stream, apikey, fr, to) {
 };
 ```
 
-Copy a [package.json from here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/sth/packages/samples/currency-js/package.json).
+Copy a content below and save it as `package.json` file:
+
+```json
+{
+  "name": "@scramjet/currency-js",
+  "version": "0.12.2",
+  "main": "index.js",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "node-fetch": "^2.6.1",
+    "scramjet": "^4.36.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
+```
 
 Open a terminal run your program on the hub:
 
