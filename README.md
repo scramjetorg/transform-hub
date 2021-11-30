@@ -1,10 +1,29 @@
-IFCA implementation in Python
-=============================
-
-Environment setup
------------------
+Scramjet in Python
+==================
 
 _Tested with Python 3.8.10 and Ubuntu 20.04._
+
+
+Most important methods
+----------------------
+
+* `read_from` - create a new stream from an iterable or an object implementing .read() method.
+* `map` - transform each chunk in a stream using specified function.
+* `filter` - keep only chunks for which specified function evaluates to `True`.
+* `to_list` - write all resulting stream chunks into a list.
+* `reduce` - combine all chunks using specified function.
+
+
+Examples
+--------
+
+Take a look at `hello_world_datastream.py` file. You can run it with:
+
+    python hello_world_datastream.py
+
+
+Running tests
+-------------
 
 Create and activate a virtualenv:
 
@@ -20,18 +39,6 @@ Check Python version:
 Install libraries:
 
     pip install -r dev-requirements.txt
-
-
-Getting started
----------------
-
-Take a look at `hello_world_datastream.py` file. You can run it with:
-
-    python hello_world_datastream.py
-
-
-Running tests
--------------
 
 Run test cases (with activated virtualenv):
 
