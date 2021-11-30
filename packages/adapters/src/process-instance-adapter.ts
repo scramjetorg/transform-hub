@@ -218,7 +218,7 @@ IComponent {
 
         if (statusCode === null) {
             this.logger.warn(`Runner was killed by a signal ${signal}, and didn't return a status code`);
-            // Probably SIGKLL
+            // Probably SIGIKLL
             return 137;
         }
 
