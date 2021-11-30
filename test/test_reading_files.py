@@ -113,19 +113,17 @@ class WriteInIntervals():
                 pipe.flush()
 
 @pytest.mark.asyncio
-async def test_waiting_for_complete_chunk():
-    pipe_path = 'test_pipe'
+async def test_waiting_for_complete_chunk(named_pipe):
     data = ['foo', '\n', 'bar baz', ' ', 'bax\nqux']
-    with WriteInIntervals(pipe_path, data):
-        with open(pipe_path) as file:
+    with WriteInIntervals(named_pipe, data):
+        with open(named_pipe) as file:
             result = await DataStream.read_from(file, chunk_size=8).to_list()
             # all except last chunk should have specified size,
             # even though some data will be available for reading earlier.
             assert result == ['foo\nbar ', 'baz bax\n', 'qux']
 
 @pytest.mark.asyncio
-async def test_processing_start_with_sync_source():
-    pipe_path = 'test_pipe'
+async def test_processing_start_with_sync_source(named_pipe):
     data = ['foo\n', 'bar\n', 'baz\n', 'bax\n', 'qux\n']
     chunks_written = Value('i', 0)
     write_counts = []
@@ -134,8 +132,8 @@ async def test_processing_start_with_sync_source():
         write_counts.append(chunks_written.value)
         return chunk
 
-    with WriteInIntervals(pipe_path, data, chunks_written):
-        with open(pipe_path) as file:
+    with WriteInIntervals(named_pipe, data, chunks_written):
+        with open(named_pipe) as file:
             max_parallel = 3
             s = DataStream.read_from(file, max_parallel=max_parallel)
             result = await s.map(log_how_many_written).to_list()
@@ -146,8 +144,7 @@ async def test_processing_start_with_sync_source():
             assert result == data
 
 @pytest.mark.asyncio
-async def test_processing_start_with_async_source():
-    pipe_path = 'test_pipe'
+async def test_processing_start_with_async_source(named_pipe):
     data = ['foo\n', 'bar\n', 'baz\n', 'bax\n', 'qux\n']
     chunks_written = Value('i', 0)
     chunks_read = Value('i', 0)
@@ -161,8 +158,8 @@ async def test_processing_start_with_async_source():
         )
         return chunk
 
-    with WriteInIntervals(pipe_path, data, chunks_written):
-        async with aiofiles.open(pipe_path) as file:
+    with WriteInIntervals(named_pipe, data, chunks_written):
+        async with aiofiles.open(named_pipe) as file:
             s = DataStream.read_from(file)
             result = await s.map(log_read_vs_written).to_list()
             # Since input is async, processing of each chunk should start

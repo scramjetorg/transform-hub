@@ -2,3 +2,5 @@ venv
 *.pyc
 test_output
 large_text_*
+# output from coverage-py
+.coverage
