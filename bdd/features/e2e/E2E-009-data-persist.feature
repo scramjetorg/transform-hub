@@ -7,9 +7,9 @@ Feature: Output streams persisting data E2E test
         And instance started with arguments "1000"
         And keep instance streams "stdout,stderr,output"
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         When send kill message to instance
-        And container is closed
+        And runner has ended execution
         Then host is running
         And kept instance stream "stdout" should store 1000 items divided by ","
         And kept instance stream "stderr" should store 1000 items divided by ","

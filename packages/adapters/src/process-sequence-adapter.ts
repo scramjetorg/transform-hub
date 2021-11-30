@@ -14,8 +14,8 @@ import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { isValidSequencePackageJSON } from "./validate-sequence-package-json";
 
-async function getRunnerConfigForStoredSequence(sequencesDir: string, id: string): Promise<ProcessSequenceConfig> {
-    const packageJsonPath = path.join(sequencesDir, id, "package.json");
+async function getRunnerConfigForStoredSequence(sequenceDir: string, id: string): Promise<ProcessSequenceConfig> {
+    const packageJsonPath = path.join(sequenceDir, "package.json");
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
 
     if (!isValidSequencePackageJSON(packageJson)) {
@@ -28,7 +28,7 @@ async function getRunnerConfigForStoredSequence(sequencesDir: string, id: string
         version: packageJson.version ?? "",
         name: packageJson.name ?? "",
         id,
-        sequencesDir
+        sequenceDir
     };
 }
 

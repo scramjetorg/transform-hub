@@ -6,11 +6,11 @@ Feature: Event e2e tests
         When sequence "../packages/reference-apps/event-sequence-v2.tar.gz" loaded
         And instance started
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         And send event "test-event" to instance with message "test message"
         Then wait for event "test-event-response" from instance
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
-        And container is closed
+        And runner has ended execution
         Then host is still running
 
     @ci
@@ -19,8 +19,8 @@ Feature: Event e2e tests
         When sequence "../packages/reference-apps/event-sequence-2.tar.gz" loaded
         And instance started
         And wait for instance healthy is "true"
-        And get containerId
+        And get runner PID
         Then get event "new-test-event" from instance
         Then instance response body is "{\"eventName\":\"new-test-event\",\"message\":\"event sent between functions in one sequence\"}"
-        And container is closed
+        And runner has ended execution
         Then host is still running

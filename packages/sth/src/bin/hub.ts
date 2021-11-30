@@ -46,7 +46,7 @@ configService.update({
         hostname: options.hostname,
         id: options.id
     },
-    noDocker: options.noDocker,
+    noDocker: !options.docker,
     sequencesDir: options.sequencesDir
 });
 

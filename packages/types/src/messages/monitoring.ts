@@ -31,6 +31,9 @@ export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
     networkTx?: number;
 
     containerId?: string;
+
+    /** PID of Runner If STH is run with --no-docker option */
+    processId?: number;
 }
 
 /**
