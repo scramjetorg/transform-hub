@@ -38,6 +38,10 @@ Should host not be spawned
 `CSI_COREDUMP_VOLUME: string`
 Required in some performance tests. Path to a file.
 
+---
+`NO_DOCKER: boolean (default: false)`
+Run host with '--no-docker' option. 
+
 ### Runner
 
 ---
