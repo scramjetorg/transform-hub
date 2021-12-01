@@ -56,7 +56,7 @@ Feature: Host configuration
         Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
         * exit hub process
 
-    @ci @starts-host
+    @ci @starts-host @docker-specific
     Scenario: HUB-001 TC-010  Default runner image
         When hub process is started with parameters "''"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
@@ -66,7 +66,7 @@ Feature: Host configuration
         Then container uses image defined in sth-config
         * exit hub process
 
-    @ci @starts-host
+    @ci @starts-host @docker-specific
     Scenario: HUB-001 TC-011  Set runner memory limit (--runner-max-mem)
         When hub process is started with parameters "--runner-max-mem 128"
         And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
@@ -86,7 +86,7 @@ Feature: Host configuration
         And end fake stream
         * exit hub process
 
-    @ci @starts-host
+    @ci @starts-host @docker-specific
     Scenario: HUB-001 TC-013  Set prerunner memory limit (--prerunner-max-mem)
         When hub process is started with parameters "--prerunner-max-mem 64"
         And get all containers
