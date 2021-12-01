@@ -3,12 +3,12 @@ Scramjet Interface <!-- omit in toc -->
 
 - [Scramjet tool set](#scramjet-tool-set)
   - [Download CLI](#download-cli)
-  - [Download SDK](#download-sdk)
 - [CLI base usage](#cli-base-usage)
   - [Set up config](#set-up-config)
 - [Create a package](#create-a-package)
 - [Sequence operations](#sequence-operations)
 - [Instance operations](#instance-operations)
+- [Host operations](#host-operations)
 - [CLI troubleshooting](#cli-troubleshooting)
   - [linux](#linux)
   - [windows](#windows)
@@ -28,6 +28,7 @@ Scramjet CLI is a tool allowing developer to control sequences and TaaS process 
 
 ### Download CLI
 
+<!--
 CLI is not yet published, but it will be obtainable via:
 
 - pre-compiled binary,
@@ -38,31 +39,15 @@ Download the binary:
 ```bash
 curl 'https://scramjet.sh/install-cli.sh' | bash -s #verify
 ```
+-->
 
 Install via npm globally:
 
 ```bash
-npm install -g @scramjet/cli #verify
+npm install -g @scramjet/cli
 ```
 
 <!-- [pip](pip_link) [homebrew](hb_link) -->
-
-### Download SDK
-
-Download [Scramjet Software Developer Kit](https://github.com/scramjetorg/transform-hub) (SDK) via GitHub to develop your code comfortably.
-
-```bash
-git clone git@github.com:scramjetorg/transform-hub
-```
-
-To build the source code you need:
-
-- [Node.js](https://nodejs.org/en/),
-- [NPM](https://www.npmjs.com/get-npm) or other package manager.
-
-For Windows users we recommend using WSL as terminal emulator or GitBash. Powershell or default windows cmd are currently not supported.
-<!-- ToDo: add SDK usage documentation -->
-[Read more about SDK usage.](xxx)
 
 ## CLI base usage
 
@@ -107,17 +92,31 @@ Show sequence and instance help by providing --help option after each.
 Set STH url:
 
 ```bash
-si config apiUrl "http://url.to.host:8000"
+si config apiUrl "http://url.to.host:8000/api/v1"
 ```
-<!--
+
 Check out config:
 
 ```bash
-> si config --list
+ si config print
+```
+
+__Result:__
+
+```bash
+14:33 $ si config print
+{
+  configVersion: 1,
+  apiUrl: 'http://127.0.0.1:8000/api/v1',
+  log: false,
+  format: 'pretty',
+  cpmApiUrl: 'http://127.0.0.1:9000/api/v1',
+  hostId: '75bd5593-7391-4200-b949-aa66d3d56b77'
+}
 ```
 
 If you are not able to see the result of this command check [troubleshooting](#cli-troubleshooting) section.
--->
+
 
 ## Create a package
 
@@ -132,7 +131,7 @@ Options:
 ## Sequence operations
 
 ```bash
-si seq run [options] [package] [args...] # Uploads a package and immediatelly executes it with given arguments
+si seq run [options] [package] [args...] # Uploads a package and immediately executes it with given arguments
 si seq send [<sequencePackage>]          # send packed and compressed sequence file
 si seq list|ls                           # list the sequences
 si seq start [options] <id> [args...]    # start the sequence
@@ -160,6 +159,14 @@ si inst stdin <id> [<file>]                           # send file to stdin, if f
 si inst stderr <id>                                   # show stream on stderr
 si inst stdout <id>                                   # show stream on stdout
 si inst help [command]                                # display help for command
+```
+
+## Host operations
+
+```bash
+si host version # display the Host version
+si host load    # monitor CPU, memory and disk usage on the Host
+si host logs    # display the logs of the Host.
 ```
 
 ## CLI troubleshooting
