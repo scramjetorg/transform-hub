@@ -200,6 +200,8 @@ IComponent {
         const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), {
             env: {
                 PATH: process.env.PATH,
+                DEVELOPMENT: process.env.DEVELOPMENT,
+                PRODUCTION: process.env.PRODUCTION,
                 FIFOS_DIR: this.fifosDir,
                 SEQUENCE_PATH: sequencePath
             }
