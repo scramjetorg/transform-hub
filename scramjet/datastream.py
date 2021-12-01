@@ -4,6 +4,7 @@ from scramjet.ansi_color_codes import *
 from os import environ
 import scramjet.utils as utils
 from collections.abc import Iterable, AsyncIterable
+import re
 
 DEBUG = 'DATASTREAM_DEBUG' in environ or 'SCRAMJET_DEBUG' in environ
 tr = utils.print_trimmed
@@ -30,6 +31,12 @@ class DataStream():
         self._ready_to_start = asyncio.Future()
         self._sinks = []
         log(self, f'INIT stream created with pyfca {self._pyfca}')
+
+    def __await__(self):
+        raise TypeError(
+            "Stream objects cannot be awaited on. To get data from a stream, "
+            "use a sink method (such as .to_list()) and await on that."
+        )
 
     async def __aiter__(self):
         self._uncork()
@@ -335,7 +342,46 @@ class DataStream():
             lambda chunk: decoder.decode(chunk) or DropChunk
         )
 
+    def each(self, func, *args):
+        def mapper(chunk):
+            func(chunk, *args)
+            return chunk
+        return self.map(mapper)
+
+    def use(self, func):
+        return func(self)
+
+
 
 class StringStream(DataStream):
     def __init__(self, max_parallel=64, upstream=None, name="stringstream"):
         super().__init__(max_parallel=max_parallel, upstream=upstream, name=name)
+
+    def parse(self, func, *args):
+        return self._as(DataStream).map(func, *args)
+
+    def split(self, separator=None):
+        def splitter(part, chunk):
+            words = (part+chunk).split(sep=separator)
+            # .split() without delimiter ignores trailing whitespace, e.g.
+            # "foo bar ".split() -> ["foo", "bar"] and not ["foo", "bar", ""].
+            # This would incorrectly treat last word as partial result, so we
+            # add an empty string as a sentinel.
+            if not separator and chunk[-1].isspace():
+                words.append("")
+            return words
+        return self.sequence(splitter, "")
+
+    def match(self, pattern):
+        regex = re.compile(pattern)
+        def mapper(chunk):
+            matches = regex.findall(chunk)
+            if regex.groups <= 1:
+                return matches
+            else:
+                flattened = []
+                for tuple in matches:
+                    flattened.extend(tuple)
+                return flattened
+
+        return self.flatmap(mapper)

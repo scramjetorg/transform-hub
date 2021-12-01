@@ -70,7 +70,8 @@ async def test_passthrough_by_default():
 @pytest.mark.asyncio
 async def test_simple_transformation():
     input_data = ['a', 'b', 'c', 'd', 'e', 'f']
-    p = pyfca.Pyfca(MAX_PARALLEL, lambda s: 'foo-' + s)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(lambda s: 'foo-' + s)
     for x in input_data:
         p.write(x)
     results = [await p.read() for _ in input_data]
@@ -93,7 +94,8 @@ async def test_concurrent_processing():
         processing_times.append(time.perf_counter() - start)
         return x
 
-    p = pyfca.Pyfca(MAX_PARALLEL, transform)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(transform)
     start = time.perf_counter()
     for x in input_data:
         p.write(x)
@@ -122,7 +124,8 @@ async def test_concurrent_processing():
 @pytest.mark.asyncio
 async def test_result_order_with_odd_chunks_delayed():
     input_data = copy.deepcopy(TEST_DATA_1)
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     for x in input_data:
         p.write(x)
     results = [await p.read() for _ in input_data]
@@ -132,7 +135,8 @@ async def test_result_order_with_odd_chunks_delayed():
 @pytest.mark.asyncio
 async def test_result_order_with_varying_processing_time():
     input_data = copy.deepcopy(TEST_DATA_2)
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     for x in input_data:
         p.write(x)
     results = [await p.read() for _ in input_data]
@@ -142,7 +146,8 @@ async def test_result_order_with_varying_processing_time():
 @pytest.mark.asyncio
 async def test_write_and_read_in_turn():
     input_data = copy.deepcopy(TEST_DATA_2)
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     reads = []
     for x in input_data:
         p.write(x)
@@ -154,7 +159,8 @@ async def test_write_and_read_in_turn():
 @pytest.mark.asyncio
 async def test_multiple_concurrent_reads():
     input_data = copy.deepcopy(TEST_DATA_2)
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     for x in input_data:
         p.write(x)
     reads = [p.read() for _ in input_data]
@@ -165,7 +171,8 @@ async def test_multiple_concurrent_reads():
 @pytest.mark.asyncio
 async def test_reads_before_write():
     input_data = copy.deepcopy(TEST_DATA_2)
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     reads = [p.read() for _ in input_data]
     for x in input_data:
         p.write(x)
@@ -180,7 +187,8 @@ async def test_reads_before_write():
 @pytest.mark.asyncio
 async def test_support_for_dropping_chunks():
     input_data = list(range(8))
-    p = pyfca.Pyfca(MAX_PARALLEL, async_keep_even)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_keep_even)
     for x in input_data:
         p.write(x)
     results = [await p.read() for _ in range(4)]
@@ -189,7 +197,8 @@ async def test_support_for_dropping_chunks():
 @pytest.mark.asyncio
 async def test_reads_before_filtering():
     input_data = list(range(8))
-    p = pyfca.Pyfca(MAX_PARALLEL, async_keep_even)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_keep_even)
     reads = [p.read() for _ in range(4)]
     for x in input_data:
         p.write(x)
@@ -213,7 +222,8 @@ async def test_dropping_chunks_in_the_middle_of_chain():
         return x
 
     input_data = list(range(8))
-    p = pyfca.Pyfca(MAX_PARALLEL, first)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(first)
     p.add_transform(second)
     for x in input_data:
         p.write(x)
@@ -232,7 +242,8 @@ async def test_dropping_chunks_in_the_middle_of_chain():
 @pytest.mark.asyncio
 async def test_unrestricted_writing_below_limit():
     input_data = copy.deepcopy(TEST_DATA_2)[:MAX_PARALLEL-1]
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     for x in input_data:
         drain = p.write(x)
         assert drain.done() == True
@@ -241,7 +252,8 @@ async def test_unrestricted_writing_below_limit():
 @pytest.mark.asyncio
 async def test_drain_pending_when_limit_reached():
     input_data = copy.deepcopy(TEST_DATA_2)[:MAX_PARALLEL]
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     writes = [p.write(x) for x in input_data]
     assert writes[-1].done() == False
     [await p.read() for _ in input_data]
@@ -249,7 +261,8 @@ async def test_drain_pending_when_limit_reached():
 @pytest.mark.asyncio
 async def test_drain_resolved_when_drops_below_limit():
     input_data = copy.deepcopy(TEST_DATA_2)[:MAX_PARALLEL+2]
-    p = pyfca.Pyfca(MAX_PARALLEL, async_identity)
+    p = pyfca.Pyfca(MAX_PARALLEL)
+    p.add_transform(async_identity)
     writes = [p.write(x) for x in input_data]
     for drain in writes[-3:]:
         assert drain.done() == False

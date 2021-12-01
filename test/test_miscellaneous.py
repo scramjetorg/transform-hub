@@ -27,6 +27,7 @@ async def test_decoding_chunks_with_():
 async def test_read_from_respects_stream_class():
     stream = StringStream.read_from(['a', 'b', 'c', 'd'])
     assert type(stream) == StringStream
+    await stream.to_list()
 
 @pytest.mark.asyncio
 async def test_changing_datastream_to_stringstream():
@@ -55,3 +56,27 @@ async def test_converting_streams_does_not_break_pyfca():
     s1 = DataStream.read_from(['a', 'b', 'c', 'd']).map(lambda x: x*2)
     s2 = s1._as(StringStream).map(lambda x: 'foo '+x)
     assert s2._pyfca == s1._pyfca
+    await s2.to_list()
+
+@pytest.mark.asyncio
+async def test_each_method():
+    result = []
+    stream = StringStream.read_from(['a', 'b', 'c', 'd'])
+    await stream.each(lambda x: result.append(x)).to_list()
+    assert result == ['a', 'b', 'c', 'd']
+
+def parse_and_square_even_dollars(stream):
+    return (
+        stream
+            .map(lambda s: int(s[1:]))
+            .filter(lambda x: x % 2 == 0)
+            .map(lambda x: x**2)
+            .map(lambda x: "$" + str(x))
+        )
+
+@pytest.mark.asyncio
+async def test_use_method():
+    data = ['$8', '$25', '$3', '$14', '$20', '$9', '$13', '$16']
+    stream = DataStream.from_iterable(data, max_parallel=4)
+    result = await stream.use(parse_and_square_even_dollars).to_list()
+    assert result == ['$64', '$196', '$400', '$256']

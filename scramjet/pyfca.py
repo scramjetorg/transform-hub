@@ -27,12 +27,10 @@ class MultipleEnd(Exception):
 
 
 class Pyfca:
-    def __init__(self, max_parallel, initial_transform=None, name="pyfca"):
+    def __init__(self, max_parallel, name="pyfca"):
         self.max_parallel = max_parallel
         self.name = name
         self._transform_chain = []
-        if initial_transform:
-            self._transform_chain.append(initial_transform)
 
         self._processing = asyncio.Queue()
         self._ready = asyncio.Queue()
