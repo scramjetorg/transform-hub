@@ -409,7 +409,7 @@ jobs:
             name: dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
         - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-          run: pigz -d docker*Img*.tar.gz
+          run: pigz -d pigz -d dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
         - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
           run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
