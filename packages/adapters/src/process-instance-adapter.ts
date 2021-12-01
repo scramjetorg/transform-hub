@@ -199,7 +199,7 @@ IComponent {
         // @TODO support running by ts-node
         const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), {
             env: {
-                ...process.env,
+                PATH: process.env.PATH,
                 FIFOS_DIR: this.fifosDir,
                 SEQUENCE_PATH: sequencePath
             }

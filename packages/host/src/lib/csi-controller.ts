@@ -136,7 +136,7 @@ export class CSIController extends EventEmitter {
 
         this.superVisorProcess = spawn(executable, command, {
             env: {
-                ...process.env,
+                PATH: process.env.PATH,
                 NO_DOCKER: this.config.noDocker.toString()
             }
         });
