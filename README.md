@@ -16,11 +16,18 @@ Scramjet in Python
 </p>
 
 
-Scramjet is a fast, simple, functional reactive stream programming framework written on top of node.js object streams. The code is written by chaining functions that transform the streamed data, including well known map, filter and reduce and fully compatible with ES7 async/await. Thanks to it some built in optimizations scramjet is much faster and much much simpler than similar frameworks when using asynchronous operations.
+Scramjet is a simple reactive stream programming framework. The code is written
+by chaining functions that transform the streamed data, including well known
+map, filter and reduce.
 
-The main advantage of scramjet is running asynchronous operations on your data streams. First of all it allows you to perform the transformations both synchronously and asynchronously by using the same API - so now you can "map" your stream from whatever source and call any number of API's consecutively. And if you're after some heavy maths there's an option of running your stream as multi-threaded!
+The main advantage of Scramjet is running asynchronous operations on your data
+streams concurrently. It allows you to perform the transformations both
+synchronously and asynchronously by using the same API - so now you can "map"
+your stream from whatever source and call any number of API's consecutively.
 
-To extend the usability of Scramjet, we decided to rewrite its functionality into the Python programming language. This is what is happening in this repository. Welcome to the new side of Scramjet, where its speed and functionality is revealed while streaming data in Python.
+[Originally written](https://github.com/scramjetorg/scramjet) on top of node.js
+object streams, Scramjet is now being ported into Python. This is what is
+happening in this repository.
 
 >_Tested with Python 3.8.10 and Ubuntu 20.04._
 
