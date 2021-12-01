@@ -359,7 +359,7 @@ jobs:
           name: dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
       - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-        run: pigz -d pigz -d dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+        run: pigz -d dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
       - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
@@ -373,7 +373,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Run BDD for HUB params
-        run: NO_DOCKER=1 SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
+        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host-no-docker
 
 
   test-bdd-ci-sth-no-docker:
@@ -409,7 +409,7 @@ jobs:
             name: dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
         - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-          run: pigz -d pigz -d dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          run: pigz -d dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
         - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
           run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
@@ -423,5 +423,5 @@ jobs:
             node-version: ${{ matrix.node-version }}
 
         - name: Run BDD tests
-          run: NO_DOCKER=1 SCRAMJET_TEST_LOG=1 yarn test:bdd-ci
+          run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-docker
 

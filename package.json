@@ -47,6 +47,8 @@
     "test:bdd-ci": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"not @starts-host\"",
     "test:bdd-ci-no-host": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"@starts-host\"",
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
+    "test:bdd-ci-no-docker": "NO_DOCKER=1 yarn test:bdd-ci --tags=\"not @docker-specific\"",
+    "test:bdd-ci-no-host-no-docker": "NO_DOCKER=1 yarn test:bdd-ci-no-host --tags=\"not @docker-specific\"",
     "prebump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && git diff --exit-code --quiet && yarn bump:images && lerna version -y --force-publish --no-git-tag-version ${NEXT_VER} && git add .",
     "bump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && yarn version --new-version ${NEXT_VER}",
     "bump:images": "./scripts/bump_docker_images.sh",
