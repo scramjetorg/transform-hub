@@ -1,5 +1,5 @@
 from collections import namedtuple
-from scramjet.datastream import DataStream
+from scramjet.streams import DataStream
 import pytest
 from multiprocessing import Process, Value
 import math

@@ -1,4 +1,4 @@
-from scramjet.datastream import DataStream
+from scramjet.streams import DataStream
 from scramjet.ansi_color_codes import *
 import scramjet.utils as utils
 import pytest
