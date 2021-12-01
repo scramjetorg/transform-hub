@@ -5,7 +5,6 @@ export type SequencePackageJSONScramjetConfig = {
 }
 
 export type SequencePackageJSONScramjetSection = {
-    // @TODO it's not used anywhere, we're using runtime config images instead
     config?: SequencePackageJSONScramjetConfig | null
 }
 
