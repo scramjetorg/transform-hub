@@ -11,7 +11,7 @@ import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
-import { isValidSequencePackageJSON } from "./validate-sequence-package-json";
+import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
@@ -138,21 +138,19 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             wait
         ]);
 
-        if (!isValidSequencePackageJSON(packageJson)) {
-            throw new Error("Invalid Scramjet sequence package.json");
-        }
+        const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson)
 
-        const engines = packageJson.engines ? { ...packageJson.engines } : {};
-        const config = packageJson.scramjet?.config ? { ...packageJson.scramjet.config } : {};
+        const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
+        const config = validPackageJson.scramjet?.config ? { ...validPackageJson.scramjet.config } : {};
 
         return {
             type: "docker",
             container: this.config.docker.runner,
-            name: packageJson.name || "",
-            version: packageJson.version || "",
+            name: validPackageJson.name || "",
+            version: validPackageJson.version || "",
             engines,
             config,
-            entrypointPath: packageJson.main,
+            entrypointPath: validPackageJson.main,
             id: volumeId,
         };
     }

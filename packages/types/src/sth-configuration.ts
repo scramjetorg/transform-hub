@@ -140,5 +140,5 @@ export type STHConfiguration = {
      * Only used when `noDocker` is true
      * Where should ProcessSequenceAdapter save new sequences
      */
-    sequencesDir: string
+    sequencesRoot: string
 }

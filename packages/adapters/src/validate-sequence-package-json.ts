@@ -1,39 +1,32 @@
-import { SequencePackageJSON } from "@scramjet/types";
+import {
+    PortConfig,
+    SequencePackageJSON,
+    SequencePackageJSONScramjetConfig,
+    SequencePackageJSONScramjetSection
+} from "@scramjet/types";
 
-function isOptionalString(value: unknown): value is string | undefined {
-    return !value || typeof value === "string";
-}
+import { Err, JsonDecoder, Ok } from "ts.data.json";
 
-function isValidPortsConfiguration(ports: unknown): ports is `${number}/${"tcp" | "udp"}`[] {
-    if (!Array.isArray(ports)) {
-        return false;
-    }
+const enginesDecoder = JsonDecoder.dictionary(JsonDecoder.string, "EnginesDecoder");
 
-    return ports.every(entry => typeof entry === "string" && (/^\d{3,5}\/(tcp|udp)$/).test(entry));
-}
+const portDecoder = new JsonDecoder.Decoder<PortConfig>((val) => {
+    const isValid = typeof val === "string" && (/^\d{3,5}\/(tcp|udp)$/).test(val);
 
-// @TODO rewrite it using decoding library like https://github.com/joanllenas/ts.data.json
-// eslint-disable-next-line complexity
-export function isValidSequencePackageJSON(value: unknown): value is SequencePackageJSON {
-    if (typeof value !== "object") {
-        return false;
-    }
+    return isValid ? new Ok(val as PortConfig) : new Err("Invalid port format");
+});
 
-    const v = value as SequencePackageJSON;
+const configDecoder = JsonDecoder.object<SequencePackageJSONScramjetConfig>({
+    ports: JsonDecoder.optional(JsonDecoder.array(portDecoder, "PortsDecoder"))
+}, "ConfigDecoder");
 
-    const enginesAreValid = !v.engines ||
-        typeof v.engines === "object" &&
-        Object.values(v.engines).every(val => typeof val === "string");
+const scramjetDecoder = JsonDecoder.object<SequencePackageJSONScramjetSection>({
+    config: JsonDecoder.optional(configDecoder)
+}, "ScramjetSectionDecoder");
 
-    const scramjetConfigIsValid = !v.scramjet ||
-         (!v.scramjet.config ||
-            typeof v.scramjet.config.ports === "object" &&
-            isValidPortsConfiguration(v.scramjet.config.ports)
-         );
-
-    return enginesAreValid &&
-        scramjetConfigIsValid &&
-        typeof v.main === "string" &&
-        isOptionalString(v.name) &&
-        isOptionalString(v.version);
-}
+export const sequencePackageJSONDecoder = JsonDecoder.object<SequencePackageJSON>({
+    name: JsonDecoder.optional(JsonDecoder.string),
+    version: JsonDecoder.optional(JsonDecoder.string),
+    main: JsonDecoder.string,
+    engines: JsonDecoder.optional(enginesDecoder),
+    scramjet: JsonDecoder.optional(scramjetDecoder)
+}, "SequencePackageJSON");
