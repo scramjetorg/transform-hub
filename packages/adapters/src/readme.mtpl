@@ -1,6 +1,6 @@
  # Scramjet Transform Hub Adapters
 
-This module holds the docker adapters utilized by [Scramjet Transform Hub](https://github.com/scramjetorg/transform-hub).
+This module holds two types of adapters utilized by Scramjet Transform Hub: Instance Adapter and Sequence Adapter. These Adapters allows for running the Sequence identification and Instance execution in two basic modes: as a non containerized standalone processes or in a Docker container.
 
 The adapter provides two main exports:
 
