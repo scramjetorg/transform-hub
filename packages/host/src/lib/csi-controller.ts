@@ -122,7 +122,6 @@ export class CSIController extends EventEmitter {
     }
 
     startSupervisor() {
-        // eslint-disable-next-line no-extra-parens
         const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
         const supervisorPath = require.resolve("@scramjet/supervisor");
 
@@ -137,6 +136,7 @@ export class CSIController extends EventEmitter {
 
         this.superVisorProcess = spawn(executable, command, {
             env: {
+                ...process.env,
                 NO_DOCKER: this.config.noDocker.toString()
             }
         });
