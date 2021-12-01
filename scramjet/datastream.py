@@ -61,6 +61,10 @@ class DataStream():
 
     @classmethod
     def read_from(cls, source, max_parallel=64, chunk_size=None):
+        """
+        Create a new stream from specified source, which must be either
+        an Iterable or implement .read() method.
+        """
         if chunk_size:
             if hasattr(source, 'read'):
                 return cls.from_callback(
@@ -81,6 +85,7 @@ class DataStream():
 
     @classmethod
     def from_iterable(cls, iterable, max_parallel=64):
+        """Create a new stream from an iterable object."""
         stream = cls(max_parallel)
         async def consume():
             await stream._ready_to_start
@@ -97,6 +102,7 @@ class DataStream():
 
     @classmethod
     def from_callback(cls, max_parallel, callback, *args):
+        """Create a new stream using callback to get chunks."""
         stream = cls(max_parallel)
 
         async def consume():
@@ -114,6 +120,7 @@ class DataStream():
         return stream
 
     def flatmap(self, func, *args):
+        """Run func on each chunk and return all results as separate chunks."""
         self._mark_consumed()
         new_stream = self.__class__(
             max_parallel=self._pyfca.max_parallel, name=f'{self.name}+fm'
@@ -139,6 +146,7 @@ class DataStream():
         return new_stream
 
     def filter(self, func, *args):
+        """Keep only chunks for which func evaluates to True."""
         self._mark_consumed()
         new_stream = self.__class__(upstream=self, name=f'{self.name}+f')
         async def run_filter(chunk):
@@ -154,6 +162,14 @@ class DataStream():
         return new_stream
 
     def sequence(self, sequencer, initialPartial=None):
+        """
+        Change how the data is chopped into chunks.
+
+        sequencer: two-argument function taking partial result from previous
+        operation and current chunk. It should return an iterable; all items
+        from the iterable except the last one will become new chunks, and the
+        last one will be fed to the next call of the sequencer.
+        """
         self._mark_consumed()
         new_stream = self.__class__(
             max_parallel=self._pyfca.max_parallel, name=f'{self.name}+s'
@@ -187,6 +203,7 @@ class DataStream():
         return new_stream
 
     def map(self, func, *args):
+        """Transform each chunk using a function."""
         self._mark_consumed()
         new_stream = self.__class__(upstream=self, name=f'{self.name}+m')
         async def run_mapper(chunk):
@@ -202,6 +219,11 @@ class DataStream():
         return new_stream
 
     def batch(self, func, *args):
+        """
+        Convert a stream of chunks into a stream of lists of chunks.
+
+        func: called on each chunk to determine when the batch will end.
+        """
         self._mark_consumed()
         new_stream = self.__class__(
             max_parallel=self._pyfca.max_parallel, name=f'{self.name}+b'
@@ -233,6 +255,7 @@ class DataStream():
         return new_stream
 
     async def to_list(self):
+        """Write all resulting stream chunks into a list."""
         self._mark_consumed()
         self._uncork()
         result = []
@@ -257,6 +280,7 @@ class DataStream():
                 chunk = await self._pyfca.read()
 
     def pipe(self, target):
+        """Forward all chunks from current stream into target."""
         self._consumed = True
         self._sinks.append(target)
         async def consume():
@@ -274,6 +298,12 @@ class DataStream():
         return target
 
     async def reduce(self, func, initial=None):
+        """
+        Apply two-argument func to elements from the stream cumulatively,
+        producing an awaitable that will resolve to a single value when the
+        stream ends. For a stream of [1,2,3,4] the result will be
+        func(func(func(1,2),3),4).
+        """
         self._mark_consumed()
         self._uncork()
         if initial is None:
@@ -295,6 +325,7 @@ class DataStream():
 
 
     def _as(self, target_class):
+        """Create a stream of type target_class from current one."""
         return target_class(
             upstream=self,
             max_parallel=self._pyfca.max_parallel,
@@ -302,6 +333,7 @@ class DataStream():
         )
 
     def decode(self, encoding):
+        """Convert chunks of bytes into strings using specified encoding."""
         import codecs
         # Incremental decoders handle characters split across inputs.
         # Input with only partial data yields empty string - drop these.
@@ -311,12 +343,14 @@ class DataStream():
         )
 
     def each(self, func, *args):
+        """Perform an operation on each chunk and return it unchanged."""
         def mapper(chunk):
             func(chunk, *args)
             return chunk
         return self.map(mapper)
 
     def use(self, func):
+        """Perform a function on the whole stream and return the result."""
         return func(self)
 
 
@@ -326,9 +360,11 @@ class StringStream(DataStream):
         super().__init__(max_parallel=max_parallel, upstream=upstream, name=name)
 
     def parse(self, func, *args):
+        """Transform StringStream into DataStream."""
         return self._as(DataStream).map(func, *args)
 
     def split(self, separator=None):
+        """Split each chunk into multiple new chunks."""
         def splitter(part, chunk):
             words = (part+chunk).split(sep=separator)
             # .split() without delimiter ignores trailing whitespace, e.g.
@@ -341,6 +377,7 @@ class StringStream(DataStream):
         return self.sequence(splitter, "")
 
     def match(self, pattern):
+        """Extract matching parts of chunk as new chunks."""
         regex = re.compile(pattern)
         def mapper(chunk):
             matches = regex.findall(chunk)
