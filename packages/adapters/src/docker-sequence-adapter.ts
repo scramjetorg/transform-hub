@@ -138,7 +138,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             wait
         ]);
 
-        const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson)
+        const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
 
         const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
         const config = validPackageJson.scramjet?.config ? { ...validPackageJson.scramjet.config } : {};
