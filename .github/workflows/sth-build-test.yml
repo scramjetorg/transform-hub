@@ -359,13 +359,13 @@ jobs:
           name: dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
       - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-        run: pigz -d dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+        run: pigz -d dockerSthImg-scramjetorg_sth-$(jq -r .version package.json)-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
       - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
 
       - name: Load Docker images
-        run: docker load -i dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar
+        run: docker load -i dockerSthImg-scramjetorg_sth-$(jq -r .version package.json)-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -409,13 +409,13 @@ jobs:
             name: dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
         - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-          run: pigz -d dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          run: pigz -d dockerSthImg-scramjetorg_sth-$(jq -r .version package.json)-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
         - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
           run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
 
         - name: Load Docker images
-          run: docker load -i dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar
+          run: docker load -i dockerSthImg-scramjetorg_sth-$(jq -r .version package.json)-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar
 
         - name: Setup Nodejs ${{ matrix.node-version }}
           uses: actions/setup-node@v2
