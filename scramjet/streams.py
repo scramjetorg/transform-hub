@@ -63,6 +63,34 @@ class DataStream():
         else:
             self._consumed = True
 
+    def _as(self, target_class):
+        """Create a stream of type target_class from current one."""
+        return target_class(
+            upstream=self,
+            max_parallel=self._pyfca.max_parallel,
+            name=f'{self.name}+_'
+        )
+
+    def use(self, func):
+        """Perform a function on the whole stream and return the result."""
+        return func(self)
+
+    def write(self, chunk):
+        """Write a single item to the datastream."""
+        return self._origin._pyfca.write(chunk)
+
+    def end(self):
+        """Mark the end of input to the datastream."""
+        self._pyfca.end()
+
+    async def read(self):
+        """Read a single item from the datastream."""
+        # cannot read from stream consumed by something else
+        if self._consumed:
+            raise StreamAlreadyConsumed
+        self._uncork()
+        return await self._pyfca.read()
+
     @classmethod
     def read_from(cls, source, max_parallel=64, chunk_size=None):
         """
@@ -87,6 +115,7 @@ class DataStream():
                        "is specified.")
                 raise UnsupportedOperation(msg)
 
+
     @classmethod
     def from_iterable(cls, iterable, max_parallel=64):
         """Create a new stream from an iterable object."""
@@ -104,6 +133,7 @@ class DataStream():
         asyncio.create_task(consume())
         stream._writable = False
         return stream
+
 
     @classmethod
     def from_callback(cls, max_parallel, callback, *args):
@@ -125,21 +155,59 @@ class DataStream():
         stream._writable = False
         return stream
 
-    def write(self, chunk):
-        """Write a single item to the datastream."""
-        return self._origin._pyfca.write(chunk)
 
-    async def read(self):
-        """Read a single item from the datastream."""
-        # cannot read from stream consumed by something else
-        if self._consumed:
-            raise StreamAlreadyConsumed
-        self._uncork()
-        return await self._pyfca.read()
+    def map(self, func, *args):
+        """Transform each chunk using a function."""
+        self._mark_consumed()
+        new_stream = self.__class__(upstream=self, origin=self._origin, name=f'{self.name}+m')
+        async def run_mapper(chunk):
+            if args:
+                log(new_stream, f'calling mapper {func} with args: {chunk, *args}')
+            result = func(chunk, *args)
+            if asyncio.iscoroutine(result):
+                result = await result
+            log(new_stream, f'mapper result: {tr(chunk)} -> {tr(result)}')
+            return result
+        log(new_stream, f'adding mapper: {func}')
+        new_stream._pyfca.add_transform(run_mapper)
+        return new_stream
 
-    def end(self):
-        """Mark the end of input to the datastream."""
-        self._pyfca.end()
+
+    def each(self, func, *args):
+        """Perform an operation on each chunk and return it unchanged."""
+        def mapper(chunk):
+            func(chunk, *args)
+            return chunk
+        return self.map(mapper)
+
+
+    def decode(self, encoding):
+        """Convert chunks of bytes into strings using specified encoding."""
+        import codecs
+        # Incremental decoders handle characters split across inputs.
+        # Input with only partial data yields empty string - drop these.
+        decoder = codecs.getincrementaldecoder(encoding)()
+        return self._as(StringStream).map(
+            lambda chunk: decoder.decode(chunk) or DropChunk
+        )
+
+
+    def filter(self, func, *args):
+        """Keep only chunks for which func evaluates to True."""
+        self._mark_consumed()
+        new_stream = self.__class__(upstream=self, origin=self._origin, name=f'{self.name}+f')
+        async def run_filter(chunk):
+            if args:
+                log(new_stream, f'calling filter {func} with args: {chunk, *args}')
+            decision = func(chunk, *args)
+            if asyncio.iscoroutine(decision):
+                decision = await decision
+            log(new_stream, f'filter result: {tr(chunk)} -> {cyan}{decision}{reset}')
+            return chunk if decision else DropChunk
+        log(new_stream, f'adding filter: {func}')
+        new_stream._pyfca.add_transform(run_filter)
+        return new_stream
+
 
     def flatmap(self, func, *args):
         """Run func on each chunk and return all results as separate chunks."""
@@ -167,21 +235,43 @@ class DataStream():
         asyncio.create_task(consume(), name='flatmap-consumer')
         return new_stream
 
-    def filter(self, func, *args):
-        """Keep only chunks for which func evaluates to True."""
+
+    def batch(self, func, *args):
+        """
+        Convert a stream of chunks into a stream of lists of chunks.
+
+        func: called on each chunk to determine when the batch will end.
+        """
         self._mark_consumed()
-        new_stream = self.__class__(upstream=self, origin=self._origin, name=f'{self.name}+f')
-        async def run_filter(chunk):
-            if args:
-                log(new_stream, f'calling filter {func} with args: {chunk, *args}')
-            decision = func(chunk, *args)
-            if asyncio.iscoroutine(decision):
-                decision = await decision
-            log(new_stream, f'filter result: {tr(chunk)} -> {cyan}{decision}{reset}')
-            return chunk if decision else DropChunk
-        log(new_stream, f'adding filter: {func}')
-        new_stream._pyfca.add_transform(run_filter)
+        new_stream = self.__class__(
+            max_parallel=self._pyfca.max_parallel, origin=self._origin, name=f'{self.name}+b'
+        )
+        async def consume():
+            self._uncork()
+            batch = []
+
+            while True:
+                chunk = await self._pyfca.read()
+                log(self, f'got: {tr(chunk)}')
+                if chunk is None:
+                    break
+                batch.append(chunk)
+                if args:
+                    log(new_stream, f'calling {func} with args: {chunk, *args}')
+                if func(chunk, *args):
+                    log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
+                    await new_stream._pyfca.write(batch)
+                    batch = []
+
+            if len(batch):
+                log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
+                await new_stream._pyfca.write(batch)
+
+            log(new_stream, f'ending pyfca {new_stream._pyfca}')
+            new_stream._pyfca.end()
+        asyncio.create_task(consume())
         return new_stream
+
 
     def sequence(self, sequencer, initialPartial=None):
         """
@@ -224,82 +314,6 @@ class DataStream():
         asyncio.create_task(consume())
         return new_stream
 
-    def map(self, func, *args):
-        """Transform each chunk using a function."""
-        self._mark_consumed()
-        new_stream = self.__class__(upstream=self, origin=self._origin, name=f'{self.name}+m')
-        async def run_mapper(chunk):
-            if args:
-                log(new_stream, f'calling mapper {func} with args: {chunk, *args}')
-            result = func(chunk, *args)
-            if asyncio.iscoroutine(result):
-                result = await result
-            log(new_stream, f'mapper result: {tr(chunk)} -> {tr(result)}')
-            return result
-        log(new_stream, f'adding mapper: {func}')
-        new_stream._pyfca.add_transform(run_mapper)
-        return new_stream
-
-    def batch(self, func, *args):
-        """
-        Convert a stream of chunks into a stream of lists of chunks.
-
-        func: called on each chunk to determine when the batch will end.
-        """
-        self._mark_consumed()
-        new_stream = self.__class__(
-            max_parallel=self._pyfca.max_parallel, origin=self._origin, name=f'{self.name}+b'
-        )
-        async def consume():
-            self._uncork()
-            batch = []
-
-            while True:
-                chunk = await self._pyfca.read()
-                log(self, f'got: {tr(chunk)}')
-                if chunk is None:
-                    break
-                batch.append(chunk)
-                if args:
-                    log(new_stream, f'calling {func} with args: {chunk, *args}')
-                if func(chunk, *args):
-                    log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
-                    await new_stream._pyfca.write(batch)
-                    batch = []
-
-            if len(batch):
-                log(new_stream, f'{pink}put batch:{reset} {tr(batch)}')
-                await new_stream._pyfca.write(batch)
-
-            log(new_stream, f'ending pyfca {new_stream._pyfca}')
-            new_stream._pyfca.end()
-        asyncio.create_task(consume())
-        return new_stream
-
-    async def to_list(self):
-        """Write all resulting stream chunks into a list."""
-        self._mark_consumed()
-        self._uncork()
-        result = []
-        log(self, f'sink: {repr(result)}')
-        chunk = await self._pyfca.read()
-        while chunk is not None:
-            log(self, f'got: {tr(chunk)}')
-            result.append(chunk)
-            chunk = await self._pyfca.read()
-        return result
-
-    async def to_file(self, out_file):
-        self._mark_consumed()
-        self._uncork()
-        log(self, f'sink: {repr(out_file)}')
-        with open(out_file, 'wb') as f:
-            log(self, f'writing to {f}')
-            chunk = await self._pyfca.read()
-            while chunk is not None:
-                log(self, f'got: {tr(chunk)}')
-                f.write(chunk)
-                chunk = await self._pyfca.read()
 
     def pipe(self, target):
         """Forward all chunks from current stream into target."""
@@ -318,6 +332,34 @@ class DataStream():
         if len(self._sinks) == 1:
             asyncio.create_task(consume(), name='pipe-consumer')
         return target
+
+
+    async def to_list(self):
+        """Write all resulting stream chunks into a list."""
+        self._mark_consumed()
+        self._uncork()
+        result = []
+        log(self, f'sink: {repr(result)}')
+        chunk = await self._pyfca.read()
+        while chunk is not None:
+            log(self, f'got: {tr(chunk)}')
+            result.append(chunk)
+            chunk = await self._pyfca.read()
+        return result
+
+
+    async def to_file(self, out_file):
+        self._mark_consumed()
+        self._uncork()
+        log(self, f'sink: {repr(out_file)}')
+        with open(out_file, 'wb') as f:
+            log(self, f'writing to {f}')
+            chunk = await self._pyfca.read()
+            while chunk is not None:
+                log(self, f'got: {tr(chunk)}')
+                f.write(chunk)
+                chunk = await self._pyfca.read()
+
 
     async def reduce(self, func, initial=None):
         """
@@ -346,36 +388,6 @@ class DataStream():
         return accumulator
 
 
-    def _as(self, target_class):
-        """Create a stream of type target_class from current one."""
-        return target_class(
-            upstream=self,
-            max_parallel=self._pyfca.max_parallel,
-            name=f'{self.name}+_'
-        )
-
-    def decode(self, encoding):
-        """Convert chunks of bytes into strings using specified encoding."""
-        import codecs
-        # Incremental decoders handle characters split across inputs.
-        # Input with only partial data yields empty string - drop these.
-        decoder = codecs.getincrementaldecoder(encoding)()
-        return self._as(StringStream).map(
-            lambda chunk: decoder.decode(chunk) or DropChunk
-        )
-
-    def each(self, func, *args):
-        """Perform an operation on each chunk and return it unchanged."""
-        def mapper(chunk):
-            func(chunk, *args)
-            return chunk
-        return self.map(mapper)
-
-    def use(self, func):
-        """Perform a function on the whole stream and return the result."""
-        return func(self)
-
-
 
 class StringStream(DataStream):
     def __init__(self, max_parallel=64, upstream=None, origin=None, name="stringstream"):
@@ -384,19 +396,6 @@ class StringStream(DataStream):
     def parse(self, func, *args):
         """Transform StringStream into DataStream."""
         return self._as(DataStream).map(func, *args)
-
-    def split(self, separator=None):
-        """Split each chunk into multiple new chunks."""
-        def splitter(part, chunk):
-            words = (part+chunk).split(sep=separator)
-            # .split() without delimiter ignores trailing whitespace, e.g.
-            # "foo bar ".split() -> ["foo", "bar"] and not ["foo", "bar", ""].
-            # This would incorrectly treat last word as partial result, so we
-            # add an empty string as a sentinel.
-            if not separator and chunk[-1].isspace():
-                words.append("")
-            return words
-        return self.sequence(splitter, "")
 
     def match(self, pattern):
         """Extract matching parts of chunk as new chunks."""
@@ -412,3 +411,16 @@ class StringStream(DataStream):
                 return flattened
 
         return self.flatmap(mapper)
+
+    def split(self, separator=None):
+        """Split each chunk into multiple new chunks."""
+        def splitter(part, chunk):
+            words = (part+chunk).split(sep=separator)
+            # .split() without delimiter ignores trailing whitespace, e.g.
+            # "foo bar ".split() -> ["foo", "bar"] and not ["foo", "bar", ""].
+            # This would incorrectly treat last word as partial result, so we
+            # add an empty string as a sentinel.
+            if not separator and chunk[-1].isspace():
+                words.append("")
+            return words
+        return self.sequence(splitter, "")

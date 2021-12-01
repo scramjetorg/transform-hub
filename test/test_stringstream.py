@@ -1,4 +1,4 @@
-from scramjet.datastream import DataStream, StringStream
+from scramjet.streams import DataStream, StringStream
 import asyncio
 import pytest
 

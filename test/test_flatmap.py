@@ -1,4 +1,4 @@
-from scramjet.datastream import DataStream
+from scramjet.streams import DataStream
 import asyncio
 import scramjet.utils as utils
 from scramjet.ansi_color_codes import *

@@ -1,4 +1,4 @@
-from scramjet.datastream import DataStream, StringStream
+from scramjet.streams import DataStream, StringStream
 import pytest
 
 async def read_as_binary_and_decode(size, expected):

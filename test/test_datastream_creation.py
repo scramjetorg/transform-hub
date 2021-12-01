@@ -1,4 +1,4 @@
-from scramjet.datastream import DataStream, UnsupportedOperation
+from scramjet.streams import DataStream, UnsupportedOperation
 import asyncio
 from scramjet.ansi_color_codes import *
 import pytest
