@@ -51,13 +51,13 @@ Show sequence and instance help by providing --help option after each.
 Set STH url:
 
 ```bash
-si config apiUrl "http://url.to.host:8000"
+si config apiUrl "http://127.0.0.1:8000/api/v1"
 ```
 
 See the current config (including default values):
 
 ```bash
-> si config print
+si config print
 ```
 
 ## Create a package
@@ -103,6 +103,14 @@ si inst stdout <id>                                   # show stream on stdout
 si inst help [command]                                # display help for command
 ```
 
+## Host operations
+
+```bash
+si host version # display the Host version
+si host load    # monitor CPU, memory and disk usage on the Host
+si host logs    # display the logs of the Host.
+```
+
 ## Extra reading
 
 See the code documentation here: [scramjetorg/transform-hub/docs/interfaces/CLI-command-reference.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/interfaces/CLI-command-reference.md)
@@ -123,7 +131,7 @@ There's no limit what you can use it for. You want a stock checker? A chat bot? 
 * The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
 * The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
 * You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/release/0.12/docs/development-guide/stream-and-api.md)
-* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/release/0.12/docs/interfaces/CLI-command-reference.md), but `si help` should also be quite effective.
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/release/0.12/packages/cli/README.md), but `si help` should also be quite effective.
 * Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
