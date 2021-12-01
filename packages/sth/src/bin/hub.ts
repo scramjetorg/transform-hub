@@ -20,7 +20,7 @@ const options = program
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
-    .option("--sequences-dir", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
+    .option("--sequences-root", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
     .parse(process.argv)
     .opts();
 
@@ -47,7 +47,7 @@ configService.update({
         id: options.id
     },
     noDocker: !options.docker,
-    sequencesDir: options.sequencesDir
+    sequencesRoot: options.sequencesRoot
 });
 
 // before here we actually load the host and we have the config imported elsewhere

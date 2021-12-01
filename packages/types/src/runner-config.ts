@@ -1,5 +1,6 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
+import { PortConfig } from "./sequence-package-json";
 import { RunnerContainerConfiguration } from "./sth-configuration";
 
 type CommonSequenceConfig = {
@@ -16,12 +17,9 @@ type CommonSequenceConfig = {
 export type DockerSequenceConfig = CommonSequenceConfig & {
     type: "docker",
     container: RunnerContainerConfiguration;
-    engines: {
-        [key: string]: string;
-    };
+    engines: Record<string, string>,
     config?: {
-        image?: string,
-        ports?: `${number}/${"tcp" | "udp"}`[]
+        ports?: PortConfig[] | null
     };
 };
 

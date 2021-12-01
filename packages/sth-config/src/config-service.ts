@@ -34,7 +34,7 @@ const _defaultConfig: STHConfiguration = {
     safeOperationLimit: 512,
     instanceAdapterExitDelay: 9000,
     noDocker: false,
-    sequencesDir: path.join(require("os").homedir(), ".scramjet_sequences")
+    sequencesRoot: path.join(require("os").homedir(), ".scramjet_sequences")
 };
 
 merge(_defaultConfig, {

@@ -7238,6 +7238,11 @@ ts-node@^10.0.0:
     make-error "^1.1.1"
     yn "3.1.1"
 
+ts.data.json@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/ts.data.json/-/ts.data.json-2.1.0.tgz#0ed5a1306ba440102d18175b2634270515dc5cc9"
+  integrity sha512-Y9eSZH1W/V9F7Mx91kV0DAfhn0q30luUglCgCJDCknRsNcB2isfcqmKMb3Dmgib+/XX9F7lsx5nUOQqMWYf0sw==
+
 tsconfig-paths@^3.11.0:
   version "3.11.0"
   resolved "https://registry.yarnpkg.com/tsconfig-paths/-/tsconfig-paths-3.11.0.tgz#954c1fe973da6339c78e06b03ce2e48810b65f36"
