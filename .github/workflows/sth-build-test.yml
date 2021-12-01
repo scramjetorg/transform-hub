@@ -365,7 +365,7 @@ jobs:
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
 
       - name: Load Docker images
-        run: ls -1  docker*Img*.tar| while read line; do docker load -i $line; done
+        run: docker load -i dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
