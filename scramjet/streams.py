@@ -91,6 +91,7 @@ class DataStream():
         self._uncork()
         return await self._pyfca.read()
 
+
     @classmethod
     def read_from(cls, source, max_parallel=64, chunk_size=None):
         """
@@ -346,19 +347,6 @@ class DataStream():
             result.append(chunk)
             chunk = await self._pyfca.read()
         return result
-
-
-    async def to_file(self, out_file):
-        self._mark_consumed()
-        self._uncork()
-        log(self, f'sink: {repr(out_file)}')
-        with open(out_file, 'wb') as f:
-            log(self, f'writing to {f}')
-            chunk = await self._pyfca.read()
-            while chunk is not None:
-                log(self, f'got: {tr(chunk)}')
-                f.write(chunk)
-                chunk = await self._pyfca.read()
 
 
     async def reduce(self, func, initial=None):

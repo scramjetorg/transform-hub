@@ -13,7 +13,9 @@ async def echo(x):
 
 @pytest.mark.asyncio
 async def test_reading_and_writing_to_file():
-    with open('test/sample_text_1.txt') as file:
-        await DataStream.read_from(file).map(lambda s: s.encode()).to_file('test_output')
+    with open('test/sample_text_1.txt') as file_in, \
+         open('test_output', 'w') as file_out:
+        async for item in DataStream.read_from(file_in):
+            file_out.write(item)
     with open('test/sample_text_1.txt') as source, open('test_output') as dest:
         assert source.read() == dest.read()
