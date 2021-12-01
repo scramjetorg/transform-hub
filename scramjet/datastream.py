@@ -343,12 +343,14 @@ class DataStream():
         )
 
     def each(self, func, *args):
+        """Perform an operation on each chunk and return it unchanged."""
         def mapper(chunk):
             func(chunk, *args)
             return chunk
         return self.map(mapper)
 
     def use(self, func):
+        """Perform a function on the whole stream and return the result."""
         return func(self)
 
 
@@ -358,9 +360,11 @@ class StringStream(DataStream):
         super().__init__(max_parallel=max_parallel, upstream=upstream, name=name)
 
     def parse(self, func, *args):
+        """Transform StringStream into DataStream."""
         return self._as(DataStream).map(func, *args)
 
     def split(self, separator=None):
+        """Split each chunk into multiple new chunks."""
         def splitter(part, chunk):
             words = (part+chunk).split(sep=separator)
             # .split() without delimiter ignores trailing whitespace, e.g.
@@ -373,6 +377,7 @@ class StringStream(DataStream):
         return self.sequence(splitter, "")
 
     def match(self, pattern):
+        """Extract matching parts of chunk as new chunks."""
         regex = re.compile(pattern)
         def mapper(chunk):
             matches = regex.findall(chunk)
