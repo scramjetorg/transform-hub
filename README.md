@@ -5,7 +5,6 @@ Scramjet in Python
     <a><img src="https://img.shields.io/github/license/scramjetorg/scramjet-dev-python?color=green&style=plastic" alt="GitHub license" /></a>
     <a><img src="https://img.shields.io/github/v/tag/scramjetorg/scramjet-dev-python?label=version&color=blue&style=plastic" alt="version" /></a>
     <a><img src="https://img.shields.io/github/stars/scramjetorg/scramjet-dev-python?color=pink&style=plastic" alt="GitHub stars" /></a>
-    <a><img src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic" alt="npm" /></a>
     <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW">
         <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?color=yellow&style=plastic" alt="Donate" />
     </a>
@@ -76,7 +75,7 @@ Run test cases (with activated virtualenv):
 
 If you want to enable detailed debug logging, set one of the following env variables:
 
-```python
+```bash
 PYFCA_DEBUG=1       # debug pyfca
 DATASTREAM_DEBUG=1  # debug datastream
 SCRAMJET_DEBUG=1    # debug both
