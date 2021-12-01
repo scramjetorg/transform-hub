@@ -20,6 +20,12 @@ import * as shellescape from "shell-escape";
 import { PassThrough } from "stream";
 import * as path from "path";
 
+const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
+
+const runnerCommand = isTSNode
+    ? ["ts-node", path.join(__dirname, "../../runner/src/bin/start-runner.ts")]
+    : [process.execPath, path.join(__dirname, "../../dist/runner/bin/start-runner.js")];
+
 class ProcessInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
@@ -185,18 +191,15 @@ IComponent {
             config.entrypointPath
         );
 
-        const runnerPath = path.resolve(__dirname, "../../dist/runner/bin/start-runner.js");
-
-        this.logger.log("Spawning Runner process with command", [
-            runnerPath
-        ], "and envs: ", {
+        this.logger.log("Spawning Runner process with command", runnerCommand, "and envs: ", {
             FIFOS_DIR: this.fifosDir,
             SEQUENCE_PATH: sequencePath
         });
 
         // @TODO support running by ts-node
-        const runnerProcess = spawn(process.execPath, [runnerPath], {
+        const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), {
             env: {
+                ...process.env,
                 FIFOS_DIR: this.fifosDir,
                 SEQUENCE_PATH: sequencePath
             }
