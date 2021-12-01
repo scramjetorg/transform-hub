@@ -44,9 +44,10 @@ Most important methods :construction_worker:
 Examples :books:
 --------
 
-Take a look at `hello_world_datastream.py` file. You can run it with:
+Take a look at [`hello_datastream.py`](./hello_datastream.py) file.
+You can run it with:
 
-    python hello_world_datastream.py
+    python hello_datastream.py
 
 
 Running tests :chart_with_upwards_trend:

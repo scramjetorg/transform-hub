@@ -1,5 +1,8 @@
 #!/bin/env python3
 
+# this is a demonstration of how pyfca, the internal
+# stream transformation scheduler, is working.
+
 import asyncio
 import sys
 from pprint import pprint
