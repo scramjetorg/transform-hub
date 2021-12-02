@@ -119,6 +119,8 @@ export interface APIBase {
         path: string | RegExp,
         callback: (stream: Duplex, headers: IncomingHttpHeaders) => void
     ): void;
+
+    use(path: string | RegExp, ...middlewares: Middleware[]): void;
 }
 
 export interface APIExpose extends APIBase {
@@ -127,7 +129,6 @@ export interface APIExpose extends APIBase {
      */
     server: Server
     log: DataStream
-    use(path: string | RegExp, ...middlewares: Middleware[]): void;
 }
 
 export interface APIRoute extends APIBase {

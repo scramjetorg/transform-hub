@@ -33,6 +33,7 @@ export function getRouter(): APIRoute {
     const get = createGetterHandler(router);
     const op = createOperationHandler(router);
     const { duplex, upstream, downstream } = createStreamHandlers(router);
+    const use = router.use;
 
     return {
         lookup: (...args) => router.lookup(...args),
@@ -40,7 +41,8 @@ export function getRouter(): APIRoute {
         op,
         duplex,
         upstream,
-        downstream
+        downstream,
+        use
     };
 }
 
