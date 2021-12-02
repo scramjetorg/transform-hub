@@ -26,8 +26,7 @@ import { PassThrough } from "stream";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
-import { FreePortsFinder } from "./utils";
-import { defer } from "@scramjet/utility";
+import { FreePortsFinder, defer } from "@scramjet/utility";
 
 class DockerInstanceAdapter implements
 ILifeCycleAdapterMain,
