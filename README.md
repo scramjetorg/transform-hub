@@ -30,12 +30,23 @@ happening in this repository.
 
 >_Tested with Python 3.8.10 and Ubuntu 20.04._
 
+
 Most important methods :construction_worker:
 ----------------------
 
+Create a stream:
+
 * `read_from` - create a new stream from an iterable or an object implementing .read() method.
+
+Transform a stream:
+
 * `map` - transform each chunk in a stream using specified function.
 * `filter` - keep only chunks for which specified function evaluates to `True`.
+* `flatmap` - run specified function on each chunk, and return all of its results as separate chunks.
+* `batch` - convert a stream of chunks into a stream of lists of chunks.
+
+Collect data from the stream (asynchronous):
+
 * `to_list` - write all resulting stream chunks into a list.
 * `reduce` - combine all chunks using specified function.
 
