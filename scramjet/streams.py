@@ -349,6 +349,25 @@ class DataStream():
         return result
 
 
+    async def write_to(self, target):
+        """
+        Write all resulting stream chunks into target.
+
+        target: object implementing .write() method
+        """
+        self._mark_consumed()
+        self._uncork()
+        log(self, f'sink: {repr(target)}')
+        chunk = await self._pyfca.read()
+        while chunk is not None:
+            log(self, f'got: {tr(chunk)}')
+            write = target.write(chunk)
+            if asyncio.iscoroutine(write):
+                await write
+            chunk = await self._pyfca.read()
+        return target
+
+
     async def reduce(self, func, initial=None):
         """
         Apply two-argument func to elements from the stream cumulatively,
