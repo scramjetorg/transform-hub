@@ -502,13 +502,9 @@ We have also prepared a template for you to use. You can use it as a base for yo
  - JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
  - TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
 
-In the following sections we will describe both templates' contents and show you how they can be used in your own project.
-### template.js :pencil:
-
-This application package template contains two files:
-- index.js - this is where you should put your code and all the logic of the application you create. It will be the entry point of your application.
-
-- package.json
+There are two more templates that we will support, but they are still in development stage:
+ - Python
+ - C++ 
 
 # Troubleshooting :collision:
 
