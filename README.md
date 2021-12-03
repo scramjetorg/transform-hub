@@ -498,7 +498,17 @@ To check out more of our ready-to-go samples, please go to our repo on GitHub, [
 
 ## Configure your own sample :pencil:
 
-We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/transform-hub/tree/release/0.12/template).
+We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates). For this moment we support two variants of template in two programming languages:
+ - JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
+ - TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
+
+In the following sections we will describe both templates' contents and show you how they can be used in your own project.
+### template.js :pencil:
+
+This application package template contains two files:
+- index.js - this is where you should put your code and all the logic of the application you create. It will be the entry point of your application.
+
+- package.json
 
 # Troubleshooting :collision:
 
