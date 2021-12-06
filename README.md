@@ -31,8 +31,11 @@ happening in this repository.
 >_Tested with Python 3.8.10 and Ubuntu 20.04._
 
 
-Most important methods :construction_worker:
+Getting started :construction_worker:
 ----------------------
+
+Basic building block of Scramjet is the `DataStream` class.
+Here are its most important methods:
 
 Create a stream:
 
@@ -47,7 +50,7 @@ Transform a stream:
 
 Collect data from the stream (asynchronous):
 
-* `to_list` - write all resulting stream chunks into a list.
+* `to_list` - return a list with all stream chunks.
 * `reduce` - combine all chunks using specified function.
 
 

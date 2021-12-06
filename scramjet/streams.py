@@ -336,7 +336,7 @@ class DataStream():
 
 
     async def to_list(self):
-        """Write all resulting stream chunks into a list."""
+        """Create a list with all resulting stream chunks."""
         self._mark_consumed()
         self._uncork()
         result = []
