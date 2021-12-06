@@ -219,11 +219,14 @@ export class CSIController extends EventEmitter {
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.PANG, async (message) => {
             const pangData = message[1];
 
-            this.provides ||= pangData.provides;
-            this.requires ||= pangData.requires;
-
-            this.apiInputEnabled = pangData.requires === "";
-
+            if (pangData.provides) {
+                this.provides ||= pangData.provides;
+            } else if (pangData.requires) {
+                this.requires ||= pangData.requires;
+                if (pangData.requires !== "") {
+                    this.apiInputEnabled = false;
+                }
+            }
             this.emit("pang", message[1]);
         });
 
