@@ -1,14 +1,14 @@
 {
   "name": "@scramjet/supervisor",
   "version": "0.12.2",
-  "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them throgh abstraction layer provided by adapters.",
+  "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./src/bin/supervisor.ts",
   "scripts": {
     "test": "nyc ava",
     "build": "tsc -p tsconfig.build.json",
     "build:docs": "typedoc",
     "start": "npm run build && node ../../dist/supervisor/bin/supervisor.js ",
-    "stop": "./stop-superviosor.sh",
+    "stop": "./stop-supervisor.sh",
     "prepack": "node ../../scripts/publish.js",
     "clean": "rm -rf ./dist .bic_cache",
     "postbuild": "yarn prepack"
