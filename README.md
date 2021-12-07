@@ -2,9 +2,9 @@ Scramjet in Python
 ==================
 
 <p align="center">
-    <a><img src="https://img.shields.io/github/license/scramjetorg/scramjet-dev-python?color=green&style=plastic" alt="GitHub license" /></a>
-    <a><img src="https://img.shields.io/github/v/tag/scramjetorg/scramjet-dev-python?label=version&color=blue&style=plastic" alt="version" /></a>
-    <a><img src="https://img.shields.io/github/stars/scramjetorg/scramjet-dev-python?color=pink&style=plastic" alt="GitHub stars" /></a>
+    <a><img src="https://img.shields.io/github/license/scramjetorg/framework-python?color=green&style=plastic" alt="GitHub license" /></a>
+    <a><img src="https://img.shields.io/github/v/tag/scramjetorg/framework-python?label=version&color=blue&style=plastic" alt="version" /></a>
+    <a><img src="https://img.shields.io/github/stars/scramjetorg/framework-python?color=pink&style=plastic" alt="GitHub stars" /></a>
     <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW">
         <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?color=yellow&style=plastic" alt="Donate" />
     </a>
