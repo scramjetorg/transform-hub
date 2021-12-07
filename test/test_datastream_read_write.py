@@ -1,4 +1,4 @@
-from scramjet.streams import DataStream, StreamAlreadyConsumed
+from scramjet.streams import Stream, StreamAlreadyConsumed
 import asyncio
 from scramjet.ansi_color_codes import *
 import pytest
@@ -7,7 +7,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_writing_chunks_to_stream():
-    stream = DataStream()
+    stream = Stream()
     for x in [1, 2, 3, 4]:
         stream.write(x)
     stream.end()
@@ -15,7 +15,7 @@ async def test_writing_chunks_to_stream():
 
 @pytest.mark.asyncio
 async def test_reading_chunks_from_stream():
-    stream = DataStream.from_iterable('abcd')
+    stream = Stream.from_iterable('abcd')
     assert await stream.read() == 'a'
     assert await stream.read() == 'b'
     assert await stream.read() == 'c'
@@ -23,21 +23,21 @@ async def test_reading_chunks_from_stream():
 
 @pytest.mark.asyncio
 async def test_reading_from_consumed_stream():
-    s1 = DataStream.from_iterable('abcd')
+    s1 = Stream.from_iterable('abcd')
     s2 = s1.map(lambda x: x*2)
     with pytest.raises(StreamAlreadyConsumed):
         await s1.read()
 
 @pytest.mark.asyncio
 async def test_writing_to_imediate_stream():
-    s1 = DataStream().map(lambda x: x*2)
+    s1 = Stream().map(lambda x: x*2)
     s2 = s1.map(lambda x: "foo-" + x)
     s2.write("a")
     assert await s2.read() == "foo-aa"
 
 @pytest.mark.asyncio
 async def test_writing_to_imediate_stream_with_pyfca_break():
-    s1 = DataStream()
+    s1 = Stream()
     s2 = s1.batch(lambda chunk: chunk > "d")
     s3 = s2.map(lambda x: len(x))
     s3.write("a")
@@ -50,13 +50,13 @@ async def test_writing_to_imediate_stream_with_pyfca_break():
 
 @pytest.mark.asyncio
 async def test_reading_some_chunks_from_stream():
-    stream = DataStream.from_iterable('abcd')
+    stream = Stream.from_iterable('abcd')
     assert await stream.read() == 'a'
     assert ['b', 'c', 'd'] == await stream.to_list()
 
 @pytest.mark.asyncio
 async def test_reading_and_writing_in_turn():
-    stream = DataStream()
+    stream = Stream()
     for x in [1, 2, 3, 4]:
         await stream.write(x)
         assert await stream.read() == x
@@ -64,7 +64,7 @@ async def test_reading_and_writing_in_turn():
 
 @pytest.mark.asyncio
 async def test_stream_write_returns_drain_status():
-    stream = DataStream(max_parallel=4)
+    stream = Stream(max_parallel=4)
     data = [1, 2, 3, 4, 5, 6, 7, 8]
     writes = [stream.write(x) for x in data]
     # initially only writes below max_parallel should resolve drain

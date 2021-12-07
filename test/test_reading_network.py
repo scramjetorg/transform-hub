@@ -1,4 +1,4 @@
-from scramjet.streams import DataStream
+from scramjet.streams import Stream
 import asyncio
 import pytest
 from multiprocessing import Process
@@ -32,7 +32,7 @@ async def test_reading_from_tcp_connection():
         data = file.read()
     with ServeOverTCP(path, 8888):
         reader, writer = await asyncio.open_connection('localhost', 8888)
-        result = await DataStream.read_from(reader, chunk_size=16384).to_list()
+        result = await Stream.read_from(reader, chunk_size=16384).to_list()
         assert len(result) == math.ceil(fsize/16384)
         assert b''.join(result) == data
         writer.close()
@@ -43,5 +43,5 @@ async def test_reading_from_tcp_connection_without_chunk_size():
     path = "test/sample_text_1.txt"
     with ServeOverTCP(path, 9999):
         reader, writer = await asyncio.open_connection('localhost', 9999)
-        result = await DataStream.read_from(reader).to_list()
+        result = await Stream.read_from(reader).to_list()
         assert result == [b'foo\n', b'bar baz\n', b'qux']

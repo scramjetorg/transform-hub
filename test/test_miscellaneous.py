@@ -1,16 +1,16 @@
-from scramjet.streams import DataStream, StringStream
+from scramjet.streams import Stream, StringStream
 import pytest
 
 async def read_as_binary_and_decode(size, expected):
     with open('test/sample_multibyte_text.txt', 'rb') as file:
-        bytes = await DataStream.read_from(file, chunk_size=size).to_list()
+        bytes = await Stream.read_from(file, chunk_size=size).to_list()
 
         # ensure that we really have characters split across chunks
         with pytest.raises(UnicodeDecodeError):
             for chunk in bytes:
                 chunk.decode("UTF-8")
 
-        result = await DataStream.read_from(bytes).decode("UTF-8").to_list()
+        result = await Stream.read_from(bytes).decode("UTF-8").to_list()
         assert result == expected
 
 @pytest.mark.asyncio
@@ -31,10 +31,10 @@ async def test_read_from_respects_stream_class():
 
 @pytest.mark.asyncio
 async def test_changing_datastream_to_stringstream():
-    s1 = DataStream.read_from(['a', 'b', 'c', 'd'])
+    s1 = Stream.read_from(['a', 'b', 'c', 'd'])
     s2 = s1._as(StringStream)
     assert type(s2) == StringStream
-    assert type(s1) == DataStream
+    assert type(s1) == Stream
     assert await s2.to_list() == ['a', 'b', 'c', 'd']
 
 @pytest.mark.asyncio
@@ -46,14 +46,14 @@ async def test_mapping_stringstream_produces_stringstream():
 
 @pytest.mark.asyncio
 async def test_decoding_datastream_produces_stringstream():
-    s1 = DataStream.read_from([b'foo\n', b'bar baz\n', b'qux'])
+    s1 = Stream.read_from([b'foo\n', b'bar baz\n', b'qux'])
     s2 = s1.decode("UTF-8")
     assert type(s2) == StringStream
     assert await s2.to_list() == ['foo\n', 'bar baz\n', 'qux']
 
 @pytest.mark.asyncio
 async def test_converting_streams_does_not_break_pyfca():
-    s1 = DataStream.read_from(['a', 'b', 'c', 'd']).map(lambda x: x*2)
+    s1 = Stream.read_from(['a', 'b', 'c', 'd']).map(lambda x: x*2)
     s2 = s1._as(StringStream).map(lambda x: 'foo '+x)
     assert s2._pyfca == s1._pyfca
     await s2.to_list()
@@ -77,6 +77,6 @@ def parse_and_square_even_dollars(stream):
 @pytest.mark.asyncio
 async def test_use_method():
     data = ['$8', '$25', '$3', '$14', '$20', '$9', '$13', '$16']
-    stream = DataStream.from_iterable(data, max_parallel=4)
+    stream = Stream.from_iterable(data, max_parallel=4)
     result = await stream.use(parse_and_square_even_dollars).to_list()
     assert result == ['$64', '$196', '$400', '$256']

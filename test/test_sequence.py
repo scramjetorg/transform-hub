@@ -1,4 +1,4 @@
-from scramjet.streams import DataStream
+from scramjet.streams import Stream
 import scramjet.utils as utils
 from scramjet.ansi_color_codes import *
 import pytest
@@ -10,7 +10,7 @@ fmt = utils.print_formatted
 async def test_sequencing_text_into_lines():
     data = ["foo\nbar", " ", "b", "az", "\nqux\n", "plox"]
     result = await (
-        DataStream
+        Stream
             .from_iterable(data, max_parallel=2)
             .sequence(lambda part, chunk: (part+chunk).split('\n'), "")
             .to_list()
@@ -27,7 +27,7 @@ async def test_sequencing_lists_into_batches():
         every_2nd_index = range(0, len(new_list), 2)
         return [new_list[i:i+2] for i in every_2nd_index]
     result = await (
-        DataStream
+        Stream
             .from_iterable(data, max_parallel=2)
             .sequence(split_into_pairs, [])
             .to_list()

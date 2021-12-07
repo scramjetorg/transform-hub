@@ -21,7 +21,7 @@ class StreamAlreadyConsumed(Exception):
     pass
 
 
-class DataStream():
+class Stream():
     def __init__(self, max_parallel=64, upstream=None, origin=None, name="datastream"):
         self._upstream = upstream
         self._origin = origin if origin else self
@@ -396,13 +396,13 @@ class DataStream():
 
 
 
-class StringStream(DataStream):
+class StringStream(Stream):
     def __init__(self, max_parallel=64, upstream=None, origin=None, name="stringstream"):
         super().__init__(max_parallel=max_parallel, upstream=upstream, origin=origin, name=name)
 
     def parse(self, func, *args):
-        """Transform StringStream into DataStream."""
-        return self._as(DataStream).map(func, *args)
+        """Transform StringStream into Stream."""
+        return self._as(Stream).map(func, *args)
 
     def match(self, pattern):
         """Extract matching parts of chunk as new chunks."""

@@ -1,4 +1,4 @@
-from scramjet.streams import DataStream, StringStream
+from scramjet.streams import Stream, StringStream
 import asyncio
 import pytest
 
@@ -13,7 +13,7 @@ async def test_cutting_text_with_custom_sequencer():
 
     data = ["foo\nbar", " ", "b", "az", "\nqux\n", "fork plox"]
     result = await (
-        DataStream
+        Stream
             .read_from(data, max_parallel=2)
             .sequence(split, "")
             .to_list()
@@ -76,7 +76,7 @@ async def test_parsing_stringstream_into_datastream():
             'change': float(parts[4])
         }
     )
-    assert isinstance (stream, DataStream)
+    assert isinstance (stream, Stream)
     results = await stream.to_list()
     assert results[0] == { 'symbol': "AAL",  'name': "American Airlines Group Inc", 'price': 46.26, 'change': 0.43 }
     assert results[6] == { 'symbol': "AKAM", 'name': "Akamai Technologies Inc", 'price': 66.44, 'change': -0.16 }

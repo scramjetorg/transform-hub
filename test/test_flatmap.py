@@ -1,4 +1,4 @@
-from scramjet.streams import DataStream
+from scramjet.streams import Stream
 import asyncio
 import scramjet.utils as utils
 from scramjet.ansi_color_codes import *
@@ -10,7 +10,7 @@ fmt = utils.print_formatted
 @pytest.mark.asyncio
 async def test_flattening_lists():
     data = ["foo\nbar", "cork", "qux\nbarf ploxx\n", "baz"]
-    stream = DataStream.from_iterable(data, max_parallel=4)
+    stream = Stream.from_iterable(data, max_parallel=4)
     result = await stream.flatmap(lambda s: s.split()).to_list()
     print('result:', result)
     assert result == ['foo', 'bar', 'cork', 'qux', 'barf', 'ploxx', 'baz']
@@ -18,7 +18,7 @@ async def test_flattening_lists():
 @pytest.mark.asyncio
 async def test_flattening_strings():
     data = ["a", "flatmap"]
-    stream = DataStream.from_iterable(data, max_parallel=4)
+    stream = Stream.from_iterable(data, max_parallel=4)
     result = await stream.flatmap(lambda s: s).to_list()
     print('result:', result)
     assert result == ['a', 'f', 'l', 'a', 't', 'm', 'a', 'p']
@@ -26,7 +26,7 @@ async def test_flattening_strings():
 @pytest.mark.asyncio
 async def test_empty_iterables():
     data = [1, 2, 3, 4]
-    stream = DataStream.from_iterable(data, max_parallel=4)
+    stream = Stream.from_iterable(data, max_parallel=4)
     result = await stream.flatmap(lambda x: []).to_list()
     print('result:', result)
     assert result == []
@@ -34,7 +34,7 @@ async def test_empty_iterables():
 @pytest.mark.asyncio
 async def test_flattening_non_iterables_errors():
     data = [1, 2, 3, 4]
-    DataStream.from_iterable(data).flatmap(lambda x: x)
+    Stream.from_iterable(data).flatmap(lambda x: x)
     # find flatmap task and see if it errored as expected
     for task in asyncio.all_tasks():
         if task.get_name() == 'flatmap-consumer':

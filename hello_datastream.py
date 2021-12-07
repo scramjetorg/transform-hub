@@ -1,4 +1,4 @@
-from scramjet.streams import DataStream
+from scramjet.streams import Stream
 import asyncio
 from scramjet.ansi_color_codes import *
 
@@ -6,7 +6,7 @@ from scramjet.ansi_color_codes import *
 async def simple_stream_example():
     data = ['$8', '$25', '$3', '$14', '$20', '$9', '$13', '$16']
     print("Input:", data, '\n')
-    stream = DataStream.read_from(data)
+    stream = Stream.read_from(data)
     result = await (
         stream
             .each(lambda x: print("Echo:", repr(x)))
@@ -35,7 +35,7 @@ async def delayed_square(x):
 
 async def async_stream_example():
     result = await (
-        DataStream
+        Stream
             .read_from(range(12), max_parallel=4)
             .map(delayed_square)
             .to_list()
@@ -53,7 +53,7 @@ async def stream_from_file_example():
         print("Input:", file.read(), '\n')
     with open(path) as file:
         result = await (
-            DataStream
+            Stream
                 .read_from(file, chunk_size=32)
                 .each(lambda x: print(f"Read: {repr(x)}"))
                 .flatmap(lambda line: line.split())

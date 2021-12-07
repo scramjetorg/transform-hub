@@ -34,7 +34,7 @@ happening in this repository.
 Getting started :construction_worker:
 ----------------------
 
-Basic building block of Scramjet is the `DataStream` class.
+Basic building block of Scramjet is the `Stream` class.
 Here are its most important methods:
 
 Create a stream:
