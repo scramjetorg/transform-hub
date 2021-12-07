@@ -34,32 +34,65 @@ happening in this repository.
 Getting started :construction_worker:
 ----------------------
 
-Basic building block of Scramjet is the `Stream` class.
-Here are its most important methods:
+Basic building block of Scramjet is the `Stream` class. It reads input in
+chunks, performs operations on these chunks and produces an iterable output
+that can be collected and written somewhere.
 
-Create a stream:
+**Creating a stream** is done using `read_from` class method. It accepts
+any iterable or an object implementing .read() method as the input, and returns
+a `Stream` instance.
 
-* `read_from` - create a new stream from an iterable or an object implementing .read() method.
-
-Transform a stream:
+**Transforming a stream:**
 
 * `map` - transform each chunk in a stream using specified function.
 * `filter` - keep only chunks for which specified function evaluates to `True`.
 * `flatmap` - run specified function on each chunk, and return all of its results as separate chunks.
 * `batch` - convert a stream of chunks into a stream of lists of chunks.
 
-Collect data from the stream (asynchronous):
+Each of these methods return the modified stream, so they can be chained like
+this: `some_stream.map(...).filter(...).batch(...)`
 
-* `to_list` - return a list with all stream chunks.
+**Collecting data** from the stream (asynchronous):
+
 * `write_to` - write all resulting stream chunks into a target.
+* `to_list` - return a list with all stream chunks.
 * `reduce` - combine all chunks using specified function.
 
 
 Examples :books:
 --------
 
-Take a look at [`hello_datastream.py`](./hello_datastream.py) file.
-You can run it with:
+Let's say we have a `fruits.csv` file like this:
+
+```csv
+orange,sweet,1
+lemon,sour,2
+pigface,salty,5
+banana,sweet,3
+cranberries,bitter,6
+```
+
+and we want to write the names of the sweet fruits to a separate file.
+To do this, write an async function like this:
+
+```python
+with open("misc/fruits.csv") as file_in, open("sweet.txt", "w") as file_out:
+    await (
+        Stream
+        .read_from(file_in)
+        .map(lambda line: line.split(','))
+        .filter(lambda record: record[1] == "sweet")
+        .map(lambda record: f"{record[0]}\n")
+        .write_to(file_out)
+    )
+```
+
+and that's it!
+
+
+You can find more examples in [`hello_datastream.py`](./hello_datastream.py)
+file. They don't require any additional dependencies, just the standard library,
+so you can run them simply with:
 
     python hello_datastream.py
 
@@ -78,7 +111,7 @@ Check Python version:
     $ python --version
     Python 3.8.10
 
-Install libraries:
+Install dependencies:
 
     pip install -r dev-requirements.txt
 
