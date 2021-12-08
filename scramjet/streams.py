@@ -176,8 +176,10 @@ class Stream():
 
     def each(self, func, *args):
         """Perform an operation on each chunk and return it unchanged."""
-        def mapper(chunk):
-            func(chunk, *args)
+        async def mapper(chunk):
+            result = func(chunk, *args)
+            if asyncio.iscoroutine(result):
+                await result
             return chunk
         return self.map(mapper)
 

@@ -1,5 +1,6 @@
 from scramjet.streams import Stream, StringStream
 import pytest
+import asyncio
 
 async def read_as_binary_and_decode(size, expected):
     with open('test/sample_multibyte_text.txt', 'rb') as file:
@@ -64,6 +65,17 @@ async def test_each_method():
     stream = StringStream.read_from(['a', 'b', 'c', 'd'])
     await stream.each(lambda x: result.append(x)).to_list()
     assert result == ['a', 'b', 'c', 'd']
+
+@pytest.mark.asyncio
+async def test_each_method_async():
+    sleep_finished = False
+    async def wait(chunk):
+        nonlocal sleep_finished
+        await asyncio.sleep(0.01)
+        sleep_finished = True
+    stream = StringStream.read_from(['a', 'b', 'c', 'd'])
+    await stream.each(wait).to_list()
+    assert sleep_finished
 
 def parse_and_square_even_dollars(stream):
     return (
