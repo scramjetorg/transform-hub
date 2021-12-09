@@ -39,7 +39,7 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L26)
+[packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L21)
 
 ___
 
@@ -61,7 +61,7 @@ Hooks up downstream streams.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L70)
+[packages/types/src/lifecycle-adapters.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L48)
 
 ___
 
@@ -81,7 +81,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L21)
+[packages/types/src/lifecycle-adapters.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L16)
 
 ___
 
@@ -101,7 +101,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:72](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L72)
+[packages/types/src/lifecycle-adapters.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L50)
 
 ___
 
@@ -119,7 +119,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L29)
+[packages/types/src/lifecycle-adapters.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L24)
 
 ___
 
@@ -133,7 +133,7 @@ Starts Runner.
 
 | Name | Type |
 | :------ | :------ |
-| `config` | [`RunnerConfig`](../README.md#runnerconfig) |
+| `config` | [`InstanceConifg`](../README.md#instanceconifg) |
 
 #### Returns
 
@@ -143,7 +143,7 @@ Runner exit code.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:56](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L56)
+[packages/types/src/lifecycle-adapters.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L34)
 
 ___
 
@@ -161,7 +161,7 @@ snapshot url.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:63](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L63)
+[packages/types/src/lifecycle-adapters.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L41)
 
 ___
 
@@ -181,4 +181,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:74](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L74)
+[packages/types/src/lifecycle-adapters.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L52)

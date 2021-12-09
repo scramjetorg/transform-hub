@@ -1,8 +1,6 @@
-[@scramjet/api-server](../README.md) / [lib/definitions](../modules/lib_definitions.md) / CeroError
+[@scramjet/api-server](../README.md) / CeroError
 
 # Class: CeroError
-
-[lib/definitions](../modules/lib_definitions.md).CeroError
 
 ## Hierarchy
 
@@ -18,26 +16,26 @@
 
 ### Constructors
 
-- [constructor](lib_definitions.CeroError.md#constructor)
+- [constructor](CeroError.md#constructor)
 
 ### Properties
 
-- [cause](lib_definitions.CeroError.md#cause)
-- [code](lib_definitions.CeroError.md#code)
-- [httpMessage](lib_definitions.CeroError.md#httpmessage)
-- [message](lib_definitions.CeroError.md#message)
-- [name](lib_definitions.CeroError.md#name)
-- [type](lib_definitions.CeroError.md#type)
-- [stackTraceLimit](lib_definitions.CeroError.md#stacktracelimit)
+- [cause](CeroError.md#cause)
+- [code](CeroError.md#code)
+- [httpMessage](CeroError.md#httpmessage)
+- [message](CeroError.md#message)
+- [name](CeroError.md#name)
+- [type](CeroError.md#type)
+- [stackTraceLimit](CeroError.md#stacktracelimit)
 
 ### Accessors
 
-- [stack](lib_definitions.CeroError.md#stack)
+- [stack](CeroError.md#stack)
 
 ### Methods
 
-- [captureStackTrace](lib_definitions.CeroError.md#capturestacktrace)
-- [prepareStackTrace](lib_definitions.CeroError.md#preparestacktrace)
+- [captureStackTrace](CeroError.md#capturestacktrace)
+- [prepareStackTrace](CeroError.md#preparestacktrace)
 
 ## Constructors
 
@@ -59,7 +57,7 @@ Error.constructor
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L44)
+[packages/api-server/src/lib/definitions.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L44)
 
 ## Properties
 
@@ -73,7 +71,7 @@ APIError.cause
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L40)
+[packages/api-server/src/lib/definitions.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L40)
 
 ___
 
@@ -87,7 +85,7 @@ APIError.code
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L38)
+[packages/api-server/src/lib/definitions.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L38)
 
 ___
 
@@ -101,7 +99,7 @@ APIError.httpMessage
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L39)
+[packages/api-server/src/lib/definitions.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L39)
 
 ___
 
@@ -119,7 +117,7 @@ Error.message
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:974
+node_modules/typescript/lib/lib.es5.d.ts:1023
 
 ___
 
@@ -137,7 +135,7 @@ Error.name
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:973
+node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
@@ -147,7 +145,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L41)
+[packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L41)
 
 ___
 
@@ -173,9 +171,17 @@ node_modules/@types/node/globals.d.ts:13
 
 `string`
 
+#### Implementation of
+
+APIError.stack
+
+#### Overrides
+
+Error.stack
+
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:60](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L60)
+[packages/api-server/src/lib/definitions.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L59)
 
 ## Methods
 

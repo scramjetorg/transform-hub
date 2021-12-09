@@ -8,7 +8,9 @@
 
 - [CPMMessageCode](enums/cpmmessagecode.md)
 - [CommunicationChannel](enums/communicationchannel.md)
+- [InstanceMessageCode](enums/instancemessagecode.md)
 - [RunnerMessageCode](enums/runnermessagecode.md)
+- [SequenceMessageCode](enums/sequencemessagecode.md)
 - [SupervisorMessageCode](enums/supervisormessagecode.md)
 
 ### Variables
@@ -23,4 +25,4 @@
 
 #### Defined in
 
-[symbols.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/symbols.ts#L1)
+[symbols.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/symbols.ts#L1)

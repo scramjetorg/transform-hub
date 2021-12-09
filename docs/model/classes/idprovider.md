@@ -31,7 +31,7 @@
 
 #### Defined in
 
-[packages/model/src/utils/id-provider.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/utils/id-provider.ts#L4)
+[packages/model/src/utils/id-provider.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/id-provider.ts#L4)
 
 ___
 
@@ -51,4 +51,4 @@ ___
 
 #### Defined in
 
-[packages/model/src/utils/id-provider.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/utils/id-provider.ts#L8)
+[packages/model/src/utils/id-provider.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/id-provider.ts#L8)

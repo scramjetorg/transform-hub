@@ -18,11 +18,11 @@
 
 ### MessageFormatter
 
-Ƭ **MessageFormatter**: <Z\>(`name`: `string`, `func`: `string`, `args`: `Z`) => `string`
+Ƭ **MessageFormatter**: <Z\>(`colors`: `boolean`, `ts`: `string`, `name`: `string`, `func`: `string`, `args`: `Z`) => `string`
 
 #### Type declaration
 
-▸ <`Z`\>(`name`, `func`, `args`): `string`
+▸ <`Z`\>(`colors`, `ts`, `name`, `func`, `args`): `string`
 
 ##### Type parameters
 
@@ -34,6 +34,8 @@
 
 | Name | Type |
 | :------ | :------ |
+| `colors` | `boolean` |
+| `ts` | `string` |
 | `name` | `string` |
 | `func` | `string` |
 | `args` | `Z` |
@@ -44,7 +46,7 @@
 
 #### Defined in
 
-[index.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L9)
+[index.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L12)
 
 ## Functions
 
@@ -56,10 +58,10 @@ Pipes log streams to the provided outputs in serialized format
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `out` | `WritableStream`<`any`\> | stream for stdout logging |
-| `err` | `WritableStream`<`any`\> | stream for stderr logging |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `out` | `WritableStream`<`any`\> | `undefined` | stream for stdout logging |
+| `err` | `WritableStream`<`any`\> | `out` | stream for stderr logging |
 
 #### Returns
 
@@ -67,7 +69,7 @@ Pipes log streams to the provided outputs in serialized format
 
 #### Defined in
 
-[index.ts:138](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L138)
+[index.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L163)
 
 ___
 
@@ -81,7 +83,7 @@ ___
 
 #### Defined in
 
-[index.ts:128](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L128)
+[index.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L153)
 
 ___
 
@@ -106,4 +108,4 @@ a Console compatible logger
 
 #### Defined in
 
-[index.ts:151](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/logger/src/index.ts#L151)
+[index.ts:176](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L176)

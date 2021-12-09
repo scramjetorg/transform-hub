@@ -4,11 +4,17 @@
 
 ## Table of contents
 
+### Classes
+
+- [FreePortsFinder](classes/freeportsfinder.md)
+
 ### Functions
 
 - [defer](README.md#defer)
+- [isDefined](README.md#isdefined)
 - [merge](README.md#merge)
 - [promiseTimeout](README.md#promisetimeout)
+- [readStreamedJSON](README.md#readstreamedjson)
 
 ## Functions
 
@@ -28,13 +34,39 @@
 
 #### Defined in
 
-[defer.ts:1](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/utility/src/defer.ts#L1)
+[defer.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/defer.ts#L1)
+
+___
+
+### isDefined
+
+▸ **isDefined**<`T`\>(`value`): value is T
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `T` | extends `unknown` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `value` | `T` \| `undefined` \| ``null`` |
+
+#### Returns
+
+value is T
+
+#### Defined in
+
+[typeguards/is-defined.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-defined.ts#L1)
 
 ___
 
 ### merge
 
-▸ `Const` **merge**<`T`\>(`objTo`, `objFrom`): `void`
+▸ `Const` **merge**<`T`\>(`objTo`, `objFrom?`): `void`
 
 #### Type parameters
 
@@ -55,7 +87,7 @@ ___
 
 #### Defined in
 
-[merge.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/utility/src/merge.ts#L3)
+[merge.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/merge.ts#L3)
 
 ___
 
@@ -82,4 +114,24 @@ ___
 
 #### Defined in
 
-[promise-timeout.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/utility/src/promise-timeout.ts#L3)
+[promise-timeout.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/promise-timeout.ts#L3)
+
+___
+
+### readStreamedJSON
+
+▸ **readStreamedJSON**(`readable`): `Promise`<`unknown`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `readable` | `Readable` |
+
+#### Returns
+
+`Promise`<`unknown`\>
+
+#### Defined in
+
+[read-streamed-json.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-streamed-json.ts#L4)

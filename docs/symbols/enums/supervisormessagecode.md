@@ -16,4 +16,4 @@
 
 #### Defined in
 
-[supervisor-message-code.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/supervisor-message-code.ts#L2)
+[supervisor-message-code.ts:2](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/supervisor-message-code.ts#L2)

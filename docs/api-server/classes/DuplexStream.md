@@ -1,8 +1,6 @@
-[@scramjet/api-server](../README.md) / [lib/duplex-stream](../modules/lib_duplex_stream.md) / DuplexStream
+[@scramjet/api-server](../README.md) / DuplexStream
 
 # Class: DuplexStream
-
-[lib/duplex-stream](../modules/lib_duplex_stream.md).DuplexStream
 
 ## Hierarchy
 
@@ -14,77 +12,77 @@
 
 ### Constructors
 
-- [constructor](lib_duplex_stream.DuplexStream.md#constructor)
+- [constructor](DuplexStream.md#constructor)
 
 ### Properties
 
-- [destroyed](lib_duplex_stream.DuplexStream.md#destroyed)
-- [input](lib_duplex_stream.DuplexStream.md#input)
-- [output](lib_duplex_stream.DuplexStream.md#output)
-- [readable](lib_duplex_stream.DuplexStream.md#readable)
-- [readableEncoding](lib_duplex_stream.DuplexStream.md#readableencoding)
-- [readableEnded](lib_duplex_stream.DuplexStream.md#readableended)
-- [readableFlowing](lib_duplex_stream.DuplexStream.md#readableflowing)
-- [readableHighWaterMark](lib_duplex_stream.DuplexStream.md#readablehighwatermark)
-- [readableLength](lib_duplex_stream.DuplexStream.md#readablelength)
-- [readableObjectMode](lib_duplex_stream.DuplexStream.md#readableobjectmode)
-- [writable](lib_duplex_stream.DuplexStream.md#writable)
-- [writableCorked](lib_duplex_stream.DuplexStream.md#writablecorked)
-- [writableEnded](lib_duplex_stream.DuplexStream.md#writableended)
-- [writableFinished](lib_duplex_stream.DuplexStream.md#writablefinished)
-- [writableHighWaterMark](lib_duplex_stream.DuplexStream.md#writablehighwatermark)
-- [writableLength](lib_duplex_stream.DuplexStream.md#writablelength)
-- [writableObjectMode](lib_duplex_stream.DuplexStream.md#writableobjectmode)
-- [captureRejectionSymbol](lib_duplex_stream.DuplexStream.md#capturerejectionsymbol)
-- [captureRejections](lib_duplex_stream.DuplexStream.md#capturerejections)
-- [defaultMaxListeners](lib_duplex_stream.DuplexStream.md#defaultmaxlisteners)
-- [errorMonitor](lib_duplex_stream.DuplexStream.md#errormonitor)
+- [destroyed](DuplexStream.md#destroyed)
+- [input](DuplexStream.md#input)
+- [output](DuplexStream.md#output)
+- [readable](DuplexStream.md#readable)
+- [readableEncoding](DuplexStream.md#readableencoding)
+- [readableEnded](DuplexStream.md#readableended)
+- [readableFlowing](DuplexStream.md#readableflowing)
+- [readableHighWaterMark](DuplexStream.md#readablehighwatermark)
+- [readableLength](DuplexStream.md#readablelength)
+- [readableObjectMode](DuplexStream.md#readableobjectmode)
+- [writable](DuplexStream.md#writable)
+- [writableCorked](DuplexStream.md#writablecorked)
+- [writableEnded](DuplexStream.md#writableended)
+- [writableFinished](DuplexStream.md#writablefinished)
+- [writableHighWaterMark](DuplexStream.md#writablehighwatermark)
+- [writableLength](DuplexStream.md#writablelength)
+- [writableObjectMode](DuplexStream.md#writableobjectmode)
+- [captureRejectionSymbol](DuplexStream.md#capturerejectionsymbol)
+- [captureRejections](DuplexStream.md#capturerejections)
+- [defaultMaxListeners](DuplexStream.md#defaultmaxlisteners)
+- [errorMonitor](DuplexStream.md#errormonitor)
 
 ### Methods
 
-- [[asyncIterator]](lib_duplex_stream.DuplexStream.md#[asynciterator])
-- [\_construct](lib_duplex_stream.DuplexStream.md#_construct)
-- [\_destroy](lib_duplex_stream.DuplexStream.md#_destroy)
-- [\_final](lib_duplex_stream.DuplexStream.md#_final)
-- [\_read](lib_duplex_stream.DuplexStream.md#_read)
-- [\_write](lib_duplex_stream.DuplexStream.md#_write)
-- [\_writev](lib_duplex_stream.DuplexStream.md#_writev)
-- [addListener](lib_duplex_stream.DuplexStream.md#addlistener)
-- [cork](lib_duplex_stream.DuplexStream.md#cork)
-- [destroy](lib_duplex_stream.DuplexStream.md#destroy)
-- [emit](lib_duplex_stream.DuplexStream.md#emit)
-- [end](lib_duplex_stream.DuplexStream.md#end)
-- [eventNames](lib_duplex_stream.DuplexStream.md#eventnames)
-- [getMaxListeners](lib_duplex_stream.DuplexStream.md#getmaxlisteners)
-- [isPaused](lib_duplex_stream.DuplexStream.md#ispaused)
-- [listenerCount](lib_duplex_stream.DuplexStream.md#listenercount)
-- [listeners](lib_duplex_stream.DuplexStream.md#listeners)
-- [off](lib_duplex_stream.DuplexStream.md#off)
-- [on](lib_duplex_stream.DuplexStream.md#on)
-- [once](lib_duplex_stream.DuplexStream.md#once)
-- [pause](lib_duplex_stream.DuplexStream.md#pause)
-- [pipe](lib_duplex_stream.DuplexStream.md#pipe)
-- [prependListener](lib_duplex_stream.DuplexStream.md#prependlistener)
-- [prependOnceListener](lib_duplex_stream.DuplexStream.md#prependoncelistener)
-- [push](lib_duplex_stream.DuplexStream.md#push)
-- [rawListeners](lib_duplex_stream.DuplexStream.md#rawlisteners)
-- [read](lib_duplex_stream.DuplexStream.md#read)
-- [removeAllListeners](lib_duplex_stream.DuplexStream.md#removealllisteners)
-- [removeListener](lib_duplex_stream.DuplexStream.md#removelistener)
-- [resume](lib_duplex_stream.DuplexStream.md#resume)
-- [setDefaultEncoding](lib_duplex_stream.DuplexStream.md#setdefaultencoding)
-- [setEncoding](lib_duplex_stream.DuplexStream.md#setencoding)
-- [setMaxListeners](lib_duplex_stream.DuplexStream.md#setmaxlisteners)
-- [uncork](lib_duplex_stream.DuplexStream.md#uncork)
-- [unpipe](lib_duplex_stream.DuplexStream.md#unpipe)
-- [unshift](lib_duplex_stream.DuplexStream.md#unshift)
-- [wrap](lib_duplex_stream.DuplexStream.md#wrap)
-- [write](lib_duplex_stream.DuplexStream.md#write)
-- [from](lib_duplex_stream.DuplexStream.md#from)
-- [getEventListener](lib_duplex_stream.DuplexStream.md#geteventlistener)
-- [listenerCount](lib_duplex_stream.DuplexStream.md#listenercount)
-- [on](lib_duplex_stream.DuplexStream.md#on)
-- [once](lib_duplex_stream.DuplexStream.md#once)
+- [[asyncIterator]](DuplexStream.md#[asynciterator])
+- [\_construct](DuplexStream.md#_construct)
+- [\_destroy](DuplexStream.md#_destroy)
+- [\_final](DuplexStream.md#_final)
+- [\_read](DuplexStream.md#_read)
+- [\_write](DuplexStream.md#_write)
+- [\_writev](DuplexStream.md#_writev)
+- [addListener](DuplexStream.md#addlistener)
+- [cork](DuplexStream.md#cork)
+- [destroy](DuplexStream.md#destroy)
+- [emit](DuplexStream.md#emit)
+- [end](DuplexStream.md#end)
+- [eventNames](DuplexStream.md#eventnames)
+- [getMaxListeners](DuplexStream.md#getmaxlisteners)
+- [isPaused](DuplexStream.md#ispaused)
+- [listenerCount](DuplexStream.md#listenercount)
+- [listeners](DuplexStream.md#listeners)
+- [off](DuplexStream.md#off)
+- [on](DuplexStream.md#on)
+- [once](DuplexStream.md#once)
+- [pause](DuplexStream.md#pause)
+- [pipe](DuplexStream.md#pipe)
+- [prependListener](DuplexStream.md#prependlistener)
+- [prependOnceListener](DuplexStream.md#prependoncelistener)
+- [push](DuplexStream.md#push)
+- [rawListeners](DuplexStream.md#rawlisteners)
+- [read](DuplexStream.md#read)
+- [removeAllListeners](DuplexStream.md#removealllisteners)
+- [removeListener](DuplexStream.md#removelistener)
+- [resume](DuplexStream.md#resume)
+- [setDefaultEncoding](DuplexStream.md#setdefaultencoding)
+- [setEncoding](DuplexStream.md#setencoding)
+- [setMaxListeners](DuplexStream.md#setmaxlisteners)
+- [uncork](DuplexStream.md#uncork)
+- [unpipe](DuplexStream.md#unpipe)
+- [unshift](DuplexStream.md#unshift)
+- [wrap](DuplexStream.md#wrap)
+- [write](DuplexStream.md#write)
+- [from](DuplexStream.md#from)
+- [getEventListener](DuplexStream.md#geteventlistener)
+- [listenerCount](DuplexStream.md#listenercount)
+- [on](DuplexStream.md#on)
+- [once](DuplexStream.md#once)
 
 ## Constructors
 
@@ -106,7 +104,7 @@ Duplex.constructor
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L7)
+[packages/api-server/src/lib/duplex-stream.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L7)
 
 ## Properties
 
@@ -130,7 +128,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L4)
+[packages/api-server/src/lib/duplex-stream.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L4)
 
 ___
 
@@ -140,7 +138,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L5)
+[packages/api-server/src/lib/duplex-stream.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L5)
 
 ___
 
@@ -342,7 +340,7 @@ ___
 
 ### captureRejectionSymbol
 
-▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](lib_duplex_stream.DuplexStream.md#capturerejectionsymbol)
+▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](DuplexStream.md#capturerejectionsymbol)
 
 #### Inherited from
 
@@ -386,7 +384,7 @@ ___
 
 ### errorMonitor
 
-▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](lib_duplex_stream.DuplexStream.md#errormonitor)
+▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](DuplexStream.md#errormonitor)
 
 This symbol shall be used to install a listener for only monitoring `'error'`
 events. Listeners installed using this symbol are called before the regular
@@ -416,7 +414,7 @@ node_modules/@types/node/events.d.ts:45
 
 #### Inherited from
 
-Duplex.\_\_@asyncIterator@3267
+Duplex.\_\_@asyncIterator@3227
 
 #### Defined in
 
@@ -511,7 +509,7 @@ Duplex.\_read
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:33](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L33)
+[packages/api-server/src/lib/duplex-stream.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L36)
 
 ___
 
@@ -537,7 +535,7 @@ Duplex.\_write
 
 #### Defined in
 
-[packages/api-server/src/lib/duplex-stream.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L20)
+[packages/api-server/src/lib/duplex-stream.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L23)
 
 ___
 
@@ -568,7 +566,7 @@ ___
 
 ### addListener
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 Event emitter
 The defined events on documents including:
@@ -589,7 +587,7 @@ The defined events on documents including:
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -599,7 +597,7 @@ Duplex.addListener
 
 node_modules/@types/node/stream.d.ts:68
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -610,7 +608,7 @@ node_modules/@types/node/stream.d.ts:68
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -620,7 +618,7 @@ Duplex.addListener
 
 node_modules/@types/node/stream.d.ts:69
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -631,7 +629,7 @@ node_modules/@types/node/stream.d.ts:69
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -641,7 +639,7 @@ Duplex.addListener
 
 node_modules/@types/node/stream.d.ts:70
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -652,7 +650,7 @@ node_modules/@types/node/stream.d.ts:70
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -662,7 +660,7 @@ Duplex.addListener
 
 node_modules/@types/node/stream.d.ts:71
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -673,7 +671,7 @@ node_modules/@types/node/stream.d.ts:71
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -683,7 +681,7 @@ Duplex.addListener
 
 node_modules/@types/node/stream.d.ts:72
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -694,7 +692,7 @@ node_modules/@types/node/stream.d.ts:72
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -704,7 +702,7 @@ Duplex.addListener
 
 node_modules/@types/node/stream.d.ts:73
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -715,7 +713,7 @@ node_modules/@types/node/stream.d.ts:73
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -725,7 +723,7 @@ Duplex.addListener
 
 node_modules/@types/node/stream.d.ts:74
 
-▸ **addListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **addListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -736,7 +734,7 @@ node_modules/@types/node/stream.d.ts:74
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1128,7 +1126,7 @@ ___
 
 ### off
 
-▸ **off**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **off**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1139,7 +1137,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1153,7 +1151,7 @@ ___
 
 ### on
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1164,7 +1162,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1174,7 +1172,7 @@ Duplex.on
 
 node_modules/@types/node/stream.d.ts:86
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1185,7 +1183,7 @@ node_modules/@types/node/stream.d.ts:86
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1195,7 +1193,7 @@ Duplex.on
 
 node_modules/@types/node/stream.d.ts:87
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1206,7 +1204,7 @@ node_modules/@types/node/stream.d.ts:87
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1216,7 +1214,7 @@ Duplex.on
 
 node_modules/@types/node/stream.d.ts:88
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1227,7 +1225,7 @@ node_modules/@types/node/stream.d.ts:88
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1237,7 +1235,7 @@ Duplex.on
 
 node_modules/@types/node/stream.d.ts:89
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1248,7 +1246,7 @@ node_modules/@types/node/stream.d.ts:89
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1258,7 +1256,7 @@ Duplex.on
 
 node_modules/@types/node/stream.d.ts:90
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1269,7 +1267,7 @@ node_modules/@types/node/stream.d.ts:90
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1279,7 +1277,7 @@ Duplex.on
 
 node_modules/@types/node/stream.d.ts:91
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1290,7 +1288,7 @@ node_modules/@types/node/stream.d.ts:91
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1300,7 +1298,7 @@ Duplex.on
 
 node_modules/@types/node/stream.d.ts:92
 
-▸ **on**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **on**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1311,7 +1309,7 @@ node_modules/@types/node/stream.d.ts:92
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1325,7 +1323,7 @@ ___
 
 ### once
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1336,7 +1334,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1346,7 +1344,7 @@ Duplex.once
 
 node_modules/@types/node/stream.d.ts:95
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1357,7 +1355,7 @@ node_modules/@types/node/stream.d.ts:95
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1367,7 +1365,7 @@ Duplex.once
 
 node_modules/@types/node/stream.d.ts:96
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1378,7 +1376,7 @@ node_modules/@types/node/stream.d.ts:96
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1388,7 +1386,7 @@ Duplex.once
 
 node_modules/@types/node/stream.d.ts:97
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1399,7 +1397,7 @@ node_modules/@types/node/stream.d.ts:97
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1409,7 +1407,7 @@ Duplex.once
 
 node_modules/@types/node/stream.d.ts:98
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1420,7 +1418,7 @@ node_modules/@types/node/stream.d.ts:98
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1430,7 +1428,7 @@ Duplex.once
 
 node_modules/@types/node/stream.d.ts:99
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1441,7 +1439,7 @@ node_modules/@types/node/stream.d.ts:99
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1451,7 +1449,7 @@ Duplex.once
 
 node_modules/@types/node/stream.d.ts:100
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1462,7 +1460,7 @@ node_modules/@types/node/stream.d.ts:100
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1472,7 +1470,7 @@ Duplex.once
 
 node_modules/@types/node/stream.d.ts:101
 
-▸ **once**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **once**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1483,7 +1481,7 @@ node_modules/@types/node/stream.d.ts:101
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1497,11 +1495,11 @@ ___
 
 ### pause
 
-▸ **pause**(): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **pause**(): [`DuplexStream`](DuplexStream.md)
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1547,7 +1545,7 @@ ___
 
 ### prependListener
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1558,7 +1556,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1568,7 +1566,7 @@ Duplex.prependListener
 
 node_modules/@types/node/stream.d.ts:104
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1579,7 +1577,7 @@ node_modules/@types/node/stream.d.ts:104
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1589,7 +1587,7 @@ Duplex.prependListener
 
 node_modules/@types/node/stream.d.ts:105
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1600,7 +1598,7 @@ node_modules/@types/node/stream.d.ts:105
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1610,7 +1608,7 @@ Duplex.prependListener
 
 node_modules/@types/node/stream.d.ts:106
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1621,7 +1619,7 @@ node_modules/@types/node/stream.d.ts:106
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1631,7 +1629,7 @@ Duplex.prependListener
 
 node_modules/@types/node/stream.d.ts:107
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1642,7 +1640,7 @@ node_modules/@types/node/stream.d.ts:107
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1652,7 +1650,7 @@ Duplex.prependListener
 
 node_modules/@types/node/stream.d.ts:108
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1663,7 +1661,7 @@ node_modules/@types/node/stream.d.ts:108
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1673,7 +1671,7 @@ Duplex.prependListener
 
 node_modules/@types/node/stream.d.ts:109
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1684,7 +1682,7 @@ node_modules/@types/node/stream.d.ts:109
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1694,7 +1692,7 @@ Duplex.prependListener
 
 node_modules/@types/node/stream.d.ts:110
 
-▸ **prependListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1705,7 +1703,7 @@ node_modules/@types/node/stream.d.ts:110
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1719,7 +1717,7 @@ ___
 
 ### prependOnceListener
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1730,7 +1728,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1740,7 +1738,7 @@ Duplex.prependOnceListener
 
 node_modules/@types/node/stream.d.ts:113
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1751,7 +1749,7 @@ node_modules/@types/node/stream.d.ts:113
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1761,7 +1759,7 @@ Duplex.prependOnceListener
 
 node_modules/@types/node/stream.d.ts:114
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1772,7 +1770,7 @@ node_modules/@types/node/stream.d.ts:114
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1782,7 +1780,7 @@ Duplex.prependOnceListener
 
 node_modules/@types/node/stream.d.ts:115
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1793,7 +1791,7 @@ node_modules/@types/node/stream.d.ts:115
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1803,7 +1801,7 @@ Duplex.prependOnceListener
 
 node_modules/@types/node/stream.d.ts:116
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1814,7 +1812,7 @@ node_modules/@types/node/stream.d.ts:116
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1824,7 +1822,7 @@ Duplex.prependOnceListener
 
 node_modules/@types/node/stream.d.ts:117
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1835,7 +1833,7 @@ node_modules/@types/node/stream.d.ts:117
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1845,7 +1843,7 @@ Duplex.prependOnceListener
 
 node_modules/@types/node/stream.d.ts:118
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1856,7 +1854,7 @@ node_modules/@types/node/stream.d.ts:118
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1866,7 +1864,7 @@ Duplex.prependOnceListener
 
 node_modules/@types/node/stream.d.ts:119
 
-▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **prependOnceListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1877,7 +1875,7 @@ node_modules/@types/node/stream.d.ts:119
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1964,7 +1962,7 @@ ___
 
 ### removeAllListeners
 
-▸ **removeAllListeners**(`event?`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeAllListeners**(`event?`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1974,7 +1972,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -1988,7 +1986,7 @@ ___
 
 ### removeListener
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -1999,7 +1997,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2009,7 +2007,7 @@ Duplex.removeListener
 
 node_modules/@types/node/stream.d.ts:122
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2020,7 +2018,7 @@ node_modules/@types/node/stream.d.ts:122
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2030,7 +2028,7 @@ Duplex.removeListener
 
 node_modules/@types/node/stream.d.ts:123
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2041,7 +2039,7 @@ node_modules/@types/node/stream.d.ts:123
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2051,7 +2049,7 @@ Duplex.removeListener
 
 node_modules/@types/node/stream.d.ts:124
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2062,7 +2060,7 @@ node_modules/@types/node/stream.d.ts:124
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2072,7 +2070,7 @@ Duplex.removeListener
 
 node_modules/@types/node/stream.d.ts:125
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2083,7 +2081,7 @@ node_modules/@types/node/stream.d.ts:125
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2093,7 +2091,7 @@ Duplex.removeListener
 
 node_modules/@types/node/stream.d.ts:126
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2104,7 +2102,7 @@ node_modules/@types/node/stream.d.ts:126
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2114,7 +2112,7 @@ Duplex.removeListener
 
 node_modules/@types/node/stream.d.ts:127
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2125,7 +2123,7 @@ node_modules/@types/node/stream.d.ts:127
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2135,7 +2133,7 @@ Duplex.removeListener
 
 node_modules/@types/node/stream.d.ts:128
 
-▸ **removeListener**(`event`, `listener`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **removeListener**(`event`, `listener`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2146,7 +2144,7 @@ node_modules/@types/node/stream.d.ts:128
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2160,11 +2158,11 @@ ___
 
 ### resume
 
-▸ **resume**(): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **resume**(): [`DuplexStream`](DuplexStream.md)
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2178,7 +2176,7 @@ ___
 
 ### setDefaultEncoding
 
-▸ **setDefaultEncoding**(`encoding`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **setDefaultEncoding**(`encoding`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2188,7 +2186,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2202,7 +2200,7 @@ ___
 
 ### setEncoding
 
-▸ **setEncoding**(`encoding`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **setEncoding**(`encoding`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2212,7 +2210,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2226,7 +2224,7 @@ ___
 
 ### setMaxListeners
 
-▸ **setMaxListeners**(`n`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **setMaxListeners**(`n`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2236,7 +2234,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2268,7 +2266,7 @@ ___
 
 ### unpipe
 
-▸ **unpipe**(`destination?`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **unpipe**(`destination?`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2278,7 +2276,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 
@@ -2317,7 +2315,7 @@ ___
 
 ### wrap
 
-▸ **wrap**(`oldStream`): [`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+▸ **wrap**(`oldStream`): [`DuplexStream`](DuplexStream.md)
 
 #### Parameters
 
@@ -2327,7 +2325,7 @@ ___
 
 #### Returns
 
-[`DuplexStream`](lib_duplex_stream.DuplexStream.md)
+[`DuplexStream`](DuplexStream.md)
 
 #### Inherited from
 

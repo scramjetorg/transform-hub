@@ -6,11 +6,36 @@
 
 ### Enumeration members
 
+- [INSTANCE](cpmmessagecode.md#instance)
+- [INSTANCES](cpmmessagecode.md#instances)
 - [LOAD](cpmmessagecode.md#load)
 - [NETWORK\_INFO](cpmmessagecode.md#network_info)
+- [SEQUENCE](cpmmessagecode.md#sequence)
+- [SEQUENCES](cpmmessagecode.md#sequences)
 - [STH\_ID](cpmmessagecode.md#sth_id)
+- [TOPIC](cpmmessagecode.md#topic)
 
 ## Enumeration members
+
+### INSTANCE
+
+• **INSTANCE** = `7005`
+
+#### Defined in
+
+[cpm-message-code.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L9)
+
+___
+
+### INSTANCES
+
+• **INSTANCES** = `7003`
+
+#### Defined in
+
+[cpm-message-code.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L7)
+
+___
 
 ### LOAD
 
@@ -18,7 +43,7 @@
 
 #### Defined in
 
-[cpm-message-code.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L3)
+[cpm-message-code.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L3)
 
 ___
 
@@ -28,7 +53,27 @@ ___
 
 #### Defined in
 
-[cpm-message-code.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L5)
+[cpm-message-code.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L5)
+
+___
+
+### SEQUENCE
+
+• **SEQUENCE** = `7006`
+
+#### Defined in
+
+[cpm-message-code.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L10)
+
+___
+
+### SEQUENCES
+
+• **SEQUENCES** = `7004`
+
+#### Defined in
+
+[cpm-message-code.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L8)
 
 ___
 
@@ -38,4 +83,14 @@ ___
 
 #### Defined in
 
-[cpm-message-code.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L2)
+[cpm-message-code.ts:2](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L2)
+
+___
+
+### TOPIC
+
+• **TOPIC** = `7007`
+
+#### Defined in
+
+[cpm-message-code.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L12)
