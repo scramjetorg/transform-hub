@@ -20,6 +20,7 @@
 - [message](ClientError.md#message)
 - [name](ClientError.md#name)
 - [reason](ClientError.md#reason)
+- [source](ClientError.md#source)
 - [stack](ClientError.md#stack)
 - [stackTraceLimit](ClientError.md#stacktracelimit)
 
@@ -33,7 +34,7 @@
 
 ### constructor
 
-• **new ClientError**(`code`, `reason?`, `message?`)
+• **new ClientError**(`code`, `reason?`, `message?`, `source?`)
 
 #### Parameters
 
@@ -42,6 +43,7 @@
 | `code` | [`ClientErrorCode`](../README.md#clienterrorcode) |
 | `reason?` | `string` \| `Error` |
 | `message?` | `string` |
+| `source?` | `Error` |
 
 #### Overrides
 
@@ -49,7 +51,7 @@ Error.constructor
 
 #### Defined in
 
-[packages/api-client/src/client-error.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-error.ts#L21)
+[packages/api-client/src/client-error.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L22)
 
 ## Properties
 
@@ -59,7 +61,7 @@ Error.constructor
 
 #### Defined in
 
-[packages/api-client/src/client-error.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-error.ts#L19)
+[packages/api-client/src/client-error.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L20)
 
 ___
 
@@ -73,7 +75,7 @@ Error.message
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:974
+node_modules/typescript/lib/lib.es5.d.ts:1023
 
 ___
 
@@ -87,7 +89,7 @@ Error.name
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:973
+node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
@@ -97,7 +99,17 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-error.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-error.ts#L18)
+[packages/api-client/src/client-error.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L18)
+
+___
+
+### source
+
+• `Optional` **source**: `Error`
+
+#### Defined in
+
+[packages/api-client/src/client-error.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L19)
 
 ___
 
@@ -111,7 +123,7 @@ Error.stack
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:975
+node_modules/typescript/lib/lib.es5.d.ts:1024
 
 ___
 
@@ -158,7 +170,7 @@ ___
 
 ### from
 
-▸ `Static` **from**(`error`, `message?`): [`ClientError`](ClientError.md)
+▸ `Static` **from**(`error`, `message?`, `source?`): [`ClientError`](ClientError.md)
 
 #### Parameters
 
@@ -166,6 +178,7 @@ ___
 | :------ | :------ |
 | `error` | `Error` \| `FetchError` |
 | `message?` | `string` |
+| `source?` | `Error` |
 
 #### Returns
 
@@ -173,7 +186,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-error.ts:31](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-error.ts#L31)
+[packages/api-client/src/client-error.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L31)
 
 ___
 

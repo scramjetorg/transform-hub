@@ -34,7 +34,7 @@
 
 #### Defined in
 
-[packages/api-client/src/client-error.ts:3](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/client-error.ts#L3)
+[packages/api-client/src/client-error.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L3)
 
 ___
 
@@ -44,7 +44,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/instance-client.ts#L8)
+[packages/api-client/src/instance-client.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L7)
 
 ___
 
@@ -54,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/instance-client.ts#L9)
+[packages/api-client/src/instance-client.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L8)
 
 ___
 
@@ -68,10 +68,11 @@ ___
 | :------ | :------ |
 | `error` | (`res`: [`ClientError`](classes/ClientError.md)) => `void` |
 | `ok` | (`res`: `Response`) => `void` |
+| `request` | (...`req`: [url: RequestInfo, init?: RequestInit]) => `void` |
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:24](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/types/index.ts#L24)
+[packages/api-client/src/types/index.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L25)
 
 ___
 
@@ -84,11 +85,11 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `data?` | `Object` |
-| `status` | `number` \| `undefined` |
+| `status` | `number` |
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:5](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/types/index.ts#L5)
+[packages/api-client/src/types/index.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L5)
 
 ___
 
@@ -100,9 +101,9 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `data?` | `Stream` |
-| `status` | `number` \| `undefined` |
+| `data?` | `NodeJS.ReadableStream` |
+| `status` | `number` |
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/types/index.ts#L10)
+[packages/api-client/src/types/index.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L10)

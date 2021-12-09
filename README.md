@@ -219,7 +219,7 @@ Hub is all set and ready to work with.
 
 You can also install the hub using npm [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth) package:
 
-    npm i @scramjet/sth
+    npm i -g @scramjet/sth
 
 and start the hub:
 
