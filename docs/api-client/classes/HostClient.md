@@ -23,10 +23,12 @@
 - [getInstanceInfo](HostClient.md#getinstanceinfo)
 - [getLoadCheck](HostClient.md#getloadcheck)
 - [getLogStream](HostClient.md#getlogstream)
+- [getNamedData](HostClient.md#getnameddata)
 - [getSequence](HostClient.md#getsequence)
 - [getVersion](HostClient.md#getversion)
 - [listInstances](HostClient.md#listinstances)
 - [listSequences](HostClient.md#listsequences)
+- [sendNamedData](HostClient.md#sendnameddata)
 - [sendSequence](HostClient.md#sendsequence)
 
 ## Constructors
@@ -44,7 +46,7 @@
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L10)
+[packages/api-client/src/host-client.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L10)
 
 ## Properties
 
@@ -54,7 +56,7 @@
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:7](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L7)
+[packages/api-client/src/host-client.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L7)
 
 ___
 
@@ -68,13 +70,13 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:8](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L8)
+[packages/api-client/src/host-client.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L8)
 
 ## Methods
 
 ### deleteSequence
 
-▸ **deleteSequence**(`sequenceId`): `Promise`<`Object`\>
+▸ **deleteSequence**(`sequenceId`): `Promise`<[`Response`](../README.md#response)\>
 
 #### Parameters
 
@@ -84,11 +86,11 @@ ___
 
 #### Returns
 
-`Promise`<`Object`\>
+`Promise`<[`Response`](../README.md#response)\>
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:39](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L39)
+[packages/api-client/src/host-client.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L38)
 
 ___
 
@@ -108,7 +110,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:49](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L49)
+[packages/api-client/src/host-client.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L48)
 
 ___
 
@@ -122,7 +124,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:53](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L53)
+[packages/api-client/src/host-client.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L52)
 
 ___
 
@@ -136,7 +138,27 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:25](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L25)
+[packages/api-client/src/host-client.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L24)
+
+___
+
+### getNamedData
+
+▸ **getNamedData**(`topic`): `Promise`<[`ResponseStream`](../README.md#responsestream)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
+
+#### Returns
+
+`Promise`<[`ResponseStream`](../README.md#responsestream)\>
+
+#### Defined in
+
+[packages/api-client/src/host-client.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L64)
 
 ___
 
@@ -156,7 +178,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:35](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L35)
+[packages/api-client/src/host-client.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L34)
 
 ___
 
@@ -170,7 +192,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:57](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L57)
+[packages/api-client/src/host-client.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L56)
 
 ___
 
@@ -184,7 +206,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L20)
+[packages/api-client/src/host-client.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L20)
 
 ___
 
@@ -198,7 +220,30 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:16](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L16)
+[packages/api-client/src/host-client.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L16)
+
+___
+
+### sendNamedData
+
+▸ **sendNamedData**(`topic`, `stream`, `contentType?`, `end?`): `Promise`<[`Response`](../README.md#response)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `topic` | `string` |
+| `stream` | `Readable` |
+| `contentType?` | `string` |
+| `end?` | `boolean` |
+
+#### Returns
+
+`Promise`<[`Response`](../README.md#response)\>
+
+#### Defined in
+
+[packages/api-client/src/host-client.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L60)
 
 ___
 
@@ -218,4 +263,4 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-client/src/host-client.ts#L29)
+[packages/api-client/src/host-client.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L28)

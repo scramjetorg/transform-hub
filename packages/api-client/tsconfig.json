@@ -17,7 +17,6 @@
     "out": "../../docs/api-client",
     "plugin": "typedoc-plugin-markdown",
     "readme": "none",
-    "toc": "true",
     "gitRevision": "HEAD"
   }
 }
