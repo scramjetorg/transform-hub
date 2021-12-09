@@ -5,8 +5,7 @@ import * as fs from "fs";
 import { PassThrough, Readable, Writable } from "stream";
 import { DataStream } from "scramjet";
 import { RunnerMessageCode } from "@scramjet/symbols";
-/* eslint-disable-next-line import/no-extraneous-dependencies */
-import { MessageUtils, Runner } from "@scramjet/runner";
+import { MessageUtils, Runner } from "../src";
 import { ReadableStream } from "@scramjet/types";
 const controlMockStream = new PassThrough() as unknown as fs.ReadStream;
 const monitorMockStream = new PassThrough() as unknown as fs.WriteStream;
