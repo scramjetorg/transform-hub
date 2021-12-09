@@ -22,4 +22,4 @@
 
 #### Defined in
 
-[packages/types/src/component.ts:2](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/component.ts#L2)
+[packages/types/src/component.ts:2](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/component.ts#L2)

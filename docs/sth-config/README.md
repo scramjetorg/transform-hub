@@ -4,40 +4,29 @@
 
 ## Table of contents
 
+### Classes
+
+- [ConfigService](classes/configservice.md)
+
 ### Variables
 
-- [configService](README.md#configservice)
+- [defaultConfig](README.md#defaultconfig)
 
 ### Functions
 
-- [config](README.md#config)
 - [development](README.md#development)
 
 ## Variables
 
-### configService
+### defaultConfig
 
-• `Const` **configService**: `ConfigService`
+• `Const` **defaultConfig**: `STHConfiguration`
 
 #### Defined in
 
-[config-service.ts:61](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/sth-config/src/config-service.ts#L61)
+[sth-config/src/config-service.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L47)
 
 ## Functions
-
-### config
-
-▸ **config**(): `Promise`<`STHConfiguration`\>
-
-#### Returns
-
-`Promise`<`STHConfiguration`\>
-
-#### Defined in
-
-[index.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/sth-config/src/index.ts#L10)
-
-___
 
 ### development
 
@@ -49,4 +38,4 @@ ___
 
 #### Defined in
 
-[index.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/sth-config/src/index.ts#L6)
+[sth-config/src/index.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/index.ts#L6)

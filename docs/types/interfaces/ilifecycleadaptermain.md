@@ -6,8 +6,6 @@
 
 - **`ILifeCycleAdapterMain`**
 
-  ↳ [`ILifeCycleAdapterIdentify`](ilifecycleadapteridentify.md)
-
   ↳ [`ILifeCycleAdapterRun`](ilifecycleadapterrun.md)
 
 ## Table of contents
@@ -32,7 +30,7 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:26](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L26)
+[packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L21)
 
 ___
 
@@ -48,7 +46,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L21)
+[packages/types/src/lifecycle-adapters.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L16)
 
 ___
 
@@ -62,4 +60,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:29](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L29)
+[packages/types/src/lifecycle-adapters.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L24)

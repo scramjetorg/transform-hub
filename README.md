@@ -103,7 +103,7 @@ This is the STH development repo. In order to use it, you need to have linux bas
 Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
 We will guide you step by step through the installation process.
 
-There are several installations you need to perform to get the hub up and running, and event more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
+There are several installations you need to perform to get the hub up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
 
 - nvm
 - node.js
@@ -120,9 +120,9 @@ To check if you already have Node.js(v16.xx.x) and npm installed, please check t
 
 If none of the above commands is found, please proceed with the installation.
 
-It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.2 with the latest version of nvm.
+It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script)
 
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
 After executing the above command you should get in the console this info:
 
@@ -504,7 +504,7 @@ We have also prepared a template for you to use. You can use it as a base for yo
 
 There are two more templates that we will support, but they are still in development stage:
  - Python
- - C++ 
+ - C++
 
 # Troubleshooting :collision:
 

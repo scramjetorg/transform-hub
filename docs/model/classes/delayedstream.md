@@ -31,7 +31,7 @@
 
 #### Defined in
 
-[packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L4)
+[packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L4)
 
 ## Methods
 
@@ -45,7 +45,7 @@
 
 #### Defined in
 
-[packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L6)
+[packages/model/src/utils/delayed-stream.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L6)
 
 ___
 
@@ -65,4 +65,4 @@ ___
 
 #### Defined in
 
-[packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L15)
+[packages/model/src/utils/delayed-stream.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L15)

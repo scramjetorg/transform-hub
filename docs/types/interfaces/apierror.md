@@ -27,7 +27,7 @@
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:55](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L55)
+[packages/types/src/api-expose.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L60)
 
 ___
 
@@ -39,7 +39,7 @@ Http status code to be outputted
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:47](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L47)
+[packages/types/src/api-expose.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L52)
 
 ___
 
@@ -51,7 +51,7 @@ The message that will be sent in reason line
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:51](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L51)
+[packages/types/src/api-expose.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L56)
 
 ___
 
@@ -65,7 +65,7 @@ Error.message
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:974
+node_modules/typescript/lib/lib.es5.d.ts:1023
 
 ___
 
@@ -79,7 +79,7 @@ Error.name
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:973
+node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
@@ -93,4 +93,4 @@ Error.stack
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:975
+node_modules/typescript/lib/lib.es5.d.ts:1024

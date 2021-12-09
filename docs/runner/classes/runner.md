@@ -46,6 +46,7 @@
 - [main](runner.md#main)
 - [runSequence](runner.md#runsequence)
 - [sendHandshakeMessage](runner.md#sendhandshakemessage)
+- [setInputContentType](runner.md#setinputcontenttype)
 - [waitForHandshakeResponse](runner.md#waitforhandshakeresponse)
 
 ## Constructors
@@ -69,7 +70,7 @@
 
 #### Defined in
 
-[runner.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L40)
+[runner.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L48)
 
 ## Properties
 
@@ -86,7 +87,7 @@
 
 #### Defined in
 
-[runner.ts:38](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L38)
+[runner.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L46)
 
 ___
 
@@ -100,7 +101,7 @@ IComponent.logger
 
 #### Defined in
 
-[runner.ts:40](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L40)
+[runner.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L48)
 
 ## Methods
 
@@ -120,21 +121,21 @@ IComponent.logger
 
 #### Defined in
 
-[runner.ts:262](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L262)
+[runner.ts:294](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L294)
 
 ___
 
 ### cleanup
 
-▸ **cleanup**(): `Promise`<`void`\>
+▸ **cleanup**(): `Promise`<`number`\>
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`<`number`\>
 
 #### Defined in
 
-[runner.ts:99](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L99)
+[runner.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L120)
 
 ___
 
@@ -148,7 +149,7 @@ ___
 
 #### Defined in
 
-[runner.ts:131](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L131)
+[runner.ts:146](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L146)
 
 ___
 
@@ -168,7 +169,7 @@ ___
 
 #### Defined in
 
-[runner.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L54)
+[runner.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L67)
 
 ___
 
@@ -182,7 +183,7 @@ ___
 
 #### Defined in
 
-[runner.ts:88](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L88)
+[runner.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L109)
 
 ___
 
@@ -196,7 +197,7 @@ ___
 
 #### Defined in
 
-[runner.ts:417](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L417)
+[runner.ts:492](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L492)
 
 ___
 
@@ -210,7 +211,7 @@ ___
 
 #### Defined in
 
-[runner.ts:212](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L212)
+[runner.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L236)
 
 ___
 
@@ -224,7 +225,7 @@ ___
 
 #### Defined in
 
-[runner.ts:246](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L246)
+[runner.ts:278](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L278)
 
 ___
 
@@ -244,7 +245,7 @@ ___
 
 #### Defined in
 
-[runner.ts:218](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L218)
+[runner.ts:242](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L242)
 
 ___
 
@@ -258,7 +259,7 @@ ___
 
 #### Defined in
 
-[runner.ts:535](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L535)
+[runner.ts:646](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L646)
 
 ___
 
@@ -272,21 +273,21 @@ ___
 
 #### Defined in
 
-[runner.ts:83](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L83)
+[runner.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L104)
 
 ___
 
 ### hookupFifoStreams
 
-▸ **hookupFifoStreams**(): `Promise`<[`void`, `void`, `void`, `void`, `void`]\>
+▸ **hookupFifoStreams**(): `Promise`<[`void`, `void`, `void`, `void`]\>
 
 #### Returns
 
-`Promise`<[`void`, `void`, `void`, `void`, `void`]\>
+`Promise`<[`void`, `void`, `void`, `void`]\>
 
 #### Defined in
 
-[runner.ts:194](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L194)
+[runner.ts:219](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L219)
 
 ___
 
@@ -300,7 +301,7 @@ ___
 
 #### Defined in
 
-[runner.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L174)
+[runner.ts:189](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L189)
 
 ___
 
@@ -314,7 +315,7 @@ ___
 
 #### Defined in
 
-[runner.ts:170](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L170)
+[runner.ts:185](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L185)
 
 ___
 
@@ -328,7 +329,7 @@ ___
 
 #### Defined in
 
-[runner.ts:166](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L166)
+[runner.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L181)
 
 ___
 
@@ -342,7 +343,7 @@ ___
 
 #### Defined in
 
-[runner.ts:186](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L186)
+[runner.ts:211](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L211)
 
 ___
 
@@ -365,7 +366,7 @@ set up streams process.stdin, process.stdout, process.stderr, fifo downstream, f
 
 #### Defined in
 
-[runner.ts:378](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L378)
+[runner.ts:453](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L453)
 
 ___
 
@@ -379,7 +380,7 @@ ___
 
 #### Defined in
 
-[runner.ts:204](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L204)
+[runner.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L228)
 
 ___
 
@@ -397,7 +398,7 @@ Initialization of runner class.
 
 #### Defined in
 
-[runner.ts:308](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L308)
+[runner.ts:340](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L340)
 
 ___
 
@@ -420,7 +421,7 @@ run sequence
 
 #### Defined in
 
-[runner.ts:432](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L432)
+[runner.ts:509](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L509)
 
 ___
 
@@ -434,7 +435,27 @@ ___
 
 #### Defined in
 
-[runner.ts:405](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L405)
+[runner.ts:480](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L480)
+
+___
+
+### setInputContentType
+
+▸ **setInputContentType**(`headers`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `headers` | `any` |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[runner.ts:198](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L198)
 
 ___
 
@@ -448,4 +469,4 @@ ___
 
 #### Defined in
 
-[runner.ts:411](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/runner/src/runner.ts#L411)
+[runner.ts:486](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L486)

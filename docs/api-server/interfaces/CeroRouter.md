@@ -1,41 +1,39 @@
-[@scramjet/api-server](../README.md) / [lib/definitions](../modules/lib_definitions.md) / CeroRouter
+[@scramjet/api-server](../README.md) / CeroRouter
 
 # Interface: CeroRouter
 
-[lib/definitions](../modules/lib_definitions.md).CeroRouter
-
 ## Hierarchy
 
-- `TRouter`<[`CeroMiddleware`](../modules/lib_definitions.md#ceromiddleware)\>
+- `TRouter`<[`CeroMiddleware`](../README.md#ceromiddleware)\>
 
   ↳ **`CeroRouter`**
 
-  ↳↳ [`SequentialCeroRouter`](lib_definitions.SequentialCeroRouter.md)
+  ↳↳ [`SequentialCeroRouter`](SequentialCeroRouter.md)
 
 ## Table of contents
 
 ### Methods
 
-- [add](lib_definitions.CeroRouter.md#add)
-- [all](lib_definitions.CeroRouter.md#all)
-- [connect](lib_definitions.CeroRouter.md#connect)
-- [delete](lib_definitions.CeroRouter.md#delete)
-- [find](lib_definitions.CeroRouter.md#find)
-- [get](lib_definitions.CeroRouter.md#get)
-- [head](lib_definitions.CeroRouter.md#head)
-- [lookup](lib_definitions.CeroRouter.md#lookup)
-- [options](lib_definitions.CeroRouter.md#options)
-- [patch](lib_definitions.CeroRouter.md#patch)
-- [post](lib_definitions.CeroRouter.md#post)
-- [put](lib_definitions.CeroRouter.md#put)
-- [trace](lib_definitions.CeroRouter.md#trace)
-- [use](lib_definitions.CeroRouter.md#use)
+- [add](CeroRouter.md#add)
+- [all](CeroRouter.md#all)
+- [connect](CeroRouter.md#connect)
+- [delete](CeroRouter.md#delete)
+- [find](CeroRouter.md#find)
+- [get](CeroRouter.md#get)
+- [head](CeroRouter.md#head)
+- [lookup](CeroRouter.md#lookup)
+- [options](CeroRouter.md#options)
+- [patch](CeroRouter.md#patch)
+- [post](CeroRouter.md#post)
+- [put](CeroRouter.md#put)
+- [trace](CeroRouter.md#trace)
+- [use](CeroRouter.md#use)
 
 ## Methods
 
 ### add
 
-▸ **add**(`method`, `pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **add**(`method`, `pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -47,7 +45,7 @@
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -61,7 +59,7 @@ ___
 
 ### all
 
-▸ **all**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **all**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -72,7 +70,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -86,7 +84,7 @@ ___
 
 ### connect
 
-▸ **connect**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **connect**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -97,7 +95,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -111,7 +109,7 @@ ___
 
 ### delete
 
-▸ **delete**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **delete**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -122,7 +120,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -166,7 +164,7 @@ ___
 
 ### get
 
-▸ **get**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **get**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -177,7 +175,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -191,7 +189,7 @@ ___
 
 ### head
 
-▸ **head**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **head**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -202,7 +200,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -232,13 +230,13 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L10)
+[packages/api-server/src/lib/definitions.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L10)
 
 ___
 
 ### options
 
-▸ **options**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **options**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -249,7 +247,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -263,7 +261,7 @@ ___
 
 ### patch
 
-▸ **patch**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **patch**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -274,7 +272,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -288,7 +286,7 @@ ___
 
 ### post
 
-▸ **post**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **post**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -299,7 +297,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -313,7 +311,7 @@ ___
 
 ### put
 
-▸ **put**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **put**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -324,7 +322,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -338,7 +336,7 @@ ___
 
 ### trace
 
-▸ **trace**(`pattern`, ...`handlers`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **trace**(`pattern`, ...`handlers`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -349,7 +347,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Inherited from
 
@@ -363,7 +361,7 @@ ___
 
 ### use
 
-▸ **use**(`path`, ...`middlewares`): [`CeroRouter`](lib_definitions.CeroRouter.md)
+▸ **use**(`path`, ...`middlewares`): [`CeroRouter`](CeroRouter.md)
 
 #### Parameters
 
@@ -374,7 +372,7 @@ ___
 
 #### Returns
 
-[`CeroRouter`](lib_definitions.CeroRouter.md)
+[`CeroRouter`](CeroRouter.md)
 
 #### Overrides
 
@@ -382,4 +380,4 @@ TRouter.use
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/api-server/src/lib/definitions.ts#L9)
+[packages/api-server/src/lib/definitions.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L9)

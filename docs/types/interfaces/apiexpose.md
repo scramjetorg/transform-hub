@@ -32,7 +32,7 @@
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:124](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L124)
+[packages/types/src/api-expose.ts:131](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L131)
 
 ___
 
@@ -44,7 +44,7 @@ The raw HTTP server
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:123](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L123)
+[packages/types/src/api-expose.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L130)
 
 ## Methods
 
@@ -72,7 +72,7 @@ A method that allows to consume incoming stream from the specified path on the A
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:107](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L107)
+[packages/types/src/api-expose.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L112)
 
 ___
 
@@ -97,7 +97,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:113](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L113)
+[packages/types/src/api-expose.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L118)
 
 ___
 
@@ -131,7 +131,7 @@ Simple GET request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:79](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L79)
+[packages/types/src/api-expose.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L84)
 
 ▸ **get**(`path`, `msg`): `void`
 
@@ -154,7 +154,7 @@ Alternative GET request hook with dynamic resolution
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:87](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L87)
+[packages/types/src/api-expose.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L92)
 
 ___
 
@@ -189,7 +189,7 @@ Simple POST request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:70](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L70)
+[packages/types/src/api-expose.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L75)
 
 ___
 
@@ -217,7 +217,7 @@ A method that allows to pass a stream to the specified path on the API server
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:95](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L95)
+[packages/types/src/api-expose.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L100)
 
 ___
 
@@ -236,6 +236,10 @@ ___
 
 `void`
 
+#### Inherited from
+
+[APIBase](apibase.md).[use](apibase.md#use)
+
 #### Defined in
 
-[packages/types/src/api-expose.ts:125](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/types/src/api-expose.ts#L125)
+[packages/types/src/api-expose.ts:123](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L123)

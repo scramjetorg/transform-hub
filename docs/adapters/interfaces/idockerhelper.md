@@ -30,7 +30,7 @@
 
 ### createContainer
 
-• **createContainer**: (`containerCfg`: { `autoRemove`: `boolean` ; `binds`: `string`[] ; `dockerImage`: `string` ; `envs`: `string`[] ; `maxMem`: `number` ; `ports`: `any` ; `volumes`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]  }) => `Promise`<`string`\>
+• **createContainer**: (`containerCfg`: { `autoRemove`: `boolean` ; `binds`: `string`[] ; `dockerImage`: `string` ; `envs`: `string`[] ; `labels`: { [key: string]: `string`;  } ; `maxMem`: `number` ; `ports`: `any` ; `publishAllPorts`: `boolean` ; `volumes`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]  }) => `Promise`<`string`\>
 
 #### Type declaration
 
@@ -47,8 +47,10 @@ Creates Docker container from provided image with attached volumes and local dir
 | `containerCfg.binds` | `string`[] |
 | `containerCfg.dockerImage` | `string` |
 | `containerCfg.envs` | `string`[] |
+| `containerCfg.labels` | `Object` |
 | `containerCfg.maxMem` | `number` |
 | `containerCfg.ports` | `any` |
+| `containerCfg.publishAllPorts` | `boolean` |
 | `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] |
 
 ##### Returns
@@ -59,7 +61,7 @@ Created container.
 
 #### Defined in
 
-[types.ts:174](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L174)
+[types.ts:180](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L180)
 
 ___
 
@@ -87,7 +89,7 @@ Created volume.
 
 #### Defined in
 
-[types.ts:227](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L227)
+[types.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L238)
 
 ___
 
@@ -109,7 +111,7 @@ List of existing volumes
 
 #### Defined in
 
-[types.ts:218](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L218)
+[types.ts:229](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L229)
 
 ___
 
@@ -135,7 +137,7 @@ Removes container.
 
 #### Defined in
 
-[types.ts:211](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L211)
+[types.ts:222](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L222)
 
 ___
 
@@ -161,7 +163,7 @@ Removes volume.
 
 #### Defined in
 
-[types.ts:236](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L236)
+[types.ts:247](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L247)
 
 ___
 
@@ -187,7 +189,7 @@ Executes command in container.
 
 #### Defined in
 
-[types.ts:245](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L245)
+[types.ts:256](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L256)
 
 ___
 
@@ -213,7 +215,7 @@ Starts container.
 
 #### Defined in
 
-[types.ts:192](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L192)
+[types.ts:203](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L203)
 
 ___
 
@@ -237,7 +239,7 @@ ___
 
 #### Defined in
 
-[types.ts:203](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L203)
+[types.ts:214](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L214)
 
 ___
 
@@ -263,7 +265,7 @@ Stops container.
 
 #### Defined in
 
-[types.ts:201](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L201)
+[types.ts:212](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L212)
 
 ___
 
@@ -291,13 +293,13 @@ DockerHelper volume configuration.
 
 #### Defined in
 
-[types.ts:161](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L161)
+[types.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L167)
 
 ## Methods
 
 ### pullImage
 
-▸ **pullImage**(`name`, `ifNeeded`): `Promise`<`void`\>
+▸ **pullImage**(`name`, `fetchOnlyIfNotExists?`): `Promise`<`void`\>
 
 Fetches the image from repo
 
@@ -306,7 +308,7 @@ Fetches the image from repo
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `name` | `string` | the name of the image, eg. ubuntu:latest |
-| `ifNeeded` | `boolean` | fetch only if not exists (defaults to true) |
+| `fetchOnlyIfNotExists?` | `boolean` | fetch only if not exists (defaults to true) |
 
 #### Returns
 
@@ -314,7 +316,7 @@ Fetches the image from repo
 
 #### Defined in
 
-[types.ts:262](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L262)
+[types.ts:273](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L273)
 
 ___
 
@@ -337,4 +339,4 @@ Waits until containter exits
 
 #### Defined in
 
-[types.ts:254](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/types.ts#L254)
+[types.ts:265](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L265)

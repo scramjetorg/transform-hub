@@ -25,6 +25,7 @@ Communicates with Docker using Dockerode library.
 - [attach](dockerodedockerhelper.md#attach)
 - [createContainer](dockerodedockerhelper.md#createcontainer)
 - [createVolume](dockerodedockerhelper.md#createvolume)
+- [isImageInLocalRegistry](dockerodedockerhelper.md#isimageinlocalregistry)
 - [listVolumes](dockerodedockerhelper.md#listvolumes)
 - [pullImage](dockerodedockerhelper.md#pullimage)
 - [removeContainer](dockerodedockerhelper.md#removecontainer)
@@ -50,7 +51,7 @@ Communicates with Docker using Dockerode library.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:44](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L44)
+[dockerode-docker-helper.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L44)
 
 ___
 
@@ -60,7 +61,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:45](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L45)
+[dockerode-docker-helper.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L45)
 
 ___
 
@@ -70,11 +71,11 @@ ___
 
 #### Index signature
 
-▪ [key: `string`]: `Promise`<`void`\>
+▪ [key: `string`]: `Promise`<`void`\> \| `undefined`
 
 #### Defined in
 
-[dockerode-docker-helper.ts:160](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L160)
+[dockerode-docker-helper.ts:169](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L169)
 
 ## Methods
 
@@ -99,7 +100,7 @@ Object with container's standard I/O streams.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:224](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L224)
+[dockerode-docker-helper.ts:239](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L239)
 
 ___
 
@@ -119,8 +120,10 @@ Creates container based on provided parameters.
 | `containerCfg.command?` | `string`[] | - |
 | `containerCfg.dockerImage` | `string` | - |
 | `containerCfg.envs` | `string`[] | - |
+| `containerCfg.labels` | `Object` | - |
 | `containerCfg.maxMem` | `number` | - |
 | `containerCfg.ports` | `any` | - |
+| `containerCfg.publishAllPorts` | `boolean` | - |
 | `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] | - |
 
 #### Returns
@@ -135,7 +138,7 @@ IDockerHelper.createContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:80](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L80)
+[dockerode-docker-helper.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L79)
 
 ___
 
@@ -163,7 +166,27 @@ IDockerHelper.createVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:188](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L188)
+[dockerode-docker-helper.ts:203](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L203)
+
+___
+
+### isImageInLocalRegistry
+
+▸ `Private` **isImageInLocalRegistry**(`name`): `Promise`<`boolean`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `name` | `string` |
+
+#### Returns
+
+`Promise`<`boolean`\>
+
+#### Defined in
+
+[dockerode-docker-helper.ts:165](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L165)
 
 ___
 
@@ -181,26 +204,26 @@ IDockerHelper.listVolumes
 
 #### Defined in
 
-[dockerode-docker-helper.ts:209](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L209)
+[dockerode-docker-helper.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L224)
 
 ___
 
 ### pullImage
 
-▸ **pullImage**(`name`, `ifNeeded`): `Promise`<`void`\>
+▸ **pullImage**(`name`, `fetchOnlyIfNotExists?`): `Promise`<`undefined` \| `void`\>
 
 Fetches the image from repo
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
-| `ifNeeded` | `boolean` |
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `name` | `string` | `undefined` |
+| `fetchOnlyIfNotExists` | `boolean` | `true` |
 
 #### Returns
 
-`Promise`<`void`\>
+`Promise`<`undefined` \| `void`\>
 
 #### Implementation of
 
@@ -208,7 +231,7 @@ Fetches the image from repo
 
 #### Defined in
 
-[dockerode-docker-helper.ts:162](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L162)
+[dockerode-docker-helper.ts:171](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L171)
 
 ___
 
@@ -236,7 +259,7 @@ IDockerHelper.removeContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:146](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L146)
+[dockerode-docker-helper.ts:151](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L151)
 
 ___
 
@@ -264,7 +287,7 @@ IDockerHelper.removeVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:205](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L205)
+[dockerode-docker-helper.ts:220](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L220)
 
 ___
 
@@ -292,7 +315,7 @@ IDockerHelper.run
 
 #### Defined in
 
-[dockerode-docker-helper.ts:234](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L234)
+[dockerode-docker-helper.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L249)
 
 ___
 
@@ -320,7 +343,7 @@ IDockerHelper.startContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:126](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L126)
+[dockerode-docker-helper.ts:131](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L131)
 
 ___
 
@@ -348,7 +371,7 @@ IDockerHelper.stats
 
 #### Defined in
 
-[dockerode-docker-helper.ts:156](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L156)
+[dockerode-docker-helper.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L161)
 
 ___
 
@@ -376,7 +399,7 @@ IDockerHelper.stopContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:136](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L136)
+[dockerode-docker-helper.ts:141](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L141)
 
 ___
 
@@ -404,7 +427,7 @@ IDockerHelper.translateVolumesConfig
 
 #### Defined in
 
-[dockerode-docker-helper.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L54)
+[dockerode-docker-helper.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L53)
 
 ___
 
@@ -433,4 +456,4 @@ Container exit code.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:288](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L288)
+[dockerode-docker-helper.ts:305](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L305)

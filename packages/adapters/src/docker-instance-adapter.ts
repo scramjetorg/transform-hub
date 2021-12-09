@@ -279,7 +279,7 @@ IComponent {
             ports: this.resources.ports,
             publishAllPorts: true,
             envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`],
-            autoRemove: true,
+            autoRemove: false,
             maxMem: config.container.maxMem
         });
 
@@ -317,7 +317,7 @@ IComponent {
         if (this.resources.volumeId) {
             this.logger.log("Volume will be removed in 1 sec");
 
-            await defer(1000);
+            await defer(60000);
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
             this.logger.log("Volume removed");
