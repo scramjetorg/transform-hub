@@ -22,9 +22,10 @@ import * as path from "path";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 
-const runnerCommand = isTSNode
-    ? ["ts-node", path.join(__dirname, "../../runner/src/bin/start-runner.ts")]
-    : [process.execPath, path.join(__dirname, "../../dist/runner/bin/start-runner.js")];
+const runnerCommand = [
+    isTSNode ? "ts-node" : process.execPath,
+    path.resolve(__dirname, require.resolve("@scramjet/runner"))
+];
 
 class ProcessInstanceAdapter implements
 ILifeCycleAdapterMain,
