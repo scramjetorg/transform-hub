@@ -279,7 +279,7 @@ IComponent {
             ports: this.resources.ports,
             publishAllPorts: true,
             envs: ["FIFOS_DIR=/pipes", `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`],
-            autoRemove: false,
+            autoRemove: true,
             maxMem: config.container.maxMem
         });
 
