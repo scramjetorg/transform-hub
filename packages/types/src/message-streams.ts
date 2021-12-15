@@ -133,8 +133,12 @@ export type DownstreamStreamsConfig<serialized extends boolean = true> = [
     input: WritableStream<any>,
     output: ReadableStream<any>,
     log: ReadableStream<any>,
-    pkg?: WritableStream<Buffer>,
+    pkg?: WritableStream<Buffer> | undefined,
 ];
+
+export type DownstreamStdioConfig = [ stdin: WritableStream<string>,
+    stdout: ReadableStream<string>,
+    stderr: ReadableStream<string>, ]
 
 export type UpstreamStreamsConfig<serialized extends boolean = true> = [
     stdin: ReadableStream<string>,

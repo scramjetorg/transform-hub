@@ -1,7 +1,7 @@
 import { MonitoringMessageData } from "./messages";
-import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
 import { InstanceConifg } from "./runner-config";
+import { DownstreamStdioConfig } from "./message-streams";
 
 export type LifeCycleConfig = {
     makeSnapshotOnError: boolean;
@@ -31,7 +31,7 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
       * @param {InstanceConifg} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    run(config: InstanceConifg): Promise<ExitCode>;
+    run(config: InstanceConifg, instancesServerPort: number, instanceId: string): Promise<ExitCode>;
 
     /**
      * Request snapshot and returns snapshot url.\
@@ -40,16 +40,11 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
      */
     snapshot(): MaybePromise<string>;
 
-    /**
-     * Hooks up downstream streams.
-     *
-     * @param communicationHandler CommunicationHandler
-     */
-    hookCommunicationHandler(communicationHandler: ICommunicationHandler): MaybePromise<void>;
-
     monitorRate(rps: number): this;
 
     stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
+
+    getStdio(): DownstreamStdioConfig
 }
 
 export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});

@@ -15,7 +15,6 @@ COPY packages/host ./packages/host
 COPY packages/logger ./packages/logger
 COPY packages/model ./packages/model
 COPY packages/sth ./packages/sth
-COPY packages/supervisor ./packages/supervisor
 COPY packages/symbols ./packages/symbols
 COPY packages/types ./packages/types
 COPY packages/load-check ./packages/load-check

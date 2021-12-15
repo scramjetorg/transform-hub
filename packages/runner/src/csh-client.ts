@@ -1,17 +1,13 @@
 /* eslint-disable dot-notation */
-import { SupervisorError } from "@scramjet/model";
-import { ICommunicationHandler, ICSHClient, UpstreamStreamsConfig, PassThoughStream, DuplexStream, ReadableStream } from "@scramjet/types";
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { ICSHClient, UpstreamStreamsConfig, PassThoughStream, DuplexStream } from "@scramjet/types";
+import { getLogger } from "@scramjet/logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import * as net from "net";
-import { Writable } from "stream";
 
 const { BPMux } = require("bpmux");
 
 class CSHClient implements ICSHClient {
-    private socketPath: string;
-
-    private streams?: UpstreamStreamsConfig;
+    private _streams?: UpstreamStreamsConfig;
 
     private connection?: net.Socket;
 
@@ -22,18 +18,24 @@ class CSHClient implements ICSHClient {
 
     logger: Console;
 
-    constructor(socketPath: string) {
-        this.socketPath = socketPath;
+    constructor(private instancesServerPort: number) {
         this.logger = getLogger(this);
-        addLoggerOutput(process.stdout, process.stderr);
+    }
+
+    private get streams(): UpstreamStreamsConfig {
+        if (!this._streams) {
+            throw new Error("Accessing streams before initialization");
+        }
+
+        return this._streams;
     }
 
     async init(id: string): Promise<void> {
         return new Promise((resolve) => {
-            this.logger.info("Connecting to", this.socketPath);
+            this.logger.info(`Connecting to localhost:${this.instancesServerPort}`);
 
             this.connection = net.createConnection({
-                path: this.socketPath
+                port: this.instancesServerPort
             });
 
             this.connection.once("connect", () => {
@@ -43,6 +45,9 @@ class CSHClient implements ICSHClient {
 
                 this.mux = new BPMux(this.connection);
 
+                this.mux.on("error", (e: any) => {
+                    this.logger.error(e);
+                });
                 const connectionChannels: DuplexStream<string, string>[] = [
                     this.mux.multiplex({ channel: CC.STDIN }),
                     this.mux.multiplex({ channel: CC.STDOUT }),
@@ -55,12 +60,10 @@ class CSHClient implements ICSHClient {
                     this.mux.multiplex({ channel: CC.PACKAGE })
                 ];
 
-                let i = 0;
-
                 connectionChannels.forEach(
-                    (channel) => {
-                        channel.on("error", (e) => this.logger.warn(e.stack));
-                        channel.on("pipe", () => this.logger.debug(`Stream ${i++} piped to output.`));
+                    (channel, i) => {
+                        channel.on("error", (e) => this.logger.warn(e));
+                        channel.on("pipe", () => this.logger.debug(`Stream ${i} piped to output.`));
                     }
                 );
 
@@ -68,7 +71,7 @@ class CSHClient implements ICSHClient {
                     this.logger.error("Connection error: ", e.stack);
                 });
 
-                this.streams = [
+                this._streams = [
                     connectionChannels[CC.STDIN],
                     connectionChannels[CC.STDOUT],
                     connectionChannels[CC.STDERR],
@@ -79,6 +82,7 @@ class CSHClient implements ICSHClient {
                     connectionChannels[CC.LOG],
                     connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer>
                 ];
+
                 connectionChannels[CC.MONITORING].resume();
                 resolve();
             });
@@ -86,46 +90,60 @@ class CSHClient implements ICSHClient {
     }
 
     async disconnect() {
-        if (this.streams) {
-            const streams = this.streams;
+        const streamsExitedPromised = this.streams
+            .map(stream => new Promise(
+                (res, rej) => {
+                stream!
+                    .on("error", rej)
+                    .on("end", res);
 
-            await Promise.all([
-                CC.STDOUT,
-                CC.STDERR,
-                CC.MONITORING,
-                CC.OUT,
-                CC.LOG
-            ]
-                .map(streamIndex => streams[streamIndex] as Writable)
-                .map(stream => new Promise(
-                    (res, rej) => stream
-                        .on("error", rej)
-                        .on("end", res)
-                        .end()
-                ))
-            );
-        }
+                if ("writable" in stream!) {
+                    stream.end();
+                } else {
+                    stream!.destroy();
+                }
+                }
+            ));
+
+        this.connection?.end();
+
+        await Promise.all(streamsExitedPromised);
     }
 
-    getPackage() {
-        if (typeof this.streams === "undefined" || typeof this.streams[CC.PACKAGE] === "undefined") {
-            throw new SupervisorError("UNINITIALIZED_STREAMS", { details: "CSHClient" });
-        }
-
-        return this.streams[CC.PACKAGE] as ReadableStream<Buffer>;
+    get stdinStream() {
+        return this.streams[CC.STDIN];
     }
 
-    hookCommunicationHandler(communicationHandler: ICommunicationHandler) {
-        if (typeof this.streams === "undefined") {
-            throw new SupervisorError("UNINITIALIZED_STREAMS", { details: "CSHClient" });
-        }
+    get stdoutStream() {
+        return this.streams[CC.STDOUT];
+    }
 
-        const { out, err } = communicationHandler.getLogOutput();
+    get stderrStream() {
+        return this.streams[CC.STDERR];
+    }
 
-        communicationHandler.hookUpstreamStreams(this.streams);
-        addLoggerOutput(out, err);
+    get controlStream() {
+        return this.streams[CC.CONTROL];
+    }
 
-        this.logger.log("Log hooked up.");
+    get monitorStream() {
+        return this.streams[CC.MONITORING];
+    }
+
+    get inputStream() {
+        return this.streams[CC.IN];
+    }
+
+    get outputStream() {
+        return this.streams[CC.OUT];
+    }
+
+    get logStream() {
+        return this.streams[CC.LOG];
+    }
+
+    get packageStream() {
+        return this.streams[CC.PACKAGE];
     }
 }
 

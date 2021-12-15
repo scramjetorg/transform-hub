@@ -23,7 +23,7 @@ const _defaultConfig: STHConfiguration = {
         hostname: "localhost",
         port: 8000,
         apiBase: "/api/v1",
-        socketPath: "/tmp/scramjet-socket-server-path",
+        instancesServerPort: 8001,
         infoFilePath: "/tmp/sth-id.json"
     },
     instanceRequirements: {
