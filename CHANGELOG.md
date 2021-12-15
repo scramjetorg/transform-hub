@@ -35,8 +35,9 @@ Bugfixes:
 -   Improved Github Actions workflows
 -   Fix for Service Discovery, where API endpoint '/input' is not blocking after the second PANG message.
 -   Verify if package exists before sending it to STH
--   Fix for STH version unknown from response API endpoint '/version'.
+-   Fix for STH version unknown from response API endpoint '/version'
+-   Add missing import in packages/types/sth-rest-api/src/index.ts.
 
-## @scramjet/transform Hub - v0.13.1
+## @scramjet/transform Hub - v0.13.2
 
 This is the last release in changelog.
