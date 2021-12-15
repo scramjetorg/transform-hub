@@ -9,7 +9,7 @@ Feature: Stdio e2e tests
         And wait for instance healthy is "true"
         And get runner PID
         When send stdin to instance with contents of file "../packages/reference-apps/stdio-sequence/numbers.txt"
-        When send kill message to instance
+        And wait for "2000" ms
         And runner has ended execution
         Then host is still running
         And kept instance stream "stdout" should be "1\n3\n5\n7\n9\n11\n13\n15\n17\n19\n"

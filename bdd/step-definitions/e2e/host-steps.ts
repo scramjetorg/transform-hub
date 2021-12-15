@@ -29,7 +29,8 @@ let containerId: string;
 let processId: number;
 let streams: { [key: string]: Promise<string | undefined> } = {};
 
-const freeport = require("freeport");
+const freeport = promisify(require("freeport"));
+
 const version = findPackage().next().value?.version || "unknown";
 const hostUtils = new HostUtils();
 const testPath = "../dist/reference-apps/hello-alice-out/";
@@ -94,13 +95,15 @@ BeforeAll({ timeout: 10e3 }, async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
     if (!apiUrl) {
-        const port = await promisify(freeport)();
+        const apiPort = await freeport();
+        const instancesServerPort = await freeport();
 
-        process.env.LOCAL_HOST_PORT = `${port}`;
-        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${port}/api/v1`;
-        process.env.LOCAL_HOST_SOCKET_PATH = `/tmp/scramjet-socket-server-path-${port}`;
+        process.env.LOCAL_HOST_PORT = apiPort.toString();
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
 
-        console.error(`Starting host on port: ${port}`);
+        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+
+        console.error(`Starting host on port: ${apiPort}`);
     }
     hostClient = new HostClient(apiUrl);
     if (process.env.SCRAMJET_TEST_LOG) {
@@ -149,13 +152,15 @@ const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
     if (!apiUrl) {
-        const port = await promisify(freeport)();
+        const apiPort = await freeport();
+        const instancesServerPort = await freeport();
 
-        process.env.LOCAL_HOST_PORT = `${port}`;
-        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${port}/api/v1`;
-        process.env.LOCAL_HOST_SOCKET_PATH = `/tmp/scramjet-socket-server-path-${port}`;
+        process.env.LOCAL_HOST_PORT = apiPort.toString();
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
 
-        console.error(`Starting host on port: ${port}`);
+        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+
+        console.error(`Starting host on port: ${apiPort}`);
     }
     hostClient = new HostClient(apiUrl);
     if (process.env.SCRAMJET_TEST_LOG) {

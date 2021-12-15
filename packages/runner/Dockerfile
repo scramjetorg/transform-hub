@@ -1,13 +1,12 @@
 FROM node:lts-bullseye-slim AS target
 
 ENV PACKAGE_DIR=/package \
-    FIFOS_DIR=/pipes \
     HUB_DIR=/opt/transform-hub
 
 RUN groupadd -g 1200 runner \
     && useradd -g 1200 -u 1200 -m -d ${HUB_DIR} -s /bin/false runner \
-    && mkdir -p ${PACKAGE_DIR} ${FIFOS_DIR} \
-    && chown runner:runner ${PACKAGE_DIR} ${FIFOS_DIR}
+    && mkdir -p ${PACKAGE_DIR} \
+    && chown runner:runner ${PACKAGE_DIR}
 
 RUN apt-get update \
     && apt-get install -y gosu --no-install-recommends \

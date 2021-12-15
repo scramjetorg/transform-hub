@@ -3,7 +3,6 @@ import { getLogger } from "@scramjet/logger";
 import { HostError } from "@scramjet/model";
 import { CommunicationChannel } from "@scramjet/symbols";
 
-import { PathLike } from "fs";
 import * as net from "net";
 import { Socket } from "net";
 import EventEmitter = require("events");
@@ -16,14 +15,12 @@ type IdentifiedSocket = Socket & { _chan: string };
 // TODO probably to change to net server, to verify
 export class SocketServer extends EventEmitter implements IComponent {
     server?: net.Server;
-    address: PathLike;
     logger: Logger;
 
-    constructor(address: PathLike) {
+    constructor(private port: number) {
         super();
 
         this.logger = getLogger(this);
-        this.address = address;
     }
 
     // eslint-disable-next-line complexity
@@ -72,6 +69,7 @@ export class SocketServer extends EventEmitter implements IComponent {
 
                 connection
                     .on("error", () => {
+                        this.logger.error("=== ERROR on mux connection");
                         /* ignore */
                         // TODO: Error handling?
                     });
@@ -88,6 +86,10 @@ export class SocketServer extends EventEmitter implements IComponent {
                     new PassThrough()
                 ];
 
+                streams.forEach((stream, i) => stream?.on("error", () => {
+                    this.logger.error(`=== ERRORR in stream ${i}`);
+                }));
+
                 new BPMux(connection)
                     .on("handshake", (stream: IdentifiedSocket) => {
                         this.handleStream(streams, stream);
@@ -102,6 +104,11 @@ export class SocketServer extends EventEmitter implements IComponent {
                         this.logger.error("Mux error.");
                     });
 
+                connection.on("close", () => {
+                    this.logger.log("=== MUX close");
+                    streams.forEach(stream => stream?.end());
+                });
+
                 this.emit("connect", {
                     id,
                     streams
@@ -110,7 +117,7 @@ export class SocketServer extends EventEmitter implements IComponent {
 
         return new Promise((res, rej) => {
             this.server!
-                .listen(this.address, () => {
+                .listen(this.port, () => {
                     this.logger.info("Server on:", this.server?.address());
                     res();
                 })

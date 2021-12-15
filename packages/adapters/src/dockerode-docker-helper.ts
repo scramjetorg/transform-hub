@@ -109,6 +109,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 MemorySwap: 0,
                 PortBindings: containerCfg.ports.PortBindings,
                 PublishAllPorts: containerCfg.publishAllPorts || false,
+                NetworkMode: "host"
             },
             Labels: containerCfg.labels || {},
         };
@@ -264,7 +265,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 maxMem: (config.maxMem || 64) * 1024 * 1024,
                 command: config.command,
                 labels: config.labels || {},
-                publishAllPorts: config.publishAllPorts || false
+                publishAllPorts: config.publishAllPorts || false,
+
             }
         );
         // ------
