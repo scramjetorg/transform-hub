@@ -23,12 +23,19 @@
     "@scramjet/host": "^0.13.2",
     "@scramjet/logger": "^0.13.2",
     "@scramjet/sth-config": "^0.13.2",
+    "commander": "^8.1.0"
+  },
+  "devDependencies": {
+    "@scramjet/types": "^0.13.2",
+    "@types/node": "15.12.5",
+    "ava": "^3.15.0",
+    "ts-node": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^4.27.0",
     "@typescript-eslint/parser": "^4.27.0",
-    "commander": "^8.1.0",
     "eslint-plugin-import": "^2.23.3",
     "ts-loader": "^9.2.3",
-    "ts-node": "^10.0.0",
+    "typedoc": "^0.22.5",
+    "typedoc-plugin-markdown": "^3.11.2",
     "typescript": "^4.3.4"
   },
   "readme": "README.md",
@@ -45,15 +52,6 @@
       "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW"
     }
   ],
-  "devDependencies": {
-    "@scramjet/types": "^0.13.2",
-    "@types/node": "15.12.5",
-    "ava": "^3.15.0",
-    "ts-node": "^10.0.0",
-    "typedoc": "^0.22.5",
-    "typedoc-plugin-markdown": "^3.11.2",
-    "typescript": "^4.3.4"
-  },
   "ava": {
     "extensions": [
       "ts"
