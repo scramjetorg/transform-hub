@@ -12,11 +12,11 @@ import { ChildProcess, spawn } from "child_process";
 
 import * as path from "path";
 
-const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
+// const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 
 const runnerCommand = [
-    isTSNode ? "ts-node" : process.execPath,
-    path.resolve(__dirname, require.resolve("@scramjet/runner"))
+    "python3",
+    path.resolve(__dirname, '/home/jan/src/transform-hub/plask.py')
 ];
 
 class ProcessInstanceAdapter implements
