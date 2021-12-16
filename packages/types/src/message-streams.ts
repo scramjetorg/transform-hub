@@ -133,6 +133,7 @@ export type DownstreamStreamsConfig<serialized extends boolean = true> = [
     input: WritableStream<any>,
     output: ReadableStream<any>,
     log: ReadableStream<any>,
+    // @TODO investigate, it seems not to be used anywhere
     pkg?: WritableStream<Buffer> | undefined,
 ];
 
