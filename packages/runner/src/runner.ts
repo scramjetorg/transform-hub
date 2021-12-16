@@ -27,6 +27,7 @@ import { Readable } from "stream";
 import { RunnerError } from "@scramjet/model";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { defer } from "@scramjet/utility";
+import { createWriteStream } from "fs";
 
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
@@ -64,6 +65,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.error("Error during input data stream.", e);
             throw e;
         });
+
+        addLoggerOutput(createWriteStream("runner-error"));
+        this.logger.log("HELLO LOGGER");
     }
 
     async controlStreamHandler([code, data]: EncodedControlMessage) {
@@ -272,6 +276,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         // @TODO handle stdio piping
 
         addLoggerOutput(this.hostClient.logStream);
+        this.logger.log("Logs connected");
 
         this.defineControlStream();
 
@@ -454,8 +459,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream: DataStream | void = this.inputDataStream ||
-            DataStream.from([]).catch((e: any) => { this.logger.error(e); });
+        let stream: DataStream | void = this.inputDataStream;
         let itemsLeftInSequence = sequence.length;
         let intermediate: SynchronousStreamable<any> | void = stream;
 

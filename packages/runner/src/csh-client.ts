@@ -1,20 +1,38 @@
 /* eslint-disable dot-notation */
-import { ICSHClient, UpstreamStreamsConfig, PassThoughStream, DuplexStream } from "@scramjet/types";
+import { ICSHClient, UpstreamStreamsConfig, ReadableStream, WritableStream } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import * as net from "net";
 
-const { BPMux } = require("bpmux");
+type RunnerOpenConnections = [
+    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
+]
+
+function mapHostConnectionToStreams(connections: RunnerOpenConnections): UpstreamStreamsConfig<true> {
+    const stdin = connections[0] as ReadableStream<string>;
+    const stdout = connections[1] as WritableStream<string>;
+    const stderr = connections[2] as WritableStream<string>;
+    const control = connections[3] as ReadableStream<string>;
+    const monitor = connections[4] as WritableStream<string>;
+    const input = connections[5] as ReadableStream<any>;
+    const output = connections[6] as WritableStream<any>;
+    const log = connections[7] as WritableStream<string>;
+
+    return [
+        stdin,
+        stdout,
+        stderr,
+        control,
+        monitor,
+        input,
+        output,
+        log
+    ];
+}
 
 class CSHClient implements ICSHClient {
     private _streams?: UpstreamStreamsConfig;
-
     private connection?: net.Socket;
-
-    /**
-     * BPMux instance.
-     */
-    private mux: any;
 
     logger: Console;
 
@@ -31,62 +49,34 @@ class CSHClient implements ICSHClient {
     }
 
     async init(id: string): Promise<void> {
-        return new Promise((resolve) => {
-            this.logger.info(`Connecting to localhost:${this.instancesServerPort}`);
+        const openConnections = await Promise.all(
+            Array.from(Array(8))
+                .map(() => {
+                    const connection = net.createConnection({
+                        port: this.instancesServerPort
+                    });
 
-            this.connection = net.createConnection({
-                port: this.instancesServerPort
-            });
+                    return new Promise<net.Socket>(res => {
+                        connection.on("connect", () => res(connection));
+                    });
+                })
+                .map((connPromised, index) => {
+                    return connPromised.then((connection) => {
+                        // Assuming id is exactly 36 bytes
+                        connection.write(id);
+                        // Assuming number is from 0-8, sending 1 byte
+                        connection.write(index.toString());
 
-            this.connection.once("connect", () => {
-                this.logger.log("Sending id: ", id);
+                        connection.on("error", (err) => {
+                            this.logger.error(err);
+                        });
 
-                this.connection?.write(id);
+                        return connection;
+                    });
+                })
+        );
 
-                this.mux = new BPMux(this.connection);
-
-                this.mux.on("error", (e: any) => {
-                    this.logger.error(e);
-                });
-                const connectionChannels: DuplexStream<string, string>[] = [
-                    this.mux.multiplex({ channel: CC.STDIN }),
-                    this.mux.multiplex({ channel: CC.STDOUT }),
-                    this.mux.multiplex({ channel: CC.STDERR }),
-                    this.mux.multiplex({ channel: CC.CONTROL }),
-                    this.mux.multiplex({ channel: CC.MONITORING }),
-                    this.mux.multiplex({ channel: CC.IN }),
-                    this.mux.multiplex({ channel: CC.OUT }),
-                    this.mux.multiplex({ channel: CC.LOG }),
-                    this.mux.multiplex({ channel: CC.PACKAGE })
-                ];
-
-                connectionChannels.forEach(
-                    (channel, i) => {
-                        channel.on("error", (e) => this.logger.warn(e));
-                        channel.on("pipe", () => this.logger.debug(`Stream ${i} piped to output.`));
-                    }
-                );
-
-                this.connection?.on("error", (e) => {
-                    this.logger.error("Connection error: ", e.stack);
-                });
-
-                this._streams = [
-                    connectionChannels[CC.STDIN],
-                    connectionChannels[CC.STDOUT],
-                    connectionChannels[CC.STDERR],
-                    connectionChannels[CC.CONTROL],
-                    connectionChannels[CC.MONITORING],
-                    connectionChannels[CC.IN],
-                    connectionChannels[CC.OUT],
-                    connectionChannels[CC.LOG],
-                    connectionChannels[CC.PACKAGE] as unknown as PassThoughStream<Buffer>
-                ];
-
-                connectionChannels[CC.MONITORING].resume();
-                resolve();
-            });
-        });
+        this._streams = mapHostConnectionToStreams(openConnections as RunnerOpenConnections);
     }
 
     async disconnect() {

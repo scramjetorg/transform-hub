@@ -1,21 +1,44 @@
-import { UpstreamStreamsConfig, PassThroughStreamsConfig, IComponent, Logger } from "@scramjet/types";
+import { IComponent, Logger, DownstreamStreamsConfig, WritableStream, ReadableStream } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
-import { HostError } from "@scramjet/model";
-import { CommunicationChannel } from "@scramjet/symbols";
-
 import * as net from "net";
-import { Socket } from "net";
 import EventEmitter = require("events");
-import { PassThrough } from "stream";
+import { isDefined } from "@scramjet/utility";
 
-const BPMux = require("bpmux").BPMux;
+type MaybeSocket = net.Socket | null
+type RunnerConnectionsInProgress = [
+    MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket, MaybeSocket
+]
+type RunnerOpenConnections = [
+    net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
+]
 
-type IdentifiedSocket = Socket & { _chan: string };
+function mapRunnerConnectionToStreams(connections: RunnerOpenConnections): DownstreamStreamsConfig<true> {
+    const stdin = connections[0] as WritableStream<string>;
+    const stdout = connections[1] as ReadableStream<string>;
+    const stderr = connections[2] as ReadableStream<string>;
+    const control = connections[3] as WritableStream<string>;
+    const monitor = connections[4] as ReadableStream<string>;
+    const input = connections[5] as WritableStream<any>;
+    const output = connections[6] as ReadableStream<any>;
+    const log = connections[7] as ReadableStream<string>;
 
-// TODO probably to change to net server, to verify
+    return [
+        stdin,
+        stdout,
+        stderr,
+        control,
+        monitor,
+        input,
+        output,
+        log
+    ];
+}
+
 export class SocketServer extends EventEmitter implements IComponent {
     server?: net.Server;
     logger: Logger;
+
+    private connectedRunners = new Map<string, RunnerConnectionsInProgress>()
 
     constructor(private port: number) {
         super();
@@ -23,96 +46,53 @@ export class SocketServer extends EventEmitter implements IComponent {
         this.logger = getLogger(this);
     }
 
-    // eslint-disable-next-line complexity
-    private handleStream(streams: UpstreamStreamsConfig, stream: IdentifiedSocket) {
-        const channel = parseInt(stream._chan, 10);
-
-        switch (channel) {
-        case CommunicationChannel.STDIN:
-        case CommunicationChannel.IN:
-        case CommunicationChannel.CONTROL:
-            streams[channel].pipe(stream);
-            break;
-        case CommunicationChannel.STDOUT:
-        case CommunicationChannel.STDERR:
-        case CommunicationChannel.MONITORING:
-        case CommunicationChannel.LOG:
-        case CommunicationChannel.OUT:
-            stream.pipe(streams[channel]);
-            break;
-        case CommunicationChannel.PACKAGE:
-            streams[channel]?.pipe(stream);
-            break;
-        default:
-            throw new HostError("UNKNOWN_CHANNEL");
-        }
-    }
-
     async start(): Promise<void> {
         this.server = net.createServer();
 
         this.server
             .on("connection", async (connection) => {
-                this.logger.info("New connection.");
+                this.logger.info("New incoming Runner connection to SocketServer");
 
-                const id = await new Promise((resolve) => {
+                connection.on("error", (err) => {
+                    this.logger.error("Error on connection from runner", err);
+                });
+
+                const id = await new Promise<string>((resolve) => {
                     connection.once("readable", () => {
                         resolve(connection.read(36).toString());
                     });
                 });
 
+                this.logger.info(`Connection from instance: ${id}`);
+
                 if (!id) {
                     throw new Error("Can't read supervisor id.");
                 }
 
-                this.logger.log("Supervisor connected! ID:", id);
+                let runner = this.connectedRunners.get(id);
 
-                connection
-                    .on("error", () => {
-                        this.logger.error("=== ERROR on mux connection");
-                        /* ignore */
-                        // TODO: Error handling?
+                if (!runner) {
+                    runner = [null, null, null, null, null, null, null, null];
+                    this.connectedRunners.set(id, runner);
+                }
+
+                const channel = await new Promise<number>((resolve) => {
+                    connection.once("readable", () => {
+                        resolve(parseInt(connection.read(1).toString(), 10));
                     });
-
-                const streams: PassThroughStreamsConfig<true> = [
-                    new PassThrough(),
-                    new PassThrough(),
-                    new PassThrough(),
-                    new PassThrough(),
-                    new PassThrough(),
-                    new PassThrough(),
-                    new PassThrough(),
-                    new PassThrough(),
-                    new PassThrough()
-                ];
-
-                streams.forEach((stream, i) => stream?.on("error", () => {
-                    this.logger.error(`=== ERRORR in stream ${i}`);
-                }));
-
-                new BPMux(connection)
-                    .on("handshake", (stream: IdentifiedSocket) => {
-                        this.handleStream(streams, stream);
-
-                        stream.on("error", () => {
-                            this.logger.error("Muxed stream error.");
-                            // TODO: Error handling?
-                        });
-                    })
-                    .on("error", () => {
-                        /* ignore */
-                        this.logger.error("Mux error.");
-                    });
-
-                connection.on("close", () => {
-                    this.logger.log("=== MUX close");
-                    streams.forEach(stream => stream?.end());
                 });
 
-                this.emit("connect", {
-                    id,
-                    streams
-                });
+                this.logger.info(`Connection on channel: ${channel}`);
+
+                // @TODO check it it runner[channel] was null before if not throw
+                runner[channel] = connection;
+
+                if (runner.every(isDefined)) {
+                    const streams = mapRunnerConnectionToStreams(runner as RunnerOpenConnections);
+
+                    // @TODO use typed event emitter
+                    this.emit("connect", { id, streams });
+                }
             });
 
         return new Promise((res, rej) => {
