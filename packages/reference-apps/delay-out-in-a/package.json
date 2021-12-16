@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/delay-out-in-a",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "",
   "main": "index.js",
   "assets": [
@@ -16,7 +16,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.13.2",
+    "@scramjet/types": "^0.13.3",
     "@types/node": "15.12.5"
   },
   "dependencies": {
