@@ -37,7 +37,8 @@ Bugfixes:
 -   Verify if package exists before sending it to STH
 -   Fix for STH version unknown from response API endpoint '/version'
 -   Add missing import in packages/types/sth-rest-api/src/index.ts.
+-   Fix for dependencies in sth/package.json, types/package.json and bdd/package.json
 
-## @scramjet/transform Hub - v0.13.2
+## @scramjet/transform Hub - v0.13.3
 
 This is the last release in changelog.
