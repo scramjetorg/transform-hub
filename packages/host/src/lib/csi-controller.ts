@@ -254,9 +254,15 @@ export class CSIController extends EventEmitter {
 
         this.upStreams = streamConfig as PassThroughStreamsConfig;
 
-        this.upStreams[CC.STDIN].pipe(stdin);
-        stdout.pipe(this.upStreams[CC.STDOUT]);
-        stderr.pipe(this.upStreams[CC.STDERR]);
+        this.upStreams[CC.STDIN].pipe(stdin.on("error", (err) => {
+            this.logger.error("STDIN", err);
+        }));
+        stdout.on("error", (err) => {
+            this.logger.error("STDOUT", err);
+        }).pipe(this.upStreams[CC.STDOUT]);
+        stderr.on("error", (err) => {
+            this.logger.error("STDERR", err);
+        }).pipe(this.upStreams[CC.STDERR]);
 
         // Up Stream 1 errors: write after end
         this.upStreams.forEach((stream, i) => stream?.on("error", () => {
@@ -273,6 +279,14 @@ export class CSIController extends EventEmitter {
 
         this.downStreams[CC.OUT].on("close", () => {
             this.logger.log("==== OUTPUT CLOSE DOWNSTREAM");
+        });
+
+        this.upStreams[CC.IN].on("close", () => {
+            this.logger.log("==== INPUT CLOSE UPSTREAM");
+        });
+
+        this.downStreams[CC.IN].on("close", () => {
+            this.logger.log("==== INPUT CLOSE DOWNSTREAM");
         });
 
         this.communicationHandler.hookUpstreamStreams(this.upStreams);

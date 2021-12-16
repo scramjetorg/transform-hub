@@ -1,8 +1,11 @@
-import { IComponent, Logger, DownstreamStreamsConfig, WritableStream, ReadableStream } from "@scramjet/types";
+import { IComponent, Logger, DownstreamStreamsConfig } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import * as net from "net";
 import EventEmitter = require("events");
 import { isDefined } from "@scramjet/utility";
+import { PassThrough } from "stream";
+import { CommunicationChannel } from "@scramjet/symbols";
+import { HostError } from "@scramjet/model";
 
 type MaybeSocket = net.Socket | null
 type RunnerConnectionsInProgress = [
@@ -12,26 +15,40 @@ type RunnerOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
 ]
 
-function mapRunnerConnectionToStreams(connections: RunnerOpenConnections): DownstreamStreamsConfig<true> {
-    const stdin = connections[0] as WritableStream<string>;
-    const stdout = connections[1] as ReadableStream<string>;
-    const stderr = connections[2] as ReadableStream<string>;
-    const control = connections[3] as WritableStream<string>;
-    const monitor = connections[4] as ReadableStream<string>;
-    const input = connections[5] as WritableStream<any>;
-    const output = connections[6] as ReadableStream<any>;
-    const log = connections[7] as ReadableStream<string>;
+// eslint-disable-next-line complexity
+function handleStream(streams: PassThrough[], stream: net.Socket, channel: number): void {
+    switch (channel) {
+    case CommunicationChannel.STDIN:
+    case CommunicationChannel.IN:
+    case CommunicationChannel.CONTROL:
+        streams[channel].pipe(stream);
+        break;
+    case CommunicationChannel.STDOUT:
+    case CommunicationChannel.STDERR:
+    case CommunicationChannel.MONITORING:
+    case CommunicationChannel.LOG:
+    case CommunicationChannel.OUT:
+        stream.pipe(streams[channel]);
+        break;
+    case CommunicationChannel.PACKAGE:
+        streams[channel]?.pipe(stream);
+        break;
+    default:
+        throw new HostError("UNKNOWN_CHANNEL");
+    }
+}
 
-    return [
-        stdin,
-        stdout,
-        stderr,
-        control,
-        monitor,
-        input,
-        output,
-        log
-    ];
+function mapRunnerConnectionToStreams(
+    connections: RunnerOpenConnections, logger: Logger
+): DownstreamStreamsConfig<true> {
+    const streams = Array.from(Array(8)).map(() => new PassThrough().on("error", (err) => {
+        logger.error(err);
+    }));
+
+    connections.forEach((conn, channel) => handleStream(streams, conn, channel));
+
+    // @TODO type it better
+    return streams as unknown as DownstreamStreamsConfig<true>;
 }
 
 export class SocketServer extends EventEmitter implements IComponent {
@@ -88,7 +105,7 @@ export class SocketServer extends EventEmitter implements IComponent {
                 runner[channel] = connection;
 
                 if (runner.every(isDefined)) {
-                    const streams = mapRunnerConnectionToStreams(runner as RunnerOpenConnections);
+                    const streams = mapRunnerConnectionToStreams(runner as RunnerOpenConnections, this.logger);
 
                     // @TODO use typed event emitter
                     this.emit("connect", { id, streams });

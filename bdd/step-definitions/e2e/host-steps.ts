@@ -433,6 +433,9 @@ When("flood the stdin stream with {int} kilobytes", async function(this: CustomW
                 console.log(`Stream paused, sent ${i}kb`);
                 res();
             })
+            .on("pause", () => {
+                console.log(`=== Stream paused, sent ${i}kb`);
+            })
             .once("end", rej);
     });
 });
