@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/sth",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.",
   "main": "src/index.ts",
   "bin": {
@@ -20,20 +20,20 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/host": "^0.13.2",
-    "@scramjet/logger": "^0.13.2",
-    "@scramjet/sth-config": "^0.13.2",
+    "@scramjet/host": "^0.13.3",
+    "@scramjet/logger": "^0.13.3",
+    "@scramjet/sth-config": "^0.13.3",
     "commander": "^8.1.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.13.2",
+    "@scramjet/types": "^0.13.3",
     "@types/node": "15.12.5",
-    "ava": "^3.15.0",
-    "ts-node": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^4.27.0",
     "@typescript-eslint/parser": "^4.27.0",
+    "ava": "^3.15.0",
     "eslint-plugin-import": "^2.23.3",
     "ts-loader": "^9.2.3",
+    "ts-node": "^10.0.0",
     "typedoc": "^0.22.5",
     "typedoc-plugin-markdown": "^3.11.2",
     "typescript": "^4.3.4"
