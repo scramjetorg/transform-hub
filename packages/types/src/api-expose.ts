@@ -17,6 +17,7 @@ export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybeProm
 
 export type NextCallback = (err?: Error) => void;
 export type Middleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
+export type Decorator = (req: IncomingMessage) => void;
 
 /**
  * Configuration options for streaming endpoionts
@@ -129,6 +130,7 @@ export interface APIExpose extends APIBase {
      */
     server: Server
     log: DataStream
+    decorate(path: string | RegExp, ...decorators: Decorator[]): void
 }
 
 export interface APIRoute extends APIBase {
