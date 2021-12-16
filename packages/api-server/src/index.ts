@@ -1,6 +1,6 @@
 import { getLogger } from "@scramjet/logger";
-import { APIExpose, APIRoute } from "@scramjet/types";
-import { Server } from "http";
+import { APIExpose, APIRoute, NextCallback } from "@scramjet/types";
+import { IncomingMessage, Server, ServerResponse } from "http";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
 import { createOperationHandler } from "./handlers/op";
@@ -24,6 +24,23 @@ function safeHandler<T extends unknown[]>(cb: (...args: T) => void) {
             await cb(...args);
         } catch (err) {
             logger.error("Uncaught error in handler", err);
+        }
+    };
+}
+
+/**
+ * Additional request processing goes here but please for the love of god do not consume payload here.
+ * @param cb Decorator
+ * @returns Handler
+ */
+function safeDecorator(cb: (req: IncomingMessage) => void) {
+    return async (req: IncomingMessage, res: ServerResponse, next: NextCallback) => {
+        try {
+            await cb(req);
+        } catch (err) {
+            logger.error("Uncaught error in handler", err);
+        } finally {
+            next();
         }
     };
 }
@@ -86,6 +103,9 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
         },
         use: (path, ...middlewares) => {
             router.use(path, ...middlewares.map(safeHandler));
+        },
+        decorate: (path, ...decorators) => {
+            router.use(path, ...decorators.map(safeDecorator));
         }
     };
 }
