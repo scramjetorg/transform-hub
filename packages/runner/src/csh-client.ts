@@ -64,11 +64,11 @@ class CSHClient implements ICSHClient {
                     return connPromised.then((connection) => {
                         // Assuming id is exactly 36 bytes
                         connection.write(id);
-                        // Assuming number is from 0-8, sending 1 byte
+                        // Assuming number is from 0-7, sending 1 byte
                         connection.write(index.toString());
 
                         connection.on("error", (err) => {
-                            this.logger.error(err);
+                            this.logger.error(`Connection on instance ${id} from channel ${index} error`, err);
                         });
 
                         return connection;

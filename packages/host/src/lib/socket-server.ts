@@ -99,6 +99,10 @@ export class SocketServer extends EventEmitter implements IComponent {
                     });
                 });
 
+                connection.on("error", (err) => {
+                    this.logger.error(`Error on instance ${id} in stream ${channel}`, err);
+                });
+
                 this.logger.info(`Connection on channel: ${channel}`);
 
                 // @TODO check it it runner[channel] was null before if not throw

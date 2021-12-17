@@ -158,7 +158,7 @@ IComponent {
             }
         } catch (error: any) {
             if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
-                this.logger.debug("Container retunrned non-zero status code", error.data.statusCode);
+                this.logger.debug("Container returned non-zero status code", error.data.statusCode);
 
                 return error.data.statusCode;
             }

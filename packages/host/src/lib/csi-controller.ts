@@ -65,7 +65,7 @@ export class CSIController extends EventEmitter {
     config: CSIConfig;
     sequence: SequenceInfo;
     appConfig: AppConfig;
-    superVisorPromise?: Promise<void>;
+    superVisorPromise?: Promise<number>;
     sequenceArgs: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
@@ -177,6 +177,8 @@ export class CSIController extends EventEmitter {
 
                 // TODO: if we have a non-zero exit code is this expected?
                 this.logger.log(`Sequence finished with status: ${exitcode}`);
+
+                return exitcode;
             } catch (error: any) {
                 this.logger.error("Error caught", error.stack);
 
@@ -201,17 +203,8 @@ export class CSIController extends EventEmitter {
 
                 this.logger.error("Cleanup done (post error).");
 
-                return;
+                return 213;
             }
-
-            /**
-        * LifeCycle Adapter Run performs cleanup operations.
-        * The cleanup operations depend on the LifeCycle interface implementation.
-        * They can include, for example, the removal of the created volume, directory, and container.
-        */
-            await this.instanceAdapter.cleanup();
-
-            this.logger.info("Cleanup done (normal execution).");
         };
 
         // @TODO remember about passing out and err to process.stdio
@@ -221,17 +214,7 @@ export class CSIController extends EventEmitter {
     supervisorStopped(): Promise<ExitCode> {
         if (!this.superVisorPromise) throw new CSIControllerError("UNATTACHED_STREAMS");
 
-        return this.superVisorPromise
-            .then(() => 0)
-            .catch((error) => {
-                const exitCode = error?.data?.exitCode ?? 10;
-
-                if (exitCode !== 0) {
-                    throw new Error(`Supervisior returned non-zero code: ${exitCode}`);
-                }
-
-                return exitCode;
-            });
+        return this.superVisorPromise;
     }
 
     hookupStreams(streams: DownstreamStreamsConfig) {
