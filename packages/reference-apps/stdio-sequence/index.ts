@@ -10,6 +10,16 @@ import { InertApp } from "@scramjet/types";
 module.exports = async function(_stream: any) {
     this.logger.log(0);
 
+    process.stdin.on("close", () => {
+        this.logger.log("CLOOOSE");
+    });
+    process.stdin.on("end", () => {
+        this.logger.log("EEENDDD");
+    });
+    process.stdin.on("data", (chunk) => {
+        this.logger.log("SEQUENCE CHUUUNK: " + chunk);
+    });
+
     return StringStream
         .from(process.stdin)
         .lines("\n")
