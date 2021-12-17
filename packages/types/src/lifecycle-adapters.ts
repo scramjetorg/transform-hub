@@ -1,7 +1,6 @@
 import { MonitoringMessageData } from "./messages";
 import { MaybePromise } from "./utils";
 import { InstanceConifg } from "./runner-config";
-import { DownstreamStdioConfig } from "./message-streams";
 
 export type LifeCycleConfig = {
     makeSnapshotOnError: boolean;
@@ -23,6 +22,7 @@ export interface ILifeCycleAdapterMain {
     // TODO: THIS is forceful removal - let's think about refactor.
     remove(): MaybePromise<void>;
 }
+// @TODO create ISequenceAdapter interface
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     /**
@@ -44,7 +44,6 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
 
     stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
 
-    getStdio(): DownstreamStdioConfig
 }
 
 export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});

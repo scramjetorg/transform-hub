@@ -89,7 +89,7 @@ export class HostUtils {
 
             this.host.on("exit", (code, signal) => {
                 // eslint-disable-next-line no-console
-                console.log("sequence process exited with code: ", code, " and signal: ", signal);
+                console.log("host process exited with code: ", code, " and signal: ", signal);
                 this.hostProcessStopped = true;
 
                 if (code === 1) {

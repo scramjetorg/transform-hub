@@ -7,8 +7,7 @@ import {
     Logger,
     MaybePromise,
     MonitoringMessageData,
-    SequenceConfig,
-    DownstreamStdioConfig
+    SequenceConfig
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 
@@ -105,18 +104,6 @@ IComponent {
         }
 
         return statusCode;
-    }
-
-    getStdio() {
-        if (!this.runnerProcess) {
-            throw new Error("Runner process not initialized");
-        }
-
-        return [
-            this.runnerProcess.stdin,
-            this.runnerProcess.stdout,
-            this.runnerProcess.stderr
-        ] as DownstreamStdioConfig;
     }
 
     async cleanup(): Promise<void> {

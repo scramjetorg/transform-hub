@@ -13,11 +13,10 @@ import {
     MonitoringMessageData,
     SequenceConfig,
     RunnerContainerConfiguration,
-    DownstreamStdioConfig
 } from "@scramjet/types";
 import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterStreams, DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
+import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
 
 class DockerInstanceAdapter implements
@@ -29,16 +28,6 @@ IComponent {
     private resources: DockerAdapterResources = {};
 
     logger: Logger;
-
-    private _streams?: DockerAdapterStreams;
-
-    get streams(): DockerAdapterStreams {
-        if (!this._streams) {
-            throw new Error("Streams are not initialized");
-        }
-
-        return this._streams;
-    }
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -131,7 +120,7 @@ IComponent {
 
         this.logger.log("Starting Runner...", config.container);
 
-        const { streams, containerId } = await this.dockerHelper.run({
+        const { containerId } = await this.dockerHelper.run({
             imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
@@ -154,13 +143,6 @@ IComponent {
         });
 
         this.resources.containerId = containerId;
-
-        this._streams = streams;
-
-        if (development()) {
-            this.streams.stderr.pipe(process.stderr);
-            this.streams.stdout.pipe(process.stdout);
-        }
 
         this.logger.log(`Container is running (${containerId}).`);
 
@@ -195,14 +177,6 @@ IComponent {
 
             this.logger.log("Volume removed");
         }
-    }
-
-    getStdio() {
-        return [
-            this.streams.stdin,
-            this.streams.stdout,
-            this.streams.stderr
-        ] as DownstreamStdioConfig;
     }
 
     // returns url identifier of made snapshot

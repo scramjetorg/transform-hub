@@ -239,8 +239,6 @@ export class CSIController extends EventEmitter {
 
         this.downStreams = streams;
 
-        const [stdin, stdout, stderr] = this.instanceAdapter.getStdio();
-
         const streamConfig: PassThroughStreamsConfig = [
             new PassThrough(), // this should be e2e encrypted
             new PassThrough(), // this should be e2e encrypted
@@ -254,15 +252,11 @@ export class CSIController extends EventEmitter {
 
         this.upStreams = streamConfig as PassThroughStreamsConfig;
 
-        this.upStreams[CC.STDIN].pipe(stdin.on("error", (err) => {
-            this.logger.error("STDIN", err);
-        }));
-        stdout.on("error", (err) => {
-            this.logger.error("STDOUT", err);
-        }).pipe(this.upStreams[CC.STDOUT]);
-        stderr.on("error", (err) => {
-            this.logger.error("STDERR", err);
-        }).pipe(this.upStreams[CC.STDERR]);
+        if (development()) {
+            // pipe instance stdout/stderr 
+            streams[1].pipe(process.stdout);
+            streams[2].pipe(process.stderr);
+        }
 
         // Up Stream 1 errors: write after end
         this.upStreams.forEach((stream, i) => stream?.on("error", () => {
