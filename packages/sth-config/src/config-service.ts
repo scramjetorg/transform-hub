@@ -20,7 +20,7 @@ const _defaultConfig: STHConfiguration = {
     },
     identifyExisting: false,
     host: {
-        hostname: "localhost",
+        hostname: "0.0.0.0",
         port: 8000,
         apiBase: "/api/v1",
         socketPath: "/tmp/scramjet-socket-server-path",
