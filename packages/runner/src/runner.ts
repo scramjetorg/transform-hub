@@ -211,7 +211,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     async hookupOutputStream() {
         this.outputStream = createWriteStream(this.outputFifoPath);
         this.outputDataStream
-            //JSONStringify()
+            .JSONStringify()
             .pipe(this.outputStream)
         ;
     }
