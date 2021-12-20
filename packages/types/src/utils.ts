@@ -82,7 +82,6 @@ export type HasTopicInformation = {
 };
 
 export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & HasTopicInformation;
-
 /**
  * Represents all readable stream types that will be accepted as return values
  * from {@see TFunction}

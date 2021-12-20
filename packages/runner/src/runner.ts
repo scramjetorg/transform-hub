@@ -13,9 +13,10 @@ import {
     MonitoringRateMessageData,
     StopSequenceMessageData,
     Streamable,
-    SynchronousStreamable
+    SynchronousStreamable,
+    HasTopicInformation
 } from "@scramjet/types";
-import { DataStream, StringStream } from "scramjet";
+import { BufferStream, DataStream, StringStream } from "scramjet";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
@@ -32,7 +33,8 @@ import { createWriteStream } from "fs";
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
 
-export function isNotPrimitive(obj: SynchronousStreamable<any> | Primitives) : obj is SynchronousStreamable<any> {
+export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives):
+    obj is SynchronousStreamable<any> {
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
@@ -85,6 +87,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     logger: Logger;
 
     private inputDataStream: DataStream
+    private outputDataStream: DataStream
 
     constructor(
         private sequencePath: string,
@@ -94,6 +97,10 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.emitter = new EventEmitter();
         this.logger = getLogger(this);
         this.inputDataStream = new DataStream().catch((e: any) => {
+            this.logger.error("Error during input data stream.", e);
+            throw e;
+        });
+        this.outputDataStream = new DataStream().catch((e: any) => {
             this.logger.error("Error during input data stream.", e);
             throw e;
         });
@@ -341,6 +348,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.hostClient.stderrStream.on("drain", () => {
                 process.stderr.emit("drain");
             });
+
+            this.logger.log("=== OUTPUT");
+            this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
         } catch (err) {
             this.logger.error("Init stream", err);
         }
@@ -524,7 +534,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream: DataStream | void = this.inputDataStream;
+        let stream: Readable & HasTopicInformation | void = this.inputDataStream;
         let itemsLeftInSequence = sequence.length;
         let intermediate: SynchronousStreamable<any> | void = stream;
 
@@ -572,11 +582,13 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 intermediate = await out;
 
-                if (intermediate instanceof DataStream) {
+                if (intermediate instanceof Readable) {
                     stream = intermediate;
-                } else if (intermediate !== undefined && isNotPrimitive(intermediate)) {
-                    stream = DataStream.from(intermediate as Readable)
-                        .catch((e: any) => { this.logger.error("stream err", e); });
+                } else if (intermediate !== undefined && isSynchronousStreamable(intermediate)) {
+                    stream = Object.assign(DataStream.from(intermediate as Readable), {
+                        topic: intermediate.topic,
+                        contentType: intermediate.contentType
+                    });
                 } else {
                     stream = undefined;
                 }
@@ -586,6 +598,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         // @TODO handle errors
+        // eslint-disable-next-line complexity
         await new Promise<void>((res) => {
             /**
          * @analyze-how-to-pass-in-out-streams
@@ -595,7 +608,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-            if (!isNotPrimitive(intermediate)) {
+            if (!isSynchronousStreamable(intermediate)) {
                 this.logger.info("Primitive returned as last value");
 
                 this.hostClient.outputStream.end(`${intermediate}`);
@@ -612,12 +625,21 @@ export class Runner<X extends AppConfig> implements IComponent {
             } else if (stream && this.hostClient.outputStream) {
                 this.logger.log(`Piping sequence output (type ${typeof stream}).`);
 
+                const shouldSerialize = stream.contentType &&
+                ["application/x-ndjson", "text/x-ndjson"].includes(stream.contentType) ||
+                stream instanceof DataStream && !(
+                    stream instanceof StringStream || stream instanceof BufferStream
+                );
+
                 stream
                     .once("end", () => {
                         this.logger.info("Sequence stream ended.");
                         res();
                     })
-                    .pipe(this.hostClient.outputStream);
+                    .pipe(shouldSerialize
+                        ? this.outputDataStream
+                        : this.hostClient.outputStream
+                    );
 
                 MessageUtils.writeMessageOnStream(
                     [RunnerMessageCode.PANG, {
