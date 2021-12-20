@@ -519,6 +519,8 @@ export class Host implements IComponent {
         );
 
         this.logger.log("Instances stopped.");
+
+        await this.cleanup();
     }
 
     async cleanup() {
@@ -533,6 +535,17 @@ export class Host implements IComponent {
             this.api.server
                 .once("close", () => {
                     this.logger.log("API server stopped.");
+                    res();
+                })
+                .close();
+        });
+
+        this.logger.log("Stopping socket server...");
+
+        await new Promise<void>((res, _rej) => {
+            this.socketServer.server
+                ?.once("close", () => {
+                    this.logger.log("Socket server stopped.");
                     res();
                 })
                 .close();
