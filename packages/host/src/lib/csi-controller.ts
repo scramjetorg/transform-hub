@@ -182,23 +182,6 @@ export class CSIController extends EventEmitter {
             } catch (error: any) {
                 this.logger.error("Error caught", error.stack);
 
-                const makeSnapshotOnError = false;
-
-                /**
-                * Container snapshot is made if it was requested in LifeCycleConfig
-                */
-                if (makeSnapshotOnError) {
-                    const retUrl = await this.instanceAdapter.snapshot();
-
-                    // TODO: we should mute this in the stream from Runner -
-                    //       Runner should not be able to send this (and probably other codes)
-                    /**
-                * The message about the successful snapshot creation and its URL is sent to the CSH.
-                */
-                    this.communicationHandler.addMonitoringHandler(RunnerMessageCode.SNAPSHOT_RESPONSE,
-                        () => [RunnerMessageCode.SNAPSHOT_RESPONSE, { url: retUrl }]);
-                }
-
                 await this.instanceAdapter.cleanup();
 
                 this.logger.error("Cleanup done (post error).");

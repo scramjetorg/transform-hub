@@ -5,7 +5,6 @@ import {
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
     Logger,
-    MaybePromise,
     MonitoringMessageData,
     SequenceConfig
 } from "@scramjet/types";
@@ -108,10 +107,6 @@ IComponent {
 
     async cleanup(): Promise<void> {
         //noop
-    }
-    // @ts-ignore
-    snapshot(): MaybePromise<string> {
-        /** ignore */
     }
 
     // @ts-ignore

@@ -28,8 +28,6 @@ import {
     HandshakeMessage,
     HandshakeAcknowledgeMessageData,
     HandshakeAcknowledgeMessage,
-    SnapshotResponseMessage,
-    SnapshotResponseMessageData,
     StatusMessage,
     StatusMessageData,
     MonitoringMessage,
@@ -61,7 +59,6 @@ export type MessageType<T> =
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
-    T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessage :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessage :
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
@@ -83,7 +80,6 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.PING ? PingMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.PANG ? PangMessageData :
-    T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
     T extends RunnerMessageCode.SEQUENCE_STOPPED ? SequenceStoppedMessageData :
     T extends RunnerMessageCode.EVENT ? EventMessageData :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
@@ -114,7 +110,7 @@ export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PING | RunnerMessageCode.PANG | RunnerMessageCode.SNAPSHOT_RESPONSE |
+    RunnerMessageCode.PING | RunnerMessageCode.PANG |
     RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD |
     CPMMessageCode.NETWORK_INFO;
 

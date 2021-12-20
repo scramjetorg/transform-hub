@@ -11,7 +11,6 @@ export { KillSequenceMessage } from "./kill-sequence";
 export { EmptyMessageData, Message } from "./message";
 export { MonitoringRateMessage, MonitoringRateMessageData } from "./monitor-rate";
 export { MonitoringMessage, MonitoringMessageData, MonitoringMessageFromRunnerData } from "./monitoring";
-export { SnapshotResponseMessage, SnapshotResponseMessageData } from "./snapshot-response";
 export { StopSequenceMessage, StopSequenceMessageData } from "./stop-sequence";
 export { SequenceEndMessage, SequenceEndMessageData } from "./sequence-end";
 export { SequenceCompleteMessage } from "./sequence-complete";

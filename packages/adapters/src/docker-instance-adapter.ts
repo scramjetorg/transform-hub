@@ -9,7 +9,6 @@ import {
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
     Logger,
-    MaybePromise,
     MonitoringMessageData,
     SequenceConfig,
     RunnerContainerConfiguration,
@@ -177,12 +176,6 @@ IComponent {
 
             this.logger.log("Volume removed");
         }
-    }
-
-    // returns url identifier of made snapshot
-    // @ts-ignore
-    snapshot(): MaybePromise<string> {
-        /** ignore */
     }
 
     // @ts-ignore

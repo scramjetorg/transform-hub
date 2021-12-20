@@ -37,7 +37,6 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.MONITORING]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING>[];
     [RunnerMessageCode.PING]: ConfiguredMessageHandler<RunnerMessageCode.PING>[];
     [RunnerMessageCode.PANG]: ConfiguredMessageHandler<RunnerMessageCode.PANG>[];
-    [RunnerMessageCode.SNAPSHOT_RESPONSE]: ConfiguredMessageHandler<RunnerMessageCode.SNAPSHOT_RESPONSE>[];
     [RunnerMessageCode.SEQUENCE_STOPPED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
     [RunnerMessageCode.SEQUENCE_COMPLETED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_COMPLETED>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
@@ -98,7 +97,6 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PING]: [],
             [RunnerMessageCode.PANG]: [],
-            [RunnerMessageCode.SNAPSHOT_RESPONSE]: [],
             [RunnerMessageCode.SEQUENCE_STOPPED]: [],
             [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
             [CPMMessageCode.LOAD]: [],
