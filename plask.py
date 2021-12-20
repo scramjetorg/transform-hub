@@ -16,14 +16,15 @@ with open('./py-runner-log', 'w') as log_file:
         log_file.write(msg+'\n')
         log_file.flush()
 
-    async def connect():
+    async def connect(channel):
         host, port = address
         reader, writer = await asyncio.open_connection(host, port)
         log(f"Connected to host on port {port}")
 
         writer.write(instance_id.encode())
+        writer.write(channel.encode())
         await writer.drain()
-        log(f"Sent ID: {instance_id}")
+        log(f"Sent ID: {instance_id} and channel: {channel}")
 
         async for x in reader:
             log(f"Msg from host: {x.decode()}")
@@ -32,4 +33,4 @@ with open('./py-runner-log', 'w') as log_file:
 
     log("Starting up...")
 
-    asyncio.run(connect())
+    asyncio.run(connect("0"))
