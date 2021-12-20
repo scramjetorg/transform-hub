@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import os
+import json
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 host_socket_port = os.getenv('INSTANCES_SERVER_PORT')
@@ -25,9 +26,20 @@ with open('./py-runner-log', 'w') as log_file:
         writer.write(channel.encode())
         await writer.drain()
         log(f"Sent ID: {instance_id} and channel: {channel}")
+        if channel == "4":
+            log(f"Sending PINK")
+            pink = json.dumps([3000, {}])
+            writer.write(f"{pink}\r\n".encode())
 
-        async for x in reader:
-            log(f"Msg from host: {x.decode()}")
+        if channel == "6":
+            await asyncio.sleep(1)
+            for x in range(20):
+                writer.write(f"{x} mlask".encode())
+                await asyncio.sleep(1)
+
+        else:
+            async for x in reader:
+                log(f"Msg from host: {x.decode()}")
 
         log('finish\n')
 
