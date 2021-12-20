@@ -3,7 +3,7 @@ import sys
 import os
 
 sequence_path = os.getenv('SEQUENCE_PATH')
-host_socket_port = os.getenv('HOST_SOCKET_PORT')
+host_socket_port = os.getenv('INSTANCES_SERVER_PORT')
 instance_id = os.getenv('INSTANCE_ID')
 
 if not sequence_path or not host_socket_port or not instance_id:
@@ -16,7 +16,7 @@ with open('./py-runner-log', 'w') as log_file:
         log_file.write(msg+'\n')
         log_file.flush()
 
-    async def connect(channel):
+    async def open_one_channel(channel):
         host, port = address
         reader, writer = await asyncio.open_connection(host, port)
         log(f"Connected to host on port {port}")
@@ -33,4 +33,12 @@ with open('./py-runner-log', 'w') as log_file:
 
     log("Starting up...")
 
-    asyncio.run(connect("0"))
+    async def connect():
+        channels = [
+            open_one_channel(ch)
+            for ch
+            in ["0", "1", "2", "3", "4", "5", "6", "7"]
+        ]
+        await asyncio.gather(*channels)
+
+    asyncio.run(connect())
