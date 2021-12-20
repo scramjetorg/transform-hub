@@ -473,8 +473,8 @@ export class CSIController extends EventEmitter {
             });
 
             this.router.get("/event/:name", async (req) => {
-                if (req.params?.name && localEmitter.lastEvents[req.params?.name]) {
-                    return localEmitter.lastEvents[req.params?.name];
+                if (req.params?.name && localEmitter.lastEvents[req.params.name]) {
+                    return localEmitter.lastEvents[req.params.name];
                 }
 
                 return awaitEvent(req);

@@ -44,12 +44,9 @@ function hookStdout(callback: any) {
     const oldWrite = process.stdout.write;
 
     // @ts-ignore
-    process.stdout.write = (function(write) {
-        return function(string, encoding, fd) {
-            write.apply(process.stdout, [string, encoding, fd]);
-            return callback(string, encoding, fd);
-        };
-    })(process.stdout.write);
+    process.stdout.write = function(string, encoding, fd) {
+        return callback(string, encoding, fd);
+    };
 
     return function() {
         process.stdout.write = oldWrite;
@@ -60,12 +57,9 @@ function hookStderr(callback: any) {
     const oldWrite = process.stderr.write;
 
     // @ts-ignore
-    process.stderr.write = (function(write) {
-        return function(string, encoding, fd) {
-            write.apply(process.stderr, [string, encoding, fd]);
-            return callback(string, encoding, fd);
-        };
-    })(process.stderr.write);
+    process.stderr.write = function(string, encoding, fd) {
+        return callback(string, encoding, fd);
+    };
 
     return function() {
         process.stderr.write = oldWrite;

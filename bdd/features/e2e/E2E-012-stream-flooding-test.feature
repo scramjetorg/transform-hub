@@ -19,7 +19,7 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
     Scenario: E2E-012 TC-002 Instance floods wrtites stdout, then Host checks whether even sent by Instance can be still received.
         Given host is running
         When sequence "../packages/reference-apps/flood-stdout-sequence.tar.gz" loaded
-        And instance started with arguments "2000 10000"
+        And instance started with arguments "4000 10000"
         And wait for instance healthy is "true"
         And get runner PID
         Then get event "test-event-response" from instance
