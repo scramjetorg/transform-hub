@@ -300,17 +300,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         await this.hostClient.init(this.instanceId);
 
-        // @TODO handle it properly!!!!!!!
-        process.on("exit", (err) => {
-            this.logger.error("EXITTTING!!!", err);
-        });
-        process.on("uncaughtException", (err) => {
-            this.logger.error("EXCEPTION!!!", err);
-        });
-        process.on("unhandledRejection", (err) => {
-            this.logger.error("REJECTION!!!", err);
-        });
-
         try {
             addLoggerOutput(this.hostClient.logStream);
             this.logger.log("Logs connected");
@@ -321,7 +310,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             this.logger.log("=== STDIN");
 
-            // @TODO handle stdio piping
             this.hostClient.stdinStream.on("data", (chunk) => {
                 this.logger.log("INCOMING stdin: " + chunk);
                 process.stdin.unshift(chunk);
