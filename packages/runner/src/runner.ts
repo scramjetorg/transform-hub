@@ -23,7 +23,7 @@ import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 
 import { EventEmitter } from "events";
 import { MessageUtils } from "./message-utils";
-import { Readable } from "stream";
+import { Readable, Writable } from "stream";
 /* eslint-disable no-extra-parens */
 import { RunnerError } from "@scramjet/model";
 import { RunnerMessageCode } from "@scramjet/symbols";
@@ -40,30 +40,16 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
 
 const exitDelay = 5000;
 
-function hookStdout(callback: any) {
-    const oldWrite = process.stdout.write;
+function overrideStandardStream(oldStream: Writable, newStream: Writable) {
+    oldStream.write = newStream.write.bind(newStream);
 
-    // @ts-ignore
-    process.stdout.write = function(string, encoding, fd) {
-        return callback(string, encoding, fd);
-    };
+    newStream.on("drain", () => {
+        oldStream.emit("drain");
+    });
 
-    return function() {
-        process.stdout.write = oldWrite;
-    };
-}
-
-function hookStderr(callback: any) {
-    const oldWrite = process.stderr.write;
-
-    // @ts-ignore
-    process.stderr.write = function(string, encoding, fd) {
-        return callback(string, encoding, fd);
-    };
-
-    return function() {
-        process.stderr.write = oldWrite;
-    };
+    newStream.on("error", () => {
+        oldStream.emit("error");
+    });
 }
 
 export class Runner<X extends AppConfig> implements IComponent {
@@ -319,17 +305,10 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
 
             this.logger.log("=== STDOUT");
-
-            hookStdout((chunk: any) => this.hostClient.stdoutStream.write(chunk));
-            this.hostClient.stdoutStream.on("drain", () => {
-                process.stdout.emit("drain");
-            });
+            overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
 
             this.logger.log("=== STDERR");
-            hookStderr((chunk: any) => this.hostClient.stderrStream.write(chunk));
-            this.hostClient.stderrStream.on("drain", () => {
-                process.stderr.emit("drain");
-            });
+            overrideStandardStream(process.stderr, this.hostClient.stderrStream);
 
             this.logger.log("=== OUTPUT");
             this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
