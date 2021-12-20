@@ -18,10 +18,11 @@ export = async function(_stream, max = 10) {
 
     const interval = setInterval(async () => {
         // output
-        const outputString = JSON.stringify({ name: names[cnt % names.length] }) + "\n";
+        const data = { name: names[cnt % names.length] };
 
-        console.log(outputString);
-        ps.write(outputString);
+        console.log(data);
+        ps.write(data);
+        // ps.write("\n");
 
         cnt++;
 
