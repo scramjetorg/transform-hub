@@ -22,7 +22,6 @@ export = async function(_stream, max = 10) {
 
         console.log(data);
         ps.write(data);
-        // ps.write("\n");
 
         cnt++;
 
