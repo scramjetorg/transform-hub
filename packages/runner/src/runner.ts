@@ -1,4 +1,4 @@
-import { AppConfig, ApplicationFunction, ApplicationInterface, EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, Logger, MaybePromise, MonitoringRateMessageData, ReadableStream, StopSequenceMessageData, Streamable, SynchronousStreamable, WritableStream } from "@scramjet/types";
+import { AppConfig, ApplicationFunction, ApplicationInterface, EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, Logger, MaybePromise, MonitoringRateMessageData, ReadableStream, StopSequenceMessageData, Streamable, SynchronousStreamable, WritableStream, HasTopicInformation } from "@scramjet/types";
 import { BufferStream, DataStream, StringStream } from "scramjet";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
@@ -16,7 +16,8 @@ import { exec } from "child_process";
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
 
-export function isNotPrimitive(obj: SynchronousStreamable<any> | Primitives) : obj is SynchronousStreamable<any> {
+export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives):
+    obj is SynchronousStreamable<any> {
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
@@ -68,36 +69,36 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.log("Control message received:", code, data);
 
         switch (code) {
-        case RunnerMessageCode.MONITORING_RATE:
-            await this.handleMonitoringRequest(data as MonitoringRateMessageData);
-            break;
-        case RunnerMessageCode.KILL:
-            await this.handleKillRequest();
-            break;
-        case RunnerMessageCode.STOP:
-            await this.addStopHandlerRequest(data as StopSequenceMessageData);
-            break;
-        case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-            this.handleForceConfirmAliveRequest();
-            break;
-        case RunnerMessageCode.PONG:
-            this.handshakeResolver?.res(data);
-            break;
-        case RunnerMessageCode.EVENT:
-            const eventData = data as EventMessageData;
+            case RunnerMessageCode.MONITORING_RATE:
+                await this.handleMonitoringRequest(data as MonitoringRateMessageData);
+                break;
+            case RunnerMessageCode.KILL:
+                await this.handleKillRequest();
+                break;
+            case RunnerMessageCode.STOP:
+                await this.addStopHandlerRequest(data as StopSequenceMessageData);
+                break;
+            case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
+                this.handleForceConfirmAliveRequest();
+                break;
+            case RunnerMessageCode.PONG:
+                this.handshakeResolver?.res(data);
+                break;
+            case RunnerMessageCode.EVENT:
+                const eventData = data as EventMessageData;
 
-            this.emitter.emit(eventData.eventName, eventData.message);
-            break;
-        // [RunnerMessageCode.INPUT_CONTENT_TYPE, false
-        case RunnerMessageCode.INPUT_CONTENT_TYPE:
-            if ((data as any).connected) {
-                this.inputResolver?.res(data);
-            } else {
-                this.inputResolver?.rej(data);
-            }
-            break;
-        default:
-            break;
+                this.emitter.emit(eventData.eventName, eventData.message);
+                break;
+            // [RunnerMessageCode.INPUT_CONTENT_TYPE, false
+            case RunnerMessageCode.INPUT_CONTENT_TYPE:
+                if ((data as any).connected) {
+                    this.inputResolver?.res(data);
+                } else {
+                    this.inputResolver?.rej(data);
+                }
+                break;
+            default:
+                break;
         }
     }
 
@@ -212,8 +213,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.outputStream = createWriteStream(this.outputFifoPath);
         this.outputDataStream
             .JSONStringify()
-            .pipe(this.outputStream)
-        ;
+            .pipe(this.outputStream);
     }
 
     async hookupFifoStreams() {
@@ -526,7 +526,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream: DataStream | void = this.inputDataStream ||
+        let stream: Readable & HasTopicInformation | void = this.inputDataStream ||
             DataStream.from([]).catch((e: any) => { this.logger.error(e); });
         let itemsLeftInSequence = sequence.length;
         let intermediate: SynchronousStreamable<any> | void = stream;
@@ -575,10 +575,13 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 intermediate = await out;
 
-                if (intermediate instanceof DataStream) {
+                if (intermediate instanceof Readable) {
                     stream = intermediate;
-                } else if (intermediate !== undefined && isNotPrimitive(intermediate)) {
-                    stream = DataStream.from(intermediate as Readable)
+                } else if (intermediate !== undefined && isSynchronousStreamable(intermediate)) {
+                    stream = Object.assign(DataStream.from(intermediate as Readable), {
+                        topic: intermediate.topic,
+                        contentType: intermediate.contentType
+                    })
                         .catch((e: any) => { this.logger.error(e); throw e; });
                 } else {
                     stream = undefined;
@@ -596,7 +599,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        if (!isNotPrimitive(intermediate)) {
+        if (!isSynchronousStreamable(intermediate)) {
             this.logger.info("Primitive returned as last value");
 
             this.outputStream?.end(`${intermediate}`);
@@ -613,15 +616,21 @@ export class Runner<X extends AppConfig> implements IComponent {
         } else if (stream && this.outputStream && this.outputDataStream) {
             this.logger.log(`Piping sequence output (type ${typeof stream}).`);
 
+            const shouldSerialize = stream.contentType &&
+                ["application/x-ndjson", "text/x-ndjson"].includes(stream.contentType) ||
+                stream instanceof DataStream && !(
+                    stream instanceof StringStream || stream instanceof BufferStream
+                );
+
             stream
                 .once("end", () => {
                     this.logger.info("Sequence stream ended.");
                     this.endRunner();
                 })
                 .pipe(
-                    stream instanceof StringStream || stream instanceof BufferStream
-                        ? this.outputStream
-                        : this.outputDataStream
+                    shouldSerialize
+                        ? this.outputDataStream
+                        : this.outputStream
                 );
 
             MessageUtils.writeMessageOnStream(
