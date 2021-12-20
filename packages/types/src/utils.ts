@@ -76,10 +76,12 @@ export type SynchronousStreamablePayload<Produces> =
     Gen<Produces, void> | Iterable<Produces> |
     AsyncIterable<Produces>;
 
-export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & {
+export type HasTopicInformation = {
     contentType?: string,
     topic?: string
-}
+};
+
+export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & HasTopicInformation;
 
 /**
  * Represents all readable stream types that will be accepted as return values
