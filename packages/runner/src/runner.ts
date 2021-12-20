@@ -45,7 +45,7 @@ function hookStdout(callback: any) {
     process.stdout.write = (function(write) {
         return function(string, encoding, fd) {
             write.apply(process.stdout, [string, encoding, fd]);
-            callback(string, encoding, fd);
+            return callback(string, encoding, fd);
         };
     })(process.stdout.write);
 
@@ -61,7 +61,7 @@ function hookStderr(callback: any) {
     process.stderr.write = (function(write) {
         return function(string, encoding, fd) {
             write.apply(process.stderr, [string, encoding, fd]);
-            callback(string, encoding, fd);
+            return callback(string, encoding, fd);
         };
     })(process.stderr.write);
 
@@ -332,9 +332,15 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.log("=== STDOUT");
 
             hookStdout((chunk: any) => this.hostClient.stdoutStream.write(chunk));
+            this.hostClient.stdoutStream.on("drain", () => {
+                process.stdout.emit("drain");
+            });
 
             this.logger.log("=== STDERR");
             hookStderr((chunk: any) => this.hostClient.stderrStream.write(chunk));
+            this.hostClient.stderrStream.on("drain", () => {
+                process.stderr.emit("drain");
+            });
         } catch (err) {
             this.logger.error("Init stream", err);
         }

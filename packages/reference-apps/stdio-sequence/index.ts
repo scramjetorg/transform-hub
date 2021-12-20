@@ -12,9 +12,7 @@ module.exports = async function(_stream: any) {
 
     return StringStream
 
-        .from(process.stdin, {
-            maxParallel: 20 // @MAGIC this is related to a possible bug in scramjet framework
-        })
+        .from(process.stdin)
         .lines("\n")
         .parse((str: any) => [+(str.match(/^\w+/) || []).pop(), str])
         .each((item) => this.logger.debug("item", item))
