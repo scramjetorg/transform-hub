@@ -2,6 +2,7 @@ import asyncio
 import sys
 import os
 import json
+from hardcoded_magic_values import CommunicationChannels as CC
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
@@ -22,20 +23,33 @@ with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
         log("Undefined config variable! Aborting. <blows raspberry>")
         sys.exit(2)
 
-    log("Starting up...")
+    log("\nStarting up...")
 
     address = ("localhost", server_port)
+    connections = {}
 
 
-    async def open_one_channel(channel):
-        host, port = address
-        reader, writer = await asyncio.open_connection(host, port)
-        log(f"Connected to host on port {port}")
+    async def init(id, host, port):
 
-        writer.write(instance_id.encode())
-        writer.write(channel.encode())
-        await writer.drain()
-        log(f"Sent ID: {instance_id} and channel: {channel}")
+        async def connect(channel):
+            reader, writer = await asyncio.open_connection(host, port)
+            log(f"Connected to host on port {port}")
+
+            writer.write(id.encode())
+            writer.write(channel.value.encode())
+            log(f"Sent ID {instance_id} on {channel}")
+
+            await writer.drain()
+            return reader, writer
+
+        channels = [connect(ch) for ch in CC]
+        log(f"channels: {channels}")
+        return await asyncio.gather(*channels)
+
+    streams = asyncio.run(init(instance_id, 'localhost', server_port))
+    log(f"streams: {streams}")
+
+    async def mlaskaj(channel):
         if channel == "4":
             log(f"Sending PINK")
             pink = json.dumps([3000, {}])
@@ -53,13 +67,3 @@ with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
 
         log('finish\n')
 
-
-    async def connect():
-        channels = [
-            open_one_channel(ch)
-            for ch
-            in ["0", "1", "2", "3", "4", "5", "6", "7"]
-        ]
-        await asyncio.gather(*channels)
-
-    asyncio.run(connect())
