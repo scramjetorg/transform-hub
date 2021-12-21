@@ -461,7 +461,7 @@ export class CSIController extends EventEmitter {
         );
     }
 
-    // TODO: move to HostOne
+    // @TODO discuss this
     async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
         this.logger.log("Got message: SEQUENCE_COMPLETED.");
 
@@ -527,9 +527,6 @@ export class CSIController extends EventEmitter {
         return message;
     }
 
-    // TODO: if we can keep alive we should not hold this promise unresolved
-    // TODO: we need some safeExec method for asynchronous handling of such cases
-    //       an error here should send an "error" event, but not block the channel
     private async handleStop(message: EncodedMessage<RunnerMessageCode.STOP>):
         Promise<EncodedMessage<RunnerMessageCode.STOP>> {
         const [, { timeout }] = message;
