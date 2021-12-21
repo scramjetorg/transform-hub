@@ -12,21 +12,23 @@ UGLY_LOCAL_LOGFILE = './python-runner.log'
 
 with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
     def log(msg):
-        log_file.write(msg+'\n')
+        log_file.write(f"{msg}\n")
         log_file.flush()
 
+    log("\nStarting up...")
     log(f"sequence_path: {sequence_path}")
     log(f"server_port: {server_port}")
     log(f"instance_id: {instance_id}")
 
     if not sequence_path or not server_port or not instance_id:
-        log("Undefined config variable! Aborting. <blows raspberry>")
+        log("Undefined config variable! <blows raspberry>")
         sys.exit(2)
 
-    log("\nStarting up...")
 
     address = ("localhost", server_port)
     connections = {}
+
+    log("Connecting to host...")
 
 
     async def init(id, host, port):
@@ -42,14 +44,28 @@ with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
             await writer.drain()
             return reader, writer
 
-        channels = [connect(ch) for ch in CC]
-        log(f"channels: {channels}")
-        return await asyncio.gather(*channels)
+        conn_futures = [connect(ch) for ch in CC]
+        rw_pairs = await asyncio.gather(*conn_futures)
 
-    streams = asyncio.run(init(instance_id, 'localhost', server_port))
-    log(f"streams: {streams}")
+        return dict(zip(CC, rw_pairs))
 
-    async def mlaskaj(channel):
+    connections = asyncio.run(init(instance_id, 'localhost', server_port))
+    log(f"streams: {connections}")
+    monwriter = connections[CC.MONITORING][1]
+    log(monwriter)
+    ctrlreader = connections[CC.CONTROL][0]
+    log(ctrlreader)
+
+    log(f"Sending PINK")
+    pink = json.dumps([3000, {}])
+    monwriter.write(f"{pink}\r\n".encode())
+
+    # async for x in ctrlreader:
+    #     log(f"Msg from host: {x.decode()}")
+
+    # asyncio.run(mlaskaj())
+
+    async def plaskay(channel):
         if channel == "4":
             log(f"Sending PINK")
             pink = json.dumps([3000, {}])
