@@ -11,6 +11,7 @@ module.exports = async function(_stream: any) {
     this.logger.log(0);
 
     return StringStream
+
         .from(process.stdin)
         .lines("\n")
         .parse((str: any) => [+(str.match(/^\w+/) || []).pop(), str])

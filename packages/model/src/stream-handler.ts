@@ -37,7 +37,6 @@ type MonitoringMessageHandlerList = {
     [RunnerMessageCode.MONITORING]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING>[];
     [RunnerMessageCode.PING]: ConfiguredMessageHandler<RunnerMessageCode.PING>[];
     [RunnerMessageCode.PANG]: ConfiguredMessageHandler<RunnerMessageCode.PANG>[];
-    [RunnerMessageCode.SNAPSHOT_RESPONSE]: ConfiguredMessageHandler<RunnerMessageCode.SNAPSHOT_RESPONSE>[];
     [RunnerMessageCode.SEQUENCE_STOPPED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_STOPPED>[];
     [RunnerMessageCode.SEQUENCE_COMPLETED]: ConfiguredMessageHandler<RunnerMessageCode.SEQUENCE_COMPLETED>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
@@ -46,7 +45,6 @@ type MonitoringMessageHandlerList = {
 };
 
 type ControlMessageHandlerList = {
-    [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: ConfiguredMessageHandler<RunnerMessageCode.FORCE_CONFIRM_ALIVE>[];
     [RunnerMessageCode.KILL]: ConfiguredMessageHandler<RunnerMessageCode.KILL>[];
     [RunnerMessageCode.MONITORING_RATE]: ConfiguredMessageHandler<RunnerMessageCode.MONITORING_RATE>[];
     [RunnerMessageCode.STOP]: ConfiguredMessageHandler<RunnerMessageCode.STOP>[];
@@ -78,7 +76,6 @@ export class CommunicationHandler implements ICommunicationHandler {
         this.monitoringPassThrough = new DataStream();
         this.loggerPassThrough = new PassThrough();
         this.controlHandlerHash = {
-            [RunnerMessageCode.FORCE_CONFIRM_ALIVE]: [],
             [RunnerMessageCode.KILL]: [],
             [RunnerMessageCode.MONITORING_RATE]: [],
             [RunnerMessageCode.STOP]: [],
@@ -98,7 +95,6 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PING]: [],
             [RunnerMessageCode.PANG]: [],
-            [RunnerMessageCode.SNAPSHOT_RESPONSE]: [],
             [RunnerMessageCode.SEQUENCE_STOPPED]: [],
             [RunnerMessageCode.SEQUENCE_COMPLETED]: [],
             [CPMMessageCode.LOAD]: [],

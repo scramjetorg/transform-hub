@@ -8,6 +8,7 @@ Feature: Output streams persisting data E2E test
         And keep instance streams "stdout,stderr,output"
         And wait for instance healthy is "true"
         And get runner PID
+        When wait for "1000" ms 
         When send kill message to instance
         And runner has ended execution
         Then host is running

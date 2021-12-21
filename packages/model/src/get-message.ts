@@ -2,7 +2,6 @@
 import { CPMMessageCode, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
-    ConfirmHealthMessage,
     DescribeSequenceMessage, DescribeSequenceMessageData,
     ErrorMessage, ErrorMessageData,
     KeepAliveMessage, KeepAliveMessageData,
@@ -57,9 +56,6 @@ export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode
 ): MessageDataType<X> => {
     if (msgCode === RunnerMessageCode.KILL) {
         return msgData as MessageDataType<KillSequenceMessage>;
-    }
-    if (msgCode === RunnerMessageCode.FORCE_CONFIRM_ALIVE) {
-        return msgData as MessageDataType<ConfirmHealthMessage>;
     }
     if (msgCode === RunnerMessageCode.STOP && isStopSequenceMessage(msgData)) {
         return msgData as MessageDataType<StopSequenceMessage>;

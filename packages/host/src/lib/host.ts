@@ -5,7 +5,6 @@ import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { access, unlink } from "fs/promises";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
 
 import { AddressInfo } from "net";
@@ -17,11 +16,9 @@ import { getSequenceAdapter } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
-import { constants } from "fs";
 import { LoadCheck } from "@scramjet/load-check";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
-const exists = (dir: string) => access(dir, constants.F_OK).then(() => true, () => false);
 
 export type HostOptions = Partial<{
     identifyExisting: boolean
@@ -96,14 +93,6 @@ export class Host implements IComponent {
         ).resume();
 
         this.logger.log("Host main called.");
-
-        try {
-            if (await exists(this.config.host.socketPath)) {
-                await unlink(this.config.host.socketPath);
-            }
-        } catch (error: any) {
-            throw new HostError("SOCKET_TAKEN", this.config.host.socketPath);
-        }
 
         if (identifyExisiting) {
             await this.identifyExistingSequences();
@@ -379,7 +368,7 @@ export class Host implements IComponent {
         const id = IDProvider.generate();
         const csiConfig: CSIConfig = {
             instanceAdapterExitDelay: this.config.instanceAdapterExitDelay,
-            socketPath: this.config.host.socketPath,
+            instancesServerPort: this.config.host.instancesServerPort,
             noDocker: this.config.noDocker
         };
         const csic = new CSIController(

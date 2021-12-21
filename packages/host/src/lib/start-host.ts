@@ -16,7 +16,7 @@ export async function startHost(
     hostOptions: HostOptions
 ): Promise<Host> {
     const apiServer = createServer(apiServerConfig);
-    const tcpServer = new SocketServer(sthConfig.host.socketPath);
+    const tcpServer = new SocketServer(sthConfig.host.instancesServerPort);
     const host = new Host(apiServer, tcpServer, sthConfig);
 
     return host.main(hostOptions);

@@ -9,6 +9,7 @@ Feature: Stdio e2e tests
         And wait for instance healthy is "true"
         And get runner PID
         When send stdin to instance with contents of file "../packages/reference-apps/stdio-sequence/numbers.txt"
+        And wait for "8000" ms
         When send kill message to instance
         And runner has ended execution
         Then host is still running
