@@ -2,6 +2,7 @@ import asyncio
 import sys
 import os
 import json
+from pprint import pprint
 from hardcoded_magic_values import CommunicationChannels as CC
 
 sequence_path = os.getenv('SEQUENCE_PATH')
@@ -9,6 +10,8 @@ server_port = os.getenv('INSTANCES_SERVER_PORT')
 instance_id = os.getenv('INSTANCE_ID')
 
 UGLY_LOCAL_LOGFILE = './python-runner.log'
+
+
 
 with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
     def log(msg):
@@ -26,9 +29,9 @@ with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
 
 
     address = ("localhost", server_port)
-    connections = {}
+    streams = {}
 
-    log("Connecting to host...")
+    log("\nConnecting to host...")
 
 
     async def init(id, host, port):
@@ -39,21 +42,36 @@ with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
 
             writer.write(id.encode())
             writer.write(channel.value.encode())
+            await writer.drain()
             log(f"Sent ID {instance_id} on {channel}")
 
-            await writer.drain()
-            return reader, writer
+            return {
+                'channel': channel,
+                'reader': reader,
+                'writer': writer,
+            }
 
-        conn_futures = [connect(ch) for ch in CC]
-        rw_pairs = await asyncio.gather(*conn_futures)
+        conn_futures = [connect(channel) for channel in CC]
+        conn_infos = await asyncio.gather(*conn_futures)
 
-        return dict(zip(CC, rw_pairs))
+        def get_streams_from_connections(conn_infos):
+            result = {}
+            for info in conn_infos:
+                pprint(info, stream=log_file)
+                channel = info['channel']
+                if channel in [CC.STDIN, CC.IN, CC.CONTROL]:
+                    result[channel] = info['reader']
+                else:
+                    result[channel] = info['writer']
+            return result
 
-    connections = asyncio.run(init(instance_id, 'localhost', server_port))
-    log(f"streams: {connections}")
-    monwriter = connections[CC.MONITORING][1]
+        return get_streams_from_connections(conn_infos)
+
+    streams = asyncio.run(init(instance_id, 'localhost', server_port))
+    pprint(streams, stream=log_file)
+    monwriter = streams[CC.MONITORING]
     log(monwriter)
-    ctrlreader = connections[CC.CONTROL][0]
+    ctrlreader = streams[CC.CONTROL]
     log(ctrlreader)
 
     log(f"Sending PINK")
