@@ -54,27 +54,25 @@ async def init_connection(id, host, port):
     }
 
 
-async def handshake():
-    pass
+async def handshake(streams):
+    monitoring = streams[CC.MONITORING]
+    control = streams[CC.CONTROL]
+
+    log(f"Sending PING")
+    ping = json.dumps([3000, {}])
+    monitoring.write(f"{ping}\r\n".encode())
+
+    pong = await control.read(1000)
+    log(f"Got PONG: {pong}")
+    return pong
 
 
-async def plaskay(channel):
-    if channel == "4":
-        log(f"Sending PINK")
-        pink = json.dumps([3000, {}])
-        writer.write(f"{pink}\r\n".encode())
-
-    if channel == "6":
+async def pretend_to_do_something(streams):
+    for x in range(50):
+        streams[CC.OUT].write(f"test {x}\n".encode())
         await asyncio.sleep(1)
-        for x in range(20):
-            writer.write(f"{x} mlask".encode())
-            await asyncio.sleep(1)
-
-    else:
-        async for x in reader:
-            log(f"Msg from host: {x.decode()}")
-
-    log('finish\n')
+        
+    log('Finished.\n')
 
 
 async def main():
@@ -82,17 +80,11 @@ async def main():
 
     log("\nConnecting to host...")
     streams = await init_connection(instance_id, 'localhost', server_port)
-    log("Communication channels established.")
 
-    monwriter = streams[CC.MONITORING]
-    ctrlreader = streams[CC.CONTROL]
+    await handshake(streams)
+    log("Communication established.")
 
-    log(f"Sending PINK")
-    pink = json.dumps([3000, {}])
-    monwriter.write(f"{pink}\r\n".encode())
-
-    async for x in ctrlreader:
-        log(f"Msg from host: {x.decode()}")
+    await pretend_to_do_something(streams)
 
 
 with open(UGLY_DEBUG_LOGFILE, 'a+') as log_file:
