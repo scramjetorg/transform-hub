@@ -1,9 +1,9 @@
 import asyncio
 import sys
 import os
-import json
-from pprint import pprint
 from hardcoded_magic_values import CommunicationChannels as CC
+from hardcoded_magic_values import RunnerMessageCodes as msg_codes
+from magic_utils import send_encoded_msg, read_and_decode
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
@@ -59,17 +59,16 @@ async def handshake(streams):
     control = streams[CC.CONTROL]
 
     log(f"Sending PING")
-    ping = json.dumps([3000, {}])
-    monitoring.write(f"{ping}\r\n".encode())
+    send_encoded_msg(monitoring, msg_codes.PING)
 
-    pong = await control.read(1000)
-    log(f"Got PONG: {pong}")
-    return pong
+    code, data = await read_and_decode(control)
+    log(f"Got configuration: {data}")
+    return data['appConfig'], data['args']
 
 
-async def pretend_to_do_something(streams):
-    for x in range(50):
-        streams[CC.OUT].write(f"test {x}\n".encode())
+async def pretend_to_do_something(streams, args):
+    for x in range(100):
+        streams[CC.OUT].write(f"test {x} {''.join(args)}\n".encode())
         await asyncio.sleep(1)
         
     log('Finished.\n')
@@ -81,10 +80,10 @@ async def main():
     log("\nConnecting to host...")
     streams = await init_connection(instance_id, 'localhost', server_port)
 
-    await handshake(streams)
+    config, args = await handshake(streams)
     log("Communication established.")
 
-    await pretend_to_do_something(streams)
+    await pretend_to_do_something(streams, args)
 
 
 with open(UGLY_DEBUG_LOGFILE, 'a+') as log_file:
