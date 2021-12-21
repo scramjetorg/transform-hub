@@ -1,5 +1,5 @@
 import { getLogger } from "@scramjet/logger";
-import { SupervisorError } from "@scramjet/model";
+import { InstanceAdapterError } from "@scramjet/model";
 import {
     ISequenceAdapter,
     Logger,
@@ -98,7 +98,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             return ret;
         } catch {
             this.logger.error("Docker failed!");
-            throw new SupervisorError("DOCKER_ERROR");
+            throw new InstanceAdapterError("DOCKER_ERROR");
         }
     }
 
@@ -133,7 +133,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             });
         } catch (err) {
             this.logger.error(err);
-            throw new SupervisorError("DOCKER_ERROR");
+            throw new InstanceAdapterError("DOCKER_ERROR");
         }
 
         try {
@@ -148,7 +148,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             return config;
         } catch (err) {
             this.logger.error(err);
-            throw new SupervisorError("PRERUNNER_ERROR", err);
+            throw new InstanceAdapterError("PRERUNNER_ERROR", err);
         }
     }
 
@@ -162,7 +162,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         try {
             return await this.dockerHelper.createVolume(id);
         } catch (error: any) {
-            throw new SupervisorError("DOCKER_ERROR", "Error creating volume");
+            throw new InstanceAdapterError("DOCKER_ERROR", "Error creating volume");
         }
     }
 

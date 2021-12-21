@@ -4,7 +4,7 @@ import {
     PassThoughStream
 } from "./utils";
 
-import { RunnerMessageCode, SupervisorMessageCode, CPMMessageCode } from "@scramjet/symbols";
+import { RunnerMessageCode, CPMMessageCode } from "@scramjet/symbols";
 
 import {
     AcknowledgeMessage,
@@ -14,8 +14,6 @@ import {
     EmptyMessageData,
     ErrorMessage,
     ErrorMessageData,
-    InstanceConfigMessage,
-    InstanceConfigMessageData,
     KeepAliveMessage,
     KeepAliveMessageData,
     KillSequenceMessage,
@@ -57,7 +55,6 @@ export type MessageType<T> =
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
-    T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessage :
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
     T extends CPMMessageCode.NETWORK_INFO ? NetworkInfoMessage :
@@ -79,7 +76,6 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.PANG ? PangMessageData :
     T extends RunnerMessageCode.SEQUENCE_STOPPED ? SequenceStoppedMessageData :
     T extends RunnerMessageCode.EVENT ? EventMessageData :
-    T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
     T extends CPMMessageCode.STH_ID ? STHIDMessageData :
     T extends CPMMessageCode.LOAD ? LoadCheckStat :
     T extends CPMMessageCode.NETWORK_INFO ? NetworkInfo[] :
@@ -91,13 +87,12 @@ export type MessageDataType<T> =
     ;
 
 export type EncodedMessage<
-    T extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode
+    T extends RunnerMessageCode| CPMMessageCode
     > = [T, MessageDataType<T>];
 
 export type ControlMessageCode =
     RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
-    SupervisorMessageCode.CONFIG |
     CPMMessageCode.STH_ID |
     RunnerMessageCode.INPUT_CONTENT_TYPE;
 

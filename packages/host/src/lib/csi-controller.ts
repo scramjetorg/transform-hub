@@ -22,7 +22,7 @@ import {
     CommunicationHandler,
     HostError,
     MessageUtilities,
-    SupervisorError
+    InstanceAdapterError
 } from "@scramjet/model";
 import { CommunicationChannel as CC, RunnerMessageCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
@@ -40,32 +40,15 @@ import { defer, promiseTimeout } from "@scramjet/utility";
 const stopTimeout = 7000;
 
 export class CSIController extends EventEmitter {
-    /**
-     * @param id Supervisor id, this id is generated in the host and passed to Supervisor at its initiation.
-     */
-         id: string;
+    id: string;
 
-         logger: Logger;
+    logger: Logger;
 
-         _endOfSequence?: Promise<number>;
-
-         get endOfSequence(): Promise<number> {
-             if (!this._endOfSequence) {
-                 throw new SupervisorError("RUNNER_NOT_STARTED");
-             }
-
-             return this._endOfSequence;
-         }
-
-         set endOfSequence(prm: Promise<number>) {
-             this._endOfSequence = prm;
-         }
-
-         private keepAliveRequested?: boolean;
+    private keepAliveRequested?: boolean;
     config: CSIConfig;
     sequence: SequenceInfo;
     appConfig: AppConfig;
-    superVisorPromise?: Promise<number>;
+    instancePromise?: Promise<number>;
     sequenceArgs: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
@@ -91,6 +74,20 @@ export class CSIController extends EventEmitter {
         }
 
         return this._instanceAdapter;
+    }
+
+    _endOfSequence?: Promise<number>;
+
+    get endOfSequence(): Promise<number> {
+        if (!this._endOfSequence) {
+            throw new InstanceAdapterError("RUNNER_NOT_STARTED");
+        }
+
+        return this._endOfSequence;
+    }
+
+    set endOfSequence(prm: Promise<number>) {
+        this._endOfSequence = prm;
     }
 
     /**
@@ -129,7 +126,7 @@ export class CSIController extends EventEmitter {
     async start() {
         const i = new Promise((res, rej) => {
             this.initResolver = { res, rej };
-            this.startSupervisor();
+            this.startInstance();
         });
 
         i.then(() => this.main()).catch(e => {
@@ -140,22 +137,22 @@ export class CSIController extends EventEmitter {
     }
 
     async main() {
-        this.logger.log("Supervisor started.");
+        this.logger.log("Instance started.");
         let code = 0;
 
         try {
-            code = await this.supervisorStopped();
+            code = await this.instanceStopped();
 
-            this.logger.log("Supervisor stopped.");
+            this.logger.log("Instance stopped.");
         } catch (e: any) {
             code = e;
-            this.logger.error("Supervisior caused error, code:", e);
+            this.logger.error("Instance caused error, code:", e);
         }
 
         this.emit("end", code);
     }
 
-    startSupervisor() {
+    startInstance() {
         this._instanceAdapter = getInstanceAdapter(this.config.noDocker);
 
         const instanceConfig: InstanceConifg = {
@@ -190,13 +187,13 @@ export class CSIController extends EventEmitter {
             }
         };
 
-        this.superVisorPromise = instanceMain();
+        this.instancePromise = instanceMain();
     }
 
-    supervisorStopped(): Promise<ExitCode> {
-        if (!this.superVisorPromise) throw new CSIControllerError("UNATTACHED_STREAMS");
+    instanceStopped(): Promise<ExitCode> {
+        if (!this.instancePromise) throw new CSIControllerError("UNATTACHED_STREAMS");
 
-        return this.superVisorPromise;
+        return this.instancePromise;
     }
 
     hookupStreams(streams: DownstreamStreamsConfig) {
@@ -310,7 +307,7 @@ export class CSIController extends EventEmitter {
         this.info.started = new Date();
     }
 
-    async handleSupervisorConnect(streams: DownstreamStreamsConfig) {
+    async handleInstanceConnect(streams: DownstreamStreamsConfig) {
         try {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();

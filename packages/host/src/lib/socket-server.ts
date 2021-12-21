@@ -82,10 +82,6 @@ export class SocketServer extends EventEmitter implements IComponent {
 
                 this.logger.info(`Connection from instance: ${id}`);
 
-                if (!id) {
-                    throw new Error("Can't read supervisor id.");
-                }
-
                 let runner = this.connectedRunners.get(id);
 
                 if (!runner) {
