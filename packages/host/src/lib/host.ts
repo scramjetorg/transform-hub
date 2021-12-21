@@ -47,9 +47,9 @@ export class Host implements IComponent {
 
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
-            this.logger.log("Supervisor connected:", id);
+            this.logger.log("Instance connected:", id);
 
-            await this.instancesStore[id].handleSupervisorConnect(streams);
+            await this.instancesStore[id].handleInstanceConnect(streams);
         });
     }
 

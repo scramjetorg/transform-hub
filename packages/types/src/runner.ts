@@ -1,4 +1,4 @@
-import { CPMMessageCode, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
 
 /**
  * Provides basic function status information
@@ -47,11 +47,6 @@ export type RunnerOptions = {
 
 export type RunnerMessage = [
     RunnerMessageCode,
-    object
-];
-
-export type SupervisorMessage = [
-    SupervisorMessageCode,
     object
 ];
 

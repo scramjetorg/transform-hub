@@ -1,4 +1,4 @@
-import { CommunicationChannel as CC, CPMMessageCode, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     ControlMessageCode,
     ControlMessageHandler,
@@ -20,7 +20,7 @@ import {
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
 
-export type ConfiguredMessageHandler<T extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode> = {
+export type ConfiguredMessageHandler<T extends RunnerMessageCode | CPMMessageCode> = {
     handler: MutatingMonitoringMessageHandler<T extends MonitoringMessageCode ? T : never>
     blocking: boolean
 } | {
@@ -51,7 +51,6 @@ type ControlMessageHandlerList = {
     [RunnerMessageCode.PONG]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.INPUT_CONTENT_TYPE]: ConfiguredMessageHandler<RunnerMessageCode.PONG>[];
     [RunnerMessageCode.EVENT]: ConfiguredMessageHandler<RunnerMessageCode.EVENT>[];
-    [SupervisorMessageCode.CONFIG]: ConfiguredMessageHandler<SupervisorMessageCode.CONFIG>[];
     [CPMMessageCode.STH_ID]: ConfiguredMessageHandler<CPMMessageCode.STH_ID>[];
 };
 
@@ -82,7 +81,6 @@ export class CommunicationHandler implements ICommunicationHandler {
             [RunnerMessageCode.EVENT]: [],
             [RunnerMessageCode.PONG]: [],
             [RunnerMessageCode.INPUT_CONTENT_TYPE]: [],
-            [SupervisorMessageCode.CONFIG]: [],
             [CPMMessageCode.STH_ID]: []
         };
         this.monitoringHandlerHash = {

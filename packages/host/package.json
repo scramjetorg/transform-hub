@@ -22,7 +22,6 @@
     "@scramjet/logger": "^0.13.3",
     "@scramjet/model": "^0.13.3",
     "@scramjet/sth-config": "^0.13.3",
-    "@scramjet/supervisor": "^0.13.3",
     "@scramjet/symbols": "^0.13.3",
     "@scramjet/verser": "^0.13.3",
     "bpmux": "^8.1.3",

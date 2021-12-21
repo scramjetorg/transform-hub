@@ -1,5 +1,5 @@
 /* eslint-disable no-extra-parens */
-import { CPMMessageCode, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
+import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
 import {
     AcknowledgeMessage, AcknowledgeMessageData,
     DescribeSequenceMessage, DescribeSequenceMessageData,
@@ -10,7 +10,7 @@ import {
     MonitoringRateMessage, MonitoringRateMessageData,
     MonitoringMessage, MonitoringMessageData,
     StopSequenceMessage, StopSequenceMessageData,
-    EventMessageData, EventMessage, InstanceConfigMessageData
+    EventMessageData, EventMessage
 } from "@scramjet/types";
 
 function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
@@ -50,7 +50,7 @@ function isMonitoringMessage(data: object): data is MonitoringMessageData {
 }
 
 // eslint-disable-next-line complexity
-export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode>(
+export const checkMessage = <X extends RunnerMessageCode | CPMMessageCode>(
     msgCode: X,
     msgData: MessageDataType<RunnerMessageCode | CPMMessageCode>
 ): MessageDataType<X> => {
@@ -80,9 +80,6 @@ export const checkMessage = <X extends RunnerMessageCode | SupervisorMessageCode
     }
     if (msgCode === RunnerMessageCode.EVENT && isEventMessage(msgData)) {
         return msgData as MessageDataType<EventMessage>;
-    }
-    if (msgCode === SupervisorMessageCode.CONFIG) {
-        return msgData as MessageDataType<InstanceConfigMessageData>;
     }
 
     throw new Error(`Bad message of type ${msgCode}`);

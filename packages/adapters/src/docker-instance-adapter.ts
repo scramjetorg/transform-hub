@@ -1,6 +1,6 @@
 import { development } from "@scramjet/sth-config";
 import { getLogger } from "@scramjet/logger";
-import { SupervisorError } from "@scramjet/model";
+import { InstanceAdapterError } from "@scramjet/model";
 import {
     ContainerConfiguration,
     ContainerConfigurationWithExposedPorts,
@@ -71,7 +71,7 @@ IComponent {
             }, {});
         }
 
-        throw new SupervisorError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
+        throw new InstanceAdapterError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
     }
 
     /**
@@ -178,12 +178,12 @@ IComponent {
             this.logger.log("Container exited.");
 
             if (statusCode > 0) {
-                throw new SupervisorError("RUNNER_NON_ZERO_EXITCODE", { statusCode });
+                throw new InstanceAdapterError("RUNNER_NON_ZERO_EXITCODE", { statusCode });
             } else {
                 return 0;
             }
         } catch (error: any) {
-            if (error instanceof SupervisorError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
+            if (error instanceof InstanceAdapterError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
                 this.logger.debug("Container returned non-zero status code", error.data.statusCode);
 
                 return error.data.statusCode;
