@@ -9,11 +9,10 @@ sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
 instance_id = os.getenv('INSTANCE_ID')
 
-UGLY_LOCAL_LOGFILE = './python-runner.log'
+UGLY_DEBUG_LOGFILE = './python-runner.log'
 
 
-
-with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
+with open(UGLY_DEBUG_LOGFILE, 'a+') as log_file:
     def log(msg):
         log_file.write(f"{msg}\n")
         log_file.flush()
@@ -35,6 +34,8 @@ with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
 
 
     async def init(id, host, port):
+        def is_incoming(channel):
+            return channel in [CC.STDIN, CC.IN, CC.CONTROL]
 
         async def connect(channel):
             reader, writer = await asyncio.open_connection(host, port)
@@ -45,27 +46,16 @@ with open(UGLY_LOCAL_LOGFILE, 'a+') as log_file:
             await writer.drain()
             log(f"Sent ID {instance_id} on {channel}")
 
-            return {
-                'channel': channel,
-                'reader': reader,
-                'writer': writer,
-            }
+            return (channel, reader, writer)
 
         conn_futures = [connect(channel) for channel in CC]
-        conn_infos = await asyncio.gather(*conn_futures)
+        conn_data = await asyncio.gather(*conn_futures)
 
-        def get_streams_from_connections(conn_infos):
-            result = {}
-            for info in conn_infos:
-                pprint(info, stream=log_file)
-                channel = info['channel']
-                if channel in [CC.STDIN, CC.IN, CC.CONTROL]:
-                    result[channel] = info['reader']
-                else:
-                    result[channel] = info['writer']
-            return result
-
-        return get_streams_from_connections(conn_infos)
+        # Pick read or write stream depending on channel.
+        return {
+            channel: reader if is_incoming(channel) else writer
+            for channel, reader, writer in conn_data
+        }
 
     streams = asyncio.run(init(instance_id, 'localhost', server_port))
     pprint(streams, stream=log_file)
