@@ -306,17 +306,25 @@ export class CSIController extends EventEmitter {
             }
 
             this.router.upstream("/output", this.upStreams[CommunicationChannel.OUT]);
+
+            let inputHeadersSent = false;
+
             this.router.downstream("/input", (req) => {
                 if (this.apiInputEnabled) {
                     const stream = this.downStreams![CommunicationChannel.IN];
                     const contentType = req.headers["content-type"];
 
-                    if (contentType === undefined) {
-                        throw new Error("Content-Type must be defined");
+                    if (!inputHeadersSent) {
+                        if (contentType === undefined) {
+                            throw new Error("Content-Type must be defined");
+                        }
+
+                        stream.write(`Content-Type: ${contentType}\r\n`);
+                        stream.write("\r\n");
+
+                        inputHeadersSent = true;
                     }
 
-                    stream.write(`Content-Type: ${contentType}\r\n`);
-                    stream.write("\r\n");
                     return stream;
                 }
 
