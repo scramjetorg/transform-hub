@@ -16,7 +16,7 @@ import * as path from "path";
 
 const runnerCommand = [
     "python3",
-    path.resolve(__dirname, '/home/jan/src/transform-hub/plask.py')
+    path.resolve(__dirname, '/home/jan/src/transform-hub/packages/runner-python/start-runner.py')
 ];
 
 class ProcessInstanceAdapter implements
