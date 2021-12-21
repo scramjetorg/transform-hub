@@ -2,7 +2,7 @@ import * as fs from "fs";
 
 import { Agent, ClientRequest, IncomingMessage, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { Duplex, EventEmitter, Readable } from "stream";
+import { Duplex, EventEmitter, PassThrough, Readable } from "stream";
 import {
     STHRestAPI,
     CPMConnectorOptions,
@@ -16,15 +16,12 @@ import {
     WritableStream
 } from "@scramjet/types";
 import { MessageUtilities } from "@scramjet/model";
-import { Socket } from "net";
 import { StringStream } from "scramjet";
 import { URL } from "url";
 import { getLogger } from "@scramjet/logger";
 import { LoadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
 import { VerserClient } from "@scramjet/verser";
-
-const BPMux = require("bpmux").BPMux;
 
 type STHInformation = {
     id?: string;
@@ -37,10 +34,9 @@ export class CPMConnector extends EventEmitter {
     loadCheck?: LoadCheck;
     config: CPMConnectorOptions;
     apiServer?: Server;
-    tunnel?: Socket;
     connected = false;
     communicationStream?: StringStream;
-    communicationChannel?: Duplex;
+    communicationChannel?: PassThrough;
     logger: Logger = getLogger(this);
     customId = false;
     info: STHInformation = {};
@@ -111,6 +107,54 @@ export class CPMConnector extends EventEmitter {
         server.httpAllowHalfOpen = true;
     }
 
+    registerChannels() {
+        this.communicationChannel = new PassThrough();
+
+        this.verserClient.registerChannel(0, { duplex: this.communicationChannel, cb: async () => {
+            StringStream.from(this.communicationChannel as Readable)
+                .JSONParse()
+                .map(async (message: EncodedControlMessage) => {
+                    this.logger.log("Received message:", message);
+
+                    if (message[0] === CPMMessageCode.STH_ID) {
+                        // eslint-disable-next-line no-extra-parens
+                        this.info.id = (message[1] as STHIDMessageData).id;
+
+                        this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
+
+                        fs.writeFileSync(
+                            this.config.infoFilePath,
+                            JSON.stringify(this.info)
+                        );
+                    }
+
+                    this.logger.log("Received id:", this.info.id);
+                    return message;
+                }).catch((e: any) => {
+                    this.logger.error("communicationChannel error", e.message);
+                });
+
+            this.communicationStream = new StringStream();
+            this.communicationStream.pipe(this.communicationChannel!);
+
+            await this.communicationStream?.whenWrote(
+                JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
+            );
+
+            this.emit("connect");
+            this.setLoadCheckMessageSender();
+        } });
+
+        this.verserClient.registerChannel(
+            1, {
+                cb: (duplex: Duplex) => {
+                    duplex.on("error", (err: Error) => this.logger.error(err.message));
+                    this.emit("log_connect", duplex);
+                }
+            }
+        );
+    }
+
     async connect() {
         this.logger.log("Connecting to CPM...");
 
@@ -131,59 +175,14 @@ export class CPMConnector extends EventEmitter {
         }
 
         this.logger.info("Connected to CPM.");
-        this.tunnel = connection.socket;
-        this.tunnel.on("close", async () => { await this.handleConnectionClose(); });
+
+        connection.socket
+            .on("close", async () => { await this.handleConnectionClose(); });
+
         this.connected = true;
-
-        new BPMux(connection.socket)
-            .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
-                if (mSocket._chan === 0) {
-                    this.communicationChannel = mSocket;
-
-                    StringStream.from(this.communicationChannel as Readable)
-                        .JSONParse()
-                        .map(async (message: EncodedControlMessage) => {
-                            this.logger.log("Received message:", message);
-
-                            if (message[0] === CPMMessageCode.STH_ID) {
-                                // eslint-disable-next-line no-extra-parens
-                                this.info.id = (message[1] as STHIDMessageData).id;
-                                this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
-                                fs.writeFileSync(
-                                    this.config.infoFilePath,
-                                    JSON.stringify(this.info)
-                                );
-                            }
-
-                            this.logger.log("Received id:", this.info.id);
-                            return message;
-                        }).catch((e: any) => {
-                            this.logger.error("communicationChannel error", e.message);
-                        });
-
-                    this.communicationStream = new StringStream();
-                    this.communicationStream.pipe(this.communicationChannel);
-
-                    await this.communicationStream?.whenWrote(
-                        JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
-                    );
-
-                    this.emit("connect");
-                    this.setLoadCheckMessageSender();
-                } else if (mSocket._chan === 1) {
-                    const logStream = mSocket.on("error", (err: Error) => this.logger.error(err.message));
-
-                    this.emit("log_connect", logStream);
-                } else {
-                    this.verserClient.handleConnection(mSocket as unknown as Duplex);
-                }
-            })
-            .on("error", (err: Error) => {
-                this.logger.log("Mux error", err);
-                // TODO: Error handling?
-            });
-
         this.connectionAttempts = 0;
+
+        this.registerChannels();
 
         connection.req.on("error", async (error: any) => {
             this.logger.error("Request error:", error);
