@@ -8,6 +8,6 @@ export type MonitoringRateMessageData = {
 
 /**
  * Message instructing Runner how often to emit monitoring messages.
- * This message type is sent from Supervisor.
+ * This message type is sent from CSIController.
  */
 export type MonitoringRateMessage = { msgCode: RunnerMessageCode.MONITORING_RATE} & MonitoringRateMessageData;

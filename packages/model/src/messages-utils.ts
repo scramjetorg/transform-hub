@@ -1,5 +1,5 @@
-import { CPMMessageCode, RunnerMessageCode, SupervisorMessageCode } from "@scramjet/symbols";
-import { CPMMessage, MessageType, RunnerMessage, SupervisorMessage } from "@scramjet/types";
+import { CPMMessageCode, RunnerMessageCode } from "@scramjet/symbols";
+import { CPMMessage, MessageType, RunnerMessage } from "@scramjet/types";
 import { getMessage } from "./get-message";
 
 // TODO: this serializes the message to array and deserializeMessage from string.
@@ -11,8 +11,8 @@ import { getMessage } from "./get-message";
  *           where 'msgCode' is a message type code and 'msgBody' is a message body
  **/
 
-export function serializeMessage<T extends RunnerMessageCode | SupervisorMessageCode | CPMMessageCode>(
-    { msgCode, ...msg }: MessageType<T>): RunnerMessage | SupervisorMessage | CPMMessage {
+export function serializeMessage<T extends RunnerMessageCode | CPMMessageCode>(
+    { msgCode, ...msg }: MessageType<T>): RunnerMessage| CPMMessage {
     // DO TYPEGUARDS...
 
     const json = JSON.parse(JSON.stringify(msg));
