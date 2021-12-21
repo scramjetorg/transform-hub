@@ -57,9 +57,9 @@ export type HostConfig = {
     apiBase: string;
 
     /**
-     * Socket name for connecting supervisors.
+     * Port number for connecting instances.
      */
-    socketPath: string;
+    instancesServerPort: number;
 
     /**
      * Host information filepath.

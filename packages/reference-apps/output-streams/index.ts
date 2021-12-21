@@ -16,6 +16,8 @@ module.exports = async function(_stream: any, count: any) {
     for (let i = 0; i < +count; i++) {
         const random = Math.floor(Math.random());
 
+        this.logger.log("iteration " + random);
+
         process.stdout.write(random + ",");
         process.stderr.write(random + ",");
         stream.write(random + ",");

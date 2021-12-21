@@ -1,17 +1,32 @@
-import { AppConfig, ApplicationFunction, ApplicationInterface, EncodedControlMessage, EncodedMonitoringMessage, EventMessageData, HandshakeAcknowledgeMessageData, IComponent, Logger, MaybePromise, MonitoringRateMessageData, ReadableStream, StopSequenceMessageData, Streamable, SynchronousStreamable, WritableStream, HasTopicInformation } from "@scramjet/types";
+import {
+    AppConfig,
+    ApplicationFunction,
+    ApplicationInterface,
+    EncodedControlMessage,
+    EncodedMonitoringMessage,
+    EventMessageData,
+    HandshakeAcknowledgeMessageData,
+    IComponent,
+    ICSHClient,
+    Logger,
+    MaybePromise,
+    MonitoringRateMessageData,
+    StopSequenceMessageData,
+    Streamable,
+    SynchronousStreamable,
+    HasTopicInformation
+} from "@scramjet/types";
 import { BufferStream, DataStream, StringStream } from "scramjet";
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { createReadStream, createWriteStream } from "fs";
 import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 
 import { EventEmitter } from "events";
 import { MessageUtils } from "./message-utils";
-import { Readable } from "stream";
-/* eslint-disable no-extra-parens */
+import { Readable, Writable } from "stream";
 import { RunnerError } from "@scramjet/model";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { exec } from "child_process";
+import { defer } from "@scramjet/utility";
 
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
@@ -21,23 +36,24 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
+const exitDelay = 5000;
+
+function overrideStandardStream(oldStream: Writable, newStream: Writable) {
+    oldStream.write = newStream.write.bind(newStream);
+
+    newStream.on("drain", () => {
+        oldStream.emit("drain");
+    });
+
+    newStream.on("error", () => {
+        oldStream.emit("error");
+    });
+}
+
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private context?: RunnerAppContext<X, any>;
     private monitoringInterval?: NodeJS.Timeout;
-    private monitorStream?: WritableStream<any>; //TODO change any to EncodedMonitoringMessage
-    private loggerStream?: WritableStream<string>;
-    private controlStream?: ReadableStream<EncodedControlMessage>;
-    private inputStream?: ReadableStream<string>; // TODO change any depend on appcontext
-    private outputStream?: WritableStream<string>; // TODO change any depend on appcontext
-    private outputDataStream: DataStream;
-    private inputDataStream?: DataStream;
-    private monitorFifoPath: string;
-    private controlFifoPath: string;
-    private loggerFifoPath: string;
-    private inputFifoPath: string;
-    private outputFifoPath: string;
-    private sequencePath: string;
     private keepAliveRequested?: boolean;
 
     private inputResolver?: { res: Function, rej: Function };
@@ -48,19 +64,22 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     logger: Logger;
 
-    constructor(sequencePath: string, fifosPath: string) {
+    private inputDataStream: DataStream
+    private outputDataStream: DataStream
+
+    constructor(
+        private sequencePath: string,
+        private hostClient: ICSHClient,
+        private instanceId: string
+    ) {
         this.emitter = new EventEmitter();
         this.logger = getLogger(this);
-
-        this.controlFifoPath = `${fifosPath}/control.fifo`;
-        this.monitorFifoPath = `${fifosPath}/monitor.fifo`;
-        this.loggerFifoPath = `${fifosPath}/logger.fifo`;
-        this.inputFifoPath = `${fifosPath}/input.fifo`;
-        this.outputFifoPath = `${fifosPath}/output.fifo`;
-        this.sequencePath = sequencePath;
-
+        this.inputDataStream = new DataStream().catch((e: any) => {
+            this.logger.error("Error during input data stream.", e);
+            throw e;
+        });
         this.outputDataStream = new DataStream().catch((e: any) => {
-            this.logger.error("Error during output data stream.", e);
+            this.logger.error("Error during input data stream.", e);
             throw e;
         });
     }
@@ -78,9 +97,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         case RunnerMessageCode.STOP:
             await this.addStopHandlerRequest(data as StopSequenceMessageData);
             break;
-        case RunnerMessageCode.FORCE_CONFIRM_ALIVE:
-            this.handleForceConfirmAliveRequest();
-            break;
         case RunnerMessageCode.PONG:
             this.handshakeResolver?.res(data);
             break;
@@ -89,7 +105,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             this.emitter.emit(eventData.eventName, eventData.message);
             break;
-            // [RunnerMessageCode.INPUT_CONTENT_TYPE, false
+        // [RunnerMessageCode.INPUT_CONTENT_TYPE, false
         case RunnerMessageCode.INPUT_CONTENT_TYPE:
             if ((data as any).connected) {
                 this.inputResolver?.res(data);
@@ -102,19 +118,13 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
     }
 
-    async hookupControlStream() {
-        this.controlStream = createReadStream(this.controlFifoPath);
-        this.defineControlStream();
-    }
-
     defineControlStream() {
         StringStream
-            .from(this.controlStream as Readable)
+            .from(this.hostClient.controlStream)
             .JSONParse()
             .each(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
-            .run()
-            .catch(async (error) => {
-                this.logger.error("An error occurred during parsing control message.", error.stack);
+            .on("error", (error) => {
+                this.logger.error("An error occurred during parsing control message.", error);
             });
     }
 
@@ -123,14 +133,12 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
-
             this.logger.log("Monitoring interval removed.");
         }
 
         try {
             this.logger.log("Cleaning up streams...");
-
-            await this.cleanupStreams();
+            await this.hostClient.disconnect();
 
             this.logger.info("Streams clear.");
 
@@ -144,99 +152,17 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
     }
 
-    async cleanupStreams(): Promise<any> {
-        return Promise.all([
-            this.cleanupStream(this.controlStream, this.controlFifoPath),
-            this.cleanupStream(this.inputStream, this.inputFifoPath)
-        ]);
-    }
-
-    private async execCommand(cmd: string) {
-        return new Promise((resolve, reject) => {
-            this.logger.log("Command [ start ]", JSON.stringify(cmd));
-
-            exec(cmd, (error) => {
-                if (error) {
-                    this.logger.error(error);
-                    reject(error);
-                }
-
-                this.logger.log("Command [ end ]", JSON.stringify(cmd), error);
-                resolve(0);
-            });
-        });
-    }
-
-    private async cleanupStream(stream: ReadableStream<any> | WritableStream<any> | undefined, fifo: string) {
-        if (stream) {
-            if ("writable" in stream) {
-                stream.end();
-            } else {
-                stream.destroy();
-            }
-        }
-
-        await this.execCommand(`echo "" > "${fifo}"`); // TODO: Shell escape
-    }
-
-    async hookupMonitorStream() {
-        this.monitorStream = createWriteStream(this.monitorFifoPath);
-    }
-
-    async hookupLoggerStream() {
-        this.loggerStream = createWriteStream(this.loggerFifoPath);
-    }
-
-    async hookupInputStream() {
-        // @TODO handle closing and reopening input stream
-        this.inputStream = createReadStream(this.inputFifoPath)!;
-        this.inputDataStream = new DataStream().catch((e: any) => { this.logger.error("Error during input data stream.", e); throw e; });
-
-        // do not await here, allow the rest of initialization in the caller to run
-    }
-
-    //readInputStreamHeaders(this.inputStream!)
     async setInputContentType(headers: any) {
         const contentType = headers["content-type"];
 
         this.logger.log(`Content-Type: ${contentType}`);
 
-        mapToInputDataStream(this.inputStream!, contentType)
+        mapToInputDataStream(this.hostClient.inputStream, contentType)
             .catch((error: any) => {
                 this.logger.error("mapToInputDataStream", error);
                 // TODO: we should be doing some error handling here:
                 // TODO: remove the stream, mark as bad, kill the instance maybe?
-            }).pipe(this.inputDataStream!);
-    }
-
-    async hookupOutputStream() {
-        this.outputStream = createWriteStream(this.outputFifoPath);
-        this.outputDataStream
-            .JSONStringify()
-            .pipe(this.outputStream);
-    }
-
-    async hookupFifoStreams() {
-        return Promise.all([
-            this.hookupControlStream(),
-            this.hookupMonitorStream(),
-            this.hookupInputStream(),
-            this.hookupOutputStream()
-        ]);
-    }
-
-    initializeLogger() {
-        if (this.loggerStream) {
-            addLoggerOutput(this.loggerStream);
-        } else {
-            throw new RunnerError("UNINITIALIZED_STREAMS", "Logger");
-        }
-    }
-
-    handleForceConfirmAliveRequest() {
-        this.logger.error("Method not implemented.");
-
-        throw new Error("Method not implemented.");
+            }).pipe(this.inputDataStream);
     }
 
     async handleMonitoringRequest(data: MonitoringRateMessageData): Promise<void> {
@@ -272,7 +198,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         const { healthy } = await context.monitor();
 
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.MONITORING, { healthy }], this.monitorStream);
+        MessageUtils.writeMessageOnStream(
+            [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
+        );
     }
 
     async handleKillRequest(): Promise<void> {
@@ -315,9 +243,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
             MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.monitorStream);
-
-            //TODO add save, cleaning etc when implemented
+                [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.hostClient.monitorStream
+            );
         }
     }
 
@@ -331,22 +258,28 @@ export class Runner<X extends AppConfig> implements IComponent {
         setTimeout(() => process.exit());
     }
 
-    // TODO: this should be the foll class logic
-    /**
-     * Initialization of runner class.
-     * * initilize streams (fifo and std)
-     * * send handshake (via monitor stream) to LCDA and receive an answer from LCDA (via control stream)
-     */
     async main() {
-        this.logger.log("Executing main..."); // TODO: this is not working (no logger yet)
+        await this.hostClient.init(this.instanceId);
 
-        await this.hookupLoggerStream();
+        addLoggerOutput(this.hostClient.logStream);
 
-        this.initializeLogger();
+        this.defineControlStream();
 
-        await this.hookupFifoStreams();
+        this.hostClient.stdinStream.on("data", (chunk) => {
+            this.logger.log("INCOMING stdin: " + chunk);
+            process.stdin.unshift(chunk);
+        });
+        this.hostClient.stdinStream.on("end", () => {
+            process.stdin.end();
+        });
 
-        this.logger.log("Fifo and logger initialized, sending handshake...");
+        overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
+
+        overrideStandardStream(process.stderr, this.hostClient.stderrStream);
+
+        this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
+
+        this.logger.log("Streams initialized, sending handshake...");
 
         this.sendHandshakeMessage();
 
@@ -378,7 +311,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     [RunnerMessageCode.PANG, {
                         requires: sequence[0].requires,
                         contentType: sequence[0].contentType
-                    }], this.monitorStream);
+                    }], this.hostClient.monitorStream);
 
                 this.logger.log("Waiting for input stream...");
 
@@ -403,9 +336,9 @@ export class Runner<X extends AppConfig> implements IComponent {
                 MessageUtils.writeMessageOnStream(
                     [RunnerMessageCode.PANG, {
                         requires: ""
-                    }], this.monitorStream);
+                    }], this.hostClient.monitorStream);
 
-                readInputStreamHeaders(this.inputStream!)
+                readInputStreamHeaders(this.hostClient.inputStream)
                     .then((headers) => this.setInputContentType(headers))
                     .catch((err) => this.logger.error("Error while reading input stream headers:", err));
             }
@@ -424,17 +357,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         }
 
         try {
-            /**
-             * @analyze-how-to-pass-in-out-streams
-             * Before we start a Sequence we should create readable and writable streams
-             * to input and output.
-             * In a fashion similar to how we create monitor and control streams,
-             * but after the acknowledge message comes (PONG) and
-             * before we start a Sequence.
-             */
             await this.runSequence(sequence, args);
 
-            this.logger.log("Sequence completed.");
+            this.logger.log(`Sequence completed. Waiting ${exitDelay}ms with exit.`);
+
+            await defer(exitDelay);
         } catch (error: any) {
             this.logger.error("Error occured during sequence execution: ", error.stack);
 
@@ -442,6 +369,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             this.exit(20);
         }
+
+        await this.cleanup();
+        this.exit(0);
     }
 
     /**
@@ -451,12 +381,6 @@ export class Runner<X extends AppConfig> implements IComponent {
      * @param config Configuration for App.
      */
     initAppContext(config: X) {
-        if (this.monitorStream === undefined) {
-            this.logger.error("Uninitialized monitoring stream.");
-
-            throw new RunnerError("UNINITIALIZED_STREAMS", "Monitoring");
-        }
-
         const runner: RunnerProxy = {
             keepAliveIssued: () => this.keepAliveIssued(),
             sendStop: (err?: Error) => {
@@ -467,20 +391,20 @@ export class Runner<X extends AppConfig> implements IComponent {
             sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])
         };
 
-        this.context = new RunnerAppContext(config, this.monitorStream, this.emitter, runner);
+        this.context = new RunnerAppContext(config, this.hostClient.monitorStream, this.emitter, runner);
 
         this.handleSequenceEvents();
     }
 
     private writeMonitoringMessage(encodedMonitoringMessage: EncodedMonitoringMessage) {
-        MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.monitorStream);
+        MessageUtils.writeMessageOnStream(encodedMonitoringMessage, this.hostClient.monitorStream);
         // TODO: what if it fails?
     }
 
     sendHandshakeMessage() {
         this.logger.log("Sending handshake.");
 
-        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.monitorStream);
+        MessageUtils.writeMessageOnStream([RunnerMessageCode.PING, {}], this.hostClient.monitorStream);
     }
 
     async waitForHandshakeResponse(): Promise<HandshakeAcknowledgeMessageData> {
@@ -500,11 +424,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         return Array.isArray(_sequence) ? _sequence : [_sequence];
     }
 
-    /**
-     * run sequence
-     *
-     * @param args {any[]} arguments that the app will be called with
-     */
     // eslint-disable-next-line complexity
     async runSequence(sequence: any[], args: any[] = []): Promise<void> {
         if (!sequence.length) {
@@ -526,8 +445,7 @@ export class Runner<X extends AppConfig> implements IComponent {
          *
          * Pass the input stream to stream instead of creating new DataStream();
          */
-        let stream: Readable & HasTopicInformation | void = this.inputDataStream ||
-            DataStream.from([]).catch((e: any) => { this.logger.error(e); });
+        let stream: Readable & HasTopicInformation | void = this.inputDataStream;
         let itemsLeftInSequence = sequence.length;
         let intermediate: SynchronousStreamable<any> | void = stream;
 
@@ -581,8 +499,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     stream = Object.assign(DataStream.from(intermediate as Readable), {
                         topic: intermediate.topic,
                         contentType: intermediate.contentType
-                    })
-                        .catch((e: any) => { this.logger.error(e); throw e; });
+                    });
                 } else {
                     stream = undefined;
                 }
@@ -591,7 +508,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             }
         }
 
-        /**
+        // eslint-disable-next-line complexity
+        await new Promise<void>((res) => {
+            /**
          * @analyze-how-to-pass-in-out-streams
          * We need to make sure to close input and output streams
          * after Sequence terminates.
@@ -599,57 +518,52 @@ export class Runner<X extends AppConfig> implements IComponent {
          * pipe the last `stream` value to output stream
          * unless there is NO LAST STREAM
          */
-        if (!isSynchronousStreamable(intermediate)) {
-            this.logger.info("Primitive returned as last value");
+            if (!isSynchronousStreamable(intermediate)) {
+                this.logger.info("Primitive returned as last value");
 
-            this.outputStream?.end(`${intermediate}`);
+                this.hostClient.outputStream.end(`${intermediate}`);
 
-            MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.PANG, {
-                    provides: "",
-                    contentType: ""
-                }],
-                this.monitorStream
-            );
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        provides: "",
+                        contentType: ""
+                    }],
+                    this.hostClient.monitorStream,
+                );
 
-            this.endRunner();
-        } else if (stream && this.outputStream && this.outputDataStream) {
-            this.logger.log(`Piping sequence output (type ${typeof stream}).`);
+                res();
+            } else if (stream && this.hostClient.outputStream) {
+                this.logger.log(`Piping sequence output (type ${typeof stream}).`);
 
-            const shouldSerialize = stream.contentType &&
+                const shouldSerialize = stream.contentType &&
                 ["application/x-ndjson", "text/x-ndjson"].includes(stream.contentType) ||
                 stream instanceof DataStream && !(
                     stream instanceof StringStream || stream instanceof BufferStream
                 );
 
-            stream
-                .once("end", () => {
-                    this.logger.info("Sequence stream ended.");
-                    this.endRunner();
-                })
-                .pipe(
-                    shouldSerialize
+                stream
+                    .once("end", () => {
+                        this.logger.info("Sequence stream ended.");
+                        res();
+                    })
+                    .pipe(shouldSerialize
                         ? this.outputDataStream
-                        : this.outputStream
+                        : this.hostClient.outputStream
+                    );
+
+                MessageUtils.writeMessageOnStream(
+                    [RunnerMessageCode.PANG, {
+                        provides: intermediate.topic || "",
+                        contentType: intermediate.contentType || ""
+                    }],
+                    this.hostClient.monitorStream,
                 );
-
-            MessageUtils.writeMessageOnStream(
-                [RunnerMessageCode.PANG, {
-                    provides: intermediate.topic || "",
-                    contentType: intermediate.contentType || ""
-                }],
-                this.monitorStream
-            );
-        } else {
+            } else {
             // TODO: this should push a PANG message with the sequence description
-            this.logger.info("Sequence did not output a stream.");
-            this.endRunner();
-        }
-    }
-
-    private endRunner() {
-        this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
-        this.stopExpected = true;
+                this.logger.info("Sequence did not output a stream.");
+                res();
+            }
+        });
     }
 
     handleSequenceEvents() {

@@ -52,10 +52,6 @@ export class HostUtils {
                 200,
                 "Remote host doesn't respond"
             );
-            // TODO: Consider this, but needs testing.
-            // if (process.env.SCRAMJET_TEST_LOG) {
-            //     (await hostClient.getLogStream()).data?.pipe(process.stderr);
-            // }
 
             return Promise.resolve();
         }
@@ -64,7 +60,7 @@ export class HostUtils {
             const command: string[] = [...hostExecutableCommand];
 
             if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
-            if (process.env.LOCAL_HOST_SOCKET_PATH) command.push("-S", process.env.LOCAL_HOST_SOCKET_PATH);
+            if (process.env.LOCAL_HOST_INSTANCES_SERVER_PORT) command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
             if (process.env.CPM_URL) command.push("-C", process.env.CPM_URL);
             if (process.env.NO_DOCKER) command.push("--no-docker");
             if (process.env.SCRAMJET_TEST_LOG) {
@@ -93,7 +89,7 @@ export class HostUtils {
 
             this.host.on("exit", (code, signal) => {
                 // eslint-disable-next-line no-console
-                console.log("sequence process exited with code: ", code, " and signal: ", signal);
+                console.log("host process exited with code: ", code, " and signal: ", signal);
                 this.hostProcessStopped = true;
 
                 if (code === 1) {

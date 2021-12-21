@@ -35,13 +35,6 @@ export interface ILifeCycleAdapter {
     cleanup(): MaybePromise<void>;
 
     /**
-     * Request snapshot and returns snapshot url.\
-     *
-     * @returns snapshot url.
-     */
-    snapshot(): MaybePromise<string>;
-
-    /**
      * Hooks up downstream streams.
      *
      * @param communicationHandler CommunicationHandler
