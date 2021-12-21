@@ -1,7 +1,7 @@
 import { CSIControllerErrorCode } from "./csi-controller-error";
 import { HostErrorCode } from "./host-error";
 import { RunnerErrorCode } from "./runner-error";
-import { SupervisorErrorCode } from "./supervisor-error";
+import { InstanceAdapterErrorCode } from "./instance-adapter-error";
 
 /**
  * Acceptable error codes
@@ -14,7 +14,7 @@ export type AppErrorCode =
     "SEQUENCE_MISCONFIGURED" |
     CSIControllerErrorCode |
     HostErrorCode |
-    SupervisorErrorCode |
+    InstanceAdapterErrorCode |
     RunnerErrorCode;
 
 /**
