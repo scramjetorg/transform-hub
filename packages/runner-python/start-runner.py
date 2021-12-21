@@ -11,12 +11,14 @@ instance_id = os.getenv('INSTANCE_ID')
 
 UGLY_DEBUG_LOGFILE = './python-runner.log'
 
+log_file = None
 
-with open(UGLY_DEBUG_LOGFILE, 'a+') as log_file:
-    def log(msg):
-        log_file.write(f"{msg}\n")
-        log_file.flush()
+def log(msg):
+    log_file.write(f"{msg}\n")
+    log_file.flush()
 
+
+def say_hello():
     log("\nStarting up...")
     log(f"sequence_path: {sequence_path}")
     log(f"server_port: {server_port}")
@@ -26,13 +28,16 @@ with open(UGLY_DEBUG_LOGFILE, 'a+') as log_file:
         log("Undefined config variable! <blows raspberry>")
         sys.exit(2)
 
-
-    address = ("localhost", server_port)
-    streams = {}
-
     log("\nConnecting to host...")
 
 
+async def handshake():
+    pass
+
+
+async def main():
+    say_hello()
+    streams = {}
     async def init(id, host, port):
         def is_incoming(channel):
             return channel in [CC.STDIN, CC.IN, CC.CONTROL]
@@ -57,37 +62,38 @@ with open(UGLY_DEBUG_LOGFILE, 'a+') as log_file:
             for channel, reader, writer in conn_data
         }
 
-    streams = asyncio.run(init(instance_id, 'localhost', server_port))
-    pprint(streams, stream=log_file)
+    streams = await init(instance_id, 'localhost', server_port)
+    log("Communication channels established.")
+
     monwriter = streams[CC.MONITORING]
-    log(monwriter)
     ctrlreader = streams[CC.CONTROL]
-    log(ctrlreader)
 
     log(f"Sending PINK")
     pink = json.dumps([3000, {}])
     monwriter.write(f"{pink}\r\n".encode())
 
-    # async for x in ctrlreader:
-    #     log(f"Msg from host: {x.decode()}")
+    async for x in ctrlreader:
+        log(f"Msg from host: {x.decode()}")
 
-    # asyncio.run(mlaskaj())
 
-    async def plaskay(channel):
-        if channel == "4":
-            log(f"Sending PINK")
-            pink = json.dumps([3000, {}])
-            writer.write(f"{pink}\r\n".encode())
+with open(UGLY_DEBUG_LOGFILE, 'a+') as log_file:
+    asyncio.run(main())
 
-        if channel == "6":
+async def plaskay(channel):
+    if channel == "4":
+        log(f"Sending PINK")
+        pink = json.dumps([3000, {}])
+        writer.write(f"{pink}\r\n".encode())
+
+    if channel == "6":
+        await asyncio.sleep(1)
+        for x in range(20):
+            writer.write(f"{x} mlask".encode())
             await asyncio.sleep(1)
-            for x in range(20):
-                writer.write(f"{x} mlask".encode())
-                await asyncio.sleep(1)
 
-        else:
-            async for x in reader:
-                log(f"Msg from host: {x.decode()}")
+    else:
+        async for x in reader:
+            log(f"Msg from host: {x.decode()}")
 
-        log('finish\n')
+    log('finish\n')
 
