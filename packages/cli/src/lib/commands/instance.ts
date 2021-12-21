@@ -84,7 +84,7 @@ export const instance: CommandDefinition = (program) => {
 
             return displayEntity(program,
                 instanceClient.sendInput(
-                    await getReadStreamFromFile(filename) || process.stdin,
+                    filename ? await getReadStreamFromFile(filename) : process.stdin,
                     { type: contentType }
                 )
             );
