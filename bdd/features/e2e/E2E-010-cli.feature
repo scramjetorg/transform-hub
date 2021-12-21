@@ -69,7 +69,6 @@ Feature: CLI tests
         Then I get Sequence id
         Then I start Sequence
         And I get instance id
-        And wait for "6000" ms
         Then I get instance health
         And host is still running
 
@@ -136,7 +135,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-016 Package and send with stdout
         Given host is running
-        When I execute CLI with bash command "$SI pack ../packages/reference-apps/transform-function -c | $SI seq send --format json"
+        When I execute CLI with bash command "$SI pack ../dist/reference-apps/transform-function -c | $SI seq send --format json"
         Then I get Sequence id
         Then I start Sequence
         Then I get list of instances

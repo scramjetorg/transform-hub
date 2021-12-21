@@ -2,13 +2,11 @@
 
 import { Command } from "commander";
 import { ConfigService } from "@scramjet/sth-config";
-import { resolve } from "path";
 
 const program = new Command();
 const options = program
     // .version(version) // TODO: replace with find-package-json
     .option("-L, --log-level <level>", "Specify log level", "debug")
-    .option("-S, --socket-path <socket>", "CSI socket location")
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
@@ -21,6 +19,7 @@ const options = program
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--sequences-root", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
+    .option("--instances-server-port <port>", "Port on which server that instances connect to should run.")
     .parse(process.argv)
     .opts();
 
@@ -41,7 +40,8 @@ configService.update({
     },
     host: {
         apiBase: "/api/v1",
-        socketPath: options.socketPath ? resolve(process.cwd(), options.socketPath) : undefined,
+        // @TODO fix
+        instancesServerPort: options.instancesServerPort ? parseInt(options.instancesServerPort, 10) : undefined,
         port: options.port,
         hostname: options.hostname,
         id: options.id

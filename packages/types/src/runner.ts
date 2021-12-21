@@ -32,7 +32,6 @@ export namespace MessageCodes {
     export type KILL = "KILL";
     export type MONITORING_RATE = "MONITORING_RATE";
     export type ALIVE = "ALIVE";
-    export type FORCE_CONFIRM_ALIVE = "FORCE_CONFIRM_ALIVE";
     export type DESCRIBE_SEQUENCE = "DESCRIBE_SEQUENCE";
     export type ERROR = "ERROR";
     export type MONITORING = "MONITORING";

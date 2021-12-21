@@ -9,7 +9,6 @@ import { RunnerMessageCode, SupervisorMessageCode, CPMMessageCode } from "@scram
 import {
     AcknowledgeMessage,
     AcknowledgeMessageData,
-    ConfirmHealthMessage,
     DescribeSequenceMessage,
     DescribeSequenceMessageData,
     EmptyMessageData,
@@ -28,8 +27,6 @@ import {
     HandshakeMessage,
     HandshakeAcknowledgeMessageData,
     HandshakeAcknowledgeMessage,
-    SnapshotResponseMessage,
-    SnapshotResponseMessageData,
     StatusMessage,
     StatusMessageData,
     MonitoringMessage,
@@ -54,14 +51,12 @@ export type MessageType<T> =
     T extends RunnerMessageCode.DESCRIBE_SEQUENCE ? DescribeSequenceMessage :
     T extends RunnerMessageCode.STATUS ? StatusMessage :
     T extends RunnerMessageCode.ERROR ? ErrorMessage :
-    T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? ConfirmHealthMessage :
     T extends RunnerMessageCode.KILL ? KillSequenceMessage :
     T extends RunnerMessageCode.MONITORING ? MonitoringMessage :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessage :
     T extends RunnerMessageCode.STOP ? StopSequenceMessage :
     T extends RunnerMessageCode.PING ? HandshakeMessage :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessage :
-    T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessage :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessage :
     T extends CPMMessageCode.STH_ID ? CPMMessageSTHID :
     T extends CPMMessageCode.LOAD ? LoadCheckStatMessage :
@@ -75,15 +70,13 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.DESCRIBE_SEQUENCE ? DescribeSequenceMessageData :
     T extends RunnerMessageCode.STATUS ? StatusMessageData :
     T extends RunnerMessageCode.ERROR ? ErrorMessageData :
-    T extends RunnerMessageCode.FORCE_CONFIRM_ALIVE ? EmptyMessageData :
-    T extends RunnerMessageCode.KILL | RunnerMessageCode.FORCE_CONFIRM_ALIVE ? EmptyMessageData :
+    T extends RunnerMessageCode.KILL ? EmptyMessageData :
     T extends RunnerMessageCode.MONITORING ? MonitoringMessageData :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :
     T extends RunnerMessageCode.PING ? PingMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.PANG ? PangMessageData :
-    T extends RunnerMessageCode.SNAPSHOT_RESPONSE ? SnapshotResponseMessageData :
     T extends RunnerMessageCode.SEQUENCE_STOPPED ? SequenceStoppedMessageData :
     T extends RunnerMessageCode.EVENT ? EventMessageData :
     T extends SupervisorMessageCode.CONFIG ? InstanceConfigMessageData :
@@ -102,8 +95,7 @@ export type EncodedMessage<
     > = [T, MessageDataType<T>];
 
 export type ControlMessageCode =
-    RunnerMessageCode.FORCE_CONFIRM_ALIVE | RunnerMessageCode.KILL |
-    RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
+    RunnerMessageCode.KILL | RunnerMessageCode.MONITORING_RATE | RunnerMessageCode.STOP | RunnerMessageCode.EVENT |
     RunnerMessageCode.PONG |
     SupervisorMessageCode.CONFIG |
     CPMMessageCode.STH_ID |
@@ -114,7 +106,7 @@ export type EncodedControlMessage = EncodedMessage<ControlMessageCode>;
 export type MonitoringMessageCode =
     RunnerMessageCode.ACKNOWLEDGE | RunnerMessageCode.DESCRIBE_SEQUENCE | RunnerMessageCode.STATUS |
     RunnerMessageCode.ALIVE | RunnerMessageCode.ERROR | RunnerMessageCode.MONITORING | RunnerMessageCode.EVENT |
-    RunnerMessageCode.PING | RunnerMessageCode.PANG | RunnerMessageCode.SNAPSHOT_RESPONSE |
+    RunnerMessageCode.PING | RunnerMessageCode.PANG |
     RunnerMessageCode.SEQUENCE_STOPPED | RunnerMessageCode.SEQUENCE_COMPLETED | CPMMessageCode.LOAD |
     CPMMessageCode.NETWORK_INFO;
 
@@ -133,8 +125,13 @@ export type DownstreamStreamsConfig<serialized extends boolean = true> = [
     input: WritableStream<any>,
     output: ReadableStream<any>,
     log: ReadableStream<any>,
-    pkg?: WritableStream<Buffer>,
+    // @TODO investigate, it seems not to be used anywhere
+    pkg?: WritableStream<Buffer> | undefined,
 ];
+
+export type DownstreamStdioConfig = [ stdin: WritableStream<string>,
+    stdout: ReadableStream<string>,
+    stderr: ReadableStream<string>, ]
 
 export type UpstreamStreamsConfig<serialized extends boolean = true> = [
     stdin: ReadableStream<string>,

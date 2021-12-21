@@ -8,7 +8,6 @@ import Dockerode = require("dockerode");
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { SIGTERM } from "constants";
-import * as net from "net";
 import path = require("path");
 import { StringDecoder } from "string_decoder";
 import { ReadStream } from "fs";
@@ -48,23 +47,6 @@ Then("API is available on port {int}", async function(this: CustomWorld, port: n
     const status = (await hostClient.getVersion()).status;
 
     assert.equal(status, 200);
-});
-
-Then("SocketServer starts on {string}", async function(this: CustomWorld, socketPath: string) {
-    await new Promise<void>((resolve, reject) => {
-        const connection = net.createConnection({
-            path: socketPath
-        });
-
-        connection.once("connect", () => {
-            connection.end();
-            resolve();
-        });
-
-        connection.once("error", (error) => {
-            reject(error);
-        });
-    });
 });
 
 Then("API starts with {string} server name", async function(this: CustomWorld, server: string) {
