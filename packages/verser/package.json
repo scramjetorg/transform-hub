@@ -17,6 +17,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/utility": "^0.13.3",
+    "@scramjet/logger": "^0.13.3",
     "bpmux": "^8.1.3"
   },
   "devDependencies": {

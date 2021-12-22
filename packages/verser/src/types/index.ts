@@ -1,4 +1,4 @@
-import { ClientRequest, OutgoingHttpHeaders, Server } from "http";
+import { IncomingMessage, OutgoingHttpHeaders, Server } from "http";
 import { Socket } from "net";
 
 export type VerserClientOptions = {
@@ -8,4 +8,4 @@ export type VerserClientOptions = {
     server?: Server
 };
 
-export type VerserClientConnection = { socket: Socket, req: ClientRequest };
+export type VerserClientConnection = { socket: Socket, req: IncomingMessage };
