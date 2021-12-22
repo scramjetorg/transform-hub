@@ -13,11 +13,7 @@ import { ChildProcess, spawn } from "child_process";
 import * as path from "path";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
-
-const runnerCommand = [
-    isTSNode ? "ts-node" : process.execPath,
-    path.resolve(__dirname, require.resolve("@scramjet/runner"))
-];
+const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -51,12 +47,27 @@ IComponent {
         };
     }
 
+    getRunnerCmd(config: SequenceConfig) {
+        if (config.entrypointPath.endsWith(".py")) {
+            this.logger.log(gotPython);
+            return [
+                "python3",
+                path.resolve(__dirname, "../../../python/runner/runner.py")
+            ];
+        }
+        return [
+            isTSNode ? "ts-node" : process.execPath,
+            path.resolve(__dirname, require.resolve("@scramjet/runner"))
+        ];
+    }
+
     async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
         }
 
         this.logger.info("Instance preparation done.");
+        const runnerCommand = this.getRunnerCmd(config);
 
         this.logger.log("Starting Runner...", config.id);
 
