@@ -4,8 +4,8 @@ import { VerserClientOptions, VerserClientConnection } from "../types";
 import { Duplex, EventEmitter } from "stream";
 import { Socket } from "net";
 
-type RegisteredChannelData = { duplex?: Duplex, cb?: Function };
-type RegisteredChannels = Map<number, RegisteredChannelData>;
+type RegisteredChannelCallback = (duplex: Duplex) => void | Promise<void>;
+type RegisteredChannels = Map<number, RegisteredChannelCallback>;
 
 const defaultVerserClientOptions: VerserClientOptions = {
     headers: {},
@@ -19,7 +19,7 @@ export class VerserClient extends EventEmitter {
     private opts: VerserClientOptions;
     private agent: Agent;
     private socket?: Socket;
-    private registeredChannels: RegisteredChannels = new Map();
+    private registeredChannels: RegisteredChannels = new Map<number, RegisteredChannelCallback>();
 
     constructor(opts: VerserClientOptions = defaultVerserClientOptions) {
         super();
@@ -29,7 +29,7 @@ export class VerserClient extends EventEmitter {
 
     public async connect(): Promise<VerserClientConnection> {
         return new Promise((resolve, reject) => {
-            const req = request({
+            const connectRequest = request({
                 agent: this.agent,
                 headers: this.opts.headers,
                 host: this.opts.remoteHost,
@@ -37,33 +37,29 @@ export class VerserClient extends EventEmitter {
                 port: this.opts.remotePort
             });
 
-            req.on("error", (err) => {
+            connectRequest.on("error", (err) => {
+                // eslint-disable-next-line no-console
+                console.log("Connect error", err);
                 reject(err);
             });
 
-            req.on("connect", (_req, socket) => {
+            connectRequest.on("connect", (_req, socket) => {
                 this.socket = socket;
                 this.mux();
-                resolve({ req, socket });
+                resolve({ req: _req, socket });
             });
 
-            req.end();
+            connectRequest.end();
         });
     }
 
     private mux() {
         new BPMux(this.socket)
             .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
-                const registeredChannel = this.registeredChannels.get(mSocket._chan);
+                const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
 
-                if (registeredChannel) {
-                    if (registeredChannel.duplex) {
-                        mSocket.pipe(registeredChannel.duplex).pipe(mSocket);
-                    }
-
-                    if (registeredChannel.cb) {
-                        registeredChannel.cb(registeredChannel.duplex);
-                    }
+                if (registeredChannelCallback) {
+                    await registeredChannelCallback(mSocket);
                 } else {
                     this.opts.server?.emit("connection", mSocket);
                 }
@@ -77,7 +73,7 @@ export class VerserClient extends EventEmitter {
         merge(this.opts.headers, headers);
     }
 
-    registerChannel(channelId: number, data: RegisteredChannelData) {
+    registerChannel(channelId: number, data: RegisteredChannelCallback) {
         this.registeredChannels.set(channelId, data);
     }
 }

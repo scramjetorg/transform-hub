@@ -1,19 +1,17 @@
 import { Server } from "http";
 import { EventEmitter } from "events";
 
+import { VerserConnection } from "./verser-connection";
+
 export class Verser extends EventEmitter {
     private server: Server;
 
     constructor(server: Server) {
         super();
         this.server = server;
-    }
 
-    start() {
-        this.server.on("connect", (req, res) => {
-            // eslint-disable-next-line no-console
-            console.log("connect");
-            this.emit("connect", req, res);
+        this.server.on("connect", (req, socket) => {
+            this.emit("connect", new VerserConnection(req, socket));
         });
     }
 }

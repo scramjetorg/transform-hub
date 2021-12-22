@@ -2,7 +2,7 @@ import * as fs from "fs";
 
 import { Agent, ClientRequest, IncomingMessage, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { Duplex, EventEmitter, PassThrough, Readable } from "stream";
+import { Duplex, EventEmitter, Readable } from "stream";
 import {
     STHRestAPI,
     CPMConnectorOptions,
@@ -36,7 +36,7 @@ export class CPMConnector extends EventEmitter {
     apiServer?: Server;
     connected = false;
     communicationStream?: StringStream;
-    communicationChannel?: PassThrough;
+    communicationChannel?: Duplex;;
     logger: Logger = getLogger(this);
     customId = false;
     info: STHInformation = {};
@@ -49,7 +49,7 @@ export class CPMConnector extends EventEmitter {
 
     loadInterval?: NodeJS.Timeout;
 
-    constructor(cpmUrl: string, config: CPMConnectorOptions) {
+    constructor(cpmUrl: string, config: CPMConnectorOptions, server: Server) {
         super();
         this.config = config;
         this.cpmURL = cpmUrl;
@@ -60,7 +60,7 @@ export class CPMConnector extends EventEmitter {
             remotePort: +cpmAddress.port,
             remoteHost: cpmAddress.hostname,
             headers: {},
-            server: this.apiServer
+            server
         });
     }
 
@@ -108,9 +108,9 @@ export class CPMConnector extends EventEmitter {
     }
 
     registerChannels() {
-        this.communicationChannel = new PassThrough();
+        this.verserClient.registerChannel(0, async (duplex: Duplex) => {
+            this.communicationChannel = duplex;
 
-        this.verserClient.registerChannel(0, { duplex: this.communicationChannel, cb: async () => {
             StringStream.from(this.communicationChannel as Readable)
                 .JSONParse()
                 .map(async (message: EncodedControlMessage) => {
@@ -120,6 +120,7 @@ export class CPMConnector extends EventEmitter {
                         // eslint-disable-next-line no-extra-parens
                         this.info.id = (message[1] as STHIDMessageData).id;
 
+                        this.logger.log("Received id:", this.info.id);
                         this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
 
                         fs.writeFileSync(
@@ -128,14 +129,13 @@ export class CPMConnector extends EventEmitter {
                         );
                     }
 
-                    this.logger.log("Received id:", this.info.id);
                     return message;
                 }).catch((e: any) => {
                     this.logger.error("communicationChannel error", e.message);
                 });
 
             this.communicationStream = new StringStream();
-            this.communicationStream.pipe(this.communicationChannel!);
+            this.communicationStream.pipe(this.communicationChannel);
 
             await this.communicationStream?.whenWrote(
                 JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
@@ -143,21 +143,17 @@ export class CPMConnector extends EventEmitter {
 
             this.emit("connect");
             this.setLoadCheckMessageSender();
-        } });
+        });
 
         this.verserClient.registerChannel(
-            1, {
-                cb: (duplex: Duplex) => {
-                    duplex.on("error", (err: Error) => this.logger.error(err.message));
-                    this.emit("log_connect", duplex);
-                }
+            1, (duplex: Duplex) => {
+                duplex.on("error", (err: Error) => this.logger.error(err.message));
+                this.emit("log_connect", duplex);
             }
         );
     }
 
     async connect() {
-        this.logger.log("Connecting to CPM...");
-
         this.isReconnecting = false;
 
         if (this.info.id) {
@@ -167,6 +163,7 @@ export class CPMConnector extends EventEmitter {
         let connection;
 
         try {
+            this.logger.log("Connecting to CPM...");
             connection = await this.verserClient.connect();
         } catch (err) {
             this.logger.error("Can not connect to CPM.", err);
