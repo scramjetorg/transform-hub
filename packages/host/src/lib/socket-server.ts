@@ -3,9 +3,6 @@ import { getLogger } from "@scramjet/logger";
 import * as net from "net";
 import EventEmitter = require("events");
 import { isDefined } from "@scramjet/utility";
-import { PassThrough } from "stream";
-import { CommunicationChannel } from "@scramjet/symbols";
-import { HostError } from "@scramjet/model";
 
 type MaybeSocket = net.Socket | null
 type RunnerConnectionsInProgress = [
@@ -14,42 +11,6 @@ type RunnerConnectionsInProgress = [
 type RunnerOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
 ]
-
-// eslint-disable-next-line complexity
-function handleStream(streams: PassThrough[], stream: net.Socket, channel: number): void {
-    switch (channel) {
-    case CommunicationChannel.STDIN:
-    case CommunicationChannel.IN:
-    case CommunicationChannel.CONTROL:
-        streams[channel].pipe(stream);
-        break;
-    case CommunicationChannel.STDOUT:
-    case CommunicationChannel.STDERR:
-    case CommunicationChannel.MONITORING:
-    case CommunicationChannel.LOG:
-    case CommunicationChannel.OUT:
-        stream.pipe(streams[channel]);
-        break;
-    case CommunicationChannel.PACKAGE:
-        streams[channel]?.pipe(stream);
-        break;
-    default:
-        throw new HostError("UNKNOWN_CHANNEL");
-    }
-}
-
-function mapRunnerConnectionToStreams(
-    connections: RunnerOpenConnections, logger: Logger
-): DownstreamStreamsConfig<true> {
-    const streams = Array.from(Array(8)).map(() => new PassThrough().on("error", (err) => {
-        logger.error(err);
-    }));
-
-    connections.forEach((conn, channel) => handleStream(streams, conn, channel));
-
-    // @TODO type it better
-    return streams as unknown as DownstreamStreamsConfig<true>;
-}
 
 export class SocketServer extends EventEmitter implements IComponent {
     server?: net.Server;
@@ -105,7 +66,7 @@ export class SocketServer extends EventEmitter implements IComponent {
                 runner[channel] = connection;
 
                 if (runner.every(isDefined)) {
-                    const streams = mapRunnerConnectionToStreams(runner as RunnerOpenConnections, this.logger);
+                    const streams: DownstreamStreamsConfig = runner as RunnerOpenConnections;
 
                     // @TODO use typed event emitter
                     this.emit("connect", { id, streams });
