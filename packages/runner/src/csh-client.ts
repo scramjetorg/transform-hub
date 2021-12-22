@@ -1,34 +1,12 @@
 /* eslint-disable dot-notation */
-import { ICSHClient, UpstreamStreamsConfig, ReadableStream, WritableStream } from "@scramjet/types";
+import { ICSHClient, UpstreamStreamsConfig, } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import * as net from "net";
 
-type RunnerOpenConnections = [
+type HostOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
 ]
-
-function mapHostConnectionToStreams(connections: RunnerOpenConnections): UpstreamStreamsConfig<true> {
-    const stdin = connections[0] as ReadableStream<string>;
-    const stdout = connections[1] as WritableStream<string>;
-    const stderr = connections[2] as WritableStream<string>;
-    const control = connections[3] as ReadableStream<string>;
-    const monitor = connections[4] as WritableStream<string>;
-    const input = connections[5] as ReadableStream<any>;
-    const output = connections[6] as WritableStream<any>;
-    const log = connections[7] as WritableStream<string>;
-
-    return [
-        stdin,
-        stdout,
-        stderr,
-        control,
-        monitor,
-        input,
-        output,
-        log
-    ];
-}
 
 class CSHClient implements ICSHClient {
     private _streams?: UpstreamStreamsConfig;
@@ -76,7 +54,7 @@ class CSHClient implements ICSHClient {
                 })
         );
 
-        this._streams = mapHostConnectionToStreams(openConnections as RunnerOpenConnections);
+        this._streams = openConnections as HostOpenConnections;
     }
 
     async disconnect() {
