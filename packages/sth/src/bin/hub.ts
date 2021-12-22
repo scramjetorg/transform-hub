@@ -40,7 +40,6 @@ configService.update({
     },
     host: {
         apiBase: "/api/v1",
-        // @TODO fix
         instancesServerPort: options.instancesServerPort ? parseInt(options.instancesServerPort, 10) : undefined,
         port: options.port,
         hostname: options.hostname,
