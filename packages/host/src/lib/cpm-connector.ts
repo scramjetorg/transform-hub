@@ -137,7 +137,7 @@ export class CPMConnector extends EventEmitter {
             this.communicationStream = new StringStream();
             this.communicationStream.pipe(this.communicationChannel);
 
-            await this.communicationStream?.whenWrote(
+            await this.communicationStream.whenWrote(
                 JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
             );
 
@@ -245,7 +245,7 @@ export class CPMConnector extends EventEmitter {
         this.loadInterval = setInterval(async () => {
             const load = await this.getLoad();
 
-            await this.communicationStream?.whenWrote(
+            await this.communicationStream!.whenWrote(
                 JSON.stringify(MessageUtilities
                     .serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
             );
