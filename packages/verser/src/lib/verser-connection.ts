@@ -5,6 +5,11 @@ import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
 
 const BPMux = require("bpmux").BPMux;
 
+/**
+ * VerserConnection class.
+ *
+ * Provides methods for handling connection to Verser server and streams in connection socket.
+ */
 export class VerserConnection {
     private logger = getLogger("VerserConnection");
 
@@ -27,22 +32,49 @@ export class VerserConnection {
         });
     }
 
+    /**
+     * Returns header value.
+     *
+     * @param {string} name header name
+     * @returns {string | string[] | undefined} Header value
+     */
     getHeader(name: string): string | string[] | undefined {
         return this.request.headers[name];
     }
 
+    /**
+     * Returns request headers.
+     *
+     * @returns request headers
+     */
     getHeaders(): IncomingHttpHeaders {
         return this.request.headers;
     }
 
+    /**
+     * Writes HTTP head to the socket with provided HTTP status code.
+     *
+     * @param {number} httpStatusCode HTTP status code
+     */
     respond(httpStatusCode: number) {
         this._socket.write(`HTTP/1.1 ${httpStatusCode} \r\n\r\n`);
     }
 
+    /**
+     * Ends response with provided HTTP status code.
+     *
+     * @param {number} httpStatusCode HTTP status code
+     */
     end(httpStatusCode: number) {
         this._socket.end(`HTTP/1.1 ${httpStatusCode} \r\n\r\n`);
     }
 
+    /**
+     * Forwards data from the request to the new duplex stream multiplexed in the socket.
+     *
+     * @param req {Incomingmessage} Request object.
+     * @param res {ServerResponse} Response object.
+     */
     async forward(req: IncomingMessage, res: ServerResponse) {
         const channel = this.bpmux.multiplex() as Duplex;
 
@@ -76,13 +108,13 @@ export class VerserConnection {
 
         channel.pipe(res.socket as Writable);
 
-        // if transfer encoding is not chunked simply pipe the request
+        // If transfer encoding is not chunked simply pipe the request.
         if (req.headers["transfer-encoding"] !== "chunked") {
             req.pipe(channel);
             return;
         }
 
-        // if transfer encoding is chunked we need to encode each chunk and catch errors for each write
+        // If transfer encoding is chunked we need to encode each chunk and catch errors for each write.
         try {
             for await (const chunk of req) {
                 await whenWrote(chunk.length.toString(16) + "\r\n", "utf-8", channel);
@@ -92,10 +124,17 @@ export class VerserConnection {
 
             await whenWrote("0\r\n\r\n", "utf-8", channel);
         } catch (err) {
-            this.logger.error("Error while forwarding STH request ", err);
+            this.logger.error("Error while forwarding request ", err);
         }
     }
 
+    /**
+     * Creates new multiplexed duplex stream in the socket.
+     * Created channel has id to be identified in VerserClient.
+     *
+     * @param id {number} Channel id.
+     * @returns Duplex stream.
+     */
     createChannel(id: number): Duplex {
         return this.bpmux.multiplex({ channel: id });
     }

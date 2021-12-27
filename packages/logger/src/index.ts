@@ -33,7 +33,7 @@ const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
     }
 };
 
-class Logger implements Console {
+export class Logger implements Console {
     private name: string;
     Console: NodeJS.ConsoleConstructor;
     /**
