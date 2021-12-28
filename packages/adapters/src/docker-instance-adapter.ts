@@ -28,6 +28,9 @@ import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
 
+/**
+ * Adapter for running Instance by Runner executed in Docker container.
+ */
 class DockerInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
@@ -72,6 +75,13 @@ IComponent {
         // TODO: useless. config provided from sequence identify.
     }
 
+    /**
+     * Creates fifo file.
+     *
+     * @param {string} dir Directory where fifo files will be created
+     * @param {string} fifoName Name of fifo file
+     * @returns {Promise<string>} Path to created fifo file
+     */
     private async createFifo(dir: string, fifoName: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             const fifoPath: string = shellescape([dir + "/" + fifoName]).replace(/\'/g, "");
@@ -89,7 +99,18 @@ IComponent {
             });
         });
     }
-    // eslint-disable-next-line valid-jsdoc
+
+    /**
+     * Creates fifos to be used for communication with runner.
+     *
+     * @param {string} controlFifo Filename for fifo file used for control stream.
+     * @param {string} monitorFifo Filename for fifo file used for monitoring stream.
+     * @param {string} loggerFifo Filename for fifo file used for logger stream.
+     * @param {string} inputFifo Filename for fifo file used for input stream.
+     * @param {string} outputFifo Filename for fifo file used for output stream.
+     *
+     * @returns {Promise<string>} Promise resolving with directory created for fifo files.
+     */
     private async createFifoStreams(
         controlFifo: string,
         monitorFifo: string,
@@ -121,10 +142,20 @@ IComponent {
         return createdDir;
     }
 
+    /**
+     * Finds free port for every port requested in Sequence configuration and returns map of assigned ports.
+     *
+     * @param {string[]} declaredPorts Ports declared in sequence config.
+     * @param {ContainerConfiguration & ContainerConfigurationWithExposedPorts} containerConfig Container configuration
+     * extended with configuration for ports exposing.
+     * @param {boolean} [exposed=false] Defines configuration output type. Exposed ports when true or port bindings.
+     *
+     * @returns {Promise<{[ key: string ]: string }>} Promise resolving with map of ports mapping.
+     */
     private async preparePortBindingsConfig(
         declaredPorts: string[],
         containerConfig: ContainerConfiguration & ContainerConfigurationWithExposedPorts,
-        exposed = false) {
+        exposed: boolean = false): Promise<{ [key: string]: string; }> {
         if (declaredPorts.every(entry => (/^\d{3,5}\/(tcp|udp)$/).test(entry))) {
             const freePorts = exposed ? [] : await FreePortsFinder.getPorts(
                 declaredPorts.length, ...containerConfig.exposePortsRange
@@ -144,6 +175,14 @@ IComponent {
         throw new SupervisorError("INVALID_CONFIGURATION", "Incorrect ports configuration provided.");
     }
 
+    /**
+     * Prepares configuration for expose/bind ports from Docker container.
+     *
+     * @param {string[]} ports Ports requested to be accessible from container.
+     * @param {RunnerContainerConfiguration} containerConfig Runner container configuration.
+     *
+     * @returns Configuration for exposing and binding ports in Docker container.
+     */
     private async getPortsConfig(
         ports: string[], containerConfig: RunnerContainerConfiguration
     ): Promise<DockerAdapterRunPortsConfig> {
@@ -155,6 +194,12 @@ IComponent {
         return { ExposedPorts, PortBindings };
     }
 
+    /**
+     * Returns objects with statistics of docker container with running instance.
+     *
+     * @param {MonitoringMessageData} msg Message to be included in statistics message.
+     * @returns {Promise<MonitoringMessageData>} Promise resolved with container statistics.
+     */
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         if (this.resources.containerId) {
             const stats = await this.dockerHelper.stats(this.resources.containerId)!;
@@ -174,6 +219,12 @@ IComponent {
         return msg;
     }
 
+    /**
+     * Sets communication channels for communication handler.
+     *
+     * @param {CommunicationHandler} communicationHandler Communication handler to be used for communication
+     * with instance.
+     */
     hookCommunicationHandler(communicationHandler: ICommunicationHandler): void {
         const downstreamStreamsConfig: DownstreamStreamsConfig = [
             this.runnerStdin,
@@ -209,6 +260,12 @@ IComponent {
         });
     }
 
+    /**
+     * Starts Runner in container with provided configuration.
+     *`
+     * @param {SequenceConfiguration} config Configuration of sequence.
+     * @returns {Promise<void>} Promise resolved with Runner exit code.
+     */
     // eslint-disable-next-line complexity
     async run(config: SequenceConfig): Promise<ExitCode> {
         if (config.type !== "docker") {
@@ -313,6 +370,10 @@ IComponent {
         }
     }
 
+    /**
+     * Performs cleanup after container close.
+     * Removes volume used by sequence and fifos used to communication with runner.
+     */
     async cleanup(): Promise<void> {
         if (this.resources.volumeId) {
             this.logger.log("Volume will be removed in 1 sec");
@@ -341,6 +402,9 @@ IComponent {
         /** ignore */
     }
 
+    /**
+     * Forcefully stops Runner container.
+     */
     async remove() {
         if (this.resources.containerId) {
             this.logger.log("Forcefully stopping containter", this.resources.containerId);

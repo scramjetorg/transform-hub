@@ -27,6 +27,9 @@ const runnerCommand = [
     path.resolve(__dirname, require.resolve("@scramjet/runner"))
 ];
 
+/**
+ * Adapter for running Instance by Runner executed in separate process.
+ */
 class ProcessInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
@@ -67,7 +70,13 @@ IComponent {
     async init(): Promise<void> {
         // noop
     }
-
+    /**
+     * Creates fifo file.
+     *
+     * @param {string} dir Directory where fifo files will be created
+     * @param {string} fifoName Name of fifo file
+     * @returns {Promise<string>} Path to created fifo file
+     */
     private async createFifo(dir: string, fifoName: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             const fifoPath: string = shellescape([dir + "/" + fifoName]).replace(/\'/g, "");
@@ -85,6 +94,17 @@ IComponent {
             });
         });
     }
+
+    /**
+     * Creates fifos to be used for communication with runner.
+     *
+     * @param {string} controlFifo Filename for fifo file used for control stream.
+     * @param {string} monitorFifo Filename for fifo file used for monitoring stream.
+     * @param {string} loggerFifo Filename for fifo file used for logger stream.
+     * @param {string} inputFifo Filename for fifo file used for input stream.
+     * @param {string} outputFifo Filename for fifo file used for output stream.     *
+     * @returns {Promise<string>} Promise resolving with directory created for fifo files.
+     */
     private async createFifoStreams(
         controlFifo: string,
         monitorFifo: string,
@@ -124,6 +144,12 @@ IComponent {
         return createdDir;
     }
 
+    /**
+     * Returns objects with statistics of process with running instance.
+     *
+     * @param {MonitoringMessageData} msg Message to be included in statistics message.
+     * @returns {Promise<MonitoringMessageData>} Promise resolved with process statistics.
+     */
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         // @TODO implement stats
         const { runnerProcess } = this;
@@ -139,6 +165,12 @@ IComponent {
         };
     }
 
+    /**
+     * Sets communication channels for communication handler.
+     *
+     * @param {CommunicationHandler} communicationHandler Communication handler to be used for communication
+     * with instance.
+     */
     hookCommunicationHandler(communicationHandler: ICommunicationHandler): void {
         const downstreamStreamsConfig: DownstreamStreamsConfig = [
             this.runnerStdin,
@@ -154,6 +186,12 @@ IComponent {
         communicationHandler.hookDownstreamStreams(downstreamStreamsConfig);
     }
 
+    /**
+     * Starts Runner in process with provided configuration.
+     *`
+     * @param {SequenceConfiguration} config Configuration of sequence.
+     * @returns {Promise<void>} Promise resolved with Runner exit code.
+     */
     async run(config: SequenceConfig): Promise<ExitCode> {
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
@@ -235,6 +273,10 @@ IComponent {
         return statusCode;
     }
 
+    /**
+     * Performs cleanup after Runner end.
+     * Removes fifos used to communication with runner.
+     */
     async cleanup(): Promise<void> {
         const { fifosDir } = this;
 
@@ -255,6 +297,9 @@ IComponent {
         /** ignore */
     }
 
+    /**
+     * Forcefully stops Runner process.
+     */
     async remove() {
         this.runnerProcess?.kill();
     }

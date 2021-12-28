@@ -47,8 +47,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
     /**
      * Translates DockerAdapterVolumeConfig to volumes configuration that Docker API can understand.
      *
-     * @param volumeConfigs Volumes configuration,
-     * @returns Translated volumes configuration.
+     * @param {DockerAdapterVolumeConfig[]} volumeConfigs Volumes configuration.
+     * @returns {DockerodeVolumeMountConfig[]} Translated volumes configuration.
      */
     translateVolumesConfig(volumeConfigs: DockerAdapterVolumeConfig[]): DockerodeVolumeMountConfig[] {
         return volumeConfigs.map(cfg => {
@@ -74,7 +74,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * Creates container based on provided parameters.
      *
      * @param containerCfg Image to start container from.
-     * @returns Created container id.
+     * @returns {Promise<DockerContainer>} Promise resolving with created container id.
      */
     async createContainer(
         containerCfg: {
