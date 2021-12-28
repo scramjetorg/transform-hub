@@ -14,6 +14,13 @@ import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 
+/**
+ * Returns existing Sequence configuration.
+ *
+ * @param {string} sequencesRoot Folder where sequences are located.
+ * @param {string} id Sequence Id.
+ * @returns {ProcessSequenceConfig} Sequence configuration.
+ */
 async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
     const sequenceDir = path.join(sequencesRoot, id);
     const packageJsonPath = path.join(sequenceDir, "package.json");
@@ -31,6 +38,9 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
     };
 }
 
+/**
+ * Adapter for preparing Sequence to be run in process.
+ */
 class ProcessSequenceAdapter implements ISequenceAdapter {
     private logger: Logger;
 
@@ -38,11 +48,21 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         this.logger = getLogger(this);
     }
 
+    /**
+     * Initializes adapter.
+     *
+     * @returns {Promise<void>} Promise resolving after initialization.
+     */
     async init(): Promise<void> {
         return fs.access(this.config.sequencesRoot)
             .catch(() => fs.mkdir(this.config.sequencesRoot));
     }
 
+    /**
+     * Finds existing sequences.
+     *
+     * @returns {Promise<SequenceConfig[]>} Promise resolving to array of identified sequences.
+     */
     async list(): Promise<SequenceConfig[]> {
         const storedSequencesIds = await fs.readdir(this.config.sequencesRoot);
         const sequencesConfigs = await Promise.all(
@@ -57,6 +77,13 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
             .filter(isDefined);
     }
 
+    /**
+     * Unpacks and identifies sequence.
+     *
+     * @param {Readable} stream Stream with packed sequence.
+     * @param {string} id Sequence Id.
+     * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
+     */
     async identify(stream: Readable, id: string): Promise<SequenceConfig> {
         const sequenceDir = path.join(this.config.sequencesRoot, id);
 
@@ -71,6 +98,12 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id);
     }
 
+    /**
+     * Removes directory used to store sequence.
+     *
+     * @param {SequenceConfig} config Sequence configuration.
+     * @returns {Promise<void>} Promise resolving after directory deletion.
+     */
     async remove(config: SequenceConfig) {
         if (config.type !== "process") {
             throw new Error(`Incorrect SequenceConfig pased to ProcessSequenceAdapter: ${config.type}`);

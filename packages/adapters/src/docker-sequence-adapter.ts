@@ -13,6 +13,9 @@ import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams,
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 
+/**
+ * Adapter for preparing Sequence to be run in Docker container.
+ */
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
     private resources: DockerAdapterResources = {};
@@ -24,6 +27,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         this.logger = getLogger(this);
     }
 
+    /**
+     * Initializes adapter.
+     */
     async init(): Promise<void> {
         this.logger.log("DockerSequenceAdapter init.");
 
@@ -32,10 +38,20 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         this.logger.info("DockerSequenceAdapter initiazation done.");
     }
 
+    /**
+     * Pulls image from registry.
+     *
+     * @param {string} name Docker image name
+     */
     async fetch(name: string) {
         await this.dockerHelper.pullImage(name, true);
     }
 
+    /**
+     * Finds existing Docker volumes containing sequences.
+     *
+     * @returns {Promise<SequenceConfig[]>} Promise resolving to array of identified sequences.
+     */
     async list(): Promise<SequenceConfig[]> {
         const potentialVolumes = await this.dockerHelper.listVolumes();
 
@@ -49,6 +65,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             .filter(isDefined);
     }
 
+    /**
+     * Identifies sequence existing on Docker volume.
+     *
+     * @param {string} volume Volume id.
+     * @returns {SequenceConfig} Sequence configuration or undefined if sequence cannot be identified.
+     */
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
 
@@ -80,6 +102,16 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         }
     }
 
+    /**
+     * Uncpacks and identifies sequence in Dockere volume.
+     * This is the main adapter method creating new Docker volume and starting Prerunner
+     * with created volume mounted to unpack sequence on it.
+     * When Prerunner finishes, it will return JSON with sequence information.
+     *
+     * @param {Readable} stream Stream containing sequence to be indentified.
+     * @param {string} id Id for the new docker volume where sequence will be stored.
+     * @returns {Promise<SequenceConfig>} Promise resolving to sequence config.
+     */
     async identify(stream: Readable, id: string): Promise<SequenceConfig> {
         const volumeId = await this.createVolume(id);
 
@@ -120,6 +152,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         }
     }
 
+    /**
+     * Creates volume with provided id.
+     *
+     * @param {string} id Volume id.
+     * @returns {DockerVolume} Created volume.
+     */
     private async createVolume(id: string): Promise<DockerVolume> {
         try {
             return await this.dockerHelper.createVolume(id);
@@ -128,6 +166,14 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         }
     }
 
+    /**
+     * Parses PreRunner output and returns sequence configuration.
+     *
+     * @param {DockerAdapterStreams} streams Docker container std streams.
+     * @param {Function} wait TBD
+     * @param {DockerVolume} volumeId Id of the volume where sequence is stored.
+     * @returns {Promise<DockerSequenceConfig>} Promise resolving to sequence configuration.
+     */
     private async parsePackage(
         streams: DockerAdapterStreams,
         wait: Function,
@@ -155,6 +201,11 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         };
     }
 
+    /**
+     * Removes Docker volume used by Sequence.
+     *
+     * @param {SequenceConfig} config Sequence configuration.
+     */
     async remove(config: SequenceConfig) {
         if (config.type !== "docker") {
             throw new Error(`Incorrect SequenceConfig pased to DockerSequenceAdapter: ${config.type}`);
