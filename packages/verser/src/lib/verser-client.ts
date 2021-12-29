@@ -6,6 +6,7 @@ import { Socket } from "net";
 import { getLogger } from "@scramjet/logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { Logger } from "@scramjet/types";
+import { URL } from "url";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -61,12 +62,14 @@ export class VerserClient extends EventEmitter {
      */
     public async connect(): Promise<VerserClientConnection> {
         return new Promise((resolve, reject) => {
+            const { host, pathname } = new URL(this.opts.verserUrl);
+
             const connectRequest = request({
                 agent: this.agent,
                 headers: this.opts.headers,
-                host: this.opts.remoteHost,
+                host,
                 method: "CONNECT",
-                port: this.opts.remotePort
+                pathname
             });
 
             connectRequest.on("error", (err) => {
