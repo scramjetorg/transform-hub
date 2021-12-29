@@ -13,16 +13,10 @@ export type VerserClientOptions = {
     headers: OutgoingHttpHeaders;
 
     /**
-     * Verser server hostname.
+     * Verser url.
      * @type {string}
      */
-    remoteHost: string;
-
-    /**
-     * Verser server port.
-     * @type {number}
-     */
-    remotePort: number;
+    verserUrl: string;
 
     /**
      * HTTP server to handle connections from Verser server.

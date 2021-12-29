@@ -122,6 +122,7 @@ export class VerserConnection {
                     Buffer.from(chunk.length.toString(16)), eol,
                     chunk, eol
                 ]);
+
                 await whenWrote(chunked, "binary", channel);
             }
 

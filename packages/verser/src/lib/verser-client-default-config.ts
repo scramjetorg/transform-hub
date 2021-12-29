@@ -5,6 +5,5 @@ import { VerserClientOptions } from "../types";
  */
 export const defaultVerserClientOptions: VerserClientOptions = {
     headers: {},
-    remoteHost: "localhost",
-    remotePort: 8080
+    verserUrl: "http://localhost:8080"
 };
