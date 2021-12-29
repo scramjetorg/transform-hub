@@ -62,14 +62,16 @@ export class VerserClient extends EventEmitter {
      */
     public async connect(): Promise<VerserClientConnection> {
         return new Promise((resolve, reject) => {
-            const { host, pathname } = new URL(this.opts.verserUrl);
+            const { hostname, port, pathname } = this.opts.verserUrl instanceof URL
+                ? this.opts.verserUrl : new URL(this.opts.verserUrl);
 
             const connectRequest = request({
                 agent: this.agent,
                 headers: this.opts.headers,
-                host,
+                hostname,
                 method: "CONNECT",
-                pathname
+                pathname,
+                port
             });
 
             connectRequest.on("error", (err) => {
