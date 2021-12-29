@@ -117,9 +117,12 @@ export class VerserConnection {
         // If transfer encoding is chunked we need to encode each chunk and catch errors for each write.
         try {
             for await (const chunk of req) {
-                await whenWrote(chunk.length.toString(16) + "\r\n", "utf-8", channel);
-                await whenWrote(chunk, "binary", channel);
-                await whenWrote("\r\n", "utf-8", channel);
+                const eol = Buffer.from("\r\n");
+                const chunked = Buffer.concat([
+                    Buffer.from(chunk.length.toString(16)), eol,
+                    chunk, eol
+                ]);
+                await whenWrote(chunked, "binary", channel);
             }
 
             await whenWrote("0\r\n\r\n", "utf-8", channel);
