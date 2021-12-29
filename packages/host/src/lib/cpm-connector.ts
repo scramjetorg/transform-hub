@@ -164,7 +164,7 @@ export class CPMConnector extends EventEmitter {
             connection = await this.verserClient.connect();
         } catch (err) {
             this.logger.error("Can not connect to CPM.", err);
-            await this.reconnect();
+            this.reconnect();
             return;
         }
 
@@ -178,9 +178,9 @@ export class CPMConnector extends EventEmitter {
 
         this.registerChannels();
 
-        connection.req.on("error", async (error: any) => {
+        connection.req.on("error", (error: any) => {
             this.logger.error("Request error:", error);
-            await this.reconnect();
+            this.reconnect();
         });
     }
 
@@ -194,10 +194,10 @@ export class CPMConnector extends EventEmitter {
             clearInterval(this.loadInterval);
         }
 
-        await this.reconnect();
+        this.reconnect();
     }
 
-    async reconnect() {
+    reconnect() {
         if (this.isReconnecting) {
             return;
         }
