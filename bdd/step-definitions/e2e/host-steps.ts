@@ -185,6 +185,12 @@ Given("start host", () => startHost());
 Then("stop host", () => hostUtils.stopHost());
 
 Given("host is running", async () => {
+    const apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+
+    if (apiUrl) {
+        hostClient = new HostClient(apiUrl);
+    }
+
     assert.equal((await hostClient.getLoadCheck()).status, 200);
 });
 
@@ -451,11 +457,11 @@ Then("kept instance stream {string} should be {string}", async (streamName, _exp
 // ? When I get version
 When("I get version", async function() {
     actualApiResponse = await hostClient.getVersion();
+    assert.equal((await hostClient.getVersion()).status, 200);
 });
 
 // ? Then it returns the root package version
 Then("it returns the root package version", function() {
-    // Write code here that turns the phrase above into concrete actions
     assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
     console.log(actualApiResponse.data, version);
     assert.deepStrictEqual(actualApiResponse.data, { version });
@@ -463,14 +469,13 @@ Then("it returns the root package version", function() {
 
 // ? When I get load-check
 When("I get load-check", async function() {
-    // Write code here that turns the phrase above into concrete actions
     actualApiResponse = await hostClient.getLoadCheck();
+    assert.equal((await hostClient.getLoadCheck()).status, 200);
 });
 
 // ? Then it returns a correct load check with required properties
 
 Then("it returns a correct load check with required properties", function() {
-    // Write code here that turns the phrase above into concrete actions
     const { data } = actualApiResponse;
 
     assert.ok(typeof data === "object");

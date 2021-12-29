@@ -1,6 +1,6 @@
 Feature: Kill e2e tests
 
-    @ci
+    @ci @npm
     Scenario: E2E-003 TC-001 API test - Kill instance
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
