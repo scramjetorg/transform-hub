@@ -103,7 +103,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     }
 
     /**
-     * Uncpacks and identifies sequence in Dockere volume.
+     * Unpacks and identifies sequence in Docker volume.
      * This is the main adapter method creating new Docker volume and starting Prerunner
      * with created volume mounted to unpack sequence on it.
      * When Prerunner finishes, it will return JSON with sequence information.
