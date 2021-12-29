@@ -555,6 +555,7 @@ export class Host implements IComponent {
         this.logger.log("Detaching log pipes...");
 
         removeLoggerOutput(this.commonLogsPipe.getIn());
+        removeLoggerOutput(process.stdout, process.stdout, false);
 
         this.logger.log("Cleanup done.");
     }

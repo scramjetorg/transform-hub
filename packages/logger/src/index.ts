@@ -166,7 +166,7 @@ const addLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<a
 
     dest.push(outputStream);
 };
-const removeLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<any>[]) => {
+const removeLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<any>[], end: boolean) => {
     const loggerIndex = dest.findIndex(src => src.origin === stream || src.output === stream);
 
     if (loggerIndex !== -1) {
@@ -176,7 +176,10 @@ const removeLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStrea
 
         if (loggerOutput.count === 0) {
             dest.splice(loggerIndex, 1);
-            loggerOutput.output.end();
+
+            if (end) {
+                loggerOutput.output.end();
+            }
         }
     }
 };
@@ -203,10 +206,11 @@ export function addLoggerOutput(out: WritableStream<any>, err: WritableStream<an
  *
  * @param out - stream for stdout logging
  * @param err - stream for stderr logging
+ * @param end - if true, closes the stream after removing it
  */
-export function removeLoggerOutput(out: WritableStream<any>, err: WritableStream<any> = out) {
-    removeLoggerStream(out, loggerOutputs.out);
-    removeLoggerStream(err, loggerOutputs.err);
+export function removeLoggerOutput(out: WritableStream<any>, err: WritableStream<any> = out, end: boolean = true) {
+    removeLoggerStream(out, loggerOutputs.out, end);
+    removeLoggerStream(err, loggerOutputs.err, end);
 }
 
 /**
