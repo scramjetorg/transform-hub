@@ -22,7 +22,7 @@ accessible by ip
 
 ```
 const exposedServer = http.createServer()
-const verser = new Verser(server);
+const verser = new Verser(exposedServer);
 
 exposedServer.listen(80);
 
@@ -64,13 +64,4 @@ await verserClient.connect();
 
 In the example above, the VerserClient connects to the Verser instance on the machine with the ip address.
 All request to `exposedServer` will be forwarded by Verser to the `localServer`. Responses for these requests will be forwarded by VerserClient to the `exposedServer`.
-
-
-
-
-
-
-
-
-
 
