@@ -53,8 +53,7 @@ const localServer = http.createServer();
 localServer.listen(8888);
 
 verserClient = new VerserClient({
-    remotePort: 80
-    remoteHost: machine-with-ip
+    verserUrl: "http://machine-with-ip:80"
     headers: {},
     localServer
 });
