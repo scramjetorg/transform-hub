@@ -45,7 +45,7 @@ export class HostClient implements ClientProvider {
     }
 
     /**
-     * Upload sequence to Host.
+     * Uploads sequence to Host.
      *
      * @param sequencePackage Stream with packad sequence.
      * @returns {SequenceClient} Sequence client.
@@ -111,6 +111,8 @@ export class HostClient implements ClientProvider {
     }
 
     /**
+     * Sends data to the topic. 
+     * Topics are a part of Service Discovery feature enabling data exchange through Topics API.
      *
      * @param {string} topic Topic name.
      * @param {Readable} stream Stream to be piped to topic.

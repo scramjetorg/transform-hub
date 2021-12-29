@@ -76,6 +76,7 @@ export class InstanceClient {
     }
 
     /**
+     * Sends event to the Instance.
      *
      * @param {string} eventName Event name.
      * @param {string} message Event data to send.
