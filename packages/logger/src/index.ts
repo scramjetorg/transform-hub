@@ -1,7 +1,6 @@
-import { LoggerOptions, PassThoughStream, WritableStream } from "@scramjet/types";
+import { LoggerOptions, WritableStream } from "@scramjet/types";
 
 import { Console } from "console";
-import { Writable } from "stream";
 import { inspect, InspectOptions } from "util";
 
 import { DataStream } from "scramjet";
@@ -13,11 +12,13 @@ export type MessageFormatter = <Z extends any[]>(
     colors: boolean, ts: string, name: string, func: string, args: Z
 ) => string;
 
+type LoggerOutputStream<IN extends any> = { output: WritableStream<IN>; origin?: WritableStream<IN> };
+
 const inspectOpts: InspectOptions = {
     colors: true,
     depth: null,
 };
-const loggerOutputs: {[key: string]: WritableStream<any[]>[]} = {
+const loggerOutputs: {[key: string]: LoggerOutputStream<any[]>[]} = {
     err: [],
     out: []
 };
@@ -29,7 +30,7 @@ const writeLog = (streamSpec: keyof typeof loggerOutputs, ...args: any[]) => {
             return x;
         });
 
-        logStream.write([new Date().toISOString(), ...inspectedArgs]);
+        logStream.output.write([new Date().toISOString(), ...inspectedArgs]);
     }
 };
 
@@ -131,27 +132,37 @@ const colorizeLogFunctionName = (func: string) => {
 const defaultFormatMessage: MessageFormatter = (colors, ts, name, func, ...args) => {
     return `${[ts, colors ? colorizeLogFunctionName(func) : func, `(${name})`, ...args].join(" ")}\n`;
 };
-const addLoggerStream = (stream: WritableStream<any>, dest: WritableStream<any>[]) => {
+const addLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<any>[]) => {
+    // Prevent adding the same source to dest stream more than once. This was causing log duplication.
+    if (dest.findIndex(src => src.origin === stream || src.output === stream) !== -1) {
+        return;
+    }
+
+    const outputStream: LoggerOutputStream<any> = { output: stream };
+
+    // Transform source stream into "objectMode" stream.
     if (!stream.objectMode) {
         // eslint-disable-next-line no-extra-parens
         const colors = (stream as typeof stream & { hasColors?: Function }).hasColors?.();
-        const lout = new DataStream();
+
+        outputStream.output = new DataStream();
+        outputStream.origin = stream;
 
         DataStream
-            .from(lout)
+            .from(outputStream.output as DataStream)
             .stringify(
                 (msg: [string, string, string, any[]]) => defaultFormatMessage(colors, ...msg)
             )
-            .pipe(stream);
-
-        dest.push(lout as unknown as PassThoughStream<any[]>);
-    } else {
-        dest.push(stream);
+            .pipe(outputStream.origin);
     }
+
+    dest.push(outputStream);
 };
 
 export const close = () => {
-    loggerOutputs.out.forEach((stream: Writable) => { stream.end(); });
+    loggerOutputs.out.forEach((stream: LoggerOutputStream<any>) => {
+        stream.output.end();
+    });
 };
 
 /**
