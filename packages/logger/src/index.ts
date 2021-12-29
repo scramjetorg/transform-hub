@@ -12,7 +12,11 @@ export type MessageFormatter = <Z extends any[]>(
     colors: boolean, ts: string, name: string, func: string, args: Z
 ) => string;
 
-type LoggerOutputStream<IN extends any> = { output: WritableStream<IN>; origin?: WritableStream<IN> };
+type LoggerOutputStream<IN extends any> = {
+    output: WritableStream<IN>,
+    origin?: WritableStream<IN>,
+    count: number
+};
 
 const inspectOpts: InspectOptions = {
     colors: true,
@@ -134,11 +138,15 @@ const defaultFormatMessage: MessageFormatter = (colors, ts, name, func, ...args)
 };
 const addLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<any>[]) => {
     // Prevent adding the same source to dest stream more than once. This was causing log duplication.
-    if (dest.findIndex(src => src.origin === stream || src.output === stream) !== -1) {
+    const loggerIndex = dest.findIndex(src => src.origin === stream || src.output === stream);
+
+    if (loggerIndex !== -1) {
+        // Mark that other resource requested adding this output (this is used during output removal).
+        dest[loggerIndex].count++;
         return;
     }
 
-    const outputStream: LoggerOutputStream<any> = { output: stream };
+    const outputStream: LoggerOutputStream<any> = { output: stream, count: 1 };
 
     // Transform source stream into "objectMode" stream.
     if (!stream.objectMode) {
@@ -158,6 +166,20 @@ const addLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<a
 
     dest.push(outputStream);
 };
+const removeLoggerStream = (stream: WritableStream<any>, dest: LoggerOutputStream<any>[]) => {
+    const loggerIndex = dest.findIndex(src => src.origin === stream || src.output === stream);
+
+    if (loggerIndex !== -1) {
+        const loggerOutput = dest[loggerIndex];
+
+        loggerOutput.count--;
+
+        if (loggerOutput.count === 0) {
+            dest.splice(loggerIndex, 1);
+            loggerOutput.output.end();
+        }
+    }
+};
 
 export const close = () => {
     loggerOutputs.out.forEach((stream: LoggerOutputStream<any>) => {
@@ -174,6 +196,17 @@ export const close = () => {
 export function addLoggerOutput(out: WritableStream<any>, err: WritableStream<any> = out) {
     addLoggerStream(out, loggerOutputs.out);
     addLoggerStream(err, loggerOutputs.err);
+}
+
+/**
+ * Removes log outputs from the logger so that they will no longer receive logs
+ *
+ * @param out - stream for stdout logging
+ * @param err - stream for stderr logging
+ */
+export function removeLoggerOutput(out: WritableStream<any>, err: WritableStream<any> = out) {
+    removeLoggerStream(out, loggerOutputs.out);
+    removeLoggerStream(err, loggerOutputs.err);
 }
 
 /**
