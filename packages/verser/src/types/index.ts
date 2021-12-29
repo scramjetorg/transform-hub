@@ -1,6 +1,7 @@
 import { IncomingMessage, OutgoingHttpHeaders, Server } from "http";
 import { Socket } from "net";
 import { Duplex } from "stream";
+import { URL } from "url";
 
 /**
  * VerserClient options type.
@@ -14,9 +15,9 @@ export type VerserClientOptions = {
 
     /**
      * Verser url.
-     * @type {string}
+     * @type {URL | string}
      */
-    verserUrl: string;
+    verserUrl: URL | string;
 
     /**
      * HTTP server to handle connections from Verser server.
