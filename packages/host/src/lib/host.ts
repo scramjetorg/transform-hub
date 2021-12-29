@@ -6,7 +6,7 @@ import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { access, unlink } from "fs/promises";
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { addLoggerOutput, removeLoggerOutput, getLogger } from "@scramjet/logger";
 
 import { AddressInfo } from "net";
 import { CPMConnector } from "./cpm-connector";
@@ -551,6 +551,10 @@ export class Host implements IComponent {
                 })
                 .close();
         });
+
+        this.logger.log("Detaching log pipes...");
+
+        removeLoggerOutput(this.commonLogsPipe.getIn());
 
         this.logger.log("Cleanup done.");
     }
