@@ -51,14 +51,11 @@ export class CPMConnector extends EventEmitter {
 
     constructor(cpmUrl: string, config: CPMConnectorOptions, server: Server) {
         super();
+        this.cpmURL = cpmUrl;
         this.config = config;
-        this.cpmURL = cpmUrl.indexOf("//") == -1 ? `http://${this.cpmURL}` : cpmURL;
-
-        const cpmAddress = this.cpmURL;
 
         this.verserClient = new VerserClient({
-            remotePort: +cpmAddress.port,
-            remoteHost: cpmAddress.hostname,
+            verserUrl: `http://${cpmUrl}/verser`,
             headers: {},
             server
         });
