@@ -9,7 +9,6 @@
     "clean": "rm -rf ./dist .bic_cache",
     "test": "echo no tests yet -- # npm run test:ava",
     "test:ava": "ava",
-    "preinstall": "tar --version 2>&1 >/dev/null",
     "prepack": "node ../../scripts/publish.js",
     "postbuild": "yarn prepack"
   },
