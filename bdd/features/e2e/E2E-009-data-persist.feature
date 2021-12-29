@@ -1,6 +1,6 @@
 Feature: Output streams persisting data E2E test
 
-    @ci
+    @ci @npm
     Scenario: E2E-009 TC-001 API test - Get stdout, stderr, output streams from Sequence which generates random numbers, check if all were recived.
         Given host is running
         And sequence "../packages/reference-apps/output-streams.tar.gz" loaded
