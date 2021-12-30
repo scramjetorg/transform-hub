@@ -3,14 +3,31 @@ import { IComponent, Logger, LoadCheckStat, LoadCheckConfig, LoadCheckContstants
 import { defer } from "@scramjet/utility";
 
 import * as sysinfo from "systeminformation";
-import { DataStream } from "scramjet";
+import { DataStream, StringStream } from "scramjet";
 
 const MB = 1024 * 1024;
 
+/**
+ * Provises methods to monitor resources usage and determine if machine is not overloaded.
+ */
 export class LoadCheck implements IComponent {
+    /**
+     * Congiguration object with requirements to determine if machine is overloaded.
+     *
+     * @type {LoadCheckConfig}
+     */
     config: LoadCheckConfig;
+
+    /**
+     * Values calculated from configuration indicating minimum requirements.
+     */
     constants: LoadCheckContstants;
 
+    /**
+     * Logger instance.
+     *
+     * @type {Logger}
+     */
     logger: Logger = getLogger(this);
 
     constructor(config: LoadCheckConfig) {
@@ -24,6 +41,12 @@ export class LoadCheck implements IComponent {
             }
         };
     }
+
+    /**
+     * Gathers various resources usage and returns it as a {@link LoadCheckStat} object.
+     *
+     * @returns {Promise<LoadCheckStat>} Promise resolving to gathered load check data.
+     */
     async getLoadCheck(): Promise<LoadCheckStat> {
         const [load, disksInfo, memInfo] = await Promise.all([
             sysinfo.currentLoad(),
@@ -40,8 +63,12 @@ export class LoadCheck implements IComponent {
         };
     }
 
+    /**
+     * Compares current load check data with the requirements to determine if machine is overloaded.
+     *
+     * @returns {boolean} True if machine is overloaded, false otherwise.
+     */
     async overloaded(): Promise<boolean> {
-        const isOverloaded = true;
         const check = await this.getLoadCheck();
 
         this.logger.log(check);
@@ -54,21 +81,20 @@ export class LoadCheck implements IComponent {
 
         this.logger.log(conditionsMet);
 
-        if (
-            conditionsMet.cpu && conditionsMet.mem && conditionsMet.dsk
-        ) {
-            return false;
-        }
-
-        return isOverloaded;
+        return !(conditionsMet.cpu && conditionsMet.mem && conditionsMet.dsk);
     }
 
-    async getLoadCheckStream(): Promise<any> {
+    /**
+     * Creates and returns a stream of load check data.
+     * Load check data is emitted every second.
+     *
+     * @returns {DataStream} Stream with load check data.
+     */
+    getLoadCheckStream(): StringStream {
         const safeOperationsLimit = this.constants.SAFE_OPERATION_LIMIT;
 
         return DataStream.from(
             async function*() {
-                // eslint-disable-next-line no-constant-condition
                 while (true) {
                     const [load, disksInfo, memInfo] = await Promise.all([
                         sysinfo.currentLoad(),
