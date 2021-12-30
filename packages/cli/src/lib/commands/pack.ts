@@ -1,6 +1,11 @@
 import { CommandDefinition } from "../../types";
 import { packAction } from "../common";
 
+/**
+ * Initializes `pack` command.
+ *
+ * @param {Command} program Commander object.
+ */
 export const pack: CommandDefinition = (program) => {
     const packProgram = program
         .command("pack <directory>")

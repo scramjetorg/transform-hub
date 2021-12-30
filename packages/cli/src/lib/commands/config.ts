@@ -2,6 +2,11 @@ import { CommandDefinition } from "../../types";
 import { getConfig, setConfigValue } from "../config";
 import { displayObject } from "../output";
 
+/**
+ * Initializes `config` command.
+ *
+ * @param {Command} program Commander object.
+ */
 export const config: CommandDefinition = (program) => {
     /**
      * Set custom value for config and write it to JSON file.

@@ -2,6 +2,11 @@ import { CommandDefinition } from "../../types";
 import { getHostClient } from "../common";
 import { displayEntity, displayStream } from "../output";
 
+/**
+ * Initializes `host` command.
+ *
+ * @param {Command} program Commander object.
+ */
 export const host: CommandDefinition = (program) => {
     const hostCmd = program
         .command("host [command]")

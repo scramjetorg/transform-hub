@@ -13,12 +13,18 @@ const { F_OK, R_OK } = constants;
 
 let hostClient: HostClient;
 
-export const getHostClient = (program: Command) => {
+/**
+ * Returns host client for host pointed by command options.
+ *
+ * @param {Command} command Command object.
+ * @returns {HostClient} Host client.
+ */
+export const getHostClient = (command: Command): HostClient => {
     if (hostClient) return hostClient;
 
-    hostClient = new HostClient(program.opts().apiUrl);
+    hostClient = new HostClient(command.opts().apiUrl);
 
-    if (program.opts().log)
+    if (command.opts().log) {
         hostClient.client.addLogger({
             ok(result) {
                 const {
@@ -36,19 +42,44 @@ export const getHostClient = (program: Command) => {
                 console.error(`Request failed with code "${code}" status: ${message}`);
             }
         });
+    }
+
     return hostClient;
 };
-export const getInstance = (program: Command, id: string) => InstanceClient.from(id, getHostClient(program));
-export const attachStdio = (program: Command, instance: InstanceClient) => {
+
+/**
+ * Returns instance client for instance with gived `id` on default host.
+ *
+ * @param {Command} command Command object.
+ * @param {string} id Instance client.
+ * @returns {InstanceClient} Instance client.
+ */
+export const getInstance = (command: Command, id: string) => InstanceClient.from(id, getHostClient(command));
+
+/**
+ * Attaches stdio to instance streams.
+ *
+ * @param {Command} command Command object.
+ * @param {InstanceClient} instanceClient Instance client.
+ * @returns {Promise<void>} Promise resolving when all stdio streams finished.
+ */
+export const attachStdio = (command: Command, instanceClient: InstanceClient) => {
     return displayEntity(
-        program,
+        command,
         Promise.all([
-            instance.sendStdin(process.stdin),
-            instance.getStream("stdout").then(out => out.data?.pipe(process.stdout)),
-            instance.getStream("stderr").then(err => err.data?.pipe(process.stderr))
+            instanceClient.sendStdin(process.stdin),
+            instanceClient.getStream("stdout").then(out => out.data?.pipe(process.stdout)),
+            instanceClient.getStream("stderr").then(err => err.data?.pipe(process.stderr))
         ]).then(() => undefined)
     );
 };
+
+/**
+ * TODO: Comment.
+ *
+ * @param {PathLike} file Filepath to read rules from.
+ * @returns TODO: Comment.
+ */
 export const getIgnoreFunction = async (file: PathLike) => {
     try {
         await access(file, R_OK);
@@ -68,6 +99,14 @@ export const getIgnoreFunction = async (file: PathLike) => {
 
     return (f: string) => !rules.find(x => x(f, 0, fakeArr));
 };
+
+/**
+ * Creates package with contents of given directory.
+ *
+ * @param {string} directory Directory to be packaged.
+ * @param {boolean} stdout If true, package will be piped to stdout.
+ * @param {output} string Output filename.
+ */
 export const packAction = async (directory: string, { stdout, output }: { stdout: boolean, output: string }) => {
     const cwd = resolve(process.cwd(), directory);
     const packageLocation = resolve(cwd, "package.json");
@@ -98,6 +137,13 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
         out.on("error", rej);
     });
 };
+
+/**
+ * Get stream from file.
+ *
+ * @param {string} file Path to file to read from.
+ * @returns {Promise<Readable>} Promise resolving to stream with file contents.
+ */
 export const getReadStreamFromFile = async (file: string): Promise<Readable> => {
     const resolvedFilePath = resolve(process.cwd(), file);
 

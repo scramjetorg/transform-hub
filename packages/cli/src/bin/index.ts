@@ -3,12 +3,11 @@
 
 import { Command } from "commander";
 import { ClientError } from "@scramjet/api-client";
-// import { version } from "../../package.json";
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
 
 const getExitCode = (_err: ClientError) => 1;
-const program: Command = new Command() as Command;
+const program: Command = new Command();
 const errorHandler = (err: ClientError) => {
     process.exitCode = getExitCode(err);
     const opts = program.opts();
