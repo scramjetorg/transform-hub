@@ -4,6 +4,11 @@ import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
 import { displayEntity, displayStream } from "../output";
 
+/**
+ * Initializes `instance` command.
+ *
+ * @param {Command} program Commander object.
+ */
 export const instance: CommandDefinition = (program) => {
     const instanceCmd = program
         .command("instance [command]")

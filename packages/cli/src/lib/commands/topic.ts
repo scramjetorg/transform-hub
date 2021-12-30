@@ -2,6 +2,11 @@ import { CommandDefinition } from "../../types";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { displayEntity, displayStream } from "../output";
 
+/**
+ * Initializes `topic` command.
+ *
+ * @param {Command} program Commander object.
+ */
 export const topic: CommandDefinition = (program) => {
     const topicCmd = program
         .command("topic [command]")
