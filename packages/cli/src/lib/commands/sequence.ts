@@ -4,6 +4,11 @@ import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getReadStreamFromFile } from "../common";
 import { displayEntity, displayObject } from "../output";
 
+/**
+ * Initializes `sequence` command.
+ *
+ * @param {Command} program Commander object.
+ */
 export const sequence: CommandDefinition = (program) => {
     const sequenceCmd = program
         .command("sequence [command]")

@@ -1,31 +1,31 @@
 /* eslint-disable no-console */
 import { Response, ResponseStream } from "@scramjet/api-client";
 import { Command } from "commander";
+import { Writable } from "stream";
 
 /**
  * Command from commander contains obj with whole params, that user provides to the console.
  */
 
 /**
- * Helper method to show output in proper format provided by user.
+ * Helper method to shows output in proper format provided by user.
  * If no value is provided the default will be taken.
- * Default: "pretty"
- * @param type { string } get format provided by user form _program.opts.format
- * @param object { any } get object with response from Interface
+ * Default: "pretty".
+ *
+ * @param {"json" | "pretty"} type get format provided by user form _program.opts.format
+ * @param {any} object get object with response from Interface
  */
 function display(type: "json" | "pretty" = "pretty", object: any) {
-    switch (type) {
-    case "json":
+    if (type === "json") {
         console.log(JSON.stringify(object));
-        break;
-    default:
+    } else {
         console.dir(object);
-        break;
     }
 }
 
 /**
- * Display object
+ * Displays object.
+ *
  * @param _program commander options object contains user input config etc.
  * @param object returned object form
  */
@@ -34,22 +34,23 @@ export async function displayObject(_program: Command, object: any) {
 }
 
 /**
- * Display stream
- * @param _program commander object
- * @param request
- * @param output
- * @returns {Object} with response or error
+ * Displays stream.
+ *
+ * @param {Command} _program commander object.
+ * @param {Promise<ResponseStream>} response Response object with stream to be displayed.
+ * @param {Writable} output Output stream.
+ * @returns {Promise} Promise resolving on stream finish or rejecting on error.
  */
 export async function displayStream(
     _program: Command,
-    request: Promise<ResponseStream>,
-    output = process.stdout
+    response: Promise<ResponseStream>,
+    output: Writable = process.stdout
 ): Promise<void> {
     try {
-        const req = await request;
+        const resp = await response;
 
-        req.data?.pipe(output);
-        return new Promise((res, rej) => req.data?.on("finish", res).on("error", rej));
+        resp.data?.pipe(output);
+        return new Promise((res, rej) => resp.data?.on("finish", res).on("error", rej));
     } catch (e: any) {
         console.error(e && e.stack || e);
         process.exitCode = e.exitCode || 1;
@@ -58,14 +59,18 @@ export async function displayStream(
 }
 
 /**
- * Display
+ * Displays reponse data.
+ *
  * @param _program { _program } commander object
- * @param request { Promise }
+ * @param {Promise<Response|void>} response Response object with data to be displayed.
  */
-export async function displayEntity(_program: Command, request: Promise<Response|void>): Promise<void> {
+export async function displayEntity(_program: Command, response: Promise<Response|void>): Promise<void> {
     // todo: different displays depending on _program.opts().format
-    const req = await request;
+    const res = await response;
 
-    if (!req) return;
-    display(_program.opts().format, req.data);
+    if (!res) {
+        return;
+    }
+
+    display(_program.opts().format, res.data);
 }
