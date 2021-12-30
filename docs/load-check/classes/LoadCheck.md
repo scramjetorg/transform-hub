@@ -92,7 +92,7 @@ ___
 
 ### getLoadCheckStream
 
-▸ **getLoadCheckStream**(): `Promise`<`any`\>
+▸ **getLoadCheckStream**(): `StringStream`
 
 #### Returns
 
