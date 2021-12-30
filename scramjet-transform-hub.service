@@ -1,0 +1,13 @@
+[Unit]
+Description=scramjet-transform-hub
+Documentation=https://github.com/scramjetorg/transform-hub
+After=network.target
+
+[Service]
+Environment=""
+Type=simple
+ExecStart=/usr/bin/scramjet-transform-hub
+#Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

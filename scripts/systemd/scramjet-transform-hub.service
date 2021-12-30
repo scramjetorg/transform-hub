@@ -1,0 +1,16 @@
+[Unit]
+Description=scramjet-transform-hub
+Documentation=https://github.com/scramjetorg/transform-hub
+After=network.target
+
+[Service]
+Environment=""
+Type=simple
+User=www-data
+ExecStart=/usr/local/bin/scramjet-transform-hub
+ExecStartPre=-/bin/rm /tmp/scramjet-socket-server-path
+ExecStop=-/bin/rm /tmp/scramjet-socket-server-path
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
