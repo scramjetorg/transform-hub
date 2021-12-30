@@ -1,0 +1,49 @@
+name: STH build and tests
+
+on:
+  pull_request:
+    branches: [ release/*, main ]
+
+jobs:
+  test-npm-sth:
+    name: Test STH from npm package (Nodejs ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [ 16.x ]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Nodejs ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --silent
+
+      - name: Build refapps
+        run: yarn build:refapps
+
+      - name: Pack sequences
+        run: yarn packseq
+
+      - name: Install ts-node
+        run: npm install -g ts-node
+
+      - name: npm link STH
+        run: npm link /home/runner/work/transform-hub/transform-hub/packages/sth/
+
+      - name: npm link CLI
+        run: npm link /home/runner/work/transform-hub/transform-hub/packages/cli/
+
+      - name: Start sth
+        run: scramjet-transform-hub &
+
+      - name: Run BDD npm tests
+        run: SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd --tags=@npm
+      
