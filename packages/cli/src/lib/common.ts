@@ -48,7 +48,7 @@ export const getHostClient = (command: Command): HostClient => {
 };
 
 /**
- * Returns instance client for instance with gived `id` on default host.
+ * Returns instance client for instance with given `id` on default host.
  *
  * @param {Command} command Command object.
  * @param {string} id Instance client.
@@ -61,7 +61,7 @@ export const getInstance = (command: Command, id: string) => InstanceClient.from
  *
  * @param {Command} command Command object.
  * @param {InstanceClient} instanceClient Instance client.
- * @returns {Promise<void>} Promise resolving when all stdio streams finished.
+ * @returns {Promise<void>} Promise resolving when all stdio streams finish.
  */
 export const attachStdio = (command: Command, instanceClient: InstanceClient) => {
     return displayEntity(
