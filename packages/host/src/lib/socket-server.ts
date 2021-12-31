@@ -12,6 +12,7 @@ type RunnerOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
 ]
 
+// TODO: probably to change to net server, to verify
 export class SocketServer extends EventEmitter implements IComponent {
     server?: net.Server;
     logger: Logger;
