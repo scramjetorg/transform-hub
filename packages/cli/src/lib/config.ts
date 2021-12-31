@@ -22,7 +22,7 @@ const location = resolve(homedir(), "sth-cli-rc.json");
 let currentConfig: Config;
 
 /**
- * Returns current config.
+ * Returns current configuration.
  * If configuration has not been loaded yet, it will be loaded from file.
  *
  * @returns Configuration.
