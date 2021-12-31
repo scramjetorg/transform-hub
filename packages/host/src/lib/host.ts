@@ -24,27 +24,69 @@ export type HostOptions = Partial<{
     identifyExisting: boolean
 }>;
 
+/**
+ * Host provides functionality to manage instances and sequences.
+ * Using provided servers to set's up API and server for communicating with instance controllers.
+ * Can communicate with Manager.
+ */
 export class Host implements IComponent {
+    /**
+     * Configuration.
+     */
     config: STHConfiguration;
 
+    /**
+     * TODO: Comment.
+     */
     api: APIExpose;
 
+    /**
+     * Api path prefix based on initial configuration.
+     */
     apiBase: string;
+
+    /**
+     * Instance path prefix.
+     */
     instanceBase: string;
 
     socketServer: SocketServer;
+
+    /**
+     * Instance of CPMConnector used to communicate with Manager.
+     */
     cpmConnector?: CPMConnector;
 
+    /**
+     * Object to store CSIControllers.
+     */
     instancesStore = InstanceStore;
+
+    /**
+     * Sequences store.
+     */
     sequencesStore = new Map<string, SequenceInfo>();
 
+    /**
+     * Instance of class providing logging utilities.
+     */
     logger: Logger;
+
+    /**
+     * Instance of class providing load check.
+     */
     loadCheck: LoadCheck;
 
+    /**
+     * Service to handle topics.
+     */
     serviceDiscovery = new ServiceDiscovery();
 
     commonLogsPipe = new CommonLogsPipe()
 
+    /**
+     * Sets listener for connections to socket server.
+     */
     private attachListeners() {
         this.socketServer.on("connect", async ({ id, streams }) => {
             this.logger.log("Instance connected:", id);
@@ -53,6 +95,14 @@ export class Host implements IComponent {
         });
     }
 
+    /**
+     * Initializes Host.
+     * Sets used modules with provided configuration.
+     *
+     * @param {APIExpose} apiServer Server to attach API to.
+     * @param {SocketServer} socketServer Server to listen for connections from instances.
+     * @param {STHConfiguration} sthConfig Configuration.
+     */
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
         this.config = sthConfig;
 
@@ -84,7 +134,15 @@ export class Host implements IComponent {
         }
     }
 
-    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<Host> {
+    /**
+     * Main method to start Host.
+     * Performs Hosts's initialization process: starts servers, identifies existing instances,
+     * sets up API and connects to Manager.
+     *
+     * @param {HostOptions} identifyExisting Indicates if existing instances should be identified.
+     * @returns {Promise<this>} Promise resolving to instance of Host.
+     */
+    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<this> {
         addLoggerOutput(process.stdout);
         addLoggerOutput(this.commonLogsPipe.getIn());
 
@@ -121,6 +179,9 @@ export class Host implements IComponent {
         return this;
     }
 
+    /**
+     * Initializes connector and conntects to Manager.
+     */
     connectToCPM() {
         this.cpmConnector?.attachServer(this.api.server);
         this.cpmConnector?.init();
@@ -193,6 +254,18 @@ export class Host implements IComponent {
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
+    /**
+     * Finds instance with given id passed in request parameters and forwards request to instance router.
+     * Forwarded request's url is reduced by the instance base path and instance parameter.
+     * For example: /api/instance/:id/log -> /log
+     *
+     * Ends response with 404 if instance is not found.
+     *
+     * @param {Request} req Request object.
+     * @param {ServerResponse} res Response object.
+     * @param {NextCallback} next Function to call when request is not handled by instance middleware.
+     * @returns {Middleware} Instance middleware.
+     */
     instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
         const params = req.params;
 
@@ -220,6 +293,15 @@ export class Host implements IComponent {
         return next();
     }
 
+    /**
+     * Handles delete sequence request.
+     * Removes sequence from the store and sends notification to Manager if connected.
+     * Note: If instance is started from a given sequence, sequence can not be removed
+     * and CONFICT status code is returned.
+     *
+     * @param {ParsedMessage} req Request object.
+     * @returns {Promise<STHRestAPI.DeleteSequenceResponse>} Promise resolving to operation result object.
+     */
     async handleDeleteSequence(req: ParsedMessage): Promise<STHRestAPI.DeleteSequenceResponse> {
         const id = req.params?.id;
 
@@ -262,6 +344,10 @@ export class Host implements IComponent {
         }
     }
 
+    /**
+     * Finds existing sequences.
+     * Used to recover sequences information after restart.
+     */
     async identifyExistingSequences() {
         this.logger.log("Listing exiting sequences.");
         const sequenceAdapter = getSequenceAdapter(this.config);
@@ -281,6 +367,14 @@ export class Host implements IComponent {
         }
     }
 
+    /**
+     * Handles incoming sequence.
+     * Uses sequence adapter to unpack and identify sequence.
+     * Notifies Manager (if connected) about new sequence.
+     *
+     * @param {IncomingMessage} stream Stream of packaged sequence.
+     * @returns {Promise} Promise resolving to operation result.
+     */
     async handleNewSequence(stream: IncomingMessage): Promise<STHRestAPI.SendSequenceResponse> {
         this.logger.info("New sequence incoming...");
 
@@ -311,6 +405,16 @@ export class Host implements IComponent {
         }
     }
 
+    /**
+     * Handles sequence start request.
+     * Parses request body for sequence configuration and parameters to be passed to first Sequence method.
+     * Passes obtained parameters to main method staring sequence.
+     *
+     * Notifies Manager (if connected) about new instance.
+     *
+     * @param {ParsedMessage} req Request object.
+     * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
+     */
     async handleStartSequence(req: ParsedMessage): Promise<STHRestAPI.StartSequenceResponse> {
         if (await this.loadCheck.overloaded()) {
             return {
@@ -318,7 +422,6 @@ export class Host implements IComponent {
             };
         }
 
-        // eslint-disable-next-line no-extra-parens
         const seqId = req.params?.id;
         const payload = req.body || {};
         const sequence = this.sequencesStore.get(seqId);
@@ -358,6 +461,13 @@ export class Host implements IComponent {
         }
     }
 
+    /**
+     * Creates new CSIController {@link CSIController} object and handles it's events.
+     *
+     * @param {SequenceInfo} sequence Sequence info object.
+     * @param {AppConfig} appConfig App configuration object.
+     * @param {any[]} [sequenceArgs] Optional arguments to be passed to sequence.
+     */
     async startCSIController(
         sequence: SequenceInfo,
         appConfig: AppConfig,
@@ -455,6 +565,11 @@ export class Host implements IComponent {
         return csic;
     }
 
+    /**
+     * Returns list of all sequences.
+     *
+     * @returns {STHRestAPI.GetInstancesResponse} List of instances.
+     */
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.log("List CSI controllers.");
 
@@ -464,6 +579,12 @@ export class Host implements IComponent {
         }));
     }
 
+    /**
+     * Returns sequence information.
+     *
+     * @param {string} id Instance ID.
+     * @returns {STHRestAPI.GetSequenceResponse} Sequence info object.
+     */
     getSequence(id: string): STHRestAPI.GetSequenceResponse {
         const sequence = this.sequencesStore.get(id);
 
@@ -478,6 +599,11 @@ export class Host implements IComponent {
         };
     }
 
+    /**
+     * Returns list of all sequences.
+     *
+     * @returns {STHRestAPI.GetSequencesResponse} List of sequences.
+     */
     getSequences(): STHRestAPI.GetSequencesResponse {
         return Array.from(this.sequencesStore.values())
             .map(sequence => ({
@@ -487,8 +613,14 @@ export class Host implements IComponent {
             }));
     }
 
+    /**
+     * Returns list of all instances of given sequence.
+     *
+     * @param {string} sequenceId Sequence ID.
+     * @returns List of instances.
+     */
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
-        // @TODO this should probably return error response when there's not corresponding Sequence
+        // @TODO: this should probably return error response when there's not corresponding Sequence
         const sequence = this.sequencesStore.get(sequenceId);
 
         if (!sequence) {
@@ -498,6 +630,10 @@ export class Host implements IComponent {
         return Array.from(sequence.instances.values());
     }
 
+    /**
+     * Stops all running instances by sending KILL command to every instance
+     * using it's CSIController {@link CSIController}
+     */
     async stop() {
         this.logger.log("Stopping instances...");
 
@@ -512,6 +648,9 @@ export class Host implements IComponent {
         await this.cleanup();
     }
 
+    /**
+     * Stops running servers.
+     */
     async cleanup() {
         this.logger.log("Cleaning up...");
 
