@@ -4,21 +4,37 @@ import { PassThrough, Stream } from "stream";
 import { CPMConnector } from "./cpm-connector";
 import { getLogger } from "@scramjet/logger";
 
+/**
+ * TODO: Refactor types below.
+ */
 export type dataType = {
     topic: string;
     contentType: string;
 }
 
+/**
+ * Topic stream type definition.
+ */
 export type streamType = {
     contentType: string;
     stream: Stream;
 }
+
+/**
+ * Topic details type definition.
+ */
 export type topicDataType = {
     contentType: string,
     stream: ReadableStream<any> | WritableStream<any>,
     localProvider?: string,
     cpmRequest?: boolean
 }
+
+/**
+ * Service Discovery provides methods to manage topics.
+ * It's functionality covers creating, storing, removing topics
+ * and requesting Manager when instance requires data but data is not available locally.
+ */
 export class ServiceDiscovery {
     dataMap = new Map<
         string,
@@ -27,10 +43,22 @@ export class ServiceDiscovery {
     logger: Logger = getLogger(this);
     cpmConnector?: CPMConnector;
 
+    /**
+     * Sets the CPM connector.
+     *
+     * @param {CPMConnector} cpmConnector Manager connector instance used to communicate with Manager.
+     */
     setConnector(cpmConnector: CPMConnector) {
         this.cpmConnector = cpmConnector;
     }
 
+    /**
+     * Stores given topic.
+     *
+     * @param {dataType} config Topic configuration.
+     * @param {string} [localProvider] Provider identifier. It not set topic will be considered as extarnal.
+     * @returns added topic data.
+     */
     addData(config: dataType, localProvider?: string) {
         if (!this.dataMap.has(config.topic)) {
             this.logger.log("Adding data:", config, localProvider);
@@ -59,12 +87,23 @@ export class ServiceDiscovery {
         return this.dataMap.get(config.topic)!;
     }
 
+    /**
+     * @TODO: implement.
+
+     * @returns All topics.
+     */
     getTopics() {
         const o: any = [];
 
         return o;
     }
 
+    /**
+     * Returns topic details for given topic.
+     *
+     * @param {string} topic Topic name.
+     * @returns {streamType|undefined} Topic details.
+     */
     getByTopic(topic: string): streamType | undefined {
         if (this.dataMap.has(topic)) {
             return this.dataMap.get(topic);
@@ -73,6 +112,11 @@ export class ServiceDiscovery {
         return undefined;
     }
 
+    /**
+     * Unsets local provider for given topic.
+     *
+     * @param {string} topic Topic name.
+     */
     removeLocalProvider(topic: string) {
         const d = this.dataMap.get(topic);
 
@@ -81,6 +125,14 @@ export class ServiceDiscovery {
         }
     }
 
+    /**
+     * Returns topic details for given topic.
+     * If topic does not exist it will be created.
+     * If topic exists but is not local, data will be requested from Manager.
+     *
+     * @param {dataType} dataType Topic configuration.
+     * @returns Topic stream.
+     */
     getData(dataType: dataType):
         ReadableStream<any> | WritableStream<any> | undefined {
         this.logger.log("Get data:", dataType);
@@ -117,6 +169,11 @@ export class ServiceDiscovery {
         return this.getData(dataType);
     }
 
+    /**
+     * Removes store topic with given id.
+     *
+     * @param {string} topic Topic name.
+     */
     removeData(topic: string) {
         if (this.dataMap.has(topic)) {
             // eslint-disable-next-line no-extra-parens
