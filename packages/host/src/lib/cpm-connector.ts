@@ -26,49 +26,179 @@ import { VerserClient } from "@scramjet/verser";
 type STHInformation = {
     id?: string;
 }
+
+/**
+ * Provides communication with Manager.
+ *
+ * @class CPMConnector
+ */
 export class CPMConnector extends EventEmitter {
+    /**
+     * Maximum attepts for first connection try.
+     *
+     * @type {number}
+     */
     MAX_CONNECTION_ATTEMPTS = 100;
+
+    /**
+     * Maximum retries on connection lost.
+     *
+     * @type {number}
+     */
     MAX_RECONNECTION_ATTEMPTS = 100;
+
+    /**
+     * Delay beween connection attempts.
+     *
+     * @type {number}
+     */
     RECONNECT_INTERVAL = 2000;
 
+    /**
+     * Load check instance to be used to get load check data.
+     *
+     * @type {LoadCheck}
+     */
     loadCheck?: LoadCheck;
+
+    /**
+     * Connector options.
+     *
+     * @type {CPMConnectorOptions}
+     */
     config: CPMConnectorOptions;
+
+    /**
+     * Server to handle request coming from Manager.
+     *
+     * @type {Server}
+     */
     apiServer?: Server;
+
+    /**
+     * Connection status indicator.
+     *
+     * @type {boolean}
+     */
     connected = false;
+
+    /**
+     * Stream used to write data to Manager.
+     *
+     * @type {StringStream}
+     */
     communicationStream?: StringStream;
-    communicationChannel?: Duplex;;
+
+    /**
+     * Stream to used to read and write data to Manager.
+     *
+     * @type {Duplex}
+     */
+    communicationChannel?: Duplex;
+
+    /**
+     * Logger instance.
+     *
+     * @type {Logger}
+     */
     logger: Logger = getLogger(this);
+
+    /**
+     * Custom id indicator.
+     *
+     * @type {boolean}
+     */
     customId = false;
+
+    /**
+     * Host info object containing host id.
+     *
+     * @type {STHInformation}
+     */
     info: STHInformation = {};
+
+    /**
+     * Connection object.
+     */
     connection?: ClientRequest;
+
+    /**
+     * Indicator for reconnection state.
+     */
     isReconnecting: boolean = false;
+
+    /**
+     * True if connection to Manager has been established at least once.
+     */
     wasConnected: boolean = false;
+
+    /**
+     * Connection attempts counter
+     *
+     * @type {number}
+     */
     connectionAttempts = 0;
+
+    /**
+     * Hostname of Manager (e.g. "localhost:8080").
+     *
+     * @type {string}
+     */
     cpmURL: string;
+
+    /**
+     * VerserClient instance used for connect with Verser.
+     *
+     * @type {VerserClient}
+     */
     verserClient: VerserClient;
 
+    /**
+     * Reference for method called in interval and sending load check data to the Manager.
+     *
+     * @type {NodeJS.Timeout}
+     */
     loadInterval?: NodeJS.Timeout;
 
-    constructor(cpmUrl: string, config: CPMConnectorOptions, server: Server) {
+    /**
+     * @constructor
+     * @param {string} cpmHostname CPM hostname to connect to. (e.g. "localhost:8080").
+     * @param {CPMConnectorOptions} config CPM connector configuration.
+     * @param {Server} server API server to handle incoming requests.
+     */
+    constructor(cpmHostname: string, config: CPMConnectorOptions, server: Server) {
         super();
-        this.cpmURL = cpmUrl;
+        this.cpmURL = cpmHostname;
         this.config = config;
 
         this.verserClient = new VerserClient({
-            verserUrl: `http://${cpmUrl}/verser`,
+            verserUrl: `http://${cpmHostname}/verser`,
             headers: {},
             server
         });
     }
 
+    /**
+     * Sets up load check object to be used to get load check data.
+     *
+     * @param {LoadCheck} loadCheck load check instance.
+     */
     setLoadCheck(loadCheck: LoadCheck) {
         this.loadCheck = loadCheck;
     }
 
+    /**
+     * Returs hosts id.
+     *
+     * @returns {string} Host id.
+     */
     getId(): string | undefined {
         return this.info.id;
     }
 
+    /**
+     * Initializes connector.
+     */
     init() {
         this.info.id = this.config.id;
 
@@ -81,6 +211,11 @@ export class CPMConnector extends EventEmitter {
         }
     }
 
+    /**
+     * Reads configuration from file.
+     *
+     * @returns {object} Configuration object.
+     */
     readInfoFile() {
         let fileContents = "";
 
@@ -99,11 +234,21 @@ export class CPMConnector extends EventEmitter {
         }
     }
 
+    /**
+     * Sets up server to handle incoming requests.
+     *
+     * @param {Server} server Server to handle incoming requests from connected manager.
+     */
     attachServer(server: Server & { httpAllowHalfOpen?: boolean }) {
         this.apiServer = server;
         server.httpAllowHalfOpen = true;
     }
 
+    /**
+     * Sets up a handlers for specific channels on the VerserClient connection.
+     * Channel 0 is reserved to handle control messages from Manager.
+     * CHannel 1 is reserved for log stream send to Manager.
+     */
     registerChannels() {
         this.verserClient.registerChannel(0, async (duplex: Duplex) => {
             this.communicationChannel = duplex;
@@ -150,7 +295,15 @@ export class CPMConnector extends EventEmitter {
         );
     }
 
-    async connect() {
+    /**
+     * Connect to Manager using VerserClient.
+     * Host send its id to Manager in headers. If id is not set, it will be received from Manager.
+     * When connection is established it sets up handlers for communication channels.
+     * If connection fails, it will try to reconnect.
+     *
+     * @returns {Promise<void>} Promise that resolves when connection is established.
+     */
+    async connect(): Promise<void> {
         this.isReconnecting = false;
 
         if (this.info.id) {
@@ -165,6 +318,7 @@ export class CPMConnector extends EventEmitter {
         } catch (err) {
             this.logger.error("Can not connect to CPM.", err);
             this.reconnect();
+
             return;
         }
 
@@ -184,6 +338,10 @@ export class CPMConnector extends EventEmitter {
         });
     }
 
+    /**
+     * Handles connection close.
+     * Tryies to reconnect.
+     */
     async handleConnectionClose() {
         this.connected = false;
 
@@ -197,7 +355,12 @@ export class CPMConnector extends EventEmitter {
         this.reconnect();
     }
 
-    reconnect() {
+    /**
+     * Reconnects to Manager if maximum number of connection attempts is not reached.
+     *
+     * @returns {void}
+     */
+    reconnect():void {
         if (this.isReconnecting) {
             return;
         }
@@ -224,6 +387,11 @@ export class CPMConnector extends EventEmitter {
         }
     }
 
+    /**
+     * Returns network interfaces information.
+     *
+     * @returns {Promise<NetworkInfo>} Promise resolving to NetworkInfo object.
+     */
     async getNetworkInfo(): Promise<NetworkInfo[]> {
         const fields = ["iface", "ifaceName", "ip4", "ip4subnet", "ip6", "ip6subnet", "mac", "dhcp"];
 
@@ -238,6 +406,9 @@ export class CPMConnector extends EventEmitter {
         });
     }
 
+    /**
+     * Sets up a method sending load check data and to be called with interval
+     */
     setLoadCheckMessageSender() {
         this.loadInterval = setInterval(async () => {
             const load = await this.getLoad();
@@ -249,6 +420,11 @@ export class CPMConnector extends EventEmitter {
         }, 5000);
     }
 
+    /**
+     * Retrieves load check data using LoadCheck module.
+     *
+     * @returns Promise<LoadCheckStatMessage> Promise resolving to LoadCheckStatMessage object.
+     */
     async getLoad(): Promise<LoadCheckStatMessage> {
         const load = await this.loadCheck!.getLoadCheck();
 
@@ -262,6 +438,11 @@ export class CPMConnector extends EventEmitter {
         };
     }
 
+    /**
+     * Sends list of sequence to Manager via communication channel.
+     *
+     * @param sequences List of sequences to send.
+     */
     async sendSequencesInfo(sequences: STHRestAPI.GetSequencesResponse): Promise<void> {
         this.logger.log("Sending sequences information, total sequences:", sequences.length);
 
@@ -272,6 +453,11 @@ export class CPMConnector extends EventEmitter {
         this.logger.log("Sequences information sent.");
     }
 
+    /**
+     * Sends list of sequence to Manager via communication channel.
+     *
+     * @param instances List of instances to send.
+     */
     async sendInstancesInfo(instances: Instance[]): Promise<void> {
         this.logger.log("Sending instances information...");
 
@@ -282,6 +468,12 @@ export class CPMConnector extends EventEmitter {
         this.logger.log("Instances information sent.");
     }
 
+    /**
+     * Sends sequence status to Manager via communication channel.
+     *
+     * @param {string} sequenceId Sequence id.
+     * @param {SequenceMessageCode} seqStatus Sequence status.
+     */
     async sendSequenceInfo(sequenceId: string, seqStatus: SequenceMessageCode): Promise<void> {
         this.logger.log("Send sequence status update", sequenceId, seqStatus);
 
@@ -290,6 +482,12 @@ export class CPMConnector extends EventEmitter {
         );
     }
 
+    /**
+     * Sends instance information to Manager via communication channel.
+     *
+     * @param {string} instance Instance details.
+     * @param {SequenceMessageCode} instanceStatus Instance status.
+     */
     async sendInstanceInfo(instance: Instance, instanceStatus: InstanceMessageCode): Promise<void> {
         this.logger.log("Send instance status update", instanceStatus);
 
@@ -298,12 +496,25 @@ export class CPMConnector extends EventEmitter {
         );
     }
 
+    /**
+     * Notifies Manager that new topic has been added.
+     * Topic information is send via communication channel.
+     *
+     * @param data Topic information.
+     */
     async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string }) {
         await this.communicationStream?.whenWrote(
             JSON.stringify([CPMMessageCode.TOPIC, { ...data, status: "add" }]) + "\n"
         );
     }
 
+    /**
+     * Makes a POST request to Manager with topic data.
+     * @TODO: Consider to make this request via VerserClient.
+     *
+     * @param {string} topic Topic name.
+     * @param topicCfg Topic configuration.
+     */
     sendTopic(topic: string, topicCfg: { contentType: string, stream: ReadableStream<any> | WritableStream<any> }) {
         const cpmUrl = new URL("http://" + this.cpmURL + "/topic/" + topic);
         const req = request(
@@ -321,6 +532,12 @@ export class CPMConnector extends EventEmitter {
         topicCfg.stream.pipe(req);
     }
 
+    /**
+     * Connects to Manager for topic data.
+     *
+     * @param {string} topic Topic name
+     * @returns {Promise} Promise resolving to `ReadableStream<any>` with topic data.
+     */
     async getTopic(topic: string): Promise<Readable> {
         const cpmUrl = new URL("http://" + this.cpmURL + "/topic/" + topic);
 
@@ -338,4 +555,3 @@ export class CPMConnector extends EventEmitter {
         });
     }
 }
-
