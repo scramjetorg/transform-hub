@@ -8,7 +8,7 @@ import { DataStream, StringStream } from "scramjet";
 const MB = 1024 * 1024;
 
 /**
- * Provises methods to monitor resources usage and determine if machine is not overloaded.
+ * Provides methods to monitor resources usage and determine if machine is not overloaded.
  */
 export class LoadCheck implements IComponent {
     /**
@@ -20,6 +20,8 @@ export class LoadCheck implements IComponent {
 
     /**
      * Values calculated from configuration indicating minimum requirements.
+     *
+     * @type {LoadCheckContstants}
      */
     constants: LoadCheckContstants;
 
