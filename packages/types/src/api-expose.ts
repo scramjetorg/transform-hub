@@ -62,12 +62,15 @@ export interface APIError extends Error {
 }
 
 export interface APIBase {
-    // /**
-    //  * The Trouter
-    //  */
-    // router: Trouter
     /**
-     * Simple POST request hook for static data in monitoring stream.
+     * Simple POST/DELETE request hook.
+     * This method can be used in two ways - as a control message handler or as general data handler.
+     *
+     * @example
+     * // Control message handler
+     * router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
+     * // Data handler
+     * router.op("post", `${this.apiBase}/start`, (req) => this.handleStartRequest(req));
      *
      * @param path the request path as string or regex
      * @param message which operation to expose
@@ -75,6 +78,7 @@ export interface APIBase {
      */
     op<T extends ControlMessageCode>(
         method: HttpMethod, path: string | RegExp, message: OpResolver | T, conn?: ICommunicationHandler): void;
+
     /**
      * Simple GET request hook for static data in monitoring stream.
      *
@@ -84,6 +88,7 @@ export interface APIBase {
      */
     get<T extends MonitoringMessageCode>(
         path: string | RegExp, msg: T, conn: ICommunicationHandler): void;
+
     /**
      * Alternative GET request hook with dynamic resolution
      *
@@ -91,6 +96,7 @@ export interface APIBase {
      * @param op which operation
      */
     get(path: string | RegExp, msg: GetResolver): void;
+
     /**
      * A method that allows to pass a stream to the specified path on the API server
      *
@@ -103,6 +109,7 @@ export interface APIBase {
         stream: StreamInput,
         config?: StreamConfig
     ): void;
+
     /**
      * A method that allows to consume incoming stream from the specified path on the API server
      *
@@ -116,11 +123,23 @@ export interface APIBase {
         config?: StreamConfig
     ): void;
 
+    /**
+     * Allows to handle dual direction (duplex) streams.
+     *
+     * @param path the request path as string or regex
+     * @param callback A method to be called when the stream is ready.
+     */
     duplex(
         path: string | RegExp,
         callback: (stream: Duplex, headers: IncomingHttpHeaders) => void
     ): void;
 
+    /**
+     * Allows to register middlewares for specific paths, for all HTTP methods.
+     *
+     * @param path
+     * @param middlewares
+     */
     use(path: string | RegExp, ...middlewares: Middleware[]): void;
 }
 

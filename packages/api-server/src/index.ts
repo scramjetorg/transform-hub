@@ -1,5 +1,5 @@
 import { getLogger } from "@scramjet/logger";
-import { APIExpose, APIRoute, NextCallback } from "@scramjet/types";
+import { APIExpose, APIRoute, MaybePromise, NextCallback } from "@scramjet/types";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
@@ -18,7 +18,7 @@ export { cero, sequentialRouter };
 
 const logger = getLogger("ApiServer");
 
-function safeHandler<T extends unknown[]>(cb: (...args: T) => void) {
+function safeHandler<T extends unknown[]>(cb: (...args: T) => MaybePromise<void>) {
     return async (...args: T) => {
         try {
             await cb(...args);
@@ -33,7 +33,7 @@ function safeHandler<T extends unknown[]>(cb: (...args: T) => void) {
  * @param cb Decorator
  * @returns Handler
  */
-function safeDecorator(cb: (req: IncomingMessage) => void) {
+function safeDecorator(cb: (req: IncomingMessage) => MaybePromise<void>) {
     return async (req: IncomingMessage, res: ServerResponse, next: NextCallback) => {
         try {
             await cb(req);
