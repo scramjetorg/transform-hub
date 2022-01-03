@@ -9,6 +9,14 @@ import { getLogger } from "@scramjet/logger";
 
 const logger = getLogger("ApiServer-stream");
 
+/**
+ * Checks if given mime types are acceptable for given parameters.
+ *
+ * @param {string|undefined} acc Accepted mime types.
+ * @param {boolean} text Indicates if text is expected as an output.
+ * @param {boolean} json Indicates if json is expected as an output.
+ * @returns True if mime types are acceptable.
+ */
 function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     const types = [];
 
@@ -24,13 +32,27 @@ function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
     return mimeAccepts(acc, types);
 }
 
+/**
+ * Checks if x-stream-end is set to true.
+ *
+ * @param {IncomingMessage} req Request object.
+ * @param {boolean} _default Value to be retured if x-end-stream header is not present.
+ * @returns True if x-end-stream header is present or a given value.
+ */
 function checkEndHeader(req: IncomingMessage, _default?: boolean) {
     if (typeof req.headers["x-end-stream"] === "string" && ["true", "false", "success"].includes(req.headers["x-end-stream"])) {
         return req.headers["x-end-stream"] === "true";
     }
+
     return _default;
 }
 
+/**
+ * Creates methods to handle stream specific requests.
+ *
+ * @param {SequentialCeroRouter} router Router to create handlers for.
+ * @returns Object with hadlers.
+ */
 export function createStreamHandlers(router: SequentialCeroRouter) {
     const decorator = (
         data: Readable,

@@ -1,5 +1,5 @@
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import { ControlMessageCode, ICommunicationHandler, MessageDataType, Middleware, OpResolver } from "@scramjet/types";
+import { APIRoute, ControlMessageCode, ICommunicationHandler, MessageDataType, Middleware, OpResolver } from "@scramjet/types";
 import { checkMessage } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
@@ -9,7 +9,19 @@ import { getLogger } from "@scramjet/logger";
 
 const logger = getLogger("API");
 
-export function createOperationHandler(router: SequentialCeroRouter) {
+/**
+ * Creates and returns a method to set up a POST/DELETE handlers for the given path.
+ *
+ * @param {SequentialCeroRouter} router Router to use.
+ * @returns Operation handler.
+ */
+export function createOperationHandler(router: SequentialCeroRouter): APIRoute["op"] {
+    /**
+     * Tries to parse data from the request body.
+     *
+     * @param {IncomingMessage} req Request object.
+     * @returns JSON object.
+     */
     const getData = async (req: IncomingMessage): Promise<object|undefined> => {
         if (!req.headers["content-type"])
             throw new CeroError("ERR_INVALID_CONTENT_TYPE");
@@ -46,13 +58,22 @@ export function createOperationHandler(router: SequentialCeroRouter) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
     };
+
     /**
-     * Simple POST request hook for static data in monitoring stream.
+     * Simple POST/DELETE request hook.
+     * Creates a Middleware for given method and path.
+     * This method can be used in two ways - as a control message handler or as a data handler.
      *
-     * @param method request method
-     * @param path the request path as string or regex
-     * @param message which operation
-     * @param conn the communication handler to use
+     * @example
+     * // Control message handler
+     * router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
+     * // Data handler
+     * router.op("post", `${this.apiBase}/start`, (req) => this.handleStartRequest(req));
+     *
+     * @param {string} method Request method.
+     * @param {string|RegExp} path Request address.
+     * @param {OpResolver} message which operation.
+     * @param {ICommunicationHandler} conn the communication handler to use.
      */
     const op = <T extends ControlMessageCode>(
         method: string = "post",
@@ -102,11 +123,14 @@ export function createOperationHandler(router: SequentialCeroRouter) {
         };
 
         switch (method) {
+        case "post":
+            router.post(path, handler);
+            break;
         case "delete":
-            router.delete(path, handler);
+            router.post(path, handler);
             break;
         default:
-            router.post(path, handler);
+            throw new Error("ERR_UNSUPPORTED_METHOD");
         }
     };
 
