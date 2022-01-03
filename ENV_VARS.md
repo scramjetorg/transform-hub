@@ -9,6 +9,12 @@
 
 ### BDD tests
 
+`SCRAMJET_SPAWN_JS: boolean (default: false)`
+
+Used to switch between running `host` with `ts-node` and `node`.
+Which comes down to whether you have to build `host` first or is it run directly from the TS source code.
+
+---
 `SCRAMJET_SPAWN_TS: boolean (default: false)`
 
 Used to switch between running `host` with `ts-node` and `node`.
@@ -40,7 +46,7 @@ Required in some performance tests. Path to a file.
 
 ---
 `NO_DOCKER: boolean (default: false)`
-Run host with '--no-docker' option. 
+Run host with '--no-docker' option.
 
 ### Runner
 

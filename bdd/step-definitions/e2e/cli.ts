@@ -7,14 +7,10 @@ import * as fs from "fs";
 import { getStreamsFromSpawn } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 
-// const si = process.env.SCRAMJET_SPAWN_TS
-//     ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
-//     : ["node", "../dist/cli/bin"]
-// ;
-
+// eslint-disable-next-line no-nested-ternary
 const si = process.env.SCRAMJET_SPAWN_JS
-    ? ["node", "../dist/cli/bin"]
-    : ["si"]
+    ? ["node", "../dist/cli/bin"] : process.env.SCRAMJET_SPAWN_TS
+        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"] : ["si"]
 ;
 
 const connectionFlags = () => process.env.LOCAL_HOST_BASE_URL
