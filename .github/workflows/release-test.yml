@@ -45,5 +45,4 @@ jobs:
         run: scramjet-transform-hub &
 
       - name: Run BDD npm tests
-        run: SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd --tags=@npm
-      
+        run: SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 test:bdd-ci
