@@ -61,8 +61,8 @@ export class FreePortsFinder {
      * Finds desired amount of free ports in the given range. If there are not enough free ports, error is thrown.
      *
      * @param {number} portsCount How many ports to find.
-     * @param min Starting port number.
-     * @param max Ending port number.
+     * @param {number} min Starting port number.
+     * @param {number} max Ending port number.
      * @returns Promise resolving to array of free ports.
      */
     static async getPorts(portsCount: number, min: number, max: number): Promise<number[]> | never {
