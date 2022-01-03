@@ -3,14 +3,29 @@ import { ServerResponse, IncomingMessage } from "http";
 import { Readable, Writable } from "stream";
 import { CeroError } from "./definitions";
 
+/**
+ * Returns result of the function call if object is a function or the object itself.
+ *
+ * @param {any} object Object.
+ * @param {IncomingMessage} req Request.
+ * @returns {Promise<any>} Promise resolving to the result of the function call or to the object itself.
+ */
 export async function getObject(object: any, req: IncomingMessage): Promise<any> {
     if (typeof object === "function") {
-        return await object(req);
+        return object(req);
     }
 
     return object;
 }
 
+/**
+ * Returns result of the function call if object is a function or the object itself.
+ *
+ * @param {any} object Object.
+ * @param {IncomingMessage} req Request.
+ * @param {ServerResponse} res Response.
+ * @returns {Promise<any>} Promise resolving to the result of the function call or to the object itself.
+ */
 export async function getWritable(object: any, req: IncomingMessage, res: ServerResponse): Promise<Writable | Object> {
     if (typeof object === "function") {
         return object(req, res);
@@ -19,6 +34,14 @@ export async function getWritable(object: any, req: IncomingMessage, res: Server
     return object;
 }
 
+/**
+ * Identifies type of given object. If object is a function, it will be called.
+ *
+ * @param req Request object.
+ * @param res Response object.
+ * @param stream Object to identify.
+ * @returns Readable if object is a stream or results of function call if object is a function.
+ */
 export async function getStream(
     req: ParsedMessage,
     res: ServerResponse,
