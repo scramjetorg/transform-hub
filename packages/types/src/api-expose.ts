@@ -137,8 +137,8 @@ export interface APIBase {
     /**
      * Allows to register middlewares for specific paths, for all HTTP methods.
      *
-     * @param path
-     * @param middlewares
+     * @param {string|RegExp} path
+     * @param {Middleware[]} middlewares
      */
     use(path: string | RegExp, ...middlewares: Middleware[]): void;
 }
