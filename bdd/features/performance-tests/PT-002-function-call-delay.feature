@@ -1,6 +1,6 @@
 Feature: Maintain efficiency within a host
 
-    @ci
+    @ci @npm
     Scenario: PT-002 TC-001 Maintain efficiency - quick test
         Given host is running
         When sequence "../packages/reference-apps/inert-sequence-2-with-delay.tar.gz" loaded
