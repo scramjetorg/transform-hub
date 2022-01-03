@@ -1,7 +1,16 @@
 import * as net from "net";
 import * as dgram from "dgram";
 
+/**
+ * Provides methods to find free tcp/udp ports.
+ */
 export class FreePortsFinder {
+    /**
+     * Check if port is available for tcp.
+     *
+     * @param {number} port Port number.
+     * @returns Promise resolving to true if port is available, false otherwise.
+     */
     static async checkTCPPort(port: number): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const server = net.createServer();
@@ -22,6 +31,12 @@ export class FreePortsFinder {
         });
     }
 
+    /**
+     * Check if port is available for udp.
+     *
+     * @param {number} port Port number.
+     * @returns Promise resolving to true if port is available, false otherwise.
+     */
     static async checkUDPPort(port: number): Promise<boolean> {
         return new Promise((resolve, reject) => {
             const server = dgram.createSocket("udp4");
@@ -42,7 +57,15 @@ export class FreePortsFinder {
         });
     }
 
-    static async getPorts(portsCount: number, min: number, max: number): Promise<number[]> {
+    /**
+     * Finds desired amount of free ports in the given range. If there are not enough free ports, error is thrown.
+     *
+     * @param {number} portsCount How many ports to find.
+     * @param min Starting port number.
+     * @param max Ending port number.
+     * @returns Promise resolving to array of free ports.
+     */
+    static async getPorts(portsCount: number, min: number, max: number): Promise<number[]> | never {
         const ports = [];
 
         for (let port = min; port <= max; port++) {
