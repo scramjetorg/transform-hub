@@ -13,6 +13,8 @@
 
 Used to switch between running `host` with `ts-node` and `node`.
 Which comes down to whether you have to build `host` first or is it run directly from the TS source code.
+It is used in CLI tests, when set to `true` CLI commands will be run with `node` out of dist folder.
+When set to `false` (default) cli commands will be run with the CLI installed from npm (with `si` command).
 
 ---
 `SCRAMJET_SPAWN_TS: boolean (default: false)`
