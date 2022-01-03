@@ -62,8 +62,11 @@ export class SocketServer extends EventEmitter implements IComponent {
 
                 this.logger.info(`Connection on channel: ${channel}`);
 
-                // @TODO check it it runner[channel] was null before if not throw
-                runner[channel] = connection;
+                if (runner[channel] === null) {
+                    runner[channel] = connection;
+                } else {
+                    throw new Error(`Runner(${id}) wanted to connect on already initialized channel ${channel}`);
+                }
 
                 if (runner.every(isDefined)) {
                     const streams: DownstreamStreamsConfig = runner as RunnerOpenConnections;
