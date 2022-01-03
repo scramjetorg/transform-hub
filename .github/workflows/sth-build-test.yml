@@ -1,4 +1,4 @@
-name: STH package install and tests
+name: STH build and tests
 
 on:
   pull_request:
@@ -133,27 +133,6 @@ jobs:
           name:  dockerPreRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
           path: '*.tar.gz'
           retention-days: 1
-
-  install-sth-package:
-    name: Install STH (Nodejs ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Setup Nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install sth package
-        run: npm install -g @scramjet/sth @scramjet/cli
 
   build-sth:
     name: Build STH (Nodejs ${{ matrix.node-version }})
