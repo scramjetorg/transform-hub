@@ -127,7 +127,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             router.post(path, handler);
             break;
         case "delete":
-            router.post(path, handler);
+            router.delete(path, handler);
             break;
         default:
             throw new Error("ERR_UNSUPPORTED_METHOD");
