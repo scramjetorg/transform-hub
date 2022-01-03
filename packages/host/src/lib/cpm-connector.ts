@@ -90,7 +90,8 @@ export class CPMConnector extends EventEmitter {
     communicationStream?: StringStream;
 
     /**
-     * Stream to used to read and write data to Manager.
+     * Stream used to read and write data to Manager.
+    ```
      *
      * @type {Duplex}
      */
@@ -147,7 +148,7 @@ export class CPMConnector extends EventEmitter {
     cpmURL: string;
 
     /**
-     * VerserClient instance used for connect with Verser.
+     * VerserClient instance used for connecting with Verser.
      *
      * @type {VerserClient}
      */
@@ -245,7 +246,7 @@ export class CPMConnector extends EventEmitter {
     }
 
     /**
-     * Sets up a handlers for specific channels on the VerserClient connection.
+     * Sets up handlers for specific channels on the VerserClient connection.
      * Channel 0 is reserved to handle control messages from Manager.
      * CHannel 1 is reserved for log stream send to Manager.
      */
@@ -340,7 +341,7 @@ export class CPMConnector extends EventEmitter {
 
     /**
      * Handles connection close.
-     * Tryies to reconnect.
+     * Tries to reconnect.
      */
     async handleConnectionClose() {
         this.connected = false;
