@@ -1,6 +1,6 @@
 Feature: Event e2e tests
 
-    @ci @npm
+    @ci
     Scenario: E2E-004 TC-001 API test - Send test-event through API and get event emitted by sequence
         Given host is running
         When sequence "../packages/reference-apps/event-sequence-v2.tar.gz" loaded
@@ -13,7 +13,7 @@ Feature: Event e2e tests
         And runner has ended execution
         Then host is still running
 
-    @ci @npm
+    @ci
     Scenario: E2E-004 TC-002 Send test-event in one function and emit this event in another function within one sequence
         Given host is running
         When sequence "../packages/reference-apps/event-sequence-2.tar.gz" loaded
