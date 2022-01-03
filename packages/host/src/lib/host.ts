@@ -26,7 +26,7 @@ export type HostOptions = Partial<{
 
 /**
  * Host provides functionality to manage instances and sequences.
- * Using provided servers to set's up API and server for communicating with instance controllers.
+ * Using provided servers to set up API and server for communicating with instance controllers.
  * Can communicate with Manager.
  */
 export class Host implements IComponent {
@@ -36,7 +36,7 @@ export class Host implements IComponent {
     config: STHConfiguration;
 
     /**
-     * TODO: Comment.
+     * The Host's API Server.
      */
     api: APIExpose;
 
@@ -462,7 +462,7 @@ export class Host implements IComponent {
     }
 
     /**
-     * Creates new CSIController {@link CSIController} object and handles it's events.
+     * Creates new CSIController {@link CSIController} object and handles its events.
      *
      * @param {SequenceInfo} sequence Sequence info object.
      * @param {AppConfig} appConfig App configuration object.
@@ -632,7 +632,7 @@ export class Host implements IComponent {
 
     /**
      * Stops all running instances by sending KILL command to every instance
-     * using it's CSIController {@link CSIController}
+     * using its CSIController {@link CSIController}
      */
     async stop() {
         this.logger.log("Stopping instances...");
