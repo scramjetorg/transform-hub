@@ -11,7 +11,7 @@ Feature: Sample e2e tests
         And runner has ended execution
         Then host is still running
 
-    @ci @npm
+    @ci
     Scenario: E2E-001 TC-002 API test - Get instance output
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
