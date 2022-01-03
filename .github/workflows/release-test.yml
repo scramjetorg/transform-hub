@@ -8,6 +8,7 @@ jobs:
   test-npm-sth:
     name: Test STH from npm package (Nodejs ${{ matrix.node-version }})
     runs-on: ubuntu-latest
+
     timeout-minutes: 20
 
     strategy:
@@ -23,8 +24,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile --silent
+
+      - name: Build packages
+        run: yarn build:packages
 
       - name: Build refapps
         run: yarn build:refapps
@@ -32,18 +39,26 @@ jobs:
       - name: Pack sequences
         run: yarn packseq
 
-      - name: Install ts-node
-        run: npm install -g ts-node
+      - name: build runner Docker image
+        run: docker build -q -t scramjetorg/runner:$(jq -r .version package.json) -f Dockerfile ../../
+        working-directory: packages/runner
+
+      - name: Build runner Docker image
+        run: docker build -q -t scramjetorg/pre-runner:$(jq -r .version package.json) .
+        working-directory: packages/pre-runner
 
       - name: npm link STH
-        run: npm link /home/runner/work/transform-hub/transform-hub/packages/sth/
+        run: npm link /home/runner/work/transform-hub/transform-hub/dist/sth/
 
       - name: npm link CLI
-        run: npm link /home/runner/work/transform-hub/transform-hub/packages/cli/
+        run: npm link /home/runner/work/transform-hub/transform-hub/dist/cli/
 
       - name: Start sth
-        run: scramjet-transform-hub &
+        run: scramjet-transform-hub >> scramjet.log 2>&1 &
 
       - name: Run BDD npm tests
-        run: SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd --tags=@npm
-      
+        run: DEVELOPMENT=true SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd --tags=@npm
+
+      - name: Show logs
+        if: always()
+        run: cat scramjet.log
