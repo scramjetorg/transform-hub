@@ -58,18 +58,20 @@ class CSHClient implements ICSHClient {
     }
 
     async disconnect() {
-        const streamsExitedPromised = this.streams
-            .map(stream => new Promise(
-                (res, rej) => {
-                stream!
-                    .on("error", rej)
-                    .on("end", res);
+        this.logger.log("Disconnecting from host");
 
-                if ("writable" in stream!) {
-                    stream.end();
-                } else {
-                    stream!.destroy();
-                }
+        const streamsExitedPromised = this.streams.map(stream =>
+            new Promise(
+                (res, rej) => {
+                    stream!
+                        .on("error", rej)
+                        .on("end", res);
+
+                    if ("writable" in stream!) {
+                        stream.end();
+                    } else {
+                        stream!.destroy();
+                    }
                 }
             ));
 
