@@ -5,7 +5,7 @@ Feature: Process large file test
         Given host is running
         When sequence "../packages/reference-apps/big-file-sequence.tar.gz" loaded
         And instance started with url from assets argument "scp-store/small-file.json.gz"
-        And get "output" in background with instanceId
+        And get "output" with instanceId and wait for it to finish
         When response data is equal "95"
         Then host is still running
 
@@ -16,7 +16,7 @@ Feature: Process large file test
         And instance started with url from assets argument "scp-store/example512M.json.gz"
         And wait for instance healthy is "true"
         And get runner PID
-        And get "output" in background with instanceId
+        And get "output" with instanceId and wait for it to finish
         And runner has ended execution
         When response data is equal "39996113"
         Then host is still running
@@ -28,7 +28,7 @@ Feature: Process large file test
         And instance started with url from assets argument "scp-store/example10G.json.gz"
         And wait for instance healthy is "true"
         And get runner PID
-        And get "output" in background with instanceId
+        And get "output" with instanceId and wait for it to finish
         And runner has ended execution
         When response data is equal "781174082"
         Then host is still running

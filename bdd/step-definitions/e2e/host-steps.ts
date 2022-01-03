@@ -258,7 +258,7 @@ When("instance started with arguments {string} and write stream to {string} and 
     ]);
 });
 
-When("get {string} in background with instanceId", { timeout: 500000 }, async function(this: CustomWorld, outputStream: InstanceOutputStream) {
+When("get {string} with instanceId and wait for it to finish", { timeout: 500000 }, async function(this: CustomWorld, outputStream: InstanceOutputStream) {
     const stream: Response = await this.resources.instance?.getStream(outputStream) as Response;
     const out = stream.data;
 
