@@ -136,8 +136,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-016 Package and send with stdout
         Given host is running
-        When I execute CLI with "pack ../packages/reference-apps/transform-function" arguments
-        And I execute CLI with "seq send ../packages/reference-apps/transform-function.tar.gz --format json" arguments
+        When I execute CLI with bash command "$SI pack ../packages/reference-apps/transform-function -c | $SI seq send --format json"
         Then I get Sequence id
         Then I start Sequence
         Then I get list of instances
@@ -146,7 +145,7 @@ Feature: CLI tests
     @ci
     Scenario: E2E-010 TC-017
         Given host is running
-        When I execute CLI with bash command "$si seq send ../packages/reference-apps/inert-function.tar.gz --format json"
+        When I execute CLI with bash command "$SI seq send ../packages/reference-apps/inert-function.tar.gz --format json"
         Then I get Sequence id
         Then I start Sequence
         Then I get instance health
