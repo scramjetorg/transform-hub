@@ -32,7 +32,7 @@ export type topicDataType = {
 
 /**
  * Service Discovery provides methods to manage topics.
- * It's functionality covers creating, storing, removing topics
+ * Its functionality covers creating, storing, removing topics
  * and requesting Manager when instance requires data but data is not available locally.
  */
 export class ServiceDiscovery {
