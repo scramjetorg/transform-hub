@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { ReadableApp, SynchronousStreamable } from "@scramjet/types";
+import { HasTopicInformation, ReadableApp } from "@scramjet/types";
 import { PassThrough } from "stream";
 
 const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Basia", "Natalia", "Monika", "Wojtek", "Arek"];
@@ -12,7 +12,7 @@ const names = ["Alice", "Ada", "Aga", "Michał", "Patryk", "Rafał", "Aida", "Ba
  */
 
 export = async function(_stream, max = 10) {
-    const ps = new PassThrough({ objectMode: true });
+    const ps: PassThrough & HasTopicInformation = new PassThrough({ objectMode: true });
 
     let cnt = 0;
 
@@ -31,10 +31,8 @@ export = async function(_stream, max = 10) {
         }
     }, 500);
 
-    // eslint-disable-next-line no-extra-parens
-    (ps as SynchronousStreamable<any>).topic = "names";
-    // eslint-disable-next-line no-extra-parens
-    (ps as SynchronousStreamable<any>).contentType = "application/x-ndjson";
+    ps.topic = "names";
+    ps.contentType = "application/x-ndjson";
 
     return ps;
 } as ReadableApp<any>;

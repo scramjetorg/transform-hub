@@ -1,5 +1,5 @@
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import { ControlMessageCode, ICommunicationHandler, MessageDataType, Middleware, OpResolver, ParsedMessage } from "@scramjet/types";
+import { ControlMessageCode, ICommunicationHandler, MessageDataType, Middleware, OpResolver } from "@scramjet/types";
 import { checkMessage } from "@scramjet/model";
 import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
@@ -61,12 +61,9 @@ export function createOperationHandler(router: SequentialCeroRouter) {
             logger.log(req.method, req.url);
             try {
                 if (typeof message === "function") {
-                    // eslint-disable-next-line no-extra-parens
-                    const parsedReq = req as ParsedMessage;
+                    req.body = await getData(req);
 
-                    parsedReq.body = await getData(req);
-
-                    const result = await message(parsedReq, res);
+                    const result = await message(req, res);
 
                     let response = "";
 

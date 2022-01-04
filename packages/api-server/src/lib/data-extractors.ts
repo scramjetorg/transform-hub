@@ -20,7 +20,7 @@ export async function getWritable(object: any, req: IncomingMessage, res: Server
 }
 
 export async function getStream(
-    req: IncomingMessage,
+    req: ParsedMessage,
     res: ServerResponse,
     stream: StreamInput
 ): Promise<Readable> {
@@ -32,7 +32,7 @@ export async function getStream(
     else if (stream instanceof Promise)
         return getStream(req, res, await stream);
     else if (typeof stream === "function")
-        return getStream(req, res, await stream(req as ParsedMessage, res));
+        return getStream(req, res, await stream(req, res));
 
     throw new CeroError("ERR_FAILED_FETCH_DATA");
 }
