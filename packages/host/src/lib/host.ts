@@ -171,8 +171,7 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
         this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
-            // eslint-disable-next-line no-extra-parens
-            const params = (req as ParsedMessage).params || {};
+            const params = req.params || {};
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
             const end = req.headers["x-end-stream"] === "true";
 
@@ -202,7 +201,7 @@ export class Host implements IComponent {
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
 
-        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req as ParsedMessage, res, next));
+        this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
     instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {

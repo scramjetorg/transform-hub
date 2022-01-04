@@ -40,8 +40,7 @@ implements AppContext<AppConfigType, State> {
         this.logger = getLogger("Sequence");
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    private handleSave(state: any): void {
+    private handleSave(_state: any): void {
         throw new Error("Method not implemented.");
     }
 

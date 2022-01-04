@@ -1,4 +1,3 @@
-/* eslint-disable padding-line-between-statements */
 import { HostClient } from "@scramjet/api-client/";
 import { createReadStream } from "fs";
 import { resolve } from "path";

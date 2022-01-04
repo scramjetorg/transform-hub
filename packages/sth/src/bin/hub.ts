@@ -6,7 +6,6 @@ import { resolve } from "path";
 
 const program = new Command();
 const options = program
-    // .version(version) // TODO: replace with find-package-json
     .option("-L, --log-level <level>", "Specify log level", "debug")
     .option("-S, --socket-path <socket>", "CSI socket location")
     .option("-P, --port <port>", "API port")

@@ -1,4 +1,4 @@
-import { GetResolver, ICommunicationHandler, MessageDataType, MonitoringMessageCode, NextCallback, ParsedMessage } from "@scramjet/types";
+import { GetResolver, ICommunicationHandler, MessageDataType, MonitoringMessageCode, NextCallback } from "@scramjet/types";
 import { IncomingMessage, ServerResponse } from "http";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
@@ -58,7 +58,7 @@ export function createGetterHandler(router: SequentialCeroRouter) {
             res.setHeader("Access-Control-Allow-Origin", "*");
             try {
                 check(req);
-                return output(await callback(req as ParsedMessage), res, next);
+                return output(await callback(req), res, next);
             } catch (e: any) {
                 return next(new CeroError("ERR_INTERNAL_ERROR", e));
             }
