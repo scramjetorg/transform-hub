@@ -36,7 +36,7 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
-const exitDelay = 5000;
+const exitDelay = 7000;
 
 function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     oldStream.write = newStream.write.bind(newStream);
