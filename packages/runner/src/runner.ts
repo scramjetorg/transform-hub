@@ -36,7 +36,8 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
-const exitDelay = 7000;
+// @TODO make this a parameter, we could be extending that bc our CLI tests execute commands slow, even ~3s/command 
+const exitDelay = 10000;
 
 function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     oldStream.write = newStream.write.bind(newStream);
