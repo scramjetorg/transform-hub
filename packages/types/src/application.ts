@@ -70,17 +70,6 @@ export type InertApp<
 
 export type ApplicationFunction = ReadableApp | WritableApp | TransformApp | InertApp;
 
-export type ApplicationExpose<
-    Consumes = any,
-    Produces = any,
-    Z extends any[] = any[],
-    S extends any = any,
-    AppConfigType extends AppConfig = AppConfig
-    > = {
-        // Because we need this a bit lower again, so it's an egg-hen problem.
-        // eslint-disable-next-line no-use-before-define
-        [exposeSequenceSymbol]: Application<Consumes, Produces, Z, S, AppConfigType>;
-    };
 /**
  * Application is an acceptable input for the runner.
  *
@@ -98,3 +87,13 @@ export type Application<
     ReadableApp<Produces, Z, S, AppConfigType> |
     WritableApp<Consumes, Z, S, AppConfigType> |
     InertApp<Z, S>;
+
+export type ApplicationExpose<
+    Consumes = any,
+    Produces = any,
+    Z extends any[] = any[],
+    S extends any = any,
+    AppConfigType extends AppConfig = AppConfig
+    > = {
+        [exposeSequenceSymbol]: Application<Consumes, Produces, Z, S, AppConfigType>;
+    };

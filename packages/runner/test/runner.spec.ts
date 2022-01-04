@@ -101,7 +101,6 @@ test("Stop sequence", async (t: any) => {
 
     t.true(
         writeMessageOnStreamMock.calledOnceWith(
-            // eslint-disable-next-line dot-notation
             [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: undefined }], runner["monitorStream"]
         )
     );

@@ -11,12 +11,12 @@ export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" 
 export type StreamInput =
     ((req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>) | MaybePromise<Readable>;
 export type StreamOutput =
-    ((req: IncomingMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
+    ((req: ParsedMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
 export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
 
 export type NextCallback = (err?: Error) => void;
-export type Middleware = (req: IncomingMessage, res: ServerResponse, next: NextCallback) => void;
+export type Middleware = (req: ParsedMessage, res: ServerResponse, next: NextCallback) => void;
 export type Decorator = (req: IncomingMessage) => void;
 
 /**

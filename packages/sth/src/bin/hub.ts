@@ -5,7 +5,6 @@ import { ConfigService } from "@scramjet/sth-config";
 
 const program = new Command();
 const options = program
-    // .version(version) // TODO: replace with find-package-json
     .option("-L, --log-level <level>", "Specify log level", "debug")
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
