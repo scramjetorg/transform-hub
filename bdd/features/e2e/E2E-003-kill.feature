@@ -7,7 +7,7 @@ Feature: Kill e2e tests
         And instance started
         And wait for instance healthy is "true"
         And get runner PID
-        When send kill message to instance
+        And send kill message to instance
         And runner has ended execution
         Then host is still running
 
