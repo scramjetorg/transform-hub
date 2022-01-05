@@ -10,7 +10,6 @@ type HostOpenConnections = [
 
 class CSHClient implements ICSHClient {
     private _streams?: UpstreamStreamsConfig;
-    private connection?: net.Socket;
 
     logger: Console;
 
@@ -74,8 +73,6 @@ class CSHClient implements ICSHClient {
                     }
                 }
             ));
-
-        this.connection?.end();
 
         await Promise.all(streamsExitedPromised);
     }
