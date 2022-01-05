@@ -267,11 +267,10 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.defineControlStream();
 
         this.hostClient.stdinStream.on("data", (chunk) => {
-            this.logger.log("INCOMING stdin: " + chunk);
             process.stdin.unshift(chunk);
         });
         this.hostClient.stdinStream.on("end", () => {
-            process.stdin.end();
+            process.stdin.emit("end");
         });
 
         overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
