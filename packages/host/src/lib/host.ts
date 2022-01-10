@@ -140,7 +140,7 @@ export class Host implements IComponent {
      * - getting sequence details
      * - listing all instances running on the CSH
      * - listing all sequences saved on the CSH
-     * - intance
+     * - instance
      */
     attachHostAPIs() {
         this.api.downstream(`${this.apiBase}/sequence`,

@@ -2,6 +2,8 @@
 
 # Class: DockerSequenceAdapter
 
+Adapter for preparing Sequence to be run in Docker container.
+
 ## Implements
 
 - `ISequenceAdapter`
@@ -43,7 +45,7 @@
 
 #### Defined in
 
-[docker-sequence-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L20)
+[docker-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L23)
 
 ## Properties
 
@@ -53,7 +55,7 @@
 
 #### Defined in
 
-[docker-sequence-adapter.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L17)
+[docker-sequence-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L20)
 
 ___
 
@@ -63,7 +65,7 @@ ___
 
 #### Defined in
 
-[docker-sequence-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L20)
+[docker-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L23)
 
 ___
 
@@ -73,7 +75,7 @@ ___
 
 #### Defined in
 
-[docker-sequence-adapter.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L18)
+[docker-sequence-adapter.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L21)
 
 ## Methods
 
@@ -81,19 +83,23 @@ ___
 
 ▸ `Private` **createVolume**(`id`): `Promise`<`string`\>
 
+Creates volume with provided id.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `id` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | Volume id. |
 
 #### Returns
 
 `Promise`<`string`\>
 
+Created volume.
+
 #### Defined in
 
-[docker-sequence-adapter.ts:123](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L123)
+[docker-sequence-adapter.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L161)
 
 ___
 
@@ -101,11 +107,13 @@ ___
 
 ▸ **fetch**(`name`): `Promise`<`void`\>
 
+Pulls image from registry.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `name` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `name` | `string` | Docker image name |
 
 #### Returns
 
@@ -113,7 +121,7 @@ ___
 
 #### Defined in
 
-[docker-sequence-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L35)
+[docker-sequence-adapter.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L46)
 
 ___
 
@@ -121,16 +129,23 @@ ___
 
 ▸ **identify**(`stream`, `id`): `Promise`<`SequenceConfig`\>
 
+Unpacks and identifies sequence in Docker volume.
+This is the main adapter method creating new Docker volume and starting Prerunner
+with created volume mounted to unpack sequence on it.
+When Prerunner finishes, it will return JSON with sequence information.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `stream` | `Readable` |
-| `id` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `stream` | `Readable` | Stream containing sequence to be indentified. |
+| `id` | `string` | Id for the new docker volume where sequence will be stored. |
 
 #### Returns
 
 `Promise`<`SequenceConfig`\>
+
+Promise resolving to sequence config.
 
 #### Implementation of
 
@@ -138,7 +153,7 @@ ISequenceAdapter.identify
 
 #### Defined in
 
-[docker-sequence-adapter.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L83)
+[docker-sequence-adapter.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L115)
 
 ___
 
@@ -146,25 +161,31 @@ ___
 
 ▸ `Private` **identifyOnly**(`volume`): `Promise`<`undefined` \| `SequenceConfig`\>
 
+Identifies sequence existing on Docker volume.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `volume` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `volume` | `string` | Volume id. |
 
 #### Returns
 
 `Promise`<`undefined` \| `SequenceConfig`\>
 
+Sequence configuration or undefined if sequence cannot be identified.
+
 #### Defined in
 
-[docker-sequence-adapter.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L52)
+[docker-sequence-adapter.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L74)
 
 ___
 
 ### init
 
 ▸ **init**(): `Promise`<`void`\>
+
+Initializes adapter.
 
 #### Returns
 
@@ -176,7 +197,7 @@ ISequenceAdapter.init
 
 #### Defined in
 
-[docker-sequence-adapter.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L27)
+[docker-sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L33)
 
 ___
 
@@ -184,9 +205,13 @@ ___
 
 ▸ **list**(): `Promise`<`SequenceConfig`[]\>
 
+Finds existing Docker volumes containing sequences.
+
 #### Returns
 
 `Promise`<`SequenceConfig`[]\>
+
+Promise resolving to array of identified sequences.
 
 #### Implementation of
 
@@ -194,7 +219,7 @@ ISequenceAdapter.list
 
 #### Defined in
 
-[docker-sequence-adapter.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L39)
+[docker-sequence-adapter.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L55)
 
 ___
 
@@ -202,21 +227,25 @@ ___
 
 ▸ `Private` **parsePackage**(`streams`, `wait`, `volumeId`): `Promise`<`DockerSequenceConfig`\>
 
+Parses PreRunner output and returns sequence configuration.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `streams` | [`DockerAdapterStreams`](../README.md#dockeradapterstreams) |
-| `wait` | `Function` |
-| `volumeId` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `streams` | [`DockerAdapterStreams`](../README.md#dockeradapterstreams) | Docker container std streams. |
+| `wait` | `Function` | TBD |
+| `volumeId` | `string` | Id of the volume where sequence is stored. |
 
 #### Returns
 
 `Promise`<`DockerSequenceConfig`\>
 
+Promise resolving to sequence configuration.
+
 #### Defined in
 
-[docker-sequence-adapter.ts:131](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L131)
+[docker-sequence-adapter.ts:177](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L177)
 
 ___
 
@@ -224,11 +253,13 @@ ___
 
 ▸ **remove**(`config`): `Promise`<`void`\>
 
+Removes Docker volume used by Sequence.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `config` | `SequenceConfig` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `config` | `SequenceConfig` | Sequence configuration. |
 
 #### Returns
 
@@ -240,4 +271,4 @@ ISequenceAdapter.remove
 
 #### Defined in
 
-[docker-sequence-adapter.ts:158](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L158)
+[docker-sequence-adapter.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L209)

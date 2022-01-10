@@ -4,6 +4,10 @@
 
 ## Table of contents
 
+### Classes
+
+- [Logger](classes/Logger.md)
+
 ### Type aliases
 
 - [MessageFormatter](README.md#messageformatter)
@@ -13,6 +17,7 @@
 - [addLoggerOutput](README.md#addloggeroutput)
 - [close](README.md#close)
 - [getLogger](README.md#getlogger)
+- [removeLoggerOutput](README.md#removeloggeroutput)
 
 ## Type aliases
 
@@ -46,7 +51,7 @@
 
 #### Defined in
 
-[index.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L12)
+[index.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L11)
 
 ## Functions
 
@@ -69,7 +74,7 @@ Pipes log streams to the provided outputs in serialized format
 
 #### Defined in
 
-[index.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L163)
+[index.ts:199](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L199)
 
 ___
 
@@ -83,13 +88,13 @@ ___
 
 #### Defined in
 
-[index.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L153)
+[index.ts:187](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L187)
 
 ___
 
 ### getLogger
 
-▸ **getLogger**(`reference`, `options?`): `Logger`
+▸ **getLogger**(`reference`, `options?`): [`Logger`](classes/Logger.md)
 
 Creates a Console compatible logger with basic decorations
 
@@ -102,10 +107,34 @@ Creates a Console compatible logger with basic decorations
 
 #### Returns
 
-`Logger`
+[`Logger`](classes/Logger.md)
 
 a Console compatible logger
 
 #### Defined in
 
-[index.ts:176](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L176)
+[index.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L224)
+
+___
+
+### removeLoggerOutput
+
+▸ **removeLoggerOutput**(`out`, `err?`, `end?`): `void`
+
+Removes log outputs from the logger so that they will no longer receive logs
+
+#### Parameters
+
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `out` | `WritableStream`<`any`\> | `undefined` | stream for stdout logging |
+| `err` | `WritableStream`<`any`\> | `out` | stream for stderr logging |
+| `end` | `boolean` | `true` | if true, closes the stream after removing it |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[index.ts:211](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L211)

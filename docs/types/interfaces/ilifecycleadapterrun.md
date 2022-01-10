@@ -13,12 +13,10 @@
 ### Methods
 
 - [cleanup](ilifecycleadapterrun.md#cleanup)
-- [hookCommunicationHandler](ilifecycleadapterrun.md#hookcommunicationhandler)
 - [init](ilifecycleadapterrun.md#init)
 - [monitorRate](ilifecycleadapterrun.md#monitorrate)
 - [remove](ilifecycleadapterrun.md#remove)
 - [run](ilifecycleadapterrun.md#run)
-- [snapshot](ilifecycleadapterrun.md#snapshot)
 - [stats](ilifecycleadapterrun.md#stats)
 
 ## Methods
@@ -39,29 +37,7 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L21)
-
-___
-
-### hookCommunicationHandler
-
-▸ **hookCommunicationHandler**(`communicationHandler`): `MaybePromise`<`void`\>
-
-Hooks up downstream streams.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `communicationHandler` | [`ICommunicationHandler`](icommunicationhandler.md) | CommunicationHandler |
-
-#### Returns
-
-`MaybePromise`<`void`\>
-
-#### Defined in
-
-[packages/types/src/lifecycle-adapters.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L48)
+[packages/types/src/lifecycle-adapters.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L16)
 
 ___
 
@@ -81,7 +57,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L16)
+[packages/types/src/lifecycle-adapters.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L11)
 
 ___
 
@@ -101,7 +77,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L50)
+[packages/types/src/lifecycle-adapters.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L32)
 
 ___
 
@@ -119,13 +95,13 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L24)
+[packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
 
 ___
 
 ### run
 
-▸ **run**(`config`): `Promise`<`number`\>
+▸ **run**(`config`, `instancesServerPort`, `instanceId`): `Promise`<`number`\>
 
 Starts Runner.
 
@@ -134,6 +110,8 @@ Starts Runner.
 | Name | Type |
 | :------ | :------ |
 | `config` | [`InstanceConifg`](../README.md#instanceconifg) |
+| `instancesServerPort` | `number` |
+| `instanceId` | `string` |
 
 #### Returns
 
@@ -143,25 +121,7 @@ Runner exit code.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L34)
-
-___
-
-### snapshot
-
-▸ **snapshot**(): `MaybePromise`<`string`\>
-
-Request snapshot and returns snapshot url.\
-
-#### Returns
-
-`MaybePromise`<`string`\>
-
-snapshot url.
-
-#### Defined in
-
-[packages/types/src/lifecycle-adapters.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L41)
+[packages/types/src/lifecycle-adapters.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L30)
 
 ___
 
@@ -181,4 +141,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L52)
+[packages/types/src/lifecycle-adapters.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L34)

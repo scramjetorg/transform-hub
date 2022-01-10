@@ -11,6 +11,7 @@
 - [GetSequenceInstancesResponse](sthrestapi.md#getsequenceinstancesresponse)
 - [GetSequenceResponse](sthrestapi.md#getsequenceresponse)
 - [GetSequencesResponse](sthrestapi.md#getsequencesresponse)
+- [OpResponse](sthrestapi.md#opresponse)
 - [SendSequenceResponse](sthrestapi.md#sendsequenceresponse)
 - [StartSequenceResponse](sthrestapi.md#startsequenceresponse)
 
@@ -18,7 +19,7 @@
 
 ### DeleteSequenceResponse
 
-Ƭ **DeleteSequenceResponse**: `OpResponse`<`Object`\>
+Ƭ **DeleteSequenceResponse**: [`OpResponse`](sthrestapi.md#opresponse)<`Object`\>
 
 #### Defined in
 
@@ -66,6 +67,22 @@ ___
 
 ___
 
+### OpResponse
+
+Ƭ **OpResponse**<`PayloadType`\>: `PayloadType` & { `opStatus`: `ReasonPhrases.OK`  } \| { `error?`: `unknown` ; `opStatus`: `Exclude`<`ReasonPhrases`, `ReasonPhrases.OK`\>  }
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `PayloadType` | extends `Record`<`string`, `unknown`\> |
+
+#### Defined in
+
+[packages/types/src/sth-rest-api/common.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/common.ts#L3)
+
+___
+
 ### SendSequenceResponse
 
 Ƭ **SendSequenceResponse**: { `id`: `string`  } \| { `error?`: `unknown` ; `opStatus`: `number`  }
@@ -78,7 +95,7 @@ ___
 
 ### StartSequenceResponse
 
-Ƭ **StartSequenceResponse**: `OpResponse`<`Object`\>
+Ƭ **StartSequenceResponse**: [`OpResponse`](sthrestapi.md#opresponse)<`Object`\>
 
 #### Defined in
 

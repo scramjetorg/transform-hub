@@ -2,6 +2,8 @@
 
 # Class: FreePortsFinder
 
+Provides methods to find free tcp/udp ports.
+
 ## Table of contents
 
 ### Constructors
@@ -26,19 +28,23 @@
 
 ▸ `Static` **checkTCPPort**(`port`): `Promise`<`boolean`\>
 
+Check if port is available for tcp.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `port` | `number` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `port` | `number` | Port number. |
 
 #### Returns
 
 `Promise`<`boolean`\>
 
+Promise resolving to true if port is available, false otherwise.
+
 #### Defined in
 
-[free-ports-finder.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L5)
+[free-ports-finder.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L14)
 
 ___
 
@@ -46,19 +52,23 @@ ___
 
 ▸ `Static` **checkUDPPort**(`port`): `Promise`<`boolean`\>
 
+Check if port is available for udp.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `port` | `number` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `port` | `number` | Port number. |
 
 #### Returns
 
 `Promise`<`boolean`\>
 
+Promise resolving to true if port is available, false otherwise.
+
 #### Defined in
 
-[free-ports-finder.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L25)
+[free-ports-finder.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L40)
 
 ___
 
@@ -66,18 +76,22 @@ ___
 
 ▸ `Static` **getPorts**(`portsCount`, `min`, `max`): `Promise`<`number`[]\>
 
+Finds desired amount of free ports in the given range. If there are not enough free ports, error is thrown.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `portsCount` | `number` |
-| `min` | `number` |
-| `max` | `number` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `portsCount` | `number` | How many ports to find. |
+| `min` | `number` | Starting port number. |
+| `max` | `number` | Ending port number. |
 
 #### Returns
 
 `Promise`<`number`[]\>
 
+Promise resolving to array of free ports.
+
 #### Defined in
 
-[free-ports-finder.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L45)
+[free-ports-finder.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L68)

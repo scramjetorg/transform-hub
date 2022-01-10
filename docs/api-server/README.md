@@ -182,7 +182,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L49)
+[packages/api-server/src/index.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L66)
 
 ___
 
@@ -196,7 +196,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L31)
+[packages/api-server/src/index.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L48)
 
 ___
 
