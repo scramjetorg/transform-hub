@@ -15,13 +15,28 @@ type Events = {
  */
 export class Verser extends TypedEmitter<Events> {
     private server: Server;
+    private connections: VerserConnection[] = [];
 
     constructor(server: Server) {
         super();
         this.server = server;
 
         this.server.on("connect", (req, socket) => {
-            this.emit("connect", new VerserConnection(req, socket));
+            const connection = new VerserConnection(req, socket);
+
+            this.connections.push(connection);
+
+            this.emit("connect", connection);
         });
+    }
+
+    async stop() {
+        await Promise.all(this.connections.map(connection => connection.close()));
+
+        await new Promise<void>(res => {
+            this.server.once("close", res).close();
+        });
+
+        this.connections = [];
     }
 }
