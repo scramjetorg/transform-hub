@@ -22,14 +22,14 @@
 
 ### writeMessageOnStream
 
-▸ `Static` **writeMessageOnStream**(`__namedParameters`, `streamToWrite?`): `void`
+▸ `Static` **writeMessageOnStream**(`__namedParameters`, `streamToWrite`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `__namedParameters` | `EncodedMonitoringMessage` |
-| `streamToWrite?` | `WritableStream`<`any`\> |
+| `streamToWrite` | `WritableStream`<`any`\> |
 
 #### Returns
 

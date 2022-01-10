@@ -2,6 +2,8 @@
 
 # Class: DockerInstanceAdapter
 
+Adapter for running Instance by Runner executed in Docker container.
+
 ## Implements
 
 - `ILifeCycleAdapterMain`
@@ -16,36 +18,19 @@
 
 ### Properties
 
-- [controlFifoPath](dockerinstanceadapter.md#controlfifopath)
-- [controlStream](dockerinstanceadapter.md#controlstream)
 - [dockerHelper](dockerinstanceadapter.md#dockerhelper)
-- [inputFifoPath](dockerinstanceadapter.md#inputfifopath)
-- [inputStream](dockerinstanceadapter.md#inputstream)
 - [logger](dockerinstanceadapter.md#logger)
-- [loggerFifoPath](dockerinstanceadapter.md#loggerfifopath)
-- [loggerStream](dockerinstanceadapter.md#loggerstream)
-- [monitorFifoPath](dockerinstanceadapter.md#monitorfifopath)
-- [monitorStream](dockerinstanceadapter.md#monitorstream)
-- [outputFifoPath](dockerinstanceadapter.md#outputfifopath)
-- [outputStream](dockerinstanceadapter.md#outputstream)
 - [resources](dockerinstanceadapter.md#resources)
-- [runnerStderr](dockerinstanceadapter.md#runnerstderr)
-- [runnerStdin](dockerinstanceadapter.md#runnerstdin)
-- [runnerStdout](dockerinstanceadapter.md#runnerstdout)
 
 ### Methods
 
 - [cleanup](dockerinstanceadapter.md#cleanup)
-- [createFifo](dockerinstanceadapter.md#createfifo)
-- [createFifoStreams](dockerinstanceadapter.md#createfifostreams)
 - [getPortsConfig](dockerinstanceadapter.md#getportsconfig)
-- [hookCommunicationHandler](dockerinstanceadapter.md#hookcommunicationhandler)
 - [init](dockerinstanceadapter.md#init)
 - [monitorRate](dockerinstanceadapter.md#monitorrate)
 - [preparePortBindingsConfig](dockerinstanceadapter.md#prepareportbindingsconfig)
 - [remove](dockerinstanceadapter.md#remove)
 - [run](dockerinstanceadapter.md#run)
-- [snapshot](dockerinstanceadapter.md#snapshot)
 - [stats](dockerinstanceadapter.md#stats)
 
 ## Constructors
@@ -56,29 +41,9 @@
 
 #### Defined in
 
-[docker-instance-adapter.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L54)
+[docker-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L32)
 
 ## Properties
-
-### controlFifoPath
-
-• `Private` `Optional` **controlFifoPath**: `string`
-
-#### Defined in
-
-[docker-instance-adapter.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L38)
-
-___
-
-### controlStream
-
-• `Private` **controlStream**: `DelayedStream`
-
-#### Defined in
-
-[docker-instance-adapter.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L47)
-
-___
 
 ### dockerHelper
 
@@ -86,27 +51,7 @@ ___
 
 #### Defined in
 
-[docker-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L35)
-
-___
-
-### inputFifoPath
-
-• `Private` `Optional` **inputFifoPath**: `string`
-
-#### Defined in
-
-[docker-instance-adapter.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L39)
-
-___
-
-### inputStream
-
-• `Private` **inputStream**: `DelayedStream`
-
-#### Defined in
-
-[docker-instance-adapter.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L49)
+[docker-instance-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L28)
 
 ___
 
@@ -120,67 +65,7 @@ IComponent.logger
 
 #### Defined in
 
-[docker-instance-adapter.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L54)
-
-___
-
-### loggerFifoPath
-
-• `Private` `Optional` **loggerFifoPath**: `string`
-
-#### Defined in
-
-[docker-instance-adapter.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L41)
-
-___
-
-### loggerStream
-
-• `Private` **loggerStream**: `DelayedStream`
-
-#### Defined in
-
-[docker-instance-adapter.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L48)
-
-___
-
-### monitorFifoPath
-
-• `Private` `Optional` **monitorFifoPath**: `string`
-
-#### Defined in
-
-[docker-instance-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L37)
-
-___
-
-### monitorStream
-
-• `Private` **monitorStream**: `DelayedStream`
-
-#### Defined in
-
-[docker-instance-adapter.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L46)
-
-___
-
-### outputFifoPath
-
-• `Private` `Optional` **outputFifoPath**: `string`
-
-#### Defined in
-
-[docker-instance-adapter.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L40)
-
-___
-
-### outputStream
-
-• `Private` **outputStream**: `DelayedStream`
-
-#### Defined in
-
-[docker-instance-adapter.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L50)
+[docker-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L32)
 
 ___
 
@@ -190,43 +75,16 @@ ___
 
 #### Defined in
 
-[docker-instance-adapter.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L52)
-
-___
-
-### runnerStderr
-
-• `Private` **runnerStderr**: `PassThrough`
-
-#### Defined in
-
-[docker-instance-adapter.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L45)
-
-___
-
-### runnerStdin
-
-• `Private` **runnerStdin**: `PassThrough`
-
-#### Defined in
-
-[docker-instance-adapter.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L43)
-
-___
-
-### runnerStdout
-
-• `Private` **runnerStdout**: `PassThrough`
-
-#### Defined in
-
-[docker-instance-adapter.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L44)
+[docker-instance-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L30)
 
 ## Methods
 
 ### cleanup
 
 ▸ **cleanup**(): `Promise`<`void`\>
+
+Performs cleanup after container close.
+Removes volume used by sequence and fifos used to communication with runner.
 
 #### Returns
 
@@ -238,52 +96,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[docker-instance-adapter.ts:316](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L316)
-
-___
-
-### createFifo
-
-▸ `Private` **createFifo**(`dir`, `fifoName`): `Promise`<`string`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `dir` | `string` |
-| `fifoName` | `string` |
-
-#### Returns
-
-`Promise`<`string`\>
-
-#### Defined in
-
-[docker-instance-adapter.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L75)
-
-___
-
-### createFifoStreams
-
-▸ `Private` **createFifoStreams**(`controlFifo`, `monitorFifo`, `loggerFifo`, `inputFifo`, `outputFifo`): `Promise`<`string`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `controlFifo` | `string` |
-| `monitorFifo` | `string` |
-| `loggerFifo` | `string` |
-| `inputFifo` | `string` |
-| `outputFifo` | `string` |
-
-#### Returns
-
-`Promise`<`string`\>
-
-#### Defined in
-
-[docker-instance-adapter.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L93)
+[docker-instance-adapter.ts:201](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L201)
 
 ___
 
@@ -291,44 +104,24 @@ ___
 
 ▸ `Private` **getPortsConfig**(`ports`, `containerConfig`): `Promise`<[`DockerAdapterRunPortsConfig`](../README.md#dockeradapterrunportsconfig)\>
 
+Prepares configuration for expose/bind ports from Docker container.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `ports` | `string`[] |
-| `containerConfig` | `RunnerContainerConfiguration` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `ports` | `string`[] | Ports requested to be accessible from container. |
+| `containerConfig` | `RunnerContainerConfiguration` | Runner container configuration. |
 
 #### Returns
 
 `Promise`<[`DockerAdapterRunPortsConfig`](../README.md#dockeradapterrunportsconfig)\>
 
-#### Defined in
-
-[docker-instance-adapter.ts:147](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L147)
-
-___
-
-### hookCommunicationHandler
-
-▸ **hookCommunicationHandler**(`communicationHandler`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `communicationHandler` | `ICommunicationHandler` |
-
-#### Returns
-
-`void`
-
-#### Implementation of
-
-ILifeCycleAdapterRun.hookCommunicationHandler
+Configuration for exposing and binding ports in Docker container.
 
 #### Defined in
 
-[docker-instance-adapter.ts:177](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L177)
+[docker-instance-adapter.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L85)
 
 ___
 
@@ -346,7 +139,7 @@ ILifeCycleAdapterMain.init
 
 #### Defined in
 
-[docker-instance-adapter.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L71)
+[docker-instance-adapter.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L40)
 
 ___
 
@@ -370,7 +163,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[docker-instance-adapter.ts:340](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L340)
+[docker-instance-adapter.ts:213](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L213)
 
 ___
 
@@ -378,27 +171,33 @@ ___
 
 ▸ `Private` **preparePortBindingsConfig**(`declaredPorts`, `containerConfig`, `exposed?`): `Promise`<`Object`\>
 
+Finds free port for every port requested in Sequence configuration and returns map of assigned ports.
+
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `declaredPorts` | `string`[] | `undefined` |
-| `containerConfig` | `ContainerConfiguration` & `ContainerConfigurationWithExposedPorts` | `undefined` |
-| `exposed` | `boolean` | `false` |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `declaredPorts` | `string`[] | `undefined` | Ports declared in sequence config. |
+| `containerConfig` | `ContainerConfiguration` & `ContainerConfigurationWithExposedPorts` | `undefined` | Container configuration extended with configuration for ports exposing. |
+| `exposed` | `boolean` | `false` | - |
 
 #### Returns
 
 `Promise`<`Object`\>
 
+>} Promise resolving with map of ports mapping.
+
 #### Defined in
 
-[docker-instance-adapter.ts:124](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L124)
+[docker-instance-adapter.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L54)
 
 ___
 
 ### remove
 
 ▸ **remove**(): `Promise`<`void`\>
+
+Forcefully stops Runner container.
 
 #### Returns
 
@@ -410,19 +209,21 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[docker-instance-adapter.ts:344](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L344)
+[docker-instance-adapter.ts:220](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L220)
 
 ___
 
 ### run
 
-▸ **run**(`config`): `Promise`<`number`\>
+▸ **run**(`config`, `instancesServerPort`, `instanceId`): `Promise`<`number`\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `config` | `SequenceConfig` |
+| `instancesServerPort` | `number` |
+| `instanceId` | `string` |
 
 #### Returns
 
@@ -434,25 +235,7 @@ ILifeCycleAdapterRun.run
 
 #### Defined in
 
-[docker-instance-adapter.ts:213](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L213)
-
-___
-
-### snapshot
-
-▸ **snapshot**(): `MaybePromise`<`string`\>
-
-#### Returns
-
-`MaybePromise`<`string`\>
-
-#### Implementation of
-
-ILifeCycleAdapterRun.snapshot
-
-#### Defined in
-
-[docker-instance-adapter.ts:335](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L335)
+[docker-instance-adapter.ts:122](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L122)
 
 ___
 
@@ -460,15 +243,19 @@ ___
 
 ▸ **stats**(`msg`): `Promise`<`MonitoringMessageData`\>
 
+Returns objects with statistics of docker container with running instance.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `msg` | `MonitoringMessageData` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `msg` | `MonitoringMessageData` | Message to be included in statistics message. |
 
 #### Returns
 
 `Promise`<`MonitoringMessageData`\>
+
+Promise resolved with container statistics.
 
 #### Implementation of
 
@@ -476,4 +263,4 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[docker-instance-adapter.ts:158](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L158)
+[docker-instance-adapter.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L102)

@@ -1,8 +1,6 @@
-[@scramjet/host](../README.md) / [socket-server](../modules/socket_server.md) / SocketServer
+[@scramjet/host](../README.md) / SocketServer
 
 # Class: SocketServer
-
-[socket-server](../modules/socket_server.md).SocketServer
 
 ## Hierarchy
 
@@ -18,53 +16,52 @@
 
 ### Constructors
 
-- [constructor](socket_server.SocketServer.md#constructor)
+- [constructor](SocketServer.md#constructor)
 
 ### Properties
 
-- [address](socket_server.SocketServer.md#address)
-- [logger](socket_server.SocketServer.md#logger)
-- [server](socket_server.SocketServer.md#server)
-- [captureRejectionSymbol](socket_server.SocketServer.md#capturerejectionsymbol)
-- [captureRejections](socket_server.SocketServer.md#capturerejections)
-- [defaultMaxListeners](socket_server.SocketServer.md#defaultmaxlisteners)
-- [errorMonitor](socket_server.SocketServer.md#errormonitor)
+- [logger](SocketServer.md#logger)
+- [server](SocketServer.md#server)
+- [captureRejectionSymbol](SocketServer.md#capturerejectionsymbol)
+- [captureRejections](SocketServer.md#capturerejections)
+- [defaultMaxListeners](SocketServer.md#defaultmaxlisteners)
+- [errorMonitor](SocketServer.md#errormonitor)
 
 ### Methods
 
-- [addListener](socket_server.SocketServer.md#addlistener)
-- [close](socket_server.SocketServer.md#close)
-- [emit](socket_server.SocketServer.md#emit)
-- [eventNames](socket_server.SocketServer.md#eventnames)
-- [getMaxListeners](socket_server.SocketServer.md#getmaxlisteners)
-- [listenerCount](socket_server.SocketServer.md#listenercount)
-- [listeners](socket_server.SocketServer.md#listeners)
-- [off](socket_server.SocketServer.md#off)
-- [on](socket_server.SocketServer.md#on)
-- [once](socket_server.SocketServer.md#once)
-- [prependListener](socket_server.SocketServer.md#prependlistener)
-- [prependOnceListener](socket_server.SocketServer.md#prependoncelistener)
-- [rawListeners](socket_server.SocketServer.md#rawlisteners)
-- [removeAllListeners](socket_server.SocketServer.md#removealllisteners)
-- [removeListener](socket_server.SocketServer.md#removelistener)
-- [setMaxListeners](socket_server.SocketServer.md#setmaxlisteners)
-- [start](socket_server.SocketServer.md#start)
-- [getEventListener](socket_server.SocketServer.md#geteventlistener)
-- [listenerCount](socket_server.SocketServer.md#listenercount)
-- [on](socket_server.SocketServer.md#on)
-- [once](socket_server.SocketServer.md#once)
+- [addListener](SocketServer.md#addlistener)
+- [close](SocketServer.md#close)
+- [emit](SocketServer.md#emit)
+- [eventNames](SocketServer.md#eventnames)
+- [getMaxListeners](SocketServer.md#getmaxlisteners)
+- [listenerCount](SocketServer.md#listenercount)
+- [listeners](SocketServer.md#listeners)
+- [off](SocketServer.md#off)
+- [on](SocketServer.md#on)
+- [once](SocketServer.md#once)
+- [prependListener](SocketServer.md#prependlistener)
+- [prependOnceListener](SocketServer.md#prependoncelistener)
+- [rawListeners](SocketServer.md#rawlisteners)
+- [removeAllListeners](SocketServer.md#removealllisteners)
+- [removeListener](SocketServer.md#removelistener)
+- [setMaxListeners](SocketServer.md#setmaxlisteners)
+- [start](SocketServer.md#start)
+- [getEventListener](SocketServer.md#geteventlistener)
+- [listenerCount](SocketServer.md#listenercount)
+- [on](SocketServer.md#on)
+- [once](SocketServer.md#once)
 
 ## Constructors
 
 ### constructor
 
-• **new SocketServer**(`address`)
+• **new SocketServer**(`port`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `address` | `PathLike` |
+| `port` | `number` |
 
 #### Overrides
 
@@ -72,19 +69,9 @@ EventEmitter.constructor
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:22](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/socket-server.ts#L22)
+[packages/host/src/lib/socket-server.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L21)
 
 ## Properties
-
-### address
-
-• **address**: `PathLike`
-
-#### Defined in
-
-[packages/host/src/lib/socket-server.ts:19](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/socket-server.ts#L19)
-
-___
 
 ### logger
 
@@ -96,7 +83,7 @@ IComponent.logger
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:20](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/socket-server.ts#L20)
+[packages/host/src/lib/socket-server.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L17)
 
 ___
 
@@ -106,13 +93,13 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:18](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/socket-server.ts#L18)
+[packages/host/src/lib/socket-server.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L16)
 
 ___
 
 ### captureRejectionSymbol
 
-▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](cpm_connector.CPMConnector.md#capturerejectionsymbol)
+▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](CPMConnector.md#capturerejectionsymbol)
 
 #### Inherited from
 
@@ -156,7 +143,7 @@ ___
 
 ### errorMonitor
 
-▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](cpm_connector.CPMConnector.md#errormonitor)
+▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](CPMConnector.md#errormonitor)
 
 This symbol shall be used to install a listener for only monitoring `'error'`
 events. Listeners installed using this symbol are called before the regular
@@ -178,7 +165,7 @@ node_modules/@types/node/events.d.ts:45
 
 ### addListener
 
-▸ **addListener**(`event`, `listener`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **addListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -189,7 +176,7 @@ node_modules/@types/node/events.d.ts:45
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -211,7 +198,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:118](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/socket-server.ts#L118)
+[packages/host/src/lib/socket-server.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L89)
 
 ___
 
@@ -326,7 +313,7 @@ ___
 
 ### off
 
-▸ **off**(`event`, `listener`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **off**(`event`, `listener`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -337,7 +324,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -351,7 +338,7 @@ ___
 
 ### on
 
-▸ **on**(`event`, `listener`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **on**(`event`, `listener`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -362,7 +349,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -376,7 +363,7 @@ ___
 
 ### once
 
-▸ **once**(`event`, `listener`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **once**(`event`, `listener`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -387,7 +374,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -401,7 +388,7 @@ ___
 
 ### prependListener
 
-▸ **prependListener**(`event`, `listener`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **prependListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -412,7 +399,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -426,7 +413,7 @@ ___
 
 ### prependOnceListener
 
-▸ **prependOnceListener**(`event`, `listener`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **prependOnceListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -437,7 +424,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -475,7 +462,7 @@ ___
 
 ### removeAllListeners
 
-▸ **removeAllListeners**(`event?`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **removeAllListeners**(`event?`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -485,7 +472,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -499,7 +486,7 @@ ___
 
 ### removeListener
 
-▸ **removeListener**(`event`, `listener`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **removeListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -510,7 +497,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -524,7 +511,7 @@ ___
 
 ### setMaxListeners
 
-▸ **setMaxListeners**(`n`): [`SocketServer`](socket_server.SocketServer.md)
+▸ **setMaxListeners**(`n`): [`SocketServer`](SocketServer.md)
 
 #### Parameters
 
@@ -534,7 +521,7 @@ ___
 
 #### Returns
 
-[`SocketServer`](socket_server.SocketServer.md)
+[`SocketServer`](SocketServer.md)
 
 #### Inherited from
 
@@ -556,7 +543,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:54](https://github.com/scramjet-cloud-platform/scramjet-csi-dev/blob/HEAD/packages/host/src/lib/socket-server.ts#L54)
+[packages/host/src/lib/socket-server.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L27)
 
 ___
 

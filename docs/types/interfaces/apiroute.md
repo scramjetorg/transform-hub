@@ -31,7 +31,7 @@
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L135)
+[packages/types/src/api-expose.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L137)
 
 ## Methods
 
@@ -59,7 +59,7 @@ A method that allows to consume incoming stream from the specified path on the A
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L112)
+[packages/types/src/api-expose.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L113)
 
 ___
 
@@ -84,7 +84,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L118)
+[packages/types/src/api-expose.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L119)
 
 ___
 
@@ -118,7 +118,7 @@ Simple GET request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L84)
+[packages/types/src/api-expose.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L85)
 
 ▸ **get**(`path`, `msg`): `void`
 
@@ -141,7 +141,7 @@ Alternative GET request hook with dynamic resolution
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L92)
+[packages/types/src/api-expose.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L93)
 
 ___
 
@@ -176,7 +176,7 @@ Simple POST request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L75)
+[packages/types/src/api-expose.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L76)
 
 ___
 
@@ -204,7 +204,7 @@ A method that allows to pass a stream to the specified path on the API server
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L100)
+[packages/types/src/api-expose.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L101)
 
 ___
 
@@ -229,4 +229,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:123](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L123)
+[packages/types/src/api-expose.ts:124](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L124)

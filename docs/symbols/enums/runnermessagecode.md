@@ -11,7 +11,6 @@
 - [DESCRIBE\_SEQUENCE](runnermessagecode.md#describe_sequence)
 - [ERROR](runnermessagecode.md#error)
 - [EVENT](runnermessagecode.md#event)
-- [FORCE\_CONFIRM\_ALIVE](runnermessagecode.md#force_confirm_alive)
 - [INPUT\_CONTENT\_TYPE](runnermessagecode.md#input_content_type)
 - [KILL](runnermessagecode.md#kill)
 - [MONITORING](runnermessagecode.md#monitoring)
@@ -21,7 +20,6 @@
 - [PONG](runnermessagecode.md#pong)
 - [SEQUENCE\_COMPLETED](runnermessagecode.md#sequence_completed)
 - [SEQUENCE\_STOPPED](runnermessagecode.md#sequence_stopped)
-- [SNAPSHOT\_RESPONSE](runnermessagecode.md#snapshot_response)
 - [STATUS](runnermessagecode.md#status)
 - [STOP](runnermessagecode.md#stop)
 
@@ -33,7 +31,7 @@
 
 #### Defined in
 
-[runner-message-code.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L10)
+[runner-message-code.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L9)
 
 ___
 
@@ -43,7 +41,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L9)
+[runner-message-code.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L8)
 
 ___
 
@@ -73,17 +71,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L21)
-
-___
-
-### FORCE\_CONFIRM\_ALIVE
-
-• **FORCE\_CONFIRM\_ALIVE** = `4004`
-
-#### Defined in
-
-[runner-message-code.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L19)
+[runner-message-code.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L18)
 
 ___
 
@@ -93,7 +81,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L13)
+[runner-message-code.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L12)
 
 ___
 
@@ -103,7 +91,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L17)
+[runner-message-code.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L16)
 
 ___
 
@@ -123,7 +111,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L18)
+[runner-message-code.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L17)
 
 ___
 
@@ -133,7 +121,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L12)
+[runner-message-code.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L11)
 
 ___
 
@@ -153,7 +141,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L15)
+[runner-message-code.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L14)
 
 ___
 
@@ -163,23 +151,13 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L11)
+[runner-message-code.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L10)
 
 ___
 
 ### SEQUENCE\_STOPPED
 
 • **SEQUENCE\_STOPPED** = `3006`
-
-#### Defined in
-
-[runner-message-code.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L7)
-
-___
-
-### SNAPSHOT\_RESPONSE
-
-• **SNAPSHOT\_RESPONSE** = `3005`
 
 #### Defined in
 
@@ -193,7 +171,7 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L8)
+[runner-message-code.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L7)
 
 ___
 
@@ -203,4 +181,4 @@ ___
 
 #### Defined in
 
-[runner-message-code.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L16)
+[runner-message-code.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-message-code.ts#L15)

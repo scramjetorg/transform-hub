@@ -11,7 +11,6 @@
 - [ANY](messagecodes.md#any)
 - [DESCRIBE\_SEQUENCE](messagecodes.md#describe_sequence)
 - [ERROR](messagecodes.md#error)
-- [FORCE\_CONFIRM\_ALIVE](messagecodes.md#force_confirm_alive)
 - [KILL](messagecodes.md#kill)
 - [MONITORING](messagecodes.md#monitoring)
 - [MONITORING\_RATE](messagecodes.md#monitoring_rate)
@@ -47,7 +46,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L40)
+[packages/types/src/runner.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L39)
 
 ___
 
@@ -57,7 +56,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L36)
+[packages/types/src/runner.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L35)
 
 ___
 
@@ -67,17 +66,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L37)
-
-___
-
-### FORCE\_CONFIRM\_ALIVE
-
-Ƭ **FORCE\_CONFIRM\_ALIVE**: ``"FORCE_CONFIRM_ALIVE"``
-
-#### Defined in
-
-[packages/types/src/runner.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L35)
+[packages/types/src/runner.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L36)
 
 ___
 
@@ -97,7 +86,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L38)
+[packages/types/src/runner.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L37)
 
 ___
 

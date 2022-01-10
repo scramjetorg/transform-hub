@@ -239,19 +239,23 @@ ___
 
 ▸ **getInstanceAdapter**(`runWithoutDocker`): `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
 
+Provides Instance adapter.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `runWithoutDocker` | `boolean` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `runWithoutDocker` | `boolean` | Defines which instance adapter to use. If true - ProcessInstanceAdapter will be used. |
 
 #### Returns
 
 `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
 
+Instance adapter.
+
 #### Defined in
 
-[get-instance-adapter.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L5)
+[get-instance-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L12)
 
 ___
 
@@ -259,16 +263,20 @@ ___
 
 ▸ **getSequenceAdapter**(`config`): `ISequenceAdapter`
 
+Provides Sequence adapter basing on Host configuration.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `config` | `STHConfiguration` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `config` | `STHConfiguration` | Host configuration. |
 
 #### Returns
 
 `ISequenceAdapter`
 
+Sequence adapter.
+
 #### Defined in
 
-[get-sequence-adapter.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L5)
+[get-sequence-adapter.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L11)
