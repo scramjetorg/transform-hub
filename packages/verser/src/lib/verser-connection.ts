@@ -149,4 +149,15 @@ export class VerserConnection {
             // TODO: Error handling?
         });
     }
+
+    /**
+     * Closes the connection by sending FIN packet.
+     *
+     * @returns Promise resolving when connection is ended.
+     */
+    async close() {
+        return new Promise<void>(res => {
+            this.socket.end(res);
+        });
+    }
 }
