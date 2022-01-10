@@ -11,7 +11,6 @@
 - [InstanceMessageCode](enums/instancemessagecode.md)
 - [RunnerMessageCode](enums/runnermessagecode.md)
 - [SequenceMessageCode](enums/sequencemessagecode.md)
-- [SupervisorMessageCode](enums/supervisormessagecode.md)
 
 ### Variables
 

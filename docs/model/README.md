@@ -12,8 +12,9 @@
 - [DelayedStream](classes/delayedstream.md)
 - [HostError](classes/hosterror.md)
 - [IDProvider](classes/idprovider.md)
+- [InstanceAdapterError](classes/instanceadaptererror.md)
 - [RunnerError](classes/runnererror.md)
-- [SupervisorError](classes/supervisorerror.md)
+- [SequenceAdapterError](classes/sequenceadaptererror.md)
 
 ### Type aliases
 
@@ -21,7 +22,6 @@
 - [ICSIControllerErrorData](README.md#icsicontrollererrordata)
 - [IHostErrorData](README.md#ihosterrordata)
 - [IRunnerErrorData](README.md#irunnererrordata)
-- [ISupervisorErrorData](README.md#isupervisorerrordata)
 
 ### Variables
 
@@ -44,7 +44,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `RunnerMessageCode` \| `SupervisorMessageCode` \| `CPMMessageCode` |
+| `T` | extends `RunnerMessageCode` \| `CPMMessageCode` |
 
 #### Defined in
 
@@ -80,16 +80,6 @@ ___
 
 [packages/model/src/errors/runner-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/runner-error.ts#L4)
 
-___
-
-### ISupervisorErrorData
-
-Ƭ **ISupervisorErrorData**: `any`
-
-#### Defined in
-
-[packages/model/src/errors/supervisor-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/supervisor-error.ts#L4)
-
 ## Variables
 
 ### MessageUtilities
@@ -101,7 +91,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `deserializeMessage` | (`msg`: `string`) => `MessageType`<`RunnerMessageCode`\> |
-| `serializeMessage` | <T\>(`__namedParameters`: `MessageType`<`T`\>) => `RunnerMessage` \| `SupervisorMessage` \| `CPMMessage` |
+| `serializeMessage` | <T\>(`__namedParameters`: `MessageType`<`T`\>) => `RunnerMessage` \| `CPMMessage` |
 
 #### Defined in
 
@@ -117,14 +107,14 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `X` | extends `RunnerMessageCode` \| `CONFIG` \| `CPMMessageCode` |
+| `X` | extends `RunnerMessageCode` \| `CPMMessageCode` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `msgCode` | `X` |
-| `msgData` | `MonitoringMessageData` \| `DescribeSequenceMessageData` \| `ErrorMessageData` \| `SnapshotResponseMessageData` \| `StatusMessageData` \| `KeepAliveMessageData` \| `AcknowledgeMessageData` \| `HandshakeAcknowledgeMessageData` \| `StopSequenceMessageData` \| `MonitoringRateMessageData` \| `PingMessageData` \| `SequenceStoppedMessageData` \| `PangMessageData` \| `EmptyMessageData` \| `EventMessageData` \| `STHIDMessageData` \| `LoadCheckStat` \| `NetworkInfo`[] \| `InstanceBulkMessage` \| `SequenceBulkMessage` \| `InstanceMessage` \| `SequenceMessage` |
+| `msgData` | `MonitoringMessageData` \| `DescribeSequenceMessageData` \| `ErrorMessageData` \| `StatusMessageData` \| `KeepAliveMessageData` \| `AcknowledgeMessageData` \| `HandshakeAcknowledgeMessageData` \| `StopSequenceMessageData` \| `MonitoringRateMessageData` \| `PingMessageData` \| `SequenceStoppedMessageData` \| `PangMessageData` \| `EmptyMessageData` \| `EventMessageData` \| `STHIDMessageData` \| `LoadCheckStat` \| `NetworkInfo`[] \| `InstanceBulkMessage` \| `SequenceBulkMessage` \| `InstanceMessage` \| `SequenceMessage` |
 
 #### Returns
 
@@ -132,7 +122,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/get-message.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/get-message.ts#L54)
+[packages/model/src/get-message.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/get-message.ts#L53)
 
 ___
 
@@ -188,13 +178,13 @@ A helper method used for deserializing messages.
 
 #### Defined in
 
-[packages/model/src/get-message.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/get-message.ts#L101)
+[packages/model/src/get-message.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/get-message.ts#L94)
 
 ___
 
 ### serializeMessage
 
-▸ **serializeMessage**<`T`\>(`__namedParameters`): `RunnerMessage` \| `SupervisorMessage` \| `CPMMessage`
+▸ **serializeMessage**<`T`\>(`__namedParameters`): `RunnerMessage` \| `CPMMessage`
 
 Serizalized message.
 
@@ -202,7 +192,7 @@ Serizalized message.
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `RunnerMessageCode` \| `CONFIG` \| `CPMMessageCode` |
+| `T` | extends `RunnerMessageCode` \| `CPMMessageCode` |
 
 #### Parameters
 
@@ -212,7 +202,7 @@ Serizalized message.
 
 #### Returns
 
-`RunnerMessage` \| `SupervisorMessage` \| `CPMMessage`
+`RunnerMessage` \| `CPMMessage`
 
 - a serializable message in a format [msgCode, {msgBody}]
           where 'msgCode' is a message type code and 'msgBody' is a message body

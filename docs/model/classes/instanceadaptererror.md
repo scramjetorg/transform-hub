@@ -1,48 +1,44 @@
-[@scramjet/model](../README.md) / SupervisorError
+[@scramjet/model](../README.md) / InstanceAdapterError
 
-# Class: SupervisorError
+# Class: InstanceAdapterError
 
 ## Hierarchy
 
 - [`AppError`](apperror.md)
 
-  ↳ **`SupervisorError`**
-
-## Implements
-
-- [`ISupervisorErrorData`](../README.md#isupervisorerrordata)
+  ↳ **`InstanceAdapterError`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](supervisorerror.md#constructor)
+- [constructor](instanceadaptererror.md#constructor)
 
 ### Properties
 
-- [code](supervisorerror.md#code)
-- [data](supervisorerror.md#data)
-- [message](supervisorerror.md#message)
-- [name](supervisorerror.md#name)
-- [stack](supervisorerror.md#stack)
-- [prepareStackTrace](supervisorerror.md#preparestacktrace)
-- [stackTraceLimit](supervisorerror.md#stacktracelimit)
+- [code](instanceadaptererror.md#code)
+- [data](instanceadaptererror.md#data)
+- [message](instanceadaptererror.md#message)
+- [name](instanceadaptererror.md#name)
+- [stack](instanceadaptererror.md#stack)
+- [prepareStackTrace](instanceadaptererror.md#preparestacktrace)
+- [stackTraceLimit](instanceadaptererror.md#stacktracelimit)
 
 ### Methods
 
-- [captureStackTrace](supervisorerror.md#capturestacktrace)
+- [captureStackTrace](instanceadaptererror.md#capturestacktrace)
 
 ## Constructors
 
 ### constructor
 
-• **new SupervisorError**(`code`, `data?`)
+• **new InstanceAdapterError**(`code`, `data?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `code` | `SupervisorErrorCode` |
+| `code` | `InstanceAdapterErrorCode` |
 | `data?` | `any` |
 
 #### Overrides
@@ -51,7 +47,7 @@
 
 #### Defined in
 
-[packages/model/src/errors/supervisor-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/supervisor-error.ts#L6)
+[packages/model/src/errors/instance-adapter-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/instance-adapter-error.ts#L4)
 
 ## Properties
 

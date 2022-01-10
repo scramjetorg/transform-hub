@@ -13,7 +13,6 @@
 - [monitorRate](ilifecycleadapter.md#monitorrate)
 - [remove](ilifecycleadapter.md#remove)
 - [run](ilifecycleadapter.md#run)
-- [snapshot](ilifecycleadapter.md#snapshot)
 - [stats](ilifecycleadapter.md#stats)
 
 ## Methods
@@ -52,7 +51,7 @@ Hooks up downstream streams.
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L49)
+[packages/types/src/lifecycle.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L42)
 
 ___
 
@@ -110,7 +109,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L51)
+[packages/types/src/lifecycle.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L44)
 
 ___
 
@@ -124,7 +123,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L54)
+[packages/types/src/lifecycle.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L47)
 
 ___
 
@@ -152,24 +151,6 @@ Runner exit code.
 
 ___
 
-### snapshot
-
-▸ **snapshot**(): `MaybePromise`<`string`\>
-
-Request snapshot and returns snapshot url.\
-
-#### Returns
-
-`MaybePromise`<`string`\>
-
-snapshot url.
-
-#### Defined in
-
-[packages/types/src/lifecycle.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L42)
-
-___
-
 ### stats
 
 ▸ **stats**(`msg`): `Promise`<[`MonitoringMessageData`](../README.md#monitoringmessagedata)\>
@@ -186,4 +167,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L56)
+[packages/types/src/lifecycle.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle.ts#L49)

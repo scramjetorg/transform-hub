@@ -1,67 +1,53 @@
-[@scramjet/model](../README.md) / AppError
+[@scramjet/model](../README.md) / SequenceAdapterError
 
-# Class: AppError
+# Class: SequenceAdapterError
 
 ## Hierarchy
 
-- `Error`
+- [`AppError`](apperror.md)
 
-  ↳ **`AppError`**
-
-  ↳↳ [`HostError`](hosterror.md)
-
-  ↳↳ [`RunnerError`](runnererror.md)
-
-  ↳↳ [`InstanceAdapterError`](instanceadaptererror.md)
-
-  ↳↳ [`CSIControllerError`](csicontrollererror.md)
-
-  ↳↳ [`SequenceAdapterError`](sequenceadaptererror.md)
-
-## Implements
-
-- `IAppError`
-- `IAppErrorData`
+  ↳ **`SequenceAdapterError`**
 
 ## Table of contents
 
 ### Constructors
 
-- [constructor](apperror.md#constructor)
+- [constructor](sequenceadaptererror.md#constructor)
 
 ### Properties
 
-- [code](apperror.md#code)
-- [data](apperror.md#data)
-- [message](apperror.md#message)
-- [name](apperror.md#name)
-- [stack](apperror.md#stack)
-- [prepareStackTrace](apperror.md#preparestacktrace)
-- [stackTraceLimit](apperror.md#stacktracelimit)
+- [code](sequenceadaptererror.md#code)
+- [data](sequenceadaptererror.md#data)
+- [message](sequenceadaptererror.md#message)
+- [name](sequenceadaptererror.md#name)
+- [stack](sequenceadaptererror.md#stack)
+- [prepareStackTrace](sequenceadaptererror.md#preparestacktrace)
+- [stackTraceLimit](sequenceadaptererror.md#stacktracelimit)
 
 ### Methods
 
-- [captureStackTrace](apperror.md#capturestacktrace)
+- [captureStackTrace](sequenceadaptererror.md#capturestacktrace)
 
 ## Constructors
 
 ### constructor
 
-• **new AppError**(`code`)
+• **new SequenceAdapterError**(`code`, `data?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `code` | `AppErrorCode` |
+| `code` | `SequenceAdapterErrorCode` |
+| `data?` | `any` |
 
 #### Overrides
 
-Error.constructor
+[AppError](apperror.md).[constructor](apperror.md#constructor)
 
 #### Defined in
 
-[packages/model/src/errors/app-error.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/app-error.ts#L9)
+[packages/model/src/errors/sequence-adapter-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/sequence-adapter-error.ts#L4)
 
 ## Properties
 
@@ -69,9 +55,9 @@ Error.constructor
 
 • **code**: `AppErrorCode`
 
-#### Implementation of
+#### Inherited from
 
-IAppError.code
+[AppError](apperror.md).[code](apperror.md#code)
 
 #### Defined in
 
@@ -83,9 +69,9 @@ ___
 
 • `Optional` **data**: `any`
 
-#### Implementation of
+#### Inherited from
 
-IAppErrorData.data
+[AppError](apperror.md).[data](apperror.md#data)
 
 #### Defined in
 
@@ -97,13 +83,9 @@ ___
 
 • **message**: `string`
 
-#### Implementation of
-
-IAppError.message
-
 #### Inherited from
 
-Error.message
+[AppError](apperror.md).[message](apperror.md#message)
 
 #### Defined in
 
@@ -115,13 +97,9 @@ ___
 
 • **name**: `string`
 
-#### Implementation of
-
-IAppError.name
-
 #### Inherited from
 
-Error.name
+[AppError](apperror.md).[name](apperror.md#name)
 
 #### Defined in
 
@@ -133,13 +111,9 @@ ___
 
 • `Optional` **stack**: `string`
 
-#### Implementation of
-
-IAppError.stack
-
 #### Inherited from
 
-Error.stack
+[AppError](apperror.md).[stack](apperror.md#stack)
 
 #### Defined in
 
@@ -170,7 +144,7 @@ Optional override for formatting stack traces
 
 #### Inherited from
 
-Error.prepareStackTrace
+[AppError](apperror.md).[prepareStackTrace](apperror.md#preparestacktrace)
 
 #### Defined in
 
@@ -184,7 +158,7 @@ ___
 
 #### Inherited from
 
-Error.stackTraceLimit
+[AppError](apperror.md).[stackTraceLimit](apperror.md#stacktracelimit)
 
 #### Defined in
 
@@ -211,7 +185,7 @@ Create .stack property on a target object
 
 #### Inherited from
 
-Error.captureStackTrace
+[AppError](apperror.md).[captureStackTrace](apperror.md#capturestacktrace)
 
 #### Defined in
 

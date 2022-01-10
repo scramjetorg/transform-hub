@@ -2,6 +2,8 @@
 
 # Class: LoadCheck
 
+Provides methods to monitor resources usage and determine if machine is not overloaded.
+
 ## Implements
 
 - `IComponent`
@@ -38,7 +40,7 @@
 
 #### Defined in
 
-[load-check.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L16)
+[load-check.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L35)
 
 ## Properties
 
@@ -46,9 +48,11 @@
 
 • **config**: `LoadCheckConfig`
 
+Congiguration object with requirements to determine if machine is overloaded.
+
 #### Defined in
 
-[load-check.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L11)
+[load-check.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L19)
 
 ___
 
@@ -56,9 +60,11 @@ ___
 
 • **constants**: `LoadCheckContstants`
 
+Values calculated from configuration indicating minimum requirements.
+
 #### Defined in
 
-[load-check.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L12)
+[load-check.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L26)
 
 ___
 
@@ -66,13 +72,15 @@ ___
 
 • **logger**: `Console`
 
+Logger instance.
+
 #### Implementation of
 
 IComponent.logger
 
 #### Defined in
 
-[load-check.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L14)
+[load-check.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L33)
 
 ## Methods
 
@@ -80,13 +88,17 @@ IComponent.logger
 
 ▸ **getLoadCheck**(): `Promise`<`LoadCheckStat`\>
 
+Gathers various resources usage and returns it as a {@link LoadCheckStat} object.
+
 #### Returns
 
 `Promise`<`LoadCheckStat`\>
 
+Promise resolving to gathered load check data.
+
 #### Defined in
 
-[load-check.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L27)
+[load-check.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L52)
 
 ___
 
@@ -94,13 +106,18 @@ ___
 
 ▸ **getLoadCheckStream**(): `StringStream`
 
+Creates and returns a stream of load check data.
+Load check data is emitted every second.
+
 #### Returns
 
-`Promise`<`any`\>
+`StringStream`
+
+Stream with load check data.
 
 #### Defined in
 
-[load-check.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L66)
+[load-check.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L95)
 
 ___
 
@@ -108,10 +125,14 @@ ___
 
 ▸ **overloaded**(): `Promise`<`boolean`\>
 
+Compares current load check data with the requirements to determine if machine is overloaded.
+
 #### Returns
 
 `Promise`<`boolean`\>
 
+True if machine is overloaded, false otherwise.
+
 #### Defined in
 
-[load-check.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L43)
+[load-check.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L73)

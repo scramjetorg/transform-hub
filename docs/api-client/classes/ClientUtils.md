@@ -2,6 +2,8 @@
 
 # Class: ClientUtils
 
+Provides HTTP communication methods.
+
 ## Implements
 
 - [`HttpClient`](../interfaces/HttpClient.md)
@@ -41,7 +43,7 @@
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L11)
+[packages/api-client/src/client-utils.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L15)
 
 ## Properties
 
@@ -51,7 +53,7 @@
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L8)
+[packages/api-client/src/client-utils.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L11)
 
 ___
 
@@ -61,7 +63,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L9)
+[packages/api-client/src/client-utils.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L13)
 
 ## Methods
 
@@ -69,11 +71,13 @@ ___
 
 ▸ **addLogger**(`logger`): `void`
 
+Sets given logger.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `logger` | `Partial`<[`RequestLogger`](../README.md#requestlogger)\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `logger` | `Partial`<[`RequestLogger`](../README.md#requestlogger)\> | Logger to set. |
 
 #### Returns
 
@@ -85,7 +89,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L15)
+[packages/api-client/src/client-utils.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L24)
 
 ___
 
@@ -93,15 +97,19 @@ ___
 
 ▸ **delete**(`url`): `Promise`<[`Response`](../README.md#response)\>
 
+Performs DELETE request.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `url` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
 
 #### Returns
 
 `Promise`<[`Response`](../README.md#response)\>
+
+Fetch response.
 
 #### Implementation of
 
@@ -109,7 +117,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:86](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L86)
+[packages/api-client/src/client-utils.ts:128](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L128)
 
 ___
 
@@ -117,15 +125,19 @@ ___
 
 ▸ **get**(`url`): `Promise`<[`Response`](../README.md#response)\>
 
+Performs get request.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `url` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
 
 #### Returns
 
 `Promise`<[`Response`](../README.md#response)\>
+
+Fetch response.
 
 #### Implementation of
 
@@ -133,7 +145,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L45)
+[packages/api-client/src/client-utils.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L66)
 
 ___
 
@@ -141,15 +153,19 @@ ___
 
 ▸ **getStream**(`url`): `Promise`<[`ResponseStream`](../README.md#responsestream)\>
 
+Performs get request for streamed data.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `url` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
 
 #### Returns
 
 `Promise`<[`ResponseStream`](../README.md#responsestream)\>
+
+Fetch response.
 
 #### Implementation of
 
@@ -157,7 +173,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L50)
+[packages/api-client/src/client-utils.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L77)
 
 ___
 
@@ -165,18 +181,22 @@ ___
 
 ▸ **post**(`url`, `data`, `headers?`, `config?`): `Promise`<[`Response`](../README.md#response)\>
 
+Performs POST request.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `url` | `string` |
-| `data` | `any` |
-| `headers` | `Headers` |
-| `config` | `PostRequestConfig` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
+| `data` | `any` | Data to be send. |
+| `headers` | `Headers` | Request headers. |
+| `config` | `PostRequestConfig` | Request config. |
 
 #### Returns
 
 `Promise`<[`Response`](../README.md#response)\>
+
+Fetch response.
 
 #### Implementation of
 
@@ -184,7 +204,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L60)
+[packages/api-client/src/client-utils.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L96)
 
 ___
 
@@ -192,19 +212,23 @@ ___
 
 ▸ `Private` **safeRequest**(...`args`): `Promise`<`Response`\>
 
+Request wrapper.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `...args` | [url: RequestInfo, init?: RequestInit] |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `...args` | [url: RequestInfo, init?: RequestInit] | Fetch arguments. |
 
 #### Returns
 
 `Promise`<`Response`\>
 
+Fetch object.
+
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L24)
+[packages/api-client/src/client-utils.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L39)
 
 ___
 
@@ -212,17 +236,21 @@ ___
 
 ▸ **sendStream**(`url`, `stream`, `__namedParameters?`): `Promise`<[`Response`](../README.md#response)\>
 
+Performs POST request for streamed data.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `url` | `string` |
-| `stream` | `string` \| `Stream` |
-| `__namedParameters` | `Partial`<`Object`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request url. |
+| `stream` | `string` \| `Stream` | to be send. |
+| `__namedParameters` | `Partial`<`Object`\> | - |
 
 #### Returns
 
 `Promise`<[`Response`](../README.md#response)\>
+
+Fetch response.
 
 #### Implementation of
 
@@ -230,4 +258,4 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/client-utils.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L101)
+[packages/api-client/src/client-utils.ts:151](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L151)
