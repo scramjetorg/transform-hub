@@ -34,7 +34,7 @@ type STHInformation = {
  */
 export class CPMConnector extends EventEmitter {
     /**
-     * Maximum attepts for first connection try.
+     * Maximum attempts for first connection try.
      *
      * @type {number}
      */
@@ -48,7 +48,7 @@ export class CPMConnector extends EventEmitter {
     MAX_RECONNECTION_ATTEMPTS = 100;
 
     /**
-     * Delay beween connection attempts.
+     * Delay between connection attempts.
      *
      * @type {number}
      */
@@ -189,7 +189,7 @@ export class CPMConnector extends EventEmitter {
     }
 
     /**
-     * Returs hosts id.
+     * Returns hosts id.
      *
      * @returns {string} Host id.
      */
@@ -248,7 +248,7 @@ export class CPMConnector extends EventEmitter {
     /**
      * Sets up handlers for specific channels on the VerserClient connection.
      * Channel 0 is reserved to handle control messages from Manager.
-     * CHannel 1 is reserved for log stream send to Manager.
+     * Channel 1 is reserved for log stream sent to Manager.
      */
     registerChannels() {
         this.verserClient.registerChannel(0, async (duplex: Duplex) => {

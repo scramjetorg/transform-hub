@@ -297,7 +297,7 @@ export class Host implements IComponent {
      * Handles delete sequence request.
      * Removes sequence from the store and sends notification to Manager if connected.
      * Note: If instance is started from a given sequence, sequence can not be removed
-     * and CONFICT status code is returned.
+     * and CONFLICT status code is returned.
      *
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.DeleteSequenceResponse>} Promise resolving to operation result object.
