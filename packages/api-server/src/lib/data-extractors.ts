@@ -18,6 +18,7 @@ export async function getObject(object: any, req: IncomingMessage): Promise<any>
     return object;
 }
 
+// @TODO: Refactor.
 /**
  * Returns result of the function call if object is a function or the object itself.
  *
@@ -35,7 +36,7 @@ export async function getWritable(object: any, req: IncomingMessage, res: Server
 }
 
 /**
- * Identifies type of given object. If object is a function, it will be called.
+ * Returns readable stream from given object. If object is a function it will be called and it should return a stream.
  *
  * @param req Request object.
  * @param res Response object.
