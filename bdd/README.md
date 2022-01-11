@@ -126,7 +126,6 @@ lerna success - @scramjet/pre-runner
 lerna success - @scramjet/runner
 lerna success - @scramjet/sth-config
 lerna success - @scramjet/sth
-lerna success - @scramjet/supervisor
 lerna success - @scramjet/symbols
 lerna success - @scramjet/test-ava-ts-node
 lerna success - @scramjet/types

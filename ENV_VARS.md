@@ -1,4 +1,5 @@
 ### General
+
 ---
 `PRODUCTION: boolean`
 
@@ -76,21 +77,21 @@ Used in starting runner locally only. Path to input FIFO file.
 `OUTPUT_PATH: string`
 Used in starting runner locally only. Path to output FIFO file.
 
-### Supervisor
-
----
-`NO_DOCKER: boolean (default: false)`
-
 ### Scripts
+
 ---
+
 #### packsequence.js
+
 `OUT_DIR: string (default: dist)`
-Used to find built sourcecode.
+Used to find built source code.
 
 #### publish-order-dist-packages.js
+
 `SCRAMJET_PUBLISH_REPO: string`
 
 #### publish.js
+
 `OUT_DIR`
 
 `LOCAL_PACKAGES`
