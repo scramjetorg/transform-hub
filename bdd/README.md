@@ -7,21 +7,27 @@ We use [Cucumber](https://cucumber.io/) as a software tool to support the BDD pr
 If you use Visual Studio Code, you can install the [Cucumber (Gherkin) Full Support](https://marketplace.visualstudio.com/items?itemName=alexkrechik.cucumberautocomplete&ssr=false#review-details) extension which will be very useful for writing BDD tests.
 
 ---
+
 # How to run tests :runner:
+
 ## How to run BDD tests :cucumber:
 
-The following instructions apply to the state of the repository from `release/0.12`.
+The following instructions apply to the state of the repository from `release/0.14`.
 
 BDD tests are located in a `bdd` folder, to execute them simply follow the steps below.
 
 ### Preparation :books:
+
 Before start running any test, please make sure that all the packages are installed and built. In order to do that please run the following command:
 
-    yarn clean && yarn install && yarn build:all && yarn packseq
+```bash
+yarn clean && yarn install && yarn build:all && yarn packseq
+```
 
 This command will remove all the 'dist' folders (if there were any), after that it will install and build all the packages including 'reference-apps' package, which contains all the applications that we use in our BDD tests. After executing the command from above every single application will be also compressed into `.tar.gz` file. We also need them for the BDD tests execution.
 
 ### Executing BDD tests :rocket:
+
 The test scenarios are located in `.feature` files, and these in separate folders named according to the subject of the testing, and these in `features` directory in `bdd` folder.
 Every scenario has its own title and unique index number. We can use those indexes to either execute one test or a bulk of tests, for example:
 
@@ -32,6 +38,7 @@ Every scenario has its own title and unique index number. We can use those index
 ```bash
 yarn test:bdd --name="E2E-001 TC-002"
 ```
+
 This is the output after running this single test:
 
 ![test1.png](../images/test1.png)
@@ -41,6 +48,7 @@ This is the output after running this single test:
 ```bash
 yarn test:bdd --name="E2E-001"
 ```
+
 This command will run all the scenarios that have the substring "E2E-001" in their index, whether they are in the same feature file or not. Cucumber will search all the files.
 
 Three tests scenarios were found and executed:
@@ -73,7 +81,9 @@ Scenario can have more that one tag, can have two or even more, for example:
 
 In the situation like this above, when you want to execute tests with `@ci` tag but without `@starts-host`tag, command like this below will do the job:
 
-    yarn test:bdd --tags="@ci" --tags="not @starts-host"
+```bash
+yarn test:bdd --tags="@ci" --tags="not @starts-host"
+```
 
 ### Results :bar_chart:
 
@@ -149,8 +159,4 @@ for example:
 
 If you add `-w` a the end of the command above the test will run automatically after every change you make in the test, eg.:
 
-```bash
-npx ava runner.spec.ts -m "Stop sequence" -w
-```
-
-
+    npx ava runner.spec.ts -m "Stop sequence" -w

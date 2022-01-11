@@ -61,11 +61,12 @@ It currently supports Node.js based apps, but Python and other languages are com
 10. [Donation](#donation-money_with_wings)
 
 ---
+
 # Introduction :handshake:
 
 This is a development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.
 
-This repository contains the source code for https://hub.scramjet.org.
+This repository contains the source code for <https://hub.scramjet.org>.
 
 If you want to [read the usage docs, go here ☝🏼](https://github.com/scramjetorg/scramjet-cloud-docs)
 
@@ -115,14 +116,18 @@ There are several installations you need to perform to get the hub up and runnin
 
 To check if you already have Node.js(v16.xx.x) and npm installed, please check the installed version, run the following commands in your console:
 
-        node -v
-        npm -v
+```bash
+node -v
+npm -v
+```
 
 If none of the above commands is found, please proceed with the installation.
 
 It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script)
 
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+```
 
 After executing the above command you should get in the console this info:
 
@@ -130,9 +135,11 @@ After executing the above command you should get in the console this info:
 
 Which means that you need to run those two more commands to finish the installation:
 
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+```
 
 Export lines from above will be saved in your ~/.bashrc file so that you will not need to run it every session start.
 After that you can check nvm version just to confirm that you have successfully installed nvm.
@@ -143,8 +150,7 @@ output: `v0.37.2`
 
 ![nvm_version](./images/nvm_version.png)
 
-
-3. Now you are ready to install node.js, simply type in your console:
+Now you are ready to install node.js, simply type in your console:
 
 ```bash
 nvm install 16     # command will install latest LTS Version of Node.js
@@ -170,8 +176,10 @@ output: `8.1.0`
 
 OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
-    npm install -g lerna
-    npm install -g yarn
+```bash
+npm install -g lerna
+npm install -g yarn
+```
 
 ![installations](./images/installations.png)
 
@@ -184,18 +192,24 @@ OK! The installation was successful. 🎉 🎆
 We also work with Docker ![docker](./images/docker.png). Currently we are working on a solution where using Docker will be optional, but until then please continue with the installation procedure.
 Run the following command in your console:
 
-    sudo apt install -y docker.io docker-compose
+```bash
+sudo apt install -y docker.io docker-compose
+```
 
 Verify that Docker and Docker-Compose are installed by getting their versions:
 
-    sudo docker version
-    docker-compose version
+```bash
+sudo docker version
+docker-compose version
+```
 
 Now let's clone build and start the hub. Please copy the following commands to the terminal:
 
-    git clone https://github.com/scramjetorg/transform-hub.git && \
-    cd transform-hub && sudo gpasswd -a $USER docker && \
-    yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
+```bash
+git clone https://github.com/scramjetorg/transform-hub.git && \
+cd transform-hub && sudo gpasswd -a $USER docker && \
+yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
+```
 
 Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 Meantime let me describe you what is happening in the command you have just pasted into the console:
 
@@ -211,7 +225,9 @@ Depending on your machine this may take some time, so it is a perfect time for a
 
  When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
-    2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
+```bash
+2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
+```
 
 Hub is all set and ready to work with.
 
@@ -219,11 +235,15 @@ Hub is all set and ready to work with.
 
 You can also install the hub using npm [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth) package:
 
-    npm i -g @scramjet/sth
+```bash
+npm i -g @scramjet/sth
+```
 
 and start the hub:
 
-    scramjet-transform-hub
+```bash
+scramjet-transform-hub
+```
 
 ![npm_package](./images/npm_package.png)
 
@@ -404,6 +424,7 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 ---
 
 # Sample usage :sunglasses:
+
 ## "Hello Alice" sample :wave:
 
 The sample will work only if you have properly configured your environment,installed hub and build all the packages.
@@ -412,6 +433,7 @@ To run sequence/sample (example Alice), first, you need to install all the depen
 > :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.12`.*
 
 To start the "Hello Alice" sample we will need these basic steps:
+
 - [start the hub](#start-the-hub-checkered_flag)
 - [compress the package](#compress-the-package-package)
 - [send compressed package (sequence) to hub](#arrow_up-upload-the-package)
@@ -480,6 +502,7 @@ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seque
 #### :arrow_down: **GET the output**
 
 To get the output we need to send GET request to `/stdout` endpoint:
+
 ```bash
 curl --location --request GET "http://localhost:8000/api/v1/instance/$INSTANCE_ID/stdout" \
 --header 'Transfer-Encoding: chunked' \
@@ -499,12 +522,14 @@ To check out more of our ready-to-go samples, please go to our repo on GitHub, [
 ## Configure your own sample :pencil:
 
 We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates). For this moment we support two variants of template in two programming languages:
- - JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
- - TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
+
+- JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
+- TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
 
 There are two more templates that we will support, but they are still in development stage:
- - Python
- - C++
+
+- Python
+- C++
 
 # Troubleshooting :collision:
 
@@ -523,6 +548,7 @@ If you create your sample in `packages/reference-apps` folder, you can use the f
 ```bash
 yarn build:reference-apps
 ```
+
 It will build all the packages in the `packages/reference-apps` folder.
 
 > **:bulb: HINT:** Remember to run `yarn packseq` to generate the tar.gz file.
@@ -535,6 +561,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 - [feature request](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=feature_request.md&title=)
 
 ---
+
 # License and contributions :page_with_curl:
 
 This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
@@ -546,11 +573,13 @@ We provide support for contributions via test cases. If you expect a certain typ
 More info about bdd tests can be found [here](./bdd/README.md).
 
 ---
+
 # Help wanted :information_desk_person:
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](opensource@scramjet.org).
 
 ---
+
 # Donation :money_with_wings:
 
 Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee:
@@ -558,4 +587,3 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 * [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
 * There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
