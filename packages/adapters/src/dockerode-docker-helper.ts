@@ -161,9 +161,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @returns Promise which resolves with container statistics.
      */
     async stats(containerId: DockerContainer): Promise<Dockerode.ContainerStats> {
-        return Object.assign(
-            {} || this.dockerode.getContainer(containerId).stats({ stream: false }),
-            await this.dockerode.listNetworks()) as unknown as any;
+        return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
     private async isImageInLocalRegistry(name: string): Promise<boolean> {
