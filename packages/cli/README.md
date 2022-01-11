@@ -46,7 +46,7 @@ Commands
 Show sequence and instance help by providing --help option after each.
 ```
 
-### Set up config
+## Set up config
 
 Set STH url:
 
@@ -158,6 +158,3 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
 * There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
-
-

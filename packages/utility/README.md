@@ -7,14 +7,18 @@ This package includes **domain agnostic** utility **functions**, meaning there s
 ## Functions
 
 ### Example of a **GOOD** function for this package
+
 This function does not have any knowledge of business components in the system and it's simple. Thus it's pretty stable.
+
 ```ts
 export const defer = (timeout: number): Promise<void> =>
     new Promise(res => setTimeout(res, timeout));
 ```
 
 ### Example of a **BAD** function for this package
+
 Knowledge about different types of streams on our platform indicates that this function defines a business logic.
+
 ```ts
 import { EncodedMonitoringMessage, WritableStream } from "@scramjet/types";
 
@@ -72,6 +76,3 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
 * There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
-
-
-
