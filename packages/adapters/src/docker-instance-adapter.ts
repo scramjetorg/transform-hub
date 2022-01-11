@@ -17,6 +17,7 @@ import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
+import * as systemInfo from "systeminformation";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -118,6 +119,24 @@ IComponent {
         return msg;
     }
 
+    private async getBridgeNetworkInterfaceIp(): Promise<string> {
+        const interfaces = await systemInfo.networkInterfaces();
+        // @TODO we could be creating our own bridge network interface, to not depend on docker0 being available 
+        const docker0Interface = interfaces.find(net => net.iface === "docker0");
+
+        if (docker0Interface) {
+            this.logger.log(`docker0 interface avaialble on host OS (${docker0Interface.ip4}), runner will connect to it`);
+
+            return docker0Interface.ip4;
+        }
+
+        const fallbackBridgeAddress = "172.17.0.1";
+
+        this.logger.log(`Couldn't find docker0 interface, defaulting to ${fallbackBridgeAddress}, runner will try to connect to it.`);
+
+        return fallbackBridgeAddress;
+    }
+
     // eslint-disable-next-line complexity
     async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "docker") {
@@ -144,6 +163,8 @@ IComponent {
             }
         }
 
+        const bridgeNetInterfaceIp = await this.getBridgeNetworkInterfaceIp();
+
         this.logger.log("Starting Runner...", config.container);
 
         const { containerId } = await this.dockerHelper.run({
@@ -162,10 +183,12 @@ IComponent {
                 `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
                 `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
                 `INSTANCES_SERVER_PORT=${instancesServerPort}`,
-                `INSTANCE_ID=${instanceId}`
+                `INSTANCES_SERVER_IP=${bridgeNetInterfaceIp}`,
+                `INSTANCE_ID=${instanceId}`,
             ],
             autoRemove: true,
             maxMem: config.container.maxMem,
+            networkMode: "bridge"
         });
 
         this.resources.containerId = containerId;

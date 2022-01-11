@@ -1,8 +1,7 @@
 import { IComponent, Logger, DownstreamStreamsConfig } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import * as net from "net";
-import EventEmitter = require("events");
-import { isDefined } from "@scramjet/utility";
+import { isDefined, TypedEmitter } from "@scramjet/utility";
 
 type MaybeSocket = net.Socket | null
 type RunnerConnectionsInProgress = [
@@ -12,16 +11,19 @@ type RunnerOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
 ]
 
+type Events = {
+    connect: (id: string, streams: DownstreamStreamsConfig) => void
+}
+
+export class SocketServer extends TypedEmitter<Events> implements IComponent {
 // TODO: probably to change to net server, to verify
-export class SocketServer extends EventEmitter implements IComponent {
-    server?: net.Server;
+server?: net.Server;
     logger: Logger;
 
-    private connectedRunners = new Map<string, RunnerConnectionsInProgress>()
+    private runnerConnectionsInProgress = new Map<string, RunnerConnectionsInProgress>()
 
     constructor(private port: number) {
         super();
-
         this.logger = getLogger(this);
     }
 
@@ -44,11 +46,11 @@ export class SocketServer extends EventEmitter implements IComponent {
 
                 this.logger.info(`Connection from instance: ${id}`);
 
-                let runner = this.connectedRunners.get(id);
+                let runner = this.runnerConnectionsInProgress.get(id);
 
                 if (!runner) {
                     runner = [null, null, null, null, null, null, null, null];
-                    this.connectedRunners.set(id, runner);
+                    this.runnerConnectionsInProgress.set(id, runner);
                 }
 
                 const channel = await new Promise<number>((resolve) => {
@@ -70,10 +72,9 @@ export class SocketServer extends EventEmitter implements IComponent {
                 }
 
                 if (runner.every(isDefined)) {
-                    const streams: DownstreamStreamsConfig = runner as RunnerOpenConnections;
+                    this.runnerConnectionsInProgress.delete(id);
 
-                    // @TODO use typed event emitter
-                    this.emit("connect", { id, streams });
+                    this.emit("connect", id, runner as RunnerOpenConnections);
                 }
             });
 

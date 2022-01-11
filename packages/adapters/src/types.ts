@@ -98,7 +98,9 @@ export type DockerAdapterRunConfig = {
 
     labels?: {
         [key: string]: string
-    }
+    },
+
+    networkMode?: string,
 };
 
 /**
@@ -189,7 +191,8 @@ export interface IDockerHelper {
             publishAllPorts: boolean,
             labels: {
                 [key: string]: string
-            }
+            },
+            networkMode?: string
         }
     ) => Promise<DockerContainer>;
 

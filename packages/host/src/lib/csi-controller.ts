@@ -14,7 +14,8 @@ import {
     SequenceInfo,
     WritableStream,
     InstanceConifg,
-    ILifeCycleAdapterRun
+    ILifeCycleAdapterRun,
+    MessageDataType
 } from "@scramjet/types";
 import {
     AppError,
@@ -35,11 +36,17 @@ import { getLogger } from "@scramjet/logger";
 import { getRouter } from "@scramjet/api-server";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
-import { defer, promiseTimeout } from "@scramjet/utility";
+import { defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 
 const stopTimeout = 7000;
 
-export class CSIController extends EventEmitter {
+type Events = {
+    pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
+    error: (error: any) => void,
+    end: (code: number) => void,
+}
+
+export class CSIController extends TypedEmitter<Events> {
     id: string;
 
     logger: Logger;

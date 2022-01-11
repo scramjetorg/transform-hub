@@ -87,7 +87,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             maxMem: number, // TODO: Container configuration
             command?: string[],
             publishAllPorts: boolean,
-            labels: { [key: string]: string }
+            labels: { [key: string]: string },
+            networkMode?: string
         }
     ): Promise<DockerContainer> {
         containerCfg.ports = { ...containerCfg.ports };
@@ -109,7 +110,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 MemorySwap: 0,
                 PortBindings: containerCfg.ports.PortBindings,
                 PublishAllPorts: containerCfg.publishAllPorts || false,
-                NetworkMode: "host"
+                NetworkMode: containerCfg.networkMode
             },
             Labels: containerCfg.labels || {},
         };
@@ -159,8 +160,10 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @param containerId Container id.
      * @returns Promise which resolves with container statistics.
      */
-    stats(containerId: DockerContainer): Promise<Dockerode.ContainerStats> {
-        return this.dockerode.getContainer(containerId).stats({ stream: false });
+    async stats(containerId: DockerContainer): Promise<Dockerode.ContainerStats> {
+        return Object.assign(
+            {} || this.dockerode.getContainer(containerId).stats({ stream: false }),
+            await this.dockerode.listNetworks()) as unknown as any;
     }
 
     private async isImageInLocalRegistry(name: string): Promise<boolean> {
@@ -266,7 +269,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 command: config.command,
                 labels: config.labels || {},
                 publishAllPorts: config.publishAllPorts || false,
-
+                networkMode: config.networkMode
             }
         );
         // ------

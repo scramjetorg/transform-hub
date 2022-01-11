@@ -4,3 +4,4 @@ export * from "./merge";
 export * from "./promise-timeout";
 export * from "./read-streamed-json";
 export * from "./typeguards";
+export * from "./typed-emitter";

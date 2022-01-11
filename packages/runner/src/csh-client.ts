@@ -13,7 +13,7 @@ class CSHClient implements ICSHClient {
 
     logger: Console;
 
-    constructor(private instancesServerPort: number) {
+    constructor(private instancesServerPort: number, private instancesServerIp: string) {
         this.logger = getLogger(this);
     }
 
@@ -29,9 +29,8 @@ class CSHClient implements ICSHClient {
         const openConnections = await Promise.all(
             Array.from(Array(8))
                 .map(() => {
-                    const connection = net.createConnection({
-                        port: this.instancesServerPort
-                    });
+                    // Error handling for each connection is process crash for now
+                    const connection = net.createConnection(this.instancesServerPort, this.instancesServerIp);
 
                     return new Promise<net.Socket>(res => {
                         connection.on("connect", () => res(connection));
@@ -43,10 +42,6 @@ class CSHClient implements ICSHClient {
                         connection.write(id);
                         // Assuming number is from 0-7, sending 1 byte
                         connection.write(index.toString());
-
-                        connection.on("error", (err) => {
-                            this.logger.error(`Connection on instance ${id} from channel ${index} error`, err);
-                        });
 
                         return connection;
                     });
