@@ -25,7 +25,8 @@
     "dockerode": "^3.3.0",
     "scramjet": "^4.36.0",
     "shell-escape": "^0.2.0",
-    "ts.data.json": "^2.1.0"
+    "ts.data.json": "^2.1.0",
+    "systeminformation": "^5.7.10"
   },
   "devDependencies": {
     "@scramjet/types": "^0.14.0",

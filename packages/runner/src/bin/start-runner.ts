@@ -7,10 +7,18 @@ import { CSHClient } from "../csh-client";
 
 const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
+const instancesServerIp = process.env.INSTANCES_SERVER_IP;
 const instanceId = process.env.INSTANCE_ID;
 
 if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
     console.error("Incorrect run argument: instancesServerPort");
+    process.exit(1);
+}
+
+const ipRegex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+
+if (!instancesServerIp || !instancesServerIp.match(ipRegex)) {
+    console.error("Incorrect run argument: instancesServerIp");
     process.exit(1);
 }
 
@@ -24,7 +32,7 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(1);
 }
 
-const hostClient = new CSHClient(+instancesServerPort);
+const hostClient = new CSHClient(+instancesServerPort, instancesServerIp);
 
 /**
  * Start runner script.

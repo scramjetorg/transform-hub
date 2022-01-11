@@ -2,7 +2,7 @@ import * as findPackage from "find-package-json";
 
 import { APIExpose, AppConfig, CSIConfig, IComponent, Logger, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
-import { Duplex, Readable, Writable } from "stream";
+import { Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { addLoggerOutput, removeLoggerOutput, getLogger } from "@scramjet/logger";
@@ -88,7 +88,7 @@ export class Host implements IComponent {
      * Sets listener for connections to socket server.
      */
     private attachListeners() {
-        this.socketServer.on("connect", async ({ id, streams }) => {
+        this.socketServer.on("connect", async (id, streams) => {
             this.logger.log("Instance connected:", id);
 
             await this.instancesStore[id].handleInstanceConnect(streams);
@@ -129,7 +129,7 @@ export class Host implements IComponent {
                 this.api.server
             );
             this.cpmConnector.setLoadCheck(this.loadCheck);
-            this.cpmConnector.on("log_connect", (channel: Duplex) => this.commonLogsPipe.getOut().pipe(channel));
+            this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
             this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
@@ -510,7 +510,8 @@ export class Host implements IComponent {
                 this.serviceDiscovery.getData(
                     {
                         topic: data.requires,
-                        contentType: data.contentType
+                        // @TODO this probably should be typed better to not allow undefined
+                        contentType: data.contentType!
                     }
                 )?.pipe(csic.getInputStream()!);
 
@@ -525,7 +526,7 @@ export class Host implements IComponent {
 
                 this.logger.log("Sequence provides data: ", data);
                 const topic = this.serviceDiscovery.addData(
-                    { topic: data.provides, contentType: data.contentType },
+                    { topic: data.provides, contentType: data.contentType! },
                     csic.id
                 );
 
