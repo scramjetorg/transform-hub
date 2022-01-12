@@ -156,8 +156,13 @@ export class VerserConnection {
      * @returns Promise resolving when connection is ended.
      */
     async close() {
+        this.logger.log("Closing VerserConnection...");
+
         return new Promise<void>(res => {
-            this.socket.end(res);
+            this.socket.end(() => {
+                this.logger.log("VerserConnection closed.");
+                res();
+            });
         });
     }
 }
