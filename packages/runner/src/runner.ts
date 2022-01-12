@@ -51,6 +51,11 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     });
 }
 
+/**
+ * Runtime environment for sequence code.
+ * Communicates with Host with data transfered to/from sequence, health info,
+ * reacts to control messages such as stopping etc. 
+ */
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
     private _context?: RunnerAppContext<X, any>;

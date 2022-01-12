@@ -46,6 +46,9 @@ type Events = {
     end: (code: number) => void,
 }
 
+/**
+ * Handles all Instance lifecycle, exposes instance's HTTP API 
+ */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
 

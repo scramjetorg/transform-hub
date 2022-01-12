@@ -3,7 +3,7 @@
 import { Runner } from "../runner";
 import * as fs from "fs";
 import { AppConfig } from "@scramjet/types";
-import { CSHClient } from "../csh-client";
+import { CSHClient } from "../host-client";
 
 const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
