@@ -3,7 +3,7 @@
 import { Runner } from "../runner";
 import * as fs from "fs";
 import { AppConfig } from "@scramjet/types";
-import { CSHClient } from "../host-client";
+import { HostClient } from "../host-client";
 
 const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
@@ -32,7 +32,7 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(1);
 }
 
-const hostClient = new CSHClient(+instancesServerPort, instancesServerIp);
+const hostClient = new HostClient(+instancesServerPort, instancesServerIp);
 
 /**
  * Start runner script.
