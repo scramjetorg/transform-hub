@@ -1,5 +1,5 @@
 /* eslint-disable dot-notation */
-import { ICSHClient, UpstreamStreamsConfig, } from "@scramjet/types";
+import { IHostClient, UpstreamStreamsConfig, } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import * as net from "net";
@@ -11,7 +11,7 @@ type HostOpenConnections = [
 /**
  * Connects to Host and exposes streams per channel (stdin, monitor etc.)
  */
-class HostClient implements ICSHClient {
+class HostClient implements IHostClient {
     private _streams?: UpstreamStreamsConfig;
 
     logger: Console;
@@ -112,4 +112,4 @@ class HostClient implements ICSHClient {
     }
 }
 
-export { HostClient as CSHClient };
+export { HostClient };
