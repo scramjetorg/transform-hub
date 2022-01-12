@@ -7,7 +7,7 @@ import {
     EventMessageData,
     HandshakeAcknowledgeMessageData,
     IComponent,
-    ICSHClient,
+    IHostClient,
     Logger,
     MaybePromise,
     MonitoringRateMessageData,
@@ -75,7 +75,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     constructor(
         private sequencePath: string,
-        private hostClient: ICSHClient,
+        private hostClient: IHostClient,
         private instanceId: string
     ) {
         this.emitter = new EventEmitter();
