@@ -30,13 +30,17 @@ export class Verser extends TypedEmitter<Events> {
         });
     }
 
-    async stop() {
+    async disconnect() {
         await Promise.all(this.connections.map(connection => connection.close()));
+
+        this.connections = [];
+    }
+
+    async stop() {
+        await this.disconnect();
 
         await new Promise<void>(res => {
             this.server.once("close", res).close();
         });
-
-        this.connections = [];
     }
 }
