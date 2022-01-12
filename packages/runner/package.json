@@ -8,7 +8,6 @@
     "build:docker": "docker build -t scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
-    "test": "echo \"Skip for now\" #nyc ava",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$npm_package_version",
     "clean": "rm -rf ./dist .bic_cache",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
