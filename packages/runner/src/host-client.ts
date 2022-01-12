@@ -8,7 +8,10 @@ type HostOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
 ]
 
-class CSHClient implements ICSHClient {
+/**
+ * Connects to Host and exposes streams per channel (stdin, monitor etc.)
+ */
+class HostClient implements ICSHClient {
     private _streams?: UpstreamStreamsConfig;
 
     logger: Console;
@@ -109,4 +112,4 @@ class CSHClient implements ICSHClient {
     }
 }
 
-export { CSHClient };
+export { HostClient as CSHClient };

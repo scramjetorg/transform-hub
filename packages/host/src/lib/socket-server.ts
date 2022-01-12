@@ -15,6 +15,9 @@ type Events = {
     connect: (id: string, streams: DownstreamStreamsConfig) => void
 }
 
+/**
+ * Server for incoming connections from Runners
+ */
 export class SocketServer extends TypedEmitter<Events> implements IComponent {
 // TODO: probably to change to net server, to verify
 server?: net.Server;
