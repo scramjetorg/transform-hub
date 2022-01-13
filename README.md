@@ -290,16 +290,18 @@ In [#Installation](#installation-:clamp:) section we managed to start the hub, w
 After build is done, you can install and run hub globally:
 
 ```bash
-npm install -g ./dist/hub  # installs packages globally
+npm install -g ./dist/sth  # installs packages globally
 scramjet-transform-hub     # starts host
 ```
 
 You can also install current Hub release from registry:
 
 ```bash
-npm install -g @scramjet/hub
+npm install -g @scramjet/sth
 scramjet-transform-hub
 ```
+
+> :point_up: **HINT:** There is also an alias available for running STH: `sth`
 
 ## Start the hub :checkered_flag:
 
@@ -307,8 +309,8 @@ Hub can be started in multiple ways
 
 ```bash
 yarn start                          # Starts Host after it's been built
-node dist/host/bin/start            # This is the same as above
-ts-node packages/host/src/bin/start # This starts node from source code
+node dist/sth/bin/hub            # This is the same as above
+ts-node packages/sth/src/bin/hub.ts # This starts node from source code
 ```
 
 ## Install CLI and execute :white_check_mark:
@@ -533,29 +535,104 @@ There are two more templates that we will support, but they are still in develop
 
 # Troubleshooting :collision:
 
-> **:bulb: HINT:** If something goes wrong, any errors occur, please try to run clean build, which will remove all the packages and rebuild them.
+### **Docker issues:**
 
-Copy and paste 🤞
+<details>
+<summary>
+    <strong>Error: connect ENOENT /var/run/docker.sock</strong>
+</summary>
+
+During sending the sequence package to the host you may come across this error:
+
+* ***Error: connect ENOENT /var/run/docker.sock***
+
+    ```bash
+    2022-01-13T11:54:26.948Z info (object:Host) New sequence incoming...
+    2022-01-13T11:54:26.948Z log (object:DockerSequenceAdapter) DockerSequenceAdapter init.
+    2022-01-13T11:54:26.948Z log (object:DockerodeDockerHelper) Checking image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:54:26.949Z log (object:DockerodeDockerHelper) Start pulling image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:54:26.949Z debug (object:Host) Error: connect ENOENT /var/run/docker.sock
+        at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1161:16)
+    2022-01-13T11:54:26.950Z debug (object:Host) Request date: 2022-01-13T11:54:26.948Z, method: POST, url: /api/v1/sequence, status: 422
+    ```
+
+To solve this issue you need to install docker and docker-compose. You can install them using the following command below or refer to [official Docker instructions](https://docs.docker.com/get-docker/).
+
+    ```bash
+    sudo apt install -y docker.io docker-compose
+    ```
+</details>
+
+<details>
+<summary>
+    <strong>Error: connect EACCES /var/run/docker.sock</strong>
+</summary>
+
+During sending the sequence package to the host you may come across this error:
+
+* ***Error: connect EACCES /var/run/docker.sock***
+
+    ```bash
+    2022-01-13T11:58:00.368Z info (object:Host) New sequence incoming...
+    2022-01-13T11:58:00.369Z log (object:DockerSequenceAdapter) DockerSequenceAdapter init.
+    2022-01-13T11:58:00.370Z log (object:DockerodeDockerHelper) Checking image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:58:00.375Z log (object:DockerodeDockerHelper) Start pulling image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:58:00.377Z debug (object:Host) Error: connect EACCES /var/run/docker.sock
+        at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1161:16)
+    2022-01-13T11:58:00.379Z debug (object:Host) Request date: 2022-01-13T11:58:00.373Z, method: POST, url: /api/v1/sequence, status: 422
+    ```
+
+To solve this issue you need to add the current user to the docker group, please use this command:
 
 ```bash
-yarn clean && yarn build
+sudo gpasswd -a $USER docker
 ```
 
-> **:bulb: HINT:** Remember to build your sample package before compressing it.
+</details><br>
+
+### **Packages issues:**
+
+<details>
+<summary>
+    <strong>Errors related to build packages</strong>
+</summary><br>
+
+If something goes wrong during building packages, any errors occur, please try to run clean build, which will remove all `node_modules` and `dist` directories, after that you try to install and build them again.
+
+```bash
+yarn clean && yarn clean:modules && yarn install && yarn build:all
+```
+
+</details>
+
+<details>
+<summary>
+    <strong>Errors related to reference-apps package</strong>
+</summary><br>
+
+Every reference-app package before we run it, needs to:
+
+* have `node_modules` installed (`yarn install`)
+* have `dist` directory created (`yarn build:refapps`)
+* be compressed (`yarn packseq`)
+
+Remember to install dependencies and build your sample package before compressing it.
 
 If you create your sample in `packages/reference-apps` folder, you can use the following command to build it:
 
 ```bash
-yarn build:reference-apps
+yarn build:refapps
 ```
 
 It will build all the packages in the `packages/reference-apps` folder.
 
-> **:bulb: HINT:** Remember to run `yarn packseq` to generate the tar.gz file.
+> **:bulb: HINT:** Remember to generate the tar.gz file before sending it to the host. Only compressed packages will be accepted by the host. Command `yarn packseq` will generate the tar.gz file of each app in the `packages/reference-apps` folder.
+
+</details><br>
 
 > **:bulb: HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run. You may find them useful.
 
-> **:bulb: HINT:** Log an issue every time you encounter a problem or you find that some feature is missing.
+Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 
 - [bug report](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=bug_report.md&title=)
 - [feature request](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=feature_request.md&title=)
@@ -586,4 +663,6 @@ Do you like this project? It helped you to reduce time spent on delivering your 
 
 * [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
-* There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
+* There's also a Paypal donation link if you prefer that:
+
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
