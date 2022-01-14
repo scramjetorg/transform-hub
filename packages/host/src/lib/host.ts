@@ -150,7 +150,7 @@ export class Host implements IComponent {
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
 
-        this.logger.log("Host main called.");
+        this.logger.log("Host main called: ", { version });
 
         if (identifyExisiting) {
             await this.identifyExistingSequences();
@@ -180,7 +180,7 @@ export class Host implements IComponent {
     }
 
     /**
-     * Initializes connector and conntects to Manager.
+     * Initializes connector and connects to Manager.
      */
     connectToCPM() {
         this.cpmConnector?.attachServer(this.api.server);
@@ -355,7 +355,7 @@ export class Host implements IComponent {
         try {
             await sequenceAdapter.init();
 
-            this.logger.debug("SequenceAdapater initialized, listing...");
+            this.logger.debug("SequenceAdapter initialized, listing...");
             const configs = await sequenceAdapter.list();
 
             for (const config of configs) {
