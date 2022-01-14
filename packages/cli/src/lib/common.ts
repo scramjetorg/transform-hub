@@ -8,6 +8,7 @@ import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
 import { Readable } from "stream";
+import { setConfigValue } from "./config";
 
 const { F_OK, R_OK } = constants;
 
@@ -117,9 +118,13 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
         throw new Error(`${packageLocation} not found.`);
     });
 
+    const ouputPath = output ? resolve(process.cwd(), output) : `${cwd}.tar.gz`;
     const target = stdout
         ? process.stdout
-        : createWriteStream(output ? resolve(process.cwd(), output) : `${cwd}.tar.gz`);
+        : createWriteStream(ouputPath);
+
+    if (!stdout) setConfigValue("lastPackagePath", ouputPath);
+
     const ignoreLocation = resolve(cwd, ".siignore");
     const filter = await getIgnoreFunction(ignoreLocation);
     const out = c(
