@@ -9,7 +9,10 @@ const defaultConfig = {
     configVersion: 1,
     apiUrl: "http://127.0.0.1:8000/api/v1",
     log: true,
-    format: "pretty"
+    format: "pretty",
+    lastPackagePath: "",
+    lastInstanceId: "",
+    lastSequenceId: ""
 };
 
 /**
@@ -17,7 +20,7 @@ const defaultConfig = {
  * @returns defaultConfig
  */
 type Config = typeof defaultConfig;
-const location = resolve(homedir(), "sth-cli-rc.json");
+const location = resolve(homedir(), ".sth-cli-rc.json");
 
 let currentConfig: Config;
 
@@ -67,5 +70,43 @@ export const setConfigValue = (key: keyof Config, value: number | string | boole
         throw new Error(`Unknown config entry: ${key}`);
     }
 
-    writeFileSync(location, JSON.stringify(conf, null, 2), "utf-8");
+    try {
+        writeFileSync(location, JSON.stringify(conf, null, 2), "utf-8");
+    } catch (e) {
+        // Just log info here.
+        // eslint-disable-next-line no-console
+        console.error("Warning: couldn't write config update");
+    }
 };
+
+const getDashDefaultValue = (id: string, def: string) => {
+    if (id !== "-") return id;
+
+    if (!def) throw new Error("Previous value isn't said - you can't use '-' to replace it.");
+    return def;
+};
+
+/**
+ * Gets last sequence id if dash is provided, otherwise returns the first argument
+ *
+ * @param id - dash or anything else
+ * @returns the correct id
+ */
+export const getSequenceId = (id: string) => getDashDefaultValue(id, getConfig().lastSequenceId);
+
+/**
+ * Gets last instance id if dash is provided, otherwise returns the first argument
+ *
+ * @param id - dash or anything else
+ * @returns the correct id
+ */
+export const getInstanceId = (id: string) => getDashDefaultValue(id, getConfig().lastSequenceId);
+
+/**
+ * Gets package file path if dash is provided, otherwise returns the first argument
+ *
+ * @param path - dash or anything else
+ * @returns the correct id
+ */
+export const getPackagePath = (path: string) => getDashDefaultValue(path, getConfig().lastPackagePath);
+
