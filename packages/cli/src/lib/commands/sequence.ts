@@ -68,6 +68,14 @@ export const sequence: CommandDefinition = (program) => {
         .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
     /**
+     * Command `si sequence select`
+     */
+    sequenceCmd.command("select")
+        .description("Select a sequence id as default")
+        .argument("<id>", "The sequence id")
+        .action(async (id) => setConfigValue("lastSequenceId", id));
+
+    /**
     * Command `si sequence start`
     * @param id sequence
     * @param appConfig
