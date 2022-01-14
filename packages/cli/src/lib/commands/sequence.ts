@@ -2,7 +2,7 @@ import { SequenceClient } from "@scramjet/api-client";
 import { readFile } from "fs/promises";
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getReadStreamFromFile } from "../common";
-import { getSequenceId, setConfigValue } from "../config";
+import { getPackagePath, getSequenceId, setConfigValue } from "../config";
 import { displayEntity, displayObject } from "../output";
 
 async function resolveConfigJson(configJson: any, config: any): Promise<any> {
@@ -50,7 +50,7 @@ export const sequence: CommandDefinition = (program) => {
         .argument("[<sequencePackage>]", "The file to upload or '-' to use the last packed. Leave empty for stdin.")
         .action(async (sequencePackage) => {
             const seq = await getHostClient(program).sendSequence(
-                sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin
+                sequencePackage ? await getReadStreamFromFile(getPackagePath(sequencePackage)) : process.stdin
             );
 
             setConfigValue("lastSequenceId", seq.id);
