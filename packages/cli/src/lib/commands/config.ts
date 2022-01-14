@@ -1,5 +1,5 @@
 import { CommandDefinition } from "../../types";
-import { getConfig, setConfigValue } from "../config";
+import { delConfigValue, getConfig, setConfigValue } from "../config";
 import { displayObject } from "../output";
 
 /**
@@ -12,7 +12,7 @@ export const config: CommandDefinition = (program) => {
      * Set custom value for config and write it to JSON file.
     */
     const configCmd = program
-        .command("config [command]")
+        .command("config")
         .alias("c")
         .description("configuration file operations");
 
@@ -23,7 +23,7 @@ export const config: CommandDefinition = (program) => {
     */
     configCmd.command("print")
         .alias("p")
-        .description("print out the current config")
+        .description("Print out the current config")
         .action(() => displayObject(program, getConfig()));
 
     /**
@@ -32,7 +32,7 @@ export const config: CommandDefinition = (program) => {
      * Log: configVersion, apiUrl, logLevel, format
      */
     configCmd.command("apiUrl <apiUrl>")
-        .description("set the hub API url")
+        .description("Set the hub API url")
         .action((value) => setConfigValue("apiUrl", value));
 
     /**
@@ -40,6 +40,15 @@ export const config: CommandDefinition = (program) => {
      * Default `format`: {@link defaultConfig.format}
      */
     configCmd.command("logLevel <logLevel>")
-        .description("set the hub API url")
+        .description("Set the hub API url")
         .action((value) => setConfigValue("log", value));
+
+    configCmd.command("set <key> <value>")
+        .description("Set config value")
+        .action((key, value) => setConfigValue(key, value));
+
+    configCmd.command("unset <key>")
+        .alias("del")
+        .description("Unset config value")
+        .action((key) => delConfigValue(key));
 };
