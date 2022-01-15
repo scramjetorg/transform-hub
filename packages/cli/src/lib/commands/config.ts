@@ -47,6 +47,12 @@ export const config: CommandDefinition = (program) => {
         .description("Set config value")
         .action((key, value) => setConfigValue(key, value));
 
+    configCmd.command("get <key>")
+        .description("Get config value")
+        .action((key: keyof ReturnType<typeof getConfig>) => {
+            console.log(getConfig()[key]);
+        });
+
     configCmd.command("unset <key>")
         .alias("del")
         .description("Unset config value")
