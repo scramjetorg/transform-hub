@@ -198,3 +198,25 @@ Feature: CLI tests
         And I get the second instance output
         Then confirm data named "hello-input-out-10" received
         * stop host
+
+    @ci
+    Scenario: E2E-010 TC-022 Check minus set/remove
+        Given I execute CLI with "seq select abc" arguments
+        And I execute CLI with "inst select def" arguments
+        Then I get the last sequence id from config
+        And I get the last instance id from config
+        And The sequence id equals "abc"
+        And The instance id equals "def"
+
+    @ci
+    Scenario: E2E-010 TC-023 Check minus replacements with a sequence
+        Given host is running
+        When I execute CLI with "pack ../dist/reference-apps/hello-alice-out" arguments
+        And I execute CLI with "seq send -" arguments
+        And I execute CLI with "seq start -" arguments
+        Then I get the last sequence id from config
+        Then I get the last instance id from config
+        And I get instance info
+        And I execute CLI with "inst kill -" arguments
+        And I execute CLI with "seq rm -" arguments
+        And host is still running
