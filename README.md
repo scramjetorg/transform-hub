@@ -28,7 +28,9 @@ export (input: Readable) => async function*() {
 }
 ```
 
-It currently supports Node.js based apps, but Python and other languages are coming. Like that? [Get Scramjet Transform Hub straight from NPM](https://www.npmjs.com/package/@scramjet/sth)
+It currently supports Node.js based apps, but Python and other languages are coming.
+
+[Get Scramjet Transform Hub straight from NPM](https://www.npmjs.com/package/@scramjet/sth)
 
 ---
 
@@ -92,7 +94,7 @@ There's no limit to what you can use it for. Do you want a stock checker? A chat
 
 [Check our proposition of sample architecture for use cases in different industries.](https://scramjet.org/#use-cases)
 
-This is the STH development repo. In order to use it, you need to have linux based os, for instance [Ubuntu](https://ubuntu.com/download/server), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
+This is the STH development repo, in order to use it, you need to have linux based operating system, for instance [Ubuntu](https://ubuntu.com/download/server)installed. We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
 
 ---
 
@@ -116,7 +118,7 @@ Some important links 👀:
 <!-- TODO - links to be fixed!!!!!!!!!!!  -->
 * Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
 * You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
-* You can see the [CLI documentation here](./docs/development-guide/scramjet-interface-cli.md), but `si help` should also be quite effective.
+* You can see the [CLI documentation here](./docs/interfaces/CLI-command-reference.md), but `si help` should also be quite effective.
 * Don't forget to `star` this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
@@ -132,7 +134,7 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 
 ## Installation :clamp:
 
-> **Reminder:** This is a development guide. In order to use it, you need to have linux based os, for instance [Ubuntu](https://ubuntu.com/download/server), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
+> **Reminder:** This is a development guide. In order to use it, you need to have linux based os (e.g. [Ubuntu](https://ubuntu.com/download/server)), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
 
 ### Environment setup
 
@@ -158,7 +160,7 @@ npm -v
 
 If none of the above commands is found, please proceed with the installation.
 
-It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script)
+It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script).
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
@@ -224,7 +226,7 @@ The same as before the installations can be confirmed by checking the installed 
 
 OK! The installation was successful. 🎉 🎆
 
-We also work with Docker, but this is optional. Running the hub is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following command in your console:
+We also work with Docker, but this is optional. Running the hub is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
 
 ```bash
 sudo apt install -y docker.io docker-compose   # command will install docker and docker-compose
@@ -267,7 +269,7 @@ When the package installation and build is complete hub should be ready to run. 
 yarn start -P 8000
 ```
 
-The parameter `-P`makes the hub listen on port 8000. If you skip this parameter the hub will listen on port 8000 anyway. This port is set as a default value in the hub configuration file.
+The parameter `-P` makes the hub listen on port 8000. If you skip this parameter the hub will listen on port 8000 anyway. This port is set as a default value in the hub configuration file.
 
 When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
@@ -279,7 +281,7 @@ Hub is all set and ready to work with. To stop the hub use `Ctrl+C` or kill the 
 
 ![hub_start](./images/hub_start.png)
 
-As we mention before, the current Hub can be also installed from the npm registry -> [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth):
+As we mentioned before, the current Hub can be also installed from the npm registry -> [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth):
 
 ```bash
 npm i -g @scramjet/sth   # installs the package globally
@@ -287,9 +289,9 @@ npm i -g @scramjet/sth   # installs the package globally
 
 ![npm_package](./images/npm_package.png)
 
-When you start the hub from npm no package installations or builds are required. You can start the hub right away, with one of those two commands: `scramjet-transform-hub` or `sth`.
+When you start the hub from npm, no package installations or builds are required. You can start the hub right away, with one of those two commands: `scramjet-transform-hub` or `sth`.
 
-If you managed to start the hub, it confirms that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
+If you managed to start the hub, it confirms that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following section.
 
 ---
 
@@ -351,16 +353,16 @@ Options:
 
 ## Install CLI and execute :white_check_mark:
 
-This command was already done at the end of the [#Installation](#installation-:clamp:) section, just before starting the hub. There are two ways to install the CLI:
+This command was already done at the end of the [Installation](#installation-:clamp:) section, just before starting the hub. But it is worth mentioning, that there are two ways to install the CLI:
 
-- in the root folder, after building, run the following commands:
+- form the source code. In the root folder, after building, run the commands:
 
 ```bash
 npm i -g ./dist/cli # install CLI globally from the source folder
 si help             # show CLI commands
 ```
 
-- you can also install the @scramjet/cli package from [npm](https://www.npmjs.com/package/@scramjet/cli).
+- from [npm](https://www.npmjs.com/package/@scramjet/cli):
 
 ```bash
 npm i -g @scramjet/cli # install CLI globally from npm
@@ -369,7 +371,7 @@ si help                # show CLI commands
 
 ![cli_npm](./images/cli_npm.png)
 
-Please run `si help` command to confirm that the installation went properly and also to see the list of available commands:
+Running `si help` command will confirm that the installation went properly and also to see the list of available commands:
 
 ![si_help](./images/si_help.png)
 
@@ -377,11 +379,17 @@ We will use CLI later on to execute the sequence. You can also [jump right away 
 
 ## Build the packages :building_construction:
 
-This is how to perform a clean build of the packages:
+All the packages in the project need to be installed and built before the can be used.
+
+**Install** will create a `node_modules` folder in the root of the project and in each package (dependencies will be installed).
+
+**Build** will create a `dist` folder in the root of the project and in each package. The folder will contain the files with the code compiled into JavaScript.
+
+This is how to perform a clean install and build of all the packages:
 
 ```bash
-yarn install:clean        # this command will perform yarn clean && yarn clean:modules && yarn install at once
-yarn build:all-packages   # optionally build:all if you want all dockerfiles.
+yarn install:clean        # this command will perform 'yarn clean && yarn clean:modules && yarn install' at once
+yarn build:all-packages   # optionally 'build:all' if you want all dockerfiles.
 ```
 
 ![build_clean](./images/clean_install.png)
@@ -466,7 +474,7 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 ## "Hello Alice" sample :wave:
 
 The sample will work only if you have properly configured your environment, installed hub and build all the packages.
-By this time you should already have all those things done by going through the [#Installation](#installation-:clamp:) section.
+By this time you should already have all those things done by going through the [Installation](#installation-:clamp:) section.
 
 > :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.14`.*
 
@@ -485,7 +493,11 @@ The sequence in a `tar.gz` file format with package.js (aka package) can be gene
 Assuming that you have the [host running](#start-the-hub-checkered_flag) use the command:
 
 ```bash
-yarn packseq    # this creates tar.gz for all packages in the repo
+yarn build:refapps    # this builds all the refapps in the 'reference-apps' package
+```
+
+```bash
+yarn packseq    # this creates tar.gz for all the refapps in the 'reference-apps' package
 ```
 
 When the host is not running you can use a script:
@@ -504,7 +516,7 @@ tar -C /path/to/package/dir czf <package-name.tar.gz> .
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#start-the-hub-checkered_flag)
+> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to start the hub =>](#start-the-hub-checkered_flag)
 
 #### :arrow_up: **Upload the package**
 
@@ -518,7 +530,7 @@ SEQ_ID=$( \
 )
 ```
 
-During your development or checking out our code, you may want to edit some of out reference app. After that you are very welcome to use our scripts to speed up your developing process. In this case, you can use the following, that will build and send any of the reference packages and samples in this repo:
+During your development or checking out our code, you may want to edit some of our reference apps. After that you are very welcome to use our scripts to speed up your developing process. In this case, you can use the following, that will build and send any of the reference packages and samples in this repo:
 
 ```bash
 SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out) # -> when you want to upload the package (it will be built if needed)
@@ -527,6 +539,8 @@ SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want 
 ```
 
 #### :arrow_right: **Start the sequence**
+
+Copy and paste the following command to the terminal:
 
 ```bash
 INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/sequence/$SEQ_ID/start" \
@@ -553,11 +567,12 @@ This is what you should get as a result:
 
 ![hello_alice](./images/hello_alice.png)
 
+<!-- Repo 'docs' which is used below is a private repo -->
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
 ## More samples :books:
 
-To check out more of our ready-to-go samples, please go to our repo on GitHub, [samples directory](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples).
+To check out more of our ready-to-go samples, please go to our [Quick Start repo](https://github.com/scramjetorg/scramjet-cloud-docs#scramjet-transform-hub---quick-start-introduction) on GitHub, [samples directory](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples).
 
 ## Configure your own sample :pencil:
 
@@ -668,7 +683,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **:bulb: HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run. You may find them useful.
+> **:bulb: HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 
