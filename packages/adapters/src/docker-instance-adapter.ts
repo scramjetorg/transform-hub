@@ -209,7 +209,9 @@ IComponent {
             networkMode: this.dockerNetworkName ?? "bridge"
         });
 
-        streams.stderr.pipe(process.stdout);
+        streams.stderr.on(
+            "data",
+            data => this.logger.error("RUNNER DOCKER error", data));
         streams.stdout.pipe(process.stdout);
 
         this.resources.containerId = containerId;
