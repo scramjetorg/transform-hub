@@ -465,9 +465,8 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 
 ## "Hello Alice" sample :wave:
 
-The sample will work only if you have properly configured your environment,installed hub and build all the packages.
-By this time you should already have the environment configured and set by going through the [#Installation](#installation-:clamp:) section.
-
+The sample will work only if you have properly configured your environment, installed hub and build all the packages.
+By this time you should already have all those things done by going through the [#Installation](#installation-:clamp:) section.
 
 > :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.14`.*
 
@@ -483,7 +482,7 @@ To start the "Hello Alice" sample we will need these basic steps:
 
 The sequence in a `tar.gz` file format with package.js (aka package) can be generated in different ways.
 
-Assuming that you have the [host running](#install-host-and-execute-:white_check_mark:) use command:
+Assuming that you have the [host running](#start-the-hub-checkered_flag) use the command:
 
 ```bash
 yarn packseq    # this creates tar.gz for all packages in the repo
@@ -505,9 +504,11 @@ tar -C /path/to/package/dir czf <package-name.tar.gz> .
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-:white_check_mark:)
+> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#start-the-hub-checkered_flag)
 
 #### :arrow_up: **Upload the package**
+
+Copy and paste the following command to the terminal:
 
 ```bash
 SEQ_ID=$( \
@@ -517,15 +518,13 @@ SEQ_ID=$( \
 )
 ```
 
-You can use the following that will build and send any of the reference packages and samples in this repo:
+During your development or checking out our code, you may want to edit some of out reference app. After that you are very welcome to use our scripts to speed up your developing process. In this case, you can use the following, that will build and send any of the reference packages and samples in this repo:
 
 ```bash
 SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out) # -> when you want to upload the package (it will be built if needed)
 SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r) # -> when you want to upload the package and make sure it's rebuilt
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
-
-> **:bulb: HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
 #### :arrow_right: **Start the sequence**
 
@@ -537,6 +536,8 @@ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seque
     "args": ["/package/data.json"]
 }' | jq ".id" -r)
 ```
+
+> **:bulb: HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
 #### :arrow_down: **GET the output**
 
