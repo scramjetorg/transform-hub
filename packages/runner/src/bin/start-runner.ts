@@ -15,9 +15,7 @@ if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort
     process.exit(1);
 }
 
-const ipRegex = /^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
-
-if (!instancesServerIp || !instancesServerIp.match(ipRegex)) {
+if (!instancesServerIp) {
     console.error("Incorrect run argument: instancesServerIp");
     process.exit(1);
 }
