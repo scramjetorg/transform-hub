@@ -130,16 +130,14 @@ IComponent {
 
         if (isHostSpawnedInDockerContainer) {
             const dockerNetworkName = randomUUID();
-
-            await this.dockerHelper.dockerode.createNetwork({ Name: dockerNetworkName, Driver: "bridge" });
-
-            this.logger.log({ dockerNetworkName });
-
-            this.dockerNetworkName = dockerNetworkName;
-
             const hostname = os.hostname();
 
-            this.logger.log({ hostname });
+            this.logger.log({ dockerNetworkName, hostname });
+            const network = await this.dockerHelper.dockerode.createNetwork({ Name: dockerNetworkName, Driver: "bridge" });
+
+            await network.connect({ Container: hostname });
+
+            this.dockerNetworkName = dockerNetworkName;
 
             return hostname;
         }
