@@ -13,6 +13,7 @@ COPY packages/api-server ./packages/api-server
 COPY packages/sth-config ./packages/sth-config
 COPY packages/host ./packages/host
 COPY packages/logger ./packages/logger
+COPY packages/obj-logger ./packages/obj-logger
 COPY packages/model ./packages/model
 COPY packages/sth ./packages/sth
 COPY packages/symbols ./packages/symbols

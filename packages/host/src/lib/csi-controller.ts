@@ -37,6 +37,7 @@ import { getRouter } from "@scramjet/api-server";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 const stopTimeout = 7000;
 
@@ -47,7 +48,7 @@ type Events = {
 }
 
 /**
- * Handles all Instance lifecycle, exposes instance's HTTP API 
+ * Handles all Instance lifecycle, exposes instance's HTTP API.
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
@@ -75,6 +76,13 @@ export class CSIController extends TypedEmitter<Events> {
 
     apiOutput = new PassThrough();
     apiInputEnabled = true;
+
+    /**
+     * Logger.
+     *
+     * @type {ObjLogger}
+     */
+    objLogger: ObjLogger;
 
     private _instanceAdapter?: ILifeCycleAdapterRun;
 
@@ -130,6 +138,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.startResolver = { res, rej };
         });
 
+        this.objLogger = new ObjLogger(this, { id: this.id });
         this.info.created = new Date();
     }
 
@@ -148,15 +157,19 @@ export class CSIController extends TypedEmitter<Events> {
 
     async main() {
         this.logger.log("Instance started.");
+        this.objLogger.trace("Instance started.");
+
         let code = 0;
 
         try {
             code = await this.instanceStopped();
 
             this.logger.log("Instance stopped.");
+            this.objLogger.trace("Instance stopped.");
         } catch (e: any) {
             code = e;
             this.logger.error("Instance caused error, code:", e);
+            this.objLogger.error("Instance caused error, code:", e);
         }
 
         this.emit("end", code);
@@ -175,23 +188,33 @@ export class CSIController extends TypedEmitter<Events> {
                 await this.instanceAdapter.init();
 
                 this.logger.log("Streams hooked and routed.");
+                this.objLogger.trace("Streams hooked and routed.");
 
                 this.endOfSequence = this.instanceAdapter.run(instanceConfig, this.config.instancesServerPort, this.id);
 
                 this.logger.info("Sequence initialized.");
+                this.objLogger.trace("Sequence initialized.");
 
                 const exitcode = await this.endOfSequence;
 
                 // TODO: if we have a non-zero exit code is this expected?
                 this.logger.log(`Sequence finished with status: ${exitcode}`);
 
+                if (exitcode === 0) {
+                    this.objLogger.trace("Sequence finished with success", exitcode);
+                } else {
+                    this.objLogger.error("Sequence finished with error", exitcode);
+                }
+
                 return exitcode;
             } catch (error: any) {
                 this.logger.error("Error caught", error.stack);
+                this.objLogger.error("Error caught", error.stack);
 
                 await this.instanceAdapter.cleanup();
 
                 this.logger.error("Cleanup done (post error).");
+                this.objLogger.error("Cleanup done (post error)");
 
                 return 213;
             }
@@ -201,13 +224,16 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     instanceStopped(): Promise<ExitCode> {
-        if (!this.instancePromise) throw new CSIControllerError("UNATTACHED_STREAMS");
+        if (!this.instancePromise) {
+            throw new CSIControllerError("UNATTACHED_STREAMS");
+        }
 
         return this.instancePromise;
     }
 
     hookupStreams(streams: DownstreamStreamsConfig) {
         this.logger.log("Hookup streams.");
+        this.objLogger.trace("Hookup streams");
 
         this.downStreams = streams;
 
@@ -217,6 +243,8 @@ export class CSIController extends TypedEmitter<Events> {
             streams[CC.LOG].pipe(process.stdout);
         }
 
+        streams[CC.LOG].pipe(this.objLogger.inLogStream);
+
         this.upStreams = [
             new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),
             new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),
@@ -224,6 +252,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
             this.logger.error(`Downstream error on channel ${i}`, err);
+            this.objLogger.error("Downstream error on channel", i, err);
         }));
 
         this.communicationHandler.hookUpstreamStreams(this.upStreams);
@@ -293,6 +322,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
         this.logger.log("PING RECEIVED", message);
+        this.objLogger.trace("PING RECEIVED", message);
 
         if (!message[1].ports) {
             this.logger.warn("Received a PING message but didn't receive ports config");
@@ -355,6 +385,7 @@ export class CSIController extends TypedEmitter<Events> {
                     const stream = this.downStreams![CC.IN];
                     const contentType = req.headers["content-type"];
 
+                    // @TODO: Check if subsequent requests have the same content-type.
                     if (!inputHeadersSent) {
                         if (contentType === undefined) {
                             throw new Error("Content-Type must be defined");

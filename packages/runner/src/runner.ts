@@ -16,17 +16,20 @@ import {
     SynchronousStreamable,
     HasTopicInformation
 } from "@scramjet/types";
-import { BufferStream, DataStream, StringStream } from "scramjet";
-import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { addLoggerOutput, getLogger } from "@scramjet/logger";
-import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
-
-import { EventEmitter } from "events";
-import { MessageUtils } from "./message-utils";
-import { Readable, Writable } from "stream";
 import { RunnerError } from "@scramjet/model";
+import { ObjLogger } from "@scramjet/obj-logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { defer } from "@scramjet/utility";
+
+import { BufferStream, DataStream, StringStream } from "scramjet";
+
+import { EventEmitter } from "events";
+import { Readable, Writable } from "stream";
+
+import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
+import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
+import { MessageUtils } from "./message-utils";
 
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
@@ -36,7 +39,7 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
-// @TODO make this a parameter, we could be extending that bc our CLI tests execute commands slow, even ~3s/command 
+// @TODO make this a parameter, we could be extending that bc our CLI tests execute commands slow, even ~3s/command
 const exitDelay = 10000;
 
 function overrideStandardStream(oldStream: Writable, newStream: Writable) {
@@ -54,7 +57,7 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
 /**
  * Runtime environment for sequence code.
  * Communicates with Host with data transfered to/from sequence, health info,
- * reacts to control messages such as stopping etc. 
+ * reacts to control messages such as stopping etc.
  */
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
@@ -69,6 +72,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     handshakeResolver?: { res: Function, rej: Function };
 
     logger: Logger;
+    objLogger: ObjLogger;
 
     private inputDataStream: DataStream
     private outputDataStream: DataStream
@@ -80,12 +84,20 @@ export class Runner<X extends AppConfig> implements IComponent {
     ) {
         this.emitter = new EventEmitter();
         this.logger = getLogger(this);
+
+        this.objLogger = new ObjLogger(this, { id: instanceId });
+        this.objLogger.pipe(this.hostClient.logStream);
+
         this.inputDataStream = new DataStream().catch((e: any) => {
             this.logger.error("Error during input data stream.", e);
+            this.objLogger.error("Error during input data stream", e);
+
             throw e;
         });
         this.outputDataStream = new DataStream().catch((e: any) => {
             this.logger.error("Error during input data stream.", e);
+            this.objLogger.error("Error during input data stream", e);
+
             throw e;
         });
     }
@@ -93,6 +105,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     get context(): RunnerAppContext<X, any> {
         if (!this._context) {
             this.logger.error("Uninitialized context.");
+            this.objLogger.error("Uninitialized context");
 
             throw new RunnerError("UNINITIALIZED_CONTEXT");
         }
@@ -102,6 +115,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async controlStreamHandler([code, data]: EncodedControlMessage) {
         this.logger.log("Control message received:", code, data);
+        this.objLogger.debug("Control message received:", code, data);
 
         switch (code) {
         case RunnerMessageCode.MONITORING_RATE:
@@ -141,30 +155,38 @@ export class Runner<X extends AppConfig> implements IComponent {
             .each(async ([code, data]: EncodedControlMessage) => this.controlStreamHandler([code, data]))
             .on("error", (error) => {
                 this.logger.error("An error occurred during parsing control message.", error);
+                this.objLogger.error("Error parsing control message", error);
             });
     }
 
     async cleanup(): Promise<number> {
         this.logger.info("Cleaning up...");
+        this.objLogger.info("Cleaning up");
 
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
             this.logger.log("Monitoring interval removed.");
+            this.objLogger.trace("Monitoring interval removed");
         }
 
         try {
             this.logger.log("Cleaning up streams...");
+            this.objLogger.info("Cleaning up streams");
+
             await this.hostClient.disconnect();
 
             this.logger.info("Streams clear.");
+            this.objLogger.info("Streams clear");
 
             return 0;
         } catch (e: any) {
             this.logger.error("Streams not clear, error.", e);
+            this.objLogger.error("Error. Streams not clear", e);
 
             return 233;
         } finally {
             this.logger.info("Clean up completed.");
+            this.objLogger.info("Clean up completed");
         }
     }
 
@@ -176,6 +198,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         mapToInputDataStream(this.hostClient.inputStream, contentType)
             .catch((error: any) => {
                 this.logger.error("mapToInputDataStream", error);
+                this.objLogger.error("mapToInputDataStream", error);
                 // TODO: we should be doing some error handling here:
                 // TODO: remove the stream, mark as bad, kill the instance maybe?
             }).pipe(this.inputDataStream);
@@ -189,7 +212,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         let working = false;
 
         this.monitoringInterval = setInterval(async () => {
-            if (working) return;
+            if (working) {
+                return;
+            }
 
             working = true;
             await this.reportHealth();
@@ -207,6 +232,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     async handleKillRequest(): Promise<void> {
         this.logger.log("Handling KILL request...");
+        this.objLogger.debug("Handling KILL request");
 
         this.context.killHandler();
         await this.cleanup();
@@ -214,9 +240,11 @@ export class Runner<X extends AppConfig> implements IComponent {
         //TODO: investigate why we need to wait (process.tick - no all logs)
         if (!this.stopExpected) {
             this.logger.log("Exiting... (unexpected, 137)");
+            this.objLogger.trace("Exiting (unexpected, 137)");
             this.exit(137);
         } else {
             this.logger.log("Exiting... (expected)");
+            this.objLogger.trace("Exiting (expected)");
             this.exit();
         }
     }

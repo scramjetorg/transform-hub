@@ -1,7 +1,7 @@
 import { SequenceConfig } from "./runner-config";
 import { Readable } from "stream";
 import { InstanceId } from "./instance";
-
+import { IObjectLogger } from "./object-logger";
 export type SequenceInfo = {
     id: string;
     config: SequenceConfig;
@@ -22,4 +22,6 @@ export interface ISequenceAdapter {
     identify(stream: Readable, id: string): Promise<SequenceConfig>;
 
     remove(conifg: SequenceConfig): Promise<void>
+
+    objLogger: IObjectLogger;
 }
