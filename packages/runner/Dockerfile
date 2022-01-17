@@ -11,7 +11,7 @@ RUN groupadd -g 1200 runner \
 RUN apt-get update \
     && apt-get install -y gosu --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
-   
+
 
 FROM node:lts-bullseye-slim AS builder
 
@@ -24,6 +24,7 @@ RUN yarn install --frozen-lockfile --silent
 COPY packages/types ./packages/types
 COPY packages/utility ./packages/utility
 COPY packages/symbols ./packages/symbols
+COPY packages/obj-logger ./packages/obj-logger
 COPY packages/logger ./packages/logger
 COPY packages/model ./packages/model
 COPY packages/runner ./packages/runner

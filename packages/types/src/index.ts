@@ -16,6 +16,7 @@ export * from "./lifecycle";
 export * from "./lifecycle-adapters";
 export * from "./message-streams";
 export * from "./messages";
+export * from "./object-logger";
 export * from "./runner-config";
 export * from "./runner";
 export * from "./sequence";

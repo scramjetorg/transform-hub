@@ -19,8 +19,8 @@ type Events = {
  * Server for incoming connections from Runners
  */
 export class SocketServer extends TypedEmitter<Events> implements IComponent {
-// TODO: probably to change to net server, to verify
-server?: net.Server;
+    // TODO: probably to change to net server, to verify
+    server?: net.Server;
     logger: Logger;
 
     private runnerConnectionsInProgress = new Map<string, RunnerConnectionsInProgress>()

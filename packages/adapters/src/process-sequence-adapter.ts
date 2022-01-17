@@ -1,10 +1,12 @@
 import { getLogger } from "@scramjet/logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 import {
     Logger,
     ProcessSequenceConfig,
     ISequenceAdapter,
     STHConfiguration,
     SequenceConfig,
+    IObjectLogger,
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { createReadStream } from "fs";
@@ -43,9 +45,11 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
  */
 class ProcessSequenceAdapter implements ISequenceAdapter {
     private logger: Logger;
+    objLogger: IObjectLogger;
 
     constructor(private config: STHConfiguration) {
         this.logger = getLogger(this);
+        this.objLogger = new ObjLogger(this.logger);
     }
 
     /**
@@ -72,6 +76,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
         );
 
         this.logger.debug("Listed stored sequences", sequencesConfigs);
+        this.objLogger.debug("Listed stored sequences", sequencesConfigs);
 
         return sequencesConfigs
             .filter(isDefined);

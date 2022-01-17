@@ -80,6 +80,7 @@ export function mapToInputDataStream(stream: Readable, contentType: string): Dat
     }
 
     if (contentType.endsWith("x-ndjson")) {
+        // @TODO: Read charset from headers
         return StringStream
             .from(stream, { encoding: "utf-8" })
             .JSONParse(true);

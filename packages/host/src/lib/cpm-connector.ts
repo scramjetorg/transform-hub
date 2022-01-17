@@ -23,6 +23,7 @@ import { LoadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
 import { VerserClient } from "@scramjet/verser";
 import { TypedEmitter } from "@scramjet/utility";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 type STHInformation = {
     id?: string;
@@ -111,6 +112,13 @@ export class CPMConnector extends TypedEmitter<Events> {
     logger: Logger = getLogger(this);
 
     /**
+     * Logger.
+     *
+     * @type {ObjLogger}
+     */
+    objLogger: ObjLogger;
+
+    /**
      * Custom id indicator.
      *
      * @type {boolean}
@@ -183,6 +191,9 @@ export class CPMConnector extends TypedEmitter<Events> {
             headers: {},
             server
         });
+
+        this.objLogger = new ObjLogger(this);
+        this.objLogger.trace("Initialized.");
     }
 
     /**

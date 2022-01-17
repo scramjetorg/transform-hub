@@ -11,6 +11,7 @@ import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
+import { ObjLogger } from "@scramjet/obj-logger";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 
 /**
@@ -22,20 +23,28 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
     private logger: Logger;
 
+    /**
+     * Instance of class providing logging utilities.
+     */
+    objLogger: ObjLogger;
+
     constructor(private config: STHConfiguration) {
         this.dockerHelper = new DockerodeDockerHelper();
         this.logger = getLogger(this);
+        this.objLogger = new ObjLogger(this);
     }
 
     /**
      * Initializes adapter.
      */
     async init(): Promise<void> {
-        this.logger.log("DockerSequenceAdapter init.");
+        this.logger.log("Initializing...");
+        this.objLogger.trace("Initializing");
 
         await this.fetch(this.config.docker.prerunner.image);
 
-        this.logger.info("DockerSequenceAdapter initiazation done.");
+        this.logger.info("Initiazation done.");
+        this.objLogger.trace("Initiazation done");
     }
 
     /**
@@ -53,6 +62,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<SequenceConfig[]>} Promise resolving to array of identified sequences.
      */
     async list(): Promise<SequenceConfig[]> {
+        this.logger.debug("Listing exiting sequences...");
+        this.objLogger.trace("Listing exiting sequences");
+
         const potentialVolumes = await this.dockerHelper.listVolumes();
 
         const configs = await Promise.all(
@@ -73,6 +85,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
+        this.objLogger.debug("Attempting to identify volume", volume);
 
         try {
             const { streams, wait } = await this.dockerHelper.run({
@@ -86,6 +99,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             });
 
             this.logger.debug(`Prerunner identify started for: ${volume}`);
+            this.objLogger.debug("PreRunner identify started", volume);
 
             const ret = await this.parsePackage(streams, wait, volume);
 
@@ -94,10 +108,13 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             }
 
             this.logger.info(`Identified volume ${volume} as to be run with ${ret.container?.image}`);
+            this.objLogger.info(`Identified volume ${volume} as to be run with ${ret.container?.image}`);
 
             return ret;
-        } catch {
+        } catch (e: any) {
             this.logger.error("Docker failed!");
+            this.objLogger.error("Docker failed", e.message, volume);
+
             throw new SequenceAdapterError("DOCKER_ERROR");
         }
     }
@@ -117,10 +134,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         this.resources.volumeId = volumeId;
         this.logger.log("Volume created. Id: ", volumeId);
+        this.objLogger.info("Volume created", volumeId);
 
         let runResult: DockerAdapterRunResponse;
 
         this.logger.log("Starting PreRunner", this.config);
+        this.logger.debug("Starting PreRunner", this.config);
 
         try {
             runResult = await this.dockerHelper.run({
@@ -131,8 +150,10 @@ class DockerSequenceAdapter implements ISequenceAdapter {
                 autoRemove: true,
                 maxMem: this.config.docker.prerunner.maxMem || 0
             });
-        } catch (err) {
+        } catch (err: any) {
             this.logger.error(err);
+            this.objLogger.error(err);
+
             throw new SequenceAdapterError("DOCKER_ERROR");
         }
 
@@ -146,8 +167,10 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             await this.fetch(config.container.image);
 
             return config;
-        } catch (err) {
-            this.logger.error(err);
+        } catch (err: any) {
+            this.logger.error(err, id);
+            this.objLogger.error(err, id);
+
             throw new SequenceAdapterError("PRERUNNER_ERROR", err);
         }
     }
@@ -162,6 +185,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         try {
             return await this.dockerHelper.createVolume(id);
         } catch (error: any) {
+            this.logger.error("Error creating volume", id);
             throw new SequenceAdapterError("DOCKER_ERROR", "Error creating volume");
         }
     }
@@ -214,6 +238,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         await this.dockerHelper.removeVolume(config.id);
 
         this.logger.debug("Volume removed.");
+        this.objLogger.debug("Volume removed", config.id);
     }
 }
 
