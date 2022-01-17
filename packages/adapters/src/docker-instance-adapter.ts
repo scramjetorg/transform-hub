@@ -19,10 +19,7 @@ import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolum
 import { FreePortsFinder, defer } from "@scramjet/utility";
 import * as fs from "fs/promises";
 import { randomUUID } from "crypto";
-import * as child_process from "child_process";
-import { promisify } from "util";
-
-const exec = promisify(child_process.exec);
+import { hostname } from "os";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -140,11 +137,7 @@ IComponent {
 
             this.dockerNetworkName = dockerNetworkName;
 
-            const { stdout: hostname } = await exec("hostname");
-
-            this.logger.log({ hostname });
-
-            return hostname;
+            return hostname();
         }
 
         const interfaces = await this.dockerHelper.listNetworks();
