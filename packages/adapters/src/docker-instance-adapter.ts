@@ -208,7 +208,7 @@ IComponent {
             ],
             autoRemove: true,
             maxMem: config.container.maxMem,
-            networkMode: "bridge"
+            networkMode: this.dockerNetworkId ?? "bridge"
         });
 
         this.resources.containerId = containerId;
