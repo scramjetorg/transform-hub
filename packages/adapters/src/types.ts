@@ -1,5 +1,5 @@
 import { ExitCode } from "@scramjet/types";
-import { ContainerStats } from "dockerode";
+import { ContainerStats, NetworkInspectInfo } from "dockerode";
 import { PathLike } from "fs";
 import { Stream, Writable } from "stream";
 
@@ -274,6 +274,8 @@ export interface IDockerHelper {
      * @param fetchOnlyIfNotExists fetch only if not exists (defaults to true)
      */
     pullImage(name: string, fetchOnlyIfNotExists?: boolean): Promise<void>
+
+    listNetworks(): Promise<NetworkInspectInfo[]>
 }
 
 export type InstanceAdapterOptions = {

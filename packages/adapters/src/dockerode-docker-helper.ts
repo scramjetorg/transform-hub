@@ -310,4 +310,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
         return { statusCode: containerExitResult.StatusCode };
     }
+
+    async listNetworks(): Promise<Dockerode.NetworkInspectInfo[]> {
+        return this.dockerode.listNetworks();
+    }
 }

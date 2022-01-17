@@ -17,7 +17,6 @@ import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
-import * as systemInfo from "systeminformation";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -120,21 +119,17 @@ IComponent {
     }
 
     private async getBridgeNetworkInterfaceIp(): Promise<string> {
-        const interfaces = await systemInfo.networkInterfaces();
-        // @TODO we could be creating our own bridge network interface, to not depend on docker0 being available 
-        const docker0Interface = interfaces.find(net => net.iface === "docker0");
+        const interfaces = await this.dockerHelper.listNetworks();
+        const bridgeInterface = interfaces.find(net => net.Driver === "bridge");
+        const bridgeNetworkIp = bridgeInterface?.IPAM?.Config?.[0]?.Gateway;
 
-        if (docker0Interface) {
-            this.logger.log(`docker0 interface avaialble on host OS (${docker0Interface.ip4}), runner will connect to it`);
-
-            return docker0Interface.ip4;
+        if (!bridgeNetworkIp) {
+            throw new Error("Couldn't find any docker bridge network in DockerInstanceAdapter");
         }
 
-        const fallbackBridgeAddress = "172.17.0.1";
+        this.logger.log(`bridge interface avaialble on host OS (${bridgeNetworkIp}), runner will connect to it`);
 
-        this.logger.log(`Couldn't find docker0 interface, defaulting to ${fallbackBridgeAddress}, runner will try to connect to it.`);
-
-        return fallbackBridgeAddress;
+        return bridgeNetworkIp;
     }
 
     // eslint-disable-next-line complexity
