@@ -19,7 +19,7 @@ import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolum
 import { FreePortsFinder, defer } from "@scramjet/utility";
 import * as fs from "fs/promises";
 import { randomUUID } from "crypto";
-import { hostname } from "os";
+import * as os from "os";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -137,7 +137,11 @@ IComponent {
 
             this.dockerNetworkName = dockerNetworkName;
 
-            return hostname();
+            const hostname = os.hostname();
+
+            this.logger.log({ hostname });
+
+            return hostname;
         }
 
         const interfaces = await this.dockerHelper.listNetworks();
@@ -183,7 +187,7 @@ IComponent {
 
         this.logger.log("Starting Runner...", config.container);
 
-        const { containerId } = await this.dockerHelper.run({
+        const { containerId, streams } = await this.dockerHelper.run({
             imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
@@ -206,6 +210,9 @@ IComponent {
             maxMem: config.container.maxMem,
             networkMode: this.dockerNetworkName ?? "bridge"
         });
+
+        streams.stderr.pipe(process.stdout);
+        streams.stdout.pipe(process.stdout);
 
         this.resources.containerId = containerId;
 
