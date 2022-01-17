@@ -15,8 +15,14 @@ import {
 } from "@scramjet/types";
 import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
+import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
+import * as fs from "fs/promises";
+import { randomUUID } from "crypto";
+import * as child_process from "child_process";
+import { promisify } from "util";
+
+const exec = promisify(child_process.exec);
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -25,11 +31,13 @@ class DockerInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
-    private dockerHelper: IDockerHelper;
+    private dockerHelper: DockerodeDockerHelper;
 
     private resources: DockerAdapterResources = {};
 
     logger: Logger;
+
+    private dockerNetworkId?: string
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -38,7 +46,7 @@ IComponent {
     }
 
     async init(): Promise<void> {
-        // noop
+
     }
 
     /**
@@ -119,6 +127,23 @@ IComponent {
     }
 
     private async getBridgeNetworkInterfaceIp(): Promise<string> {
+        const isHostSpawnedInDockerContainer = await fs.access("/.dockerenv").then(() => true, () => false);
+
+        this.logger.log({ isHostSpawnedInDockerContainer });
+
+        if (isHostSpawnedInDockerContainer) {
+            const dockerNetworkName = randomUUID();
+            const network = await this.dockerHelper.dockerode.createNetwork({ Name: dockerNetworkName });
+
+            this.logger.log({ dockerNetworkName });
+
+            this.dockerNetworkId = network.id;
+
+            const { stdout: hostname } = await exec("hostname");
+
+            return hostname;
+        }
+
         const interfaces = await this.dockerHelper.listNetworks();
         const bridgeInterface = interfaces.find(net => net.Driver === "bridge");
         const bridgeNetworkIp = bridgeInterface?.IPAM?.Config?.[0]?.Gateway;
@@ -224,6 +249,10 @@ IComponent {
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
             this.logger.log("Volume removed");
+        }
+
+        if (this.dockerNetworkId) {
+            await this.dockerHelper.dockerode.getNetwork(this.dockerNetworkId).remove();
         }
     }
 

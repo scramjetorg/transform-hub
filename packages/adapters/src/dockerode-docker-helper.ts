@@ -41,7 +41,7 @@ type DockerodeVolumeMountConfig = {
  * Communicates with Docker using Dockerode library.
  */
 export class DockerodeDockerHelper implements IDockerHelper {
-    dockerode: Dockerode = new Dockerode();
+    public dockerode: Dockerode = new Dockerode();
     logger: Logger = getLogger(this);
 
     /**
@@ -305,7 +305,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @param options Condition to be fullfilled. @see {DockerAdapterWaitOptions}
      * @returns Container exit code.
      */
-    async wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData> {
+    async wait(container: DockerContainer, options: DockerAdapterWaitOptions = {}): Promise<ExitData> {
         const containerExitResult = await this.dockerode.getContainer(container).wait(options);
 
         return { statusCode: containerExitResult.StatusCode };
