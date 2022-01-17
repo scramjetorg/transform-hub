@@ -253,7 +253,11 @@ IComponent {
         }
 
         if (this.dockerNetworkName) {
-            await this.dockerHelper.dockerode.getNetwork(this.dockerNetworkName).remove();
+            const network = this.dockerHelper.dockerode.getNetwork(this.dockerNetworkName);
+
+            await network.disconnect({ Container: os.hostname() });
+
+            await network.remove();
         }
     }
 
