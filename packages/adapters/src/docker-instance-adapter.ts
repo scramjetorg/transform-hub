@@ -211,7 +211,7 @@ IComponent {
 
         streams.stderr.on(
             "data",
-            data => this.logger.error("RUNNER DOCKER error", data));
+            data => this.logger.error("RUNNER DOCKER error", data.toString()));
         streams.stdout.pipe(process.stdout);
 
         this.resources.containerId = containerId;
