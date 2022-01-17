@@ -37,7 +37,7 @@ IComponent {
 
     logger: Logger;
 
-    private dockerNetworkId?: string
+    private dockerNetworkName?: string
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -133,13 +133,16 @@ IComponent {
 
         if (isHostSpawnedInDockerContainer) {
             const dockerNetworkName = randomUUID();
-            const network = await this.dockerHelper.dockerode.createNetwork({ Name: dockerNetworkName });
+
+            await this.dockerHelper.dockerode.createNetwork({ Name: dockerNetworkName, Driver: "bridge" });
 
             this.logger.log({ dockerNetworkName });
 
-            this.dockerNetworkId = network.id;
+            this.dockerNetworkName = dockerNetworkName;
 
             const { stdout: hostname } = await exec("hostname");
+
+            this.logger.log({ hostname });
 
             return hostname;
         }
@@ -208,7 +211,7 @@ IComponent {
             ],
             autoRemove: true,
             maxMem: config.container.maxMem,
-            networkMode: this.dockerNetworkId ?? "bridge"
+            networkMode: this.dockerNetworkName ?? "bridge"
         });
 
         this.resources.containerId = containerId;
@@ -251,8 +254,8 @@ IComponent {
             this.logger.log("Volume removed");
         }
 
-        if (this.dockerNetworkId) {
-            await this.dockerHelper.dockerode.getNetwork(this.dockerNetworkId).remove();
+        if (this.dockerNetworkName) {
+            await this.dockerHelper.dockerode.getNetwork(this.dockerNetworkName).remove();
         }
     }
 
