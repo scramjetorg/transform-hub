@@ -16,8 +16,8 @@
     ],
     "out": "../../docs/utility",
     "plugin": "typedoc-plugin-markdown",
-    "readme": "none",
     "excludePrivate": "true",
-    "gitRevision": "HEAD"
+    "gitRevision": "HEAD",
+    "sort": "alphabetical"
   }
 }

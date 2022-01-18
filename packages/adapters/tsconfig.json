@@ -16,8 +16,7 @@
     ],
     "out": "../../docs/adapters",
     "plugin": "typedoc-plugin-markdown",
-    "readme": "none",
-    "toc": "true",
-    "gitRevision": "HEAD"
+    "gitRevision": "HEAD",
+    "sort": "alphabetical"
   }
 }

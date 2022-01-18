@@ -16,8 +16,8 @@
     ],
     "out": "../../docs/cli",
     "plugin": "typedoc-plugin-markdown",
-    "readme": "README.md",
     "excludePrivate": "true",
-    "gitRevision": "HEAD"
+    "gitRevision": "HEAD",
+    "sort": "alphabetical"
   }
 }
