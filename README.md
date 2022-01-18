@@ -183,7 +183,7 @@ After that you can check nvm version just to confirm that you have successfully 
 
 command: `nvm --version`
 
-output: `v0.37.2`
+output e.g.: `v0.37.2`
 
 ![nvm_version](./images/nvm_version.png)
 

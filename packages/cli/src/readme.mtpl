@@ -115,6 +115,10 @@ si host logs    # display the logs of the Host.
 
 >!docs interfaces/CLI-command-reference.md &
 
+## Docs
+
+>!docs cli/modules.md &
+
 >@sth
 >@use-cases
 >@links

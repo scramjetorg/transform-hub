@@ -14,7 +14,7 @@ host.getSequence("3e989fe7-a3b7-401e-a269-2fa0a7ac70f4")
 
 ## Docs
 
->!docs api-client/README.md &
+>!docs api-client/modules.md &
 
 >@sth
 >@use-cases

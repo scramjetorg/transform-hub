@@ -2,7 +2,9 @@
 
 This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package provides the API Server used by STH to expose the interface.
 
->!docs api-server/README.md &
+## Docs
+
+>!docs api-server/modules.md &
 
 >@sth
 >@use-cases
