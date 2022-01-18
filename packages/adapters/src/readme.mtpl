@@ -7,7 +7,9 @@ The adapter provides two main exports:
 * [LifecycleDockerAdapterSequence](./src/sequence-adapter.ts) - An adapter allowing to execution control an Instance of a Sequence.
 * [LifecycleDockerAdapterInstance](./src/instance-adapter.ts) - An adapter allowing to identification and deployment of a Sequence.
 
->!docs adapters/README.md &
+## Docs
+
+>!docs adapters/modules.md &
 
 >@sth
 >@use-cases

@@ -27,7 +27,7 @@ scramjet-transform-hub
 
 Depending on your machine this may take some time. When it's done the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
-```
+```shell
 2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
 ```
 
