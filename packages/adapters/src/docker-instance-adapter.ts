@@ -156,6 +156,9 @@ IComponent {
 
             if (!isHostConnected) {
                 await network.connect({ Container: hostname });
+                this.logger.log("Connecting host");
+
+                this.logger.log(await network.inspect());
             }
 
             this.dockerNetworkName = dockerNetworkName;
