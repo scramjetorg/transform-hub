@@ -157,7 +157,10 @@ IComponent {
             );
 
             if (!isHostConnected) {
-                await network.connect({ Container: hostname });
+                // @TODO do not connect on instances run, do that before
+                await network.connect({ Container: hostname }).catch((err) => {
+                    this.logger.warn("This STH is probably already connected", err);
+                });
                 this.logger.log("Connecting host");
                 await defer(4000);
                 this.logger.log((await network.inspect()).Containers);
