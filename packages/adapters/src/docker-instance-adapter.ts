@@ -148,17 +148,19 @@ IComponent {
                 });
             }
 
-            this.logger.log(await network.inspect());
+            const containers = (await network.inspect()).Containers;
 
-            const isHostConnected = !!Object.entries((await network.inspect()).Containers).find(
+            this.logger.log({ containers });
+
+            const isHostConnected = !!Object.entries(containers).find(
                 ([id, { Name }]: [string, any]) => id.startsWith(hostname) || Name === hostname
             );
 
             if (!isHostConnected) {
                 await network.connect({ Container: hostname });
                 this.logger.log("Connecting host");
-
-                this.logger.log(await network.inspect());
+                await defer(4000);
+                this.logger.log((await network.inspect()).Containers);
             }
 
             this.dockerNetworkName = dockerNetworkName;
