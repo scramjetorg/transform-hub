@@ -18,7 +18,6 @@ import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
 import * as fs from "fs/promises";
-import { randomUUID } from "crypto";
 import * as os from "os";
 
 /**
@@ -129,13 +128,32 @@ IComponent {
         this.logger.log({ isHostSpawnedInDockerContainer });
 
         if (isHostSpawnedInDockerContainer) {
-            const dockerNetworkName = randomUUID();
+            const dockerNetworkName = "transformhub0";
             const hostname = os.hostname();
 
             this.logger.log({ dockerNetworkName, hostname });
-            const network = await this.dockerHelper.dockerode.createNetwork({ Name: dockerNetworkName, Driver: "bridge" });
 
-            await network.connect({ Container: hostname });
+            const network = this.dockerHelper.dockerode.getNetwork(dockerNetworkName);
+
+            if (await network.inspect().then(() => true, () => false) === false) {
+                await this.dockerHelper.dockerode.createNetwork({
+                    Name: dockerNetworkName,
+                    Driver: "bridge",
+                    Options: {
+                        "com.docker.network.bridge.host_binding_ipv4":"0.0.0.0",
+                        "com.docker.network.bridge.enable_ip_masquerade":"true",
+                        "com.docker.network.bridge.enable_icc":"true",
+                        "com.docker.network.driver.mtu":"1500"
+                    }
+                });
+            }
+            const isHostConnected = !!Object.entries((await network.inspect()).Containers).find(
+                ([id, { Name }]: [string, any]) => id.startsWith(hostname) || Name === hostname
+            );
+
+            if (!isHostConnected) {
+                await network.connect({ Container: hostname });
+            }
 
             this.dockerNetworkName = dockerNetworkName;
 
@@ -258,8 +276,6 @@ IComponent {
             const network = this.dockerHelper.dockerode.getNetwork(this.dockerNetworkName);
 
             await network.disconnect({ Container: os.hostname() });
-
-            await network.remove();
         }
     }
 
