@@ -9,6 +9,11 @@ export type SequenceInfo = {
 }
 
 export interface ISequenceAdapter {
+    /**
+     * Adapter name.
+     */
+    name: string;
+
     init(): Promise<void>;
 
     /**

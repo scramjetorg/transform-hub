@@ -45,7 +45,10 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
  */
 class ProcessSequenceAdapter implements ISequenceAdapter {
     private logger: Logger;
+
     objLogger: IObjectLogger;
+
+    name = "ProcessSequenceAdapter";
 
     constructor(private config: STHConfiguration) {
         this.logger = getLogger(this);

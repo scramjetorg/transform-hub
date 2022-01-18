@@ -16,7 +16,7 @@ import {
     SynchronousStreamable,
     HasTopicInformation
 } from "@scramjet/types";
-import { addLoggerOutput, getLogger } from "@scramjet/logger";
+import { getLogger } from "@scramjet/logger";
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { RunnerMessageCode } from "@scramjet/symbols";
@@ -86,7 +86,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger = getLogger(this);
 
         this.objLogger = new ObjLogger(this, { id: instanceId });
-        this.objLogger.pipe(this.hostClient.logStream);
 
         this.inputDataStream = new DataStream().catch((e: any) => {
             this.logger.error("Error during input data stream.", e);
@@ -94,6 +93,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             throw e;
         });
+
         this.outputDataStream = new DataStream().catch((e: any) => {
             this.logger.error("Error during input data stream.", e);
             this.objLogger.error("Error during input data stream", e);
@@ -263,6 +263,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             sequenceError = err;
 
             this.logger.error("Following error ocurred during stopping sequence: ", err);
+            this.logger.error("Error stopping sequence", err);
         }
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
@@ -285,7 +286,9 @@ export class Runner<X extends AppConfig> implements IComponent {
     async main() {
         await this.hostClient.init(this.instanceId);
 
-        addLoggerOutput(this.hostClient.logStream);
+        //addLoggerOutput(this.hostClient.logStream);
+
+        this.objLogger.pipe(this.hostClient.logStream);
 
         this.defineControlStream();
 
@@ -297,7 +300,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         });
 
         overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
-
         overrideStandardStream(process.stderr, this.hostClient.stderrStream);
 
         this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);

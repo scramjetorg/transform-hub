@@ -20,8 +20,9 @@ import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 class DockerSequenceAdapter implements ISequenceAdapter {
     private dockerHelper: IDockerHelper;
     private resources: DockerAdapterResources = {};
-
     private logger: Logger;
+
+    public name = "DockerSequenceAdapter";
 
     /**
      * Instance of class providing logging utilities.
@@ -85,7 +86,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
-        this.objLogger.debug("Attempting to identify volume", volume);
+        this.objLogger.info(`Attempting to identify volume: ${volume}`);
 
         try {
             const { streams, wait } = await this.dockerHelper.run({
@@ -99,7 +100,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             });
 
             this.logger.debug(`Prerunner identify started for: ${volume}`);
-            this.objLogger.debug("PreRunner identify started", volume);
+            this.objLogger.debug("Identify started", volume);
 
             const ret = await this.parsePackage(streams, wait, volume);
 
@@ -238,7 +239,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         await this.dockerHelper.removeVolume(config.id);
 
         this.logger.debug("Volume removed.");
-        this.objLogger.debug("Volume removed", config.id);
+        this.objLogger.debug("Volume removed.", config.id);
     }
 }
 

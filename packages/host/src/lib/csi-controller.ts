@@ -157,7 +157,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     async main() {
         this.logger.log("Instance started.");
-        this.objLogger.trace("Instance started.");
+        this.objLogger.trace("Instance started");
 
         let code = 0;
 
@@ -188,12 +188,12 @@ export class CSIController extends TypedEmitter<Events> {
                 await this.instanceAdapter.init();
 
                 this.logger.log("Streams hooked and routed.");
-                this.objLogger.trace("Streams hooked and routed.");
+                this.objLogger.trace("Streams hooked and routed");
 
                 this.endOfSequence = this.instanceAdapter.run(instanceConfig, this.config.instancesServerPort, this.id);
 
                 this.logger.info("Sequence initialized.");
-                this.objLogger.trace("Sequence initialized.");
+                this.objLogger.trace("Sequence initialized");
 
                 const exitcode = await this.endOfSequence;
 
@@ -243,7 +243,8 @@ export class CSIController extends TypedEmitter<Events> {
             streams[CC.LOG].pipe(process.stdout);
         }
 
-        streams[CC.LOG].pipe(this.objLogger.inLogStream);
+        streams[CC.LOG].pipe(this.objLogger.inStringStream);
+        //streams[CC.LOG].pipe(process.stdout);
 
         this.upStreams = [
             new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),
@@ -322,7 +323,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
         this.logger.log("PING RECEIVED", message);
-        this.objLogger.trace("PING RECEIVED", message);
+        this.objLogger.debug("PING RECEIVED", message);
 
         if (!message[1].ports) {
             this.logger.warn("Received a PING message but didn't receive ports config");
