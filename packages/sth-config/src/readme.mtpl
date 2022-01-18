@@ -4,7 +4,7 @@ This package executes the sequences and controls the runner via the wired adapte
 
 ## Docs
 
->!docs sth-config/README.md &
+>!docs sth-config/modules.md &
 
 >@sth
 >@use-cases

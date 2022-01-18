@@ -4,7 +4,7 @@ This package holds the symbols and enumerations for STH.
 
 ## Docs
 
->!docs symbols/README.md &
+>!docs symbols/modules.md &
 
 >@sth
 >@links

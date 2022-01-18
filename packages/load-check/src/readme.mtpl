@@ -4,7 +4,7 @@ This package provides info about STH health and also some metrics such as CPU, m
 
 ## Docs
 
->!docs load-check/README.md &
+>!docs load-check/modules.md &
 
 >@sth
 >@use-cases

@@ -12,12 +12,12 @@
   ],
   "typedocOptions": {
     "entryPoints": [
-      "src/bin/index.ts"
+      "src/index.ts"
     ],
     "out": "../../docs/cli",
     "plugin": "typedoc-plugin-markdown",
-    "readme": "README.md",
     "excludePrivate": "true",
-    "gitRevision": "HEAD"
+    "gitRevision": "HEAD",
+    "sort": "alphabetical"
   }
 }

@@ -12,9 +12,9 @@
   ],
   "typedocOptions": {
     "entryPoints": [
-      "src/bin/index.ts"
+      "src/index.ts"
     ],
-    "out": "../../docs/cli",
+    "out": "../../docs/verser",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",

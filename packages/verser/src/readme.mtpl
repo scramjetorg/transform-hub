@@ -8,6 +8,10 @@ This package provides a reverse server functionality.
 npm install -g @scramjet/verser
 ```
 
+## Docs
+
+>!docs verser/modules.md &
+
 >@sth
 >@use-cases
 >@links
