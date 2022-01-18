@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / STHRestAPI
+[@scramjet/types](../README.md) / [Exports](../modules.md) / STHRestAPI
 
 # Namespace: STHRestAPI
 
@@ -29,7 +29,7 @@ ___
 
 ### GetInstancesResponse
 
-Ƭ **GetInstancesResponse**: [`Instance`](../README.md#instance)[]
+Ƭ **GetInstancesResponse**: [`Instance`](../modules.md#instance)[]
 
 #### Defined in
 
@@ -49,7 +49,7 @@ ___
 
 ### GetSequenceResponse
 
-Ƭ **GetSequenceResponse**: { `config`: [`SequenceConfig`](../README.md#sequenceconfig) ; `id`: `string` ; `instances`: readonly `string`[]  } \| `undefined`
+Ƭ **GetSequenceResponse**: { `config`: [`SequenceConfig`](../modules.md#sequenceconfig) ; `id`: `string` ; `instances`: readonly `string`[]  } \| `undefined`
 
 #### Defined in
 
@@ -59,7 +59,7 @@ ___
 
 ### GetSequencesResponse
 
-Ƭ **GetSequencesResponse**: { `config`: [`SequenceConfig`](../README.md#sequenceconfig) ; `id`: `string` ; `instances`: readonly `string`[]  }[]
+Ƭ **GetSequencesResponse**: { `config`: [`SequenceConfig`](../modules.md#sequenceconfig) ; `id`: `string` ; `instances`: readonly `string`[]  }[]
 
 #### Defined in
 

@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / WritableStream
+[@scramjet/types](../README.md) / [Exports](../modules.md) / WritableStream
 
 # Interface: WritableStream<Consumes\>
 
@@ -19,18 +19,6 @@ Writable stream representation with generic chunks.
   ↳ **`WritableStream`**
 
 ## Table of contents
-
-### Properties
-
-- [destroyed](writablestream.md#destroyed)
-- [objectMode](writablestream.md#objectmode)
-- [writable](writablestream.md#writable)
-- [writableCorked](writablestream.md#writablecorked)
-- [writableEnded](writablestream.md#writableended)
-- [writableFinished](writablestream.md#writablefinished)
-- [writableHighWaterMark](writablestream.md#writablehighwatermark)
-- [writableLength](writablestream.md#writablelength)
-- [writableObjectMode](writablestream.md#writableobjectmode)
 
 ### Methods
 
@@ -62,127 +50,17 @@ Writable stream representation with generic chunks.
 - [uncork](writablestream.md#uncork)
 - [write](writablestream.md#write)
 
-## Properties
+### Properties
 
-### destroyed
-
-• **destroyed**: `boolean`
-
-#### Inherited from
-
-Writable.destroyed
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:150
-
-___
-
-### objectMode
-
-• `Optional` **objectMode**: ``true``
-
-#### Defined in
-
-[packages/types/src/utils.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L55)
-
-___
-
-### writable
-
-• **writable**: `boolean`
-
-#### Overrides
-
-Writable.writable
-
-#### Defined in
-
-[packages/types/src/utils.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L56)
-
-___
-
-### writableCorked
-
-• `Readonly` **writableCorked**: `number`
-
-#### Inherited from
-
-Writable.writableCorked
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:149
-
-___
-
-### writableEnded
-
-• `Readonly` **writableEnded**: `boolean`
-
-#### Inherited from
-
-Writable.writableEnded
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:144
-
-___
-
-### writableFinished
-
-• `Readonly` **writableFinished**: `boolean`
-
-#### Inherited from
-
-Writable.writableFinished
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:145
-
-___
-
-### writableHighWaterMark
-
-• `Readonly` **writableHighWaterMark**: `number`
-
-#### Inherited from
-
-Writable.writableHighWaterMark
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:146
-
-___
-
-### writableLength
-
-• `Readonly` **writableLength**: `number`
-
-#### Inherited from
-
-Writable.writableLength
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:147
-
-___
-
-### writableObjectMode
-
-• `Readonly` **writableObjectMode**: `boolean`
-
-#### Inherited from
-
-Writable.writableObjectMode
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:148
+- [destroyed](writablestream.md#destroyed)
+- [objectMode](writablestream.md#objectmode)
+- [writable](writablestream.md#writable)
+- [writableCorked](writablestream.md#writablecorked)
+- [writableEnded](writablestream.md#writableended)
+- [writableFinished](writablestream.md#writablefinished)
+- [writableHighWaterMark](writablestream.md#writablehighwatermark)
+- [writableLength](writablestream.md#writablelength)
+- [writableObjectMode](writablestream.md#writableobjectmode)
 
 ## Methods
 
@@ -1775,3 +1653,125 @@ Writable.write
 #### Defined in
 
 [packages/types/src/utils.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L59)
+
+## Properties
+
+### destroyed
+
+• **destroyed**: `boolean`
+
+#### Inherited from
+
+Writable.destroyed
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:150
+
+___
+
+### objectMode
+
+• `Optional` **objectMode**: ``true``
+
+#### Defined in
+
+[packages/types/src/utils.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L55)
+
+___
+
+### writable
+
+• **writable**: `boolean`
+
+#### Overrides
+
+Writable.writable
+
+#### Defined in
+
+[packages/types/src/utils.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L56)
+
+___
+
+### writableCorked
+
+• `Readonly` **writableCorked**: `number`
+
+#### Inherited from
+
+Writable.writableCorked
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:149
+
+___
+
+### writableEnded
+
+• `Readonly` **writableEnded**: `boolean`
+
+#### Inherited from
+
+Writable.writableEnded
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:144
+
+___
+
+### writableFinished
+
+• `Readonly` **writableFinished**: `boolean`
+
+#### Inherited from
+
+Writable.writableFinished
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:145
+
+___
+
+### writableHighWaterMark
+
+• `Readonly` **writableHighWaterMark**: `number`
+
+#### Inherited from
+
+Writable.writableHighWaterMark
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:146
+
+___
+
+### writableLength
+
+• `Readonly` **writableLength**: `number`
+
+#### Inherited from
+
+Writable.writableLength
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:147
+
+___
+
+### writableObjectMode
+
+• `Readonly` **writableObjectMode**: `boolean`
+
+#### Inherited from
+
+Writable.writableObjectMode
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:148

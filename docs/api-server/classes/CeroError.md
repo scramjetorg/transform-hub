@@ -1,4 +1,4 @@
-[@scramjet/api-server](../README.md) / CeroError
+[@scramjet/api-server](../README.md) / [Modules](../modules.md) / CeroError
 
 # Class: CeroError
 
@@ -14,9 +14,10 @@
 
 ## Table of contents
 
-### Constructors
+### Methods
 
-- [constructor](CeroError.md#constructor)
+- [captureStackTrace](CeroError.md#capturestacktrace)
+- [prepareStackTrace](CeroError.md#preparestacktrace)
 
 ### Properties
 
@@ -25,39 +26,72 @@
 - [httpMessage](CeroError.md#httpmessage)
 - [message](CeroError.md#message)
 - [name](CeroError.md#name)
-- [type](CeroError.md#type)
 - [stackTraceLimit](CeroError.md#stacktracelimit)
+- [type](CeroError.md#type)
+
+### Constructors
+
+- [constructor](CeroError.md#constructor)
 
 ### Accessors
 
 - [stack](CeroError.md#stack)
 
-### Methods
+## Methods
 
-- [captureStackTrace](CeroError.md#capturestacktrace)
-- [prepareStackTrace](CeroError.md#preparestacktrace)
+### captureStackTrace
 
-## Constructors
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
 
-### constructor
-
-• **new CeroError**(`errCode`, `cause?`, `extraMessage?`)
+Create .stack property on a target object
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `errCode` | ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"`` |
-| `cause?` | `Error` |
-| `extraMessage?` | `string` |
+| `targetObject` | `object` |
+| `constructorOpt?` | `Function` |
 
-#### Overrides
+#### Returns
 
-Error.constructor
+`void`
+
+#### Inherited from
+
+Error.captureStackTrace
 
 #### Defined in
 
-[packages/api-server/src/lib/definitions.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L44)
+node_modules/@types/node/globals.d.ts:4
+
+___
+
+### prepareStackTrace
+
+▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
+
+Optional override for formatting stack traces
+
+**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `err` | `Error` |
+| `stackTraces` | `CallSite`[] |
+
+#### Returns
+
+`any`
+
+#### Inherited from
+
+Error.prepareStackTrace
+
+#### Defined in
+
+node_modules/@types/node/globals.d.ts:11
 
 ## Properties
 
@@ -139,16 +173,6 @@ node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
-### type
-
-• **type**: ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"``
-
-#### Defined in
-
-[packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L41)
-
-___
-
 ### stackTraceLimit
 
 ▪ `Static` **stackTraceLimit**: `number`
@@ -160,6 +184,38 @@ Error.stackTraceLimit
 #### Defined in
 
 node_modules/@types/node/globals.d.ts:13
+
+___
+
+### type
+
+• **type**: ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"``
+
+#### Defined in
+
+[packages/api-server/src/lib/definitions.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L41)
+
+## Constructors
+
+### constructor
+
+• **new CeroError**(`errCode`, `cause?`, `extraMessage?`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `errCode` | ``"ERR_NOT_FOUND"`` \| ``"ERR_NOT_CURRENTLY_AVAILABLE"`` \| ``"ERR_FAILED_FETCH_DATA"`` \| ``"ERR_FAILED_TO_SERIALIZE"`` \| ``"ERR_INTERNAL_ERROR"`` \| ``"ERR_INVALID_CONTENT_TYPE"`` \| ``"ERR_CANNOT_PARSE_CONTENT"`` \| ``"ERR_UNSUPPORTED_ENCODING"`` |
+| `cause?` | `Error` |
+| `extraMessage?` | `string` |
+
+#### Overrides
+
+Error.constructor
+
+#### Defined in
+
+[packages/api-server/src/lib/definitions.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L44)
 
 ## Accessors
 
@@ -182,59 +238,3 @@ Error.stack
 #### Defined in
 
 [packages/api-server/src/lib/definitions.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L59)
-
-## Methods
-
-### captureStackTrace
-
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
-
-Create .stack property on a target object
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-Error.captureStackTrace
-
-#### Defined in
-
-node_modules/@types/node/globals.d.ts:4
-
-___
-
-### prepareStackTrace
-
-▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
-
-Optional override for formatting stack traces
-
-**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-#### Returns
-
-`any`
-
-#### Inherited from
-
-Error.prepareStackTrace
-
-#### Defined in
-
-node_modules/@types/node/globals.d.ts:11

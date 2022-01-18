@@ -1,4 +1,4 @@
-[@scramjet/api-client](../README.md) / SequenceClient
+[@scramjet/api-client](../README.md) / [Exports](../modules.md) / SequenceClient
 
 # Class: SequenceClient
 
@@ -6,10 +6,6 @@ Sequence client.
 Provides methods to interact with sequence.
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](SequenceClient.md#constructor)
 
 ### Properties
 
@@ -22,31 +18,18 @@ Provides methods to interact with sequence.
 - [clientUtils](SequenceClient.md#clientutils)
 - [id](SequenceClient.md#id)
 
+### Constructors
+
+- [constructor](SequenceClient.md#constructor)
+
 ### Methods
 
+- [from](SequenceClient.md#from)
 - [getInfo](SequenceClient.md#getinfo)
 - [getInstance](SequenceClient.md#getinstance)
 - [listInstances](SequenceClient.md#listinstances)
 - [overwrite](SequenceClient.md#overwrite)
 - [start](SequenceClient.md#start)
-- [from](SequenceClient.md#from)
-
-## Constructors
-
-### constructor
-
-• `Private` **new SequenceClient**(`id`, `host`)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `id` | `string` |
-| `host` | [`ClientProvider`](../interfaces/ClientProvider.md) |
-
-#### Defined in
-
-[packages/api-client/src/sequence-client.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L37)
 
 ## Properties
 
@@ -108,17 +91,59 @@ Sequence id.
 
 [packages/api-client/src/sequence-client.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L18)
 
+## Constructors
+
+### constructor
+
+• `Private` **new SequenceClient**(`id`, `host`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+| `host` | [`ClientProvider`](../interfaces/ClientProvider.md) |
+
+#### Defined in
+
+[packages/api-client/src/sequence-client.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L37)
+
 ## Methods
+
+### from
+
+▸ `Static` **from**(`id`, `host`): [`SequenceClient`](SequenceClient.md)
+
+Creates SequenceClient instance for sequence with given id and host.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | Sequence id |
+| `host` | [`ClientProvider`](../interfaces/ClientProvider.md) | Host client |
+
+#### Returns
+
+[`SequenceClient`](SequenceClient.md)
+
+Sequence client
+
+#### Defined in
+
+[packages/api-client/src/sequence-client.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L33)
+
+___
 
 ### getInfo
 
-▸ **getInfo**(): `Promise`<[`Response`](../README.md#response)\>
+▸ **getInfo**(): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns sequence details.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Promise which resolves with sequence info.
 
@@ -155,13 +180,13 @@ ___
 
 ### listInstances
 
-▸ **listInstances**(): `Promise`<[`Response`](../README.md#response)\>
+▸ **listInstances**(): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns list of all instances creteated from sequnece.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 List of instances
 
@@ -209,28 +234,3 @@ Promise which resolves with instance client.
 #### Defined in
 
 [packages/api-client/src/sequence-client.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L54)
-
-___
-
-### from
-
-▸ `Static` **from**(`id`, `host`): [`SequenceClient`](SequenceClient.md)
-
-Creates SequenceClient instance for sequence with given id and host.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `id` | `string` | Sequence id |
-| `host` | [`ClientProvider`](../interfaces/ClientProvider.md) | Host client |
-
-#### Returns
-
-[`SequenceClient`](SequenceClient.md)
-
-Sequence client
-
-#### Defined in
-
-[packages/api-client/src/sequence-client.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L33)

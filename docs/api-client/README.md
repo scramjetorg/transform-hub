@@ -1,109 +1,65 @@
-@scramjet/api-client
+@scramjet/api-client / [Exports](modules.md)
 
-# @scramjet/api-client
+# Scramjet Transform Hub API Client <!-- omit in toc -->
 
-## Table of contents
+The package provides an API Client for use with Scramjet Transform Hub.
 
-### Classes
+Usage:
 
-- [ClientError](classes/ClientError.md)
-- [ClientUtils](classes/ClientUtils.md)
-- [HostClient](classes/HostClient.md)
-- [InstanceClient](classes/InstanceClient.md)
-- [SequenceClient](classes/SequenceClient.md)
+```js
+import { HostClient, SequenceClient } from "@scramjet/api-client";
 
-### Interfaces
+const host = new HostClient("http://192.168.0.34:8000/api/v1");
 
-- [ClientProvider](interfaces/ClientProvider.md)
-- [HttpClient](interfaces/HttpClient.md)
+host.getSequence("3e989fe7-a3b7-401e-a269-2fa0a7ac70f4")
+```
 
-### Type aliases
+## Docs
 
-- [ClientErrorCode](README.md#clienterrorcode)
-- [InstanceInputStream](README.md#instanceinputstream)
-- [InstanceOutputStream](README.md#instanceoutputstream)
-- [RequestLogger](README.md#requestlogger)
-- [Response](README.md#response)
-- [ResponseStream](README.md#responsestream)
+See the code documentation here: [scramjetorg/transform-hub/docs/api-client/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/modules.md)
 
-## Type aliases
+## Scramjet Transform Hub
 
-### ClientErrorCode
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
 
-Ƭ **ClientErrorCode**: ``"GENERAL_ERROR"`` \| ``"BAD_PARAMETERS"`` \| ``"NEED_AUTHENTICATION"`` \| ``"NOT_AUTHORIZED"`` \| ``"NOT_FOUND"`` \| ``"GONE"`` \| ``"SERVER_ERROR"`` \| ``"REQUEST_ERROR"`` \| ``"UNKNOWN_ERROR"`` \| ``"CANNOT_CONNECT"`` \| ``"INVALID_RESPONSE"``
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
-#### Defined in
+## Use cases
 
-[packages/api-client/src/client-error.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L3)
+There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Slack](https://join.slack.com/t/scramjetframework/shared_invite/enQtODg2MDIyMTQ5MzUxLTVlNTIwMmFlYWU0YTg2ZTg1YmFiOTZkZTdhNzNmNjE2ZmQ3ZWQzZjI5MGQyZDAyOWM2NDc5YzdmZGQzNGI3YTU)!
 
-___
+## Some important links
 
-### InstanceInputStream
+* Scramjet, the company behind [Transform Hub](https://scramjet.org)
+* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
+* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
+* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/release/0.12/docs/development-guide/stream-and-api.md)
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/main/packages/cli/README.md), but `si help` should also be quite effective.
+* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
-Ƭ **InstanceInputStream**: ``"stdin"`` \| ``"input"``
+## License and contributions
 
-#### Defined in
+This module is licensed under AGPL-3.0 license.
 
-[packages/api-client/src/instance-client.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L7)
+The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
-___
+## Contributions
 
-### InstanceOutputStream
+We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
 
-Ƭ **InstanceOutputStream**: ``"stdout"`` \| ``"stderr"`` \| ``"output"`` \| ``"log"``
+We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
 
-#### Defined in
+### Help wanted :information_desk_person:
 
-[packages/api-client/src/instance-client.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L8)
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
-___
+### Donation :money_with_wings:
 
-### RequestLogger
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
 
-Ƭ **RequestLogger**: `Object`
+[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
-#### Type declaration
+* There's also a Paypal donation link if you prefer that:
 
-| Name | Type |
-| :------ | :------ |
-| `error` | (`res`: [`ClientError`](classes/ClientError.md)) => `void` |
-| `ok` | (`res`: `Response`) => `void` |
-| `request` | (...`req`: [url: RequestInfo, init?: RequestInit]) => `void` |
-
-#### Defined in
-
-[packages/api-client/src/types/index.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L25)
-
-___
-
-### Response
-
-Ƭ **Response**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `data?` | `Object` |
-| `status` | `number` |
-
-#### Defined in
-
-[packages/api-client/src/types/index.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L5)
-
-___
-
-### ResponseStream
-
-Ƭ **ResponseStream**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `data?` | `NodeJS.ReadableStream` |
-| `status` | `number` |
-
-#### Defined in
-
-[packages/api-client/src/types/index.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L10)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)

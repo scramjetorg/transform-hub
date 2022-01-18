@@ -1,4 +1,4 @@
-[@scramjet/model](../README.md) / HostError
+[@scramjet/model](../README.md) / [Exports](../modules.md) / HostError
 
 # Class: HostError
 
@@ -10,13 +10,13 @@
 
 ## Implements
 
-- [`IHostErrorData`](../README.md#ihosterrordata)
+- [`IHostErrorData`](../modules.md#ihosterrordata)
 
 ## Table of contents
 
-### Constructors
+### Methods
 
-- [constructor](hosterror.md#constructor)
+- [captureStackTrace](hosterror.md#capturestacktrace)
 
 ### Properties
 
@@ -24,34 +24,40 @@
 - [data](hosterror.md#data)
 - [message](hosterror.md#message)
 - [name](hosterror.md#name)
-- [stack](hosterror.md#stack)
 - [prepareStackTrace](hosterror.md#preparestacktrace)
+- [stack](hosterror.md#stack)
 - [stackTraceLimit](hosterror.md#stacktracelimit)
 
-### Methods
+### Constructors
 
-- [captureStackTrace](hosterror.md#capturestacktrace)
+- [constructor](hosterror.md#constructor)
 
-## Constructors
+## Methods
 
-### constructor
+### captureStackTrace
 
-• **new HostError**(`code`, `data?`)
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+
+Create .stack property on a target object
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `code` | `HostErrorCode` |
-| `data?` | `any` |
+| `targetObject` | `object` |
+| `constructorOpt?` | `Function` |
 
-#### Overrides
+#### Returns
 
-[AppError](apperror.md).[constructor](apperror.md#constructor)
+`void`
+
+#### Inherited from
+
+[AppError](apperror.md).[captureStackTrace](apperror.md#capturestacktrace)
 
 #### Defined in
 
-[packages/model/src/errors/host-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/host-error.ts#L6)
+node_modules/@types/node/globals.d.ts:4
 
 ## Properties
 
@@ -111,20 +117,6 @@ node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
-### stack
-
-• `Optional` **stack**: `string`
-
-#### Inherited from
-
-[AppError](apperror.md).[stack](apperror.md#stack)
-
-#### Defined in
-
-node_modules/typescript/lib/lib.es5.d.ts:1024
-
-___
-
 ### prepareStackTrace
 
 ▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
@@ -156,6 +148,20 @@ node_modules/@types/node/globals.d.ts:11
 
 ___
 
+### stack
+
+• `Optional` **stack**: `string`
+
+#### Inherited from
+
+[AppError](apperror.md).[stack](apperror.md#stack)
+
+#### Defined in
+
+node_modules/typescript/lib/lib.es5.d.ts:1024
+
+___
+
 ### stackTraceLimit
 
 ▪ `Static` **stackTraceLimit**: `number`
@@ -168,29 +174,23 @@ ___
 
 node_modules/@types/node/globals.d.ts:13
 
-## Methods
+## Constructors
 
-### captureStackTrace
+### constructor
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
-
-Create .stack property on a target object
+• **new HostError**(`code`, `data?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+| `code` | `HostErrorCode` |
+| `data?` | `any` |
 
-#### Returns
+#### Overrides
 
-`void`
-
-#### Inherited from
-
-[AppError](apperror.md).[captureStackTrace](apperror.md#capturestacktrace)
+[AppError](apperror.md).[constructor](apperror.md#constructor)
 
 #### Defined in
 
-node_modules/@types/node/globals.d.ts:4
+[packages/model/src/errors/host-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/host-error.ts#L6)

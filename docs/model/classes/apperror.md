@@ -1,4 +1,4 @@
-[@scramjet/model](../README.md) / AppError
+[@scramjet/model](../README.md) / [Exports](../modules.md) / AppError
 
 # Class: AppError
 
@@ -25,9 +25,9 @@
 
 ## Table of contents
 
-### Constructors
+### Methods
 
-- [constructor](apperror.md#constructor)
+- [captureStackTrace](apperror.md#capturestacktrace)
 
 ### Properties
 
@@ -35,33 +35,40 @@
 - [data](apperror.md#data)
 - [message](apperror.md#message)
 - [name](apperror.md#name)
-- [stack](apperror.md#stack)
 - [prepareStackTrace](apperror.md#preparestacktrace)
+- [stack](apperror.md#stack)
 - [stackTraceLimit](apperror.md#stacktracelimit)
 
-### Methods
+### Constructors
 
-- [captureStackTrace](apperror.md#capturestacktrace)
+- [constructor](apperror.md#constructor)
 
-## Constructors
+## Methods
 
-### constructor
+### captureStackTrace
 
-• **new AppError**(`code`)
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+
+Create .stack property on a target object
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `code` | `AppErrorCode` |
+| `targetObject` | `object` |
+| `constructorOpt?` | `Function` |
 
-#### Overrides
+#### Returns
 
-Error.constructor
+`void`
+
+#### Inherited from
+
+Error.captureStackTrace
 
 #### Defined in
 
-[packages/model/src/errors/app-error.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/app-error.ts#L9)
+node_modules/@types/node/globals.d.ts:4
 
 ## Properties
 
@@ -129,24 +136,6 @@ node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
-### stack
-
-• `Optional` **stack**: `string`
-
-#### Implementation of
-
-IAppError.stack
-
-#### Inherited from
-
-Error.stack
-
-#### Defined in
-
-node_modules/typescript/lib/lib.es5.d.ts:1024
-
-___
-
 ### prepareStackTrace
 
 ▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
@@ -178,6 +167,24 @@ node_modules/@types/node/globals.d.ts:11
 
 ___
 
+### stack
+
+• `Optional` **stack**: `string`
+
+#### Implementation of
+
+IAppError.stack
+
+#### Inherited from
+
+Error.stack
+
+#### Defined in
+
+node_modules/typescript/lib/lib.es5.d.ts:1024
+
+___
+
 ### stackTraceLimit
 
 ▪ `Static` **stackTraceLimit**: `number`
@@ -190,29 +197,22 @@ Error.stackTraceLimit
 
 node_modules/@types/node/globals.d.ts:13
 
-## Methods
+## Constructors
 
-### captureStackTrace
+### constructor
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
-
-Create .stack property on a target object
+• **new AppError**(`code`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+| `code` | `AppErrorCode` |
 
-#### Returns
+#### Overrides
 
-`void`
-
-#### Inherited from
-
-Error.captureStackTrace
+Error.constructor
 
 #### Defined in
 
-node_modules/@types/node/globals.d.ts:4
+[packages/model/src/errors/app-error.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/app-error.ts#L9)

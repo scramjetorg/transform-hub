@@ -1,18 +1,16 @@
-[@scramjet/host](../README.md) / CSIController
+[@scramjet/host](../README.md) / [Exports](../modules.md) / CSIController
 
 # Class: CSIController
 
+Handles all Instance lifecycle, exposes instance's HTTP API
+
 ## Hierarchy
 
-- `EventEmitter`
+- `TypedEmitter`<`Events`\>
 
   ↳ **`CSIController`**
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](CSIController.md#constructor)
 
 ### Properties
 
@@ -35,15 +33,6 @@
 - [sequenceArgs](CSIController.md#sequenceargs)
 - [startPromise](CSIController.md#startpromise)
 - [startResolver](CSIController.md#startresolver)
-- [captureRejectionSymbol](CSIController.md#capturerejectionsymbol)
-- [captureRejections](CSIController.md#capturerejections)
-- [defaultMaxListeners](CSIController.md#defaultmaxlisteners)
-- [errorMonitor](CSIController.md#errormonitor)
-
-### Accessors
-
-- [endOfSequence](CSIController.md#endofsequence)
-- [instanceAdapter](CSIController.md#instanceadapter)
 
 ### Methods
 
@@ -78,10 +67,915 @@
 - [setMaxListeners](CSIController.md#setmaxlisteners)
 - [start](CSIController.md#start)
 - [startInstance](CSIController.md#startinstance)
-- [getEventListener](CSIController.md#geteventlistener)
-- [listenerCount](CSIController.md#listenercount)
-- [on](CSIController.md#on)
-- [once](CSIController.md#once)
+
+### Constructors
+
+- [constructor](CSIController.md#constructor)
+
+### Accessors
+
+- [endOfSequence](CSIController.md#endofsequence)
+- [instanceAdapter](CSIController.md#instanceadapter)
+
+## Properties
+
+### \_endOfSequence
+
+• `Optional` **\_endOfSequence**: `Promise`<`number`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L89)
+
+___
+
+### apiInputEnabled
+
+• **apiInputEnabled**: `boolean` = `true`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L77)
+
+___
+
+### apiOutput
+
+• **apiOutput**: `PassThrough`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L76)
+
+___
+
+### appConfig
+
+• **appConfig**: `AppConfig`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L60)
+
+___
+
+### communicationHandler
+
+• **communicationHandler**: `ICommunicationHandler`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L109)
+
+___
+
+### config
+
+• **config**: `CSIConfig`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L58)
+
+___
+
+### controlDataStream
+
+• `Optional` **controlDataStream**: `DataStream`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L63)
+
+___
+
+### id
+
+• **id**: `string`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L53)
+
+___
+
+### info
+
+• **info**: `Object` = `{}`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `created?` | `Date` |
+| `ports?` | `any` |
+| `started?` | `Date` |
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L65)
+
+___
+
+### initResolver
+
+• `Optional` **initResolver**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `rej` | `Function` |
+| `res` | `Function` |
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L72)
+
+___
+
+### instancePromise
+
+• `Optional` **instancePromise**: `Promise`<`number`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L61)
+
+___
+
+### logger
+
+• **logger**: `Console`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L55)
+
+___
+
+### provides
+
+• `Optional` **provides**: `string`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L70)
+
+___
+
+### requires
+
+• `Optional` **requires**: `string`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L71)
+
+___
+
+### router
+
+• `Optional` **router**: `APIRoute`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L64)
+
+___
+
+### sequence
+
+• **sequence**: `SequenceInfo`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L59)
+
+___
+
+### sequenceArgs
+
+• **sequenceArgs**: `undefined` \| `any`[]
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L62)
+
+___
+
+### startPromise
+
+• **startPromise**: `Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L74)
+
+___
+
+### startResolver
+
+• `Optional` **startResolver**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `rej` | `Function` |
+| `res` | `Function` |
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L73)
+
+## Methods
+
+### addListener
+
+▸ **addListener**<`E`\>(`event`, `listener`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.addListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:24
+
+___
+
+### confirmInputHook
+
+▸ **confirmInputHook**(): `Promise`<`void`\>
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:468](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L468)
+
+___
+
+### createInstanceAPIRouter
+
+▸ **createInstanceAPIRouter**(): `void`
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:331](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L331)
+
+___
+
+### emit
+
+▸ **emit**<`E`\>(`event`, ...`args`): `boolean`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `...args` | `Arguments`<`Events`[`E`]\> |
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+TypedEmitter.emit
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:34
+
+___
+
+### eventNames
+
+▸ **eventNames**(): (`string` \| `symbol`)[]
+
+#### Returns
+
+(`string` \| `symbol`)[]
+
+#### Inherited from
+
+TypedEmitter.eventNames
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:35
+
+___
+
+### getInfo
+
+▸ **getInfo**(): `Promise`<`Object`\>
+
+#### Returns
+
+`Promise`<`Object`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:445](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L445)
+
+___
+
+### getInputStream
+
+▸ **getInputStream**(): `WritableStream`<`any`\>
+
+#### Returns
+
+`WritableStream`<`any`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:460](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L460)
+
+___
+
+### getLogStream
+
+▸ **getLogStream**(): `Readable`
+
+#### Returns
+
+`Readable`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:464](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L464)
+
+___
+
+### getMaxListeners
+
+▸ **getMaxListeners**(): `number`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+TypedEmitter.getMaxListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:40
+
+___
+
+### getOutputStream
+
+▸ **getOutputStream**(): `ReadableStream`<`any`\>
+
+#### Returns
+
+`ReadableStream`<`any`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:456](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L456)
+
+___
+
+### handleHandshake
+
+▸ **handleHandshake**(`message`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `EncodedMessage`<`PING`\> |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:294](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L294)
+
+___
+
+### handleInstanceConnect
+
+▸ **handleInstanceConnect**(`streams`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `streams` | `DownstreamStreamsConfig`<``true``\> |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:320](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L320)
+
+___
+
+### handleKeepAliveCommand
+
+▸ **handleKeepAliveCommand**(`message`): `EncodedMessage`<`ALIVE`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `EncodedMessage`<`ALIVE`\> |
+
+#### Returns
+
+`EncodedMessage`<`ALIVE`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:520](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L520)
+
+___
+
+### handleSequenceCompleted
+
+▸ **handleSequenceCompleted**(`message`): `Promise`<`EncodedMessage`<`SEQUENCE_COMPLETED`\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `EncodedMessage`<`SEQUENCE_COMPLETED`\> |
+
+#### Returns
+
+`Promise`<`EncodedMessage`<`SEQUENCE_COMPLETED`\>\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:475](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L475)
+
+___
+
+### handleSequenceStopped
+
+▸ **handleSequenceStopped**(`message`): `Promise`<`EncodedMessage`<`SEQUENCE_STOPPED`\>\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `EncodedMessage`<`SEQUENCE_STOPPED`\> |
+
+#### Returns
+
+`Promise`<`EncodedMessage`<`SEQUENCE_STOPPED`\>\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:496](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L496)
+
+___
+
+### hookupStreams
+
+▸ **hookupStreams**(`streams`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `streams` | `DownstreamStreamsConfig`<``true``\> |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L209)
+
+___
+
+### instanceStopped
+
+▸ **instanceStopped**(): `Promise`<`number`\>
+
+#### Returns
+
+`Promise`<`number`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:203](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L203)
+
+___
+
+### listenerCount
+
+▸ **listenerCount**<`E`\>(`event`): `number`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+TypedEmitter.listenerCount
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:38
+
+___
+
+### listeners
+
+▸ **listeners**<`E`\>(`event`): `Function`[]
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+
+#### Returns
+
+`Function`[]
+
+#### Inherited from
+
+TypedEmitter.listeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:37
+
+___
+
+### main
+
+▸ **main**(): `Promise`<`void`\>
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:149](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L149)
+
+___
+
+### off
+
+▸ **off**<`E`\>(`event`, `listener`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.off
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:30
+
+___
+
+### on
+
+▸ **on**<`E`\>(`event`, `listener`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.on
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:25
+
+___
+
+### once
+
+▸ **once**<`E`\>(`event`, `listener`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.once
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:26
+
+___
+
+### prependListener
+
+▸ **prependListener**<`E`\>(`event`, `listener`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.prependListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:27
+
+___
+
+### prependOnceListener
+
+▸ **prependOnceListener**<`E`\>(`event`, `listener`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.prependOnceListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:28
+
+___
+
+### rawListeners
+
+▸ **rawListeners**<`E`\>(`event`): `Function`[]
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+
+#### Returns
+
+`Function`[]
+
+#### Inherited from
+
+TypedEmitter.rawListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:36
+
+___
+
+### removeAllListeners
+
+▸ **removeAllListeners**<`E`\>(`event?`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event?` | `E` |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.removeAllListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:31
+
+___
+
+### removeListener
+
+▸ **removeListener**<`E`\>(`event`, `listener`): [`CSIController`](CSIController.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.removeListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:32
+
+___
+
+### setMaxListeners
+
+▸ **setMaxListeners**(`maxListeners`): [`CSIController`](CSIController.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `maxListeners` | `number` |
+
+#### Returns
+
+[`CSIController`](CSIController.md)
+
+#### Inherited from
+
+TypedEmitter.setMaxListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:41
+
+___
+
+### start
+
+▸ **start**(): `Promise`<`unknown`\>
+
+#### Returns
+
+`Promise`<`unknown`\>
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:136](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L136)
+
+___
+
+### startInstance
+
+▸ **startInstance**(): `void`
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:165](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L165)
 
 ## Constructors
 
@@ -102,289 +996,11 @@
 
 #### Overrides
 
-EventEmitter.constructor
+TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L101)
-
-## Properties
-
-### \_endOfSequence
-
-• `Optional` **\_endOfSequence**: `Promise`<`number`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L79)
-
-___
-
-### apiInputEnabled
-
-• **apiInputEnabled**: `boolean` = `true`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L67)
-
-___
-
-### apiOutput
-
-• **apiOutput**: `PassThrough`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L66)
-
-___
-
-### appConfig
-
-• **appConfig**: `AppConfig`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L50)
-
-___
-
-### communicationHandler
-
-• **communicationHandler**: `ICommunicationHandler`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:99](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L99)
-
-___
-
-### config
-
-• **config**: `CSIConfig`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L48)
-
-___
-
-### controlDataStream
-
-• `Optional` **controlDataStream**: `DataStream`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L53)
-
-___
-
-### id
-
-• **id**: `string`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L43)
-
-___
-
-### info
-
-• **info**: `Object` = `{}`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `created?` | `Date` |
-| `ports?` | `any` |
-| `started?` | `Date` |
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L55)
-
-___
-
-### initResolver
-
-• `Optional` **initResolver**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `rej` | `Function` |
-| `res` | `Function` |
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L62)
-
-___
-
-### instancePromise
-
-• `Optional` **instancePromise**: `Promise`<`number`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L51)
-
-___
-
-### logger
-
-• **logger**: `Console`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L45)
-
-___
-
-### provides
-
-• `Optional` **provides**: `string`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L60)
-
-___
-
-### requires
-
-• `Optional` **requires**: `string`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L61)
-
-___
-
-### router
-
-• `Optional` **router**: `APIRoute`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L54)
-
-___
-
-### sequence
-
-• **sequence**: `SequenceInfo`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L49)
-
-___
-
-### sequenceArgs
-
-• **sequenceArgs**: `undefined` \| `any`[]
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L52)
-
-___
-
-### startPromise
-
-• **startPromise**: `Promise`<`void`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L64)
-
-___
-
-### startResolver
-
-• `Optional` **startResolver**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `rej` | `Function` |
-| `res` | `Function` |
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L63)
-
-___
-
-### captureRejectionSymbol
-
-▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](CPMConnector.md#capturerejectionsymbol)
-
-#### Inherited from
-
-EventEmitter.captureRejectionSymbol
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:46
-
-___
-
-### captureRejections
-
-▪ `Static` **captureRejections**: `boolean`
-
-Sets or gets the default captureRejection value for all emitters.
-
-#### Inherited from
-
-EventEmitter.captureRejections
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:52
-
-___
-
-### defaultMaxListeners
-
-▪ `Static` **defaultMaxListeners**: `number`
-
-#### Inherited from
-
-EventEmitter.defaultMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:53
-
-___
-
-### errorMonitor
-
-▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](CPMConnector.md#errormonitor)
-
-This symbol shall be used to install a listener for only monitoring `'error'`
-events. Listeners installed using this symbol are called before the regular
-`'error'` listeners are called.
-
-Installing a listener using this symbol does not change the behavior once an
-`'error'` event is emitted, therefore the process will still crash if no
-regular `'error'` listener is installed.
-
-#### Inherited from
-
-EventEmitter.errorMonitor
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:45
+[packages/host/src/lib/csi-controller.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L111)
 
 ## Accessors
 
@@ -398,7 +1014,7 @@ node_modules/@types/node/events.d.ts:45
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L81)
+[packages/host/src/lib/csi-controller.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L91)
 
 • `set` **endOfSequence**(`prm`): `void`
 
@@ -414,7 +1030,7 @@ node_modules/@types/node/events.d.ts:45
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L89)
+[packages/host/src/lib/csi-controller.ts:99](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L99)
 
 ___
 
@@ -428,748 +1044,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L71)
-
-## Methods
-
-### addListener
-
-▸ **addListener**(`event`, `listener`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.addListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:72
-
-___
-
-### confirmInputHook
-
-▸ **confirmInputHook**(): `Promise`<`void`\>
-
-#### Returns
-
-`Promise`<`void`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:458](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L458)
-
-___
-
-### createInstanceAPIRouter
-
-▸ **createInstanceAPIRouter**(): `void`
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:321](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L321)
-
-___
-
-### emit
-
-▸ **emit**(`event`, ...`args`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `...args` | `any`[] |
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-EventEmitter.emit
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:82
-
-___
-
-### eventNames
-
-▸ **eventNames**(): (`string` \| `symbol`)[]
-
-#### Returns
-
-(`string` \| `symbol`)[]
-
-#### Inherited from
-
-EventEmitter.eventNames
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:87
-
-___
-
-### getInfo
-
-▸ **getInfo**(): `Promise`<`Object`\>
-
-#### Returns
-
-`Promise`<`Object`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:435](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L435)
-
-___
-
-### getInputStream
-
-▸ **getInputStream**(): `WritableStream`<`any`\>
-
-#### Returns
-
-`WritableStream`<`any`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:450](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L450)
-
-___
-
-### getLogStream
-
-▸ **getLogStream**(): `Readable`
-
-#### Returns
-
-`Readable`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:454](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L454)
-
-___
-
-### getMaxListeners
-
-▸ **getMaxListeners**(): `number`
-
-#### Returns
-
-`number`
-
-#### Inherited from
-
-EventEmitter.getMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:79
-
-___
-
-### getOutputStream
-
-▸ **getOutputStream**(): `ReadableStream`<`any`\>
-
-#### Returns
-
-`ReadableStream`<`any`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:446](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L446)
-
-___
-
-### handleHandshake
-
-▸ **handleHandshake**(`message`): `Promise`<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `message` | `EncodedMessage`<`PING`\> |
-
-#### Returns
-
-`Promise`<`void`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:284](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L284)
-
-___
-
-### handleInstanceConnect
-
-▸ **handleInstanceConnect**(`streams`): `Promise`<`void`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `streams` | `DownstreamStreamsConfig`<``true``\> |
-
-#### Returns
-
-`Promise`<`void`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:310](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L310)
-
-___
-
-### handleKeepAliveCommand
-
-▸ **handleKeepAliveCommand**(`message`): `EncodedMessage`<`ALIVE`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `message` | `EncodedMessage`<`ALIVE`\> |
-
-#### Returns
-
-`EncodedMessage`<`ALIVE`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:510](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L510)
-
-___
-
-### handleSequenceCompleted
-
-▸ **handleSequenceCompleted**(`message`): `Promise`<`EncodedMessage`<`SEQUENCE_COMPLETED`\>\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `message` | `EncodedMessage`<`SEQUENCE_COMPLETED`\> |
-
-#### Returns
-
-`Promise`<`EncodedMessage`<`SEQUENCE_COMPLETED`\>\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:465](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L465)
-
-___
-
-### handleSequenceStopped
-
-▸ **handleSequenceStopped**(`message`): `Promise`<`EncodedMessage`<`SEQUENCE_STOPPED`\>\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `message` | `EncodedMessage`<`SEQUENCE_STOPPED`\> |
-
-#### Returns
-
-`Promise`<`EncodedMessage`<`SEQUENCE_STOPPED`\>\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:486](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L486)
-
-___
-
-### hookupStreams
-
-▸ **hookupStreams**(`streams`): `void`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `streams` | `DownstreamStreamsConfig`<``true``\> |
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:199](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L199)
-
-___
-
-### instanceStopped
-
-▸ **instanceStopped**(): `Promise`<`number`\>
-
-#### Returns
-
-`Promise`<`number`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L193)
-
-___
-
-### listenerCount
-
-▸ **listenerCount**(`event`): `number`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`number`
-
-#### Inherited from
-
-EventEmitter.listenerCount
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:83
-
-___
-
-### listeners
-
-▸ **listeners**(`event`): `Function`[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`Function`[]
-
-#### Inherited from
-
-EventEmitter.listeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:80
-
-___
-
-### main
-
-▸ **main**(): `Promise`<`void`\>
-
-#### Returns
-
-`Promise`<`void`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:139](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L139)
-
-___
-
-### off
-
-▸ **off**(`event`, `listener`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.off
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:76
-
-___
-
-### on
-
-▸ **on**(`event`, `listener`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.on
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:73
-
-___
-
-### once
-
-▸ **once**(`event`, `listener`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:74
-
-___
-
-### prependListener
-
-▸ **prependListener**(`event`, `listener`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.prependListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:85
-
-___
-
-### prependOnceListener
-
-▸ **prependOnceListener**(`event`, `listener`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.prependOnceListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:86
-
-___
-
-### rawListeners
-
-▸ **rawListeners**(`event`): `Function`[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`Function`[]
-
-#### Inherited from
-
-EventEmitter.rawListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:81
-
-___
-
-### removeAllListeners
-
-▸ **removeAllListeners**(`event?`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event?` | `string` \| `symbol` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.removeAllListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:77
-
-___
-
-### removeListener
-
-▸ **removeListener**(`event`, `listener`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.removeListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:75
-
-___
-
-### setMaxListeners
-
-▸ **setMaxListeners**(`n`): [`CSIController`](CSIController.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `n` | `number` |
-
-#### Returns
-
-[`CSIController`](CSIController.md)
-
-#### Inherited from
-
-EventEmitter.setMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:78
-
-___
-
-### start
-
-▸ **start**(): `Promise`<`unknown`\>
-
-#### Returns
-
-`Promise`<`unknown`\>
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L126)
-
-___
-
-### startInstance
-
-▸ **startInstance**(): `void`
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:155](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L155)
-
-___
-
-### getEventListener
-
-▸ `Static` **getEventListener**(`emitter`, `name`): `Function`[]
-
-Returns a list listener for a specific emitter event name.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `DOMEventTarget` \| `EventEmitter` |
-| `name` | `string` \| `symbol` |
-
-#### Returns
-
-`Function`[]
-
-#### Inherited from
-
-EventEmitter.getEventListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:34
-
-___
-
-### listenerCount
-
-▸ `Static` **listenerCount**(`emitter`, `event`): `number`
-
-**`deprecated`** since v4.0.0
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`number`
-
-#### Inherited from
-
-EventEmitter.listenerCount
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:30
-
-___
-
-### on
-
-▸ `Static` **on**(`emitter`, `event`, `options?`): `AsyncIterableIterator`<`any`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`AsyncIterableIterator`<`any`\>
-
-#### Inherited from
-
-EventEmitter.on
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:27
-
-___
-
-### once
-
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `NodeEventTarget` |
-| `event` | `string` \| `symbol` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:25
-
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `DOMEventTarget` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:26
+[packages/host/src/lib/csi-controller.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L81)

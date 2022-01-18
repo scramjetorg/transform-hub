@@ -1,219 +1,55 @@
-@scramjet/api-server
+@scramjet/api-server / [Modules](modules.md)
 
-# @scramjet/api-server
+# Scramjet Transform Hub API Server <!-- omit in toc -->
 
-## Table of contents
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package provides the API Server used by STH to expose the interface.
 
-### Classes
+## Docs
 
-- [CeroError](classes/CeroError.md)
-- [DuplexStream](classes/DuplexStream.md)
+See the code documentation here: [scramjetorg/transform-hub/docs/api-server/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-server/modules.md)
 
-### Interfaces
+## Scramjet Transform Hub
 
-- [CeroRouter](interfaces/CeroRouter.md)
-- [SequentialCeroRouter](interfaces/SequentialCeroRouter.md)
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
 
-### Type aliases
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
-- [CeroCode](README.md#cerocode)
-- [CeroConfig](README.md#ceroconfig)
-- [CeroDefaultRoute](README.md#cerodefaultroute)
-- [CeroErrorHandler](README.md#ceroerrorhandler)
-- [CeroMiddleware](README.md#ceromiddleware)
-- [CeroRouterConfig](README.md#cerorouterconfig)
-- [ServerConfig](README.md#serverconfig)
+## Use cases
 
-### Functions
+There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Slack](https://join.slack.com/t/scramjetframework/shared_invite/enQtODg2MDIyMTQ5MzUxLTVlNTIwMmFlYWU0YTg2ZTg1YmFiOTZkZTdhNzNmNjE2ZmQ3ZWQzZjI5MGQyZDAyOWM2NDc5YzdmZGQzNGI3YTU)!
 
-- [cero](README.md#cero)
-- [createServer](README.md#createserver)
-- [getRouter](README.md#getrouter)
-- [sequentialRouter](README.md#sequentialrouter)
+## Some important links
 
-## Type aliases
+* Scramjet, the company behind [Transform Hub](https://scramjet.org)
+* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
+* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
+* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/release/0.12/docs/development-guide/stream-and-api.md)
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/main/packages/cli/README.md), but `si help` should also be quite effective.
+* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
-### CeroCode
+## License and contributions
 
-Ƭ **CeroCode**: keyof typeof `codelist`
+This module is licensed under AGPL-3.0 license.
 
-#### Defined in
+The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
-[packages/api-server/src/lib/definitions.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L35)
+## Contributions
 
-___
+We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
 
-### CeroConfig
+We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
 
-Ƭ **CeroConfig**<`T`, `S`\>: `Partial`<`Object`\>
+### Help wanted :information_desk_person:
 
-#### Type parameters
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
-| Name | Type |
-| :------ | :------ |
-| `T` | extends `Server` = `Server` |
-| `S` | extends [`CeroRouter`](interfaces/CeroRouter.md) = [`CeroRouter`](interfaces/CeroRouter.md) |
+### Donation :money_with_wings:
 
-#### Defined in
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
 
-[packages/api-server/src/lib/definitions.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L15)
+[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
-___
+* There's also a Paypal donation link if you prefer that:
 
-### CeroDefaultRoute
-
-Ƭ **CeroDefaultRoute**: `Middleware`
-
-#### Defined in
-
-[packages/api-server/src/lib/definitions.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L6)
-
-___
-
-### CeroErrorHandler
-
-Ƭ **CeroErrorHandler**: (`err`: [`CeroError`](classes/CeroError.md), `req`: `IncomingMessage`, `res`: `ServerResponse`) => `void`
-
-#### Type declaration
-
-▸ (`err`, `req`, `res`): `void`
-
-##### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | [`CeroError`](classes/CeroError.md) |
-| `req` | `IncomingMessage` |
-| `res` | `ServerResponse` |
-
-##### Returns
-
-`void`
-
-#### Defined in
-
-[packages/api-server/src/lib/definitions.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L64)
-
-___
-
-### CeroMiddleware
-
-Ƭ **CeroMiddleware**: `Middleware`
-
-#### Defined in
-
-[packages/api-server/src/lib/definitions.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L5)
-
-___
-
-### CeroRouterConfig
-
-Ƭ **CeroRouterConfig**: `Partial`<`Object`\>
-
-#### Defined in
-
-[packages/api-server/src/lib/definitions.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L66)
-
-___
-
-### ServerConfig
-
-Ƭ **ServerConfig**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `router?` | [`CeroRouter`](interfaces/CeroRouter.md) |
-| `server?` | `Server` |
-| `verbose?` | `boolean` |
-
-#### Defined in
-
-[packages/api-server/src/index.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L11)
-
-## Functions
-
-### cero
-
-▸ `Const` **cero**<`T`, `S`\>(`config?`): `Object`
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends `Server`<`T`\> = `Server` |
-| `S` | extends [`CeroRouter`](interfaces/CeroRouter.md)<`S`\> = [`CeroRouter`](interfaces/CeroRouter.md) |
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `config?` | `Partial`<`Object`\> |
-
-#### Returns
-
-`Object`
-
-| Name | Type |
-| :------ | :------ |
-| `router` | `S` |
-| `server` | `T` |
-
-#### Defined in
-
-[packages/api-server/src/lib/0http.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/0http.ts#L7)
-
-___
-
-### createServer
-
-▸ **createServer**(`conf?`): `APIExpose`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `conf` | [`ServerConfig`](README.md#serverconfig) |
-
-#### Returns
-
-`APIExpose`
-
-#### Defined in
-
-[packages/api-server/src/index.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L66)
-
-___
-
-### getRouter
-
-▸ **getRouter**(): `APIRoute`
-
-#### Returns
-
-`APIRoute`
-
-#### Defined in
-
-[packages/api-server/src/index.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L48)
-
-___
-
-### sequentialRouter
-
-▸ `Const` **sequentialRouter**(`config`): [`SequentialCeroRouter`](interfaces/SequentialCeroRouter.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `config` | `Partial`<`Object`\> |
-
-#### Returns
-
-[`SequentialCeroRouter`](interfaces/SequentialCeroRouter.md)
-
-#### Defined in
-
-[packages/api-server/src/lib/0http.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/0http.ts#L6)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)

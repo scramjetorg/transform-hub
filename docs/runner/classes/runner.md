@@ -1,6 +1,10 @@
-[@scramjet/runner](../README.md) / Runner
+[@scramjet/runner](../README.md) / [Exports](../modules.md) / Runner
 
 # Class: Runner<X\>
+
+Runtime environment for sequence code.
+Communicates with Host with data transfered to/from sequence, health info,
+reacts to control messages such as stopping etc.
 
 ## Type parameters
 
@@ -13,15 +17,6 @@
 - `IComponent`
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](runner.md#constructor)
-
-### Properties
-
-- [handshakeResolver](runner.md#handshakeresolver)
-- [logger](runner.md#logger)
 
 ### Methods
 
@@ -40,60 +35,18 @@
 - [setInputContentType](runner.md#setinputcontenttype)
 - [waitForHandshakeResponse](runner.md#waitforhandshakeresponse)
 
-## Constructors
+### Constructors
 
-### constructor
+- [constructor](runner.md#constructor)
 
-• **new Runner**<`X`\>(`sequencePath`, `hostClient`, `instanceId`)
+### Accessors
 
-#### Type parameters
+- [context](runner.md#context)
 
-| Name | Type |
-| :------ | :------ |
-| `X` | extends `AppConfig` |
+### Properties
 
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `sequencePath` | `string` |
-| `hostClient` | `ICSHClient` |
-| `instanceId` | `string` |
-
-#### Defined in
-
-[runner.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L69)
-
-## Properties
-
-### handshakeResolver
-
-• `Optional` **handshakeResolver**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `rej` | `Function` |
-| `res` | `Function` |
-
-#### Defined in
-
-[runner.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L64)
-
-___
-
-### logger
-
-• **logger**: `Console`
-
-#### Implementation of
-
-IComponent.logger
-
-#### Defined in
-
-[runner.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L66)
+- [handshakeResolver](runner.md#handshakeresolver)
+- [logger](runner.md#logger)
 
 ## Methods
 
@@ -113,7 +66,7 @@ IComponent.logger
 
 #### Defined in
 
-[runner.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L223)
+[runner.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L224)
 
 ___
 
@@ -127,7 +80,7 @@ ___
 
 #### Defined in
 
-[runner.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L132)
+[runner.ts:147](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L147)
 
 ___
 
@@ -147,7 +100,7 @@ ___
 
 #### Defined in
 
-[runner.ts:88](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L88)
+[runner.ts:103](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L103)
 
 ___
 
@@ -161,7 +114,7 @@ ___
 
 #### Defined in
 
-[runner.ts:122](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L122)
+[runner.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L137)
 
 ___
 
@@ -175,7 +128,7 @@ ___
 
 #### Defined in
 
-[runner.ts:416](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L416)
+[runner.ts:405](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L405)
 
 ___
 
@@ -189,7 +142,7 @@ ___
 
 #### Defined in
 
-[runner.ts:207](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L207)
+[runner.ts:208](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L208)
 
 ___
 
@@ -209,7 +162,7 @@ ___
 
 #### Defined in
 
-[runner.ts:169](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L169)
+[runner.ts:184](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L184)
 
 ___
 
@@ -223,7 +176,7 @@ ___
 
 #### Defined in
 
-[runner.ts:569](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L569)
+[runner.ts:558](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L558)
 
 ___
 
@@ -246,7 +199,7 @@ set up streams process.stdin, process.stdout, process.stderr, fifo downstream, f
 
 #### Defined in
 
-[runner.ts:383](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L383)
+[runner.ts:372](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L372)
 
 ___
 
@@ -260,7 +213,7 @@ ___
 
 #### Defined in
 
-[runner.ts:262](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L262)
+[runner.ts:257](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L257)
 
 ___
 
@@ -281,7 +234,7 @@ ___
 
 #### Defined in
 
-[runner.ts:428](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L428)
+[runner.ts:417](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L417)
 
 ___
 
@@ -295,7 +248,7 @@ ___
 
 #### Defined in
 
-[runner.ts:404](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L404)
+[runner.ts:393](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L393)
 
 ___
 
@@ -315,7 +268,7 @@ ___
 
 #### Defined in
 
-[runner.ts:156](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L156)
+[runner.ts:171](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L171)
 
 ___
 
@@ -329,4 +282,73 @@ ___
 
 #### Defined in
 
-[runner.ts:410](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L410)
+[runner.ts:399](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L399)
+
+## Constructors
+
+### constructor
+
+• **new Runner**<`X`\>(`sequencePath`, `hostClient`, `instanceId`)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `X` | extends `AppConfig` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `sequencePath` | `string` |
+| `hostClient` | `IHostClient` |
+| `instanceId` | `string` |
+
+#### Defined in
+
+[runner.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L74)
+
+## Accessors
+
+### context
+
+• `get` **context**(): `RunnerAppContext`<`X`, `any`\>
+
+#### Returns
+
+`RunnerAppContext`<`X`, `any`\>
+
+#### Defined in
+
+[runner.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L93)
+
+## Properties
+
+### handshakeResolver
+
+• `Optional` **handshakeResolver**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `rej` | `Function` |
+| `res` | `Function` |
+
+#### Defined in
+
+[runner.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L69)
+
+___
+
+### logger
+
+• **logger**: `Console`
+
+#### Implementation of
+
+IComponent.logger
+
+#### Defined in
+
+[runner.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L71)

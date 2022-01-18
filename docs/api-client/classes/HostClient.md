@@ -1,4 +1,4 @@
-[@scramjet/api-client](../README.md) / HostClient
+[@scramjet/api-client](../README.md) / [Exports](../modules.md) / HostClient
 
 # Class: HostClient
 
@@ -11,14 +11,14 @@ Provides methods to interact with Host.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](HostClient.md#constructor)
-
 ### Properties
 
 - [apiBase](HostClient.md#apibase)
 - [client](HostClient.md#client)
+
+### Constructors
+
+- [constructor](HostClient.md#constructor)
 
 ### Methods
 
@@ -33,23 +33,6 @@ Provides methods to interact with Host.
 - [listSequences](HostClient.md#listsequences)
 - [sendNamedData](HostClient.md#sendnameddata)
 - [sendSequence](HostClient.md#sendsequence)
-
-## Constructors
-
-### constructor
-
-• **new HostClient**(`apiBase`, `utils?`)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `apiBase` | `string` |
-| `utils` | [`ClientUtils`](ClientUtils.md) |
-
-#### Defined in
-
-[packages/api-client/src/host-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L14)
 
 ## Properties
 
@@ -75,11 +58,28 @@ ___
 
 [packages/api-client/src/host-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L12)
 
+## Constructors
+
+### constructor
+
+• **new HostClient**(`apiBase`, `utils?`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `apiBase` | `string` |
+| `utils` | [`ClientUtils`](ClientUtils.md) |
+
+#### Defined in
+
+[packages/api-client/src/host-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L14)
+
 ## Methods
 
 ### deleteSequence
 
-▸ **deleteSequence**(`sequenceId`): `Promise`<[`Response`](../README.md#response)\>
+▸ **deleteSequence**(`sequenceId`): `Promise`<[`Response`](../modules.md#response)\>
 
 Deletes sequence with given id.
 
@@ -91,7 +91,7 @@ Deletes sequence with given id.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 TODO: comment.
 
@@ -103,7 +103,7 @@ ___
 
 ### getInstanceInfo
 
-▸ **getInstanceInfo**(`instanceId`): `Promise`<[`Response`](../README.md#response)\>
+▸ **getInstanceInfo**(`instanceId`): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns instance details.
 
@@ -115,7 +115,7 @@ Returns instance details.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Instance details.
 
@@ -127,13 +127,13 @@ ___
 
 ### getLoadCheck
 
-▸ **getLoadCheck**(): `Promise`<[`Response`](../README.md#response)\>
+▸ **getLoadCheck**(): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns Host load-check.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Promise resolving to Host load check data.
 
@@ -145,13 +145,13 @@ ___
 
 ### getLogStream
 
-▸ **getLogStream**(): `Promise`<[`ResponseStream`](../README.md#responsestream)\>
+▸ **getLogStream**(): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 Returns Host log stream.
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../README.md#responsestream)\>
+`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 Promise resolving to response with log stream.
 
@@ -163,7 +163,7 @@ ___
 
 ### getNamedData
 
-▸ **getNamedData**(`topic`): `Promise`<[`ResponseStream`](../README.md#responsestream)\>
+▸ **getNamedData**(`topic`): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 Returns stream from given topic.
 
@@ -175,7 +175,7 @@ Returns stream from given topic.
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../README.md#responsestream)\>
+`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 Promise resolving to stream.
 
@@ -187,7 +187,7 @@ ___
 
 ### getSequence
 
-▸ **getSequence**(`sequenceId`): `Promise`<[`Response`](../README.md#response)\>
+▸ **getSequence**(`sequenceId`): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns sequence details.
 
@@ -199,7 +199,7 @@ Returns sequence details.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Object with sequence details.
 
@@ -211,13 +211,13 @@ ___
 
 ### getVersion
 
-▸ **getVersion**(): `Promise`<[`Response`](../README.md#response)\>
+▸ **getVersion**(): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns Host version.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Promise resolving to Host version.
 
@@ -229,13 +229,13 @@ ___
 
 ### listInstances
 
-▸ **listInstances**(): `Promise`<[`Response`](../README.md#response)\>
+▸ **listInstances**(): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns list of all instances on Host.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Promise resolving to response with list.
 
@@ -247,13 +247,13 @@ ___
 
 ### listSequences
 
-▸ **listSequences**(): `Promise`<[`Response`](../README.md#response)\>
+▸ **listSequences**(): `Promise`<[`Response`](../modules.md#response)\>
 
 Returns list of all sequences on Host.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Promise resolving to response with list.
 
@@ -265,7 +265,7 @@ ___
 
 ### sendNamedData
 
-▸ **sendNamedData**(`topic`, `stream`, `contentType?`, `end?`): `Promise`<[`Response`](../README.md#response)\>
+▸ **sendNamedData**(`topic`, `stream`, `contentType?`, `end?`): `Promise`<[`Response`](../modules.md#response)\>
 
 Sends data to the topic.
 Topics are a part of Service Discovery feature enabling data exchange through Topics API.
@@ -281,7 +281,7 @@ Topics are a part of Service Discovery feature enabling data exchange through To
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 TODO: comment.
 

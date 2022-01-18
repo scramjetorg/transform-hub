@@ -1,4 +1,4 @@
-[@scramjet/api-client](../README.md) / ClientUtils
+[@scramjet/api-client](../README.md) / [Exports](../modules.md) / ClientUtils
 
 # Class: ClientUtils
 
@@ -10,15 +10,6 @@ Provides HTTP communication methods.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](ClientUtils.md#constructor)
-
-### Properties
-
-- [apiBase](ClientUtils.md#apibase)
-- [log](ClientUtils.md#log)
-
 ### Methods
 
 - [addLogger](ClientUtils.md#addlogger)
@@ -29,41 +20,14 @@ Provides HTTP communication methods.
 - [safeRequest](ClientUtils.md#saferequest)
 - [sendStream](ClientUtils.md#sendstream)
 
-## Constructors
+### Properties
 
-### constructor
+- [apiBase](ClientUtils.md#apibase)
+- [log](ClientUtils.md#log)
 
-• **new ClientUtils**(`apiBase`)
+### Constructors
 
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `apiBase` | `string` |
-
-#### Defined in
-
-[packages/api-client/src/client-utils.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L15)
-
-## Properties
-
-### apiBase
-
-• **apiBase**: `string` = `""`
-
-#### Defined in
-
-[packages/api-client/src/client-utils.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L11)
-
-___
-
-### log
-
-• `Private` `Optional` **log**: [`RequestLogger`](../README.md#requestlogger)
-
-#### Defined in
-
-[packages/api-client/src/client-utils.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L13)
+- [constructor](ClientUtils.md#constructor)
 
 ## Methods
 
@@ -77,7 +41,7 @@ Sets given logger.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `logger` | `Partial`<[`RequestLogger`](../README.md#requestlogger)\> | Logger to set. |
+| `logger` | `Partial`<[`RequestLogger`](../modules.md#requestlogger)\> | Logger to set. |
 
 #### Returns
 
@@ -95,7 +59,7 @@ ___
 
 ### delete
 
-▸ **delete**(`url`): `Promise`<[`Response`](../README.md#response)\>
+▸ **delete**(`url`): `Promise`<[`Response`](../modules.md#response)\>
 
 Performs DELETE request.
 
@@ -107,7 +71,7 @@ Performs DELETE request.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Fetch response.
 
@@ -123,7 +87,7 @@ ___
 
 ### get
 
-▸ **get**(`url`): `Promise`<[`Response`](../README.md#response)\>
+▸ **get**(`url`): `Promise`<[`Response`](../modules.md#response)\>
 
 Performs get request.
 
@@ -135,7 +99,7 @@ Performs get request.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Fetch response.
 
@@ -151,7 +115,7 @@ ___
 
 ### getStream
 
-▸ **getStream**(`url`): `Promise`<[`ResponseStream`](../README.md#responsestream)\>
+▸ **getStream**(`url`): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 Performs get request for streamed data.
 
@@ -163,7 +127,7 @@ Performs get request for streamed data.
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../README.md#responsestream)\>
+`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 Fetch response.
 
@@ -179,7 +143,7 @@ ___
 
 ### post
 
-▸ **post**(`url`, `data`, `headers?`, `config?`): `Promise`<[`Response`](../README.md#response)\>
+▸ **post**(`url`, `data`, `headers?`, `config?`): `Promise`<[`Response`](../modules.md#response)\>
 
 Performs POST request.
 
@@ -194,7 +158,7 @@ Performs POST request.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Fetch response.
 
@@ -234,7 +198,7 @@ ___
 
 ### sendStream
 
-▸ **sendStream**(`url`, `stream`, `__namedParameters?`): `Promise`<[`Response`](../README.md#response)\>
+▸ **sendStream**(`url`, `stream`, `__namedParameters?`): `Promise`<[`Response`](../modules.md#response)\>
 
 Performs POST request for streamed data.
 
@@ -248,7 +212,7 @@ Performs POST request for streamed data.
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 Fetch response.
 
@@ -259,3 +223,39 @@ Fetch response.
 #### Defined in
 
 [packages/api-client/src/client-utils.ts:151](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L151)
+
+## Properties
+
+### apiBase
+
+• **apiBase**: `string` = `""`
+
+#### Defined in
+
+[packages/api-client/src/client-utils.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L11)
+
+___
+
+### log
+
+• `Private` `Optional` **log**: [`RequestLogger`](../modules.md#requestlogger)
+
+#### Defined in
+
+[packages/api-client/src/client-utils.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L13)
+
+## Constructors
+
+### constructor
+
+• **new ClientUtils**(`apiBase`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `apiBase` | `string` |
+
+#### Defined in
+
+[packages/api-client/src/client-utils.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-utils.ts#L15)

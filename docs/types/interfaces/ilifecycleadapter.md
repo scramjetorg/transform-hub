@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / ILifeCycleAdapter
+[@scramjet/types](../README.md) / [Exports](../modules.md) / ILifeCycleAdapter
 
 # Interface: ILifeCycleAdapter
 
@@ -57,7 +57,7 @@ ___
 
 ### identify
 
-▸ **identify**(`stream`): `MaybePromise`<[`InstanceConifg`](../README.md#instanceconifg)\>
+▸ **identify**(`stream`): `MaybePromise`<[`InstanceConifg`](../modules.md#instanceconifg)\>
 
 Passes stream to PreRunner and resolves with PreRunner's results.
 
@@ -69,7 +69,7 @@ Passes stream to PreRunner and resolves with PreRunner's results.
 
 #### Returns
 
-`MaybePromise`<[`InstanceConifg`](../README.md#instanceconifg)\>
+`MaybePromise`<[`InstanceConifg`](../modules.md#instanceconifg)\>
 
 #### Defined in
 
@@ -137,7 +137,7 @@ Starts Runner.
 
 | Name | Type |
 | :------ | :------ |
-| `config` | [`InstanceConifg`](../README.md#instanceconifg) |
+| `config` | [`InstanceConifg`](../modules.md#instanceconifg) |
 
 #### Returns
 
@@ -153,17 +153,17 @@ ___
 
 ### stats
 
-▸ **stats**(`msg`): `Promise`<[`MonitoringMessageData`](../README.md#monitoringmessagedata)\>
+▸ **stats**(`msg`): `Promise`<[`MonitoringMessageData`](../modules.md#monitoringmessagedata)\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `msg` | [`MonitoringMessageData`](../README.md#monitoringmessagedata) |
+| `msg` | [`MonitoringMessageData`](../modules.md#monitoringmessagedata) |
 
 #### Returns
 
-`Promise`<[`MonitoringMessageData`](../README.md#monitoringmessagedata)\>
+`Promise`<[`MonitoringMessageData`](../modules.md#monitoringmessagedata)\>
 
 #### Defined in
 

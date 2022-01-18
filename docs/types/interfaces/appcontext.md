@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / AppContext
+[@scramjet/types](../README.md) / [Exports](../modules.md) / AppContext
 
 # Interface: AppContext<AppConfigType, State\>
 
@@ -10,7 +10,7 @@ interruption.
 
 | Name | Type |
 | :------ | :------ |
-| `AppConfigType` | extends [`AppConfig`](../README.md#appconfig) |
+| `AppConfigType` | extends [`AppConfig`](../modules.md#appconfig) |
 | `State` | extends `any` |
 
 ## Table of contents
@@ -40,7 +40,7 @@ interruption.
 
 ### AppError
 
-• `Readonly` **AppError**: [`AppErrorConstructor`](../README.md#apperrorconstructor)
+• `Readonly` **AppError**: [`AppErrorConstructor`](../modules.md#apperrorconstructor)
 
 #### Defined in
 
@@ -60,7 +60,7 @@ ___
 
 ### definition
 
-• **definition**: [`FunctionDefinition`](../README.md#functiondefinition)
+• **definition**: [`FunctionDefinition`](../modules.md#functiondefinition)
 
 Provides automated definition as understood by the system
 
@@ -111,7 +111,7 @@ and the data will be lost.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `handler` | [`KillHandler`](../README.md#killhandler) | the handler callback |
+| `handler` | [`KillHandler`](../modules.md#killhandler) | the handler callback |
 
 #### Returns
 
@@ -140,7 +140,7 @@ return value from the Sequence.
 
 | Name | Type |
 | :------ | :------ |
-| `handler` | [`MonitoringHandler`](../README.md#monitoringhandler) |
+| `handler` | [`MonitoringHandler`](../modules.md#monitoringhandler) |
 
 #### Returns
 
@@ -171,7 +171,7 @@ last call will be made sure to be saved before the process will be terminated.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `item` | [`StopHandler`](../README.md#stophandler) | the handler callback |
+| `item` | [`StopHandler`](../modules.md#stophandler) | the handler callback |
 
 #### Returns
 
@@ -193,7 +193,7 @@ Allows overriding the function definition from within the code
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `definition` | [`FunctionDefinition`](../README.md#functiondefinition) | the actual definition |
+| `definition` | [`FunctionDefinition`](../modules.md#functiondefinition) | the actual definition |
 
 #### Returns
 
@@ -224,7 +224,7 @@ out.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `error?` | [`AppError`](../README.md#apperror) | optional error object for inspection |
+| `error?` | [`AppError`](../modules.md#apperror) | optional error object for inspection |
 
 #### Returns
 
@@ -264,7 +264,7 @@ Sends events to the Instance that can be received by CLI and configured actions
 | Name | Type |
 | :------ | :------ |
 | `ev` | ``"error"`` |
-| `message` | [`AppError`](../README.md#apperror) |
+| `message` | [`AppError`](../modules.md#apperror) |
 
 #### Returns
 

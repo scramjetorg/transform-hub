@@ -1,4 +1,4 @@
-[@scramjet/symbols](../README.md) / CPMMessageCode
+[@scramjet/symbols](../README.md) / [Exports](../modules.md) / CPMMessageCode
 
 # Enumeration: CPMMessageCode
 

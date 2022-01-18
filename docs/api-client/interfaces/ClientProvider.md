@@ -1,4 +1,4 @@
-[@scramjet/api-client](../README.md) / ClientProvider
+[@scramjet/api-client](../README.md) / [Exports](../modules.md) / ClientProvider
 
 # Interface: ClientProvider
 

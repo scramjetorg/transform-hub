@@ -1,4 +1,4 @@
-[@scramjet/api-client](../README.md) / ClientError
+[@scramjet/api-client](../README.md) / [Exports](../modules.md) / ClientError
 
 # Class: ClientError
 
@@ -10,9 +10,11 @@
 
 ## Table of contents
 
-### Constructors
+### Methods
 
-- [constructor](ClientError.md#constructor)
+- [captureStackTrace](ClientError.md#capturestacktrace)
+- [from](ClientError.md#from)
+- [prepareStackTrace](ClientError.md#preparestacktrace)
 
 ### Properties
 
@@ -24,34 +26,87 @@
 - [stack](ClientError.md#stack)
 - [stackTraceLimit](ClientError.md#stacktracelimit)
 
-### Methods
+### Constructors
 
-- [captureStackTrace](ClientError.md#capturestacktrace)
-- [from](ClientError.md#from)
-- [prepareStackTrace](ClientError.md#preparestacktrace)
+- [constructor](ClientError.md#constructor)
 
-## Constructors
+## Methods
 
-### constructor
+### captureStackTrace
 
-• **new ClientError**(`code`, `reason?`, `message?`, `source?`)
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+
+Create .stack property on a target object
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `code` | [`ClientErrorCode`](../README.md#clienterrorcode) |
-| `reason?` | `string` \| `Error` |
-| `message?` | `string` |
-| `source?` | `Error` |
+| `targetObject` | `object` |
+| `constructorOpt?` | `Function` |
 
-#### Overrides
+#### Returns
 
-Error.constructor
+`void`
+
+#### Inherited from
+
+Error.captureStackTrace
 
 #### Defined in
 
-[packages/api-client/src/client-error.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L22)
+node_modules/@types/node/globals.d.ts:4
+
+___
+
+### from
+
+▸ `Static` **from**(`error`, `message?`, `source?`): [`ClientError`](ClientError.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `error` | `Error` \| `FetchError` |
+| `message?` | `string` |
+| `source?` | `Error` |
+
+#### Returns
+
+[`ClientError`](ClientError.md)
+
+#### Defined in
+
+[packages/api-client/src/client-error.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L31)
+
+___
+
+### prepareStackTrace
+
+▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
+
+Optional override for formatting stack traces
+
+**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `err` | `Error` |
+| `stackTraces` | `CallSite`[] |
+
+#### Returns
+
+`any`
+
+#### Inherited from
+
+Error.prepareStackTrace
+
+#### Defined in
+
+node_modules/@types/node/globals.d.ts:11
 
 ## Properties
 
@@ -139,80 +194,25 @@ Error.stackTraceLimit
 
 node_modules/@types/node/globals.d.ts:13
 
-## Methods
+## Constructors
 
-### captureStackTrace
+### constructor
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
-
-Create .stack property on a target object
+• **new ClientError**(`code`, `reason?`, `message?`, `source?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
-
-#### Returns
-
-`void`
-
-#### Inherited from
-
-Error.captureStackTrace
-
-#### Defined in
-
-node_modules/@types/node/globals.d.ts:4
-
-___
-
-### from
-
-▸ `Static` **from**(`error`, `message?`, `source?`): [`ClientError`](ClientError.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `error` | `Error` \| `FetchError` |
+| `code` | [`ClientErrorCode`](../modules.md#clienterrorcode) |
+| `reason?` | `string` \| `Error` |
 | `message?` | `string` |
 | `source?` | `Error` |
 
-#### Returns
+#### Overrides
 
-[`ClientError`](ClientError.md)
-
-#### Defined in
-
-[packages/api-client/src/client-error.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L31)
-
-___
-
-### prepareStackTrace
-
-▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
-
-Optional override for formatting stack traces
-
-**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-#### Returns
-
-`any`
-
-#### Inherited from
-
-Error.prepareStackTrace
+Error.constructor
 
 #### Defined in
 
-node_modules/@types/node/globals.d.ts:11
+[packages/api-client/src/client-error.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/client-error.ts#L22)

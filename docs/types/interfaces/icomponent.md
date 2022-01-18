@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / IComponent
+[@scramjet/types](../README.md) / [Exports](../modules.md) / IComponent
 
 # Interface: IComponent
 
@@ -6,7 +6,7 @@
 
 - **`IComponent`**
 
-  ↳ [`ICSHClient`](icshclient.md)
+  ↳ [`IHostClient`](ihostclient.md)
 
 ## Table of contents
 

@@ -1,4 +1,4 @@
-[@scramjet/logger](../README.md) / Logger
+[@scramjet/logger](../README.md) / [Exports](../modules.md) / Logger
 
 # Class: Logger
 
@@ -7,10 +7,6 @@
 - `Console`
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](Logger.md#constructor)
 
 ### Properties
 
@@ -43,22 +39,9 @@
 - [trace](Logger.md#trace)
 - [warn](Logger.md#warn)
 
-## Constructors
+### Constructors
 
-### constructor
-
-• **new Logger**(`reference`, `_options`)
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `reference` | `any` | A reference passed to logger (log4j style) |
-| `_options` | `LoggerOptions` | Logger options |
-
-#### Defined in
-
-[index.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L49)
+- [constructor](Logger.md#constructor)
 
 ## Properties
 
@@ -631,3 +614,20 @@ Console.warn
 #### Defined in
 
 [index.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L114)
+
+## Constructors
+
+### constructor
+
+• **new Logger**(`reference`, `_options`)
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `reference` | `any` | A reference passed to logger (log4j style) |
+| `_options` | `LoggerOptions` | Logger options |
+
+#### Defined in
+
+[index.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L49)

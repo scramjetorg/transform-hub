@@ -1,4 +1,4 @@
-[@scramjet/adapters](../README.md) / DockerSequenceAdapter
+[@scramjet/adapters](../README.md) / [Exports](../modules.md) / DockerSequenceAdapter
 
 # Class: DockerSequenceAdapter
 
@@ -14,12 +14,6 @@ Adapter for preparing Sequence to be run in Docker container.
 
 - [constructor](dockersequenceadapter.md#constructor)
 
-### Properties
-
-- [dockerHelper](dockersequenceadapter.md#dockerhelper)
-- [logger](dockersequenceadapter.md#logger)
-- [resources](dockersequenceadapter.md#resources)
-
 ### Methods
 
 - [createVolume](dockersequenceadapter.md#createvolume)
@@ -30,6 +24,12 @@ Adapter for preparing Sequence to be run in Docker container.
 - [list](dockersequenceadapter.md#list)
 - [parsePackage](dockersequenceadapter.md#parsepackage)
 - [remove](dockersequenceadapter.md#remove)
+
+### Properties
+
+- [dockerHelper](dockersequenceadapter.md#dockerhelper)
+- [logger](dockersequenceadapter.md#logger)
+- [resources](dockersequenceadapter.md#resources)
 
 ## Constructors
 
@@ -46,36 +46,6 @@ Adapter for preparing Sequence to be run in Docker container.
 #### Defined in
 
 [docker-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L23)
-
-## Properties
-
-### dockerHelper
-
-• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/idockerhelper.md)
-
-#### Defined in
-
-[docker-sequence-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L20)
-
-___
-
-### logger
-
-• `Private` **logger**: `Console`
-
-#### Defined in
-
-[docker-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L23)
-
-___
-
-### resources
-
-• `Private` **resources**: [`DockerAdapterResources`](../README.md#dockeradapterresources) = `{}`
-
-#### Defined in
-
-[docker-sequence-adapter.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L21)
 
 ## Methods
 
@@ -233,7 +203,7 @@ Parses PreRunner output and returns sequence configuration.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `streams` | [`DockerAdapterStreams`](../README.md#dockeradapterstreams) | Docker container std streams. |
+| `streams` | [`DockerAdapterStreams`](../modules.md#dockeradapterstreams) | Docker container std streams. |
 | `wait` | `Function` | TBD |
 | `volumeId` | `string` | Id of the volume where sequence is stored. |
 
@@ -272,3 +242,33 @@ ISequenceAdapter.remove
 #### Defined in
 
 [docker-sequence-adapter.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L209)
+
+## Properties
+
+### dockerHelper
+
+• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/idockerhelper.md)
+
+#### Defined in
+
+[docker-sequence-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L20)
+
+___
+
+### logger
+
+• `Private` **logger**: `Console`
+
+#### Defined in
+
+[docker-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L23)
+
+___
+
+### resources
+
+• `Private` **resources**: [`DockerAdapterResources`](../modules.md#dockeradapterresources) = `{}`
+
+#### Defined in
+
+[docker-sequence-adapter.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L21)

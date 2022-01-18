@@ -1,4 +1,4 @@
-[@scramjet/model](../README.md) / CommunicationHandler
+[@scramjet/model](../README.md) / [Exports](../modules.md) / CommunicationHandler
 
 # Class: CommunicationHandler
 
@@ -7,10 +7,6 @@
 - `ICommunicationHandler`
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](communicationhandler.md#constructor)
 
 ### Properties
 
@@ -40,15 +36,9 @@
 - [sendControlMessage](communicationhandler.md#sendcontrolmessage)
 - [sendMonitoringMessage](communicationhandler.md#sendmonitoringmessage)
 
-## Constructors
+### Constructors
 
-### constructor
-
-• **new CommunicationHandler**()
-
-#### Defined in
-
-[packages/model/src/stream-handler.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L71)
+- [constructor](communicationhandler.md#constructor)
 
 ## Properties
 
@@ -451,3 +441,13 @@ ICommunicationHandler.sendMonitoringMessage
 #### Defined in
 
 [packages/model/src/stream-handler.ts:262](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L262)
+
+## Constructors
+
+### constructor
+
+• **new CommunicationHandler**()
+
+#### Defined in
+
+[packages/model/src/stream-handler.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L71)

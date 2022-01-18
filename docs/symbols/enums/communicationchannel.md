@@ -1,4 +1,4 @@
-[@scramjet/symbols](../README.md) / CommunicationChannel
+[@scramjet/symbols](../README.md) / [Exports](../modules.md) / CommunicationChannel
 
 # Enumeration: CommunicationChannel
 
