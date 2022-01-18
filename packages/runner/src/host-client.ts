@@ -18,6 +18,9 @@ class HostClient implements IHostClient {
 
     constructor(private instancesServerPort: number, private instancesServerIp: string) {
         this.logger = getLogger(this);
+
+        // eslint-disable-next-line no-console
+        console.log(`Will connect to ${instancesServerIp}:${instancesServerPort}`);
     }
 
     private get streams(): UpstreamStreamsConfig {
