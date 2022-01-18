@@ -4,7 +4,7 @@ The package provides the domain model for Scramjet Transform Hub, the API Client
 
 ## Docs
 
->!docs model/README.md &
+>!docs model/modules.md &
 
 >@sth
 >@use-cases
