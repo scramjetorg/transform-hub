@@ -8,8 +8,18 @@ import { AddressInfo } from "net";
 import { APIExpose, AppConfig, CSIConfig, IComponent, Logger, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
+<<<<<<< HEAD
 import { addLoggerOutput, removeLoggerOutput, getLogger } from "@scramjet/logger";
 import { ObjLogger } from "@scramjet/obj-logger";
+||||||| constructed merge base
+import { addLoggerOutput, removeLoggerOutput, getLogger } from "@scramjet/logger";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { getSequenceAdapter } from "@scramjet/adapters";
+=======
+import { removeLoggerOutput, getLogger } from "@scramjet/logger";
+import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
+import { getSequenceAdapter } from "@scramjet/adapters";
+>>>>>>> Add more obj logs, add pretty-print
 import { LoadCheck } from "@scramjet/load-check";
 import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
 
@@ -20,6 +30,7 @@ import { InstanceStore } from "./instance-store";
 
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
+import { DataStream } from "scramjet";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -115,7 +126,13 @@ export class Host implements IComponent {
         this.config = sthConfig;
 
         this.logger = getLogger(this);
+
         this.objLogger = new ObjLogger(this);
+
+        const prettyLog = new DataStream().map(prettyPrint);
+
+        this.objLogger.addOutput(prettyLog);
+        prettyLog.pipe(process.stdout);
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
@@ -155,9 +172,9 @@ export class Host implements IComponent {
      */
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<this> {
         //addLoggerOutput(process.stdout);
-        addLoggerOutput(this.commonLogsPipe.getIn());
+        //addLoggerOutput(this.commonLogsPipe.getIn());
 
-        this.objLogger.pipe(process.stdout);
+        this.objLogger.pipe(this.commonLogsPipe.getIn());
 
         this.api.log.each(
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
@@ -381,7 +398,6 @@ export class Host implements IComponent {
         try {
             await sequenceAdapter.init();
 
-            this.logger.debug("SequenceAdapter initialized, listing...");
             const configs = await sequenceAdapter.list();
 
             sequenceAdapter.objLogger.pipe(this.objLogger);
@@ -415,7 +431,7 @@ export class Host implements IComponent {
 
             sequenceAdapter.objLogger.pipe(this.objLogger);
 
-            this.objLogger.debug(`Using ${typeof sequenceAdapter} as sequence adapter`);
+            this.objLogger.debug(`Using ${sequenceAdapter.name} as sequence adapter`);
 
             await sequenceAdapter.init();
 
@@ -464,7 +480,7 @@ export class Host implements IComponent {
 
         if (sequence) {
             this.logger.info("Starting sequence", sequence.id);
-            this.objLogger.info("Start sequence", sequence.id);
+            this.objLogger.info("Start sequence", sequence.id, sequence.config.name);
 
             const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
@@ -495,6 +511,7 @@ export class Host implements IComponent {
             this.commonLogsPipe.addInStream(csic.id, logStream);
         } else {
             this.logger.warn("Cannot add log stream to commonLogsPipe because it's undefined");
+            this.objLogger.warn("Cannot add log stream to commonLogsPipe because it's undefined");
         }
     }
 
@@ -535,18 +552,22 @@ export class Host implements IComponent {
 
         await csic.start();
 
+        this.logger.log("CSIController started:", id);
+        this.objLogger.trace("CSIController started", id);
+
         this.attachInstanceToCommonLogsPipe(csic);
 
         sequence.instances.add(id);
 
         csic.on("pang", (data) => {
             this.logger.log("PANG message received:", data);
+            this.logger.log("PANG received", data);
+
             let notifyCPM = false;
 
             if (data.requires) {
                 notifyCPM = true;
 
-                this.logger.log("Sequence requires data: ");
                 this.serviceDiscovery.getData(
                     {
                         topic: data.requires,
@@ -565,6 +586,8 @@ export class Host implements IComponent {
                 notifyCPM = true;
 
                 this.logger.log("Sequence provides data: ", data);
+                this.objLogger.debug("Sequence provides data", data);
+
                 const topic = this.serviceDiscovery.addData(
                     { topic: data.provides, contentType: data.contentType! },
                     csic.id
@@ -578,10 +601,9 @@ export class Host implements IComponent {
             }
         });
 
-        this.logger.log("CSIController started:", id);
-
         csic.on("end", (code) => {
             this.logger.log("CSIControlled ended with exit code:", code);
+            this.objLogger.trace("CSIControlled ended", `Exit code: ${code}`);
 
             delete InstanceStore[csic.id];
 
@@ -613,6 +635,7 @@ export class Host implements IComponent {
      */
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.log("List CSI controllers.");
+        this.objLogger.info("List Instances");
 
         return Object.values(this.instancesStore).map(csiController => ({
             id: csiController.id,
@@ -677,6 +700,7 @@ export class Host implements IComponent {
      */
     async stop() {
         this.logger.log("Stopping instances...");
+        this.objLogger.trace("Stopping instances");
 
         await Promise.all(
             Object.values(this.instancesStore)
@@ -685,6 +709,7 @@ export class Host implements IComponent {
         );
 
         this.logger.log("Instances stopped.");
+        this.objLogger.info("Instances stopped");
 
         await this.cleanup();
     }
@@ -694,37 +719,45 @@ export class Host implements IComponent {
      */
     async cleanup() {
         this.logger.log("Cleaning up...");
+        this.objLogger.trace("Cleaning up");
 
         this.instancesStore = {};
         this.sequencesStore = new Map();
 
-        this.logger.log("Stopping API server...");
+        this.logger.trace("Stopping API server...");
+        this.objLogger.trace("Stopping API server");
 
         await new Promise<void>((res, _rej) => {
             this.api.server
                 .once("close", () => {
                     this.logger.log("API server stopped.");
+                    this.logger.info("API server stopped");
                     res();
                 })
                 .close();
         });
 
         this.logger.log("Stopping socket server...");
+        this.logger.trace("Stopping socket server");
 
         await new Promise<void>((res, _rej) => {
             this.socketServer.server
                 ?.once("close", () => {
                     this.logger.log("Socket server stopped.");
+                    this.objLogger.trace("Socket server stopped.");
+
                     res();
                 })
                 .close();
         });
 
         this.logger.log("Detaching log pipes...");
+        this.objLogger.trace("Detaching log pipes");
 
         removeLoggerOutput(this.commonLogsPipe.getIn());
         removeLoggerOutput(process.stdout, process.stdout, false);
 
         this.logger.log("Cleanup done.");
+        this.objLogger.trace("Cleanup done");
     }
 }
