@@ -1,10 +1,12 @@
-[@scramjet/host](../README.md) / SocketServer
+[@scramjet/host](../README.md) / [Exports](../modules.md) / SocketServer
 
 # Class: SocketServer
 
+Server for incoming connections from Runners
+
 ## Hierarchy
 
-- `EventEmitter`
+- `TypedEmitter`<`Events`\>
 
   ↳ **`SocketServer`**
 
@@ -13,19 +15,6 @@
 - `IComponent`
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](SocketServer.md#constructor)
-
-### Properties
-
-- [logger](SocketServer.md#logger)
-- [server](SocketServer.md#server)
-- [captureRejectionSymbol](SocketServer.md#capturerejectionsymbol)
-- [captureRejections](SocketServer.md#capturerejections)
-- [defaultMaxListeners](SocketServer.md#defaultmaxlisteners)
-- [errorMonitor](SocketServer.md#errormonitor)
 
 ### Methods
 
@@ -46,10 +35,471 @@
 - [removeListener](SocketServer.md#removelistener)
 - [setMaxListeners](SocketServer.md#setmaxlisteners)
 - [start](SocketServer.md#start)
-- [getEventListener](SocketServer.md#geteventlistener)
-- [listenerCount](SocketServer.md#listenercount)
-- [on](SocketServer.md#on)
-- [once](SocketServer.md#once)
+
+### Constructors
+
+- [constructor](SocketServer.md#constructor)
+
+### Properties
+
+- [logger](SocketServer.md#logger)
+- [server](SocketServer.md#server)
+
+## Methods
+
+### addListener
+
+▸ **addListener**<`E`\>(`event`, `listener`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.addListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:24
+
+___
+
+### close
+
+▸ **close**(): `void`
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/host/src/lib/socket-server.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L94)
+
+___
+
+### emit
+
+▸ **emit**<`E`\>(`event`, ...`args`): `boolean`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `...args` | `Arguments`<`Events`[`E`]\> |
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+TypedEmitter.emit
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:34
+
+___
+
+### eventNames
+
+▸ **eventNames**(): (`string` \| `symbol`)[]
+
+#### Returns
+
+(`string` \| `symbol`)[]
+
+#### Inherited from
+
+TypedEmitter.eventNames
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:35
+
+___
+
+### getMaxListeners
+
+▸ **getMaxListeners**(): `number`
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+TypedEmitter.getMaxListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:40
+
+___
+
+### listenerCount
+
+▸ **listenerCount**<`E`\>(`event`): `number`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+TypedEmitter.listenerCount
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:38
+
+___
+
+### listeners
+
+▸ **listeners**<`E`\>(`event`): `Function`[]
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+
+#### Returns
+
+`Function`[]
+
+#### Inherited from
+
+TypedEmitter.listeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:37
+
+___
+
+### off
+
+▸ **off**<`E`\>(`event`, `listener`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.off
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:30
+
+___
+
+### on
+
+▸ **on**<`E`\>(`event`, `listener`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.on
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:25
+
+___
+
+### once
+
+▸ **once**<`E`\>(`event`, `listener`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.once
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:26
+
+___
+
+### prependListener
+
+▸ **prependListener**<`E`\>(`event`, `listener`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.prependListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:27
+
+___
+
+### prependOnceListener
+
+▸ **prependOnceListener**<`E`\>(`event`, `listener`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.prependOnceListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:28
+
+___
+
+### rawListeners
+
+▸ **rawListeners**<`E`\>(`event`): `Function`[]
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+
+#### Returns
+
+`Function`[]
+
+#### Inherited from
+
+TypedEmitter.rawListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:36
+
+___
+
+### removeAllListeners
+
+▸ **removeAllListeners**<`E`\>(`event?`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event?` | `E` |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.removeAllListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:31
+
+___
+
+### removeListener
+
+▸ **removeListener**<`E`\>(`event`, `listener`): [`SocketServer`](SocketServer.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends ``"connect"`` |
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.removeListener
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:32
+
+___
+
+### setMaxListeners
+
+▸ **setMaxListeners**(`maxListeners`): [`SocketServer`](SocketServer.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `maxListeners` | `number` |
+
+#### Returns
+
+[`SocketServer`](SocketServer.md)
+
+#### Inherited from
+
+TypedEmitter.setMaxListeners
+
+#### Defined in
+
+node_modules/typed-emitter/index.d.ts:41
+
+___
+
+### start
+
+▸ **start**(): `Promise`<`void`\>
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[packages/host/src/lib/socket-server.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L33)
 
 ## Constructors
 
@@ -65,11 +515,11 @@
 
 #### Overrides
 
-EventEmitter.constructor
+TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L21)
+[packages/host/src/lib/socket-server.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L28)
 
 ## Properties
 
@@ -83,7 +533,7 @@ IComponent.logger
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L17)
+[packages/host/src/lib/socket-server.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L24)
 
 ___
 
@@ -93,582 +543,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L16)
-
-___
-
-### captureRejectionSymbol
-
-▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](CPMConnector.md#capturerejectionsymbol)
-
-#### Inherited from
-
-EventEmitter.captureRejectionSymbol
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:46
-
-___
-
-### captureRejections
-
-▪ `Static` **captureRejections**: `boolean`
-
-Sets or gets the default captureRejection value for all emitters.
-
-#### Inherited from
-
-EventEmitter.captureRejections
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:52
-
-___
-
-### defaultMaxListeners
-
-▪ `Static` **defaultMaxListeners**: `number`
-
-#### Inherited from
-
-EventEmitter.defaultMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:53
-
-___
-
-### errorMonitor
-
-▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](CPMConnector.md#errormonitor)
-
-This symbol shall be used to install a listener for only monitoring `'error'`
-events. Listeners installed using this symbol are called before the regular
-`'error'` listeners are called.
-
-Installing a listener using this symbol does not change the behavior once an
-`'error'` event is emitted, therefore the process will still crash if no
-regular `'error'` listener is installed.
-
-#### Inherited from
-
-EventEmitter.errorMonitor
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:45
-
-## Methods
-
-### addListener
-
-▸ **addListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.addListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:72
-
-___
-
-### close
-
-▸ **close**(): `void`
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[packages/host/src/lib/socket-server.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L89)
-
-___
-
-### emit
-
-▸ **emit**(`event`, ...`args`): `boolean`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `...args` | `any`[] |
-
-#### Returns
-
-`boolean`
-
-#### Inherited from
-
-EventEmitter.emit
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:82
-
-___
-
-### eventNames
-
-▸ **eventNames**(): (`string` \| `symbol`)[]
-
-#### Returns
-
-(`string` \| `symbol`)[]
-
-#### Inherited from
-
-EventEmitter.eventNames
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:87
-
-___
-
-### getMaxListeners
-
-▸ **getMaxListeners**(): `number`
-
-#### Returns
-
-`number`
-
-#### Inherited from
-
-EventEmitter.getMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:79
-
-___
-
-### listenerCount
-
-▸ **listenerCount**(`event`): `number`
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`number`
-
-#### Inherited from
-
-EventEmitter.listenerCount
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:83
-
-___
-
-### listeners
-
-▸ **listeners**(`event`): `Function`[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`Function`[]
-
-#### Inherited from
-
-EventEmitter.listeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:80
-
-___
-
-### off
-
-▸ **off**(`event`, `listener`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.off
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:76
-
-___
-
-### on
-
-▸ **on**(`event`, `listener`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.on
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:73
-
-___
-
-### once
-
-▸ **once**(`event`, `listener`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:74
-
-___
-
-### prependListener
-
-▸ **prependListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.prependListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:85
-
-___
-
-### prependOnceListener
-
-▸ **prependOnceListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.prependOnceListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:86
-
-___
-
-### rawListeners
-
-▸ **rawListeners**(`event`): `Function`[]
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`Function`[]
-
-#### Inherited from
-
-EventEmitter.rawListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:81
-
-___
-
-### removeAllListeners
-
-▸ **removeAllListeners**(`event?`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event?` | `string` \| `symbol` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.removeAllListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:77
-
-___
-
-### removeListener
-
-▸ **removeListener**(`event`, `listener`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.removeListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:75
-
-___
-
-### setMaxListeners
-
-▸ **setMaxListeners**(`n`): [`SocketServer`](SocketServer.md)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `n` | `number` |
-
-#### Returns
-
-[`SocketServer`](SocketServer.md)
-
-#### Inherited from
-
-EventEmitter.setMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:78
-
-___
-
-### start
-
-▸ **start**(): `Promise`<`void`\>
-
-#### Returns
-
-`Promise`<`void`\>
-
-#### Defined in
-
-[packages/host/src/lib/socket-server.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L27)
-
-___
-
-### getEventListener
-
-▸ `Static` **getEventListener**(`emitter`, `name`): `Function`[]
-
-Returns a list listener for a specific emitter event name.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `DOMEventTarget` \| `EventEmitter` |
-| `name` | `string` \| `symbol` |
-
-#### Returns
-
-`Function`[]
-
-#### Inherited from
-
-EventEmitter.getEventListener
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:34
-
-___
-
-### listenerCount
-
-▸ `Static` **listenerCount**(`emitter`, `event`): `number`
-
-**`deprecated`** since v4.0.0
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`number`
-
-#### Inherited from
-
-EventEmitter.listenerCount
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:30
-
-___
-
-### on
-
-▸ `Static` **on**(`emitter`, `event`, `options?`): `AsyncIterableIterator`<`any`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`AsyncIterableIterator`<`any`\>
-
-#### Inherited from
-
-EventEmitter.on
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:27
-
-___
-
-### once
-
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `NodeEventTarget` |
-| `event` | `string` \| `symbol` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:25
-
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `DOMEventTarget` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:26
+[packages/host/src/lib/socket-server.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L23)

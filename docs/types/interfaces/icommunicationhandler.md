@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / ICommunicationHandler
+[@scramjet/types](../README.md) / [Exports](../modules.md) / ICommunicationHandler
 
 # Interface: ICommunicationHandler
 
@@ -29,14 +29,14 @@
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`ControlMessageCode`](../README.md#controlmessagecode) |
+| `T` | extends [`ControlMessageCode`](../modules.md#controlmessagecode) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `code` | `T` |
-| `handler` | [`ControlMessageHandler`](../README.md#controlmessagehandler)<`T`\> |
+| `handler` | [`ControlMessageHandler`](../modules.md#controlmessagehandler)<`T`\> |
 
 #### Returns
 
@@ -56,14 +56,14 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`MonitoringMessageCode`](../README.md#monitoringmessagecode) |
+| `T` | extends [`MonitoringMessageCode`](../modules.md#monitoringmessagecode) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `code` | `T` |
-| `handler` | [`MutatingMonitoringMessageHandler`](../README.md#mutatingmonitoringmessagehandler)<`T`\> |
+| `handler` | [`MutatingMonitoringMessageHandler`](../modules.md#mutatingmonitoringmessagehandler)<`T`\> |
 | `blocking` | ``true`` |
 
 #### Returns
@@ -80,14 +80,14 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`MonitoringMessageCode`](../README.md#monitoringmessagecode) |
+| `T` | extends [`MonitoringMessageCode`](../modules.md#monitoringmessagecode) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `code` | `T` |
-| `handler` | [`MonitoringMessageHandler`](../README.md#monitoringmessagehandler)<`T`\> |
+| `handler` | [`MonitoringMessageHandler`](../modules.md#monitoringmessagehandler)<`T`\> |
 | `blocking` | ``false`` |
 
 #### Returns
@@ -104,14 +104,14 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`MonitoringMessageCode`](../README.md#monitoringmessagecode) |
+| `T` | extends [`MonitoringMessageCode`](../modules.md#monitoringmessagecode) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `code` | `T` |
-| `handler` | [`MonitoringMessageHandler`](../README.md#monitoringmessagehandler)<`T`\> |
+| `handler` | [`MonitoringMessageHandler`](../modules.md#monitoringmessagehandler)<`T`\> |
 
 #### Returns
 
@@ -125,13 +125,13 @@ ___
 
 ### getLogOutput
 
-▸ **getLogOutput**(): [`LoggerOutput`](../README.md#loggeroutput)
+▸ **getLogOutput**(): [`LoggerOutput`](../modules.md#loggeroutput)
 
 Returns log stream for writing
 
 #### Returns
 
-[`LoggerOutput`](../README.md#loggeroutput)
+[`LoggerOutput`](../modules.md#loggeroutput)
 
 #### Defined in
 
@@ -185,7 +185,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `str` | [`DownstreamStreamsConfig`](../README.md#downstreamstreamsconfig)<``true``\> |
+| `str` | [`DownstreamStreamsConfig`](../modules.md#downstreamstreamsconfig)<``true``\> |
 
 #### Returns
 
@@ -205,7 +205,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `str` | [`UpstreamStreamsConfig`](../README.md#upstreamstreamsconfig)<``true``\> |
+| `str` | [`UpstreamStreamsConfig`](../modules.md#upstreamstreamsconfig)<``true``\> |
 
 #### Returns
 
@@ -267,14 +267,14 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`ControlMessageCode`](../README.md#controlmessagecode) |
+| `T` | extends [`ControlMessageCode`](../modules.md#controlmessagecode) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `code` | `T` |
-| `msg` | [`MessageDataType`](../README.md#messagedatatype)<`T`\> |
+| `msg` | [`MessageDataType`](../modules.md#messagedatatype)<`T`\> |
 
 #### Returns
 
@@ -294,14 +294,14 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`MonitoringMessageCode`](../README.md#monitoringmessagecode) |
+| `T` | extends [`MonitoringMessageCode`](../modules.md#monitoringmessagecode) |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `code` | `T` |
-| `msg` | [`MessageDataType`](../README.md#messagedatatype)<`T`\> |
+| `msg` | [`MessageDataType`](../modules.md#messagedatatype)<`T`\> |
 
 #### Returns
 

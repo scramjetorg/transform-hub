@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / APIError
+[@scramjet/types](../README.md) / [Exports](../modules.md) / APIError
 
 # Interface: APIError
 

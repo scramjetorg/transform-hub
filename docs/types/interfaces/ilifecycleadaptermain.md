@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / ILifeCycleAdapterMain
+[@scramjet/types](../README.md) / [Exports](../modules.md) / ILifeCycleAdapterMain
 
 # Interface: ILifeCycleAdapterMain
 

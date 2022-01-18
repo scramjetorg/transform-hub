@@ -22,9 +22,9 @@
     "build:packages": "LOCAL_PACKAGES=true lerna run build",
     "build:all-packages": "LOCAL_PACKAGES=true lerna run build && LOCAL_PACKAGES=true lerna run build:refapps",
     "build:docker": "lerna run build:docker",
-    "build:docs": "lerna run build:docs",
     "build:readme": "node ./scripts/mk-readme",
-    "build:all-docs": "lerna run build:docs && node ./scripts/mk-readme",
+    "build:docs": "lerna run build:docs",
+    "build:all-docs": "node ./scripts/mk-readme && lerna run build:docs",
     "pack-one-app": "([ -n \"$APPNAME\" ] || ( echo 'usage: APPNAME=@scramjet/reference-transform-1-seq yarn pack-one-app' ; exit 1 ) ) && yarn build --scope=$APPNAME && yarn prepack --scope=$APPNAME && yarn packseq --scope=$APPNAME",
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -prune -exec rm -rf {} ';' 2> /dev/null",
@@ -102,7 +102,6 @@
     }
   },
   "dependencies": {
-    "@scramjet/cli": "file:packages/cli",
     "scramjet": "^4.36.0"
   }
 }

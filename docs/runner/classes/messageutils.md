@@ -1,4 +1,4 @@
-[@scramjet/runner](../README.md) / MessageUtils
+[@scramjet/runner](../README.md) / [Exports](../modules.md) / MessageUtils
 
 # Class: MessageUtils
 

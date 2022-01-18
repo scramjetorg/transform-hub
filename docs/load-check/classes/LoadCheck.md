@@ -1,4 +1,4 @@
-[@scramjet/load-check](../README.md) / LoadCheck
+[@scramjet/load-check](../README.md) / [Exports](../modules.md) / LoadCheck
 
 # Class: LoadCheck
 
@@ -10,37 +10,21 @@ Provides methods to monitor resources usage and determine if machine is not over
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](LoadCheck.md#constructor)
-
 ### Properties
 
 - [config](LoadCheck.md#config)
 - [constants](LoadCheck.md#constants)
 - [logger](LoadCheck.md#logger)
 
+### Constructors
+
+- [constructor](LoadCheck.md#constructor)
+
 ### Methods
 
 - [getLoadCheck](LoadCheck.md#getloadcheck)
 - [getLoadCheckStream](LoadCheck.md#getloadcheckstream)
 - [overloaded](LoadCheck.md#overloaded)
-
-## Constructors
-
-### constructor
-
-• **new LoadCheck**(`config`)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `config` | `LoadCheckConfig` |
-
-#### Defined in
-
-[load-check.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L35)
 
 ## Properties
 
@@ -81,6 +65,22 @@ IComponent.logger
 #### Defined in
 
 [load-check.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L33)
+
+## Constructors
+
+### constructor
+
+• **new LoadCheck**(`config`)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `LoadCheckConfig` |
+
+#### Defined in
+
+[load-check.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L35)
 
 ## Methods
 

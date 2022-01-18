@@ -1,4 +1,4 @@
-[@scramjet/model](../README.md) / IDProvider
+[@scramjet/model](../README.md) / [Exports](../modules.md) / IDProvider
 
 # Class: IDProvider
 

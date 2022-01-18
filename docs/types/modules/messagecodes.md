@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / MessageCodes
+[@scramjet/types](../README.md) / [Exports](../modules.md) / MessageCodes
 
 # Namespace: MessageCodes
 

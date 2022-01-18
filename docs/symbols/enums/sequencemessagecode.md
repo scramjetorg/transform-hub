@@ -1,4 +1,4 @@
-[@scramjet/symbols](../README.md) / SequenceMessageCode
+[@scramjet/symbols](../README.md) / [Exports](../modules.md) / SequenceMessageCode
 
 # Enumeration: SequenceMessageCode
 

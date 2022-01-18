@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / APIRoute
+[@scramjet/types](../README.md) / [Exports](../modules.md) / APIRoute
 
 # Interface: APIRoute
 
@@ -10,10 +10,6 @@
 
 ## Table of contents
 
-### Properties
-
-- [lookup](apiroute.md#lookup)
-
 ### Methods
 
 - [downstream](apiroute.md#downstream)
@@ -23,15 +19,9 @@
 - [upstream](apiroute.md#upstream)
 - [use](apiroute.md#use)
 
-## Properties
+### Properties
 
-### lookup
-
-• **lookup**: [`Middleware`](../README.md#middleware)
-
-#### Defined in
-
-[packages/types/src/api-expose.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L137)
+- [lookup](apiroute.md#lookup)
 
 ## Methods
 
@@ -46,8 +36,8 @@ A method that allows to consume incoming stream from the specified path on the A
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `path` | `string` \| `RegExp` | the request path as string or regex |
-| `stream` | [`StreamOutput`](../README.md#streamoutput) | the output that will be piped to from request or a method to be called then |
-| `config?` | [`StreamConfig`](../README.md#streamconfig) | configuration of the stream |
+| `stream` | [`StreamOutput`](../modules.md#streamoutput) | the output that will be piped to from request or a method to be called then |
+| `config?` | [`StreamConfig`](../modules.md#streamconfig) | configuration of the stream |
 
 #### Returns
 
@@ -59,7 +49,7 @@ A method that allows to consume incoming stream from the specified path on the A
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L113)
+[packages/types/src/api-expose.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L120)
 
 ___
 
@@ -67,12 +57,14 @@ ___
 
 ▸ **duplex**(`path`, `callback`): `void`
 
+Allows to handle dual direction (duplex) streams.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `path` | `string` \| `RegExp` |
-| `callback` | (`stream`: `Duplex`, `headers`: `IncomingHttpHeaders`) => `void` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `path` | `string` \| `RegExp` | the request path as string or regex |
+| `callback` | (`stream`: `Duplex`, `headers`: `IncomingHttpHeaders`) => `void` | A method to be called when the stream is ready. |
 
 #### Returns
 
@@ -84,7 +76,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L119)
+[packages/types/src/api-expose.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L132)
 
 ___
 
@@ -98,7 +90,7 @@ Simple GET request hook for static data in monitoring stream.
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`MonitoringMessageCode`](../README.md#monitoringmessagecode) |
+| `T` | extends [`MonitoringMessageCode`](../modules.md#monitoringmessagecode) |
 
 #### Parameters
 
@@ -118,7 +110,7 @@ Simple GET request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L85)
+[packages/types/src/api-expose.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L89)
 
 ▸ **get**(`path`, `msg`): `void`
 
@@ -129,7 +121,7 @@ Alternative GET request hook with dynamic resolution
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `path` | `string` \| `RegExp` | the request path as string or regex |
-| `msg` | [`GetResolver`](../README.md#getresolver) | - |
+| `msg` | [`GetResolver`](../modules.md#getresolver) | - |
 
 #### Returns
 
@@ -141,7 +133,7 @@ Alternative GET request hook with dynamic resolution
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L93)
+[packages/types/src/api-expose.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L98)
 
 ___
 
@@ -149,21 +141,28 @@ ___
 
 ▸ **op**<`T`\>(`method`, `path`, `message`, `conn?`): `void`
 
-Simple POST request hook for static data in monitoring stream.
+Simple POST/DELETE request hook.
+This method can be used in two ways - as a control message handler or as general data handler.
+
+**`example`**
+// Control message handler
+router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
+// Data handler
+router.op("post", `${this.apiBase}/start`, (req) => this.handleStartRequest(req));
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends [`ControlMessageCode`](../README.md#controlmessagecode) |
+| `T` | extends [`ControlMessageCode`](../modules.md#controlmessagecode) |
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `method` | [`HttpMethod`](../README.md#httpmethod) | - |
+| `method` | [`HttpMethod`](../modules.md#httpmethod) | - |
 | `path` | `string` \| `RegExp` | the request path as string or regex |
-| `message` | [`OpResolver`](../README.md#opresolver) \| `T` | which operation to expose |
+| `message` | [`OpResolver`](../modules.md#opresolver) \| `T` | which operation to expose |
 | `conn?` | [`ICommunicationHandler`](icommunicationhandler.md) | the communication handler to use |
 
 #### Returns
@@ -176,7 +175,7 @@ Simple POST request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L76)
+[packages/types/src/api-expose.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L79)
 
 ___
 
@@ -191,8 +190,8 @@ A method that allows to pass a stream to the specified path on the API server
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `path` | `string` \| `RegExp` | the request path as string or regex |
-| `stream` | [`StreamInput`](../README.md#streaminput) | the stream that will be sent in reponse body or a method to be called then |
-| `config?` | [`StreamConfig`](../README.md#streamconfig) | configuration of the stream |
+| `stream` | [`StreamInput`](../modules.md#streaminput) | the stream that will be sent in reponse body or a method to be called then |
+| `config?` | [`StreamConfig`](../modules.md#streamconfig) | configuration of the stream |
 
 #### Returns
 
@@ -204,7 +203,7 @@ A method that allows to pass a stream to the specified path on the API server
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L101)
+[packages/types/src/api-expose.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L107)
 
 ___
 
@@ -212,12 +211,14 @@ ___
 
 ▸ **use**(`path`, ...`middlewares`): `void`
 
+Allows to register middlewares for specific paths, for all HTTP methods.
+
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `path` | `string` \| `RegExp` |
-| `...middlewares` | [`Middleware`](../README.md#middleware)[] |
+| `...middlewares` | [`Middleware`](../modules.md#middleware)[] |
 
 #### Returns
 
@@ -229,4 +230,14 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:124](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L124)
+[packages/types/src/api-expose.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L143)
+
+## Properties
+
+### lookup
+
+• **lookup**: [`Middleware`](../modules.md#middleware)
+
+#### Defined in
+
+[packages/types/src/api-expose.ts:156](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L156)

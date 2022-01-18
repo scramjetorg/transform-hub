@@ -1,4 +1,4 @@
-[@scramjet/adapters](../README.md) / IDockerHelper
+[@scramjet/adapters](../README.md) / [Exports](../modules.md) / IDockerHelper
 
 # Interface: IDockerHelper
 
@@ -30,7 +30,7 @@
 
 ### createContainer
 
-• **createContainer**: (`containerCfg`: { `autoRemove`: `boolean` ; `binds`: `string`[] ; `dockerImage`: `string` ; `envs`: `string`[] ; `labels`: { [key: string]: `string`;  } ; `maxMem`: `number` ; `ports`: `any` ; `publishAllPorts`: `boolean` ; `volumes`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]  }) => `Promise`<`string`\>
+• **createContainer**: (`containerCfg`: { `autoRemove`: `boolean` ; `binds`: `string`[] ; `dockerImage`: `string` ; `envs`: `string`[] ; `labels`: { [key: string]: `string`;  } ; `maxMem`: `number` ; `networkMode?`: `string` ; `ports`: `any` ; `publishAllPorts`: `boolean` ; `volumes`: [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[]  }) => `Promise`<`string`\>
 
 #### Type declaration
 
@@ -49,9 +49,10 @@ Creates Docker container from provided image with attached volumes and local dir
 | `containerCfg.envs` | `string`[] |
 | `containerCfg.labels` | `Object` |
 | `containerCfg.maxMem` | `number` |
+| `containerCfg.networkMode?` | `string` |
 | `containerCfg.ports` | `any` |
 | `containerCfg.publishAllPorts` | `boolean` |
-| `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] |
+| `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[] |
 
 ##### Returns
 
@@ -61,7 +62,7 @@ Created container.
 
 #### Defined in
 
-[types.ts:180](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L180)
+[types.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L182)
 
 ___
 
@@ -89,7 +90,7 @@ Created volume.
 
 #### Defined in
 
-[types.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L238)
+[types.ts:241](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L241)
 
 ___
 
@@ -111,7 +112,7 @@ List of existing volumes
 
 #### Defined in
 
-[types.ts:229](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L229)
+[types.ts:232](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L232)
 
 ___
 
@@ -137,7 +138,7 @@ Removes container.
 
 #### Defined in
 
-[types.ts:222](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L222)
+[types.ts:225](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L225)
 
 ___
 
@@ -163,17 +164,17 @@ Removes volume.
 
 #### Defined in
 
-[types.ts:247](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L247)
+[types.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L250)
 
 ___
 
 ### run
 
-• **run**: (`config`: [`DockerAdapterRunConfig`](../README.md#dockeradapterrunconfig)) => `Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+• **run**: (`config`: [`DockerAdapterRunConfig`](../modules.md#dockeradapterrunconfig)) => `Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 #### Type declaration
 
-▸ (`config`): `Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+▸ (`config`): `Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 Executes command in container.
 
@@ -181,15 +182,15 @@ Executes command in container.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `config` | [`DockerAdapterRunConfig`](../README.md#dockeradapterrunconfig) | Execution configuration. |
+| `config` | [`DockerAdapterRunConfig`](../modules.md#dockeradapterrunconfig) | Execution configuration. |
 
 ##### Returns
 
-`Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+`Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 #### Defined in
 
-[types.ts:256](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L256)
+[types.ts:259](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L259)
 
 ___
 
@@ -215,7 +216,7 @@ Starts container.
 
 #### Defined in
 
-[types.ts:203](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L203)
+[types.ts:206](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L206)
 
 ___
 
@@ -239,7 +240,7 @@ ___
 
 #### Defined in
 
-[types.ts:214](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L214)
+[types.ts:217](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L217)
 
 ___
 
@@ -265,13 +266,13 @@ Stops container.
 
 #### Defined in
 
-[types.ts:212](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L212)
+[types.ts:215](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L215)
 
 ___
 
 ### translateVolumesConfig
 
-• **translateVolumesConfig**: (`volumeConfigs`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]) => `any`
+• **translateVolumesConfig**: (`volumeConfigs`: [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[]) => `any`
 
 #### Type declaration
 
@@ -283,7 +284,7 @@ Converts pairs of mount path and volume name to DockerHelper specific volume con
 
 | Name | Type |
 | :------ | :------ |
-| `volumeConfigs` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] |
+| `volumeConfigs` | [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[] |
 
 ##### Returns
 
@@ -293,7 +294,7 @@ DockerHelper volume configuration.
 
 #### Defined in
 
-[types.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L167)
+[types.ts:169](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L169)
 
 ## Methods
 
@@ -316,13 +317,13 @@ Fetches the image from repo
 
 #### Defined in
 
-[types.ts:273](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L273)
+[types.ts:276](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L276)
 
 ___
 
 ### wait
 
-▸ **wait**(`container`, `options?`): `Promise`<[`ExitData`](../README.md#exitdata)\>
+▸ **wait**(`container`, `options?`): `Promise`<[`ExitData`](../modules.md#exitdata)\>
 
 Waits until containter exits
 
@@ -331,12 +332,12 @@ Waits until containter exits
 | Name | Type |
 | :------ | :------ |
 | `container` | `string` |
-| `options?` | [`DockerAdapterWaitOptions`](../README.md#dockeradapterwaitoptions) |
+| `options?` | [`DockerAdapterWaitOptions`](../modules.md#dockeradapterwaitoptions) |
 
 #### Returns
 
-`Promise`<[`ExitData`](../README.md#exitdata)\>
+`Promise`<[`ExitData`](../modules.md#exitdata)\>
 
 #### Defined in
 
-[types.ts:265](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L265)
+[types.ts:268](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L268)
