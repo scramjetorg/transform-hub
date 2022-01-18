@@ -115,11 +115,11 @@ Scramjet Transform Hub allows you to deploy and execute programs that you build 
 * Currently STH supports node.js runner only, we're working on bringing you runners for other languages, with Python and C++ as the first ones.
 
 Some important links 👀:
-<!-- TODO - links to be fixed!!!!!!!!!!!  -->
+
 * Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
 * You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
 * You can see the [CLI documentation here](./docs/interfaces/CLI-command-reference.md), but `si help` should also be quite effective.
-* Don't forget to `star` this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
 ---
@@ -567,7 +567,6 @@ This is what you should get as a result:
 
 ![hello_alice](./images/hello_alice.png)
 
-<!-- Repo 'docs' which is used below is a private repo -->
 [See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
 
 ## More samples :books:
