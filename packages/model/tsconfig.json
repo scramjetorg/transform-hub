@@ -16,7 +16,7 @@
     ],
     "out": "../../docs/model",
     "plugin": "typedoc-plugin-markdown",
-    "readme": "none",
-    "gitRevision": "HEAD"
+    "gitRevision": "HEAD",
+    "sort": "alphabetical"
   }
 }
