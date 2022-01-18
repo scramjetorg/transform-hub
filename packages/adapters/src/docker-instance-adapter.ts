@@ -147,6 +147,9 @@ IComponent {
                     }
                 });
             }
+
+            this.logger.log(await network.inspect());
+
             const isHostConnected = !!Object.entries((await network.inspect()).Containers).find(
                 ([id, { Name }]: [string, any]) => id.startsWith(hostname) || Name === hostname
             );
@@ -201,7 +204,15 @@ IComponent {
 
         const bridgeNetInterfaceIp = await this.getBridgeNetworkInterfaceIp();
 
-        this.logger.log("Starting Runner...", config.container);
+        this.logger.log("Starting Runner...", config.container, [
+            `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`,
+            `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
+            `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
+            `INSTANCES_SERVER_PORT=${instancesServerPort}`,
+            `INSTANCES_SERVER_IP=${bridgeNetInterfaceIp}`,
+            `INSTANCE_ID=${instanceId}`,
+        ], { networkMode: this.dockerNetworkName ?? "bridge"
+        });
 
         const { containerId, streams } = await this.dockerHelper.run({
             imageName: config.container.image,
@@ -230,7 +241,9 @@ IComponent {
         streams.stderr.on(
             "data",
             data => this.logger.error("RUNNER DOCKER error", data.toString()));
-        streams.stdout.pipe(process.stdout);
+        streams.stdout.on(
+            "data",
+            data => this.logger.log("RUNNER output", data.toString()));
 
         this.resources.containerId = containerId;
 
