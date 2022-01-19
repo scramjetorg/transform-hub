@@ -80,7 +80,7 @@ IComponent {
                 PRODUCTION: process.env.PRODUCTION,
                 SEQUENCE_PATH: sequencePath,
                 INSTANCES_SERVER_PORT: instancesServerPort.toString(),
-                INSTANCES_SERVER_IP: "127.0.0.1",
+                INSTANCES_SERVER_HOST: "127.0.0.1",
                 INSTANCE_ID: instanceId,
             }
         });

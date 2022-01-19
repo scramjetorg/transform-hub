@@ -7,7 +7,7 @@ import { HostClient } from "../host-client";
 
 const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
-const instancesServerIp = process.env.INSTANCES_SERVER_IP;
+const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
 
 if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
@@ -15,8 +15,8 @@ if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort
     process.exit(1);
 }
 
-if (!instancesServerIp) {
-    console.error("Incorrect run argument: instancesServerIp");
+if (!instancesServerHost) {
+    console.error("Incorrect run argument: instancesServerHost");
     process.exit(1);
 }
 
@@ -30,7 +30,7 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(1);
 }
 
-const hostClient = new HostClient(+instancesServerPort, instancesServerIp);
+const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
 
 /**
  * Start runner script.
