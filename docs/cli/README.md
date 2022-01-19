@@ -24,7 +24,7 @@ This package provides a CLI interface to communicate with Scramjet Transform Hub
 npm install -g @scramjet/cli
 ```
 
-Once installed, the CLI is available as the command `si` or `scramjet-interface`:
+Once installed, the CLI is available as the command `si`:
 
 ```md
 Usage: si [options...] | si [command] [options...]
@@ -48,9 +48,9 @@ Commands
 Show sequence and instance help by providing --help option after each.
 ```
 
-### Set up config
+## Set up config
 
-Set STH url:
+Set STH url: "http://url.to.host:portNumber/api/v1", e.g.:
 
 ```bash
 si config apiUrl "http://127.0.0.1:8000/api/v1"
@@ -112,10 +112,6 @@ si host version # display the Host version
 si host load    # monitor CPU, memory and disk usage on the Host
 si host logs    # display the logs of the Host.
 ```
-
-## Extra reading
-
-See the code documentation here: [scramjetorg/transform-hub/docs/interfaces/CLI-command-reference.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/interfaces/CLI-command-reference.md)
 
 ## Docs
 
