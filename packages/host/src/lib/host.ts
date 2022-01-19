@@ -12,11 +12,12 @@ import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
-import { getSequenceAdapter } from "@scramjet/adapters";
+import { DockerodeDockerHelper, getSequenceAdapter } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { LoadCheck } from "@scramjet/load-check";
+import { setupDockerNetworking } from "@scramjet/adapters/src/docker-networking";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -154,6 +155,12 @@ export class Host implements IComponent {
 
         if (identifyExisiting) {
             await this.identifyExistingSequences();
+        }
+
+        if (!this.config.noDocker) {
+            this.logger.log("Setting up Docker networking");
+
+            await setupDockerNetworking(new DockerodeDockerHelper());
         }
 
         await this.socketServer.start();

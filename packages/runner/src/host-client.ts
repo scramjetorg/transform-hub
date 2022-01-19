@@ -16,10 +16,8 @@ class HostClient implements IHostClient {
 
     logger: Console;
 
-    constructor(private instancesServerPort: number, private instancesServerIp: string) {
+    constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = getLogger(this);
-
-        process.stderr.write(`Will connect to ${instancesServerIp}:${instancesServerPort}`);
     }
 
     private get streams(): UpstreamStreamsConfig {
@@ -35,7 +33,7 @@ class HostClient implements IHostClient {
             Array.from(Array(8))
                 .map(() => {
                     // Error handling for each connection is process crash for now
-                    const connection = net.createConnection(this.instancesServerPort, this.instancesServerIp);
+                    const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
 
                     return new Promise<net.Socket>(res => {
                         connection.on("connect", () => res(connection));

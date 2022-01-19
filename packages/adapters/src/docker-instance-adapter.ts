@@ -17,8 +17,8 @@ import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
-import * as fs from "fs/promises";
 import * as os from "os";
+import { DOCKER_NETWORK_NAME, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -122,66 +122,31 @@ IComponent {
         return msg;
     }
 
-    private async getBridgeNetworkInterfaceIp(): Promise<string> {
-        const isHostSpawnedInDockerContainer = await fs.access("/.dockerenv").then(() => true, () => false);
-
-        this.logger.log({ isHostSpawnedInDockerContainer });
-
-        if (isHostSpawnedInDockerContainer) {
-            const dockerNetworkName = "transformhub0";
-            const hostname = os.hostname();
-
-            this.logger.log({ dockerNetworkName, hostname });
-
-            const network = this.dockerHelper.dockerode.getNetwork(dockerNetworkName);
-
-            if (await network.inspect().then(() => true, () => false) === false) {
-                await this.dockerHelper.dockerode.createNetwork({
-                    Name: dockerNetworkName,
-                    Driver: "bridge",
-                    Options: {
-                        "com.docker.network.bridge.host_binding_ipv4":"0.0.0.0",
-                        "com.docker.network.bridge.enable_ip_masquerade":"true",
-                        "com.docker.network.bridge.enable_icc":"true",
-                        "com.docker.network.driver.mtu":"1500"
-                    }
-                });
-            }
-
-            const containers = (await network.inspect()).Containers;
-
-            this.logger.log({ containers });
-
-            const isHostConnected = !!Object.entries(containers).find(
-                ([id, { Name }]: [string, any]) => id.startsWith(hostname) || Name === hostname
-            );
-
-            if (!isHostConnected) {
-                // @TODO do not connect on instances run, do that before
-                await network.connect({ Container: hostname }).catch((err) => {
-                    this.logger.warn("This STH is probably already connected", err);
-                });
-                this.logger.log("Connecting host");
-                await defer(4000);
-                this.logger.log((await network.inspect()).Containers);
-            }
-
-            this.dockerNetworkName = dockerNetworkName;
-
-            return hostname;
+    private async getNetworkSetup(): Promise<{ network: string, host: string }> {
+        if (await isHostSpawnedInDockerContainer()) {
+            // If Transform Hub runs in Docker container then it the network was already setup in Host initialization
+            return {
+                host: getHostname(),
+                network: DOCKER_NETWORK_NAME
+            };
         }
 
+        // otherwise use default bridge network
+
         const interfaces = await this.dockerHelper.listNetworks();
-        const bridgeInterface = interfaces.find(net => net.Driver === "bridge");
+        const bridgeInterface = interfaces.find(net => net.Name === "bridge" && net.Driver === "bridge");
         const bridgeNetworkIp = bridgeInterface?.IPAM?.Config?.[0]?.Gateway;
 
         if (!bridgeNetworkIp) {
             throw new Error("Couldn't find any docker bridge network in DockerInstanceAdapter");
         }
 
-        this.logger.log(`bridge interface avaialble on host OS (${bridgeNetworkIp}), runner will connect to it`);
+        this.logger.log(`default bridge interface avaialble on host OS (${bridgeNetworkIp}), runner will connect to it`);
 
-        return bridgeNetworkIp;
+        return {
+            network: "bridge",
+            host: bridgeNetworkIp
+        };
     }
 
     // eslint-disable-next-line complexity
@@ -210,17 +175,18 @@ IComponent {
             }
         }
 
-        const bridgeNetInterfaceIp = await this.getBridgeNetworkInterfaceIp();
+        const networkSetup = await this.getNetworkSetup();
 
-        this.logger.log("Starting Runner...", config.container, [
+        const envs = [
             `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`,
             `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
             `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
             `INSTANCES_SERVER_PORT=${instancesServerPort}`,
-            `INSTANCES_SERVER_IP=${bridgeNetInterfaceIp}`,
+            `INSTANCES_SERVER_HOST=${networkSetup.host}`,
             `INSTANCE_ID=${instanceId}`,
-        ], { networkMode: this.dockerNetworkName ?? "bridge"
-        });
+        ];
+
+        this.logger.log("Runner will start with envs: ", envs);
 
         const { containerId, streams } = await this.dockerHelper.run({
             imageName: config.container.image,
@@ -233,25 +199,13 @@ IComponent {
             },
             ports: this.resources.ports,
             publishAllPorts: true,
-            envs: [
-                `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`,
-                `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
-                `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
-                `INSTANCES_SERVER_PORT=${instancesServerPort}`,
-                `INSTANCES_SERVER_IP=${bridgeNetInterfaceIp}`,
-                `INSTANCE_ID=${instanceId}`,
-            ],
+            envs,
             autoRemove: true,
             maxMem: config.container.maxMem,
-            networkMode: this.dockerNetworkName ?? "bridge"
+            networkMode: networkSetup.network
         });
 
-        streams.stderr.on(
-            "data",
-            data => this.logger.error("RUNNER DOCKER error", data.toString()));
-        streams.stdout.on(
-            "data",
-            data => this.logger.log("RUNNER output", data.toString()));
+        streams.stderr.on("data", data => this.logger.error("Docker container error: ", data.toString()));
 
         this.resources.containerId = containerId;
 
