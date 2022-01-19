@@ -2,6 +2,7 @@ import { IComponent, Logger, DownstreamStreamsConfig } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import net from "net";
 import { isDefined, TypedEmitter } from "@scramjet/utility";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 type MaybeSocket = net.Socket | null
 type RunnerConnectionsInProgress = [
@@ -22,12 +23,14 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
     // TODO: probably to change to net server, to verify
     server?: net.Server;
     logger: Logger;
+    objLogger: ObjLogger;
 
     private runnerConnectionsInProgress = new Map<string, RunnerConnectionsInProgress>()
 
     constructor(private port: number) {
         super();
         this.logger = getLogger(this);
+        this.objLogger = new ObjLogger(this);
     }
 
     async start(): Promise<void> {
@@ -36,9 +39,11 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
         this.server
             .on("connection", async (connection) => {
                 this.logger.info("New incoming Runner connection to SocketServer");
+                this.objLogger.info("New incoming Runner connection to SocketServer");
 
                 connection.on("error", (err) => {
                     this.logger.error("Error on connection from runner", err);
+                    this.objLogger.error("Error on connection from runner", err);
                 });
 
                 const id = await new Promise<string>((resolve) => {
@@ -48,6 +53,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 });
 
                 this.logger.info(`Connection from instance: ${id}`);
+                this.objLogger.info("Connection from instance", id);
 
                 let runner = this.runnerConnectionsInProgress.get(id);
 
@@ -64,9 +70,11 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
                 connection.on("error", (err) => {
                     this.logger.error(`Error on instance ${id} in stream ${channel}`, err);
+                    this.objLogger.error("Error on instance in stream", id, channel, err);
                 });
 
                 this.logger.info(`Connection on channel: ${channel}`);
+                this.objLogger.info("Connection on channel", channel);
 
                 if (runner[channel] === null) {
                     runner[channel] = connection;
@@ -85,6 +93,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
             this.server!
                 .listen(this.port, () => {
                     this.logger.info("Server on:", this.server?.address());
+                    this.objLogger.info("SocketServer on", this.server?.address());
                     res();
                 })
                 .on("error", rej);

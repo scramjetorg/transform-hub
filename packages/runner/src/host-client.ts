@@ -3,6 +3,7 @@ import { IHostClient, UpstreamStreamsConfig, } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import net from "net";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 type HostOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket
@@ -15,9 +16,11 @@ class HostClient implements IHostClient {
     private _streams?: UpstreamStreamsConfig;
 
     logger: Console;
+    objLogger: ObjLogger;
 
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = getLogger(this);
+        this.objLogger = new ObjLogger(this);
     }
 
     private get streams(): UpstreamStreamsConfig {
@@ -56,6 +59,7 @@ class HostClient implements IHostClient {
 
     async disconnect() {
         this.logger.log("Disconnecting from host");
+        this.objLogger.trace("Disconnecting from host");
 
         const streamsExitedPromised = this.streams.map(stream =>
             new Promise(
