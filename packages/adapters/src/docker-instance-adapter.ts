@@ -17,7 +17,7 @@ import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
-import { DOCKER_NETWORK_NAME, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
+import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -39,7 +39,6 @@ IComponent {
     }
 
     async init(): Promise<void> {
-
     }
 
     /**
@@ -120,29 +119,38 @@ IComponent {
     }
 
     private async getNetworkSetup(): Promise<{ network: string, host: string }> {
+        const interfaces = await this.dockerHelper.listNetworks();
+        const sthDockerNetwork = interfaces.find(net => net.Name === STH_DOCKER_NETWORK);
+
+        if (!sthDockerNetwork) {
+            // STH docker network should be created in Host intitialization
+            throw new Error(`Couldn't find sth docker network: ${sthDockerNetwork}`);
+        }
+
         if (await isHostSpawnedInDockerContainer()) {
-            // If Transform Hub runs in Docker container then it the network was already setup in Host initialization
+            const hostname = getHostname();
+
+            // If Transform Hub runs in Docker container
+            // then this container should be connected to STH docker network in Host initialization
+            this.logger.log(`Runner will connect to STH container with hostname ${hostname}`);
+
             return {
-                host: getHostname(),
-                network: DOCKER_NETWORK_NAME
+                network: STH_DOCKER_NETWORK,
+                host: hostname,
             };
         }
+        // otherwise STH runs on Host OS so we Runner can just connect to the Gateway 
+        const sthNetworkGateway = sthDockerNetwork?.IPAM?.Config?.[0]?.Gateway;
 
-        // otherwise use default bridge network
-
-        const interfaces = await this.dockerHelper.listNetworks();
-        const bridgeInterface = interfaces.find(net => net.Name === "bridge" && net.Driver === "bridge");
-        const bridgeNetworkIp = bridgeInterface?.IPAM?.Config?.[0]?.Gateway;
-
-        if (!bridgeNetworkIp) {
-            throw new Error("Couldn't find any docker bridge network in DockerInstanceAdapter");
+        if (!sthNetworkGateway) {
+            throw new Error(`Couldn't determine gateway for ${STH_DOCKER_NETWORK}`);
         }
 
-        this.logger.log(`default bridge interface avaialble on host OS (${bridgeNetworkIp}), runner will connect to it`);
+        this.logger.log(`Runner will connect to STH on host OS using gateway: (${sthNetworkGateway})`);
 
         return {
-            network: "bridge",
-            host: bridgeNetworkIp
+            network: STH_DOCKER_NETWORK,
+            host: sthNetworkGateway
         };
     }
 

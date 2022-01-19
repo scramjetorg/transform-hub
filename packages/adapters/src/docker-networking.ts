@@ -6,19 +6,15 @@ export const isHostSpawnedInDockerContainer = async () => await fs.access("/.doc
 
 export const getHostname = () => os.hostname();
 
-export const DOCKER_NETWORK_NAME = "transformhub0";
+export const STH_DOCKER_NETWORK = "transformhub0";
 
 // @TODO this could be encapsulated into IInstanceAdapter for doing something on Transform Hub launch
 export async function setupDockerNetworking(dockerHelper: IDockerHelper) {
-    if (await isHostSpawnedInDockerContainer() === false) {
-        return;
-    }
-
-    const networkExists = await dockerHelper.inspectNetwork(DOCKER_NETWORK_NAME).then(() => true, () => false);
+    const networkExists = await dockerHelper.inspectNetwork(STH_DOCKER_NETWORK).then(() => true, () => false);
 
     if (!networkExists) {
         await dockerHelper.createNetwork({
-            name: DOCKER_NETWORK_NAME,
+            name: STH_DOCKER_NETWORK,
             driver: "bridge",
             options: {
                 "com.docker.network.bridge.host_binding_ipv4":"0.0.0.0",
@@ -29,15 +25,17 @@ export async function setupDockerNetworking(dockerHelper: IDockerHelper) {
         });
     }
 
-    const { containers } = await dockerHelper.inspectNetwork(DOCKER_NETWORK_NAME);
+    if (await isHostSpawnedInDockerContainer()) {
+        const { containers } = await dockerHelper.inspectNetwork(STH_DOCKER_NETWORK);
 
-    const hostname = getHostname();
+        const hostname = getHostname();
 
-    const isHostConnected = !!Object.entries(containers).find(
-        ([id, { Name }]: [string, any]) => id.startsWith(hostname) || Name === hostname
-    );
+        const isHostConnected = !!Object.entries(containers).find(
+            ([id, { Name }]: [string, any]) => id.startsWith(hostname) || Name === hostname
+        );
 
-    if (!isHostConnected) {
-        await dockerHelper.connectToNetwork(DOCKER_NETWORK_NAME, hostname);
+        if (!isHostConnected) {
+            await dockerHelper.connectToNetwork(STH_DOCKER_NETWORK, hostname);
+        }
     }
 }
