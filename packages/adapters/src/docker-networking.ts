@@ -1,6 +1,6 @@
-import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import * as fs from "fs/promises";
 import * as os from "os";
+import { IDockerHelper } from "./types";
 
 export const isHostSpawnedInDockerContainer = async () => await fs.access("/.dockerenv").then(() => true, () => false);
 
@@ -9,20 +9,18 @@ export const getHostname = () => os.hostname();
 export const DOCKER_NETWORK_NAME = "transformhub0";
 
 // @TODO this could be encapsulated into IInstanceAdapter for doing something on Transform Hub launch
-export async function setupDockerNetworking(dockerHelper: DockerodeDockerHelper) {
+export async function setupDockerNetworking(dockerHelper: IDockerHelper) {
     if (await isHostSpawnedInDockerContainer() === false) {
         return;
     }
 
-    const network = dockerHelper.dockerode.getNetwork(DOCKER_NETWORK_NAME);
-
-    const networkExists = await network.inspect().then(() => true, () => false);
+    const networkExists = await dockerHelper.inspectNetwork(DOCKER_NETWORK_NAME).then(() => true, () => false);
 
     if (!networkExists) {
-        await dockerHelper.dockerode.createNetwork({
-            Name: DOCKER_NETWORK_NAME,
-            Driver: "bridge",
-            Options: {
+        await dockerHelper.createNetwork({
+            name: DOCKER_NETWORK_NAME,
+            driver: "bridge",
+            options: {
                 "com.docker.network.bridge.host_binding_ipv4":"0.0.0.0",
                 "com.docker.network.bridge.enable_ip_masquerade":"true",
                 "com.docker.network.bridge.enable_icc":"true",
@@ -31,7 +29,7 @@ export async function setupDockerNetworking(dockerHelper: DockerodeDockerHelper)
         });
     }
 
-    const containers = (await network.inspect()).Containers;
+    const { containers } = await dockerHelper.inspectNetwork(DOCKER_NETWORK_NAME);
 
     const hostname = getHostname();
 
@@ -40,6 +38,6 @@ export async function setupDockerNetworking(dockerHelper: DockerodeDockerHelper)
     );
 
     if (!isHostConnected) {
-        await network.connect({ Container: hostname });
+        await dockerHelper.connectToNetwork(DOCKER_NETWORK_NAME, hostname);
     }
 }

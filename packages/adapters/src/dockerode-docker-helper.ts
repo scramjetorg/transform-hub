@@ -9,7 +9,8 @@ import {
     DockerAdapterStreams, DockerAdapterVolumeConfig,
     DockerAdapterWaitOptions,
     DockerContainer,
-    IDockerHelper, DockerImage, DockerVolume, ExitData
+    IDockerHelper, DockerImage, DockerVolume, ExitData,
+    DockerCreateNetworkConfig, DockerNetwork
 } from "./types";
 
 /**
@@ -312,6 +313,33 @@ export class DockerodeDockerHelper implements IDockerHelper {
     }
 
     async listNetworks(): Promise<Dockerode.NetworkInspectInfo[]> {
+        // @TODO this
         return this.dockerode.listNetworks();
+    }
+
+    async inspectNetwork(id: string): Promise<DockerNetwork> {
+        const network = await this.dockerode.getNetwork(id).inspect();
+
+        const dockerodeContainers = network.Containers as Record<string, { Name: string }>;
+
+        const containers = Object.fromEntries(
+            Object.entries(dockerodeContainers).map(([containerId, { Name }]) => [containerId, { name: Name }])
+        );
+
+        return {
+            containers
+        };
+    }
+
+    async connectToNetwork(networkid: string, container: string): Promise<void> {
+        await this.dockerode.getNetwork(networkid).connect({ Container: container });
+    }
+
+    async createNetwork(config: DockerCreateNetworkConfig): Promise<void> {
+        await this.dockerode.createNetwork({
+            Name: config.name,
+            Driver:config.driver,
+            Options: config.options
+        });
     }
 }
