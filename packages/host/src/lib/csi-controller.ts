@@ -199,6 +199,7 @@ export class CSIController extends TypedEmitter<Events> {
 
                 // TODO: if we have a non-zero exit code is this expected?
                 this.logger.log(`Sequence finished with status: ${exitcode}`);
+                this.objLogger.trace("Sequence finished with status", exitcode);
 
                 if (exitcode === 0) {
                     this.objLogger.trace("Sequence finished with success", exitcode);
@@ -240,10 +241,11 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
-            streams[CC.LOG].pipe(process.stdout);
+            //streams[CC.LOG].pipe(process.stdout);
         }
 
         streams[CC.LOG].pipe(this.objLogger.inStringStream);
+        //.lines().JSONParse().stringify().pipe(this.objLogger.inStringStream);
         //streams[CC.LOG].pipe(process.stdout);
 
         this.upStreams = [

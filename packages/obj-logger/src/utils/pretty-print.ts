@@ -10,8 +10,8 @@ const COLOR_MAP: { [ key: string]: string } = {
     FATAL: COLORS.FgMagenta
 };
 
-const getColor = (level: LogLevel = "INFO") => `${COLOR_MAP[level]}${level?.padEnd(5)}${COLORS.Reset}`;
+const getLevelColor = (level: LogLevel = "INFO") => `${COLOR_MAP[level]}${level?.padEnd(5)}${COLORS.Reset}`;
 
 export const prettyPrint = (obj: LogEntry) => {
-    return `${COLORS.Dim}${new Date(obj.ts!).toISOString()}${COLORS.Reset} ${getColor(obj.level)} ${obj.msg} ${COLORS.Dim}${(obj.data || []).length ? JSON.stringify(obj.data, null, 0) : ""}${COLORS.Reset}\n`;
+    return `${COLORS.Dim}${new Date(obj.ts!).toISOString()}${COLORS.Reset} ${getLevelColor(obj.level)} ${obj.from || ""} ${obj.msg} ${COLORS.Dim}${(obj.data || []).length ? JSON.stringify(obj.data, null, 0) : ""}${COLORS.Reset}\n`;
 };

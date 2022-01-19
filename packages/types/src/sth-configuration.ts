@@ -1,4 +1,4 @@
-import { LogLevel } from ".";
+import { LogLevel } from "./object-logger";
 
 export type ContainerConfiguration = {
     /**

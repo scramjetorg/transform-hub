@@ -170,7 +170,7 @@ export class Host implements IComponent {
         //addLoggerOutput(process.stdout);
         //addLoggerOutput(this.commonLogsPipe.getIn());
 
-        this.objLogger.pipe(this.commonLogsPipe.getIn());
+        this.objLogger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
@@ -589,7 +589,7 @@ export class Host implements IComponent {
                     csic.id
                 );
 
-                csic.getOutputStream()!.pipe(topic.stream as Writable);//.pipe(process.stdout);
+                csic.getOutputStream()!.pipe(topic.stream as Writable);
             }
 
             if (notifyCPM) {

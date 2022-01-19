@@ -9,7 +9,8 @@ export type LogEntry = DeepPartial<{
     level: LogLevel;
     error: string;
     ts: number;
-    data?: any;
+    data?: any[];
+    from: string;
 }>
 
 export interface IObjectLogger {

@@ -7,9 +7,7 @@ import { getName } from "./utils/get-name";
 export class ObjLogger implements IObjectLogger {
     outLogStream = new PassThrough({ objectMode: true });
     inLogStream = new PassThrough({ objectMode: true });
-    inStringStream = new StringStream().JSONParse().catch((error: any) => {
-        this.error("inStringStream.JSONParse() failed", error.message);
-    });
+    inStringStream = new PassThrough({ objectMode: false });
 
     output: DataStream;
 
@@ -23,28 +21,31 @@ export class ObjLogger implements IObjectLogger {
 
     constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "ERROR") {
         this.name = getName(reference);
+
         this.baseLog = baseLog;
         this.logLevel = logLevel;
 
-        this.inStringStream.pipe(this.inLogStream);
-
+        StringStream.from(this.inStringStream).JSONParse(true).pipe(this.inLogStream);
         DataStream.from(this.inLogStream).map((entry: LogEntry) => {
             const a: any = { ...entry };
 
+            a.from = entry.from || this.name;
             a[this.name] = {
                 ...this.baseLog
             };
 
-            return a;
-        }).pipe(this.outLogStream);
+            this.write(entry.level!, entry, ...entry.data || []);
+
+            //return a;
+        });//.pipe(this.outLogStream);
 
         this.output = new DataStream({ objectMode: true });
         this.outLogStream.pipe(this.output);
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
-        if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
-            return;
+        if (ObjLogger.levels.indexOf(level) >= ObjLogger.levels.indexOf(this.logLevel)) {
+            //return;
         }
 
         if (typeof entry === "string") {
@@ -52,6 +53,8 @@ export class ObjLogger implements IObjectLogger {
         }
 
         const a: any = { level, msg: entry.msg, ts: entry.ts || Date.now() };
+
+        a.from = entry.from || this.name;
 
         a[this.name] = {
             ...this.baseLog
