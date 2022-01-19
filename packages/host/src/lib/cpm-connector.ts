@@ -343,6 +343,11 @@ export class CPMConnector extends TypedEmitter<Events> {
             this.logger.error("Request error:", error);
             this.reconnect();
         });
+
+        this.verserClient.on("error", (error: any) => {
+            this.logger.error("VerserClient error:", error);
+            this.reconnect();
+        });
     }
 
     /**
