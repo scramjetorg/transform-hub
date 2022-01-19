@@ -42,8 +42,8 @@ It currently supports Node.js based apps, but Python and other languages are com
 4. [Development instructions](#development-instructions-construction_worker)
     - [Installation](#installation-clamp)
         - [Environment setup](#environment-setup)
-        - [Hub installation](#hub-installation)
-    - [Start the hub](#start-the-hub-checkered_flag)
+        - [STH installation](#sth-installation)
+    - [Start STH](#start-sth-checkered_flag)
     - [Install CLI and execute](#install-cli-and-execute-white_check_mark)
     - [Build the packages](#build-the-packages-building_construction)
     - [Docker commands](#docker-commands-whale)
@@ -94,7 +94,7 @@ There's no limit to what you can use it for. Do you want a stock checker? A chat
 
 [Check our proposition of sample architecture for use cases in different industries.](https://scramjet.org/#use-cases)
 
-This is the STH development repo, in order to use it, you need to have linux based operating system, for instance [Ubuntu](https://ubuntu.com/download/server)installed. We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
+This is the STH development repo, in order to use it, you need to have linux based operating system, for instance [Ubuntu](https://ubuntu.com/download/server) installed. We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
 
 ---
 
@@ -126,7 +126,7 @@ Some important links 👀:
 
 # Development instructions :construction_worker:
 
-This section contains more detailed installation descriptions, it is intended for developers who would like to contribute or build Transform Hub from source. If you wish to fire up sth quickly and without unnecessary installations, go to [Quick Start](https://github.com/scramjetorg/scramjet-cloud-docs#3-install-scramjet-transform-hub) installation, which focuses on starting STH and deploying a sample application.
+This section contains more detailed installation descriptions, it is intended for developers who would like to contribute or build Transform Hub from source. If you wish to fire up STH quickly and without unnecessary installations, go to [Quick Start](https://github.com/scramjetorg/scramjet-cloud-docs#3-install-scramjet-transform-hub) installation, which focuses on starting STH and deploying a sample application.
 
 In this section we will also show you some useful commands, tools and functionalities that you can use to develop your own programs.
 
@@ -141,7 +141,7 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
 We will guide you step by step through the installation process.
 
-There are several installations you need to perform to get the hub up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
+There are several installations you need to perform to get STH up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
 
 - nvm
 - node.js
@@ -226,7 +226,7 @@ The same as before the installations can be confirmed by checking the installed 
 
 OK! The installation was successful. 🎉 🎆
 
-We also work with Docker, but this is optional. Running the hub is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
+We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
 
 ```bash
 sudo apt install -y docker.io docker-compose   # command will install docker and docker-compose
@@ -243,11 +243,11 @@ sudo docker version
 docker-compose version
 ```
 
-### Hub installation
+### STH installation
 
-There are two ways to install the hub, either by cloning the repo or by using the npm registry.
+There are two ways to install STH, either by cloning the repo or by using the npm registry.
 
-First, let's clone transform-hub repo. After that, some more installations will be required. Please copy the following commands to the terminal:
+First, let's clone the transform-hub repo. After that, some more installations will be required. Please copy the following commands to the terminal:
 
 ```bash
 git clone https://github.com/scramjetorg/transform-hub.git && \
@@ -257,31 +257,31 @@ yarn install && yarn build:all && npm i -g ./dist/cli
 
 Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 Meantime let me describe you what is happening in the command you have just pasted into the console:
 
-- `git clone https://github.com/scramjetorg/transform-hub.git` is cloning the hub repository.
-- `cd transform-hub` is changing the directory to the hub repository.
-- `yarn install` is installing all the dependencies of the hub.
-- `yarn build:all` is building all the hub packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
-- `npm i -g ./dist/cli` is installing the hub CLI as a global command.
+- `git clone https://github.com/scramjetorg/transform-hub.git` is cloning STH repository.
+- `cd transform-hub` is changing the directory to STH repository.
+- `yarn install` is installing all the dependencies of STH.
+- `yarn build:all` is building all STH packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
+- `npm i -g ./dist/cli` is installing STH CLI as a global command.
 
-When the package installation and build is complete hub should be ready to run. To confirm that we will try to start it. There are several ways to do it, but for now we will use the [script](package.json#start) that will run the hub from node:
+When the package installation and build is complete, STH should be ready to run. To confirm that we will try to start it. There are several ways to do it, but for now we will use the [script](package.json#start) that will run STH from node:
 
 ```bash
 yarn start -P 8000
 ```
 
-The parameter `-P` makes the hub listen on port 8000. If you skip this parameter the hub will listen on port 8000 anyway. This port is set as a default value in the hub configuration file.
+The parameter `-P` makes STH listen on port 8000. If you skip this parameter, it will listen on port 8000 anyway. This port is set as a default value in STH configuration file.
 
-When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
+When it's done, STH should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
 ```bash
 2022-01-14T10:26:39.201Z info (object:Host) API listening on: 0.0.0.0:8000
 ```
 
-Hub is all set and ready to work with. To stop the hub use `Ctrl+C` or kill the process with command: `kill -9 $(lsof -t -i:8000)`.
+STH is all set and ready to work with. To stop it use `Ctrl+C` or kill the process with command: `kill -9 $(lsof -t -i:8000)`.
 
 ![hub_start](./images/hub_start.png)
 
-As we mentioned before, the current Hub can be also installed from the npm registry -> [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth):
+As we mentioned before, the current STH can be also installed from the npm registry -> [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth):
 
 ```bash
 npm i -g @scramjet/sth   # installs the package globally
@@ -289,15 +289,15 @@ npm i -g @scramjet/sth   # installs the package globally
 
 ![npm_package](./images/npm_package.png)
 
-When you start the hub from npm, no package installations or builds are required. You can start the hub right away, with one of those two commands: `scramjet-transform-hub` or `sth`.
+When you start STH from npm, no package installations or builds are required. You can start STH right away, with one of those two commands: `scramjet-transform-hub` or `sth`.
 
-If you managed to start the hub, it confirms that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following section.
+If you managed to start STH, it confirms that the installation process was performed successfully. This is the command we used to start STH: `yarn start -P 8000`. The `-P` option is used to start STH on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that STH can be started on any port number, and it can be started in several ways, which is described in the following section.
 
 ---
 
-## Start the hub :checkered_flag:
+## Start STH :checkered_flag:
 
-The Hub can be started in multiple ways. The default way is to run the hub with Docker and on localhost and port number 8000.
+STH can be started in multiple ways. The default way is to run it with Docker and on localhost and port number 8000.
 
 ```bash
 node dist/sth/bin/hub                 # Starts Host after it's been built
@@ -309,7 +309,7 @@ ts-node packages/sth/src/bin/hub.ts   # Starts Host in development mode
 yarn start:dev                        # This is the same as above but using script
 ```
 
-You can also start the hub without Docker, use the same commands as above but with added `--no-docker` option:
+You can also start STH without Docker, use the same commands as above but with added `--no-docker` option:
 
 ```bash
 node dist/sth/bin/hub --no-docker
@@ -321,7 +321,7 @@ ts-node packages/sth/src/bin/hub.ts --no-docker
 yarn start:dev --no-docker
 ```
 
-There is a wide range of options that you can start the hub with. Please add `--help` or `-h` flag to list all the options:
+There is a wide range of options that you can start STH with. Please add `--help` or `-h` flag to list all the options:
 
 `scramjet-transform-hub --help`
 
@@ -353,9 +353,9 @@ Options:
 
 ## Install CLI and execute :white_check_mark:
 
-This command was already done at the end of the [Installation](#installation-:clamp:) section, just before starting the hub. But it is worth mentioning, that there are two ways to install the CLI:
+Thi installation was already done at the end of the [Installation](#installation-:clamp:) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
 
-- form the source code. In the root folder, after building, run the commands:
+- from the source code. In the root folder, after building, run the commands:
 
 ```bash
 npm i -g ./dist/cli # install CLI globally from the source folder
@@ -480,7 +480,7 @@ By this time you should already have all those things done by going through the 
 
 To start the "Hello Alice" sample we will need these basic steps:
 
-- [start the hub](#start-the-hub-checkered_flag)
+- [start STH](#start-the-hub-checkered_flag)
 - [compress the package](#compress-the-package-package)
 - [send compressed package (sequence) to hub](#arrow_up-upload-the-package)
 - [start sequence](#arrow_right-start-the-sequence)
@@ -516,7 +516,7 @@ tar -C /path/to/package/dir czf <package-name.tar.gz> .
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to start the hub =>](#start-the-hub-checkered_flag)
+> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to start STH =>](#start-the-hub-checkered_flag)
 
 #### :arrow_up: **Upload the package**
 
