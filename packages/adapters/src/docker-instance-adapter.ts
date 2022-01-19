@@ -15,9 +15,8 @@ import {
 } from "@scramjet/types";
 import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig } from "./types";
+import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
-import * as os from "os";
 import { DOCKER_NETWORK_NAME, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 
 /**
@@ -27,13 +26,11 @@ class DockerInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
-    private dockerHelper: DockerodeDockerHelper;
+    private dockerHelper: IDockerHelper;
 
     private resources: DockerAdapterResources = {};
 
     logger: Logger;
-
-    private dockerNetworkName?: string
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -245,12 +242,6 @@ IComponent {
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
             this.logger.log("Volume removed");
-        }
-
-        if (this.dockerNetworkName) {
-            const network = this.dockerHelper.dockerode.getNetwork(this.dockerNetworkName);
-
-            await network.disconnect({ Container: os.hostname() });
         }
     }
 

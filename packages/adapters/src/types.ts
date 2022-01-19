@@ -45,6 +45,10 @@ export type DockerAdapterRunPortsConfig = {
     PortBindings: any
 }
 
+export type DockerNetwork = { containers: Record<string, { name: string }> }
+
+export type DockerCreateNetworkConfig = { name: string, driver: string, options: Record<string, string> }
+
 /**
  * Configuration used to run command in container.
  *
@@ -276,6 +280,12 @@ export interface IDockerHelper {
     pullImage(name: string, fetchOnlyIfNotExists?: boolean): Promise<void>
 
     listNetworks(): Promise<NetworkInspectInfo[]>
+
+    inspectNetwork(id: string): Promise<DockerNetwork>
+
+    connectToNetwork(networkid: string, container: string): Promise<void>
+
+    createNetwork(config: DockerCreateNetworkConfig): Promise<void>
 }
 
 export type InstanceAdapterOptions = {
