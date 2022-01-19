@@ -45,7 +45,8 @@ configService.update({
         id: options.id
     },
     noDocker: !options.docker,
-    sequencesRoot: options.sequencesRoot
+    sequencesRoot: options.sequencesRoot,
+    logLevel: options.logLevel,
 });
 
 // before here we actually load the host and we have the config imported elsewhere

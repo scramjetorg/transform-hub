@@ -1,2 +1,2 @@
 export * from "./obj-logger";
-export * from "./pretty-print";
+export * from "./utils/pretty-print";

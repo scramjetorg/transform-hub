@@ -1,3 +1,5 @@
+import { LogLevel } from ".";
+
 export type ContainerConfiguration = {
     /**
      * Docker image to use.
@@ -68,6 +70,11 @@ export type HostConfig = {
 }
 
 export type STHConfiguration = {
+    /**
+     * Logging level.
+     */
+    logLevel: LogLevel
+
     /**
      * CPM url.
      */

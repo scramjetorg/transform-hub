@@ -5,6 +5,7 @@ import path from "path";
 const imageConfig = require("./image-config.json");
 
 const _defaultConfig: STHConfiguration = {
+    logLevel: "ERROR",
     cpmUrl: "",
     docker: {
         prerunner: {

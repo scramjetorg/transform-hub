@@ -8,18 +8,8 @@ import { AddressInfo } from "net";
 import { APIExpose, AppConfig, CSIConfig, IComponent, Logger, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-<<<<<<< HEAD
-import { addLoggerOutput, removeLoggerOutput, getLogger } from "@scramjet/logger";
-import { ObjLogger } from "@scramjet/obj-logger";
-||||||| constructed merge base
-import { addLoggerOutput, removeLoggerOutput, getLogger } from "@scramjet/logger";
-import { ObjLogger } from "@scramjet/obj-logger";
-import { getSequenceAdapter } from "@scramjet/adapters";
-=======
 import { removeLoggerOutput, getLogger } from "@scramjet/logger";
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { getSequenceAdapter } from "@scramjet/adapters";
->>>>>>> Add more obj logs, add pretty-print
 import { LoadCheck } from "@scramjet/load-check";
 import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
 
@@ -109,6 +99,7 @@ export class Host implements IComponent {
     private attachListeners() {
         this.socketServer.on("connect", async (id, streams) => {
             this.logger.log("Instance connected:", id);
+            this.objLogger.debug("Instance connected", id);
 
             await this.instancesStore[id].handleInstanceConnect(streams);
         });
@@ -127,7 +118,12 @@ export class Host implements IComponent {
 
         this.logger = getLogger(this);
 
-        this.objLogger = new ObjLogger(this);
+        this.objLogger = new ObjLogger(
+            this,
+            {},
+            ObjLogger.levels.find((l) => l.toLowerCase() === sthConfig.logLevel) ||
+                ObjLogger.levels[ObjLogger.levels.length - 1]
+        );
 
         const prettyLog = new DataStream().map(prettyPrint);
 

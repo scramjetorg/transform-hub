@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Writable } from "stream";
-import { IObjectLogger, LogEntry } from "@scramjet/types";
-import { getName } from "./get-name";
+import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
+import { getName } from "./utils/get-name";
 
 export class ObjLogger implements IObjectLogger {
     outLogStream = new PassThrough({ objectMode: true });
@@ -15,11 +15,16 @@ export class ObjLogger implements IObjectLogger {
 
     name: string;
     baseLog: LogEntry;
+    logLevel: LogLevel;
+
     outputs: Writable[] = [];
 
-    constructor(reference: any, baseLog: LogEntry = {}) {
+    static levels: LogLevel[] = ["FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"];
+
+    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "ERROR") {
         this.name = getName(reference);
         this.baseLog = baseLog;
+        this.logLevel = logLevel;
 
         this.inStringStream.pipe(this.inLogStream);
 
@@ -37,7 +42,11 @@ export class ObjLogger implements IObjectLogger {
         this.outLogStream.pipe(this.output);
     }
 
-    write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]) {
+    write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
+        if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
+            return;
+        }
+
         if (typeof entry === "string") {
             entry = { msg: entry };
         }
