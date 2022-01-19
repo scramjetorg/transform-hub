@@ -1,6 +1,6 @@
-# `@scramjet/logger` <!-- omit in toc -->
+# `@scramjet/obj-logger` <!-- omit in toc -->
 
-The package provides Scramjet Transform Hub with a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice.
+The package provides Scramjet Transform Hub with a object logger.
 
 ## Docs
 

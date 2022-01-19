@@ -205,7 +205,7 @@ IComponent {
             ports: this.resources.ports,
             publishAllPorts: true,
             envs,
-            autoRemove: true,
+            autoRemove: false,
             maxMem: config.container.maxMem,
             networkMode: networkSetup.network
         });
