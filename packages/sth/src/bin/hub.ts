@@ -5,7 +5,7 @@ import { ConfigService } from "@scramjet/sth-config";
 
 const program = new Command();
 const options = program
-    .option("-L, --log-level <level>", "Specify log level", "debug")
+    .option("-L, --log-level <level>", "Specify log level", "trace")
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)

@@ -9,7 +9,7 @@ export class ObjLogger implements IObjectLogger {
     inLogStream = new PassThrough({ objectMode: true });
     inStringStream = new PassThrough({ objectMode: false });
 
-    output: DataStream;
+    output = new DataStream({ objectMode: true });
 
     name: string;
     baseLog: LogEntry;
@@ -25,27 +25,30 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
         this.logLevel = logLevel;
 
-        StringStream.from(this.inStringStream).JSONParse(true).pipe(this.inLogStream);
-        DataStream.from(this.inLogStream).map((entry: LogEntry) => {
-            const a: any = { ...entry };
+        StringStream
+            .from(this.inStringStream)
+            .JSONParse(true)
+            .pipe(this.inLogStream);
 
-            a.from = entry.from || this.name;
-            a[this.name] = {
-                ...this.baseLog
-            };
+        DataStream
+            .from(this.inLogStream)
+            .each((entry: LogEntry) => {
+                const a: any = { ...entry };
 
-            this.write(entry.level!, entry, ...entry.data || []);
+                a.from = entry.from || this.name;
+                a[this.name] = {
+                    ...this.baseLog
+                };
 
-            //return a;
-        });//.pipe(this.outLogStream);
+                this.write(entry.level!, entry, ...entry.data || []);
+            });
 
-        this.output = new DataStream({ objectMode: true });
         this.outLogStream.pipe(this.output);
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
         if (ObjLogger.levels.indexOf(level) >= ObjLogger.levels.indexOf(this.logLevel)) {
-            //return;
+            return;
         }
 
         if (typeof entry === "string") {
