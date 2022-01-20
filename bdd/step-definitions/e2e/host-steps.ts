@@ -64,7 +64,9 @@ const waitForContainerToClose = async () => {
             containerExist = containers.filter(
                 containerInfo => containerInfo.Id === containerId
             ).length > 0;
+
             console.log("Container exists: ", containerExist);
+
             await defer(500);
         } while (containerExist);
     }
@@ -73,7 +75,7 @@ const waitForContainerToClose = async () => {
 const waitForProcessToEnd = async (pid: number) => {
     // eslint-disable-next-line no-constant-condition
     while (true) {
-        const proc = await exec(`ps -p ${pid}`);
+        const proc = exec(`ps -p ${pid}`);
 
         const exitCode = await new Promise<number>(res => proc.on("exit", res));
 
@@ -162,17 +164,18 @@ const startHost = async () => {
         console.error(`Starting host on port: ${apiPort}`);
     }
     hostClient = new HostClient(apiUrl);
+
     if (process.env.SCRAMJET_TEST_LOG) {
         hostClient.client.addLogger({
             request(url) {
-                console.error(new Date().toISOString(), "Starting request to", url);
+                console.log(new Date().toISOString(), "Starting request to", url);
             },
             ok(result) {
                 const {
                     status, statusText, url
                 } = result;
 
-                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
+                console.log(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error) {
                 const { code, reason: result } = error;

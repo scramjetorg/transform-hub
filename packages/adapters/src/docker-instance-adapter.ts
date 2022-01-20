@@ -39,6 +39,7 @@ IComponent {
 
         this.logger = getLogger(this);
         this.objLogger = new ObjLogger(this);
+        this.dockerHelper.objLogger.pipe(this.objLogger);
     }
 
     async init(): Promise<void> {
@@ -169,7 +170,7 @@ IComponent {
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
 
         this.logger.info("Instance preparation done.");
-
+        this.objLogger.info("Instance preparation done");
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
         if (development()) {
@@ -226,6 +227,7 @@ IComponent {
         this.resources.containerId = containerId;
 
         this.logger.log(`Container is running (${containerId}).`);
+        this.objLogger.trace("Container is running", containerId);
 
         try {
             const { statusCode } = await this.dockerHelper.wait(containerId);
@@ -261,7 +263,7 @@ IComponent {
             this.logger.log("Volume will be removed in 1 sec");
             this.objLogger.debug("Volume will be removed in 1 sec");
 
-            await defer(1000); // one sec
+            await defer(6000); // one sec?
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
             this.logger.log("Volume removed");

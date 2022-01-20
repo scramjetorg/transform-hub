@@ -185,6 +185,7 @@ export class Host implements IComponent {
 
         if (!this.config.noDocker) {
             this.logger.log("Setting up Docker networking");
+            this.objLogger.trace("Setting up Docker networking");
 
             await setupDockerNetworking(new DockerodeDockerHelper());
         }
@@ -199,6 +200,7 @@ export class Host implements IComponent {
 
                 this.logger.info("API listening on:", `${serverInfo?.address}:${serverInfo.port}`);
                 this.objLogger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+
                 res();
             });
         });
@@ -318,6 +320,7 @@ export class Host implements IComponent {
             req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
 
             this.logger.debug(req.method, req.url);
+            this.objLogger.debug(req.method!, req.url);
 
             return instance.router.lookup(req, res, next);
         }
@@ -445,6 +448,7 @@ export class Host implements IComponent {
             };
         } catch (error: any) {
             this.logger.debug(error?.stack);
+            this.objLogger.error(error?.stack);
 
             return {
                 opStatus: 422,
@@ -574,7 +578,10 @@ export class Host implements IComponent {
 
                 csic.confirmInputHook().then(
                     () => { /* noop */ },
-                    (e: any) => { this.logger.error(e); }
+                    (e: any) => {
+                        this.logger.error(e);
+                        this.objLogger.error(e);
+                    }
                 );
             }
 

@@ -1,3 +1,4 @@
+import { ObjLogger } from "@scramjet/obj-logger";
 import { ExitCode } from "@scramjet/types";
 import { ContainerStats, NetworkInspectInfo } from "dockerode";
 import { PathLike } from "fs";
@@ -163,6 +164,8 @@ export type DockerAdapterRunResponse = {
     containerId: DockerContainer
 };
 export interface IDockerHelper {
+    objLogger: ObjLogger;
+
     /**
      * Converts pairs of mount path and volume name to DockerHelper specific volume configuration.
      *
