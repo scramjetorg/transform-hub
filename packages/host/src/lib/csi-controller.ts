@@ -325,10 +325,11 @@ export class CSIController extends TypedEmitter<Events> {
 
     async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
         this.logger.log("PING RECEIVED", message);
-        this.objLogger.debug("PING RECEIVED", message);
+        this.objLogger.debug("PING received", message);
 
         if (!message[1].ports) {
             this.logger.warn("Received a PING message but didn't receive ports config");
+            this.objLogger.trace("Received a PING message but didn't receive ports config");
         }
 
         this.info.ports = message[1].ports;
@@ -348,6 +349,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.startResolver?.res();
 
         this.info.started = new Date();
+        this.objLogger.info("Instance started", this.info);
     }
 
     async handleInstanceConnect(streams: DownstreamStreamsConfig) {
@@ -362,118 +364,123 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     createInstanceAPIRouter() {
-        if (this.upStreams) {
-            this.router = getRouter();
-
-            this.router.get("/", () => {
-                return this.getInfo();
-            });
-
-            this.router.upstream("/stdout", this.upStreams[CC.STDOUT]);
-            this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
-            this.router.downstream("/stdin", this.upStreams[CC.STDIN], { end: true });
-
-            this.router.upstream("/log", this.upStreams[CC.LOG]);
-
-            if (development()) {
-                this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
-            }
-
-            this.router.upstream("/output", this.upStreams[CC.OUT]);
-
-            let inputHeadersSent = false;
-
-            this.router.downstream("/input", (req) => {
-                if (this.apiInputEnabled) {
-                    const stream = this.downStreams![CC.IN];
-                    const contentType = req.headers["content-type"];
-
-                    // @TODO: Check if subsequent requests have the same content-type.
-                    if (!inputHeadersSent) {
-                        if (contentType === undefined) {
-                            throw new Error("Content-Type must be defined");
-                        }
-
-                        stream.write(`Content-Type: ${contentType}\r\n`);
-                        stream.write("\r\n");
-
-                        inputHeadersSent = true;
-                    }
-
-                    return stream;
-                }
-
-                return { opStatus: 406, error: "Input provided in other way." };
-            }, { checkContentType: false, end: true, encoding: "utf-8" });
-
-            // monitoring data
-            this.router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
-
-            // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
-            // router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
-
-            const localEmitter = Object.assign(
-                new EventEmitter(),
-                { lastEvents: {} } as { lastEvents: { [evname: string]: any } }
-            );
-
-            this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
-                const event = data[1];
-
-                if (!event.eventName) return;
-                localEmitter.lastEvents[event.eventName] = event;
-                localEmitter.emit(event.eventName, event);
-            });
-
-            this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
-                const name = req.params?.name;
-
-                if (!name) {
-                    throw new HostError("EVENT_NAME_MISSING");
-                }
-
-                const out = new DataStream();
-                const handler = (data: any) => out.write(data);
-                const clean = () => {
-                    this.logger.debug(`Event stream "${name}" disconnected`);
-                    localEmitter.off(name, handler);
-                };
-
-                this.logger.debug(`Event stream "${name}" connected.`);
-                localEmitter.on(name, handler);
-                res.on("error", clean);
-                res.on("end", clean);
-
-                return out.JSONStringify();
-            });
-
-            const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
-                const name = req.params?.name;
-
-                if (!name) {
-                    throw new HostError("EVENT_NAME_MISSING");
-                }
-
-                localEmitter.once(name, res);
-            });
-
-            this.router.get("/event/:name", async (req) => {
-                if (req.params?.name && localEmitter.lastEvents[req.params.name]) {
-                    return localEmitter.lastEvents[req.params.name];
-                }
-
-                return awaitEvent(req);
-            });
-            this.router.get("/once/:name", awaitEvent);
-
-            // operations
-            this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
-            this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
-            this.router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
-            this.router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
-        } else {
+        if (!this.upStreams) {
             throw new AppError("UNATTACHED_STREAMS");
         }
+
+        this.router = getRouter();
+
+        this.router.get("/", () => {
+            return this.getInfo();
+        });
+
+        this.router.upstream("/stdout", this.upStreams[CC.STDOUT]);
+        this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
+        this.router.downstream("/stdin", this.upStreams[CC.STDIN], { end: true });
+
+        this.router.upstream("/log", this.upStreams[CC.LOG]);
+
+        if (development()) {
+            this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
+        }
+
+        this.router.upstream("/output", this.upStreams[CC.OUT]);
+
+        let inputHeadersSent = false;
+
+        this.router.downstream("/input", (req) => {
+            if (this.apiInputEnabled) {
+                const stream = this.downStreams![CC.IN];
+                const contentType = req.headers["content-type"];
+
+                // @TODO: Check if subsequent requests have the same content-type.
+                if (!inputHeadersSent) {
+                    if (contentType === undefined) {
+                        throw new Error("Content-Type must be defined");
+                    }
+
+                    stream.write(`Content-Type: ${contentType}\r\n`);
+                    stream.write("\r\n");
+
+                    inputHeadersSent = true;
+                }
+
+                return stream;
+            }
+
+            return { opStatus: 406, error: "Input provided in other way." };
+        }, { checkContentType: false, end: true, encoding: "utf-8" });
+
+        // monitoring data
+        this.router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
+
+        // We are not able to obtain all necessary information for this endpoint yet, disabling it for now
+        // router.get("/status", RunnerMessageCode.STATUS, this.communicationHandler);
+
+        const localEmitter = Object.assign(
+            new EventEmitter(),
+                { lastEvents: {} } as { lastEvents: { [evname: string]: any } }
+        );
+
+        this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
+            const event = data[1];
+
+            if (!event.eventName) return;
+            localEmitter.lastEvents[event.eventName] = event;
+            localEmitter.emit(event.eventName, event);
+        });
+
+        this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
+            const name = req.params?.name;
+
+            if (!name) {
+                throw new HostError("EVENT_NAME_MISSING");
+            }
+
+            const out = new DataStream();
+            const handler = (data: any) => out.write(data);
+            const clean = () => {
+                this.logger.debug(`Event stream "${name}" disconnected`);
+                this.objLogger.debug(`Event stream "${name}" disconnected`);
+
+                localEmitter.off(name, handler);
+            };
+
+            this.logger.debug(`Event stream "${name}" connected.`);
+            this.objLogger.debug("Event stream connected", name);
+
+            localEmitter.on(name, handler);
+
+            res.on("error", clean);
+            res.on("end", clean);
+
+            return out.JSONStringify();
+        });
+
+        const awaitEvent = async (req: ParsedMessage): Promise<unknown> => new Promise(res => {
+            const name = req.params?.name;
+
+            if (!name) {
+                throw new HostError("EVENT_NAME_MISSING");
+            }
+
+            localEmitter.once(name, res);
+        });
+
+        this.router.get("/event/:name", async (req) => {
+            if (req.params?.name && localEmitter.lastEvents[req.params.name]) {
+                return localEmitter.lastEvents[req.params.name];
+            }
+
+            return awaitEvent(req);
+        });
+        this.router.get("/once/:name", awaitEvent);
+
+        // operations
+        this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
+        this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
+        this.router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
+        this.router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
     }
 
     async getInfo() {
@@ -508,6 +515,7 @@ export class CSIController extends TypedEmitter<Events> {
     // @TODO discuss this
     async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
         this.logger.log("Got message: SEQUENCE_COMPLETED.");
+        this.objLogger.trace("Got message: SEQUENCE_COMPLETED.");
 
         // TODO: we are ready to ask Runner to exit.
         // TODO: this needs to send a STOP request with canKeepAlive and timeout.
@@ -517,9 +525,12 @@ export class CSIController extends TypedEmitter<Events> {
         try {
             await promiseTimeout(this.endOfSequence, stopTimeout);
             this.logger.log("Sequence terminated itself.");
+            this.objLogger.trace("Sequence terminated itself");
         } catch {
             await this.instanceAdapter.remove();
             this.logger.log("Sequence doesn't terminated itself in expected time (%s).", stopTimeout);
+            this.objLogger.trace("Sequence doesn't terminated itself in expected time", stopTimeout);
+
             process.exitCode = 252;
         }
 
@@ -529,19 +540,26 @@ export class CSIController extends TypedEmitter<Events> {
     // TODO: move this to Host like handleSequenceCompleted.
     async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {
         this.logger.log("Got sequence end message, sending kill");
+        this.objLogger.trace("Sequence ended, sending kill");
 
         try {
             await promiseTimeout(this.endOfSequence, stopTimeout);
             this.logger.log("Sequence terminated itself.");
+            this.objLogger.trace("Instance terminated itself");
         } catch {
             this.logger.warn("Sequence failed to terminate within timeout, sending kill...");
+            this.objLogger.warn("Instance failed to terminate within timeout, sending kill");
+
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
 
             try {
                 await promiseTimeout(this.endOfSequence, stopTimeout);
                 this.logger.log("Terminated with kill.");
+                this.objLogger.trace("Terminated with kill.");
             } catch {
                 this.logger.error("Sequence unresponsive, killing container...");
+                this.objLogger.error("Sequence unresponsive, killing");
+
                 await this.instanceAdapter.remove();
                 process.exitCode = 253;
             }
@@ -553,6 +571,8 @@ export class CSIController extends TypedEmitter<Events> {
     // TODO: move this to host (it's needed for both Stop and Complete signals)
     handleKeepAliveCommand(message: EncodedMessage<RunnerMessageCode.ALIVE>) {
         this.logger.log("Got keep-alive message from sequence");
+        this.objLogger.trace("Got keep-alive message from sequence");
+
         this.keepAliveRequested = true;
 
         return message;

@@ -33,6 +33,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         this.dockerHelper = new DockerodeDockerHelper();
         this.logger = getLogger(this);
         this.objLogger = new ObjLogger(this);
+
+        this.dockerHelper.objLogger.pipe(this.objLogger);
     }
 
     /**
@@ -86,7 +88,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     private async identifyOnly(volume: string): Promise<SequenceConfig | undefined> {
         this.logger.info(`Attempting to identify volume: ${volume}`);
-        this.objLogger.info(`Attempting to identify volume: ${volume}`);
+        this.objLogger.info("Attempting to identify volume", volume);
 
         try {
             const { streams, wait } = await this.dockerHelper.run({
@@ -187,6 +189,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             return await this.dockerHelper.createVolume(id);
         } catch (error: any) {
             this.logger.error("Error creating volume", id);
+            this.objLogger.error("Error creating volume", id);
+
             throw new SequenceAdapterError("DOCKER_ERROR", "Error creating volume");
         }
     }
@@ -239,7 +243,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         await this.dockerHelper.removeVolume(config.id);
 
         this.logger.debug("Volume removed.");
-        this.objLogger.debug("Volume removed.", config.id);
+        this.objLogger.debug("Volume removed", config.id);
     }
 }
 
