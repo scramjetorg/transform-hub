@@ -2,6 +2,7 @@ import asyncio
 import sys
 import os
 import codecs
+import json
 import importlib.util
 from scramjet.streams import Stream
 from logging_setup import LoggingSetup
@@ -34,6 +35,8 @@ class Runner:
 
         config, args = await self.handshake()
         self.logger.info("Communication established.")
+        asyncio.create_task(self.connect_control_stream())
+        asyncio.create_task(self.setup_heartbeat())
 
         await self.run_instance(args)
 
@@ -94,6 +97,24 @@ class Runner:
             return data['appConfig'], data['args']
 
 
+    async def connect_control_stream(self):
+        async for bytes in self.streams[CC.CONTROL]:
+            code, data = json.loads(bytes.decode())
+            self.logger.debug(f"Control message received: {code} {data}")
+            if code == msg_codes.KILL.value:
+                self.exit_immediately()
+
+
+    async def setup_heartbeat(self):
+        while True:
+            send_encoded_msg(
+                self.streams[CC.MONITORING],
+                msg_codes.MONITORING,
+                {'healthy': True}
+            )
+            await asyncio.sleep(1)
+
+
     async def run_instance(self, args):
         self.logger.debug(f"Loading sequence from {self.seq_path}...")
         spec = importlib.util.spec_from_file_location("sequence", self.seq_path)
@@ -113,6 +134,10 @@ class Runner:
         await output.write_to(self.streams[CC.OUT])
 
         self.logger.info('Finished.')
+
+
+    def exit_immediately(self):
+        sys.exit(1)
 
 
 class AppContext:
