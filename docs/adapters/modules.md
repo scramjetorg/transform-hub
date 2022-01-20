@@ -14,7 +14,9 @@
 - [DockerAdapterVolumeConfig](modules.md#dockeradaptervolumeconfig)
 - [DockerAdapterWaitOptions](modules.md#dockeradapterwaitoptions)
 - [DockerContainer](modules.md#dockercontainer)
+- [DockerCreateNetworkConfig](modules.md#dockercreatenetworkconfig)
 - [DockerImage](modules.md#dockerimage)
+- [DockerNetwork](modules.md#dockernetwork)
 - [DockerVolume](modules.md#dockervolume)
 - [ExitData](modules.md#exitdata)
 - [InstanceAdapterOptions](modules.md#instanceadapteroptions)
@@ -29,10 +31,17 @@
 
 - [IDockerHelper](interfaces/idockerhelper.md)
 
+### Variables
+
+- [STH\_DOCKER\_NETWORK](modules.md#sth_docker_network)
+
 ### Functions
 
+- [getHostname](modules.md#gethostname)
 - [getInstanceAdapter](modules.md#getinstanceadapter)
 - [getSequenceAdapter](modules.md#getsequenceadapter)
+- [isHostSpawnedInDockerContainer](modules.md#ishostspawnedindockercontainer)
+- [setupDockerNetworking](modules.md#setupdockernetworking)
 
 ## Type aliases
 
@@ -51,7 +60,7 @@
 
 #### Defined in
 
-[types.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L130)
+[types.ts:134](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L134)
 
 ___
 
@@ -79,7 +88,7 @@ Configuration used to run command in container.
 
 #### Defined in
 
-[types.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L53)
+[types.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L57)
 
 ___
 
@@ -116,7 +125,7 @@ Result of running command in container.
 
 #### Defined in
 
-[types.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L144)
+[types.ts:148](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L148)
 
 ___
 
@@ -136,7 +145,7 @@ Standard streams connected with container.
 
 #### Defined in
 
-[types.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L109)
+[types.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L113)
 
 ___
 
@@ -164,7 +173,7 @@ ___
 
 #### Defined in
 
-[types.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L137)
+[types.ts:141](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L141)
 
 ___
 
@@ -180,6 +189,24 @@ Docker container.
 
 ___
 
+### DockerCreateNetworkConfig
+
+Ƭ **DockerCreateNetworkConfig**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `driver` | `string` |
+| `name` | `string` |
+| `options` | `Record`<`string`, `string`\> |
+
+#### Defined in
+
+[types.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L50)
+
+___
+
 ### DockerImage
 
 Ƭ **DockerImage**: `string`
@@ -189,6 +216,22 @@ Docker image.
 #### Defined in
 
 [types.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L11)
+
+___
+
+### DockerNetwork
+
+Ƭ **DockerNetwork**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `containers` | `Record`<`string`, `Object`\> |
+
+#### Defined in
+
+[types.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L48)
 
 ___
 
@@ -216,7 +259,7 @@ ___
 
 #### Defined in
 
-[types.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L126)
+[types.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L130)
 
 ___
 
@@ -232,9 +275,33 @@ ___
 
 #### Defined in
 
-[types.ts:279](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L279)
+[types.ts:291](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L291)
+
+## Variables
+
+### STH\_DOCKER\_NETWORK
+
+• `Const` **STH\_DOCKER\_NETWORK**: ``"transformhub0"``
+
+#### Defined in
+
+[docker-networking.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-networking.ts#L9)
 
 ## Functions
+
+### getHostname
+
+▸ `Const` **getHostname**(): `string`
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+[docker-networking.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-networking.ts#L7)
+
+___
 
 ### getInstanceAdapter
 
@@ -281,3 +348,37 @@ Sequence adapter.
 #### Defined in
 
 [get-sequence-adapter.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L11)
+
+___
+
+### isHostSpawnedInDockerContainer
+
+▸ `Const` **isHostSpawnedInDockerContainer**(): `Promise`<`boolean`\>
+
+#### Returns
+
+`Promise`<`boolean`\>
+
+#### Defined in
+
+[docker-networking.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-networking.ts#L5)
+
+___
+
+### setupDockerNetworking
+
+▸ **setupDockerNetworking**(`dockerHelper`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `dockerHelper` | [`IDockerHelper`](interfaces/idockerhelper.md) |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[docker-networking.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-networking.ts#L12)
