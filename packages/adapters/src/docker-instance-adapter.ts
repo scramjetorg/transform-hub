@@ -213,7 +213,7 @@ IComponent {
             ports: this.resources.ports,
             publishAllPorts: true,
             envs,
-            autoRemove: false,
+            autoRemove: true,
             maxMem: config.container.maxMem,
             networkMode: networkSetup.network
         });

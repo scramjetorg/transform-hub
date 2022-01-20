@@ -82,7 +82,7 @@ export class HostUtils {
             this.host.stdout?.on("data", (data) => {
                 const decodedData = decoder.write(data);
 
-                if (decodedData.match(/API listening on:/)) {
+                if (decodedData.match(/API on/)) {
                     resolve();
                 }
             });
