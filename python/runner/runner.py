@@ -38,6 +38,7 @@ class Runner:
         asyncio.create_task(self.connect_control_stream())
         asyncio.create_task(self.setup_heartbeat())
 
+        self.load_sequence()
         await self.run_instance(args)
 
 
@@ -115,25 +116,63 @@ class Runner:
             await asyncio.sleep(1)
 
 
-    async def run_instance(self, args):
+    def load_sequence(self):
         self.logger.debug(f"Loading sequence from {self.seq_path}...")
         spec = importlib.util.spec_from_file_location("sequence", self.seq_path)
         self.sequence = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.sequence)
+        self.logger.info(f"Sequence loaded: {self.sequence}")
         # switch to sequence dir so that relative paths will work
         os.chdir(os.path.dirname(self.seq_path))
 
+
+    async def run_instance(self, args):
         context = AppContext(self)
-        input = Stream.read_from(self.streams[CC.IN]).decode("utf-8")
+        input_stream = Stream()
+        asyncio.create_task(self.connect_input_stream(input_stream))
 
         self.logger.info("Running instance...")
-        result = self.sequence.run(context, input, *args)
+        result = self.sequence.run(context, input_stream, *args)
         if asyncio.iscoroutine(result):
             result = await result
-        output = result.map(lambda s: s.encode())
-        await output.write_to(self.streams[CC.OUT])
+        await self.forward_output_stream(result)
 
         self.logger.info('Finished.')
+
+
+    async def connect_input_stream(self, input_stream):
+        raw_headers = await self.streams[CC.IN].readuntil(b"\r\n\r\n")
+        header_list = raw_headers.decode().rstrip().split("\r\n")
+        headers = {
+            key.lower(): val for key, val in [el.split(": ") for el in header_list]
+        }
+        self.logger.info(f"Input headers: {repr(headers)}")
+
+        input = Stream.read_from(self.streams[CC.IN])
+        if headers['content-type'] == "text/plain":
+            self.logger.debug("Decoding input stream...")
+            input = input.decode("utf-8")
+
+        input.pipe(input_stream)
+        self.logger.debug("Input stream forwarded to the instance.")
+
+
+    async def forward_output_stream(self, output):
+        try:
+            output_type = self.sequence.output_type
+        except AttributeError:
+            self.logger.debug("Output type not set, using default")
+            output_type = "text/plain"
+        self.logger.info(f"Output type: {output_type}")
+
+        if output_type == "text/plain":
+            self.logger.debug("Output stream will be treated as text and encoded")
+            output = output.map(lambda s: s.encode())
+        if output_type == "application/x-ndjson":
+            self.logger.debug("Output will be converted to JSON")
+            output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
+
+        await output.write_to(self.streams[CC.OUT])
 
 
     def exit_immediately(self):
