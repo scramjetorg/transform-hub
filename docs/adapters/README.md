@@ -6,8 +6,8 @@ This module holds two types of adapters utilized by Scramjet Transform Hub: Inst
 
 The adapter provides two main exports:
 
-* [LifecycleDockerAdapterSequence](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapters/src/sequence-adapter.ts) - An adapter allowing to execution control an Instance of a Sequence.
-* [LifecycleDockerAdapterInstance](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapters/src/instance-adapter.ts) - An adapter allowing to identification and deployment of a Sequence.
+* [DockerSequenceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapters/src/docker-sequence-adapter.ts) - An adapter for preparing Sequence to be run in Docker container.
+* [DockerInstanceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapters/src/docker-instance-adapter.ts) - An adapter for running Instance by Runner executed in Docker container.
 
 ## Docs
 
