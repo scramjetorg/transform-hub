@@ -30,7 +30,7 @@ async def do_stuff(stream):
         stream.write(random.choice('🎄🎁🎀🐍🚀'))
 
 
-async def run(input):
+async def run(context, input):
     stream = Stream()
     asyncio.create_task(do_stuff(stream))
     return stream.map(lambda s: s+'\n')
