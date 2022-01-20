@@ -18,9 +18,9 @@ host.getSequence("3e989fe7-a3b7-401e-a269-2fa0a7ac70f4")
 
 See the code documentation here: [scramjetorg/transform-hub/docs/api-client/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/modules.md)
 
-## Read more
+## More reading
 
-Here you will find more information about the API Client, streams and messages.
+In the link below you will find more information about our stream protocol and API usage.
 
 See the code documentation here: [scramjetorg/transform-hub/docs/read-more/stream-and-api.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/read-more/stream-and-api.md)
 
@@ -44,7 +44,7 @@ There's no limit what you can use it for. You want a stock checker? A chat bot? 
 
 ___
 
-## Host operations
+### Host operations
 
 <details>
 <summary>
@@ -252,7 +252,7 @@ No parameters
 
 ___
 
-## Sequence operations
+### Sequence operations
 
 <details>
 <summary>
@@ -371,7 +371,7 @@ No parameters
 
 ___
 
-## Instance basic operations
+### Instance basic operations
 
 <details>
 <summary>
@@ -505,7 +505,7 @@ No parameters
 
 ___
 
-## Instance advanced operation
+### Instance advanced operation
 
 STH allows you to interact (communicate) with an instance by sending events with or without any information defined in the object​. As well as providing and receiving stream with all kinds of data files.
 
@@ -666,7 +666,7 @@ No parameters
 
 ___
 
-## Service Discovery: Topics
+### Service Discovery: Topics
 
 <details>
 <summary>
@@ -730,8 +730,8 @@ ___
 * Scramjet, the company behind [Transform Hub](https://scramjet.org)
 * The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
 * The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
-* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/release/0.12/docs/development-guide/stream-and-api.md)
-* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/main/packages/cli/README.md), but `si help` should also be quite effective.
+* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/read-more/stream-and-api.md)
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
 * Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 

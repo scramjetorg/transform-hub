@@ -567,7 +567,7 @@ This is what you should get as a result:
 
 ![hello_alice](./images/hello_alice.png)
 
-[See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
+[See more about streams and curl commands =>](docs/read-more/stream-and-api.md)
 
 ## More samples :books:
 
