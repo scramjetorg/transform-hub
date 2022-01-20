@@ -34,7 +34,7 @@ When("hub process is started with parameters {string}", function(this: CustomWor
         this.resources.hub.stdout?.on("data", (data: Buffer) => {
             const decodedData = decoder.write(data);
 
-            if (decodedData.match(/API listening on:/)) {
+            if (decodedData.match(/API on/)) {
                 this.resources.startOutput = decodedData;
                 resolve();
             }
@@ -55,7 +55,7 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
 
     assert.equal(status, 200);
 
-    const apiURL = this.resources.startOutput.match(/API listening on:\s*(.*)/)[1];
+    const apiURL = this.resources.startOutput.match(/API on\s*(.*)/)[1];
 
     // eslint-disable-next-line no-console
     console.log(`API is available on ${apiURL}`);
