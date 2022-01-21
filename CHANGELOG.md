@@ -24,6 +24,10 @@ Prominent
 - 23b6baaf - Host now communicates with Manager using a Verser module
 - 986b9793 - Improved Host logging
 - ea5211dc - Runner connects with Host via TCP
+- 51310043 - STH CLI extended with a new functionality that replaces the ID number of the last item the user interacted with "-" alias
+- 1c4ce2f2 - Reenable STH to be run inside a docker container
+- 3f0b4494 - Listen and reconnect on VerserClient error in Host to Manager connection
+- d0f7bdc4 - Python runner work in progress
 
 New features:
 
@@ -34,6 +38,8 @@ New features:
 - **Verser module** - New module for reverse server functionality
 - **Comments** - Improved code documentation
 - **TCP Runner** - Connection between Runner and Host is replaced from socket to TCP
+- **CLI extension** - Last uploaded/added sequence can now be referenced when starting etc. This will massively improve the CLI experience, as there's no longer need to parse the previous command line if we want to do quick deployment of a sequence
+- **Python runner WIP** - Running STH without docker can now spawn sequences written in python
 
 Bugfixes:
 
@@ -52,7 +58,9 @@ Bugfixes:
 - Fix for CLI when input is provided from command line
 - Fix for log duplication
 - Fix process.stdin ending
+- Fix STH to be able to run from within a docker container (bugged since 0.13 and TCP Runner)
+- STH is able to reconnect to Scramjet Cloud Platform automatically
 
-## @scramjet/transform Hub - v0.14.0
+## @scramjet/transform Hub - v0.15.0
 
 This is the last release in changelog.
