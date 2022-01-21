@@ -3,6 +3,7 @@ import sys
 import os
 import codecs
 import json
+from pyee import EventEmitter
 import importlib.util
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 from scramjet.streams import Stream
@@ -29,6 +30,7 @@ class Runner:
         self.logger = log_setup.logger
         self.stop_handler = None
         self.health_check = lambda: {'healthy': True}
+        self.emitter = EventEmitter()
 
 
     async def main(self, server_host, server_port):
@@ -129,6 +131,8 @@ class Runner:
                 self.exit_immediately()
             if code == msg_codes.STOP.value:
                 await self.handle_stop(data)
+            if code == msg_codes.EVENT.value:
+                self.emitter.emit(data['eventName'], data['message'])
 
 
     async def handle_stop(self, data):
@@ -249,12 +253,23 @@ class AppContext:
         self.config = config
         self.monitoring = runner.streams[CC.MONITORING]
         self.runner = runner
+        self.emitter = runner.emitter
 
     def set_stop_handler(self, handler):
         self.runner.stop_handler = handler
 
     def set_health_check(self, health_check):
         self.runner.health_check = health_check
+
+    def on(self, event_name, callback):
+        self.emitter.on(event_name, callback)
+
+    def emit(self, event_name, message=""):
+        send_encoded_msg(
+            self.monitoring,
+            msg_codes.EVENT,
+            {'eventName': event_name, 'message': message}
+        )
 
 
 log_setup = LoggingSetup(STARTUP_LOGFILE)

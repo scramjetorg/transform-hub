@@ -104,7 +104,6 @@ Feature: Test our shiny new Python runner
         Then "output" is "consumer got: producer got: topic test input"
         And host is still running
 
-    @ignore
     @python
     Scenario: E2E-014 TC-012 Sequence can receive and emit events
         Given host is running
