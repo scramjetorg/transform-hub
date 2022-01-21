@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/test-ava-ts-node",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "devDependencies": {
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
