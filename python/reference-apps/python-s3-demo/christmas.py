@@ -4,22 +4,22 @@ import random
 from scramjet.streams import Stream
 
 async def do_stuff(stream):
-    stream.write('\nTo jest niespodziankowe świąteczne demo. 🎄')
-    stream.write('Połącz się przez API do stdin (si inst stdin <instance id>)')
-    stream.write('i wpisz swoje imię, żeby kontynuować.')
+    stream.write('\nThis is a surprise Christmas demo. 🎄')
+    stream.write('Connect to stdin via API (si inst stdin <instance id>)')
+    stream.write('and enter your name to continue.')
     name = (await sys.stdin.read()).strip()
 
     text = [
-        (2.0,  f'\nHej {name} :)\n'),
-        (2.0, 'Ta sekwencja jest napisana w Pythonie 🐍'),
-        (1.0, 'i została uruchomiona'),
-        (0.5, 'za pomocą Pythonowego runnera! 😀'),
-        (2.0, 'Jak widać, potrafi czytać z stdin'),
-        (0.5, 'i pisać na output. 💻'),
-        (2.0, 'Na styku sekwencji i runnera'),
-        (0.5, 'jest odrobina pythonowego frameworka. 🚀'),
-        (2.0,  f'\nWesołych Świąt, {name}! 🎁\n'),
-        (3.0,  f'PS oczywiście na razie wszystko jest zrobione na taśmę klejącą 🩹 😉\n'),
+        (2.0,  f'\nHello {name} :)\n'),
+        (2.0, 'This sequence is written in python 🐍'),
+        (1.0, 'and was executed'),
+        (0.5, 'using python runner! 😀'),
+        (2.0, 'As you can see, it can read stdin'),
+        (0.5, 'and write to output. 💻'),
+        (2.0, 'At the border between runner and sequence'),
+        (0.5, "there's a little bit of python framework. 🚀"),
+        (2.0,  f'\nMerry Christmas, {name}! 🎁\n'),
+        (3.0,  f'PS everythin is done using duct tape for now, obviously 🩹 😉\n'),
     ]
     for delay, line in text:
         await asyncio.sleep(delay)
