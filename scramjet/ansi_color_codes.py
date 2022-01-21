@@ -1,0 +1,11 @@
+red="\033[31m"
+green="\033[32m"
+yellow="\033[33m"
+blue="\033[34m"
+pink="\033[35m"
+cyan="\033[36m"
+grey="\033[37m"
+
+bold="\033[1m"
+strong="\033[97;1m"
+reset="\033[0m"
