@@ -171,6 +171,7 @@ IComponent {
 
         this.logger.info("Instance preparation done.");
         this.objLogger.info("Instance preparation done");
+
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
         if (development()) {
@@ -250,6 +251,7 @@ IComponent {
 
             this.logger.debug("Container errored.", error);
             this.objLogger.debug("Container errored", error);
+
             throw error;
         }
     }
@@ -263,7 +265,7 @@ IComponent {
             this.logger.log("Volume will be removed in 1 sec");
             this.objLogger.debug("Volume will be removed in 1 sec");
 
-            await defer(6000); // one sec?
+            await defer(60000); // @TODO: one sec?
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
             this.logger.log("Volume removed");
