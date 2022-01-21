@@ -130,6 +130,8 @@ export class Host implements IComponent {
         this.objLogger.addOutput(prettyLog);
         prettyLog.pipe(process.stdout);
 
+        this.objLogger.info("Log Level", sthConfig.logLevel);
+
         const { safeOperationLimit, instanceRequirements } = this.config;
 
         this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements });
@@ -504,6 +506,7 @@ export class Host implements IComponent {
         };
     }
 
+    /*
     private attachInstanceToCommonLogsPipe(csic: CSIController) {
         const logStream = csic.getLogStream();
 
@@ -514,6 +517,7 @@ export class Host implements IComponent {
             this.objLogger.warn("Cannot add log stream to commonLogsPipe because it's undefined");
         }
     }
+    */
 
     /**
      * Creates new CSIController {@link CSIController} object and handles its events.
@@ -555,7 +559,7 @@ export class Host implements IComponent {
         this.logger.log("CSIController started:", id);
         this.objLogger.trace("CSIController started", id);
 
-        this.attachInstanceToCommonLogsPipe(csic);
+        //this.attachInstanceToCommonLogsPipe(csic);
 
         sequence.instances.add(id);
 

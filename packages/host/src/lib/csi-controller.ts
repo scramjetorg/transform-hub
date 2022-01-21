@@ -554,6 +554,7 @@ export class CSIController extends TypedEmitter<Events> {
 
             try {
                 await promiseTimeout(this.endOfSequence, stopTimeout);
+
                 this.logger.log("Terminated with kill.");
                 this.objLogger.trace("Terminated with kill.");
             } catch {

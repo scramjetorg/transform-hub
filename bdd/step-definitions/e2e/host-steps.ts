@@ -168,14 +168,14 @@ const startHost = async () => {
     if (process.env.SCRAMJET_TEST_LOG) {
         hostClient.client.addLogger({
             request(url) {
-                console.log(new Date().toISOString(), "Starting request to", url);
+                console.error(new Date().toISOString(), "Starting request to", url);
             },
             ok(result) {
                 const {
                     status, statusText, url
                 } = result;
 
-                console.log(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
+                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error) {
                 const { code, reason: result } = error;

@@ -396,7 +396,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.log(`Sequence completed. Waiting ${exitDelay}ms with exit.`);
             this.objLogger.trace(`Sequence completed. Waiting ${exitDelay}ms with exit.`);
 
-            await defer(exitDelay);
+            await defer(exitDelay); // @TODO: investigate why we need to wait
         } catch (error: any) {
             this.logger.error("Error occured during sequence execution: ", error.stack);
             this.objLogger.error("Error occured during sequence execution: ", error.stack);

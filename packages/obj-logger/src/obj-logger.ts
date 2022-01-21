@@ -47,8 +47,8 @@ export class ObjLogger implements IObjectLogger {
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
-        if (ObjLogger.levels.indexOf(level) >= ObjLogger.levels.indexOf(this.logLevel)) {
-            return;
+        if (ObjLogger.levels.indexOf(level) <= ObjLogger.levels.indexOf(this.logLevel)) {
+            //return;
         }
 
         if (typeof entry === "string") {
