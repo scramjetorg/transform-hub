@@ -20,7 +20,7 @@
     "@scramjet/sth-config": "^0.15.0",
     "@scramjet/symbols": "^0.15.0",
     "n-readlines": "^1.0.1",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.1",
     "scramjet": "^4.36.0"
   },
   "devDependencies": {
