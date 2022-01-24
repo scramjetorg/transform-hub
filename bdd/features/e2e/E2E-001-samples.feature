@@ -21,7 +21,7 @@ Feature: Sample e2e tests
         And get runner PID
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         And send kill message to instance
-        And wait for "2000" ms
+        And wait for "12000" ms
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         Then runner has ended execution
