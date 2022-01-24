@@ -5,9 +5,9 @@ import { DuplexStream } from "../lib/duplex-stream";
 import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
-import { getLogger } from "@scramjet/logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 
-const logger = getLogger("ApiServer-stream");
+const logger = new ObjLogger("ApiServer-stream");
 
 /**
  * Checks if given mime types are acceptable for given parameters.

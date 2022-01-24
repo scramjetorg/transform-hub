@@ -43,7 +43,7 @@ const exp: [
             .catch((e: any) => { console.log(e); })
             .run();
 
-        this.logger.log("Instance finished, total entries:", diffs.length);
+        this.logger.trace("Instance finished, total entries:", diffs.length);
 
         diffs.splice(0, CUTOFF);
 
@@ -57,7 +57,7 @@ const exp: [
                 }, BigInt(0)
             );
 
-        this.logger.info(diffs);
+        this.logger.info("Diffs", diffs);
 
         return JSON.stringify({
             units: "ns",

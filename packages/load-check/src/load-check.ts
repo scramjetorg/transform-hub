@@ -1,5 +1,5 @@
-import { getLogger } from "@scramjet/logger";
-import { IComponent, Logger, LoadCheckStat, LoadCheckConfig, LoadCheckContstants } from "@scramjet/types";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { IComponent, LoadCheckStat, LoadCheckConfig, LoadCheckContstants } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 
 import sysinfo from "systeminformation";
@@ -28,9 +28,9 @@ export class LoadCheck implements IComponent {
     /**
      * Logger instance.
      *
-     * @type {Logger}
+     * @type {IObjectLogger}
      */
-    logger: Logger = getLogger(this);
+    objLogger: ObjLogger = new ObjLogger(this);
 
     constructor(config: LoadCheckConfig) {
         this.config = config;
@@ -73,7 +73,7 @@ export class LoadCheck implements IComponent {
     async overloaded(): Promise<boolean> {
         const check = await this.getLoadCheck();
 
-        this.logger.log(check);
+        this.objLogger.trace("Load Check", check);
 
         const conditionsMet = {
             cpu: check.avgLoad < 100 - this.constants.MIN_INSTANCE_REQUIREMENTS.cpuLoad,
@@ -81,7 +81,7 @@ export class LoadCheck implements IComponent {
             dsk: check.fsSize[0].available > this.constants.MIN_INSTANCE_REQUIREMENTS.freeSpace
         };
 
-        this.logger.log(conditionsMet);
+        this.objLogger.trace("Contidions", conditionsMet);
 
         return !(conditionsMet.cpu && conditionsMet.mem && conditionsMet.dsk);
     }

@@ -1,4 +1,3 @@
-import { getLogger } from "@scramjet/logger";
 import { ObjLogger } from "@scramjet/obj-logger";
 import {
     ExitCode,
@@ -6,7 +5,6 @@ import {
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
     IObjectLogger,
-    Logger,
     MonitoringMessageData,
     SequenceConfig
 } from "@scramjet/types";
@@ -24,13 +22,11 @@ class ProcessInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
-    logger: Logger;
     objLogger: IObjectLogger;
 
     private runnerProcess?: ChildProcess;
 
     constructor() {
-        this.logger = getLogger(this);
         this.objLogger = new ObjLogger(this);
     }
 
@@ -53,7 +49,8 @@ IComponent {
 
     getRunnerCmd(config: SequenceConfig) {
         if (config.entrypointPath.endsWith(".py")) {
-            this.logger.log(gotPython);
+            this.objLogger.trace(gotPython);
+
             return [
                 "python3",
                 path.resolve(__dirname, "../../../python/runner/runner.py")
@@ -74,10 +71,8 @@ IComponent {
             throw new Error("Process instance adapter run with invalid runner config");
         }
 
-        this.logger.info("Instance preparation done.");
         this.objLogger.info("Instance preparation done");
 
-        this.logger.log("Starting Runner...", config.id);
         this.objLogger.trace("Starting Runner", config.id);
 
         const runnerCommand = this.getRunnerCmd(config);
@@ -86,14 +81,6 @@ IComponent {
             config.sequenceDir,
             config.entrypointPath
         );
-
-        this.logger.log("Spawning Runner process with command", runnerCommand, "and envs: ", {
-            DEVELOPMENT: process.env.DEVELOPMENT,
-            PRODUCTION: process.env.PRODUCTION,
-            SEQUENCE_PATH: sequencePath,
-            INSTANCES_SERVER_PORT: instancesServerPort,
-            INSTANCE_ID: instanceId
-        });
 
         this.objLogger.debug("Spawning Runner process with command", runnerCommand, "and envs: ", {
             DEVELOPMENT: process.env.DEVELOPMENT,
@@ -115,7 +102,6 @@ IComponent {
             }
         });
 
-        this.logger.log(`Runner process is running (${runnerProcess.pid}).`);
         this.objLogger.trace("Runner process is running", runnerProcess.pid);
 
         this.runnerProcess = runnerProcess;
@@ -124,18 +110,16 @@ IComponent {
             (res) => runnerProcess.on("exit", (code, sig) => res([code, sig]))
         );
 
-        this.logger.log("Process exited.");
         this.objLogger.trace("Runner process exited", runnerProcess.pid);
 
         if (statusCode === null) {
-            this.logger.warn(`Runner was killed by a signal ${signal}, and didn't return a status code`);
             this.objLogger.warn("Runner was killed by a signal, and didn't return a status code", signal);
+
             // Probably SIGIKLL
             return 137;
         }
 
         if (statusCode > 0) {
-            this.logger.debug("Process returned non-zero status code", statusCode);
             this.objLogger.debug("Process returned non-zero status code", statusCode);
         }
 

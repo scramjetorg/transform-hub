@@ -14,7 +14,7 @@ const exp: [ReadableApp<{ ts: bigint }, [], { x: number }>, WritableApp<{ ts: bi
 
         let x = data?.x || 0;
 
-        this.logger.log(`Testing ${timesOfExecution} samples after ${waitToStart} with abort=${abort}`);
+        this.logger.trace(`Testing ${timesOfExecution} samples after ${waitToStart} with abort=${abort}`);
 
         return DataStream.from(async function* () {
             await new Promise(res => setTimeout(res, waitToStart));

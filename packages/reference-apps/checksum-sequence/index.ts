@@ -16,6 +16,7 @@ export = async function(_stream: any) {
     const hex = crypto.createHash("md5").update(out).digest("hex");
 
     this.logger.info("Sequence Checksum hex: " + hex);
+
     return hex;
 } as TransformApp;
 

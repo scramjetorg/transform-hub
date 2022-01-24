@@ -47,7 +47,7 @@ export = async function(_stream: any, allocMemSize: string, files: string[] = [
     this.on("check", async (asked) => {
         const uptime = (Date.now() - startDate) / 1000;
 
-        this.logger.log(`Check received: ${JSON.stringify(asked)}`);
+        this.logger.trace(`Check received: ${JSON.stringify(asked)}`);
         this.emit("ok", { uptime, asked });
     });
 

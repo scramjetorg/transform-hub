@@ -1,9 +1,9 @@
+import { ObjLogger } from "@scramjet/obj-logger";
 import { BufferStream, DataStream, StringStream } from "scramjet";
 
 import { Readable } from "stream";
-import { getLogger } from "@scramjet/logger";
 
-const logger = getLogger("@sth/runner/inputStram");
+const objLogger = new ObjLogger("@sth/runner/inputStram");
 
 function loopStream<T extends unknown>(
     stream: Readable,
@@ -67,13 +67,13 @@ export function readInputStreamHeaders(stream: Readable): Promise<Record<string,
             .map(headerStr => headerStr.split(": "))
             .reduce((obj, [key, val]) => ({ ...obj, [key.toLowerCase()]: val }), {});
 
-        logger.debug("Headers:", { action: "end", data: headersMap });
+        objLogger.debug("Headers", { action: "end", data: headersMap });
         return { action: "end", data: headersMap, unconsumedData: Buffer.from(bodyBeginning, "utf8") };
     });
 }
 
 export function mapToInputDataStream(stream: Readable, contentType: string): DataStream {
-    logger.debug("Content-Type:", contentType);
+    objLogger.debug("Content-Type", contentType);
 
     if (contentType === undefined) {
         throw new Error("Content-Type is undefined");

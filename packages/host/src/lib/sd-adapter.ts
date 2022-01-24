@@ -1,8 +1,7 @@
-import { Logger, ReadableStream, WritableStream } from "@scramjet/types";
+import { ReadableStream, WritableStream } from "@scramjet/types";
 import { PassThrough, Stream } from "stream";
 
 import { CPMConnector } from "./cpm-connector";
-import { getLogger } from "@scramjet/logger";
 import { ObjLogger } from "@scramjet/obj-logger";
 
 /**
@@ -41,7 +40,6 @@ export class ServiceDiscovery {
         string,
         topicDataType
     >();
-    logger: Logger = getLogger(this);
     objLogger = new ObjLogger(this);
     cpmConnector?: CPMConnector;
 
@@ -63,7 +61,6 @@ export class ServiceDiscovery {
      */
     addData(config: dataType, localProvider?: string) {
         if (!this.dataMap.has(config.topic)) {
-            this.logger.log("Adding data:", config, localProvider);
             this.objLogger.trace("Adding data:", config, localProvider);
 
             const topicStream = new PassThrough();
@@ -74,19 +71,16 @@ export class ServiceDiscovery {
                 localProvider
             });
         } else {
-            this.logger.log("Routing data:", config);
             this.objLogger.trace("Routing data:", config);
         }
 
         if (localProvider) {
-            this.logger.log(`Local provider added topic:${config.topic}, provider:${localProvider}`);
-            this.logger.trace("Local provider added topic, provider", config.topic, localProvider);
+            this.objLogger.trace("Local provider added topic, provider", config.topic, localProvider);
 
             if (this.cpmConnector) {
                 this.cpmConnector
                     .sendTopic(config.topic, this.dataMap.get(config.topic)!);
 
-                this.logger.log("Sending data to cpm");
                 this.objLogger.trace("Sending data to cpm");
             }
         }
@@ -142,27 +136,24 @@ export class ServiceDiscovery {
      */
     getData(dataType: dataType):
         ReadableStream<any> | WritableStream<any> | undefined {
-        this.logger.log("Get data:", dataType);
         this.objLogger.debug("Get data:", dataType);
 
         if (this.dataMap.has(dataType.topic)) {
             const topicData = this.dataMap.get(dataType.topic)!;
 
-            this.logger.log("Topic exists");
-            this.logger.debug("Topic exists", dataType.topic);
+            this.objLogger.debug("Topic exists", dataType.topic);
 
             if (topicData?.localProvider) {
-                this.logger.log(`LocalProvider found topic:${dataType.topic}, provider:${topicData.localProvider}`);
-                this.logger.trace("LocalProvider found topic, provider", dataType.topic, topicData.localProvider);
+                this.objLogger.trace("LocalProvider found topic, provider", dataType.topic, topicData.localProvider);
             } else {
-                this.logger.log("Local topic provider not found for:", dataType.topic);
+                this.objLogger.trace("Local topic provider not found for:", dataType.topic);
 
                 if (this.cpmConnector) {
-                    this.logger.log("Requesting CPM for:", dataType);
+                    this.objLogger.trace("Requesting CPM for topic", dataType);
 
                     this.cpmConnector?.getTopic(dataType.topic)
                         .then(stream => {
-                            this.logger.log("CPM connected for:", dataType);
+                            this.objLogger.trace("CPM connected for topic", dataType);
 
                             stream.pipe(topicData?.stream as WritableStream<any>);
                         });
@@ -171,7 +162,7 @@ export class ServiceDiscovery {
                 }
             }
 
-            return topicData?.stream.on("end", () => this.logger.debug("Topic ended:", dataType));
+            return topicData?.stream.on("end", () => this.objLogger.debug("Topic ended", dataType));
         }
 
         this.addData(dataType);

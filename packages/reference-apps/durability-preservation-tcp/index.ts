@@ -1,7 +1,7 @@
 import https from "https";
 import { IncomingMessage } from "http";
 import { PassThrough } from "stream";
-import { Logger, ReadableApp } from "@scramjet/types";
+import { IObjectLogger, ReadableApp } from "@scramjet/types";
 import { StringStream } from "scramjet";
 import net from "net";
 
@@ -29,7 +29,7 @@ const downloadFile = (url: string): Promise<IncomingMessage | PassThrough> => {
 let server: net.Server;
 let lastItem = "";
 
-const startServer = (logger: Logger) => {
+const startServer = (logger: IObjectLogger) => {
     const port = 20000;
 
     server = net.createServer();
@@ -68,12 +68,12 @@ export = async function(_stream: any, ...args: any) {
     const stream = new StringStream();
     const files = args[1];
 
-    this.logger.log(`Args: MemAlloc: ${allocMemSize}, Files: ${files}]`);
+    this.logger.trace(`Args: MemAlloc: ${allocMemSize}, Files: ${files}]`);
 
     startServer(this.logger);
 
     this.on("check", async (data) => {
-        this.logger.log(`Check received: ${JSON.stringify(data)}`);
+        this.logger.trace(`Check received: ${JSON.stringify(data)}`);
         lastItem = data;
     });
 
@@ -88,7 +88,7 @@ export = async function(_stream: any, ...args: any) {
                 });
             });
         } catch (err: any) {
-            this.logger.log(err);
+            this.logger.trace(err);
         }
     }, 1000);
 

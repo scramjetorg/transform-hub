@@ -1,8 +1,8 @@
-import { getLogger } from "@scramjet/logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 import {
     EventMessageData, KeepAliveMessageData, MonitoringMessageFromRunnerData,
     AppConfig, AppError, AppErrorConstructor, AppContext, WritableStream,
-    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, Logger
+    FunctionDefinition, KillHandler, StopHandler, MonitoringHandler, IObjectLogger
 } from "@scramjet/types";
 import { EventEmitter } from "events";
 
@@ -23,13 +23,13 @@ export interface RunnerProxy {
 
 export class RunnerAppContext<AppConfigType extends AppConfig, State extends any>
 implements AppContext<AppConfigType, State> {
+    private runner;
     config: AppConfigType;
     AppError!: AppErrorConstructor;
     monitorStream: WritableStream<any>;
     emitter: EventEmitter;
-    private runner;
-    logger: Logger;
-    initialState?: State | undefined;
+    objLogger: ObjLogger;
+    initialState?: State;
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
         emitter: EventEmitter, runner: RunnerProxy) {
@@ -37,8 +37,11 @@ implements AppContext<AppConfigType, State> {
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
-        this.logger = getLogger("Sequence");
+
+        this.objLogger = new ObjLogger("Sequence");
     }
+
+    logger: IObjectLogger = new ObjLogger("Sequence");
 
     private handleSave(_state: any): void {
         throw new Error("Method not implemented.");
@@ -55,6 +58,7 @@ implements AppContext<AppConfigType, State> {
 
         // TODO: should this handler be executed more than once if passed more than once?
         this._killHandlers.push(handler);
+
         return this;
     }
 

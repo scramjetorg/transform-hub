@@ -32,7 +32,7 @@ export = async function(this: AppContext<any, any>, _inputStream: any, file: str
             };
 
             this.emit("status", status);
-            this.logger.log(status);
+            this.logger.trace("Status", status);
         }, interval * 1000);
     });
 }

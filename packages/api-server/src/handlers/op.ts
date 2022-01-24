@@ -5,9 +5,9 @@ import { IncomingMessage } from "http";
 import { mimeAccepts } from "../lib/mime";
 import { StringDecoder } from "string_decoder";
 import { getStatusCode, ReasonPhrases, StatusCodes } from "http-status-codes";
-import { getLogger } from "@scramjet/logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 
-const logger = getLogger("API");
+const logger = new ObjLogger("API");
 
 /**
  * Creates and returns a method to set up a POST/DELETE handlers for the given path.
@@ -79,7 +79,8 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
         method: string = "post",
         path: string|RegExp, message: T | OpResolver, conn: ICommunicationHandler): void => {
         const handler: Middleware = async (req, res, next) => {
-            logger.log(req.method, req.url);
+            logger.trace("Request", req.method, req.url);
+
             try {
                 if (typeof message === "function") {
                     req.body = await getData(req);

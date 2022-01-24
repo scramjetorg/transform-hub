@@ -8,7 +8,7 @@ const mod: (TransformApp | { requires: string, contentType: string})[] = [
     function(input: Streamable<any>) {
         const out = new PassThrough({ objectMode: true });
 
-        this.logger.log("Instance started");
+        this.logger.trace("Instance started");
 
         (input as StringStream)
             .map((data: any) => "Name is: " + data.name + "\n")

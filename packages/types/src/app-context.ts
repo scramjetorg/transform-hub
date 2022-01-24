@@ -3,7 +3,7 @@ import { MonitoringMessageFromRunnerData } from "./messages";
 import { MaybePromise } from "./utils";
 import { AppError, AppErrorConstructor } from "./error-codes/app-error";
 import { AppConfig } from "./app-config";
-import { Logger } from "./logger";
+import { IObjectLogger } from "./object-logger";
 import { FunctionDefinition } from "./messages/describe-sequence";
 
 /**
@@ -34,8 +34,8 @@ export type MonitoringHandler =
  * interruption.
  */
 export interface AppContext<AppConfigType extends AppConfig, State extends any> {
+    logger: IObjectLogger;
 
-    logger: Logger;
     /**
      * This method should be overridden by the Sequence if auto detection of the Sequence
      * state is not precise enough.
