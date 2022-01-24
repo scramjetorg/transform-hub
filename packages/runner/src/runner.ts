@@ -14,7 +14,8 @@ import {
     StopSequenceMessageData,
     Streamable,
     SynchronousStreamable,
-    HasTopicInformation
+    HasTopicInformation,
+    IObjectLogger
 } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { RunnerError } from "@scramjet/model";
@@ -72,7 +73,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     handshakeResolver?: { res: Function, rej: Function };
 
     logger: Logger;
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     private inputDataStream: DataStream
     private outputDataStream: DataStream

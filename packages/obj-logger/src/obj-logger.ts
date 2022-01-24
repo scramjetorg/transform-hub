@@ -1,14 +1,13 @@
-/* eslint-disable no-console */
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Writable } from "stream";
 import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
 import { getName } from "./utils/get-name";
 
 export class ObjLogger implements IObjectLogger {
-    outLogStream = new PassThrough({ objectMode: true });
     inLogStream = new PassThrough({ objectMode: true });
     inStringStream = new PassThrough({ objectMode: false });
 
+    outLogStream = new PassThrough({ objectMode: true });
     output = new DataStream({ objectMode: true });
 
     name: string;
@@ -47,8 +46,8 @@ export class ObjLogger implements IObjectLogger {
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
-        if (ObjLogger.levels.indexOf(level) <= ObjLogger.levels.indexOf(this.logLevel)) {
-            //return;
+        if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
+            return;
         }
 
         if (typeof entry === "string") {

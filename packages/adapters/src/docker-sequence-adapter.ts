@@ -6,6 +6,7 @@ import {
     SequenceConfig,
     STHConfiguration,
     DockerSequenceConfig,
+    IObjectLogger,
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -27,7 +28,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     /**
      * Instance of class providing logging utilities.
      */
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     constructor(private config: STHConfiguration) {
         this.dockerHelper = new DockerodeDockerHelper();

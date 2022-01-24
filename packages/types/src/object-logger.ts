@@ -1,4 +1,5 @@
-import { Writable } from "stream";
+import { DataStream } from "scramjet";
+import { PassThrough, Writable } from "stream";
 import { DeepPartial } from "./utils";
 
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
@@ -17,6 +18,11 @@ export type LogEntry = DeepPartial<{
 }>
 
 export interface IObjectLogger {
+    inLogStream: PassThrough;
+    inStringStream: PassThrough;
+    outLogStream: PassThrough;
+    output: DataStream;
+
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
     debug(entry: LogEntry | string, ...optionalParams: any[]): void;
     error(entry: LogEntry | string, ...optionalParams: any[]): void;
@@ -24,5 +30,5 @@ export interface IObjectLogger {
     info(entry: LogEntry | string, ...optionalParams: any[]): void;
     trace(entry: LogEntry | string, ...optionalParams: any[]): void;
     warn(entry: LogEntry | string, ...optionalParams: any[]): void;
-    pipe(target: Writable | IObjectLogger): void;
+    pipe(target: Writable | IObjectLogger, options?: { stringified?: boolean }): void;
 }
