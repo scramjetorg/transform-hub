@@ -1,4 +1,4 @@
-import { IComponent, Logger, DownstreamStreamsConfig } from "@scramjet/types";
+import { IComponent, Logger, DownstreamStreamsConfig, IObjectLogger } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import net from "net";
 import { isDefined, TypedEmitter } from "@scramjet/utility";
@@ -23,7 +23,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
     // TODO: probably to change to net server, to verify
     server?: net.Server;
     logger: Logger;
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     private runnerConnectionsInProgress = new Map<string, RunnerConnectionsInProgress>()
 

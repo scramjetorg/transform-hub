@@ -15,7 +15,8 @@ import {
     WritableStream,
     InstanceConifg,
     ILifeCycleAdapterRun,
-    MessageDataType
+    MessageDataType,
+    IObjectLogger
 } from "@scramjet/types";
 import {
     AppError,
@@ -80,9 +81,9 @@ export class CSIController extends TypedEmitter<Events> {
     /**
      * Logger.
      *
-     * @type {ObjLogger}
+     * @type {IObjectLogger}
      */
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     private _instanceAdapter?: ILifeCycleAdapterRun;
 

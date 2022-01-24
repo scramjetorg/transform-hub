@@ -1,5 +1,5 @@
 /* eslint-disable dot-notation */
-import { IHostClient, UpstreamStreamsConfig, } from "@scramjet/types";
+import { IHostClient, IObjectLogger, UpstreamStreamsConfig, } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
 import net from "net";
@@ -16,7 +16,8 @@ class HostClient implements IHostClient {
     private _streams?: UpstreamStreamsConfig;
 
     logger: Console;
-    objLogger: ObjLogger;
+
+    objLogger: IObjectLogger;
 
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
         this.logger = getLogger(this);

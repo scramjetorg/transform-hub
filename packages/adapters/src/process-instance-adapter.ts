@@ -5,6 +5,7 @@ import {
     IComponent,
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
+    IObjectLogger,
     Logger,
     MonitoringMessageData,
     SequenceConfig
@@ -24,7 +25,7 @@ ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
     logger: Logger;
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     private runnerProcess?: ChildProcess;
 

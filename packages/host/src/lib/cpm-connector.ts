@@ -13,7 +13,8 @@ import {
     NetworkInfo,
     ReadableStream,
     STHIDMessageData,
-    WritableStream
+    WritableStream,
+    IObjectLogger
 } from "@scramjet/types";
 import { MessageUtilities } from "@scramjet/model";
 import { StringStream } from "scramjet";
@@ -114,9 +115,9 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Logger.
      *
-     * @type {ObjLogger}
+     * @type {IObjectLogger}
      */
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     /**
      * Custom id indicator.
