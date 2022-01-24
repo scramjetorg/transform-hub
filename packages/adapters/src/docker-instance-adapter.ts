@@ -8,6 +8,7 @@ import {
     IComponent,
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
+    IObjectLogger,
     Logger,
     MonitoringMessageData,
     SequenceConfig,
@@ -32,7 +33,7 @@ IComponent {
     private resources: DockerAdapterResources = {};
 
     logger: Logger;
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();

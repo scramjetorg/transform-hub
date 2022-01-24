@@ -3,6 +3,9 @@ import { DeepPartial } from "./utils";
 
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
 
+/**
+ * Single log entry.
+ */
 export type LogEntry = DeepPartial<{
     id: string;
     msg: string;
@@ -15,8 +18,11 @@ export type LogEntry = DeepPartial<{
 
 export interface IObjectLogger {
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
-    trace(entry: LogEntry | string, ...optionalParams: any[]): void;
     debug(entry: LogEntry | string, ...optionalParams: any[]): void;
-    info(entry: LogEntry | string): void
+    error(entry: LogEntry | string, ...optionalParams: any[]): void;
+    fatal(entry: LogEntry | string, ...optionalParams: any[]): void;
+    info(entry: LogEntry | string, ...optionalParams: any[]): void;
+    trace(entry: LogEntry | string, ...optionalParams: any[]): void;
+    warn(entry: LogEntry | string, ...optionalParams: any[]): void;
     pipe(target: Writable | IObjectLogger): void;
 }
