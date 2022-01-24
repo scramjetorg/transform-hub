@@ -98,6 +98,10 @@ export class ObjLogger implements IObjectLogger {
         this.write("DEBUG", entry, ...optionalParams);
     }
 
+    fatal(entry: LogEntry | string, ...optionalParams: any[]) {
+        this.write("FATAL", entry, ...optionalParams);
+    }
+
     warn(entry: LogEntry | string, ...optionalParams: any[]) {
         this.write("WARN", entry, ...optionalParams);
     }
@@ -106,10 +110,12 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
     }
 
-    pipe(target: Writable | this, options: { stringified?: boolean } = {}): Writable {
+    pipe(target: Writable | IObjectLogger, options: { stringified?: boolean } = {}): Writable {
         if (target instanceof ObjLogger) {
             target = target.inLogStream;
         }
+
+        target = target as Writable;
 
         if (options.stringified || !target.writableObjectMode) {
             return this.output.JSONStringify().pipe(target);
