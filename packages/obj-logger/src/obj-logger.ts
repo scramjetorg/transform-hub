@@ -18,7 +18,7 @@ export class ObjLogger implements IObjectLogger {
 
     static levels: LogLevel[] = ["FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"];
 
-    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "ERROR") {
+    constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "TRACE") {
         this.name = getName(reference);
 
         this.baseLog = baseLog;
@@ -111,6 +111,8 @@ export class ObjLogger implements IObjectLogger {
 
     pipe(target: Writable | IObjectLogger, options: { stringified?: boolean } = {}): Writable {
         if (target instanceof ObjLogger) {
+            this.logLevel = target.logLevel;
+
             target = target.inLogStream;
         }
 

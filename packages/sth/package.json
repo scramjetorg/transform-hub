@@ -23,7 +23,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/host": "^0.15.0",
-    "@scramjet/logger": "^0.15.0",
+    "@scramjet/obj-logger": "^0.15.0",
     "@scramjet/sth-config": "^0.15.0",
     "commander": "^8.1.0"
   },

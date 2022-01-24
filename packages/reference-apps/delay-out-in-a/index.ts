@@ -13,7 +13,7 @@ export default [
      * @returns {DataStream} data output stream
     */
     function(this: AppContext<AppConfig, any>, _stream: any, timesOfExecution = 12000, waitToStart = 20000) {
-        this.logger.log(`Testing ${timesOfExecution} samples after ${waitToStart} ms`);
+        this.logger.trace(`Testing ${timesOfExecution} samples after ${waitToStart} ms`);
 
         return Object.assign(
             DataStream.from(
@@ -34,7 +34,7 @@ export default [
                 .map(
                     () => rht.stringified() + "\n"
                 )
-                .on("error", (e) => { this.logger.log("ERR", e.message); }),
+                .on("error", (e) => { this.logger.error("ERR", e.message); }),
             { topic: "delay-test", contentType: "application/x-ndjson" }
         );
     }

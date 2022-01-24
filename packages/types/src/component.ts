@@ -1,3 +1,5 @@
+import { IObjectLogger } from "./object-logger";
+
 export interface IComponent {
-    logger: Console;
+    objLogger: IObjectLogger;
 }

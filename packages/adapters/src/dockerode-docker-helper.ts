@@ -1,7 +1,5 @@
 import Dockerode from "dockerode";
 import { PassThrough } from "stream";
-import { getLogger } from "@scramjet/logger";
-import { Logger } from "@scramjet/types";
 
 import {
     DockerAdapterRunConfig,
@@ -44,7 +42,7 @@ type DockerodeVolumeMountConfig = {
  */
 export class DockerodeDockerHelper implements IDockerHelper {
     public dockerode: Dockerode = new Dockerode();
-    logger: Logger = getLogger(this);
+
     objLogger = new ObjLogger(this);
 
     /**
@@ -175,7 +173,6 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     async pullImage(name: string, fetchOnlyIfNotExists = true) {
         if (fetchOnlyIfNotExists) {
-            this.logger.log("Checking image", name);
             this.objLogger.trace("Checking image", name);
 
             if (this.pulledImages[name]) return this.pulledImages[name];
@@ -187,7 +184,6 @@ export class DockerodeDockerHelper implements IDockerHelper {
         }
 
         this.pulledImages[name] = (async () => {
-            this.logger.log("Start pulling image", name);
             this.objLogger.trace("Start pulling image", name);
 
             const pullStream = await this.dockerode.pull(name);
@@ -195,7 +191,6 @@ export class DockerodeDockerHelper implements IDockerHelper {
             // Wait for pull to finish
             await new Promise(res => this.dockerode.modem.followProgress(pullStream, res));
 
-            this.logger.log("Pulling image", name, "done.");
             this.objLogger.trace("Image pulled");
         })();
 

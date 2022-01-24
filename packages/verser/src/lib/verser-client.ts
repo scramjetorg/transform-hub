@@ -3,9 +3,8 @@ import { merge, TypedEmitter } from "@scramjet/utility";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
 import { Duplex } from "stream";
 import { Socket } from "net";
-import { getLogger } from "@scramjet/logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
-import { Logger } from "@scramjet/types";
 import { URL } from "url";
 
 const BPMux = require("bpmux").BPMux;
@@ -49,12 +48,13 @@ export class VerserClient extends TypedEmitter<Events> {
     /**
      * Logger instance.
      *
-     * @type {Logger}
+     * @type {IObjectLogger}
      */
-    public logger: Logger = getLogger(this);
+    public objLogger = new ObjLogger(this);
 
     constructor(opts: VerserClientOptions = defaultVerserClientOptions) {
         super();
+
         this.opts = opts;
         this.agent = new Agent({ keepAlive: true });
     }
@@ -79,13 +79,14 @@ export class VerserClient extends TypedEmitter<Events> {
             });
 
             connectRequest.on("error", (err) => {
-                this.logger.log("Connect error", err);
+                this.objLogger.error("Connect error", err);
                 reject(err);
             });
 
             connectRequest.on("connect", (_req, socket) => {
                 this.socket = socket;
                 this.mux();
+
                 resolve({ req: _req, socket });
             });
 

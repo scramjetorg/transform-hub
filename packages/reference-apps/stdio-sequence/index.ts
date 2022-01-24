@@ -8,7 +8,7 @@ import { InertApp } from "@scramjet/types";
  * @param {Readable} _stream - dummy input stream
  */
 module.exports = async function(_stream: any) {
-    this.logger.log(0);
+    this.logger.trace("Start");
 
     return StringStream
         .from(process.stdin)
@@ -29,7 +29,7 @@ module.exports = async function(_stream: any) {
         )
         .run()
         .then(() => {
-            this.logger.log("Almost done");
+            this.logger.trace("Almost done");
             return new Promise(res => setTimeout(res, 100));
         });
 } as InertApp;

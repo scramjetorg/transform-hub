@@ -1,7 +1,6 @@
-import { getLogger } from "@scramjet/logger";
-
 import { Duplex, Writable } from "stream";
 import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -11,7 +10,7 @@ const BPMux = require("bpmux").BPMux;
  * Provides methods for handling connection to Verser server and streams in connection socket.
  */
 export class VerserConnection {
-    private logger = getLogger("VerserConnection");
+    private objLogger = new ObjLogger(this)
 
     private request: IncomingMessage;
     private bpmux: any;
@@ -27,7 +26,7 @@ export class VerserConnection {
         this._socket = socket;
 
         this.request.on("error", (error: Error) => {
-            this.logger.error("Request error:", error);
+            this.objLogger.error("Request error:", error);
             // TODO: handle error.
         });
     }
@@ -80,13 +79,13 @@ export class VerserConnection {
 
         channel
             .on("error", (error: Error) => {
-                this.logger.error("Channel error, id:", error.message);
+                this.objLogger.error("Channel error, id:", error.message);
             })
             .on("end", () => {
-                this.logger.log("Request ended.", req.method, req.url);
+                this.objLogger.trace("Request ended.", req.method, req.url);
             });
 
-        this.logger.debug("Forwarding request", req.method, req.url);
+        this.objLogger.debug("Forwarding request", req.method, req.url);
 
         channel.write(
             `${req.method} ${req.url} HTTP/1.1\r\n` +
@@ -111,6 +110,7 @@ export class VerserConnection {
         // If transfer encoding is not chunked simply pipe the request.
         if (req.headers["transfer-encoding"] !== "chunked") {
             req.pipe(channel);
+
             return;
         }
 
@@ -128,7 +128,7 @@ export class VerserConnection {
 
             await whenWrote("0\r\n\r\n", "utf-8", channel);
         } catch (err) {
-            this.logger.error("Error while forwarding request ", err);
+            this.objLogger.error("Error while forwarding request", err);
         }
     }
 
@@ -145,7 +145,7 @@ export class VerserConnection {
 
     reconnect() {
         this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
-            this.logger.error(error.message);
+            this.objLogger.error(error.message);
             // TODO: Error handling?
         });
     }
@@ -156,11 +156,11 @@ export class VerserConnection {
      * @returns Promise resolving when connection is ended.
      */
     async close() {
-        this.logger.log("Closing VerserConnection...");
+        this.objLogger.trace("Closing VerserConnection");
 
         return new Promise<void>(res => {
             this.socket.end(() => {
-                this.logger.log("VerserConnection closed.");
+                this.objLogger.trace("VerserConnection closed");
                 res();
             });
         });

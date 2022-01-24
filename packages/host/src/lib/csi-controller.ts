@@ -7,7 +7,6 @@ import {
     ExitCode,
     HandshakeAcknowledgeMessage,
     ICommunicationHandler,
-    Logger,
     ParsedMessage,
     PassThroughStreamsConfig,
     ReadableStream,
@@ -33,7 +32,6 @@ import { development } from "@scramjet/sth-config";
 import { DataStream } from "scramjet";
 import { EventEmitter } from "events";
 import { ServerResponse } from "http";
-import { getLogger } from "@scramjet/logger";
 import { getRouter } from "@scramjet/api-server";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
@@ -53,8 +51,6 @@ type Events = {
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
-
-    logger: Logger;
 
     private keepAliveRequested?: boolean;
     config: CSIConfig;
@@ -132,7 +128,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.appConfig = appConfig;
         this.config = csiConfig;
         this.sequenceArgs = sequenceArgs;
-        this.logger = getLogger(this);
+
         this.communicationHandler = communicationHandler;
 
         this.startPromise = new Promise((res, rej) => {
@@ -140,6 +136,8 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         this.objLogger = new ObjLogger(this, { id: this.id });
+
+        this.objLogger.debug("Constructor executed");
         this.info.created = new Date();
     }
 
@@ -157,7 +155,6 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async main() {
-        this.logger.log("Instance started.");
         this.objLogger.trace("Instance started");
 
         let code = 0;
@@ -165,11 +162,9 @@ export class CSIController extends TypedEmitter<Events> {
         try {
             code = await this.instanceStopped();
 
-            this.logger.log("Instance stopped.");
             this.objLogger.trace("Instance stopped.");
         } catch (e: any) {
             code = e;
-            this.logger.error("Instance caused error, code:", e);
             this.objLogger.error("Instance caused error, code:", e);
         }
 
@@ -188,18 +183,15 @@ export class CSIController extends TypedEmitter<Events> {
             try {
                 await this.instanceAdapter.init();
 
-                this.logger.log("Streams hooked and routed.");
                 this.objLogger.trace("Streams hooked and routed");
 
                 this.endOfSequence = this.instanceAdapter.run(instanceConfig, this.config.instancesServerPort, this.id);
 
-                this.logger.info("Sequence initialized.");
                 this.objLogger.trace("Sequence initialized");
 
                 const exitcode = await this.endOfSequence;
 
                 // TODO: if we have a non-zero exit code is this expected?
-                this.logger.log(`Sequence finished with status: ${exitcode}`);
                 this.objLogger.trace("Sequence finished with status", exitcode);
 
                 if (exitcode === 0) {
@@ -210,12 +202,10 @@ export class CSIController extends TypedEmitter<Events> {
 
                 return exitcode;
             } catch (error: any) {
-                this.logger.error("Error caught", error.stack);
                 this.objLogger.error("Error caught", error.stack);
 
                 await this.instanceAdapter.cleanup();
 
-                this.logger.error("Cleanup done (post error).");
                 this.objLogger.error("Cleanup done (post error)");
 
                 return 213;
@@ -234,7 +224,6 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     hookupStreams(streams: DownstreamStreamsConfig) {
-        this.logger.log("Hookup streams.");
         this.objLogger.trace("Hookup streams");
 
         this.downStreams = streams;
@@ -255,7 +244,6 @@ export class CSIController extends TypedEmitter<Events> {
         ];
 
         this.upStreams.forEach((stream, i) => stream?.on("error", (err) => {
-            this.logger.error(`Downstream error on channel ${i}`, err);
             this.objLogger.error("Downstream error on channel", i, err);
         }));
 
@@ -325,11 +313,9 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async handleHandshake(message: EncodedMessage<RunnerMessageCode.PING>) {
-        this.logger.log("PING RECEIVED", message);
         this.objLogger.debug("PING received", message);
 
         if (!message[1].ports) {
-            this.logger.warn("Received a PING message but didn't receive ports config");
             this.objLogger.trace("Received a PING message but didn't receive ports config");
         }
 
@@ -441,13 +427,11 @@ export class CSIController extends TypedEmitter<Events> {
             const out = new DataStream();
             const handler = (data: any) => out.write(data);
             const clean = () => {
-                this.logger.debug(`Event stream "${name}" disconnected`);
                 this.objLogger.debug(`Event stream "${name}" disconnected`);
 
                 localEmitter.off(name, handler);
             };
 
-            this.logger.debug(`Event stream "${name}" connected.`);
             this.objLogger.debug("Event stream connected", name);
 
             localEmitter.on(name, handler);
@@ -515,7 +499,6 @@ export class CSIController extends TypedEmitter<Events> {
 
     // @TODO discuss this
     async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
-        this.logger.log("Got message: SEQUENCE_COMPLETED.");
         this.objLogger.trace("Got message: SEQUENCE_COMPLETED.");
 
         // TODO: we are ready to ask Runner to exit.
@@ -525,11 +508,11 @@ export class CSIController extends TypedEmitter<Events> {
 
         try {
             await promiseTimeout(this.endOfSequence, stopTimeout);
-            this.logger.log("Sequence terminated itself.");
+
             this.objLogger.trace("Sequence terminated itself");
         } catch {
             await this.instanceAdapter.remove();
-            this.logger.log("Sequence doesn't terminated itself in expected time (%s).", stopTimeout);
+
             this.objLogger.trace("Sequence doesn't terminated itself in expected time", stopTimeout);
 
             process.exitCode = 252;
@@ -540,15 +523,13 @@ export class CSIController extends TypedEmitter<Events> {
 
     // TODO: move this to Host like handleSequenceCompleted.
     async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {
-        this.logger.log("Got sequence end message, sending kill");
         this.objLogger.trace("Sequence ended, sending kill");
 
         try {
             await promiseTimeout(this.endOfSequence, stopTimeout);
-            this.logger.log("Sequence terminated itself.");
+
             this.objLogger.trace("Instance terminated itself");
         } catch {
-            this.logger.warn("Sequence failed to terminate within timeout, sending kill...");
             this.objLogger.warn("Instance failed to terminate within timeout, sending kill");
 
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
@@ -556,10 +537,8 @@ export class CSIController extends TypedEmitter<Events> {
             try {
                 await promiseTimeout(this.endOfSequence, stopTimeout);
 
-                this.logger.log("Terminated with kill.");
-                this.objLogger.trace("Terminated with kill.");
+                this.objLogger.trace("Terminated with kill");
             } catch {
-                this.logger.error("Sequence unresponsive, killing container...");
                 this.objLogger.error("Sequence unresponsive, killing");
 
                 await this.instanceAdapter.remove();
@@ -572,7 +551,6 @@ export class CSIController extends TypedEmitter<Events> {
 
     // TODO: move this to host (it's needed for both Stop and Complete signals)
     handleKeepAliveCommand(message: EncodedMessage<RunnerMessageCode.ALIVE>) {
-        this.logger.log("Got keep-alive message from sequence");
         this.objLogger.trace("Got keep-alive message from sequence");
 
         this.keepAliveRequested = true;

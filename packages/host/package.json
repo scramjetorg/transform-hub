@@ -20,7 +20,6 @@
     "@scramjet/adapters": "^0.15.0",
     "@scramjet/api-server": "^0.15.0",
     "@scramjet/load-check": "^0.15.0",
-    "@scramjet/logger": "^0.15.0",
     "@scramjet/model": "^0.15.0",
     "@scramjet/obj-logger": "^0.15.0",
     "@scramjet/sth-config": "^0.15.0",

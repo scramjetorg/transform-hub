@@ -1,4 +1,4 @@
-import { getLogger } from "@scramjet/logger";
+import { ObjLogger } from "@scramjet/obj-logger";
 import { APIExpose, APIRoute, MaybePromise, NextCallback } from "@scramjet/types";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { DataStream } from "scramjet";
@@ -16,14 +16,14 @@ export type ServerConfig = {
 
 export { cero, sequentialRouter };
 
-const logger = getLogger("ApiServer");
+const objLogger = new ObjLogger("ApiServer");
 
 function safeHandler<T extends unknown[]>(cb: (...args: T) => MaybePromise<void>) {
     return async (...args: T) => {
         try {
             await cb(...args);
         } catch (err) {
-            logger.error("Uncaught error in handler", err);
+            objLogger.error("Uncaught error in handler", err);
         }
     };
 }
@@ -38,7 +38,7 @@ function safeDecorator(cb: (req: IncomingMessage) => MaybePromise<void>) {
         try {
             await cb(req);
         } catch (err) {
-            logger.error("Uncaught error in handler", err);
+            objLogger.error("Uncaught error in handler", err);
         } finally {
             next();
         }

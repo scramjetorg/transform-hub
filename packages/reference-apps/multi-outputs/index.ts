@@ -18,7 +18,7 @@ export = async function(_stream) {
         console.log(cnt);
 
         // log
-        this.logger.log(cnt);
+        this.logger.trace("Count", cnt);
 
         if (cnt === 0) {
             cnt = 60;
