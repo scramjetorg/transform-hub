@@ -1,4 +1,4 @@
-[@scramjet/adapters](../README.md) / DockerodeDockerHelper
+[@scramjet/adapters](../README.md) / [Exports](../modules.md) / DockerodeDockerHelper
 
 # Class: DockerodeDockerHelper
 
@@ -10,22 +10,16 @@ Communicates with Docker using Dockerode library.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](dockerodedockerhelper.md#constructor)
-
-### Properties
-
-- [dockerode](dockerodedockerhelper.md#dockerode)
-- [logger](dockerodedockerhelper.md#logger)
-- [pulledImages](dockerodedockerhelper.md#pulledimages)
-
 ### Methods
 
 - [attach](dockerodedockerhelper.md#attach)
+- [connectToNetwork](dockerodedockerhelper.md#connecttonetwork)
 - [createContainer](dockerodedockerhelper.md#createcontainer)
+- [createNetwork](dockerodedockerhelper.md#createnetwork)
 - [createVolume](dockerodedockerhelper.md#createvolume)
+- [inspectNetwork](dockerodedockerhelper.md#inspectnetwork)
 - [isImageInLocalRegistry](dockerodedockerhelper.md#isimageinlocalregistry)
+- [listNetworks](dockerodedockerhelper.md#listnetworks)
 - [listVolumes](dockerodedockerhelper.md#listvolumes)
 - [pullImage](dockerodedockerhelper.md#pullimage)
 - [removeContainer](dockerodedockerhelper.md#removecontainer)
@@ -37,45 +31,15 @@ Communicates with Docker using Dockerode library.
 - [translateVolumesConfig](dockerodedockerhelper.md#translatevolumesconfig)
 - [wait](dockerodedockerhelper.md#wait)
 
-## Constructors
+### Constructors
 
-### constructor
+- [constructor](dockerodedockerhelper.md#constructor)
 
-• **new DockerodeDockerHelper**()
+### Properties
 
-## Properties
-
-### dockerode
-
-• **dockerode**: `Dockerode`
-
-#### Defined in
-
-[dockerode-docker-helper.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L44)
-
-___
-
-### logger
-
-• **logger**: `Console`
-
-#### Defined in
-
-[dockerode-docker-helper.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L45)
-
-___
-
-### pulledImages
-
-• `Private` **pulledImages**: `Object` = `{}`
-
-#### Index signature
-
-▪ [key: `string`]: `Promise`<`void`\> \| `undefined`
-
-#### Defined in
-
-[dockerode-docker-helper.ts:170](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L170)
+- [dockerode](dockerodedockerhelper.md#dockerode)
+- [logger](dockerodedockerhelper.md#logger)
+- [pulledImages](dockerodedockerhelper.md#pulledimages)
 
 ## Methods
 
@@ -100,7 +64,32 @@ Object with container's standard I/O streams.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:240](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L240)
+[dockerode-docker-helper.ts:242](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L242)
+
+___
+
+### connectToNetwork
+
+▸ **connectToNetwork**(`networkid`, `container`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `networkid` | `string` |
+| `container` | `string` |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Implementation of
+
+[IDockerHelper](../interfaces/idockerhelper.md).[connectToNetwork](../interfaces/idockerhelper.md#connecttonetwork)
+
+#### Defined in
+
+[dockerode-docker-helper.ts:334](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L334)
 
 ___
 
@@ -122,9 +111,10 @@ Creates container based on provided parameters.
 | `containerCfg.envs` | `string`[] | - |
 | `containerCfg.labels` | `Object` | - |
 | `containerCfg.maxMem` | `number` | - |
+| `containerCfg.networkMode?` | `string` | - |
 | `containerCfg.ports` | `any` | - |
 | `containerCfg.publishAllPorts` | `boolean` | - |
-| `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] | - |
+| `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[] | - |
 
 #### Returns
 
@@ -138,7 +128,31 @@ IDockerHelper.createContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L79)
+[dockerode-docker-helper.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L80)
+
+___
+
+### createNetwork
+
+▸ **createNetwork**(`config`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | [`DockerCreateNetworkConfig`](../modules.md#dockercreatenetworkconfig) |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Implementation of
+
+[IDockerHelper](../interfaces/idockerhelper.md).[createNetwork](../interfaces/idockerhelper.md#createnetwork)
+
+#### Defined in
+
+[dockerode-docker-helper.ts:338](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L338)
 
 ___
 
@@ -166,7 +180,31 @@ IDockerHelper.createVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:204](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L204)
+[dockerode-docker-helper.ts:206](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L206)
+
+___
+
+### inspectNetwork
+
+▸ **inspectNetwork**(`id`): `Promise`<[`DockerNetwork`](../modules.md#dockernetwork)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+
+#### Returns
+
+`Promise`<[`DockerNetwork`](../modules.md#dockernetwork)\>
+
+#### Implementation of
+
+[IDockerHelper](../interfaces/idockerhelper.md).[inspectNetwork](../interfaces/idockerhelper.md#inspectnetwork)
+
+#### Defined in
+
+[dockerode-docker-helper.ts:320](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L320)
 
 ___
 
@@ -186,7 +224,25 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L166)
+[dockerode-docker-helper.ts:168](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L168)
+
+___
+
+### listNetworks
+
+▸ **listNetworks**(): `Promise`<`NetworkInspectInfo`[]\>
+
+#### Returns
+
+`Promise`<`NetworkInspectInfo`[]\>
+
+#### Implementation of
+
+[IDockerHelper](../interfaces/idockerhelper.md).[listNetworks](../interfaces/idockerhelper.md#listnetworks)
+
+#### Defined in
+
+[dockerode-docker-helper.ts:315](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L315)
 
 ___
 
@@ -204,7 +260,7 @@ IDockerHelper.listVolumes
 
 #### Defined in
 
-[dockerode-docker-helper.ts:225](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L225)
+[dockerode-docker-helper.ts:227](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L227)
 
 ___
 
@@ -231,7 +287,7 @@ Fetches the image from repo
 
 #### Defined in
 
-[dockerode-docker-helper.ts:172](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L172)
+[dockerode-docker-helper.ts:174](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L174)
 
 ___
 
@@ -259,7 +315,7 @@ IDockerHelper.removeContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:152](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L152)
+[dockerode-docker-helper.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L154)
 
 ___
 
@@ -287,13 +343,13 @@ IDockerHelper.removeVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:221](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L221)
+[dockerode-docker-helper.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L223)
 
 ___
 
 ### run
 
-▸ **run**(`config`): `Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+▸ **run**(`config`): `Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 Starts container.
 
@@ -301,11 +357,11 @@ Starts container.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `config` | [`DockerAdapterRunConfig`](../README.md#dockeradapterrunconfig) | Container configuration. |
+| `config` | [`DockerAdapterRunConfig`](../modules.md#dockeradapterrunconfig) | Container configuration. |
 
 #### Returns
 
-`Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+`Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 @see {DockerAdapterRunResponse}
 
@@ -315,7 +371,7 @@ IDockerHelper.run
 
 #### Defined in
 
-[dockerode-docker-helper.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L250)
+[dockerode-docker-helper.ts:252](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L252)
 
 ___
 
@@ -343,7 +399,7 @@ IDockerHelper.startContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L132)
+[dockerode-docker-helper.ts:134](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L134)
 
 ___
 
@@ -371,7 +427,7 @@ IDockerHelper.stats
 
 #### Defined in
 
-[dockerode-docker-helper.ts:162](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L162)
+[dockerode-docker-helper.ts:164](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L164)
 
 ___
 
@@ -399,7 +455,7 @@ IDockerHelper.stopContainer
 
 #### Defined in
 
-[dockerode-docker-helper.ts:142](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L142)
+[dockerode-docker-helper.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L144)
 
 ___
 
@@ -413,7 +469,7 @@ Translates DockerAdapterVolumeConfig to volumes configuration that Docker API ca
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `volumeConfigs` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] | Volumes configuration. |
+| `volumeConfigs` | [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[] | Volumes configuration. |
 
 #### Returns
 
@@ -427,13 +483,13 @@ IDockerHelper.translateVolumesConfig
 
 #### Defined in
 
-[dockerode-docker-helper.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L53)
+[dockerode-docker-helper.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L54)
 
 ___
 
 ### wait
 
-▸ **wait**(`container`, `options`): `Promise`<[`ExitData`](../README.md#exitdata)\>
+▸ **wait**(`container`, `options?`): `Promise`<[`ExitData`](../modules.md#exitdata)\>
 
 Waits for container status change.
 
@@ -442,11 +498,11 @@ Waits for container status change.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `container` | `string` | Container id. |
-| `options` | [`DockerAdapterWaitOptions`](../README.md#dockeradapterwaitoptions) | Condition to be fullfilled. @see {DockerAdapterWaitOptions} |
+| `options` | [`DockerAdapterWaitOptions`](../modules.md#dockeradapterwaitoptions) | Condition to be fullfilled. @see {DockerAdapterWaitOptions} |
 
 #### Returns
 
-`Promise`<[`ExitData`](../README.md#exitdata)\>
+`Promise`<[`ExitData`](../modules.md#exitdata)\>
 
 Container exit code.
 
@@ -456,4 +512,44 @@ Container exit code.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:307](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L307)
+[dockerode-docker-helper.ts:309](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L309)
+
+## Constructors
+
+### constructor
+
+• **new DockerodeDockerHelper**()
+
+## Properties
+
+### dockerode
+
+• **dockerode**: `Dockerode`
+
+#### Defined in
+
+[dockerode-docker-helper.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L45)
+
+___
+
+### logger
+
+• **logger**: `Console`
+
+#### Defined in
+
+[dockerode-docker-helper.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L46)
+
+___
+
+### pulledImages
+
+• `Private` **pulledImages**: `Object` = `{}`
+
+#### Index signature
+
+▪ [key: `string`]: `Promise`<`void`\> \| `undefined`
+
+#### Defined in
+
+[dockerode-docker-helper.ts:172](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L172)

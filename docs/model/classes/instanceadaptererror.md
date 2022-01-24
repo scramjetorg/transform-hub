@@ -1,4 +1,4 @@
-[@scramjet/model](../README.md) / InstanceAdapterError
+[@scramjet/model](../README.md) / [Exports](../modules.md) / InstanceAdapterError
 
 # Class: InstanceAdapterError
 
@@ -10,9 +10,9 @@
 
 ## Table of contents
 
-### Constructors
+### Methods
 
-- [constructor](instanceadaptererror.md#constructor)
+- [captureStackTrace](instanceadaptererror.md#capturestacktrace)
 
 ### Properties
 
@@ -20,34 +20,40 @@
 - [data](instanceadaptererror.md#data)
 - [message](instanceadaptererror.md#message)
 - [name](instanceadaptererror.md#name)
-- [stack](instanceadaptererror.md#stack)
 - [prepareStackTrace](instanceadaptererror.md#preparestacktrace)
+- [stack](instanceadaptererror.md#stack)
 - [stackTraceLimit](instanceadaptererror.md#stacktracelimit)
 
-### Methods
+### Constructors
 
-- [captureStackTrace](instanceadaptererror.md#capturestacktrace)
+- [constructor](instanceadaptererror.md#constructor)
 
-## Constructors
+## Methods
 
-### constructor
+### captureStackTrace
 
-• **new InstanceAdapterError**(`code`, `data?`)
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+
+Create .stack property on a target object
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `code` | `InstanceAdapterErrorCode` |
-| `data?` | `any` |
+| `targetObject` | `object` |
+| `constructorOpt?` | `Function` |
 
-#### Overrides
+#### Returns
 
-[AppError](apperror.md).[constructor](apperror.md#constructor)
+`void`
+
+#### Inherited from
+
+[AppError](apperror.md).[captureStackTrace](apperror.md#capturestacktrace)
 
 #### Defined in
 
-[packages/model/src/errors/instance-adapter-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/instance-adapter-error.ts#L4)
+node_modules/@types/node/globals.d.ts:4
 
 ## Properties
 
@@ -107,20 +113,6 @@ node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
-### stack
-
-• `Optional` **stack**: `string`
-
-#### Inherited from
-
-[AppError](apperror.md).[stack](apperror.md#stack)
-
-#### Defined in
-
-node_modules/typescript/lib/lib.es5.d.ts:1024
-
-___
-
 ### prepareStackTrace
 
 ▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
@@ -152,6 +144,20 @@ node_modules/@types/node/globals.d.ts:11
 
 ___
 
+### stack
+
+• `Optional` **stack**: `string`
+
+#### Inherited from
+
+[AppError](apperror.md).[stack](apperror.md#stack)
+
+#### Defined in
+
+node_modules/typescript/lib/lib.es5.d.ts:1024
+
+___
+
 ### stackTraceLimit
 
 ▪ `Static` **stackTraceLimit**: `number`
@@ -164,29 +170,23 @@ ___
 
 node_modules/@types/node/globals.d.ts:13
 
-## Methods
+## Constructors
 
-### captureStackTrace
+### constructor
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
-
-Create .stack property on a target object
+• **new InstanceAdapterError**(`code`, `data?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+| `code` | `InstanceAdapterErrorCode` |
+| `data?` | `any` |
 
-#### Returns
+#### Overrides
 
-`void`
-
-#### Inherited from
-
-[AppError](apperror.md).[captureStackTrace](apperror.md#capturestacktrace)
+[AppError](apperror.md).[constructor](apperror.md#constructor)
 
 #### Defined in
 
-node_modules/@types/node/globals.d.ts:4
+[packages/model/src/errors/instance-adapter-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/instance-adapter-error.ts#L4)

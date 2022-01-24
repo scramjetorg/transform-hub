@@ -1,282 +1,60 @@
-@scramjet/adapters
+@scramjet/adapters / [Exports](modules.md)
 
-# @scramjet/adapters
+# Scramjet Transform Hub Adapters
 
-## Table of contents
+This module holds two types of adapters utilized by Scramjet Transform Hub: Instance Adapter and Sequence Adapter. These Adapters allows for running the Sequence identification and Instance execution in two basic modes: as a non containerized standalone processes or in a Docker container.
 
-### Classes
+The adapter provides two main exports:
 
-- [DockerInstanceAdapter](classes/dockerinstanceadapter.md)
-- [DockerSequenceAdapter](classes/dockersequenceadapter.md)
-- [DockerodeDockerHelper](classes/dockerodedockerhelper.md)
+* [DockerSequenceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapters/src/docker-sequence-adapter.ts) - An adapter for preparing Sequence to be run in Docker container.
+* [DockerInstanceAdapter](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/adapters/src/docker-instance-adapter.ts) - An adapter for running Instance by Runner executed in Docker container.
 
-### Interfaces
+## Docs
 
-- [IDockerHelper](interfaces/idockerhelper.md)
+See the code documentation here: [scramjetorg/transform-hub/docs/adapters/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/adapters/modules.md)
 
-### Type aliases
+## Scramjet Transform Hub
 
-- [DockerAdapterResources](README.md#dockeradapterresources)
-- [DockerAdapterRunConfig](README.md#dockeradapterrunconfig)
-- [DockerAdapterRunPortsConfig](README.md#dockeradapterrunportsconfig)
-- [DockerAdapterRunResponse](README.md#dockeradapterrunresponse)
-- [DockerAdapterStreams](README.md#dockeradapterstreams)
-- [DockerAdapterVolumeConfig](README.md#dockeradaptervolumeconfig)
-- [DockerAdapterWaitOptions](README.md#dockeradapterwaitoptions)
-- [DockerContainer](README.md#dockercontainer)
-- [DockerImage](README.md#dockerimage)
-- [DockerVolume](README.md#dockervolume)
-- [ExitData](README.md#exitdata)
-- [InstanceAdapterOptions](README.md#instanceadapteroptions)
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
 
-### Functions
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
-- [getInstanceAdapter](README.md#getinstanceadapter)
-- [getSequenceAdapter](README.md#getsequenceadapter)
+## Use cases
 
-## Type aliases
+There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Slack](https://join.slack.com/t/scramjetframework/shared_invite/enQtODg2MDIyMTQ5MzUxLTVlNTIwMmFlYWU0YTg2ZTg1YmFiOTZkZTdhNzNmNjE2ZmQ3ZWQzZjI5MGQyZDAyOWM2NDc5YzdmZGQzNGI3YTU)!
 
-### DockerAdapterResources
+## Some important links
 
-Ƭ **DockerAdapterResources**: `Object`
+* Scramjet, the company behind [Transform Hub](https://scramjet.org)
+* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
+* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
+* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
+* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
-#### Type declaration
+## License and contributions
 
-| Name | Type |
-| :------ | :------ |
-| `containerId?` | [`DockerContainer`](README.md#dockercontainer) |
-| `fifosDir?` | `PathLike` |
-| `ports?` | [`DockerAdapterRunPortsConfig`](README.md#dockeradapterrunportsconfig) |
-| `volumeId?` | [`DockerVolume`](README.md#dockervolume) |
+This module is licensed under AGPL-3.0 license.
 
-#### Defined in
+The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
-[types.ts:128](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L128)
+## Contributions
 
-___
+We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
 
-### DockerAdapterRunConfig
+We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
 
-Ƭ **DockerAdapterRunConfig**: `Object`
+### Help wanted :information_desk_person:
 
-Configuration used to run command in container.
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
-#### Type declaration
+### Donation :money_with_wings:
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `autoRemove?` | `boolean` | **`property`** {boolean} autoRemove If true container will be removed after container's process exit. |
-| `binds?` | `string`[] | **`property`** {string[]} binds Directories mount configuration. |
-| `command?` | `string`[] | Command with optional parameters.  **`property`** {string[]} command Command to be executed. |
-| `envs?` | `string`[] | **`property`** {string[]} envs A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
-| `imageName` | `string` | **`property`** {string} imageName Image name. |
-| `labels?` | `Object` | - |
-| `maxMem?` | `number` | **`property`** {number} maxMem Container memory limit (bytes). |
-| `ports?` | [`DockerAdapterRunPortsConfig`](README.md#dockeradapterrunportsconfig) | **`property`** {DockerAdapterRunPortsConfig} ports Docker ports configuration |
-| `publishAllPorts?` | `boolean` | - |
-| `volumes?` | [`DockerAdapterVolumeConfig`](README.md#dockeradaptervolumeconfig)[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration. |
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
 
-#### Defined in
+[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
-[types.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L53)
+* There's also a Paypal donation link if you prefer that:
 
-___
-
-### DockerAdapterRunPortsConfig
-
-Ƭ **DockerAdapterRunPortsConfig**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `ExposedPorts` | `any` |
-| `PortBindings` | `any` |
-
-#### Defined in
-
-[types.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L43)
-
-___
-
-### DockerAdapterRunResponse
-
-Ƭ **DockerAdapterRunResponse**: `Object`
-
-Result of running command in container.
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `containerId` | [`DockerContainer`](README.md#dockercontainer) |
-| `streams` | [`DockerAdapterStreams`](README.md#dockeradapterstreams) |
-| `wait` | `Function` |
-
-#### Defined in
-
-[types.ts:142](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L142)
-
-___
-
-### DockerAdapterStreams
-
-Ƭ **DockerAdapterStreams**: `Object`
-
-Standard streams connected with container.
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `stderr` | `Stream` |
-| `stdin` | `Writable` |
-| `stdout` | `Stream` |
-
-#### Defined in
-
-[types.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L107)
-
-___
-
-### DockerAdapterVolumeConfig
-
-Ƭ **DockerAdapterVolumeConfig**: { `mountPoint`: `string`  } & { `volume`: [`DockerVolume`](README.md#dockervolume)  } \| { `bind`: `string`  }
-
-Volume mounting configuration.
-
-#### Defined in
-
-[types.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L32)
-
-___
-
-### DockerAdapterWaitOptions
-
-Ƭ **DockerAdapterWaitOptions**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `condition?` | ``"not-running"`` \| ``"next-exit"`` \| ``"removed"`` |
-
-#### Defined in
-
-[types.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L135)
-
-___
-
-### DockerContainer
-
-Ƭ **DockerContainer**: `string`
-
-Docker container.
-
-#### Defined in
-
-[types.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L18)
-
-___
-
-### DockerImage
-
-Ƭ **DockerImage**: `string`
-
-Docker image.
-
-#### Defined in
-
-[types.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L11)
-
-___
-
-### DockerVolume
-
-Ƭ **DockerVolume**: `string`
-
-Docker volume.
-
-#### Defined in
-
-[types.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L25)
-
-___
-
-### ExitData
-
-Ƭ **ExitData**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `statusCode` | `ExitCode` |
-
-#### Defined in
-
-[types.ts:124](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L124)
-
-___
-
-### InstanceAdapterOptions
-
-Ƭ **InstanceAdapterOptions**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `exitDelay` | `number` |
-
-#### Defined in
-
-[types.ts:276](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L276)
-
-## Functions
-
-### getInstanceAdapter
-
-▸ **getInstanceAdapter**(`runWithoutDocker`): `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
-
-Provides Instance adapter.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `runWithoutDocker` | `boolean` | Defines which instance adapter to use. If true - ProcessInstanceAdapter will be used. |
-
-#### Returns
-
-`ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
-
-Instance adapter.
-
-#### Defined in
-
-[get-instance-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L12)
-
-___
-
-### getSequenceAdapter
-
-▸ **getSequenceAdapter**(`config`): `ISequenceAdapter`
-
-Provides Sequence adapter basing on Host configuration.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `config` | `STHConfiguration` | Host configuration. |
-
-#### Returns
-
-`ISequenceAdapter`
-
-Sequence adapter.
-
-#### Defined in
-
-[get-sequence-adapter.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L11)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)

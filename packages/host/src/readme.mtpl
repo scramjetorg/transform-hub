@@ -4,7 +4,7 @@ This package provides the main host subsystem of STH - starts API Servers, creat
 
 ## Docs
 
->!docs host/README.md &
+>!docs host/modules.md &
 
 >@sth
 >@use-cases

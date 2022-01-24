@@ -1,4 +1,4 @@
-[@scramjet/sth-config](../README.md) / ConfigService
+[@scramjet/sth-config](../README.md) / [Exports](../modules.md) / ConfigService
 
 # Class: ConfigService
 

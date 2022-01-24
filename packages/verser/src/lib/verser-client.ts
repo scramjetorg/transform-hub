@@ -1,7 +1,7 @@
 import { OutgoingHttpHeaders, request, Agent } from "http";
-import { merge } from "@scramjet/utility";
+import { merge, TypedEmitter } from "@scramjet/utility";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
-import { Duplex, EventEmitter } from "stream";
+import { Duplex } from "stream";
 import { Socket } from "net";
 import { getLogger } from "@scramjet/logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
@@ -10,12 +10,16 @@ import { URL } from "url";
 
 const BPMux = require("bpmux").BPMux;
 
+type Events = {
+    error: (err: Error) => void;
+}
+
 /**
  * VerserClient class.
  *
  * Provides methods for connecting to Verser server and handling of incoming muxed duplex streams.
  */
-export class VerserClient extends EventEmitter {
+export class VerserClient extends TypedEmitter<Events> {
     /**
      * VerserClient options.
      *

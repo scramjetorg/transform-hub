@@ -17,6 +17,7 @@ import * as path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";
+import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -38,7 +39,6 @@ IComponent {
     }
 
     async init(): Promise<void> {
-        // noop
     }
 
     /**
@@ -118,6 +118,42 @@ IComponent {
         return msg;
     }
 
+    private async getNetworkSetup(): Promise<{ network: string, host: string }> {
+        const interfaces = await this.dockerHelper.listNetworks();
+        const sthDockerNetwork = interfaces.find(net => net.Name === STH_DOCKER_NETWORK);
+
+        if (!sthDockerNetwork) {
+            // STH docker network should be created in Host intitialization
+            throw new Error(`Couldn't find sth docker network: ${sthDockerNetwork}`);
+        }
+
+        if (await isHostSpawnedInDockerContainer()) {
+            const hostname = getHostname();
+
+            // If Transform Hub runs in Docker container
+            // then this container should be connected to STH docker network in Host initialization
+            this.logger.log(`Runner will connect to STH container with hostname ${hostname}`);
+
+            return {
+                network: STH_DOCKER_NETWORK,
+                host: hostname,
+            };
+        }
+        // otherwise STH runs on Host OS so we Runner can just connect to the Gateway 
+        const sthNetworkGateway = sthDockerNetwork?.IPAM?.Config?.[0]?.Gateway;
+
+        if (!sthNetworkGateway) {
+            throw new Error(`Couldn't determine gateway for ${STH_DOCKER_NETWORK}`);
+        }
+
+        this.logger.log(`Runner will connect to STH on host OS using gateway: (${sthNetworkGateway})`);
+
+        return {
+            network: STH_DOCKER_NETWORK,
+            host: sthNetworkGateway
+        };
+    }
+
     // eslint-disable-next-line complexity
     async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "docker") {
@@ -144,9 +180,20 @@ IComponent {
             }
         }
 
-        this.logger.log("Starting Runner...", config.container);
+        const networkSetup = await this.getNetworkSetup();
 
-        const { containerId } = await this.dockerHelper.run({
+        const envs = [
+            `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`,
+            `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
+            `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
+            `INSTANCES_SERVER_PORT=${instancesServerPort}`,
+            `INSTANCES_SERVER_HOST=${networkSetup.host}`,
+            `INSTANCE_ID=${instanceId}`,
+        ];
+
+        this.logger.log("Runner will start with envs: ", envs);
+
+        const { containerId, streams } = await this.dockerHelper.run({
             imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
@@ -157,16 +204,13 @@ IComponent {
             },
             ports: this.resources.ports,
             publishAllPorts: true,
-            envs: [
-                `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`,
-                `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
-                `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
-                `INSTANCES_SERVER_PORT=${instancesServerPort}`,
-                `INSTANCE_ID=${instanceId}`
-            ],
+            envs,
             autoRemove: true,
             maxMem: config.container.maxMem,
+            networkMode: networkSetup.network
         });
+
+        streams.stderr.on("data", data => this.logger.error("Docker container error: ", data.toString()));
 
         this.resources.containerId = containerId;
 

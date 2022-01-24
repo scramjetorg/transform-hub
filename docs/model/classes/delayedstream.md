@@ -1,27 +1,21 @@
-[@scramjet/model](../README.md) / DelayedStream
+[@scramjet/model](../README.md) / [Exports](../modules.md) / DelayedStream
 
 # Class: DelayedStream
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](delayedstream.md#constructor)
-
 ### Properties
 
 - [\_stream](delayedstream.md#_stream)
+
+### Constructors
+
+- [constructor](delayedstream.md#constructor)
 
 ### Methods
 
 - [getStream](delayedstream.md#getstream)
 - [run](delayedstream.md#run)
-
-## Constructors
-
-### constructor
-
-• **new DelayedStream**()
 
 ## Properties
 
@@ -32,6 +26,12 @@
 #### Defined in
 
 [packages/model/src/utils/delayed-stream.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L4)
+
+## Constructors
+
+### constructor
+
+• **new DelayedStream**()
 
 ## Methods
 

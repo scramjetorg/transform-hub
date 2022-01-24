@@ -1,12 +1,8 @@
-[@scramjet/host](../README.md) / CommonLogsPipe
+[@scramjet/host](../README.md) / [Exports](../modules.md) / CommonLogsPipe
 
 # Class: CommonLogsPipe
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](CommonLogsPipe.md#constructor)
 
 ### Methods
 
@@ -14,21 +10,9 @@
 - [getIn](CommonLogsPipe.md#getin)
 - [getOut](CommonLogsPipe.md#getout)
 
-## Constructors
+### Constructors
 
-### constructor
-
-• **new CommonLogsPipe**(`bufferLength?`)
-
-#### Parameters
-
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `bufferLength` | `number` | `1e5` |
-
-#### Defined in
-
-[packages/host/src/lib/common-logs-pipe.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/common-logs-pipe.ts#L9)
+- [constructor](CommonLogsPipe.md#constructor)
 
 ## Methods
 
@@ -78,3 +62,19 @@ ___
 #### Defined in
 
 [packages/host/src/lib/common-logs-pipe.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/common-logs-pipe.ts#L27)
+
+## Constructors
+
+### constructor
+
+• **new CommonLogsPipe**(`bufferLength?`)
+
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `bufferLength` | `number` | `1e5` |
+
+#### Defined in
+
+[packages/host/src/lib/common-logs-pipe.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/common-logs-pipe.ts#L9)

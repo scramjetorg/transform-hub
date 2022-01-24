@@ -1,4 +1,4 @@
-[@scramjet/api-server](../README.md) / SequentialCeroRouter
+[@scramjet/api-server](../README.md) / [Modules](../modules.md) / SequentialCeroRouter
 
 # Interface: SequentialCeroRouter
 

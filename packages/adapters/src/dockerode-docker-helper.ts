@@ -9,7 +9,8 @@ import {
     DockerAdapterStreams, DockerAdapterVolumeConfig,
     DockerAdapterWaitOptions,
     DockerContainer,
-    IDockerHelper, DockerImage, DockerVolume, ExitData
+    IDockerHelper, DockerImage, DockerVolume, ExitData,
+    DockerCreateNetworkConfig, DockerNetwork
 } from "./types";
 
 /**
@@ -41,7 +42,7 @@ type DockerodeVolumeMountConfig = {
  * Communicates with Docker using Dockerode library.
  */
 export class DockerodeDockerHelper implements IDockerHelper {
-    dockerode: Dockerode = new Dockerode();
+    public dockerode: Dockerode = new Dockerode();
     logger: Logger = getLogger(this);
 
     /**
@@ -87,7 +88,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
             maxMem: number, // TODO: Container configuration
             command?: string[],
             publishAllPorts: boolean,
-            labels: { [key: string]: string }
+            labels: { [key: string]: string },
+            networkMode?: string
         }
     ): Promise<DockerContainer> {
         containerCfg.ports = { ...containerCfg.ports };
@@ -109,7 +111,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 MemorySwap: 0,
                 PortBindings: containerCfg.ports.PortBindings,
                 PublishAllPorts: containerCfg.publishAllPorts || false,
-                NetworkMode: "host"
+                NetworkMode: containerCfg.networkMode
             },
             Labels: containerCfg.labels || {},
         };
@@ -159,7 +161,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @param containerId Container id.
      * @returns Promise which resolves with container statistics.
      */
-    stats(containerId: DockerContainer): Promise<Dockerode.ContainerStats> {
+    async stats(containerId: DockerContainer): Promise<Dockerode.ContainerStats> {
         return this.dockerode.getContainer(containerId).stats({ stream: false });
     }
 
@@ -266,7 +268,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 command: config.command,
                 labels: config.labels || {},
                 publishAllPorts: config.publishAllPorts || false,
-
+                networkMode: config.networkMode
             }
         );
         // ------
@@ -304,9 +306,40 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @param options Condition to be fullfilled. @see {DockerAdapterWaitOptions}
      * @returns Container exit code.
      */
-    async wait(container: DockerContainer, options: DockerAdapterWaitOptions): Promise<ExitData> {
+    async wait(container: DockerContainer, options: DockerAdapterWaitOptions = {}): Promise<ExitData> {
         const containerExitResult = await this.dockerode.getContainer(container).wait(options);
 
         return { statusCode: containerExitResult.StatusCode };
+    }
+
+    async listNetworks(): Promise<Dockerode.NetworkInspectInfo[]> {
+        // @TODO this
+        return this.dockerode.listNetworks();
+    }
+
+    async inspectNetwork(id: string): Promise<DockerNetwork> {
+        const network = await this.dockerode.getNetwork(id).inspect();
+
+        const dockerodeContainers = network.Containers as Record<string, { Name: string }>;
+
+        const containers = Object.fromEntries(
+            Object.entries(dockerodeContainers).map(([containerId, { Name }]) => [containerId, { name: Name }])
+        );
+
+        return {
+            containers
+        };
+    }
+
+    async connectToNetwork(networkid: string, container: string): Promise<void> {
+        await this.dockerode.getNetwork(networkid).connect({ Container: container });
+    }
+
+    async createNetwork(config: DockerCreateNetworkConfig): Promise<void> {
+        await this.dockerode.createNetwork({
+            Name: config.name,
+            Driver:config.driver,
+            Options: config.options
+        });
     }
 }

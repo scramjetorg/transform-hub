@@ -1,140 +1,55 @@
-@scramjet/logger
+@scramjet/logger / [Exports](modules.md)
 
-# @scramjet/logger
+# `@scramjet/logger` <!-- omit in toc -->
 
-## Table of contents
+The package provides Scramjet Transform Hub with a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice.
 
-### Classes
+## Docs
 
-- [Logger](classes/Logger.md)
+See the code documentation here: [scramjetorg/transform-hub/docs/logger/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/logger/modules.md)
 
-### Type aliases
+## Scramjet Transform Hub
 
-- [MessageFormatter](README.md#messageformatter)
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
 
-### Functions
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
-- [addLoggerOutput](README.md#addloggeroutput)
-- [close](README.md#close)
-- [getLogger](README.md#getlogger)
-- [removeLoggerOutput](README.md#removeloggeroutput)
+## Use cases
 
-## Type aliases
+There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Slack](https://join.slack.com/t/scramjetframework/shared_invite/enQtODg2MDIyMTQ5MzUxLTVlNTIwMmFlYWU0YTg2ZTg1YmFiOTZkZTdhNzNmNjE2ZmQ3ZWQzZjI5MGQyZDAyOWM2NDc5YzdmZGQzNGI3YTU)!
 
-### MessageFormatter
+## Some important links
 
-Ƭ **MessageFormatter**: <Z\>(`colors`: `boolean`, `ts`: `string`, `name`: `string`, `func`: `string`, `args`: `Z`) => `string`
+* Scramjet, the company behind [Transform Hub](https://scramjet.org)
+* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
+* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
+* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
+* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
-#### Type declaration
+## License and contributions
 
-▸ <`Z`\>(`colors`, `ts`, `name`, `func`, `args`): `string`
+This module is licensed under AGPL-3.0 license.
 
-##### Type parameters
+The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
-| Name | Type |
-| :------ | :------ |
-| `Z` | extends `any`[] |
+## Contributions
 
-##### Parameters
+We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
 
-| Name | Type |
-| :------ | :------ |
-| `colors` | `boolean` |
-| `ts` | `string` |
-| `name` | `string` |
-| `func` | `string` |
-| `args` | `Z` |
+We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
 
-##### Returns
+### Help wanted :information_desk_person:
 
-`string`
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
-#### Defined in
+### Donation :money_with_wings:
 
-[index.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L11)
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
 
-## Functions
+[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
-### addLoggerOutput
+* There's also a Paypal donation link if you prefer that:
 
-▸ **addLoggerOutput**(`out`, `err?`): `void`
-
-Pipes log streams to the provided outputs in serialized format
-
-#### Parameters
-
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `out` | `WritableStream`<`any`\> | `undefined` | stream for stdout logging |
-| `err` | `WritableStream`<`any`\> | `out` | stream for stderr logging |
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[index.ts:199](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L199)
-
-___
-
-### close
-
-▸ `Const` **close**(): `void`
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[index.ts:187](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L187)
-
-___
-
-### getLogger
-
-▸ **getLogger**(`reference`, `options?`): [`Logger`](classes/Logger.md)
-
-Creates a Console compatible logger with basic decorations
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `reference` | `any` | a reference object to get the name from |
-| `options` | `LoggerOptions` | the logger options |
-
-#### Returns
-
-[`Logger`](classes/Logger.md)
-
-a Console compatible logger
-
-#### Defined in
-
-[index.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L224)
-
-___
-
-### removeLoggerOutput
-
-▸ **removeLoggerOutput**(`out`, `err?`, `end?`): `void`
-
-Removes log outputs from the logger so that they will no longer receive logs
-
-#### Parameters
-
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `out` | `WritableStream`<`any`\> | `undefined` | stream for stdout logging |
-| `err` | `WritableStream`<`any`\> | `out` | stream for stderr logging |
-| `end` | `boolean` | `true` | if true, closes the stream after removing it |
-
-#### Returns
-
-`void`
-
-#### Defined in
-
-[index.ts:211](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/logger/src/index.ts#L211)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)

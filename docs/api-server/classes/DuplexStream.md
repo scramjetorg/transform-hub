@@ -1,4 +1,4 @@
-[@scramjet/api-server](../README.md) / DuplexStream
+[@scramjet/api-server](../README.md) / [Modules](../modules.md) / DuplexStream
 
 # Class: DuplexStream
 
@@ -9,34 +9,6 @@
   ↳ **`DuplexStream`**
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](DuplexStream.md#constructor)
-
-### Properties
-
-- [destroyed](DuplexStream.md#destroyed)
-- [input](DuplexStream.md#input)
-- [output](DuplexStream.md#output)
-- [readable](DuplexStream.md#readable)
-- [readableEncoding](DuplexStream.md#readableencoding)
-- [readableEnded](DuplexStream.md#readableended)
-- [readableFlowing](DuplexStream.md#readableflowing)
-- [readableHighWaterMark](DuplexStream.md#readablehighwatermark)
-- [readableLength](DuplexStream.md#readablelength)
-- [readableObjectMode](DuplexStream.md#readableobjectmode)
-- [writable](DuplexStream.md#writable)
-- [writableCorked](DuplexStream.md#writablecorked)
-- [writableEnded](DuplexStream.md#writableended)
-- [writableFinished](DuplexStream.md#writablefinished)
-- [writableHighWaterMark](DuplexStream.md#writablehighwatermark)
-- [writableLength](DuplexStream.md#writablelength)
-- [writableObjectMode](DuplexStream.md#writableobjectmode)
-- [captureRejectionSymbol](DuplexStream.md#capturerejectionsymbol)
-- [captureRejections](DuplexStream.md#capturerejections)
-- [defaultMaxListeners](DuplexStream.md#defaultmaxlisteners)
-- [errorMonitor](DuplexStream.md#errormonitor)
 
 ### Methods
 
@@ -53,12 +25,17 @@
 - [emit](DuplexStream.md#emit)
 - [end](DuplexStream.md#end)
 - [eventNames](DuplexStream.md#eventnames)
+- [from](DuplexStream.md#from)
+- [getEventListener](DuplexStream.md#geteventlistener)
 - [getMaxListeners](DuplexStream.md#getmaxlisteners)
 - [isPaused](DuplexStream.md#ispaused)
+- [listenerCount](DuplexStream.md#listenercount)
 - [listenerCount](DuplexStream.md#listenercount)
 - [listeners](DuplexStream.md#listeners)
 - [off](DuplexStream.md#off)
 - [on](DuplexStream.md#on)
+- [on](DuplexStream.md#on)
+- [once](DuplexStream.md#once)
 - [once](DuplexStream.md#once)
 - [pause](DuplexStream.md#pause)
 - [pipe](DuplexStream.md#pipe)
@@ -78,329 +55,34 @@
 - [unshift](DuplexStream.md#unshift)
 - [wrap](DuplexStream.md#wrap)
 - [write](DuplexStream.md#write)
-- [from](DuplexStream.md#from)
-- [getEventListener](DuplexStream.md#geteventlistener)
-- [listenerCount](DuplexStream.md#listenercount)
-- [on](DuplexStream.md#on)
-- [once](DuplexStream.md#once)
 
-## Constructors
-
-### constructor
-
-• **new DuplexStream**(`options`, `input`, `output`)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `options` | `DuplexOptions` |
-| `input` | `Readable` |
-| `output` | `Writable` |
-
-#### Overrides
-
-Duplex.constructor
-
-#### Defined in
-
-[packages/api-server/src/lib/duplex-stream.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L7)
-
-## Properties
-
-### destroyed
-
-• **destroyed**: `boolean`
-
-#### Inherited from
-
-Duplex.destroyed
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:41
-
-___
-
-### input
-
-• **input**: `Readable`
-
-#### Defined in
-
-[packages/api-server/src/lib/duplex-stream.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L4)
-
-___
-
-### output
-
-• **output**: `Writable`
-
-#### Defined in
-
-[packages/api-server/src/lib/duplex-stream.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L5)
-
-___
-
-### readable
-
-• **readable**: `boolean`
-
-#### Inherited from
-
-Duplex.readable
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:34
-
-___
-
-### readableEncoding
-
-• `Readonly` **readableEncoding**: ``null`` \| `BufferEncoding`
-
-#### Inherited from
-
-Duplex.readableEncoding
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:35
-
-___
-
-### readableEnded
-
-• `Readonly` **readableEnded**: `boolean`
-
-#### Inherited from
-
-Duplex.readableEnded
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:36
-
-___
-
-### readableFlowing
-
-• `Readonly` **readableFlowing**: ``null`` \| `boolean`
-
-#### Inherited from
-
-Duplex.readableFlowing
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:37
-
-___
-
-### readableHighWaterMark
-
-• `Readonly` **readableHighWaterMark**: `number`
-
-#### Inherited from
-
-Duplex.readableHighWaterMark
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:38
-
-___
-
-### readableLength
-
-• `Readonly` **readableLength**: `number`
-
-#### Inherited from
-
-Duplex.readableLength
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:39
-
-___
-
-### readableObjectMode
-
-• `Readonly` **readableObjectMode**: `boolean`
-
-#### Inherited from
-
-Duplex.readableObjectMode
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:40
-
-___
-
-### writable
-
-• `Readonly` **writable**: `boolean`
-
-#### Inherited from
-
-Duplex.writable
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:251
-
-___
-
-### writableCorked
-
-• `Readonly` **writableCorked**: `number`
-
-#### Inherited from
-
-Duplex.writableCorked
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:257
-
-___
-
-### writableEnded
-
-• `Readonly` **writableEnded**: `boolean`
-
-#### Inherited from
-
-Duplex.writableEnded
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:252
-
-___
-
-### writableFinished
-
-• `Readonly` **writableFinished**: `boolean`
-
-#### Inherited from
-
-Duplex.writableFinished
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:253
-
-___
-
-### writableHighWaterMark
-
-• `Readonly` **writableHighWaterMark**: `number`
-
-#### Inherited from
-
-Duplex.writableHighWaterMark
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:254
-
-___
-
-### writableLength
-
-• `Readonly` **writableLength**: `number`
-
-#### Inherited from
-
-Duplex.writableLength
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:255
-
-___
-
-### writableObjectMode
-
-• `Readonly` **writableObjectMode**: `boolean`
-
-#### Inherited from
-
-Duplex.writableObjectMode
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:256
-
-___
-
-### captureRejectionSymbol
-
-▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](DuplexStream.md#capturerejectionsymbol)
-
-#### Inherited from
-
-Duplex.captureRejectionSymbol
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:46
-
-___
-
-### captureRejections
-
-▪ `Static` **captureRejections**: `boolean`
-
-Sets or gets the default captureRejection value for all emitters.
-
-#### Inherited from
-
-Duplex.captureRejections
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:52
-
-___
-
-### defaultMaxListeners
-
-▪ `Static` **defaultMaxListeners**: `number`
-
-#### Inherited from
-
-Duplex.defaultMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:53
-
-___
-
-### errorMonitor
-
-▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](DuplexStream.md#errormonitor)
-
-This symbol shall be used to install a listener for only monitoring `'error'`
-events. Listeners installed using this symbol are called before the regular
-`'error'` listeners are called.
-
-Installing a listener using this symbol does not change the behavior once an
-`'error'` event is emitted, therefore the process will still crash if no
-regular `'error'` listener is installed.
-
-#### Inherited from
-
-Duplex.errorMonitor
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:45
+### Properties
+
+- [captureRejectionSymbol](DuplexStream.md#capturerejectionsymbol)
+- [captureRejections](DuplexStream.md#capturerejections)
+- [defaultMaxListeners](DuplexStream.md#defaultmaxlisteners)
+- [destroyed](DuplexStream.md#destroyed)
+- [errorMonitor](DuplexStream.md#errormonitor)
+- [input](DuplexStream.md#input)
+- [output](DuplexStream.md#output)
+- [readable](DuplexStream.md#readable)
+- [readableEncoding](DuplexStream.md#readableencoding)
+- [readableEnded](DuplexStream.md#readableended)
+- [readableFlowing](DuplexStream.md#readableflowing)
+- [readableHighWaterMark](DuplexStream.md#readablehighwatermark)
+- [readableLength](DuplexStream.md#readablelength)
+- [readableObjectMode](DuplexStream.md#readableobjectmode)
+- [writable](DuplexStream.md#writable)
+- [writableCorked](DuplexStream.md#writablecorked)
+- [writableEnded](DuplexStream.md#writableended)
+- [writableFinished](DuplexStream.md#writablefinished)
+- [writableHighWaterMark](DuplexStream.md#writablehighwatermark)
+- [writableLength](DuplexStream.md#writablelength)
+- [writableObjectMode](DuplexStream.md#writableobjectmode)
+
+### Constructors
+
+- [constructor](DuplexStream.md#constructor)
 
 ## Methods
 
@@ -1040,6 +722,60 @@ node_modules/@types/node/events.d.ts:87
 
 ___
 
+### from
+
+▸ `Static` **from**(`iterable`, `options?`): `Readable`
+
+A utility method for creating Readable Streams out of iterators.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `iterable` | `Iterable`<`any`\> \| `AsyncIterable`<`any`\> |
+| `options?` | `ReadableOptions` |
+
+#### Returns
+
+`Readable`
+
+#### Inherited from
+
+Duplex.from
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:32
+
+___
+
+### getEventListener
+
+▸ `Static` **getEventListener**(`emitter`, `name`): `Function`[]
+
+Returns a list listener for a specific emitter event name.
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `emitter` | `EventEmitter` \| `DOMEventTarget` |
+| `name` | `string` \| `symbol` |
+
+#### Returns
+
+`Function`[]
+
+#### Inherited from
+
+Duplex.getEventListener
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:34
+
+___
+
 ### getMaxListeners
 
 ▸ **getMaxListeners**(): `number`
@@ -1073,6 +809,33 @@ Duplex.isPaused
 #### Defined in
 
 node_modules/@types/node/stream.d.ts:49
+
+___
+
+### listenerCount
+
+▸ `Static` **listenerCount**(`emitter`, `event`): `number`
+
+**`deprecated`** since v4.0.0
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `emitter` | `EventEmitter` |
+| `event` | `string` \| `symbol` |
+
+#### Returns
+
+`number`
+
+#### Inherited from
+
+Duplex.listenerCount
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:30
 
 ___
 
@@ -1146,6 +909,32 @@ Duplex.off
 #### Defined in
 
 node_modules/@types/node/events.d.ts:76
+
+___
+
+### on
+
+▸ `Static` **on**(`emitter`, `event`, `options?`): `AsyncIterableIterator`<`any`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `emitter` | `EventEmitter` |
+| `event` | `string` |
+| `options?` | `StaticEventEmitterOptions` |
+
+#### Returns
+
+`AsyncIterableIterator`<`any`\>
+
+#### Inherited from
+
+Duplex.on
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:27
 
 ___
 
@@ -1318,6 +1107,54 @@ Duplex.on
 #### Defined in
 
 node_modules/@types/node/stream.d.ts:93
+
+___
+
+### once
+
+▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `emitter` | `NodeEventTarget` |
+| `event` | `string` \| `symbol` |
+| `options?` | `StaticEventEmitterOptions` |
+
+#### Returns
+
+`Promise`<`any`[]\>
+
+#### Inherited from
+
+Duplex.once
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:25
+
+▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `emitter` | `DOMEventTarget` |
+| `event` | `string` |
+| `options?` | `StaticEventEmitterOptions` |
+
+#### Returns
+
+`Promise`<`any`[]\>
+
+#### Inherited from
+
+Duplex.once
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:26
 
 ___
 
@@ -2382,157 +2219,320 @@ Duplex.write
 
 node_modules/@types/node/stream.d.ts:264
 
-___
+## Properties
 
-### from
+### captureRejectionSymbol
 
-▸ `Static` **from**(`iterable`, `options?`): `Readable`
-
-A utility method for creating Readable Streams out of iterators.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `iterable` | `Iterable`<`any`\> \| `AsyncIterable`<`any`\> |
-| `options?` | `ReadableOptions` |
-
-#### Returns
-
-`Readable`
+▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](DuplexStream.md#capturerejectionsymbol)
 
 #### Inherited from
 
-Duplex.from
+Duplex.captureRejectionSymbol
 
 #### Defined in
 
-node_modules/@types/node/stream.d.ts:32
+node_modules/@types/node/events.d.ts:46
 
 ___
 
-### getEventListener
+### captureRejections
 
-▸ `Static` **getEventListener**(`emitter`, `name`): `Function`[]
+▪ `Static` **captureRejections**: `boolean`
 
-Returns a list listener for a specific emitter event name.
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` \| `DOMEventTarget` |
-| `name` | `string` \| `symbol` |
-
-#### Returns
-
-`Function`[]
+Sets or gets the default captureRejection value for all emitters.
 
 #### Inherited from
 
-Duplex.getEventListener
+Duplex.captureRejections
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:34
+node_modules/@types/node/events.d.ts:52
 
 ___
 
-### listenerCount
+### defaultMaxListeners
 
-▸ `Static` **listenerCount**(`emitter`, `event`): `number`
-
-**`deprecated`** since v4.0.0
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`number`
+▪ `Static` **defaultMaxListeners**: `number`
 
 #### Inherited from
 
-Duplex.listenerCount
+Duplex.defaultMaxListeners
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:30
+node_modules/@types/node/events.d.ts:53
 
 ___
 
-### on
+### destroyed
 
-▸ `Static` **on**(`emitter`, `event`, `options?`): `AsyncIterableIterator`<`any`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`AsyncIterableIterator`<`any`\>
+• **destroyed**: `boolean`
 
 #### Inherited from
 
-Duplex.on
+Duplex.destroyed
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:27
+node_modules/@types/node/stream.d.ts:41
 
 ___
 
-### once
+### errorMonitor
 
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
+▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](DuplexStream.md#errormonitor)
+
+This symbol shall be used to install a listener for only monitoring `'error'`
+events. Listeners installed using this symbol are called before the regular
+`'error'` listeners are called.
+
+Installing a listener using this symbol does not change the behavior once an
+`'error'` event is emitted, therefore the process will still crash if no
+regular `'error'` listener is installed.
+
+#### Inherited from
+
+Duplex.errorMonitor
+
+#### Defined in
+
+node_modules/@types/node/events.d.ts:45
+
+___
+
+### input
+
+• **input**: `Readable`
+
+#### Defined in
+
+[packages/api-server/src/lib/duplex-stream.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L4)
+
+___
+
+### output
+
+• **output**: `Writable`
+
+#### Defined in
+
+[packages/api-server/src/lib/duplex-stream.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L5)
+
+___
+
+### readable
+
+• **readable**: `boolean`
+
+#### Inherited from
+
+Duplex.readable
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:34
+
+___
+
+### readableEncoding
+
+• `Readonly` **readableEncoding**: ``null`` \| `BufferEncoding`
+
+#### Inherited from
+
+Duplex.readableEncoding
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:35
+
+___
+
+### readableEnded
+
+• `Readonly` **readableEnded**: `boolean`
+
+#### Inherited from
+
+Duplex.readableEnded
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:36
+
+___
+
+### readableFlowing
+
+• `Readonly` **readableFlowing**: ``null`` \| `boolean`
+
+#### Inherited from
+
+Duplex.readableFlowing
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:37
+
+___
+
+### readableHighWaterMark
+
+• `Readonly` **readableHighWaterMark**: `number`
+
+#### Inherited from
+
+Duplex.readableHighWaterMark
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:38
+
+___
+
+### readableLength
+
+• `Readonly` **readableLength**: `number`
+
+#### Inherited from
+
+Duplex.readableLength
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:39
+
+___
+
+### readableObjectMode
+
+• `Readonly` **readableObjectMode**: `boolean`
+
+#### Inherited from
+
+Duplex.readableObjectMode
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:40
+
+___
+
+### writable
+
+• `Readonly` **writable**: `boolean`
+
+#### Inherited from
+
+Duplex.writable
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:251
+
+___
+
+### writableCorked
+
+• `Readonly` **writableCorked**: `number`
+
+#### Inherited from
+
+Duplex.writableCorked
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:257
+
+___
+
+### writableEnded
+
+• `Readonly` **writableEnded**: `boolean`
+
+#### Inherited from
+
+Duplex.writableEnded
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:252
+
+___
+
+### writableFinished
+
+• `Readonly` **writableFinished**: `boolean`
+
+#### Inherited from
+
+Duplex.writableFinished
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:253
+
+___
+
+### writableHighWaterMark
+
+• `Readonly` **writableHighWaterMark**: `number`
+
+#### Inherited from
+
+Duplex.writableHighWaterMark
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:254
+
+___
+
+### writableLength
+
+• `Readonly` **writableLength**: `number`
+
+#### Inherited from
+
+Duplex.writableLength
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:255
+
+___
+
+### writableObjectMode
+
+• `Readonly` **writableObjectMode**: `boolean`
+
+#### Inherited from
+
+Duplex.writableObjectMode
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:256
+
+## Constructors
+
+### constructor
+
+• **new DuplexStream**(`options`, `input`, `output`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `emitter` | `NodeEventTarget` |
-| `event` | `string` \| `symbol` |
-| `options?` | `StaticEventEmitterOptions` |
+| `options` | `DuplexOptions` |
+| `input` | `Readable` |
+| `output` | `Writable` |
 
-#### Returns
+#### Overrides
 
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-Duplex.once
+Duplex.constructor
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:25
-
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `DOMEventTarget` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-Duplex.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:26
+[packages/api-server/src/lib/duplex-stream.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L7)

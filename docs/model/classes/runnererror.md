@@ -1,4 +1,4 @@
-[@scramjet/model](../README.md) / RunnerError
+[@scramjet/model](../README.md) / [Exports](../modules.md) / RunnerError
 
 # Class: RunnerError
 
@@ -10,13 +10,13 @@
 
 ## Implements
 
-- [`IRunnerErrorData`](../README.md#irunnererrordata)
+- [`IRunnerErrorData`](../modules.md#irunnererrordata)
 
 ## Table of contents
 
-### Constructors
+### Methods
 
-- [constructor](runnererror.md#constructor)
+- [captureStackTrace](runnererror.md#capturestacktrace)
 
 ### Properties
 
@@ -24,34 +24,40 @@
 - [data](runnererror.md#data)
 - [message](runnererror.md#message)
 - [name](runnererror.md#name)
-- [stack](runnererror.md#stack)
 - [prepareStackTrace](runnererror.md#preparestacktrace)
+- [stack](runnererror.md#stack)
 - [stackTraceLimit](runnererror.md#stacktracelimit)
 
-### Methods
+### Constructors
 
-- [captureStackTrace](runnererror.md#capturestacktrace)
+- [constructor](runnererror.md#constructor)
 
-## Constructors
+## Methods
 
-### constructor
+### captureStackTrace
 
-• **new RunnerError**(`code`, `data?`)
+▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
+
+Create .stack property on a target object
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `code` | `RunnerErrorCode` |
-| `data?` | `any` |
+| `targetObject` | `object` |
+| `constructorOpt?` | `Function` |
 
-#### Overrides
+#### Returns
 
-[AppError](apperror.md).[constructor](apperror.md#constructor)
+`void`
+
+#### Inherited from
+
+[AppError](apperror.md).[captureStackTrace](apperror.md#capturestacktrace)
 
 #### Defined in
 
-[packages/model/src/errors/runner-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/runner-error.ts#L6)
+node_modules/@types/node/globals.d.ts:4
 
 ## Properties
 
@@ -111,20 +117,6 @@ node_modules/typescript/lib/lib.es5.d.ts:1022
 
 ___
 
-### stack
-
-• `Optional` **stack**: `string`
-
-#### Inherited from
-
-[AppError](apperror.md).[stack](apperror.md#stack)
-
-#### Defined in
-
-node_modules/typescript/lib/lib.es5.d.ts:1024
-
-___
-
 ### prepareStackTrace
 
 ▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
@@ -156,6 +148,20 @@ node_modules/@types/node/globals.d.ts:11
 
 ___
 
+### stack
+
+• `Optional` **stack**: `string`
+
+#### Inherited from
+
+[AppError](apperror.md).[stack](apperror.md#stack)
+
+#### Defined in
+
+node_modules/typescript/lib/lib.es5.d.ts:1024
+
+___
+
 ### stackTraceLimit
 
 ▪ `Static` **stackTraceLimit**: `number`
@@ -168,29 +174,23 @@ ___
 
 node_modules/@types/node/globals.d.ts:13
 
-## Methods
+## Constructors
 
-### captureStackTrace
+### constructor
 
-▸ `Static` **captureStackTrace**(`targetObject`, `constructorOpt?`): `void`
-
-Create .stack property on a target object
+• **new RunnerError**(`code`, `data?`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `targetObject` | `object` |
-| `constructorOpt?` | `Function` |
+| `code` | `RunnerErrorCode` |
+| `data?` | `any` |
 
-#### Returns
+#### Overrides
 
-`void`
-
-#### Inherited from
-
-[AppError](apperror.md).[captureStackTrace](apperror.md#capturestacktrace)
+[AppError](apperror.md).[constructor](apperror.md#constructor)
 
 #### Defined in
 
-node_modules/@types/node/globals.d.ts:4
+[packages/model/src/errors/runner-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/runner-error.ts#L6)

@@ -1,7 +1,11 @@
 import { Server } from "http";
-import { EventEmitter } from "events";
 
 import { VerserConnection } from "./verser-connection";
+import { TypedEmitter } from "@scramjet/utility";
+
+type Events = {
+    connect: (connection: VerserConnection) => void;
+}
 
 /**
  * Verser class.
@@ -9,15 +13,34 @@ import { VerserConnection } from "./verser-connection";
  * When instanced it sets up a listener for incoming "CONNECT" connections on the provided server.
  * When a new connection is received it emits "connect" event with  VerserConnection instance
  */
-export class Verser extends EventEmitter {
+export class Verser extends TypedEmitter<Events> {
     private server: Server;
+    private connections: VerserConnection[] = [];
 
     constructor(server: Server) {
         super();
         this.server = server;
 
         this.server.on("connect", (req, socket) => {
-            this.emit("connect", new VerserConnection(req, socket));
+            const connection = new VerserConnection(req, socket);
+
+            this.connections.push(connection);
+
+            this.emit("connect", connection);
+        });
+    }
+
+    async disconnect() {
+        await Promise.all(this.connections.map(connection => connection.close()));
+
+        this.connections = [];
+    }
+
+    async stop() {
+        await this.disconnect();
+
+        await new Promise<void>(res => {
+            this.server.once("close", res).close();
         });
     }
 }

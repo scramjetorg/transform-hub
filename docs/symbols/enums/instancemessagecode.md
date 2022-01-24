@@ -1,4 +1,4 @@
-[@scramjet/symbols](../README.md) / InstanceMessageCode
+[@scramjet/symbols](../README.md) / [Exports](../modules.md) / InstanceMessageCode
 
 # Enumeration: InstanceMessageCode
 

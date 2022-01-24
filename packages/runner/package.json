@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/runner",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./src/bin/start-runner.ts",
   "scripts": {
@@ -8,7 +8,6 @@
     "build:docker": "docker build -t scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
-    "test": "echo \"Skip for now\" #nyc ava",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$npm_package_version",
     "clean": "rm -rf ./dist .bic_cache",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
@@ -18,14 +17,14 @@
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
   "dependencies": {
-    "@scramjet/logger": "^0.14.0",
-    "@scramjet/model": "^0.14.0",
-    "@scramjet/symbols": "^0.14.0",
-    "@scramjet/utility": "^0.14.0",
+    "@scramjet/logger": "^0.15.0",
+    "@scramjet/model": "^0.15.0",
+    "@scramjet/symbols": "^0.15.0",
+    "@scramjet/utility": "^0.15.0",
     "scramjet": "^4.36.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.14.0",
+    "@scramjet/types": "^0.15.0",
     "@types/node": "15.12.5",
     "@types/sinon": "^10.0.2",
     "ava": "^3.15.0",

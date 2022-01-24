@@ -2,7 +2,7 @@ import * as fs from "fs";
 
 import { Agent, ClientRequest, IncomingMessage, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
-import { Duplex, EventEmitter, Readable } from "stream";
+import { Duplex, Readable } from "stream";
 import {
     STHRestAPI,
     CPMConnectorOptions,
@@ -22,9 +22,15 @@ import { getLogger } from "@scramjet/logger";
 import { LoadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
 import { VerserClient } from "@scramjet/verser";
+import { TypedEmitter } from "@scramjet/utility";
 
 type STHInformation = {
     id?: string;
+}
+
+type Events = {
+    connect: () => void,
+    "log_connect": (logStream: NodeJS.WritableStream) => void;
 }
 
 /**
@@ -32,7 +38,7 @@ type STHInformation = {
  *
  * @class CPMConnector
  */
-export class CPMConnector extends EventEmitter {
+export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Maximum attempts for first connection try.
      *
@@ -335,6 +341,11 @@ export class CPMConnector extends EventEmitter {
 
         connection.req.on("error", (error: any) => {
             this.logger.error("Request error:", error);
+            this.reconnect();
+        });
+
+        this.verserClient.on("error", (error: any) => {
+            this.logger.error("VerserClient error:", error);
             this.reconnect();
         });
     }

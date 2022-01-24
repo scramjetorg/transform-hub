@@ -1,4 +1,4 @@
-[@scramjet/utility](../README.md) / FreePortsFinder
+[@scramjet/utility](../README.md) / [Exports](../modules.md) / FreePortsFinder
 
 # Class: FreePortsFinder
 
@@ -6,21 +6,15 @@ Provides methods to find free tcp/udp ports.
 
 ## Table of contents
 
-### Constructors
-
-- [constructor](freeportsfinder.md#constructor)
-
 ### Methods
 
 - [checkTCPPort](freeportsfinder.md#checktcpport)
 - [checkUDPPort](freeportsfinder.md#checkudpport)
 - [getPorts](freeportsfinder.md#getports)
 
-## Constructors
+### Constructors
 
-### constructor
-
-• **new FreePortsFinder**()
+- [constructor](freeportsfinder.md#constructor)
 
 ## Methods
 
@@ -44,7 +38,7 @@ Promise resolving to true if port is available, false otherwise.
 
 #### Defined in
 
-[free-ports-finder.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L14)
+[packages/utility/src/free-ports-finder.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L14)
 
 ___
 
@@ -68,7 +62,7 @@ Promise resolving to true if port is available, false otherwise.
 
 #### Defined in
 
-[free-ports-finder.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L40)
+[packages/utility/src/free-ports-finder.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L40)
 
 ___
 
@@ -94,4 +88,10 @@ Promise resolving to array of free ports.
 
 #### Defined in
 
-[free-ports-finder.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L68)
+[packages/utility/src/free-ports-finder.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L68)
+
+## Constructors
+
+### constructor
+
+• **new FreePortsFinder**()

@@ -1,162 +1,82 @@
-@scramjet/utility
+@scramjet/utility / [Exports](modules.md)
 
-# @scramjet/utility
+# `@scramjet/utility`
 
-## Table of contents
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth). The package holds utility functions used in places around Scramjet Transform Hub.
 
-### Classes
-
-- [FreePortsFinder](classes/freeportsfinder.md)
-
-### Functions
-
-- [defer](README.md#defer)
-- [isDefined](README.md#isdefined)
-- [merge](README.md#merge)
-- [promiseTimeout](README.md#promisetimeout)
-- [readStreamedJSON](README.md#readstreamedjson)
+This package includes **domain agnostic** utility **functions**, meaning there shouldn't be any business use-case specific code here. It's important since a package like this one tends to be a very common dependency for other packages. Ideally functions from this package should be written once, well tested and never changed.
 
 ## Functions
 
-### defer
+### Example of a **GOOD** function for this package
 
-▸ `Const` **defer**(`timeout`): `Promise`<`void`\>
+This function does not have any knowledge of business components in the system and it's simple. Thus it's pretty stable.
 
-Returns a promise that resolves after the specified duration.
+```ts
+export const defer = (timeout: number): Promise<void> =>
+    new Promise(res => setTimeout(res, timeout));
+```
 
-**`example`**
-// waits for 10 second
-await defer(10 * 1000);
+### Example of a **BAD** function for this package
 
-#### Parameters
+Knowledge about different types of streams on our platform indicates that this function defines a business logic.
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `timeout` | `number` | timeout in milliseconds. |
+```ts
+import { EncodedMonitoringMessage, WritableStream } from "@scramjet/types";
 
-#### Returns
+export class MessageUtils {
+    public static writeMessageOnStream([code, data]: EncodedMonitoringMessage, streamToWrite?: WritableStream<any>){
+        if (streamToWrite === undefined) {
+            throw new Error("The Stream is not defined.");
+        }
 
-`Promise`<`void`\>
+        streamToWrite.write(JSON.stringify([code, data]) + "\r\n");
+    }
+}
+```
 
-- promise that resolves after timeout.
+## Docs
 
-#### Defined in
+See the code documentation here: [scramjetorg/transform-hub/docs/types/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/types/modules.md)
 
-[defer.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/defer.ts#L10)
+## Scramjet Transform Hub
 
-___
+This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
 
-### isDefined
+Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
-▸ **isDefined**<`T`\>(`value`): value is T
+## Some important links
 
-Returns true if given value is defined.
+* Scramjet, the company behind [Transform Hub](https://scramjet.org)
+* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
+* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
+* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
+* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
-#### Type parameters
+## License and contributions
 
-| Name | Type |
-| :------ | :------ |
-| `T` | extends `unknown` |
+This module is licensed under AGPL-3.0 license.
 
-#### Parameters
+The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `value` | `T` \| `undefined` \| ``null`` | Value to check. |
+## Contributions
 
-#### Returns
+We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
 
-value is T
+We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
 
-Returns true if given value is defined.
+### Help wanted :information_desk_person:
 
-#### Defined in
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
-[typeguards/is-defined.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-defined.ts#L7)
+### Donation :money_with_wings:
 
-___
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
 
-### merge
+[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
-▸ `Const` **merge**<`T`\>(`target`, `source?`): `void`
+* There's also a Paypal donation link if you prefer that:
 
-Deep merge objects.
-Copies all properties from source to target.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends `Record`<`string`, `unknown`\> |
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `target` | `T` | Target object. |
-| `source` | `DeepPartial`<`T`\> | Source object. |
-
-#### Returns
-
-`void`
-
-Returns nothing.
-
-#### Defined in
-
-[merge.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/merge.ts#L11)
-
-___
-
-### promiseTimeout
-
-▸ `Const` **promiseTimeout**<`T`\>(`promise`, `timeout`): `Promise`<`T`\>
-
-Returns a promise rejecting after the specified timeout or a given promise.
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `T` | extends `unknown` |
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `promise` | `Promise`<`T`\> | Promise to wait for. |
-| `timeout` | `number` | Timeout in milliseconds. |
-
-#### Returns
-
-`Promise`<`T`\>
-
-Promise that reject after timeout or.
-
-#### Defined in
-
-[promise-timeout.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/promise-timeout.ts#L10)
-
-___
-
-### readStreamedJSON
-
-▸ **readStreamedJSON**(`readable`): `Promise`<`unknown`\>
-
-Reads and parses JSON from a stream.
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `readable` | `Readable` | Stream to read from. |
-
-#### Returns
-
-`Promise`<`unknown`\>
-
-Promise that resolves with the parsed JSON.
-
-#### Defined in
-
-[read-streamed-json.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-streamed-json.ts#L10)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)

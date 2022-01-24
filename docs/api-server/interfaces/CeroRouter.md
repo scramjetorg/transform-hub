@@ -1,10 +1,10 @@
-[@scramjet/api-server](../README.md) / CeroRouter
+[@scramjet/api-server](../README.md) / [Modules](../modules.md) / CeroRouter
 
 # Interface: CeroRouter
 
 ## Hierarchy
 
-- `TRouter`<[`CeroMiddleware`](../README.md#ceromiddleware)\>
+- `TRouter`<[`CeroMiddleware`](../modules.md#ceromiddleware)\>
 
   ↳ **`CeroRouter`**
 

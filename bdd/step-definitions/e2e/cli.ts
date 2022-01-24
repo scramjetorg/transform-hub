@@ -37,6 +37,10 @@ When("I execute CLI with bash command {string}", { timeout: 30000 }, async funct
 
 When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        console.error(stdio);
+    }
     assert.equal(stdio[2], 0);
 });
 
@@ -121,6 +125,36 @@ Then("I get array of information about sequences", function() {
     const arr = JSON.parse(stdio[0].replace("\n", ""));
 
     assert.equal(Array.isArray(arr), true);
+});
+
+Then('I get the last instance id from config', async function() {
+    // Write code here that turns the phrase above into concrete actions
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "p", "--format", "json"]);
+    instanceId = JSON.parse(stdio[0]).lastInstanceId;
+
+    assert.ok(typeof instanceId === "string", "instanceId must be defined");
+    assert.ok(instanceId.length > 0, "Instance id is not empty");
+});
+
+Then('I get the last sequence id from config', async function() {
+    // Write code here that turns the phrase above into concrete actions
+    stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "p", "--format", "json"]);
+    if (process.env.SCRAMJET_TEST_LOG) {
+        console.error(stdio);
+    }
+
+    sequenceId = JSON.parse(stdio[0]).lastSequenceId;
+
+    assert.ok(typeof sequenceId === "string", "sequenceId must be defined");
+    assert.ok(sequenceId.length > 0, "Sequence id is not empty");
+});
+
+Then('The sequence id equals {string}', function(str: string) {
+    assert.strictEqual(str, sequenceId);
+});
+
+Then('The instance id equals {string}', function(str: string) {
+    assert.strictEqual(str, instanceId);
 });
 
 Then("I start Sequence", async function() {

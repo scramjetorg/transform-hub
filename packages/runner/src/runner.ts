@@ -7,7 +7,7 @@ import {
     EventMessageData,
     HandshakeAcknowledgeMessageData,
     IComponent,
-    ICSHClient,
+    IHostClient,
     Logger,
     MaybePromise,
     MonitoringRateMessageData,
@@ -51,9 +51,14 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     });
 }
 
+/**
+ * Runtime environment for sequence code.
+ * Communicates with Host with data transfered to/from sequence, health info,
+ * reacts to control messages such as stopping etc. 
+ */
 export class Runner<X extends AppConfig> implements IComponent {
     private emitter;
-    private context?: RunnerAppContext<X, any>;
+    private _context?: RunnerAppContext<X, any>;
     private monitoringInterval?: NodeJS.Timeout;
     private keepAliveRequested?: boolean;
 
@@ -70,7 +75,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     constructor(
         private sequencePath: string,
-        private hostClient: ICSHClient,
+        private hostClient: IHostClient,
         private instanceId: string
     ) {
         this.emitter = new EventEmitter();
@@ -83,6 +88,16 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.error("Error during input data stream.", e);
             throw e;
         });
+    }
+
+    get context(): RunnerAppContext<X, any> {
+        if (!this._context) {
+            this.logger.error("Uninitialized context.");
+
+            throw new RunnerError("UNINITIALIZED_CONTEXT");
+        }
+
+        return this._context;
     }
 
     async controlStreamHandler([code, data]: EncodedControlMessage) {
@@ -173,12 +188,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         let working = false;
 
-        if (this.context === undefined || this.context.monitor === undefined) {
-            this.logger.error("No monitoring stream.");
-
-            throw new RunnerError("NO_MONITORING");
-        }
-
         this.monitoringInterval = setInterval(async () => {
             if (working) return;
 
@@ -189,15 +198,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async reportHealth() {
-        const { context } = this;
-
-        if (!context) {
-            // Context is not yet defined
-            this.logger.warn("Undefined context while reporting health");
-            return;
-        }
-
-        const { healthy } = await context.monitor();
+        const { healthy } = await this.context.monitor();
 
         MessageUtils.writeMessageOnStream(
             [RunnerMessageCode.MONITORING, { healthy }], this.hostClient.monitorStream
@@ -207,7 +208,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     async handleKillRequest(): Promise<void> {
         this.logger.log("Handling KILL request...");
 
-        this.context?.killHandler();
+        this.context.killHandler();
         await this.cleanup();
 
         //TODO: investigate why we need to wait (process.tick - no all logs)
@@ -221,12 +222,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
-        if (!this.context) {
-            this.logger.error("Uninitialized context.");
-
-            throw new RunnerError("UNINITIALIZED_CONTEXT");
-        }
-
         this.keepAliveRequested = false;
 
         let sequenceError;
@@ -288,12 +283,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.log("Handshake received.");
 
         this.initAppContext(appConfig as X);
-
-        if (!this.context) {
-            this.logger.error("Uninitialized context.");
-
-            throw new RunnerError("UNINITIALIZED_CONTEXT");
-        }
 
         await this.reportHealth();
         await this.handleMonitoringRequest({ monitoringRate: 1 });
@@ -391,7 +380,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])
         };
 
-        this.context = new RunnerAppContext(config, this.hostClient.monitorStream, this.emitter, runner);
+        this._context = new RunnerAppContext(config, this.hostClient.monitorStream, this.emitter, runner);
 
         this.handleSequenceEvents();
     }

@@ -4,7 +4,7 @@ This package executes the Sequences and provides control mechanisms to them.
 
 ## Docs
 
->!docs runner/README.md &
+>!docs runner/modules.md &
 
 >@sth
 >@use-cases

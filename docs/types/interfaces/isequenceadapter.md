@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / ISequenceAdapter
+[@scramjet/types](../README.md) / [Exports](../modules.md) / ISequenceAdapter
 
 # Interface: ISequenceAdapter
 
@@ -15,7 +15,7 @@
 
 ### identify
 
-▸ **identify**(`stream`, `id`): `Promise`<[`SequenceConfig`](../README.md#sequenceconfig)\>
+▸ **identify**(`stream`, `id`): `Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)\>
 
 Identifies new sequence
 
@@ -28,7 +28,7 @@ Identifies new sequence
 
 #### Returns
 
-`Promise`<[`SequenceConfig`](../README.md#sequenceconfig)\>
+`Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)\>
 
 #### Defined in
 
@@ -52,13 +52,13 @@ ___
 
 ### list
 
-▸ **list**(): `Promise`<[`SequenceConfig`](../README.md#sequenceconfig)[]\>
+▸ **list**(): `Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)[]\>
 
 Identifies existing sequences
 
 #### Returns
 
-`Promise`<[`SequenceConfig`](../README.md#sequenceconfig)[]\>
+`Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)[]\>
 
 #### Defined in
 
@@ -74,7 +74,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `conifg` | [`SequenceConfig`](../README.md#sequenceconfig) |
+| `conifg` | [`SequenceConfig`](../modules.md#sequenceconfig) |
 
 #### Returns
 

@@ -3,14 +3,20 @@
 import { Runner } from "../runner";
 import * as fs from "fs";
 import { AppConfig } from "@scramjet/types";
-import { CSHClient } from "../csh-client";
+import { HostClient } from "../host-client";
 
 const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
+const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
 
 if (!instancesServerPort || instancesServerPort !== parseInt(instancesServerPort, 10).toString()) {
     console.error("Incorrect run argument: instancesServerPort");
+    process.exit(1);
+}
+
+if (!instancesServerHost) {
+    console.error("Incorrect run argument: instancesServerHost");
     process.exit(1);
 }
 
@@ -24,7 +30,7 @@ if (!fs.existsSync(sequencePath)) {
     process.exit(1);
 }
 
-const hostClient = new CSHClient(+instancesServerPort);
+const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
 
 /**
  * Start runner script.

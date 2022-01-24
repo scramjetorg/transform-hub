@@ -1,4 +1,4 @@
-[@scramjet/api-client](../README.md) / HttpClient
+[@scramjet/api-client](../README.md) / [Exports](../modules.md) / HttpClient
 
 # Interface: HttpClient
 
@@ -27,7 +27,7 @@
 
 | Name | Type |
 | :------ | :------ |
-| `logger` | [`RequestLogger`](../README.md#requestlogger) |
+| `logger` | [`RequestLogger`](../modules.md#requestlogger) |
 
 #### Returns
 
@@ -41,7 +41,7 @@ ___
 
 ### delete
 
-▸ **delete**(`url`): `Promise`<[`Response`](../README.md#response)\>
+▸ **delete**(`url`): `Promise`<[`Response`](../modules.md#response)\>
 
 #### Parameters
 
@@ -51,7 +51,7 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 #### Defined in
 
@@ -61,7 +61,7 @@ ___
 
 ### get
 
-▸ **get**(`url`): `Promise`<[`Response`](../README.md#response)\>
+▸ **get**(`url`): `Promise`<[`Response`](../modules.md#response)\>
 
 #### Parameters
 
@@ -71,7 +71,7 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 #### Defined in
 
@@ -81,7 +81,7 @@ ___
 
 ### getStream
 
-▸ **getStream**(`url`): `Promise`<[`ResponseStream`](../README.md#responsestream)\>
+▸ **getStream**(`url`): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 #### Parameters
 
@@ -91,7 +91,7 @@ ___
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../README.md#responsestream)\>
+`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
 
 #### Defined in
 
@@ -101,7 +101,7 @@ ___
 
 ### post
 
-▸ **post**(`url`, `data`, `headers?`, `options?`): `Promise`<[`Response`](../README.md#response)\>
+▸ **post**(`url`, `data`, `headers?`, `options?`): `Promise`<[`Response`](../modules.md#response)\>
 
 #### Parameters
 
@@ -114,7 +114,7 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 #### Defined in
 
@@ -124,7 +124,7 @@ ___
 
 ### sendStream
 
-▸ **sendStream**(`url`, `stream`, `options?`): `Promise`<[`Response`](../README.md#response)\>
+▸ **sendStream**(`url`, `stream`, `options?`): `Promise`<[`Response`](../modules.md#response)\>
 
 #### Parameters
 
@@ -136,7 +136,7 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../README.md#response)\>
+`Promise`<[`Response`](../modules.md#response)\>
 
 #### Defined in
 

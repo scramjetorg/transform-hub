@@ -1,18 +1,16 @@
-[@scramjet/host](../README.md) / CPMConnector
+[@scramjet/host](../README.md) / [Exports](../modules.md) / CPMConnector
 
 # Class: CPMConnector
 
+Provides communication with Manager.
+
 ## Hierarchy
 
-- `EventEmitter`
+- `TypedEmitter`<`Events`\>
 
   ↳ **`CPMConnector`**
 
 ## Table of contents
-
-### Constructors
-
-- [constructor](CPMConnector.md#constructor)
 
 ### Properties
 
@@ -35,10 +33,6 @@
 - [logger](CPMConnector.md#logger)
 - [verserClient](CPMConnector.md#verserclient)
 - [wasConnected](CPMConnector.md#wasconnected)
-- [captureRejectionSymbol](CPMConnector.md#capturerejectionsymbol)
-- [captureRejections](CPMConnector.md#capturerejections)
-- [defaultMaxListeners](CPMConnector.md#defaultmaxlisteners)
-- [errorMonitor](CPMConnector.md#errormonitor)
 
 ### Methods
 
@@ -76,32 +70,10 @@
 - [setLoadCheck](CPMConnector.md#setloadcheck)
 - [setLoadCheckMessageSender](CPMConnector.md#setloadcheckmessagesender)
 - [setMaxListeners](CPMConnector.md#setmaxlisteners)
-- [getEventListener](CPMConnector.md#geteventlistener)
-- [listenerCount](CPMConnector.md#listenercount)
-- [on](CPMConnector.md#on)
-- [once](CPMConnector.md#once)
 
-## Constructors
+### Constructors
 
-### constructor
-
-• **new CPMConnector**(`cpmUrl`, `config`, `server`)
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `cpmUrl` | `string` |
-| `config` | `CPMConnectorOptions` |
-| `server` | `Server` |
-
-#### Overrides
-
-EventEmitter.constructor
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L52)
+- [constructor](CPMConnector.md#constructor)
 
 ## Properties
 
@@ -109,105 +81,7 @@ EventEmitter.constructor
 
 • **MAX\_CONNECTION\_ATTEMPTS**: `number` = `100`
 
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L30)
-
-___
-
-### MAX\_RECONNECTION\_ATTEMPTS
-
-• **MAX\_RECONNECTION\_ATTEMPTS**: `number` = `100`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L31)
-
-___
-
-### RECONNECT\_INTERVAL
-
-• **RECONNECT\_INTERVAL**: `number` = `2000`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L32)
-
-___
-
-### apiServer
-
-• `Optional` **apiServer**: `Server`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L36)
-
-___
-
-### communicationChannel
-
-• `Optional` **communicationChannel**: `Duplex`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L39)
-
-___
-
-### communicationStream
-
-• `Optional` **communicationStream**: `StringStream`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L38)
-
-___
-
-### config
-
-• **config**: `CPMConnectorOptions`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L35)
-
-___
-
-### connected
-
-• **connected**: `boolean` = `false`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L37)
-
-___
-
-### connection
-
-• `Optional` **connection**: `ClientRequest`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L43)
-
-___
-
-### connectionAttempts
-
-• **connectionAttempts**: `number` = `0`
-
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L46)
-
-___
-
-### cpmURL
-
-• **cpmURL**: `string`
+Maximum attempts for first connection try.
 
 #### Defined in
 
@@ -215,13 +89,138 @@ ___
 
 ___
 
+### MAX\_RECONNECTION\_ATTEMPTS
+
+• **MAX\_RECONNECTION\_ATTEMPTS**: `number` = `100`
+
+Maximum retries on connection lost.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L54)
+
+___
+
+### RECONNECT\_INTERVAL
+
+• **RECONNECT\_INTERVAL**: `number` = `2000`
+
+Delay between connection attempts.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L61)
+
+___
+
+### apiServer
+
+• `Optional` **apiServer**: `Server`
+
+Server to handle request coming from Manager.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:82](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L82)
+
+___
+
+### communicationChannel
+
+• `Optional` **communicationChannel**: `Duplex`
+
+Stream used to read and write data to Manager.
+```
+
+@type {Duplex}
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L104)
+
+___
+
+### communicationStream
+
+• `Optional` **communicationStream**: `StringStream`
+
+Stream used to write data to Manager.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L96)
+
+___
+
+### config
+
+• **config**: `CPMConnectorOptions`
+
+Connector options.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L75)
+
+___
+
+### connected
+
+• **connected**: `boolean` = `false`
+
+Connection status indicator.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L89)
+
+___
+
+### connection
+
+• `Optional` **connection**: `ClientRequest`
+
+Connection object.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L130)
+
+___
+
+### connectionAttempts
+
+• **connectionAttempts**: `number` = `0`
+
+Connection attempts counter
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:147](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L147)
+
+___
+
+### cpmURL
+
+• **cpmURL**: `string`
+
+Hostname of Manager (e.g. "localhost:8080").
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L154)
+
+___
+
 ### customId
 
 • **customId**: `boolean` = `false`
 
+Custom id indicator.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L41)
+[packages/host/src/lib/cpm-connector.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L118)
 
 ___
 
@@ -229,9 +228,11 @@ ___
 
 • **info**: `STHInformation` = `{}`
 
+Host info object containing host id.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L42)
+[packages/host/src/lib/cpm-connector.ts:125](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L125)
 
 ___
 
@@ -239,9 +240,11 @@ ___
 
 • **isReconnecting**: `boolean` = `false`
 
+Indicator for reconnection state.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L44)
+[packages/host/src/lib/cpm-connector.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L135)
 
 ___
 
@@ -249,9 +252,11 @@ ___
 
 • `Optional` **loadCheck**: `LoadCheck`
 
+Load check instance to be used to get load check data.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L34)
+[packages/host/src/lib/cpm-connector.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L68)
 
 ___
 
@@ -259,9 +264,11 @@ ___
 
 • `Optional` **loadInterval**: `Timeout`
 
+Reference for method called in interval and sending load check data to the Manager.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L50)
+[packages/host/src/lib/cpm-connector.ts:168](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L168)
 
 ___
 
@@ -269,9 +276,11 @@ ___
 
 • **logger**: `Console`
 
+Logger instance.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L40)
+[packages/host/src/lib/cpm-connector.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L111)
 
 ___
 
@@ -279,9 +288,11 @@ ___
 
 • **verserClient**: `VerserClient`
 
+VerserClient instance used for connecting with Verser.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L48)
+[packages/host/src/lib/cpm-connector.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L161)
 
 ___
 
@@ -289,88 +300,30 @@ ___
 
 • **wasConnected**: `boolean` = `false`
 
-#### Defined in
-
-[packages/host/src/lib/cpm-connector.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L45)
-
-___
-
-### captureRejectionSymbol
-
-▪ `Static` `Readonly` **captureRejectionSymbol**: typeof [`captureRejectionSymbol`](CPMConnector.md#capturerejectionsymbol)
-
-#### Inherited from
-
-EventEmitter.captureRejectionSymbol
+True if connection to Manager has been established at least once.
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:46
-
-___
-
-### captureRejections
-
-▪ `Static` **captureRejections**: `boolean`
-
-Sets or gets the default captureRejection value for all emitters.
-
-#### Inherited from
-
-EventEmitter.captureRejections
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:52
-
-___
-
-### defaultMaxListeners
-
-▪ `Static` **defaultMaxListeners**: `number`
-
-#### Inherited from
-
-EventEmitter.defaultMaxListeners
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:53
-
-___
-
-### errorMonitor
-
-▪ `Static` `Readonly` **errorMonitor**: typeof [`errorMonitor`](CPMConnector.md#errormonitor)
-
-This symbol shall be used to install a listener for only monitoring `'error'`
-events. Listeners installed using this symbol are called before the regular
-`'error'` listeners are called.
-
-Installing a listener using this symbol does not change the behavior once an
-`'error'` event is emitted, therefore the process will still crash if no
-regular `'error'` listener is installed.
-
-#### Inherited from
-
-EventEmitter.errorMonitor
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:45
+[packages/host/src/lib/cpm-connector.ts:140](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L140)
 
 ## Methods
 
 ### addListener
 
-▸ **addListener**(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+▸ **addListener**<`E`\>(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
 
 #### Returns
 
@@ -378,11 +331,11 @@ node_modules/@types/node/events.d.ts:45
 
 #### Inherited from
 
-EventEmitter.addListener
+TypedEmitter.addListener
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:72
+node_modules/typed-emitter/index.d.ts:24
 
 ___
 
@@ -390,11 +343,13 @@ ___
 
 ▸ **attachServer**(`server`): `void`
 
+Sets up server to handle incoming requests.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `server` | `Server` & { `httpAllowHalfOpen?`: `boolean`  } |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `server` | `Server` & { `httpAllowHalfOpen?`: `boolean`  } | Server to handle incoming requests from connected manager. |
 
 #### Returns
 
@@ -402,7 +357,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L102)
+[packages/host/src/lib/cpm-connector.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L249)
 
 ___
 
@@ -410,26 +365,39 @@ ___
 
 ▸ **connect**(): `Promise`<`void`\>
 
+Connect to Manager using VerserClient.
+Host send its id to Manager in headers. If id is not set, it will be received from Manager.
+When connection is established it sets up handlers for communication channels.
+If connection fails, it will try to reconnect.
+
 #### Returns
 
 `Promise`<`void`\>
 
+Promise that resolves when connection is established.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L153)
+[packages/host/src/lib/cpm-connector.ts:313](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L313)
 
 ___
 
 ### emit
 
-▸ **emit**(`event`, ...`args`): `boolean`
+▸ **emit**<`E`\>(`event`, ...`args`): `boolean`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `...args` | `any`[] |
+| `event` | `E` |
+| `...args` | `Arguments`<`Events`[`E`]\> |
 
 #### Returns
 
@@ -437,11 +405,11 @@ ___
 
 #### Inherited from
 
-EventEmitter.emit
+TypedEmitter.emit
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:82
+node_modules/typed-emitter/index.d.ts:34
 
 ___
 
@@ -455,11 +423,11 @@ ___
 
 #### Inherited from
 
-EventEmitter.eventNames
+TypedEmitter.eventNames
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:87
+node_modules/typed-emitter/index.d.ts:35
 
 ___
 
@@ -467,13 +435,17 @@ ___
 
 ▸ **getId**(): `undefined` \| `string`
 
+Returns hosts id.
+
 #### Returns
 
 `undefined` \| `string`
 
+Host id.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L68)
+[packages/host/src/lib/cpm-connector.ts:202](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L202)
 
 ___
 
@@ -481,13 +453,17 @@ ___
 
 ▸ **getLoad**(): `Promise`<`LoadCheckStatMessage`\>
 
+Retrieves load check data using LoadCheck module.
+
 #### Returns
 
 `Promise`<`LoadCheckStatMessage`\>
 
+Promise<LoadCheckStatMessage> Promise resolving to LoadCheckStatMessage object.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:252](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L252)
+[packages/host/src/lib/cpm-connector.ts:440](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L440)
 
 ___
 
@@ -501,11 +477,11 @@ ___
 
 #### Inherited from
 
-EventEmitter.getMaxListeners
+TypedEmitter.getMaxListeners
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:79
+node_modules/typed-emitter/index.d.ts:40
 
 ___
 
@@ -513,13 +489,17 @@ ___
 
 ▸ **getNetworkInfo**(): `Promise`<`NetworkInfo`[]\>
 
+Returns network interfaces information.
+
 #### Returns
 
 `Promise`<`NetworkInfo`[]\>
 
+Promise resolving to NetworkInfo object.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:227](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L227)
+[packages/host/src/lib/cpm-connector.ts:407](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L407)
 
 ___
 
@@ -527,19 +507,23 @@ ___
 
 ▸ **getTopic**(`topic`): `Promise`<`Readable`\>
 
+Connects to Manager for topic data.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `topic` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `topic` | `string` | Topic name |
 
 #### Returns
 
 `Promise`<`Readable`\>
 
+Promise resolving to `ReadableStream<any>` with topic data.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:324](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L324)
+[packages/host/src/lib/cpm-connector.ts:553](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L553)
 
 ___
 
@@ -547,13 +531,16 @@ ___
 
 ▸ **handleConnectionClose**(): `Promise`<`void`\>
 
+Handles connection close.
+Tries to reconnect.
+
 #### Returns
 
 `Promise`<`void`\>
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:187](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L187)
+[packages/host/src/lib/cpm-connector.ts:357](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L357)
 
 ___
 
@@ -561,25 +548,33 @@ ___
 
 ▸ **init**(): `void`
 
+Initializes connector.
+
 #### Returns
 
 `void`
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L72)
+[packages/host/src/lib/cpm-connector.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L209)
 
 ___
 
 ### listenerCount
 
-▸ **listenerCount**(`event`): `number`
+▸ **listenerCount**<`E`\>(`event`): `number`
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
+| `event` | `E` |
 
 #### Returns
 
@@ -587,23 +582,29 @@ ___
 
 #### Inherited from
 
-EventEmitter.listenerCount
+TypedEmitter.listenerCount
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:83
+node_modules/typed-emitter/index.d.ts:38
 
 ___
 
 ### listeners
 
-▸ **listeners**(`event`): `Function`[]
+▸ **listeners**<`E`\>(`event`): `Function`[]
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
+| `event` | `E` |
 
 #### Returns
 
@@ -611,24 +612,30 @@ ___
 
 #### Inherited from
 
-EventEmitter.listeners
+TypedEmitter.listeners
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:80
+node_modules/typed-emitter/index.d.ts:37
 
 ___
 
 ### off
 
-▸ **off**(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+▸ **off**<`E`\>(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
 
 #### Returns
 
@@ -636,24 +643,30 @@ ___
 
 #### Inherited from
 
-EventEmitter.off
+TypedEmitter.off
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:76
+node_modules/typed-emitter/index.d.ts:30
 
 ___
 
 ### on
 
-▸ **on**(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+▸ **on**<`E`\>(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
 
 #### Returns
 
@@ -661,24 +674,30 @@ ___
 
 #### Inherited from
 
-EventEmitter.on
+TypedEmitter.on
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:73
+node_modules/typed-emitter/index.d.ts:25
 
 ___
 
 ### once
 
-▸ **once**(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+▸ **once**<`E`\>(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
 
 #### Returns
 
@@ -686,24 +705,30 @@ ___
 
 #### Inherited from
 
-EventEmitter.once
+TypedEmitter.once
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:74
+node_modules/typed-emitter/index.d.ts:26
 
 ___
 
 ### prependListener
 
-▸ **prependListener**(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+▸ **prependListener**<`E`\>(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
 
 #### Returns
 
@@ -711,24 +736,30 @@ ___
 
 #### Inherited from
 
-EventEmitter.prependListener
+TypedEmitter.prependListener
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:85
+node_modules/typed-emitter/index.d.ts:27
 
 ___
 
 ### prependOnceListener
 
-▸ **prependOnceListener**(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+▸ **prependOnceListener**<`E`\>(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
 
 #### Returns
 
@@ -736,23 +767,29 @@ ___
 
 #### Inherited from
 
-EventEmitter.prependOnceListener
+TypedEmitter.prependOnceListener
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:86
+node_modules/typed-emitter/index.d.ts:28
 
 ___
 
 ### rawListeners
 
-▸ **rawListeners**(`event`): `Function`[]
+▸ **rawListeners**<`E`\>(`event`): `Function`[]
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
+| `event` | `E` |
 
 #### Returns
 
@@ -760,11 +797,11 @@ ___
 
 #### Inherited from
 
-EventEmitter.rawListeners
+TypedEmitter.rawListeners
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:81
+node_modules/typed-emitter/index.d.ts:36
 
 ___
 
@@ -772,13 +809,17 @@ ___
 
 ▸ **readInfoFile**(): `any`
 
+Reads configuration from file.
+
 #### Returns
 
 `any`
 
+Configuration object.
+
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L84)
+[packages/host/src/lib/cpm-connector.ts:226](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L226)
 
 ___
 
@@ -786,13 +827,15 @@ ___
 
 ▸ **reconnect**(): `void`
 
+Reconnects to Manager if maximum number of connection attempts is not reached.
+
 #### Returns
 
 `void`
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:200](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L200)
+[packages/host/src/lib/cpm-connector.ts:375](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L375)
 
 ___
 
@@ -800,25 +843,35 @@ ___
 
 ▸ **registerChannels**(): `void`
 
+Sets up handlers for specific channels on the VerserClient connection.
+Channel 0 is reserved to handle control messages from Manager.
+Channel 1 is reserved for log stream sent to Manager.
+
 #### Returns
 
 `void`
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L107)
+[packages/host/src/lib/cpm-connector.ts:259](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L259)
 
 ___
 
 ### removeAllListeners
 
-▸ **removeAllListeners**(`event?`): [`CPMConnector`](CPMConnector.md)
+▸ **removeAllListeners**<`E`\>(`event?`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event?` | `string` \| `symbol` |
+| `event?` | `E` |
 
 #### Returns
 
@@ -826,24 +879,30 @@ ___
 
 #### Inherited from
 
-EventEmitter.removeAllListeners
+TypedEmitter.removeAllListeners
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:77
+node_modules/typed-emitter/index.d.ts:31
 
 ___
 
 ### removeListener
 
-▸ **removeListener**(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+▸ **removeListener**<`E`\>(`event`, `listener`): [`CPMConnector`](CPMConnector.md)
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `E` | extends keyof `Events` |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `event` | `string` \| `symbol` |
-| `listener` | (...`args`: `any`[]) => `void` |
+| `event` | `E` |
+| `listener` | `Events`[`E`] |
 
 #### Returns
 
@@ -851,11 +910,11 @@ ___
 
 #### Inherited from
 
-EventEmitter.removeListener
+TypedEmitter.removeListener
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:75
+node_modules/typed-emitter/index.d.ts:32
 
 ___
 
@@ -863,12 +922,14 @@ ___
 
 ▸ **sendInstanceInfo**(`instance`, `instanceStatus`): `Promise`<`void`\>
 
+Sends instance information to Manager via communication channel.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `instance` | `Instance` |
-| `instanceStatus` | `InstanceMessageCode` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `instance` | `Instance` | Instance details. |
+| `instanceStatus` | `InstanceMessageCode` | Instance status. |
 
 #### Returns
 
@@ -876,7 +937,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:293](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L293)
+[packages/host/src/lib/cpm-connector.ts:503](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L503)
 
 ___
 
@@ -884,11 +945,13 @@ ___
 
 ▸ **sendInstancesInfo**(`instances`): `Promise`<`void`\>
 
+Sends list of sequence to Manager via communication channel.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `instances` | `Instance`[] |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `instances` | `Instance`[] | List of instances to send. |
 
 #### Returns
 
@@ -896,7 +959,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:275](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L275)
+[packages/host/src/lib/cpm-connector.ts:473](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L473)
 
 ___
 
@@ -904,12 +967,14 @@ ___
 
 ▸ **sendSequenceInfo**(`sequenceId`, `seqStatus`): `Promise`<`void`\>
 
+Sends sequence status to Manager via communication channel.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `sequenceId` | `string` |
-| `seqStatus` | `SequenceMessageCode` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `sequenceId` | `string` | Sequence id. |
+| `seqStatus` | `SequenceMessageCode` | Sequence status. |
 
 #### Returns
 
@@ -917,7 +982,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:285](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L285)
+[packages/host/src/lib/cpm-connector.ts:489](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L489)
 
 ___
 
@@ -925,11 +990,13 @@ ___
 
 ▸ **sendSequencesInfo**(`sequences`): `Promise`<`void`\>
 
+Sends list of sequence to Manager via communication channel.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `sequences` | `GetSequencesResponse` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `sequences` | `GetSequencesResponse` | List of sequences to send. |
 
 #### Returns
 
@@ -937,7 +1004,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:265](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L265)
+[packages/host/src/lib/cpm-connector.ts:458](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L458)
 
 ___
 
@@ -945,14 +1012,18 @@ ___
 
 ▸ **sendTopic**(`topic`, `topicCfg`): `void`
 
+Makes a POST request to Manager with topic data.
+
+**`todo:`** Consider to make this request via VerserClient.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `topic` | `string` |
-| `topicCfg` | `Object` |
-| `topicCfg.contentType` | `string` |
-| `topicCfg.stream` | `ReadableStream`<`any`\> \| `WritableStream`<`any`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `topic` | `string` | Topic name. |
+| `topicCfg` | `Object` | Topic configuration. |
+| `topicCfg.contentType` | `string` | - |
+| `topicCfg.stream` | `ReadableStream`<`any`\> \| `WritableStream`<`any`\> | - |
 
 #### Returns
 
@@ -960,7 +1031,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:307](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L307)
+[packages/host/src/lib/cpm-connector.ts:530](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L530)
 
 ___
 
@@ -968,14 +1039,17 @@ ___
 
 ▸ **sendTopicInfo**(`data`): `Promise`<`void`\>
 
+Notifies Manager that new topic has been added.
+Topic information is send via communication channel.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `data` | `Object` |
-| `data.contentType?` | `string` |
-| `data.provides?` | `string` |
-| `data.requires?` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `data` | `Object` | Topic information. |
+| `data.contentType?` | `string` | - |
+| `data.provides?` | `string` | - |
+| `data.requires?` | `string` | - |
 
 #### Returns
 
@@ -983,7 +1057,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:301](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L301)
+[packages/host/src/lib/cpm-connector.ts:517](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L517)
 
 ___
 
@@ -991,11 +1065,13 @@ ___
 
 ▸ **setLoadCheck**(`loadCheck`): `void`
 
+Sets up load check object to be used to get load check data.
+
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `loadCheck` | `LoadCheck` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `loadCheck` | `LoadCheck` | load check instance. |
 
 #### Returns
 
@@ -1003,7 +1079,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L64)
+[packages/host/src/lib/cpm-connector.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L193)
 
 ___
 
@@ -1011,25 +1087,27 @@ ___
 
 ▸ **setLoadCheckMessageSender**(): `void`
 
+Sets up a method sending load check data and to be called with interval
+
 #### Returns
 
 `void`
 
 #### Defined in
 
-[packages/host/src/lib/cpm-connector.ts:241](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L241)
+[packages/host/src/lib/cpm-connector.ts:424](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L424)
 
 ___
 
 ### setMaxListeners
 
-▸ **setMaxListeners**(`n`): [`CPMConnector`](CPMConnector.md)
+▸ **setMaxListeners**(`maxListeners`): [`CPMConnector`](CPMConnector.md)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `n` | `number` |
+| `maxListeners` | `number` |
 
 #### Returns
 
@@ -1037,136 +1115,30 @@ ___
 
 #### Inherited from
 
-EventEmitter.setMaxListeners
+TypedEmitter.setMaxListeners
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:78
+node_modules/typed-emitter/index.d.ts:41
 
-___
+## Constructors
 
-### getEventListener
+### constructor
 
-▸ `Static` **getEventListener**(`emitter`, `name`): `Function`[]
-
-Returns a list listener for a specific emitter event name.
+• **new CPMConnector**(`cpmHostname`, `config`, `server`)
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `DOMEventTarget` \| `EventEmitter` |
-| `name` | `string` \| `symbol` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cpmHostname` | `string` | CPM hostname to connect to. (e.g. "localhost:8080"). |
+| `config` | `CPMConnectorOptions` | CPM connector configuration. |
+| `server` | `Server` | API server to handle incoming requests. |
 
-#### Returns
+#### Overrides
 
-`Function`[]
-
-#### Inherited from
-
-EventEmitter.getEventListener
+TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-node_modules/@types/node/events.d.ts:34
-
-___
-
-### listenerCount
-
-▸ `Static` **listenerCount**(`emitter`, `event`): `number`
-
-**`deprecated`** since v4.0.0
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` \| `symbol` |
-
-#### Returns
-
-`number`
-
-#### Inherited from
-
-EventEmitter.listenerCount
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:30
-
-___
-
-### on
-
-▸ `Static` **on**(`emitter`, `event`, `options?`): `AsyncIterableIterator`<`any`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `EventEmitter` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`AsyncIterableIterator`<`any`\>
-
-#### Inherited from
-
-EventEmitter.on
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:27
-
-___
-
-### once
-
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `NodeEventTarget` |
-| `event` | `string` \| `symbol` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:25
-
-▸ `Static` **once**(`emitter`, `event`, `options?`): `Promise`<`any`[]\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `emitter` | `DOMEventTarget` |
-| `event` | `string` |
-| `options?` | `StaticEventEmitterOptions` |
-
-#### Returns
-
-`Promise`<`any`[]\>
-
-#### Inherited from
-
-EventEmitter.once
-
-#### Defined in
-
-node_modules/@types/node/events.d.ts:26
+[packages/host/src/lib/cpm-connector.ts:176](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L176)

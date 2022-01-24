@@ -1,5 +1,5 @@
 import { ExitCode } from "@scramjet/types";
-import { ContainerStats } from "dockerode";
+import { ContainerStats, NetworkInspectInfo } from "dockerode";
 import { PathLike } from "fs";
 import { Stream, Writable } from "stream";
 
@@ -44,6 +44,10 @@ export type DockerAdapterRunPortsConfig = {
     ExposedPorts: any,
     PortBindings: any
 }
+
+export type DockerNetwork = { containers: Record<string, { name: string }> }
+
+export type DockerCreateNetworkConfig = { name: string, driver: string, options: Record<string, string> }
 
 /**
  * Configuration used to run command in container.
@@ -98,7 +102,9 @@ export type DockerAdapterRunConfig = {
 
     labels?: {
         [key: string]: string
-    }
+    },
+
+    networkMode?: string,
 };
 
 /**
@@ -189,7 +195,8 @@ export interface IDockerHelper {
             publishAllPorts: boolean,
             labels: {
                 [key: string]: string
-            }
+            },
+            networkMode?: string
         }
     ) => Promise<DockerContainer>;
 
@@ -271,6 +278,14 @@ export interface IDockerHelper {
      * @param fetchOnlyIfNotExists fetch only if not exists (defaults to true)
      */
     pullImage(name: string, fetchOnlyIfNotExists?: boolean): Promise<void>
+
+    listNetworks(): Promise<NetworkInspectInfo[]>
+
+    inspectNetwork(id: string): Promise<DockerNetwork>
+
+    connectToNetwork(networkid: string, container: string): Promise<void>
+
+    createNetwork(config: DockerCreateNetworkConfig): Promise<void>
 }
 
 export type InstanceAdapterOptions = {

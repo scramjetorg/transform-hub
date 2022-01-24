@@ -28,7 +28,9 @@ export (input: Readable) => async function*() {
 }
 ```
 
-It currently supports Node.js based apps, but Python and other languages are coming. Like that? [Get Scramjet Transform Hub straight from NPM](https://www.npmjs.com/package/@scramjet/sth)
+It currently supports Node.js based apps, but Python and other languages are coming.
+
+[Get Scramjet Transform Hub straight from NPM](https://www.npmjs.com/package/@scramjet/sth)
 
 ---
 
@@ -36,36 +38,34 @@ It currently supports Node.js based apps, but Python and other languages are com
 
 1. [Introduction](#introduction-handshake)
 2. [Usage](#usage-bulb)
-3. [Installation](#installation-clamp)
-4. [The basics](#the-basics-abcd)
-5. [Development instructions](#development-instructions-construction_worker)
-    - [Install hub globally](#install-hub-globally-white_check_mark)
-    - [Start the hub](#start-the-hub-checkered_flag)
+3. [The basics](#the-basics-abcd)
+4. [Development instructions](#development-instructions-construction_worker)
+    - [Installation](#installation-clamp)
+        - [Environment setup](#environment-setup)
+        - [STH installation](#sth-installation)
+    - [Start STH](#start-sth-checkered_flag)
     - [Install CLI and execute](#install-cli-and-execute-white_check_mark)
-    - [Clean build](#clean-build-building_construction)
+    - [Build the packages](#build-the-packages-building_construction)
     - [Docker commands](#docker-commands-whale)
     - [Build Hub on Docker](#build-hub-on-docker-building_construction)
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-robot)
     - [Lerna commands](#lerna-commands-pencil)
-6. [Sample usage](#sample-usage-sunglasses)
+5. [Sample usage](#sample-usage-sunglasses)
     - ["Hello Alice" sample](#hello-alice-sample-wave)
     - [More samples](#more-samples-books)
-    - [Configure your own sample](#configure-your-own-sample-pencil)<!--section to be improved-->
-7. [Troubleshooting](#troubleshooting-collision)
-    <!--
-    Section to be added:
-    - Known issues and limitations
-    -->
-8. [License and contributions](#license-and-contributions-page_with_curl)
-9. [Work with us](#help-wanted-information_desk_person)
-10. [Donation](#donation-money_with_wings)
+    - [Configure your own sample](#configure-your-own-sample-pencil)
+6. [Troubleshooting](#troubleshooting-collision)
+7. [License and contributions](#license-and-contributions-page_with_curl)
+8. [Work with us](#help-wanted-information_desk_person)
+9. [Donation](#donation-money_with_wings)
 
 ---
+
 # Introduction :handshake:
 
 This is a development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.
 
-This repository contains the source code for https://hub.scramjet.org.
+This repository contains the source code for <https://hub.scramjet.org>.
 
 If you want to [read the usage docs, go here ☝🏼](https://github.com/scramjetorg/scramjet-cloud-docs)
 
@@ -94,16 +94,54 @@ There's no limit to what you can use it for. Do you want a stock checker? A chat
 
 [Check our proposition of sample architecture for use cases in different industries.](https://scramjet.org/#use-cases)
 
-This is the STH development repo. In order to use it, you need to have linux based os, for instance [Ubuntu](https://ubuntu.com/download/server), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
+This is the STH development repo, in order to use it, you need to have linux based operating system, for instance [Ubuntu](https://ubuntu.com/download/server) installed. We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
 
 ---
 
-# Installation :clamp:
+# The basics :abcd:
+
+Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
+
+* The program should consist of a function or an array of functions, such a program is called a **Transform Sequence**.
+* The sequence will be executed within a separate docker instance (🔜 we're working on other execution environment integrations - help will be appreciated 🦾).
+* The sequence function will receive a stream as input in the first argument - you can send the data to it via the command `si instance input`.
+* If your sequence contains more than one function, then the output from the first function is passed to the next one. Also, the first function in sequence receives the input from API.
+* The last (or the only) function in sequence can return a `Promise` or a `Stream` - based on this, STH will know when processing is done.
+* Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the sequence and remove its container.
+* You can communicate with the server via API, command line client `si` which we wrote for your convenience.
+* The sequence is called with an AppContext as `this`, a class that allows you to communicate back from the sequence: send logs, provide health info, send and receive events from the API or CLI.
+* You can run your sequence multiple times with different arguments (like for instance currency tickers with different symbols or sensor data readers for each sensor)
+* The program does not leave your server and doesn't use any external systems. It runs on the server you install the host on.
+* Currently STH supports node.js runner only, we're working on bringing you runners for other languages, with Python and C++ as the first ones.
+
+Some important links 👀:
+
+* Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
+* You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
+* You can see the [CLI documentation here](./docs/interfaces/CLI-command-reference.md), but `si help` should also be quite effective.
+* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
+
+---
+
+# Development instructions :construction_worker:
+
+This section contains more detailed installation descriptions, it is intended for developers who would like to contribute or build Transform Hub from source. If you wish to fire up STH quickly and without unnecessary installations, go to [Quick Start](https://github.com/scramjetorg/scramjet-cloud-docs#3-install-scramjet-transform-hub) installation, which focuses on starting STH and deploying a sample application.
+
+In this section we will also show you some useful commands, tools and functionalities that you can use to develop your own programs.
+
+If you want to help out, we're happy to accept your pull requests. Please follow the below information to start development.
+
+## Installation :clamp:
+
+> **Reminder:** This is a development guide. In order to use it, you need to have linux based os (e.g. [Ubuntu](https://ubuntu.com/download/server)), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
+
+### Environment setup
 
 Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
 We will guide you step by step through the installation process.
 
-There are several installations you need to perform to get the hub up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
+There are several installations you need to perform to get STH up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
 
 - nvm
 - node.js
@@ -115,14 +153,18 @@ There are several installations you need to perform to get the hub up and runnin
 
 To check if you already have Node.js(v16.xx.x) and npm installed, please check the installed version, run the following commands in your console:
 
-        node -v
-        npm -v
+```bash
+node -v
+npm -v
+```
 
 If none of the above commands is found, please proceed with the installation.
 
-It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script)
+It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script).
 
-        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+```
 
 After executing the above command you should get in the console this info:
 
@@ -130,21 +172,22 @@ After executing the above command you should get in the console this info:
 
 Which means that you need to run those two more commands to finish the installation:
 
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+```bash
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+```
 
 Export lines from above will be saved in your ~/.bashrc file so that you will not need to run it every session start.
 After that you can check nvm version just to confirm that you have successfully installed nvm.
 
 command: `nvm --version`
 
-output: `v0.37.2`
+output e.g.: `v0.37.2`
 
 ![nvm_version](./images/nvm_version.png)
 
-
-3. Now you are ready to install node.js, simply type in your console:
+Now you are ready to install node.js, simply type in your console:
 
 ```bash
 nvm install 16     # command will install latest LTS Version of Node.js
@@ -170,8 +213,10 @@ output: `8.1.0`
 
 OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
-    npm install -g lerna
-    npm install -g yarn
+```bash
+npm install -g lerna
+npm install -g yarn
+```
 
 ![installations](./images/installations.png)
 
@@ -181,154 +226,175 @@ The same as before the installations can be confirmed by checking the installed 
 
 OK! The installation was successful. 🎉 🎆
 
-We also work with Docker ![docker](./images/docker.png). Currently we are working on a solution where using Docker will be optional, but until then please continue with the installation procedure.
-Run the following command in your console:
+We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
 
-    sudo apt install -y docker.io docker-compose
+```bash
+sudo apt install -y docker.io docker-compose   # command will install docker and docker-compose
+```
+
+```bash
+sudo gpasswd -a $USER docker   # command will add you to the docker group
+```
 
 Verify that Docker and Docker-Compose are installed by getting their versions:
 
-    sudo docker version
-    docker-compose version
+```bash
+sudo docker version
+docker-compose version
+```
 
-Now let's clone build and start the hub. Please copy the following commands to the terminal:
+### STH installation
 
-    git clone https://github.com/scramjetorg/transform-hub.git && \
-    cd transform-hub && sudo gpasswd -a $USER docker && \
-    yarn install && yarn build:all && npm i -g ./dist/cli && yarn start -P 8000
+There are two ways to install STH, either by cloning the repo or by using the npm registry.
+
+First, let's clone the transform-hub repo. After that, some more installations will be required. Please copy the following commands to the terminal:
+
+```bash
+git clone https://github.com/scramjetorg/transform-hub.git && \
+cd transform-hub && \
+yarn install && yarn build:all && npm i -g ./dist/cli
+```
 
 Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 Meantime let me describe you what is happening in the command you have just pasted into the console:
 
-- `git clone https://github.com/scramjetorg/transform-hub.git` is cloning the hub repository.
-- `cd transform-hub` is changing the directory to the hub repository.
-- `sudo gpasswd -a $USER docker` is adding the current user to the docker group.
-- `yarn install` is installing all the dependencies of the hub.
-- `yarn build:all` is building all the hub packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
-- `npm i -g ./dist/cli` is installing the hub CLI as a global command.
-- `yarn start -P 8000` is starting the hub with parameter `-P`, which makes the hub listen on port 8000.
+- `git clone https://github.com/scramjetorg/transform-hub.git` is cloning STH repository.
+- `cd transform-hub` is changing the directory to STH repository.
+- `yarn install` is installing all the dependencies of STH.
+- `yarn build:all` is building all STH packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
+- `npm i -g ./dist/cli` is installing STH CLI as a global command.
 
-> :bulb: **NOTE:**  *If you skip parameter `-P` the hub will listen on port 8000 anyway, this port is set as a default value in the hub configuration file.*
+When the package installation and build is complete, STH should be ready to run. To confirm that we will try to start it. There are several ways to do it, but for now we will use the [script](package.json#start) that will run STH from node:
 
- When it's done, the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
+```bash
+yarn start -P 8000
+```
 
-    2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
+The parameter `-P` makes STH listen on port 8000. If you skip this parameter, it will listen on port 8000 anyway. This port is set as a default value in STH configuration file.
 
-Hub is all set and ready to work with.
+When it's done, STH should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
+
+```bash
+2022-01-14T10:26:39.201Z info (object:Host) API listening on: 0.0.0.0:8000
+```
+
+STH is all set and ready to work with. To stop it use `Ctrl+C` or kill the process with command: `kill -9 $(lsof -t -i:8000)`.
 
 ![hub_start](./images/hub_start.png)
 
-You can also install the hub using npm [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth) package:
+As we mentioned before, the current STH can be also installed from the npm registry -> [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth):
 
-    npm i -g @scramjet/sth
-
-and start the hub:
-
-    scramjet-transform-hub
+```bash
+npm i -g @scramjet/sth   # installs the package globally
+```
 
 ![npm_package](./images/npm_package.png)
 
----
+When you start STH from npm, no package installations or builds are required. You can start STH right away, with one of those two commands: `scramjet-transform-hub` or `sth`.
 
-# The basics :abcd:
-
-Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
-
-* The program should consist of a function or an array of functions, such a program is called a **Transform Sequence**.
-* The sequence will be executed within a separate docker instance (🔜 we're working on other execution environment integrations - help will be appreciated 🦾).
-* The sequence function will receive a stream as input in the first argument - you can send the data to it via the command `si instance input`.
-* If your sequence contains more than one function, then the output from the first function is passed to the next one. Also, the first function in sequence receives the input from API.
-* The last (or the only) function in sequence can return a `Promise` or a `Stream` - based on this, STH will know when processing is done.
-* Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the sequence and remove its container.
-* You can communicate with the server via API, command line client `si` which we wrote for your convenience.
-* The sequence is called with an AppContext as `this`, a class that allows you to communicate back from the sequence: send logs, provide health info, send and receive events from the API or CLI.
-* You can run your sequence multiple times with different arguments (like for instance currency tickers with different symbols or sensor data readers for each sensor)
-* The program does not leave your server and doesn't use any external systems. It runs on the server you install the host on.
-* Currently STH supports node.js runner only, we're working on bringing you runners for other languages, with Python and C++ as the first ones.
-
-Some important links 👀:
-
-* Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
-* You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
-* You can see the [CLI documentation here](./docs/development-guide/scramjet-interface-cli.md), but `si help` should also be quite effective.
-* Don't forget to `star` this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
-* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
+If you managed to start STH, it confirms that the installation process was performed successfully. This is the command we used to start STH: `yarn start -P 8000`. The `-P` option is used to start STH on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that STH can be started on any port number, and it can be started in several ways, which is described in the following section.
 
 ---
 
-# Development instructions :construction_worker:
+## Start STH :checkered_flag:
 
-In this section we will show you some useful commands, tools and functionalities that you can use to develop your own programs.
-
-If you want to help out, we're happy to accept your pull requests. Please follow the below information to start development.
-
-You should already have node.js, npm and other necessary packages installed, also transform-hub repo should be cloned by now. If not and you skipped the installation section, then please go back and follow the instructions, they are initial for development.
-
-In [#Installation](#installation-:clamp:) section we managed to start the hub, which confirmed that the installation process was performed successfully. This is the command we used to start the hub: `yarn start -P 8000`. The `-P` option is used to start the hub on localhost and port number 8000 (127.0.0.1:8000). It is worth mentioning, that the hub can be started on any port number, and it can be started in several ways, which is described in the following sections.
-
-## Install hub globally :white_check_mark:
-
-After build is done, you can install and run hub globally:
+STH can be started in multiple ways. The default way is to run it with Docker and on localhost and port number 8000.
 
 ```bash
-npm install -g ./dist/hub  # installs packages globally
-scramjet-transform-hub     # starts host
+node dist/sth/bin/hub                 # Starts Host after it's been built
+
+yarn start                            # This is the same as above but using script
+
+ts-node packages/sth/src/bin/hub.ts   # Starts Host in development mode
+
+yarn start:dev                        # This is the same as above but using script
 ```
 
-You can also install current Hub release from registry:
+You can also start STH without Docker, use the same commands as above but with added `--no-docker` option:
 
 ```bash
-npm install -g @scramjet/hub
-scramjet-transform-hub
+node dist/sth/bin/hub --no-docker
+
+yarn start --no-docker
+
+ts-node packages/sth/src/bin/hub.ts --no-docker
+
+yarn start:dev --no-docker
 ```
 
-## Start the hub :checkered_flag:
+There is a wide range of options that you can start STH with. Please add `--help` or `-h` flag to list all the options:
 
-Hub can be started in multiple ways
+`scramjet-transform-hub --help`
 
-```bash
-yarn start                          # Starts Host after it's been built
-node dist/host/bin/start            # This is the same as above
-ts-node packages/host/src/bin/start # This starts node from source code
+or
+
+`sth --help`
+
+```shell
+$ sth --help
+Usage: sth [options]
+
+Options:
+  -L, --log-level <level>         Specify log level (default: "debug")
+  -S, --socket-path <socket>      CSI socket location
+  -P, --port <port>               API port
+  -H, --hostname <IP>             API IP
+  -E, --identify-existing         Index existing volumes as sequences (default: false)
+  -C, --cpm-url <host:ip>
+  --id <id>
+  --runner-image <image name>     Image used by runner
+  --runner-max-mem <mb>           Maximum mem used by runner
+  --prerunner-image <image name>  Image used by prerunner
+  --prerunner-max-mem <mb>        Maximum mem used by prerunner
+  --expose-host-ip <ip>           Host IP address that the Runner containers port is mapped to.
+  --no-docker                     Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.
+  --sequences-root                Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences
+  -h, --help                      display help for command
 ```
 
 ## Install CLI and execute :white_check_mark:
 
-This command was already done at the end the [#Installation](#installation-:clamp:) section, just before starting the hub. There are two ways to install the CLI:
+Thi installation was already done at the end of the [Installation](#installation-:clamp:) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
 
-- in the root folder, after building, run the following commands:
+- from the source code. In the root folder, after building, run the commands:
 
 ```bash
-npm i -g ./dist/cli # install CLI globally
+npm i -g ./dist/cli # install CLI globally from the source folder
 si help             # show CLI commands
 ```
 
-- you can also install the @scramjet/cli package from [npm](https://www.npmjs.com/package/@scramjet/cli).
+- from [npm](https://www.npmjs.com/package/@scramjet/cli):
 
 ```bash
-npm i -g @scramjet/cli # install CLI globally
+npm i -g @scramjet/cli # install CLI globally from npm
 si help                # show CLI commands
 ```
 
 ![cli_npm](./images/cli_npm.png)
 
-Please run `si help` command to confirm that the installation went properly and also to see the list of available commands:
+Running `si help` command will confirm that the installation went properly and also to see the list of available commands:
 
 ![si_help](./images/si_help.png)
 
-We will use CLI later on to execute the sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/release/0.12/docs/interfaces/API-reference.md).
+We will use CLI later on to execute the sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/main/docs/interfaces/CLI-command-reference.md).
 
-> **:bulb: HINT:** If something goes wrong make clean, install, build.
+## Build the packages :building_construction:
 
-## Clean build :building_construction:
+All the packages in the project need to be installed and built before the can be used.
 
-This is how to perform a clean build of the packages:
+**Install** will create a `node_modules` folder in the root of the project and in each package (dependencies will be installed).
+
+**Build** will create a `dist` folder in the root of the project and in each package. The folder will contain the files with the code compiled into JavaScript.
+
+This is how to perform a clean install and build of all the packages:
 
 ```bash
-yarn install:clean        # this command will perform yarn clean && yarn clean:modules && yarn install at once
-yarn build:all-packages   # optionally build:all if you want all dockerfiles.
+yarn install:clean        # this command will perform 'yarn clean && yarn clean:modules && yarn install' at once
+yarn build:all-packages   # optionally 'build:all' if you want all dockerfiles.
 ```
 
 ![build_clean](./images/clean_install.png)
+
+> :bulb: **HINT:** For more scripts please see `"scripts: {}"` in main [package.json](package.json#scripts).
 
 ## Docker commands :whale:
 
@@ -404,15 +470,17 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 ---
 
 # Sample usage :sunglasses:
+
 ## "Hello Alice" sample :wave:
 
-The sample will work only if you have properly configured your environment,installed hub and build all the packages.
-To run sequence/sample (example Alice), first, you need to install all the dependencies, [install and execute host](#install-host-and-execute-:white_check_mark:), compress the package, and then you're good to go and use curl commands or [CLI commands](#install-CLI-and-execute-:white_check_mark:) to execute the sequence, we will show you both ways.
+The sample will work only if you have properly configured your environment, installed hub and build all the packages.
+By this time you should already have all those things done by going through the [Installation](#installation-:clamp:) section.
 
-> :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.12`.*
+> :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.14`.*
 
 To start the "Hello Alice" sample we will need these basic steps:
-- [start the hub](#start-the-hub-checkered_flag)
+
+- [start STH](#start-the-hub-checkered_flag)
 - [compress the package](#compress-the-package-package)
 - [send compressed package (sequence) to hub](#arrow_up-upload-the-package)
 - [start sequence](#arrow_right-start-the-sequence)
@@ -422,10 +490,14 @@ To start the "Hello Alice" sample we will need these basic steps:
 
 The sequence in a `tar.gz` file format with package.js (aka package) can be generated in different ways.
 
-Assuming that you have the [host running](#install-host-and-execute-:white_check_mark:) use command:
+Assuming that you have the [host running](#start-the-hub-checkered_flag) use the command:
 
 ```bash
-yarn packseq    # this creates tar.gz for all packages in the repo
+yarn build:refapps    # this builds all the refapps in the 'reference-apps' package
+```
+
+```bash
+yarn packseq    # this creates tar.gz for all the refapps in the 'reference-apps' package
 ```
 
 When the host is not running you can use a script:
@@ -444,9 +516,11 @@ tar -C /path/to/package/dir czf <package-name.tar.gz> .
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to execute hub =>](#install-hub-and-execute-:white_check_mark:)
+> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to start STH =>](#start-the-hub-checkered_flag)
 
 #### :arrow_up: **Upload the package**
+
+Copy and paste the following command to the terminal:
 
 ```bash
 SEQ_ID=$( \
@@ -456,7 +530,7 @@ SEQ_ID=$( \
 )
 ```
 
-You can use the following that will build and send any of the reference packages and samples in this repo:
+During your development or checking out our code, you may want to edit some of our reference apps. After that you are very welcome to use our scripts to speed up your developing process. In this case, you can use the following, that will build and send any of the reference packages and samples in this repo:
 
 ```bash
 SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out) # -> when you want to upload the package (it will be built if needed)
@@ -464,9 +538,9 @@ SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r)
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
-> **:bulb: HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
-
 #### :arrow_right: **Start the sequence**
+
+Copy and paste the following command to the terminal:
 
 ```bash
 INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/sequence/$SEQ_ID/start" \
@@ -477,9 +551,12 @@ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seque
 }' | jq ".id" -r)
 ```
 
+> **:bulb: HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
+
 #### :arrow_down: **GET the output**
 
 To get the output we need to send GET request to `/stdout` endpoint:
+
 ```bash
 curl --location --request GET "http://localhost:8000/api/v1/instance/$INSTANCE_ID/stdout" \
 --header 'Transfer-Encoding: chunked' \
@@ -490,51 +567,130 @@ This is what you should get as a result:
 
 ![hello_alice](./images/hello_alice.png)
 
-[See more about streams and curl commands =>](docs/development-guide/stream-and-api.md)
+[See more about streams and curl commands =>](docs/read-more/stream-and-api.md)
 
 ## More samples :books:
 
-To check out more of our ready-to-go samples, please go to our repo on GitHub, [samples directory](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples).
+To check out more of our ready-to-go samples, please go to our [Quick Start repo](https://github.com/scramjetorg/scramjet-cloud-docs#scramjet-transform-hub---quick-start-introduction) on GitHub, [samples directory](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples).
 
 ## Configure your own sample :pencil:
 
 We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates). For this moment we support two variants of template in two programming languages:
- - JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
- - TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
+
+- JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
+- TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
 
 There are two more templates that we will support, but they are still in development stage:
- - Python
- - C++
+
+- Python
+- C++
 
 # Troubleshooting :collision:
 
-> **:bulb: HINT:** If something goes wrong, any errors occur, please try to run clean build, which will remove all the packages and rebuild them.
+### **Docker issues:**
 
-Copy and paste 🤞
+<details>
+<summary>
+    <strong>Error: connect ENOENT /var/run/docker.sock</strong>
+</summary>
+
+During sending the sequence package to the host you may come across this error:
+
+* ***Error: connect ENOENT /var/run/docker.sock***
+
+    ```bash
+    2022-01-13T11:54:26.948Z info (object:Host) New sequence incoming...
+    2022-01-13T11:54:26.948Z log (object:DockerSequenceAdapter) DockerSequenceAdapter init.
+    2022-01-13T11:54:26.948Z log (object:DockerodeDockerHelper) Checking image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:54:26.949Z log (object:DockerodeDockerHelper) Start pulling image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:54:26.949Z debug (object:Host) Error: connect ENOENT /var/run/docker.sock
+        at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1161:16)
+    2022-01-13T11:54:26.950Z debug (object:Host) Request date: 2022-01-13T11:54:26.948Z, method: POST, url: /api/v1/sequence, status: 422
+    ```
+
+To solve this issue you need to install docker and docker-compose. You can install them using the following command below or refer to [official Docker instructions](https://docs.docker.com/get-docker/).
+
+    ```bash
+    sudo apt install -y docker.io docker-compose
+    ```
+</details>
+
+<details>
+<summary>
+    <strong>Error: connect EACCES /var/run/docker.sock</strong>
+</summary>
+
+During sending the sequence package to the host you may come across this error:
+
+* ***Error: connect EACCES /var/run/docker.sock***
+
+    ```bash
+    2022-01-13T11:58:00.368Z info (object:Host) New sequence incoming...
+    2022-01-13T11:58:00.369Z log (object:DockerSequenceAdapter) DockerSequenceAdapter init.
+    2022-01-13T11:58:00.370Z log (object:DockerodeDockerHelper) Checking image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:58:00.375Z log (object:DockerodeDockerHelper) Start pulling image scramjetorg/pre-runner:0.14.0
+    2022-01-13T11:58:00.377Z debug (object:Host) Error: connect EACCES /var/run/docker.sock
+        at PipeConnectWrap.afterConnect [as oncomplete] (node:net:1161:16)
+    2022-01-13T11:58:00.379Z debug (object:Host) Request date: 2022-01-13T11:58:00.373Z, method: POST, url: /api/v1/sequence, status: 422
+    ```
+
+To solve this issue you need to add the current user to the docker group, please use this command:
 
 ```bash
-yarn clean && yarn build
+sudo gpasswd -a $USER docker
 ```
 
-> **:bulb: HINT:** Remember to build your sample package before compressing it.
+</details><br>
+
+### **Packages issues:**
+
+<details>
+<summary>
+    <strong>Errors related to build packages</strong>
+</summary><br>
+
+If something goes wrong during building packages, any errors occur, please try to run clean build, which will remove all `node_modules` and `dist` directories, after that you try to install and build them again.
+
+```bash
+yarn clean && yarn clean:modules && yarn install && yarn build:all
+```
+
+</details>
+
+<details>
+<summary>
+    <strong>Errors related to reference-apps package</strong>
+</summary><br>
+
+Every reference-app package before we run it, needs to:
+
+* have `node_modules` installed (`yarn install`)
+* have `dist` directory created (`yarn build:refapps`)
+* be compressed (`yarn packseq`)
+
+Remember to install dependencies and build your sample package before compressing it.
 
 If you create your sample in `packages/reference-apps` folder, you can use the following command to build it:
 
 ```bash
-yarn build:reference-apps
+yarn build:refapps
 ```
+
 It will build all the packages in the `packages/reference-apps` folder.
 
-> **:bulb: HINT:** Remember to run `yarn packseq` to generate the tar.gz file.
+> **:bulb: HINT:** Remember to generate the tar.gz file before sending it to the host. Only compressed packages will be accepted by the host. Command `yarn packseq` will generate the tar.gz file of each app in the `packages/reference-apps` folder.
 
-> **:bulb: HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run. You may find them useful.
+</details><br>
 
-> **:bulb: HINT:** Log an issue every time you encounter a problem or you find that some feature is missing.
+> **:bulb: HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
+
+Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 
 - [bug report](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=bug_report.md&title=)
 - [feature request](https://github.com/scramjetorg/transform-hub/issues/new?assignees=&labels=&template=feature_request.md&title=)
 
 ---
+
 # License and contributions :page_with_curl:
 
 This project is licensed dual licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
@@ -546,16 +702,19 @@ We provide support for contributions via test cases. If you expect a certain typ
 More info about bdd tests can be found [here](./bdd/README.md).
 
 ---
+
 # Help wanted :information_desk_person:
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](opensource@scramjet.org).
 
 ---
+
 # Donation :money_with_wings:
 
 Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee:
 
 * [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
-* There's also a Paypal donation link if you prefer that: [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
+* There's also a Paypal donation link if you prefer that:
 
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)

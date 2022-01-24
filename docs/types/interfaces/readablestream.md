@@ -1,4 +1,4 @@
-[@scramjet/types](../README.md) / ReadableStream
+[@scramjet/types](../README.md) / [Exports](../modules.md) / ReadableStream
 
 # Interface: ReadableStream<Produces\>
 
@@ -19,17 +19,6 @@ A readable stream representation with generic chunks.
   ↳ **`ReadableStream`**
 
 ## Table of contents
-
-### Properties
-
-- [destroyed](readablestream.md#destroyed)
-- [readable](readablestream.md#readable)
-- [readableEncoding](readablestream.md#readableencoding)
-- [readableEnded](readablestream.md#readableended)
-- [readableFlowing](readablestream.md#readableflowing)
-- [readableHighWaterMark](readablestream.md#readablehighwatermark)
-- [readableLength](readablestream.md#readablelength)
-- [readableObjectMode](readablestream.md#readableobjectmode)
 
 ### Methods
 
@@ -64,117 +53,16 @@ A readable stream representation with generic chunks.
 - [unshift](readablestream.md#unshift)
 - [wrap](readablestream.md#wrap)
 
-## Properties
+### Properties
 
-### destroyed
-
-• **destroyed**: `boolean`
-
-#### Inherited from
-
-PipeableStream.destroyed
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:41
-
-___
-
-### readable
-
-• **readable**: `boolean`
-
-#### Inherited from
-
-PipeableStream.readable
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:34
-
-___
-
-### readableEncoding
-
-• `Readonly` **readableEncoding**: ``null`` \| `BufferEncoding`
-
-#### Inherited from
-
-PipeableStream.readableEncoding
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:35
-
-___
-
-### readableEnded
-
-• `Readonly` **readableEnded**: `boolean`
-
-#### Inherited from
-
-PipeableStream.readableEnded
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:36
-
-___
-
-### readableFlowing
-
-• `Readonly` **readableFlowing**: ``null`` \| `boolean`
-
-#### Inherited from
-
-PipeableStream.readableFlowing
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:37
-
-___
-
-### readableHighWaterMark
-
-• `Readonly` **readableHighWaterMark**: `number`
-
-#### Inherited from
-
-PipeableStream.readableHighWaterMark
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:38
-
-___
-
-### readableLength
-
-• `Readonly` **readableLength**: `number`
-
-#### Inherited from
-
-PipeableStream.readableLength
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:39
-
-___
-
-### readableObjectMode
-
-• `Readonly` **readableObjectMode**: `boolean`
-
-#### Inherited from
-
-PipeableStream.readableObjectMode
-
-#### Defined in
-
-node_modules/@types/node/stream.d.ts:40
+- [destroyed](readablestream.md#destroyed)
+- [readable](readablestream.md#readable)
+- [readableEncoding](readablestream.md#readableencoding)
+- [readableEnded](readablestream.md#readableended)
+- [readableFlowing](readablestream.md#readableflowing)
+- [readableHighWaterMark](readablestream.md#readablehighwatermark)
+- [readableLength](readablestream.md#readablelength)
+- [readableObjectMode](readablestream.md#readableobjectmode)
 
 ## Methods
 
@@ -1934,3 +1822,115 @@ PipeableStream.wrap
 #### Defined in
 
 node_modules/@types/node/stream.d.ts:52
+
+## Properties
+
+### destroyed
+
+• **destroyed**: `boolean`
+
+#### Inherited from
+
+PipeableStream.destroyed
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:41
+
+___
+
+### readable
+
+• **readable**: `boolean`
+
+#### Inherited from
+
+PipeableStream.readable
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:34
+
+___
+
+### readableEncoding
+
+• `Readonly` **readableEncoding**: ``null`` \| `BufferEncoding`
+
+#### Inherited from
+
+PipeableStream.readableEncoding
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:35
+
+___
+
+### readableEnded
+
+• `Readonly` **readableEnded**: `boolean`
+
+#### Inherited from
+
+PipeableStream.readableEnded
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:36
+
+___
+
+### readableFlowing
+
+• `Readonly` **readableFlowing**: ``null`` \| `boolean`
+
+#### Inherited from
+
+PipeableStream.readableFlowing
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:37
+
+___
+
+### readableHighWaterMark
+
+• `Readonly` **readableHighWaterMark**: `number`
+
+#### Inherited from
+
+PipeableStream.readableHighWaterMark
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:38
+
+___
+
+### readableLength
+
+• `Readonly` **readableLength**: `number`
+
+#### Inherited from
+
+PipeableStream.readableLength
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:39
+
+___
+
+### readableObjectMode
+
+• `Readonly` **readableObjectMode**: `boolean`
+
+#### Inherited from
+
+PipeableStream.readableObjectMode
+
+#### Defined in
+
+node_modules/@types/node/stream.d.ts:40

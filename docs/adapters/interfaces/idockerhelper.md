@@ -1,4 +1,4 @@
-[@scramjet/adapters](../README.md) / IDockerHelper
+[@scramjet/adapters](../README.md) / [Exports](../modules.md) / IDockerHelper
 
 # Interface: IDockerHelper
 
@@ -7,6 +7,15 @@
 - [`DockerodeDockerHelper`](../classes/dockerodedockerhelper.md)
 
 ## Table of contents
+
+### Methods
+
+- [connectToNetwork](idockerhelper.md#connecttonetwork)
+- [createNetwork](idockerhelper.md#createnetwork)
+- [inspectNetwork](idockerhelper.md#inspectnetwork)
+- [listNetworks](idockerhelper.md#listnetworks)
+- [pullImage](idockerhelper.md#pullimage)
+- [wait](idockerhelper.md#wait)
 
 ### Properties
 
@@ -21,16 +30,132 @@
 - [stopContainer](idockerhelper.md#stopcontainer)
 - [translateVolumesConfig](idockerhelper.md#translatevolumesconfig)
 
-### Methods
+## Methods
 
-- [pullImage](idockerhelper.md#pullimage)
-- [wait](idockerhelper.md#wait)
+### connectToNetwork
+
+▸ **connectToNetwork**(`networkid`, `container`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `networkid` | `string` |
+| `container` | `string` |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:286](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L286)
+
+___
+
+### createNetwork
+
+▸ **createNetwork**(`config`): `Promise`<`void`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | [`DockerCreateNetworkConfig`](../modules.md#dockercreatenetworkconfig) |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:288](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L288)
+
+___
+
+### inspectNetwork
+
+▸ **inspectNetwork**(`id`): `Promise`<[`DockerNetwork`](../modules.md#dockernetwork)\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
+
+#### Returns
+
+`Promise`<[`DockerNetwork`](../modules.md#dockernetwork)\>
+
+#### Defined in
+
+[types.ts:284](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L284)
+
+___
+
+### listNetworks
+
+▸ **listNetworks**(): `Promise`<`NetworkInspectInfo`[]\>
+
+#### Returns
+
+`Promise`<`NetworkInspectInfo`[]\>
+
+#### Defined in
+
+[types.ts:282](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L282)
+
+___
+
+### pullImage
+
+▸ **pullImage**(`name`, `fetchOnlyIfNotExists?`): `Promise`<`void`\>
+
+Fetches the image from repo
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `name` | `string` | the name of the image, eg. ubuntu:latest |
+| `fetchOnlyIfNotExists?` | `boolean` | fetch only if not exists (defaults to true) |
+
+#### Returns
+
+`Promise`<`void`\>
+
+#### Defined in
+
+[types.ts:280](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L280)
+
+___
+
+### wait
+
+▸ **wait**(`container`, `options?`): `Promise`<[`ExitData`](../modules.md#exitdata)\>
+
+Waits until containter exits
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `container` | `string` |
+| `options?` | [`DockerAdapterWaitOptions`](../modules.md#dockeradapterwaitoptions) |
+
+#### Returns
+
+`Promise`<[`ExitData`](../modules.md#exitdata)\>
+
+#### Defined in
+
+[types.ts:272](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L272)
 
 ## Properties
 
 ### createContainer
 
-• **createContainer**: (`containerCfg`: { `autoRemove`: `boolean` ; `binds`: `string`[] ; `dockerImage`: `string` ; `envs`: `string`[] ; `labels`: { [key: string]: `string`;  } ; `maxMem`: `number` ; `ports`: `any` ; `publishAllPorts`: `boolean` ; `volumes`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]  }) => `Promise`<`string`\>
+• **createContainer**: (`containerCfg`: { `autoRemove`: `boolean` ; `binds`: `string`[] ; `dockerImage`: `string` ; `envs`: `string`[] ; `labels`: { [key: string]: `string`;  } ; `maxMem`: `number` ; `networkMode?`: `string` ; `ports`: `any` ; `publishAllPorts`: `boolean` ; `volumes`: [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[]  }) => `Promise`<`string`\>
 
 #### Type declaration
 
@@ -49,9 +174,10 @@ Creates Docker container from provided image with attached volumes and local dir
 | `containerCfg.envs` | `string`[] |
 | `containerCfg.labels` | `Object` |
 | `containerCfg.maxMem` | `number` |
+| `containerCfg.networkMode?` | `string` |
 | `containerCfg.ports` | `any` |
 | `containerCfg.publishAllPorts` | `boolean` |
-| `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] |
+| `containerCfg.volumes` | [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[] |
 
 ##### Returns
 
@@ -61,7 +187,7 @@ Created container.
 
 #### Defined in
 
-[types.ts:180](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L180)
+[types.ts:186](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L186)
 
 ___
 
@@ -89,7 +215,7 @@ Created volume.
 
 #### Defined in
 
-[types.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L238)
+[types.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L245)
 
 ___
 
@@ -111,7 +237,7 @@ List of existing volumes
 
 #### Defined in
 
-[types.ts:229](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L229)
+[types.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L236)
 
 ___
 
@@ -137,7 +263,7 @@ Removes container.
 
 #### Defined in
 
-[types.ts:222](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L222)
+[types.ts:229](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L229)
 
 ___
 
@@ -163,17 +289,17 @@ Removes volume.
 
 #### Defined in
 
-[types.ts:247](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L247)
+[types.ts:254](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L254)
 
 ___
 
 ### run
 
-• **run**: (`config`: [`DockerAdapterRunConfig`](../README.md#dockeradapterrunconfig)) => `Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+• **run**: (`config`: [`DockerAdapterRunConfig`](../modules.md#dockeradapterrunconfig)) => `Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 #### Type declaration
 
-▸ (`config`): `Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+▸ (`config`): `Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 Executes command in container.
 
@@ -181,15 +307,15 @@ Executes command in container.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `config` | [`DockerAdapterRunConfig`](../README.md#dockeradapterrunconfig) | Execution configuration. |
+| `config` | [`DockerAdapterRunConfig`](../modules.md#dockeradapterrunconfig) | Execution configuration. |
 
 ##### Returns
 
-`Promise`<[`DockerAdapterRunResponse`](../README.md#dockeradapterrunresponse)\>
+`Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
 #### Defined in
 
-[types.ts:256](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L256)
+[types.ts:263](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L263)
 
 ___
 
@@ -215,7 +341,7 @@ Starts container.
 
 #### Defined in
 
-[types.ts:203](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L203)
+[types.ts:210](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L210)
 
 ___
 
@@ -239,7 +365,7 @@ ___
 
 #### Defined in
 
-[types.ts:214](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L214)
+[types.ts:221](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L221)
 
 ___
 
@@ -265,13 +391,13 @@ Stops container.
 
 #### Defined in
 
-[types.ts:212](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L212)
+[types.ts:219](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L219)
 
 ___
 
 ### translateVolumesConfig
 
-• **translateVolumesConfig**: (`volumeConfigs`: [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[]) => `any`
+• **translateVolumesConfig**: (`volumeConfigs`: [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[]) => `any`
 
 #### Type declaration
 
@@ -283,7 +409,7 @@ Converts pairs of mount path and volume name to DockerHelper specific volume con
 
 | Name | Type |
 | :------ | :------ |
-| `volumeConfigs` | [`DockerAdapterVolumeConfig`](../README.md#dockeradaptervolumeconfig)[] |
+| `volumeConfigs` | [`DockerAdapterVolumeConfig`](../modules.md#dockeradaptervolumeconfig)[] |
 
 ##### Returns
 
@@ -293,50 +419,4 @@ DockerHelper volume configuration.
 
 #### Defined in
 
-[types.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L167)
-
-## Methods
-
-### pullImage
-
-▸ **pullImage**(`name`, `fetchOnlyIfNotExists?`): `Promise`<`void`\>
-
-Fetches the image from repo
-
-#### Parameters
-
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `name` | `string` | the name of the image, eg. ubuntu:latest |
-| `fetchOnlyIfNotExists?` | `boolean` | fetch only if not exists (defaults to true) |
-
-#### Returns
-
-`Promise`<`void`\>
-
-#### Defined in
-
-[types.ts:273](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L273)
-
-___
-
-### wait
-
-▸ **wait**(`container`, `options?`): `Promise`<[`ExitData`](../README.md#exitdata)\>
-
-Waits until containter exits
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `container` | `string` |
-| `options?` | [`DockerAdapterWaitOptions`](../README.md#dockeradapterwaitoptions) |
-
-#### Returns
-
-`Promise`<[`ExitData`](../README.md#exitdata)\>
-
-#### Defined in
-
-[types.ts:265](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L265)
+[types.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L173)

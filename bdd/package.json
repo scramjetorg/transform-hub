@@ -1,12 +1,12 @@
 {
   "name": "scramjet-bdd",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "description": "",
   "main": "_cucumber.js",
   "dependencies": {
-    "@scramjet/api-client": "^0.14.0",
-    "@scramjet/logger": "^0.14.0",
-    "@scramjet/sth-config": "^0.14.0",
+    "@scramjet/api-client": "^0.15.0",
+    "@scramjet/logger": "^0.15.0",
+    "@scramjet/sth-config": "^0.15.0",
     "dockerode": "^3.3.0",
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
