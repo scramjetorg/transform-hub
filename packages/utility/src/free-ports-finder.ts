@@ -1,5 +1,5 @@
-import * as net from "net";
-import * as dgram from "dgram";
+import net from "net";
+import dgram from "dgram";
 
 /**
  * Provides methods to find free tcp/udp ports.

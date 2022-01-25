@@ -3,7 +3,7 @@ import { APIExpose } from "@scramjet/types";
 import { RunnerMessageCode } from "@scramjet/symbols";
 
 import test, { after, before, beforeEach, skip } from "ava";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import { getCommunicationHandler } from "./lib/get-communcation-handler";
 import { mockRequestResponse, mockServer, ServerWithPlayMethods } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";

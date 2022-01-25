@@ -3,7 +3,7 @@ import { HostClient, InstanceClient } from "@scramjet/api-client";
 import { When, Then } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 
-import * as crypto from "crypto";
+import crypto from "crypto";
 
 import { createReadStream } from "fs";
 import { CustomWorld } from "../world";

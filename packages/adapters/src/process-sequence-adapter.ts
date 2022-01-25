@@ -8,8 +8,8 @@ import {
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { createReadStream } from "fs";
-import * as fs from "fs/promises";
-import * as path from "path";
+import fs from "fs/promises";
+import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";

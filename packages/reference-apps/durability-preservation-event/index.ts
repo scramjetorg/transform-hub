@@ -1,4 +1,4 @@
-import * as https from "https";
+import https from "https";
 
 import { AppContext } from "@scramjet/types";
 import { IncomingMessage } from "http";

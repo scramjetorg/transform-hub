@@ -1,6 +1,6 @@
 import { DeepPartial, STHConfiguration } from "@scramjet/types";
 import { merge } from "@scramjet/utility";
-import * as path from "path";
+import path from "path";
 
 const imageConfig = require("./image-config.json");
 

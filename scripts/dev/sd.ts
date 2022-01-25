@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import fs from "fs";
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ChildProcess, spawn } from "child_process";

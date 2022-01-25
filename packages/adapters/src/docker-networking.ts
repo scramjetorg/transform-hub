@@ -1,5 +1,5 @@
-import * as fs from "fs/promises";
-import * as os from "os";
+import fs from "fs/promises";
+import os from "os";
 import { IDockerHelper } from "./types";
 
 export const isHostSpawnedInDockerContainer = async () => await fs.access("/.dockerenv").then(() => true, () => false);

@@ -4,17 +4,16 @@
 import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer } from "../../lib/utils";
-import * as fs from "fs";
-import { createReadStream } from "fs";
+import fs, { createReadStream } from "fs";
 import { HostClient, InstanceOutputStream, Response } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream } from "stream";
-import * as crypto from "crypto";
+import crypto from "crypto";
 import { promisify } from "util";
-import * as Dockerode from "dockerode";
+import Dockerode from "dockerode";
 import { CustomWorld } from "../world";
 
-import * as findPackage from "find-package-json";
+import findPackage from "find-package-json";
 import { readFile } from "fs/promises";
 import { BufferStream } from "scramjet";
 import { expectedResponses } from "./expectedResponses";

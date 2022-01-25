@@ -1,9 +1,9 @@
-import * as https from "https";
+import https from "https";
 import { IncomingMessage } from "http";
 import { PassThrough } from "stream";
 import { Logger, ReadableApp } from "@scramjet/types";
 import { StringStream } from "scramjet";
-import * as net from "net";
+import net from "net";
 
 const mockResponse = () => {
     const fakeData = new PassThrough();

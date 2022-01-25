@@ -1,6 +1,6 @@
 import { IComponent, Logger, DownstreamStreamsConfig } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
-import * as net from "net";
+import net from "net";
 import { isDefined, TypedEmitter } from "@scramjet/utility";
 
 type MaybeSocket = net.Socket | null

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Runner } from "../runner";
-import * as fs from "fs";
+import fs from "fs";
 import { AppConfig } from "@scramjet/types";
 import { HostClient } from "../host-client";
 

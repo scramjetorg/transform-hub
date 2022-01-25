@@ -13,7 +13,7 @@ import {
     SequenceConfig,
     RunnerContainerConfiguration,
 } from "@scramjet/types";
-import * as path from "path";
+import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
 import { FreePortsFinder, defer } from "@scramjet/utility";

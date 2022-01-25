@@ -3,8 +3,8 @@ import { Then } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
 import { strict as assert } from "assert";
-import * as crypto from "crypto";
-import * as net from "net";
+import crypto from "crypto";
+import net from "net";
 import { stdout } from "process";
 
 import { InstanceClient } from "@scramjet/api-client";
