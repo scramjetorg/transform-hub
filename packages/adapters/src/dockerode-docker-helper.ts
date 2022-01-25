@@ -1,4 +1,4 @@
-import * as Dockerode from "dockerode";
+import Dockerode from "dockerode";
 import { PassThrough } from "stream";
 import { getLogger } from "@scramjet/logger";
 import { Logger } from "@scramjet/types";

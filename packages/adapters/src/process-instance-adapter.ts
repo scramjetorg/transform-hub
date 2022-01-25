@@ -10,7 +10,7 @@ import {
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
 
-import * as path from "path";
+import path from "path";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
@@ -57,7 +57,7 @@ IComponent {
         }
         return [
             isTSNode ? "ts-node" : process.execPath,
-            path.resolve(__dirname, require.resolve("@scramjet/runner"))
+            path.resolve(__dirname, "../../../runner/src/bin/start-runner.js")
         ];
     }
 

@@ -2,7 +2,7 @@
 import { IHostClient, UpstreamStreamsConfig, } from "@scramjet/types";
 import { getLogger } from "@scramjet/logger";
 import { CommunicationChannel as CC } from "@scramjet/symbols";
-import * as net from "net";
+import net from "net";
 
 type HostOpenConnections = [
     net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket, net.Socket

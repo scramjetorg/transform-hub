@@ -1,4 +1,4 @@
-import * as findPackage from "find-package-json";
+import findPackage from "find-package-json";
 
 import { APIExpose, AppConfig, CSIConfig, IComponent, Logger, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";

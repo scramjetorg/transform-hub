@@ -1,5 +1,5 @@
 /* eslint-disable no-loop-func */
-import * as fs from "fs";
+import fs from "fs";
 import { strict as assert } from "assert";
 import { promisify } from "util";
 import { exec, spawn } from "child_process";

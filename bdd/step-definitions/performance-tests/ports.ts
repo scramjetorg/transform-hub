@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
 import { When } from "@cucumber/cucumber";
 import { InstanceOutputStream } from "@scramjet/api-client";
-import * as net from "net";
+import net from "net";
 import { strict as assert } from "assert";
 import { PassThrough, Stream } from "stream";
-import * as dgram from "dgram";
+import dgram from "dgram";
 import { CustomWorld } from "../world";
 import { URL } from "url";
 

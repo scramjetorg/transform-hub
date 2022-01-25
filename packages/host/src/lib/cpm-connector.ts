@@ -1,4 +1,4 @@
-import * as fs from "fs";
+import fs from "fs";
 
 import { Agent, ClientRequest, IncomingMessage, Server, request } from "http";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";

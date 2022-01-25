@@ -2,7 +2,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 import test, { after, beforeEach } from "ava";
 import { Writable, Readable } from "stream";
 import { DataStream } from "scramjet";
-import * as sinon from "sinon";
+import sinon from "sinon";
 import { getCommunicationHandler } from "./lib/get-communcation-handler";
 import { mockServer } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";

@@ -2,7 +2,7 @@ import { getLogger } from "@scramjet/logger";
 import { IComponent, Logger, LoadCheckStat, LoadCheckConfig, LoadCheckContstants } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 
-import * as sysinfo from "systeminformation";
+import sysinfo from "systeminformation";
 import { DataStream, StringStream } from "scramjet";
 
 const MB = 1024 * 1024;

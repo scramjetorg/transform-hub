@@ -3,7 +3,7 @@
 /* eslint-disable no-console */
 import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import * as fs from "fs";
+import fs from "fs";
 import { getStreamsFromSpawn } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 

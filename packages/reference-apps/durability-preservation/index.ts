@@ -1,5 +1,5 @@
 /* eslint-disable no-console, no-extra-parens */
-import * as http from "https";
+import http from "https";
 import { IncomingMessage } from "http";
 import { PassThrough } from "stream";
 import { ReadableApp } from "@scramjet/types";
