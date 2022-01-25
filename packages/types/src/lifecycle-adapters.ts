@@ -1,10 +1,13 @@
 import { MonitoringMessageData } from "./messages";
 import { MaybePromise } from "./utils";
 import { InstanceConifg } from "./runner-config";
+import { IObjectLogger } from "./object-logger";
 
 export type ExitCode = number;
 
 export interface ILifeCycleAdapterMain {
+    objLogger: IObjectLogger;
+
     /**
      * Initializes Lifecycle adapter.
      */
