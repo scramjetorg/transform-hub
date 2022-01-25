@@ -44,12 +44,12 @@ IComponent {
     /**
      * Finds free port for every port requested in Sequence configuration and returns map of assigned ports.
      *
-     * @param {string[]} declaredPorts Ports declared in sequence config.
-     * @param {ContainerConfiguration & ContainerConfigurationWithExposedPorts} containerConfig Container configuration
+     * @param declaredPorts - Ports declared in sequence config.
+     * @param containerConfig Container configuration
      * extended with configuration for ports exposing.
-     * @param {boolean} [exposed=false] Defines configuration output type. Exposed ports when true or port bindings.
+     * @param exposed - Defines configuration output type. Exposed ports when true or port bindings.
      *
-     * @returns {Promise<{[ key: string ]: string }>} Promise resolving with map of ports mapping.
+     * @returns Promise resolving with map of ports mapping.
      */
     private async preparePortBindingsConfig(
         declaredPorts: string[],
@@ -139,7 +139,7 @@ IComponent {
                 host: hostname,
             };
         }
-        // otherwise STH runs on Host OS so we Runner can just connect to the Gateway 
+        // otherwise STH runs on Host OS so we Runner can just connect to the Gateway
         const sthNetworkGateway = sthDockerNetwork?.IPAM?.Config?.[0]?.Gateway;
 
         if (!sthNetworkGateway) {

@@ -123,7 +123,7 @@ export const getSequenceId = (id: string) => getDashDefaultValue(id, getConfig()
  * @param id - dash or anything else
  * @returns the correct id
  */
-export const getInstanceId = (id: string) => getDashDefaultValue(id, getConfig().lastSequenceId);
+export const getInstanceId = (id: string) => getDashDefaultValue(id, getConfig().lastInstanceId);
 
 /**
  * Gets package file path if dash is provided, otherwise returns the first argument
