@@ -5,7 +5,7 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, AppConfig, CSIConfig, IComponent, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, CSIConfig, IComponent, IObjectLogger, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
@@ -74,7 +74,7 @@ export class Host implements IComponent {
     /**
      * Instance of class providing logging utilities.
      */
-    objLogger: ObjLogger;
+    objLogger: IObjectLogger;
 
     /**
      * Instance of class providing load check.
@@ -161,9 +161,6 @@ export class Host implements IComponent {
      * @returns {Promise<this>} Promise resolving to instance of Host.
      */
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<this> {
-        //addLoggerOutput(process.stdout);
-        //addLoggerOutput(this.commonLogsPipe.getIn());
-
         this.objLogger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(

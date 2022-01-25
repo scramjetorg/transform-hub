@@ -18,10 +18,12 @@ export type LogEntry = DeepPartial<{
 }>
 
 export interface IObjectLogger {
-    inLogStream: PassThrough;
-    inStringStream: PassThrough;
-    outLogStream: PassThrough;
+    inputLogStream: PassThrough;
+    inputStringifiedLogStream: PassThrough;
+    outputLogStream: PassThrough;
     output: DataStream;
+
+    addOutput(output: Writable): void;
 
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
     debug(entry: LogEntry | string, ...optionalParams: any[]): void;

@@ -267,7 +267,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     async main() {
         await this.hostClient.init(this.instanceId);
 
-        //addLoggerOutput(this.hostClient.logStream);
         this.objLogger.pipe(this.hostClient.logStream, { stringified: true });
 
         this.defineControlStream();
