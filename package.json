@@ -17,6 +17,7 @@
   },
   "scripts": {
     "build": "yarn build:all-packages",
+    "build:packages-esbuild": "lerna run build:esbuild",
     "build:all": "yarn build:packages && yarn build:refapps && yarn build:docker",
     "build:refapps": "LOCAL_PACKAGES=true lerna run build:refapps",
     "build:packages": "LOCAL_PACKAGES=true lerna run build",
@@ -74,6 +75,7 @@
     "@typescript-eslint/parser": "^4.27.0",
     "build-if-changed": "^1.5.5",
     "cloc": "^2.8.0",
+    "esbuild": "^0.14.13",
     "eslint": "^7.29.0",
     "eslint-plugin-import": "^2.23.3",
     "eslint-to-editorconfig": "^2.0.0",

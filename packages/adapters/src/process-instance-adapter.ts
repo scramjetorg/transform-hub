@@ -57,7 +57,11 @@ IComponent {
         }
         return [
             isTSNode ? "ts-node" : process.execPath,
-            path.resolve(__dirname, "../../../runner/src/bin/start-runner.js")
+            path.resolve(__dirname,
+                process.env.ESBUILD
+                    ? "../../runner/bin/start-runner.js"
+                    : require.resolve("@scramjet/runner")
+            )
         ];
     }
 
