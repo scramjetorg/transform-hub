@@ -231,12 +231,9 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
-            //streams[CC.LOG].pipe(process.stdout);
         }
 
-        streams[CC.LOG].pipe(this.objLogger.inStringStream);
-        //.lines().JSONParse().stringify().pipe(this.objLogger.inStringStream);
-        //streams[CC.LOG].pipe(process.stdout);
+        streams[CC.LOG].pipe(this.objLogger.inputStringifiedLogStream);
 
         this.upStreams = [
             new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),

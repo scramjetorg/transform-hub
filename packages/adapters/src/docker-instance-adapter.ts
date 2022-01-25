@@ -40,15 +40,16 @@ IComponent {
     }
 
     async init(): Promise<void> {
+        /** ignore */
     }
 
     /**
      * Finds free port for every port requested in Sequence configuration and returns map of assigned ports.
      *
-     * @param declaredPorts - Ports declared in sequence config.
-     * @param containerConfig Container configuration
+     * @param {string[]} declaredPorts Ports declared in sequence config.
+     * @param {ContainerConfigurationWithExposedPorts} containerConfig Container configuration
      * extended with configuration for ports exposing.
-     * @param exposed - Defines configuration output type. Exposed ports when true or port bindings.
+     * @param {boolean} [exposed=false] Defines configuration output type. Exposed ports when true or port bindings.
      *
      * @returns Promise resolving with map of ports mapping.
      */

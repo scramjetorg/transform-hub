@@ -4,20 +4,57 @@ import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
 import { getName } from "./utils/get-name";
 
 export class ObjLogger implements IObjectLogger {
-    inLogStream = new PassThrough({ objectMode: true });
-    inStringStream = new PassThrough({ objectMode: false });
+    /**
+     * @type {PassThrough} Stream used to write logs.
+     */
+    outputLogStream = new PassThrough({ objectMode: true });
 
-    outLogStream = new PassThrough({ objectMode: true });
+    /**
+     * Input log stream in object mode.
+     */
+    inputLogStream = new PassThrough({ objectMode: true });
+
+    /**
+     * Input log stream in string mode.
+     */
+    inputStringifiedLogStream = new PassThrough({ objectMode: false });
+
+    /**
+     * Output stream in object mode.
+     */
     output = new DataStream({ objectMode: true });
 
+    /**
+     * Name used to indicate the source of the log.
+     */
     name: string;
+
+    /**
+     * Default log object.
+     */
     baseLog: LogEntry;
+
+    /**
+     * Log level.
+     */
     logLevel: LogLevel;
 
+    /**
+     * Additional output streams.
+     */
     outputs: Writable[] = [];
 
+    /**
+     * Logging levels chierarchy.
+     */
     static levels: LogLevel[] = ["FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"];
 
+    /**
+     *
+     * @param {any} reference Used to obtain a name for the logger.
+     * @param {LogEntry} baseLog Default log object.
+     * @param {LogLevel} logLevel Log level.
+     */
     constructor(reference: any, baseLog: LogEntry = {}, logLevel: LogLevel = "TRACE") {
         this.name = getName(reference);
 
@@ -25,12 +62,12 @@ export class ObjLogger implements IObjectLogger {
         this.logLevel = logLevel;
 
         StringStream
-            .from(this.inStringStream)
+            .from(this.inputStringifiedLogStream)
             .JSONParse(true)
-            .pipe(this.inLogStream);
+            .pipe(this.inputLogStream);
 
         DataStream
-            .from(this.inLogStream)
+            .from(this.inputLogStream)
             .each((entry: LogEntry) => {
                 const a: any = { ...entry };
 
@@ -42,7 +79,7 @@ export class ObjLogger implements IObjectLogger {
                 this.write(entry.level!, entry, ...entry.data || []);
             });
 
-        this.outLogStream.pipe(this.output);
+        this.outputLogStream.pipe(this.output);
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
@@ -74,7 +111,7 @@ export class ObjLogger implements IObjectLogger {
             }
         });
 
-        this.outLogStream.write(a);
+        this.outputLogStream.write(a);
     }
 
     addOutput(output: Writable) {
@@ -109,11 +146,18 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
     }
 
+    /**
+     * Pipes output logger to provided target. The target can be a writable stream or an ObjectLogger instance.
+     *
+     * @param {Writable | IObjectLogger} target Target for log stream.
+     * @param options Pipe options. If option `stringified` is set to true, the output will be stringified.
+     * @returns {Writable} Piped stream
+     */
     pipe(target: Writable | IObjectLogger, options: { stringified?: boolean } = {}): Writable {
         if (target instanceof ObjLogger) {
             this.logLevel = target.logLevel;
 
-            target = target.inLogStream;
+            target = target.inputLogStream;
         }
 
         target = target as Writable;
