@@ -9,13 +9,16 @@ from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
-from magic_utils import send_encoded_msg, read_and_decode
 
 STARTUP_LOGFILE = './python-runner-startup.log'
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
 instance_id = os.getenv('INSTANCE_ID')
+
+def send_encoded_msg(stream, msg_code, data={}):
+    message = json.dumps([msg_code.value, data])
+    stream.write(f"{message}\r\n".encode())
 
 
 class Runner:
@@ -93,7 +96,10 @@ class Runner:
         self.logger.info(f"Sending PING")
         send_encoded_msg(monitoring, msg_codes.PING)
 
-        code, data = await read_and_decode(control)
+        message = await control.readuntil(b"\n")
+        self.logger.info(f"Got message: {message}")
+        code, data = json.loads(message.decode())
+
         if code == msg_codes.PONG.value:
             self.logger.info(f"Got configuration: {data}")
             return data['appConfig'], data['args']
