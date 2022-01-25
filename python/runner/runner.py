@@ -4,6 +4,7 @@ import os
 import codecs
 import json
 import importlib.util
+from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
@@ -152,10 +153,16 @@ class Runner:
         }
         self.logger.info(f"Input headers: {repr(headers)}")
 
-        input = Stream.read_from(self.streams[CC.IN])
-        if headers['content-type'] == "text/plain":
+        input_type = headers['content-type']
+        if input_type == "text/plain":
+            input = Stream.read_from(self.streams[CC.IN])
             self.logger.debug("Decoding input stream...")
             input = input.decode("utf-8")
+        elif input_type == "application/octet-stream":
+            self.logger.debug("Opening input in binary mode...")
+            input = Stream.read_from(self.streams[CC.IN], chunk_size=CHUNK_SIZE)
+        else:
+            raise TypeError(f"Unsupported input type: {repr(input_type)}")
 
         input.pipe(input_stream)
         self.logger.debug("Input stream forwarded to the instance.")
