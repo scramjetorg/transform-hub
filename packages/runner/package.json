@@ -12,7 +12,9 @@
     "clean": "rm -rf ./dist .bic_cache",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
     "postbuild": "yarn prepack",
-    "prepack": "node ../../scripts/publish.js"
+    "prepack": "node ../../scripts/publish.js",
+    "build:esbuild": "esbuild src/**/*.ts --tsconfig=tsconfig.build.json --outdir=dist --bundle --platform=node --external:@scramjet/runner --external:ssh2 --external:cpu-features",
+    "postbuild:esbuild": "mkdir -p ../../dist/runner && cp -r dist/** ../../dist/runner && cp package.json ../../dist/runner"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
