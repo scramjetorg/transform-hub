@@ -50,7 +50,7 @@ export const config: CommandDefinition = (program) => {
     configCmd.command("get <key>")
         .description("Get config value")
         .action((key: keyof ReturnType<typeof getConfig>) => {
-            console.log(getConfig()[key]);
+            return displayObject(program, getConfig()[key]);
         });
 
     configCmd.command("unset <key>")
