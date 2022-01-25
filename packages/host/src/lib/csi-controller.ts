@@ -173,6 +173,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     startInstance() {
         this._instanceAdapter = getInstanceAdapter(this.config.noDocker);
+        this._instanceAdapter.objLogger.pipe(this.objLogger);
 
         const instanceConfig: InstanceConifg = {
             ...this.sequence.config,
