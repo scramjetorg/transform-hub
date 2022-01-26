@@ -117,6 +117,10 @@ class Runner:
 
 
     def load_sequence(self):
+        # Add sequence directory to sys.path
+        module_dir = os.path.dirname(self.seq_path)
+        if module_dir not in sys.path:
+            sys.path.append(module_dir)
         self.logger.debug(f"Loading sequence from {self.seq_path}...")
         spec = importlib.util.spec_from_file_location("sequence", self.seq_path)
         self.sequence = importlib.util.module_from_spec(spec)
