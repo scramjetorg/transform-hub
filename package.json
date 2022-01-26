@@ -39,7 +39,6 @@
     "lint": "eslint . --ext .ts --cache --cache-strategy=content --cache-location=/tmp/.eslintcache_scramjet-csi",
     "lint:uncached": "rm /tmp/.eslintcache_scramjet-csi && yarn lint",
     "lint:dedupe": "scripts/dedupe.js",
-    "lint:packages-only":  "eslint ./packages --ext .ts --cache --cache-strategy=content --cache-location=/tmp/.eslintcache_scramjet-csi",
     "start": "node dist/sth/bin/hub.js",
     "start:dev": "ts-node packages/sth/src/bin/hub.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
