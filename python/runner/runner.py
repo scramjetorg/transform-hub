@@ -106,8 +106,14 @@ class Runner:
 
 
     async def connect_control_stream(self):
-        async for bytes in self.streams[CC.CONTROL]:
-            code, data = json.loads(bytes.decode())
+        # Control stream carries ndjson, so it's enough to split into lines.
+        control_messages = (
+            Stream
+                # 128 kB is the typical size of TCP buffer.
+                .read_from(self.streams[CC.CONTROL], chunk_size=131072)
+                .decode('utf-8').split('\n').map(json.loads)
+        )
+        async for code, data in control_messages:
             self.logger.debug(f"Control message received: {code} {data}")
             if code == msg_codes.KILL.value:
                 self.exit_immediately()
