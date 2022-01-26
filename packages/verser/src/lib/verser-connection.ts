@@ -10,7 +10,7 @@ const BPMux = require("bpmux").BPMux;
  * Provides methods for handling connection to Verser server and streams in connection socket.
  */
 export class VerserConnection {
-    private objLogger = new ObjLogger(this)
+    private logger = new ObjLogger(this)
 
     private request: IncomingMessage;
     private bpmux: any;
@@ -26,7 +26,7 @@ export class VerserConnection {
         this._socket = socket;
 
         this.request.on("error", (error: Error) => {
-            this.objLogger.error("Request error:", error);
+            this.logger.error("Request error:", error);
             // TODO: handle error.
         });
     }
@@ -79,13 +79,13 @@ export class VerserConnection {
 
         channel
             .on("error", (error: Error) => {
-                this.objLogger.error("Channel error, id:", error.message);
+                this.logger.error("Channel error, id:", error.message);
             })
             .on("end", () => {
-                this.objLogger.trace("Request ended.", req.method, req.url);
+                this.logger.trace("Request ended.", req.method, req.url);
             });
 
-        this.objLogger.debug("Forwarding request", req.method, req.url);
+        this.logger.debug("Forwarding request", req.method, req.url);
 
         channel.write(
             `${req.method} ${req.url} HTTP/1.1\r\n` +
@@ -128,7 +128,7 @@ export class VerserConnection {
 
             await whenWrote("0\r\n\r\n", "utf-8", channel);
         } catch (err) {
-            this.objLogger.error("Error while forwarding request", err);
+            this.logger.error("Error while forwarding request", err);
         }
     }
 
@@ -145,7 +145,7 @@ export class VerserConnection {
 
     reconnect() {
         this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
-            this.objLogger.error(error.message);
+            this.logger.error(error.message);
             // TODO: Error handling?
         });
     }
@@ -156,11 +156,11 @@ export class VerserConnection {
      * @returns Promise resolving when connection is ended.
      */
     async close() {
-        this.objLogger.trace("Closing VerserConnection");
+        this.logger.trace("Closing VerserConnection");
 
         return new Promise<void>(res => {
             this.socket.end(() => {
-                this.objLogger.trace("VerserConnection closed");
+                this.logger.trace("VerserConnection closed");
                 res();
             });
         });

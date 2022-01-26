@@ -30,13 +30,13 @@ IComponent {
 
     private resources: DockerAdapterResources = {};
 
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
 
-        this.objLogger = new ObjLogger(this);
-        this.dockerHelper.objLogger.pipe(this.objLogger);
+        this.logger = new ObjLogger(this);
+        this.dockerHelper.logger.pipe(this.logger);
     }
 
     async init(): Promise<void> {
@@ -135,7 +135,7 @@ IComponent {
             // If Transform Hub runs in Docker container
             // then this container should be connected to STH docker network in Host initialization
 
-            this.objLogger.debug("Runner will connect to STH container with hostname", hostname);
+            this.logger.debug("Runner will connect to STH container with hostname", hostname);
 
             return {
                 network: STH_DOCKER_NETWORK,
@@ -149,7 +149,7 @@ IComponent {
             throw new Error(`Couldn't determine gateway for ${STH_DOCKER_NETWORK}`);
         }
 
-        this.objLogger.debug("Runner will connect to STH on host OS using gateway", sthNetworkGateway);
+        this.logger.debug("Runner will connect to STH on host OS using gateway", sthNetworkGateway);
 
         return {
             network: STH_DOCKER_NETWORK,
@@ -166,15 +166,15 @@ IComponent {
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
 
-        this.objLogger.info("Instance preparation done");
+        this.logger.info("Instance preparation done");
 
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
         if (development()) {
-            this.objLogger.debug("Development mode on");
+            this.logger.debug("Development mode on");
 
             if (process.env.CSI_COREDUMP_VOLUME) {
-                this.objLogger.debug("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
+                this.logger.debug("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
 
                 extraVolumes.push({
                     mountPoint: "/cores",
@@ -194,7 +194,7 @@ IComponent {
             `INSTANCE_ID=${instanceId}`,
         ];
 
-        this.objLogger.debug("Runner will start with envs", envs);
+        this.logger.debug("Runner will start with envs", envs);
 
         const { containerId, streams } = await this.dockerHelper.run({
             imageName: config.container.image,
@@ -214,17 +214,17 @@ IComponent {
         });
 
         streams.stderr.on("data", data => {
-            this.objLogger.error("Docker container error: ", data.toString());
+            this.logger.error("Docker container error: ", data.toString());
         });
 
         this.resources.containerId = containerId;
 
-        this.objLogger.trace("Container is running", containerId);
+        this.logger.trace("Container is running", containerId);
 
         try {
             const { statusCode } = await this.dockerHelper.wait(containerId);
 
-            this.objLogger.debug("Container exited", statusCode);
+            this.logger.debug("Container exited", statusCode);
 
             if (statusCode > 0) {
                 throw new InstanceAdapterError("RUNNER_NON_ZERO_EXITCODE", { statusCode });
@@ -233,12 +233,12 @@ IComponent {
             }
         } catch (error: any) {
             if (error instanceof InstanceAdapterError && error.code === "RUNNER_NON_ZERO_EXITCODE" && error.data.statusCode) {
-                this.objLogger.debug("Container returned non-zero status code", error.data.statusCode);
+                this.logger.debug("Container returned non-zero status code", error.data.statusCode);
 
                 return error.data.statusCode;
             }
 
-            this.objLogger.debug("Container errored", error);
+            this.logger.debug("Container errored", error);
 
             throw error;
         }
@@ -250,12 +250,12 @@ IComponent {
      */
     async cleanup(): Promise<void> {
         if (this.resources.volumeId) {
-            this.objLogger.debug("Volume will be removed in 1 sec");
+            this.logger.debug("Volume will be removed in 1 sec");
 
             await defer(60000); // @TODO: one sec?
             await this.dockerHelper.removeVolume(this.resources.volumeId);
 
-            this.objLogger.debug("Volume removed");
+            this.logger.debug("Volume removed");
         }
     }
 
@@ -269,11 +269,11 @@ IComponent {
      */
     async remove() {
         if (this.resources.containerId) {
-            this.objLogger.debug("Forcefully stopping containter", this.resources.containerId);
+            this.logger.debug("Forcefully stopping containter", this.resources.containerId);
 
             await this.dockerHelper.stopContainer(this.resources.containerId);
 
-            this.objLogger.debug("Container removed");
+            this.logger.debug("Container removed");
         }
     }
 }

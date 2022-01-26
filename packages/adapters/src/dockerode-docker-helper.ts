@@ -43,7 +43,7 @@ type DockerodeVolumeMountConfig = {
 export class DockerodeDockerHelper implements IDockerHelper {
     public dockerode: Dockerode = new Dockerode();
 
-    objLogger = new ObjLogger(this);
+    logger = new ObjLogger(this);
 
     /**
      * Translates DockerAdapterVolumeConfig to volumes configuration that Docker API can understand.
@@ -173,7 +173,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     async pullImage(name: string, fetchOnlyIfNotExists = true) {
         if (fetchOnlyIfNotExists) {
-            this.objLogger.trace("Checking image", name);
+            this.logger.trace("Checking image", name);
 
             if (this.pulledImages[name]) return this.pulledImages[name];
 
@@ -184,14 +184,14 @@ export class DockerodeDockerHelper implements IDockerHelper {
         }
 
         this.pulledImages[name] = (async () => {
-            this.objLogger.trace("Start pulling image", name);
+            this.logger.trace("Start pulling image", name);
 
             const pullStream = await this.dockerode.pull(name);
 
             // Wait for pull to finish
             await new Promise(res => this.dockerode.modem.followProgress(pullStream, res));
 
-            this.objLogger.trace("Image pulled");
+            this.logger.trace("Image pulled");
         })();
 
         return this.pulledImages[name];

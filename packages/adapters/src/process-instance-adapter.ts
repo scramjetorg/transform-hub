@@ -22,12 +22,12 @@ class ProcessInstanceAdapter implements
 ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 
     private runnerProcess?: ChildProcess;
 
     constructor() {
-        this.objLogger = new ObjLogger(this);
+        this.logger = new ObjLogger(this);
     }
 
     async init(): Promise<void> {
@@ -49,7 +49,7 @@ IComponent {
 
     getRunnerCmd(config: SequenceConfig) {
         if (config.entrypointPath.endsWith(".py")) {
-            this.objLogger.trace(gotPython);
+            this.logger.trace(gotPython);
 
             return [
                 "python3",
@@ -71,9 +71,9 @@ IComponent {
             throw new Error("Process instance adapter run with invalid runner config");
         }
 
-        this.objLogger.info("Instance preparation done");
+        this.logger.info("Instance preparation done");
 
-        this.objLogger.trace("Starting Runner", config.id);
+        this.logger.trace("Starting Runner", config.id);
 
         const runnerCommand = this.getRunnerCmd(config);
 
@@ -82,7 +82,7 @@ IComponent {
             config.entrypointPath
         );
 
-        this.objLogger.debug("Spawning Runner process with command", runnerCommand, "and envs: ", {
+        this.logger.debug("Spawning Runner process with command", runnerCommand, "and envs: ", {
             DEVELOPMENT: process.env.DEVELOPMENT,
             PRODUCTION: process.env.PRODUCTION,
             SEQUENCE_PATH: sequencePath,
@@ -102,7 +102,7 @@ IComponent {
             }
         });
 
-        this.objLogger.trace("Runner process is running", runnerProcess.pid);
+        this.logger.trace("Runner process is running", runnerProcess.pid);
 
         this.runnerProcess = runnerProcess;
 
@@ -110,17 +110,17 @@ IComponent {
             (res) => runnerProcess.on("exit", (code, sig) => res([code, sig]))
         );
 
-        this.objLogger.trace("Runner process exited", runnerProcess.pid);
+        this.logger.trace("Runner process exited", runnerProcess.pid);
 
         if (statusCode === null) {
-            this.objLogger.warn("Runner was killed by a signal, and didn't return a status code", signal);
+            this.logger.warn("Runner was killed by a signal, and didn't return a status code", signal);
 
             // Probably SIGIKLL
             return 137;
         }
 
         if (statusCode > 0) {
-            this.objLogger.debug("Process returned non-zero status code", statusCode);
+            this.logger.debug("Process returned non-zero status code", statusCode);
         }
 
         return statusCode;

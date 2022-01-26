@@ -28,5 +28,5 @@ export interface ISequenceAdapter {
 
     remove(conifg: SequenceConfig): Promise<void>
 
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 }
