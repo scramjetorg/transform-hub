@@ -76,6 +76,11 @@ export type STHConfiguration = {
     logLevel: LogLevel
 
     /**
+     * Enable colors in logging.
+     */
+    logColors: boolean,
+
+    /**
      * CPM url.
      */
     cpmUrl: string;

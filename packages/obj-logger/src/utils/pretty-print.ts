@@ -10,8 +10,15 @@ const COLOR_MAP: { [ key: string]: string } = {
     FATAL: COLORS.FgMagenta
 };
 
-const getLevelColor = (level: LogLevel = "INFO") => `${COLOR_MAP[level]}${level?.padEnd(5)}${COLORS.Reset}`;
+const colorLevel = (level: LogLevel = "INFO") => `${COLOR_MAP[level]}${level?.padEnd(5)}${COLORS.Reset}`;
+const colorDate = (ts?: number) => ts ? `${COLORS.Dim}${new Date(ts).toISOString()}${COLORS.Reset}` : "";
+const colorSource = (source?: string) => `${COLORS.FgMagenta}${source}${COLORS.Reset}`;
+const colorData = (data: any) => `${COLORS.Dim}${(data || []).length ? JSON.stringify(data, null, 0) : ""}${COLORS.Reset}`;
 
-export const prettyPrint = (obj: LogEntry) => {
-    return `${COLORS.Dim}${new Date(obj.ts!).toISOString()}${COLORS.Reset} ${getLevelColor(obj.level)} ${COLORS.FgMagenta}${obj.from || ""}${COLORS.Reset} ${obj.msg} ${COLORS.Dim}${(obj.data || []).length ? JSON.stringify(obj.data, null, 0) : ""}${COLORS.Reset}\n`;
-};
+export const prettyPrint = (opts: { colors?: boolean }) => opts.colors
+    ? (obj: LogEntry) => {
+        return `${colorDate(obj.ts)} ${colorLevel(obj.level)} ${colorSource(obj.from)} ${obj.msg} ${colorData(obj.data)}\n`;
+    } : (obj: LogEntry) => {
+        return `${obj.ts} ${obj.level} ${obj.from} ${obj.msg} ${(obj.data || []).length ? JSON.stringify(obj.data, null, 0) : ""}\n`;
+    };
+
