@@ -28,6 +28,10 @@ Prominent
 - 1c4ce2f2 - Reenable STH to be run inside a docker container
 - 3f0b4494 - Listen and reconnect on VerserClient error in Host to Manager connection
 - d0f7bdc4 - Python runner work in progress
+- f0963d02 - Logger upgrade, now it operates on objects not strings
+- e89113b2 - CLI: fix for saving instance id in config
+- 5217044e - Introduce a new, faster building for development using esbuild
+- fe364b1a - Add support for complex packages in python apps
 
 New features:
 
@@ -60,7 +64,8 @@ Bugfixes:
 - Fix process.stdin ending
 - Fix STH to be able to run from within a docker container (bugged since 0.13 and TCP Runner)
 - STH is able to reconnect to Scramjet Cloud Platform automatically
+- Fix for the id replacement in CLI.
 
-## @scramjet/transform Hub - v0.15.0
+## @scramjet/transform Hub - v0.15.1
 
 This is the last release in changelog.
