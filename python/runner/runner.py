@@ -81,6 +81,7 @@ class Runner:
         # pretend to have API compatibiliy
         sys.stdout.flush = lambda: True
         sys.stderr.flush = lambda: True
+        self.logger.info("Stdio connected.")
 
 
     def connect_log_stream(self):
@@ -189,7 +190,10 @@ class Runner:
 
         if asyncio.iscoroutine(result):
             result = await result
-        await self.forward_output_stream(result)
+        if result:
+            await self.forward_output_stream(result)
+        else:
+            self.logger.debug("Sequence returned no output.")
 
         self.logger.info('Finished.')
 
