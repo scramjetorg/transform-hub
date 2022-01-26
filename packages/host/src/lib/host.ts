@@ -5,7 +5,7 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, AppConfig, CSIConfig, IComponent, IObjectLogger, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, CSIConfig, IComponent, IObjectLogger, LogLevel, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
@@ -113,11 +113,11 @@ export class Host implements IComponent {
         this.objLogger = new ObjLogger(
             this,
             {},
-            ObjLogger.levels.find((l) => l.toLowerCase() === sthConfig.logLevel) ||
+            ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
                 ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
-        const prettyLog = new DataStream().map(prettyPrint);
+        const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
 
         this.objLogger.addOutput(prettyLog);
         prettyLog.pipe(process.stdout);
