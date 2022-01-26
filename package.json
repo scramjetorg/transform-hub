@@ -92,8 +92,7 @@
   },
   "workspaces": {
     "packages": [
-      "packages/**",
-      "bdd"
+      "packages/**"
     ]
   },
   "husky": {

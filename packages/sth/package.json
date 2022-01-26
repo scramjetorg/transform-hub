@@ -23,7 +23,7 @@
     "@scramjet/host": "^0.15.0",
     "@scramjet/logger": "^0.15.0",
     "@scramjet/sth-config": "^0.15.0",
-    "commander": "^8.1.0"
+    "commander": "8.1.0"
   },
   "devDependencies": {
     "@scramjet/types": "^0.15.0",
