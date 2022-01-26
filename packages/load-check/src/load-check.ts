@@ -30,7 +30,7 @@ export class LoadCheck implements IComponent {
      *
      * @type {IObjectLogger}
      */
-    objLogger: ObjLogger = new ObjLogger(this);
+    logger: ObjLogger = new ObjLogger(this);
 
     constructor(config: LoadCheckConfig) {
         this.config = config;
@@ -73,7 +73,7 @@ export class LoadCheck implements IComponent {
     async overloaded(): Promise<boolean> {
         const check = await this.getLoadCheck();
 
-        this.objLogger.trace("Load Check", check);
+        this.logger.trace("Load Check", check);
 
         const conditionsMet = {
             cpu: check.avgLoad < 100 - this.constants.MIN_INSTANCE_REQUIREMENTS.cpuLoad,
@@ -81,7 +81,7 @@ export class LoadCheck implements IComponent {
             dsk: check.fsSize[0].available > this.constants.MIN_INSTANCE_REQUIREMENTS.freeSpace
         };
 
-        this.objLogger.trace("Contidions", conditionsMet);
+        this.logger.trace("Contidions", conditionsMet);
 
         return !(conditionsMet.cpu && conditionsMet.mem && conditionsMet.dsk);
     }

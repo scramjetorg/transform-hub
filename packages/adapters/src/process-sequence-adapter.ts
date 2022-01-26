@@ -42,12 +42,12 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
  * Adapter for preparing Sequence to be run in process.
  */
 class ProcessSequenceAdapter implements ISequenceAdapter {
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 
     name = "ProcessSequenceAdapter";
 
     constructor(private config: STHConfiguration) {
-        this.objLogger = new ObjLogger(this);
+        this.logger = new ObjLogger(this);
     }
 
     /**
@@ -73,7 +73,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
                 .map((configPromised) => configPromised.catch(() => null))
         );
 
-        this.objLogger.debug("Listed stored sequences", sequencesConfigs);
+        this.logger.debug("Listed stored sequences", sequencesConfigs);
 
         return sequencesConfigs
             .filter(isDefined);

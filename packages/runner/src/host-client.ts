@@ -14,10 +14,10 @@ type HostOpenConnections = [
 class HostClient implements IHostClient {
     private _streams?: UpstreamStreamsConfig;
 
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 
     constructor(private instancesServerPort: number, private instancesServerHost: string) {
-        this.objLogger = new ObjLogger(this);
+        this.logger = new ObjLogger(this);
     }
 
     private get streams(): UpstreamStreamsConfig {
@@ -55,7 +55,7 @@ class HostClient implements IHostClient {
     }
 
     async disconnect() {
-        this.objLogger.trace("Disconnecting from host");
+        this.logger.trace("Disconnecting from host");
 
         const streamsExitedPromised = this.streams.map(stream =>
             new Promise(

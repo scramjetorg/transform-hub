@@ -16,14 +16,14 @@ export type ServerConfig = {
 
 export { cero, sequentialRouter };
 
-const objLogger = new ObjLogger("ApiServer");
+const logger = new ObjLogger("ApiServer");
 
 function safeHandler<T extends unknown[]>(cb: (...args: T) => MaybePromise<void>) {
     return async (...args: T) => {
         try {
             await cb(...args);
         } catch (err) {
-            objLogger.error("Uncaught error in handler", err);
+            logger.error("Uncaught error in handler", err);
         }
     };
 }
@@ -38,7 +38,7 @@ function safeDecorator(cb: (req: IncomingMessage) => MaybePromise<void>) {
         try {
             await cb(req);
         } catch (err) {
-            objLogger.error("Uncaught error in handler", err);
+            logger.error("Uncaught error in handler", err);
         } finally {
             next();
         }

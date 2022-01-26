@@ -6,7 +6,7 @@ import { IObjectLogger } from "./object-logger";
 export type ExitCode = number;
 
 export interface ILifeCycleAdapterMain {
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 
     /**
      * Initializes Lifecycle adapter.

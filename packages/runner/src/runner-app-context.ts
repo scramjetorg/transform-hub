@@ -28,8 +28,8 @@ implements AppContext<AppConfigType, State> {
     AppError!: AppErrorConstructor;
     monitorStream: WritableStream<any>;
     emitter: EventEmitter;
-    objLogger: ObjLogger;
     initialState?: State;
+    logger: IObjectLogger = new ObjLogger("Sequence");
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
         emitter: EventEmitter, runner: RunnerProxy) {
@@ -37,11 +37,7 @@ implements AppContext<AppConfigType, State> {
         this.monitorStream = monitorStream;
         this.emitter = emitter;
         this.runner = runner;
-
-        this.objLogger = new ObjLogger("Sequence");
     }
-
-    logger: IObjectLogger = new ObjLogger("Sequence");
 
     private handleSave(_state: any): void {
         throw new Error("Method not implemented.");

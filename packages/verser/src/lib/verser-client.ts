@@ -1,5 +1,6 @@
 import { OutgoingHttpHeaders, request, Agent } from "http";
 import { merge, TypedEmitter } from "@scramjet/utility";
+import { IObjectLogger } from "@scramjet/types";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
 import { Duplex } from "stream";
 import { Socket } from "net";
@@ -50,7 +51,7 @@ export class VerserClient extends TypedEmitter<Events> {
      *
      * @type {IObjectLogger}
      */
-    public objLogger = new ObjLogger(this);
+    public logger: IObjectLogger = new ObjLogger(this);
 
     constructor(opts: VerserClientOptions = defaultVerserClientOptions) {
         super();
@@ -79,7 +80,7 @@ export class VerserClient extends TypedEmitter<Events> {
             });
 
             connectRequest.on("error", (err) => {
-                this.objLogger.error("Connect error", err);
+                this.logger.error("Connect error", err);
                 reject(err);
             });
 

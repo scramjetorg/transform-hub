@@ -163,7 +163,7 @@ export type DockerAdapterRunResponse = {
     containerId: DockerContainer
 };
 export interface IDockerHelper {
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 
     /**
      * Converts pairs of mount path and volume name to DockerHelper specific volume configuration.

@@ -74,7 +74,7 @@ export class Host implements IComponent {
     /**
      * Instance of class providing logging utilities.
      */
-    objLogger: IObjectLogger;
+    logger: IObjectLogger;
 
     /**
      * Instance of class providing load check.
@@ -93,7 +93,7 @@ export class Host implements IComponent {
      */
     private attachListeners() {
         this.socketServer.on("connect", async (id, streams) => {
-            this.objLogger.debug("Instance connected", id);
+            this.logger.debug("Instance connected", id);
 
             await this.instancesStore[id].handleInstanceConnect(streams);
         });
@@ -110,7 +110,7 @@ export class Host implements IComponent {
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
         this.config = sthConfig;
 
-        this.objLogger = new ObjLogger(
+        this.logger = new ObjLogger(
             this,
             {},
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
@@ -119,10 +119,10 @@ export class Host implements IComponent {
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
 
-        this.objLogger.addOutput(prettyLog);
+        this.logger.addOutput(prettyLog);
         prettyLog.pipe(process.stdout);
 
-        this.objLogger.info("Log Level", sthConfig.logLevel);
+        this.logger.info("Log Level", sthConfig.logLevel);
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
@@ -148,7 +148,7 @@ export class Host implements IComponent {
             this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
             this.serviceDiscovery.setConnector(this.cpmConnector);
 
-            this.cpmConnector.objLogger.pipe(this.objLogger);
+            this.cpmConnector.logger.pipe(this.logger);
         }
     }
 
@@ -161,20 +161,20 @@ export class Host implements IComponent {
      * @returns {Promise<this>} Promise resolving to instance of Host.
      */
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<this> {
-        this.objLogger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
+        this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
-            ({ date, method, url, status }) => this.objLogger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
+            ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
 
-        this.objLogger.debug("Host main called", { version });
+        this.logger.debug("Host main called", { version });
 
         if (identifyExisiting) {
             await this.identifyExistingSequences();
         }
 
         if (!this.config.noDocker) {
-            this.objLogger.trace("Setting up Docker networking");
+            this.logger.trace("Setting up Docker networking");
 
             await setupDockerNetworking(new DockerodeDockerHelper());
         }
@@ -187,7 +187,7 @@ export class Host implements IComponent {
             this.api?.server.once("listening", () => {
                 const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
-                this.objLogger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
+                this.logger.info("API on", `${serverInfo?.address}:${serverInfo.port}`);
 
                 res();
             });
@@ -249,7 +249,7 @@ export class Host implements IComponent {
             const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
             const end = req.headers["x-end-stream"] === "true";
 
-            this.objLogger.debug(`Incoming topic '${params.name}' request, end:${end}.`);
+            this.logger.debug(`Incoming topic '${params.name}' request, end:${end}.`);
 
             if (sdTarget) {
                 return sdTarget;
@@ -306,7 +306,7 @@ export class Host implements IComponent {
 
             req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
 
-            this.objLogger.debug(req.method!, req.url);
+            this.logger.debug(req.method!, req.url);
 
             return instance.router.lookup(req, res, next);
         }
@@ -329,7 +329,7 @@ export class Host implements IComponent {
     async handleDeleteSequence(req: ParsedMessage): Promise<STHRestAPI.DeleteSequenceResponse> {
         const id = req.params?.id;
 
-        this.objLogger.trace("Deleting sequence...", id);
+        this.logger.trace("Deleting sequence...", id);
 
         const sequenceInfo = this.sequencesStore.get(id);
 
@@ -340,7 +340,7 @@ export class Host implements IComponent {
         }
 
         if (sequenceInfo.instances.size > 0) {
-            this.objLogger.warn("Can't remove sequence in use:", id);
+            this.logger.warn("Can't remove sequence in use:", id);
 
             return {
                 opStatus: ReasonPhrases.CONFLICT,
@@ -354,7 +354,7 @@ export class Host implements IComponent {
             await sequenceAdapter.remove(sequenceInfo.config);
             this.sequencesStore.delete(id);
 
-            this.objLogger.trace("Sequence removed:", id);
+            this.logger.trace("Sequence removed:", id);
 
             this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
 
@@ -363,7 +363,7 @@ export class Host implements IComponent {
                 id
             };
         } catch (error: any) {
-            this.objLogger.error("Error removing sequence!", error);
+            this.logger.error("Error removing sequence!", error);
 
             throw new HostError("CONTROLLER_ERROR");
         }
@@ -381,14 +381,14 @@ export class Host implements IComponent {
 
             const configs = await sequenceAdapter.list();
 
-            sequenceAdapter.objLogger.pipe(this.objLogger);
+            sequenceAdapter.logger.pipe(this.logger);
 
             for (const config of configs) {
                 this.sequencesStore.set(config.id, { id: config.id, config: config, instances: new Set() });
-                this.objLogger.trace("Sequence found", config);
+                this.logger.trace("Sequence found", config);
             }
         } catch (e: any) {
-            this.objLogger.warn("Error while trying to identify existing sequences.", e);
+            this.logger.warn("Error while trying to identify existing sequences.", e);
         }
     }
 
@@ -401,16 +401,16 @@ export class Host implements IComponent {
      * @returns {Promise} Promise resolving to operation result.
      */
     async handleNewSequence(stream: IncomingMessage): Promise<STHRestAPI.SendSequenceResponse> {
-        this.objLogger.info("New sequence incoming");
+        this.logger.info("New sequence incoming");
 
         const id = IDProvider.generate();
 
         try {
             const sequenceAdapter = getSequenceAdapter(this.config);
 
-            sequenceAdapter.objLogger.pipe(this.objLogger);
+            sequenceAdapter.logger.pipe(this.logger);
 
-            this.objLogger.debug(`Using ${sequenceAdapter.name} as sequence adapter`);
+            this.logger.debug(`Using ${sequenceAdapter.name} as sequence adapter`);
 
             await sequenceAdapter.init();
 
@@ -418,7 +418,7 @@ export class Host implements IComponent {
 
             this.sequencesStore.set(config.id, { id: config.id, config, instances: new Set() });
 
-            this.objLogger.info("Sequence identified", config);
+            this.logger.info("Sequence identified", config);
 
             await this.cpmConnector?.sendSequenceInfo(config.id, SequenceMessageCode.SEQUENCE_CREATED);
 
@@ -426,7 +426,7 @@ export class Host implements IComponent {
                 id: config.id
             };
         } catch (error: any) {
-            this.objLogger.error(error?.stack);
+            this.logger.error(error?.stack);
 
             return {
                 opStatus: 422,
@@ -457,7 +457,7 @@ export class Host implements IComponent {
         const sequence = this.sequencesStore.get(seqId);
 
         if (sequence) {
-            this.objLogger.info("Start sequence", sequence.id, sequence.config.name);
+            this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
             const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
 
@@ -509,20 +509,20 @@ export class Host implements IComponent {
             csiConfig
         );
 
-        csic.objLogger.pipe(this.objLogger);
+        csic.logger.pipe(this.logger);
 
-        this.objLogger.trace("CSIController created", id);
+        this.logger.trace("CSIController created", id);
 
         this.instancesStore[id] = csic;
 
         await csic.start();
 
-        this.objLogger.trace("CSIController started", id);
+        this.logger.trace("CSIController started", id);
 
         sequence.instances.add(id);
 
         csic.on("pang", (data) => {
-            this.objLogger.trace("PANG received", data);
+            this.logger.trace("PANG received", data);
 
             let notifyCPM = false;
 
@@ -540,7 +540,7 @@ export class Host implements IComponent {
                 csic.confirmInputHook().then(
                     () => { /* noop */ },
                     (e: any) => {
-                        this.objLogger.error(e);
+                        this.logger.error(e);
                     }
                 );
             }
@@ -548,7 +548,7 @@ export class Host implements IComponent {
             if (data.provides) {
                 notifyCPM = true;
 
-                this.objLogger.debug("Sequence provides data", data);
+                this.logger.debug("Sequence provides data", data);
 
                 const topic = this.serviceDiscovery.addData(
                     { topic: data.provides, contentType: data.contentType! },
@@ -564,7 +564,7 @@ export class Host implements IComponent {
         });
 
         csic.on("end", (code) => {
-            this.objLogger.trace("CSIControlled ended", `Exit code: ${code}`);
+            this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
 
             delete InstanceStore[csic.id];
 
@@ -595,7 +595,7 @@ export class Host implements IComponent {
      * @returns {STHRestAPI.GetInstancesResponse} List of instances.
      */
     getInstances(): STHRestAPI.GetInstancesResponse {
-        this.objLogger.info("List Instances");
+        this.logger.info("List Instances");
 
         return Object.values(this.instancesStore).map(csiController => ({
             id: csiController.id,
@@ -659,7 +659,7 @@ export class Host implements IComponent {
      * using its CSIController {@link CSIController}
      */
     async stop() {
-        this.objLogger.trace("Stopping instances");
+        this.logger.trace("Stopping instances");
 
         await Promise.all(
             Object.values(this.instancesStore)
@@ -667,7 +667,7 @@ export class Host implements IComponent {
                     csiController.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {}))
         );
 
-        this.objLogger.info("Instances stopped");
+        this.logger.info("Instances stopped");
 
         await this.cleanup();
     }
@@ -676,28 +676,28 @@ export class Host implements IComponent {
      * Stops running servers.
      */
     async cleanup() {
-        this.objLogger.trace("Cleaning up");
+        this.logger.trace("Cleaning up");
 
         this.instancesStore = {};
         this.sequencesStore = new Map();
 
-        this.objLogger.trace("Stopping API server");
+        this.logger.trace("Stopping API server");
 
         await new Promise<void>((res, _rej) => {
             this.api.server
                 .once("close", () => {
-                    this.objLogger.info("API server stopped");
+                    this.logger.info("API server stopped");
                     res();
                 })
                 .close();
         });
 
-        this.objLogger.trace("Stopping socket server");
+        this.logger.trace("Stopping socket server");
 
         await new Promise<void>((res, _rej) => {
             this.socketServer.server
                 ?.once("close", () => {
-                    this.objLogger.trace("Socket server stopped.");
+                    this.logger.trace("Socket server stopped.");
 
                     res();
                 })
