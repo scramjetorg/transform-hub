@@ -16,6 +16,10 @@
 - [init](ilifecycleadaptermain.md#init)
 - [remove](ilifecycleadaptermain.md#remove)
 
+### Properties
+
+- [logger](ilifecycleadaptermain.md#logger)
+
 ## Methods
 
 ### cleanup
@@ -30,7 +34,7 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L16)
+[packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
 
 ___
 
@@ -46,7 +50,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L11)
+[packages/types/src/lifecycle-adapters.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L14)
 
 ___
 
@@ -60,4 +64,14 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
+[packages/types/src/lifecycle-adapters.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L22)
+
+## Properties
+
+### logger
+
+• **logger**: [`IObjectLogger`](iobjectlogger.md)
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L9)

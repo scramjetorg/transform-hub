@@ -22,6 +22,7 @@
 - [createContainer](idockerhelper.md#createcontainer)
 - [createVolume](idockerhelper.md#createvolume)
 - [listVolumes](idockerhelper.md#listvolumes)
+- [logger](idockerhelper.md#logger)
 - [removeContainer](idockerhelper.md#removecontainer)
 - [removeVolume](idockerhelper.md#removevolume)
 - [run](idockerhelper.md#run)
@@ -49,7 +50,7 @@
 
 #### Defined in
 
-[types.ts:286](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L286)
+[types.ts:288](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L288)
 
 ___
 
@@ -69,7 +70,7 @@ ___
 
 #### Defined in
 
-[types.ts:288](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L288)
+[types.ts:290](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L290)
 
 ___
 
@@ -89,7 +90,7 @@ ___
 
 #### Defined in
 
-[types.ts:284](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L284)
+[types.ts:286](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L286)
 
 ___
 
@@ -103,7 +104,7 @@ ___
 
 #### Defined in
 
-[types.ts:282](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L282)
+[types.ts:284](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L284)
 
 ___
 
@@ -126,7 +127,7 @@ Fetches the image from repo
 
 #### Defined in
 
-[types.ts:280](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L280)
+[types.ts:282](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L282)
 
 ___
 
@@ -149,7 +150,7 @@ Waits until containter exits
 
 #### Defined in
 
-[types.ts:272](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L272)
+[types.ts:274](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L274)
 
 ## Properties
 
@@ -187,7 +188,7 @@ Created container.
 
 #### Defined in
 
-[types.ts:186](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L186)
+[types.ts:188](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L188)
 
 ___
 
@@ -215,7 +216,7 @@ Created volume.
 
 #### Defined in
 
-[types.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L245)
+[types.ts:247](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L247)
 
 ___
 
@@ -237,7 +238,17 @@ List of existing volumes
 
 #### Defined in
 
-[types.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L236)
+[types.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L238)
+
+___
+
+### logger
+
+• **logger**: `IObjectLogger`
+
+#### Defined in
+
+[types.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L166)
 
 ___
 
@@ -263,7 +274,7 @@ Removes container.
 
 #### Defined in
 
-[types.ts:229](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L229)
+[types.ts:231](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L231)
 
 ___
 
@@ -289,7 +300,7 @@ Removes volume.
 
 #### Defined in
 
-[types.ts:254](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L254)
+[types.ts:256](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L256)
 
 ___
 
@@ -315,7 +326,7 @@ Executes command in container.
 
 #### Defined in
 
-[types.ts:263](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L263)
+[types.ts:265](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L265)
 
 ___
 
@@ -341,7 +352,7 @@ Starts container.
 
 #### Defined in
 
-[types.ts:210](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L210)
+[types.ts:212](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L212)
 
 ___
 
@@ -365,7 +376,7 @@ ___
 
 #### Defined in
 
-[types.ts:221](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L221)
+[types.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L223)
 
 ___
 
@@ -391,7 +402,7 @@ Stops container.
 
 #### Defined in
 
-[types.ts:219](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L219)
+[types.ts:221](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L221)
 
 ___
 
@@ -419,4 +430,4 @@ DockerHelper volume configuration.
 
 #### Defined in
 
-[types.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L173)
+[types.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L175)

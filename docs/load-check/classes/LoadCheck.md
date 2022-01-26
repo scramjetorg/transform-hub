@@ -54,7 +54,7 @@ ___
 
 ### logger
 
-• **logger**: `Console`
+• **logger**: `ObjLogger`
 
 Logger instance.
 

@@ -17,6 +17,7 @@
 - [ILifeCycleAdapter](interfaces/ilifecycleadapter.md)
 - [ILifeCycleAdapterMain](interfaces/ilifecycleadaptermain.md)
 - [ILifeCycleAdapterRun](interfaces/ilifecycleadapterrun.md)
+- [IObjectLogger](interfaces/iobjectlogger.md)
 - [ISequenceAdapter](interfaces/isequenceadapter.md)
 - [ReadableStream](interfaces/readablestream.md)
 - [WritableStream](interfaces/writablestream.md)
@@ -91,6 +92,8 @@
 - [LoadCheckContstants](modules.md#loadcheckcontstants)
 - [LoadCheckStat](modules.md#loadcheckstat)
 - [LoadCheckStatMessage](modules.md#loadcheckstatmessage)
+- [LogEntry](modules.md#logentry)
+- [LogLevel](modules.md#loglevel)
 - [Logger](modules.md#logger)
 - [LoggerOptions](modules.md#loggeroptions)
 - [LoggerOutput](modules.md#loggeroutput)
@@ -433,7 +436,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L1)
+[packages/types/src/sth-configuration.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L3)
 
 ___
 
@@ -450,7 +453,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L13)
+[packages/types/src/sth-configuration.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L15)
 
 ___
 
@@ -781,7 +784,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L5)
+[packages/types/src/lifecycle-adapters.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L6)
 
 ___
 
@@ -940,7 +943,7 @@ Host process configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L38)
+[packages/types/src/sth-configuration.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L40)
 
 ___
 
@@ -1178,7 +1181,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L38)
+[packages/types/src/lifecycle-adapters.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L41)
 
 ___
 
@@ -1249,6 +1252,28 @@ ___
 #### Defined in
 
 [packages/types/src/messages/load.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/load.ts#L4)
+
+___
+
+### LogEntry
+
+Ƭ **LogEntry**: [`DeepPartial`](modules.md#deeppartial)<`Object`\>
+
+Single log entry.
+
+#### Defined in
+
+[packages/types/src/object-logger.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L10)
+
+___
+
+### LogLevel
+
+Ƭ **LogLevel**: ``"ERROR"`` \| ``"WARN"`` \| ``"INFO"`` \| ``"DEBUG"`` \| ``"FATAL"`` \| ``"TRACE"``
+
+#### Defined in
+
+[packages/types/src/object-logger.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L5)
 
 ___
 
@@ -1727,7 +1752,7 @@ PreRunner container configuraion.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L28)
+[packages/types/src/sth-configuration.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L30)
 
 ___
 
@@ -1844,7 +1869,7 @@ Runner container configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L33)
+[packages/types/src/sth-configuration.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L35)
 
 ___
 
@@ -1903,13 +1928,15 @@ ___
 | `instanceRequirements.cpuLoad` | `number` | Required free CPU. In percentage. |
 | `instanceRequirements.freeMem` | `number` | Free memory required to start instance. In megabytes. |
 | `instanceRequirements.freeSpace` | `number` | Free disk space required to start instance. In megabytes. |
+| `logColors` | `boolean` | Enable colors in logging. |
+| `logLevel` | [`LogLevel`](modules.md#loglevel) | Logging level. |
 | `noDocker` | `boolean` | Whether host should run all the instances on the host machine, instead of in docker containers **UNSAFE FOR RUNNING ARBITRARY CODE (e.g. user submitted)** |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new sequences |
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L70)
+[packages/types/src/sth-configuration.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L72)
 
 ___
 
