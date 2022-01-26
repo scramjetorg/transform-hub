@@ -528,13 +528,17 @@ Container exit code.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L45)
+[dockerode-docker-helper.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L44)
 
 ___
 
 ### logger
 
-• **logger**: `Console`
+• **logger**: `ObjLogger`
+
+#### Implementation of
+
+[IDockerHelper](../interfaces/idockerhelper.md).[logger](../interfaces/idockerhelper.md#logger)
 
 #### Defined in
 

@@ -19,6 +19,10 @@
 - [run](ilifecycleadapterrun.md#run)
 - [stats](ilifecycleadapterrun.md#stats)
 
+### Properties
+
+- [logger](ilifecycleadapterrun.md#logger)
+
 ## Methods
 
 ### cleanup
@@ -37,7 +41,7 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L16)
+[packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
 
 ___
 
@@ -57,7 +61,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L11)
+[packages/types/src/lifecycle-adapters.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L14)
 
 ___
 
@@ -77,7 +81,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L32)
+[packages/types/src/lifecycle-adapters.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L35)
 
 ___
 
@@ -95,7 +99,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
+[packages/types/src/lifecycle-adapters.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L22)
 
 ___
 
@@ -121,7 +125,7 @@ Runner exit code.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L30)
+[packages/types/src/lifecycle-adapters.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L33)
 
 ___
 
@@ -141,4 +145,18 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L34)
+[packages/types/src/lifecycle-adapters.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L37)
+
+## Properties
+
+### logger
+
+• **logger**: [`IObjectLogger`](iobjectlogger.md)
+
+#### Inherited from
+
+[ILifeCycleAdapterMain](ilifecycleadaptermain.md).[logger](ilifecycleadaptermain.md#logger)
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L9)

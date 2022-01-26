@@ -11,6 +11,11 @@
 - [list](isequenceadapter.md#list)
 - [remove](isequenceadapter.md#remove)
 
+### Properties
+
+- [logger](isequenceadapter.md#logger)
+- [name](isequenceadapter.md#name)
+
 ## Methods
 
 ### identify
@@ -32,7 +37,7 @@ Identifies new sequence
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L22)
+[packages/types/src/sequence-adapter.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L27)
 
 ___
 
@@ -46,7 +51,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L12)
+[packages/types/src/sequence-adapter.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L17)
 
 ___
 
@@ -62,7 +67,7 @@ Identifies existing sequences
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L17)
+[packages/types/src/sequence-adapter.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L22)
 
 ___
 
@@ -82,4 +87,26 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L24)
+[packages/types/src/sequence-adapter.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L29)
+
+## Properties
+
+### logger
+
+• **logger**: [`IObjectLogger`](iobjectlogger.md)
+
+#### Defined in
+
+[packages/types/src/sequence-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L31)
+
+___
+
+### name
+
+• **name**: `string`
+
+Adapter name.
+
+#### Defined in
+
+[packages/types/src/sequence-adapter.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L15)

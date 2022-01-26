@@ -275,7 +275,7 @@ ___
 
 #### Defined in
 
-[types.ts:291](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L291)
+[types.ts:293](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L293)
 
 ## Variables
 

@@ -29,6 +29,7 @@ Adapter for preparing Sequence to be run in Docker container.
 
 - [dockerHelper](dockersequenceadapter.md#dockerhelper)
 - [logger](dockersequenceadapter.md#logger)
+- [name](dockersequenceadapter.md#name)
 - [resources](dockersequenceadapter.md#resources)
 
 ## Constructors
@@ -45,7 +46,7 @@ Adapter for preparing Sequence to be run in Docker container.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L23)
+[docker-sequence-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L28)
 
 ## Methods
 
@@ -69,7 +70,7 @@ Created volume.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L161)
+[docker-sequence-adapter.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L175)
 
 ___
 
@@ -91,7 +92,7 @@ Pulls image from registry.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L46)
+[docker-sequence-adapter.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L54)
 
 ___
 
@@ -123,7 +124,7 @@ ISequenceAdapter.identify
 
 #### Defined in
 
-[docker-sequence-adapter.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L115)
+[docker-sequence-adapter.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L126)
 
 ___
 
@@ -147,7 +148,7 @@ Sequence configuration or undefined if sequence cannot be identified.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L74)
+[docker-sequence-adapter.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L84)
 
 ___
 
@@ -167,7 +168,7 @@ ISequenceAdapter.init
 
 #### Defined in
 
-[docker-sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L33)
+[docker-sequence-adapter.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L41)
 
 ___
 
@@ -189,7 +190,7 @@ ISequenceAdapter.list
 
 #### Defined in
 
-[docker-sequence-adapter.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L55)
+[docker-sequence-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L63)
 
 ___
 
@@ -215,7 +216,7 @@ Promise resolving to sequence configuration.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:177](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L177)
+[docker-sequence-adapter.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L193)
 
 ___
 
@@ -241,7 +242,7 @@ ISequenceAdapter.remove
 
 #### Defined in
 
-[docker-sequence-adapter.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L209)
+[docker-sequence-adapter.ts:225](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L225)
 
 ## Properties
 
@@ -257,7 +258,27 @@ ___
 
 ### logger
 
-• `Private` **logger**: `Console`
+• **logger**: `IObjectLogger`
+
+Instance of class providing logging utilities.
+
+#### Implementation of
+
+ISequenceAdapter.logger
+
+#### Defined in
+
+[docker-sequence-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L28)
+
+___
+
+### name
+
+• **name**: `string` = `"DockerSequenceAdapter"`
+
+#### Implementation of
+
+ISequenceAdapter.name
 
 #### Defined in
 

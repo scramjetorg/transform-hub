@@ -85,11 +85,11 @@ ___
 
 ### logger
 
-• **logger**: `Console`
+• **logger**: [`IObjectLogger`](iobjectlogger.md)
 
 #### Defined in
 
-[packages/types/src/app-context.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L38)
+[packages/types/src/app-context.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L37)
 
 ## Methods
 

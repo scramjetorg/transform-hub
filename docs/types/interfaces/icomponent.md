@@ -18,8 +18,8 @@
 
 ### logger
 
-• **logger**: `Console`
+• **logger**: [`IObjectLogger`](iobjectlogger.md)
 
 #### Defined in
 
-[packages/types/src/component.ts:2](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/component.ts#L2)
+[packages/types/src/component.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/component.ts#L4)
