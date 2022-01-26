@@ -8,6 +8,10 @@
 
 `SCRAMJET_DEVELOPMENT: boolean`
 
+---
+`ESBUILD: boolean`
+After STH is built with esbuild it should run with this flag
+
 ### BDD tests
 
 `SCRAMJET_SPAWN_JS: boolean (default: false)`
