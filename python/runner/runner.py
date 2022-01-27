@@ -4,17 +4,21 @@ import os
 import codecs
 import json
 import importlib.util
+from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
 from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
-from magic_utils import send_encoded_msg, read_and_decode
 
 STARTUP_LOGFILE = './python-runner-startup.log'
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
 instance_id = os.getenv('INSTANCE_ID')
+
+def send_encoded_msg(stream, msg_code, data={}):
+    message = json.dumps([msg_code.value, data])
+    stream.write(f"{message}\r\n".encode())
 
 
 class Runner:
@@ -92,15 +96,24 @@ class Runner:
         self.logger.info(f"Sending PING")
         send_encoded_msg(monitoring, msg_codes.PING)
 
-        code, data = await read_and_decode(control)
+        message = await control.readuntil(b"\n")
+        self.logger.info(f"Got message: {message}")
+        code, data = json.loads(message.decode())
+
         if code == msg_codes.PONG.value:
             self.logger.info(f"Got configuration: {data}")
             return data['appConfig'], data['args']
 
 
     async def connect_control_stream(self):
-        async for bytes in self.streams[CC.CONTROL]:
-            code, data = json.loads(bytes.decode())
+        # Control stream carries ndjson, so it's enough to split into lines.
+        control_messages = (
+            Stream
+                # 128 kB is the typical size of TCP buffer.
+                .read_from(self.streams[CC.CONTROL], chunk_size=131072)
+                .decode('utf-8').split('\n').map(json.loads)
+        )
+        async for code, data in control_messages:
             self.logger.debug(f"Control message received: {code} {data}")
             if code == msg_codes.KILL.value:
                 self.exit_immediately()
@@ -152,10 +165,16 @@ class Runner:
         }
         self.logger.info(f"Input headers: {repr(headers)}")
 
-        input = Stream.read_from(self.streams[CC.IN])
-        if headers['content-type'] == "text/plain":
+        input_type = headers['content-type']
+        if input_type == "text/plain":
+            input = Stream.read_from(self.streams[CC.IN])
             self.logger.debug("Decoding input stream...")
             input = input.decode("utf-8")
+        elif input_type == "application/octet-stream":
+            self.logger.debug("Opening input in binary mode...")
+            input = Stream.read_from(self.streams[CC.IN], chunk_size=CHUNK_SIZE)
+        else:
+            raise TypeError(f"Unsupported input type: {repr(input_type)}")
 
         input.pipe(input_stream)
         self.logger.debug("Input stream forwarded to the instance.")
