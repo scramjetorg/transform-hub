@@ -5,6 +5,7 @@ import { RunnerContainerConfiguration } from "./sth-configuration";
 
 type CommonSequenceConfig = {
     type: string;
+    engines: Record<string, string>;
     id: string;
     /**
      * Relative path from sequence package root to JS file 
@@ -17,7 +18,6 @@ type CommonSequenceConfig = {
 export type DockerSequenceConfig = CommonSequenceConfig & {
     type: "docker",
     container: RunnerContainerConfiguration;
-    engines: Record<string, string>,
     config?: {
         ports?: PortConfig[] | null
     };

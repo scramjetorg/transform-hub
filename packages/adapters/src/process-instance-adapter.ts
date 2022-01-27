@@ -48,9 +48,15 @@ IComponent {
     }
 
     getRunnerCmd(config: SequenceConfig) {
-        if (config.entrypointPath.endsWith(".py")) {
-            this.logger.trace(gotPython);
+        const engines = Object.keys(config.engines);
 
+        if (engines.length > 1) {
+            throw new Error("Incorrect config passed to SequenceConfig," +
+            "'engines' field can't contain more than one element");
+        }
+
+        if ("python3" in config.engines) {
+            this.logger.trace(gotPython);
             return [
                 "python3",
                 path.resolve(__dirname, "../../../python/runner/runner.py")

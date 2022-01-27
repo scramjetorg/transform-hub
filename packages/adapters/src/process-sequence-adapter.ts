@@ -27,9 +27,11 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
     const packageJson = await readStreamedJSON(createReadStream(packageJsonPath));
 
     const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
+    const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
 
     return {
         type: "process",
+        engines,
         entrypointPath: validPackageJson.main,
         version: validPackageJson.version ?? "",
         name: validPackageJson.name ?? "",
