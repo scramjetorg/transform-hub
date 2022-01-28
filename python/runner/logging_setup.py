@@ -1,8 +1,13 @@
 import logging
 from logging.handlers import MemoryHandler
-from time import gmtime
 import sys
 
+
+class CustomFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        # record.created is a float in seconds, we want ms.
+        # Note that using timestamp gives us UTC, as desired.
+        return round(record.created*1000)
 
 class LoggingSetup():
     def __init__(self, temp_log_path, min_loglevel=logging.DEBUG) -> None:
@@ -11,46 +16,18 @@ class LoggingSetup():
         sys.stdout = self._temp_logfile
         sys.stderr = self._temp_logfile
 
-        self.configure_loglevels()
         self.logger = logging.getLogger('PythonRunner')
         self.logger.setLevel(min_loglevel)
         self.create_handlers(min_loglevel)
-
-
-    def configure_loglevels(self):
-        class Colors:
-            red="\033[31m"
-            green="\033[32m"
-            yellow="\033[33m"
-            blue="\033[34m"
-            magenta="\033[35m"
-            cyan="\033[36m"
-            grey="\033[37m"
-
-            bold="\033[1m"
-            reset="\033[0m"
-
-        def customize_name(level, text):
-            colors = {
-                logging.ERROR: Colors.red,
-                logging.WARN:  Colors.magenta,
-                logging.INFO:  Colors.cyan,
-                logging.DEBUG: Colors.yellow,
-            }
-            logging.addLevelName(level, colors[level] + text + Colors.reset)
-
-        customize_name(logging.ERROR, "error")
-        customize_name(logging.WARN, "warn")
-        customize_name(logging.INFO, "info")
-        customize_name(logging.DEBUG, "debug")
+        self.adjust_levels()
 
 
     def get_formatter(self):
-        logging.Formatter.converter = gmtime  # use UTC time
-        date_format = "%Y-%m-%dT%H:%M:%S"  # ISO 8601 format (excl. miliseconds)
-        log_format = '{asctime}.{msecs:03.0f}Z {levelname} ({name}) {message}'
-
-        return logging.Formatter(fmt=log_format, datefmt=date_format, style='{')
+        log_format = (
+            '{{"ts": {asctime}, "level": "{levelname}", '
+            '"from": "{name}", "msg": "{message}"}}'
+        )
+        return CustomFormatter(fmt=log_format, style='{')
 
 
     def create_handlers(self, min_loglevel):
@@ -65,6 +42,15 @@ class LoggingSetup():
         self._temp_handler.setLevel(logging.INFO)
         self._temp_handler.setFormatter(formatter)
         self.logger.addHandler(self._temp_handler)
+
+
+    def adjust_levels(self):
+        # Adjust level names according to transform hub convention.
+        logging.addLevelName(logging.WARNING, "WARN")
+        logging.addLevelName(logging.CRITICAL, "FATAL")
+
+        # Un-deprecate "warn", as transform-hub uses "warn" rather than "warning".
+        self.logger.warn = self.logger.warning
 
 
     def switch_to(self, target):
