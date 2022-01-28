@@ -130,8 +130,10 @@ bdd/*-test-result.txt
 packages/pre-runner/sample-package/
 
 # sample packages
-packages/reference-apps/*.tar.gz
+*.tar.gz
 
 .bic_cache
 .dockerignores
 aaa/
+
+**/__pycache__/
