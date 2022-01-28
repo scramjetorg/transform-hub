@@ -43,7 +43,7 @@ class Runner:
         asyncio.create_task(self.setup_heartbeat())
 
         self.load_sequence()
-        await self.run_instance(args)
+        await self.run_instance(config, args)
 
 
     async def init_connections(self, host, port):
@@ -143,8 +143,8 @@ class Runner:
         os.chdir(os.path.dirname(self.seq_path))
 
 
-    async def run_instance(self, args):
-        context = AppContext(self)
+    async def run_instance(self, config, args):
+        context = AppContext(self, config)
         input_stream = Stream()
         asyncio.create_task(self.connect_input_stream(input_stream))
 
@@ -203,8 +203,9 @@ class Runner:
 
 
 class AppContext:
-    def __init__(self, runner) -> None:
+    def __init__(self, runner, config) -> None:
         self.logger = runner.logger
+        self.config = config
 
 
 log_setup = LoggingSetup(STARTUP_LOGFILE)
