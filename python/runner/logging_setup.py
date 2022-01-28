@@ -1,13 +1,20 @@
 import logging
 from logging.handlers import MemoryHandler
 import sys
+import json
 
 
-class CustomFormatter(logging.Formatter):
-    def formatTime(self, record, datefmt=None):
+class JsonFormatter(logging.Formatter):
+    def formatMessage(self, record):
         # record.created is a float in seconds, we want ms.
         # Note that using timestamp gives us UTC, as desired.
-        return round(record.created*1000)
+        return json.dumps({
+            "ts": round(record.created*1000),
+            "level": record.levelname,
+            "from": record.name,
+            "msg": record.message,
+        })
+
 
 class LoggingSetup():
     def __init__(self, temp_log_path, min_loglevel=logging.DEBUG) -> None:
@@ -22,16 +29,8 @@ class LoggingSetup():
         self.adjust_levels()
 
 
-    def get_formatter(self):
-        log_format = (
-            '{{"ts": {asctime}, "level": "{levelname}", '
-            '"from": "{name}", "msg": "{message}"}}'
-        )
-        return CustomFormatter(fmt=log_format, style='{')
-
-
     def create_handlers(self, min_loglevel):
-        formatter = self.get_formatter()
+        formatter = JsonFormatter()
 
         self._main_handler = logging.StreamHandler(self._temp_logfile)
         self._main_handler.setLevel(min_loglevel)

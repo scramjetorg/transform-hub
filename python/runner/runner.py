@@ -97,9 +97,11 @@ class Runner:
         send_encoded_msg(monitoring, msg_codes.PING)
 
         message = await control.readuntil(b"\n")
+        self.logger.info(f"Got message: {message}")
         code, data = json.loads(message.decode())
 
         if code == msg_codes.PONG.value:
+            self.logger.info(f"Got configuration: {data}")
             return data['appConfig'], data['args']
 
 
