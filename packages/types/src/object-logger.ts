@@ -1,19 +1,47 @@
-import { DataStream } from "scramjet";
 import { PassThrough, Writable } from "stream";
-import { DeepPartial } from "./utils";
+
+import { DataStream } from "scramjet";
 
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
 
 /**
  * Single log entry.
  */
-export type LogEntry = DeepPartial<{
+export type LogEntry = Partial<{
+    /**
+     * Id of source.
+     */
     id: string;
+
+    /**
+     * Log message.
+     */
     msg: string;
+
+    /**
+     * Log level.
+     * @type {LogLevel}
+     */
     level: LogLevel;
+
+    /**
+     * Additional error message.
+     */
     error: string;
+
+    /**
+     * Timestamp. Unix time.
+     */
     ts: number;
-    data?: any[];
+
+    /**
+     * Additional log data.
+     */
+    data: any[];
+
+    /**
+     * Log source (auto filled).
+     */
     from: string;
 }>
 

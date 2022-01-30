@@ -1,6 +1,7 @@
 import { DataStream, StringStream } from "scramjet";
-import { PassThrough, Writable } from "stream";
 import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
+import { PassThrough, Writable } from "stream";
+
 import { getName } from "./utils/get-name";
 
 export class ObjLogger implements IObjectLogger {
@@ -64,6 +65,9 @@ export class ObjLogger implements IObjectLogger {
         StringStream
             .from(this.inputStringifiedLogStream)
             .JSONParse(true)
+            .catch((e: any) => {
+                this.error("Error parsing incoming log", e.chunk);
+            })
             .pipe(this.inputLogStream);
 
         DataStream
@@ -147,7 +151,8 @@ export class ObjLogger implements IObjectLogger {
     }
 
     /**
-     * Pipes output logger to provided target. The target can be a writable stream or an ObjectLogger instance.
+     * Pipes output logger to provided target. The target can be a writable stream
+     * or an instance of class fulfiling IObjectLogger interface.
      *
      * @param {Writable | IObjectLogger} target Target for log stream.
      * @param options Pipe options. If option `stringified` is set to true, the output will be stringified.
@@ -169,4 +174,3 @@ export class ObjLogger implements IObjectLogger {
         return this.output.pipe(target);
     }
 }
-
