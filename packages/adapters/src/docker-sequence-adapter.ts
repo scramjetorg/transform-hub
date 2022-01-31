@@ -152,6 +152,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         try {
             const { streams, wait } = runResult;
 
+            // @PR-COMMENT we are not saving compresssed package anywhere 
             stream.pipe(streams.stdin);
 
             const config = await this.parsePackage(streams, wait, volumeId);

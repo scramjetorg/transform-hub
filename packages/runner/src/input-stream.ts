@@ -5,7 +5,7 @@ import { Readable } from "stream";
 
 const logger = new ObjLogger("@sth/runner/inputStram");
 
-function loopStream<T extends unknown>(
+export function loopStream<T extends unknown>(
     stream: Readable,
     iter: (chunk: Buffer) => { action: "continue" } | { action: "end", data: T, unconsumedData?: Buffer }
 ): Promise<T> {

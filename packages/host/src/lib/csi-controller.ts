@@ -37,6 +37,7 @@ import { getRouter } from "@scramjet/api-server";
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { ProcessInstanceAdapter } from "@scramjet/adapters/src/process-instance-adapter";
 
 const stopTimeout = 7000;
 
@@ -329,6 +330,11 @@ export class CSIController extends TypedEmitter<Events> {
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
         } else {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
+        }
+
+        if (this.config.noDocker) {
+            await (this.instanceAdapter as ProcessInstanceAdapter)
+                .sendSequenceToRunner(this.downStreams?.[CC.STDIN]!);
         }
 
         this.startResolver?.res();

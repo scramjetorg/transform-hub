@@ -93,6 +93,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         const uncompressingProc = exec(`tar zxf - -C ${sequenceDir}`);
 
+        // @PR-COMMENT we are not saving compresssed package anywhere 
         stream.pipe(uncompressingProc.stdin!);
 
         await new Promise(res => uncompressingProc.on("close", res));

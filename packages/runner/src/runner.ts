@@ -27,8 +27,11 @@ import { EventEmitter } from "events";
 import { Readable, Writable } from "stream";
 
 import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
-import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
+import { loopStream, mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
+import { mkdir } from "fs/promises";
+import path from "path";
+import { exec } from "child_process";
 
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
@@ -264,6 +267,67 @@ export class Runner<X extends AppConfig> implements IComponent {
         setTimeout(() => process.exit());
     }
 
+    private async receiveSequenceFromStdin() {
+        this.logger.debug("=== Waiting for sequence");
+        // read sequence package size which is a  64 bit JS number
+        let tmp = Buffer.from([]);
+
+        const size = await loopStream(process.stdin, (chunk) => {
+            tmp = Buffer.concat([tmp, chunk]);
+
+            const endingIndex = tmp.indexOf("\r\n\r\n");
+
+            if (endingIndex !== -1) {
+                return {
+                    action: "end",
+                    data: parseInt(tmp.slice(0, endingIndex).toString("utf-8"), 10),
+                    unconsumedData: Buffer.from(tmp.slice(endingIndex + 4))
+                };
+            }
+
+            return { action: "continue" };
+        });
+
+        this.logger.debug(`=== Got sequence size ${size}`);
+
+        const sequenceDir = path.join(__dirname, this.instanceId);
+
+        this.logger.debug(`Unpacking to ${sequenceDir}`);
+        await mkdir(sequenceDir);
+
+        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir}`);
+
+        uncompressingProc.stdout?.on("data", (data) => {
+            this.logger.info(data);
+        });
+        uncompressingProc.stderr?.on("data", (data) => {
+            this.logger.error(data);
+        });
+        let bytesRead = 0;
+
+        await loopStream(process.stdin, (chunk) => {
+            this.logger.debug(chunk.toString("hex").slice(-100));
+            bytesRead += chunk.length;
+            uncompressingProc.stdin!.write(chunk);
+
+            if (bytesRead === size) {
+                uncompressingProc.stdin!.end();
+                return { action: "end", data: null };
+            }
+
+            return { action: "continue" };
+        });
+
+        await new Promise(res => uncompressingProc.on("close", (code) => {
+            this.logger.debug(`TAR exited with ${code}`);
+            res(null);
+        }));
+
+        this.sequencePath = path.join(sequenceDir, path.basename(this.sequencePath));
+
+        // process.env.SEQUENCE_PATH
+    }
+
     async main() {
         await this.hostClient.init(this.instanceId);
 
@@ -289,6 +353,8 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.sendHandshakeMessage();
 
         const { appConfig, args } = await this.waitForHandshakeResponse();
+
+        await this.receiveSequenceFromStdin();
 
         this.logger.debug("Handshake received");
 
@@ -416,6 +482,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     getSequence(): ApplicationInterface[] {
+        this.logger.debug(`Import sequence from ${this.sequencePath}`);
         /* eslint-disable-next-line import/no-dynamic-require */
         const sequenceFromFile = require(this.sequencePath);
         const _sequence: MaybeArray<ApplicationFunction> =

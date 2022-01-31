@@ -166,8 +166,6 @@ IComponent {
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
 
-        this.logger.info("Instance preparation done");
-
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
         if (development()) {

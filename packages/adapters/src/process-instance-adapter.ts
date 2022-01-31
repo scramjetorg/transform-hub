@@ -6,11 +6,14 @@ import {
     ILifeCycleAdapterRun,
     IObjectLogger,
     MonitoringMessageData,
+    ProcessSequenceConfig,
     SequenceConfig
 } from "@scramjet/types";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess, exec, spawn } from "child_process";
+import { createReadStream, stat } from "fs";
 
 import path from "path";
+import { Writable } from "stream";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
@@ -25,6 +28,8 @@ IComponent {
     logger: IObjectLogger;
 
     private runnerProcess?: ChildProcess;
+
+    private config?: ProcessSequenceConfig;
 
     constructor() {
         this.logger = new ObjLogger(this);
@@ -70,8 +75,7 @@ IComponent {
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
         }
-
-        this.logger.info("Instance preparation done");
+        this.config = config;
 
         this.logger.trace("Starting Runner", config.id);
 
@@ -106,6 +110,10 @@ IComponent {
 
         this.runnerProcess = runnerProcess;
 
+        runnerProcess.stderr.on("data", data => {
+            this.logger.error("Runner process error: ", data.toString());
+        });
+
         const [statusCode, signal] = await new Promise<[number | null, NodeJS.Signals | null]>(
             (res) => runnerProcess.on("exit", (code, sig) => res([code, sig]))
         );
@@ -124,6 +132,26 @@ IComponent {
         }
 
         return statusCode;
+    }
+
+    public async sendSequenceToRunner(writeable: Writable): Promise<void> {
+        const compressedFilename = path.join(this.config!.sequenceDir, "compressed.tar.gz");
+        const compressProc = exec(`tar -czf ${compressedFilename} --directory=${this.config!.sequenceDir} .`);
+
+        await new Promise(res => compressProc.on("exit", res));
+
+        const size = await new Promise<number>(res => stat(compressedFilename, (_, stats) => res(stats.size)));
+
+        writeable.write(size.toString() + "\r\n\r\n");
+
+        return new Promise(res =>
+            createReadStream(compressedFilename)
+                .on("data", (chunk) => {
+                    this.logger.debug(chunk.toString("hex").slice(-100));
+                })
+                .pipe(writeable, { end: false })
+                .on("close", res)
+        );
     }
 
     /**
