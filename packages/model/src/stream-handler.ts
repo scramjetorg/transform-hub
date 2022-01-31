@@ -6,6 +6,7 @@ import {
     EncodedControlMessage,
     EncodedMonitoringMessage,
     ICommunicationHandler,
+    IObjectLogger,
     LoggerOutput,
     MaybePromise,
     MessageDataType,
@@ -16,6 +17,7 @@ import {
     UpstreamStreamsConfig,
     WritableStream
 } from "@scramjet/types";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 import { DataStream, StringStream } from "scramjet";
 import { PassThrough, Readable, Writable } from "stream";
@@ -55,6 +57,8 @@ type ControlMessageHandlerList = {
 };
 
 export class CommunicationHandler implements ICommunicationHandler {
+    logger: IObjectLogger;
+
     upstreams?: UpstreamStreamsConfig;
     downstreams?: DownstreamStreamsConfig;
 
@@ -71,6 +75,8 @@ export class CommunicationHandler implements ICommunicationHandler {
     private controlHandlerHash: ControlMessageHandlerList;
 
     constructor() {
+        this.logger = new ObjLogger(this);
+
         this.controlPassThrough = new DataStream();
         this.monitoringPassThrough = new DataStream();
         this.loggerPassThrough = new PassThrough();
@@ -98,12 +104,13 @@ export class CommunicationHandler implements ICommunicationHandler {
             [CPMMessageCode.LOAD]: [],
             [CPMMessageCode.NETWORK_INFO]: []
         };
+
+        this.logger.trace("CommunicationHandler created");
     }
 
     safeHandle(promisePotentiallyRejects: MaybePromise<any>): void {
         Promise.resolve(promisePotentiallyRejects).catch(
-            // eslint-disable-next-line no-console
-            (e: any) => console.error(e?.stack || e) // TODO: push this to log file
+            (e: any) => this.logger.error("Safe handler. Provided method failed", e?.stack || e) // TODO: push this to log file
         );
     }
 
@@ -113,6 +120,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     getStdio(): { stdin: Writable; stdout: Readable; stderr: Readable; } {
         if (!this.downstreams) {
+            this.logger.error("Downstreams not set");
             throw new Error("Streams not attached");
         }
 
@@ -134,11 +142,14 @@ export class CommunicationHandler implements ICommunicationHandler {
     }
 
     pipeMessageStreams() {
-        if (this._piped)
+        if (this._piped) {
+            this.logger.error("pipeMessageStreams called twice");
             throw new Error("pipeMessageStreams called twice");
+        }
         this._piped = true;
 
         if (!this.downstreams || !this.upstreams) {
+            this.logger.error("Streams not attached");
             throw new Error("Streams not hooked");
         }
 
@@ -146,6 +157,9 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         const monitoringOutput = StringStream.from(this.downstreams[CC.MONITORING] as Readable)
             .JSONParse()
+            .catch((error: any) => {
+                this.logger.error("Can't parse message in monitoring stream", error.chunk);
+            })
             .map(async (message: EncodedMonitoringMessage) => {
                 // TODO: WARN if (!this.monitoringHandlerHash[message[0]])
                 if (this.monitoringHandlerHash[message[0]].length) {
@@ -155,9 +169,13 @@ export class CommunicationHandler implements ICommunicationHandler {
                         const { handler, blocking } = item;
                         const result = handler(currentMessage);
 
-                        if (blocking) currentMessage = await result;
-                        else this.safeHandle(result);
+                        if (blocking) {
+                            currentMessage = await result;
+                        } else {
+                            this.safeHandle(result);
+                        }
                     }
+
                     return currentMessage as EncodedMonitoringMessage;
                 }
 
@@ -170,6 +188,9 @@ export class CommunicationHandler implements ICommunicationHandler {
 
         StringStream.from(this.upstreams[CC.CONTROL] as Readable)
             .JSONParse()
+            .catch((error: any) => {
+                this.logger.error("Can't parse message in control stream", error.chunk);
+            })
             .map(async (message: EncodedControlMessage) => {
                 // TODO: WARN if (!this.controlHandlerHash[message[0]])
                 if (this.controlHandlerHash[message[0]].length) {
@@ -179,9 +200,13 @@ export class CommunicationHandler implements ICommunicationHandler {
                         const { handler, blocking } = item;
                         const result = handler(currentMessage);
 
-                        if (blocking) currentMessage = await result;
-                        else this.safeHandle(result);
+                        if (blocking) {
+                            currentMessage = await result;
+                        } else {
+                            this.safeHandle(result);
+                        }
                     }
+
                     return currentMessage as EncodedMonitoringMessage;
                 }
 
@@ -204,6 +229,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     pipeStdio(): this {
         if (!this.downstreams || !this.upstreams) {
+            this.logger.error("Streams not hooked");
             throw new Error("Streams not hooked");
         }
 
@@ -216,6 +242,7 @@ export class CommunicationHandler implements ICommunicationHandler {
 
     pipeDataStreams(): this {
         if (!this.downstreams || !this.upstreams) {
+            this.logger.error("Streams not hooked");
             throw new Error("Streams not hooked");
         }
 
@@ -244,6 +271,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             handler,
             blocking
         } as any);
+
         return this;
     }
 
@@ -256,6 +284,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             handler,
             blocking
         } as any);
+
         return this;
     }
 

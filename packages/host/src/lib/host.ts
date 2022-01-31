@@ -510,6 +510,7 @@ export class Host implements IComponent {
         );
 
         csic.logger.pipe(this.logger);
+        communicationHandler.logger.pipe(this.logger);
 
         this.logger.trace("CSIController created", id);
 

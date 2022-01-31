@@ -15,6 +15,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@scramjet/obj-logger": "^0.15.1",
     "@scramjet/symbols": "^0.15.1",
     "scramjet": "^4.36.0",
     "uuid": "^8.3.2"
