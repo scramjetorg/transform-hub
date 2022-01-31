@@ -11,6 +11,8 @@ import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
 export type ServerConfig = {
     verbose?: boolean;
     server?: Server;
+    sslKeyPath?: string;
+    sslCertPath?: string;
     router?: CeroRouter;
 };
 
@@ -45,6 +47,25 @@ function safeDecorator(cb: (req: IncomingMessage) => MaybePromise<void>) {
     };
 }
 
+function createCeroServerConfig(conf: ServerConfig = {}): any {
+    if (conf.server) {
+        return conf.server;
+    }
+
+    if (conf.sslKeyPath && conf.sslCertPath) {
+        const https = require("https");
+        const fs = require("fs");
+        const sslConfig = {
+            key: fs.readFileSync(conf.sslKeyPath),
+            cert: fs.readFileSync(conf.sslCertPath)
+        };
+
+        return https.createServer(sslConfig);
+    }
+
+    return undefined;
+}
+
 export function getRouter(): APIRoute {
     const router = sequentialRouter({});
     const get = createGetterHandler(router);
@@ -77,7 +98,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
             else res.end();
         }
     };
-    const { server: srv, router } = cero({ server: conf.server, router: sequentialRouter(config) });
+    const { server: srv, router } = cero({ server: createCeroServerConfig(conf), router: sequentialRouter(config) });
 
     router.use("/", async (req, res, next) => {
         next();
