@@ -103,6 +103,7 @@ IComponent {
                 INSTANCES_SERVER_PORT: instancesServerPort.toString(),
                 INSTANCES_SERVER_HOST: "127.0.0.1",
                 INSTANCE_ID: instanceId,
+                RECEIVE_SEQUENCE: "true"
             }
         });
 

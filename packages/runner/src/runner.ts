@@ -354,7 +354,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         const { appConfig, args } = await this.waitForHandshakeResponse();
 
-        await this.receiveSequenceFromStdin();
+        if (process.env.RECEIVE_SEQUENCE === "true")
+            await this.receiveSequenceFromStdin();
 
         this.logger.debug("Handshake received");
 
