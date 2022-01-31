@@ -6,8 +6,8 @@
 
 // import { Runner } from "../runner";
 // import { stdout } from "process";
-// import * as fs from "fs";
-// import * as path from "path";
+// import fs from "fs";
+// import path from "path";
 // import { PassThrough, Readable } from "stream";
 // import { StringStream } from "scramjet";
 // import { createReadStream, createWriteStream } from "fs";

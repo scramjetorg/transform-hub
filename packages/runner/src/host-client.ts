@@ -31,9 +31,20 @@ class HostClient implements IHostClient {
     async init(id: string): Promise<void> {
         const openConnections = await Promise.all(
             Array.from(Array(8))
-                .map(() => {
+                .map((_, index) => {
+                    // eslint-disable-next-line no-console
+                    console.log(`Initiating a connection ${index}`);
                     // Error handling for each connection is process crash for now
-                    const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
+                    const connection = net.createConnection({
+                        port:  this.instancesServerPort,
+                        host: this.instancesServerHost,
+                        timeout: 4000
+                    });
+
+                    connection.on("error", (error) => {
+                        console.error(`Nie pykło ${index}`);
+                        console.error(error);
+                    });
 
                     return new Promise<net.Socket>(res => {
                         connection.on("connect", () => res(connection));
@@ -49,7 +60,9 @@ class HostClient implements IHostClient {
                         return connection;
                     });
                 })
-        );
+        ).catch((error) => {
+            console.error(error);
+        });
 
         this._streams = openConnections as HostOpenConnections;
     }

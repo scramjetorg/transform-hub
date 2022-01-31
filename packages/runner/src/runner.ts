@@ -251,11 +251,17 @@ export class Runner<X extends AppConfig> implements IComponent {
     private exit(exitCode?: number) {
         if (typeof exitCode !== undefined) process.exitCode = exitCode;
         // TODO: why we need this?
-        setTimeout(() => process.exit());
+        // @TODO BRING BACK
+        // setTimeout(() => process.exit());
     }
 
     async main() {
         await this.hostClient.init(this.instanceId);
+
+        setInterval(() => {
+            // eslint-disable-next-line no-console
+            console.log("Runner process alive");
+        }, 5000);
 
         addLoggerOutput(this.hostClient.logStream);
 

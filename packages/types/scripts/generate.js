@@ -16,7 +16,7 @@ const { readdir } = require("fs").promises;
         const importName = file.replace(/\.spec\.ts$/, "");
         const filename = file.replace(/\.ts$/, "");
 
-        out.write(`import * as ${importName} from "../${filename}";\nexport { ${importName} };\n`);
+        out.write(`import ${importName} from "../${filename}";\nexport { ${importName} };\n`);
     }
 
     out.end();

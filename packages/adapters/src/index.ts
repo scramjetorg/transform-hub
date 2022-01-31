@@ -7,3 +7,4 @@ export * from "./get-instance-adapter";
 export * from "./get-sequence-adapter";
 
 export * from "./docker-networking";
+export * from './kubernetes-instance-adapter'

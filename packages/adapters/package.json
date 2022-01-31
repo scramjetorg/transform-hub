@@ -11,11 +11,12 @@
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
     "test": "nyc ava",
     "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack"
+    "postbuild": "cp ./src/k8s-config.yaml dist/ && yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
+    "@kubernetes/client-node": "^0.16.2",
     "@scramjet/logger": "^0.15.0",
     "@scramjet/model": "^0.15.0",
     "@scramjet/runner": "^0.15.0",

@@ -17,7 +17,7 @@ const options = program
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
-    .option("--sequences-root", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
+    .option("--sequences-root <path>", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
     .option("--instances-server-port <port>", "Port on which server that instances connect to should run.")
     .parse(process.argv)
     .opts();

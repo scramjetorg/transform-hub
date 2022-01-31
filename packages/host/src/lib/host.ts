@@ -12,11 +12,12 @@ import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
-import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
+import { DockerodeDockerHelper, getSequenceAdapter, KubernetesInstanceAdapter, setupDockerNetworking } from "@scramjet/adapters";
 import { ReasonPhrases } from "http-status-codes";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { LoadCheck } from "@scramjet/load-check";
+import { defer } from "@scramjet/utility";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -146,6 +147,33 @@ export class Host implements IComponent {
         addLoggerOutput(process.stdout);
         addLoggerOutput(this.commonLogsPipe.getIn());
 
+        await this.socketServer.start();
+
+        this.logger.log("=== 7 HUB main");
+
+        await defer(1000);
+
+        const adapter = new KubernetesInstanceAdapter(this.config);
+
+        await adapter.init();
+
+        this.logger.log("Finished INIT");
+
+        try {
+            await adapter.run({
+                type: "process",
+                name: "some_package",
+                entrypointPath: "some.js",
+                sequenceDir: "dir",
+                version: "1",
+                id: "e85b983d-1ada-4420-9dc6-9e2e17339829"
+            }, 8001, "e85b983d-1ada-4420-9dc6-9e2e17339829");
+        } catch (e) {
+            this.logger.error(e);
+        }
+
+        this.logger.log("Finished RUN");
+
         this.api.log.each(
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
@@ -161,8 +189,6 @@ export class Host implements IComponent {
 
             await setupDockerNetworking(new DockerodeDockerHelper());
         }
-
-        await this.socketServer.start();
 
         this.api.server.listen(this.config.host.port, this.config.host.hostname);
 

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sth
+spec:
+  containers:
+  - name: sth
+    image: <add>
+    ports:
+    - containerPort: 8000

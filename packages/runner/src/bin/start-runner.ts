@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Runner } from "../runner";
-import fs from "fs";
+// import fs from "fs";
 import { AppConfig } from "@scramjet/types";
 import { HostClient } from "../host-client";
 
@@ -25,10 +25,10 @@ if (!instanceId) {
     process.exit(1);
 }
 
-if (!fs.existsSync(sequencePath)) {
-    console.error("Incorrect run argument: sequence path (" + sequencePath + ") does not exists. ");
-    process.exit(1);
-}
+// if (!fs.existsSync(sequencePath)) {
+//     console.error("Incorrect run argument: sequence path (" + sequencePath + ") does not exists. ");
+//     process.exit(1);
+// }
 
 const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
 

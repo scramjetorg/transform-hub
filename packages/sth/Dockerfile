@@ -37,6 +37,8 @@ RUN set -xe \
 WORKDIR /app
 COPY --from=builder /build/dist ./dist
 
+RUN ls ./dist/adapters
+
 RUN set -xe \
     && npm install -g ./dist/sth
 
