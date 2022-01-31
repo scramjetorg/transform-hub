@@ -1,5 +1,6 @@
 import { DataStream } from "scramjet";
 import { Readable, Writable } from "stream";
+import { IObjectLogger } from "./object-logger";
 import { LoggerOutput } from "./logger";
 import {
     ControlMessageCode, DownstreamStreamsConfig, EncodedMessage, MessageDataType,
@@ -15,6 +16,7 @@ export type ControlMessageHandler<T extends ControlMessageCode> =
     (msg: EncodedMessage<T>) => MaybePromise<EncodedMessage<T> | null>;
 
 export interface ICommunicationHandler {
+    logger: IObjectLogger;
 
     hookUpstreamStreams(str: UpstreamStreamsConfig): this;
     hookDownstreamStreams(str: DownstreamStreamsConfig): this;
