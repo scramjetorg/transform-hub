@@ -58,7 +58,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                     Target: cfg.mountPoint,
                     Source: cfg.bind,
                     Type: "bind",
-                    ReadOnly: false
+                    ReadOnly: !cfg.writeable
                 };
             }
 
@@ -66,7 +66,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
                 Target: cfg.mountPoint,
                 Source: cfg.volume,
                 Type: "volume",
-                ReadOnly: false
+                ReadOnly: !cfg.writeable
             };
         });
     }

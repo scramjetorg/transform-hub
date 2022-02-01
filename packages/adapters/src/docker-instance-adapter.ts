@@ -177,6 +177,7 @@ IComponent {
                 this.logger.debug("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
 
                 extraVolumes.push({
+                    writeable: true,
                     mountPoint: "/cores",
                     bind: process.env.CSI_COREDUMP_VOLUME
                 });
@@ -200,7 +201,7 @@ IComponent {
             imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
-                { mountPoint: "/package", volume: config.id }
+                { mountPoint: "/package", volume: config.id, writeable: false }
             ],
             labels: {
                 "scramjet.sequence.name": config.name

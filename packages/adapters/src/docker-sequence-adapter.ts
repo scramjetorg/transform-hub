@@ -88,7 +88,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             const { streams, wait } = await this.dockerHelper.run({
                 imageName: this.config.docker.prerunner?.image || "",
                 volumes: [
-                    { mountPoint: "/package", volume },
+                    { mountPoint: "/package", volume, writeable: true },
                 ],
                 command: ["/app/identify.sh"],
                 autoRemove: true,
@@ -138,7 +138,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             runResult = await this.dockerHelper.run({
                 imageName: this.config.docker.prerunner.image || "",
                 volumes: [
-                    { mountPoint: "/package", volume: volumeId }
+                    { mountPoint: "/package", volume: volumeId, writeable: true }
                 ],
                 autoRemove: true,
                 maxMem: this.config.docker.prerunner.maxMem || 0
