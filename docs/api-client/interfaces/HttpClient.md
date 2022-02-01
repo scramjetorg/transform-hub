@@ -132,7 +132,7 @@ ___
 | :------ | :------ |
 | `url` | `string` |
 | `stream` | `string` \| `Stream` |
-| `options?` | `Partial`<`Object`\> |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` ; `type`: `string`  }\> |
 
 #### Returns
 

@@ -32,7 +32,7 @@
 
 ### HostOptions
 
-Ƭ **HostOptions**: `Partial`<`Object`\>
+Ƭ **HostOptions**: `Partial`<{ `identifyExisting`: `boolean`  }\>
 
 #### Defined in
 
@@ -127,7 +127,7 @@ Starts Host module.
 | :------ | :------ | :------ |
 | `apiServerConfig` | `ServerConfig` | api server configuration |
 | `sthConfig` | `STHConfiguration` | sth configuration |
-| `hostOptions` | `Partial`<`Object`\> | host options |
+| `hostOptions` | `Partial`<{ `identifyExisting`: `boolean`  }\> | host options |
 
 #### Returns
 

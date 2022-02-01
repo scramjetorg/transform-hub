@@ -477,7 +477,7 @@ sets up API and connects to Manager.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `identifyExisting` | `Partial`<`Object`\> | Indicates if existing instances should be identified. |
+| `identifyExisting` | `Partial`<{ `identifyExisting`: `boolean`  }\> | Indicates if existing instances should be identified. |
 
 #### Returns
 

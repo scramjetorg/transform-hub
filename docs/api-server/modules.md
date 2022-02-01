@@ -45,7 +45,7 @@ ___
 
 ### CeroConfig
 
-Ƭ **CeroConfig**<`T`, `S`\>: `Partial`<`Object`\>
+Ƭ **CeroConfig**<`T`, `S`\>: `Partial`<{ `prioRequestsProcessing`: `boolean` ; `router`: `S` ; `server`: `T`  }\>
 
 #### Type parameters
 
@@ -108,7 +108,7 @@ ___
 
 ### CeroRouterConfig
 
-Ƭ **CeroRouterConfig**: `Partial`<`Object`\>
+Ƭ **CeroRouterConfig**: `Partial`<{ `cacheSize`: `number` ; `defaultRoute`: [`CeroDefaultRoute`](modules.md#cerodefaultroute) ; `errorHandler`: [`CeroErrorHandler`](modules.md#ceroerrorhandler) ; `id`: `string`  }\>
 
 #### Defined in
 
@@ -149,7 +149,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `config?` | `Partial`<`Object`\> |
+| `config?` | `Partial`<{ `prioRequestsProcessing`: `boolean` ; `router`: `S` ; `server`: `T`  }\> |
 
 #### Returns
 
@@ -208,7 +208,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `config` | `Partial`<`Object`\> |
+| `config` | `Partial`<{ `cacheSize`: `number` ; `defaultRoute`: `Middleware` ; `errorHandler`: [`CeroErrorHandler`](modules.md#ceroerrorhandler) ; `id`: `string`  }\> |
 
 #### Returns
 
