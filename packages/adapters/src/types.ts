@@ -30,13 +30,26 @@ export type DockerVolume = string;
  * @typedef {object} DockerAdapterVolumeConfig
  */
 export type DockerAdapterVolumeConfig = {
-    /** @property {string} mountPoint Mount point. */ mountPoint: string
-} &
-(
+    /**
+     * @property {string} mountPoint Mount point.
+     * */
+    mountPoint: string;
+
+    /**
+     * @property { boolean } writeable Mount mode. Container can write to the volume if set to true.
+     */
+    writeable: boolean;
+} & (
     {
-        /** @property {DockerVolume} volume Volume. */ volume: DockerVolume
+        /**
+         * @property {DockerVolume} volume Volume.
+         */
+        volume: DockerVolume;
     } | {
-        /** @property {DockerVolume} volume Volume. */ bind: string
+        /**
+         * @property {DockerVolume} volume Volume.
+         */
+        bind: string;
     }
 );
 
