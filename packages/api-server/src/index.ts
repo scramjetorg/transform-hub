@@ -47,23 +47,21 @@ function safeDecorator(cb: (req: IncomingMessage) => MaybePromise<void>) {
     };
 }
 
-function createCeroServerConfig(conf: ServerConfig = {}): any {
+function createCeroServerConfig(conf: ServerConfig = {}): ServerConfig["server"] {
     if (conf.server) {
         return conf.server;
     }
 
     if (conf.sslKeyPath && conf.sslCertPath) {
-        const https = require("https");
-        const fs = require("fs");
         const sslConfig = {
             key: fs.readFileSync(conf.sslKeyPath),
             cert: fs.readFileSync(conf.sslCertPath)
         };
 
-        return https.createServer(sslConfig);
+        return createHttpsServer(sslConfig);
     }
 
-    return undefined;
+    return createHttpServer();
 }
 
 export function getRouter(): APIRoute {
