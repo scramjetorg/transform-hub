@@ -8,5 +8,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "engines": {
+    "python3": "3.5.0"
   }
 }
