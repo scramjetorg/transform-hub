@@ -6,9 +6,6 @@ RUNNER_USER="${RUNNER_USER:-runner}"
 
 if [ "$1" == "start-runner" ]; then
 	shift
-	mkdir -p ${PACKAGE_DIR}
-    chown -R ${RUNNER_USER}:${RUNNER_USER} ${HUB_DIR} ${PACKAGE_DIR}
-
 	set -- node bin/start-runner "$@"
 fi
 

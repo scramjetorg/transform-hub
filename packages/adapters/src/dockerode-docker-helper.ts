@@ -179,6 +179,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
             if (await this.isImageInLocalRegistry(name)) {
                 this.pulledImages[name] = Promise.resolve();
+
                 return this.pulledImages[name];
             }
         }
