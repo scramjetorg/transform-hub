@@ -47,7 +47,7 @@ export type DockerAdapterVolumeConfig = {
         volume: DockerVolume;
     } | {
         /**
-         * @property {string} bind a bind mount.
+         * @property {string} bind A bind mount.
          */
         bind: string;
     }
