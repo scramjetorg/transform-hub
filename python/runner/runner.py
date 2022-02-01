@@ -100,6 +100,13 @@ class Runner:
         self.logger.info(f"Got message: {message}")
         code, data = json.loads(message.decode())
 
+        self.logger.info(f"Sending PANG")
+        pang_requires_data = {
+            'requires': '',
+            'contentType': ''
+        }
+        send_encoded_msg(monitoring, msg_codes.PANG, pang_requires_data)
+
         if code == msg_codes.PONG.value:
             self.logger.info(f"Got configuration: {data}")
             return data['appConfig'], data['args']
@@ -150,6 +157,15 @@ class Runner:
 
         self.logger.info("Running instance...")
         result = self.sequence.run(context, input_stream, *args)
+
+        self.logger.info(f"Sending PANG")
+        monitoring = self.streams[CC.MONITORING]
+        pang_provides_data = {
+            'provides': '',
+            'contentType': ''
+        }
+        send_encoded_msg(monitoring, msg_codes.PANG, pang_provides_data)
+
         if asyncio.iscoroutine(result):
             result = await result
         await self.forward_output_stream(result)
