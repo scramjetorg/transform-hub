@@ -10,7 +10,7 @@ import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
 
 export type ServerConfig = {
     verbose?: boolean;
-    server?: Server;
+    server?: HttpsServer | HttpServer;
     sslKeyPath?: string;
     sslCertPath?: string;
     router?: CeroRouter;
