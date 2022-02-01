@@ -1,6 +1,7 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { APIExpose, APIRoute, MaybePromise, NextCallback } from "@scramjet/types";
-import { IncomingMessage, Server, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse, Server as HttpServer, createServer as createHttpServer } from "http";
+import { Server as HttpsServer, createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
 import { createOperationHandler } from "./handlers/op";
@@ -53,6 +54,7 @@ function createCeroServerConfig(conf: ServerConfig = {}): ServerConfig["server"]
     }
 
     if (conf.sslKeyPath && conf.sslCertPath) {
+        const fs = require("fs");
         const sslConfig = {
             key: fs.readFileSync(conf.sslKeyPath),
             cert: fs.readFileSync(conf.sslCertPath)
