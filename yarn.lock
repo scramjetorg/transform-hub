@@ -1454,7 +1454,7 @@
   resolved "https://registry.npmjs.org/@types/uuid/-/uuid-8.3.0.tgz"
   integrity sha512-eQ9qFW/fhfGJF8WKHGEHZEyVWfZxrT+6CLIJGBcZPfxUh/+BnEj+UCGYMlr9qZuX/2AltsvwrGqp0LhEW8D0zQ==
 
-"@types/uuid@^8.3.0", "@types/uuid@^8.3.1":
+"@types/uuid@^8.3.1":
   version "8.3.3"
   resolved "https://registry.npmjs.org/@types/uuid/-/uuid-8.3.3.tgz"
   integrity sha512-0LbEEx1zxrYB3pgpd1M5lEhLcXjKJnYghvhTRgaBeUivLHMDM1TzF3IJ6hXU2+8uA4Xz+5BA63mtZo5DjVT8iA==
@@ -4968,10 +4968,10 @@ marked@^2.1.1:
   resolved "https://registry.npmjs.org/marked/-/marked-2.1.3.tgz"
   integrity sha512-/Q+7MGzaETqifOMWYEA7HVMaZb4XbcRfaOzcSsHZEith83KGlvaSG33u0SKu89Mj5h+T8V2hM+8O45Qc5XTgwA==
 
-marked@^3.0.8:
-  version "3.0.8"
-  resolved "https://registry.npmjs.org/marked/-/marked-3.0.8.tgz"
-  integrity sha512-0gVrAjo5m0VZSJb4rpL59K1unJAMb/hm8HRXqasD8VeC8m91ytDPMritgFSlKonfdt+rRYYpP/JfLxgIX8yoSw==
+marked@^4.0.10:
+  version "4.0.12"
+  resolved "https://registry.yarnpkg.com/marked/-/marked-4.0.12.tgz#2262a4e6fd1afd2f13557726238b69a48b982f7d"
+  integrity sha512-hgibXWrEDNBWgGiK18j/4lkS6ihTe9sxtV4Q1OQppb/0zzyPSzoFANBa5MfsG/zgsWklmNnhm0XACZOH/0HBiQ==
 
 matcher@^3.0.0:
   version "3.0.0"
@@ -6638,7 +6638,16 @@ shell-escape@^0.2.0:
   resolved "https://registry.npmjs.org/shell-escape/-/shell-escape-0.2.0.tgz"
   integrity sha1-aP0CXrBJC09WegJ/C/IkgLX4QTM=
 
-shiki@^0.9.12, shiki@^0.9.3:
+shiki@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/shiki/-/shiki-0.10.0.tgz#85f21ecfa95b377ff64db6c71442c22c220e9540"
+  integrity sha512-iczxaIYeBFHTFrQPb9DVy2SKgYxC4Wo7Iucm7C17cCh2Ge/refnvHscUOxM85u57MfLoNOtjoEFUWt9gBexblA==
+  dependencies:
+    jsonc-parser "^3.0.0"
+    vscode-oniguruma "^1.6.1"
+    vscode-textmate "5.2.0"
+
+shiki@^0.9.3:
   version "0.9.12"
   resolved "https://registry.npmjs.org/shiki/-/shiki-0.9.12.tgz"
   integrity sha512-VXcROdldv0/Qu0w2XvzU4IrvTeBNs/Kj/FCmtcEXGz7Tic/veQzliJj6tEiAgoKianhQstpYmbPDStHU5Opqcw==
@@ -7477,10 +7486,10 @@ typedoc-plugin-markdown@3.10.2:
   dependencies:
     handlebars "^4.7.7"
 
-typedoc-plugin-markdown@^3.11.2:
-  version "3.11.6"
-  resolved "https://registry.npmjs.org/typedoc-plugin-markdown/-/typedoc-plugin-markdown-3.11.6.tgz"
-  integrity sha512-CV1BuxL7HR/EE1ctnPXOWzf4/Exl0FzkwtFVYaKTVWTnD/dkFLgABOfWuOL4lPmzLUOsAL85pmq+/PB6cdRppw==
+typedoc-plugin-markdown@^3.11.12:
+  version "3.11.12"
+  resolved "https://registry.yarnpkg.com/typedoc-plugin-markdown/-/typedoc-plugin-markdown-3.11.12.tgz#04f4740534d19728696a5c0ccc35f319bcb93b31"
+  integrity sha512-gb/RuzgZ1zCnRUOqUg6firIqU7xDs9s7hq0vlU/gAsFfVCnpl3NTM9vPyPON75nnpfVFCxr/hmKQ01k1CYY/Qg==
   dependencies:
     handlebars "^4.7.7"
 
@@ -7499,16 +7508,16 @@ typedoc@0.21.2:
     shiki "^0.9.3"
     typedoc-default-themes "^0.12.10"
 
-typedoc@^0.22.5:
-  version "0.22.9"
-  resolved "https://registry.npmjs.org/typedoc/-/typedoc-0.22.9.tgz"
-  integrity sha512-84PjudoXVcap6bwdZFbYIUWlgdz/iLV09ZHwrCzhtHWXaDQG6mlosJ8te6DSThuRkRvQjp46HO+qY/P7Gpm78g==
+typedoc@^0.22.11:
+  version "0.22.11"
+  resolved "https://registry.yarnpkg.com/typedoc/-/typedoc-0.22.11.tgz#a3d7f4577eef9fc82dd2e8f4e2915e69f884c250"
+  integrity sha512-pVr3hh6dkS3lPPaZz1fNpvcrqLdtEvXmXayN55czlamSgvEjh+57GUqfhAI1Xsuu/hNHUT1KNSx8LH2wBP/7SA==
   dependencies:
     glob "^7.2.0"
     lunr "^2.3.9"
-    marked "^3.0.8"
+    marked "^4.0.10"
     minimatch "^3.0.4"
-    shiki "^0.9.12"
+    shiki "^0.10.0"
 
 typescript@^4.3.4:
   version "4.5.2"
@@ -7681,6 +7690,11 @@ verror@^1.10.0:
     assert-plus "^1.0.0"
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
+
+vscode-oniguruma@^1.6.1:
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/vscode-oniguruma/-/vscode-oniguruma-1.6.1.tgz#2bf4dfcfe3dd2e56eb549a3068c8ee39e6c30ce5"
+  integrity sha512-vc4WhSIaVpgJ0jJIejjYxPvURJavX6QG41vu0mGhqywMkQqulezEqEQ3cO3gc8GvcOpX6ycmKGqRoROEMBNXTQ==
 
 vscode-textmate@5.2.0:
   version "5.2.0"
