@@ -199,7 +199,7 @@ export class Host implements IComponent {
      * @param {HostOptions} identifyExisting Indicates if existing Instances should be identified.
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
-    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<this> {
+    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<void> {
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
@@ -236,25 +236,41 @@ export class Host implements IComponent {
         this.attachHostAPIs();
 
         if (this.cpmConnector) {
-            this.connectToCPM();
+            await this.connectToCPM();
         }
 
-        return this;
+        if (this.config.startupConfig) {
+            await this.performStartup();
+        }
+    }
+
+    async performStartup() {
+        // TODO: load config
+        // TODO: validate
+        // TODO: iterate over config
+        // TODO:   issue start with arguments
+        // TODO:   wait until started and running
+        // TODO:   run x in parallel?
+        // TODO: error handling?
     }
 
     /**
      * Initializes connector and connects to Manager.
      */
-    connectToCPM() {
-        this.cpmConnector?.init();
+    async connectToCPM() {
+        const connector = this.cpmConnector;
 
-        this.cpmConnector?.on("connect", async () => {
-            await this.cpmConnector?.sendSequencesInfo(this.getSequences());
-            await this.cpmConnector?.sendInstancesInfo(this.getInstances());
-            await this.cpmConnector?.sendTopicsInfo(this.getTopics());
+        if (!connector) return;
+
+        connector.init();
+
+        connector.on("connect", async () => {
+            await connector.sendSequencesInfo(this.getSequences());
+            await connector.sendInstancesInfo(this.getInstances());
+            await connector.sendTopicsInfo(this.getTopics());
         });
 
-        this.cpmConnector?.connect();
+        await connector.connect();
     }
 
     /**

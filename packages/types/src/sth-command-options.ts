@@ -25,4 +25,5 @@ export type STHCommandOptions = {
     k8sSequencesRoot: string;
     docker: boolean;
     k8sRunnerCleanupTimeout: string
+    startupConfig: string;
 }

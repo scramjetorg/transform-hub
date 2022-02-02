@@ -28,9 +28,11 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-image <image>", "Runner image spawned in Nodejs Pod.")
     .option("--k8s-runner-py-image <image>", "Runner image spawned in Python Pod.")
     .option("--k8s-sequences-root <path>", "Kubernetes Process Adapter will store sequences here.")
-    .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
+    .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instances-server-port <port>", "Port on which server that instances connect to should run.")
+    .option("--sequences-root <path>", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
+    .option("--startup-config <path>", "Only works with --no-docker option. Where we should load")
     .parse(process.argv)
     .opts();
 
@@ -60,6 +62,7 @@ configService.update({
     },
     runtimeAdapter: getRuntimeAdapterOption(options),
     sequencesRoot: options.sequencesRoot,
+    startupConfig: options.startupConfig,
     logLevel: options.logLevel,
     kubernetes: {
         namespace: options.k8sNamespace,
