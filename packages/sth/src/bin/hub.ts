@@ -30,6 +30,7 @@ const options: STHCommandOptions = program
     .option("--k8s-sequences-root <path>", "Kubernetes Process Adapter will store sequences here.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
+    .option("--instances-server-port <port>", "Port on which server that instances connect to should run.")
     .parse(process.argv)
     .opts();
 
