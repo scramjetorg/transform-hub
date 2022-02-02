@@ -3,6 +3,7 @@
 import { Command } from "commander";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
 import { STHCommandOptions } from "@scramjet/types";
+import { resolve } from "path";
 
 const program = new Command();
 const options: STHCommandOptions = program
@@ -61,8 +62,8 @@ configService.update({
         id: options.id
     },
     runtimeAdapter: getRuntimeAdapterOption(options),
-    sequencesRoot: options.sequencesRoot,
-    startupConfig: options.startupConfig,
+    sequencesRoot: options.sequencesRoot && resolve(process.cwd(), options.sequencesRoot),
+    startupConfig: options.startupConfig && resolve(process.cwd(), options.startupConfig),
     logLevel: options.logLevel,
     kubernetes: {
         namespace: options.k8sNamespace,

@@ -5,14 +5,13 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, StartSequenceDTO, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck } from "@scramjet/load-check";
 import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
-import { readJsonFile } from "@scramjet/utility";
 
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
@@ -25,6 +24,8 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
+import { readFile } from "fs/promises";
+import { isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -34,6 +35,8 @@ const name = packageFile.value?.name || "unknown";
 export type HostOptions = Partial<{
     identifyExisting: boolean
 }>;
+
+const PARALLEL_SEQUENCE_STARTUP = 4;
 
 /**
  * Host provides functionality to manage Instances and Sequences.
@@ -235,23 +238,47 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-        if (this.cpmConnector) {
-            await this.connectToCPM();
-        }
+        await this.connectToCPM();
 
-        if (this.config.startupConfig) {
-            await this.performStartup();
-        }
+        await this.performStartup();
     }
 
     async performStartup() {
-        // TODO: load config
-        // TODO: validate
-        // TODO: iterate over config
-        // TODO:   issue start with arguments
-        // TODO:   wait until started and running
-        // TODO:   run x in parallel?
-        // TODO: error handling?
+        if (!this.config.startupConfig) return;
+
+        let _config;
+
+        // Load the config
+        try {
+            const configString = await readFile(this.config.startupConfig, "utf-8");
+
+            _config = JSON.parse(configString);
+        } catch {
+            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
+        }
+
+        // Validate the config
+        if (!Array.isArray(_config) || _config.some(x => !isStartSequenceDTO(x)))
+            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", "Startup config validation failed");
+
+        const startupConfig: StartSequenceDTO[] = _config;
+
+        await DataStream.from(startupConfig)
+            .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
+            .map(async (seqenceConfig: StartSequenceDTO) => {
+                const sequence = this.sequencesStore.get(seqenceConfig.id);
+
+                if (!sequence) {
+                    this.logger.warn("Sequence id not found for startup", sequence);
+                    return;
+                }
+
+                await this.startCSIController(sequence, {
+                    appConfig: seqenceConfig.appConfig || {},
+                    args: seqenceConfig.args
+                });
+            })
+            .run();
     }
 
     /**
