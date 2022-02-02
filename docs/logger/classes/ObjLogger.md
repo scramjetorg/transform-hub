@@ -48,7 +48,7 @@
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `reference` | `any` | `undefined` | Used to obtain a name for the logger. |
-| `baseLog` | `DeepPartial`<`Object`\> | `{}` | Default log object. |
+| `baseLog` | `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> | `{}` | Default log object. |
 | `logLevel` | `LogLevel` | `"TRACE"` | Log level. |
 
 #### Defined in
@@ -59,7 +59,7 @@
 
 ### baseLog
 
-• **baseLog**: `DeepPartial`<`Object`\>
+• **baseLog**: `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\>
 
 Default log object.
 
@@ -211,7 +211,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<`Object`\> |
+| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -236,7 +236,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<`Object`\> |
+| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -261,7 +261,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<`Object`\> |
+| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -286,7 +286,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<`Object`\> |
+| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -341,7 +341,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<`Object`\> |
+| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -366,7 +366,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `baseLog` | `DeepPartial`<`Object`\> |
+| `baseLog` | `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 
 #### Returns
 
@@ -386,7 +386,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<`Object`\> |
+| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -412,7 +412,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `level` | `LogLevel` |
-| `entry` | `string` \| `DeepPartial`<`Object`\> |
+| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns

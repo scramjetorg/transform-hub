@@ -403,11 +403,11 @@ ___
 
 ### getInfo
 
-▸ **getInfo**(): `Promise`<`Object`\>
+▸ **getInfo**(): `Promise`<{ `appConfig`: `AppConfig` ; `args`: `undefined` \| `any`[] ; `created?`: `Date` ; `ports?`: `any` ; `sequenceId`: `string` ; `started?`: `Date`  }\>
 
 #### Returns
 
-`Promise`<`Object`\>
+`Promise`<{ `appConfig`: `AppConfig` ; `args`: `undefined` \| `any`[] ; `created?`: `Date` ; `ports?`: `any` ; `sequenceId`: `string` ; `started?`: `Date`  }\>
 
 #### Defined in
 

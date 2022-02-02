@@ -4,7 +4,7 @@
 
 ## Hierarchy
 
-- `TRouter`<[`CeroMiddleware`](../modules.md#ceromiddleware)\>
+- `default`<[`CeroMiddleware`](../modules.md#ceromiddleware)\>
 
   ↳ **`CeroRouter`**
 

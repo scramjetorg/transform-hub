@@ -38,7 +38,7 @@ We provide support for contributors via test cases. If you expect a certain type
 
 ### Help wanted :information_desk_person:
 
-The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on slack](https://join.slack.com/t/scramjetframework/shared_invite/zt-bb16pluv-XlICrq5Khuhbq5beenP2Fg) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://discord.gg/4EX3jHBe) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
 ### Donation :money_with_wings:
 

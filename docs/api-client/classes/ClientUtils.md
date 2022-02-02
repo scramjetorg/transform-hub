@@ -208,7 +208,7 @@ Performs POST request for streamed data.
 | :------ | :------ | :------ |
 | `url` | `string` | Request url. |
 | `stream` | `string` \| `Stream` | to be send. |
-| `__namedParameters` | `Partial`<`Object`\> | - |
+| `__namedParameters` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` ; `type`: `string`  }\> | - |
 
 #### Returns
 
