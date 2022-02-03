@@ -17,7 +17,7 @@ import { defer } from "../../lib/utils";
 
 const AWAITING_POLL_DEFER_TIME = 250;
 
-const spawned: ChildProcess[] = [];
+const spawned: Set<ChildProcess> = new Set();
 
 process.on("exit", (sig) => {
     spawned.forEach(child => {
@@ -39,7 +39,7 @@ When("hub process is started with parameters {string}", function(this: CustomWor
             }
         );
 
-        spawned.push(this.resources.hub);
+        spawned.add(this.resources.hub);
 
         if (process.env.SCRAMJET_TEST_LOG) {
             this.resources.hub?.stdout?.pipe(process.stdout);
@@ -81,14 +81,15 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
     assert.ok(new RegExp(server).test(apiURL));
 });
 
-Then("exit hub process", function(this: CustomWorld) {
-    return new Promise<void>((resolve) => {
-        const hub = this.resources.hub as ChildProcess;
+Then("exit hub process", async function(this: CustomWorld) {
+    const hub = this.resources.hub as ChildProcess;
 
+    await new Promise<void>((resolve) => {
         hub.on("close", resolve);
-
         hub.kill(SIGTERM);
     });
+
+    spawned.delete(hub);
 });
 
 Then("get runner container information", { timeout: 20000 }, async function(this: CustomWorld) {

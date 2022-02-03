@@ -436,6 +436,26 @@ Then("I get list of Sequences", async function() {
     assert.equal(res.sequences.length > 0, true);
 });
 
+Then("There are some sequences", async function() {
+    const { sequences } = (this as CustomWorld).cliResources;
+
+    assert.equal(sequences.length > 0, true);
+});
+
+let sequenceFound;
+
+Then('I see a sequence called {string}', function(string: string) {
+    const { sequences } = (this as CustomWorld).cliResources;
+
+    // Write code here that turns the phrase above into concrete actions
+    sequenceFound = sequences.find(({ id }: { id: string }) => {
+        console.error(id, string);
+        return id === string;
+    });
+
+    assert.notStrictEqual(typeof sequenceFound, "undefined", `Sequence ${string} not found`);
+});
+
 Then("I get list of Instances", async function() {
     const res = (this as CustomWorld).cliResources;
 
