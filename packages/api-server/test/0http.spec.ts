@@ -1,11 +1,11 @@
 import test, { after, beforeEach } from "ava";
-import sinon from "sinon";
+import { createSandbox } from "sinon";
 import http from "http";
 
 /* eslint-disable-next-line import/no-extraneous-dependencies */
 import { cero, sequentialRouter } from "@scramjet/api-server";
 
-const sandbox = sinon.createSandbox();
+const sandbox = createSandbox();
 const { Server } = http;
 
 beforeEach(() => sandbox.restore());

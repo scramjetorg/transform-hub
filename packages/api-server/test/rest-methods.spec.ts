@@ -3,7 +3,7 @@ import { APIExpose } from "@scramjet/types";
 import { RunnerMessageCode } from "@scramjet/symbols";
 
 import test, { after, before, beforeEach, skip } from "ava";
-import sinon from "sinon";
+import { createSandbox } from "sinon";
 import { getCommunicationHandler } from "./lib/get-communcation-handler";
 import { mockRequestResponse, mockServer, ServerWithPlayMethods } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";
@@ -12,7 +12,7 @@ import { routerMock } from "./lib/trouter-mock";
 import { CeroRouter, createServer } from "@scramjet/api-server";
 import { DataStream } from "scramjet";
 
-export const sandbox = sinon.createSandbox();
+export const sandbox = createSandbox();
 
 let server: ServerWithPlayMethods;
 let router: CeroRouter;
