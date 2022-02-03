@@ -17,6 +17,19 @@ import { defer } from "../../lib/utils";
 
 const AWAITING_POLL_DEFER_TIME = 250;
 
+const spawned: ChildProcess[] = [];
+
+process.on("exit", (sig) => {
+    spawned.forEach(child => {
+        try {
+            if (child.pid) child.kill(sig);
+        } catch {
+            // eslint-disable-next-line no-console
+            console.error(`Had problems killing PID: ${child.pid}`);
+        }
+    });
+});
+
 When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
     return new Promise<void>((resolve, reject) => {
         this.resources.hub = spawn(
@@ -25,6 +38,8 @@ When("hub process is started with parameters {string}", function(this: CustomWor
                 detached: true
             }
         );
+
+        spawned.push(this.resources.hub);
 
         if (process.env.SCRAMJET_TEST_LOG) {
             this.resources.hub?.stdout?.pipe(process.stdout);

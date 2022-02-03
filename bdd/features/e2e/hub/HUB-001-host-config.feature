@@ -1,4 +1,4 @@
-Feature: Host configuration
+Feature: HUB-001 Host configuration
 
     @ci @starts-host
     Scenario: HUB-001 TC-001 Set host port (-P)
