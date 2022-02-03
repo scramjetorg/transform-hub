@@ -19,6 +19,8 @@ export async function startHost(
     const tcpServer = new SocketServer(sthConfig.host.instancesServerPort);
     const host = new Host(apiServer, tcpServer, sthConfig);
 
-    return host.main(hostOptions);
+    await host.main(hostOptions);
+
+    return host;
 }
 
