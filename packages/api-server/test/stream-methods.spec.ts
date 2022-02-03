@@ -2,14 +2,14 @@ import { APIExpose } from "@scramjet/types";
 import test, { after, before, beforeEach } from "ava";
 import { Readable, Writable } from "stream";
 import { StringStream } from "scramjet";
-import sinon from "sinon";
+import { createSandbox } from "sinon";
 import { mockRequestResponse, mockServer, ServerWithPlayMethods } from "./lib/server-mock";
 import { routerMock } from "./lib/trouter-mock";
 
 /* eslint-disable-next-line import/no-extraneous-dependencies */
 import { CeroRouter, createServer } from "@scramjet/api-server";
 
-export const sandbox = sinon.createSandbox();
+export const sandbox = createSandbox();
 
 let server: ServerWithPlayMethods;
 let router: CeroRouter;
