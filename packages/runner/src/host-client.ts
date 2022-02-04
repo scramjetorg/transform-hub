@@ -30,7 +30,7 @@ class HostClient implements IHostClient {
 
     async init(id: string): Promise<void> {
         const openConnections = await Promise.all(
-            Array.from(Array(8))
+            [...Array(8)]
                 .map(() => {
                     // Error handling for each connection is process crash for now
                     const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);

@@ -25,12 +25,12 @@ if (!instanceId) {
     process.exit(1);
 }
 
+const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
+
 if (!fs.existsSync(sequencePath)) {
     console.error("Incorrect run argument: sequence path (" + sequencePath + ") does not exists. ");
     process.exit(1);
 }
-
-const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
 
 /**
  * Start runner script.
@@ -41,7 +41,6 @@ const hostClient = new HostClient(+instancesServerPort, instancesServerHost);
  * @param sequencePath - sequence file path
  * @param fifosPath - fifo files path
  */
-
 const runner: Runner<AppConfig> = new Runner(sequencePath, hostClient, instanceId);
 
 runner.main()

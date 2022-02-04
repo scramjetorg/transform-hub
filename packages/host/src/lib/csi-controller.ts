@@ -137,19 +137,23 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.logger = new ObjLogger(this, { id: this.id });
 
-        this.logger.debug("Constructor executed");
         this.info.created = new Date();
+        this.logger.debug("Constructor executed");
     }
 
     async start() {
         const i = new Promise((res, rej) => {
             this.initResolver = { res, rej };
+
+            this.logger.debug("Starting instance");
+
             this.startInstance();
         });
 
-        i.then(() => this.main()).catch(e => {
-            this.emit("error", e);
-        });
+        i.then(() => this.main())
+            .catch(e => {
+                this.logger.error("Instance failed to start", e);
+            });
 
         return i;
     }
@@ -160,12 +164,14 @@ export class CSIController extends TypedEmitter<Events> {
         let code = 0;
 
         try {
+            this.logger.trace("Wait for instance stop...", code);
+
             code = await this.instanceStopped();
 
-            this.logger.trace("Instance stopped.");
+            this.logger.trace("Instance stopped.", code);
         } catch (e: any) {
             code = e;
-            this.logger.error("Instance caused error, code:", e);
+            this.logger.error("Instance caused error with code", e);
         }
 
         this.emit("end", code);
@@ -188,17 +194,16 @@ export class CSIController extends TypedEmitter<Events> {
 
                 this.endOfSequence = this.instanceAdapter.run(instanceConfig, this.config.instancesServerPort, this.id);
 
-                this.logger.trace("Sequence initialized");
+                this.logger.trace("Instance initialized");
+                this.logger.debug("Instance config", instanceConfig);
 
                 const exitcode = await this.endOfSequence;
 
                 // TODO: if we have a non-zero exit code is this expected?
-                this.logger.trace("Sequence finished with status", exitcode);
+                this.logger.trace("Instance finished with status", exitcode);
 
-                if (exitcode === 0) {
-                    this.logger.trace("Sequence finished with success", exitcode);
-                } else {
-                    this.logger.error("Sequence finished with error", exitcode);
+                if (exitcode !== 0) {
+                    throw new InstanceAdapterError("RUNNER_ERROR", { exitcode });
                 }
 
                 return exitcode;
@@ -208,15 +213,20 @@ export class CSIController extends TypedEmitter<Events> {
                 await this.instanceAdapter.cleanup();
 
                 this.logger.error("Cleanup done (post error)");
+                this.initResolver?.rej();
 
                 return 213;
             }
         };
 
         this.instancePromise = instanceMain();
+
+        this.logger.debug("instanceMain executed");
     }
 
     instanceStopped(): Promise<ExitCode> {
+        this.logger.debug("Instance promise", this.instancePromise);
+
         if (!this.instancePromise) {
             throw new CSIControllerError("UNATTACHED_STREAMS");
         }
@@ -343,7 +353,9 @@ export class CSIController extends TypedEmitter<Events> {
             this.createInstanceAPIRouter();
 
             this.initResolver?.res();
+            this.logger.info("Instance connected");
         } catch (e: any) {
+            this.logger.error("Error after instance connect");
             this.initResolver?.rej(e);
         }
     }

@@ -512,13 +512,13 @@ export class Runner<X extends AppConfig> implements IComponent {
         // eslint-disable-next-line complexity
         await new Promise<void>((res) => {
             /**
-         * @analyze-how-to-pass-in-out-streams
-         * We need to make sure to close input and output streams
-         * after Sequence terminates.
-         *
-         * pipe the last `stream` value to output stream
-         * unless there is NO LAST STREAM
-         */
+            * @analyze-how-to-pass-in-out-streams
+            * We need to make sure to close input and output streams
+            * after Sequence terminates.
+            *
+            * pipe the last `stream` value to output stream
+            * unless there is NO LAST STREAM
+            */
             if (!isSynchronousStreamable(intermediate)) {
                 this.logger.info("Primitive returned as last value");
 

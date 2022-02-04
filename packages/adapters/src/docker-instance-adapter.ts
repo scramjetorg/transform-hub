@@ -159,14 +159,14 @@ IComponent {
 
     // eslint-disable-next-line complexity
     async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+        this.logger.debug("Config", config);
+
         if (config.type !== "docker") {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
 
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
-
-        this.logger.info("Instance preparation done");
 
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
