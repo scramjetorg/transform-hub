@@ -1,0 +1,26 @@
+{
+  "name": "@scramjet/template-sequence-js",
+  "version": "0.15.1",
+  "description": "",
+  "main": "index.js",
+  "assets": [],
+  "scripts": {
+    "clean": "rm -rf ./dist .bic_cache"
+  },
+  "author": "Scramjet Sequence Creator <open-source@scramjet.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "@scramjet/types": "^0.15.1",
+    "@types/node": "15.12.5"
+  },
+  "scramjet": {
+    "image": "node"
+  },
+  "dependencies": {
+    "scramjet": "^4.36.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
