@@ -1,0 +1,22 @@
+{
+  "name": "@scramjet/empty-seq",
+  "version": "0.15.1",
+  "description": "",
+  "main": "index.js",
+
+  "scripts": {
+    "clean": "rm -rf ./dist .bic_cache"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "ISC",
+  "scramjet": {
+    "image": "node"
+  },
+  "devDependencies": {
+    "@scramjet/types": "^0.15.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
