@@ -14,7 +14,7 @@ const options = createProgram
     .action((name: string) => {
         sequenceName = name;
     })
-    .option("--lang, <js|ts|py>", "Sequence language")
+    .option("--lang, <js|ts>", "Sequence language")
     .option("--log-level, <debug|trace>", "Specify log level", "trace")
     .option("--overwrite", "Overwrite existing sequence", false)
     .parse(process.argv)

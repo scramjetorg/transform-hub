@@ -8,7 +8,7 @@ import { createAction } from "../common";
 export const create: CommandDefinition = (program) => {
     const createProgram = program
         .command("create <hhh>")
-        .option("--lang, <js|ts|py>", "Sequence language", "ts")
+        .option("--lang, <js|ts>", "Sequence language", "ts")
         .option("--log-level, <debug|trace>", "Specify log level", "trace")
         .option("--overwrite", "Overwrite existing sequence", false);
 
