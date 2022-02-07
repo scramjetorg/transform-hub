@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/avengers-names-output",
+  "name": "@scramjet/template-sequence-ts",
   "version": "0.15.1",
   "description": "",
   "main": "index.js",
@@ -7,10 +7,6 @@
     "avengers.json"
   ],
   "scripts": {
-    "build:refapps": "tsc -p tsconfig.json",
-    "postbuild:refapps": "yarn prepack",
-    "prepack": "node ../../../scripts/publish.js",
-    "packseq": "node ../../../scripts/packsequence.js",
     "clean": "rm -rf ./dist .bic_cache"
   },
   "author": "Scramjet <open-source@scramjet.org>",
