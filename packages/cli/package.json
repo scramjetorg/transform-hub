@@ -22,14 +22,17 @@
   "dependencies": {
     "@scramjet/api-client": "^0.18.7",
     "@scramjet/client-utils": "^0.18.7",
+    "@scramjet/obj-logger": "^0.18.7",
     "@scramjet/middleware-api-client": "^0.18.7",
+    "@scramjet/sequence-creator": "^0.18.7",
     "commander": "^8.3.0",
     "minimatch": "^3.1.2",
-    "scramjet": "^4.36.6",
-    "tar": "^6.1.11"
+    "scramjet": "^4.36.0",
+    "tar": "^6.1.0"
   },
   "devDependencies": {
     "@types/minimatch": "^3.0.5",
+    "@scramjet/types": "^0.15.1",
     "@types/node": "15.12.5",
     "@types/tar": "^4.0.5",
     "ava": "^3.15.0",

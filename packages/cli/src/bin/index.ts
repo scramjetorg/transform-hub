@@ -41,6 +41,7 @@ const errorHandler = (err: ClientError) => {
     /**
      * Commands
      * ```
+     * create <name> --lang <lang> [--overwrite] [--log-level <level>]
      * pack [options] [<directory>]
      * host [command]                operations on host
      * config|c [command]            configuration file operations

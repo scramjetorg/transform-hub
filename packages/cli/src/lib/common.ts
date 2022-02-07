@@ -10,6 +10,9 @@ import { filter as mmfilter } from "minimatch";
 import { Readable } from "stream";
 import { getConfig, setConfigValue } from "./config";
 import { getMiddlewareClient } from "./platform";
+import { SequenceCreateConfig, SequenceCreator } from "@scramjet/sequence-creator";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { LogLevel } from "@scramjet/types";
 
 const { F_OK, R_OK } = constants;
 
@@ -35,9 +38,7 @@ export const getHostClient = (command: Command): HostClient => {
     if (command.opts().log) {
         hostClient.client.addLogger({
             ok(result) {
-                const {
-                    status, statusText, url
-                } = result;
+                const { status, statusText, url } = result;
 
                 // eslint-disable-next-line no-console
                 console.error("Request ok:", url, `status: ${status} ${statusText}`);
@@ -48,7 +49,7 @@ export const getHostClient = (command: Command): HostClient => {
 
                 // eslint-disable-next-line no-console
                 console.error(`Request failed with code "${code}" status: ${message}`);
-            }
+            },
         });
     }
 
@@ -95,17 +96,30 @@ export const getIgnoreFunction = async (file: PathLike) => {
         return () => true;
     }
 
-    const rules: ReturnType<typeof mmfilter>[] =
-        await StringStream.from(createReadStream(file))
-            .lines()
-            .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
-            .parse((line: string) => mmfilter(line))
-            .catch(() => undefined)
-            .toArray()
-        ;
+    const rules: ReturnType<typeof mmfilter>[] = await StringStream.from(createReadStream(file))
+        .lines()
+        .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
+        .parse((line: string) => mmfilter(line))
+        .catch(() => undefined)
+        .toArray();
     const fakeArr: string[] = [];
 
-    return (f: string) => !rules.find(x => x(f, 0, fakeArr));
+    return (f: string) => !rules.find((x) => x(f, 0, fakeArr));
+};
+
+export const createAction = async (name: string, options: SequenceCreateConfig & { logLevel: LogLevel }) => {
+    if (!ObjLogger.isLogLevelValid(options.logLevel)) {
+        throw new Error(`Invalid log level: ${options.logLevel}`);
+    }
+
+    SequenceCreator.create(
+        {
+            name,
+            lang: options.lang,
+            overwrite: options.overwrite,
+        },
+        options.logLevel.toUpperCase() as LogLevel
+    );
 };
 
 /**
@@ -115,7 +129,7 @@ export const getIgnoreFunction = async (file: PathLike) => {
  * @param {boolean} stdout If true, package will be piped to stdout.
  * @param {output} string Output filename.
  */
-export const packAction = async (directory: string, { stdout, output }: { stdout: boolean, output: string }) => {
+export const packAction = async (directory: string, { stdout, output }: { stdout: boolean; output: string }) => {
     const cwd = resolve(process.cwd(), directory);
     const packageLocation = resolve(cwd, "package.json");
 
@@ -126,9 +140,7 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
     });
 
     const ouputPath = output ? resolve(process.cwd(), output) : `${cwd}.tar.gz`;
-    const target = stdout
-        ? process.stdout
-        : createWriteStream(ouputPath);
+    const target = stdout ? process.stdout : createWriteStream(ouputPath);
 
     if (!stdout) setConfigValue("lastPackagePath", ouputPath);
 
@@ -138,11 +150,10 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
         {
             gzip: true,
             cwd,
-            filter
+            filter,
         },
         await readdir(directory)
-    )
-        .pipe(target);
+    ).pipe(target);
 
     await new Promise((res, rej) => {
         out.on("finish", res);
@@ -159,9 +170,9 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
 export const getReadStreamFromFile = async (file: string): Promise<Readable> => {
     const resolvedFilePath = resolve(process.cwd(), file);
 
-    return access(resolvedFilePath, F_OK).then(
-        () => createReadStream(resolvedFilePath),
-    ).catch(() => {
-        throw new Error(`File "${file}" not found.`);
-    });
+    return access(resolvedFilePath, F_OK)
+        .then(() => createReadStream(resolvedFilePath))
+        .catch(() => {
+            throw new Error(`File "${file}" not found.`);
+        });
 };

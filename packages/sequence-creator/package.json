@@ -1,11 +1,10 @@
 {
   "name": "@scramjet/sequence-creator",
-  "version": "0.15.1",
+  "version": "0.18.7",
   "description": "This package is part of Scramjet Transform Hub. The package provides a utility to generate sequence from template.",
   "main": "./src/index.ts",
-  "assets": ["templates"],
   "bin": {
-    "sequence-creator": "./bin/cli"
+    "sequence-creator": "./src/bin/cli.ts"
   },
   "scripts": {
     "start": "ts-node ./src/bin/index",
@@ -19,14 +18,14 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/obj-logger": "^0.15.1",
-    "@scramjet/utility": "^0.15.1",
+    "@scramjet/obj-logger": "^0.18.7",
+    "@scramjet/utility": "^0.18.7",
     "commander": "^9.0.0",
     "bpmux": "^8.1.3",
     "scramjet": "^4.36.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.15.1",
+    "@scramjet/types": "^0.18.7",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.0.0",
