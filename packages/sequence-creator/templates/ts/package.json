@@ -7,6 +7,7 @@
     "avengers.json"
   ],
   "scripts": {
+    "build": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist .bic_cache"
   },
   "author": "Scramjet <open-source@scramjet.org>",
