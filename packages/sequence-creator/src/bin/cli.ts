@@ -1,5 +1,4 @@
 #!/usr/bin/env ts-node
-/* eslint-disable no-console */
 
 import { Command } from "commander";
 import { SequenceCreator } from "../lib/sequence-creator";
@@ -20,7 +19,6 @@ const options = createProgram
     .parse(process.argv)
     .opts();
 
-// eslint-disable-next-line no-console
 if (!ObjLogger.isLogLevelValid(options.logLevel)) {
     throw new Error(`Invalid log level: ${options.logLevel}`);
 }

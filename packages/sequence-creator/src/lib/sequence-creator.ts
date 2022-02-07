@@ -12,13 +12,24 @@ import { execSync } from "child_process";
 export class SequenceCreator {
     static create(opts: SequenceCreateConfig, logLevel?: LogLevel) {
         const logger = new ObjLogger("SequenceCreator", {}, logLevel);
-
         const prettyLog = new DataStream().map(prettyPrint({ colors: true }));
 
         logger.addOutput(prettyLog);
         prettyLog.pipe(process.stdout);
 
-        logger.info("Creating sequence", opts);
+        if (!SequenceCreator.isNameValid(opts.name)) {
+            logger.error("Sequence name is invalid");
+
+            return;
+        }
+
+        if (!["js", "ts"].includes(opts.lang)) {
+            logger.error("Sequence language not supported");
+
+            return;
+        }
+
+        logger.debug("Creating sequence", opts);
 
         const workDir = process.cwd();
         const targetDir = path.join(workDir, opts.name);
@@ -51,6 +62,10 @@ export class SequenceCreator {
         if (SequenceCreator.checkDirExists(dir)) {
             execSync(`rm -rf ${dir}`);
         }
+    }
+
+    static isNameValid(name: string): boolean {
+        return (/[^\w\s]/gi).test(name);
     }
 
     static checkDirExists(dir: string) {
