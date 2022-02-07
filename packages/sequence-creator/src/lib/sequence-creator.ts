@@ -1,30 +1,54 @@
+import { LogLevel } from "@scramjet/types";
+import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
+
+import { DataStream } from "scramjet";
+
+import { SequenceCreateConfig } from "../types";
+
 import * as path from "path";
 import * as fs from "fs";
-import { SequenceCreateConfig } from "../types";
-import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { DataStream } from "scramjet";
 import { execSync } from "child_process";
 
 export class SequenceCreator {
-    static create(opts: SequenceCreateConfig) {
-        const workDir = process.cwd();
-        const targetDir = path.join(workDir, opts.name);
-        const templatesDir = path.join(__dirname, "..", "..", "templates");
-
-        const logger = new ObjLogger("SequenceCreator");
+    static create(opts: SequenceCreateConfig, logLevel?: LogLevel) {
+        const logger = new ObjLogger("SequenceCreator", {}, logLevel);
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: true }));
 
         logger.addOutput(prettyLog);
         prettyLog.pipe(process.stdout);
 
+        logger.info("Creating sequence", opts);
+
+        const workDir = process.cwd();
+        const targetDir = path.join(workDir, opts.name);
+        const templatesDir = path.join(__dirname, "..", "..", "templates");
+
         logger.debug("Working directory", workDir);
         logger.debug("Templates directory", templatesDir);
 
-        logger.info("Creating sequence", opts);
+        if (opts.overwrite) {
+            SequenceCreator.removeDir(targetDir);
+        } else if (SequenceCreator.checkDirExists(targetDir)) {
+            logger.error("Sequence already exists. Use --overwrite to overwrite");
+
+            return;
+        }
 
         SequenceCreator.copyDir(path.join(templatesDir, opts.lang), targetDir);
         SequenceCreator.updatePackageJSON(path.join(targetDir, "package.json"), opts);
+
+        logger.info("Sequence created", opts.name);
+    }
+
+    static removeDir(dir: string) {
+        if (SequenceCreator.checkDirExists(dir)) {
+            execSync(`rm -rf ${dir}`);
+        }
+    }
+
+    static checkDirExists(dir: string) {
+        return fs.existsSync(dir);
     }
 
     static copyDir(src: string, dest: string) {

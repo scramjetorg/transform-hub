@@ -2,15 +2,21 @@
 
 ![Scramjet Transform Hub](https://assets.scramjet.org/sth-logo.svg "Scramjet Transform Hub Logo")
 
-This package provides a reverse server functionality.
-
-```bash
-npm install -g @scramjet/verser
-```
+This package provides an utility to create sequences in desired language.
+It is intended to be used by `@scramjet/cli` to generate sequence files.
 
 ## Docs
 
-See the code documentation here: [scramjetorg/transform-hub/docs/verser/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/verser/modules.md)
+Standalone usage
+
+```
+npx @scramjet/sequence-creator <sequence_name> --lang <js|ts|py>
+```
+
+Cli usage
+```
+si seq create <sequence_name> --lang <js|ts|py>
+```
 
 ## Scramjet Transform Hub
 

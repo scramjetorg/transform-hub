@@ -173,4 +173,8 @@ export class ObjLogger implements IObjectLogger {
 
         return this.output.pipe(target);
     }
+
+    static isLogLevelValid(level: string) {
+        return ObjLogger.levels.includes(level.toUpperCase() as LogLevel);
+    }
 }
