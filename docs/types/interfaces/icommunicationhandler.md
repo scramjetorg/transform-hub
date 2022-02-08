@@ -19,6 +19,10 @@
 - [sendControlMessage](icommunicationhandler.md#sendcontrolmessage)
 - [sendMonitoringMessage](icommunicationhandler.md#sendmonitoringmessage)
 
+### Properties
+
+- [logger](icommunicationhandler.md#logger)
+
 ## Methods
 
 ### addControlHandler
@@ -44,7 +48,7 @@
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L29)
+[packages/types/src/communication-handler.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L31)
 
 ___
 
@@ -72,7 +76,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L22)
+[packages/types/src/communication-handler.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L24)
 
 ▸ **addMonitoringHandler**<`T`\>(`code`, `handler`, `blocking`): [`ICommunicationHandler`](icommunicationhandler.md)
 
@@ -96,7 +100,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L24)
+[packages/types/src/communication-handler.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L26)
 
 ▸ **addMonitoringHandler**<`T`\>(`code`, `handler`): [`ICommunicationHandler`](icommunicationhandler.md)
 
@@ -119,7 +123,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L26)
+[packages/types/src/communication-handler.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L28)
 
 ___
 
@@ -135,7 +139,7 @@ Returns log stream for writing
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L45)
+[packages/types/src/communication-handler.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L47)
 
 ___
 
@@ -151,7 +155,7 @@ Returns a copy of monitor stream for reading - does not interact with the fifo s
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L41)
+[packages/types/src/communication-handler.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L43)
 
 ___
 
@@ -173,7 +177,7 @@ Gets stdio streams for full interaction
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L50)
+[packages/types/src/communication-handler.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L52)
 
 ___
 
@@ -193,7 +197,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L20)
+[packages/types/src/communication-handler.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L22)
 
 ___
 
@@ -213,7 +217,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L19)
+[packages/types/src/communication-handler.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L21)
 
 ___
 
@@ -227,7 +231,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L33)
+[packages/types/src/communication-handler.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L35)
 
 ___
 
@@ -241,7 +245,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L31)
+[packages/types/src/communication-handler.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L33)
 
 ___
 
@@ -255,7 +259,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L32)
+[packages/types/src/communication-handler.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L34)
 
 ___
 
@@ -282,7 +286,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L36)
+[packages/types/src/communication-handler.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L38)
 
 ___
 
@@ -309,4 +313,14 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L35)
+[packages/types/src/communication-handler.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L37)
+
+## Properties
+
+### logger
+
+• **logger**: [`IObjectLogger`](iobjectlogger.md)
+
+#### Defined in
+
+[packages/types/src/communication-handler.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L19)

@@ -48,7 +48,7 @@
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L23)
+[packages/model/src/stream-handler.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L25)
 
 ___
 

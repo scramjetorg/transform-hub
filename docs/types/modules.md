@@ -493,7 +493,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L14)
+[packages/types/src/communication-handler.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L15)
 
 ___
 
@@ -589,11 +589,11 @@ ___
 
 ### DockerSequenceConfig
 
-Ƭ **DockerSequenceConfig**: `CommonSequenceConfig` & { `config?`: { `ports?`: [`PortConfig`](modules.md#portconfig)[] \| ``null``  } ; `container`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `engines`: `Record`<`string`, `string`\> ; `type`: ``"docker"``  }
+Ƭ **DockerSequenceConfig**: `CommonSequenceConfig` & { `config?`: { `ports?`: [`PortConfig`](modules.md#portconfig)[] \| ``null``  } ; `container`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `type`: ``"docker"``  }
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L17)
+[packages/types/src/runner-config.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L18)
 
 ___
 
@@ -1257,7 +1257,7 @@ ___
 
 ### LogEntry
 
-Ƭ **LogEntry**: [`DeepPartial`](modules.md#deeppartial)<`Object`\>
+Ƭ **LogEntry**: `Partial`<`Object`\>
 
 Single log entry.
 
@@ -1513,7 +1513,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L10)
+[packages/types/src/communication-handler.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L11)
 
 ___
 
@@ -1572,7 +1572,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/communication-handler.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L12)
+[packages/types/src/communication-handler.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/communication-handler.ts#L13)
 
 ___
 

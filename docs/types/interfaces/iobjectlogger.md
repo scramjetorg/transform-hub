@@ -41,7 +41,7 @@
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L26)
+[packages/types/src/object-logger.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L54)
 
 ___
 
@@ -53,7 +53,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| [`DeepPartial`](../modules.md#deeppartial)<`Object`\> |
+| `entry` | `string` \| `Partial`<`Object`\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -62,7 +62,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L29)
+[packages/types/src/object-logger.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L57)
 
 ___
 
@@ -74,7 +74,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| [`DeepPartial`](../modules.md#deeppartial)<`Object`\> |
+| `entry` | `string` \| `Partial`<`Object`\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -83,7 +83,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L30)
+[packages/types/src/object-logger.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L58)
 
 ___
 
@@ -95,7 +95,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| [`DeepPartial`](../modules.md#deeppartial)<`Object`\> |
+| `entry` | `string` \| `Partial`<`Object`\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -104,7 +104,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L31)
+[packages/types/src/object-logger.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L59)
 
 ___
 
@@ -116,7 +116,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| [`DeepPartial`](../modules.md#deeppartial)<`Object`\> |
+| `entry` | `string` \| `Partial`<`Object`\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -125,7 +125,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L32)
+[packages/types/src/object-logger.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L60)
 
 ___
 
@@ -147,7 +147,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L35)
+[packages/types/src/object-logger.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L63)
 
 ___
 
@@ -159,7 +159,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| [`DeepPartial`](../modules.md#deeppartial)<`Object`\> |
+| `entry` | `string` \| `Partial`<`Object`\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -168,7 +168,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L33)
+[packages/types/src/object-logger.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L61)
 
 ___
 
@@ -180,7 +180,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| [`DeepPartial`](../modules.md#deeppartial)<`Object`\> |
+| `entry` | `string` \| `Partial`<`Object`\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -189,7 +189,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L34)
+[packages/types/src/object-logger.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L62)
 
 ___
 
@@ -201,8 +201,8 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `level` | `undefined` \| [`DeepPartial`](../modules.md#deeppartial)<[`LogLevel`](../modules.md#loglevel)\> |
-| `entry` | `string` \| [`DeepPartial`](../modules.md#deeppartial)<`Object`\> |
+| `level` | `undefined` \| [`LogLevel`](../modules.md#loglevel) |
+| `entry` | `string` \| `Partial`<`Object`\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -211,7 +211,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L28)
+[packages/types/src/object-logger.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L56)
 
 ## Properties
 
@@ -221,7 +221,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L21)
+[packages/types/src/object-logger.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L49)
 
 ___
 
@@ -231,7 +231,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L22)
+[packages/types/src/object-logger.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L50)
 
 ___
 
@@ -241,7 +241,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L24)
+[packages/types/src/object-logger.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L52)
 
 ___
 
@@ -251,4 +251,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L23)
+[packages/types/src/object-logger.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L51)
