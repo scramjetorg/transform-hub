@@ -32,6 +32,9 @@ Prominent
 - e89113b2 - CLI: fix for saving instance id in config
 - 5217044e - Introduce a new, faster building for development using esbuild
 - fe364b1a - Add support for complex packages in python apps
+- 2d193278 - Introduce HTTPS support in the API Server
+- 38d69826 - The Docker Sequence and Instance Adapters specify the volume permissions
+- e46e9d80 - Scramjet community moving to Discord documentation update
 
 New features:
 
@@ -44,8 +47,9 @@ New features:
 - **TCP Runner** - Connection between Runner and Host is replaced from socket to TCP
 - **CLI extension** - Last uploaded/added sequence can now be referenced when starting etc. This will massively improve the CLI experience, as there's no longer need to parse the previous command line if we want to do quick deployment of a sequence
 - **Python runner WIP** - Running STH without docker can now spawn sequences written in python
+- **HTTPS Upgrade** - The API server can now be secured using HTTPS
 
-Bugfixes:
+Bugfixes and minor improvements:
 
 - Fix for spawning runner process
 - Container close issues now show not occur
@@ -65,7 +69,14 @@ Bugfixes:
 - Fix STH to be able to run from within a docker container (bugged since 0.13 and TCP Runner)
 - STH is able to reconnect to Scramjet Cloud Platform automatically
 - Fix for the id replacement in CLI.
+- Improved chunk size handling for the input and controls streams in the Python Runner
+- Smarter Python Runner selection based on the Sequence configuration
+- Sequence configuration can now be provided to Python Sequence on startup
+- Python Runner operates on the JSON logs (aligned with the new ObjLogger used in the Host)
+- Better error handling in the ObjectLogger and the CommunicationHandler
+- Added Docker Sequence and Instance Adapter volume permissions
+- Python Runner implements the complete Host handshake (including the default topic messages)
 
-## @scramjet/transform Hub - v0.15.1
+## @scramjet/transform Hub - v0.16.0
 
 This is the last release in changelog.
