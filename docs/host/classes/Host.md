@@ -233,7 +233,7 @@ Stops running servers.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:678](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L678)
+[packages/host/src/lib/host.ts:679](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L679)
 
 ___
 
@@ -267,7 +267,7 @@ List of instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:597](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L597)
+[packages/host/src/lib/host.ts:598](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L598)
 
 ___
 
@@ -291,7 +291,7 @@ Sequence info object.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:612](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L612)
+[packages/host/src/lib/host.ts:613](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L613)
 
 ___
 
@@ -315,7 +315,7 @@ List of instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:646](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L646)
+[packages/host/src/lib/host.ts:647](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L647)
 
 ___
 
@@ -333,7 +333,7 @@ List of sequences.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:631](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L631)
+[packages/host/src/lib/host.ts:632](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L632)
 
 ___
 
@@ -528,7 +528,7 @@ using its CSIController [CSIController](CSIController.md)
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:661](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L661)
+[packages/host/src/lib/host.ts:662](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L662)
 
 ## Constructors
 

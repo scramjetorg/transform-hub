@@ -14,6 +14,7 @@
 - [controlHandlerHash](communicationhandler.md#controlhandlerhash)
 - [controlPassThrough](communicationhandler.md#controlpassthrough)
 - [downstreams](communicationhandler.md#downstreams)
+- [logger](communicationhandler.md#logger)
 - [loggerPassThrough](communicationhandler.md#loggerpassthrough)
 - [monitoringHandlerHash](communicationhandler.md#monitoringhandlerhash)
 - [monitoringPassThrough](communicationhandler.md#monitoringpassthrough)
@@ -48,7 +49,7 @@
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L65)
+[packages/model/src/stream-handler.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L69)
 
 ___
 
@@ -58,7 +59,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L71)
+[packages/model/src/stream-handler.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L75)
 
 ___
 
@@ -68,7 +69,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L62)
+[packages/model/src/stream-handler.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L66)
 
 ___
 
@@ -78,7 +79,21 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L59)
+[packages/model/src/stream-handler.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L63)
+
+___
+
+### logger
+
+• **logger**: `IObjectLogger`
+
+#### Implementation of
+
+ICommunicationHandler.logger
+
+#### Defined in
+
+[packages/model/src/stream-handler.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L60)
 
 ___
 
@@ -88,7 +103,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L61)
+[packages/model/src/stream-handler.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L65)
 
 ___
 
@@ -98,7 +113,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L70)
+[packages/model/src/stream-handler.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L74)
 
 ___
 
@@ -108,7 +123,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L63)
+[packages/model/src/stream-handler.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L67)
 
 ___
 
@@ -118,7 +133,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L58)
+[packages/model/src/stream-handler.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L62)
 
 ## Methods
 
@@ -150,7 +165,7 @@ ICommunicationHandler.addControlHandler
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L250)
+[packages/model/src/stream-handler.ts:278](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L278)
 
 ___
 
@@ -182,7 +197,7 @@ ICommunicationHandler.addMonitoringHandler
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L238)
+[packages/model/src/stream-handler.ts:265](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L265)
 
 ___
 
@@ -196,7 +211,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:197](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L197)
+[packages/model/src/stream-handler.ts:222](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L222)
 
 ___
 
@@ -214,7 +229,7 @@ ICommunicationHandler.getLogOutput
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:201](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L201)
+[packages/model/src/stream-handler.ts:226](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L226)
 
 ___
 
@@ -232,7 +247,7 @@ ICommunicationHandler.getMonitorStream
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L110)
+[packages/model/src/stream-handler.ts:117](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L117)
 
 ___
 
@@ -256,7 +271,7 @@ ICommunicationHandler.getStdio
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L114)
+[packages/model/src/stream-handler.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L121)
 
 ___
 
@@ -280,7 +295,7 @@ ICommunicationHandler.hookDownstreamStreams
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:131](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L131)
+[packages/model/src/stream-handler.ts:139](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L139)
 
 ___
 
@@ -304,7 +319,7 @@ ICommunicationHandler.hookUpstreamStreams
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L126)
+[packages/model/src/stream-handler.ts:134](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L134)
 
 ___
 
@@ -322,7 +337,7 @@ ICommunicationHandler.pipeDataStreams
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:217](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L217)
+[packages/model/src/stream-handler.ts:243](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L243)
 
 ___
 
@@ -340,7 +355,7 @@ ICommunicationHandler.pipeMessageStreams
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:136](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L136)
+[packages/model/src/stream-handler.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L144)
 
 ___
 
@@ -358,7 +373,7 @@ ICommunicationHandler.pipeStdio
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:205](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L205)
+[packages/model/src/stream-handler.ts:230](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L230)
 
 ___
 
@@ -378,7 +393,7 @@ ___
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:103](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L103)
+[packages/model/src/stream-handler.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L111)
 
 ___
 
@@ -409,7 +424,7 @@ ICommunicationHandler.sendControlMessage
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:268](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L268)
+[packages/model/src/stream-handler.ts:297](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L297)
 
 ___
 
@@ -440,7 +455,7 @@ ICommunicationHandler.sendMonitoringMessage
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:262](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L262)
+[packages/model/src/stream-handler.ts:291](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L291)
 
 ## Constructors
 
@@ -450,4 +465,4 @@ ICommunicationHandler.sendMonitoringMessage
 
 #### Defined in
 
-[packages/model/src/stream-handler.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L71)
+[packages/model/src/stream-handler.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L75)

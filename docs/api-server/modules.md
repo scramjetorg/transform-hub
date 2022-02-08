@@ -125,12 +125,14 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `router?` | [`CeroRouter`](interfaces/CeroRouter.md) |
-| `server?` | `Server` |
+| `server?` | `HttpsServer` \| `HttpServer` |
+| `sslCertPath?` | `string` |
+| `sslKeyPath?` | `string` |
 | `verbose?` | `boolean` |
 
 #### Defined in
 
-[packages/api-server/src/index.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L11)
+[packages/api-server/src/index.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L12)
 
 ## Functions
 
@@ -182,7 +184,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L66)
+[packages/api-server/src/index.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L87)
 
 ___
 
@@ -196,7 +198,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L48)
+[packages/api-server/src/index.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L69)
 
 ___
 

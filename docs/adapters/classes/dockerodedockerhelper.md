@@ -64,7 +64,7 @@ Object with container's standard I/O streams.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:242](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L242)
+[dockerode-docker-helper.ts:243](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L243)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:334](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L334)
+[dockerode-docker-helper.ts:335](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L335)
 
 ___
 
@@ -152,7 +152,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:338](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L338)
+[dockerode-docker-helper.ts:339](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L339)
 
 ___
 
@@ -180,7 +180,7 @@ IDockerHelper.createVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:206](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L206)
+[dockerode-docker-helper.ts:207](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L207)
 
 ___
 
@@ -204,7 +204,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:320](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L320)
+[dockerode-docker-helper.ts:321](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L321)
 
 ___
 
@@ -242,7 +242,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:315](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L315)
+[dockerode-docker-helper.ts:316](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L316)
 
 ___
 
@@ -260,7 +260,7 @@ IDockerHelper.listVolumes
 
 #### Defined in
 
-[dockerode-docker-helper.ts:227](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L227)
+[dockerode-docker-helper.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L228)
 
 ___
 
@@ -343,7 +343,7 @@ IDockerHelper.removeVolume
 
 #### Defined in
 
-[dockerode-docker-helper.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L223)
+[dockerode-docker-helper.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L224)
 
 ___
 
@@ -371,7 +371,7 @@ IDockerHelper.run
 
 #### Defined in
 
-[dockerode-docker-helper.ts:252](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L252)
+[dockerode-docker-helper.ts:253](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L253)
 
 ___
 
@@ -512,7 +512,7 @@ Container exit code.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:309](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L309)
+[dockerode-docker-helper.ts:310](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L310)
 
 ## Constructors
 

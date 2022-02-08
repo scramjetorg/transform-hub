@@ -53,7 +53,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[docker-instance-adapter.ts:251](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L251)
+[docker-instance-adapter.ts:252](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L252)
 
 ___
 
@@ -134,7 +134,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[docker-instance-adapter.ts:263](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L263)
+[docker-instance-adapter.ts:264](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L264)
 
 ___
 
@@ -180,7 +180,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[docker-instance-adapter.ts:270](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L270)
+[docker-instance-adapter.ts:271](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L271)
 
 ___
 

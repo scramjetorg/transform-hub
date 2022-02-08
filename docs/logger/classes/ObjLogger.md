@@ -48,24 +48,24 @@
 | Name | Type | Default value | Description |
 | :------ | :------ | :------ | :------ |
 | `reference` | `any` | `undefined` | Used to obtain a name for the logger. |
-| `baseLog` | `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> | `{}` | Default log object. |
+| `baseLog` | `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> | `{}` | Default log object. |
 | `logLevel` | `LogLevel` | `"TRACE"` | Log level. |
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L58)
+[obj-logger/src/obj-logger.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L59)
 
 ## Properties
 
 ### baseLog
 
-• **baseLog**: `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\>
+• **baseLog**: `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\>
 
 Default log object.
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L35)
+[obj-logger/src/obj-logger.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L36)
 
 ___
 
@@ -81,7 +81,7 @@ IObjectLogger.inputLogStream
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L15)
+[obj-logger/src/obj-logger.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L16)
 
 ___
 
@@ -97,7 +97,7 @@ IObjectLogger.inputStringifiedLogStream
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L20)
+[obj-logger/src/obj-logger.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L21)
 
 ___
 
@@ -109,7 +109,7 @@ Log level.
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L40)
+[obj-logger/src/obj-logger.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L41)
 
 ___
 
@@ -121,7 +121,7 @@ Name used to indicate the source of the log.
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L30)
+[obj-logger/src/obj-logger.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L31)
 
 ___
 
@@ -137,7 +137,7 @@ IObjectLogger.output
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L25)
+[obj-logger/src/obj-logger.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L26)
 
 ___
 
@@ -151,7 +151,7 @@ IObjectLogger.outputLogStream
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L10)
+[obj-logger/src/obj-logger.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L11)
 
 ___
 
@@ -163,7 +163,7 @@ Additional output streams.
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L45)
+[obj-logger/src/obj-logger.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L46)
 
 ___
 
@@ -175,7 +175,7 @@ Logging levels chierarchy.
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L50)
+[obj-logger/src/obj-logger.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L51)
 
 ## Methods
 
@@ -199,7 +199,7 @@ IObjectLogger.addOutput
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:117](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L117)
+[obj-logger/src/obj-logger.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L121)
 
 ___
 
@@ -211,7 +211,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -224,7 +224,7 @@ IObjectLogger.debug
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L133)
+[obj-logger/src/obj-logger.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L137)
 
 ___
 
@@ -236,7 +236,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -249,7 +249,7 @@ IObjectLogger.error
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L129)
+[obj-logger/src/obj-logger.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L133)
 
 ___
 
@@ -261,7 +261,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -274,7 +274,7 @@ IObjectLogger.fatal
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L137)
+[obj-logger/src/obj-logger.ts:141](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L141)
 
 ___
 
@@ -286,7 +286,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -299,7 +299,7 @@ IObjectLogger.info
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:125](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L125)
+[obj-logger/src/obj-logger.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L129)
 
 ___
 
@@ -307,7 +307,8 @@ ___
 
 ▸ **pipe**(`target`, `options?`): `Writable`
 
-Pipes output logger to provided target. The target can be a writable stream or an ObjectLogger instance.
+Pipes output logger to provided target. The target can be a writable stream
+or an instance of class fulfiling IObjectLogger interface.
 
 #### Parameters
 
@@ -329,7 +330,7 @@ IObjectLogger.pipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:156](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L156)
+[obj-logger/src/obj-logger.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L161)
 
 ___
 
@@ -341,7 +342,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -354,7 +355,7 @@ IObjectLogger.trace
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L121)
+[obj-logger/src/obj-logger.ts:125](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L125)
 
 ___
 
@@ -366,7 +367,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `baseLog` | `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `baseLog` | `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 
 #### Returns
 
@@ -374,7 +375,7 @@ ___
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L145)
+[obj-logger/src/obj-logger.ts:149](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L149)
 
 ___
 
@@ -386,7 +387,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -399,7 +400,7 @@ IObjectLogger.warn
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:141](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L141)
+[obj-logger/src/obj-logger.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L145)
 
 ___
 
@@ -412,7 +413,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `level` | `LogLevel` |
-| `entry` | `string` \| `DeepPartial`<{ `data?`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
+| `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
 
 #### Returns
@@ -425,4 +426,4 @@ IObjectLogger.write
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L85)
+[obj-logger/src/obj-logger.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L89)
