@@ -90,7 +90,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
                 volumes: [
                     { mountPoint: "/package", volume, writeable: true },
                 ],
-                command: ["/app/identify.sh"],
+                command: ["/opt/transform-hub/identify.sh"],
                 autoRemove: true,
                 maxMem: this.config.docker.prerunner?.maxMem || 0
             });
