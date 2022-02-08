@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/template-sequence-ts",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "description": "",
   "main": "index.js",
   "assets": [
@@ -13,7 +13,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.15.1",
+    "@scramjet/types": "^0.16.0",
     "@types/node": "15.12.5"
   },
   "scramjet": {
