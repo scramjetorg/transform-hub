@@ -253,15 +253,16 @@ export class Host implements IComponent {
             const configString = await readFile(this.config.startupConfig, "utf-8");
 
             _config = JSON.parse(configString);
+            this.logger.debug("Sequence config loaded", configString, _config);
         } catch {
             throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
         }
 
         // Validate the config
-        if (!Array.isArray(_config) || _config.some(x => !isStartSequenceDTO(x)))
+        if (_config && !Array.isArray(_config.sequences) || _config.sequences.some((x: any) => !isStartSequenceDTO(x)))
             throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", "Startup config validation failed");
 
-        const startupConfig: StartSequenceDTO[] = _config;
+        const startupConfig: StartSequenceDTO[] = _config.sequences;
 
         await DataStream.from(startupConfig)
             .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
@@ -269,7 +270,7 @@ export class Host implements IComponent {
                 const sequence = this.sequencesStore.get(seqenceConfig.id);
 
                 if (!sequence) {
-                    this.logger.warn("Sequence id not found for startup", sequence);
+                    this.logger.warn("Sequence id not found for startup config", seqenceConfig);
                     return;
                 }
 
