@@ -12,3 +12,9 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
 
 #    @ci @starts-host
 #    Scenario: HUB-002 TC-002 Start host with instances started
+
+#    @ci @starts-host
+#    Scenario: HUB-002 TC-003 Start host with instances started and exits automatically
+
+#    @ci @starts-host
+#    Scenario: HUB-002 TC-004 Start host with instances started and stays alive
