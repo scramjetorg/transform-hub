@@ -39,3 +39,15 @@ Feature: Sample e2e tests
         And confirm that sequence and volumes are removed
         And runner has ended execution
         Then host is still running
+    
+    @ci
+    Scenario: E2E-001 TC-004 Execute python-alice example for host
+        Given host is running
+        When sequence "../packages/reference-apps/py/python-alice.tar.gz" loaded
+        And instance started
+        And wait for instance healthy is "true"
+        And get runner PID
+        And get "output" with instanceId and wait for it to finish
+        When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        And runner has ended execution
+        Then host is still running

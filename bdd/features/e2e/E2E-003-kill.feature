@@ -24,3 +24,14 @@ Feature: Kill e2e tests
         Then instance response body is "{\"eventName\":\"kill-handler-called\",\"message\":\"\"}"
         And runner has ended execution
         Then host is still running
+        
+    @ci
+    Scenario: E2E-003 TC-003 API test - Kill instance Python
+        Given host is running
+        When sequence "../packages/reference-apps/py/python-alice.tar.gz" loaded
+        And instance started
+        And wait for instance healthy is "true"
+        And get runner PID
+        And send kill message to instance
+        And runner has ended execution
+        Then host is still running

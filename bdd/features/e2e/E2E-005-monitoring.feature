@@ -18,3 +18,21 @@ Feature: Monitoring e2e tests
         And get runner PID
         And runner has ended execution
         Then host is still running
+
+    Scenario: E2E-005 TC-003 Get monitoring from sequence where new handler method is added and returning: healthy false
+        Given host is running
+        When sequence "../packages/reference-apps/py/unhealthy-sequence.tar.gz" loaded
+        And instance started
+        And wait for instance healthy is "true"
+        And get runner PID
+        And runner has ended execution
+        Then host is still running
+
+    Scenario: E2E-005 TC-004 Get monitoring from sequence, should return default monitoring value: healthy true
+        Given host is running
+        When sequence "../packages/reference-apps/py/healthy-sequence.tar.gz" loaded
+        And instance started
+        And wait for instance healthy is "true"
+        And get runner PID
+        And runner has ended execution
+        Then host is still running
