@@ -9,4 +9,4 @@ async def delayed_hello(person):
 def run(context, input):
     source = open('data.json')
     data = Stream.read_from(source, chunk_size=1024, max_parallel=1)
-    return data.flatmap(json.loads).map(delayed_hello).each(print)
+    return data.flatmap(json.loads).map(delayed_hello).each(lambda x: print(x.strip()))
