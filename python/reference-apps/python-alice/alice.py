@@ -4,7 +4,7 @@ from scramjet.streams import Stream
 
 async def delayed_hello(person):
     await asyncio.sleep(0.25)
-    return f"Hello {person['name'].strip()}!"
+    return f"Hello {person['name'].strip()}!\n"
 
 def run(context, input):
     source = open('data.json')
