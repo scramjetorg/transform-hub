@@ -49,7 +49,7 @@ export const getHostClient = (command: Command): HostClient => {
 
                 // eslint-disable-next-line no-console
                 console.error(`Request failed with code "${code}" status: ${message}`);
-            },
+            }
         });
     }
 

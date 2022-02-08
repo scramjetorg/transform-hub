@@ -1,4 +1,4 @@
-# Scramjet Verser <!-- omit in toc -->
+# Scramjet Sequence Generator <!-- omit in toc -->
 
 ![Scramjet Transform Hub](https://assets.scramjet.org/sth-logo.svg "Scramjet Transform Hub Logo")
 

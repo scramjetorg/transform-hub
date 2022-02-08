@@ -1,5 +1,6 @@
 import { CommandDefinition } from "../../types";
 import { createAction } from "../common";
+
 /**
  * Initializes `create` command.
  *
