@@ -1,0 +1,8 @@
+{
+  "sequences": [
+    {"id": "hello-1", "args": ["Hi"]},
+    {"id": "hello-1"},
+    {"id": "hello-2", "config": {"greet": true}},
+    {"id": "hello-3"}
+  ]
+}
