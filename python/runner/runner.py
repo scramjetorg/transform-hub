@@ -124,6 +124,18 @@ class Runner:
             self.logger.debug(f"Control message received: {code} {data}")
             if code == msg_codes.KILL.value:
                 self.exit_immediately()
+            if code == msg_codes.STOP.value:
+                # TODO: add canCallKeppAlive feature, asyncio.wait?
+                # canCallKeepAlive = data.get('canCallKeppalive')
+                self.logger.info(f"Gracefully shutting down...{data}")
+                try:
+                    timeout = data.get('timeout') / 1000
+                    await asyncio.sleep(timeout)
+                    send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, {})
+                    self.exit_immediately()
+                except Exception as e:
+                    self.logger.error("Error stopping sequence", e)
+                    send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, e)
 
 
     async def setup_heartbeat(self):
