@@ -16,58 +16,84 @@ const logger = getLogger("Test");
 
 addLoggerOutput(stdout, stdout);
 
-Then("check on port {int} every {int} s if instances respond correctly for {float} h", { timeout: 3600 * 48 * 1000 }, async function(this: CustomWorld, port: number, seconds: number, timeoutHrs: number) {
-    let rej: Function;
+Then(
+    "check on port {int} every {int} s if instances respond correctly for {float} h",
+    { timeout: 3600 * 48 * 1000 },
+    async function (
+        this: CustomWorld,
+        port: number,
+        seconds: number,
+        timeoutHrs: number
+    ) {
+        let rej: Function;
 
-    const timePassedPromise = new Promise<boolean>((resolve, reject) => {
-        rej = reject;
-        setTimeout(() => {
-            clearInterval(this.resources.interval);
-            resolve(true);
-        }, timeoutHrs * 3600 * 1000);
-    });
+        const timePassedPromise = new Promise<boolean>((resolve, reject) => {
+            rej = reject;
+            setTimeout(() => {
+                clearInterval(this.resources.interval);
+                resolve(true);
+            }, timeoutHrs * 3600 * 1000);
+        });
 
-    this.resources.interval = setInterval(async () => {
-        logger.log("Start sending events...");
+        this.resources.interval = setInterval(async () => {
+            logger.log("Start sending events...");
 
-        await Promise.all(this.resources.instances.map(async (instance: InstanceClient) => {
-            const hash = `${instance.id} ${crypto.randomBytes(20).toString("hex")}`;
+            await Promise.all(
+                this.resources.instances.map(async (instance: InstanceClient) => {
+                    const hash = `${instance.id} ${crypto
+                        .randomBytes(20)
+                        .toString("hex")}`;
 
-            await instance.sendEvent("check", hash);
+                    await instance.sendEvent("check", hash);
 
-            logger.log("SENT:", hash);
+                    logger.log("SENT:", hash);
 
-            await defer(500);
+                    await defer(500);
 
-            const instanceInfo = (await instance.getInfo()).data;
+                    const instanceInfo = (await instance.getInfo()).data;
 
-            return new Promise<void>((resolve) => {
-                const chunks: Buffer[] = [];
+                    return new Promise<void>((resolve) => {
+                        const chunks: Buffer[] = [];
 
-                let response = "";
+                        let response = "";
 
-                const client = net.createConnection({
-                    port: instanceInfo?.ports[port + "/tcp"],
-                    host: process.env.SCRAMJET_HOST_URL ? new URL(process.env.SCRAMJET_HOST_URL).hostname : "localhost"
-                }, () => {
-                    client
-                        .on("data", async (chunk: Buffer) => {
-                            chunks.push(chunk);
-                        })
-                        .on("end", () => {
-                            response = chunks.join("");
+                        const client = net.createConnection(
+                            {
+                                port: instanceInfo?.ports[port + "/tcp"],
+                                host: process.env.SCRAMJET_HOST_URL
+                                    ? new URL(process.env.SCRAMJET_HOST_URL).hostname
+                                    : "localhost",
+                            },
+                            () => {
+                                client
+                                    .on("data", async (chunk: Buffer) => {
+                                        chunks.push(chunk);
+                                    })
+                                    .on("end", () => {
+                                        response = chunks.join("");
 
-                            logger.log("RECV:", response);
-                            if (response === hash) {
-                                resolve();
-                            } else {
-                                rej(JSON.stringify({ id: instance.id, sent: hash, response, message: "not match" }));
+                                        logger.log("RECV:", response);
+                                        if (response === hash) {
+                                            resolve();
+                                        } else {
+                                            rej(
+                                                JSON.stringify({
+                                                    id: instance.id,
+                                                    sent: hash,
+                                                    response,
+                                                    message: "not match",
+                                                })
+                                            );
+                                        }
+                                    })
+                                    .on("error", (err) => rej(err));
                             }
-                        }).on("error", (err) => rej(err));
-                });
-            });
-        }));
-    }, seconds * 1000);
+                        );
+                    });
+                })
+            );
+        }, seconds * 1000);
 
-    assert.ok(await timePassedPromise);
-});
+        assert.ok(await timePassedPromise);
+    }
+);

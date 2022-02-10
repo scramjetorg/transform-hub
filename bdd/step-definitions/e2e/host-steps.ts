@@ -35,10 +35,14 @@ const hostUtils = new HostUtils();
 const testPath = "../dist/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
-const startWith = async function(this: CustomWorld, instanceArg: string) {
-    this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
+const startWith = async function (this: CustomWorld, instanceArg: string) {
+    this.resources.instance = await this.resources.sequence!.start(
+        {},
+        instanceArg.split(" ")
+    );
 };
-const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
+const assetsLocation =
+    process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 const streamToString = async (stream: Stream): Promise<string> => {
     const chunks = [];
     const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
@@ -61,9 +65,9 @@ const waitForContainerToClose = async () => {
 
         do {
             containers = await dockerode.listContainers();
-            containerExist = containers.filter(
-                containerInfo => containerInfo.Id === containerId
-            ).length > 0;
+            containerExist =
+                containers.filter((containerInfo) => containerInfo.Id === containerId)
+                    .length > 0;
 
             console.log("Container exists: ", containerExist);
 
@@ -77,7 +81,7 @@ const waitForProcessToEnd = async (pid: number) => {
     while (true) {
         const proc = exec(`ps -p ${pid}`);
 
-        const exitCode = await new Promise<number>(res => proc.on("exit", res));
+        const exitCode = await new Promise<number>((res) => proc.on("exit", res));
 
         if (exitCode > 0) {
             return;
@@ -113,20 +117,26 @@ BeforeAll({ timeout: 10e3 }, async () => {
                 console.error(new Date().toISOString(), "Starting request to", url);
             },
             ok(result) {
-                const {
-                    status, statusText, url
-                } = result;
+                const { status, statusText, url } = result;
 
                 // eslint-disable-next-line no-console
-                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
+                console.error(
+                    new Date().toISOString(),
+                    "Request ok:",
+                    url,
+                    `status: ${status} ${statusText}`
+                );
             },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
                 // eslint-disable-next-line no-console
-                console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
-            }
+                console.error(
+                    new Date().toISOString(),
+                    `Request failed with code "${code}" status: ${message}`
+                );
+            },
         });
     }
     await hostUtils.spawnHost();
@@ -171,18 +181,24 @@ const startHost = async () => {
                 console.error(new Date().toISOString(), "Starting request to", url);
             },
             ok(result) {
-                const {
-                    status, statusText, url
-                } = result;
+                const { status, statusText, url } = result;
 
-                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
+                console.error(
+                    new Date().toISOString(),
+                    "Request ok:",
+                    url,
+                    `status: ${status} ${statusText}`
+                );
             },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
-                console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
-            }
+                console.error(
+                    new Date().toISOString(),
+                    `Request failed with code "${code}" status: ${message}`
+                );
+            },
         });
     }
     await hostUtils.spawnHost();
@@ -209,88 +225,121 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
-    this.resources.sequence = await hostClient.sendSequence(
-        createReadStream(packagePath)
-    );
-    console.log("Package successfully loaded, sequence started.");
-});
+When(
+    "sequence {string} loaded",
+    { timeout: 50000 },
+    async function (this: CustomWorld, packagePath: string) {
+        this.resources.sequence = await hostClient.sendSequence(
+            createReadStream(packagePath)
+        );
+        console.log("Package successfully loaded, sequence started.");
+    }
+);
 
-When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
-    hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
+When(
+    "sequence {string} is loaded",
+    { timeout: 15000 },
+    async function (this: CustomWorld, packagePath: string) {
+        hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
 
-    this.resources.sequence = await hostClient.sendSequence(
-        createReadStream(packagePath)
-    );
-    console.log("Package successfully loaded, sequence started.");
-});
+        this.resources.sequence = await hostClient.sendSequence(
+            createReadStream(packagePath)
+        );
+        console.log("Package successfully loaded, sequence started.");
+    }
+);
 
-When("instance started", async function(this: CustomWorld) {
+When("instance started", async function (this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({}, []);
 });
 
-When("instances started", async function(this: CustomWorld) {
+When("instances started", async function (this: CustomWorld) {
     this.resources.instance1 = await this.resources.sequence1!.start({}, []);
     this.resources.instance2 = await this.resources.sequence2!.start({}, []);
 
     console.log("Sequences started.");
 });
 
-When("instance started with url from assets argument {string}", { timeout: 25000 }, async function(this: CustomWorld, assetUrl: string) {
-    return startWith.call(this, `${assetsLocation}${assetUrl}`);
-});
+When(
+    "instance started with url from assets argument {string}",
+    { timeout: 25000 },
+    async function (this: CustomWorld, assetUrl: string) {
+        return startWith.call(this, `${assetsLocation}${assetUrl}`);
+    }
+);
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
 
-When("instance started with args {string}, output to {string} and timeout {int} s", { timeout: -1 }, async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
-    this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
+When(
+    "instance started with args {string}, output to {string} and timeout {int} s",
+    { timeout: -1 },
+    async function (
+        this: CustomWorld,
+        instanceArg: string,
+        fileName: string,
+        timeout: number
+    ) {
+        this.resources.instance = await this.resources.sequence!.start(
+            {},
+            instanceArg.split(" ")
+        );
 
-    const stream: any = (await this.resources.instance?.getStream("stdout"))?.data;
-    const writeStream = fs.createWriteStream(fileName);
+        const stream: any = (await this.resources.instance?.getStream("stdout"))?.data;
+        const writeStream = fs.createWriteStream(fileName);
 
-    stream.pipe(writeStream);
+        stream.pipe(writeStream);
 
-    actualHealthResponse = await this.resources.instance?.getHealth();
+        actualHealthResponse = await this.resources.instance?.getHealth();
 
-    await Promise.race([
-        new Promise((res, rej) => {
-            writeStream.on("error", rej);
-            stream.on("end", res);
-        }),
-        new Promise(res => setTimeout(res, 1000 * timeout))
-    ]);
-});
+        await Promise.race([
+            new Promise((res, rej) => {
+                writeStream.on("error", rej);
+                stream.on("end", res);
+            }),
+            new Promise((res) => setTimeout(res, 1000 * timeout)),
+        ]);
+    }
+);
 
-When("get {string} with instanceId and wait for it to finish", { timeout: 500000 }, async function(this: CustomWorld, outputStream: InstanceOutputStream) {
-    const stream: Response = await this.resources.instance?.getStream(outputStream) as Response;
-    const out = stream.data;
+When(
+    "get {string} with instanceId and wait for it to finish",
+    { timeout: 500000 },
+    async function (this: CustomWorld, outputStream: InstanceOutputStream) {
+        const stream: Response = (await this.resources.instance?.getStream(
+            outputStream
+        )) as Response;
+        const out = stream.data;
 
-    out!.pipe(process.stdout);
+        out!.pipe(process.stdout);
 
-    if (!out) assert.fail("No output!");
+        if (!out) assert.fail("No output!");
 
-    actualLogResponse = await streamToString(out as Stream);
-});
+        actualLogResponse = await streamToString(out as Stream);
+    }
+);
 
 Then("file {string} is generated", async (filename) => {
     assert.ok(await promisify(fs.exists)(`${filename}`));
 });
 
-When("every response line contains {string}, name from {string} and {string}", async (greeting: string, file2: any, suffix: string) => {
-    const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
-    const lines: string[] = actualLogResponse.split("\n");
+When(
+    "every response line contains {string}, name from {string} and {string}",
+    async (greeting: string, file2: any, suffix: string) => {
+        const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
+        const lines: string[] = actualLogResponse.split("\n");
 
-    let i: number;
+        let i: number;
 
-    for (i = 0; i < input.length; i++) {
-        const line1: string = input[i].name;
+        for (i = 0; i < input.length; i++) {
+            const line1: string = input[i].name;
 
-        // console.log(removeBoundaryQuotes(lines[i]));
+            // console.log(removeBoundaryQuotes(lines[i]));
 
-        assert.deepEqual(greeting + line1 + suffix, removeBoundaryQuotes(lines[i]));
+            assert.deepEqual(greeting + line1 + suffix, removeBoundaryQuotes(lines[i]));
+        }
+
+        assert.equal(i, input.length, "incorrect number of elements compared");
     }
-
-    assert.equal(i, input.length, "incorrect number of elements compared");
-});
+);
 
 When("response data is equal {string}", async (respNumber: any) => {
     assert.equal(actualLogResponse, respNumber);
@@ -300,41 +349,53 @@ Given("file in the location {string} exists on hard drive", async (filename: any
     assert.ok(await promisify(fs.exists)(filename));
 });
 
-When("compare checksums of content sent from file {string}", async function(this: CustomWorld, filePath: string) {
-    const readStream = fs.createReadStream(filePath);
-    const hex: string = crypto.createHash("md5").update(await readFile(filePath)).digest("hex");
+When(
+    "compare checksums of content sent from file {string}",
+    async function (this: CustomWorld, filePath: string) {
+        const readStream = fs.createReadStream(filePath);
+        const hex: string = crypto
+            .createHash("md5")
+            .update(await readFile(filePath))
+            .digest("hex");
 
-    await this.resources.instance?.sendStream("input", readStream, {
-        type: "application/octet-stream",
-        end: true
-    });
+        await this.resources.instance?.sendStream("input", readStream, {
+            type: "application/octet-stream",
+            end: true,
+        });
 
-    const output = await this.resources.instance?.getStream("output");
+        const output = await this.resources.instance?.getStream("output");
 
-    if (!output?.data) assert.fail("No output!");
+        if (!output?.data) assert.fail("No output!");
 
-    const outputString = await streamToString(output.data);
+        const outputString = await streamToString(output.data);
 
-    assert.equal(output.status, 200);
-    assert.equal(outputString, hex);
+        assert.equal(output.status, 200);
+        assert.equal(outputString, hex);
 
-    await this.resources.instance?.sendInput("null");
-});
+        await this.resources.instance?.sendInput("null");
+    }
+);
 
-When("send stop message with timeout {int} and canCallKeepAlive {string}", async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
-    console.log("Stop message sent");
-    const resp = await this.resources.instance?.stop(timeout, canCallKeepalive === "true");
+When(
+    "send stop message with timeout {int} and canCallKeepAlive {string}",
+    async function (this: CustomWorld, timeout: number, canCallKeepalive: string) {
+        console.log("Stop message sent");
+        const resp = await this.resources.instance?.stop(
+            timeout,
+            canCallKeepalive === "true"
+        );
 
-    assert.equal(resp?.status, 202);
-});
+        assert.equal(resp?.status, 202);
+    }
+);
 
-When("send kill message to instance", async function(this: CustomWorld) {
+When("send kill message to instance", async function (this: CustomWorld) {
     const resp = await this.resources.instance?.kill();
 
     assert.equal(resp?.status, 202);
 });
 
-When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
+When("get runner PID", { timeout: 31000 }, async function (this: CustomWorld) {
     if (process.env.NO_DOCKER) {
         const res = actualResponse()?.data?.processId;
 
@@ -354,60 +415,74 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
 
 When("runner has ended execution", { timeout: 500000 }, async () => {
     if (process.env.NO_DOCKER) {
-        if (!processId)assert.fail("There is no process ID");
+        if (!processId) assert.fail("There is no process ID");
 
         await waitForProcessToEnd(processId);
         console.log("Process has ended.");
     } else {
-        if (!containerId)assert.fail("There is no container ID");
+        if (!containerId) assert.fail("There is no container ID");
 
         await waitForContainerToClose();
         console.log("Container is closed.");
     }
 });
 
-When("send event {string} to instance with message {string}", async function(this: CustomWorld, eventName, eventMessage) {
-    const resp = await this.resources.instance?.sendEvent(eventName, eventMessage);
+When(
+    "send event {string} to instance with message {string}",
+    async function (this: CustomWorld, eventName, eventMessage) {
+        const resp = await this.resources.instance?.sendEvent(eventName, eventMessage);
 
-    assert.equal(resp?.status, 202);
-});
-
-Then("wait for event {string} from instance", { timeout: 10000 }, async function(this:CustomWorld, event: string) {
-    const expectedHttpCode = 200;
-
-    actualStatusResponse = await this.resources.instance?.getNextEvent(event);
-    assert.equal(actualStatusResponse?.status, expectedHttpCode);
-});
-
-Then("get event {string} from instance", { timeout: 10000 }, async function(this: CustomWorld, event: string) {
-    const expectedHttpCode = 200;
-
-    actualStatusResponse = await this.resources.instance?.getEvent(event);
-    assert.equal(actualStatusResponse?.status, expectedHttpCode);
-});
-
-When("wait for instance healthy is {string}", async function(this: CustomWorld, resp: string) {
-    let healthy = "false";
-
-    if (resp === "false") {
-        console.log(`Response body is ${healthy}`);
-    } else {
-        do {
-            actualHealthResponse = await this.resources.instance?.getHealth();
-            healthy = actualResponse().data.healthy.toString();
-
-            if (typeof actualResponse() === "undefined") {
-                console.log("actualResponse is undefined");
-            } else {
-                console.log(`Response body is ${healthy}`);
-            }
-
-            await defer(100);
-        } while (!healthy);
+        assert.equal(resp?.status, 202);
     }
+);
 
-    assert.equal(healthy, resp);
-});
+Then(
+    "wait for event {string} from instance",
+    { timeout: 10000 },
+    async function (this: CustomWorld, event: string) {
+        const expectedHttpCode = 200;
+
+        actualStatusResponse = await this.resources.instance?.getNextEvent(event);
+        assert.equal(actualStatusResponse?.status, expectedHttpCode);
+    }
+);
+
+Then(
+    "get event {string} from instance",
+    { timeout: 10000 },
+    async function (this: CustomWorld, event: string) {
+        const expectedHttpCode = 200;
+
+        actualStatusResponse = await this.resources.instance?.getEvent(event);
+        assert.equal(actualStatusResponse?.status, expectedHttpCode);
+    }
+);
+
+When(
+    "wait for instance healthy is {string}",
+    async function (this: CustomWorld, resp: string) {
+        let healthy = "false";
+
+        if (resp === "false") {
+            console.log(`Response body is ${healthy}`);
+        } else {
+            do {
+                actualHealthResponse = await this.resources.instance?.getHealth();
+                healthy = actualResponse().data.healthy.toString();
+
+                if (typeof actualResponse() === "undefined") {
+                    console.log("actualResponse is undefined");
+                } else {
+                    console.log(`Response body is ${healthy}`);
+                }
+
+                await defer(100);
+            } while (!healthy);
+        }
+
+        assert.equal(healthy, resp);
+    }
+);
 
 Then("instance response body is {string}", async (expectedResp: string) => {
     const resp = JSON.stringify(actualResponse().data);
@@ -421,34 +496,43 @@ Then("instance response body is {string}", async (expectedResp: string) => {
     assert.equal(resp, expectedResp);
 });
 
-When("send stdin to instance with contents of file {string}", async function(this: CustomWorld, filePath: string) {
-    await this.resources.instance?.sendStream("stdin", createReadStream(filePath));
-});
+When(
+    "send stdin to instance with contents of file {string}",
+    async function (this: CustomWorld, filePath: string) {
+        await this.resources.instance?.sendStream("stdin", createReadStream(filePath));
+    }
+);
 
-When("flood the stdin stream with {int} kilobytes", async function(this: CustomWorld, kbytes: number) {
-    let i = 0;
+When(
+    "flood the stdin stream with {int} kilobytes",
+    async function (this: CustomWorld, kbytes: number) {
+        let i = 0;
 
-    await new Promise<void>((res, rej) => {
-        const stream = BufferStream.from(function* () {
-            while (i < kbytes) { yield Buffer.alloc(1024, 0xdeadbeef); i++; }
+        await new Promise<void>((res, rej) => {
+            const stream = BufferStream.from(function* () {
+                while (i < kbytes) {
+                    yield Buffer.alloc(1024, 0xdeadbeef);
+                    i++;
+                }
+            });
+
+            // ignore the outcome.
+            this.resources.instance?.sendStream("stdin", stream).catch(() => 0);
+
+            stream
+                .once("pause", () => {
+                    console.log(`Stream paused, sent ${i}kb`);
+                    res();
+                })
+                .on("pause", () => {
+                    console.log(`=== Stream paused, sent ${i}kb`);
+                })
+                .once("end", rej);
         });
+    }
+);
 
-        this.resources.instance?.sendStream("stdin", stream)
-            .catch(() => 0); // ignore the outcome.
-
-        stream
-            .once("pause", () => {
-                console.log(`Stream paused, sent ${i}kb`);
-                res();
-            })
-            .on("pause", () => {
-                console.log(`=== Stream paused, sent ${i}kb`);
-            })
-            .once("end", rej);
-    });
-});
-
-When("keep instance streams {string}", async function(this: CustomWorld, streamNames) {
+When("keep instance streams {string}", async function (this: CustomWorld, streamNames) {
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!this.resources.instance) assert.fail("Instance not existent");
 
@@ -458,34 +542,37 @@ When("keep instance streams {string}", async function(this: CustomWorld, streamN
     });
 });
 
-Then("kept instance stream {string} should be {string}", async (streamName, _expected) => {
-    const expected = JSON.parse(`"${_expected}"`);
+Then(
+    "kept instance stream {string} should be {string}",
+    async (streamName, _expected) => {
+        const expected = JSON.parse(`"${_expected}"`);
 
-    assert.equal(await streams[streamName], expected);
-});
+        assert.equal(await streams[streamName], expected);
+    }
+);
 
 // ? When I get version
-When("I get version", async function() {
+When("I get version", async function () {
     actualApiResponse = await hostClient.getVersion();
     assert.equal((await hostClient.getVersion()).status, 200);
 });
 
 // ? Then it returns the root package version
-Then("it returns the root package version", function() {
+Then("it returns the root package version", function () {
     assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
     console.log(actualApiResponse.data, version);
     assert.deepStrictEqual(actualApiResponse.data, { version });
 });
 
 // ? When I get load-check
-When("I get load-check", async function() {
+When("I get load-check", async function () {
     actualApiResponse = await hostClient.getLoadCheck();
     assert.equal((await hostClient.getLoadCheck()).status, 200);
 });
 
 // ? Then it returns a correct load check with required properties
 
-Then("it returns a correct load check with required properties", function() {
+Then("it returns a correct load check with required properties", function () {
     const { data } = actualApiResponse;
 
     assert.ok(typeof data === "object");
@@ -507,23 +594,26 @@ Then("it returns a correct load check with required properties", function() {
     return "skip";
 });
 
-When("kept instance stream {string} should store {int} items divided by {string}", async (streamName, expectedCount, separator) => {
-    const res = await streams[streamName];
+When(
+    "kept instance stream {string} should store {int} items divided by {string}",
+    async (streamName, expectedCount, separator) => {
+        const res = await streams[streamName];
 
-    if (!res) assert.fail(`Stream ${streamName} not ready`);
+        if (!res) assert.fail(`Stream ${streamName} not ready`);
 
-    const nrOfItems = res.split(separator).length - 1;
+        const nrOfItems = res.split(separator).length - 1;
 
-    assert.equal(nrOfItems, expectedCount);
-});
+        assert.equal(nrOfItems, expectedCount);
+    }
+);
 
-When("delete sequence and volumes", async function(this: CustomWorld) {
+When("delete sequence and volumes", async function (this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
     await hostClient.deleteSequence(sequenceId);
 });
 
-When("confirm that sequence and volumes are removed", async function(this: CustomWorld) {
+When("confirm that sequence and volumes are removed", async function (this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
     if (!sequenceId) assert.fail();
@@ -537,38 +627,41 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
     console.log(`Sequence with id ${sequenceId} is removed.`);
 });
 
-When("instance is finished", async function(this: CustomWorld) {
+When("instance is finished", async function (this: CustomWorld) {
     actualHealthResponse = await this.resources.instance?.getHealth();
     assert.equal(actualHealthResponse.status, 404);
     console.log("Instance process has finished.");
 });
 
-When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
+When("stop instance", { timeout: 60 * 1000 }, async function (this: CustomWorld) {
     await this.resources.instance?.stop(0, false);
 });
 
-When("stream sequence logs to stderr", async function(this: CustomWorld) {
-    this.resources.instance?.getStream("log")
+When("stream sequence logs to stderr", async function (this: CustomWorld) {
+    this.resources.instance
+        ?.getStream("log")
         .then(({ data }) => data?.pipe(process.stderr))
-        .catch(e => console.error(e));
-    this.resources.instance?.getStream("stdout")
+        .catch((e) => console.error(e));
+    this.resources.instance
+        ?.getStream("stdout")
         .then(({ data }) => data?.pipe(process.stderr))
-        .catch(e => console.error(e));
-    this.resources.instance?.getStream("stderr")
+        .catch((e) => console.error(e));
+    this.resources.instance
+        ?.getStream("stderr")
         .then(({ data }) => data?.pipe(process.stderr))
-        .catch(e => console.error(e));
+        .catch((e) => console.error(e));
 });
 
-When("send data", async function(this: CustomWorld) {
-    const status = await this.resources.instance?.sendStream("input", "{\"a\": 1}", {
+When("send data", async function (this: CustomWorld) {
+    const status = await this.resources.instance?.sendStream("input", '{"a": 1}', {
         type: "application/x-ndjson",
-        end: true
+        end: true,
     });
 
     console.log(status);
 });
 
-Then("output is {string}", async function(this: CustomWorld, str) {
+Then("output is {string}", async function (this: CustomWorld, str) {
     const output = await this.resources.instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");
@@ -580,12 +673,7 @@ Then("output is {string}", async function(this: CustomWorld, str) {
 
 Then("send data {string} named {string}", async (data: any, topic: string) => {
     const ps = new Readable();
-    const sendDataP = hostClient.sendNamedData(
-        topic,
-        ps,
-        "application/x-ndjson",
-        true
-    );
+    const sendDataP = hostClient.sendNamedData(topic, ps, "application/x-ndjson", true);
 
     ps.push(data);
     ps.push(null);
@@ -607,7 +695,7 @@ Then("send data from file {string} named {string}", async (path: any, topic: str
     assert.equal(sendData.status, 200);
 });
 
-When("get data named {string}", async function(this: CustomWorld, topic: string) {
+When("get data named {string}", async function (this: CustomWorld, topic: string) {
     const stream = await hostClient.getNamedData(topic);
 
     if (!stream?.data) assert.fail("No data!");
@@ -616,7 +704,7 @@ When("get data named {string}", async function(this: CustomWorld, topic: string)
     assert.equal(stream.status, 200);
 });
 
-Then("get output", async function(this: CustomWorld) {
+Then("get output", async function (this: CustomWorld) {
     const output = await this.resources.instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");
@@ -624,7 +712,10 @@ Then("get output", async function(this: CustomWorld) {
     assert.equal(output.status, 200);
 });
 
-Then("confirm data defined as {string} received", async function(this: CustomWorld, data) {
-    console.log("Received data: ", this.resources.out);
-    assert.equal(this.resources.out, expectedResponses[data]);
-});
+Then(
+    "confirm data defined as {string} received",
+    async function (this: CustomWorld, data) {
+        console.log("Received data: ", this.resources.out);
+        assert.equal(this.resources.out, expectedResponses[data]);
+    }
+);
