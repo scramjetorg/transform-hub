@@ -365,7 +365,10 @@ export class Host implements IComponent {
         } catch (error: any) {
             this.logger.error("Error removing sequence!", error);
 
-            throw new HostError("CONTROLLER_ERROR");
+            return {
+                opStatus: ReasonPhrases.INTERNAL_SERVER_ERROR,
+                error: `Error removing sequence: ${error.message}`
+            };
         }
     }
 
