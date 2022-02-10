@@ -261,12 +261,12 @@ Then("I get instance info", async function() {
     assert.equal(seqId, sequenceId);
 });
 
-When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
+When("I send an event named {string} with message {string} to Instance", async function(eventName: string, eventMsg: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "emit", instanceId, eventName, eventMsg, ...formatFlags(), ...connectionFlags()]);
     assert.equal(stdio[2], 0);
 });
 
-Then("I get event {string} with event message {string} from instance", async function(eventName: string, value: string) {
+Then("I get event {string} with message {string} from instance", async function(eventName: string, value: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", instanceId, eventName, ...formatFlags(), ...connectionFlags()]);
     assert.equal(stdio[2], 0);
     assert.equal(stdio[0].trim(), value);

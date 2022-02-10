@@ -7,7 +7,7 @@ Feature: Sample e2e tests
         And get "output" with instanceId and wait for it to finish
         And wait for instance healthy is "true"
         And get runner PID
-        When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        When every response line contains "Hello ", name from "data.json" and "!"
         And runner has ended execution
         Then host is still running
 
@@ -19,7 +19,7 @@ Feature: Sample e2e tests
         And get "output" with instanceId and wait for it to finish
         And wait for instance healthy is "true"
         And get runner PID
-        When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        When every response line contains "Hello ", name from "data.json" and "!"
         And send kill message to instance
         And wait for "12000" ms
         And delete sequence and volumes
@@ -34,7 +34,7 @@ Feature: Sample e2e tests
         And get "output" with instanceId and wait for it to finish
         And wait for instance healthy is "true"
         And get runner PID
-        When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
+        When every response line contains "Hello ", name from "data.json" and "!"
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         And runner has ended execution

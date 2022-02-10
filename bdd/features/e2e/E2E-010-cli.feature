@@ -128,8 +128,8 @@ Feature: CLI tests
         Then I get Sequence id
         Then I start Sequence
         Then I get instance info
-        Then I send an event named "test-event" with event message "test message" to Instance
-        Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
+        Then I send an event named "test-event" with message "test message" to Instance
+        Then I get event "test-event-response" with message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
         And host is still running
 
     @ci

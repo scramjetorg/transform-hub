@@ -7,11 +7,11 @@ Feature: Stop e2e tests
         And instance started with arguments "SEND_KEEPALIVE"
         And wait for instance healthy is "true"
         And get runner PID
-        And send stop message to instance with arguments timeout 5000 and canCallKeepAlive "true"
+        And send stop message with timeout 5000 and canCallKeepAlive "true"
         And wait for instance healthy is "true"
-        And send stop message to instance with arguments timeout 5000 and canCallKeepAlive "true"
+        And send stop message with timeout 5000 and canCallKeepAlive "true"
         And wait for instance healthy is "true"
-        And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
+        And send stop message with timeout 0 and canCallKeepAlive "false"
         And runner has ended execution
         Then host is still running
 
@@ -22,7 +22,7 @@ Feature: Stop e2e tests
         And instance started with arguments ""
         And wait for instance healthy is "true"
         And get runner PID
-        And send stop message to instance with arguments timeout 2000 and canCallKeepAlive "true"
+        And send stop message with timeout 2000 and canCallKeepAlive "true"
         And runner has ended execution
         Then host is still running
 
@@ -33,6 +33,6 @@ Feature: Stop e2e tests
         And instance started with arguments "SEND_KEEPALIVE"
         And wait for instance healthy is "true"
         And get runner PID
-        And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
+        And send stop message with timeout 0 and canCallKeepAlive "false"
         And runner has ended execution
         Then host is still running

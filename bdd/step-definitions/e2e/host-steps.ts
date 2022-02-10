@@ -241,7 +241,7 @@ When("instance started with url from assets argument {string}", { timeout: 25000
 });
 When("instance started with arguments {string}", { timeout: 25000 }, startWith);
 
-When("instance started with arguments {string} and write stream to {string} and timeout after {int} seconds", { timeout: -1 }, async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
+When("instance started with args {string}, output to {string} and timeout {int} s", { timeout: -1 }, async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
     this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
 
     const stream: any = (await this.resources.instance?.getStream("stdout"))?.data;
@@ -275,7 +275,7 @@ Then("file {string} is generated", async (filename) => {
     assert.ok(await promisify(fs.exists)(`${filename}`));
 });
 
-When("response in every line contains {string} followed by name from file {string} finished by {string}", async (greeting: string, file2: any, suffix: string) => {
+When("every response line contains {string}, name from {string} and {string}", async (greeting: string, file2: any, suffix: string) => {
     const input = JSON.parse(fs.readFileSync(`${testPath}${file2}`, "utf8"));
     const lines: string[] = actualLogResponse.split("\n");
 
@@ -321,7 +321,7 @@ When("compare checksums of content sent from file {string}", async function(this
     await this.resources.instance?.sendInput("null");
 });
 
-When("send stop message to instance with arguments timeout {int} and canCallKeepAlive {string}", async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
+When("send stop message with timeout {int} and canCallKeepAlive {string}", async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
     console.log("Stop message sent");
     const resp = await this.resources.instance?.stop(timeout, canCallKeepalive === "true");
 

@@ -8,7 +8,7 @@ const lineByLine = require("n-readlines");
 
 let delayAverage: number;
 
-When("calculate average delay time from {string} of first {string} function calls starting {string}", async (probesFile, numberOfProbes, startFromProbe) => {
+When("calculate avg delay from {string} of first {string} function calls from {string}", async (probesFile, numberOfProbes, startFromProbe) => {
     const output = new lineByLine(`${probesFile}`);
 
     let line: string;
@@ -56,7 +56,7 @@ When("memory dump file {word} was created", async (fileName) => {
     assert.ok(occurenceFile >= 1, " memory dump file not created");
 });
 
-When("search word {word} and find {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
+When("search word {word} and find {int} occurences in {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
     assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
 
     const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
@@ -67,7 +67,7 @@ When("search word {word} and find {int} occurences in location {word} file", asy
     assert.equal(occurenceNumber, expectedFoundWordNumber, " incorrect number of words in core dump.");
 });
 
-When("search word {word} and find more than {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
+When("search word {word} and find more than {int} occurences in {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
     assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
 
     const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);

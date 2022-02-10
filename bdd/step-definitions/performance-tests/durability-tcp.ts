@@ -16,7 +16,7 @@ const logger = getLogger("Test");
 
 addLoggerOutput(stdout, stdout);
 
-Then("check every {int} seconds if instances respond with correct data for {float} hours on port {int}", { timeout: 3600 * 48 * 1000 }, async function(this: CustomWorld, seconds: number, timeoutHrs: number, port: number) {
+Then("check on port {int} every {int} s if instances respond correctly for {float} h", { timeout: 3600 * 48 * 1000 }, async function(this: CustomWorld, port: number, seconds: number, timeoutHrs: number) {
     let rej: Function;
 
     const timePassedPromise = new Promise<boolean>((resolve, reject) => {
