@@ -17,7 +17,7 @@ const assetsLocation =
 When(
     "starts at least {int} sequences from file {string}",
     { timeout: 3600 * 48 * 1000 },
-    async function (this: CustomWorld, minNumber: number, seq: string) {
+    async function(this: CustomWorld, minNumber: number, seq: string) {
         // eslint-disable-next-line no-extra-parens
         const sequence = await hostClient.sendSequence(createReadStream(seq));
         const data = {
@@ -80,7 +80,7 @@ When(
     }
 );
 
-Then("stop all instances", { timeout: 60 * 1000 }, async function (this: CustomWorld) {
+Then("stop all instances", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
     await Promise.all(
         this.resources.instances.map((instance: InstanceClient) =>
             instance.stop(0, false)
@@ -91,7 +91,7 @@ Then("stop all instances", { timeout: 60 * 1000 }, async function (this: CustomW
 Then(
     "check every {float} seconds if instances respond for {float} hours",
     { timeout: 3600 * 48 * 1000 },
-    async function (this: CustomWorld, seconds: number, timeoutHrs: number) {
+    async function(this: CustomWorld, seconds: number, timeoutHrs: number) {
         let rej: Function;
 
         const timePassedPromise = new Promise<boolean>((resolve, reject) => {

@@ -19,7 +19,7 @@ addLoggerOutput(stdout, stdout);
 Then(
     "check on port {int} every {int} s if instances respond correctly for {float} h",
     { timeout: 3600 * 48 * 1000 },
-    async function (
+    async function(
         this: CustomWorld,
         port: number,
         seconds: number,

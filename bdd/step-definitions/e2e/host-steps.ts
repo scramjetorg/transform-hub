@@ -35,7 +35,7 @@ const hostUtils = new HostUtils();
 const testPath = "../dist/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
-const startWith = async function (this: CustomWorld, instanceArg: string) {
+const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start(
         {},
         instanceArg.split(" ")
@@ -228,7 +228,7 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
 When(
     "sequence {string} loaded",
     { timeout: 50000 },
-    async function (this: CustomWorld, packagePath: string) {
+    async function(this: CustomWorld, packagePath: string) {
         this.resources.sequence = await hostClient.sendSequence(
             createReadStream(packagePath)
         );
@@ -239,7 +239,7 @@ When(
 When(
     "sequence {string} is loaded",
     { timeout: 15000 },
-    async function (this: CustomWorld, packagePath: string) {
+    async function(this: CustomWorld, packagePath: string) {
         hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
 
         this.resources.sequence = await hostClient.sendSequence(
@@ -249,11 +249,11 @@ When(
     }
 );
 
-When("instance started", async function (this: CustomWorld) {
+When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({}, []);
 });
 
-When("instances started", async function (this: CustomWorld) {
+When("instances started", async function(this: CustomWorld) {
     this.resources.instance1 = await this.resources.sequence1!.start({}, []);
     this.resources.instance2 = await this.resources.sequence2!.start({}, []);
 
@@ -263,7 +263,7 @@ When("instances started", async function (this: CustomWorld) {
 When(
     "instance started with url from assets argument {string}",
     { timeout: 25000 },
-    async function (this: CustomWorld, assetUrl: string) {
+    async function(this: CustomWorld, assetUrl: string) {
         return startWith.call(this, `${assetsLocation}${assetUrl}`);
     }
 );
@@ -272,7 +272,7 @@ When("instance started with arguments {string}", { timeout: 25000 }, startWith);
 When(
     "instance started with args {string}, output to {string} and timeout {int} s",
     { timeout: -1 },
-    async function (
+    async function(
         this: CustomWorld,
         instanceArg: string,
         fileName: string,
@@ -303,7 +303,7 @@ When(
 When(
     "get {string} with instanceId and wait for it to finish",
     { timeout: 500000 },
-    async function (this: CustomWorld, outputStream: InstanceOutputStream) {
+    async function(this: CustomWorld, outputStream: InstanceOutputStream) {
         const stream: Response = (await this.resources.instance?.getStream(
             outputStream
         )) as Response;
@@ -351,7 +351,7 @@ Given("file in the location {string} exists on hard drive", async (filename: any
 
 When(
     "compare checksums of content sent from file {string}",
-    async function (this: CustomWorld, filePath: string) {
+    async function(this: CustomWorld, filePath: string) {
         const readStream = fs.createReadStream(filePath);
         const hex: string = crypto
             .createHash("md5")
@@ -378,7 +378,7 @@ When(
 
 When(
     "send stop message with timeout {int} and canCallKeepAlive {string}",
-    async function (this: CustomWorld, timeout: number, canCallKeepalive: string) {
+    async function(this: CustomWorld, timeout: number, canCallKeepalive: string) {
         console.log("Stop message sent");
         const resp = await this.resources.instance?.stop(
             timeout,
@@ -389,13 +389,13 @@ When(
     }
 );
 
-When("send kill message to instance", async function (this: CustomWorld) {
+When("send kill message to instance", async function(this: CustomWorld) {
     const resp = await this.resources.instance?.kill();
 
     assert.equal(resp?.status, 202);
 });
 
-When("get runner PID", { timeout: 31000 }, async function (this: CustomWorld) {
+When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     if (process.env.NO_DOCKER) {
         const res = actualResponse()?.data?.processId;
 
@@ -429,7 +429,7 @@ When("runner has ended execution", { timeout: 500000 }, async () => {
 
 When(
     "send event {string} to instance with message {string}",
-    async function (this: CustomWorld, eventName, eventMessage) {
+    async function(this: CustomWorld, eventName, eventMessage) {
         const resp = await this.resources.instance?.sendEvent(eventName, eventMessage);
 
         assert.equal(resp?.status, 202);
@@ -439,7 +439,7 @@ When(
 Then(
     "wait for event {string} from instance",
     { timeout: 10000 },
-    async function (this: CustomWorld, event: string) {
+    async function(this: CustomWorld, event: string) {
         const expectedHttpCode = 200;
 
         actualStatusResponse = await this.resources.instance?.getNextEvent(event);
@@ -450,7 +450,7 @@ Then(
 Then(
     "get event {string} from instance",
     { timeout: 10000 },
-    async function (this: CustomWorld, event: string) {
+    async function(this: CustomWorld, event: string) {
         const expectedHttpCode = 200;
 
         actualStatusResponse = await this.resources.instance?.getEvent(event);
@@ -460,7 +460,7 @@ Then(
 
 When(
     "wait for instance healthy is {string}",
-    async function (this: CustomWorld, resp: string) {
+    async function(this: CustomWorld, resp: string) {
         let healthy = "false";
 
         if (resp === "false") {
@@ -498,14 +498,14 @@ Then("instance response body is {string}", async (expectedResp: string) => {
 
 When(
     "send stdin to instance with contents of file {string}",
-    async function (this: CustomWorld, filePath: string) {
+    async function(this: CustomWorld, filePath: string) {
         await this.resources.instance?.sendStream("stdin", createReadStream(filePath));
     }
 );
 
 When(
     "flood the stdin stream with {int} kilobytes",
-    async function (this: CustomWorld, kbytes: number) {
+    async function(this: CustomWorld, kbytes: number) {
         let i = 0;
 
         await new Promise<void>((res, rej) => {
@@ -532,7 +532,7 @@ When(
     }
 );
 
-When("keep instance streams {string}", async function (this: CustomWorld, streamNames) {
+When("keep instance streams {string}", async function(this: CustomWorld, streamNames) {
     streamNames.split(",").map((streamName: InstanceOutputStream) => {
         if (!this.resources.instance) assert.fail("Instance not existent");
 
@@ -552,27 +552,27 @@ Then(
 );
 
 // ? When I get version
-When("I get version", async function () {
+When("I get version", async function() {
     actualApiResponse = await hostClient.getVersion();
     assert.equal((await hostClient.getVersion()).status, 200);
 });
 
 // ? Then it returns the root package version
-Then("it returns the root package version", function () {
+Then("it returns the root package version", function() {
     assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
     console.log(actualApiResponse.data, version);
     assert.deepStrictEqual(actualApiResponse.data, { version });
 });
 
 // ? When I get load-check
-When("I get load-check", async function () {
+When("I get load-check", async function() {
     actualApiResponse = await hostClient.getLoadCheck();
     assert.equal((await hostClient.getLoadCheck()).status, 200);
 });
 
 // ? Then it returns a correct load check with required properties
 
-Then("it returns a correct load check with required properties", function () {
+Then("it returns a correct load check with required properties", function() {
     const { data } = actualApiResponse;
 
     assert.ok(typeof data === "object");
@@ -607,13 +607,13 @@ When(
     }
 );
 
-When("delete sequence and volumes", async function (this: CustomWorld) {
+When("delete sequence and volumes", async function(this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
     await hostClient.deleteSequence(sequenceId);
 });
 
-When("confirm that sequence and volumes are removed", async function (this: CustomWorld) {
+When("confirm that sequence and volumes are removed", async function(this: CustomWorld) {
     const sequenceId = this.resources.sequence!.id;
 
     if (!sequenceId) assert.fail();
@@ -627,17 +627,17 @@ When("confirm that sequence and volumes are removed", async function (this: Cust
     console.log(`Sequence with id ${sequenceId} is removed.`);
 });
 
-When("instance is finished", async function (this: CustomWorld) {
+When("instance is finished", async function(this: CustomWorld) {
     actualHealthResponse = await this.resources.instance?.getHealth();
     assert.equal(actualHealthResponse.status, 404);
     console.log("Instance process has finished.");
 });
 
-When("stop instance", { timeout: 60 * 1000 }, async function (this: CustomWorld) {
+When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
     await this.resources.instance?.stop(0, false);
 });
 
-When("stream sequence logs to stderr", async function (this: CustomWorld) {
+When("stream sequence logs to stderr", async function(this: CustomWorld) {
     this.resources.instance
         ?.getStream("log")
         .then(({ data }) => data?.pipe(process.stderr))
@@ -652,8 +652,8 @@ When("stream sequence logs to stderr", async function (this: CustomWorld) {
         .catch((e) => console.error(e));
 });
 
-When("send data", async function (this: CustomWorld) {
-    const status = await this.resources.instance?.sendStream("input", '{"a": 1}', {
+When("send data", async function(this: CustomWorld) {
+    const status = await this.resources.instance?.sendStream("input", "{\"a\": 1}", {
         type: "application/x-ndjson",
         end: true,
     });
@@ -661,7 +661,7 @@ When("send data", async function (this: CustomWorld) {
     console.log(status);
 });
 
-Then("output is {string}", async function (this: CustomWorld, str) {
+Then("output is {string}", async function(this: CustomWorld, str) {
     const output = await this.resources.instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");
@@ -695,7 +695,7 @@ Then("send data from file {string} named {string}", async (path: any, topic: str
     assert.equal(sendData.status, 200);
 });
 
-When("get data named {string}", async function (this: CustomWorld, topic: string) {
+When("get data named {string}", async function(this: CustomWorld, topic: string) {
     const stream = await hostClient.getNamedData(topic);
 
     if (!stream?.data) assert.fail("No data!");
@@ -704,7 +704,7 @@ When("get data named {string}", async function (this: CustomWorld, topic: string
     assert.equal(stream.status, 200);
 });
 
-Then("get output", async function (this: CustomWorld) {
+Then("get output", async function(this: CustomWorld) {
     const output = await this.resources.instance?.getStream("output");
 
     if (!output?.data) assert.fail("No output!");
@@ -714,7 +714,7 @@ Then("get output", async function (this: CustomWorld) {
 
 Then(
     "confirm data defined as {string} received",
-    async function (this: CustomWorld, data) {
+    async function(this: CustomWorld, data) {
         console.log("Received data: ", this.resources.out);
         assert.equal(this.resources.out, expectedResponses[data]);
     }

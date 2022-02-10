@@ -11,8 +11,8 @@ import { expectedResponses } from "./expectedResponses";
 const si = process.env.SCRAMJET_SPAWN_JS
     ? ["node", "../dist/cli/bin"]
     : process.env.SCRAMJET_SPAWN_TS
-    ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
-    : ["si"];
+        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"]
+        : ["si"];
 const connectionFlags = () =>
     process.env.LOCAL_HOST_BASE_URL ? ["-a", process.env.LOCAL_HOST_BASE_URL] : [];
 const formatFlags = () => ["-L", "--format", "json"];
@@ -31,7 +31,7 @@ let sequences: any;
 When(
     "I execute CLI with bash command {string}",
     { timeout: 30000 },
-    async function (cmd: string) {
+    async function(cmd: string) {
         stdio = await getStreamsFromSpawn(
             "/bin/bash",
             ["-c", `${cmd} ${connectionFlags().join(" ")}`],
@@ -44,7 +44,7 @@ When(
 When(
     "I execute CLI with {string} arguments",
     { timeout: 30000 },
-    async function (args: string) {
+    async function(args: string) {
         stdio = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
             ...args.split(" "),
@@ -58,11 +58,11 @@ When(
     }
 );
 
-Then("I get a help information", function () {
+Then("I get a help information", function() {
     assert.equal(stdio[0].includes("Usage:"), true);
 });
 
-Then("the exit status is {int}", function (status: number) {
+Then("the exit status is {int}", function(status: number) {
     if (stdio[2] !== status) {
         console.error(stdio);
         assert.equal(stdio[2], status);
@@ -70,18 +70,18 @@ Then("the exit status is {int}", function (status: number) {
     assert.ok(true);
 });
 
-Then("I get location {string} of compressed directory", function (filepath: string) {
+Then("I get location {string} of compressed directory", function(filepath: string) {
     assert.equal(fs.existsSync(filepath), true);
 });
 
-Then("I get Sequence id", function () {
+Then("I get Sequence id", function() {
     const seq = JSON.parse(stdio[0].replace("\n", ""));
 
     sequenceId = seq._id;
     assert.equal(typeof sequenceId !== "undefined", true);
 });
 
-Then("I get id from both sequences", function () {
+Then("I get id from both sequences", function() {
     const seq1 = JSON.parse(stdio[0].replace("\n", ""))[0];
     const seq2 = JSON.parse(stdio[0].replace("\n", ""))[1];
 
@@ -91,7 +91,7 @@ Then("I get id from both sequences", function () {
     assert.equal(typeof sequence1Id && typeof sequence2Id !== "undefined", true);
 });
 
-Then("I start the first sequence", async function () {
+Then("I start the first sequence", async function() {
     try {
         stdio1 = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
@@ -118,7 +118,7 @@ Then("I start the first sequence", async function () {
     }
 });
 
-Then("I start the second sequence", async function () {
+Then("I start the second sequence", async function() {
     try {
         stdio2 = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
@@ -145,17 +145,17 @@ Then("I start the second sequence", async function () {
     }
 });
 
-Then("I get Host load information", function () {
+Then("I get Host load information", function() {
     assert.equal(stdio[0].includes("avgLoad:"), true);
 });
 
-Then("I get array of information about sequences", function () {
+Then("I get array of information about sequences", function() {
     const arr = JSON.parse(stdio[0].replace("\n", ""));
 
     assert.equal(Array.isArray(arr), true);
 });
 
-Then("I get the last instance id from config", async function () {
+Then("I get the last instance id from config", async function() {
     // Write code here that turns the phrase above into concrete actions
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
@@ -170,7 +170,7 @@ Then("I get the last instance id from config", async function () {
     assert.ok(instanceId.length > 0, "Instance id is not empty");
 });
 
-Then("I get the last sequence id from config", async function () {
+Then("I get the last sequence id from config", async function() {
     // Write code here that turns the phrase above into concrete actions
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
@@ -189,15 +189,15 @@ Then("I get the last sequence id from config", async function () {
     assert.ok(sequenceId.length > 0, "Sequence id is not empty");
 });
 
-Then("The sequence id equals {string}", function (str: string) {
+Then("The sequence id equals {string}", function(str: string) {
     assert.strictEqual(str, sequenceId);
 });
 
-Then("The instance id equals {string}", function (str: string) {
+Then("The instance id equals {string}", function(str: string) {
     assert.strictEqual(str, instanceId);
 });
 
-Then("I start Sequence", async function () {
+Then("I start Sequence", async function() {
     try {
         stdio = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
@@ -222,11 +222,11 @@ Then("I start Sequence", async function () {
     }
 });
 
-Then("I get instance id", function () {
+Then("I get instance id", function() {
     assert.equal(typeof instanceId !== "undefined", true);
 });
 
-Then("I kill instance", async function () {
+Then("I kill instance", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -238,7 +238,7 @@ Then("I kill instance", async function () {
     assert.equal(stdio[2], 0);
 });
 
-Then("I delete sequence", { timeout: 10000 }, async function () {
+Then("I delete sequence", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "seq",
@@ -250,7 +250,7 @@ Then("I delete sequence", { timeout: 10000 }, async function () {
     assert.equal(stdio[2], 0);
 });
 
-Then("I get instance health", { timeout: 10000 }, async function () {
+Then("I get instance health", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -277,7 +277,7 @@ Then("health outputs 404", async () => {
     assert.equal(stdio[1].includes("404"), true);
 });
 
-Then("I get instance log", { timeout: 30000 }, async function () {
+Then("I get instance log", { timeout: 30000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -288,7 +288,7 @@ Then("I get instance log", { timeout: 30000 }, async function () {
     assert.equal(stdio[2], 0);
 });
 
-Then("I get instance output", { timeout: 30000 }, async function () {
+Then("I get instance output", { timeout: 30000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -299,7 +299,7 @@ Then("I get instance output", { timeout: 30000 }, async function () {
     assert.equal(stdio[2], 0);
 });
 
-Then("I get the second instance output", { timeout: 30000 }, async function () {
+Then("I get the second instance output", { timeout: 30000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -310,7 +310,7 @@ Then("I get the second instance output", { timeout: 30000 }, async function () {
     assert.equal(stdio[2], 0);
 });
 
-Then("I send input data {string}", async function (pathToFile: string) {
+Then("I send input data {string}", async function(pathToFile: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -325,7 +325,7 @@ Then("I send input data {string}", async function (pathToFile: string) {
 
 Then(
     "I stop instance {string} {string}",
-    async function (timeout: string, canCallKeepAlive: string) {
+    async function(timeout: string, canCallKeepAlive: string) {
         stdio = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
             "inst",
@@ -340,7 +340,7 @@ Then(
     }
 );
 
-Then("I get list of sequences", async function () {
+Then("I get list of sequences", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "seq",
@@ -354,7 +354,7 @@ Then("I get list of sequences", async function () {
     assert.equal(sequences.length > 0, true);
 });
 
-Then("I get list of instances", async function () {
+Then("I get list of instances", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -375,7 +375,7 @@ Then("I get list of instances", async function () {
     assert.equal(instanceFound, true);
 });
 
-Then("I get instance info", async function () {
+Then("I get instance info", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [
         ...si,
         "inst",
@@ -393,7 +393,7 @@ Then("I get instance info", async function () {
 
 When(
     "I send an event named {string} with message {string} to Instance",
-    async function (eventName: string, eventMsg: string) {
+    async function(eventName: string, eventMsg: string) {
         stdio = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
             "inst",
@@ -410,7 +410,7 @@ When(
 
 Then(
     "I get event {string} with message {string} from instance",
-    async function (eventName: string, value: string) {
+    async function(eventName: string, value: string) {
         stdio = await getStreamsFromSpawn("/usr/bin/env", [
             ...si,
             "inst",
@@ -425,7 +425,7 @@ Then(
     }
 );
 
-Then("confirm data named {string} received", async function (data) {
+Then("confirm data named {string} received", async function(data) {
     console.log("Received data:\n", stdio[0]);
     assert.equal(stdio[0], expectedResponses[data]);
 });

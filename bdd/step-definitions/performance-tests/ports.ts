@@ -19,7 +19,7 @@ const streamToString = async (stream: Stream): Promise<string> => {
     return chunks.join("");
 };
 
-When("get instance info", async function (this: CustomWorld) {
+When("get instance info", async function(this: CustomWorld) {
     this.resources.instanceInfo = (await this.resources.instance!.getInfo()).data;
 
     console.log(this.resources.instanceInfo);
@@ -28,7 +28,7 @@ When("get instance info", async function (this: CustomWorld) {
 When(
     "connect to instance on port {int} using {string} server",
     { timeout: 20000 },
-    async function (this: CustomWorld, internalPort: number, givenServer: string) {
+    async function(this: CustomWorld, internalPort: number, givenServer: string) {
         const instanceInfo = this.resources.instanceInfo;
         const host = process.env.SCRAMJET_HOST_URL
             ? new URL(process.env.SCRAMJET_HOST_URL).hostname
@@ -73,7 +73,7 @@ When(
 
 When(
     "send {string} to {string} server",
-    async function (this: CustomWorld, str: string, serverType: string) {
+    async function(this: CustomWorld, str: string, serverType: string) {
         if (serverType === "tcp") {
             this.resources.connection.write(str);
         }
@@ -96,7 +96,7 @@ When(
 
 When(
     "start reading {string} stream",
-    async function (this: CustomWorld, log: InstanceOutputStream) {
+    async function(this: CustomWorld, log: InstanceOutputStream) {
         const stream = (await this.resources.instance!.getStream(log)).data;
 
         this.resources.stream = new PassThrough();
@@ -104,7 +104,7 @@ When(
     }
 );
 
-When("check stream for message sent", async function (this: CustomWorld) {
+When("check stream for message sent", async function(this: CustomWorld) {
     this.resources.stream.end();
     const str = await streamToString(this.resources.stream);
 

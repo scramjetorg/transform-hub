@@ -36,7 +36,7 @@ When(
             max = max > cnt ? max : cnt;
         }
 
-        const average = Number((BigInt(1e3) * sum) / BigInt(numberOfProbes)) / 1e3 / 1000;
+        const average = Number(BigInt(1e3) * sum / BigInt(numberOfProbes)) / 1e3 / 1000;
 
         console.log(
             `Average: ${average / 1000}ms of ${numberOfProbes} probes, max time: ${
