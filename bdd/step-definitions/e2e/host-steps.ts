@@ -568,6 +568,22 @@ When("send data", async function(this: CustomWorld) {
     console.log(status);
 });
 
+When("send {string} to input", async function(this: CustomWorld, str) {
+    const status = await this.resources.instance?.sendStream("input", str, {
+        type: "text/plain",
+        end: true
+    });
+
+    console.log(status);
+});
+
+Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
+    const result = await this.resources.instance?.getStream(stream);
+
+    if (!result?.data) assert.fail(`No data in ${stream}!`);
+    assert.equal(text, await streamToString(result.data));
+});
+
 Then("output is {string}", async function(this: CustomWorld, str) {
     const output = await this.resources.instance?.getStream("output");
 
