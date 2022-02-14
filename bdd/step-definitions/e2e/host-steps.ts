@@ -336,14 +336,14 @@ When("send kill message to instance", async function(this: CustomWorld) {
 
 When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     if (process.env.NO_DOCKER) {
-        const res = actualResponse()?.data?.processId;
+        const res = (await this.resources.instance?.getHealth())?.data?.processId;
 
         if (!res) assert.fail();
 
         processId = res;
         console.log("Process is identified.", processId);
     } else {
-        const res = actualResponse()?.data?.containerId;
+        const res = (await this.resources.instance?.getHealth())?.data?.containerId;
 
         if (!res) assert.fail();
 

@@ -33,3 +33,13 @@ Feature: Test our shiny new Python runner
         And instance started with arguments "foo 3 4 bar"
         Then "output" is "{'named_arg': 'foo', 'wildcard_args': ('3', '4', 'bar')}"
         And host is still running
+
+    @python
+    Scenario: E2E-014 TC-005 Python sequences can be killed
+        Given host is running
+        When sequence "../python-forever.tar.gz" loaded
+        And instance started
+        And get runner PID
+        And send kill message to instance
+        Then runner has ended execution
+        And host is still running
