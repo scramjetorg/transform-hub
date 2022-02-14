@@ -28,7 +28,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("-d, --detached", "Don't attach to stdio")
         .option("-c, --config <config-path>", "Appconfig path location")
         .option("-C, --config-json <config-string>", "Appconfig as string")
-        .action(async (sequencePackage, args) => {
+        .action(async (sequencePackage: string, args: any) => {
             const { config: configPath, detached } = sequenceCmd.opts();
             const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
             const seq = await getHostClient(program)
@@ -48,7 +48,7 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd.command("send")
         .description("Send packed and compressed sequence file")
         .argument("[<sequencePackage>]", "The file to upload or '-' to use the last packed. Leave empty for stdin.")
-        .action(async (sequencePackage) => {
+        .action(async (sequencePackage: string) => {
             const seq = await getHostClient(program).sendSequence(
                 sequencePackage ? await getReadStreamFromFile(getPackagePath(sequencePackage)) : process.stdin
             );
@@ -73,7 +73,7 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd.command("select")
         .description("Select a sequence id as default")
         .argument("<id>", "The sequence id")
-        .action(async (id) => setConfigValue("lastSequenceId", id));
+        .action(async (id: string) => setConfigValue("lastSequenceId", id));
 
     /**
     * Command `si sequence start`
@@ -88,7 +88,7 @@ export const sequence: CommandDefinition = (program) => {
         .argument("[args...]")
         .option("-c, --config <config-path>", "Appconfig path location")
         .option("-C, --config-json <config-string>", "Appconfig as string")
-        .action(async (id, args) => {
+        .action(async (id: string, args: any) => {
             const { config, configJson } = sequenceCmd.opts();
             const sequenceClient = SequenceClient.from(
                 getSequenceId(id),
@@ -111,7 +111,7 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd.command("get")
         .argument("<id>", "The sequence id to start or '-' for the last uploaded.")
         .description("Obtains basic information about a sequence")
-        .action(async (id) => {
+        .action(async (id: string) => {
             return displayEntity(
                 program,
                 getHostClient(program).getSequence(getSequenceId(id))
@@ -126,7 +126,7 @@ export const sequence: CommandDefinition = (program) => {
         .description("Removes the sequence from STH")
         .argument("<id>", "The sequence id to remove or '-' for the last uploaded.")
         .alias("rm")
-        .action(async (id) => {
+        .action(async (id: string) => {
             return displayEntity(program, getHostClient(program).deleteSequence(
                 getSequenceId(id)
             ));

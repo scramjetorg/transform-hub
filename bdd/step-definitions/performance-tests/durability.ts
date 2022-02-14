@@ -45,7 +45,7 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
 
             if (instance) {
                 this.resources.instances.push(instance);
-                (await instance.getStream("log")).data?.pipe(process.stdout);
+                (await instance.getStream("log")).pipe(process.stdout);
                 rejected = false;
             } else {
                 rejected = true;
@@ -98,7 +98,7 @@ Then("check every {float} seconds if instances respond for {float} hours", { tim
             try {
                 const response = await instance.getEvent("check");
 
-                if (response.data?.message.asked === hash) {
+                if (response.message.asked === hash) {
                     return;
                 }
                 console.error(`${instance.id}, sent: ${hash}, received: ${JSON.stringify(response.data)}`);

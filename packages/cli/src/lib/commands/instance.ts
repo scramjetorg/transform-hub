@@ -24,7 +24,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd.command("kill")
         .description("Kill instance immediately without waiting for unfinished tasks")
         .argument("<id>", "The instance id or '-' for the last one started.")
-        .action(async (id) => {
+        .action(async (id: string) => {
             return displayEntity(program, getInstance(program, getInstanceId(id)).kill());
         });
 
@@ -37,7 +37,7 @@ export const instance: CommandDefinition = (program) => {
         .description("End instance gracefully with waiting for unfinished tasks")
         .argument("<id>", "The instance id or '-' for the last one started.")
         .argument("<timeout>", "Timeout in milliseconds.")
-        .action(async (id, timeout) => {
+        .action(async (id: string, timeout: string) => {
             return displayEntity(program, getInstance(program, getInstanceId(id)).stop(+timeout, true));
         });
 
@@ -51,7 +51,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd.command("health")
         .description("Display last instance health status")
         .argument("<id>", "The instance id or '-' for the last one started.")
-        .action((id) => {
+        .action((id: string) => {
             return displayEntity(
                 program,
                 getInstance(program, getInstanceId(id)).getHealth()
@@ -61,12 +61,12 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd.command("select")
         .description("Select an instance id as default")
         .argument("<id>", "The instance id")
-        .action(async (id) => setConfigValue("lastInstanceId", id));
+        .action(async (id: string) => setConfigValue("lastInstanceId", id));
 
     instanceCmd.command("info")
         .description("Display info about the instance")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        .action(async (id) => displayEntity(
+        .action(async (id: string) => displayEntity(
             program,
             getHostClient(program).getInstanceInfo(getInstanceId(id))
         ));
@@ -76,7 +76,7 @@ export const instance: CommandDefinition = (program) => {
         .description("Sends event with eventName and a JSON formatted event payload")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
         .arguments("<eventName> [<payload>]")
-        .action(async (id, eventName, message) => {
+        .action(async (id: string, eventName: string, message: string) => {
             const instanceClient = getInstance(program, getInstanceId(id));
 
             return displayEntity(
@@ -97,7 +97,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("<eventName>", "The event name")
         .option("-s, --stream", "stream the events (the stream will start with last event)")
         .option("-n, --next", "wait for the next event occurrence")
-        .action(async (id, event, { next, stream }) => {
+        .action(async (id: string, event: string, { next, stream }) => {
             if (stream)
                 return displayStream(
                     program,
@@ -121,7 +121,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
         .argument("[<file>]", "The input file (stdin if not given default)")
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        .action(async (id, filename, { contentType }) => {
+        .action(async (id: string, filename: string, { contentType }) => {
             const instanceClient = getInstance(program, getInstanceId(id));
 
             return displayEntity(program,
@@ -135,21 +135,21 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd.command("output")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
         .description("Pipe running instance output to stdout")
-        .action((id) => {
+        .action((id: string) => {
             return displayStream(program, getInstance(program, getInstanceId(id)).getStream("output"));
         });
 
     instanceCmd.command("log")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
         .description("Pipe running instance log to stdout")
-        .action((id) => {
+        .action((id: string) => {
             return displayStream(program, getInstance(program, getInstanceId(id)).getStream("log"));
         });
 
     instanceCmd.command("attach")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
         .description("Connect to all stdio - stdin, stdout, stderr of a running instance")
-        .action(async (id) => {
+        .action(async (id: string) => {
             const inst = getInstance(program, getInstanceId(id));
 
             await attachStdio(program, inst);
@@ -159,7 +159,7 @@ export const instance: CommandDefinition = (program) => {
         .description("Send file to stdin, if file not given the data will be read from stdin")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
         .argument("[<file>]", "The input file (stdin if not given default)")
-        .action((id, stream) => {
+        .action((id: string, stream: string) => {
             const instanceClient = getInstance(program, getInstanceId(id));
 
             return displayEntity(
@@ -171,7 +171,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd.command("stderr")
         .description("Pipe running instances stderr stream to stdout")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        .action((id) => displayStream(
+        .action((id: string) => displayStream(
             program,
             getInstance(program, getInstanceId(id)).getStream("stderr")
         ));
@@ -179,7 +179,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd.command("stdout")
         .description("Pipe running instances stdout stream to stdout")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        .action((id) => {
+        .action((id: string) => {
             return displayStream(program, getInstance(program, getInstanceId(id)).getStream("stdout"));
         });
 };

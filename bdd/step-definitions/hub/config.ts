@@ -12,6 +12,7 @@ import path = require("path");
 import { StringDecoder } from "string_decoder";
 import { ReadStream } from "fs";
 import { PassThrough } from "stream";
+import { defer } from "../../lib/utils";
 
 When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
     return new Promise<void>((resolve, reject) => {
@@ -44,16 +45,16 @@ When("hub process is started with parameters {string}", function(this: CustomWor
 
 Then("API is available on port {int}", async function(this: CustomWorld, port: number) {
     const hostClient = new HostClient(`http://127.0.0.1:${port}/api/v1`);
-    const status = (await hostClient.getVersion()).status;
+    const version = await hostClient.getVersion();
 
-    assert.equal(status, 200);
+    assert.ok(version);
 });
 
 Then("API starts with {string} server name", async function(this: CustomWorld, server: string) {
     const hostClient = new HostClient(`http://${server}:8000/api/v1`);
-    const status = (await hostClient.getVersion()).status;
+    const version = await hostClient.getVersion();
 
-    assert.equal(status, 200);
+    assert.ok(version);
 
     const apiURL = this.resources.startOutput.match(/API on\s*(.*)/)[1];
 
@@ -76,7 +77,7 @@ Then("exit hub process", function(this: CustomWorld) {
 Then("get runner container information", { timeout: 20000 }, async function(this: CustomWorld) {
     const instance = this.resources.instance as InstanceClient;
     const resp = await instance.getHealth();
-    const containerId = resp.data?.containerId;
+    const containerId = resp.containerId;
     const [stats, info, inspect] = await Promise.all([
         new Dockerode().getContainer(containerId).stats({ stream: false }),
         new Dockerode().listContainers().then(containers => containers.find(container => container.Id === containerId)),
@@ -111,13 +112,10 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
 
     this.resources.pkgFake = new PassThrough();
 
-    try {
-        this.resources.sequenceSendPromise = hostClient.sendSequence(
-            this.resources.pkgFake as unknown as ReadStream
-        ).catch(() => undefined);
-    } catch {
-        /* don't care */
-    }
+    this.resources.sequenceSendPromise = hostClient.sendSequence(
+        this.resources.pkgFake as unknown as ReadStream
+    // eslint-disable-next-line no-console
+    ).catch((err: any) => console.log(err));
 
     this.resources.pkgFake.write(
         Buffer.from([0x1f8b0800000000000003])
@@ -126,6 +124,8 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
 
 Then("end fake stream", async function(this: CustomWorld) {
     this.resources.pkgFake.end();
+    await defer(2000);
+    //this.resources.sequenceSendPromise.resolve();
 });
 
 Then("get last container info", async function(this: CustomWorld) {

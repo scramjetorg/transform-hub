@@ -1,4 +1,3 @@
-import fetch, { Response as FetchResponse } from "node-fetch";
 import { Stream } from "stream";
 import { ClientError } from "../client-error";
 
@@ -8,14 +7,14 @@ export type Response = {
 };
 
 export type ResponseStream = {
-    data?: NodeJS.ReadableStream;
+    data?: typeof Response;
     status: number;
 };
 
 export type SendStreamOptions = Partial<{
     type: string;
     end: boolean;
-    parseResponse? : "json" | "text"
+    parseResponse?: "json" | "text";
 }>;
 
 export type Headers = {
@@ -23,29 +22,24 @@ export type Headers = {
 };
 
 export type RequestLogger = {
-    request: (...req: Parameters<typeof fetch>) => void;
-    ok: (res: FetchResponse) => void;
+    request: (...req: any) => void;
+    ok: (res: any) => void;
     error: (res: ClientError) => void;
 };
 
 export type PostRequestConfig = {
-    parseResponse? : "json" | "text"
+    parseResponse?: "json" | "text";
     json?: boolean;
-}
+};
 export interface HttpClient {
     addLogger(logger: RequestLogger): void;
-    get(url: string): Promise<Response>;
-    getStream(url: string): Promise<ResponseStream>;
-    post(url: string, data: any, headers?: Headers, options?: { json: boolean } & PostRequestConfig): Promise<Response>;
+    get<T>(url: string): Promise<T>;
+    getStream(url: string): Promise<any>;
+    post<T>(url: string, data: any, headers?: Headers, options?: { json: boolean } & PostRequestConfig): Promise<T>;
     delete(url: string): Promise<Response>;
-    sendStream(
-        url: string,
-        stream: Stream | string,
-        options?: SendStreamOptions
-    ): Promise<Response>;
+    sendStream<T>(url: string, stream: Stream | string, options?: SendStreamOptions): Promise<T>;
 }
 
 export interface ClientProvider {
     client: HttpClient;
 }
-

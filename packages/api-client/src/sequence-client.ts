@@ -52,12 +52,12 @@ export class SequenceClient {
      * @returns {Promise<InstanceClient>} Promise which resolves with instance client.
      */
     async start(appConfig: any, args: any): Promise<InstanceClient> {
-        const response = await this.clientUtils.post(
+        const response = await this.clientUtils.post<{ id: string }>(
             `${this.sequenceURL}/start`, { appConfig, args }, {}, { json: true, parseResponse: "json" }
         );
 
-        if (response.data?.id) {
-            return InstanceClient.from(response.data.id, this.host);
+        if (response.id) {
+            return InstanceClient.from(response.id, this.host);
         }
 
         throw new ClientError("INVALID_RESPONSE", "Response did not include instance id.");

@@ -1,11 +1,11 @@
-import { Response, ResponseStream, SendStreamOptions, ClientProvider, HttpClient } from "./types";
+import { Response, SendStreamOptions, ClientProvider, HttpClient } from "./types";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage } from "@scramjet/types";
 import { Stream } from "stream";
 import { IDProvider } from "@scramjet/model";
 
 export type InstanceInputStream = "stdin" | "input";
-export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log"
+export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
 
 /**
  * Instance client.
@@ -53,12 +53,18 @@ export class InstanceClient {
      * @returns {Promise<Response>} TODO: comment
      */
     async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {
-        return this.clientUtils.post(`${this.instanceURL}/_stop`, [
-            RunnerMessageCode.STOP, {
-                timeout,
-                canCallKeepalive
-            }] as EncodedControlMessage,
-        {}, { json: true });
+        return this.clientUtils.post(
+            `${this.instanceURL}/_stop`,
+            [
+                RunnerMessageCode.STOP,
+                {
+                    timeout,
+                    canCallKeepalive,
+                },
+            ] as EncodedControlMessage,
+            {},
+            { json: true }
+        );
     }
 
     /**
@@ -66,12 +72,12 @@ export class InstanceClient {
      *
      * @returns {Promise<Response>} TODO: comment.
      */
-    async kill(): Promise<Response> {
-        return this.clientUtils.post(`${this.instanceURL}/_kill`, [
-            RunnerMessageCode.KILL,
-            {}
-        ] as EncodedControlMessage,
-        {}, { json: true }
+    async kill(): Promise<any> {
+        return this.clientUtils.post(
+            `${this.instanceURL}/_kill`,
+            [RunnerMessageCode.KILL, {}] as EncodedControlMessage,
+            {},
+            { json: true }
         );
     }
 
@@ -84,10 +90,12 @@ export class InstanceClient {
      */
     async sendEvent(eventName: string, message: string): Promise<Response> {
         const data = [
-            RunnerMessageCode.EVENT, {
+            RunnerMessageCode.EVENT,
+            {
                 eventName,
-                message
-            }] as EncodedControlMessage;
+                message,
+            },
+        ] as EncodedControlMessage;
 
         return this.clientUtils.post(`${this.instanceURL}/_event`, data, {}, { json: true });
     }
@@ -110,7 +118,7 @@ export class InstanceClient {
      * @returns {Promise<Response>} Promise resolving with event data.
      */
     async getEvent(eventName: string) {
-        return this.clientUtils.get(`${this.instanceURL}/event/${eventName}`);
+        return this.clientUtils.get<any>(`${this.instanceURL}/event/${eventName}`);
     }
 
     /**
@@ -127,7 +135,7 @@ export class InstanceClient {
      * Returns instance health.
      */
     async getHealth() {
-        return this.clientUtils.get(`${this.instanceURL}/health`);
+        return this.clientUtils.get<any>(`${this.instanceURL}/health`);
     }
 
     /**
@@ -141,7 +149,7 @@ export class InstanceClient {
      * Returns instance info.
      */
     async getInfo() {
-        return this.clientUtils.get(`${this.instanceURL}`);
+        return this.clientUtils.get<any>(`${this.instanceURL}`);
     }
 
     /**
@@ -151,8 +159,8 @@ export class InstanceClient {
      * @param {string} streamId Stream id.
      * @returns Promise resolving to stream.
      */
-    async getStream(streamId: InstanceOutputStream): Promise<ResponseStream> {
-        return this.clientUtils.getStream(`${this.instanceURL}/${streamId}`);
+    async getStream(streamId: InstanceOutputStream): Promise<Stream | ReadableStream> {
+        return this.clientUtils.getStream(`${this.instanceURL}/${streamId}`).then((response) => response.body);
     }
 
     /**
@@ -165,7 +173,7 @@ export class InstanceClient {
      * @returns Promise resolving to stream.
      */
     async sendStream(streamId: InstanceInputStream, stream: Stream | string, options?: SendStreamOptions) {
-        return this.clientUtils.sendStream(`${this.instanceURL}/${streamId}`, stream, options);
+        return this.clientUtils.sendStream<any>(`${this.instanceURL}/${streamId}`, stream, options);
     }
 
     /**
@@ -175,7 +183,7 @@ export class InstanceClient {
      * @param {SendStreamOptions} options Request options
      * @returns {Promise<Response>} Promise resolving to response.
      */
-    async sendInput(stream: Stream | string, options ?: SendStreamOptions) {
+    async sendInput(stream: Stream | string, options?: SendStreamOptions) {
         return this.sendStream("input", stream, options);
     }
 

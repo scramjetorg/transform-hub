@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
-import { Response, ResponseStream } from "@scramjet/api-client";
 import { Command } from "commander";
-import { Writable } from "stream";
+import { Readable, Writable } from "stream";
 
 /**
  * Command from commander contains obj with whole params, that user provides to the console.
@@ -43,14 +42,14 @@ export async function displayObject(_program: Command, object: any) {
  */
 export async function displayStream(
     _program: Command,
-    response: Promise<ResponseStream>,
+    response: Promise<Readable>,
     output: Writable = process.stdout
 ): Promise<void> {
     try {
         const resp = await response;
 
-        resp.data?.pipe(output);
-        return new Promise((res, rej) => resp.data?.on("finish", res).on("error", rej));
+        resp.pipe(output);
+        return new Promise((res, rej) => resp.on("finish", res).on("error", rej));
     } catch (e: any) {
         console.error(e && e.stack || e);
         process.exitCode = e.exitCode || 1;
@@ -64,7 +63,7 @@ export async function displayStream(
  * @param _program { _program } commander object
  * @param {Promise<Response|void>} response Response object with data to be displayed.
  */
-export async function displayEntity(_program: Command, response: Promise<Response|void>): Promise<void> {
+export async function displayEntity(_program: Command, response: Promise<any>): Promise<void> {
     // todo: different displays depending on _program.opts().format
     const res = await response;
 
@@ -72,5 +71,5 @@ export async function displayEntity(_program: Command, response: Promise<Respons
         return;
     }
 
-    display(_program.opts().format, res.data);
+    display(_program.opts().format, res);
 }
