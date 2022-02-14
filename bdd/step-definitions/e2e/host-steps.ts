@@ -577,6 +577,17 @@ When("send {string} to input", async function(this: CustomWorld, str) {
     console.log(status);
 });
 
+When("send {string} to stdin", async function(this: CustomWorld, str) {
+    const pipe = new Readable();
+
+    pipe.push(str);
+    pipe.push(null);
+
+    const status = await this.resources.instance?.sendStream("stdin", pipe);
+
+    console.log(status);
+});
+
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
     const result = await this.resources.instance?.getStream(stream);
 
