@@ -575,7 +575,7 @@ Then("output is {string}", async function(this: CustomWorld, str) {
 
     const outputString = await streamToString(output.data);
 
-    assert(outputString, str);
+    assert.equal(outputString, str);
 });
 
 Then("send data {string} named {string}", async (data: any, topic: string) => {
