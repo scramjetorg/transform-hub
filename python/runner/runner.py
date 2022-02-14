@@ -27,6 +27,7 @@ class Runner:
         self.seq_path = sequence_path
         self._logging_setup = log_setup
         self.logger = log_setup.logger
+        self.health_check = lambda: {'healthy': True}
 
 
     async def main(self, server_host, server_port):
@@ -131,7 +132,7 @@ class Runner:
             send_encoded_msg(
                 self.streams[CC.MONITORING],
                 msg_codes.MONITORING,
-                {'healthy': True}
+                self.health_check(),
             )
             await asyncio.sleep(1)
 
@@ -222,6 +223,10 @@ class AppContext:
     def __init__(self, runner, config) -> None:
         self.logger = runner.logger
         self.config = config
+        self.runner = runner
+
+    def set_health_check(self, callback):
+        self.runner.health_check = callback
 
 
 log_setup = LoggingSetup(STARTUP_LOGFILE)
