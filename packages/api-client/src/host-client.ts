@@ -23,7 +23,7 @@ export class HostClient implements ClientProvider {
      * @returns {Promise<Response>} Promise resolving to response with list.
      */
     async listSequences() {
-        return this.client.get("sequences");
+        return this.client.get<any>("sequences");
     }
 
     /**
@@ -40,8 +40,8 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<Response>} Promise resolving to response with log stream.
      */
-    async getLogStream() {
-        return this.client.getStream("log");
+    async getLogStream<T>(): Promise<T> {
+        return this.client.getStream<any>("log");
     }
 
     /**
@@ -51,9 +51,9 @@ export class HostClient implements ClientProvider {
      * @returns {SequenceClient} Sequence client.
      */
     async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
-        const response = await this.client.sendStream("sequence", sequencePackage, { parseResponse: "json" });
+        const response = await this.client.sendStream<{ id: string }>("sequence", sequencePackage, { parseResponse: "json" });
 
-        return SequenceClient.from(response.data?.id, this);
+        return SequenceClient.from(response.id, this);
     }
 
     /**
@@ -63,7 +63,7 @@ export class HostClient implements ClientProvider {
      * @returns Object with sequence details.
      */
     async getSequence(sequenceId: string) {
-        return this.client.get(`sequence/${sequenceId}`);
+        return this.client.get<Response>(`sequence/${sequenceId}`);
     }
 
     /**
@@ -73,7 +73,7 @@ export class HostClient implements ClientProvider {
      * @returns TODO: comment.
      */
     async deleteSequence(sequenceId: string): Promise<Response> {
-        const response = await this.client.delete(`sequence/${sequenceId}`);
+        const response = await this.client.delete<Response>(`sequence/${sequenceId}`);
 
         return {
             data: response.data,
@@ -98,7 +98,7 @@ export class HostClient implements ClientProvider {
      * @returns {Promise<Response>} Promise resolving to Host load check data.
      */
     async getLoadCheck() {
-        return this.client.get("load-check");
+        return this.client.get<Response>("load-check");
     }
 
     /**
@@ -107,11 +107,11 @@ export class HostClient implements ClientProvider {
      * @returns {Promise<Response>} Promise resolving to Host version.
      */
     async getVersion() {
-        return this.client.get("version");
+        return this.client.get<Response>("version");
     }
 
     /**
-     * Sends data to the topic. 
+     * Sends data to the topic.
      * Topics are a part of Service Discovery feature enabling data exchange through Topics API.
      *
      * @param {string} topic Topic name.
@@ -120,8 +120,8 @@ export class HostClient implements ClientProvider {
      * @param {boolean} end Indicates if "end" event from stream should be passed to topic.
      * @returns TODO: comment.
      */
-    async sendNamedData(topic: string, stream: Readable, contentType?: string, end?: boolean) {
-        return this.client.sendStream(`topic/${topic}`, stream, { type: contentType, end: end });
+    async sendNamedData<T>(topic: string, stream: Readable, contentType?: string, end?: boolean) {
+        return this.client.sendStream<T>(`topic/${topic}`, stream, { type: contentType, end: end });
     }
 
     /**
@@ -130,8 +130,8 @@ export class HostClient implements ClientProvider {
      * @param topic Topic name.
      * @returns Promise resolving to stream.
      */
-    async getNamedData(topic: string) {
-        return this.client.getStream(`topic/${topic}`);
+    async getNamedData<T>(topic: string): Promise<T> {
+        return this.client.getStream<any>(`topic/${topic}`).then(response => response.body);
     }
 }
 

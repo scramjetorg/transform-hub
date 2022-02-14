@@ -39,7 +39,7 @@ Then("check every {int} seconds if instances respond with correct data for {floa
 
             await defer(500);
 
-            const instanceInfo = (await instance.getInfo()).data;
+            const instanceInfo = await instance.getInfo();
 
             return new Promise<void>((resolve) => {
                 const chunks: Buffer[] = [];

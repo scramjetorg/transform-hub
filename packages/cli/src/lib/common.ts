@@ -69,8 +69,8 @@ export const attachStdio = (command: Command, instanceClient: InstanceClient) =>
         command,
         Promise.all([
             instanceClient.sendStdin(process.stdin),
-            instanceClient.getStream("stdout").then(out => out.data?.pipe(process.stdout)),
-            instanceClient.getStream("stderr").then(err => err.data?.pipe(process.stderr))
+            instanceClient.getStream("stdout").then(out => out.pipe(process.stdout)),
+            instanceClient.getStream("stderr").then(err => err.pipe(process.stderr))
         ]).then(() => undefined)
     );
 };

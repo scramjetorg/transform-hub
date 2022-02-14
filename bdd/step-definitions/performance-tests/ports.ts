@@ -80,7 +80,7 @@ When("send {string} to {string} server", async function(this: CustomWorld, str: 
 });
 
 When("start reading {string} stream", async function(this: CustomWorld, log: InstanceOutputStream) {
-    const stream = (await this.resources.instance!.getStream(log)).data;
+    const stream = await this.resources.instance!.getStream(log);
 
     this.resources.stream = new PassThrough();
     stream?.pipe(this.resources.stream);

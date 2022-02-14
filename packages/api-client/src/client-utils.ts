@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
-import fetch, { FetchError } from "node-fetch";
+import { fetch, QueryError, FetchResultTypes } from "@sapphire/fetch";
 import { Stream } from "stream";
+
 import { ClientError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, Response, ResponseStream, SendStreamOptions, PostRequestConfig } from "./types";
+import { Headers, HttpClient, RequestLogger, SendStreamOptions, PostRequestConfig } from "./types";
 
 /**
  * Provides HTTP communication methods.
@@ -20,13 +21,13 @@ export class ClientUtils implements HttpClient {
      * Sets given logger.
      *
      * @param {Partial<RequestLogger>} logger Logger to set.
-    */
+     */
     public addLogger(logger: Partial<RequestLogger>) {
         this.log = {
             request: () => 0,
             ok: () => 0,
             error: () => 0,
-            ...logger
+            ...logger,
         };
     }
 
@@ -36,25 +37,29 @@ export class ClientUtils implements HttpClient {
      * @param args Fetch arguments.
      * @returns Fetch object.
      */
-    private safeRequest(...args: Parameters<typeof fetch>): ReturnType<typeof fetch> {
-        let resp = fetch(...args);
+    private safeRequest<T>(...args: Parameters<typeof fetch>) {
+        let resp = fetch<T>(...args);
 
         if (this.log) {
             const log = this.log;
 
             log.request(...args);
             resp = resp
-                .then(res => { log.ok(res); return res; })
-                .catch(err => { log.error(err); throw err; })
-            ;
+                .then((res) => {
+                    log.ok(res);
+                    return res;
+                })
+                .catch((err) => {
+                    log.error(err);
+                    throw err;
+                });
         }
 
         const source = new Error();
 
-        return resp
-            .catch((e: FetchError) => {
-                throw ClientError.from(e, undefined, source);
-            });
+        return resp.catch((e: Error | QueryError) => {
+            throw ClientError.from(e, undefined, source);
+        });
     }
 
     /**
@@ -63,9 +68,8 @@ export class ClientUtils implements HttpClient {
      * @param {string} url Request URL.
      * @returns Fetch response.
      */
-    async get(url: string): Promise<Response> {
-        return this.safeRequest(`${this.apiBase}/${url}`)
-            .then(async (response) => ({ data: await response.json(), status: response.status }));
+    async get<T>(url: string): Promise<T> {
+        return this.safeRequest<any>(`${this.apiBase}/${url}`, {}, FetchResultTypes.JSON);
     }
 
     /**
@@ -74,14 +78,8 @@ export class ClientUtils implements HttpClient {
      * @param {string} url Request URL.
      * @returns Fetch response.
      */
-    async getStream(url: string): Promise<ResponseStream> {
-        return this.safeRequest(`${this.apiBase}/${url}`)
-            .then((d) => {
-                return {
-                    status: d.status,
-                    data: d.body
-                };
-            });
+    async getStream<T>(url: string): Promise<T> {
+        return this.safeRequest<any>(`${this.apiBase}/${url}`, {}, FetchResultTypes.Result) as Promise<T>;
     }
 
     /**
@@ -93,30 +91,26 @@ export class ClientUtils implements HttpClient {
      * @param config Request config.
      * @returns Fetch response.
      */
-    async post(
+    async post<T>(
         url: string,
         data: any,
         headers: Headers = {},
-        config: PostRequestConfig = { json: false }): Promise<Response> {
+        config: PostRequestConfig = { json: false }
+    ): Promise<T> {
         if (config.json) {
             headers["Content-Type"] = "application/json";
             data = JSON.stringify(data);
         }
 
-        return this.safeRequest(
+        return this.safeRequest<T>(
             `${this.apiBase}/${url}`,
             {
                 method: "post",
                 body: data,
-                headers
-            }
-        )
-            .then(async (res) => ({
-                status: res.status,
-                data: !config.parseResponse
-                    ? res
-                    : await res[config.parseResponse]().catch((e) => { this.log?.error(e); throw e; })
-            }));
+                headers,
+            },
+            config.parseResponse ? FetchResultTypes.JSON : FetchResultTypes.Result
+        ) as Promise<T>;
     }
 
     /**
@@ -125,19 +119,17 @@ export class ClientUtils implements HttpClient {
      * @param url Request URL.
      * @returns Fetch response.
      */
-    async delete(url: string): Promise<Response> {
-        return this.safeRequest(
+    async delete<T>(url: string): Promise<T> {
+        return this.safeRequest<T>(
             `${this.apiBase}/${url}`,
             {
                 method: "delete",
                 headers: {
-                    "Content-Type": "application/json"
-                }
-            }
-        )
-            .then((res) => ({
-                status: res.status
-            }));
+                    "Content-Type": "application/json",
+                },
+            },
+            FetchResultTypes.JSON
+        ) as Promise<T>;
     }
 
     /**
@@ -148,29 +140,20 @@ export class ClientUtils implements HttpClient {
 
      * @returns Fetch response.
      */
-    async sendStream(
+    async sendStream<T>(
         url: string,
-        stream: Stream | string,
-        {
-            type = "application/octet-stream",
-            end,
-            parseResponse
-        }: SendStreamOptions = {}
-    ): Promise<Response> {
+        stream: string | Stream,
+        { type = "application/octet-stream", end, parseResponse }: SendStreamOptions = {}
+    ): Promise<T> {
         const headers: Headers = {
             "content-type": type,
-            expect: "100-continue"
+            expect: "100-continue",
         };
 
         if (typeof end !== "undefined") {
             headers["x-end-stream"] = end ? "true" : "false";
         }
 
-        return this.post(
-            url,
-            stream,
-            headers,
-            { parseResponse }
-        );
+        return this.post<T>(url, stream, headers, { parseResponse });
     }
 }
