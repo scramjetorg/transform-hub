@@ -206,6 +206,7 @@ class Runner:
             self.logger.debug('Sequence returned no output.')
 
         self.logger.info('Finished.')
+        self.streams[CC.LOG].close()
 
 
     async def connect_input_stream(self, input_stream):
