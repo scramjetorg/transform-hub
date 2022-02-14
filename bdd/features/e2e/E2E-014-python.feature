@@ -25,3 +25,11 @@ Feature: Test our shiny new Python runner
         And instance started
         Then "stderr" contains "TestException: This exception should appear on stderr"
         And host is still running
+
+    @python
+    Scenario: E2E-014 TC-004 Arguments can be passed to Python sequences
+        Given host is running
+        When sequence "../python-debug-args.tar.gz" loaded
+        And instance started with arguments "foo 3 4 bar"
+        Then "output" is "{'named_arg': 'foo', 'wildcard_args': ('3', '4', 'bar')}"
+        And host is still running
