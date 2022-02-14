@@ -605,6 +605,16 @@ Then("output is {string}", async function(this: CustomWorld, str) {
     assert(outputString, str);
 });
 
+Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
+    const output = await this.resources.instance?.getStream(stream);
+
+    if (!output?.data) assert.fail("No output!");
+
+    const outputString = await streamToString(output.data);
+
+    assert.equal(outputString.includes(text), true);
+});
+
 Then("send data {string} named {string}", async (data: any, topic: string) => {
     const ps = new Readable();
     const sendDataP = hostClient.sendNamedData(

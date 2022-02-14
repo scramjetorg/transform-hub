@@ -17,3 +17,11 @@ Feature: Test our shiny new Python runner
         And send "python runner" to stdin
         Then "stdout" is "Got on stdin: python runner"
         And host is still running
+
+    @python
+    Scenario: E2E-014 TC-003 Exceptions thrown in python sequences appear in stderr
+        Given host is running
+        When sequence "../python-exception-test.tar.gz" loaded
+        And instance started
+        Then "stderr" contains "TestException: This exception should appear on stderr"
+        And host is still running
