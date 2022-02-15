@@ -577,6 +577,22 @@ When("send {string} to input", async function(this: CustomWorld, str) {
     console.log(status);
 });
 
+When("send file {string} as text input", async function(this: CustomWorld, path) {
+    const status = await this.resources.instance?.sendStream(
+        "input", createReadStream(path), { type: "text/plain", end: true }
+    );
+
+    console.log(status);
+});
+
+When("send file {string} as binary input", async function(this: CustomWorld, path) {
+    const status = await this.resources.instance?.sendStream(
+        "input", createReadStream(path), { type: "application/octet-stream", end: true }
+    );
+
+    console.log(status);
+});
+
 When("send {string} to stdin", async function(this: CustomWorld, str) {
     const pipe = new Readable();
 
