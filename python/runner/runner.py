@@ -27,6 +27,7 @@ class Runner:
         self.seq_path = sequence_path
         self._logging_setup = log_setup
         self.logger = log_setup.logger
+        self.stop_handler = None
 
 
     async def main(self, server_host, server_port):
@@ -124,6 +125,25 @@ class Runner:
             self.logger.debug(f"Control message received: {code} {data}")
             if code == msg_codes.KILL.value:
                 self.exit_immediately()
+            if code == msg_codes.STOP.value:
+                self.handle_stop(data)
+
+
+    async def handle_stop(self, data):
+        stop = self.stop_handler()
+        if asyncio.iscoroutine(stop):
+            await stop
+        # TODO: add canCallKeppAlive feature, asyncio.wait?
+        # canCallKeepAlive = data.get('canCallKeppalive')
+        self.logger.info(f"Gracefully shutting down...{data}")
+        try:
+            timeout = data.get('timeout') / 1000
+            await asyncio.sleep(timeout)
+            send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, {})
+            self.exit_immediately()
+        except Exception as e:
+            self.logger.error("Error stopping sequence", e)
+            send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, e)
 
 
     async def setup_heartbeat(self):
@@ -222,6 +242,12 @@ class AppContext:
     def __init__(self, runner, config) -> None:
         self.logger = runner.logger
         self.config = config
+        self.monitoring = runner.streams[CC.MONITORING]
+        self.runner = runner
+
+    def set_stop_handler(self, handler):
+        self.runner.stop_handler = handler
+
 
 
 log_setup = LoggingSetup(STARTUP_LOGFILE)
