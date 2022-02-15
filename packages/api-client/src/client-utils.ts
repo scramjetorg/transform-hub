@@ -78,8 +78,8 @@ export class ClientUtils implements HttpClient {
      * @param {string} url Request URL.
      * @returns Fetch response.
      */
-    async getStream<T>(url: string): Promise<T> {
-        return this.safeRequest<any>(`${this.apiBase}/${url}`, {}, FetchResultTypes.Result) as Promise<T>;
+    async getStream(url: string): Promise<ReadableStream> {
+        return this.safeRequest<Response>(`${this.apiBase}/${url}`, {}, FetchResultTypes.Result).then((res) => (res as Response).body as ReadableStream);
     }
 
     /**

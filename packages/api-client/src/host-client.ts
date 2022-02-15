@@ -2,6 +2,7 @@ import { Readable } from "stream";
 import { ClientUtils } from "./client-utils";
 import { SequenceClient } from "./sequence-client";
 import { ClientProvider, Response } from "./types";
+import { InstanceResponse, SequenceResponse } from "./types/responses";
 
 /**
  * Host client.
@@ -23,7 +24,7 @@ export class HostClient implements ClientProvider {
      * @returns {Promise<Response>} Promise resolving to response with list.
      */
     async listSequences() {
-        return this.client.get<any>("sequences");
+        return this.client.get<SequenceResponse[]>("sequences");
     }
 
     /**
@@ -32,7 +33,7 @@ export class HostClient implements ClientProvider {
      * @returns {Promise<Response>} Promise resolving to response with list.
      */
     async listInstances() {
-        return this.client.get("instances");
+        return this.client.get<InstanceResponse[]>("instances");
     }
 
     /**
@@ -40,8 +41,8 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<Response>} Promise resolving to response with log stream.
      */
-    async getLogStream<T>(): Promise<T> {
-        return this.client.getStream<any>("log");
+    async getLogStream(): Promise<ReadableStream> {
+        return this.client.getStream("log");
     }
 
     /**
@@ -63,7 +64,7 @@ export class HostClient implements ClientProvider {
      * @returns Object with sequence details.
      */
     async getSequence(sequenceId: string) {
-        return this.client.get<Response>(`sequence/${sequenceId}`);
+        return this.client.get<SequenceResponse>(`sequence/${sequenceId}`);
     }
 
     /**
@@ -130,8 +131,8 @@ export class HostClient implements ClientProvider {
      * @param topic Topic name.
      * @returns Promise resolving to stream.
      */
-    async getNamedData<T>(topic: string): Promise<T> {
-        return this.client.getStream<any>(`topic/${topic}`).then(response => response.body);
+    async getNamedData(topic: string): Promise<ReadableStream> {
+        return this.client.getStream(`topic/${topic}`);
     }
 }
 

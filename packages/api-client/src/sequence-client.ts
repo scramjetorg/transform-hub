@@ -2,6 +2,7 @@ import { IDProvider } from "@scramjet/model";
 import { ClientError } from "./client-error";
 import { InstanceClient } from "./instance-client";
 import { ClientProvider, HttpClient } from "./types";
+import { SequenceResponse } from "./types/responses";
 
 /**
  * Sequence client.
@@ -69,7 +70,7 @@ export class SequenceClient {
      * @returns List of instances
      */
     async listInstances() {
-        return this.clientUtils.get(`${this.sequenceURL}/instances`);
+        return this.clientUtils.get<string[]>(`${this.sequenceURL}/instances`);
     }
 
     /**
@@ -89,7 +90,7 @@ export class SequenceClient {
      * @returns Promise which resolves with sequence info.
      */
     async getInfo() {
-        return this.clientUtils.get(this.sequenceURL);
+        return this.clientUtils.get<SequenceResponse>(this.sequenceURL);
     }
 
     /**

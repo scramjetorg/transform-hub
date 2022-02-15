@@ -1,4 +1,3 @@
-import { Readable } from "stream";
 import { CommandDefinition } from "../../types";
 import { getHostClient } from "../common";
 import { displayEntity, displayStream } from "../output";
@@ -34,7 +33,7 @@ export const host: CommandDefinition = (program) => {
     hostCmd
         .command("logs")
         .description("show all instances logs")
-        .action(async () => displayStream(program, getHostClient(program).getLogStream<Readable>()));
+        .action(async () => displayStream(program, getHostClient(program).getLogStream()));
 
     /**
     * Command `si host load`
