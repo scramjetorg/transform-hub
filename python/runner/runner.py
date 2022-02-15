@@ -128,7 +128,7 @@ class Runner:
             if code == msg_codes.KILL.value:
                 self.exit_immediately()
             if code == msg_codes.STOP.value:
-                self.handle_stop(data)
+                await self.handle_stop(data)
 
 
     async def handle_stop(self, data):

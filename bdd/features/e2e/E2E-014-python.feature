@@ -63,3 +63,15 @@ Feature: Test our shiny new Python runner
         And send file "../python/test/sample_unicode_1.txt" as binary input
         Then "output" is "20,"
         And host is still running
+
+    @python
+    Scenario: E2E-014 TC-008 Instance can run stop handler before it shuts down
+        Given host is running
+        When sequence "../python-stop-handler.tar.gz" loaded
+        And instance started
+        And get runner PID
+        And keep instance streams "stdout"
+        And send stop with timeout 2000
+        Then runner has ended execution
+        And kept instance stream "stdout" should be "Cleaning up... Cleanup done.\n"
+        And host is still running
