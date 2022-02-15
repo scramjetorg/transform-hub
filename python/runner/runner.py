@@ -28,6 +28,7 @@ class Runner:
         self._logging_setup = log_setup
         self.logger = log_setup.logger
         self.stop_handler = None
+        self.health_check = lambda: {'healthy': True}
 
 
     async def main(self, server_host, server_port):
@@ -151,7 +152,7 @@ class Runner:
             send_encoded_msg(
                 self.streams[CC.MONITORING],
                 msg_codes.MONITORING,
-                {'healthy': True}
+                self.health_check(),
             )
             await asyncio.sleep(1)
 
@@ -248,6 +249,8 @@ class AppContext:
     def set_stop_handler(self, handler):
         self.runner.stop_handler = handler
 
+    def set_health_check(self, health_check):
+        self.runner.health_check = health_check
 
 
 log_setup = LoggingSetup(STARTUP_LOGFILE)
