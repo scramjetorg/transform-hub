@@ -42,11 +42,11 @@ export async function displayObject(_program: Command, object: any) {
  */
 export async function displayStream(
     _program: Command,
-    response: Promise<Readable>,
+    response: Promise<ReadableStream>,
     output: Writable = process.stdout
 ): Promise<void> {
     try {
-        const resp = await response;
+        const resp = await response as unknown as Readable;
 
         resp.pipe(output);
         return new Promise((res, rej) => resp.on("finish", res).on("error", rej));

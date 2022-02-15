@@ -125,7 +125,6 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
 Then("end fake stream", async function(this: CustomWorld) {
     this.resources.pkgFake.end();
     await defer(2000);
-    //this.resources.sequenceSendPromise.resolve();
 });
 
 Then("get last container info", async function(this: CustomWorld) {
