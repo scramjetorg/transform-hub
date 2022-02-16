@@ -638,6 +638,13 @@ Then("{string} contains {string}", async function(this: CustomWorld, stream, tex
     assert.equal(outputString.includes(text), true);
 });
 
+When("instance health is {string}", async function(this: CustomWorld, health: string) {
+    const resp = await this.resources.instance?.getHealth();
+    const actual = resp?.data?.healthy.toString();
+
+    assert.equal(health, actual);
+});
+
 Then("send data {string} named {string}", async (data: any, topic: string) => {
     const ps = new Readable();
     const sendDataP = hostClient.sendNamedData(

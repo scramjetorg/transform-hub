@@ -75,3 +75,19 @@ Feature: Test our shiny new Python runner
         Then runner has ended execution
         And kept instance stream "stdout" should be "Cleaning up... Cleanup done.\n"
         And host is still running
+
+    @python
+    Scenario: E2E-014 TC-009 Instance by default reports as healthy
+        Given host is running
+        When sequence "../python-forever.tar.gz" loaded
+        And instance started
+        Then instance health is "true"
+        And host is still running
+
+    @python
+    Scenario: E2E-014 TC-010 User can override health check method
+        Given host is running
+        When sequence "../unhealthy-sequence.tar.gz" loaded
+        And instance started
+        Then instance health is "false"
+        And host is still running
