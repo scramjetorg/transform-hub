@@ -94,11 +94,23 @@ Feature: Test our shiny new Python runner
 
     @python
     Scenario: E2E-014 TC-011 Send data between python instances using topics
-        When start host
-        And sequence "../python-topic-producer.tar.gz" loaded
+        Given host is running
+        When sequence "../python-topic-producer.tar.gz" loaded
         And instance started
         And send "topic test input" to input
         And sequence "../python-topic-consumer.tar.gz" loaded
         And instance started
         Then "output" is "consumer got: producer got: topic test input"
+        And host is still running
+
+    @python
+    Scenario: E2E-014 TC-012 Sequence can receive and emit events
+        Given host is running
+        When sequence "../python-events.tar.gz" loaded
+        And instance started
+        And send event "test-event" to instance with message "foo"
+        Then instance emits event "test-response" with body
+            """
+            {"eventName":"test-response","message":"reply to foo"}
+            """
         And host is still running

@@ -645,6 +645,20 @@ When("instance health is {string}", async function(this: CustomWorld, health: st
     assert.equal(health, actual);
 });
 
+Then("instance emits event {string} with body", { timeout: 10000 },
+    async function(this:CustomWorld, event: string, body: string) {
+        const expectedHttpCode = 200;
+
+        const resp = await this.resources.instance?.getNextEvent(event);
+
+        assert.equal(resp?.status, expectedHttpCode);
+        console.log("getNextEvent response:", resp);
+
+        const actual = JSON.stringify(resp.data);
+
+        assert.equal(actual, body);
+    });
+
 Then("send data {string} named {string}", async (data: any, topic: string) => {
     const ps = new Readable();
     const sendDataP = hostClient.sendNamedData(
