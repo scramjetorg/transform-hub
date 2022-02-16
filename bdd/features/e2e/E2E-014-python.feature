@@ -91,3 +91,14 @@ Feature: Test our shiny new Python runner
         And instance started
         Then instance health is "false"
         And host is still running
+
+    @python
+    Scenario: E2E-014 TC-011 Send data between python instances using topics
+        When start host
+        And sequence "../python-topic-producer.tar.gz" loaded
+        And instance started
+        And send "topic test input" to input
+        And sequence "../python-topic-consumer.tar.gz" loaded
+        And instance started
+        Then "output" is "consumer got: producer got: topic test input"
+        And host is still running
