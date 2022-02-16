@@ -6,6 +6,7 @@ import json
 from pyee import EventEmitter
 import importlib.util
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
+
 from scramjet.streams import Stream
 from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
@@ -186,11 +187,15 @@ class Runner:
 
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
-        pang_provides_data = {
-            'provides': '',
-            'contentType': ''
-        }
-        send_encoded_msg(monitoring, msg_codes.PANG, pang_provides_data)
+
+        if hasattr(self.sequence, 'provides'):
+            produces = self.sequence.provides
+            self.logger.info(f'Sending PANG with {produces}')
+            send_encoded_msg(monitoring, msg_codes.PANG, produces)
+        if hasattr(self.sequence, 'requires'):
+            consumes = self.sequence.requires
+            self.logger.info(f'Sending PANG with {consumes}')
+            send_encoded_msg(monitoring, msg_codes.PANG, consumes)
 
         if asyncio.iscoroutine(result):
             result = await result
@@ -203,14 +208,17 @@ class Runner:
 
 
     async def connect_input_stream(self, input_stream):
-        raw_headers = await self.streams[CC.IN].readuntil(b'\r\n\r\n')
-        header_list = raw_headers.decode().rstrip().split('\r\n')
-        headers = {
-            key.lower(): val for key, val in [el.split(': ') for el in header_list]
-        }
-        self.logger.info(f'Input headers: {repr(headers)}')
+        if hasattr(self.sequence, "requires"):
+            input_type = self.sequence.requires['contentType']
+        else:
+            raw_headers = await self.streams[CC.IN].readuntil(b'\r\n\r\n')
+            header_list = raw_headers.decode().rstrip().split('\r\n')
+            headers = {
+                key.lower(): val for key, val in [el.split(': ') for el in header_list]
+            }
+            self.logger.info(f'Input headers: {repr(headers)}')
+            input_type = headers['content-type']
 
-        input_type = headers['content-type']
         if input_type == 'text/plain':
             input = Stream.read_from(self.streams[CC.IN])
             self.logger.debug('Decoding input stream...')
