@@ -92,6 +92,7 @@ Feature: Test our shiny new Python runner
         Then instance health is "false"
         And host is still running
 
+    @ignore
     @python
     Scenario: E2E-014 TC-011 Send data between python instances using topics
         Given host is running
@@ -103,6 +104,7 @@ Feature: Test our shiny new Python runner
         Then "output" is "consumer got: producer got: topic test input"
         And host is still running
 
+    @ignore
     @python
     Scenario: E2E-014 TC-012 Sequence can receive and emit events
         Given host is running
