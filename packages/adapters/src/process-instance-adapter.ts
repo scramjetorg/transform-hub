@@ -73,6 +73,17 @@ IComponent {
         ];
     }
 
+    getPythonpath() {
+        let pythonpath = path.resolve(
+            __dirname,
+            isTSNode ? "../../../python_modules" : "../../python_modules"
+        );
+
+        if (process.env.PYTHONPATH) pythonpath += `:${process.env.PYTHONPATH}`;
+
+        return pythonpath;
+    }
+
     async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
@@ -100,6 +111,7 @@ IComponent {
         const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), {
             env: {
                 PATH: process.env.PATH,
+                PYTHONPATH: this.getPythonpath(),
                 DEVELOPMENT: process.env.DEVELOPMENT,
                 PRODUCTION: process.env.PRODUCTION,
                 SEQUENCE_PATH: sequencePath,

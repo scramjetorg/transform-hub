@@ -151,6 +151,7 @@ There are several installations you need to perform to get STH up and running, a
 - typescript
 - ts-node
 - docker
+- pip
 
 To check if you already have Node.js(v16.xx.x) and npm installed, please check the installed version, run the following commands in your console:
 
@@ -226,6 +227,15 @@ The same as before the installations can be confirmed by checking the installed 
 ![versions](./images/versions.png)
 
 OK! The installation was successful. 🎉 🎆
+
+STH can run python packages, and for that it needs to have `python` and `pip`. These should be already installed on your system - check with:
+
+```bash
+python --version
+pip --version
+```
+
+If they are not present, refer to the official installation guide for [Python](https://wiki.python.org/moin/BeginnersGuide/Download) and [Pip](https://pip.pypa.io/en/stable/installation/).
 
 We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
 
