@@ -39,6 +39,6 @@
   },
   "devDependencies": {
     "@scramjet/types": "^0.16.0",
-    "ava": "^3.15.0"
+    "ava": "^4.0.1"
   }
 }

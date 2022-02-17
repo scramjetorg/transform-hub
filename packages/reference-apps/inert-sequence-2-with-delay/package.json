@@ -14,10 +14,10 @@
   "license": "ISC",
   "devDependencies": {
     "@scramjet/types": "^0.16.0",
-    "@types/node": "15.12.5"
+    "@types/node": "^17.0.18"
   },
   "dependencies": {
-    "scramjet": "^4.36.0"
+    "scramjet": "^4.36.1"
   },
   "repository": {
     "type": "git",
