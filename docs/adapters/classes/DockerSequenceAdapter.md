@@ -12,25 +12,25 @@ Adapter for preparing Sequence to be run in Docker container.
 
 ### Constructors
 
-- [constructor](dockersequenceadapter.md#constructor)
+- [constructor](DockerSequenceAdapter.md#constructor)
 
 ### Methods
 
-- [createVolume](dockersequenceadapter.md#createvolume)
-- [fetch](dockersequenceadapter.md#fetch)
-- [identify](dockersequenceadapter.md#identify)
-- [identifyOnly](dockersequenceadapter.md#identifyonly)
-- [init](dockersequenceadapter.md#init)
-- [list](dockersequenceadapter.md#list)
-- [parsePackage](dockersequenceadapter.md#parsepackage)
-- [remove](dockersequenceadapter.md#remove)
+- [createVolume](DockerSequenceAdapter.md#createvolume)
+- [fetch](DockerSequenceAdapter.md#fetch)
+- [identify](DockerSequenceAdapter.md#identify)
+- [identifyOnly](DockerSequenceAdapter.md#identifyonly)
+- [init](DockerSequenceAdapter.md#init)
+- [list](DockerSequenceAdapter.md#list)
+- [parsePackage](DockerSequenceAdapter.md#parsepackage)
+- [remove](DockerSequenceAdapter.md#remove)
 
 ### Properties
 
-- [dockerHelper](dockersequenceadapter.md#dockerhelper)
-- [logger](dockersequenceadapter.md#logger)
-- [name](dockersequenceadapter.md#name)
-- [resources](dockersequenceadapter.md#resources)
+- [dockerHelper](DockerSequenceAdapter.md#dockerhelper)
+- [logger](DockerSequenceAdapter.md#logger)
+- [name](DockerSequenceAdapter.md#name)
+- [resources](DockerSequenceAdapter.md#resources)
 
 ## Constructors
 
@@ -46,7 +46,7 @@ Adapter for preparing Sequence to be run in Docker container.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L28)
+[docker-sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L30)
 
 ## Methods
 
@@ -248,7 +248,7 @@ ISequenceAdapter.remove
 
 ### dockerHelper
 
-• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/idockerhelper.md)
+• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/IDockerHelper.md)
 
 #### Defined in
 

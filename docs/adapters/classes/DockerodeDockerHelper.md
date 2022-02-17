@@ -6,40 +6,40 @@ Communicates with Docker using Dockerode library.
 
 ## Implements
 
-- [`IDockerHelper`](../interfaces/idockerhelper.md)
+- [`IDockerHelper`](../interfaces/IDockerHelper.md)
 
 ## Table of contents
 
 ### Methods
 
-- [attach](dockerodedockerhelper.md#attach)
-- [connectToNetwork](dockerodedockerhelper.md#connecttonetwork)
-- [createContainer](dockerodedockerhelper.md#createcontainer)
-- [createNetwork](dockerodedockerhelper.md#createnetwork)
-- [createVolume](dockerodedockerhelper.md#createvolume)
-- [inspectNetwork](dockerodedockerhelper.md#inspectnetwork)
-- [isImageInLocalRegistry](dockerodedockerhelper.md#isimageinlocalregistry)
-- [listNetworks](dockerodedockerhelper.md#listnetworks)
-- [listVolumes](dockerodedockerhelper.md#listvolumes)
-- [pullImage](dockerodedockerhelper.md#pullimage)
-- [removeContainer](dockerodedockerhelper.md#removecontainer)
-- [removeVolume](dockerodedockerhelper.md#removevolume)
-- [run](dockerodedockerhelper.md#run)
-- [startContainer](dockerodedockerhelper.md#startcontainer)
-- [stats](dockerodedockerhelper.md#stats)
-- [stopContainer](dockerodedockerhelper.md#stopcontainer)
-- [translateVolumesConfig](dockerodedockerhelper.md#translatevolumesconfig)
-- [wait](dockerodedockerhelper.md#wait)
+- [attach](DockerodeDockerHelper.md#attach)
+- [connectToNetwork](DockerodeDockerHelper.md#connecttonetwork)
+- [createContainer](DockerodeDockerHelper.md#createcontainer)
+- [createNetwork](DockerodeDockerHelper.md#createnetwork)
+- [createVolume](DockerodeDockerHelper.md#createvolume)
+- [inspectNetwork](DockerodeDockerHelper.md#inspectnetwork)
+- [isImageInLocalRegistry](DockerodeDockerHelper.md#isimageinlocalregistry)
+- [listNetworks](DockerodeDockerHelper.md#listnetworks)
+- [listVolumes](DockerodeDockerHelper.md#listvolumes)
+- [pullImage](DockerodeDockerHelper.md#pullimage)
+- [removeContainer](DockerodeDockerHelper.md#removecontainer)
+- [removeVolume](DockerodeDockerHelper.md#removevolume)
+- [run](DockerodeDockerHelper.md#run)
+- [startContainer](DockerodeDockerHelper.md#startcontainer)
+- [stats](DockerodeDockerHelper.md#stats)
+- [stopContainer](DockerodeDockerHelper.md#stopcontainer)
+- [translateVolumesConfig](DockerodeDockerHelper.md#translatevolumesconfig)
+- [wait](DockerodeDockerHelper.md#wait)
 
 ### Constructors
 
-- [constructor](dockerodedockerhelper.md#constructor)
+- [constructor](DockerodeDockerHelper.md#constructor)
 
 ### Properties
 
-- [dockerode](dockerodedockerhelper.md#dockerode)
-- [logger](dockerodedockerhelper.md#logger)
-- [pulledImages](dockerodedockerhelper.md#pulledimages)
+- [dockerode](DockerodeDockerHelper.md#dockerode)
+- [logger](DockerodeDockerHelper.md#logger)
+- [pulledImages](DockerodeDockerHelper.md#pulledimages)
 
 ## Methods
 
@@ -85,7 +85,7 @@ ___
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/idockerhelper.md).[connectToNetwork](../interfaces/idockerhelper.md#connecttonetwork)
+[IDockerHelper](../interfaces/IDockerHelper.md).[connectToNetwork](../interfaces/IDockerHelper.md#connecttonetwork)
 
 #### Defined in
 
@@ -124,7 +124,7 @@ Promise resolving with created container id.
 
 #### Implementation of
 
-IDockerHelper.createContainer
+[IDockerHelper](../interfaces/IDockerHelper.md).[createContainer](../interfaces/IDockerHelper.md#createcontainer)
 
 #### Defined in
 
@@ -148,7 +148,7 @@ ___
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/idockerhelper.md).[createNetwork](../interfaces/idockerhelper.md#createnetwork)
+[IDockerHelper](../interfaces/IDockerHelper.md).[createNetwork](../interfaces/IDockerHelper.md#createnetwork)
 
 #### Defined in
 
@@ -176,7 +176,7 @@ Volume name.
 
 #### Implementation of
 
-IDockerHelper.createVolume
+[IDockerHelper](../interfaces/IDockerHelper.md).[createVolume](../interfaces/IDockerHelper.md#createvolume)
 
 #### Defined in
 
@@ -200,7 +200,7 @@ ___
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/idockerhelper.md).[inspectNetwork](../interfaces/idockerhelper.md#inspectnetwork)
+[IDockerHelper](../interfaces/IDockerHelper.md).[inspectNetwork](../interfaces/IDockerHelper.md#inspectnetwork)
 
 #### Defined in
 
@@ -238,7 +238,7 @@ ___
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/idockerhelper.md).[listNetworks](../interfaces/idockerhelper.md#listnetworks)
+[IDockerHelper](../interfaces/IDockerHelper.md).[listNetworks](../interfaces/IDockerHelper.md#listnetworks)
 
 #### Defined in
 
@@ -250,13 +250,15 @@ ___
 
 ▸ **listVolumes**(): `Promise`<`string`[]\>
 
+Lists exisiting volumes
+
 #### Returns
 
 `Promise`<`string`[]\>
 
 #### Implementation of
 
-IDockerHelper.listVolumes
+[IDockerHelper](../interfaces/IDockerHelper.md).[listVolumes](../interfaces/IDockerHelper.md#listvolumes)
 
 #### Defined in
 
@@ -283,7 +285,7 @@ Fetches the image from repo
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/idockerhelper.md).[pullImage](../interfaces/idockerhelper.md#pullimage)
+[IDockerHelper](../interfaces/IDockerHelper.md).[pullImage](../interfaces/IDockerHelper.md#pullimage)
 
 #### Defined in
 
@@ -311,7 +313,7 @@ Promise which resolves when container has been removed.
 
 #### Implementation of
 
-IDockerHelper.removeContainer
+[IDockerHelper](../interfaces/IDockerHelper.md).[removeContainer](../interfaces/IDockerHelper.md#removecontainer)
 
 #### Defined in
 
@@ -339,7 +341,7 @@ Promise which resolves when volume has been removed.
 
 #### Implementation of
 
-IDockerHelper.removeVolume
+[IDockerHelper](../interfaces/IDockerHelper.md).[removeVolume](../interfaces/IDockerHelper.md#removevolume)
 
 #### Defined in
 
@@ -367,7 +369,7 @@ Starts container.
 
 #### Implementation of
 
-IDockerHelper.run
+[IDockerHelper](../interfaces/IDockerHelper.md).[run](../interfaces/IDockerHelper.md#run)
 
 #### Defined in
 
@@ -395,7 +397,7 @@ Promise resolving when container has been started.
 
 #### Implementation of
 
-IDockerHelper.startContainer
+[IDockerHelper](../interfaces/IDockerHelper.md).[startContainer](../interfaces/IDockerHelper.md#startcontainer)
 
 #### Defined in
 
@@ -423,7 +425,7 @@ Promise which resolves with container statistics.
 
 #### Implementation of
 
-IDockerHelper.stats
+[IDockerHelper](../interfaces/IDockerHelper.md).[stats](../interfaces/IDockerHelper.md#stats)
 
 #### Defined in
 
@@ -451,7 +453,7 @@ Promise which resolves when the container has been stopped.
 
 #### Implementation of
 
-IDockerHelper.stopContainer
+[IDockerHelper](../interfaces/IDockerHelper.md).[stopContainer](../interfaces/IDockerHelper.md#stopcontainer)
 
 #### Defined in
 
@@ -479,7 +481,7 @@ Translated volumes configuration.
 
 #### Implementation of
 
-IDockerHelper.translateVolumesConfig
+[IDockerHelper](../interfaces/IDockerHelper.md).[translateVolumesConfig](../interfaces/IDockerHelper.md#translatevolumesconfig)
 
 #### Defined in
 
@@ -508,7 +510,7 @@ Container exit code.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/idockerhelper.md).[wait](../interfaces/idockerhelper.md#wait)
+[IDockerHelper](../interfaces/IDockerHelper.md).[wait](../interfaces/IDockerHelper.md#wait)
 
 #### Defined in
 
@@ -538,7 +540,7 @@ ___
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/idockerhelper.md).[logger](../interfaces/idockerhelper.md#logger)
+[IDockerHelper](../interfaces/IDockerHelper.md).[logger](../interfaces/IDockerHelper.md#logger)
 
 #### Defined in
 

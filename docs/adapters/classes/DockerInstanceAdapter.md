@@ -14,25 +14,25 @@ Adapter for running Instance by Runner executed in Docker container.
 
 ### Methods
 
-- [cleanup](dockerinstanceadapter.md#cleanup)
-- [getNetworkSetup](dockerinstanceadapter.md#getnetworksetup)
-- [getPortsConfig](dockerinstanceadapter.md#getportsconfig)
-- [init](dockerinstanceadapter.md#init)
-- [monitorRate](dockerinstanceadapter.md#monitorrate)
-- [preparePortBindingsConfig](dockerinstanceadapter.md#prepareportbindingsconfig)
-- [remove](dockerinstanceadapter.md#remove)
-- [run](dockerinstanceadapter.md#run)
-- [stats](dockerinstanceadapter.md#stats)
+- [cleanup](DockerInstanceAdapter.md#cleanup)
+- [getNetworkSetup](DockerInstanceAdapter.md#getnetworksetup)
+- [getPortsConfig](DockerInstanceAdapter.md#getportsconfig)
+- [init](DockerInstanceAdapter.md#init)
+- [monitorRate](DockerInstanceAdapter.md#monitorrate)
+- [preparePortBindingsConfig](DockerInstanceAdapter.md#prepareportbindingsconfig)
+- [remove](DockerInstanceAdapter.md#remove)
+- [run](DockerInstanceAdapter.md#run)
+- [stats](DockerInstanceAdapter.md#stats)
 
 ### Constructors
 
-- [constructor](dockerinstanceadapter.md#constructor)
+- [constructor](DockerInstanceAdapter.md#constructor)
 
 ### Properties
 
-- [dockerHelper](dockerinstanceadapter.md#dockerhelper)
-- [logger](dockerinstanceadapter.md#logger)
-- [resources](dockerinstanceadapter.md#resources)
+- [dockerHelper](DockerInstanceAdapter.md#dockerhelper)
+- [logger](DockerInstanceAdapter.md#logger)
+- [resources](DockerInstanceAdapter.md#resources)
 
 ## Methods
 
@@ -59,11 +59,11 @@ ___
 
 ### getNetworkSetup
 
-▸ `Private` **getNetworkSetup**(): `Promise`<`Object`\>
+▸ `Private` **getNetworkSetup**(): `Promise`<{ `host`: `string` ; `network`: `string`  }\>
 
 #### Returns
 
-`Promise`<`Object`\>
+`Promise`<{ `host`: `string` ; `network`: `string`  }\>
 
 #### Defined in
 
@@ -116,7 +116,7 @@ ___
 
 ### monitorRate
 
-▸ **monitorRate**(`_rps`): [`DockerInstanceAdapter`](dockerinstanceadapter.md)
+▸ **monitorRate**(`_rps`): [`DockerInstanceAdapter`](DockerInstanceAdapter.md)
 
 #### Parameters
 
@@ -126,7 +126,7 @@ ___
 
 #### Returns
 
-[`DockerInstanceAdapter`](dockerinstanceadapter.md)
+[`DockerInstanceAdapter`](DockerInstanceAdapter.md)
 
 #### Implementation of
 
@@ -140,7 +140,7 @@ ___
 
 ### preparePortBindingsConfig
 
-▸ `Private` **preparePortBindingsConfig**(`declaredPorts`, `containerConfig`, `exposed?`): `Promise`<`Object`\>
+▸ `Private` **preparePortBindingsConfig**(`declaredPorts`, `containerConfig`, `exposed?`): `Promise`<{ [key: string]: `string`;  }\>
 
 Finds free port for every port requested in Sequence configuration and returns map of assigned ports.
 
@@ -154,7 +154,7 @@ Finds free port for every port requested in Sequence configuration and returns m
 
 #### Returns
 
-`Promise`<`Object`\>
+`Promise`<{ [key: string]: `string`;  }\>
 
 Promise resolving with map of ports mapping.
 
@@ -244,13 +244,13 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[docker-instance-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L33)
+[docker-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L35)
 
 ## Properties
 
 ### dockerHelper
 
-• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/idockerhelper.md)
+• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/IDockerHelper.md)
 
 #### Defined in
 
