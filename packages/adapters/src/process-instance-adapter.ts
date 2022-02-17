@@ -57,10 +57,11 @@ IComponent {
 
         if ("python3" in config.engines) {
             this.logger.trace(gotPython);
-            return [
-                "python3",
-                path.resolve(__dirname, "../../../python/runner/runner.py")
-            ];
+            const runnerPath = isTSNode
+                ? "../../../python/runner/runner.py"
+                : "../../python/runner/runner.py";
+
+            return ["python3", path.resolve(__dirname, runnerPath)];
         }
         return [
             isTSNode ? "ts-node" : process.execPath,

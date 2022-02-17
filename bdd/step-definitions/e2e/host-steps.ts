@@ -336,14 +336,14 @@ When("send kill message to instance", async function(this: CustomWorld) {
 
 When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     if (process.env.NO_DOCKER) {
-        const res = actualResponse()?.data?.processId;
+        const res = (await this.resources.instance?.getHealth())?.data?.processId;
 
         if (!res) assert.fail();
 
         processId = res;
         console.log("Process is identified.", processId);
     } else {
-        const res = actualResponse()?.data?.containerId;
+        const res = (await this.resources.instance?.getHealth())?.data?.containerId;
 
         if (!res) assert.fail();
 
@@ -568,6 +568,56 @@ When("send data", async function(this: CustomWorld) {
     console.log(status);
 });
 
+When("send {string} to input", async function(this: CustomWorld, str) {
+    const status = await this.resources.instance?.sendStream("input", str, {
+        type: "text/plain",
+        end: true
+    });
+
+    console.log(status);
+});
+
+When("send file {string} as text input", async function(this: CustomWorld, path) {
+    const status = await this.resources.instance?.sendStream(
+        "input", createReadStream(path), { type: "text/plain", end: true }
+    );
+
+    console.log(status);
+});
+
+When("send file {string} as binary input", async function(this: CustomWorld, path) {
+    const status = await this.resources.instance?.sendStream(
+        "input", createReadStream(path), { type: "application/octet-stream", end: true }
+    );
+
+    console.log(status);
+});
+
+When("send {string} to stdin", async function(this: CustomWorld, str) {
+    const pipe = new Readable();
+
+    pipe.push(str);
+    pipe.push(null);
+
+    const status = await this.resources.instance?.sendStream("stdin", pipe);
+
+    console.log(status);
+});
+
+When("send stop with timeout {int}", async function(this: CustomWorld, timeout: number) {
+    console.log(`Sent stop message with timeouts ${timeout}`);
+    const resp = await this.resources.instance?.stop(timeout, false);
+
+    assert.equal(resp?.status, 202);
+});
+
+Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
+    const result = await this.resources.instance?.getStream(stream);
+
+    if (!result?.data) assert.fail(`No data in ${stream}!`);
+    assert.equal(text, await streamToString(result.data));
+});
+
 Then("output is {string}", async function(this: CustomWorld, str) {
     const output = await this.resources.instance?.getStream("output");
 
@@ -577,6 +627,37 @@ Then("output is {string}", async function(this: CustomWorld, str) {
 
     assert(outputString, str);
 });
+
+Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
+    const output = await this.resources.instance?.getStream(stream);
+
+    if (!output?.data) assert.fail("No output!");
+
+    const outputString = await streamToString(output.data);
+
+    assert.equal(outputString.includes(text), true);
+});
+
+When("instance health is {string}", async function(this: CustomWorld, health: string) {
+    const resp = await this.resources.instance?.getHealth();
+    const actual = resp?.data?.healthy.toString();
+
+    assert.equal(health, actual);
+});
+
+Then("instance emits event {string} with body", { timeout: 10000 },
+    async function(this:CustomWorld, event: string, body: string) {
+        const expectedHttpCode = 200;
+
+        const resp = await this.resources.instance?.getNextEvent(event);
+
+        assert.equal(resp?.status, expectedHttpCode);
+        console.log("getNextEvent response:", resp);
+
+        const actual = JSON.stringify(resp.data);
+
+        assert.equal(actual, body);
+    });
 
 Then("send data {string} named {string}", async (data: any, topic: string) => {
     const ps = new Readable();
