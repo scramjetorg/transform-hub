@@ -23,13 +23,13 @@
 
 ### Classes
 
-- [DockerInstanceAdapter](classes/dockerinstanceadapter.md)
-- [DockerSequenceAdapter](classes/dockersequenceadapter.md)
-- [DockerodeDockerHelper](classes/dockerodedockerhelper.md)
+- [DockerInstanceAdapter](classes/DockerInstanceAdapter.md)
+- [DockerSequenceAdapter](classes/DockerSequenceAdapter.md)
+- [DockerodeDockerHelper](classes/DockerodeDockerHelper.md)
 
 ### Interfaces
 
-- [IDockerHelper](interfaces/idockerhelper.md)
+- [IDockerHelper](interfaces/IDockerHelper.md)
 
 ### Variables
 
@@ -227,7 +227,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `containers` | `Record`<`string`, `Object`\> |
+| `containers` | `Record`<`string`, { `name`: `string`  }\> |
 
 #### Defined in
 
@@ -281,7 +281,7 @@ ___
 
 ### STH\_DOCKER\_NETWORK
 
-• `Const` **STH\_DOCKER\_NETWORK**: ``"transformhub0"``
+• **STH\_DOCKER\_NETWORK**: ``"transformhub0"``
 
 #### Defined in
 
@@ -373,7 +373,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `dockerHelper` | [`IDockerHelper`](interfaces/idockerhelper.md) |
+| `dockerHelper` | [`IDockerHelper`](interfaces/IDockerHelper.md) |
 
 #### Returns
 
