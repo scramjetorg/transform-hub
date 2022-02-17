@@ -21,6 +21,7 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@scramjet/api-client": "^0.16.0",
+    "@scramjet/client-utils": "^0.16.0",
     "commander": "^8.3.0",
     "minimatch": "^3.0.4",
     "scramjet": "^4.36.0",

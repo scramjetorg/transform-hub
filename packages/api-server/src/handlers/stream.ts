@@ -6,6 +6,7 @@ import { getStream, getWritable } from "../lib/data-extractors";
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { getStatusCode } from "http-status-codes";
 
 const logger = new ObjLogger("ApiServer-stream");
 
@@ -157,7 +158,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     // eslint-disable-next-line no-extra-parens
                     if ((data as any).opStatus) {
                         // eslint-disable-next-line no-extra-parens
-                        status = (data as any).opStatus;
+                        status = getStatusCode((data as any).opStatus);
                         // eslint-disable-next-line no-extra-parens
                         delete (data as any).opStatus;
                     }

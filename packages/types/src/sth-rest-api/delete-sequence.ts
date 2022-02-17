@@ -1,3 +1,1 @@
-import { OpResponse } from "./common";
-
-export type DeleteSequenceResponse = OpResponse<{id: string}>
+export type DeleteSequenceResponse = {id: string}

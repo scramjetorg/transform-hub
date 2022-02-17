@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { Command } from "commander";
-import { Readable, Writable } from "stream";
+import { Readable, Stream, Writable } from "stream";
 
 /**
  * Command from commander contains obj with whole params, that user provides to the console.
@@ -42,16 +42,16 @@ export async function displayObject(_program: Command, object: any) {
  */
 export async function displayStream(
     _program: Command,
-    response: Promise<ReadableStream>,
+    response: Promise<Stream | ReadableStream<any>>,
     output: Writable = process.stdout
 ): Promise<void> {
     try {
-        const resp = await response as unknown as Readable;
+        const resp = (await response) as unknown as Readable;
 
         resp.pipe(output);
         return new Promise((res, rej) => resp.on("finish", res).on("error", rej));
     } catch (e: any) {
-        console.error(e && e.stack || e);
+        console.error((e && e.stack) || e);
         process.exitCode = e.exitCode || 1;
         return Promise.reject();
     }

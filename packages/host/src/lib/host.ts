@@ -21,6 +21,7 @@ import { InstanceStore } from "./instance-store";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
+import { OpResponse } from "@scramjet/types/src/sth-rest-api";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -326,7 +327,7 @@ export class Host implements IComponent {
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.DeleteSequenceResponse>} Promise resolving to operation result object.
      */
-    async handleDeleteSequence(req: ParsedMessage): Promise<STHRestAPI.DeleteSequenceResponse> {
+    async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
         const id = req.params?.id;
 
         this.logger.trace("Deleting sequence...", id);
@@ -403,7 +404,7 @@ export class Host implements IComponent {
      * @param {IncomingMessage} stream Stream of packaged sequence.
      * @returns {Promise} Promise resolving to operation result.
      */
-    async handleNewSequence(stream: IncomingMessage): Promise<STHRestAPI.SendSequenceResponse> {
+    async handleNewSequence(stream: IncomingMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         this.logger.info("New sequence incoming");
 
         const id = IDProvider.generate();
@@ -426,13 +427,14 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(config.id, SequenceMessageCode.SEQUENCE_CREATED);
 
             return {
-                id: config.id
+                id: config.id,
+                opStatus: ReasonPhrases.OK
             };
         } catch (error: any) {
             this.logger.error(error?.stack);
 
             return {
-                opStatus: 422,
+                opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
                 error
             };
         }
@@ -448,7 +450,7 @@ export class Host implements IComponent {
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
      */
-    async handleStartSequence(req: ParsedMessage): Promise<STHRestAPI.StartSequenceResponse> {
+    async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
         if (await this.loadCheck.overloaded()) {
             return {
                 opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
@@ -469,6 +471,7 @@ export class Host implements IComponent {
                 appConfig: csic.appConfig,
                 sequenceArgs: csic.sequenceArgs,
                 sequence: seqId,
+                ports: csic.info.ports,
                 created: csic.info.created,
                 started: csic.info.started
             }, InstanceMessageCode.INSTANCE_STARTED);

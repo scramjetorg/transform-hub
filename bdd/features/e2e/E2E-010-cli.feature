@@ -218,5 +218,6 @@ Feature: CLI tests
         Then I get the last instance id from config
         And I get instance info
         And I execute CLI with "inst kill -" arguments
+        And wait for "8000" ms
         And I execute CLI with "seq rm -" arguments
         And host is still running

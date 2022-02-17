@@ -37,7 +37,7 @@ export class ClientUtils implements HttpClient {
      * @param args Fetch arguments.
      * @returns Fetch object.
      */
-    private safeRequest<T>(...args: Parameters<typeof fetch>) {
+    private async safeRequest<T>(...args: Parameters<typeof fetch>) {
         let resp = fetch<T>(...args);
 
         if (this.log) {
@@ -54,7 +54,6 @@ export class ClientUtils implements HttpClient {
                     throw err;
                 });
         }
-
         const source = new Error();
 
         return resp.catch((e: Error | QueryError) => {
@@ -78,8 +77,10 @@ export class ClientUtils implements HttpClient {
      * @param {string} url Request URL.
      * @returns Fetch response.
      */
-    async getStream(url: string): Promise<ReadableStream> {
-        return this.safeRequest<Response>(`${this.apiBase}/${url}`, {}, FetchResultTypes.Result).then((res) => (res as Response).body as ReadableStream);
+    async getStream(url: string): Promise<Stream> {
+        return this.safeRequest<Response>(`${this.apiBase}/${url}`, {}, FetchResultTypes.Result).then(
+            (res) => (res as Response).body as unknown as Stream
+        );
     }
 
     /**
@@ -142,7 +143,7 @@ export class ClientUtils implements HttpClient {
      */
     async sendStream<T>(
         url: string,
-        stream: string | Stream,
+        stream: Stream | string,
         { type = "application/octet-stream", end, parseResponse }: SendStreamOptions = {}
     ): Promise<T> {
         const headers: Headers = {

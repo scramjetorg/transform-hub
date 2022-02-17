@@ -5,7 +5,7 @@ import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumb
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer } from "../../lib/utils";
 import fs, { createReadStream } from "fs";
-import { HostClient, InstanceOutputStream, Response } from "@scramjet/api-client";
+import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
 import crypto from "crypto";
@@ -22,7 +22,7 @@ import { exec } from "child_process";
 let hostClient: HostClient;
 let actualHealthResponse: any;
 let actualStatusResponse: any;
-let actualApiResponse: Response;
+let actualApiResponse: any;
 let actualLogResponse: any;
 let containerId: string;
 let processId: number;
@@ -39,7 +39,7 @@ const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
 };
 const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
-const streamToString = async (stream: Readable | ReadableStream): Promise<string> => {
+const streamToString = async (stream: Stream): Promise<string> => {
     const chunks = [];
     const strings = (stream as Readable).pipe(new PassThrough({ encoding: "utf-8" }));
 
@@ -265,7 +265,7 @@ When(
         const out = await this.resources.instance?.getStream(outputStream);
 
         console.log(out);
-        out.pipe(process.stdout);
+        out!.pipe(process.stdout);
 
         if (!out) assert.fail("No output!");
 
@@ -540,10 +540,8 @@ When("confirm that sequence and volumes are removed", async function(this: Custo
 
     if (!sequenceId) assert.fail();
 
-    const sequences = await hostClient.listSequences();
-    const sequenceExist = !!sequences?.find((sequenceInfo: { id: string }) => {
-        return sequenceId === sequenceInfo.id;
-    });
+    const sequences = await hostClient.listSequences() || [];
+    const sequenceExist = !!sequences.find(sequenceInfo => sequenceId === sequenceInfo.id);
 
     assert.equal(sequenceExist, false);
     console.log(`Sequence with id ${sequenceId} is removed.`);
@@ -653,16 +651,16 @@ Then("output is {string}", async function(this: CustomWorld, str) {
 Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
     const output = await this.resources.instance?.getStream(stream);
 
-    if (!output?.data) assert.fail("No output!");
+    if (!output) assert.fail("No output!");
 
-    const outputString = await streamToString(output.data);
+    const outputString = await streamToString(output);
 
     assert.equal(outputString.includes(text), true);
 });
 
 When("instance health is {string}", async function(this: CustomWorld, health: string) {
     const resp = await this.resources.instance?.getHealth();
-    const actual = resp?.data?.healthy.toString();
+    const actual = resp.healthy.toString();
 
     assert.equal(health, actual);
 });

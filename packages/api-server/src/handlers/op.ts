@@ -87,7 +87,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
 
                     const result = await message(req, res);
 
-                    let response = "";
+                    let response = "{}";
 
                     if (result) {
                         result.opStatus = result.opStatus || ReasonPhrases.OK;
@@ -117,7 +117,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
                 await conn.sendControlMessage(message, checkMessage(message, obj));
 
                 res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
-                return res.end();
+                return res.end(JSON.stringify({ accepted: true }));
             } catch (e: any) {
                 return next(e);
             }
