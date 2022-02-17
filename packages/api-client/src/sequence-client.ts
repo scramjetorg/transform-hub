@@ -1,8 +1,9 @@
 import { IDProvider } from "@scramjet/model";
-import { ClientError } from "./client-error";
+import { ClientError } from "@scramjet/client-utils";
+import { STHRestAPI } from "@scramjet/types";
+
 import { InstanceClient } from "./instance-client";
 import { ClientProvider, HttpClient } from "./types";
-import { SequenceResponse } from "./types/responses";
 
 /**
  * Sequence client.
@@ -53,8 +54,11 @@ export class SequenceClient {
      * @returns {Promise<InstanceClient>} Promise which resolves with instance client.
      */
     async start(appConfig: any, args: any): Promise<InstanceClient> {
-        const response = await this.clientUtils.post<{ id: string }>(
-            `${this.sequenceURL}/start`, { appConfig, args }, {}, { json: true, parseResponse: "json" }
+        const response = await this.clientUtils.post<STHRestAPI.StartSequenceResponse>(
+            `${this.sequenceURL}/start`,
+            { appConfig, args },
+            {},
+            { json: true, parseResponse: "json" }
         );
 
         if (response.id) {
@@ -90,7 +94,7 @@ export class SequenceClient {
      * @returns Promise which resolves with sequence info.
      */
     async getInfo() {
-        return this.clientUtils.get<SequenceResponse>(this.sequenceURL);
+        return this.clientUtils.get<STHRestAPI.GetSequenceResponse>(this.sequenceURL);
     }
 
     /**

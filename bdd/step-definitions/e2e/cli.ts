@@ -37,8 +37,8 @@ When("I execute CLI with bash command {string}", { timeout: 30000 }, async funct
 
 When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
+
     if (process.env.SCRAMJET_TEST_LOG) {
-        console.log(stdio);
         console.error(stdio);
     }
     assert.equal(stdio[2], 0);
@@ -181,7 +181,7 @@ Then("I get instance id", function() {
 
 Then("I kill instance", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "kill", instanceId, ...formatFlags(), ...connectionFlags()]);
-    console.log(stdio);
+
     assert.equal(stdio[2], 0);
 });
 
@@ -194,7 +194,6 @@ Then("I delete sequence", { timeout: 10000 }, async function() {
 
 Then("I get instance health", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", instanceId, ...formatFlags(), ...connectionFlags()]);
-    console.log(stdio);
 
     assert.equal(stdio[2], 0);
     const msg = JSON.parse(stdio[0].replace("\n", ""));
@@ -204,19 +203,16 @@ Then("I get instance health", { timeout: 10000 }, async function() {
 
 Then("health outputs 404", async () => {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", instanceId, ...connectionFlags()]);
-    console.log(stdio);
     assert.equal(stdio[1].includes("404"), true);
 });
 
 Then("I get instance log", { timeout: 30000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "log", instanceId, ...connectionFlags()]);
-    console.log(stdio);
     assert.equal(stdio[2], 0);
 });
 
 Then("I get instance output", { timeout: 30000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", instanceId, ...connectionFlags()]);
-    console.log(stdio);
     assert.equal(stdio[2], 0);
 });
 
@@ -227,19 +223,16 @@ Then("I get the second instance output", { timeout: 30000 }, async function() {
 
 Then("I send input data {string}", async function(pathToFile: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "input", instanceId, pathToFile, ...formatFlags(), ...connectionFlags()]);
-    console.log(stdio);
     assert.equal(stdio[2], 0);
 });
 
 Then("I stop instance {string} {string}", async function(timeout: string, canCallKeepAlive: string) {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "stop", instanceId, timeout, canCallKeepAlive, ...formatFlags(), ...connectionFlags()]);
-    console.log(stdio);
     assert.equal(stdio[2], 0);
 });
 
 Then("I get list of sequences", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls", ...formatFlags(), ...connectionFlags()]);
-    console.log(stdio);
     assert.equal(stdio[2], 0);
     sequences = JSON.parse(stdio[0].replace("\n", ""));
 
@@ -254,12 +247,10 @@ Then("I get list of instances", async function() {
 
     let instanceFound = false;
 
-    for (let i = 0; i < instances.length; i++) {
-        const inst = instances[i];
-
-        if (inst.id === instanceId)
-            instanceFound = true;
+    for (const i of instances) {
+        if (i.id === instanceId) instanceFound = true;
     }
+
     assert.equal(instanceFound, true);
 });
 
@@ -267,7 +258,7 @@ Then("I get instance info", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "info", instanceId, ...formatFlags(), ...connectionFlags()]);
     assert.equal(stdio[2], 0);
     const info = JSON.parse(stdio[0].replace("\n", ""));
-    const seqId = info.sequenceId;
+    const seqId = info.sequence;
 
     assert.equal(seqId, sequenceId);
 });

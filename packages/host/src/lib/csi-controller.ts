@@ -15,7 +15,8 @@ import {
     InstanceConifg,
     ILifeCycleAdapterRun,
     MessageDataType,
-    IObjectLogger
+    IObjectLogger,
+    STHRestAPI
 } from "@scramjet/types";
 import {
     AppError,
@@ -466,14 +467,17 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
     }
 
-    async getInfo() {
+    async getInfo(): Promise<STHRestAPI.GetInstanceResponse> {
         await this.startPromise;
 
         return {
-            ...this.info,
-            sequenceId: this.sequence.id,
+            ports: this.info.ports,
+            started: this.info.started,
+            created: this.info.created,
+            id: this.id,
+            sequence: this.sequence.id,
             appConfig: this.appConfig,
-            args: this.sequenceArgs
+            sequenceArgs: this.sequenceArgs
         };
     }
 

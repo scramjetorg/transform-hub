@@ -1,5 +1,5 @@
 import { Stream } from "stream";
-import { ClientError } from "@scramjet/client-utils";
+import { ClientError } from "../client-error";
 
 export type SendStreamOptions = Partial<{
     type: string;

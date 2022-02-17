@@ -20,7 +20,7 @@ const streamToString = async (stream: Stream): Promise<string> => {
 };
 
 When("get instance info", async function(this: CustomWorld) {
-    this.resources.instanceInfo = (await this.resources.instance!.getInfo()).data;
+    this.resources.instanceInfo = await this.resources.instance!.getInfo();
 
     console.log(this.resources.instanceInfo);
 });

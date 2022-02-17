@@ -1,6 +1,6 @@
-import { Response, SendStreamOptions, ClientProvider, HttpClient } from "./types";
+import { SendStreamOptions, ClientProvider, HttpClient } from "./types";
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage } from "@scramjet/types";
+import { EncodedControlMessage, STHRestAPI } from "@scramjet/types";
 import { Stream } from "stream";
 import { IDProvider } from "@scramjet/model";
 
@@ -72,12 +72,12 @@ export class InstanceClient {
      *
      * @returns {Promise<Response>} TODO: comment.
      */
-    async kill(): Promise<any> {
-        return this.clientUtils.post(
+    async kill(): Promise<STHRestAPI.SendKillInstanceResponse> {
+        return this.clientUtils.post<STHRestAPI.SendKillInstanceResponse>(
             `${this.instanceURL}/_kill`,
             [RunnerMessageCode.KILL, {}] as EncodedControlMessage,
             {},
-            { json: true }
+            { json: true, parseResponse: "json" }
         );
     }
 
@@ -149,7 +149,7 @@ export class InstanceClient {
      * Returns instance info.
      */
     async getInfo() {
-        return this.clientUtils.get<any>(`${this.instanceURL}`);
+        return this.clientUtils.get<STHRestAPI.GetInstanceResponse>(`${this.instanceURL}`);
     }
 
     /**
@@ -159,8 +159,8 @@ export class InstanceClient {
      * @param {string} streamId Stream id.
      * @returns Promise resolving to stream.
      */
-    async getStream(streamId: InstanceOutputStream): Promise<Stream | ReadableStream> {
-        return this.clientUtils.getStream(`${this.instanceURL}/${streamId}`).then((response) => response.body);
+    async getStream(streamId: InstanceOutputStream): Promise<Stream> {
+        return this.clientUtils.getStream(`${this.instanceURL}/${streamId}`);
     }
 
     /**

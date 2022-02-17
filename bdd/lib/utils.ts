@@ -137,7 +137,11 @@ export async function getStreamsFromSpawn(
             child.on("error", rej);
             child.on("exit", res);
         })
-    ]);
+    ]).catch((error: any) => {
+        // eslint-disable-next-line no-console
+        console.error("Error in spawn", error);
+        throw error;
+    });
 
     return [stdout, stderr, statusCode];
 }

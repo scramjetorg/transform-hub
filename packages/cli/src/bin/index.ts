@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 
 import { Command } from "commander";
-import { ClientError } from "@scramjet/api-client";
+import { ClientError } from "@scramjet/client-utils";
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
 
@@ -13,13 +13,15 @@ const errorHandler = (err: ClientError) => {
     const opts = program.opts();
 
     if (opts.format === "json") {
-        console.log(JSON.stringify({
-            error: true,
-            code: err?.code,
-            stack: opts.log ? err?.stack : undefined,
-            message: err?.message,
-            reason: err?.reason?.message
-        }));
+        console.log(
+            JSON.stringify({
+                error: true,
+                code: err?.code,
+                stack: opts.log ? err?.stack : undefined,
+                message: err?.message,
+                reason: err?.reason?.message,
+            })
+        );
     } else {
         console.error(err.stack);
         if (err.reason) {
@@ -46,8 +48,7 @@ const errorHandler = (err: ClientError) => {
      * instance|inst [command]       operations on instance
      * help [command]                display help for command
      */
-    for (const command of Object.values(commands))
-        command(program);
+    for (const command of Object.values(commands)) command(program);
 
     /**
      * Options
@@ -64,12 +65,10 @@ const errorHandler = (err: ClientError) => {
         .option("-a, --api-url <url>", "Specify base API url", conf.apiUrl)
         .option("-f, --format <value>", "Specify display formatting: json or pretty", conf.format)
         .parse(process.argv)
-        .opts()
-    ;
+        .opts();
 
-    await new Promise(res => program.hook("postAction", res));
-})()
-    .catch(errorHandler);
+    await new Promise((res) => program.hook("postAction", res));
+})().catch(errorHandler);
 
 process.on("uncaughtException", errorHandler);
 process.on("unhandledRejection", errorHandler);

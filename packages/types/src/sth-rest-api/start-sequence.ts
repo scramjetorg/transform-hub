@@ -1,4 +1,2 @@
-import { OpResponse } from "./common";
-
-export type StartSequenceResponse = OpResponse<{ id: string }>
+export type StartSequenceResponse = { id: string }
 

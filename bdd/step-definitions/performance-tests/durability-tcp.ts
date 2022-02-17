@@ -47,7 +47,7 @@ Then("check every {int} seconds if instances respond with correct data for {floa
                 let response = "";
 
                 const client = net.createConnection({
-                    port: instanceInfo?.ports[port + "/tcp"],
+                    port: instanceInfo?.ports![port + "/tcp"],
                     host: process.env.SCRAMJET_HOST_URL ? new URL(process.env.SCRAMJET_HOST_URL).hostname : "localhost"
                 }, () => {
                     client
