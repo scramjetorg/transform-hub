@@ -649,10 +649,10 @@ Then("instance emits event {string} with body", { timeout: 10000 },
     async function(this:CustomWorld, event: string, body: string) {
         const expectedHttpCode = 200;
 
-        const resp = await this.resources.instance?.getNextEvent(event);
+        const resp = await this.resources.instance?.getEvent(event);
 
         assert.equal(resp?.status, expectedHttpCode);
-        console.log("getNextEvent response:", resp);
+        console.log("getEvent response:", resp);
 
         const actual = JSON.stringify(resp.data);
 
