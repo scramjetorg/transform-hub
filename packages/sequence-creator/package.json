@@ -13,7 +13,8 @@
     "test": "echo no tests yet -- # npm run test:ava",
     "test:ava": "ava",
     "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack"
+    "postbuild": "cp -prT ./templates ./dist/templates",
+    "postpostbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
