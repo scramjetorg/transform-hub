@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Then, When } from "@cucumber/cucumber";
 import { CustomWorld } from "../world";
 
@@ -58,7 +59,6 @@ Then("API starts with {string} server name", async function(this: CustomWorld, s
 
     const apiURL = this.resources.startOutput.match(/API on\s*(.*)/)[1];
 
-    // eslint-disable-next-line no-console
     console.log(`API is available on ${apiURL}`);
 
     assert.ok(new RegExp(server).test(apiURL));
@@ -114,7 +114,6 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
 
     this.resources.sequenceSendPromise = hostClient.sendSequence(
         this.resources.pkgFake as unknown as ReadStream
-    // eslint-disable-next-line no-console
     ).catch((err: any) => console.log(err));
 
     this.resources.pkgFake.write(

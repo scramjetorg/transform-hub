@@ -51,7 +51,7 @@ export async function displayStream(
         resp.pipe(output);
         return new Promise((res, rej) => resp.on("finish", res).on("error", rej));
     } catch (e: any) {
-        console.error((e && e.stack) || e);
+        console.error(e && e.stack || e);
         process.exitCode = e.exitCode || 1;
         return Promise.reject();
     }
