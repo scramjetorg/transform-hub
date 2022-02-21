@@ -4,6 +4,7 @@
 import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
+import { STHRestAPI } from "@scramjet/types";
 import { getStreamsFromSpawn } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 
@@ -187,7 +188,6 @@ Then("I kill instance", async function() {
 
 Then("I delete sequence", { timeout: 10000 }, async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "delete", sequenceId, ...formatFlags(), ...connectionFlags()]);
-    console.log(stdio);
 
     assert.equal(stdio[2], 0);
 });
@@ -241,15 +241,11 @@ Then("I get list of sequences", async function() {
 
 Then("I get list of instances", async function() {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls", ...formatFlags(), ...connectionFlags()]);
-    console.log(stdio);
+
     assert.equal(stdio[2], 0);
-    const instances = JSON.parse(stdio[0].replace("\n", ""));
+    const instances = JSON.parse(stdio[0].replace("\n", "")) as STHRestAPI.GetInstancesResponse;
 
-    let instanceFound = false;
-
-    for (const i of instances) {
-        if (i.id === instanceId) instanceFound = true;
-    }
+    const instanceFound = instances.some(({ id }) => id === instanceId);
 
     assert.equal(instanceFound, true);
 });

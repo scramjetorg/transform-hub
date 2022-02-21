@@ -353,12 +353,13 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
         processId = res;
         console.log("Process is identified.", processId);
     } else {
-        const res = (await this.resources.instance?.getHealth())?.containerId;
+        containerId = (await this.resources.instance?.getHealth())?.containerId!;
 
-        if (!res) assert.fail();
-
-        containerId = res;
-        console.log("Container is identified.", containerId);
+        if (containerId) {
+            console.log("Container is identified.", containerId);
+        } else {
+            assert.fail();
+        }
     }
 });
 
@@ -626,9 +627,11 @@ When("send {string} to stdin", async function(this: CustomWorld, str) {
 
 When("send stop with timeout {int}", async function(this: CustomWorld, timeout: number) {
     console.log(`Sent stop message with timeouts ${timeout}`);
-    const resp = await this.resources.instance?.stop(timeout, false);
+    const resp = await this.resources.instance?.stop(timeout, false)!;
 
-    assert.equal(resp?.status, 202);
+    if (!resp.accepted) {
+        assert.fail();
+    }
 });
 
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
@@ -659,7 +662,7 @@ Then("{string} contains {string}", async function(this: CustomWorld, stream, tex
 });
 
 When("instance health is {string}", async function(this: CustomWorld, health: string) {
-    const resp = await this.resources.instance?.getHealth();
+    const resp = await this.resources.instance?.getHealth()!;
     const actual = resp.healthy.toString();
 
     assert.equal(health, actual);

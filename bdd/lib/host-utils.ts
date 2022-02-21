@@ -21,14 +21,14 @@ export class HostUtils {
 
     async check() {
         assert.equal(
-            (await new HostClient(this.hostUrl).getLoadCheck()).status,
+            (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad,
             200,
             "Remote host doesn't respond"
         );
     }
 
     async getHostStatus() {
-        return (await new HostClient(this.hostUrl).getLoadCheck()).status;
+        return (await new HostClient(this.hostUrl).getLoadCheck()).currentLoad;
     }
 
     async stopHost() {
@@ -48,7 +48,7 @@ export class HostUtils {
             const hostClient = new HostClient(this.hostUrl);
 
             assert.equal(
-                (await hostClient.getLoadCheck()).status, // TODO: change to version and log it
+                (await hostClient.getLoadCheck()).currentLoad, // TODO: change to version and log it
                 200,
                 "Remote host doesn't respond"
             );

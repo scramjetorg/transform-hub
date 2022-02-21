@@ -79,9 +79,9 @@ Then("get runner container information", { timeout: 20000 }, async function(this
     const resp = await instance.getHealth();
     const containerId = resp.containerId;
     const [stats, info, inspect] = await Promise.all([
-        new Dockerode().getContainer(containerId).stats({ stream: false }),
+        new Dockerode().getContainer(containerId!).stats({ stream: false }),
         new Dockerode().listContainers().then(containers => containers.find(container => container.Id === containerId)),
-        new Dockerode().getContainer(containerId).inspect(),
+        new Dockerode().getContainer(containerId!).inspect(),
     ]);
 
     this.resources.containerStats = stats;
