@@ -212,7 +212,7 @@ Feature: CLI tests
     @ci @cli
     Scenario: E2E-010 TC-023 Check minus replacements with a sequence
         Given host is running
-        When I execute CLI with "pack ../dist/reference-apps/hello-alice-out" arguments
+        When I execute CLI with "pack ../dist/reference-apps/checksum-sequence" arguments
         And I execute CLI with "seq send -" arguments
         And I execute CLI with "seq start -" arguments
         Then I get the last sequence id from config
