@@ -50,7 +50,7 @@ export class InstanceClient {
      *
      * @param {number} timeout Timeout in milliseconds to graceful stop
      * @param {boolean} canCallKeepalive If true, instance can call keepAlive.
-     * @returns {Promise<Response>} TODO: comment
+     * @returns {Promise<SendStopInstanceResponse>} Promise resolving to stop Instance result.
      */
     async stop(timeout: number, canCallKeepalive: boolean): Promise<STHRestAPI.SendStopInstanceResponse> {
         return this.clientUtils.post(
@@ -70,7 +70,7 @@ export class InstanceClient {
     /**
      * Send kill command to instance
      *
-     * @returns {Promise<Response>} TODO: comment.
+     * @returns {Promise<SendKillInstanceResponse>} Promise resolving to kill Instance result.
      */
     async kill(): Promise<STHRestAPI.SendKillInstanceResponse> {
         return this.clientUtils.post<STHRestAPI.SendKillInstanceResponse>(
@@ -86,7 +86,7 @@ export class InstanceClient {
      *
      * @param {string} eventName Event name.
      * @param {string} message Event data to send.
-     * @returns {Promise<Response>} TODO: comment.
+     * @returns {Promise<STHRestAPI.SendEventResponse>} Promise resolving to send event result.
      */
     async sendEvent(eventName: string, message: string) {
         const data = [
@@ -104,7 +104,7 @@ export class InstanceClient {
      * Waits and returns next event sent by instance.
      *
      * @param {string} eventName Event name.
-     * @returns {Promise<Response>} Promise resolving with event data.
+     * @returns {Promise<STHRestAPI.GetEventResponse>} Promise resolving to event data.
      */
     async getNextEvent(eventName: string) {
         return this.clientUtils.get<STHRestAPI.GetEventResponse>(`${this.instanceURL}/once/${eventName}`);
@@ -115,7 +115,7 @@ export class InstanceClient {
      * Waits for event if it was never fired.
      *
      * @param {string} eventName Event name.
-     * @returns {Promise<Response>} Promise resolving with event data.
+     * @returns {Promise<STHRestAPI.GetEventResponse>} Promise resolving to event data.
      */
     async getEvent(eventName: string) {
         return this.clientUtils.get<STHRestAPI.GetEventResponse>(`${this.instanceURL}/event/${eventName}`);
@@ -125,7 +125,7 @@ export class InstanceClient {
      * Fetches event
      *
      * @param {string} eventName - event name
-     * @returns stream of events from instance
+     * @returns stream of events from Instance
      **/
     async getEventStream(eventName: string) {
         return this.clientUtils.getStream(`${this.instanceURL}/events/${eventName}`);
@@ -133,6 +133,8 @@ export class InstanceClient {
 
     /**
      * Returns instance health.
+     *
+     * @returns {Promise<STHRestAPI.GetInstanceHealthResponse>} Promise resolving to Instance health.
      */
     async getHealth() {
         return this.clientUtils.get<STHRestAPI.GetHealthResponse>(`${this.instanceURL}/health`);
@@ -140,6 +142,8 @@ export class InstanceClient {
 
     /**
      * Returns instance info.
+     *
+     * @returns {Promise<STHRestAPI.GetInstanceResponse>} Promise resolving to Instance info.
      */
     async getInfo() {
         return this.clientUtils.get<STHRestAPI.GetInstanceResponse>(`${this.instanceURL}`);
@@ -158,7 +162,6 @@ export class InstanceClient {
 
     /**
      * Sends stream to one of the instance inputs.
-     *
      *
      * @param {string} streamId Target input stream.
      * @param {stream|string} stream Stream to send.
