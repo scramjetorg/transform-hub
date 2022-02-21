@@ -52,7 +52,7 @@ export class InstanceClient {
      * @param {boolean} canCallKeepalive If true, instance can call keepAlive.
      * @returns {Promise<Response>} TODO: comment
      */
-    async stop(timeout: number, canCallKeepalive: boolean): Promise<Response> {
+    async stop(timeout: number, canCallKeepalive: boolean): Promise<STHRestAPI.SendStopInstanceResponse> {
         return this.clientUtils.post(
             `${this.instanceURL}/_stop`,
             [
@@ -88,7 +88,7 @@ export class InstanceClient {
      * @param {string} message Event data to send.
      * @returns {Promise<Response>} TODO: comment.
      */
-    async sendEvent(eventName: string, message: string): Promise<Response> {
+    async sendEvent(eventName: string, message: string) {
         const data = [
             RunnerMessageCode.EVENT,
             {
@@ -97,7 +97,7 @@ export class InstanceClient {
             },
         ] as EncodedControlMessage;
 
-        return this.clientUtils.post(`${this.instanceURL}/_event`, data, {}, { json: true });
+        return this.clientUtils.post<STHRestAPI.SendEventResponse>(`${this.instanceURL}/_event`, data, {}, { json: true, parseResponse: "json" });
     }
 
     /**
@@ -107,7 +107,7 @@ export class InstanceClient {
      * @returns {Promise<Response>} Promise resolving with event data.
      */
     async getNextEvent(eventName: string) {
-        return this.clientUtils.get(`${this.instanceURL}/once/${eventName}`);
+        return this.clientUtils.get<STHRestAPI.GetEventResponse>(`${this.instanceURL}/once/${eventName}`);
     }
 
     /**
@@ -118,7 +118,7 @@ export class InstanceClient {
      * @returns {Promise<Response>} Promise resolving with event data.
      */
     async getEvent(eventName: string) {
-        return this.clientUtils.get<any>(`${this.instanceURL}/event/${eventName}`);
+        return this.clientUtils.get<STHRestAPI.GetEventResponse>(`${this.instanceURL}/event/${eventName}`);
     }
 
     /**
@@ -135,14 +135,7 @@ export class InstanceClient {
      * Returns instance health.
      */
     async getHealth() {
-        return this.clientUtils.get<any>(`${this.instanceURL}/health`);
-    }
-
-    /**
-     * Returns instance status.
-     */
-    async getStatus() {
-        return this.clientUtils.get(`${this.instanceURL}/status`);
+        return this.clientUtils.get<STHRestAPI.GetHealthResponse>(`${this.instanceURL}/health`);
     }
 
     /**
