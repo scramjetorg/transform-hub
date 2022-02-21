@@ -51,7 +51,7 @@ export class SequenceClient {
      *
      * @param {any} appConfig Configuration to be passed to Instance context.
      * @param {any} args Arguments to be passed to first function in Sequence.
-     * @returns {Promise<InstanceClient>} Promise which resolves with instance client.
+     * @returns {Promise<InstanceClient>} Promise resolving to Instance Client.
      */
     async start(appConfig: any, args: any): Promise<InstanceClient> {
         const response = await this.clientUtils.post<STHRestAPI.StartSequenceResponse>(
@@ -71,7 +71,7 @@ export class SequenceClient {
     /**
      * Returns list of all instances creteated from sequnece.
      *
-     * @returns List of instances
+     * @returns {Promise<string[]>} Promise resolving to list of Instances.
      */
     async listInstances() {
         return this.clientUtils.get<string[]>(`${this.sequenceURL}/instances`);
@@ -91,14 +91,14 @@ export class SequenceClient {
     /**
      * Returns sequence details.
      *
-     * @returns Promise which resolves with sequence info.
+     * @returns {Promise<STHRestAPI.GetSequenceResponse>} Promise resolving to Sequence info.
      */
     async getInfo() {
         return this.clientUtils.get<STHRestAPI.GetSequenceResponse>(this.sequenceURL);
     }
 
     /**
-     * TODO: comment.
+     * Not implemented.
      */
     async overwrite() {
         throw Error("Not yet implemented");

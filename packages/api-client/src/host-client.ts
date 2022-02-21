@@ -21,7 +21,7 @@ export class HostClient implements ClientProvider {
     /**
      * Returns list of all sequences on Host.
      *
-     * @returns {Promise<STHRestAPI.GetSequencesResponse[]>} Promise resolving to response with list.
+     * @returns {Promise<STHRestAPI.GetSequencesResponse[]>} Promise resolving to list of Sequences.
      */
     async listSequences() {
         return this.client.get<STHRestAPI.GetSequencesResponse>("sequences");
@@ -30,7 +30,7 @@ export class HostClient implements ClientProvider {
     /**
      * Returns list of all instances on Host.
      *
-     * @returns {Promise<STHRestAPI.GetInstancesResponse>} Promise resolving to response with list.
+     * @returns {Promise<STHRestAPI.GetInstancesResponse>} Promise resolving to list of Instances.
      */
     async listInstances() {
         return this.client.get<STHRestAPI.GetInstancesResponse>("instances");
@@ -63,7 +63,7 @@ export class HostClient implements ClientProvider {
      * Returns sequence details.
      *
      * @param {string} sequenceId Seqeuence id.
-     * @returns Object with sequence details.
+     * @returns {Promise<STHRestAPI.GetSequenceResponse>} Promise resolving to Sequence details.
      */
     async getSequence(sequenceId: string) {
         return this.client.get<STHRestAPI.GetSequenceResponse>(`sequence/${sequenceId}`);
@@ -73,7 +73,7 @@ export class HostClient implements ClientProvider {
      * Deletes sequence with given id.
      *
      * @param {string} sequenceId Sequence id
-     * @returns TODO: comment.
+     * @returns {STHRestAPI.Promise<DeleteSequenceResponse>} Promise resolving to delete Sequence result.
      */
     async deleteSequence(sequenceId: string): Promise<STHRestAPI.DeleteSequenceResponse> {
         return this.client.delete<STHRestAPI.DeleteSequenceResponse>(`sequence/${sequenceId}`);
@@ -84,7 +84,7 @@ export class HostClient implements ClientProvider {
      * Returns instance details.
      *
      * @param {string} instanceId Instance id.
-     * @returns Instance details.
+     * @returns {Promise<STHRestAPI.GetInstanceResponse>} Promise resolving to Instance details.
      */
     async getInstanceInfo(instanceId: string) {
         return this.client.get<STHRestAPI.GetInstanceResponse>(`instance/${instanceId}`);
@@ -93,7 +93,7 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host load-check.
      *
-     * @returns {Promise<Response>} Promise resolving to Host load check data.
+     * @returns {Promise<GetLoadCheckResponse>} Promise resolving to Host load check data.
      */
     async getLoadCheck() {
         return this.client.get<STHRestAPI.GetLoadCheckResponse>("load-check");
@@ -102,7 +102,7 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host version.
      *
-     * @returns {Promise<Response>} Promise resolving to Host version.
+     * @returns {Promise<GetVersionResponse>} Promise resolving to Host version.
      */
     async getVersion() {
         return this.client.get<STHRestAPI.GetVersionResponse>("version");
