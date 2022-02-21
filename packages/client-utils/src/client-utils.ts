@@ -27,7 +27,7 @@ export class ClientUtils implements HttpClient {
             request: () => 0,
             ok: () => 0,
             error: () => 0,
-            ...logger,
+            ...logger
         };
     }
 
@@ -148,7 +148,7 @@ export class ClientUtils implements HttpClient {
     ): Promise<T> {
         const headers: Headers = {
             "content-type": type,
-            expect: "100-continue",
+            expect: "100-continue"
         };
 
         if (typeof end !== "undefined") {
