@@ -32,7 +32,7 @@ export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
 
     containerId?: string;
 
-    /** PID of Runner If STH is run with --no-docker option */
+    /** PID of Runner If STH is run with --runtime-adpater='process' option */
     processId?: number;
 }
 

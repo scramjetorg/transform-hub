@@ -1,7 +1,6 @@
 import {
     APIRoute,
     AppConfig,
-    CSIConfig,
     DownstreamStreamsConfig,
     EncodedMessage,
     ExitCode,
@@ -16,7 +15,8 @@ import {
     ILifeCycleAdapterRun,
     MessageDataType,
     IObjectLogger,
-    STHRestAPI
+    STHRestAPI,
+    STHConfiguration
 } from "@scramjet/types";
 import {
     AppError,
@@ -54,7 +54,7 @@ export class CSIController extends TypedEmitter<Events> {
     id: string;
 
     private keepAliveRequested?: boolean;
-    config: CSIConfig;
+    sthConfig: STHConfiguration;
     sequence: SequenceInfo;
     appConfig: AppConfig;
     instancePromise?: Promise<number>;
@@ -120,14 +120,14 @@ export class CSIController extends TypedEmitter<Events> {
         appConfig: AppConfig,
         sequenceArgs: any[] | undefined,
         communicationHandler: CommunicationHandler,
-        csiConfig: CSIConfig
+        sthConfig: STHConfiguration
     ) {
         super();
 
         this.id = id;
         this.sequence = sequence;
         this.appConfig = appConfig;
-        this.config = csiConfig;
+        this.sthConfig = sthConfig;
         this.sequenceArgs = sequenceArgs;
 
         this.communicationHandler = communicationHandler;
@@ -173,12 +173,12 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     startInstance() {
-        this._instanceAdapter = getInstanceAdapter(this.config.noDocker);
+        this._instanceAdapter = getInstanceAdapter(this.sthConfig);
         this._instanceAdapter.logger.pipe(this.logger);
 
         const instanceConfig: InstanceConifg = {
             ...this.sequence.config,
-            instanceAdapterExitDelay: this.config.instanceAdapterExitDelay
+            instanceAdapterExitDelay: this.sthConfig.instanceAdapterExitDelay
         };
 
         const instanceMain = async () => {
@@ -187,7 +187,10 @@ export class CSIController extends TypedEmitter<Events> {
 
                 this.logger.trace("Streams hooked and routed");
 
-                this.endOfSequence = this.instanceAdapter.run(instanceConfig, this.config.instancesServerPort, this.id);
+                this.endOfSequence = this.instanceAdapter.run(
+                    instanceConfig,
+                    this.sthConfig.host.instancesServerPort,
+                    this.id);
 
                 this.logger.trace("Sequence initialized");
 
@@ -283,6 +286,7 @@ export class CSIController extends TypedEmitter<Events> {
             return message;
         }, true);
 
+        // @DISCOVERY Control handlers won't work here :(
         this.communicationHandler.addControlHandler(
             RunnerMessageCode.KILL,
             (message) => this.handleKillCommand(message)

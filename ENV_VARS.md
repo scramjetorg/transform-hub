@@ -52,8 +52,8 @@ Should host not be spawned
 Required in some performance tests. Path to a file.
 
 ---
-`NO_DOCKER: boolean (default: false)`
-Run host with '--no-docker' option.
+`RUNTIME_ADAPTER: string`
+Runs host with specific --runtime-adapter
 
 ### Runner
 

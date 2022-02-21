@@ -320,16 +320,16 @@ ts-node packages/sth/src/bin/hub.ts   # Starts Host in development mode
 yarn start:dev                        # This is the same as above but using script
 ```
 
-You can also start STH without Docker, use the same commands as above but with added `--no-docker` option:
+You can also start STH without Docker, use the same commands as above but with added `--runtime-adapter=process` option:
 
 ```bash
-node dist/sth/bin/hub --no-docker
+node dist/sth/bin/hub --runtime-adapter=process
 
-yarn start --no-docker
+yarn start --runtime-adapter=process
 
-ts-node packages/sth/src/bin/hub.ts --no-docker
+ts-node packages/sth/src/bin/hub.ts --runtime-adapter=process
 
-yarn start:dev --no-docker
+yarn start:dev --runtime-adapter=process
 ```
 
 There is a wide range of options that you can start STH with. Please add `--help` or `-h` flag to list all the options:
@@ -357,8 +357,8 @@ Options:
   --prerunner-image <image name>  Image used by prerunner
   --prerunner-max-mem <mb>        Maximum mem used by prerunner
   --expose-host-ip <ip>           Host IP address that the Runner containers port is mapped to.
-  --no-docker                     Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.
-  --sequences-root                Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences
+  --runtime-adapter <type>        Run all the instances on the given type of container or on host machine. Possible value: `process`, `docker`, `kubernetes`. Keep in mind that using `process` is UNSAFE FOR RUNNING ARBITRARY CODE.
+  --sequences-root                Only works with --runtime-adapter=process option. Where should ProcessSequenceAdapter save new sequences
   -h, --help                      display help for command
 ```
 

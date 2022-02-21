@@ -69,6 +69,14 @@ export type HostConfig = {
     infoFilePath: string;
 }
 
+export type K8SAdapterConfiguration = {
+    namespace: string,
+    authConfigPath?: string,
+    sthPodHost: string,
+    runnerImage: string,
+    sequencesRoot: string
+}
+
 export type STHConfiguration = {
     /**
      * Logging level.
@@ -142,15 +150,16 @@ export type STHConfiguration = {
     instanceAdapterExitDelay: number;
 
     /**
-     * Whether host should run all the instances on the host machine,
-     * instead of in docker containers
-     * **UNSAFE FOR RUNNING ARBITRARY CODE (e.g. user submitted)**
+     * Which sequence and instance adpaters should sth use.
+     * One of 'docker', 'process', 'kubernetes'
      */
-    noDocker: boolean;
+     runtimeAdapter: string,
 
     /**
      * Only used when `noDocker` is true
      * Where should ProcessSequenceAdapter save new sequences
      */
     sequencesRoot: string
+
+    kubernetes: Partial<K8SAdapterConfiguration>
 }

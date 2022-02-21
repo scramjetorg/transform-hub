@@ -84,8 +84,6 @@ const waitForProcessToEnd = async (pid: number) => {
     }
 };
 
-process.env.LOCAL_HOST_BASE_URL = "";
-
 BeforeAll({ timeout: 10e3 }, async () => {
     if (process.env.NO_HOST) {
         return;
@@ -345,7 +343,12 @@ When("send kill message to instance", async function(this: CustomWorld) {
 });
 
 When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
-    if (process.env.NO_DOCKER) {
+    if (process.env.RUNTIME_ADAPTER === "kubernetes") {
+        // @TODO
+        return;
+    }
+
+    if (process.env.RUNTIME_ADAPTER === "process") {
         const res = (await this.resources.instance?.getHealth())?.processId;
 
         if (!res) assert.fail();
@@ -364,7 +367,12 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
 });
 
 When("runner has ended execution", { timeout: 500000 }, async () => {
-    if (process.env.NO_DOCKER) {
+    if (process.env.RUNTIME_ADAPTER === "kubernetes") {
+        // @TODO
+        return;
+    }
+
+    if (process.env.RUNTIME_ADAPTER === "process") {
         if (!processId) assert.fail("There is no process ID");
 
         await waitForProcessToEnd(processId);

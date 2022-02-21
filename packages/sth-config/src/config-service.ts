@@ -1,6 +1,7 @@
 import { DeepPartial, STHConfiguration } from "@scramjet/types";
 import { merge } from "@scramjet/utility";
 import path from "path";
+import { homedir } from "os";
 
 const imageConfig = require("./image-config.json");
 
@@ -35,8 +36,15 @@ const _defaultConfig: STHConfiguration = {
     },
     safeOperationLimit: 512,
     instanceAdapterExitDelay: 9000,
-    noDocker: false,
-    sequencesRoot: path.join(require("os").homedir(), ".scramjet_sequences")
+    runtimeAdapter: "docker",
+    sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+    kubernetes: {
+        namespace: "default",
+        authConfigPath: undefined,
+        sthPodHost: undefined,
+        runnerImage: undefined,
+        sequencesRoot: path.join(homedir(), ".scramjet_k8s_sequences")
+    }
 };
 
 merge(_defaultConfig, {

@@ -14,6 +14,8 @@ module.exports = async function(_stream: any) {
         .from(process.stdin)
         .lines("\n")
         .parse((str: any) => [+(str.match(/^\w+/) || []).pop(), str])
+        /// THIS IS SUPER WEIRRRRRRRDDDDD
+        // .each will only print: item [ [ null, '' ] ]
         .each((item) => this.logger.debug("item", item))
         .filter(([item]: any) => !isNaN(item))
         .do(
