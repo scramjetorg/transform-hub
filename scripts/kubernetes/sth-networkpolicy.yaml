@@ -1,0 +1,40 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  namespace: default
+  name: sth-policy
+  labels:
+    app.kubernetes.io/name: sth
+spec:
+  podSelector:
+    matchLabels:
+       app: sth
+  ingress:
+  - ports:
+      - port: 8000
+      - port: 8001
+  egress:
+  - {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  namespace: default
+  name: runner-policy
+  labels:
+    app.kubernetes.io/name: runner
+spec:
+  podSelector:
+    matchLabels:
+       app: runner
+  ingress:
+    - {}
+  egress:
+  - ports:
+      - port: 8001
+  policyTypes:
+    - Ingress
+    - Egress
