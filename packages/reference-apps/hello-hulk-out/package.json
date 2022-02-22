@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/hello-hulk-out",
   "version": "0.17.0",
-  "main": "index",
+  "main": "index.js",
   "scripts": {
     "build:refapps": "tsc -p tsconfig.json",
     "postbuild:refapps": "yarn prepack && yarn packseq",
