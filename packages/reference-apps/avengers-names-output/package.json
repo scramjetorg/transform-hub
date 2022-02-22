@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/avengers-names-output",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "description": "",
   "main": "index.js",
   "assets": [
@@ -16,7 +16,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.16.0",
+    "@scramjet/types": "^0.17.0",
     "@types/node": "15.12.5"
   },
   "scramjet": {

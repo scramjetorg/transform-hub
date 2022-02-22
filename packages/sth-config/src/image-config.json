@@ -1,4 +1,4 @@
 {
-  "prerunner": "scramjetorg/pre-runner:0.16.0",
-  "runner": "scramjetorg/runner:0.16.0"
+  "prerunner": "scramjetorg/pre-runner:0.17.0",
+  "runner": "scramjetorg/runner:0.17.0"
 }
