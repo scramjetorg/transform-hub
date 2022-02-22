@@ -1,0 +1,150 @@
+import { IObjectLogger } from "@scramjet/types";
+import * as k8s from "@kubernetes/client-node";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { defer } from "@scramjet/utility";
+import { Writable, Readable } from "stream";
+import http from "http";
+
+const POD_STATUS_CHECK_INTERVAL_MS = 500;
+const POD_STATUS_FAIL_LIMIT = 10;
+
+class KubernetesClientAdapter {
+    logger: IObjectLogger;
+    name = "KubernetesClientAdapter";
+
+    private _configPath: string;
+    private _config?: k8s.KubeConfig
+    private _namespace: string;
+
+    constructor(configPath: string = "", namespace: string = "default") {
+        this.logger = new ObjLogger(this.name);
+        this._configPath = configPath;
+        this._namespace = namespace;
+    }
+
+    private get config(): k8s.KubeConfig {
+        if (!this._config) {
+            throw new Error("Kubernetes API client not initialized");
+        }
+
+        return this._config;
+    }
+
+    public init() {
+        const kc = new k8s.KubeConfig();
+
+        try {
+            if (this._configPath && this._configPath.length) {
+                kc.loadFromFile(this._configPath);
+            } else {
+                kc.loadFromCluster();
+            }
+
+            this._config = kc;
+        } catch (err: any) {
+            this.logger.error("Unable to load kubeconfig", err);
+        }
+    }
+
+    async createPod(metadata: k8s.V1ObjectMeta, spec: k8s.V1PodSpec, retries: number = 0) {
+        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+
+        const result = await this.runWithRetries(retries, "Create Pod", () =>
+            kubeApi.createNamespacedPod(this._namespace, {
+                apiVersion: "v1",
+                kind: "Pod",
+                metadata,
+                spec
+            })
+        );
+
+        return result as {
+            response: http.IncomingMessage;
+            body: k8s.V1Pod;
+        };
+    }
+
+    async deletePod(podName: string, retries: number = 0) {
+        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+
+        const result = await this.runWithRetries(retries, "Delete Pod", () =>
+            kubeApi.deleteNamespacedPod(podName, this._namespace, undefined, undefined, 0)
+        );
+
+        return result as {
+            response: http.IncomingMessage;
+            body: k8s.V1Pod;
+        };
+    }
+
+    async exec(podName: string, containerName: string, command: string | string[],
+        stdout: Writable | null, stderr: Writable | null, stdin: Readable | null, retries: number = 0
+    ) {
+        const exec = new k8s.Exec(this.config);
+
+        await this.runWithRetries(retries, "Exec", () =>
+            exec.exec(this._namespace, podName, containerName, command, stdout, stderr, stdin, false,
+                (...args) => this.logger.debug("exec status", ...args))
+        );
+    }
+
+    async waitForPodStatus(podName: string, expectedStatuses: string[]): Promise<string> {
+        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+
+        let failCount = 0;
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            try {
+                const response = await kubeApi.readNamespacedPodStatus(podName, this._namespace);
+                const status = response.body.status?.phase || "";
+
+                if (expectedStatuses.includes(status)) {
+                    return status;
+                }
+            } catch (err: any) {
+                this.logger.error("Failed to get pod status", err);
+
+                failCount++;
+                if (failCount > POD_STATUS_FAIL_LIMIT) {
+                    throw new Error("Reached the limit of failed pod status requests");
+                }
+            }
+
+            await defer(POD_STATUS_CHECK_INTERVAL_MS);
+        }
+    }
+
+    private async runWithRetries(retries: number, name: string, callback: any) {
+        let tries = 0;
+        let sleepMs = 1000;
+        let success = false;
+        let result: any = null;
+
+        this.logger.debug(`Starting: ${name}...`);
+
+        while (!success && tries <= retries) {
+            tries++;
+
+            try {
+                result = await callback();
+
+                success = true;
+            } catch (err: any) {
+                this.logger.error(`Failed to run: ${name}.`, err);
+
+                await defer(sleepMs);
+
+                sleepMs *= 2;
+            }
+        }
+
+        if (!success) {
+            throw new Error(`Failed to run: ${name} after ${tries} retries.`);
+        }
+
+        return result;
+    }
+}
+
+export { KubernetesClientAdapter };

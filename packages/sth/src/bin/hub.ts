@@ -11,16 +11,28 @@ const options = program
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
     .option("-C, --cpm-url <host:ip>")
     .option("-I, --id <id>")
-    .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
-    .option("--sequences-root", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
+    .option("--runtime-adapter <adapter>", "Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'")
     .option("--runner-image <image name>", "Image used by runner")
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--isp, --instances-server-port <port>", "Port on which server that instances connect to should run.")
+    .option("--sequences-root <path>", "Only works with --runtime-adapter='process' option. Where should ProcessSequenceAdapter save new sequences")
+    .option("--k8s-namespace <namespace>", "Kubernetes namespace used in Sequence and Instance adapters.")
+    .option("--k8s-auth-config-path <path>", "Kubernetes authorization config path. If not supplied the mounted service account will be used.")
+    .option("--k8s-sth-pod-host <host>", "Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to.")
+    .option("--k8s-runner-image <image>", "Runner image spawned in Pod.")
+    .option("--k8s-sequences-root <path>", "Kuberenetes Process Adapter will store sequences here.")
+    .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .parse(process.argv)
     .opts();
+
+// If --runtime-adapter is not supplied we can check for legacy --no-docker option
+function getRuntimeAdapterOption() {
+    if (options.runtimeAdapter) return options.runtimeAdapter;
+    return options.docker ? "docker" : "process";
+}
 
 const configService = new ConfigService();
 
@@ -44,9 +56,16 @@ configService.update({
         hostname: options.hostname,
         id: options.id
     },
-    noDocker: !options.docker,
+    runtimeAdapter: getRuntimeAdapterOption(),
     sequencesRoot: options.sequencesRoot,
     logLevel: options.logLevel,
+    kubernetes: {
+        namespace: options.k8sNamespace,
+        authConfigPath: options.k8sAuthConfigPath,
+        sthPodHost: options.k8sSthPodHost,
+        runnerImage: options.k8sRunnerImage,
+        sequencesRoot: options.k8sSequencesRoot
+    }
 });
 
 // before here we actually load the host and we have the config imported elsewhere

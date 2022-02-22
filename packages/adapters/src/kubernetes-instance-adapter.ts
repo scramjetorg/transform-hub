@@ -1,0 +1,171 @@
+/* eslint-disable no-console */
+import {
+    ExitCode,
+    IComponent,
+    ILifeCycleAdapterMain,
+    ILifeCycleAdapterRun,
+    IObjectLogger,
+    K8SAdapterConfiguration,
+    MonitoringMessageData,
+    SequenceConfig,
+    STHConfiguration,
+} from "@scramjet/types";
+
+import path from "path";
+import { ObjLogger } from "@scramjet/obj-logger";
+import { createReadStream } from "fs";
+import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
+import { adapterConfigDecoder } from "./kubernetes-config-decoder";
+
+/**
+ * Adapter for running Instance by Runner executed in separate process.
+ */
+class KubernetesInstanceAdapter implements
+ILifeCycleAdapterMain,
+ILifeCycleAdapterRun,
+IComponent {
+    logger: IObjectLogger;
+    name = "KubernetesInstanceAdapter"
+
+    private _runnerName?: string
+    private _kubeClient?: KubernetesClientAdapter;
+
+    private adapterConfig: K8SAdapterConfiguration
+
+    constructor(sthConfig: STHConfiguration) {
+        // @TODO this is a redundant check (it was already checked in sequence adapter)
+        // We should move this to config service decoding: https://github.com/scramjetorg/transform-hub/issues/279
+        const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);
+
+        if (!decodedAdapterConfig.isOk()) {
+            throw new Error("Invalid Kubernetes Adapter configuration");
+        }
+
+        this.adapterConfig = decodedAdapterConfig.value;
+        this.logger = new ObjLogger(this.name);
+    }
+
+    private get kubeClient() {
+        if (!this._kubeClient) {
+            throw new Error("Kubernetes client not initialized");
+        }
+
+        return this._kubeClient;
+    }
+
+    async init(): Promise<void> {
+        this._kubeClient = new KubernetesClientAdapter(this.adapterConfig.authConfigPath, this.adapterConfig.namespace);
+        this.kubeClient.init();
+
+        this._kubeClient.logger.pipe(this.logger);
+    }
+
+    async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
+        return {
+            ...msg,
+        };
+    }
+
+    async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+        if (config.type !== "kubernetes") {
+            throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
+        }
+
+        const runnerName = this._runnerName = `runner-${ instanceId }`;
+
+        this.logger.debug("Creating Runner Pod");
+
+        const env = Object.entries({
+            SEQUENCE_PATH: path.join("/package", config.entrypointPath),
+            DEVELOPMENT: process.env.DEVELOPMENT ?? "",
+            PRODUCTION: process.env.PRODUCTION ?? "",
+            INSTANCES_SERVER_PORT: instancesServerPort.toString(),
+            INSTANCES_SERVER_HOST: this.adapterConfig.sthPodHost,
+            INSTANCE_ID: instanceId,
+        }).map(([name, value]) => ({ name, value }));
+
+        await this.kubeClient.createPod(
+            {
+                name: runnerName,
+                labels: {
+                    app: "runner"
+                }
+            },
+            {
+                containers: [{
+                    env,
+                    name: runnerName,
+                    image: this.adapterConfig.runnerImage,
+                    stdin: true,
+                    command: ["wait-for-sequence-and-start.sh"],
+                    imagePullPolicy: "Always"
+                }],
+                restartPolicy: "Never",
+            },
+            2
+        );
+
+        const startPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Running", "Failed"]);
+
+        if (startPodStatus === "Failed") {
+            this.logger.error("Runner unable to start", startPodStatus);
+
+            await this.remove();
+
+            // This means runner pod was unable to start. So it went from "Pending" to "Failed" state directly.
+            // Return 1 which is Linux exit code for "General Error" since we are not able
+            // to determine what happened exactly.
+            return 1;
+        }
+
+        this.logger.debug("Copy sequence files to Runner");
+
+        const compressedStream = createReadStream(path.join(config.sequenceDir, "compressed.tar.gz"));
+
+        await this.kubeClient.exec(runnerName, runnerName, "unpack.sh", process.stdout, process.stderr, compressedStream, 2);
+
+        const exitPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Succeeded", "Failed", "Unknown"]);
+
+        this.logger.debug("For some reasone this wont be printed", exitPodStatus);
+        console.log("And this willl :(", exitPodStatus);
+
+        if (exitPodStatus !== "Succeeded") {
+            this.logger.error("Runner stopped incorrectly", exitPodStatus);
+
+            await this.remove();
+
+            // This means runner was stopped forcefully or incorrectly (via external kill or sequence error).
+            // So we return 137 (SIGKILL).
+            return 137;
+        }
+
+        await this.remove();
+
+        // @TODO handle error status
+        return 0;
+    }
+
+    async cleanup(): Promise<void> {
+        //noop
+    }
+
+    // @ts-ignore
+    monitorRate(_rps: number): this {
+        /** ignore */
+    }
+
+    /**
+     * Forcefully stops Runner process.
+     */
+    async remove() {
+        if (!this._runnerName) {
+            this.logger.error("Trying to stop non existent runner", this._runnerName);
+        } else {
+            await this.kubeClient.deletePod(this._runnerName, 2);
+
+            this._runnerName = undefined;
+        }
+    }
+}
+
+export { KubernetesInstanceAdapter };

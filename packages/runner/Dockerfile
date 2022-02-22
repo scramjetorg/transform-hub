@@ -45,6 +45,8 @@ RUN yarn install --frozen-lockfile --production --silent \
     && chmod +x ./bin/start-runner.js
 
 COPY ./packages/runner/docker-entrypoint.sh /usr/local/bin/
+COPY ./packages/runner/unpack.sh /usr/local/bin/
+COPY ./packages/runner/wait-for-sequence-and-start.sh /usr/local/bin/
 
 ENTRYPOINT [ "docker-entrypoint.sh" ]
 CMD [ "start-runner" ]

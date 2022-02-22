@@ -28,6 +28,11 @@ export type ProcessSequenceConfig = CommonSequenceConfig & {
     sequenceDir: string
 }
 
-export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig
+export type KubernetesSequenceConfig = CommonSequenceConfig & {
+    type: "kubernetes",
+    sequenceDir: string
+}
+
+export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig
 
 export type InstanceConifg = SequenceConfig & { instanceAdapterExitDelay: number }

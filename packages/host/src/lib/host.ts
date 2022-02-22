@@ -5,7 +5,7 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, AppConfig, CSIConfig, IComponent, IObjectLogger, LogLevel, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, IObjectLogger, LogLevel, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
@@ -174,7 +174,7 @@ export class Host implements IComponent {
             await this.identifyExistingSequences();
         }
 
-        if (!this.config.noDocker) {
+        if (this.config.runtimeAdapter === "docker") {
             this.logger.trace("Setting up Docker networking");
 
             await setupDockerNetworking(new DockerodeDockerHelper());
@@ -431,7 +431,7 @@ export class Host implements IComponent {
                 opStatus: ReasonPhrases.OK
             };
         } catch (error: any) {
-            this.logger.error(error?.stack);
+            this.logger.error(error);
 
             return {
                 opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
@@ -501,18 +501,14 @@ export class Host implements IComponent {
     ): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
-        const csiConfig: CSIConfig = {
-            instanceAdapterExitDelay: this.config.instanceAdapterExitDelay,
-            instancesServerPort: this.config.host.instancesServerPort,
-            noDocker: this.config.noDocker
-        };
+
         const csic = new CSIController(
             id,
             sequence,
             appConfig,
             sequenceArgs,
             communicationHandler,
-            csiConfig
+            this.config
         );
 
         csic.logger.pipe(this.logger);

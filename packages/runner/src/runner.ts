@@ -42,7 +42,14 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
 const exitDelay = 10000;
 
 function overrideStandardStream(oldStream: Writable, newStream: Writable) {
-    oldStream.write = newStream.write.bind(newStream);
+    if (process.env.PRINT_TO_STDOUT) {
+        const oldWrite = oldStream.write;
+
+        // @ts-ignore
+        oldStream.write = (...args) => { oldWrite.call(oldStream, ...args); return newStream.write(...args); };
+    } else {
+        oldStream.write = newStream.write.bind(newStream);
+    }
 
     newStream.on("drain", () => {
         oldStream.emit("drain");
@@ -83,6 +90,10 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.emitter = new EventEmitter();
 
         this.logger = new ObjLogger(this, { id: instanceId });
+
+        if (process.env.PRINT_TO_STDOUT) {
+            this.logger.addOutput(process.stdout);
+        }
 
         this.inputDataStream = new DataStream().catch((e: any) => {
             this.logger.error("Error during input data stream", e);

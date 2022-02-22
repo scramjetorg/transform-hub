@@ -26,7 +26,8 @@
     "scramjet": "^4.36.0",
     "shell-escape": "^0.2.0",
     "systeminformation": "^5.7.10",
-    "ts.data.json": "^2.1.0"
+    "ts.data.json": "^2.1.0",
+    "@kubernetes/client-node": "^0.16.2"
   },
   "devDependencies": {
     "@scramjet/types": "^0.17.0",
