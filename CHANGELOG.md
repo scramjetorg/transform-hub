@@ -35,10 +35,10 @@ Prominent
 - 2d193278 - Introduce HTTPS support in the API Server
 - 38d69826 - The Docker Sequence and Instance Adapters specify the volume permissions
 - e46e9d80 - Scramjet community moving to Discord documentation update
-- 7dc49fea - sapphire fetch wrapper integration
+- 7dc49fea - Sapphire fetch wrapper integration
 - 13d08d36 - BDD tests for Python Runner
-- de177100 - setup for installing dependencies in Python Runner
-- d7ae4019 - implementation of Instance event handling in Python Runner
+- de177100 - Setup for installing dependencies in Python Runner
+- d7ae4019 - Implementation of Instance event handling in Python Runner
 
 New features:
 

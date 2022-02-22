@@ -42,13 +42,13 @@ Provides methods to interact with Host.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L11)
+[host-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L12)
 
 ___
 
 ### client
 
-• **client**: [`ClientUtils`](ClientUtils.md)
+• **client**: `ClientUtils`
 
 #### Implementation of
 
@@ -56,7 +56,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L12)
+[host-client.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L13)
 
 ## Constructors
 
@@ -69,17 +69,17 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `apiBase` | `string` |
-| `utils` | [`ClientUtils`](ClientUtils.md) |
+| `utils` | `ClientUtils` |
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L14)
+[host-client.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L15)
 
 ## Methods
 
 ### deleteSequence
 
-▸ **deleteSequence**(`sequenceId`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **deleteSequence**(`sequenceId`): `Promise`<`DeleteSequenceResponse`\>
 
 Deletes sequence with given id.
 
@@ -91,19 +91,19 @@ Deletes sequence with given id.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`DeleteSequenceResponse`\>
 
-TODO: comment.
+Promise resolving to delete Sequence result.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L75)
+[host-client.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L78)
 
 ___
 
 ### getInstanceInfo
 
-▸ **getInstanceInfo**(`instanceId`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getInstanceInfo**(`instanceId`): `Promise`<`Instance`\>
 
 Returns instance details.
 
@@ -115,55 +115,55 @@ Returns instance details.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`Instance`\>
 
-Instance details.
+Promise resolving to Instance details.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L91)
+[host-client.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L89)
 
 ___
 
 ### getLoadCheck
 
-▸ **getLoadCheck**(): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getLoadCheck**(): `Promise`<`LoadCheckStat`\>
 
 Returns Host load-check.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`LoadCheckStat`\>
 
 Promise resolving to Host load check data.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L100)
+[host-client.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L98)
 
 ___
 
 ### getLogStream
 
-▸ **getLogStream**(): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+▸ **getLogStream**(): `Promise`<`Stream` \| `ReadableStream`<`any`\>\>
 
 Returns Host log stream.
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+`Promise`<`Stream` \| `ReadableStream`<`any`\>\>
 
 Promise resolving to response with log stream.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L43)
+[host-client.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L44)
 
 ___
 
 ### getNamedData
 
-▸ **getNamedData**(`topic`): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+▸ **getNamedData**(`topic`): `Promise`<`Stream`\>
 
 Returns stream from given topic.
 
@@ -175,19 +175,19 @@ Returns stream from given topic.
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+`Promise`<`Stream`\>
 
 Promise resolving to stream.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L133)
+[host-client.ts:131](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L131)
 
 ___
 
 ### getSequence
 
-▸ **getSequence**(`sequenceId`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getSequence**(`sequenceId`): `Promise`<`GetSequenceResponse`\>
 
 Returns sequence details.
 
@@ -199,76 +199,82 @@ Returns sequence details.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`GetSequenceResponse`\>
 
-Object with sequence details.
+Promise resolving to Sequence details.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L65)
+[host-client.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L68)
 
 ___
 
 ### getVersion
 
-▸ **getVersion**(): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getVersion**(): `Promise`<`GetVersionResponse`\>
 
 Returns Host version.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`GetVersionResponse`\>
 
 Promise resolving to Host version.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L109)
+[host-client.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L107)
 
 ___
 
 ### listInstances
 
-▸ **listInstances**(): `Promise`<[`Response`](../modules.md#response)\>
+▸ **listInstances**(): `Promise`<`GetInstancesResponse`\>
 
 Returns list of all instances on Host.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`GetInstancesResponse`\>
 
-Promise resolving to response with list.
+Promise resolving to list of Instances.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L34)
+[host-client.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L35)
 
 ___
 
 ### listSequences
 
-▸ **listSequences**(): `Promise`<[`Response`](../modules.md#response)\>
+▸ **listSequences**(): `Promise`<`GetSequencesResponse`\>
 
 Returns list of all sequences on Host.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`GetSequencesResponse`\>
 
-Promise resolving to response with list.
+Promise resolving to list of Sequences.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L25)
+[host-client.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L26)
 
 ___
 
 ### sendNamedData
 
-▸ **sendNamedData**(`topic`, `stream`, `contentType?`, `end?`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **sendNamedData**<`T`\>(`topic`, `stream`, `contentType?`, `end?`): `Promise`<`T`\>
 
 Sends data to the topic.
 Topics are a part of Service Discovery feature enabling data exchange through Topics API.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
 
 #### Parameters
 
@@ -281,13 +287,13 @@ Topics are a part of Service Discovery feature enabling data exchange through To
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`T`\>
 
 TODO: comment.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:123](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L123)
+[host-client.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L121)
 
 ___
 
@@ -311,4 +317,4 @@ Sequence client.
 
 #### Defined in
 
-[packages/api-client/src/host-client.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L53)
+[host-client.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L54)

@@ -30,7 +30,6 @@ Provides methods to interact with instance.
 - [getHealth](InstanceClient.md#gethealth)
 - [getInfo](InstanceClient.md#getinfo)
 - [getNextEvent](InstanceClient.md#getnextevent)
-- [getStatus](InstanceClient.md#getstatus)
 - [getStream](InstanceClient.md#getstream)
 - [kill](InstanceClient.md#kill)
 - [sendEvent](InstanceClient.md#sendevent)
@@ -47,7 +46,7 @@ Provides methods to interact with instance.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L15)
+[instance-client.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L15)
 
 ___
 
@@ -57,7 +56,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L17)
+[instance-client.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L17)
 
 ___
 
@@ -67,7 +66,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L16)
+[instance-client.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L16)
 
 ## Accessors
 
@@ -81,7 +80,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L23)
+[instance-client.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L23)
 
 ___
 
@@ -95,7 +94,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L19)
+[instance-client.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L19)
 
 ## Constructors
 
@@ -112,7 +111,7 @@ ___
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L38)
+[instance-client.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L38)
 
 ## Methods
 
@@ -137,13 +136,13 @@ Instance client.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L34)
+[instance-client.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L34)
 
 ___
 
 ### getEvent
 
-▸ **getEvent**(`eventName`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getEvent**(`eventName`): `Promise`<`any`\>
 
 Return last data from event givent in eventName.
 Waits for event if it was never fired.
@@ -156,19 +155,19 @@ Waits for event if it was never fired.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`any`\>
 
-Promise resolving with event data.
+Promise resolving to event data.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L112)
+[instance-client.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L120)
 
 ___
 
 ### getEventStream
 
-▸ **getEventStream**(`eventName`): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+▸ **getEventStream**(`eventName`): `Promise`<`Stream`\>
 
 Fetches event
 
@@ -180,51 +179,55 @@ Fetches event
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+`Promise`<`Stream`\>
 
-stream of events from instance
+stream of events from Instance
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:122](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L122)
+[instance-client.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L130)
 
 ___
 
 ### getHealth
 
-▸ **getHealth**(): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getHealth**(): `Promise`<`GetHealthResponse`\>
 
 Returns instance health.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`GetHealthResponse`\>
+
+Promise resolving to Instance health.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L129)
+[instance-client.ts:139](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L139)
 
 ___
 
 ### getInfo
 
-▸ **getInfo**(): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getInfo**(): `Promise`<`Instance`\>
 
 Returns instance info.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`Instance`\>
+
+Promise resolving to Instance info.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L143)
+[instance-client.ts:148](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L148)
 
 ___
 
 ### getNextEvent
 
-▸ **getNextEvent**(`eventName`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **getNextEvent**(`eventName`): `Promise`<`any`\>
 
 Waits and returns next event sent by instance.
 
@@ -236,35 +239,19 @@ Waits and returns next event sent by instance.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`any`\>
 
-Promise resolving with event data.
-
-#### Defined in
-
-[packages/api-client/src/instance-client.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L101)
-
-___
-
-### getStatus
-
-▸ **getStatus**(): `Promise`<[`Response`](../modules.md#response)\>
-
-Returns instance status.
-
-#### Returns
-
-`Promise`<[`Response`](../modules.md#response)\>
+Promise resolving to event data.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:136](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L136)
+[instance-client.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L109)
 
 ___
 
 ### getStream
 
-▸ **getStream**(`streamId`): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+▸ **getStream**(`streamId`): `Promise`<`Stream`\>
 
 Returns readable stream from instance.
 Stream can be one of type [InstanceOutputStream](../modules.md#instanceoutputstream).
@@ -277,37 +264,37 @@ Stream can be one of type [InstanceOutputStream](../modules.md#instanceoutputstr
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+`Promise`<`Stream`\>
 
 Promise resolving to stream.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L154)
+[instance-client.ts:159](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L159)
 
 ___
 
 ### kill
 
-▸ **kill**(): `Promise`<[`Response`](../modules.md#response)\>
+▸ **kill**(): `Promise`<`ControlMessageResponse`\>
 
 Send kill command to instance
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`ControlMessageResponse`\>
 
-TODO: comment.
+Promise resolving to kill Instance result.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L69)
+[instance-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L75)
 
 ___
 
 ### sendEvent
 
-▸ **sendEvent**(`eventName`, `message`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **sendEvent**(`eventName`, `message`): `Promise`<`ControlMessageResponse`\>
 
 Sends event to the Instance.
 
@@ -320,19 +307,19 @@ Sends event to the Instance.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`ControlMessageResponse`\>
 
-TODO: comment.
+Promise resolving to send event result.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L85)
+[instance-client.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L91)
 
 ___
 
 ### sendInput
 
-▸ **sendInput**(`stream`, `options?`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **sendInput**(`stream`, `options?`): `Promise`<`any`\>
 
 Pipes given stream to instance "input".
 
@@ -345,19 +332,19 @@ Pipes given stream to instance "input".
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`any`\>
 
 Promise resolving to response.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L178)
+[instance-client.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L182)
 
 ___
 
 ### sendStdin
 
-▸ **sendStdin**(`stream`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **sendStdin**(`stream`): `Promise`<`any`\>
 
 Pipes given stream to instance "stdin".
 
@@ -369,19 +356,19 @@ Pipes given stream to instance "stdin".
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`any`\>
 
 Promise resolving to response.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:188](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L188)
+[instance-client.ts:192](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L192)
 
 ___
 
 ### sendStream
 
-▸ **sendStream**(`streamId`, `stream`, `options?`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **sendStream**(`streamId`, `stream`, `options?`): `Promise`<`any`\>
 
 Sends stream to one of the instance inputs.
 
@@ -395,19 +382,19 @@ Sends stream to one of the instance inputs.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`any`\>
 
 Promise resolving to stream.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L167)
+[instance-client.ts:171](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L171)
 
 ___
 
 ### stop
 
-▸ **stop**(`timeout`, `canCallKeepalive`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **stop**(`timeout`, `canCallKeepalive`): `Promise`<`ControlMessageResponse`\>
 
 Send stop command to instance.
 
@@ -420,10 +407,10 @@ Send stop command to instance.
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`ControlMessageResponse`\>
 
-TODO: comment
+Promise resolving to stop Instance result.
 
 #### Defined in
 
-[packages/api-client/src/instance-client.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L55)
+[instance-client.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L55)

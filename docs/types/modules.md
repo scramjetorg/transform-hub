@@ -6,21 +6,21 @@
 
 ### Interfaces
 
-- [APIBase](interfaces/apibase.md)
-- [APIError](interfaces/apierror.md)
-- [APIExpose](interfaces/apiexpose.md)
-- [APIRoute](interfaces/apiroute.md)
-- [AppContext](interfaces/appcontext.md)
-- [ICommunicationHandler](interfaces/icommunicationhandler.md)
-- [IComponent](interfaces/icomponent.md)
-- [IHostClient](interfaces/ihostclient.md)
-- [ILifeCycleAdapter](interfaces/ilifecycleadapter.md)
-- [ILifeCycleAdapterMain](interfaces/ilifecycleadaptermain.md)
-- [ILifeCycleAdapterRun](interfaces/ilifecycleadapterrun.md)
-- [IObjectLogger](interfaces/iobjectlogger.md)
-- [ISequenceAdapter](interfaces/isequenceadapter.md)
-- [ReadableStream](interfaces/readablestream.md)
-- [WritableStream](interfaces/writablestream.md)
+- [APIBase](interfaces/APIBase.md)
+- [APIError](interfaces/APIError.md)
+- [APIExpose](interfaces/APIExpose.md)
+- [APIRoute](interfaces/APIRoute.md)
+- [AppContext](interfaces/AppContext.md)
+- [ICommunicationHandler](interfaces/ICommunicationHandler.md)
+- [IComponent](interfaces/IComponent.md)
+- [IHostClient](interfaces/IHostClient.md)
+- [ILifeCycleAdapter](interfaces/ILifeCycleAdapter.md)
+- [ILifeCycleAdapterMain](interfaces/ILifeCycleAdapterMain.md)
+- [ILifeCycleAdapterRun](interfaces/ILifeCycleAdapterRun.md)
+- [IObjectLogger](interfaces/IObjectLogger.md)
+- [ISequenceAdapter](interfaces/ISequenceAdapter.md)
+- [ReadableStream](interfaces/ReadableStream.md)
+- [WritableStream](interfaces/WritableStream.md)
 
 ### Type aliases
 
@@ -171,8 +171,8 @@
 
 ### Namespaces
 
-- [MessageCodes](modules/messagecodes.md)
-- [STHRestAPI](modules/sthrestapi.md)
+- [MessageCodes](modules/MessageCodes.md)
+- [STHRestAPI](modules/STHRestAPI.md)
 
 ## Type aliases
 
@@ -286,9 +286,9 @@ Application is an acceptable input for the runner.
 | :------ | :------ |
 | `Consumes` | `any` |
 | `Produces` | `any` |
-| `Z` | extends `any`[]`any`[] |
-| `S` | extends `any``any` |
-| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig)[`AppConfig`](modules.md#appconfig) |
+| `Z` | extends `any`[] = `any`[] |
+| `S` | extends `any` = `any` |
+| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig) = [`AppConfig`](modules.md#appconfig) |
 
 #### Defined in
 
@@ -306,9 +306,9 @@ ___
 | :------ | :------ |
 | `Consumes` | `any` |
 | `Produces` | `any` |
-| `Z` | extends `any`[]`any`[] |
-| `S` | extends `any``any` |
-| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig)[`AppConfig`](modules.md#appconfig) |
+| `Z` | extends `any`[] = `any`[] |
+| `S` | extends `any` = `any` |
+| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig) = [`AppConfig`](modules.md#appconfig) |
 
 #### Type declaration
 
@@ -334,7 +334,7 @@ ___
 
 ### ApplicationInterface
 
-Ƭ **ApplicationInterface**: (`this`: [`AppContext`](interfaces/appcontext.md)<[`AppConfig`](modules.md#appconfig), `any`\>, `source`: [`ReadableStream`](interfaces/readablestream.md)<`any`\>, ...`argv`: `any`[]) => `MaybePromise`<[`Streamable`](modules.md#streamable)<`any`\> \| `void`\>
+Ƭ **ApplicationInterface**: (`this`: [`AppContext`](interfaces/AppContext.md)<[`AppConfig`](modules.md#appconfig), `any`\>, `source`: [`ReadableStream`](interfaces/ReadableStream.md)<`any`\>, ...`argv`: `any`[]) => `MaybePromise`<[`Streamable`](modules.md#streamable)<`any`\> \| `void`\>
 
 #### Type declaration
 
@@ -344,8 +344,8 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `this` | [`AppContext`](interfaces/appcontext.md)<[`AppConfig`](modules.md#appconfig), `any`\> |
-| `source` | [`ReadableStream`](interfaces/readablestream.md)<`any`\> |
+| `this` | [`AppContext`](interfaces/AppContext.md)<[`AppConfig`](modules.md#appconfig), `any`\> |
+| `source` | [`ReadableStream`](interfaces/ReadableStream.md)<`any`\> |
 | `...argv` | `any`[] |
 
 ##### Returns
@@ -523,7 +523,7 @@ ___
 
 ### DeepPartial
 
-Ƭ **DeepPartial**<`T`\>: { [K in keyof T]?: DeepPartial<T[K]\>}
+Ƭ **DeepPartial**<`T`\>: { [K in keyof T]?: DeepPartial<T[K]\> }
 
 #### Type parameters
 
@@ -615,7 +615,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `serialized` | extends `boolean```true`` |
+| `serialized` | extends `boolean` = ``true`` |
 
 #### Defined in
 
@@ -625,7 +625,7 @@ ___
 
 ### DuplexStream
 
-Ƭ **DuplexStream**<`Consumes`, `Produces`\>: [`WritableStream`](interfaces/writablestream.md)<`Consumes`\> & [`ReadableStream`](interfaces/readablestream.md)<`Produces`\>
+Ƭ **DuplexStream**<`Consumes`, `Produces`\>: [`WritableStream`](interfaces/WritableStream.md)<`Consumes`\> & [`ReadableStream`](interfaces/ReadableStream.md)<`Produces`\>
 
 #### Type parameters
 
@@ -979,9 +979,9 @@ An Inert App is an app that doesn't accept data from the platform and doesn't ou
 
 | Name | Type |
 | :------ | :------ |
-| `Z` | extends `any`[]`any`[] |
-| `S` | extends `any``any` |
-| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig)[`AppConfig`](modules.md#appconfig) |
+| `Z` | extends `any`[] = `any`[] |
+| `S` | extends `any` = `any` |
+| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig) = [`AppConfig`](modules.md#appconfig) |
 | `VoidType` | `void` |
 
 #### Defined in
@@ -1004,7 +1004,7 @@ the progress via streaming.
 | :------ | :------ |
 | `Z` | `any` |
 | `Y` | `any` |
-| `X` | extends `any`[]`any`[] |
+| `X` | extends `any`[] = `any`[] |
 
 #### Defined in
 
@@ -1023,6 +1023,7 @@ ___
 | `appConfig?` | [`AppConfig`](modules.md#appconfig) |
 | `created?` | `Date` |
 | `id` | `string` |
+| `ports?` | `Record`<`string`, `number`\> |
 | `sequence` | `string` |
 | `sequenceArgs?` | `any`[] |
 | `started?` | `Date` |
@@ -1257,7 +1258,7 @@ ___
 
 ### LogEntry
 
-Ƭ **LogEntry**: `Partial`<`Object`\>
+Ƭ **LogEntry**: `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: [`LogLevel`](modules.md#loglevel) ; `msg`: `string` ; `ts`: `number`  }\>
 
 Single log entry.
 
@@ -1311,8 +1312,8 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `err?` | [`WritableStream`](interfaces/writablestream.md)<`any`\> | Errror stream |
-| `out` | [`WritableStream`](interfaces/writablestream.md)<`any`\> | Output stream |
+| `err?` | [`WritableStream`](interfaces/WritableStream.md)<`any`\> | Errror stream |
+| `out` | [`WritableStream`](interfaces/WritableStream.md)<`any`\> | Output stream |
 
 #### Defined in
 
@@ -1343,7 +1344,7 @@ ___
 
 ### MessageCode
 
-Ƭ **MessageCode**: [`ANY`](modules/messagecodes.md#any)
+Ƭ **MessageCode**: [`ANY`](modules/MessageCodes.md#any)
 
 #### Defined in
 
@@ -1710,7 +1711,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `serialized` | extends `boolean```true`` |
+| `serialized` | extends `boolean` = ``true`` |
 
 #### Defined in
 
@@ -1784,7 +1785,7 @@ ___
 
 ### ReadFunction
 
-Ƭ **ReadFunction**<`Produces`\>: (`stream`: [`ReadableStream`](interfaces/readablestream.md)<`never`\>, ...`parameters`: `any`[]) => [`Streamable`](modules.md#streamable)<`Produces`\>
+Ƭ **ReadFunction**<`Produces`\>: (`stream`: [`ReadableStream`](interfaces/ReadableStream.md)<`never`\>, ...`parameters`: `any`[]) => [`Streamable`](modules.md#streamable)<`Produces`\>
 
 #### Type parameters
 
@@ -1802,7 +1803,7 @@ A Function that returns a streamable result is a read function
 
 | Name | Type |
 | :------ | :------ |
-| `stream` | [`ReadableStream`](interfaces/readablestream.md)<`never`\> |
+| `stream` | [`ReadableStream`](interfaces/ReadableStream.md)<`never`\> |
 | `...parameters` | `any`[] |
 
 ##### Returns
@@ -1827,7 +1828,7 @@ a chain of transforms.
 | Name | Type |
 | :------ | :------ |
 | `Produces` | `Produces` |
-| `Y` | extends `any`[]`any`[] |
+| `Y` | extends `any`[] = `any`[] |
 | `Z` | `any` |
 
 #### Defined in
@@ -1850,9 +1851,9 @@ A Readable App is an app that obtains the data by it's own means and preforms
 | Name | Type |
 | :------ | :------ |
 | `Produces` | `any` |
-| `Z` | extends `any`[]`any`[] |
-| `S` | extends `any``any` |
-| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig)[`AppConfig`](modules.md#appconfig) |
+| `Z` | extends `any`[] = `any`[] |
+| `S` | extends `any` = `any` |
+| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig) = [`AppConfig`](modules.md#appconfig) |
 | `VoidType` | `void` |
 
 #### Defined in
@@ -2374,7 +2375,7 @@ ___
 
 ### TranformFunction
 
-Ƭ **TranformFunction**<`Consumes`, `Produces`\>: (`stream`: [`ReadableStream`](interfaces/readablestream.md)<`Consumes`\>, ...`parameters`: `any`[]) => `StreambleMaybeFunction`<`Produces`\>
+Ƭ **TranformFunction**<`Consumes`, `Produces`\>: (`stream`: [`ReadableStream`](interfaces/ReadableStream.md)<`Consumes`\>, ...`parameters`: `any`[]) => `StreambleMaybeFunction`<`Produces`\>
 
 #### Type parameters
 
@@ -2391,7 +2392,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `stream` | [`ReadableStream`](interfaces/readablestream.md)<`Consumes`\> |
+| `stream` | [`ReadableStream`](interfaces/ReadableStream.md)<`Consumes`\> |
 | `...parameters` | `any`[] |
 
 ##### Returns
@@ -2406,7 +2407,7 @@ ___
 
 ### TransformApp
 
-Ƭ **TransformApp**<`Consumes`, `Produces`, `Z`, `S`, `AppConfigType`, `ReturnType`\>: (`this`: [`AppContext`](interfaces/appcontext.md)<`AppConfigType`, `S`\>, `source`: [`ReadableStream`](interfaces/readablestream.md)<`Consumes`\>, ...`args`: `Z`) => `MaybePromise`<`ReturnType`\>
+Ƭ **TransformApp**<`Consumes`, `Produces`, `Z`, `S`, `AppConfigType`, `ReturnType`\>: (`this`: [`AppContext`](interfaces/AppContext.md)<`AppConfigType`, `S`\>, `source`: [`ReadableStream`](interfaces/ReadableStream.md)<`Consumes`\>, ...`args`: `Z`) => `MaybePromise`<`ReturnType`\>
 
 #### Type parameters
 
@@ -2414,9 +2415,9 @@ ___
 | :------ | :------ |
 | `Consumes` | `any` |
 | `Produces` | `any` |
-| `Z` | extends `any`[]`any`[] |
-| `S` | extends `any``any` |
-| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig)[`AppConfig`](modules.md#appconfig) |
+| `Z` | extends `any`[] = `any`[] |
+| `S` | extends `any` = `any` |
+| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig) = [`AppConfig`](modules.md#appconfig) |
 | `ReturnType` | [`Streamable`](modules.md#streamable)<`Produces`\> |
 
 #### Type declaration
@@ -2428,12 +2429,14 @@ and returns the data to the platforms for further use.
 
 Has both active readable and writable sides.
 
+**`interface`**
+
 ##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `this` | [`AppContext`](interfaces/appcontext.md)<`AppConfigType`, `S`\> |
-| `source` | [`ReadableStream`](interfaces/readablestream.md)<`Consumes`\> |
+| `this` | [`AppContext`](interfaces/AppContext.md)<`AppConfigType`, `S`\> |
+| `source` | [`ReadableStream`](interfaces/ReadableStream.md)<`Consumes`\> |
 | `...args` | `Z` |
 
 ##### Returns
@@ -2477,7 +2480,7 @@ outputs the result.
 | `Consumes` | `Consumes` |
 | `Produces` | `Produces` |
 | `Z` | `any` |
-| `X` | extends `any`[]`any`[] |
+| `X` | extends `any`[] = `any`[] |
 
 #### Defined in
 
@@ -2493,7 +2496,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `serialized` | extends `boolean```true`` |
+| `serialized` | extends `boolean` = ``true`` |
 
 #### Defined in
 
@@ -2531,9 +2534,9 @@ of transforms and then saves it to the data destination by it's own means.
 | Name | Type |
 | :------ | :------ |
 | `Consumes` | `any` |
-| `Z` | extends `any`[]`any`[] |
-| `S` | extends `any``any` |
-| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig)[`AppConfig`](modules.md#appconfig) |
+| `Z` | extends `any`[] = `any`[] |
+| `S` | extends `any` = `any` |
+| `AppConfigType` | extends [`AppConfig`](modules.md#appconfig) = [`AppConfig`](modules.md#appconfig) |
 | `VoidType` | `void` |
 
 #### Defined in
@@ -2544,7 +2547,7 @@ ___
 
 ### WriteFunction
 
-Ƭ **WriteFunction**<`Consumes`\>: (`stream`: [`ReadableStream`](interfaces/readablestream.md)<`Consumes`\>, ...`parameters`: `any`[]) => `MaybePromise`<`void`\>
+Ƭ **WriteFunction**<`Consumes`\>: (`stream`: [`ReadableStream`](interfaces/ReadableStream.md)<`Consumes`\>, ...`parameters`: `any`[]) => `MaybePromise`<`void`\>
 
 #### Type parameters
 
@@ -2560,7 +2563,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `stream` | [`ReadableStream`](interfaces/readablestream.md)<`Consumes`\> |
+| `stream` | [`ReadableStream`](interfaces/ReadableStream.md)<`Consumes`\> |
 | `...parameters` | `any`[] |
 
 ##### Returns
@@ -2585,7 +2588,7 @@ a number of functions and writes to some destination.
 | Name | Type |
 | :------ | :------ |
 | `Consumes` | `Consumes` |
-| `Y` | extends `any`[]`any`[] |
+| `Y` | extends `any`[] = `any`[] |
 | `Z` | `any` |
 
 #### Defined in
