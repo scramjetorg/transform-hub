@@ -1,11 +1,8 @@
 # Transform Hub on Kubernetes
 
-## Notes
+This example assumes deployment to `default` namespace. Prepared policies (RBAC) allow `runner` POD creation in the same namespace as STH.
 
-This example assumes deployment to `default` namespace
-Prepared policies (RBAC) allow `runner` POD creation in the same namespace as STH.
-If you want to change the namespace, please edit manifests and change `namespace: default` as needed.
-Please rememeber to change one of transform-hub argument in `sth-deployment.yaml` ; `- "--k8s-namespace=default"` to correct namespace.
+If you want to change the namespace, please edit manifests and change `namespace: default` as needed. Also please remember to change one of transform-hub argument `- "--k8s-namespace=default"` in `sth-deployment.yaml` to correct namespace.
 
 
 ## Run RBAC related yaml file which will setup all the authorization related stuff:
