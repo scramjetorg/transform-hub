@@ -58,7 +58,7 @@ NAME                   READY   STATUS             RESTARTS   AGE     IP         
 sth-9cbc9f6d9-kr9jp    1/1     Running            0          26m     10.100.9.246    k8s-node-dev06   <none>           <none>
 ```
 
-So, now you can check version of transform-hub
+So, now you can check version of transform-hub:
 
 ```bash
 curl -s http://k8s-node-dev06:30030/api/v1/version
