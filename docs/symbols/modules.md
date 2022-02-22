@@ -6,11 +6,11 @@
 
 ### Enumerations
 
-- [CPMMessageCode](enums/cpmmessagecode.md)
-- [CommunicationChannel](enums/communicationchannel.md)
-- [InstanceMessageCode](enums/instancemessagecode.md)
-- [RunnerMessageCode](enums/runnermessagecode.md)
-- [SequenceMessageCode](enums/sequencemessagecode.md)
+- [CPMMessageCode](enums/CPMMessageCode.md)
+- [CommunicationChannel](enums/CommunicationChannel.md)
+- [InstanceMessageCode](enums/InstanceMessageCode.md)
+- [RunnerMessageCode](enums/RunnerMessageCode.md)
+- [SequenceMessageCode](enums/SequenceMessageCode.md)
 
 ### Variables
 
@@ -20,7 +20,7 @@
 
 ### exposeSequenceSymbol
 
-• `Const` **exposeSequenceSymbol**: typeof [`exposeSequenceSymbol`](modules.md#exposesequencesymbol)
+• **exposeSequenceSymbol**: typeof [`exposeSequenceSymbol`](modules.md#exposesequencesymbol)
 
 #### Defined in
 

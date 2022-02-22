@@ -6,7 +6,7 @@
 
 ### Classes
 
-- [ConfigService](classes/configservice.md)
+- [ConfigService](classes/ConfigService.md)
 
 ### Variables
 
@@ -20,7 +20,7 @@
 
 ### defaultConfig
 
-• `Const` **defaultConfig**: `STHConfiguration`
+• **defaultConfig**: `STHConfiguration` = `_defaultConfig`
 
 #### Defined in
 

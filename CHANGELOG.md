@@ -35,6 +35,10 @@ Prominent
 - 2d193278 - Introduce HTTPS support in the API Server
 - 38d69826 - The Docker Sequence and Instance Adapters specify the volume permissions
 - e46e9d80 - Scramjet community moving to Discord documentation update
+- 7dc49fea - Sapphire fetch wrapper integration
+- 13d08d36 - BDD tests for Python Runner
+- de177100 - Setup for installing dependencies in Python Runner
+- d7ae4019 - Implementation of Instance event handling in Python Runner
 
 New features:
 
@@ -48,6 +52,11 @@ New features:
 - **CLI extension** - Last uploaded/added sequence can now be referenced when starting etc. This will massively improve the CLI experience, as there's no longer need to parse the previous command line if we want to do quick deployment of a sequence
 - **Python runner WIP** - Running STH without docker can now spawn sequences written in python
 - **HTTPS Upgrade** - The API server can now be secured using HTTPS
+- **Instance stop improvement** - Support for graceful stop of Instance in Python Runner
+- **Typed responses for api-client** - Integrate sapphire fetch wrapper in api-cli
+- **Python Runner BDD tests** - Introduce BDD tests for Python Runner
+- **PYTHONPATH** - Configured PYTHONPATH for loading dependencies
+- **Python Instance events** - Handle Instance events in Python Runner
 
 Bugfixes and minor improvements:
 
@@ -76,7 +85,9 @@ Bugfixes and minor improvements:
 - Better error handling in the ObjectLogger and the CommunicationHandler
 - Added Docker Sequence and Instance Adapter volume permissions
 - Python Runner implements the complete Host handshake (including the default topic messages)
+- Fix for starting STH with the identify Sequences flag `-E`
+- Fix for deleting Sequence which was causing STH crash
 
-## @scramjet/transform Hub - v0.16.0
+## @scramjet/transform Hub - v0.17.0
 
 This is the last release in changelog.

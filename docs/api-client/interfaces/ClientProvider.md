@@ -20,4 +20,4 @@
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L49)
+[types/index.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L35)

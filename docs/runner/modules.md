@@ -6,5 +6,5 @@
 
 ### Classes
 
-- [MessageUtils](classes/messageutils.md)
-- [Runner](classes/runner.md)
+- [MessageUtils](classes/MessageUtils.md)
+- [Runner](classes/Runner.md)

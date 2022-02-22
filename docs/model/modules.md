@@ -6,15 +6,15 @@
 
 ### Classes
 
-- [AppError](classes/apperror.md)
-- [CSIControllerError](classes/csicontrollererror.md)
-- [CommunicationHandler](classes/communicationhandler.md)
-- [DelayedStream](classes/delayedstream.md)
-- [HostError](classes/hosterror.md)
-- [IDProvider](classes/idprovider.md)
-- [InstanceAdapterError](classes/instanceadaptererror.md)
-- [RunnerError](classes/runnererror.md)
-- [SequenceAdapterError](classes/sequenceadaptererror.md)
+- [AppError](classes/AppError.md)
+- [CSIControllerError](classes/CSIControllerError.md)
+- [CommunicationHandler](classes/CommunicationHandler.md)
+- [DelayedStream](classes/DelayedStream.md)
+- [HostError](classes/HostError.md)
+- [IDProvider](classes/IDProvider.md)
+- [InstanceAdapterError](classes/InstanceAdapterError.md)
+- [RunnerError](classes/RunnerError.md)
+- [SequenceAdapterError](classes/SequenceAdapterError.md)
 
 ### Type aliases
 
@@ -84,14 +84,14 @@ ___
 
 ### MessageUtilities
 
-• `Const` **MessageUtilities**: `Object`
+• **MessageUtilities**: `Object`
 
 #### Type declaration
 
 | Name | Type |
 | :------ | :------ |
 | `deserializeMessage` | (`msg`: `string`) => `MessageType`<`RunnerMessageCode`\> |
-| `serializeMessage` | <T\>(`__namedParameters`: `MessageType`<`T`\>) => `RunnerMessage` \| `CPMMessage` |
+| `serializeMessage` | <T\>(`msg`: `MessageType`<`T`\>) => `RunnerMessage` \| `CPMMessage` |
 
 #### Defined in
 
@@ -184,7 +184,7 @@ ___
 
 ### serializeMessage
 
-▸ **serializeMessage**<`T`\>(`__namedParameters`): `RunnerMessage` \| `CPMMessage`
+▸ **serializeMessage**<`T`\>(`msg`): `RunnerMessage` \| `CPMMessage`
 
 Serizalized message.
 
@@ -196,9 +196,9 @@ Serizalized message.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `__namedParameters` | `MessageType`<`T`\> |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `msg` | `MessageType`<`T`\> | an object of message type |
 
 #### Returns
 

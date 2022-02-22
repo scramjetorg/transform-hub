@@ -2,10 +2,6 @@
 
 # Interface: HttpClient
 
-## Implemented by
-
-- [`ClientUtils`](../classes/ClientUtils.md)
-
 ## Table of contents
 
 ### Methods
@@ -35,13 +31,13 @@
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L36)
+[types/index.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L26)
 
 ___
 
 ### delete
 
-▸ **delete**(`url`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **delete**(`url`): `Promise`<`Response`\>
 
 #### Parameters
 
@@ -51,17 +47,23 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`Response`\>
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L40)
+[types/index.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L30)
 
 ___
 
 ### get
 
-▸ **get**(`url`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **get**<`T`\>(`url`): `Promise`<`T`\>
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
 
 #### Parameters
 
@@ -71,17 +73,17 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`T`\>
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L37)
+[types/index.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L27)
 
 ___
 
 ### getStream
 
-▸ **getStream**(`url`): `Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+▸ **getStream**(`url`): `Promise`<`Stream`\>
 
 #### Parameters
 
@@ -91,17 +93,23 @@ ___
 
 #### Returns
 
-`Promise`<[`ResponseStream`](../modules.md#responsestream)\>
+`Promise`<`Stream`\>
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L38)
+[types/index.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L28)
 
 ___
 
 ### post
 
-▸ **post**(`url`, `data`, `headers?`, `options?`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **post**<`T`\>(`url`, `data`, `headers?`, `options?`): `Promise`<`T`\>
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
 
 #### Parameters
 
@@ -114,17 +122,23 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`T`\>
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L39)
+[types/index.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L29)
 
 ___
 
 ### sendStream
 
-▸ **sendStream**(`url`, `stream`, `options?`): `Promise`<[`Response`](../modules.md#response)\>
+▸ **sendStream**<`T`\>(`url`, `stream`, `options?`): `Promise`<`T`\>
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
 
 #### Parameters
 
@@ -136,8 +150,8 @@ ___
 
 #### Returns
 
-`Promise`<[`Response`](../modules.md#response)\>
+`Promise`<`T`\>
 
 #### Defined in
 
-[packages/api-client/src/types/index.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L41)
+[types/index.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L31)

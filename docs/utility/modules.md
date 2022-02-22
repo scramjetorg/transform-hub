@@ -6,8 +6,8 @@
 
 ### Classes
 
-- [FreePortsFinder](classes/freeportsfinder.md)
-- [TypedEmitter](classes/typedemitter.md)
+- [FreePortsFinder](classes/FreePortsFinder.md)
+- [TypedEmitter](classes/TypedEmitter.md)
 
 ### Functions
 
@@ -63,7 +63,7 @@ Returns true if given value is defined.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `value` | `T` \| `undefined` \| ``null`` | Value to check. |
+| `value` | `undefined` \| ``null`` \| `T` | Value to check. |
 
 #### Returns
 

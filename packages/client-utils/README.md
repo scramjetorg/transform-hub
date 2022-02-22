@@ -5,7 +5,7 @@
     <a href="https://npmjs.org/package/@scramjet/sth"><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
     <a href="https://github.com/scramjetorg/transform-hub"><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
     <a href="https://npmjs.org/package/@scramjet/sth"><img src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic" alt="npm" /></a>
-    <a href="https://discord.gg/4EX3jHBe"><img alt="Discord" src="https://img.shields.io/discord/925384545342201896?label=discord"></a>
+    <a href="https://discord.gg/TTqCpHDjHz"><img alt="Discord" src="https://img.shields.io/discord/925384545342201896?label=discord&style=plastic"></a>
     <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW">
         <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?color=yellow&style=plastic" alt="Donate" />
     </a>
@@ -51,11 +51,11 @@ There's no limit what you can use it for. You want a stock checker? A chat bot? 
 
 ## Quick guide
 
-- [Host operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#host-operations)
-- [Sequence operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#sequence-operations)
-- [Instance basic operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#instance-basic-operations)
-- [Instance advanced operation](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#instance-advanced-operation)
-- [Service Discovery: Topics](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/api-client/#service-discovery-topics)
+- [Host operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#host-operations)
+- [Sequence operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#sequence-operations)
+- [Instance basic operations](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#instance-basic-operations)
+- [Instance advanced operation](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#instance-advanced-operation)
+- [Service Discovery: Topics](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/client-utils/#service-discovery-topics)
 
 ___
 
