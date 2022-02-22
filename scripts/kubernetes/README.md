@@ -44,9 +44,7 @@ sth-api      NodePort    10.111.75.239    <none>        8000:30030/TCP   14m
 sth-runner   ClusterIP   10.103.128.166   <none>        8001/TCP         4m40s
 ```
 
-In this example kubernetes exposed our `sth-api` on port `30030`
-
-Now, we have to check on what node our STH pod is running, to do this You can type:
+In this example kubernetes exposed our `sth-api` on port `30030`. Now, we have to check on what node our STH pod is running, to do this You can type:
 
 ``` bash
 kubectl get pod -l app=sth -o wide
