@@ -46,13 +46,13 @@ Feature: Host configuration
         * exit hub process
 
     @ci @starts-host @docker-specific
-    Scenario: HUB-001 TC-010  Default runner image
+    Scenario: HUB-001 TC-010  Default runner image for js/ts sequences
         When hub process is started with parameters "''"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started
         And wait for "2000" ms
         And get runner container information
-        Then container uses image defined in sth-config
+        Then container uses node image defined in sth-config
         * exit hub process
 
     @ci @starts-host @docker-specific

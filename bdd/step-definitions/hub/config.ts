@@ -97,8 +97,8 @@ Then("container uses {string} image", async function(this: CustomWorld, image: s
     assert.equal(this.resources.containerInfo.Image, image);
 });
 
-Then("container uses image defined in sth-config", async function(this: CustomWorld) {
-    const defaultRunnerImage = defaultConfig.docker.runner.image;
+Then("container uses node image defined in sth-config", async function(this: CustomWorld) {
+    const defaultRunnerImage = defaultConfig.docker.runnerImages.node;
 
     assert.equal(this.resources.containerInfo.Image, defaultRunnerImage);
 });
