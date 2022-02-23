@@ -53,7 +53,7 @@ export class InstanceClient {
      * @returns {Promise<SendStopInstanceResponse>} Promise resolving to stop Instance result.
      */
     async stop(timeout: number, canCallKeepalive: boolean): Promise<STHRestAPI.SendStopInstanceResponse> {
-        return this.clientUtils.post(
+        return this.clientUtils.post<STHRestAPI.SendStopInstanceResponse>(
             `${this.instanceURL}/_stop`,
             [
                 RunnerMessageCode.STOP,
@@ -63,7 +63,7 @@ export class InstanceClient {
                 },
             ] as EncodedControlMessage,
             {},
-            { json: true }
+            { json: true, parseResponse: "json" }
         );
     }
 
