@@ -9,7 +9,7 @@ Sequence downloads following files every second:
 
 build everything:
 ```
-yarn install && yarn build && yarn prepack && yarn packseq
+yarn install && yarn build && yarn prepack
 ```
 
 ## Run test
@@ -40,7 +40,7 @@ yarn test:bdd --name "PT-003 TC-003"
 prepare sequence
 ```
 ✘-INT ~/github/scramjet-csi-dev/packages/reference-apps/durability-preservation
-$ yarn build && yarn prepack && yarn packseq
+$ yarn build && yarn prepack
 ```
 
 start host

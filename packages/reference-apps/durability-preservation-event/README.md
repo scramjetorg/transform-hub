@@ -8,7 +8,7 @@ After requesting file, the sequence emits an event with response status code and
 
 ```
 # in sequence directory
-$ yarn build && yarn packseq
+$ yarn build
 ```
 
 ## Send sequence

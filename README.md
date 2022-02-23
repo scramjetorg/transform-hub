@@ -507,10 +507,6 @@ Assuming that you have the [host running](#start-the-hub-checkered_flag) use the
 yarn build:refapps    # this builds all the refapps in the 'reference-apps' package
 ```
 
-```bash
-yarn packseq    # this creates tar.gz for all the refapps in the 'reference-apps' package
-```
-
 When the host is not running you can use a script:
 
 ```bash
@@ -676,8 +672,7 @@ yarn clean && yarn clean:modules && yarn install && yarn build:all
 Every reference-app package before we run it, needs to:
 
 * have `node_modules` installed (`yarn install`)
-* have `dist` directory created (`yarn build:refapps`)
-* be compressed (`yarn packseq`)
+* have `dist` directory created and tar.gz package created (`yarn build:refapps`)
 
 Remember to install dependencies and build your sample package before compressing it.
 
@@ -688,8 +683,6 @@ yarn build:refapps
 ```
 
 It will build all the packages in the `packages/reference-apps` folder.
-
-> **:bulb: HINT:** Remember to generate the tar.gz file before sending it to the host. Only compressed packages will be accepted by the host. Command `yarn packseq` will generate the tar.gz file of each app in the `packages/reference-apps` folder.
 
 </details><br>
 

@@ -21,7 +21,7 @@ BDD tests are located in a `bdd` folder, to execute them simply follow the steps
 Before start running any test, please make sure that all the packages are installed and built. In order to do that please run the following command:
 
 ```bash
-yarn clean && yarn install && yarn build:all && yarn packseq
+yarn clean && yarn install && yarn build:all
 ```
 
 This command will remove all the 'dist' folders (if there were any), after that it will install and build all the packages including 'reference-apps' package, which contains all the applications that we use in our BDD tests. After executing the command from above every single application will be also compressed into `.tar.gz` file. We also need them for the BDD tests execution.

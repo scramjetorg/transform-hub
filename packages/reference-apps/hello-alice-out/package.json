@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "build:refapps": "tsc -p tsconfig.json",
-    "postbuild:refapps": "yarn prepack",
+    "postbuild:refapps": "yarn prepack && yarn packseq",
     "clean": "rm -rf ./dist .bic_cache",
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js"
