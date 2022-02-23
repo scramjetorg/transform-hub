@@ -12,11 +12,12 @@ from logging_setup import LoggingSetup
 from hardcoded_magic_values import CommunicationChannels as CC
 from hardcoded_magic_values import RunnerMessageCodes as msg_codes
 
-STARTUP_LOGFILE = './python-runner-startup.log'
 
 sequence_path = os.getenv('SEQUENCE_PATH')
 server_port = os.getenv('INSTANCES_SERVER_PORT')
+server_host = os.getenv('INSTANCES_SERVER_HOST') or 'localhost'
 instance_id = os.getenv('INSTANCE_ID')
+
 
 def send_encoded_msg(stream, msg_code, data={}):
     message = json.dumps([msg_code.value, data])
@@ -89,8 +90,8 @@ class Runner:
 
     def connect_log_stream(self):
         self.logger.info('Switching to main log stream...')
-        target = codecs.getwriter('utf-8')(self.streams[CC.LOG])
-        self._logging_setup.switch_to(target)
+        log_stream = codecs.getwriter('utf-8')(self.streams[CC.LOG])
+        self._logging_setup.switch_target(log_stream)
         self._logging_setup.flush_temp_handler()
         self.logger.info('Log stream connected.')
 
@@ -279,10 +280,11 @@ class AppContext:
             {'eventName': event_name, 'message': message}
         )
 
-
-log_setup = LoggingSetup(STARTUP_LOGFILE)
+log_target = open(sys.argv[1], 'a+') if len(sys.argv) > 1 else sys.stdout
+log_setup = LoggingSetup(log_target)
 
 log_setup.logger.info('Starting up...')
+log_setup.logger.debug(f'server_host: {server_host}')
 log_setup.logger.debug(f'server_port: {server_port}')
 log_setup.logger.debug(f'instance_id: {instance_id}')
 log_setup.logger.debug(f'sequence_path: {sequence_path}')
@@ -292,4 +294,4 @@ if not sequence_path or not server_port or not instance_id:
     sys.exit(2)
 
 runner = Runner(instance_id, sequence_path, log_setup)
-asyncio.run(runner.main('localhost', server_port))
+asyncio.run(runner.main(server_host, server_port))

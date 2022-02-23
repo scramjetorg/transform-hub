@@ -17,11 +17,12 @@ class JsonFormatter(logging.Formatter):
 
 
 class LoggingSetup():
-    def __init__(self, temp_log_path, min_loglevel=logging.DEBUG) -> None:
-        self._temp_logfile = open(temp_log_path, 'a+')
-        self._temp_logfile.write('\n')
-        sys.stdout = self._temp_logfile
-        sys.stderr = self._temp_logfile
+    def __init__(self, target, min_loglevel=logging.DEBUG) -> None:
+        self._target = target
+        self._target.write('\n')
+        if self._target != sys.stdout:
+            sys.stdout = self._target
+            sys.stderr = self._target
 
         self.logger = logging.getLogger('PythonRunner')
         self.logger.setLevel(min_loglevel)
@@ -32,7 +33,7 @@ class LoggingSetup():
     def create_handlers(self, min_loglevel):
         formatter = JsonFormatter()
 
-        self._main_handler = logging.StreamHandler(self._temp_logfile)
+        self._main_handler = logging.StreamHandler(self._target)
         self._main_handler.setLevel(min_loglevel)
         self._main_handler.setFormatter(formatter)
         self.logger.addHandler(self._main_handler)
@@ -52,9 +53,11 @@ class LoggingSetup():
         self.logger.warn = self.logger.warning
 
 
-    def switch_to(self, target):
-        self._main_handler.setStream(target)
-        self._temp_logfile.close()
+    def switch_target(self, new_target):
+        old_target = self._target
+        self._main_handler.setStream(new_target)
+        self._target = new_target
+        old_target.close()
 
 
     def flush_temp_handler(self):
