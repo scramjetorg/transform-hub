@@ -20,9 +20,13 @@ const getFirstLineFromUrlFilePromise = async (url: string) => {
 // Simple seqence receiving line of text and passing to the output:
 // received line + md5 of line + first line of file from storeItemUrl
 // seqeuence destroys outputStream if it's unable to get line from storeItemUrl
-const app: TransformApp<string> = async function(input: any) {
+const app: TransformApp<string> = async function(input: any, development = "") {
     const outputStream = new PassThrough({ encoding: "utf-8" });
+
+    if (development) input.on("data", (data: Buffer) => outputStream.write(`<><> ${new Date()}, ${data.toString("utf-8").match(/\n/g)?.length} <><>\n`)).pause();
+
     const rl = createInterface({ input });
+
     let drain: null | Promise<void> = null;
 
     const storeItemUrl = "https://assets.scramjet.org/scp-store/helloworld.txt";
@@ -30,7 +34,7 @@ const app: TransformApp<string> = async function(input: any) {
 
     rl.on("line", async (line) => {
         const out = outputStream.write(
-            line + ";" + createHash("md5").update(line).digest("hex") + ";" + storeFirstLine + "\n"
+            `${line};${createHash("md5").update(line).digest("hex")};${new Date()};${storeFirstLine}\n`
         );
 
         if (!out) {
@@ -39,8 +43,7 @@ const app: TransformApp<string> = async function(input: any) {
             await drain;
             input.resume();
         }
-    });
-    rl.on("close", async () => {
+    }).on("close", async () => {
         await drain;
         outputStream.end();
     });

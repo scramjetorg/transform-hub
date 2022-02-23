@@ -1311,6 +1311,19 @@
   dependencies:
     cross-fetch "^3.1.5"
 
+"@scramjet/symbols@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.16.0.tgz#827727cf48ea819c4f2cba0bfd11080bdd81418c"
+  integrity sha512-yMKeiOTsu5XSyoDR/u70LLcpNUbzlw4rDbe6mu7+Z+RdcpFcKU63G+tnVmoFC5+uoLJbEeUcI5tHT62DQbSQaA==
+
+"@scramjet/types@^0.16.0":
+  version "0.16.0"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.16.0.tgz#93d6a9c5ce160d4a25260dca941418820960dcb1"
+  integrity sha512-eV1dvnGgAK4FcFKvh+rm8sDV4wJp5Gu9dvSGyusNcycBlNeYoypxfhpfevbKDjUsQKfCZGmhz7msadZBJJSsAQ==
+  dependencies:
+    "@scramjet/symbols" "^0.16.0"
+    http-status-codes "^2.1.4"
+
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.npmjs.org/@sindresorhus/is/-/is-0.14.0.tgz"

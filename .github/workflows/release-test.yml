@@ -32,9 +32,6 @@ jobs:
       - name: Build refapps
         run: yarn build:refapps
 
-      - name: Pack sequences
-        run: yarn packseq
-
       - name: build runner Docker image
         run: docker build -q -t scramjetorg/runner:$(jq -r .version package.json) -f Dockerfile ../../
         working-directory: packages/runner

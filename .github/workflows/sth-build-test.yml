@@ -195,9 +195,6 @@ jobs:
       - name: Build refapps
         run: yarn build:refapps
 
-      - name: Pack sequences
-        run: yarn packseq
-
       - name: Create artifact
         run: tar --exclude=dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/.*
 
