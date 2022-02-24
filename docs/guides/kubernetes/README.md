@@ -4,7 +4,6 @@ This example assumes deployment to `default` namespace. Prepared policies (RBAC)
 
 If you want to change the namespace, please edit manifests and change `namespace: default` as needed. Also please remember to change one of transform-hub argument `- "--k8s-namespace=default"` in `sth-deployment.yaml` to correct namespace.
 
-
 ## Run RBAC related yaml file which will setup all the authorization related stuff:
 
 ```bash
