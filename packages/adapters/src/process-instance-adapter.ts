@@ -58,8 +58,8 @@ IComponent {
         if ("python3" in config.engines) {
             this.logger.trace(gotPython);
             const runnerPath = isTSNode
-                ? "../../../python/runner/runner.py"
-                : "../../python/runner/runner.py";
+                ? "../../python-runner/runner.py"
+                : path.resolve(__dirname, require.resolve("@scramjet/python-runner"));
 
             return [
                 "/usr/bin/env",
@@ -81,7 +81,9 @@ IComponent {
     getPythonpath() {
         let pythonpath = path.resolve(
             __dirname,
-            isTSNode ? "../../../python_modules" : "../../python_modules"
+            isTSNode
+                ? "../../python-runner/dist"
+                : path.resolve(__dirname, require.resolve("@scramjet/python-runner"), "..")
         );
 
         if (process.env.PYTHONPATH) pythonpath += `:${process.env.PYTHONPATH}`;

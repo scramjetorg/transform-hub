@@ -94,7 +94,8 @@
   },
   "workspaces": {
     "packages": [
-      "packages/**",
+      "packages/*",
+      "packages/reference-apps/*",
       "bdd"
     ]
   },
