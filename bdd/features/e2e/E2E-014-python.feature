@@ -92,7 +92,7 @@ Feature: Test our shiny new Python runner
         Then instance health is "false"
         And host is still running
 
-    @ignore
+
     @python
     Scenario: E2E-014 TC-011 Send data between python instances using topics
         Given host is running

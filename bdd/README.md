@@ -96,7 +96,7 @@ for seq_name in `ls python/reference-apps/`; do si pack "python/reference-apps/$
 Also, python runner does not support Docker yet, so run tests with
 
 ```bash
-NO_DOCKER=1 yarn test:bdd --tags=@python
+RUNTIME_ADAPTER=process yarn test:bdd --tags=@python
 ```
 
 ### Results :bar_chart:
