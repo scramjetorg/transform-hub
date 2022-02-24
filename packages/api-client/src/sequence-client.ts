@@ -1,8 +1,7 @@
-import { ClientError, HttpClient } from "@scramjet/client-utils";
+import { ClientError, ClientProvider, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 
 import { InstanceClient } from "./instance-client";
-import { ClientProvider } from "./types";
 
 /**
  * Sequence client.
@@ -77,9 +76,9 @@ export class SequenceClient {
     }
 
     /**
-     * TODO:
+     * Return Instance Client for given instance id.
      *
-     * @param {string} id TODO:
+     * @param {string} id Instance id.
      * @param {ClientProvider} host Host client.
      * @returns {InstanceClient} Instance client.
      */

@@ -1,7 +1,6 @@
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage, STHRestAPI } from "@scramjet/types";
-import { HttpClient } from "@scramjet/client-utils";
-import { SendStreamOptions, ClientProvider } from "./types";
+import { ClientProvider, HttpClient, SendStreamOptions } from "@scramjet/client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
@@ -154,7 +153,7 @@ export class InstanceClient {
      * Stream can be one of type {@link InstanceOutputStream}.
      *
      * @param {string} streamId Stream id.
-     * @returns Promise resolving to stream.
+     * @returns Promise resolving to readable stream.
      */
     async getStream(streamId: InstanceOutputStream): ReturnType<HttpClient["getStream"]> {
         return this.clientUtils.getStream(`${this.instanceURL}/${streamId}`);
@@ -164,9 +163,9 @@ export class InstanceClient {
      * Sends stream to one of the instance inputs.
      *
      * @param {string} streamId Target input stream.
-     * @param {stream|string} stream Stream to send.
+     * @param {Readable|string} stream Stream to send.
      * @param {SendStreamOptions} [options] Stream options.
-     * @returns Promise resolving to stream.
+     * @returns {Promise<STHRestAPI.SendStreamResponse>} Promise resolving to send stream result.
      */
     async sendStream(streamId: InstanceInputStream, stream: Parameters<HttpClient["sendStream"]>[1] | string, options?: SendStreamOptions) {
         return this.clientUtils.sendStream<any>(`${this.instanceURL}/${streamId}`, stream, options);
@@ -175,9 +174,9 @@ export class InstanceClient {
     /**
      * Pipes given stream to instance "input".
      *
-     * @param {Stream|string} stream Stream to be piped. Or string writen to "stdin" stream.
+     * @param {Readable|string} stream Stream to be piped. Or string writen to "stdin" stream.
      * @param {SendStreamOptions} options Request options
-     * @returns {Promise<Response>} Promise resolving to response.
+     * @returns {Promise<STHRestAPI.SendStreamResponse>} Promise resolving to send stream result.
      */
     async sendInput(stream: Parameters<HttpClient["sendStream"]>[1] | string, options?: SendStreamOptions) {
         return this.sendStream("input", stream, options);
@@ -186,8 +185,8 @@ export class InstanceClient {
     /**
      * Pipes given stream to instance "stdin".
      *
-     * @param {Stream|string} stream Stream to be piped. Or string writen to "stdin" stream.
-     * @returns {Promise<Response>} Promise resolving to response.
+     * @param {Readable|string} stream Stream to be piped. Or string writen to "stdin" stream.
+     * @returns {Promise<STHRestAPI.SendStreamResponse>} Promise resolving to send stream result.
      */
     async sendStdin(stream: Parameters<HttpClient["sendStream"]>[1] | string) {
         return this.sendStream("stdin", stream);
