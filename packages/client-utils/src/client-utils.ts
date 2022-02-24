@@ -5,7 +5,7 @@ import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } 
 /**
  * Provides HTTP communication methods.
  */
-export class ClientUtilsBase implements HttpClient {
+export abstract class ClientUtilsBase implements HttpClient {
     fetch!: any;
 
     apiBase: string = "";
@@ -31,7 +31,11 @@ export class ClientUtilsBase implements HttpClient {
     }
 
     /**
-     * Request wrapper.
+     * Wraps fetch request and handles response based on given config.
+     *
+     * @param {RequestInfo} input Request URL.
+     * @param {RequestInit} init Request options.
+     * @param {RequestConfig} options Request wrapper options.
      */
     private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
         const source = new Error();
@@ -48,7 +52,7 @@ export class ClientUtilsBase implements HttpClient {
             }
 
             if (this.log) {
-                this.log?.ok(response);
+                this.log.ok(response);
             }
 
             if (this.log) {
@@ -74,10 +78,10 @@ export class ClientUtilsBase implements HttpClient {
     }
 
     /**
-     * Performs get request.
+     * Performs get using request wrapper.
      *
      * @param {string} url Request URL.
-     * @returns Fetch response.
+     * @returns {Promise<T>} Promise resolving to given type.
      */
     async get<T>(url: string): Promise<T> {
         return this.safeRequest<T>(`${this.apiBase}/${url}`, {}, { parse: "json" });
@@ -87,20 +91,20 @@ export class ClientUtilsBase implements HttpClient {
      * Performs get request for streamed data.
      *
      * @param {string} url Request URL.
-     * @returns Fetch response.
+     * @returns {Readable} Readable stream.
      */
     async getStream(url: string) {
         return this.safeRequest<any>(`${this.apiBase}/${url}`, {});
     }
 
     /**
-     * Performs POST request.
+     * Performs POST request and returns response in given type.
      *
      * @param url Request URL.
      * @param data Data to be send.
      * @param headers Request headers.
      * @param config Request config.
-     * @returns Fetch response.
+     * @returns {Promise<T>} Promise resolving to given type.
      */
     async post<T>(
         url: string,
@@ -128,7 +132,7 @@ export class ClientUtilsBase implements HttpClient {
      * Performs DELETE request.
      *
      * @param url Request URL.
-     * @returns Fetch response.
+     * @returns {Promise<T>} Promise resolving to given type.
      */
     async delete<T>(url: string): Promise<T> {
         return this.safeRequest<T>(
@@ -147,9 +151,10 @@ export class ClientUtilsBase implements HttpClient {
      * Performs POST request for streamed data.
      *
      * @param {string} url Request url.
-     * @param {Stream|string} stream to be send.
+     * @param {Readable|string} stream stream to be send.
+     * @param {SendStreamOptions} options send stream options.
 
-     * @returns Fetch response.
+     * @returns {Promise<T>} Promise resolving to response of given type.
      */
     async sendStream<T>(
         url: string,

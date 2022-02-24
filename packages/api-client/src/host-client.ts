@@ -1,7 +1,6 @@
-import { ClientUtils, HttpClient } from "@scramjet/client-utils";
+import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 import { SequenceClient } from "./sequence-client";
-import { ClientProvider } from "./types";
 
 /**
  * Host client.
@@ -38,7 +37,7 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host log stream.
      *
-     * @returns {Promise<Response>} Promise resolving to response with log stream.
+     * @returns Promise resolving to response with log stream.
      */
     async getLogStream(): ReturnType<HttpClient["getStream"]> {
         return this.client.getStream("log");
@@ -112,7 +111,7 @@ export class HostClient implements ClientProvider {
      * Topics are a part of Service Discovery feature enabling data exchange through Topics API.
      *
      * @param {string} topic Topic name.
-     * @param {Readable} stream Stream to be piped to topic.
+     * @param stream Stream to be piped to topic.
      * @param {string} [contentType] Content type to be set in headers.
      * @param {boolean} end Indicates if "end" event from stream should be passed to topic.
      * @returns TODO: comment.
@@ -125,7 +124,7 @@ export class HostClient implements ClientProvider {
      * Returns stream from given topic.
      *
      * @param topic Topic name.
-     * @returns Promise resolving to stream.
+     * @returns Promise resolving to readable stream.
      */
     async getNamedData(topic: string): ReturnType<HttpClient["getStream"]> {
         return this.client.getStream(`topic/${topic}`);

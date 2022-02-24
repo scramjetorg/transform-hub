@@ -1,6 +1,13 @@
 import { ClientUtilsBase } from "./client-utils";
 import { HttpClientBrowser as HttpClient } from "./types";
 
+/**
+ * Provides HTTP communication methods.
+ *
+ * @class ClientUtils
+ * @extends ClientUtilsBase
+ * @classdesc Provides HTTP communication methods.
+ */
 export class ClientUtils extends ClientUtilsBase implements HttpClient {
     fetch = window.fetch.bind(window);
 }
