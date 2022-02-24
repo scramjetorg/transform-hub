@@ -1,9 +1,9 @@
 import { IDProvider } from "@scramjet/model";
-import { ClientError } from "@scramjet/client-utils";
+import { ClientError, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 
 import { InstanceClient } from "./instance-client";
-import { ClientProvider, HttpClient } from "./types";
+import { ClientProvider } from "./types";
 
 /**
  * Sequence client.
@@ -58,7 +58,7 @@ export class SequenceClient {
             `${this.sequenceURL}/start`,
             { appConfig, args },
             {},
-            { json: true, parseResponse: "json" }
+            { json: true, parse: "json" }
         );
 
         if (response.id) {

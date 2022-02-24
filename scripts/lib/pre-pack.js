@@ -60,7 +60,6 @@ class PrePack {
             if (!this.options.noInstall) {
                 await this.install();
             }
-
         } catch (message) {
             console.error(message);
             process.exitCode = 1;
@@ -189,6 +188,7 @@ class PrePack {
         return { ...dependencies };
     }
 
+    // eslint-disable-next-line complexity
     async transformPackageJson() {
         const content = this.currPackageJson;
 
@@ -196,10 +196,9 @@ class PrePack {
 
         const dependencies = this.localizeDependencies(content.dependencies);
         const {
-            bin: _bin, main: _main,
+            bin: _bin, main: _main, browser: _browser,
             name, version, description, keywords,
             files = this.rootPackageJson.files,
-            browser = this.rootPackageJson.browser,
             license = this.rootPackageJson.license,
             author = this.rootPackageJson.author,
             contributors = this.rootPackageJson.contributors,
@@ -217,6 +216,7 @@ class PrePack {
         const priv = !this.options.public && this.rootPackageJson.private;
         const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, rp);
         const main = srcRe(_main);
+        const browser = _browser && srcRe(_browser);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)
             : Object.entries(_bin)
