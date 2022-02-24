@@ -1,10 +1,10 @@
-import { Stream } from "stream";
+import { Readable } from "stream";
 import { ClientError } from "../client-error";
 
 export type SendStreamOptions = Partial<{
     type: string;
     end: boolean;
-    parseResponse?: "json" | "text";
+    parseResponse?: "json" | "text" | "stream";
 }>;
 
 export type Headers = {
@@ -17,18 +17,29 @@ export type RequestLogger = {
     error: (res: ClientError) => void;
 };
 
-export type PostRequestConfig = {
-    parseResponse?: "json" | "text";
+export type RequestConfig = {
+    parse: "json" | "text" | "stream"
     json?: boolean;
 };
 
 export interface HttpClient {
+    fetch?: any;
     addLogger(logger: RequestLogger): void;
     get<T>(url: string): Promise<T>;
-    getStream(url: string): Promise<Stream>;
-    post<T>(url: string, data: any, headers?: Headers, options?: { json: boolean } & PostRequestConfig): Promise<T>;
-    delete(url: string): Promise<Response>;
-    sendStream<T>(url: string, stream: Stream | string, options?: SendStreamOptions): Promise<T>;
+    getStream(url: string): Promise<any>;
+    post<T>(url: string, data: any, headers?: Headers, options?: { json: boolean } & RequestConfig): Promise<T>;
+    delete<T>(url: string): Promise<T>;
+    sendStream<T>(url: string, stream: any, options?: SendStreamOptions): Promise<T>;
+}
+
+export interface HttpClientNode extends HttpClient {
+    getStream(url: string): Promise<Readable>;
+    sendStream<T>(url: string, stream: Readable | string, options?: SendStreamOptions): Promise<T>;
+}
+
+export interface HttpClientBrowser extends HttpClient {
+    getStream(url: string): Promise<Response["body"]>;
+    sendStream<T>(url: string, stream: ReadableStream<any> | string, options?: SendStreamOptions): Promise<T>;
 }
 
 export interface ClientProvider {

@@ -1,14 +1,13 @@
 /* eslint-disable no-console */
-import { fetch, QueryError, FetchResultTypes } from "@sapphire/fetch";
-import { Stream } from "stream";
-
 import { ClientError } from "./client-error";
-import { Headers, HttpClient, RequestLogger, SendStreamOptions, PostRequestConfig } from "./types";
+import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } from "./types";
 
 /**
  * Provides HTTP communication methods.
  */
-export class ClientUtils implements HttpClient {
+export class ClientUtilsBase implements HttpClient {
+    fetch!: any;
+
     apiBase: string = "";
 
     private log?: RequestLogger;
@@ -33,32 +32,45 @@ export class ClientUtils implements HttpClient {
 
     /**
      * Request wrapper.
-     *
-     * @param args Fetch arguments.
-     * @returns Fetch object.
      */
-    private async safeRequest<T>(...args: Parameters<typeof fetch>) {
-        let resp = fetch<T>(...args);
+    private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
+        let resp = this.fetch(input, init);
 
         if (this.log) {
             const log = this.log;
 
-            log.request(...args);
+            log.request(...arguments);
+
             resp = resp
-                .then((res) => {
-                    log.ok(res);
+                .then((res: any) => {
+                    log.request(input, init, res);
                     return res;
                 })
-                .catch((err) => {
+                .catch((err: any) => {
                     log.error(err);
                     throw err;
                 });
         }
+
         const source = new Error();
 
-        return resp.catch((e: Error | QueryError) => {
+        resp.catch((e: Error) => {
             throw ClientError.from(e, undefined, source);
         });
+
+        if (options.parse === "json") {
+            return resp.then((res: any) => res.json()) as Promise<T>;
+        }
+
+        if (options.parse === "text") {
+            return resp.then((res: any) => res.text()) as Promise<T>;
+        }
+
+        if (options.parse === "stream") {
+            return resp.then((res: any) => res.body) as Promise<T>;
+        }
+
+        throw new Error("Unknown parse option");
     }
 
     /**
@@ -68,7 +80,7 @@ export class ClientUtils implements HttpClient {
      * @returns Fetch response.
      */
     async get<T>(url: string): Promise<T> {
-        return this.safeRequest<any>(`${this.apiBase}/${url}`, {}, FetchResultTypes.JSON);
+        return this.safeRequest<T>(`${this.apiBase}/${url}`, {}, { parse: "json" });
     }
 
     /**
@@ -77,10 +89,8 @@ export class ClientUtils implements HttpClient {
      * @param {string} url Request URL.
      * @returns Fetch response.
      */
-    async getStream(url: string): Promise<Stream> {
-        return this.safeRequest<Response>(`${this.apiBase}/${url}`, {}, FetchResultTypes.Result).then(
-            (res) => (res as Response).body as unknown as Stream
-        );
+    async getStream(url: string) {
+        return this.safeRequest<any>(`${this.apiBase}/${url}`, {});
     }
 
     /**
@@ -96,7 +106,7 @@ export class ClientUtils implements HttpClient {
         url: string,
         data: any,
         headers: Headers = {},
-        config: PostRequestConfig = { json: false }
+        config: RequestConfig = { parse: "stream", json: false }
     ): Promise<T> {
         if (config.json) {
             headers["Content-Type"] = "application/json";
@@ -110,8 +120,8 @@ export class ClientUtils implements HttpClient {
                 body: data,
                 headers,
             },
-            config.parseResponse ? FetchResultTypes.JSON : FetchResultTypes.Result
-        ) as Promise<T>;
+            config
+        );
     }
 
     /**
@@ -129,8 +139,8 @@ export class ClientUtils implements HttpClient {
                     "Content-Type": "application/json",
                 },
             },
-            FetchResultTypes.JSON
-        ) as Promise<T>;
+            { parse: "json" }
+        );
     }
 
     /**
@@ -143,8 +153,8 @@ export class ClientUtils implements HttpClient {
      */
     async sendStream<T>(
         url: string,
-        stream: Stream | string,
-        { type = "application/octet-stream", end, parseResponse }: SendStreamOptions = {}
+        stream: any | string,
+        { type = "application/octet-stream", end, parseResponse = "stream" }: SendStreamOptions = {}
     ): Promise<T> {
         const headers: Headers = {
             "content-type": type,
@@ -155,6 +165,6 @@ export class ClientUtils implements HttpClient {
             headers["x-end-stream"] = end ? "true" : "false";
         }
 
-        return this.post<T>(url, stream, headers, { parseResponse });
+        return this.post<T>(url, stream, headers, { parse: parseResponse });
     }
 }

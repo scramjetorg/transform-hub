@@ -41,7 +41,7 @@ const startWith = async function(this: CustomWorld, instanceArg: string) {
 const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 const streamToString = async (stream: Stream): Promise<string> => {
     const chunks = [];
-    const strings = (stream as Readable).pipe(new PassThrough({ encoding: "utf-8" }));
+    const strings = stream.pipe(new PassThrough({ encoding: "utf-8" }));
 
     for await (const chunk of strings) {
         chunks.push(chunk);

@@ -1,5 +1,4 @@
-import { Stream } from "stream";
-import { ClientError } from "@scramjet/client-utils";
+import { ClientError, HttpClient } from "@scramjet/client-utils";
 
 export type SendStreamOptions = Partial<{
     type: string;
@@ -21,15 +20,6 @@ export type PostRequestConfig = {
     parseResponse?: "json" | "text";
     json?: boolean;
 };
-
-export interface HttpClient {
-    addLogger(logger: RequestLogger): void;
-    get<T>(url: string): Promise<T>;
-    getStream(url: string): Promise<Stream>;
-    post<T>(url: string, data: any, headers?: Headers, options?: { json: boolean } & PostRequestConfig): Promise<T>;
-    delete(url: string): Promise<Response>;
-    sendStream<T>(url: string, stream: Stream | string, options?: SendStreamOptions): Promise<T>;
-}
 
 export interface ClientProvider {
     client: HttpClient;

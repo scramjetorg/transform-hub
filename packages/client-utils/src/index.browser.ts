@@ -1,9 +1,8 @@
 import { ClientUtilsBase } from "./client-utils";
-import { HttpClientNode as HttpClient } from "./types";
-import * as nodefetch from "node-fetch";
+import { HttpClientBrowser as HttpClient } from "./types";
 
 export class ClientUtils extends ClientUtilsBase implements HttpClient {
-    fetch = nodefetch;
+    fetch = window.fetch
 }
 
 export { ClientError, ClientErrorCode } from "./client-error";
@@ -14,4 +13,3 @@ export interface ClientProvider {
 }
 
 export { HttpClient };
-
