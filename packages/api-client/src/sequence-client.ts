@@ -1,4 +1,3 @@
-import { IDProvider } from "@scramjet/model";
 import { ClientError, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 
@@ -37,8 +36,8 @@ export class SequenceClient {
     }
 
     private constructor(id: string, host: ClientProvider) {
-        if (!IDProvider.isValid(id)) {
-            throw new Error(`Invalid id: ${id}`);
+        if (!id) {
+            throw new Error("No id provided");
         }
 
         this._id = id;

@@ -18,6 +18,5 @@
     "plugin": "typedoc-plugin-markdown",
     "gitRevision": "HEAD",
     "sort": "alphabetical"
-  },
-  "noLib": true
+  }
 }

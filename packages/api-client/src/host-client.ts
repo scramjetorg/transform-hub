@@ -1,8 +1,7 @@
-import { Readable, Stream } from "stream";
-import { ClientUtils } from "@scramjet/client-utils";
+import { ClientUtils, HttpClient } from "@scramjet/client-utils";
+import { STHRestAPI } from "@scramjet/types";
 import { SequenceClient } from "./sequence-client";
 import { ClientProvider } from "./types";
-import { STHRestAPI } from "@scramjet/types";
 
 /**
  * Host client.
@@ -41,7 +40,7 @@ export class HostClient implements ClientProvider {
      *
      * @returns {Promise<Response>} Promise resolving to response with log stream.
      */
-    async getLogStream(): Promise<Stream | ReadableStream> {
+    async getLogStream(): ReturnType<HttpClient["getStream"]> {
         return this.client.getStream("log");
     }
 
@@ -51,7 +50,7 @@ export class HostClient implements ClientProvider {
      * @param sequencePackage Stream with packad sequence.
      * @returns {SequenceClient} Sequence client.
      */
-    async sendSequence(sequencePackage: Readable): Promise<SequenceClient> {
+    async sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1]): Promise<SequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, {
             parseResponse: "json",
         });
@@ -118,7 +117,7 @@ export class HostClient implements ClientProvider {
      * @param {boolean} end Indicates if "end" event from stream should be passed to topic.
      * @returns TODO: comment.
      */
-    async sendNamedData<T>(topic: string, stream: Readable, contentType?: string, end?: boolean) {
+    async sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], contentType?: string, end?: boolean) {
         return this.client.sendStream<T>(`topic/${topic}`, stream, { type: contentType, end: end });
     }
 
@@ -128,7 +127,7 @@ export class HostClient implements ClientProvider {
      * @param topic Topic name.
      * @returns Promise resolving to stream.
      */
-    async getNamedData(topic: string): Promise<Stream> {
+    async getNamedData(topic: string): ReturnType<HttpClient["getStream"]> {
         return this.client.getStream(`topic/${topic}`);
     }
 }
