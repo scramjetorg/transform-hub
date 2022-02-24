@@ -42,7 +42,7 @@
     "start": "node dist/sth/bin/hub.js",
     "start:dev": "ts-node packages/sth/src/bin/hub.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
-    "install:python-deps": "pip install -r python/runner/requirements.txt --target python_modules",
+    "install:python-deps": "pip install --upgrade -r python/runner/requirements.txt --target python_modules",
     "postinstall": "lerna link",
     "prepare": "npx husky install",
     "test": "lerna run test",
