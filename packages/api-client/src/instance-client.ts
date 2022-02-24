@@ -1,8 +1,7 @@
-import { SendStreamOptions, ClientProvider } from "./types";
 import { RunnerMessageCode } from "@scramjet/symbols";
 import { EncodedControlMessage, STHRestAPI } from "@scramjet/types";
-import { IDProvider } from "@scramjet/model";
 import { HttpClient } from "@scramjet/client-utils";
+import { SendStreamOptions, ClientProvider } from "./types";
 
 export type InstanceInputStream = "stdin" | "input";
 export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
@@ -37,8 +36,9 @@ export class InstanceClient {
 
     private constructor(id: string, host: ClientProvider) {
         this.host = host;
-        if (!IDProvider.isValid(id)) {
-            throw new Error(`Invalid id: ${id}`);
+
+        if (!id) {
+            throw new Error("No id provided");
         }
 
         this._id = id;
