@@ -20,7 +20,7 @@
     "@types/node": "15.12.5"
   },
   "dependencies": {
-    "scramjet": "^4.36.0"
+    "scramjet": "^4.36.6"
   },
   "repository": {
     "type": "git",
