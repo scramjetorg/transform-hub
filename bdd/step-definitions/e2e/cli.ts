@@ -203,7 +203,7 @@ Then("I get instance health", { timeout: 10000 }, async function() {
 
 Then("health outputs 404", async () => {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", instanceId, ...connectionFlags()]);
-
+    console.log(stdio);
     assert.equal(stdio[1].includes("404"), true);
 });
 

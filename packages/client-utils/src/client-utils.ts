@@ -34,43 +34,43 @@ export class ClientUtilsBase implements HttpClient {
      * Request wrapper.
      */
     private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
-        let resp = this.fetch(input, init);
-
-        if (this.log) {
-            const log = this.log;
-
-            log.request(...arguments);
-
-            resp = resp
-                .then((res: any) => {
-                    log.request(input, init, res);
-                    return res;
-                })
-                .catch((err: any) => {
-                    log.error(err);
-                    throw err;
-                });
-        }
-
         const source = new Error();
 
-        resp.catch((e: Error) => {
-            throw ClientError.from(e, undefined, source);
-        });
+        try {
+            const response = await this.fetch(input, init);
 
-        if (options.parse === "json") {
-            return resp.then((res: any) => res.json()) as Promise<T>;
+            if (response.status >= 400) {
+                if (this.log) {
+                    this.log?.error(new ClientError(response.status, response.statusText, response.error));
+                }
+
+                throw new ClientError(response.status, response.statusText, response.error);
+            }
+
+            if (this.log) {
+                this.log?.ok(response);
+            }
+
+            if (this.log) {
+                this.log.request(arguments);
+            }
+
+            if (options.parse === "json") {
+                return response.json() as Promise<T>;
+            }
+
+            if (options.parse === "text") {
+                return response.text() as Promise<T>;
+            }
+
+            if (options.parse === "stream") {
+                return response.body as Promise<T>;
+            }
+        } catch (error: any) {
+            throw ClientError.from(error, undefined, source);
         }
 
-        if (options.parse === "text") {
-            return resp.then((res: any) => res.text()) as Promise<T>;
-        }
-
-        if (options.parse === "stream") {
-            return resp.then((res: any) => res.body) as Promise<T>;
-        }
-
-        throw new Error("Unknown parse option");
+        throw ClientError.from(source, undefined, source);
     }
 
     /**
