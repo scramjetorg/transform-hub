@@ -385,7 +385,7 @@ When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
     }
 });
 
-When("runner has ended execution", { timeout: 500000 }, async () => {
+When("runner has ended execution", { timeout: 20000 }, async () => {
     if (process.env.RUNTIME_ADAPTER === "kubernetes") {
         // @TODO
         return;

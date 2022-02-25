@@ -39,7 +39,7 @@ import { getInstanceAdapter } from "@scramjet/adapters";
 import { defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 
-const stopTimeout = 7000;
+const runnerExitDelay = 11000;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
@@ -286,12 +286,6 @@ export class CSIController extends TypedEmitter<Events> {
             return message;
         }, true);
 
-        // @DISCOVERY Control handlers won't work here :(
-        this.communicationHandler.addControlHandler(
-            RunnerMessageCode.KILL,
-            (message) => this.handleKillCommand(message)
-        );
-
         this.communicationHandler.addMonitoringHandler(
             RunnerMessageCode.ALIVE,
             (message) => this.handleKeepAliveCommand(message)
@@ -305,11 +299,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.communicationHandler.addMonitoringHandler(
             RunnerMessageCode.SEQUENCE_COMPLETED,
             message => this.handleSequenceCompleted(message)
-        );
-
-        this.communicationHandler.addControlHandler(
-            RunnerMessageCode.STOP,
-            async message => this.handleStop(message)
         );
 
         this.upStreams[CC.MONITORING].resume();
@@ -467,8 +456,33 @@ export class CSIController extends TypedEmitter<Events> {
         // operations
         this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
         this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
-        this.router.op("post", "/_stop", RunnerMessageCode.STOP, this.communicationHandler);
-        this.router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
+
+        this.router.op("post", "/_stop", async (req) => {
+            const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
+
+            await this.communicationHandler.sendControlMessage(...message);
+
+            const [, { timeout }] = message;
+
+            this.keepAliveRequested = false;
+
+            await defer(timeout);
+
+            if (!this.keepAliveRequested) {
+                await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+            }
+
+            return {};
+        }, this.communicationHandler);
+
+        this.router.op("post", "/_kill", async () => {
+            await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+
+            await promiseTimeout(this.endOfSequence, runnerExitDelay)
+                .catch(() => this.instanceAdapter.remove());
+
+            return {};
+        }, this.communicationHandler);
     }
 
     async getInfo(): Promise<STHRestAPI.GetInstanceResponse> {
@@ -507,19 +521,14 @@ export class CSIController extends TypedEmitter<Events> {
     async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
         this.logger.trace("Got message: SEQUENCE_COMPLETED.");
 
-        // TODO: we are ready to ask Runner to exit.
-        // TODO: this needs to send a STOP request with canKeepAlive and timeout.
-        //       host would get those in `create` request.
-        await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
-
         try {
-            await promiseTimeout(this.endOfSequence, stopTimeout);
+            await promiseTimeout(this.endOfSequence, runnerExitDelay);
 
             this.logger.trace("Sequence terminated itself");
         } catch {
             await this.instanceAdapter.remove();
 
-            this.logger.trace("Sequence doesn't terminated itself in expected time", stopTimeout);
+            this.logger.trace("Sequence doesn't terminated itself in expected time", runnerExitDelay);
 
             process.exitCode = 252;
         }
@@ -527,12 +536,12 @@ export class CSIController extends TypedEmitter<Events> {
         return message;
     }
 
-    // TODO: move this to Host like handleSequenceCompleted.
     async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {
+        // @TODO redesign this process, currently it's not used by any sequence
         this.logger.trace("Sequence ended, sending kill");
 
         try {
-            await promiseTimeout(this.endOfSequence, stopTimeout);
+            await promiseTimeout(this.endOfSequence, runnerExitDelay);
 
             this.logger.trace("Instance terminated itself");
         } catch {
@@ -541,7 +550,7 @@ export class CSIController extends TypedEmitter<Events> {
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
 
             try {
-                await promiseTimeout(this.endOfSequence, stopTimeout);
+                await promiseTimeout(this.endOfSequence, runnerExitDelay);
 
                 this.logger.trace("Terminated with kill");
             } catch {
@@ -560,34 +569,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Got keep-alive message from sequence");
 
         this.keepAliveRequested = true;
-
-        return message;
-    }
-
-    private async kill() {
-        await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
-    }
-
-    private async handleKillCommand(message: EncodedMessage<RunnerMessageCode.KILL>) {
-        // wait for this before cleanups
-        // handle errors there
-        await promiseTimeout(this.endOfSequence, stopTimeout)
-            .catch(() => this.instanceAdapter.remove());
-
-        return message;
-    }
-
-    private async handleStop(message: EncodedMessage<RunnerMessageCode.STOP>):
-        Promise<EncodedMessage<RunnerMessageCode.STOP>> {
-        const [, { timeout }] = message;
-
-        this.keepAliveRequested = false;
-
-        await defer(timeout);
-
-        if (!this.keepAliveRequested) {
-            await this.kill();
-        }
 
         return message;
     }

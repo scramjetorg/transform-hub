@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "extends": "../../../tsconfig.base.json",
+  "include": [
+    "./src",
+    "./test"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "typedocOptions": {
+    "entryPoints": [
+      "index.ts"
+    ],
+    "out": "../../docs/model",
+    "gitRevision": "HEAD"
+  }
+}
