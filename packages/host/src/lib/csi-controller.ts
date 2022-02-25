@@ -38,6 +38,7 @@ import { getRouter } from "@scramjet/api-server";
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { ReasonPhrases } from "http-status-codes";
 
 const runnerExitDelay = 11000;
 
@@ -478,10 +479,13 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.op("post", "/_kill", async () => {
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
 
-            await promiseTimeout(this.endOfSequence, runnerExitDelay)
+            // This will be resolved after HTTP response. It's not awaited on purpose
+            promiseTimeout(this.endOfSequence, runnerExitDelay)
                 .catch(() => this.instanceAdapter.remove());
 
-            return {};
+            return {
+                opStatus: ReasonPhrases.ACCEPTED
+            };
         }, this.communicationHandler);
     }
 
