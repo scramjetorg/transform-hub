@@ -61,7 +61,12 @@ IComponent {
                 ? "../../../python/runner/runner.py"
                 : "../../python/runner/runner.py";
 
-            return ["python3", path.resolve(__dirname, runnerPath)];
+            return [
+                "/usr/bin/env",
+                "python3",
+                path.resolve(__dirname, runnerPath),
+                "./python-runner-startup.log",
+            ];
         }
         return [
             isTSNode ? "ts-node" : process.execPath,

@@ -106,6 +106,10 @@ export type STHConfiguration = {
          * Runner container configuration.
          */
         runner: RunnerContainerConfiguration,
+        runnerImages: {
+            python3: string,
+            node: string,
+        },
     },
 
     /**

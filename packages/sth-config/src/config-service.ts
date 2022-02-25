@@ -20,6 +20,10 @@ const _defaultConfig: STHConfiguration = {
             exposePortsRange: [30000, 32767],
             hostIp: "0.0.0.0"
         },
+        runnerImages: {
+            python3: "",
+            node: "",
+        },
     },
     identifyExisting: false,
     host: {
@@ -50,7 +54,7 @@ const _defaultConfig: STHConfiguration = {
 merge(_defaultConfig, {
     docker: {
         prerunner: { image: imageConfig.prerunner },
-        runner: { image: imageConfig.runner },
+        runnerImages: imageConfig.runner,
     }
 });
 

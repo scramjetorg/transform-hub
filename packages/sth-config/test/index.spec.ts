@@ -22,11 +22,14 @@ test("Check if the tags of the images match packages version", async t => {
     const runnerPackageJson = require("../../runner/package.json");
     const preRunnerPackageJson = require("../../pre-runner/package.json");
     const dockerConfig = configService.getDockerConfig();
-    const runnerTagImageConfig = dockerConfig.runner.image.split(":")[1];
+    const runnerTagImagesConfig =
+        Object.values(dockerConfig.runnerImages).map(image => image.split(":")[1]);
     const preRunnerTagImageConfig = dockerConfig.prerunner.image.split(":")[1];
     const runnerTagPackageJson = runnerPackageJson.version;
     const preRunnerTagPackageJson = preRunnerPackageJson.version;
 
-    t.is(runnerTagPackageJson, runnerTagImageConfig, "Runner tag is eqal");
+    for (const tag of runnerTagImagesConfig) {
+        t.is(runnerTagPackageJson, tag, "Runner tag is eqal");
+    }
     t.is(preRunnerTagPackageJson, preRunnerTagImageConfig, "Prerunner tag is eqal");
 });
