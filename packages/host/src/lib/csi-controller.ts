@@ -537,7 +537,6 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async handleSequenceStopped(message: EncodedMessage<RunnerMessageCode.SEQUENCE_STOPPED>) {
-        // @TODO redesign this process, currently it's not used by any sequence
         this.logger.trace("Sequence ended, sending kill");
 
         try {
