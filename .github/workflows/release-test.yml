@@ -1,4 +1,4 @@
-name: STH build and tests
+name: Release test
 
 on:
   pull_request:
