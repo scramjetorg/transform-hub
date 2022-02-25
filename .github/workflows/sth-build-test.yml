@@ -421,4 +421,4 @@ jobs:
           run: yarn install --frozen-lockfile --silent
 
         - name: Run BDD tests
-          run: ls && ls packages && ls packages/reference-apps && SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-docker
+          run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-docker
