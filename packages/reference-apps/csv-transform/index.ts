@@ -23,7 +23,12 @@ const getFirstLineFromUrlFilePromise = async (url: string) => {
 const app: TransformApp<string> = async function(input: any, development = "") {
     const outputStream = new PassThrough({ encoding: "utf-8" });
 
-    if (development) input.on("data", (data: Buffer) => outputStream.write(`<><> ${new Date()}, ${data.toString("utf-8").match(/\n/g)?.length} <><>\n`)).pause();
+    if (development)
+        input
+            .on("data", (data: Buffer) =>
+                outputStream.write(`<><> ${new Date()}, ${data.toString("utf-8").match(/\n/g)?.length} <><>\n`)
+            )
+            .pause();
 
     const rl = createInterface({ input });
 
@@ -33,9 +38,7 @@ const app: TransformApp<string> = async function(input: any, development = "") {
     let storeFirstLine: string = "";
 
     rl.on("line", async (line) => {
-        const out = outputStream.write(
-            `${line};${createHash("md5").update(line).digest("hex")};${new Date()};${storeFirstLine}\n`
-        );
+        const out = outputStream.write(`${line};${createHash("md5").update(line).digest("hex")};${storeFirstLine}\n`);
 
         if (!out) {
             input.pause();
