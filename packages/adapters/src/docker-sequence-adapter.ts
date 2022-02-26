@@ -4,11 +4,17 @@ import {
     SequenceConfig,
     STHConfiguration,
     DockerSequenceConfig,
-    IObjectLogger,
+    IObjectLogger
 } from "@scramjet/types";
 import { Readable } from "stream";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
-import { DockerAdapterResources, DockerAdapterRunResponse, DockerAdapterStreams, DockerVolume, IDockerHelper } from "./types";
+import {
+    DockerAdapterResources,
+    DockerAdapterRunResponse,
+    DockerAdapterStreams,
+    DockerVolume,
+    IDockerHelper
+} from "./types";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
@@ -67,12 +73,11 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         const configs = await Promise.all(
             potentialVolumes
-                .map((volume) => this.identifyOnly(volume))
-                .map((configPromised) => configPromised.catch(() => null))
+                .map(volume => this.identifyOnly(volume))
+                .map(configPromised => configPromised.catch(() => null))
         );
 
-        return configs
-            .filter(isDefined);
+        return configs.filter(isDefined);
     }
 
     /**
@@ -87,9 +92,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         try {
             const { streams, wait } = await this.dockerHelper.run({
                 imageName: this.config.docker.prerunner?.image || "",
-                volumes: [
-                    { mountPoint: "/package", volume, writeable: true },
-                ],
+                volumes: [{ mountPoint: "/package", volume, writeable: true }],
                 command: ["/opt/transform-hub/identify.sh"],
                 autoRemove: true,
                 maxMem: this.config.docker.prerunner?.maxMem || 0
@@ -109,7 +112,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         } catch (e: any) {
             this.logger.error("Docker failed", e.message, volume);
 
-            throw new SequenceAdapterError("DOCKER_ERROR");
+            throw e;
         }
     }
 
@@ -137,9 +140,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         try {
             runResult = await this.dockerHelper.run({
                 imageName: this.config.docker.prerunner.image || "",
-                volumes: [
-                    { mountPoint: "/package", volume: volumeId, writeable: true }
-                ],
+                volumes: [{ mountPoint: "/package", volume: volumeId, writeable: true }],
                 autoRemove: true,
                 maxMem: this.config.docker.prerunner.maxMem || 0
             });
@@ -160,9 +161,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             return config;
         } catch (err: any) {
-            this.logger.error(err, id);
-
-            throw new SequenceAdapterError("PRERUNNER_ERROR", err);
+            this.logger.error("Identify failed on volume", id);
+            if (err instanceof SequenceAdapterError) {
+                throw err;
+            } else {
+                throw new SequenceAdapterError("PRERUNNER_ERROR", err);
+            }
         }
     }
 
@@ -195,13 +199,17 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         wait: Function,
         volumeId: DockerVolume
     ): Promise<DockerSequenceConfig> {
-        const [packageJson] = await Promise.all([
-            readStreamedJSON(streams.stdout as Readable),
-            wait
-        ]);
+        const [preRunnerResult] = (await Promise.all([readStreamedJSON(streams.stdout as Readable), wait])) as any;
 
-        const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
+        this.logger.debug("PreRunner response", preRunnerResult);
 
+        if (preRunnerResult && preRunnerResult.error) {
+            this.logger.error("PreRunner failed", preRunnerResult.error);
+
+            throw new SequenceAdapterError("PRERUNNER_ERROR", preRunnerResult.error);
+        }
+
+        const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(preRunnerResult);
         const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
         const config = validPackageJson.scramjet?.config ? { ...validPackageJson.scramjet.config } : {};
 
@@ -219,7 +227,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             engines,
             config,
             entrypointPath: validPackageJson.main,
-            id: volumeId,
+            id: volumeId
         };
     }
 
