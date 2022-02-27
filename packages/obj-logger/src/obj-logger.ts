@@ -86,6 +86,12 @@ export class ObjLogger implements IObjectLogger {
         this.outputLogStream.pipe(this.output);
     }
 
+    async flush() {
+        return new Promise<void>(resolve => {
+            this.outputLogStream.on("drain", resolve);
+        });
+    }
+
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
         if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
             return;

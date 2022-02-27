@@ -52,7 +52,7 @@ export interface IObjectLogger {
     output: DataStream;
 
     addOutput(output: Writable): void;
-
+    flush(): Promise<void>;
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
     debug(entry: LogEntry | string, ...optionalParams: any[]): void;
     error(entry: LogEntry | string, ...optionalParams: any[]): void;

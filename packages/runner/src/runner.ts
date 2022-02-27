@@ -172,10 +172,11 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             this.logger.info("Cleaning up streams");
+            await this.logger.flush();
 
             await this.hostClient.disconnect();
 
-            this.logger.info("Streams clear");
+            this.logger.info("Streams clear"); // who cares anymore?
 
             return 0;
         } catch (e: any) {
