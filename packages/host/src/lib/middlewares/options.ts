@@ -10,9 +10,3 @@ export const optionsMiddleware = (req: ParsedMessage, res: ServerResponse, next:
 
     return next();
 };
-
-export const corsMiddleware = (req: ParsedMessage, res: ServerResponse, next: NextCallback) => {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-
-    return next();
-};

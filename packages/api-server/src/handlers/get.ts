@@ -93,8 +93,6 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
      */
     const getResolver = (path: string | RegExp, callback: GetResolver): void => {
         router.get(path, async (req, res, next) => {
-            res.setHeader("Access-Control-Allow-Origin", "*");
-
             try {
                 check(req);
                 return output(await callback(req), res, next);

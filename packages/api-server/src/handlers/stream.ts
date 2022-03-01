@@ -71,7 +71,6 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
             res.setHeader("content-type", cType);
             res.setHeader("transfer-encoding", "chunked");
-            res.setHeader("Access-Control-Allow-Origin", "*");
             res.writeHead(200);
             res.flushHeaders();
 
