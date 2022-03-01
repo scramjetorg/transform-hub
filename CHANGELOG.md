@@ -40,8 +40,8 @@ Prominent
 - de177100 - Setup for installing dependencies in Python Runner
 - d7ae4019 - Implementation of Instance event handling in Python Runner
 - f477555 - Transform-Hub supports running programs on Kubernetes cluster
-- cbebb3e - Docker support for Python Runner
-- 2e0e504 - Kubernetes manifests enabling Transform-Hub deployment on Kubernetes
+- cbebb3e - Docker Runtime Adapter for Python Runner
+- 2e0e504 - Added Kubernetes manifests for Transform-Hub deployment on Kubernetes
 
 New features:
 
