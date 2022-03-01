@@ -22,6 +22,8 @@ import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { OpResponse } from "@scramjet/types/src/sth-rest-api";
+import { optionsMiddleware } from "./middlewares/options";
+import { corsMiddleware } from "./middlewares/cors";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -229,6 +231,9 @@ export class Host implements IComponent {
      * - instance
      */
     attachHostAPIs() {
+        this.api.use("*", corsMiddleware);
+        this.api.use("*", optionsMiddleware);
+
         this.api.downstream(`${this.apiBase}/sequence`,
             async (req) => this.handleNewSequence(req), { end: true }
         );
