@@ -37,7 +37,6 @@ Feature: Host configuration
         When hub process is started with parameters "''"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started
-        And wait for "2000" ms
         And get runner container information
         Then container uses node image defined in sth-config
         * exit hub process
@@ -47,7 +46,6 @@ Feature: Host configuration
         When hub process is started with parameters "--runner-max-mem 128"
         And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
         And instance started
-        And wait for "2000" ms
         And get runner container information
         Then container memory limit is 128
         * exit hub process
@@ -56,7 +54,6 @@ Feature: Host configuration
         When hub process is started with parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers
         And send fake stream as sequence
-        And wait for "5000" ms
         And get last container info
         And last container uses "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7" image
         And end fake stream
@@ -67,7 +64,6 @@ Feature: Host configuration
         When hub process is started with parameters "--prerunner-max-mem 64"
         And get all containers
         And send fake stream as sequence
-        And wait for "5000" ms
         And get last container info
         Then last container memory limit is 64
         And end fake stream

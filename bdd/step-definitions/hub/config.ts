@@ -75,18 +75,28 @@ Then("exit hub process", function(this: CustomWorld) {
 });
 
 Then("get runner container information", { timeout: 20000 }, async function(this: CustomWorld) {
-    const instance = this.resources.instance as InstanceClient;
-    const resp = await instance.getHealth();
-    const containerId = resp.containerId;
-    const [stats, info, inspect] = await Promise.all([
-        new Dockerode().getContainer(containerId!).stats({ stream: false }),
-        new Dockerode().listContainers().then(containers => containers.find(container => container.Id === containerId)),
-        new Dockerode().getContainer(containerId!).inspect(),
-    ]);
+    let success: string | undefined;
 
-    this.resources.containerStats = stats;
-    this.resources.containerInfo = info;
-    this.resources.containerInspect = inspect;
+    while (!success) {
+        const instance = this.resources.instance as InstanceClient;
+        const resp = await instance.getHealth();
+        const containerId = success = resp.containerId;
+
+        if (containerId) {
+            const [stats, info, inspect] = await Promise.all([
+                new Dockerode().getContainer(containerId!).stats({ stream: false }),
+                new Dockerode().listContainers().then(
+                    containers => containers.find(container => container.Id === containerId)),
+                new Dockerode().getContainer(containerId!).inspect(),
+            ]);
+
+            this.resources.containerStats = stats;
+            this.resources.containerInfo = info;
+            this.resources.containerInspect = inspect;
+        } else {
+            await defer(50);
+        }
+    }
 });
 
 Then("container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
@@ -121,17 +131,29 @@ Then("send fake stream as sequence", async function(this: CustomWorld) {
     );
 });
 
-Then("end fake stream", async function(this: CustomWorld) {
-    this.resources.pkgFake.end();
-    await defer(2000);
+Then("end fake stream", async function(this: CustomWorld): Promise<void> {
+    return new Promise(res => {
+        this.resources.pkgFake.on("close", async () => {
+            await defer(50);
+            res();
+        }).end();
+    });
 });
 
 Then("get last container info", async function(this: CustomWorld) {
-    const containers = await new Dockerode().listContainers();
+    let success: any;
 
-    this.resources.lastContainer = containers.filter(container =>
-        !this.resources.containers.find((c: Dockerode.ContainerInfo) => c.Id === container.Id)
-    )[0];
+    while (!success) {
+        const containers = await new Dockerode().listContainers();
+        const lastContainer = containers.filter(container =>
+            !this.resources.containers.find((c: Dockerode.ContainerInfo) => c.Id === container.Id));
+
+        if (lastContainer.length) {
+            this.resources.lastContainer = success = lastContainer[0];
+        } else {
+            await defer(50);
+        }
+    }
 });
 
 When("last container uses {string} image", async function(this: CustomWorld, image: string) {
