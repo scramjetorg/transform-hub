@@ -88,7 +88,11 @@ export class ObjLogger implements IObjectLogger {
 
     async flush() {
         return new Promise<void>(resolve => {
-            this.outputLogStream.on("drain", resolve);
+            if (this.outputLogStream..writableNeedDrain) {
+                this.outputLogStream.once("drain", resolve);
+            } else {
+                resolve();
+            }
         });
     }
 
