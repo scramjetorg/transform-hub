@@ -39,6 +39,9 @@ Prominent
 - 13d08d36 - BDD tests for Python Runner
 - de177100 - Setup for installing dependencies in Python Runner
 - d7ae4019 - Implementation of Instance event handling in Python Runner
+- f477555 - Transform-Hub supports running programs on Kubernetes cluster
+- cbebb3e - Docker support for Python Runner
+- 2e0e504 - Kubernetes manifests enabling Transform-Hub deployment on Kubernetes
 
 New features:
 
@@ -57,6 +60,8 @@ New features:
 - **Python Runner BDD tests** - Introduce BDD tests for Python Runner
 - **PYTHONPATH** - Configured PYTHONPATH for loading dependencies
 - **Python Instance events** - Handle Instance events in Python Runner
+- **Kubernetes Runtime Adapters** - new Sequence and Instance Adapters allow running programs on Kubernetes
+- **Dockerized Python Runner** - Python programs can now be run in Docker containers
 
 Bugfixes and minor improvements:
 
@@ -87,6 +92,13 @@ Bugfixes and minor improvements:
 - Python Runner implements the complete Host handshake (including the default topic messages)
 - Fix for starting STH with the identify Sequences flag `-E`
 - Fix for deleting Sequence which was causing STH crash
+- Fix for starting the Transform-Hub with mutually exclusive runtime adapters options
+- Fix for Instance Client response type
+- Faster building of the reference apps
+- Improvement of 'upgrade:all' script for aligning and updating all dependencies in all packages in the Transform-Hub project
+- Simplify usage of fetch and add browser entrypoint in client-utils
+- Ensure reinstalling Python dependencies if required
+- Add responding to OPTIONS requests and setting CORS in the Transform-Hub API server
 
 ## @scramjet/transform Hub - v0.17.0
 

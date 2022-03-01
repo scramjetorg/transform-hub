@@ -6,35 +6,45 @@
 
 ### Classes
 
-- [ConfigService](classes/ConfigService.md)
+- [ConfigService](undefined)
 
 ### Variables
 
-- [defaultConfig](modules.md#defaultconfig)
+- [defaultConfig](undefined)
 
 ### Functions
 
-- [development](modules.md#development)
+- [development](undefined)
+
+## Classes
+
+### ConfigService
+
+• **ConfigService**: Class ConfigService
+
+#### Defined in
+
+[sth-config/src/config-service.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L63)
 
 ## Variables
 
 ### defaultConfig
 
-• **defaultConfig**: `STHConfiguration` = `_defaultConfig`
+• `Const` **defaultConfig**: STHConfiguration = `_defaultConfig`
 
 #### Defined in
 
-[sth-config/src/config-service.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L49)
+[sth-config/src/config-service.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L61)
 
 ## Functions
 
 ### development
 
-▸ **development**(): `boolean`
+▸ **development**(): boolean
 
 #### Returns
 
-`boolean`
+boolean
 
 #### Defined in
 

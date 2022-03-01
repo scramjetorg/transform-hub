@@ -6,36 +6,36 @@
 
 ### Type aliases
 
-- [CeroCode](modules.md#cerocode)
-- [CeroConfig](modules.md#ceroconfig)
-- [CeroDefaultRoute](modules.md#cerodefaultroute)
-- [CeroErrorHandler](modules.md#ceroerrorhandler)
-- [CeroMiddleware](modules.md#ceromiddleware)
-- [CeroRouterConfig](modules.md#cerorouterconfig)
-- [ServerConfig](modules.md#serverconfig)
+- [CeroCode](undefined)
+- [CeroConfig](undefined)
+- [CeroDefaultRoute](undefined)
+- [CeroErrorHandler](undefined)
+- [CeroMiddleware](undefined)
+- [CeroRouterConfig](undefined)
+- [ServerConfig](undefined)
 
 ### Classes
 
-- [CeroError](classes/CeroError.md)
-- [DuplexStream](classes/DuplexStream.md)
+- [CeroError](undefined)
+- [DuplexStream](undefined)
 
 ### Interfaces
 
-- [CeroRouter](interfaces/CeroRouter.md)
-- [SequentialCeroRouter](interfaces/SequentialCeroRouter.md)
+- [CeroRouter](undefined)
+- [SequentialCeroRouter](undefined)
 
 ### Functions
 
-- [cero](modules.md#cero)
-- [createServer](modules.md#createserver)
-- [getRouter](modules.md#getrouter)
-- [sequentialRouter](modules.md#sequentialrouter)
+- [cero](undefined)
+- [createServer](undefined)
+- [getRouter](undefined)
+- [sequentialRouter](undefined)
 
 ## Type aliases
 
 ### CeroCode
 
-Ƭ **CeroCode**: keyof typeof `codelist`
+Ƭ **CeroCode**: keyof typeof codelist
 
 #### Defined in
 
@@ -45,14 +45,14 @@ ___
 
 ### CeroConfig
 
-Ƭ **CeroConfig**<`T`, `S`\>: `Partial`<{ `prioRequestsProcessing`: `boolean` ; `router`: `S` ; `server`: `T`  }\>
+Ƭ **CeroConfig**: Partial<Object\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `Server` = `Server` |
-| `S` | extends [`CeroRouter`](interfaces/CeroRouter.md) = [`CeroRouter`](interfaces/CeroRouter.md) |
+| `T` | extends Server = Server |
+| `S` | extends CeroRouter = CeroRouter |
 
 #### Defined in
 
@@ -62,7 +62,7 @@ ___
 
 ### CeroDefaultRoute
 
-Ƭ **CeroDefaultRoute**: `Middleware`
+Ƭ **CeroDefaultRoute**: Middleware
 
 #### Defined in
 
@@ -72,23 +72,23 @@ ___
 
 ### CeroErrorHandler
 
-Ƭ **CeroErrorHandler**: (`err`: [`CeroError`](classes/CeroError.md), `req`: `IncomingMessage`, `res`: `ServerResponse`) => `void`
+Ƭ **CeroErrorHandler**: Function
 
 #### Type declaration
 
-▸ (`err`, `req`, `res`): `void`
+▸ (`err`, `req`, `res`): void
 
 ##### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `err` | [`CeroError`](classes/CeroError.md) |
-| `req` | `IncomingMessage` |
-| `res` | `ServerResponse` |
+| `err` | CeroError |
+| `req` | IncomingMessage |
+| `res` | ServerResponse |
 
 ##### Returns
 
-`void`
+void
 
 #### Defined in
 
@@ -98,7 +98,7 @@ ___
 
 ### CeroMiddleware
 
-Ƭ **CeroMiddleware**: `Middleware`
+Ƭ **CeroMiddleware**: Middleware
 
 #### Defined in
 
@@ -108,7 +108,7 @@ ___
 
 ### CeroRouterConfig
 
-Ƭ **CeroRouterConfig**: `Partial`<{ `cacheSize`: `number` ; `defaultRoute`: [`CeroDefaultRoute`](modules.md#cerodefaultroute) ; `errorHandler`: [`CeroErrorHandler`](modules.md#ceroerrorhandler) ; `id`: `string`  }\>
+Ƭ **CeroRouterConfig**: Partial<Object\>
 
 #### Defined in
 
@@ -124,43 +124,83 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `router?` | [`CeroRouter`](interfaces/CeroRouter.md) |
-| `server?` | `HttpsServer` \| `HttpServer` |
-| `sslCertPath?` | `string` |
-| `sslKeyPath?` | `string` |
-| `verbose?` | `boolean` |
+| `router?` | CeroRouter |
+| `server?` | HttpsServer \| HttpServer |
+| `sslCertPath?` | string |
+| `sslKeyPath?` | string |
+| `verbose?` | boolean |
 
 #### Defined in
 
 [packages/api-server/src/index.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L12)
 
+## Classes
+
+### CeroError
+
+• **CeroError**: Class CeroError
+
+#### Defined in
+
+[packages/api-server/src/lib/definitions.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L37)
+
+___
+
+### DuplexStream
+
+• **DuplexStream**: Class DuplexStream
+
+#### Defined in
+
+[packages/api-server/src/lib/duplex-stream.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/duplex-stream.ts#L3)
+
+## Interfaces
+
+### CeroRouter
+
+• **CeroRouter**: Interface CeroRouter
+
+#### Defined in
+
+[packages/api-server/src/lib/definitions.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L8)
+
+___
+
+### SequentialCeroRouter
+
+• **SequentialCeroRouter**: Interface SequentialCeroRouter
+
+#### Defined in
+
+[packages/api-server/src/lib/definitions.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/definitions.ts#L13)
+
 ## Functions
 
 ### cero
 
-▸ `Const` **cero**<`T`, `S`\>(`config?`): `Object`
+▸ **cero**<`T`, `S`\>(`config?`): Object
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `Server`<`T`\> = `Server` |
-| `S` | extends [`CeroRouter`](interfaces/CeroRouter.md)<`S`\> = [`CeroRouter`](interfaces/CeroRouter.md) |
+| `T` | extends Server<T\> = Server |
+| `S` | extends CeroRouter<S\> = CeroRouter |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `config?` | `Partial`<{ `prioRequestsProcessing`: `boolean` ; `router`: `S` ; `server`: `T`  }\> |
+| `config?` | Partial<Object\> |
 
 #### Returns
 
-`Object`
+Object
 
 | Name | Type |
 | :------ | :------ |
-| `router` | `S` |
-| `server` | `T` |
+| `router` | S |
+| `server` | T |
 
 #### Defined in
 
@@ -170,17 +210,17 @@ ___
 
 ### createServer
 
-▸ **createServer**(`conf?`): `APIExpose`
+▸ **createServer**(`conf?`): APIExpose
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `conf` | [`ServerConfig`](modules.md#serverconfig) |
+| `conf` | ServerConfig |
 
 #### Returns
 
-`APIExpose`
+APIExpose
 
 #### Defined in
 
@@ -190,11 +230,11 @@ ___
 
 ### getRouter
 
-▸ **getRouter**(): `APIRoute`
+▸ **getRouter**(): APIRoute
 
 #### Returns
 
-`APIRoute`
+APIRoute
 
 #### Defined in
 
@@ -204,17 +244,17 @@ ___
 
 ### sequentialRouter
 
-▸ `Const` **sequentialRouter**(`config`): [`SequentialCeroRouter`](interfaces/SequentialCeroRouter.md)
+▸ **sequentialRouter**(`config`): SequentialCeroRouter
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `config` | `Partial`<{ `cacheSize`: `number` ; `defaultRoute`: `Middleware` ; `errorHandler`: [`CeroErrorHandler`](modules.md#ceroerrorhandler) ; `id`: `string`  }\> |
+| `config` | Partial<Object\> |
 
 #### Returns
 
-[`SequentialCeroRouter`](interfaces/SequentialCeroRouter.md)
+SequentialCeroRouter
 
 #### Defined in
 

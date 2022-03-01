@@ -6,22 +6,52 @@
 
 ### Classes
 
-- [FreePortsFinder](classes/FreePortsFinder.md)
-- [TypedEmitter](classes/TypedEmitter.md)
+- [FreePortsFinder](undefined)
+- [TypedEmitter](undefined)
 
 ### Functions
 
-- [defer](modules.md#defer)
-- [isDefined](modules.md#isdefined)
-- [merge](modules.md#merge)
-- [promiseTimeout](modules.md#promisetimeout)
-- [readStreamedJSON](modules.md#readstreamedjson)
+- [defer](undefined)
+- [isDefined](undefined)
+- [merge](undefined)
+- [promiseTimeout](undefined)
+- [readStreamedJSON](undefined)
+
+## Classes
+
+### FreePortsFinder
+
+• **FreePortsFinder**: Class FreePortsFinder
+
+Provides methods to find free tcp/udp ports.
+
+#### Defined in
+
+[packages/utility/src/free-ports-finder.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/free-ports-finder.ts#L7)
+
+___
+
+### TypedEmitter
+
+• **TypedEmitter**: Class TypedEmitter<Events\>
+
+Native Node.JS EventEmitter typed properly.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `Events` |
+
+#### Defined in
+
+[packages/utility/src/typed-emitter.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typed-emitter.ts#L8)
 
 ## Functions
 
 ### defer
 
-▸ `Const` **defer**(`timeout`): `Promise`<`void`\>
+▸ **defer**(`timeout`): Promise<void\>
 
 Returns a promise that resolves after the specified duration.
 
@@ -33,11 +63,11 @@ await defer(10 * 1000);
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `timeout` | `number` | timeout in milliseconds. |
+| `timeout` | number | timeout in milliseconds. |
 
 #### Returns
 
-`Promise`<`void`\>
+Promise<void\>
 
 - promise that resolves after timeout.
 
@@ -57,13 +87,13 @@ Returns true if given value is defined.
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `unknown` |
+| `T` | extends unknown |
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `value` | `undefined` \| ``null`` \| `T` | Value to check. |
+| `value` | undefined \| null \| T | Value to check. |
 
 #### Returns
 
@@ -79,7 +109,7 @@ ___
 
 ### merge
 
-▸ `Const` **merge**<`T`\>(`target`, `source?`): `void`
+▸ **merge**<`T`\>(`target`, `source?`): void
 
 Deep merge objects.
 Copies all properties from source to target.
@@ -88,18 +118,18 @@ Copies all properties from source to target.
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `Record`<`string`, `unknown`\> |
+| `T` | extends Record<string, unknown\> |
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `target` | `T` | Target object. |
-| `source` | `DeepPartial`<`T`\> | Source object. |
+| `target` | T | Target object. |
+| `source` | DeepPartial<T\> | Source object. |
 
 #### Returns
 
-`void`
+void
 
 Returns nothing.
 
@@ -111,7 +141,7 @@ ___
 
 ### promiseTimeout
 
-▸ `Const` **promiseTimeout**<`T`\>(`promise`, `timeout`): `Promise`<`T`\>
+▸ **promiseTimeout**<`T`\>(`promise`, `timeout`): Promise<T\>
 
 Returns a promise rejecting after the specified timeout or a given promise.
 
@@ -119,18 +149,18 @@ Returns a promise rejecting after the specified timeout or a given promise.
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `unknown` |
+| `T` | extends unknown |
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `promise` | `Promise`<`T`\> | Promise to wait for. |
-| `timeout` | `number` | Timeout in milliseconds. |
+| `promise` | Promise<T\> | Promise to wait for. |
+| `timeout` | number | Timeout in milliseconds. |
 
 #### Returns
 
-`Promise`<`T`\>
+Promise<T\>
 
 Promise that reject after timeout or.
 
@@ -142,7 +172,7 @@ ___
 
 ### readStreamedJSON
 
-▸ **readStreamedJSON**(`readable`): `Promise`<`unknown`\>
+▸ **readStreamedJSON**(`readable`): Promise<unknown\>
 
 Reads and parses JSON from a stream.
 
@@ -150,11 +180,11 @@ Reads and parses JSON from a stream.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `readable` | `Readable` | Stream to read from. |
+| `readable` | Readable | Stream to read from. |
 
 #### Returns
 
-`Promise`<`unknown`\>
+Promise<unknown\>
 
 Promise that resolves with the parsed JSON.
 

@@ -4,57 +4,72 @@
 
 ## Table of contents
 
-### Interfaces
-
-- [ClientProvider](interfaces/ClientProvider.md)
-- [HttpClient](interfaces/HttpClient.md)
-
 ### Classes
 
-- [HostClient](classes/HostClient.md)
-- [InstanceClient](classes/InstanceClient.md)
-- [SequenceClient](classes/SequenceClient.md)
+- [HostClient](undefined)
+- [InstanceClient](undefined)
+- [SequenceClient](undefined)
 
 ### Type aliases
 
-- [InstanceInputStream](modules.md#instanceinputstream)
-- [InstanceOutputStream](modules.md#instanceoutputstream)
-- [RequestLogger](modules.md#requestlogger)
+- [InstanceInputStream](undefined)
+- [InstanceOutputStream](undefined)
+
+## Classes
+
+### HostClient
+
+• **HostClient**: Class HostClient
+
+Host client.
+Provides methods to interact with Host.
+
+#### Defined in
+
+[api-client/src/host-client.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L9)
+
+___
+
+### InstanceClient
+
+• **InstanceClient**: Class InstanceClient
+
+Instance client.
+Provides methods to interact with instance.
+
+#### Defined in
+
+[api-client/src/instance-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L12)
+
+___
+
+### SequenceClient
+
+• **SequenceClient**: Class SequenceClient
+
+Sequence client.
+Provides methods to interact with sequence.
+
+#### Defined in
+
+[api-client/src/sequence-client.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L10)
 
 ## Type aliases
 
 ### InstanceInputStream
 
-Ƭ **InstanceInputStream**: ``"stdin"`` \| ``"input"``
+Ƭ **InstanceInputStream**: "stdin" \| "input"
 
 #### Defined in
 
-[instance-client.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L7)
+[api-client/src/instance-client.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L5)
 
 ___
 
 ### InstanceOutputStream
 
-Ƭ **InstanceOutputStream**: ``"stdout"`` \| ``"stderr"`` \| ``"output"`` \| ``"log"``
+Ƭ **InstanceOutputStream**: "stdout" \| "stderr" \| "output" \| "log"
 
 #### Defined in
 
-[instance-client.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L8)
-
-___
-
-### RequestLogger
-
-Ƭ **RequestLogger**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `error` | (`res`: `ClientError`) => `void` |
-| `ok` | (`res`: `any`) => `void` |
-| `request` | (...`req`: `any`) => `void` |
-
-#### Defined in
-
-[types/index.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/types/index.ts#L14)
+[api-client/src/instance-client.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L6)

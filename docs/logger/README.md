@@ -1,55 +1,56 @@
-@scramjet/logger / [Exports](modules.md)
+@scramjet/obj-logger
 
-# `@scramjet/logger` <!-- omit in toc -->
+# @scramjet/obj-logger
 
-The package provides Scramjet Transform Hub with a simple logger with 100% Console Web API compatible signatures and a streaming output of any choice.
+## Table of contents
 
-## Docs
+### Classes
 
-See the code documentation here: [scramjetorg/transform-hub/docs/logger/modules.md](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/logger/modules.md)
+- [ObjLogger](undefined)
 
-## Scramjet Transform Hub
+### Functions
 
-This package is part of [Scramjet Transform Hub](https://www.npmjs.org/package/@scramjet/sth).
+- [prettyPrint](undefined)
 
-Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program, as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
+## Classes
 
-## Use cases
+### ObjLogger
 
-There's no limit what you can use it for. You want a stock checker? A chat bot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) or hop on our [Scramjet Discord](https://discord.gg/4EX3jHBe)!
+• **ObjLogger**: Class ObjLogger
 
-## Some important links
+#### Defined in
 
-* Scramjet, the company behind [Transform Hub](https://scramjet.org)
-* The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
-* The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
-* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
-* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
-* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
-* You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
+[obj-logger/src/obj-logger.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L7)
 
-## License and contributions
+## Functions
 
-This module is licensed under AGPL-3.0 license.
+### prettyPrint
 
-The Scramjet Transform Hub project is dual-licensed under the AGPL-3.0 and MIT licenses. Parts of the project that are linked with your programs are MIT licensed, the rest is AGPL.
+▸ **prettyPrint**(`opts`): Function
 
-## Contributions
+#### Parameters
 
-We accept valid contributions and we will be publishing a more specific project roadmap so contributors can propose features and also help us implement them. We kindly ask you that contributed commits are Signed-Off `git commit --sign-off`.
+| Name | Type |
+| :------ | :------ |
+| `opts` | Object |
+| `opts.colors?` | boolean |
 
-We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
+#### Returns
 
-### Help wanted :information_desk_person:
+Function
 
-The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://discord.gg/4EX3jHBe) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
+▸ (`obj`): string
 
-### Donation :money_with_wings:
+##### Parameters
 
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
+| Name | Type |
+| :------ | :------ |
+| `obj` | Partial<Object\> |
 
-[You can sponsor us on github](https://github.com/sponsors/scramjetorg)
+##### Returns
 
-* There's also a Paypal donation link if you prefer that:
+string
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW)
+#### Defined in
+
+[obj-logger/src/utils/pretty-print.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/utils/pretty-print.ts#L19)

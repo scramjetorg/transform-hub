@@ -6,42 +6,44 @@
 
 ### Type aliases
 
-- [DockerAdapterResources](modules.md#dockeradapterresources)
-- [DockerAdapterRunConfig](modules.md#dockeradapterrunconfig)
-- [DockerAdapterRunPortsConfig](modules.md#dockeradapterrunportsconfig)
-- [DockerAdapterRunResponse](modules.md#dockeradapterrunresponse)
-- [DockerAdapterStreams](modules.md#dockeradapterstreams)
-- [DockerAdapterVolumeConfig](modules.md#dockeradaptervolumeconfig)
-- [DockerAdapterWaitOptions](modules.md#dockeradapterwaitoptions)
-- [DockerContainer](modules.md#dockercontainer)
-- [DockerCreateNetworkConfig](modules.md#dockercreatenetworkconfig)
-- [DockerImage](modules.md#dockerimage)
-- [DockerNetwork](modules.md#dockernetwork)
-- [DockerVolume](modules.md#dockervolume)
-- [ExitData](modules.md#exitdata)
-- [InstanceAdapterOptions](modules.md#instanceadapteroptions)
+- [DockerAdapterResources](undefined)
+- [DockerAdapterRunConfig](undefined)
+- [DockerAdapterRunPortsConfig](undefined)
+- [DockerAdapterRunResponse](undefined)
+- [DockerAdapterStreams](undefined)
+- [DockerAdapterVolumeConfig](undefined)
+- [DockerAdapterWaitOptions](undefined)
+- [DockerContainer](undefined)
+- [DockerCreateNetworkConfig](undefined)
+- [DockerImage](undefined)
+- [DockerNetwork](undefined)
+- [DockerVolume](undefined)
+- [ExitData](undefined)
+- [InstanceAdapterOptions](undefined)
 
 ### Classes
 
-- [DockerInstanceAdapter](classes/DockerInstanceAdapter.md)
-- [DockerSequenceAdapter](classes/DockerSequenceAdapter.md)
-- [DockerodeDockerHelper](classes/DockerodeDockerHelper.md)
+- [DockerInstanceAdapter](undefined)
+- [DockerSequenceAdapter](undefined)
+- [DockerodeDockerHelper](undefined)
+- [KubernetesInstanceAdapter](undefined)
+- [KubernetesSequenceAdapter](undefined)
 
 ### Interfaces
 
-- [IDockerHelper](interfaces/IDockerHelper.md)
+- [IDockerHelper](undefined)
 
 ### Variables
 
-- [STH\_DOCKER\_NETWORK](modules.md#sth_docker_network)
+- [STH\_DOCKER\_NETWORK](undefined)
 
 ### Functions
 
-- [getHostname](modules.md#gethostname)
-- [getInstanceAdapter](modules.md#getinstanceadapter)
-- [getSequenceAdapter](modules.md#getsequenceadapter)
-- [isHostSpawnedInDockerContainer](modules.md#ishostspawnedindockercontainer)
-- [setupDockerNetworking](modules.md#setupdockernetworking)
+- [getHostname](undefined)
+- [getInstanceAdapter](undefined)
+- [getSequenceAdapter](undefined)
+- [isHostSpawnedInDockerContainer](undefined)
+- [setupDockerNetworking](undefined)
 
 ## Type aliases
 
@@ -53,10 +55,10 @@
 
 | Name | Type |
 | :------ | :------ |
-| `containerId?` | [`DockerContainer`](modules.md#dockercontainer) |
-| `fifosDir?` | `PathLike` |
-| `ports?` | [`DockerAdapterRunPortsConfig`](modules.md#dockeradapterrunportsconfig) |
-| `volumeId?` | [`DockerVolume`](modules.md#dockervolume) |
+| `containerId?` | DockerContainer |
+| `fifosDir?` | PathLike |
+| `ports?` | DockerAdapterRunPortsConfig |
+| `volumeId?` | DockerVolume |
 
 #### Defined in
 
@@ -74,17 +76,17 @@ Configuration used to run command in container.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `autoRemove?` | `boolean` | **`property`** {boolean} autoRemove If true container will be removed after container's process exit. |
-| `binds?` | `string`[] | **`property`** {string[]} binds Directories mount configuration. |
-| `command?` | `string`[] | Command with optional parameters.  **`property`** {string[]} command Command to be executed. |
-| `envs?` | `string`[] | **`property`** {string[]} envs A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
-| `imageName` | `string` | **`property`** {string} imageName Image name. |
-| `labels?` | `Object` | - |
-| `maxMem?` | `number` | **`property`** {number} maxMem Container memory limit (bytes). |
-| `networkMode?` | `string` | - |
-| `ports?` | [`DockerAdapterRunPortsConfig`](modules.md#dockeradapterrunportsconfig) | **`property`** {DockerAdapterRunPortsConfig} ports Docker ports configuration |
-| `publishAllPorts?` | `boolean` | - |
-| `volumes?` | [`DockerAdapterVolumeConfig`](modules.md#dockeradaptervolumeconfig)[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration. |
+| `autoRemove?` | boolean | **`property`** {boolean} autoRemove If true container will be removed after container's process exit. |
+| `binds?` | string[] | **`property`** {string[]} binds Directories mount configuration. |
+| `command?` | string[] | Command with optional parameters.  **`property`** {string[]} command Command to be executed. |
+| `envs?` | string[] | **`property`** {string[]} envs A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
+| `imageName` | string | **`property`** {string} imageName Image name. |
+| `labels?` | Object | - |
+| `maxMem?` | number | **`property`** {number} maxMem Container memory limit (bytes). |
+| `networkMode?` | string | - |
+| `ports?` | DockerAdapterRunPortsConfig | **`property`** {DockerAdapterRunPortsConfig} ports Docker ports configuration |
+| `publishAllPorts?` | boolean | - |
+| `volumes?` | DockerAdapterVolumeConfig[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration. |
 
 #### Defined in
 
@@ -100,8 +102,8 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `ExposedPorts` | `any` |
-| `PortBindings` | `any` |
+| `ExposedPorts` | any |
+| `PortBindings` | any |
 
 #### Defined in
 
@@ -119,9 +121,9 @@ Result of running command in container.
 
 | Name | Type |
 | :------ | :------ |
-| `containerId` | [`DockerContainer`](modules.md#dockercontainer) |
-| `streams` | [`DockerAdapterStreams`](modules.md#dockeradapterstreams) |
-| `wait` | `Function` |
+| `containerId` | DockerContainer |
+| `streams` | DockerAdapterStreams |
+| `wait` | Function |
 
 #### Defined in
 
@@ -139,9 +141,9 @@ Standard streams connected with container.
 
 | Name | Type |
 | :------ | :------ |
-| `stderr` | `Stream` |
-| `stdin` | `Writable` |
-| `stdout` | `Stream` |
+| `stderr` | Stream |
+| `stdin` | Writable |
+| `stdout` | Stream |
 
 #### Defined in
 
@@ -151,7 +153,7 @@ ___
 
 ### DockerAdapterVolumeConfig
 
-Ƭ **DockerAdapterVolumeConfig**: { `mountPoint`: `string` ; `writeable`: `boolean`  } & { `volume`: [`DockerVolume`](modules.md#dockervolume)  } \| { `bind`: `string`  }
+Ƭ **DockerAdapterVolumeConfig**: Object & (Object \| Object)
 
 Volume mounting configuration.
 
@@ -169,7 +171,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `condition?` | ``"not-running"`` \| ``"next-exit"`` \| ``"removed"`` |
+| `condition?` | "not-running" \| "next-exit" \| "removed" |
 
 #### Defined in
 
@@ -179,7 +181,7 @@ ___
 
 ### DockerContainer
 
-Ƭ **DockerContainer**: `string`
+Ƭ **DockerContainer**: string
 
 Docker container.
 
@@ -197,9 +199,9 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `driver` | `string` |
-| `name` | `string` |
-| `options` | `Record`<`string`, `string`\> |
+| `driver` | string |
+| `name` | string |
+| `options` | Record<string, string\> |
 
 #### Defined in
 
@@ -209,7 +211,7 @@ ___
 
 ### DockerImage
 
-Ƭ **DockerImage**: `string`
+Ƭ **DockerImage**: string
 
 Docker image.
 
@@ -227,7 +229,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `containers` | `Record`<`string`, { `name`: `string`  }\> |
+| `containers` | Record<string, Object\> |
 
 #### Defined in
 
@@ -237,7 +239,7 @@ ___
 
 ### DockerVolume
 
-Ƭ **DockerVolume**: `string`
+Ƭ **DockerVolume**: string
 
 Docker volume.
 
@@ -255,7 +257,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `statusCode` | `ExitCode` |
+| `statusCode` | ExitCode |
 
 #### Defined in
 
@@ -271,17 +273,87 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `exitDelay` | `number` |
+| `exitDelay` | number |
 
 #### Defined in
 
 [types.ts:306](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L306)
 
+## Classes
+
+### DockerInstanceAdapter
+
+• **DockerInstanceAdapter**: Class DockerInstanceAdapter
+
+Adapter for running Instance by Runner executed in Docker container.
+
+#### Defined in
+
+[docker-instance-adapter.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L25)
+
+___
+
+### DockerSequenceAdapter
+
+• **DockerSequenceAdapter**: Class DockerSequenceAdapter
+
+Adapter for preparing Sequence to be run in Docker container.
+
+#### Defined in
+
+[docker-sequence-adapter.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L19)
+
+___
+
+### DockerodeDockerHelper
+
+• **DockerodeDockerHelper**: Class DockerodeDockerHelper
+
+Communicates with Docker using Dockerode library.
+
+#### Defined in
+
+[dockerode-docker-helper.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L43)
+
+___
+
+### KubernetesInstanceAdapter
+
+• **KubernetesInstanceAdapter**: Class KubernetesInstanceAdapter
+
+Adapter for running Instance by Runner executed in separate process.
+
+#### Defined in
+
+[kubernetes-instance-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L23)
+
+___
+
+### KubernetesSequenceAdapter
+
+• **KubernetesSequenceAdapter**: Class KubernetesSequenceAdapter
+
+Adapter for preparing Sequence to be run in process.
+
+#### Defined in
+
+[kubernetes-sequence-adapter.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L48)
+
+## Interfaces
+
+### IDockerHelper
+
+• **IDockerHelper**: Interface IDockerHelper
+
+#### Defined in
+
+[types.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L178)
+
 ## Variables
 
 ### STH\_DOCKER\_NETWORK
 
-• **STH\_DOCKER\_NETWORK**: ``"transformhub0"``
+• `Const` **STH\_DOCKER\_NETWORK**: "transformhub0" = `"transformhub0"`
 
 #### Defined in
 
@@ -291,11 +363,11 @@ ___
 
 ### getHostname
 
-▸ `Const` **getHostname**(): `string`
+▸ **getHostname**(): string
 
 #### Returns
 
-`string`
+string
 
 #### Defined in
 
@@ -305,7 +377,7 @@ ___
 
 ### getInstanceAdapter
 
-▸ **getInstanceAdapter**(`runWithoutDocker`): `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
+▸ **getInstanceAdapter**(`config`): ILifeCycleAdapterMain & ILifeCycleAdapterRun
 
 Provides Instance adapter.
 
@@ -313,23 +385,23 @@ Provides Instance adapter.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `runWithoutDocker` | `boolean` | Defines which instance adapter to use. If true - ProcessInstanceAdapter will be used. |
+| `config` | STHConfiguration | STH config. If true - ProcessInstanceAdapter will be used. |
 
 #### Returns
 
-`ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
+ILifeCycleAdapterMain & ILifeCycleAdapterRun
 
 Instance adapter.
 
 #### Defined in
 
-[get-instance-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L12)
+[get-instance-adapter.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L24)
 
 ___
 
 ### getSequenceAdapter
 
-▸ **getSequenceAdapter**(`config`): `ISequenceAdapter`
+▸ **getSequenceAdapter**(`config`): ISequenceAdapter
 
 Provides Sequence adapter basing on Host configuration.
 
@@ -337,27 +409,27 @@ Provides Sequence adapter basing on Host configuration.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `config` | `STHConfiguration` | Host configuration. |
+| `config` | STHConfiguration | Host configuration. |
 
 #### Returns
 
-`ISequenceAdapter`
+ISequenceAdapter
 
 Sequence adapter.
 
 #### Defined in
 
-[get-sequence-adapter.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L11)
+[get-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L23)
 
 ___
 
 ### isHostSpawnedInDockerContainer
 
-▸ `Const` **isHostSpawnedInDockerContainer**(): `Promise`<`boolean`\>
+▸ **isHostSpawnedInDockerContainer**(): Promise<boolean\>
 
 #### Returns
 
-`Promise`<`boolean`\>
+Promise<boolean\>
 
 #### Defined in
 
@@ -367,17 +439,17 @@ ___
 
 ### setupDockerNetworking
 
-▸ **setupDockerNetworking**(`dockerHelper`): `Promise`<`void`\>
+▸ **setupDockerNetworking**(`dockerHelper`): Promise<void\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `dockerHelper` | [`IDockerHelper`](interfaces/IDockerHelper.md) |
+| `dockerHelper` | IDockerHelper |
 
 #### Returns
 
-`Promise`<`void`\>
+Promise<void\>
 
 #### Defined in
 

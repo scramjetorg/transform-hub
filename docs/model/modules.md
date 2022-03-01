@@ -6,45 +6,135 @@
 
 ### Classes
 
-- [AppError](classes/AppError.md)
-- [CSIControllerError](classes/CSIControllerError.md)
-- [CommunicationHandler](classes/CommunicationHandler.md)
-- [DelayedStream](classes/DelayedStream.md)
-- [HostError](classes/HostError.md)
-- [IDProvider](classes/IDProvider.md)
-- [InstanceAdapterError](classes/InstanceAdapterError.md)
-- [RunnerError](classes/RunnerError.md)
-- [SequenceAdapterError](classes/SequenceAdapterError.md)
+- [AppError](undefined)
+- [CSIControllerError](undefined)
+- [CommunicationHandler](undefined)
+- [DelayedStream](undefined)
+- [HostError](undefined)
+- [IDProvider](undefined)
+- [InstanceAdapterError](undefined)
+- [RunnerError](undefined)
+- [SequenceAdapterError](undefined)
 
 ### Type aliases
 
-- [ConfiguredMessageHandler](modules.md#configuredmessagehandler)
-- [ICSIControllerErrorData](modules.md#icsicontrollererrordata)
-- [IHostErrorData](modules.md#ihosterrordata)
-- [IRunnerErrorData](modules.md#irunnererrordata)
+- [ConfiguredMessageHandler](undefined)
+- [ICSIControllerErrorData](undefined)
+- [IHostErrorData](undefined)
+- [IRunnerErrorData](undefined)
 
 ### Variables
 
-- [MessageUtilities](modules.md#messageutilities)
+- [MessageUtilities](undefined)
 
 ### Functions
 
-- [checkMessage](modules.md#checkmessage)
-- [deserializeMessage](modules.md#deserializemessage)
-- [getMessage](modules.md#getmessage)
-- [serializeMessage](modules.md#serializemessage)
+- [checkMessage](undefined)
+- [deserializeMessage](undefined)
+- [getMessage](undefined)
+- [serializeMessage](undefined)
+
+## Classes
+
+### AppError
+
+• **AppError**: Class AppError
+
+#### Defined in
+
+[packages/model/src/errors/app-error.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/app-error.ts#L7)
+
+___
+
+### CSIControllerError
+
+• **CSIControllerError**: Class CSIControllerError
+
+#### Defined in
+
+[packages/model/src/errors/csi-controller-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/csi-controller-error.ts#L6)
+
+___
+
+### CommunicationHandler
+
+• **CommunicationHandler**: Class CommunicationHandler
+
+#### Defined in
+
+[packages/model/src/stream-handler.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/stream-handler.ts#L59)
+
+___
+
+### DelayedStream
+
+• **DelayedStream**: Class DelayedStream
+
+#### Defined in
+
+[packages/model/src/utils/delayed-stream.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/delayed-stream.ts#L3)
+
+___
+
+### HostError
+
+• **HostError**: Class HostError
+
+#### Defined in
+
+[packages/model/src/errors/host-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/host-error.ts#L6)
+
+___
+
+### IDProvider
+
+• **IDProvider**: Class IDProvider
+
+#### Defined in
+
+[packages/model/src/utils/id-provider.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/utils/id-provider.ts#L3)
+
+___
+
+### InstanceAdapterError
+
+• **InstanceAdapterError**: Class InstanceAdapterError
+
+#### Defined in
+
+[packages/model/src/errors/instance-adapter-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/instance-adapter-error.ts#L4)
+
+___
+
+### RunnerError
+
+• **RunnerError**: Class RunnerError
+
+#### Defined in
+
+[packages/model/src/errors/runner-error.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/runner-error.ts#L6)
+
+___
+
+### SequenceAdapterError
+
+• **SequenceAdapterError**: Class SequenceAdapterError
+
+#### Defined in
+
+[packages/model/src/errors/sequence-adapter-error.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/errors/sequence-adapter-error.ts#L4)
 
 ## Type aliases
 
 ### ConfiguredMessageHandler
 
-Ƭ **ConfiguredMessageHandler**<`T`\>: { `blocking`: `boolean` ; `handler`: `MutatingMonitoringMessageHandler`<`T` extends `MonitoringMessageCode` ? `T` : `never`\>  } \| { `blocking`: `boolean` ; `handler`: `ControlMessageHandler`<`T` extends `ControlMessageCode` ? `T` : `never`\>  }
+Ƭ **ConfiguredMessageHandler**: Object \| Object
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `RunnerMessageCode` \| `CPMMessageCode` |
+| `T` | extends RunnerMessageCode \| CPMMessageCode |
 
 #### Defined in
 
@@ -54,7 +144,7 @@ ___
 
 ### ICSIControllerErrorData
 
-Ƭ **ICSIControllerErrorData**: `any`
+Ƭ **ICSIControllerErrorData**: any
 
 #### Defined in
 
@@ -64,7 +154,7 @@ ___
 
 ### IHostErrorData
 
-Ƭ **IHostErrorData**: `any`
+Ƭ **IHostErrorData**: any
 
 #### Defined in
 
@@ -74,7 +164,7 @@ ___
 
 ### IRunnerErrorData
 
-Ƭ **IRunnerErrorData**: `any`
+Ƭ **IRunnerErrorData**: any
 
 #### Defined in
 
@@ -84,14 +174,14 @@ ___
 
 ### MessageUtilities
 
-• **MessageUtilities**: `Object`
+• `Const` **MessageUtilities**: `Object`
 
 #### Type declaration
 
 | Name | Type |
 | :------ | :------ |
-| `deserializeMessage` | (`msg`: `string`) => `MessageType`<`RunnerMessageCode`\> |
-| `serializeMessage` | <T\>(`msg`: `MessageType`<`T`\>) => `RunnerMessage` \| `CPMMessage` |
+| `deserializeMessage` | Function |
+| `serializeMessage` | Function |
 
 #### Defined in
 
@@ -101,24 +191,24 @@ ___
 
 ### checkMessage
 
-▸ `Const` **checkMessage**<`X`\>(`msgCode`, `msgData`): `MessageDataType`<`X`\>
+▸ **checkMessage**<`X`\>(`msgCode`, `msgData`): MessageDataType<X\>
 
 #### Type parameters
 
 | Name | Type |
 | :------ | :------ |
-| `X` | extends `RunnerMessageCode` \| `CPMMessageCode` |
+| `X` | extends RunnerMessageCode \| CPMMessageCode |
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `msgCode` | `X` |
-| `msgData` | `MonitoringMessageData` \| `DescribeSequenceMessageData` \| `ErrorMessageData` \| `StatusMessageData` \| `KeepAliveMessageData` \| `AcknowledgeMessageData` \| `HandshakeAcknowledgeMessageData` \| `StopSequenceMessageData` \| `MonitoringRateMessageData` \| `PingMessageData` \| `SequenceStoppedMessageData` \| `PangMessageData` \| `EmptyMessageData` \| `EventMessageData` \| `STHIDMessageData` \| `LoadCheckStat` \| `NetworkInfo`[] \| `InstanceBulkMessage` \| `SequenceBulkMessage` \| `InstanceMessage` \| `SequenceMessage` |
+| `msgCode` | X |
+| `msgData` | MonitoringMessageData \| DescribeSequenceMessageData \| ErrorMessageData \| StatusMessageData \| KeepAliveMessageData \| AcknowledgeMessageData \| HandshakeAcknowledgeMessageData \| StopSequenceMessageData \| MonitoringRateMessageData \| PingMessageData \| SequenceStoppedMessageData \| PangMessageData \| EmptyMessageData \| EventMessageData \| STHIDMessageData \| LoadCheckStat \| NetworkInfo[] \| InstanceBulkMessage \| SequenceBulkMessage \| InstanceMessage \| SequenceMessage |
 
 #### Returns
 
-`MessageDataType`<`X`\>
+MessageDataType<X\>
 
 #### Defined in
 
@@ -128,7 +218,7 @@ ___
 
 ### deserializeMessage
 
-▸ **deserializeMessage**(`msg`): `MessageType`<`RunnerMessageCode`\>
+▸ **deserializeMessage**(`msg`): MessageType<RunnerMessageCode\>
 
 Get an object of message type from serialized message.
 
@@ -136,11 +226,11 @@ Get an object of message type from serialized message.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `msg` | `string` | a stringified and serialized message |
+| `msg` | string | a stringified and serialized message |
 
 #### Returns
 
-`MessageType`<`RunnerMessageCode`\>
+MessageType<RunnerMessageCode\>
 
 - an object of message type
 
@@ -152,7 +242,7 @@ ___
 
 ### getMessage
 
-▸ `Const` **getMessage**<`X`\>(`msgCode`, `msgData`): `MessageType`<`X`\>
+▸ **getMessage**<`X`\>(`msgCode`, `msgData`): MessageType<X\>
 
 Get an object of message type from serialized message.
 A helper method used for deserializing messages.
@@ -161,18 +251,18 @@ A helper method used for deserializing messages.
 
 | Name | Type |
 | :------ | :------ |
-| `X` | extends `RunnerMessageCode` |
+| `X` | extends RunnerMessageCode |
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `msgCode` | `X` | message type code |
-| `msgData` | `MessageDataType`<`X`\> | a message object |
+| `msgCode` | X | message type code |
+| `msgData` | MessageDataType<X\> | a message object |
 
 #### Returns
 
-`MessageType`<`X`\>
+MessageType<X\>
 
 - an object of message type
 
@@ -184,7 +274,7 @@ ___
 
 ### serializeMessage
 
-▸ **serializeMessage**<`T`\>(`msg`): `RunnerMessage` \| `CPMMessage`
+▸ **serializeMessage**<`T`\>(`msg`): RunnerMessage \| CPMMessage
 
 Serizalized message.
 
@@ -192,17 +282,17 @@ Serizalized message.
 
 | Name | Type |
 | :------ | :------ |
-| `T` | extends `RunnerMessageCode` \| `CPMMessageCode` |
+| `T` | extends RunnerMessageCode \| CPMMessageCode |
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `msg` | `MessageType`<`T`\> | an object of message type |
+| `msg` | MessageType<T\> | an object of message type |
 
 #### Returns
 
-`RunnerMessage` \| `CPMMessage`
+RunnerMessage \| CPMMessage
 
 - a serializable message in a format [msgCode, {msgBody}]
           where 'msgCode' is a message type code and 'msgBody' is a message body

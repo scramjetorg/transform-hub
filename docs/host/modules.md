@@ -6,37 +6,111 @@
 
 ### Classes
 
-- [CPMConnector](classes/CPMConnector.md)
-- [CSIController](classes/CSIController.md)
-- [CommonLogsPipe](classes/CommonLogsPipe.md)
-- [Host](classes/Host.md)
-- [ServiceDiscovery](classes/ServiceDiscovery.md)
-- [SocketServer](classes/SocketServer.md)
+- [CPMConnector](undefined)
+- [CSIController](undefined)
+- [CommonLogsPipe](undefined)
+- [Host](undefined)
+- [ServiceDiscovery](undefined)
+- [SocketServer](undefined)
 
 ### Type aliases
 
-- [HostOptions](modules.md#hostoptions)
-- [dataType](modules.md#datatype)
-- [streamType](modules.md#streamtype)
-- [topicDataType](modules.md#topicdatatype)
+- [HostOptions](undefined)
+- [dataType](undefined)
+- [streamType](undefined)
+- [topicDataType](undefined)
 
 ### Variables
 
-- [InstanceStore](modules.md#instancestore)
+- [InstanceStore](undefined)
 
 ### Functions
 
-- [startHost](modules.md#starthost)
+- [startHost](undefined)
+
+## Classes
+
+### CPMConnector
+
+• **CPMConnector**: Class CPMConnector
+
+Provides communication with Manager.
+
+#### Defined in
+
+[packages/host/src/lib/cpm-connector.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/cpm-connector.ts#L41)
+
+___
+
+### CSIController
+
+• **CSIController**: Class CSIController
+
+Handles all Instance lifecycle, exposes instance's HTTP API.
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L53)
+
+___
+
+### CommonLogsPipe
+
+• **CommonLogsPipe**: Class CommonLogsPipe
+
+#### Defined in
+
+[packages/host/src/lib/common-logs-pipe.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/common-logs-pipe.ts#L6)
+
+___
+
+### Host
+
+• **Host**: Class Host
+
+Host provides functionality to manage instances and sequences.
+Using provided servers to set up API and server for communicating with instance controllers.
+Can communicate with Manager.
+
+#### Defined in
+
+[packages/host/src/lib/host.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L39)
+
+___
+
+### ServiceDiscovery
+
+• **ServiceDiscovery**: Class ServiceDiscovery
+
+Service Discovery provides methods to manage topics.
+Its functionality covers creating, storing, removing topics
+and requesting Manager when instance requires data but data is not available locally.
+
+#### Defined in
+
+[packages/host/src/lib/sd-adapter.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L38)
+
+___
+
+### SocketServer
+
+• **SocketServer**: Class SocketServer
+
+Server for incoming connections from Runners
+
+#### Defined in
+
+[packages/host/src/lib/socket-server.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L23)
 
 ## Type aliases
 
 ### HostOptions
 
-Ƭ **HostOptions**: `Partial`<{ `identifyExisting`: `boolean`  }\>
+Ƭ **HostOptions**: Partial<Object\>
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L28)
+[packages/host/src/lib/host.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L30)
 
 ___
 
@@ -50,8 +124,8 @@ TODO: Refactor types below.
 
 | Name | Type |
 | :------ | :------ |
-| `contentType` | `string` |
-| `topic` | `string` |
+| `contentType` | string |
+| `topic` | string |
 
 #### Defined in
 
@@ -69,8 +143,8 @@ Topic stream type definition.
 
 | Name | Type |
 | :------ | :------ |
-| `contentType` | `string` |
-| `stream` | `Stream` |
+| `contentType` | string |
+| `stream` | Stream |
 
 #### Defined in
 
@@ -88,10 +162,10 @@ Topic details type definition.
 
 | Name | Type |
 | :------ | :------ |
-| `contentType` | `string` |
-| `cpmRequest?` | `boolean` |
-| `localProvider?` | `string` |
-| `stream` | `ReadableStream`<`any`\> \| `WritableStream`<`any`\> |
+| `contentType` | string |
+| `cpmRequest?` | boolean |
+| `localProvider?` | string |
+| `stream` | ReadableStream<any\> \| WritableStream<any\> |
 
 #### Defined in
 
@@ -101,13 +175,13 @@ Topic details type definition.
 
 ### InstanceStore
 
-• **InstanceStore**: `Object` = `{}`
+• `Const` **InstanceStore**: Object = `{}`
 
 Object storing Instance controllers.
 
 #### Index signature
 
-▪ [key: `string`]: [`CSIController`](classes/CSIController.md)
+▪ [key: string]: CSIController
 
 #### Defined in
 
@@ -117,7 +191,7 @@ Object storing Instance controllers.
 
 ### startHost
 
-▸ **startHost**(`apiServerConfig`, `sthConfig`, `hostOptions`): `Promise`<[`Host`](classes/Host.md)\>
+▸ **startHost**(`apiServerConfig`, `sthConfig`, `hostOptions`): Promise<Host\>
 
 Starts Host module.
 
@@ -125,13 +199,13 @@ Starts Host module.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `apiServerConfig` | `ServerConfig` | api server configuration |
-| `sthConfig` | `STHConfiguration` | sth configuration |
-| `hostOptions` | `Partial`<{ `identifyExisting`: `boolean`  }\> | host options |
+| `apiServerConfig` | ServerConfig | api server configuration |
+| `sthConfig` | STHConfiguration | sth configuration |
+| `hostOptions` | Partial<Object\> | host options |
 
 #### Returns
 
-`Promise`<[`Host`](classes/Host.md)\>
+Promise<Host\>
 
 #### Defined in
 
