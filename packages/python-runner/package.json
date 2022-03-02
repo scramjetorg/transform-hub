@@ -4,8 +4,16 @@
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./runner.py",
   "scripts": {
+    "postinstall": "pip install --upgrade -r requirements.txt --target __pydeps__",
+    "build": "pip install --upgrade -r requirements.txt --target dist; cp -r ../../python/scramjet-framework/scramjet/ dist/",
+    "postbuild": "node ../../scripts/publish.js",
     "build:docker": "docker build -t scramjetorg/python-runner:$npm_package_version -f Dockerfile ../../"
   },
+  "assets": [
+    "hardcoded_magic_values.py",
+    "logging_setup.py",
+    "runner.py"
+  ],
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
   "dependencies": {},

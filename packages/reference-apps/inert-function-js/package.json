@@ -19,5 +19,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "dependencies": {
+    "mysql": "^2.18.1"
   }
 }
