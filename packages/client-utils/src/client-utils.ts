@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { ClientError } from "./client-error";
+import { ClientError, QueryError } from "./client-error";
 import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } from "./types";
 
 /**
@@ -38,26 +38,36 @@ export abstract class ClientUtilsBase implements HttpClient {
      * @param {RequestConfig} options Request wrapper options.
      */
     private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
-        const source = new Error();
-
         try {
-            const response = await this.fetch(input, init);
+            const response = await this.fetch(input, init)
+                .then((result: any) => {
+                    if (result.ok) {
+                        if (this.log) {
+                            this.log.ok(result);
+                        }
 
-            if (response.status >= 400) {
-                if (this.log) {
-                    this.log?.error(new ClientError(response.status, response.statusText, response.error));
-                }
+                        return result;
+                    }
 
-                throw new ClientError(response.status, response.statusText, response.error);
-            }
+                    const fetchError = new QueryError(
+                        input.toString(),
+                        result.status,
+                        result,
+                        result.body
+                    );
 
-            if (this.log) {
-                this.log.ok(response);
-            }
+                    throw fetchError;
+                }).catch((error: any) => {
+                    if (this.log) {
+                        this.log?.error(error);
+                    }
 
-            if (this.log) {
-                this.log.request(arguments);
-            }
+                    if (error instanceof QueryError) {
+                        throw error;
+                    }
+
+                    throw new QueryError(input.toString(), error.code);
+                });
 
             if (options.parse === "json") {
                 return response.json() as Promise<T>;
@@ -70,11 +80,11 @@ export abstract class ClientUtilsBase implements HttpClient {
             if (options.parse === "stream") {
                 return response.body as Promise<T>;
             }
-        } catch (error: any) {
-            throw ClientError.from(error, undefined, source);
-        }
 
-        throw ClientError.from(source, undefined, source);
+            throw new ClientError("BAD_PARAMETERS", `Unknown parse option: ${options.parse}`);
+        } catch (error: any) {
+            throw ClientError.from(error);
+        }
     }
 
     /**

@@ -46,10 +46,14 @@ export async function displayStream(
     output: Writable = process.stdout
 ): Promise<void> {
     try {
-        const resp = (await response) as unknown as Readable;
+        const resp = await response as unknown as Readable;
 
-        resp.pipe(output);
-        return new Promise((res, rej) => resp.on("finish", res).on("error", rej));
+        if (resp) {
+            resp.pipe(output);
+            return new Promise((res, rej) => resp.on("finish", res).on("error", rej));
+        }
+
+        return Promise.reject(new Error("Stream is not available"));
     } catch (e: any) {
         console.error(e && e.stack || e);
         process.exitCode = e.exitCode || 1;
@@ -65,7 +69,9 @@ export async function displayStream(
  */
 export async function displayEntity(_program: Command, response: Promise<any>): Promise<void> {
     // todo: different displays depending on _program.opts().format
-    const res = await response;
+    const res = await response.catch(e => {
+        console.error(e);
+    });
 
     if (!res) {
         return;
