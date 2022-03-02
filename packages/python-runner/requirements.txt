@@ -1,1 +1,2 @@
 pyee==8.2.2
+git+https://github.com/scramjetorg/framework-python#egg=scramjet_framework_python

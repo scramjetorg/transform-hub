@@ -12,7 +12,6 @@ RUN apt-get update \
     && apt-get install -y gosu --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-COPY python/scramjet-framework/scramjet ./scramjet
 COPY packages/python-runner/*.py ./
 COPY packages/python-runner/requirements.txt ./requirements.txt
 COPY packages/python-runner/docker-entrypoint.sh /usr/local/bin/
