@@ -1,6 +1,6 @@
 Feature: Maintain efficiency within a host
 
-    @ci
+    @ci @runner-cleanup
     Scenario: PT-002 TC-001 Maintain efficiency - quick test
         Given host is running
         When sequence "../packages/reference-apps/inert-sequence-2-with-delay.tar.gz" loaded
@@ -9,9 +9,10 @@ Feature: Maintain efficiency within a host
         Then file "delay-test-result.txt" is generated
         When calculate average delay time from "delay-test-result.txt" of first "2000" function calls starting "2000"
         When calculated avereage delay time is lower than 0.1 ms
-        And runner has ended execution
+        #And runner has ended execution
         Then host is still running
 
+    @runner-cleanup
     Scenario: PT-002 TC-002 Maintain efficiency
         Given host is running
         When sequence "../packages/reference-apps/inert-sequence-2-with-delay.tar.gz" loaded
@@ -20,7 +21,7 @@ Feature: Maintain efficiency within a host
         Then file "delay-test-result.txt" is generated
         When calculate average delay time from "delay-test-result.txt" of first "10000" function calls starting "2000"
         When calculated avereage delay time is lower than 0.1 ms
-        And runner has ended execution
+        #And runner has ended execution
         Then host is still running
 
     Scenario: PT-002 TC-003 Maintain efficiency test with core dump

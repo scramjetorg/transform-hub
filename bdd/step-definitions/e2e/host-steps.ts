@@ -1,7 +1,7 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable no-console */
 // eslint-disable-next-line no-extra-parens
-import { Given, When, Then, Before, BeforeAll, AfterAll } from "@cucumber/cucumber";
+import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer } from "../../lib/utils";
 import fs, { createReadStream } from "fs";
@@ -84,6 +84,23 @@ const waitForProcessToEnd = async (pid: number) => {
     }
 };
 
+const killRunner = async () => {
+    if (process.env.RUNTIME_ADAPTER === "kubernetes") {
+        // @TODO
+        return;
+    }
+
+    if (process.env.RUNTIME_ADAPTER === "process" && processId) {
+        process.kill(processId);
+
+        await waitForProcessToEnd(processId);
+    }
+
+    if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
+        await dockerode.getContainer(containerId).kill();
+    }
+};
+
 BeforeAll({ timeout: 10e3 }, async () => {
     if (process.env.NO_HOST) {
         return;
@@ -142,6 +159,8 @@ Before(() => {
     actualLogResponse = "";
     streams = {};
 });
+
+After({ tags: "@runner-cleanup" }, killRunner);
 
 const startHost = async () => {
     let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
