@@ -13,6 +13,7 @@ import path from "path";
 import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
+import { SequenceAdapterError } from "@scramjet/model";
 
 /**
  * Returns existing Sequence configuration.
@@ -93,11 +94,34 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
 
         await fs.mkdir(sequenceDir);
 
-        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir}`);
+        const uncompressingProc = exec(`tar zxf - -C ${sequenceDir} >/dev/null 2>&1 || echo >&2 '{"error":"Invalid pkg tar.gz archive"}' && exit 1`);
 
         stream.pipe(uncompressingProc.stdin!);
 
+        const stderrChunks: string[] = [];
+
+        uncompressingProc.stderr!.on("data", (chunk: Buffer) => {
+            stderrChunks.push(chunk.toString());
+        });
+
         await new Promise(res => uncompressingProc.on("close", res));
+
+        const stderrOutput = stderrChunks.join("");
+
+        if (stderrOutput) {
+            let preRunnenrError;
+
+            try {
+                preRunnenrError = JSON.parse(stderrOutput);
+                this.logger.error("Unpacking sequence failed", stderrOutput);
+            } catch (e) {
+                throw new SequenceAdapterError("PRERUNNER_ERROR", `Error parsing ${stderrOutput}`);
+            }
+
+            throw new SequenceAdapterError("PRERUNNER_ERROR", preRunnenrError.error);
+        }
+
+        this.logger.debug("Unpacking sequence succeeded", stderrOutput);
 
         return getRunnerConfigForStoredSequence(this.config.sequencesRoot, id);
     }
