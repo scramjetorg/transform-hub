@@ -9,7 +9,6 @@ Feature: Maintain efficiency within a host
         Then file "delay-test-result.txt" is generated
         When calculate average delay time from "delay-test-result.txt" of first "2000" function calls starting "2000"
         When calculated avereage delay time is lower than 0.1 ms
-        #And runner has ended execution
         Then host is still running
 
     @runner-cleanup
@@ -21,7 +20,6 @@ Feature: Maintain efficiency within a host
         Then file "delay-test-result.txt" is generated
         When calculate average delay time from "delay-test-result.txt" of first "10000" function calls starting "2000"
         When calculated avereage delay time is lower than 0.1 ms
-        #And runner has ended execution
         Then host is still running
 
     Scenario: PT-002 TC-003 Maintain efficiency test with core dump

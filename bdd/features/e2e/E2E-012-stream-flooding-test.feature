@@ -12,7 +12,6 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         And send event "test-event" to instance with message "test message"
         Then get event "test-event-response" from instance
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
-        #And runner has ended execution #check event, runner ending not important
         Then host is still running
 
     @ci @runner-cleanup
@@ -25,7 +24,5 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         Then get event "test-event-response" from instance
         When wait for "1000" ms
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
-        #And send kill message to instance
-        #And runner has ended execution # checks event, runner ending not important
         Then host is still running
 

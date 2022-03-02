@@ -10,5 +10,4 @@ Feature: Event e2e tests
         And send event "test-event" to instance with message "test message"
         Then wait for event "test-event-response" from instance
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
-        #And runner has ended execution
         Then host is still running
