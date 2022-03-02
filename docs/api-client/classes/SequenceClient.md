@@ -39,17 +39,17 @@ Provides methods to interact with sequence.
 
 #### Defined in
 
-[sequence-client.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L13)
+[api-client/src/sequence-client.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L11)
 
 ___
 
 ### host
 
-• `Private` **host**: [`ClientProvider`](../interfaces/ClientProvider.md)
+• `Private` **host**: `ClientProvider`
 
 #### Defined in
 
-[sequence-client.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L15)
+[api-client/src/sequence-client.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L13)
 
 ___
 
@@ -59,21 +59,21 @@ ___
 
 #### Defined in
 
-[sequence-client.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L14)
+[api-client/src/sequence-client.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L12)
 
 ## Accessors
 
 ### clientUtils
 
-• `Private` `get` **clientUtils**(): [`HttpClient`](../interfaces/HttpClient.md)
+• `Private` `get` **clientUtils**(): `HttpClientNode`
 
 #### Returns
 
-[`HttpClient`](../interfaces/HttpClient.md)
+`HttpClientNode`
 
 #### Defined in
 
-[sequence-client.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L24)
+[api-client/src/sequence-client.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L22)
 
 ___
 
@@ -89,7 +89,7 @@ Sequence id.
 
 #### Defined in
 
-[sequence-client.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L20)
+[api-client/src/sequence-client.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L18)
 
 ## Constructors
 
@@ -102,11 +102,11 @@ Sequence id.
 | Name | Type |
 | :------ | :------ |
 | `id` | `string` |
-| `host` | [`ClientProvider`](../interfaces/ClientProvider.md) |
+| `host` | `ClientProvider` |
 
 #### Defined in
 
-[sequence-client.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L39)
+[api-client/src/sequence-client.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L37)
 
 ## Methods
 
@@ -121,7 +121,7 @@ Creates SequenceClient instance for sequence with given id and host.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `id` | `string` | Sequence id |
-| `host` | [`ClientProvider`](../interfaces/ClientProvider.md) | Host client |
+| `host` | `ClientProvider` | Host client |
 
 #### Returns
 
@@ -131,7 +131,7 @@ Sequence client
 
 #### Defined in
 
-[sequence-client.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L35)
+[api-client/src/sequence-client.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L33)
 
 ___
 
@@ -149,7 +149,7 @@ Promise resolving to Sequence info.
 
 #### Defined in
 
-[sequence-client.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L96)
+[api-client/src/sequence-client.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L94)
 
 ___
 
@@ -157,14 +157,14 @@ ___
 
 ▸ **getInstance**(`id`, `host`): `Promise`<[`InstanceClient`](InstanceClient.md)\>
 
-TODO:
+Return Instance Client for given instance id.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `id` | `string` | TODO: |
-| `host` | [`ClientProvider`](../interfaces/ClientProvider.md) | Host client. |
+| `id` | `string` | Instance id. |
+| `host` | `ClientProvider` | Host client. |
 
 #### Returns
 
@@ -174,7 +174,7 @@ Instance client.
 
 #### Defined in
 
-[sequence-client.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L87)
+[api-client/src/sequence-client.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L85)
 
 ___
 
@@ -192,7 +192,7 @@ Promise resolving to list of Instances.
 
 #### Defined in
 
-[sequence-client.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L76)
+[api-client/src/sequence-client.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L74)
 
 ___
 
@@ -208,7 +208,7 @@ Not implemented.
 
 #### Defined in
 
-[sequence-client.ts:103](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L103)
+[api-client/src/sequence-client.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L101)
 
 ___
 
@@ -233,4 +233,4 @@ Promise resolving to Instance Client.
 
 #### Defined in
 
-[sequence-client.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L56)
+[api-client/src/sequence-client.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L54)

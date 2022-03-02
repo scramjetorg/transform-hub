@@ -36,7 +36,7 @@
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L28)
+[packages/host/src/lib/host.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L30)
 
 ___
 
