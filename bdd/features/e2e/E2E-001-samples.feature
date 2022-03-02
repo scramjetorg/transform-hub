@@ -10,7 +10,9 @@ Feature: Sample e2e tests
         And get runner PID
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         And send kill message to instance
-        And wait for "12000" ms
+        And wait for instance healthy is "false"
+        # Give instance some time to close correctly
+        And wait for "1000" ms
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         Then runner has ended execution
