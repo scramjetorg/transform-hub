@@ -15,6 +15,8 @@ import { ReadStream } from "fs";
 import { PassThrough } from "stream";
 import { defer } from "../../lib/utils";
 
+const AWAITING_POLL_DEFER_TIME = 250;
+
 When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
     return new Promise<void>((resolve, reject) => {
         this.resources.hub = spawn(
@@ -94,7 +96,7 @@ Then("get runner container information", { timeout: 20000 }, async function(this
             this.resources.containerInfo = info;
             this.resources.containerInspect = inspect;
         } else {
-            await defer(50);
+            await defer(AWAITING_POLL_DEFER_TIME);
         }
     }
 });
@@ -151,7 +153,7 @@ Then("get last container info", async function(this: CustomWorld) {
         if (lastContainer.length) {
             this.resources.lastContainer = success = lastContainer[0];
         } else {
-            await defer(50);
+            await defer(AWAITING_POLL_DEFER_TIME);
         }
     }
 });
