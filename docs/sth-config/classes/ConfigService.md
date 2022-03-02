@@ -28,7 +28,7 @@
 
 #### Defined in
 
-[sth-config/src/config-service.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L54)
+[sth-config/src/config-service.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L66)
 
 ## Methods
 
@@ -42,7 +42,7 @@
 
 #### Defined in
 
-[sth-config/src/config-service.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L62)
+[sth-config/src/config-service.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L74)
 
 ___
 
@@ -58,10 +58,13 @@ ___
 | :------ | :------ | :------ |
 | `prerunner` | `ContainerConfiguration` | PreRunner container configuration. |
 | `runner` | `RunnerContainerConfiguration` | Runner container configuration. |
+| `runnerImages` | `Object` | - |
+| `runnerImages.node` | `string` | - |
+| `runnerImages.python3` | `string` | - |
 
 #### Defined in
 
-[sth-config/src/config-service.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L66)
+[sth-config/src/config-service.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L78)
 
 ___
 
@@ -81,4 +84,4 @@ ___
 
 #### Defined in
 
-[sth-config/src/config-service.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L70)
+[sth-config/src/config-service.ts:82](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L82)

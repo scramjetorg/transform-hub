@@ -37,7 +37,6 @@
 - [CPMConnectorOptions](modules.md#cpmconnectoroptions)
 - [CPMMessage](modules.md#cpmmessage)
 - [CPMMessageSTHID](modules.md#cpmmessagesthid)
-- [CSIConfig](modules.md#csiconfig)
 - [CSIControllerErrorCode](modules.md#csicontrollererrorcode)
 - [ContainerConfiguration](modules.md#containerconfiguration)
 - [ContainerConfigurationWithExposedPorts](modules.md#containerconfigurationwithexposedports)
@@ -83,10 +82,12 @@
 - [InstanceId](modules.md#instanceid)
 - [InstanceMessage](modules.md#instancemessage)
 - [InstanceMessageData](modules.md#instancemessagedata)
+- [K8SAdapterConfiguration](modules.md#k8sadapterconfiguration)
 - [KeepAliveMessage](modules.md#keepalivemessage)
 - [KeepAliveMessageData](modules.md#keepalivemessagedata)
 - [KillHandler](modules.md#killhandler)
 - [KillSequenceMessage](modules.md#killsequencemessage)
+- [KubernetesSequenceConfig](modules.md#kubernetessequenceconfig)
 - [LifeCycleError](modules.md#lifecycleerror)
 - [LoadCheckConfig](modules.md#loadcheckconfig)
 - [LoadCheckContstants](modules.md#loadcheckcontstants)
@@ -392,24 +393,6 @@ ___
 #### Defined in
 
 [packages/types/src/messages/sth-id.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sth-id.ts#L7)
-
-___
-
-### CSIConfig
-
-Ƭ **CSIConfig**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `instanceAdapterExitDelay` | [`STHConfiguration`](modules.md#sthconfiguration)[``"instanceAdapterExitDelay"``] |
-| `instancesServerPort` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"instancesServerPort"``] |
-| `noDocker` | [`STHConfiguration`](modules.md#sthconfiguration)[``"noDocker"``] |
-
-#### Defined in
-
-[packages/types/src/csi-config.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csi-config.ts#L6)
 
 ___
 
@@ -1067,7 +1050,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L33)
+[packages/types/src/runner-config.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L38)
 
 ___
 
@@ -1106,6 +1089,26 @@ ___
 #### Defined in
 
 [packages/types/src/messages/instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L3)
+
+___
+
+### K8SAdapterConfiguration
+
+Ƭ **K8SAdapterConfiguration**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `authConfigPath?` | `string` |
+| `namespace` | `string` |
+| `runnerImage` | `string` |
+| `sequencesRoot` | `string` |
+| `sthPodHost` | `string` |
+
+#### Defined in
+
+[packages/types/src/sth-configuration.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L72)
 
 ___
 
@@ -1173,6 +1176,16 @@ This message type is sent from CSIController.
 #### Defined in
 
 [packages/types/src/messages/kill-sequence.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/kill-sequence.ts#L8)
+
+___
+
+### KubernetesSequenceConfig
+
+Ƭ **KubernetesSequenceConfig**: `CommonSequenceConfig` & { `sequenceDir`: `string` ; `type`: ``"kubernetes"``  }
+
+#### Defined in
+
+[packages/types/src/runner-config.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L31)
 
 ___
 
@@ -1922,6 +1935,9 @@ ___
 | `docker` | `Object` | Docker related configuration. |
 | `docker.prerunner` | [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) | PreRunner container configuration. |
 | `docker.runner` | [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) | Runner container configuration. |
+| `docker.runnerImages` | `Object` | - |
+| `docker.runnerImages.node` | `string` | - |
+| `docker.runnerImages.python3` | `string` | - |
 | `host` | [`HostConfig`](modules.md#hostconfig) | Host configuration. |
 | `identifyExisting` | `boolean` | Should we identify existing sequences. |
 | `instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time instance API is still available. |
@@ -1929,15 +1945,16 @@ ___
 | `instanceRequirements.cpuLoad` | `number` | Required free CPU. In percentage. |
 | `instanceRequirements.freeMem` | `number` | Free memory required to start instance. In megabytes. |
 | `instanceRequirements.freeSpace` | `number` | Free disk space required to start instance. In megabytes. |
+| `kubernetes` | `Partial`<[`K8SAdapterConfiguration`](modules.md#k8sadapterconfiguration)\> | - |
 | `logColors` | `boolean` | Enable colors in logging. |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) | Logging level. |
-| `noDocker` | `boolean` | Whether host should run all the instances on the host machine, instead of in docker containers **UNSAFE FOR RUNNING ARBITRARY CODE (e.g. user submitted)** |
+| `runtimeAdapter` | `string` | Which sequence and instance adpaters should sth use. One of 'docker', 'process', 'kubernetes' |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new sequences |
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L72)
+[packages/types/src/sth-configuration.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L80)
 
 ___
 
@@ -1999,11 +2016,11 @@ ___
 
 ### SequenceConfig
 
-Ƭ **SequenceConfig**: [`DockerSequenceConfig`](modules.md#dockersequenceconfig) \| [`ProcessSequenceConfig`](modules.md#processsequenceconfig)
+Ƭ **SequenceConfig**: [`DockerSequenceConfig`](modules.md#dockersequenceconfig) \| [`ProcessSequenceConfig`](modules.md#processsequenceconfig) \| [`KubernetesSequenceConfig`](modules.md#kubernetessequenceconfig)
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L31)
+[packages/types/src/runner-config.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L36)
 
 ___
 

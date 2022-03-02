@@ -37,6 +37,8 @@
   "devDependencies": {
     "@scramjet/types": "^0.17.0",
     "ava": "^3.15.0",
-    "typed-emitter": "^1.4.0"
+    "typed-emitter": "^1.4.0",
+    "typedoc": "0.22.11",
+    "typedoc-plugin-markdown": "3.11.12"
   }
 }
