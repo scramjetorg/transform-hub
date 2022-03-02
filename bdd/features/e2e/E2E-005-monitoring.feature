@@ -8,5 +8,4 @@ Feature: Monitoring e2e tests
         And wait for instance healthy is "true"
         And get runner PID
         And wait for instance healthy is "false"
-        # And runner has ended execution # checks health
         Then host is still running
