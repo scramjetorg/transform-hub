@@ -5,7 +5,7 @@ import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
 import { STHRestAPI } from "@scramjet/types";
-import { getStreamsFromSpawn } from "../../lib/utils";
+import { getStreamsFromSpawn, defer } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 
 // eslint-disable-next-line no-nested-ternary
@@ -204,6 +204,24 @@ Then("I get instance health", { timeout: 10000 }, async function() {
 Then("health outputs 404", async () => {
     stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", instanceId, ...connectionFlags()]);
     assert.equal(stdio[1].includes("404"), true);
+});
+
+Then("I wait for instance health status to change from 200 to 404", { timeout: 20000 }, async () => {
+    let success = false;
+
+    while (!success) {
+        stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", instanceId, ...connectionFlags()]);
+
+        if (stdio[1].includes("code \"404\" status")) {
+            success = true;
+        } else if (!stdio[1].includes("status: 200 OK")) {
+            assert.fail();
+        }
+
+        await defer(250);
+    }
+
+    assert.equal(success, true);
 });
 
 Then("I get instance log", { timeout: 30000 }, async function() {

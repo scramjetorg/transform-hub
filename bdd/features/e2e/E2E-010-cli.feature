@@ -143,14 +143,13 @@ Feature: CLI tests
         And host is still running
 
     @ci @cli
-    Scenario: E2E-010 TC-017
+    Scenario: E2E-010 TC-017 Get 404 on health endpoint for finished instance
         Given host is running
         When I execute CLI with bash command "$SI seq send ../packages/reference-apps/inert-function.tar.gz --format json"
         Then I get Sequence id
         Then I start Sequence
         Then I get instance health
-        Then wait for "20000" ms
-        Then health outputs 404
+        Then I wait for instance health status to change from 200 to 404
         And host is still running
 
     @ci @cli @starts-host
