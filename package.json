@@ -95,6 +95,7 @@
     "packages": [
       "packages/*",
       "packages/reference-apps/*",
+      "python/reference-apps/*",
       "bdd"
     ]
   },
