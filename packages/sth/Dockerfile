@@ -1,6 +1,4 @@
-FROM node:lts-buster-slim as builder
-
-RUN apt-get update && apt-get upgrade -y
+FROM node:lts-bullseye-slim as builder
 
 WORKDIR /build
 
@@ -25,12 +23,10 @@ COPY scripts ./scripts
 COPY conf ./conf
 COPY LICENSE ./
 
-RUN yarn install --frozen-lock \
+RUN yarn install --frozen-lock --silent \
   && yarn build:packages
 
-FROM node:lts-buster-slim as release
-
-RUN apt-get update && apt-get upgrade -y
+FROM node:lts-bullseye-slim as release
 
 RUN set -xe \
   && mkdir -p /app
