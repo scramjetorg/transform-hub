@@ -16,7 +16,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -40,7 +40,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -75,7 +75,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -110,7 +110,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -145,7 +145,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -182,7 +182,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -217,7 +217,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile --silent
@@ -276,10 +276,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --silent
+      - uses: actions/checkout@v3
 
       - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
         uses: actions/download-artifact@v2
@@ -320,6 +317,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --silent
+
       - name: Run BDD tests
       # SCRAMJET_SPAWN_JS will run cli test from dist directory
         run: SCRAMJET_TEST_LOG=1 SCRAMJET_SPAWN_JS=1 yarn test:bdd-ci
@@ -337,10 +337,7 @@ jobs:
         node-version: [14.x, 16.x]
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --silent
+      - uses: actions/checkout@v3
 
       - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
         uses: actions/download-artifact@v2
@@ -371,9 +368,11 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile --silent
+
       - name: Run BDD for HUB params
         run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host-no-docker
-
 
   test-bdd-ci-sth-no-docker:
       name: Test bdd-ci-no-docker STH (Nodejs ${{ matrix.node-version }})
@@ -387,10 +386,7 @@ jobs:
           node-version: [14.x, 16.x]
 
       steps:
-        - uses: actions/checkout@v2
-
-        - name: Install dependencies
-          run: yarn install --frozen-lockfile --silent
+        - uses: actions/checkout@v3
 
         - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
           uses: actions/download-artifact@v2
@@ -420,6 +416,9 @@ jobs:
           uses: actions/setup-node@v2
           with:
             node-version: ${{ matrix.node-version }}
+
+        - name: Install dependencies
+          run: yarn install --frozen-lockfile --silent
 
         - name: Run BDD tests
           run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-docker
