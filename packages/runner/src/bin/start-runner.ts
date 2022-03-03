@@ -5,7 +5,7 @@ import fs from "fs";
 import { AppConfig } from "@scramjet/types";
 import { HostClient } from "../host-client";
 
-const sequencePath: string = process.env.SEQUENCE_PATH ?? "";
+const sequencePath: string = process.env.SEQUENCE_PATH?.replace(/.js$/, "") + ".js";
 const instancesServerPort = process.env.INSTANCES_SERVER_PORT;
 const instancesServerHost = process.env.INSTANCES_SERVER_HOST;
 const instanceId = process.env.INSTANCE_ID;
