@@ -224,6 +224,8 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
 });
 
 When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
+    // console.log("__dirname " + __dirname);
+    // console.log("packagePath " + packagePath);
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");
 });
