@@ -11,6 +11,7 @@
   "engines": {
     "python3": "3.5.0"
   },
+  "assets": ["data.json"],
   "scripts": {
     "build:refapps": "mkdir -p dist/ && cp *.py dist/",
     "postbuild:refapps": "yarn prepack && yarn packseq",
