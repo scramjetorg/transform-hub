@@ -2,6 +2,7 @@ import { APIRoute, GetResolver, ICommunicationHandler, MessageDataType, Monitori
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
 import { mimeAccepts } from "../lib/mime";
 import { IncomingMessage, ServerResponse } from "http";
+import { getStatusCode } from "http-status-codes";
 
 /**
  * Returns function to create GET handler for the given router.
@@ -28,7 +29,7 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
      * @param {NextCallback} next Next callback.
      * @returns Unused.
      */
-    const output = (data: object, res: ServerResponse, next: NextCallback): void => {
+    const output = (data: any, res: ServerResponse, next: NextCallback): void => {
         try {
             if (data === null) {
                 res.writeHead(204, "No content", {
@@ -38,9 +39,19 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
                 return res.end();
             }
 
+            let statusCode = 200;
+            let reason = "OK";
+
+            if (data.opStatus) {
+                statusCode = getStatusCode(data.opStatus);
+                reason = data.opStatus;
+
+                delete data.opStatus;
+            }
+
             const out = JSON.stringify(data);
 
-            res.writeHead(200, "OK", {
+            res.writeHead(statusCode, reason, {
                 "content-type": "application/json"
             });
 
