@@ -99,7 +99,12 @@ Bugfixes and minor improvements:
 - Simplify usage of fetch and add browser entrypoint in client-utils
 - Ensure reinstalling Python dependencies if required
 - Add responding to OPTIONS requests and setting CORS in the Transform-Hub API server
+- Revert appending the Sequence main file extension to Sequence entrypoint in the Runner
+- Removing overlapping BDD tests
+- Speed up the execution of BDD tests by force-closing Runner in the specific tests
+- Improve BDD tests performance by removing explicit waits
+- Fix Python logging test
 
-## @scramjet/transform Hub - v0.18.0
+## @scramjet/transform Hub - v0.18.1
 
 This is the last release in changelog.
