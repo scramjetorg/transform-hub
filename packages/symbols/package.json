@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/symbols",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "description": "This package is part of Scramjet Transform Hub. The package holds the symbols and enumerations for STH.",
   "main": "./src/index.ts",
   "scripts": {
