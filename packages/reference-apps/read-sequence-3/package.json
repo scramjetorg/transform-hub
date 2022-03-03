@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/reference-read-3-seq",
-  "version": "0.18.1",
+  "version": "0.18.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.18.1",
+    "@scramjet/types": "^0.18.2",
     "@types/node": "15.12.5"
   },
   "repository": {
