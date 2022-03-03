@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/durability-preservation-event",
-  "version": "0.18.2",
+  "version": "0.18.3",
   "description": "",
   "main": "index.ts",
   "scripts": {
@@ -17,7 +17,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.18.2",
+    "@scramjet/types": "^0.18.3",
     "@types/node": "15.12.5"
   },
   "dependencies": {
