@@ -19,6 +19,7 @@
     "@kubernetes/client-node": "^0.16.3",
     "@scramjet/model": "^0.18.3",
     "@scramjet/obj-logger": "^0.18.3",
+    "@scramjet/python-runner": "^0.18.3",
     "@scramjet/runner": "^0.18.3",
     "@scramjet/sth-config": "^0.18.3",
     "@scramjet/symbols": "^0.18.3",
