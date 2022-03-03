@@ -12,7 +12,7 @@
     "python3": "3.5.0"
   },
   "scripts": {
-    "build:refapps": "mkdir -p dist/ && cp *.py dist/",
+    "build:refapps": "mkdir -p dist/ && cp *.py dist/ && cp -rL scramjet/ dist/scramjet",
     "postbuild:refapps": "yarn prepack && yarn packseq",
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js",

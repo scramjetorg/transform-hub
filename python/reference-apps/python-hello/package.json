@@ -11,5 +11,12 @@
   },
   "engines": {
     "python3": "3.5.0"
+  },
+  "scripts": {
+    "build:refapps": "mkdir -p dist/ && cp *.py dist/ && cp -rL scramjet/ dist/scramjet",
+    "postbuild:refapps": "yarn prepack && yarn packseq",
+    "packseq": "PACKAGES_DIR=python node ../../../scripts/packsequence.js",
+    "prepack": "PACKAGES_DIR=python node ../../../scripts/publish.js",
+    "clean": "rm -rf ./dist"
   }
 }
