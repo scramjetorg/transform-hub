@@ -137,3 +137,5 @@ packages/pre-runner/sample-package/
 aaa/
 
 **/__pycache__/
+
+**/__pydeps__/**
