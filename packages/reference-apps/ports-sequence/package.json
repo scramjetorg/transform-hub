@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/ports-sequence",
-  "version": "0.18.3",
+  "version": "0.18.4",
   "description": "",
   "main": "index.js",
   "scramjet": {
@@ -24,7 +24,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.18.3",
+    "@scramjet/types": "^0.18.4",
     "@types/node": "15.12.5"
   },
   "dependencies": {
