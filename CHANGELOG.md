@@ -104,7 +104,8 @@ Bugfixes and minor improvements:
 - Speed up the execution of BDD tests by force-closing Runner in the specific tests
 - Improve BDD tests performance by removing explicit waits
 - Fix Python logging test
+- Upgrade Python installation from `pip install` to `pip3 install`
 
-## @scramjet/transform Hub - v0.18.1
+## @scramjet/transform Hub - v0.18.2
 
 This is the last release in changelog.
