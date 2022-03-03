@@ -617,14 +617,17 @@ export class Host implements IComponent {
      * @param {string} id Instance ID.
      * @returns {STHRestAPI.GetSequenceResponse} Sequence info object.
      */
-    getSequence(id: string): STHRestAPI.GetSequenceResponse {
+    getSequence(id: string): OpResponse<STHRestAPI.GetSequenceResponse> {
         const sequence = this.sequencesStore.get(id);
 
         if (!sequence) {
-            throw new HostError("SEQUENCE_IDENTIFICATION_FAILED", "Sequence not found");
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND
+            };
         }
 
         return {
+            opStatus: ReasonPhrases.OK,
             id: sequence.id,
             config: sequence.config,
             instances: Array.from(sequence.instances.values())
