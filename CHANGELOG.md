@@ -106,7 +106,9 @@ Bugfixes and minor improvements:
 - Fix Python logging test
 - Upgrade Python installation from `pip install` to `pip3 install`
 - Add missing scripts to python-runner
+- Fix missing dependencies
+- Fix python-runner image in sth-config
 
-## @scramjet/transform Hub - v0.18.3
+## @scramjet/transform Hub - v0.18.4
 
 This is the last release in changelog.
