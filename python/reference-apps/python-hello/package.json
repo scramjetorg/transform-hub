@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/hello-python",
+  "name": "@scramjet/python-hello-python",
   "version": "0.11.0-0",
   "lang": "python",
   "main": "./hello.py",

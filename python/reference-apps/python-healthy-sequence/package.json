@@ -1,5 +1,5 @@
 {
-    "name": "@scramjet/healthy-sequence-py",
+    "name": "@scramjet/python-healthy-sequence-py",
     "version": "0.11.0-0",
     "main": "./main.py",
     "author": "Michał Piotrowski <open-source@scramjet.org>",

@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/christmas-surprise",
+  "name": "@scramjet/python-christmas-surprise",
   "version": "0.11.0-0",
   "lang": "python",
   "main": "./christmas.py",

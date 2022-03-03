@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/python-alice",
+  "name": "@scramjet/python-events",
   "version": "0.11.0-0",
   "main": "./events.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",

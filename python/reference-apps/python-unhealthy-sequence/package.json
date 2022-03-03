@@ -1,5 +1,5 @@
 {
-    "name": "@scramjet/unhealthy-sequence-py",
+    "name": "@scramjet/python-unhealthy-sequence-py",
     "version": "0.11.0-0",
     "main": "./unhealthy.py",
     "author": "Michał Piotrowski <open-source@scramjet.org>",

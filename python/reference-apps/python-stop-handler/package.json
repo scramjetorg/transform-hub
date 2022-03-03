@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/stop-handler",
+  "name": "@scramjet/python-stop-handler",
   "version": "0.11.0-0",
   "main": "./stop-handler.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",
