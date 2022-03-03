@@ -1,7 +1,7 @@
 Feature: Stop e2e tests
 
-    @ci @runner-cleanup
-    Scenario: E2E-002 TC-001 API test - Send stop, sequence sends keepAlive
+    @ci
+    Scenario: E2E-002 TC-001 API test - Send stop, sequence sends keepAlive, runner closes successfully
         Given host is running
         When sequence "../packages/reference-apps/can-keep-alive.tar.gz" loaded
         And instance started with arguments "SEND_KEEPALIVE"
@@ -12,6 +12,7 @@ Feature: Stop e2e tests
         And send stop message to instance with arguments timeout 5000 and canCallKeepAlive "true"
         And wait for instance healthy is "true"
         And send stop message to instance with arguments timeout 0 and canCallKeepAlive "false"
+        And runner has ended execution
         Then host is still running
 
     @ci @runner-cleanup
