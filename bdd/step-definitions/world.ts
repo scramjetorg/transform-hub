@@ -19,6 +19,19 @@ export class CustomWorld implements World {
         sequence2?: SequenceClient
     } = {}
 
+    cliResources: {
+        stdio?: [stdout: string, stderr: string, statusCode: any];
+        stdio1?: [stdout: string, stderr: string, statusCode: any];
+        stdio2?: [stdout: string, stderr: string, statusCode: any];
+        sequenceId?: string;
+        sequence1Id?: string;
+        sequence2Id?: string;
+        instanceId?: string;
+        instance1Id?: string;
+        instance2Id?: string;
+        sequences?: any;
+    } = {};
+
     constructor({ attach, log, parameters }: any) {
         this.attach = attach;
         this.log = log;

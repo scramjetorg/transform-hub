@@ -199,7 +199,8 @@ Feature: CLI tests
         Then confirm data named "hello-input-out-10" received
         * stop host
 
-    @ci @cli
+    # This tests writes and uses shared config file so it may fail if run in parallel
+    @ci @cli @no-parallel
     Scenario: E2E-010 TC-022 Check minus set/remove
         Given I execute CLI with "seq select abc" arguments
         And I execute CLI with "inst select def" arguments
@@ -208,7 +209,8 @@ Feature: CLI tests
         And The sequence id equals "abc"
         And The instance id equals "def"
 
-    @ci @cli
+    # This tests writes and uses shared config file so it may fail if run in parallel
+    @ci @cli @no-parallel
     Scenario: E2E-010 TC-023 Check minus replacements with a sequence
         Given host is running
         When I execute CLI with "pack ../dist/reference-apps/checksum-sequence" arguments
