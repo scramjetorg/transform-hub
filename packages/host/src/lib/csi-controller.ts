@@ -458,35 +458,38 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.op("post", "/_monitoring_rate", RunnerMessageCode.MONITORING_RATE, this.communicationHandler);
         this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
 
-        this.router.op("post", "/_stop", async (req) => {
-            const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
+        this.router.op("post", "/_stop", (req) => this.handleStop(req), this.communicationHandler);
+        this.router.op("post", "/_kill", () => this.handleKill(), this.communicationHandler);
+    }
 
-            await this.communicationHandler.sendControlMessage(...message);
+    private async handleStop(req: ParsedMessage) {
+        const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
 
-            const [, { timeout }] = message;
+        await this.communicationHandler.sendControlMessage(...message);
 
-            this.keepAliveRequested = false;
+        const [, { timeout }] = message;
 
-            await defer(timeout);
+        this.keepAliveRequested = false;
 
-            if (!this.keepAliveRequested) {
-                await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
-            }
+        await defer(timeout);
 
-            return {};
-        }, this.communicationHandler);
-
-        this.router.op("post", "/_kill", async () => {
+        if (!this.keepAliveRequested) {
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+        }
 
-            // This will be resolved after HTTP response. It's not awaited on purpose
-            promiseTimeout(this.endOfSequence, runnerExitDelay)
-                .catch(() => this.instanceAdapter.remove());
+        return {};
+    }
 
-            return {
-                opStatus: ReasonPhrases.ACCEPTED
-            };
-        }, this.communicationHandler);
+    private async handleKill() {
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
+
+        // This will be resolved after HTTP response. It's not awaited on purpose
+        promiseTimeout(this.endOfSequence, runnerExitDelay)
+            .catch(() => this.instanceAdapter.remove());
+
+        return {
+            opStatus: ReasonPhrases.ACCEPTED
+        };
     }
 
     async getInfo(): Promise<STHRestAPI.GetInstanceResponse> {
