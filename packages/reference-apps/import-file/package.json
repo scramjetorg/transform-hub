@@ -1,0 +1,23 @@
+{
+  "name": "@scramjet/reference-inert-import-file",
+  "version": "0.15.1",
+  "description": "",
+  "main": "./subpackage",
+  "scripts": {
+    "build:refapps": "yarn clean && mkdir -p dist/ && cp -r ./subpackage ./dist/",
+    "postbuild:refapps": "yarn prepack",
+    "prepack": "node ../../../scripts/publish.js",
+    "packseq": "node ../../../scripts/packsequence.js",
+    "clean": "rm -rf ./dist"
+  },
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "ISC",
+  "devDependencies": {
+    "@scramjet/types": "^0.15.1",
+    "@types/node": "15.12.5"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
