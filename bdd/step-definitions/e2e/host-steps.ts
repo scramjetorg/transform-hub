@@ -365,26 +365,39 @@ When("send kill message to instance", async function(this: CustomWorld) {
 });
 
 When("get runner PID", { timeout: 31000 }, async function(this: CustomWorld) {
-    if (process.env.RUNTIME_ADAPTER === "kubernetes") {
-        // @TODO
-        return;
+    let success: any;
+    let tries = 0;
+
+    while (!success && tries < 3) {
+        if (process.env.RUNTIME_ADAPTER === "kubernetes") {
+            // @TODO
+            return;
+        }
+
+        if (process.env.RUNTIME_ADAPTER === "process") {
+            const res = (await this.resources.instance?.getHealth())?.processId;
+
+            if (res) {
+                processId = success = res;
+                console.log("Process is identified.", processId);
+            }
+        } else {
+            containerId = success = (await this.resources.instance?.getHealth())?.containerId!;
+
+            if (containerId) {
+                console.log("Container is identified.", containerId);
+            }
+        }
+
+        tries++;
+
+        if (!success) {
+            await defer(1000);
+        }
     }
 
-    if (process.env.RUNTIME_ADAPTER === "process") {
-        const res = (await this.resources.instance?.getHealth())?.processId;
-
-        if (!res) assert.fail();
-
-        processId = res;
-        console.log("Process is identified.", processId);
-    } else {
-        containerId = (await this.resources.instance?.getHealth())?.containerId!;
-
-        if (containerId) {
-            console.log("Container is identified.", containerId);
-        } else {
-            assert.fail();
-        }
+    if (!success) {
+        assert.fail("Runner PID not found.");
     }
 });
 
