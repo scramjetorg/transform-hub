@@ -91,9 +91,12 @@ const killRunner = async () => {
     }
 
     if (process.env.RUNTIME_ADAPTER === "process" && processId) {
-        process.kill(processId);
-
-        await waitForProcessToEnd(processId);
+        try {
+            process.kill(processId);
+            await waitForProcessToEnd(processId);
+        } catch (e) {
+            console.error("Couldn't kill runner", e);
+        }
     }
 
     if (process.env.RUNTIME_ADAPTER === "docker" && containerId) {
