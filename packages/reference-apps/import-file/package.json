@@ -2,7 +2,7 @@
   "name": "@scramjet/reference-inert-import-file",
   "version": "0.15.1",
   "description": "",
-  "main": "./subpackage",
+  "main": "./subpackage/main",
   "scripts": {
     "build:refapps": "yarn clean && mkdir -p dist/ && cp -r ./subpackage ./dist/",
     "postbuild:refapps": "yarn prepack",
