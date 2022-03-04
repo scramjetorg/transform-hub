@@ -1,0 +1,15 @@
+{
+  "name": "@scramjet/python-runner-demo-sprint-7",
+  "version": "0.1",
+  "lang": "python",
+  "main": "./demo_s7.py",
+  "author": "Jan Warchoł <open-source@scramjet.org>",
+  "license": "GPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "engines": {
+    "python3": "3.5.0"
+  }
+}
