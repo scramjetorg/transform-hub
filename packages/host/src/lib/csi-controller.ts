@@ -205,19 +205,27 @@ export class CSIController extends TypedEmitter<Events> {
                     this.logger.error("Sequence finished with error", exitcode);
                 }
 
+                await this.cleanup();
+
                 return exitcode;
             } catch (error: any) {
                 this.logger.error("Error caught", error.stack);
 
-                await this.instanceAdapter.cleanup();
-
-                this.logger.error("Cleanup done (post error)");
+                await this.cleanup();
 
                 return 213;
             }
         };
 
         this.instancePromise = instanceMain();
+    }
+
+    async cleanup() {
+        await Promise.all([
+            this.instanceAdapter.cleanup(),
+            this.communicationHandler.cleanup()
+        ]);
+        this.logger.error("Cleanup done...");
     }
 
     instanceStopped(): Promise<ExitCode> {

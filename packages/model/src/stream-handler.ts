@@ -141,6 +141,11 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
+    cleanup(): this {
+        this.loggerPassThrough.end();
+        return this;
+    }
+
     pipeMessageStreams() {
         if (this._piped) {
             this.logger.error("pipeMessageStreams called twice");
