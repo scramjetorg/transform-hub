@@ -25,6 +25,7 @@ export * from "./load-check-stat";
 export * from "./network-info";
 export * from "./instance-store";
 export * from "./instance";
+export * from "./sth-command-options";
 
 export { STHRestAPI };
 export * from "./sequence-package-json";

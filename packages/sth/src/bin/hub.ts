@@ -1,10 +1,11 @@
 #!/usr/bin/env ts-node
 
 import { Command } from "commander";
-import { ConfigService } from "@scramjet/sth-config";
+import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
+import { STHCommandOptions } from "@scramjet/types";
 
 const program = new Command();
-const options = program
+const options: STHCommandOptions = program
     .option("-L, --log-level <level>", "Specify log level", "trace")
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
@@ -28,15 +29,6 @@ const options = program
     .parse(process.argv)
     .opts();
 
-// If --runtime-adapter is not supplied we can check for legacy --no-docker option
-function getRuntimeAdapterOption() {
-    if (options.docker === false && options.runtimeAdapter) {
-        throw new Error("Options --no-docker and --runtime-adapter are mutually exclusive");
-    }
-    if (options.runtimeAdapter) return options.runtimeAdapter;
-    return options.docker ? "docker" : "process";
-}
-
 const configService = new ConfigService();
 
 configService.update({
@@ -59,7 +51,7 @@ configService.update({
         hostname: options.hostname,
         id: options.id
     },
-    runtimeAdapter: getRuntimeAdapterOption(),
+    runtimeAdapter: getRuntimeAdapterOption(options),
     sequencesRoot: options.sequencesRoot,
     logLevel: options.logLevel,
     kubernetes: {
@@ -74,7 +66,7 @@ configService.update({
 // before here we actually load the host and we have the config imported elsewhere
 // so the config is changed before compile time, not in runtime.
 require("@scramjet/host").startHost({}, configService.getConfig(), {
-    identifyExisting: options.identifyExisting as boolean
+    identifyExisting: options.identifyExisting
 })
     .catch((e: Error & { exitCode?: number }) => {
         // eslint-disable-next-line no-console
