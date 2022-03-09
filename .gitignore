@@ -139,3 +139,4 @@ aaa/
 **/__pycache__/
 
 **/__pydeps__/**
+*.{crt,csr,ext,key,pem,srl}

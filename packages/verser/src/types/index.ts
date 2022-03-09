@@ -24,6 +24,8 @@ export type VerserClientOptions = {
      * @type {Server}
      */
     server?: Server;
+
+    https?: false | true | { ca: (string | Buffer)[] }
 };
 
 /**
