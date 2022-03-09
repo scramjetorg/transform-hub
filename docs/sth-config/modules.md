@@ -15,6 +15,7 @@
 ### Functions
 
 - [development](modules.md#development)
+- [getRuntimeAdapterOption](modules.md#getruntimeadapteroption)
 
 ## Variables
 
@@ -38,4 +39,24 @@
 
 #### Defined in
 
-[sth-config/src/index.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/index.ts#L6)
+[sth-config/src/index.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/index.ts#L16)
+
+___
+
+### getRuntimeAdapterOption
+
+▸ **getRuntimeAdapterOption**(`options`): `string`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `options` | `STHCommandOptions` |
+
+#### Returns
+
+`string`
+
+#### Defined in
+
+[sth-config/src/index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/index.ts#L8)

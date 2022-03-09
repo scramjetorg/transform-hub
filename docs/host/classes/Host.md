@@ -233,7 +233,7 @@ Stops running servers.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:686](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L686)
+[packages/host/src/lib/host.ts:689](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L689)
 
 ___
 
@@ -273,7 +273,7 @@ ___
 
 ### getSequence
 
-▸ **getSequence**(`id`): `GetSequenceResponse`
+▸ **getSequence**(`id`): `OpResponse`<`GetSequenceResponse`\>
 
 Returns sequence information.
 
@@ -285,7 +285,7 @@ Returns sequence information.
 
 #### Returns
 
-`GetSequenceResponse`
+`OpResponse`<`GetSequenceResponse`\>
 
 Sequence info object.
 
@@ -315,7 +315,7 @@ List of instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:654](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L654)
+[packages/host/src/lib/host.ts:657](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L657)
 
 ___
 
@@ -333,7 +333,7 @@ List of sequences.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:639](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L639)
+[packages/host/src/lib/host.ts:642](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L642)
 
 ___
 
@@ -528,7 +528,7 @@ using its CSIController [CSIController](CSIController.md)
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:669](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L669)
+[packages/host/src/lib/host.ts:672](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L672)
 
 ## Constructors
 

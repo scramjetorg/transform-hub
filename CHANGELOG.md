@@ -42,6 +42,8 @@ Prominent
 - f477555 - Transform-Hub supports running programs on Kubernetes cluster
 - cbebb3e - Docker Runtime Adapter for Python Runner
 - 2e0e504 - Added Kubernetes manifests for Transform-Hub deployment on Kubernetes
+- 5538ac52 - STH: update docker to bullseye, silent yarn
+- 8c54e56e - Restore proper STOP/KILL supervisor mechanisms.
 
 New features:
 
@@ -108,7 +110,11 @@ Bugfixes and minor improvements:
 - Add missing scripts to python-runner
 - Fix missing dependencies
 - Fix python-runner image in sth-config
+- Docker image is built from Debian Bullseye (instead of Buster)
+- Fixes providing error details in client-utils
+- Fix not passing error from prerunner
+- Restore proper STOP/KILL supervisor mechanisms in CSIController
 
-## @scramjet/transform Hub - v0.18.4
+## @scramjet/transform Hub - v0.18.5
 
 This is the last release in changelog.
