@@ -75,13 +75,6 @@ export class CPMConnector extends TypedEmitter<Events> {
     config: CPMConnectorOptions;
 
     /**
-     * Server to handle request coming from Manager.
-     *
-     * @type {Server}
-     */
-    apiServer?: Server;
-
-    /**
      * Connection status indicator.
      *
      * @type {boolean}
@@ -244,16 +237,6 @@ export class CPMConnector extends TypedEmitter<Events> {
 
             return {};
         }
-    }
-
-    /**
-     * Sets up server to handle incoming requests.
-     *
-     * @param {Server} server Server to handle incoming requests from connected manager.
-     */
-    attachServer(server: Server & { httpAllowHalfOpen?: boolean }) {
-        this.apiServer = server;
-        server.httpAllowHalfOpen = true;
     }
 
     /**

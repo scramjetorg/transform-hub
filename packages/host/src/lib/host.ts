@@ -2,7 +2,7 @@ import findPackage from "find-package-json";
 import { ReasonPhrases } from "http-status-codes";
 
 import { Readable, Writable } from "stream";
-import { IncomingMessage, ServerResponse } from "http";
+import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
 import { APIExpose, AppConfig, IComponent, IObjectLogger, LogLevel, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
@@ -142,6 +142,8 @@ export class Host implements IComponent {
         }
 
         if (this.config.cpmUrl) {
+            (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
+
             this.cpmConnector = new CPMConnector(
                 this.config.cpmUrl,
                 { id: this.config.host.id, infoFilePath: this.config.host.infoFilePath },
@@ -210,7 +212,6 @@ export class Host implements IComponent {
      * Initializes connector and connects to Manager.
      */
     connectToCPM() {
-        this.cpmConnector?.attachServer(this.api.server);
         this.cpmConnector?.init();
 
         this.cpmConnector?.on("connect", async () => {

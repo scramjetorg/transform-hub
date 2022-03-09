@@ -1,4 +1,5 @@
-import { OutgoingHttpHeaders, request, Agent } from "http";
+import { OutgoingHttpHeaders, Agent as HttpAgent } from "http";
+import { Agent as HttpsAgent, request } from "https";
 import { merge, TypedEmitter } from "@scramjet/utility";
 import { IObjectLogger } from "@scramjet/types";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
@@ -32,7 +33,7 @@ export class VerserClient extends TypedEmitter<Events> {
      *
      * @type {http.Agent} @see https://nodejs.org/api/http.html#http_class_http_agent.
      */
-    private agent: Agent;
+    private agent: HttpsAgent | HttpAgent;
 
     /**
      * Connection socket.
@@ -57,7 +58,7 @@ export class VerserClient extends TypedEmitter<Events> {
         super();
 
         this.opts = opts;
-        this.agent = new Agent({ keepAlive: true });
+        this.agent = this.opts.https ? new HttpsAgent({ keepAlive: true }) : new HttpAgent({ keepAlive: true });
     }
 
     /**
@@ -76,7 +77,9 @@ export class VerserClient extends TypedEmitter<Events> {
                 hostname,
                 method: "CONNECT",
                 pathname,
-                port
+                port,
+                protocol: this.opts.https ? "https:" : "http:",
+                ca: typeof this.opts.https === "object" ? this.opts.https.ca : undefined,
             });
 
             connectRequest.on("error", (err) => {
