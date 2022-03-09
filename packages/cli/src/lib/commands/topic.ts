@@ -20,7 +20,7 @@ export const topic: CommandDefinition = (program) => {
             program,
             getHostClient(program).sendNamedData(
                 topicName,
-                await getReadStreamFromFile(filename) || process.stdin,
+                filename ? await getReadStreamFromFile(filename) : process.stdin,
                 contentType,
                 end)
         ));
