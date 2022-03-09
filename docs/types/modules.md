@@ -132,6 +132,7 @@
 - [RunnerErrorCode](modules.md#runnererrorcode)
 - [RunnerMessage](modules.md#runnermessage)
 - [RunnerOptions](modules.md#runneroptions)
+- [STHCommandOptions](modules.md#sthcommandoptions)
 - [STHConfiguration](modules.md#sthconfiguration)
 - [STHIDMessageData](modules.md#sthidmessagedata)
 - [SequenceAdapterErrorCode](modules.md#sequenceadaptererrorcode)
@@ -1920,6 +1921,41 @@ ___
 #### Defined in
 
 [packages/types/src/runner.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner.ts#L44)
+
+___
+
+### STHCommandOptions
+
+Ƭ **STHCommandOptions**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `cpmUrl?` | `string` |
+| `docker` | `boolean` |
+| `exposeHostIp` | `string` |
+| `hostname` | `string` |
+| `id?` | `string` |
+| `identifyExisting` | `boolean` |
+| `instancesServerPort` | `string` |
+| `k8sAuthConfigPath` | `string` |
+| `k8sNamespace` | `string` |
+| `k8sRunnerImage` | `string` |
+| `k8sSequencesRoot` | `string` |
+| `k8sSthPodHost` | `string` |
+| `logLevel` | [`LogLevel`](modules.md#loglevel) |
+| `port` | `number` |
+| `prerunnerImage` | `string` |
+| `prerunnerMaxMem` | `number` |
+| `runnerImage` | `string` |
+| `runnerMaxMem` | `number` |
+| `runtimeAdapter` | `string` |
+| `sequencesRoot` | `string` |
+
+#### Defined in
+
+[packages/types/src/sth-command-options.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-command-options.ts#L3)
 
 ___
 
