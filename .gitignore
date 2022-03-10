@@ -36,7 +36,6 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
-
 # Dependency directories
 node_modules/
 jspm_packages/
@@ -139,4 +138,9 @@ aaa/
 **/__pycache__/
 
 **/__pydeps__/**
+
+# keys
 *.{crt,csr,ext,key,pem,srl}
+
+# bundled modules
+bundle
