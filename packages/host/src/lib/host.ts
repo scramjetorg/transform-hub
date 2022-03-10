@@ -5,7 +5,7 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, AppConfig, IComponent, IObjectLogger, LogLevel, NextCallback, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
@@ -21,7 +21,6 @@ import { InstanceStore } from "./instance-store";
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
-import { OpResponse } from "@scramjet/types/src/sth-rest-api";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 
