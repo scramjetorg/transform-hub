@@ -21,7 +21,7 @@
     "@scramjet/sth-config": "^0.18.5",
     "@scramjet/symbols": "^0.18.5",
     "n-readlines": "^1.0.1",
-    "node-fetch": "2.6.1",
+    "node-fetch": "^2.6.1",
     "scramjet": "^4.36.6"
   },
   "devDependencies": {
