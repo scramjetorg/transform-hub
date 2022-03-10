@@ -115,3 +115,12 @@ Feature: Test our shiny new Python runner
             {"eventName":"test-response","message":"reply to foo"}
             """
         And host is still running
+
+    @ci @python
+    Scenario: E2E-015 TC-013 Logger in context can log in instance
+        Given host is running
+        When sequence "../python/reference-apps/python-logs-test.tar.gz" loaded
+        And instance started
+        And send kill message to instance
+        Then "log" contains "Debug log message"
+        And host is still running

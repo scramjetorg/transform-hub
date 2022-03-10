@@ -224,8 +224,6 @@ When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
 });
 
 When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
-    // console.log("__dirname " + __dirname);
-    // console.log("packagePath " + packagePath);
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");
 });
@@ -674,9 +672,7 @@ When("send stop with timeout {int}", async function(this: CustomWorld, timeout: 
     console.log(`Sent stop message with timeouts ${timeout}`);
     const resp = await this.resources.instance?.stop(timeout, false)!;
 
-    if (!resp.accepted) {
-        assert.fail();
-    }
+    assert.ok(resp);
 });
 
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
