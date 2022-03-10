@@ -221,11 +221,10 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async cleanup() {
-        await Promise.all([
-            this.instanceAdapter.cleanup(),
-            this.communicationHandler.cleanup()
-        ]);
-        this.logger.error("Cleanup done...");
+        await this.instanceAdapter.cleanup();
+
+        if (this.upStreams)
+            this.upStreams[CC.LOG].unpipe();
     }
 
     instanceStopped(): Promise<ExitCode> {
@@ -245,8 +244,6 @@ export class CSIController extends TypedEmitter<Events> {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
         }
-
-        streams[CC.LOG].pipe(this.logger.inputStringifiedLogStream);
 
         this.upStreams = [
             new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),

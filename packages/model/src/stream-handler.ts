@@ -141,11 +141,6 @@ export class CommunicationHandler implements ICommunicationHandler {
         return this;
     }
 
-    cleanup(): this {
-        this.loggerPassThrough.end();
-        return this;
-    }
-
     pipeMessageStreams() {
         if (this._piped) {
             this.logger.error("pipeMessageStreams called twice");
@@ -158,7 +153,7 @@ export class CommunicationHandler implements ICommunicationHandler {
             throw new Error("Streams not hooked");
         }
 
-        this.downstreams[CC.LOG].pipe(this.loggerPassThrough, { end: false }).pipe(this.upstreams[CC.LOG]);
+        this.downstreams[CC.LOG].pipe(this.loggerPassThrough).pipe(this.upstreams[CC.LOG]);
 
         const monitoringOutput = StringStream.from(this.downstreams[CC.MONITORING] as Readable)
             .JSONParse()

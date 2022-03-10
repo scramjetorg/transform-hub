@@ -54,7 +54,5 @@ export interface ICommunicationHandler {
         stdout: Readable,
         stderr: Readable
     };
-
-    cleanup(): this;
 }
 
