@@ -21,7 +21,7 @@
 
 ### defer
 
-▸ `Const` **defer**(`timeout`): `Promise`<`void`\>
+▸ **defer**(`timeout`): `Promise`<`void`\>
 
 Returns a promise that resolves after the specified duration.
 
@@ -79,7 +79,7 @@ ___
 
 ### merge
 
-▸ `Const` **merge**<`T`\>(`target`, `source?`): `void`
+▸ **merge**<`T`\>(`target`, `source?`): `void`
 
 Deep merge objects.
 Copies all properties from source to target.
@@ -111,7 +111,7 @@ ___
 
 ### promiseTimeout
 
-▸ `Const` **promiseTimeout**<`T`\>(`promise`, `timeout`): `Promise`<`T`\>
+▸ **promiseTimeout**<`T`\>(`promise`, `timeout`): `Promise`<`T`\>
 
 Returns a promise rejecting after the specified timeout or a given promise.
 

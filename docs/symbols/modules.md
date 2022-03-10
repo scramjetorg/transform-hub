@@ -20,7 +20,7 @@
 
 ### exposeSequenceSymbol
 
-• **exposeSequenceSymbol**: typeof [`exposeSequenceSymbol`](modules.md#exposesequencesymbol)
+• `Const` **exposeSequenceSymbol**: typeof [`exposeSequenceSymbol`](modules.md#exposesequencesymbol)
 
 #### Defined in
 

@@ -138,7 +138,7 @@ ___
 
 ### cero
 
-▸ `Const` **cero**<`T`, `S`\>(`config?`): `Object`
+▸ **cero**<`T`, `S`\>(`config?`): `Object`
 
 #### Type parameters
 
@@ -204,7 +204,7 @@ ___
 
 ### sequentialRouter
 
-▸ `Const` **sequentialRouter**(`config`): [`SequentialCeroRouter`](interfaces/SequentialCeroRouter.md)
+▸ **sequentialRouter**(`config`): [`SequentialCeroRouter`](interfaces/SequentialCeroRouter.md)
 
 #### Parameters
 

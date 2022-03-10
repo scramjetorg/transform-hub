@@ -101,7 +101,7 @@ Topic details type definition.
 
 ### InstanceStore
 
-• **InstanceStore**: `Object` = `{}`
+• `Const` **InstanceStore**: `Object` = `{}`
 
 Object storing Instance controllers.
 

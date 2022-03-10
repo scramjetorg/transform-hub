@@ -58,7 +58,7 @@ ___
 | :------ | :------ | :------ |
 | `prerunner` | `ContainerConfiguration` | PreRunner container configuration. |
 | `runner` | `RunnerContainerConfiguration` | Runner container configuration. |
-| `runnerImages` | `Object` | - |
+| `runnerImages` | { `node`: `string` ; `python3`: `string`  } | - |
 | `runnerImages.node` | `string` | - |
 | `runnerImages.python3` | `string` | - |
 

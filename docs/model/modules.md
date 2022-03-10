@@ -84,7 +84,7 @@ ___
 
 ### MessageUtilities
 
-• **MessageUtilities**: `Object`
+• `Const` **MessageUtilities**: `Object`
 
 #### Type declaration
 
@@ -101,7 +101,7 @@ ___
 
 ### checkMessage
 
-▸ `Const` **checkMessage**<`X`\>(`msgCode`, `msgData`): `MessageDataType`<`X`\>
+▸ **checkMessage**<`X`\>(`msgCode`, `msgData`): `MessageDataType`<`X`\>
 
 #### Type parameters
 
@@ -152,7 +152,7 @@ ___
 
 ### getMessage
 
-▸ `Const` **getMessage**<`X`\>(`msgCode`, `msgData`): `MessageType`<`X`\>
+▸ **getMessage**<`X`\>(`msgCode`, `msgData`): `MessageType`<`X`\>
 
 Get an object of message type from serialized message.
 A helper method used for deserializing messages.
