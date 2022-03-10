@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/logger",
+    "out": "../../docs/obj-logger",
     "plugin": "typedoc-plugin-markdown",
     "readme": "none",
     "excludePrivate": "true",
