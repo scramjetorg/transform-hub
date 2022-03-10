@@ -114,7 +114,8 @@ Bugfixes and minor improvements:
 - Fixes providing error details in client-utils
 - Fix not passing error from prerunner
 - Restore proper STOP/KILL supervisor mechanisms in CSIController
+- Dependencies security upgrade
 
-## @scramjet/transform Hub - v0.18.5
+## @scramjet/transform Hub - v0.18.6
 
 This is the last release in changelog.
