@@ -9,6 +9,7 @@ const _defaultConfig: STHConfiguration = {
     logLevel: "TRACE",
     logColors: true,
     cpmUrl: "",
+    cpmId: "",
     docker: {
         prerunner: {
             image: "",

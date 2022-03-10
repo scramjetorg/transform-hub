@@ -147,6 +147,13 @@ export class CPMConnector extends TypedEmitter<Events> {
     cpmURL: string;
 
     /**
+     * Id of Manager (e.g. "cpm-1").
+     *
+     * @type {string}
+     */
+    cpmId: string;
+
+    /**
      * VerserClient instance used for connecting with Verser.
      *
      * @type {VerserClient}
@@ -163,17 +170,22 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * @constructor
      * @param {string} cpmHostname CPM hostname to connect to. (e.g. "localhost:8080").
+     * @param {string} cpmId CPM id to connect to. (e.g. "CPM1").
      * @param {CPMConnectorOptions} config CPM connector configuration.
      * @param {Server} server API server to handle incoming requests.
      */
-    constructor(cpmHostname: string, config: CPMConnectorOptions, server: Server) {
+    constructor(cpmHostname: string, cpmId: string, config: CPMConnectorOptions, server: Server) {
         super();
         this.cpmURL = cpmHostname;
+        this.cpmId = cpmId;
         this.config = config;
 
         this.verserClient = new VerserClient({
             verserUrl: `http://${cpmHostname}/verser`,
-            headers: {},
+            headers: {
+                "x-host-id": config.id,
+                "x-manager-id": cpmId
+            },
             server
         });
 
@@ -311,7 +323,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         let connection;
 
         try {
-            this.logger.trace("Connecting to Manager", this.cpmURL);
+            this.logger.trace("Connecting to Manager", this.cpmURL, this.cpmId);
             connection = await this.verserClient.connect();
         } catch (err) {
             this.logger.error("Can not connect to Manager", err);

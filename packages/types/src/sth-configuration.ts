@@ -94,6 +94,11 @@ export type STHConfiguration = {
     cpmUrl: string;
 
     /**
+     * CPM id.
+     */
+    cpmId: string;
+
+    /**
      * Docker related configuration.
      */
     docker: {
