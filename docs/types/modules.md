@@ -785,7 +785,7 @@ Definition that informs the platform of the details of a single function.
 | `description?` | `string` | Additional description of the function |
 | `mode` | ``"buffer"`` \| ``"object"`` \| ``"reference"`` | Stream mode:  * buffer - carries binary/string chunks that have no fixed size chunks and can be passed through sockets * object - carries any type of object, that is serializable via JSON or analogue * reference - carries non-serializable object references that should not be passed outside of a single process |
 | `name?` | `string` | Optional name for the function (which will be shown in UI/CLI) |
-| `scalability?` | `Object` | Describes how head (readable side) and tail (writable side) of this Function can be scaled to other machines. |
+| `scalability?` | { `head?`: `ScalabilityOptions` ; `tail?`: `ScalabilityOptions`  } | Describes how head (readable side) and tail (writable side) of this Function can be scaled to other machines. |
 | `scalability.head?` | `ScalabilityOptions` | Writable side scalability |
 | `scalability.tail?` | `ScalabilityOptions` | Readable side scalability |
 
@@ -1208,7 +1208,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `instanceRequirements` | `Object` |
+| `instanceRequirements` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } |
 | `instanceRequirements.cpuLoad` | `number` |
 | `instanceRequirements.freeMem` | `number` |
 | `instanceRequirements.freeSpace` | `number` |
@@ -1228,7 +1228,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `MIN_INSTANCE_REQUIREMENTS` | `Object` |
+| `MIN_INSTANCE_REQUIREMENTS` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } |
 | `MIN_INSTANCE_REQUIREMENTS.cpuLoad` | `number` |
 | `MIN_INSTANCE_REQUIREMENTS.freeMem` | `number` |
 | `MIN_INSTANCE_REQUIREMENTS.freeSpace` | `number` |
@@ -1693,7 +1693,7 @@ ___
 
 ### ParsedMessage
 
-Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params`: { [key: string]: `any`;  } \| `undefined`  }
+Ƭ **ParsedMessage**: `IncomingMessage` & { `body?`: `any` ; `params`: { `[key: string]`: `any`;  } \| `undefined`  }
 
 #### Defined in
 
@@ -1968,16 +1968,16 @@ ___
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `cpmUrl` | `string` | CPM url. |
-| `docker` | `Object` | Docker related configuration. |
+| `docker` | { `prerunner`: [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) ; `runner`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `runnerImages`: { `node`: `string` ; `python3`: `string`  }  } | Docker related configuration. |
 | `docker.prerunner` | [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) | PreRunner container configuration. |
 | `docker.runner` | [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) | Runner container configuration. |
-| `docker.runnerImages` | `Object` | - |
+| `docker.runnerImages` | { `node`: `string` ; `python3`: `string`  } | - |
 | `docker.runnerImages.node` | `string` | - |
 | `docker.runnerImages.python3` | `string` | - |
 | `host` | [`HostConfig`](modules.md#hostconfig) | Host configuration. |
 | `identifyExisting` | `boolean` | Should we identify existing sequences. |
 | `instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time instance API is still available. |
-| `instanceRequirements` | `Object` | Minimum requirements to start new instance. |
+| `instanceRequirements` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } | Minimum requirements to start new instance. |
 | `instanceRequirements.cpuLoad` | `number` | Required free CPU. In percentage. |
 | `instanceRequirements.freeMem` | `number` | Free memory required to start instance. In megabytes. |
 | `instanceRequirements.freeSpace` | `number` | Free disk space required to start instance. In megabytes. |

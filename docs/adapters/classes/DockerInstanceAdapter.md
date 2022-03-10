@@ -140,7 +140,7 @@ ___
 
 ### preparePortBindingsConfig
 
-▸ `Private` **preparePortBindingsConfig**(`declaredPorts`, `containerConfig`, `exposed?`): `Promise`<{ [key: string]: `string`;  }\>
+▸ `Private` **preparePortBindingsConfig**(`declaredPorts`, `containerConfig`, `exposed?`): `Promise`<{ `[key: string]`: `string`;  }\>
 
 Finds free port for every port requested in Sequence configuration and returns map of assigned ports.
 
@@ -154,7 +154,7 @@ Finds free port for every port requested in Sequence configuration and returns m
 
 #### Returns
 
-`Promise`<{ [key: string]: `string`;  }\>
+`Promise`<{ `[key: string]`: `string`;  }\>
 
 Promise resolving with map of ports mapping.
 

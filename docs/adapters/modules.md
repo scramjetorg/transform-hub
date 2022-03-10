@@ -81,7 +81,7 @@ Configuration used to run command in container.
 | `command?` | `string`[] | Command with optional parameters.  **`property`** {string[]} command Command to be executed. |
 | `envs?` | `string`[] | **`property`** {string[]} envs A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
 | `imageName` | `string` | **`property`** {string} imageName Image name. |
-| `labels?` | `Object` | - |
+| `labels?` | { `[key: string]`: `string`;  } | - |
 | `maxMem?` | `number` | **`property`** {number} maxMem Container memory limit (bytes). |
 | `networkMode?` | `string` | - |
 | `ports?` | [`DockerAdapterRunPortsConfig`](modules.md#dockeradapterrunportsconfig) | **`property`** {DockerAdapterRunPortsConfig} ports Docker ports configuration |
@@ -283,7 +283,7 @@ ___
 
 ### STH\_DOCKER\_NETWORK
 
-• **STH\_DOCKER\_NETWORK**: ``"transformhub0"``
+• `Const` **STH\_DOCKER\_NETWORK**: ``"transformhub0"``
 
 #### Defined in
 
@@ -293,7 +293,7 @@ ___
 
 ### getHostname
 
-▸ `Const` **getHostname**(): `string`
+▸ **getHostname**(): `string`
 
 #### Returns
 
@@ -355,7 +355,7 @@ ___
 
 ### isHostSpawnedInDockerContainer
 
-▸ `Const` **isHostSpawnedInDockerContainer**(): `Promise`<`boolean`\>
+▸ **isHostSpawnedInDockerContainer**(): `Promise`<`boolean`\>
 
 #### Returns
 

@@ -80,7 +80,7 @@ ___
 
 ### close
 
-▸ `Const` **close**(): `void`
+▸ **close**(): `void`
 
 #### Returns
 

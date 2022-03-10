@@ -21,7 +21,7 @@
 
 ### defaultConfig
 
-• **defaultConfig**: `STHConfiguration` = `_defaultConfig`
+• `Const` **defaultConfig**: `STHConfiguration` = `_defaultConfig`
 
 #### Defined in
 

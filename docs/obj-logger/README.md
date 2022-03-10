@@ -16,7 +16,7 @@
 
 ### prettyPrint
 
-▸ `Const` **prettyPrint**(`opts`): (`obj`: `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\>) => `string`
+▸ **prettyPrint**(`opts`): (`obj`: `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: `LogLevel` ; `msg`: `string` ; `ts`: `number`  }\>) => `string`
 
 #### Parameters
 
