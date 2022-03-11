@@ -1,4 +1,4 @@
-FROM python:3.8.12-bullseye
+FROM python:3.8.12-slim-bullseye
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub
@@ -9,7 +9,7 @@ RUN groupadd -g 1200 runner \
     && chown runner:runner ${PACKAGE_DIR}
 
 RUN apt-get update \
-    && apt-get install -y gosu --no-install-recommends \
+    && apt-get install -y git gosu --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packages/python-runner/*.py ./

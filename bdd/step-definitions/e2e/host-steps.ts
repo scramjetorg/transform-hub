@@ -672,9 +672,7 @@ When("send stop with timeout {int}", async function(this: CustomWorld, timeout: 
     console.log(`Sent stop message with timeouts ${timeout}`);
     const resp = await this.resources.instance?.stop(timeout, false)!;
 
-    if (!resp.accepted) {
-        assert.fail();
-    }
+    assert.ok(resp);
 });
 
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {

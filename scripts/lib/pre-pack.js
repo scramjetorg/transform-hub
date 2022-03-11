@@ -7,7 +7,7 @@ const { chmod, readFile, writeFile } = require("fs/promises");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
-    PACKAGES_DIR = "packages";
+    PACKAGES_DIR = process.env.PACKAGES_DIR || "packages";
 
     constructor(options) {
         this.options = options || {};
@@ -33,6 +33,13 @@ class PrePack {
         this.rootPackageJson = null;
         this.currPackageJson = null;
         this.packagesMap = null;
+
+        console.log(this.options, {
+            currDir: this.currDir,
+            rootDir: this.rootDir,
+            currDirDist: this.currDirDist,
+            rootDistPackPath: this.rootDistPackPath
+        });
     }
 
     async build() {
@@ -55,7 +62,7 @@ class PrePack {
 
             await this.copyAssets();
 
-            await this.saveJson(await this.transformPackageJson());
+            await this.savePkgJson(await this.transformPackageJson());
 
             if (!this.options.noInstall) {
                 await this.install();
@@ -262,7 +269,7 @@ class PrePack {
         ));
     }
 
-    async saveJson(content) {
+    async savePkgJson(content) {
         console.log(`Add package.json to ${this.rootDistPackPath}`);
 
         return fse.outputJSON(path.join(this.rootDistPackPath, "package.json"), content, { spaces: 2 })

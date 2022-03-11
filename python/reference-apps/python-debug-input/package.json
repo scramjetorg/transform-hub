@@ -1,22 +1,18 @@
 {
-  "name": "@scramjet/python-hello-python",
+  "name": "@scramjet/python-debug-input",
   "version": "0.11.0-0",
-  "lang": "python",
-  "main": "./hello.py",
+  "main": "./debug-input.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",
   "license": "GPL-3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
-  "engines": {
-    "python3": "3.5.0"
-  },
   "scripts": {
     "build:refapps": "mkdir -p dist/ && cp *.py dist/ && cp -rL scramjet/ dist/scramjet",
     "postbuild:refapps": "yarn prepack && yarn packseq",
-    "packseq": "PACKAGES_DIR=python node ../../../scripts/packsequence.js",
     "prepack": "PACKAGES_DIR=python node ../../../scripts/publish.js",
+    "packseq": "PACKAGES_DIR=python node ../../../scripts/packsequence.js",
     "clean": "rm -rf ./dist"
   }
 }
