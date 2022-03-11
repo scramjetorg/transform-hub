@@ -71,7 +71,7 @@ Feature: Test our shiny new Python runner
         And instance started
         And get runner PID
         And keep instance streams "stdout"
-        And send stop with timeout 2000
+        And send stop message to instance with arguments timeout 2000 and canCallKeepAlive "false"
         Then runner has ended execution
         And kept instance stream "stdout" should be "Cleaning up... Cleanup done.\n"
         And host is still running
