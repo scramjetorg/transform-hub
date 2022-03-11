@@ -12,6 +12,7 @@ const options: STHCommandOptions = program
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
     .option("-C, --cpm-url <host:ip>")
     .option("-I, --id <id>")
+    .option("--cpm-id <id>")
     .option("--runtime-adapter <adapter>", "Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'")
     .option("--runner-image <image name>", "Image used by runner")
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
@@ -33,6 +34,7 @@ const configService = new ConfigService();
 
 configService.update({
     cpmUrl: options.cpmUrl,
+    cpmId: options.cpmId,
     docker: {
         prerunner: {
             image: options.prerunnerImage,

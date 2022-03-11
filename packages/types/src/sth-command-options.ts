@@ -6,6 +6,7 @@ export type STHCommandOptions = {
     hostname: string;
     identifyExisting: boolean;
     cpmUrl?: string;
+    cpmId?: string;
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;
