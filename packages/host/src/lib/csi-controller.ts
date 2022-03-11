@@ -206,19 +206,26 @@ export class CSIController extends TypedEmitter<Events> {
                     this.logger.error("Sequence finished with error", exitcode);
                 }
 
+                await this.cleanup();
+
                 return exitcode;
             } catch (error: any) {
                 this.logger.error("Error caught", error.stack);
 
-                await this.instanceAdapter.cleanup();
-
-                this.logger.error("Cleanup done (post error)");
+                await this.cleanup();
 
                 return 213;
             }
         };
 
         this.instancePromise = instanceMain();
+    }
+
+    async cleanup() {
+        await this.instanceAdapter.cleanup();
+
+        if (this.upStreams)
+            this.upStreams[CC.LOG].unpipe();
     }
 
     instanceStopped(): Promise<ExitCode> {
@@ -238,8 +245,6 @@ export class CSIController extends TypedEmitter<Events> {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
         }
-
-        streams[CC.LOG].pipe(this.logger.inputStringifiedLogStream);
 
         this.upStreams = [
             new PassThrough(), new PassThrough(), new PassThrough(), new PassThrough(),
