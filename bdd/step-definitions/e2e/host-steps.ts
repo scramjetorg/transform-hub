@@ -668,13 +668,6 @@ When("send {string} to stdin", async function(this: CustomWorld, str) {
     console.log(status);
 });
 
-When("send stop with timeout {int}", async function(this: CustomWorld, timeout: number) {
-    console.log(`Sent stop message with timeouts ${timeout}`);
-    const resp = await this.resources.instance?.stop(timeout, false)!;
-
-    assert.ok(resp);
-});
-
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
     const result = await this.resources.instance?.getStream(stream);
 
