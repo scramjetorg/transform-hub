@@ -1,4 +1,6 @@
+/* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
+import { getMiddlewareClient } from "../platform";
 
 /**
  * Initializes `space` command.
@@ -19,9 +21,23 @@ export const space: CommandDefinition = (program) => {
 
     spaceCmd.command("list")
         .alias("ls")
-        .description("Not implemented. List all existing spaces")
-        .action(() => {
-            throw new Error("Not implemented");
+        .description("List all existing spaces")
+        .action(async () => {
+            const mwClient = getMiddlewareClient(program);
+            const mmList = await mwClient.listMultiManagers();
+
+            if (!mmList.length) {
+                console.error("No MultiManagers found");
+                return;
+            }
+
+            // @TODO: get from all MultiManger.
+            const multiManager = mmList[0];
+            const multiManagerClient = mwClient.getMultiManagerClient(multiManager.id);
+
+            const managers = await multiManagerClient.getManagers();
+
+            console.log(managers);
         });
 
     spaceCmd.command("use")

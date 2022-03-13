@@ -56,7 +56,8 @@ const errorHandler = (err: ClientError) => {
      * -L, --log-level <level>       Specify log level (default: "trace")
      * -a, --api-url <url>           Specify base API url (default: "http://127.0.0.1:8000/api/v1")
      * -h, --help                    display help for command
-     * ```
+     * -ma, --middleware-api-url <url>           Specify base API url
+    * ```
      */
     program
         // .version(version)
@@ -64,6 +65,7 @@ const errorHandler = (err: ClientError) => {
         .option("-L, --log", "Logs all API requests in detail", conf.log)
         .option("-a, --api-url <url>", "Specify base API url", conf.apiUrl)
         .option("-f, --format <value>", "Specify display formatting: json or pretty", conf.format)
+        .option("-ma, --middleware-api-url <value>", "Specify middleware API url", conf.middlewareApiUrl)
         .parse(process.argv)
         .opts();
 
