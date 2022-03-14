@@ -2,6 +2,7 @@
 export * from "./lib/common";
 export * from "./lib/config";
 export * from "./lib/output";
+export * from "./lib/commands/scope";
 export * from "./lib/commands/config";
 export * from "./lib/commands/host";
 export * from "./lib/commands/instance";

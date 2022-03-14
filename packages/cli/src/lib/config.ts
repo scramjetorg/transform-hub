@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
-import { homedir } from "os";
 import { resolve } from "path";
+import { siDir } from "./paths";
 
 /**
  * Default CLI configuration.
@@ -25,7 +25,7 @@ const defaultConfig = {
  * @returns defaultConfig
  */
 type Config = typeof defaultConfig;
-const location = resolve(homedir(), ".sth-cli-rc.json");
+const location = resolve(siDir, ".sth-cli-rc.json");
 
 let currentConfig: Config;
 
@@ -70,9 +70,7 @@ function writeConfig(conf: any) {
 export const delConfigValue = (key: keyof Config) => {
     const conf = getConfig();
 
-    if (
-        Object.prototype.hasOwnProperty.call(defaultConfig, key)
-    ) {
+    if (Object.prototype.hasOwnProperty.call(defaultConfig, key)) {
         delete conf[key];
     } else {
         throw new Error(`Unknown config entry: ${key}`);
@@ -86,20 +84,14 @@ export const delConfigValue = (key: keyof Config) => {
  *
  * @param {defaultConfig} key Property to be set.
  * @param {number | string | boolean} value Value to be set.
-*/
+ */
 export const setConfigValue = (key: keyof Config, value: number | string | boolean) => {
     const conf = getConfig();
 
-    if (
-        Object.prototype.hasOwnProperty.call(defaultConfig, key) &&
-        typeof value === typeof defaultConfig[key]
-    ) {
-        if (typeof defaultConfig[key] === "boolean")
-            conf[key] = Boolean(value) as never;
-        else if (typeof defaultConfig[key] === "string")
-            conf[key] = value.toString() as never;
-        else if (typeof defaultConfig[key] === "number")
-            conf[key] = Number(value) as never;
+    if (Object.prototype.hasOwnProperty.call(defaultConfig, key) && typeof value === typeof defaultConfig[key]) {
+        if (typeof defaultConfig[key] === "boolean") conf[key] = Boolean(value) as never;
+        else if (typeof defaultConfig[key] === "string") conf[key] = value.toString() as never;
+        else if (typeof defaultConfig[key] === "number") conf[key] = Number(value) as never;
     } else {
         throw new Error(`Unknown config entry: ${key}`);
     }
