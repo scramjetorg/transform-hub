@@ -15,6 +15,7 @@ const defaultConfig = {
     lastSequenceId: "",
     middlewareApiUrl: "",
     lastSpaceId: "",
+    lastHostId: ""
 };
 
 /**

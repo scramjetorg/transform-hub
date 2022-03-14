@@ -1,4 +1,8 @@
+/* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
+import { getConfig, setConfigValue } from "../config";
+import { displayObject } from "../output";
+import { getMiddlewareClient } from "../platform";
 
 /**
  * Initializes `hub` command.
@@ -12,14 +16,39 @@ export const hub: CommandDefinition = (program) => {
 
     hubCmd.command("list")
         .alias("ls")
-        .description("Not implemented. List all hubs")
-        .action(() => {
-            throw new Error("Not implemented");
+        .description("List all hubs")
+        .action(async () => {
+            const space = getConfig().lastSpaceId;
+
+            console.log("Space:", space);
+            const managerClient = getMiddlewareClient(program).getManagerClient(space);
+
+            const hosts = await managerClient.getHosts();
+
+            console.log("Hubs", hosts);
         });
 
-    hubCmd.command("use <name|id>")
-        .description("Not implemented. Specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
-        .action(() => {
-            throw new Error("Not implemented");
+    hubCmd.command("use <id>")
+
+        .description("Specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
+        .action(async (id: string) => {
+            const space = getConfig().lastSpaceId;
+
+            console.log("Space:", space);
+            const managerClient = getMiddlewareClient(program).getManagerClient(space);
+
+            const hosts = await managerClient.getHosts();
+
+            const host = hosts.find((h) => h.id === id);
+
+            if (!host) {
+                console.error("Host not found");
+                return;
+            }
+
+            const hostClient = managerClient.getHostClient(id);
+
+            setConfigValue("lastHostId", id);
+            await displayObject(program, hostClient);
         });
 };
