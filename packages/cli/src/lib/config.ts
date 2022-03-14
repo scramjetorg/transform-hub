@@ -13,7 +13,8 @@ const defaultConfig = {
     lastPackagePath: "",
     lastInstanceId: "",
     lastSequenceId: "",
-    middlewareApiUrl: ""
+    middlewareApiUrl: "",
+    lastSpaceId: "",
 };
 
 /**

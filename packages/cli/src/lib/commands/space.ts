@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
+import { setConfigValue } from "../config";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -41,8 +42,16 @@ export const space: CommandDefinition = (program) => {
         });
 
     spaceCmd.command("use")
-        .description("Not implemented. Use the space")
-        .action(() => {
-            throw new Error("Not implemented");
+        .argument("<id>")
+        .description("Use the space")
+        .action(async (id: string) => {
+            const mwClient = getMiddlewareClient(program);
+            const mmList = await mwClient.listMultiManagers();
+            const multiManager = mmList[0];
+            const multiManagerClient = mwClient.getMultiManagerClient(multiManager.id);
+            const managerClient = multiManagerClient.getManagerClient(id);
+
+            console.log({ id, ...await managerClient.getVersion() });
+            setConfigValue("lastSpaceId", id);
         });
 };
