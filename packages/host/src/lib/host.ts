@@ -171,7 +171,7 @@ export class Host implements IComponent {
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
 
-        this.logger.debug("Host main called", { version });
+        this.logger.trace("Host main called", { version });
 
         if (identifyExisiting) {
             await this.identifyExistingSequences();
