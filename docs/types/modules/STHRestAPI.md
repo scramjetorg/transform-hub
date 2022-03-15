@@ -18,7 +18,6 @@
 - [GetSequenceResponse](STHRestAPI.md#getsequenceresponse)
 - [GetSequencesResponse](STHRestAPI.md#getsequencesresponse)
 - [GetVersionResponse](STHRestAPI.md#getversionresponse)
-- [OpResponse](STHRestAPI.md#opresponse)
 - [SendEventResponse](STHRestAPI.md#sendeventresponse)
 - [SendKillInstanceResponse](STHRestAPI.md#sendkillinstanceresponse)
 - [SendSequenceResponse](STHRestAPI.md#sendsequenceresponse)
@@ -39,7 +38,7 @@
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/common.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/common.ts#L7)
+[packages/types/src/rest-api-sth/common.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/common.ts#L3)
 
 ___
 
@@ -55,7 +54,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/send-delete-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/send-delete-sequence.ts#L1)
+[packages/types/src/rest-api-sth/send-delete-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/send-delete-sequence.ts#L1)
 
 ___
 
@@ -65,7 +64,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/index.ts#L18)
+[packages/types/src/rest-api-sth/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L18)
 
 ___
 
@@ -89,7 +88,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/get-health.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/get-health.ts#L1)
+[packages/types/src/rest-api-sth/get-health.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-health.ts#L1)
 
 ___
 
@@ -99,7 +98,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/get-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/get-instance.ts#L3)
+[packages/types/src/rest-api-sth/get-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-instance.ts#L3)
 
 ___
 
@@ -109,7 +108,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/get-instances.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/get-instances.ts#L3)
+[packages/types/src/rest-api-sth/get-instances.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-instances.ts#L3)
 
 ___
 
@@ -119,7 +118,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/get-load-check.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/get-load-check.ts#L3)
+[packages/types/src/rest-api-sth/get-load-check.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-load-check.ts#L3)
 
 ___
 
@@ -129,7 +128,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/index.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/index.ts#L19)
+[packages/types/src/rest-api-sth/index.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L19)
 
 ___
 
@@ -139,7 +138,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/get-sequence-instances.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/get-sequence-instances.ts#L1)
+[packages/types/src/rest-api-sth/get-sequence-instances.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-sequence-instances.ts#L1)
 
 ___
 
@@ -157,7 +156,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/get-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/get-sequence.ts#L3)
+[packages/types/src/rest-api-sth/get-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-sequence.ts#L3)
 
 ___
 
@@ -167,7 +166,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/get-sequences.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/get-sequences.ts#L3)
+[packages/types/src/rest-api-sth/get-sequences.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-sequences.ts#L3)
 
 ___
 
@@ -183,23 +182,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/version.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/version.ts#L1)
-
-___
-
-### OpResponse
-
-Ƭ **OpResponse**<`PayloadType`\>: `PayloadType` & { `opStatus`: `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`  } \| { `error?`: `unknown` ; `opStatus`: `Exclude`<`ReasonPhrases`, `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`\>  }
-
-#### Type parameters
-
-| Name | Type |
-| :------ | :------ |
-| `PayloadType` | extends `Record`<`string`, `unknown`\> |
-
-#### Defined in
-
-[packages/types/src/sth-rest-api/common.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/common.ts#L3)
+[packages/types/src/rest-api-sth/version.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/version.ts#L1)
 
 ___
 
@@ -209,7 +192,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/send-event.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/send-event.ts#L3)
+[packages/types/src/rest-api-sth/send-event.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/send-event.ts#L3)
 
 ___
 
@@ -219,7 +202,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/send-kill-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/send-kill-instance.ts#L3)
+[packages/types/src/rest-api-sth/send-kill-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/send-kill-instance.ts#L3)
 
 ___
 
@@ -235,7 +218,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/send-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/send-sequence.ts#L1)
+[packages/types/src/rest-api-sth/send-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/send-sequence.ts#L1)
 
 ___
 
@@ -245,7 +228,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/send-stop-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/send-stop-instance.ts#L3)
+[packages/types/src/rest-api-sth/send-stop-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/send-stop-instance.ts#L3)
 
 ___
 
@@ -261,4 +244,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-rest-api/start-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-rest-api/start-sequence.ts#L1)
+[packages/types/src/rest-api-sth/start-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L1)
