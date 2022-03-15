@@ -1,12 +1,12 @@
 /* eslint-disable no-console */
-import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
+import { ClientProvider, ClientUtils } from "@scramjet/client-utils";
 import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { ManagerClient } from "@scramjet/manager-api-client";
 import { MWRestAPI } from "@scramjet/types";
 
 export class MiddlewareClient implements ClientProvider {
-    client: HttpClient;
     apiBase: string;
+    client: ClientUtils;
 
     constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
         this.apiBase = apiBase.replace(/\/$/, "");

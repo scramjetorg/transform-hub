@@ -7,5 +7,6 @@ export * from "./lib/commands/host";
 export * from "./lib/commands/instance";
 export * from "./lib/commands/pack";
 export * from "./lib/commands/sequence";
+export * from "./lib/commands/space";
 export * from "./lib/commands/topic";
 export * from "./types/index";

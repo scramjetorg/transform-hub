@@ -12,7 +12,11 @@ const defaultConfig = {
     format: "pretty",
     lastPackagePath: "",
     lastInstanceId: "",
-    lastSequenceId: ""
+    lastSequenceId: "",
+    middlewareApiUrl: "",
+    lastSpaceId: "",
+    lastHostId: "",
+    env: "development"
 };
 
 /**

@@ -8,7 +8,8 @@ import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
 import { Readable } from "stream";
-import { setConfigValue } from "./config";
+import { getConfig, setConfigValue } from "./config";
+import { getMiddlewareClient } from "./platform";
 
 const { F_OK, R_OK } = constants;
 
@@ -23,7 +24,13 @@ let hostClient: HostClient;
 export const getHostClient = (command: Command): HostClient => {
     if (hostClient) return hostClient;
 
-    hostClient = new HostClient(command.opts().apiUrl);
+    const config = getConfig();
+
+    if (config.env === "development") {
+        hostClient = new HostClient(command.opts().apiUrl);
+    } else if (config.env === "production") {
+        hostClient = getMiddlewareClient(command).getManagerClient(config.lastSpaceId).getHostClient(config.lastHostId);
+    }
 
     if (command.opts().log) {
         hostClient.client.addLogger({
