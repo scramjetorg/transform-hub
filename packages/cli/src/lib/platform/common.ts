@@ -1,7 +1,7 @@
 import { Command } from "commander";
 
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
-import { getConfig } from "../config";
+import { getConfig, setConfigValue } from "../config";
 
 let middlewareClient: MiddlewareClient;
 
@@ -43,4 +43,34 @@ export const getMiddlewareClient = (command: Command): MiddlewareClient => {
     }
 
     return middlewareClient;
+};
+
+export const setPlatformDefaults = async (command: Command) => {
+    const config = getConfig();
+
+    if (config.lastSpaceId && config.lastHubId) {
+        return false;
+    }
+
+    if (!config.middlewareApiUrl || config.env !== "production") {
+        return false;
+    }
+
+    const multiManagers = await getMiddlewareClient(command).listMultiManagers();
+
+    if (!multiManagers.length) {
+        return false;
+    }
+
+    const managerClient = getMiddlewareClient(command).getManagerClient(multiManagers[0].id);
+    const hosts = await managerClient.getHosts();
+
+    if (!hosts.length) {
+        return false;
+    }
+
+    setConfigValue("lastSpaceId", multiManagers[0].id);
+    setConfigValue("lastHubId", hosts[0].id);
+
+    return true;
 };

@@ -29,7 +29,7 @@ export const getHostClient = (command: Command): HostClient => {
     if (config.env === "development") {
         hostClient = new HostClient(command.opts().apiUrl);
     } else if (config.env === "production") {
-        hostClient = getMiddlewareClient(command).getManagerClient(config.lastSpaceId).getHostClient(config.lastHostId);
+        hostClient = getMiddlewareClient(command).getManagerClient(config.lastSpaceId).getHostClient(config.lastHubId);
     }
 
     if (command.opts().log) {
