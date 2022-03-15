@@ -5,6 +5,7 @@ import { Command } from "commander";
 import { ClientError } from "@scramjet/client-utils";
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
+import { setPlatformDefaults } from "../lib/platform";
 
 const getExitCode = (_err: ClientError) => 1;
 const program: Command = new Command();
@@ -67,6 +68,8 @@ const errorHandler = (err: ClientError) => {
         .option("-f, --format <value>", "Specify display formatting: json or pretty", conf.format)
         .parse(process.argv)
         .opts();
+
+    await setPlatformDefaults(program);
 
     await new Promise((res) => program.hook("postAction", res));
 })().catch(errorHandler);

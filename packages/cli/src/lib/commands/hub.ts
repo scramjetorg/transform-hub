@@ -20,6 +20,11 @@ export const hub: CommandDefinition = (program) => {
         .action(async () => {
             const space = getConfig().lastSpaceId;
 
+            if (!space) {
+                console.error("No space selected");
+                return;
+            }
+
             console.log("Space:", space);
             const managerClient = getMiddlewareClient(program).getManagerClient(space);
 
@@ -29,7 +34,6 @@ export const hub: CommandDefinition = (program) => {
         });
 
     hubCmd.command("use <id>")
-
         .description("Specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
         .action(async (id: string) => {
             const space = getConfig().lastSpaceId;
@@ -48,7 +52,7 @@ export const hub: CommandDefinition = (program) => {
 
             const hostClient = managerClient.getHostClient(id);
 
-            setConfigValue("lastHostId", id);
+            setConfigValue("lastHubId", id);
             await displayObject(program, hostClient);
         });
 };
