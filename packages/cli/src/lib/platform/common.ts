@@ -1,6 +1,7 @@
 import { Command } from "commander";
 
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
+import { getConfig } from "../config";
 
 let middlewareClient: MiddlewareClient;
 
@@ -13,7 +14,7 @@ let middlewareClient: MiddlewareClient;
 export const getMiddlewareClient = (command: Command): MiddlewareClient => {
     if (middlewareClient) return middlewareClient;
 
-    const mwUrl = command.opts().middlewareApiUrl;
+    const mwUrl = getConfig().middlewareApiUrl;
 
     if (!mwUrl) {
         throw new Error("Middleware API URL is not specified");

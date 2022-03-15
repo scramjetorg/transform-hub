@@ -15,7 +15,8 @@ const defaultConfig = {
     lastSequenceId: "",
     middlewareApiUrl: "",
     lastSpaceId: "",
-    lastHostId: ""
+    lastHostId: "",
+    env: "development"
 };
 
 /**
