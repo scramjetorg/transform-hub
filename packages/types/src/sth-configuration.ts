@@ -166,4 +166,6 @@ export type STHConfiguration = {
     sequencesRoot: string
 
     kubernetes: Partial<K8SAdapterConfiguration>
+
+    serverless: boolean
 }

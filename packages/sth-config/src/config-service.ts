@@ -42,6 +42,7 @@ const _defaultConfig: STHConfiguration = {
     instanceAdapterExitDelay: 9000,
     runtimeAdapter: "docker",
     sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
+    serverless: false,
     kubernetes: {
         namespace: "default",
         authConfigPath: undefined,

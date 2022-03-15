@@ -34,5 +34,7 @@ export class HostServerless extends HostBase {
 
         this._router = getRouter();
         this._apiBase = this.config.host.apiBase;
+
+        this.logger.trace("Serverless Host initialized");
     }
 }

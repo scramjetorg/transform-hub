@@ -36,6 +36,8 @@ export class Host extends HostBase {
 
         this._api = apiServer;
         this._apiBase = this.config.host.apiBase;
+
+        this.logger.trace("Host initialized");
     }
 
     async onMain() {

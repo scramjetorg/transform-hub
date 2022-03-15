@@ -21,4 +21,5 @@ export type STHCommandOptions = {
     k8sRunnerImage: string;
     k8sSequencesRoot: string;
     docker: boolean;
+    serverless: boolean;
 }

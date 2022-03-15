@@ -25,6 +25,7 @@ const options: STHCommandOptions = program
     .option("--k8s-sth-pod-host <host>", "Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to.")
     .option("--k8s-runner-image <image>", "Runner image spawned in Pod.")
     .option("--k8s-sequences-root <path>", "Kuberenetes Process Adapter will store sequences here.")
+    .option("--serverless", "Whenever to start Host without its own API server")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .parse(process.argv)
     .opts();
@@ -54,6 +55,7 @@ configService.update({
     runtimeAdapter: getRuntimeAdapterOption(options),
     sequencesRoot: options.sequencesRoot,
     logLevel: options.logLevel,
+    serverless: options.serverless,
     kubernetes: {
         namespace: options.k8sNamespace,
         authConfigPath: options.k8sAuthConfigPath,
