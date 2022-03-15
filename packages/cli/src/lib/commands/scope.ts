@@ -1,6 +1,7 @@
 import { CommandDefinition } from "../../types";
-import { listScopes, deleteScope, getScope, useScope } from "../scope";
+import { listScopes, deleteScope, getScope, scopeExists } from "../scope";
 import { displayObject } from "../output";
+import { globalConfig, sessionConfig } from "../config";
 
 /**
  * Initializes `scope` command.
@@ -9,10 +10,9 @@ import { displayObject } from "../output";
  */
 export const scope: CommandDefinition = (program) => {
     const scopeCmd = program
-        .command("scope [command] [options...]")
+        .command("scope")
         .alias("s")
         .description("Manage scope of the space and hub in temporary file.");
-    // FIXME: output slightly differs from draft proposition
 
     scopeCmd.command("list").alias("ls").description("list scope files").action(listScopes);
     scopeCmd
@@ -27,9 +27,23 @@ export const scope: CommandDefinition = (program) => {
     scopeCmd
         .command("use <name>")
         .description("use scope under the file name")
-        .action((name: string) => useScope(name));
+        .action((name: string) => {
+            if (scopeExists(name)) globalConfig.setScope(name);
+        });
     scopeCmd
         .command("delete <name>")
         .description("delete temp scope file")
-        .action((name: string) => deleteScope(name));
+        .action((name: string) => {
+            if (globalConfig.getConfig().scope === name) {
+                // eslint-disable-next-line no-console
+                console.error(`WARN: can't remove scope ${name} set in configuration.`);
+                return;
+            }
+            if (sessionConfig.getConfig().scope === name) {
+                // eslint-disable-next-line no-console
+                console.error(`WARN: can't remove currently used scope ${name}`);
+                return;
+            }
+            deleteScope(name);
+        });
 };

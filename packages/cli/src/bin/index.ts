@@ -6,9 +6,9 @@ import completionMixin, { Command } from "commander-completion";
 import { ClientError, ClientUtils } from "@scramjet/client-utils";
 
 import { commands } from "../lib/commands/index";
-import { getConfig } from "../lib/config";
 import { setPlatformDefaults } from "../lib/platform";
-import { initRequiredPaths } from "../lib/paths";
+import { globalConfig, sessionConfig } from "../lib/config";
+import { initPaths } from "../lib/paths";
 
 const CommandClass = completionMixin(commander).Command;
 
@@ -42,12 +42,13 @@ const errorHandler = (err: ClientError) => {
  * Start commander using defined config {@link Apple.seeds}
  */
 (async () => {
-    initRequiredPaths();
-    const conf = getConfig();
+    initPaths();
+    const { token, env, middlewareApiUrl, log, format } = globalConfig.getConfig();
+    const { apiUrl } = sessionConfig.getConfig();
 
-    if (conf.token && conf.env === "production" && conf.middlewareApiUrl) {
+    if (token && globalConfig.isProductionEnv(env) && middlewareApiUrl) {
         ClientUtils.setDefaultHeaders({
-            Authorization: `Bearer ${conf.token}`
+            Authorization: `Bearer ${token}`,
         });
 
         await setPlatformDefaults(program);
@@ -72,14 +73,14 @@ const errorHandler = (err: ClientError) => {
      * -a, --api-url <url>           Specify base API url (default: "http://127.0.0.1:8000/api/v1")
      * -h, --help                    display help for command
      * -ma, --middleware-api-url <url>           Specify base API url
-    * ```
+     * ```
      */
     program
         // .version(version)
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
-        .option("-L, --log", "Logs all API requests in detail", conf.log)
-        .option("-a, --api-url <url>", "Specify base API url", conf.apiUrl)
-        .option("-f, --format <value>", "Specify display formatting: json or pretty", conf.format)
+        .option("-L, --log", "Logs all API requests in detail", log)
+        .option("-a, --api-url <url>", "Specify base API url", apiUrl)
+        .option("-f, --format <value>", "Specify display formatting: json or pretty", format)
         .parse(process.argv)
         .opts();
 

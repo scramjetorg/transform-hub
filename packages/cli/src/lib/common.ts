@@ -8,7 +8,7 @@ import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
 import { Readable } from "stream";
-import { getConfig, setConfigValue } from "./config";
+import { globalConfig, sessionConfig } from "./config";
 import { getMiddlewareClient } from "./platform";
 
 const { F_OK, R_OK } = constants;
@@ -23,21 +23,22 @@ let hostClient: HostClient;
  */
 export const getHostClient = (command: Command): HostClient => {
     if (hostClient) return hostClient;
+    const env = globalConfig.getEnv();
 
-    const config = getConfig();
-
-    if (config.env === "development") {
+    if (globalConfig.isDevelopmentEnv(env)) {
         hostClient = new HostClient(command.opts().apiUrl);
-    } else if (config.env === "production") {
-        hostClient = getMiddlewareClient(command).getManagerClient(config.lastSpaceId).getHostClient(config.lastHubId);
+    } else if (globalConfig.isProductionEnv(env)) {
+        const sessionConf = sessionConfig.getConfig();
+
+        hostClient = getMiddlewareClient(command)
+            .getManagerClient(sessionConf.lastSpaceId)
+            .getHostClient(sessionConf.lastHubId);
     }
 
     if (command.opts().log) {
         hostClient.client.addLogger({
             ok(result) {
-                const {
-                    status, statusText, url
-                } = result;
+                const { status, statusText, url } = result;
 
                 // eslint-disable-next-line no-console
                 console.error("Request ok:", url, `status: ${status} ${statusText}`);
@@ -48,7 +49,7 @@ export const getHostClient = (command: Command): HostClient => {
 
                 // eslint-disable-next-line no-console
                 console.error(`Request failed with code "${code}" status: ${message}`);
-            }
+            },
         });
     }
 
@@ -76,8 +77,8 @@ export const attachStdio = (command: Command, instanceClient: InstanceClient) =>
         command,
         Promise.all([
             instanceClient.sendStdin(process.stdin),
-            instanceClient.getStream("stdout").then(out => out.pipe(process.stdout)),
-            instanceClient.getStream("stderr").then(err => err.pipe(process.stderr))
+            instanceClient.getStream("stdout").then((out) => out.pipe(process.stdout)),
+            instanceClient.getStream("stderr").then((err) => err.pipe(process.stderr)),
         ]).then(() => undefined)
     );
 };
@@ -95,17 +96,15 @@ export const getIgnoreFunction = async (file: PathLike) => {
         return () => true;
     }
 
-    const rules: ReturnType<typeof mmfilter>[] =
-        await StringStream.from(createReadStream(file))
-            .lines()
-            .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
-            .parse((line: string) => mmfilter(line))
-            .catch(() => undefined)
-            .toArray()
-        ;
+    const rules: ReturnType<typeof mmfilter>[] = await StringStream.from(createReadStream(file))
+        .lines()
+        .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
+        .parse((line: string) => mmfilter(line))
+        .catch(() => undefined)
+        .toArray();
     const fakeArr: string[] = [];
 
-    return (f: string) => !rules.find(x => x(f, 0, fakeArr));
+    return (f: string) => !rules.find((x) => x(f, 0, fakeArr));
 };
 
 /**
@@ -115,7 +114,7 @@ export const getIgnoreFunction = async (file: PathLike) => {
  * @param {boolean} stdout If true, package will be piped to stdout.
  * @param {output} string Output filename.
  */
-export const packAction = async (directory: string, { stdout, output }: { stdout: boolean, output: string }) => {
+export const packAction = async (directory: string, { stdout, output }: { stdout: boolean; output: string }) => {
     const cwd = resolve(process.cwd(), directory);
     const packageLocation = resolve(cwd, "package.json");
 
@@ -126,11 +125,9 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
     });
 
     const ouputPath = output ? resolve(process.cwd(), output) : `${cwd}.tar.gz`;
-    const target = stdout
-        ? process.stdout
-        : createWriteStream(ouputPath);
+    const target = stdout ? process.stdout : createWriteStream(ouputPath);
 
-    if (!stdout) setConfigValue("lastPackagePath", ouputPath);
+    if (!stdout) sessionConfig.setLastPackagePath(ouputPath);
 
     const ignoreLocation = resolve(cwd, ".siignore");
     const filter = await getIgnoreFunction(ignoreLocation);
@@ -138,11 +135,10 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
         {
             gzip: true,
             cwd,
-            filter
+            filter,
         },
         await readdir(directory)
-    )
-        .pipe(target);
+    ).pipe(target);
 
     await new Promise((res, rej) => {
         out.on("finish", res);
@@ -159,9 +155,9 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
 export const getReadStreamFromFile = async (file: string): Promise<Readable> => {
     const resolvedFilePath = resolve(process.cwd(), file);
 
-    return access(resolvedFilePath, F_OK).then(
-        () => createReadStream(resolvedFilePath),
-    ).catch(() => {
-        throw new Error(`File "${file}" not found.`);
-    });
+    return access(resolvedFilePath, F_OK)
+        .then(() => createReadStream(resolvedFilePath))
+        .catch(() => {
+            throw new Error(`File "${file}" not found.`);
+        });
 };

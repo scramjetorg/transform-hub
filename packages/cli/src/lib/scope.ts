@@ -1,20 +1,7 @@
 /* eslint-disable no-console */
-import { existsSync, mkdirSync, rmSync, symlinkSync, readdirSync, readFileSync, unlinkSync, rmdirSync } from "fs";
-import { basename, format, resolve } from "path";
-import { scopesDir, siTempDir, sessionScopeDir, defaultScopeFile, configFileExt, procPath } from "./paths";
-import { Config } from "../types";
-
-export const clearUnusedSessionScopes = () => {
-    if (!existsSync(siTempDir)) return;
-    const existingSessions = readdirSync(siTempDir).filter(Number);
-
-    if (existingSessions.length === 0) return;
-    const currentPids = readdirSync(procPath).filter(Number);
-
-    existingSessions
-        .filter((sessionPID) => !currentPids.includes(sessionPID))
-        .forEach((unusedSession: string) => rmdirSync(resolve(siTempDir, `./${unusedSession}`), { recursive: true }));
-};
+import { existsSync, rmSync, readdirSync, readFileSync } from "fs";
+import { basename, format } from "path";
+import { scopesDir, configFileExt } from "./paths";
 
 const getScopePath = (scopeName: string) => {
     const scopePath = format({ dir: scopesDir, name: scopeName, ext: configFileExt });
@@ -46,7 +33,7 @@ export const getScope = (scopeName: string) => {
     try {
         const scopeConfig = JSON.parse(readFileSync(scopePath, "utf-8"));
 
-        return scopeConfig as Config;
+        return scopeConfig;
     } catch {
         console.error(`WARN: Parse error in config at ${scopePath}.`);
         return null;
@@ -54,25 +41,12 @@ export const getScope = (scopeName: string) => {
 };
 
 /**
- * Creates symbolic link aiming to selected scope
+ * Check if scope is exists.
  *
  * @param scopeName - scope name
+ * @returns true if scope exists, false otherwise
  */
-export const useScope = (scopeName: string) => {
-    const scopePath = getScopePath(scopeName);
-
-    if (!scopePath) return;
-    if (existsSync(defaultScopeFile)) unlinkSync(defaultScopeFile);
-    else if (!existsSync(sessionScopeDir)) {
-        const mkdirResult = mkdirSync(sessionScopeDir, { recursive: true });
-
-        if (mkdirResult === undefined) {
-            console.error(`WARN: Couldn't create directory ${sessionScopeDir}.`);
-            return;
-        }
-    }
-    symlinkSync(scopePath, defaultScopeFile);
-};
+export const scopeExists = (scopeName: string) => getScopePath(scopeName) !== null;
 
 /**
  * Removes scope configuration

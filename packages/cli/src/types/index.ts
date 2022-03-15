@@ -7,16 +7,25 @@ import { Command } from "commander-completion";
  */
 export type CommandDefinition = (program: Command) => void;
 
-export type Config = {
+export type configEnv = "development" | "production";
+
+export interface GlobalConfigEntity {
     configVersion: number;
     apiUrl: string;
     log: boolean;
     format: string;
+    middlewareApiUrl: string;
+    env: configEnv;
+    scope: string;
+    token: string,
+}
+
+export interface SessionConfigEntity {
+    apiUrl: string;
     lastPackagePath: string;
     lastInstanceId: string;
     lastSequenceId: string;
-    middlewareApiUrl: string,
     lastSpaceId: string,
     lastHubId: string,
-    env: "development" | "production",
-};
+    scope: string;
+}
