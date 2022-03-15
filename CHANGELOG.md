@@ -44,6 +44,7 @@ Prominent
 - 2e0e504 - Added Kubernetes manifests for Transform-Hub deployment on Kubernetes
 - 5538ac52 - STH: update docker to bullseye, silent yarn
 - 8c54e56e - Restore proper STOP/KILL supervisor mechanisms.
+- b214a8d4 - Add HTTPS support to Verser.
 
 New features:
 
@@ -115,7 +116,8 @@ Bugfixes and minor improvements:
 - Fix not passing error from prerunner
 - Restore proper STOP/KILL supervisor mechanisms in CSIController
 - Dependencies security upgrade
+- HTTPS support for connecting to cloud platform manager
 
-## @scramjet/transform Hub - v0.18.6
+## @scramjet/transform Hub - v0.18.7
 
 This is the last release in changelog.

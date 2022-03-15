@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-stdinout",
-  "version": "0.11.0-0",
+  "version": "0.18.7",
   "lang": "python",
   "main": "./stdinout.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",

@@ -98,6 +98,7 @@
 - [Logger](modules.md#logger)
 - [LoggerOptions](modules.md#loggeroptions)
 - [LoggerOutput](modules.md#loggeroutput)
+- [ManagerConfiguration](modules.md#managerconfiguration)
 - [Message](modules.md#message)
 - [MessageCode](modules.md#messagecode)
 - [MessageDataType](modules.md#messagedatatype)
@@ -116,6 +117,7 @@
 - [NetworkInfoMessage](modules.md#networkinfomessage)
 - [NextCallback](modules.md#nextcallback)
 - [OpResolver](modules.md#opresolver)
+- [OpResponse](modules.md#opresponse)
 - [PangMessageData](modules.md#pangmessagedata)
 - [ParsedMessage](modules.md#parsedmessage)
 - [PassThoughStream](modules.md#passthoughstream)
@@ -173,6 +175,9 @@
 
 ### Namespaces
 
+- [MMRestAPI](modules/MMRestAPI.md)
+- [MRestAPI](modules/MRestAPI.md)
+- [MWRestAPI](modules/MWRestAPI.md)
 - [MessageCodes](modules/MessageCodes.md)
 - [STHRestAPI](modules/STHRestAPI.md)
 
@@ -1335,6 +1340,31 @@ ___
 
 ___
 
+### ManagerConfiguration
+
+Ƭ **ManagerConfiguration**: `Object`
+
+Manager configuration type definition.
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `allowUnknownHosts` | `boolean` | Allow to connect Host providing id but hasn't been registered in Manager. |
+| `apiBase` | `string` | MultiManager api base. |
+| `hostname` | `string` | MultiManager server hostname |
+| `id` | `string` | Manager id. |
+| `logColors` | `boolean` | Enables/disables colorized logs. |
+| `sthController` | { `unhealthyTimeoutMs`: `number`  } | Host controller configuration. |
+| `sthController.unhealthyTimeoutMs` | `number` | Number of milliseconds to wait for next LOAD message from `host` before marking it as unhealthy |
+| `sthServerPort` | `number` | Port for server listening for incoming Host connections. |
+
+#### Defined in
+
+[packages/types/src/manager-configuration.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/manager-configuration.ts#L4)
+
+___
+
 ### Message
 
 Ƭ **Message**: `Object`
@@ -1670,6 +1700,22 @@ ___
 #### Defined in
 
 [packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L16)
+
+___
+
+### OpResponse
+
+Ƭ **OpResponse**<`PayloadType`\>: `PayloadType` & { `opStatus`: `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`  } \| { `error?`: `unknown` ; `opStatus`: `Exclude`<`ReasonPhrases`, `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`\>  }
+
+#### Type parameters
+
+| Name | Type |
+| :------ | :------ |
+| `PayloadType` | extends `Record`<`string`, `unknown`\> |
+
+#### Defined in
+
+[packages/types/src/op-response.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/op-response.ts#L3)
 
 ___
 
