@@ -183,7 +183,6 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.verserClient = new VerserClient({
             verserUrl: `http://${cpmHostname}/verser`,
             headers: {
-                "x-host-id": config.id,
                 "x-manager-id": cpmId
             },
             server
