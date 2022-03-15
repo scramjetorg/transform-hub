@@ -164,9 +164,9 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @constructor
      * @param {string} cpmHostname CPM hostname to connect to. (e.g. "localhost:8080").
      * @param {CPMConnectorOptions} config CPM connector configuration.
-     * @param {Server} server API server to handle incoming requests.
+     * @param {Server} [server] API server to handle incoming requests.
      */
-    constructor(cpmHostname: string, config: CPMConnectorOptions, server: Server) {
+    constructor(cpmHostname: string, config: CPMConnectorOptions, server?: Server) {
         super();
         this.cpmURL = cpmHostname;
         this.config = config;

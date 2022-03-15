@@ -1,6 +1,7 @@
 import { createServer, ServerConfig } from "@scramjet/api-server";
 import { STHConfiguration } from "@scramjet/types";
-import { Host, HostOptions } from "./host";
+import { HostOptions } from "./host-base";
+import { Host } from "./host";
 import { SocketServer } from "./socket-server";
 
 /**
