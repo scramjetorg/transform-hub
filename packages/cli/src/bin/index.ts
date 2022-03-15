@@ -8,6 +8,7 @@ import { ClientError, ClientUtils } from "@scramjet/client-utils";
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
 import { setPlatformDefaults } from "../lib/platform";
+import { initRequiredPaths } from "../lib/paths";
 
 const CommandClass = completionMixin(commander).Command;
 
@@ -41,6 +42,7 @@ const errorHandler = (err: ClientError) => {
  * Start commander using defined config {@link Apple.seeds}
  */
 (async () => {
+    initRequiredPaths();
     const conf = getConfig();
 
     if (conf.token && conf.env === "production" && conf.middlewareApiUrl) {

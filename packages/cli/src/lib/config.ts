@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
-import { resolve } from "path";
-import { siDir } from "./paths";
+import { scopeConfigExists, globalConfigFile } from "./paths";
+import { Config } from "../types";
 
 /**
  * Default CLI configuration.
@@ -17,15 +17,8 @@ const defaultConfig = {
     lastSpaceId: "",
     lastHubId: "",
     env: "development",
-    token: ""
-};
-
-/**
- *
- * @returns defaultConfig
- */
-type Config = typeof defaultConfig;
-const location = resolve(siDir, ".sth-cli-rc.json");
+    token: "",
+} as Config;
 
 let currentConfig: Config;
 
@@ -36,16 +29,16 @@ let currentConfig: Config;
  * @returns Configuration.
  */
 export const getConfig = () => {
-    if (currentConfig) return currentConfig;
+    if (scopeConfigExists()) return currentConfig;
 
-    if (existsSync(location)) {
+    if (existsSync(globalConfigFile)) {
         try {
-            const overlay = JSON.parse(readFileSync(location, "utf-8"));
+            const overlay = JSON.parse(readFileSync(globalConfigFile, "utf-8"));
 
             return { ...defaultConfig, ...overlay } as Config;
         } catch {
             // eslint-disable-next-line no-console
-            console.error(`WARN: Parse error in config at ${location}.`);
+            console.error(`WARN: Parse error in config at ${globalConfigFile}.`);
         }
     }
 
@@ -59,7 +52,7 @@ export const getConfig = () => {
  */
 function writeConfig(conf: any) {
     try {
-        writeFileSync(location, JSON.stringify(conf, null, 2), "utf-8");
+        writeFileSync(globalConfigFile, JSON.stringify(conf, null, 2), "utf-8");
     } catch (e) {
         // Just log info here.
         // eslint-disable-next-line no-console
