@@ -5,8 +5,9 @@
   "extends": "../../tsconfig.base.json",
   "include": [
     "./src/**/*.ts",
-    "./test/**/*.ts"
-, "src/types"  ],
+    "./test/**/*.ts",
+    "src/types"
+  ],
   "exclude": [
     "node_modules"
   ],
