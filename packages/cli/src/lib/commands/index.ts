@@ -9,6 +9,7 @@ import { scope } from "./scope";
 import { sequence } from "./sequence";
 import { space } from "./space";
 import { topic } from "./topic";
+import { completion } from "./completion";
 
 export const commands: CommandDefinition[] = [
     pack,
@@ -19,5 +20,6 @@ export const commands: CommandDefinition[] = [
     sequence,
     space,
     instance,
-    topic
+    topic,
+    completion
 ];

@@ -1,0 +1,44 @@
+# Forked from https://github.com/isaacs/npm/blob/v1.3.17/lib/utils/completion.sh
+###-begin-${name}-completion-###
+#
+# ${name} command completion script
+#
+# Installation: ${name} completion >> ~/.bashrc  (or ~/.zshrc)
+# Or, maybe: ${name} completion > /usr/local/etc/bash_completion.d/${name}
+#
+
+COMP_WORDBREAKS=${COMP_WORDBREAKS/=/}
+COMP_WORDBREAKS=${COMP_WORDBREAKS/@/}
+export COMP_WORDBREAKS
+
+if complete &>/dev/null; then
+  _${name}_completion () {
+    local ${name}="$IFS"
+
+    IFS=$'\n' COMPREPLY=($(COMP_CWORD="$COMP_CWORD" \
+                           COMP_LINE="$COMP_LINE" \
+                           COMP_POINT="$COMP_POINT" \
+                           ${name} completion -- "${COMP_WORDS[@]}" \
+                           2>/dev/null)) || return $?
+    IFS="$${name}"
+  }
+  complete -F _${name}_completion ${name}
+elif compctl &>/dev/null; then
+  _${name}_completion () {
+    local cword line point words ${name}
+    read -Ac words
+    read -cn cword
+    let cword-=1
+    read -l line
+    read -ln point
+    ${name}="$IFS"
+    IFS=$'\n' reply=($(COMP_CWORD="$cword" \
+                       COMP_LINE="$line" \
+                       COMP_POINT="$point" \
+                       ${name} completion -- "${words[@]}" \
+                       2>/dev/null)) || return $?
+    IFS="$${name}"
+  }
+  compctl -K _${name}_completion ${name}
+fi
+###-end-${name}-completion-###
