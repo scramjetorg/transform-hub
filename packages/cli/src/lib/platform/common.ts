@@ -52,10 +52,6 @@ export const setPlatformDefaults = async (command: Command) => {
         return false;
     }
 
-    if (!config.middlewareApiUrl || config.env !== "production") {
-        return false;
-    }
-
     const multiManagers = await getMiddlewareClient(command).listMultiManagers();
 
     if (!multiManagers.length) {

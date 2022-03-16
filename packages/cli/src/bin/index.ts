@@ -3,7 +3,8 @@
 
 import commander from "commander";
 import completionMixin, { Command } from "commander-completion";
-import { ClientError } from "@scramjet/client-utils";
+import { ClientError, ClientUtils } from "@scramjet/client-utils";
+
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
 import { setPlatformDefaults } from "../lib/platform";
@@ -42,6 +43,14 @@ const errorHandler = (err: ClientError) => {
 (async () => {
     const conf = getConfig();
 
+    if (conf.token && conf.env === "production" && conf.middlewareApiUrl) {
+        ClientUtils.setDefaultHeaders({
+            Authorization: `Bearer ${conf.token}`
+        });
+
+        await setPlatformDefaults(program);
+    }
+
     /**
      * Commands
      * ```
@@ -71,8 +80,6 @@ const errorHandler = (err: ClientError) => {
         .option("-f, --format <value>", "Specify display formatting: json or pretty", conf.format)
         .parse(process.argv)
         .opts();
-
-    await setPlatformDefaults(program);
 
     await new Promise((res) => program.hook("postAction", res));
 })().catch(errorHandler);

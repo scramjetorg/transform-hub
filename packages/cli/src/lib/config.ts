@@ -16,7 +16,8 @@ const defaultConfig = {
     middlewareApiUrl: "",
     lastSpaceId: "",
     lastHubId: "",
-    env: "development"
+    env: "development",
+    token: ""
 };
 
 /**
