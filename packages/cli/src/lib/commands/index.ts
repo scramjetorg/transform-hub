@@ -1,6 +1,6 @@
-
 import { CommandDefinition } from "../../types";
 import { config } from "./config";
+import { create } from "./create";
 import { host } from "./host";
 import { hub } from "./hub";
 import { instance } from "./instance";
@@ -15,6 +15,7 @@ export const commands: CommandDefinition[] = [
     host,
     hub,
     config,
+    create,
     scope,
     sequence,
     space,
