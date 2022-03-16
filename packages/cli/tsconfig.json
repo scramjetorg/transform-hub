@@ -5,7 +5,8 @@
   "extends": "../../tsconfig.base.json",
   "include": [
     "./src/**/*.ts",
-    "./test/**/*.ts"
+    "./test/**/*.ts",
+    "./commander-completion.d.ts"
   ],
   "exclude": [
     "node_modules"

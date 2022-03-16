@@ -9,4 +9,5 @@ export * from "./lib/commands/pack";
 export * from "./lib/commands/sequence";
 export * from "./lib/commands/space";
 export * from "./lib/commands/topic";
+export * from "./lib/commands/completion";
 export * from "./types/index";

@@ -24,6 +24,7 @@
     "@scramjet/client-utils": "^0.18.7",
     "@scramjet/middleware-api-client": "^0.18.7",
     "commander": "^8.3.0",
+    "commander-completion": "^1.0.1",
     "minimatch": "^3.1.2",
     "scramjet": "^4.36.6",
     "tar": "^6.1.11"
@@ -52,5 +53,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
-  }
+  },
+  "assets": [
+    "src/completion"
+  ]
 }
