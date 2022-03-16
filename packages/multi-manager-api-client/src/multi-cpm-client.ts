@@ -2,12 +2,13 @@
 import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
 import { ManagerClient } from "@scramjet/manager-api-client";
 import { DeepPartial, LoadCheckStat, ManagerConfiguration, MMRestAPI } from "@scramjet/types";
+import { ChildProcess } from "child_process";
 
 export class MultiManagerClient implements ClientProvider {
     client: HttpClient;
     apiBase: string;
 
-    constructor(apiBase: string, utils = new ClientUtils(apiBase)) {
+    constructor(apiBase: string, public process?: ChildProcess, utils = new ClientUtils(apiBase)) {
         this.apiBase = apiBase.replace(/\/$/, "");
 
         this.client = utils;
