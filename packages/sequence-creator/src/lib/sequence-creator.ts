@@ -44,7 +44,7 @@ export class SequenceCreator {
 
         const workDir = process.cwd();
         const targetDir = path.join(workDir, opts.name);
-        const templatesDir = path.join(__dirname, "..", "..", "templates");
+        const templatesDir = path.join(__dirname, "..", "templates");
 
         if (!checkDirExists(path.join(templatesDir, opts.lang))) {
             logger.error("Template not found", opts.lang);

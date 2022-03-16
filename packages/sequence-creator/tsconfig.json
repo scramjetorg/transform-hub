@@ -14,7 +14,7 @@
     "entryPoints": [
       "src/index.ts"
     ],
-    "out": "../../docs/verser",
+    "out": "../../docs/sequence-creator",
     "plugin": "typedoc-plugin-markdown",
     "excludePrivate": "true",
     "gitRevision": "HEAD",
