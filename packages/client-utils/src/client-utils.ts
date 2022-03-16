@@ -12,6 +12,8 @@ export abstract class ClientUtilsBase implements HttpClient {
 
     private log?: RequestLogger;
 
+    static headers: Headers = {};
+
     constructor(apiBase: string) {
         this.apiBase = apiBase;
     }
@@ -30,6 +32,10 @@ export abstract class ClientUtilsBase implements HttpClient {
         };
     }
 
+    static setDefaultHeaders(headers: Headers) {
+        ClientUtilsBase.headers = headers;
+    }
+
     /**
      * Wraps fetch request and handles response based on given config.
      *
@@ -38,8 +44,12 @@ export abstract class ClientUtilsBase implements HttpClient {
      * @param {RequestConfig} options Request wrapper options.
      */
     private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
+        const fetchInit: RequestInit = init;
+
+        fetchInit.headers = { ...ClientUtilsBase.headers, ...fetchInit.headers };
+
         try {
-            const response = await this.fetch(input, init)
+            const response = await this.fetch(input, fetchInit)
                 .then((result: any) => {
                     if (result.ok) {
                         if (this.log) {

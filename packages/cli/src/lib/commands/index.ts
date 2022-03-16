@@ -1,5 +1,6 @@
 
 import { CommandDefinition } from "../../types";
+import { auth } from "./auth";
 import { config } from "./config";
 import { host } from "./host";
 import { hub } from "./hub";
@@ -12,6 +13,7 @@ import { topic } from "./topic";
 import { completion } from "./completion";
 
 export const commands: CommandDefinition[] = [
+    auth,
     pack,
     host,
     hub,
