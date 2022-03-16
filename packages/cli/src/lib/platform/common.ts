@@ -48,7 +48,7 @@ export const getMiddlewareClient = (command: Command): MiddlewareClient => {
 export const setPlatformDefaults = async (command: Command) => {
     const config = getConfig();
 
-    if (config.lastSpaceId && config.lastHubId) {
+    if (config.lastSpaceId || config.lastHubId) {
         return false;
     }
 
@@ -62,15 +62,25 @@ export const setPlatformDefaults = async (command: Command) => {
         return false;
     }
 
-    const managerClient = getMiddlewareClient(command).getManagerClient(multiManagers[0].id);
+    const multiManagerClient = middlewareClient.getMultiManagerClient(multiManagers[0].id);
+    const managers = await multiManagerClient.getManagers();
+
+    if (!managers.length) {
+        return false;
+    }
+
+    const managerClient = getMiddlewareClient(command).getManagerClient(managers[0].id);
     const hosts = await managerClient.getHosts();
 
     if (!hosts.length) {
         return false;
     }
 
-    setConfigValue("lastSpaceId", multiManagers[0].id);
+    setConfigValue("lastSpaceId", managers[0].id);
     setConfigValue("lastHubId", hosts[0].id);
+
+    // eslint-disable-next-line no-console
+    console.log(`Defaults set to: Space: ${managers[0].id}, Hub: ${hosts[0].id}`);
 
     return true;
 };
