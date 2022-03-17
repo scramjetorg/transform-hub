@@ -1978,6 +1978,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `cpmId?` | `string` |
 | `cpmUrl?` | `string` |
 | `docker` | `boolean` |
 | `exposeHostIp` | `string` |
@@ -2013,6 +2014,7 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `cpmId` | `string` | CPM id. |
 | `cpmUrl` | `string` | CPM url. |
 | `docker` | { `prerunner`: [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) ; `runner`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `runnerImages`: { `node`: `string` ; `python3`: `string`  }  } | Docker related configuration. |
 | `docker.prerunner` | [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) | PreRunner container configuration. |

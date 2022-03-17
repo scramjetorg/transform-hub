@@ -1,5 +1,4 @@
-# Scramjet Transform Hub
-
+<h1 align="center"><strong>Scramjet Transform Hub</strong></h1>
 <p align="center">
     <a href="https://github.com/scramjetorg/transform-hub/blob/HEAD/LICENSE"><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
     <a href="https://npmjs.org/package/@scramjet/sth"><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
@@ -104,14 +103,14 @@ This is the STH development repo, in order to use it, you need to have linux bas
 Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
 
 * The program should consist of a function or an array of functions, such a program is called a **Transform Sequence**.
-* The sequence will be executed within a separate docker instance (🔜 we're working on other execution environment integrations - help will be appreciated 🦾).
-* The sequence function will receive a stream as input in the first argument - you can send the data to it via the command `si instance input`.
-* If your sequence contains more than one function, then the output from the first function is passed to the next one. Also, the first function in sequence receives the input from API.
-* The last (or the only) function in sequence can return a `Promise` or a `Stream` - based on this, STH will know when processing is done.
-* Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the sequence and remove its container.
+* The Sequence will be executed within a separate docker instance (🔜 we're working on other execution environment integrations - help will be appreciated 🦾).
+* The Sequence function will receive a stream as input in the first argument - you can send the data to it via the command `si instance input`.
+* If your Sequence contains more than one function, then the output from the first function is passed to the next one. Also, the first function in Sequence receives the input from API.
+* The last (or the only) function in Sequence can return a `Promise` or a `Stream` - based on this, STH will know when processing is done.
+* Once the returned `Promise` is resolved, or the `Stream` is ended, STH will gracefully stop the Sequence and remove its container.
 * You can communicate with the server via API, command line client `si` which we wrote for your convenience.
-* The sequence is called with an AppContext as `this`, a class that allows you to communicate back from the sequence: send logs, provide health info, send and receive events from the API or CLI.
-* You can run your sequence multiple times with different arguments (like for instance currency tickers with different symbols or sensor data readers for each sensor)
+* The Sequence is called with an AppContext as `this`, a class that allows you to communicate back from the Sequence: send logs, provide health info, send and receive events from the API or CLI.
+* You can run your Sequence multiple times with different arguments (like for instance currency tickers with different symbols or sensor data readers for each sensor)
 * The program does not leave your server and doesn't use any external systems. It runs on the server you install the host on.
 * Currently STH supports node.js runner only, we're working on bringing you runners for other languages, with Python and C++ as the first ones.
 
@@ -120,7 +119,7 @@ Some important links 👀:
 * Here you can find the definition of the [Transform Sequence AppContext](./docs/types/interfaces/appcontext.md)
 * You can see the [Scramjet Transform Hub API docs here](./docs/interfaces/API-reference.md)
 * You can see the [CLI documentation here](./docs/interfaces/CLI-command-reference.md), but `si help` should also be quite effective.
-* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* Don't forget to ⭐ this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
 ---
@@ -195,7 +194,7 @@ Now you are ready to install node.js, simply type in your console:
 nvm install 16     # command will install latest LTS Version of Node.js
 ```
 
-> :pencil: **Note**:
+> 💡 **Note**:
 The project is working on Node Long Term Support (LTS) Version. Witch contains Node Package Manager (NPM) in `^8.1.0` version.
 NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
 
@@ -386,7 +385,7 @@ Running `si help` command will confirm that the installation went properly and a
 
 ![si_help](./images/si_help.png)
 
-We will use CLI later on to execute the sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/main/docs/interfaces/CLI-command-reference.md).
+We will use CLI later on to execute the Sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/main/docs/interfaces/CLI-command-reference.md).
 
 ## Build the packages :building_construction:
 
@@ -405,7 +404,7 @@ yarn build:all-packages   # optionally 'build:all' if you want all dockerfiles.
 
 ![build_clean](./images/clean_install.png)
 
-> :bulb: **HINT:** For more scripts please see `"scripts: {}"` in main [package.json](package.json#scripts).
+> 💡 **HINT:** For more scripts please see `"scripts: {}"` in main [package.json](package.json#scripts).
 
 ## Docker commands :whale:
 
@@ -487,19 +486,19 @@ lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <scr
 The sample will work only if you have properly configured your environment, installed hub and build all the packages.
 By this time you should already have all those things done by going through the [Installation](#installation-:clamp:) section.
 
-> :bulb: **HINT:** *The following instructions apply to the state of the repository from the `release/0.14`.*
+> 💡 **HINT:** *The following instructions apply to the state of the repository from the `release/0.14`.*
 
 To start the "Hello Alice" sample we will need these basic steps:
 
 - [start STH](#start-the-hub-checkered_flag)
-- [compress the package](#compress-the-package-package)
-- [send compressed package (sequence) to hub](#arrow_up-upload-the-package)
-- [start sequence](#arrow_right-start-the-sequence)
-- [get the result](#arrow_down-get-the-output)
+- [compress the Sequence](#compress-the-sequence)
+- [send compressed package to the hub](#upload-the-package)
+- [start Sequence](#start-the-sequence)
+- [get the result](#get-the-output)
 
-### Compress the package :package:
+### Compress the Sequence
 
-The sequence in a `tar.gz` file format with package.js (aka package) can be generated in different ways.
+The Sequence needs to be compressed into a `tar.gz` file format before we send it to the hub.
 
 Assuming that you have the [host running](#start-the-hub-checkered_flag) use the command:
 
@@ -519,13 +518,13 @@ To compress specific package use linux tar command:
 tar -C /path/to/package/dir czf <package-name.tar.gz> .
 ```
 
-### Execute sample :fire:
+### Execute sample
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **:bulb: HINT**: remember that to use curl commands hub must be running.  [See how to start STH =>](#start-the-hub-checkered_flag)
+> **💡 HINT**: remember that to use curl commands hub must be running.  [See how to start STH =>](#start-the-hub-checkered_flag)
 
-#### :arrow_up: **Upload the package**
+#### **Upload the package**
 
 Copy and paste the following command to the terminal:
 
@@ -545,7 +544,7 @@ SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r)
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
-#### :arrow_right: **Start the sequence**
+#### **Start the Sequence**
 
 Copy and paste the following command to the terminal:
 
@@ -558,9 +557,9 @@ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seque
 }' | jq ".id" -r)
 ```
 
-> **:bulb: HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
+> **💡 HINT:** *INSTANCE_ID and SEQ_ID are shell variables.*
 
-#### :arrow_down: **GET the output**
+#### **GET the output**
 
 To get the output we need to send GET request to `/stdout` endpoint:
 
@@ -601,7 +600,7 @@ There are two more templates that we will support, but they are still in develop
     <strong>Error: connect ENOENT /var/run/docker.sock</strong>
 </summary>
 
-During sending the sequence package to the host you may come across this error:
+During sending the Sequence compressed package to the host you may come across this error:
 
 * ***Error: connect ENOENT /var/run/docker.sock***
 
@@ -627,7 +626,7 @@ To solve this issue you need to install docker and docker-compose. You can insta
     <strong>Error: connect EACCES /var/run/docker.sock</strong>
 </summary>
 
-During sending the sequence package to the host you may come across this error:
+During sending the Sequence compressed package to the host you may come across this error:
 
 * ***Error: connect EACCES /var/run/docker.sock***
 
@@ -686,7 +685,7 @@ It will build all the packages in the `packages/reference-apps` folder.
 
 </details><br>
 
-> **:bulb: HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
+> **💡 HINT:** Have a look at the root `package.json`, there is the `scripts` section, which contains the list of all the scripts you can run with lerna. You may find them useful.
 
 Log an issue/bug every time you encounter a problem or find a bug. Maybe you will also find that some feature is missing?
 
@@ -715,7 +714,7 @@ The project need's your help! There's lots of work to do and we have a lot of pl
 
 # Donation :money_with_wings:
 
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee:
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ☕
 
 * [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 

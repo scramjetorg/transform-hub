@@ -4,13 +4,13 @@ We accept valid contributions and we will be publishing a more specific project 
 
 We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](../../bdd/README.md).
 
-### Help wanted :information_desk_person:
+### Help wanted 👩‍🎓🧑👱‍♀️
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://discord.gg/4EX3jHBe) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
-### Donation :money_with_wings:
+### Donation 💸
 
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ☕ Thanks a lot! 😉
 
 [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 

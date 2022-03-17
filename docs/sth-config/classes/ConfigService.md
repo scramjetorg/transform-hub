@@ -28,7 +28,7 @@
 
 #### Defined in
 
-[sth-config/src/config-service.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L66)
+[sth-config/src/config-service.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L67)
 
 ## Methods
 
@@ -42,7 +42,7 @@
 
 #### Defined in
 
-[sth-config/src/config-service.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L74)
+[sth-config/src/config-service.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L75)
 
 ___
 
@@ -64,7 +64,7 @@ ___
 
 #### Defined in
 
-[sth-config/src/config-service.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L78)
+[sth-config/src/config-service.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L79)
 
 ___
 
@@ -84,4 +84,4 @@ ___
 
 #### Defined in
 
-[sth-config/src/config-service.ts:82](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L82)
+[sth-config/src/config-service.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L83)
