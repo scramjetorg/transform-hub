@@ -15,7 +15,7 @@
     "test:ava": "ava",
     "preinstall": "tar --version 2>&1 >/dev/null",
     "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack"
+    "postbuild": "yarn prepack && cp ./src/completion ../../dist/cli/completion -rL"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -53,8 +53,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
-  },
-  "assets": [
-    "src/completion"
-  ]
+  }
 }

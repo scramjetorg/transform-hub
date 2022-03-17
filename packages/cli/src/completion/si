@@ -1,10 +1,10 @@
 # Forked from https://github.com/isaacs/npm/blob/v1.3.17/lib/utils/completion.sh
-###-begin-${name}-completion-###
+###-begin-si-completion-###
 #
-# ${name} command completion script
+# si command completion script
 #
-# Installation: ${name} completion >> ~/.bashrc  (or ~/.zshrc)
-# Or, maybe: ${name} completion > /usr/local/etc/bash_completion.d/${name}
+# Installation: si completion >> ~/.bashrc  (or ~/.zshrc)
+# Or, maybe: si completion > /usr/local/etc/bash_completion.d/si
 #
 
 COMP_WORDBREAKS=${COMP_WORDBREAKS/=/}
@@ -12,33 +12,33 @@ COMP_WORDBREAKS=${COMP_WORDBREAKS/@/}
 export COMP_WORDBREAKS
 
 if complete &>/dev/null; then
-  _${name}_completion () {
-    local ${name}="$IFS"
+  _si_completion () {
+    local si="$IFS"
 
     IFS=$'\n' COMPREPLY=($(COMP_CWORD="$COMP_CWORD" \
                            COMP_LINE="$COMP_LINE" \
                            COMP_POINT="$COMP_POINT" \
-                           ${name} completion -- "${COMP_WORDS[@]}" \
+                           si completion -- "${COMP_WORDS[@]}" \
                            2>/dev/null)) || return $?
-    IFS="$${name}"
+    IFS="$si"
   }
-  complete -F _${name}_completion ${name}
+  complete -F _si_completion si
 elif compctl &>/dev/null; then
-  _${name}_completion () {
-    local cword line point words ${name}
+  _si_completion () {
+    local cword line point words si
     read -Ac words
     read -cn cword
     let cword-=1
     read -l line
     read -ln point
-    ${name}="$IFS"
+    si="$IFS"
     IFS=$'\n' reply=($(COMP_CWORD="$cword" \
                        COMP_LINE="$line" \
                        COMP_POINT="$point" \
-                       ${name} completion -- "${words[@]}" \
+                       si completion -- "${words[@]}" \
                        2>/dev/null)) || return $?
-    IFS="$${name}"
+    IFS="$si"
   }
-  compctl -K _${name}_completion ${name}
+  compctl -K _si_completion si
 fi
-###-end-${name}-completion-###
+###-end-si-completion-###
