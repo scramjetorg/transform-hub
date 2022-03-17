@@ -43,7 +43,6 @@ export type RequestConfig = {
  * Environmentally independent HttpClient interface.
  */
 export interface HttpClient {
-    fetch?: any;
     addLogger(logger: RequestLogger): void;
     get<T>(url: string): Promise<T>;
     getStream(url: string): Promise<any>;

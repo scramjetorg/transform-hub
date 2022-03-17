@@ -6,16 +6,14 @@ import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } 
  * Provides HTTP communication methods.
  */
 export abstract class ClientUtilsBase implements HttpClient {
-    fetch!: any;
-
-    apiBase: string = "";
-
     private log?: RequestLogger;
 
     static headers: Headers = {};
 
-    constructor(apiBase: string) {
-        this.apiBase = apiBase;
+    constructor(
+        public apiBase: string,
+        private fetch: any
+    ) {
     }
 
     /**
