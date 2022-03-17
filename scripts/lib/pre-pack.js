@@ -186,7 +186,7 @@ class PrePack {
                 ret[dependency] = this.packagesMap.has(dependency)
                     ? `file:../${this.packagesMap.get(dependency)}`
                     : version
-                ;
+                    ;
             }
 
             return ret;
@@ -234,7 +234,7 @@ class PrePack {
         const types = content.types || !_main || !_main.endsWith(".ts")
             ? content.types
             : srcRe(_main, ".d.ts")
-        ;
+            ;
 
         if (typeof bin === "object") await this.fixShebang(bin);
 
