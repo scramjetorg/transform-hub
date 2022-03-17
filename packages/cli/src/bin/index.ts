@@ -1,10 +1,8 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
 
-import commander, { Command } from "commander";
-// TODO: remove
-// @ts-ignore
-import completionMixin from "commander-completion";
+import commander from "commander";
+import completionMixin, { Command } from "commander-completion";
 import { ClientError } from "@scramjet/client-utils";
 import { commands } from "../lib/commands/index";
 import { getConfig } from "../lib/config";
@@ -13,7 +11,7 @@ import { setPlatformDefaults } from "../lib/platform";
 const CommandClass = completionMixin(commander).Command;
 
 const getExitCode = (_err: ClientError) => 1;
-const program: Command = (new CommandClass()) as Command;
+const program = new CommandClass() as Command;
 const errorHandler = (err: ClientError) => {
     process.exitCode = getExitCode(err);
     const opts = program.opts();

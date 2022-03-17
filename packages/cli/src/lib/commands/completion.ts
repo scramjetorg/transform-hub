@@ -21,8 +21,6 @@ export const completion: CommandDefinition = (program) => {
             if (!process.env.COMP_LINE || !process.env.COMP_POINT) {
                 console.log("COMP_ variables are nonexistent. Did you mean si completion install?"); //eslint-disable-line
             } else {
-                // TODO: remove
-                // @ts-ignore
                 program.complete({
                     line: process.env.COMP_LINE,
                     cursor: process.env.COMP_POINT
