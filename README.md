@@ -51,6 +51,7 @@ It currently supports Node.js based apps, but Python and other languages are com
     - [Build Hub on Docker](#build-hub-on-docker-building_construction)
     - [Run Transform Hub in Docker](#run-transform-hub-in-docker-robot)
     - [Lerna commands](#lerna-commands-pencil)
+    - [Autocomplete](#lautocomplete-zap)
 5. [Sample usage](#sample-usage-sunglasses)
     - ["Hello Alice" sample](#hello-alice-sample-wave)
     - [More samples](#more-samples-books)
@@ -477,6 +478,19 @@ lerna run --scope @scramjet/<package_name> <script-name>
 lerna run --scope @scramjet/<package_name> --scope @scramjet/<package_name> <script-name>
     # Run script in more packages
 ```
+
+## Autocomplete :zap:
+
+Completion script depends on bash-completion so make sure it's alredy installed by running `type _init_completion`. 
+
+Below command installs completion script in ~/.bashrc.
+
+```bash
+si completion install
+
+```
+
+For immidiete effect make sure to run `source ~/.bashrc`. Also you can manage completion script by yourself. Running `si completion bash` prints script to the terminal.
 
 ---
 
