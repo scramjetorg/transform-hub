@@ -1,6 +1,7 @@
 import fs from "fs";
 
-import { Agent, ClientRequest, IncomingMessage, Server, request } from "http";
+import { Agent, ClientRequest, IncomingMessage, Server } from "http";
+import { request } from "https";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, Readable } from "stream";
 import {
@@ -180,16 +181,22 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.cpmId = cpmId;
         this.config = config;
 
+        const verserUrl = `${config.cpmSslCaPath ? "https" : "http"}://${cpmHostname}/verser`;
+
         this.verserClient = new VerserClient({
-            verserUrl: `http://${cpmHostname}/verser`,
+            verserUrl,
             headers: {
                 "x-manager-id": cpmId
             },
-            server
+            server,
+            https: typeof config.cpmSslCaPath === "string"
+                ? { ca: [fs.readFileSync(config.cpmSslCaPath)] }
+                : undefined
         });
 
         this.logger = new ObjLogger(this);
         this.logger.trace("Initialized.");
+        this.logger.debug("CONNNECTING", config);
     }
 
     /**
@@ -539,11 +546,12 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param topicCfg Topic configuration.
      */
     sendTopic(topic: string, topicCfg: { contentType: string, stream: ReadableStream<any> | WritableStream<any> }) {
-        const cpmUrl = new URL("http://" + this.cpmURL + "/topic/" + topic);
+        const cpmUrl = new URL("https://" + this.cpmURL + "/topic/" + topic);
         const req = request(
             cpmUrl,
             {
                 method: "POST",
+                // @TODO support https agent and ca
                 agent: new Agent({ keepAlive: true }),
                 headers: {
                     "x-end-stream": "true",

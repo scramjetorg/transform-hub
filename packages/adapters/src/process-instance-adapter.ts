@@ -1,4 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
+import { development } from "@scramjet/sth-config";
 import {
     ExitCode,
     IComponent,
@@ -123,6 +124,11 @@ IComponent {
                 INSTANCE_ID: instanceId,
             }
         });
+
+        if (development()) {
+            runnerProcess.stdout.pipe(process.stdout);
+            runnerProcess.stderr.pipe(process.stderr);
+        }
 
         this.logger.trace("Runner process is running", runnerProcess.pid);
 

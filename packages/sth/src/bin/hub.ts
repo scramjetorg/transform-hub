@@ -11,6 +11,7 @@ const options: STHCommandOptions = program
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences", false)
     .option("-C, --cpm-url <host:ip>")
+    .option("--cpm-ssl-ca-path <path>", "Certficate Authority for self-signed CPM SSL certificates")
     .option("-I, --id <id>")
     .option("--cpm-id <id>")
     .option("--runtime-adapter <adapter>", "Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'")
@@ -35,6 +36,7 @@ const configService = new ConfigService();
 configService.update({
     cpmUrl: options.cpmUrl,
     cpmId: options.cpmId,
+    cpmSslCaPath: options.cpmSslCaPath,
     docker: {
         prerunner: {
             image: options.prerunnerImage,

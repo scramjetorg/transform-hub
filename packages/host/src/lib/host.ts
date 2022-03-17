@@ -146,7 +146,11 @@ export class Host implements IComponent {
             this.cpmConnector = new CPMConnector(
                 this.config.cpmUrl,
                 this.config.cpmId,
-                { id: this.config.host.id, infoFilePath: this.config.host.infoFilePath },
+                {
+                    id: this.config.host.id,
+                    infoFilePath: this.config.host.infoFilePath,
+                    cpmSslCaPath: this.config.cpmSslCaPath
+                },
                 this.api.server
             );
             this.cpmConnector.setLoadCheck(this.loadCheck);

@@ -140,7 +140,13 @@ aaa/
 **/__pydeps__/**
 
 # keys
-*.{crt,csr,ext,key,pem,srl}
+*.crt
+*.csr
+*.ext
+*.key
+*.pem
+*.srl
+
 
 # bundled modules
 bundle

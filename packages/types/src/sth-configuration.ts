@@ -93,6 +93,8 @@ export type STHConfiguration = {
      */
     cpmUrl: string;
 
+    cpmSslCaPath?: string;
+
     /**
      * CPM id.
      */

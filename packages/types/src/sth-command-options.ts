@@ -7,6 +7,7 @@ export type STHCommandOptions = {
     identifyExisting: boolean;
     cpmUrl?: string;
     cpmId?: string;
+    cpmSslCaPath?: string;
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;
