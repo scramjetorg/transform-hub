@@ -1,21 +1,20 @@
 @scramjet/cli / [Exports](modules.md)
 
-# Scramjet Transform Hub Command Line Interface <!-- omit in toc -->
+<h1 align="center"><strong>Scramjet Transform Hub Command Line Interface</strong></h1>
 
 <p align="center">
-    <a><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
-    <a><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
-    <a><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
-    <a><img src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic" alt="npm" /></a>
+    <a href="https://github.com/scramjetorg/transform-hub/blob/HEAD/LICENSE"><img src="https://img.shields.io/github/license/scramjetorg/transform-hub?color=green&style=plastic" alt="GitHub license" /></a>
+    <a href="https://npmjs.org/package/@scramjet/sth"><img src="https://img.shields.io/github/v/tag/scramjetorg/transform-hub?label=version&color=blue&style=plastic" alt="STH version" /></a>
+    <a href="https://github.com/scramjetorg/transform-hub"><img src="https://img.shields.io/github/stars/scramjetorg/transform-hub?color=pink&style=plastic" alt="GitHub stars" /></a>
+    <a href="https://npmjs.org/package/@scramjet/sth"><img src="https://img.shields.io/npm/dt/@scramjet/sth?color=orange&style=plastic" alt="npm" /></a>
+    <a href="https://discord.gg/TTqCpHDjHz"><img alt="Discord" src="https://img.shields.io/discord/925384545342201896?label=discord&style=plastic"></a>
     <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=7F7V65C43EBMW">
         <img src="https://img.shields.io/badge/Donate-PayPal-green.svg?color=yellow&style=plastic" alt="Donate" />
     </a>
 </p>
 <p align="center">⭐ Star us on GitHub — it motivates us a lot! 🚀 </p>
 <p align="center">
-    <a href="https://www.npmjs.com/package/@scramjet/sth">
-        <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
-    </a>
+    <img src="https://assets.scramjet.org/sth-logo.svg" alt="Scramjet Transform Hub Logo">
 </p>
 
 This package provides a CLI interface to communicate with Scramjet Transform Hub. You can install the CLI like this:
@@ -132,9 +131,9 @@ There's no limit what you can use it for. You want a stock checker? A chat bot? 
 * Scramjet, the company behind [Transform Hub](https://scramjet.org)
 * The [Scramjet Framework - functional reactive stream processing framework](https://framework.scramjet.org)
 * The [Transform Hub repo on github](https://github.com/scramjetorg/transform-hub)
-* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/release/0.12/docs/development-guide/stream-and-api.md)
-* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/main/packages/cli/README.md), but `si help` should also be quite effective.
-* Don't forget to :star: this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
+* You can see the [Scramjet Transform Hub API docs here](https://github.com/scramjetorg/transform-hub/tree/HEAD/docs/api-client/README.md)
+* You can see the [CLI documentation here](https://github.com/scramjetorg/transform-hub/tree/HEAD/packages/cli/README.md), but `si help` should also be quite effective.
+* Don't forget to ⭐ this repo if you like it, `subscribe` to releases and keep visiting us for new versions and updates.
 * You can [open an issue - file a bug report or a feature request here](https://github.com/scramjetorg/transform-hub/issues/new/choose)
 
 ## License and contributions
@@ -149,13 +148,13 @@ We accept valid contributions and we will be publishing a more specific project 
 
 We provide support for contributors via test cases. If you expect a certain type of workflow to be officially supported, please specify and implement a test case in `Gherkin` format in `bdd` directory and include it in your pull request. More info about our BDD test you will find [here](https://github.com/scramjetorg/transform-hub/tree/HEAD/bdd/README.md).
 
-### Help wanted :information_desk_person:
+### Help wanted 👩‍🎓🧑👱‍♀️
 
 The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://discord.gg/4EX3jHBe) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
-### Donation :money_with_wings:
+### Donation 💸
 
-Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee :coffee: Thanks a lot! ;)
+Do you like this project? It helped you to reduce time spent on delivering your solution? You are welcome to buy us a coffee ☕ Thanks a lot! 😉
 
 [You can sponsor us on github](https://github.com/sponsors/scramjetorg)
 
