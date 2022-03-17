@@ -1,4 +1,4 @@
-import { Command } from "commander";
+import { Command } from "commander-completion";
 
 /**
  * CommandDefinition is an object from commander.js
