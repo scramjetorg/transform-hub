@@ -7,6 +7,8 @@ import { setConfigValue } from "../config";
  * @param {Command} program Commander object.
  */
 export const auth: CommandDefinition = (program) => {
+    const JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
+
     const authCmd = program
         .command("auth [command]");
 
@@ -20,6 +22,11 @@ export const auth: CommandDefinition = (program) => {
         .argument("<token>")
         .description("Set Platform auth token")
         .action(async (token: string) => {
-            setConfigValue("token", token);
+            if (token.match(JWS_REGEX)) {
+                setConfigValue("token", token);
+            } else {
+                // eslint-disable-next-line no-console
+                console.error("Invalid token");
+            }
         });
 };
