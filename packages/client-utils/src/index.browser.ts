@@ -9,7 +9,11 @@ import { HttpClientBrowser as HttpClient } from "./types";
  * @classdesc Provides HTTP communication methods.
  */
 export class ClientUtils extends ClientUtilsBase implements HttpClient {
-    fetch = window.fetch.bind(window);
+    constructor(
+        apiBase: string,
+    ) {
+        super(apiBase, window.fetch.bind(window));
+    }
 }
 
 export { ClientError, ClientErrorCode } from "./client-error";
