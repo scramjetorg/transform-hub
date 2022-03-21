@@ -1,7 +1,7 @@
 import fs from "fs";
 
-import { ClientRequest, IncomingMessage, Server } from "http";
-import { request, Agent } from "https";
+import * as http from "http";
+import * as https from "https";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, Readable } from "stream";
 import {
@@ -18,7 +18,6 @@ import {
 } from "@scramjet/types";
 import { MessageUtilities } from "@scramjet/model";
 import { StringStream } from "scramjet";
-import { URL } from "url";
 import { LoadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
 import { VerserClient } from "@scramjet/verser";
@@ -121,7 +120,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Connection object.
      */
-    connection?: ClientRequest;
+    connection?: http.ClientRequest;
 
     /**
      * Indicator for reconnection state.
@@ -139,13 +138,6 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @type {number}
      */
     connectionAttempts = 0;
-
-    /**
-     * Hostname of Manager (e.g. "localhost:8080").
-     *
-     * @type {string}
-     */
-    cpmURL: string;
 
     /**
      * Id of Manager (e.g. "cpm-1").
@@ -169,34 +161,61 @@ export class CPMConnector extends TypedEmitter<Events> {
     loadInterval?: NodeJS.Timeout;
 
     /**
+     * Loaded certficiate authority file for connecting to CPM via HTTPS
+     */
+    _cpmSslCa?: string | Buffer;
+
+    /**
      * @constructor
      * @param {string} cpmHostname CPM hostname to connect to. (e.g. "localhost:8080").
      * @param {string} cpmId CPM id to connect to. (e.g. "CPM1").
      * @param {CPMConnectorOptions} config CPM connector configuration.
      * @param {Server} server API server to handle incoming requests.
      */
-    constructor(cpmHostname: string, cpmId: string, config: CPMConnectorOptions, server: Server) {
+    constructor(private cpmHostname: string, cpmId: string, config: CPMConnectorOptions, server: http.Server) {
         super();
-        this.cpmURL = cpmHostname;
         this.cpmId = cpmId;
         this.config = config;
 
-        const verserUrl = `${config.cpmSslCaPath ? "https" : "http"}://${cpmHostname}/verser`;
-
         this.verserClient = new VerserClient({
-            verserUrl,
+            verserUrl: `${this.cpmUrl}/verser`,
             headers: {
                 "x-manager-id": cpmId
             },
             server,
-            https: typeof config.cpmSslCaPath === "string"
-                ? { ca: [fs.readFileSync(config.cpmSslCaPath)] }
+            https: this.isHttps
+                ? { ca: [this.cpmSslCa] }
                 : undefined
         });
 
         this.logger = new ObjLogger(this);
         this.logger.trace("Initialized.");
-        this.logger.debug("CONNNECTING", config);
+    }
+
+    private get cpmSslCa() {
+        if (typeof this.config.cpmSslCaPath === "undefined") {
+            throw new Error("No cpmSslCaPath specified");
+        }
+
+        if (!this._cpmSslCa) {
+            this._cpmSslCa = fs.readFileSync(this.config.cpmSslCaPath);
+        }
+
+        return this._cpmSslCa;
+    }
+
+    /**
+     * Should Host connect on SSL encrypted connection to CPM
+     */
+    private get isHttps(): boolean {
+        // @TODO potentially not all https requests would use custom CA
+        return typeof this.config.cpmSslCaPath === "string";
+    }
+
+    private get cpmUrl() {
+        const protocol = this.isHttps ? "https" : "http";
+
+        return `${protocol}://${this.cpmHostname}`;
     }
 
     /**
@@ -329,7 +348,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         let connection;
 
         try {
-            this.logger.trace("Connecting to Manager", this.cpmURL, this.cpmId);
+            this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
             connection = await this.verserClient.connect();
         } catch (err) {
             this.logger.error("Can not connect to Manager", err);
@@ -546,21 +565,37 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param topicCfg Topic configuration.
      */
     sendTopic(topic: string, topicCfg: { contentType: string, stream: ReadableStream<any> | WritableStream<any> }) {
-        const cpmUrl = new URL("https://" + this.cpmURL + "/topic/" + topic);
-        const req = request(
-            cpmUrl,
-            {
-                method: "POST",
-                // @TODO support https agent and ca
-                agent: new Agent({ keepAlive: true, ca:  [fs.readFileSync(this.config.cpmSslCaPath!)] }),
-                headers: {
-                    "x-end-stream": "true",
-                    "content-type": topicCfg.contentType || "application/x-ndjson"
-                }
-            }
-        );
+        const req = this.makeHttpRequestToCpm("POST", `/topic/${topic}`, {
+            "x-end-stream": "true",
+            "content-type": topicCfg.contentType || "application/x-ndjson"
+        });
 
         topicCfg.stream.pipe(req);
+    }
+
+    private makeHttpRequestToCpm(
+        method: string,
+        reqPath: string,
+        headers: Record<string, string> = {}
+    ): http.ClientRequest {
+        const isHttps = !!this.cpmSslCa;
+
+        const url = `${this.cpmUrl}/${reqPath}`;
+        const agent = isHttps
+            ? new https.Agent({
+                keepAlive: true, ca: [fs.readFileSync(this.cpmSslCa!)]
+            })
+            : new http.Agent({ keepAlive: true });
+        const requestFn = isHttps ? https.request : http.request;
+
+        return requestFn(
+            url,
+            {
+                method,
+                agent,
+                headers
+            }
+        );
     }
 
     /**
@@ -570,19 +605,13 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @returns {Promise} Promise resolving to `ReadableStream<any>` with topic data.
      */
     async getTopic(topic: string): Promise<Readable> {
-        const cpmUrl = new URL("http://" + this.cpmURL + "/topic/" + topic);
-
         return new Promise<Readable>((resolve, _reject) => {
-            request(
-                cpmUrl,
-                {
-                    method: "GET"
-                }
-            ).on("response", (res: IncomingMessage) => {
-                resolve(res);
-            }).on("error", (err: Error) => {
-                this.logger.error("Topic request error:", err);
-            }).end();
+            this.makeHttpRequestToCpm("POST", `/topic/${topic}`)
+                .on("response", (res: http.IncomingMessage) => {
+                    resolve(res);
+                }).on("error", (err: Error) => {
+                    this.logger.error("Topic request error:", err);
+                }).end();
         });
     }
 }
