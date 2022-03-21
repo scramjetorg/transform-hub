@@ -215,7 +215,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     private get cpmUrl() {
         const protocol = this.isHttps ? "https" : "http";
 
-        return `${protocol}://${this.cpmHostname}`;
+        return `${protocol}://${this.cpmHostname.replace(/\/$/, "")}`;
     }
 
     /**
@@ -578,7 +578,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
-        const url = `${this.cpmUrl}/${reqPath}`;
+        const url = this.cpmUrl + reqPath;
         const agent = this.isHttps
             ? new https.Agent({
                 keepAlive: true, ca: [this.cpmSslCa]
@@ -600,7 +600,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     async getTopic(topic: string): Promise<Readable> {
         return new Promise<Readable>((resolve, _reject) => {
-            this.makeHttpRequestToCpm("POST", `/topic/${topic}`)
+            this.makeHttpRequestToCpm("GET", `/topic/${topic}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
                 }).on("error", (err: Error) => {
