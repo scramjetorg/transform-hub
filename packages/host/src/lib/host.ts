@@ -122,6 +122,7 @@ export class Host implements IComponent {
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
 
         this.logger.addOutput(prettyLog);
+        this.serviceDiscovery.logger.addOutput(prettyLog);
         prettyLog.pipe(process.stdout);
 
         this.logger.info("Log Level", sthConfig.logLevel);
@@ -153,6 +154,7 @@ export class Host implements IComponent {
                 },
                 this.api.server
             );
+            this.cpmConnector.logger.addOutput(prettyLog);
             this.cpmConnector.setLoadCheck(this.loadCheck);
             this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
             this.serviceDiscovery.setConnector(this.cpmConnector);
@@ -589,6 +591,7 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             if (csic.provides && csic.provides !== "") {
+                // @TODO not sure why we need that
                 csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
                     {
                         topic: csic.provides,
