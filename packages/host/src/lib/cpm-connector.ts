@@ -1,7 +1,7 @@
 import fs from "fs";
 
-import { Agent, ClientRequest, IncomingMessage, Server } from "http";
-import { request } from "https";
+import { ClientRequest, IncomingMessage, Server } from "http";
+import { request, Agent } from "https";
 import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, Readable } from "stream";
 import {
@@ -552,7 +552,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             {
                 method: "POST",
                 // @TODO support https agent and ca
-                agent: new Agent({ keepAlive: true }),
+                agent: new Agent({ keepAlive: true, ca:  [fs.readFileSync(this.config.cpmSslCaPath!)] }),
                 headers: {
                     "x-end-stream": "true",
                     "content-type": topicCfg.contentType || "application/x-ndjson"
