@@ -578,23 +578,17 @@ export class CPMConnector extends TypedEmitter<Events> {
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
-        const isHttps = !!this.cpmSslCa;
-
         const url = `${this.cpmUrl}/${reqPath}`;
-        const agent = isHttps
+        const agent = this.isHttps
             ? new https.Agent({
-                keepAlive: true, ca: [fs.readFileSync(this.cpmSslCa!)]
+                keepAlive: true, ca: [this.cpmSslCa]
             })
             : new http.Agent({ keepAlive: true });
-        const requestFn = isHttps ? https.request : http.request;
+        const requestFn = this.isHttps ? https.request : http.request;
 
         return requestFn(
             url,
-            {
-                method,
-                agent,
-                headers
-            }
+            { method, agent, headers }
         );
     }
 
