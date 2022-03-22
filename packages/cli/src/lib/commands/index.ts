@@ -14,6 +14,7 @@ import { completion } from "./completion";
 
 export const commands: CommandDefinition[] = [
     auth,
+    scope,
     pack,
     host,
     hub,

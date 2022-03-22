@@ -1,7 +1,7 @@
 import { Command } from "commander";
 
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
-import { getConfig, setConfigValue } from "../config";
+import { globalConfig, sessionConfig } from "../config";
 
 let middlewareClient: MiddlewareClient;
 
@@ -14,7 +14,7 @@ let middlewareClient: MiddlewareClient;
 export const getMiddlewareClient = (command: Command): MiddlewareClient => {
     if (middlewareClient) return middlewareClient;
 
-    const mwUrl = getConfig().middlewareApiUrl;
+    const mwUrl = globalConfig.getConfig().middlewareApiUrl;
 
     if (!mwUrl) {
         throw new Error("Middleware API URL is not specified");
@@ -24,21 +24,19 @@ export const getMiddlewareClient = (command: Command): MiddlewareClient => {
 
     if (command.opts().log) {
         middlewareClient.client.addLogger({
-            ok(result) {
-                const {
-                    status, statusText, url
-                } = result;
+            ok(result: any) {
+                const { status, statusText, url } = result;
 
                 // eslint-disable-next-line no-console
                 console.error("Request ok:", url, `status: ${status} ${statusText}`);
             },
-            error(error) {
+            error(error: any) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
                 // eslint-disable-next-line no-console
                 console.error(`Request failed with code "${code}" status: ${message}`);
-            }
+            },
         });
     }
 
@@ -46,9 +44,9 @@ export const getMiddlewareClient = (command: Command): MiddlewareClient => {
 };
 
 export const setPlatformDefaults = async (command: Command) => {
-    const config = getConfig();
+    const session = sessionConfig.getConfig();
 
-    if (config.lastSpaceId || config.lastHubId) {
+    if (session.lastSpaceId || session.lastHubId) {
         return false;
     }
 
@@ -72,8 +70,8 @@ export const setPlatformDefaults = async (command: Command) => {
         return false;
     }
 
-    setConfigValue("lastSpaceId", managers[0].id);
-    setConfigValue("lastHubId", hosts[0].id);
+    sessionConfig.setLastSpaceId(managers[0].id);
+    sessionConfig.setLastHubId(hosts[0].id);
 
     // eslint-disable-next-line no-console
     console.log(`Defaults set to: Space: ${managers[0].id}, Hub: ${hosts[0].id}`);

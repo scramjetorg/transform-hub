@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
-import { setConfigValue } from "../config";
+import { sessionConfig } from "../config";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -52,6 +52,6 @@ export const space: CommandDefinition = (program) => {
             const managerClient = multiManagerClient.getManagerClient(id);
 
             console.log({ id, ...await managerClient.getVersion() });
-            setConfigValue("lastSpaceId", id);
+            sessionConfig.setLastSpaceId(id);
         });
 };
