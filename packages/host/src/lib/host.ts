@@ -154,12 +154,10 @@ export class Host implements IComponent {
                 },
                 this.api.server
             );
-            this.cpmConnector.logger.addOutput(prettyLog);
+            this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
             this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
             this.serviceDiscovery.setConnector(this.cpmConnector);
-
-            this.cpmConnector.logger.pipe(this.logger);
         }
     }
 
