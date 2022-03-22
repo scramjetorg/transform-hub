@@ -137,6 +137,8 @@ export class Host implements IComponent {
         this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements });
 
         this.socketServer = socketServer;
+        this.socketServer.logger.pipe(this.logger);
+
         this.api = apiServer;
 
         this.apiBase = this.config.host.apiBase;
@@ -296,8 +298,6 @@ export class Host implements IComponent {
             }
 
             req.url = req.url?.substring(this.instanceBase.length + 1 + params.id.length);
-
-            this.logger.debug(req.method!, req.url);
 
             return instance.router.lookup(req, res, next);
         }

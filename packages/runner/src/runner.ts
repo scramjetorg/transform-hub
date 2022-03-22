@@ -90,6 +90,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.emitter = new EventEmitter();
 
         this.logger = new ObjLogger(this, { id: instanceId });
+        hostClient.logger.pipe(this.logger);
 
         if (process.env.PRINT_TO_STDOUT) {
             this.logger.addOutput(process.stdout);
@@ -272,7 +273,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     private exit(exitCode?: number) {
         if (typeof exitCode !== undefined) process.exitCode = exitCode;
         // TODO: why we need this?
-        setTimeout(() => process.exit());
+        setTimeout(() => process.exit(), 100);
     }
 
     async main() {

@@ -52,6 +52,7 @@ class HostClient implements IHostClient {
         );
 
         this._streams = openConnections as HostOpenConnections;
+        this.logger.debug("Connected to host");
     }
 
     async disconnect() {
