@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/cli",
-  "version": "0.18.7",
+  "version": "0.19.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides a CLI interface to communicate with Scramjet Transform Hub.",
   "main": "./src/index.ts",
   "bin": {
@@ -20,9 +20,9 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/api-client": "^0.18.7",
-    "@scramjet/client-utils": "^0.18.7",
-    "@scramjet/middleware-api-client": "^0.18.7",
+    "@scramjet/api-client": "^0.19.0",
+    "@scramjet/client-utils": "^0.19.0",
+    "@scramjet/middleware-api-client": "^0.19.0",
     "commander": "^8.3.0",
     "commander-completion": "^1.0.1",
     "minimatch": "^3.1.2",

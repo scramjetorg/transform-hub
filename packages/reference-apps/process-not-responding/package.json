@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/process-not-responding",
-  "version": "0.18.7",
+  "version": "0.19.0",
   "main": "index.js",
   "scripts": {
     "build:refapps": "tsc -p tsconfig.json",

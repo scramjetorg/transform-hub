@@ -45,6 +45,7 @@ Prominent
 - 5538ac52 - STH: update docker to bullseye, silent yarn
 - 8c54e56e - Restore proper STOP/KILL supervisor mechanisms.
 - b214a8d4 - Add HTTPS support to Verser.
+- 7f2484f16 - CLI commands for interacting with Scramjet Cloud Platform
 
 New features:
 
@@ -117,7 +118,10 @@ Bugfixes and minor improvements:
 - Restore proper STOP/KILL supervisor mechanisms in CSIController
 - Dependencies security upgrade
 - HTTPS support for connecting to cloud platform manager
+- CLI commands for interacting with Scramjet Cloud Platform
+- Shell autocompletion for cli
+- Session and global configuration for cli
 
-## @scramjet/transform Hub - v0.18.7
+## @scramjet/transform Hub - v0.19
 
 This is the last release in changelog.
