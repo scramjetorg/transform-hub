@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-christmas-surprise",
-  "version": "0.18.7",
+  "version": "0.19.0",
   "lang": "python",
   "main": "./christmas.py",
   "author": "Santa <open-source@scramjet.org>",

@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-stop-handler",
-  "version": "0.18.7",
+  "version": "0.19.0",
   "main": "./stop-handler.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",
   "license": "GPL-3.0",

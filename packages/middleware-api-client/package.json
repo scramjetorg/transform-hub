@@ -1,6 +1,6 @@
 {
     "name": "@scramjet/middleware-api-client",
-    "version": "0.18.7",
+    "version": "0.19.0",
     "description": "Scramjet Middleware API Client",
     "main": "src/index.ts",
     "scripts": {
@@ -15,13 +15,13 @@
         "postbuild": "yarn prepack"
     },
     "dependencies": {
-        "@scramjet/api-client": "^0.18.7",
-        "@scramjet/client-utils": "^0.18.7",
-        "@scramjet/manager-api-client": "^0.18.7",
-        "@scramjet/multi-manager-api-client": "^0.18.7"
+        "@scramjet/api-client": "^0.19.0",
+        "@scramjet/client-utils": "^0.19.0",
+        "@scramjet/manager-api-client": "^0.19.0",
+        "@scramjet/multi-manager-api-client": "^0.19.0"
     },
     "devDependencies": {
-        "@scramjet/types": "^0.18.7",
+        "@scramjet/types": "^0.19.0",
         "ava": "^3.15.0",
         "esbuild": "0.14.23",
         "ts-node": "^10.7.0",
