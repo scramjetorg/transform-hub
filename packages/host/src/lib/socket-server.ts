@@ -4,6 +4,7 @@ import net from "net";
 
 import { isDefined, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { CommunicationChannel } from "@scramjet/symbols";
 
 type MaybeSocket = net.Socket | null
 type RunnerConnectionsInProgress = [
@@ -81,6 +82,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 if (runner.every(isDefined)) {
                     this.runnerConnectionsInProgress.delete(id);
 
+                    runner[CommunicationChannel.LOG]!.pipe(this.logger.inputStringifiedLogStream);
                     this.emit("connect", id, runner as RunnerOpenConnections);
                 }
             });
