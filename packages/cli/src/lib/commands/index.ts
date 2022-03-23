@@ -25,6 +25,6 @@ export const commands: CommandDefinition[] = [
     instance,
     topic,
     template,
-    // FIXME: completion not in draft
+    // TODO: completion check with version of draft 2.0
     completion,
 ];

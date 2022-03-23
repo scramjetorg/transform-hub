@@ -19,17 +19,18 @@ export const sequence: CommandDefinition = (program) => {
         .command("sequence")
         .alias("seq")
         .usage("si seq [subcommand] [options...]")
-        // FIXME: get rid of "aka"?
+        // TODO: update with draft 2.0
         .description("operations on sequence of chained functions aka program");
-    // FIXME: which description should we leave?
-    // .description(`The sequence is a list of chained functions with a lightweight
-    // application business logic that contains a developer code.
-    // The minimal number is one function.`);
+
+    sequenceCmd
+        .command("list")
+        .alias("ls")
+        .description("list the sequences")
+        .action(async () => displayEntity(program, getHostClient(program).listSequences()));
 
     sequenceCmd
         .command("pack")
-        // FIXME: arguments should be required, and only path proposition <path>?
-        .argument("[path|folder]")
+        .argument("<path>")
         .description("create archived file (package) with sequence for later use")
         .action(() => {
             // TODO: implement me
@@ -38,10 +39,10 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("send")
-        .argument("<folder|package>")
+        .argument("<package>")
         .argument("[--start]")
-        // FIXME: are args only needed when start?
-        .argument("[args...]")
+        // TODO: fix with draft 2.0
+        .option("--args [args...]")
         .description("send package or folder to the hub and optionally start it")
         .action(() => {
             // TODO: implement me
@@ -64,19 +65,11 @@ export const sequence: CommandDefinition = (program) => {
     // });
 
     sequenceCmd
-        .command("list")
-        .alias("ls")
-        .description("list the sequences")
-        .action(async () => displayEntity(program, getHostClient(program).listSequences()));
-
-    sequenceCmd
         .command("start")
         .argument("<id>")
-        //FIXME: default values must be moved -won't work as --hub
-        // .argument("[hub=aws|ovh|gcp]")
-        //FIXME: proposition:
-        .option("--hub <aws|ovh|gcp>")
-        // FIXME: -won't work as described in hub: --args arg1 arg2
+        // TODO: add description from draft 2.0
+        .option("--hub <provider>", "aws|ovh|gcp")
+        // TODO: fix with draft 2.0 -won't work as described in hub: --args arg1 arg2
         .option("--args [args...]")
         .description("start the sequence with or without given arguments")
         .action((id, { hub, ...args }) => {
@@ -86,6 +79,15 @@ export const sequence: CommandDefinition = (program) => {
             throw new Error("Implement me");
         });
 
+    sequenceCmd
+        .command("deploy")
+        .argument("<path>")
+        // TODO: add description from draft 2.0
+        .description("")
+        .action(() => {
+            // TODO: implement me
+            throw new Error("Implement me");
+        });
     // TODO: cleanup after .command("start") implementation
     // /**
     //  * Command `si sequence start`

@@ -1,7 +1,6 @@
 import { CommandDefinition } from "../../types";
 import { globalConfig } from "../config";
 import { displayObject } from "../output";
-import { globalConfigFile, simplyfyPath } from "../paths";
 
 /**
  * Initializes `config` command.
@@ -16,10 +15,7 @@ export const config: CommandDefinition = (program) => {
         .command("config")
         .alias("c")
         .usage("si config [subcommand] ")
-        // FIXME: Do we realy want to show path to global config?
-        .description(`Config contains global information. It is located under ${simplyfyPath(globalConfigFile)}`);
-    // FIXME: which description should we leave?
-    // .description("operations on configuration file");
+        .description("config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");
 
     /**
      * Command: `si config print`
@@ -32,61 +28,26 @@ export const config: CommandDefinition = (program) => {
         .description("Print out the current config")
         .action(() => displayObject(program, globalConf));
 
-    const setCommand = configCmd
+    configCmd
         .command("set")
-        .argument("<pathToFile|{json}>")
-        .description("set config from file or pass json object")
-        .action(() => {
-            // TODO: implement me
-            // FIXME: what is expected behaviour of pathToFile- use this path or copy to global config?
-            throw new Error("Implement me");
-        });
-
-    setCommand
-        .command("apiUrl")
-        // FIXME: argument should be apiUrl or url?
-        .argument("<apiUrl>")
-        .description(`specify the hub API url (default: "${apiUrl}")`)
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
-
-    setCommand
-        .command("middlewareApiUrl")
-        // FIXME: mixed style? why here middlewareApiUrl->url and with apiUrl->apiUrl
-        .argument("<url>")
-        .description(`specify middleware API url (default: "${middlewareApiUrl}")`)
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
-
-    setCommand
-        .command("scope")
-        .argument("<name>")
-        .description("specify default scope that should be used when session start")
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
-
-    setCommand
-        .command("env")
-        .argument("<production|develop>")
-        //FIXME: missing quotes on env?
-        .description(`specify the environment (default: ${env})`)
+        .option("--json <json>", "set config from json object")
+        .option("--apiUrl <url>", `specify the hub API url (default: "${apiUrl}")`)
+        .option("--middlewareApiUrl <url>", `specify middleware API url (default: "${middlewareApiUrl}")`)
+        .option("--scope <name>", "specify default scope that should be used when session start")
+        .option("--env <production|develop>", `specify the environment (default: ${env})`)
+        .description("use an option to set the values in config")
         .action(() => {
             // TODO: implement me
             throw new Error("Implement me");
         });
 
     configCmd
-        .command("unset")
-        // FIXME: not sure if del is proper name for logic behind (since we reset to default)
-        .alias("del")
-        .argument("<apiUrl|middlewareApiUrl>")
-        .description("unset config value")
+        .command("reset")
+        .option("--apiUrl")
+        .option("--middlewareApiUrl")
+        .option("--env")
+        .option("--all")
+        .description("reset config value to default")
         .action(() => {
             // TODO: implement me
             throw new Error("Implement me unset");

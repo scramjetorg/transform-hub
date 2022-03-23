@@ -10,27 +10,35 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const hub: CommandDefinition = (program) => {
+    //TODO: add commands version, log,
     const hubCmd = program
         .command("hub")
         .usage("si hub [subcommand] [options...]")
-        //FIXME: diff with draft returns:
-        // --driver                   (default: "scp")
+        .option(
+            "-v, --version [name|id]",
+            "display chosen hub version if a name is not provided it displays a version of a current hub"
+        )
         .option("--driver", "", "scp")
-        .option("--provider <aws|cpm>")
-        .option("--region <us-east-1|...>")
+        .option("--provider <value>", "specify provider: aws|cpm")
+        .option("--region <value>", "i.e.: us-east-1")
         .description("allows to run programs in different data centers, computers or devices in local network");
-    // FIXME: which description should we leave?
-    // .description("Hub allows to run programs in different data centers, computers or devices in local network.");
 
-    // hubCmd
-    //     //FIXME: missing name in draft
-    //     .command()
-    //     .argument("[name]")
-    //     .option("-v")
-    //     .action(() => {
-    //         // TODO: implement me
-    //         throw new Error("Implement me");
-    //     });
+    //TODO: remove after option -v implementation
+    // hostCmd
+    // .command("version")
+    // .description("get version")
+    // .action(async () => displayEntity(program, getHostClient(program).getVersion()));
+
+    hubCmd
+        .command("create")
+        .argument("<name>")
+        .option("--json <json>")
+        .option("--file <pathToFile>")
+        .description(" create hub with parameters")
+        .action(() => {
+            // TODO: implement me
+            throw new Error("Implement me");
+        });
 
     hubCmd
         .command("use")
@@ -93,33 +101,13 @@ export const hub: CommandDefinition = (program) => {
             throw new Error("Implement me");
         });
 
-    hubCmd
-        .command("create")
-        .argument("<options...>")
-        .description(" create hub with parameters")
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
-
-    hubCmd
-        // FIXME: probably should be merged with previous one
-        .command("create")
-        // FIXME: differs from draft
-        .argument("<pathToFile>")
-        .description("create hub with parameters from JSON file")
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
-
-    hubCmd
-        .command("set")
-        .argument("<apiUrl>")
-        // FIXME: lacking description in draft
-        .description("")
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
+    // TODO: think about it
+    // hubCmd
+    //     .command("set")
+    //     .argument("<apiUrl>")
+    //     .description("")
+    //     .action(() => {
+    //         // TODO: implement me
+    //         throw new Error("Implement me");
+    //     });
 };

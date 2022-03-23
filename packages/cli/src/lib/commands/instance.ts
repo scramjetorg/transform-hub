@@ -15,9 +15,8 @@ export const instance: CommandDefinition = (program) => {
         .command("instance [command]")
         .usage("si inst [subcommand] [options...]")
         .alias("inst")
+        //TODO: remove aka, check with draft 2.0
         .description("operations on running sequence aka computing instance");
-    // FIXME: which description should we leave?
-    // .description("Instance is a running sequence aka computing instance.");
 
     instanceCmd
         .command("list")
@@ -41,7 +40,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("stop")
         .argument("<id>", "The instance id or '-' for the last one started.")
-        // FIXME: for what we use timeout?
+        // TODO: check in draft 2.0
         .argument("<timeout>", "Timeout in milliseconds.")
         .description("end instance gracefully waiting for unfinished tasks")
         .action(async (id: string, timeout: string) => {
@@ -83,8 +82,8 @@ export const instance: CommandDefinition = (program) => {
         });
 
     instanceCmd
-        //FIXME: should be 3 methods in separate subcomand? i.e. "si inst event emit"?
-        .command("emit|trigger|invoke")
+        //TODO: wait on draft 2.0 for one command
+        .command("emit|invoke")
         .argument("<id>")
         .argument("<eventName>")
         .argument("[payload]")
@@ -95,9 +94,7 @@ export const instance: CommandDefinition = (program) => {
         });
 
     instanceCmd
-        //FIXME: should be in separate subcomand? i.e. "si inst event get"? alias somehow doesn't fit...
         .command("getEvent")
-        .alias("on")
         .argument("[options]")
         .argument("<id>")
         .argument("<eventName>")
@@ -110,10 +107,9 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("input")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        // FIXME: so file is optional or required?
-        .argument("[<file>]", "The input file (stdin if not given default)")
-        // FIXME: get rid of this?
-        // .option("-t, --content-type <value>", "Content-Type", "text/plain")
+        .argument("[file]", "The input file (stdin if not given default)")
+        // TODO: add to draft 2.0 option -t
+        .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .description("send file to input, if file not given the data will be read from stdin")
         .action(async (id: string, filename: string, { contentType }) => {
             const instanceClient = getInstance(program, getInstanceId(id));
@@ -126,6 +122,7 @@ export const instance: CommandDefinition = (program) => {
             );
         });
 
+    // FIXME: ustalic z Ala ktore stdin output itd zostawiamy
     instanceCmd
         .command("output")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
