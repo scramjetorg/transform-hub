@@ -93,6 +93,9 @@ export type STHConfiguration = {
      */
     cpmUrl: string;
 
+    /**
+     * Path to the certficate authority file for verifying self-signed CPM certs 
+     */
     cpmSslCaPath?: string;
 
     /**

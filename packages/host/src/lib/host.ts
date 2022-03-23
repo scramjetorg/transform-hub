@@ -122,7 +122,7 @@ export class Host implements IComponent {
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
 
         this.logger.addOutput(prettyLog);
-        this.serviceDiscovery.logger.addOutput(prettyLog);
+        this.serviceDiscovery.logger.pipe(this.logger);
         prettyLog.pipe(process.stdout);
 
         this.logger.info("Log Level", sthConfig.logLevel);
