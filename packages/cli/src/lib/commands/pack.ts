@@ -7,6 +7,7 @@ import { packAction } from "../common";
  * @param {Command} program Commander object.
  */
 export const pack: CommandDefinition = (program) => {
+    // TODO: move to si seq pack
     const packProgram = program
         .command("pack <directory>")
         .option("-c, --stdout", "output to stdout (ignores -o)")

@@ -8,6 +8,7 @@ import { displayEntity, displayStream } from "../output";
  * @param {Command} program Commander object.
  */
 export const host: CommandDefinition = (program) => {
+    // FIXME: not in the draft
     const hostCmd = program
         .command("host [command]")
         .description("something");
