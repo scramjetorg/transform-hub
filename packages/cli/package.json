@@ -15,7 +15,7 @@
     "test:ava": "ava",
     "preinstall": "tar --version 2>&1 >/dev/null",
     "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack && cp ./src/completion ../../dist/cli/completion -rL && cp ./src/types/commander-completion.d.ts ../../dist/cli/types/commander-completion.d.ts -L"
+    "postbuild": "yarn prepack && mkdir -p ../../dist/cli/types && cp ./src/completion ../../dist/cli/completion -rL && cp ./src/types/commander-completion.d.ts ../../dist/cli/types/commander-completion.d.ts -L"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
