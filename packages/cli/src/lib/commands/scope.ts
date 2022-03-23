@@ -12,27 +12,59 @@ export const scope: CommandDefinition = (program) => {
     const scopeCmd = program
         .command("scope")
         .alias("s")
-        .description("Manage scope of the space and hub in temporary file.");
+        .usage("si scope [subcommand] [options...]")
+        .description("manage scopes that store pairs of spaces and hubs used when working");
 
-    scopeCmd.command("list").alias("ls").description("list scope files").action(listScopes);
+    scopeCmd.command("list").alias("ls").description("list all created scopes").action(listScopes);
+
     scopeCmd
-        .command("print <name>")
-        .description("see json file under the scope file")
+        .command("print")
+        .argument("<name>")
+        .description("see json file under the scope")
         .action(async (name: string) => {
             const scopeConfig = getScope(name);
 
-            if (!scopeConfig) return;
+            if (!scopeConfig) {
+                // eslint-disable-next-line no-console
+                console.error(`Couldn't find scope: ${name}`);
+                return;
+            }
+
             await displayObject(program, scopeConfig);
         });
+
     scopeCmd
-        .command("use <name>")
-        .description("use scope under the file name")
-        .action((name: string) => {
-            if (scopeExists(name)) globalConfig.setScope(name);
+        .command("add")
+        .option("--hub <name> <id>", "add hub to specified scope")
+        .option("--space <name> <apiUrl>", "add space to specified scope")
+        .description("add hub or space to specified scope");
+
+    scopeCmd
+        .command("save")
+        .argument("<name>")
+        .description("save current chosen space and hub under a scope")
+        .action(() => {
+            // TODO: implement me
+            throw new Error("Implement me");
         });
+
     scopeCmd
-        .command("delete <name>")
-        .description("delete temp scope file")
+        .command("use")
+        .argument("<name>")
+        .description("work on the selected scope")
+        .action((name: string) => {
+            if (!scopeExists(name)) {
+                // eslint-disable-next-line no-console
+                console.error(`Couldn't find scope: ${name}`);
+                return;
+            }
+            sessionConfig.setScope(name);
+        });
+
+    scopeCmd
+        .command("delete")
+        .argument("<name>")
+        .description("delete specific scope")
         .action((name: string) => {
             if (globalConfig.getConfig().scope === name) {
                 // eslint-disable-next-line no-console
