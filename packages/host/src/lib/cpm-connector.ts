@@ -90,7 +90,6 @@ export class CPMConnector extends TypedEmitter<Events> {
 
     /**
      * Stream used to read and write data to Manager.
-    ```
      *
      * @type {Duplex}
      */
@@ -565,7 +564,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @param topicCfg Topic configuration.
      */
     sendTopic(topic: string, topicCfg: { contentType: string, stream: ReadableStream<any> | WritableStream<any> }) {
-        const req = this.makeHttpRequestToCpm("POST", `/topic/${topic}`, {
+        const req = this.makeHttpRequestToCpm("POST", `topic/${topic}`, {
             "x-end-stream": "true",
             "content-type": topicCfg.contentType || "application/x-ndjson"
         });
@@ -578,7 +577,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
-        const url = this.cpmUrl + reqPath;
+        const url = `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
         const agent = this.isHttps
             ? new https.Agent({
                 keepAlive: true, ca: [this.cpmSslCa]
@@ -600,7 +599,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     async getTopic(topic: string): Promise<Readable> {
         return new Promise<Readable>((resolve, _reject) => {
-            this.makeHttpRequestToCpm("GET", `/topic/${topic}`)
+            this.makeHttpRequestToCpm("GET", `topic/${topic}`)
                 .on("response", (res: http.IncomingMessage) => {
                     resolve(res);
                 }).on("error", (err: Error) => {
