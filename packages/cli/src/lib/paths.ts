@@ -20,6 +20,11 @@ export const simplyfyPath = (path: string) => {
     return path;
 };
 
+export const simplyfyPath = (path: string) => {
+    if (path.startsWith(homedir())) return path.replace(homedir(), "~");
+    return path;
+};
+
 const initDir = (dir: string) => {
     if (existsSync(dir)) return;
     const result = mkdirSync(dir, { recursive: true });

@@ -85,6 +85,7 @@ export const instance: CommandDefinition = (program) => {
             );
         });
 
+    // FIXME: ustalic z Ala ktore stdin output itd zostawiamy
     instanceCmd
         .command("output")
         .argument("<id>", "the instance id or '-' for the last one started or selected.")
@@ -161,3 +162,54 @@ export const instance: CommandDefinition = (program) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("stdout"));
         });
 };
+
+//TODO: cleanup
+// instanceCmd
+//     .command("select")
+//     .argument("<id>", "The instance id")
+//     .description("Select an instance id as default")
+//     .action(async (id: string) => sessionConfig.setLastInstanceId(id) as unknown as void);
+
+// instanceCmd
+//     .command("invokeEvent")
+//     .alias("emit")
+//     .description("Sends event with eventName and a JSON formatted event payload")
+//     .argument("<id>", "The instance id or '-' for the last one started or selected.")
+//     .arguments("<eventName> [<payload>]")
+//     .action(async (id: string, eventName: string, message: string) => {
+//         const instanceClient = getInstance(program, getInstanceId(id));
+
+//         return displayEntity(program, instanceClient.sendEvent(eventName, message));
+//     });
+
+// /**
+//  * No eventName.
+//  * Currently there is no event filtering.
+//  * Only the last event instance is returned
+//  */
+// instanceCmd
+//     .command("event")
+//     .description("Get the last event occurence (will wait for the first one if not yet retrieved)")
+//     .alias("on")
+//     .argument("<id>", "The instance id or '-' for the last one started or selected.")
+//     .argument("<eventName>", "The event name")
+//     .option("-s, --stream", "stream the events (the stream will start with last event)")
+//     .option("-n, --next", "wait for the next event occurrence")
+//     .action(async (id: string, event: string, { next, stream }) => {
+//         if (stream) return displayStream(program, getInstance(program, getInstanceId(id)).getEventStream(event));
+
+//         if (next) return displayEntity(program, getInstance(program, getInstanceId(id)).getNextEvent(event));
+
+//         return displayEntity(program, getInstance(program, getInstanceId(id)).getEvent(event));
+//     });
+
+// instanceCmd
+//     .command("attach")
+//     .argument("<id>", "The instance id or '-' for the last one started or selected.")
+//     .description("Connect to all stdio - stdin, stdout, stderr of a running instance")
+//     .action(async (id: string) => {
+//         const inst = getInstance(program, getInstanceId(id));
+
+//         await attachStdio(program, inst);
+//     });
+

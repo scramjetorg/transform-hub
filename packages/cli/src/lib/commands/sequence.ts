@@ -86,7 +86,7 @@ export const sequence: CommandDefinition = (program) => {
         sequenceCmd
             .command("start")
             .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
-        // TODO: for future impolemenation
+        // TODO: for future implementation
         // .option("--hub <provider>", "aws|ovh|gcp");
             .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
             .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
@@ -126,6 +126,56 @@ export const sequence: CommandDefinition = (program) => {
                 await sendPackage(path);
             await startSequence("-", { configFile, configString, args });
         });
+    // TODO: cleanup after .command("start") implementation
+    // /**
+    //  * Command `si sequence start`
+    //  * @param id sequence
+    //  * @param appConfig
+    //  * @param args for example '[10000, 2000]' | '["tcp"]'
+    //  * @returns {Object} with response or error
+    //  */
+    // sequenceCmd
+    //     .command("start")
+    //     .description("Starts a sequence")
+    //     .argument("<id>", "The sequence id to start or '-' for the last uploaded.")
+    //     .argument("[args...]")
+    //     .option("-c, --config <config-path>", "Appconfig path location")
+    //     .option("-C, --config-json <config-string>", "Appconfig as string")
+    //     .action(async (id: string, args: any) => {
+    //         const { config, configJson } = sequenceCmd.opts();
+    //         const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient(program));
+
+    //         const instance = await sequenceClient.start(await resolveConfigJson(configJson, config), args);
+
+    //         sessionConfig.setLastInstanceId(instance.id);
+    //         return displayObject(program, instance);
+    //     });
+
+    // FIXME: tego nie ma w nowym drafcie
+    // sequenceCmd
+    //     .command("run")
+    //     .description("Uploads a package and immediately executes it with given arguments")
+    //     .argument("<package>", "The file to upload or '-' to use the last packed")
+    //     .argument("[args...]", "Additional args")
+    //     .option("-d, --detached", "Don't attach to stdio")
+    //     .option("-c, --config <config-path>", "Appconfig path location")
+    //     .option("-C, --config-json <config-string>", "Appconfig as string")
+    //     .action(async (sequencePackage: string, args: any) => {
+    //         const { config: configPath, detached } = sequenceCmd.opts();
+    //         const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
+    //         const seq = await getHostClient(program).sendSequence(
+    //             sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin
+    //         );
+
+    //         sessionConfig.setLastSequenceId(seq.id);
+    //         const instance = await seq.start(config, args);
+
+    //         sessionConfig.setLastInstanceId(instance.id);
+
+    //         if (!detached) {
+    //             await attachStdio(program, instance);
+    //         }
+    //     });
 
     sequenceCmd
         .command("get")

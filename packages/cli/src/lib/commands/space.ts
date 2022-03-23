@@ -17,6 +17,8 @@ export const space: CommandDefinition = (program) => {
         .option("-c, --stdout", "output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
         .description("operations on grouped and separated runtime environments that allow sharing the data within them");
+        // FIXME: which description should we leave?
+        // .description("Space is grouped and separated runtime environments that allow sharing the data within them.");
 
     spaceCmd
         .command("create")
