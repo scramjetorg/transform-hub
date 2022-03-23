@@ -90,6 +90,10 @@ class DefaultFileConfig extends FileConfig {
 
         return fileConfig ? fileConfig : this.defaultConfig;
     }
+    getDefaultConfig() {
+        return this.defaultConfig;
+    }
+
     validateConfigValue(key: string, value: any): boolean {
         type defaultConfigKey = keyof typeof this.defaultConfig;
         return this.keyExists(key) && typeof value === typeof this.defaultConfig[key as defaultConfigKey];
@@ -118,6 +122,9 @@ class GlobalConfig extends DefaultFileConfig {
     }
     getConfig(): GlobalConfigEntity {
         return super.getConfig();
+    }
+    getDefaultConfig(): GlobalConfigEntity {
+        return super.getDefaultConfig();
     }
     getEnv(): configEnv {
         return this.getConfig().env;
@@ -179,6 +186,9 @@ class SessionConfig extends DefaultFileConfig {
     }
     getConfig(): SessionConfigEntity {
         return super.getConfig();
+    }
+    getDefaultConfig(): GlobalConfigEntity {
+        return super.getDefaultConfig();
     }
     setApiUrl(apiUrl: string): boolean {
         return this.setConfigValue("apiUrl", apiUrl) as boolean;

@@ -1,4 +1,3 @@
-
 import { CommandDefinition } from "../../types";
 import { auth } from "./auth";
 import { config } from "./config";
@@ -11,6 +10,7 @@ import { sequence } from "./sequence";
 import { space } from "./space";
 import { topic } from "./topic";
 import { completion } from "./completion";
+import { template } from "./template";
 
 export const commands: CommandDefinition[] = [
     auth,
@@ -24,5 +24,7 @@ export const commands: CommandDefinition[] = [
     space,
     instance,
     topic,
-    completion
+    template,
+    // TODO: completion check with version of draft 2.0
+    completion,
 ];

@@ -8,6 +8,7 @@ import { displayEntity, displayStream } from "../output";
  * @param {Command} program Commander object.
  */
 export const host: CommandDefinition = (program) => {
+    // TODO: move all functionality to commands/hub.ts and remove from commands
     const hostCmd = program
         .command("host [command]")
         .description("something");

@@ -7,6 +7,7 @@ import { globalConfig } from "../config";
  * @param {Command} program Commander object.
  */
 export const auth: CommandDefinition = (program) => {
+    // FIXME: not in the draft
     const authCmd = program.command("auth [command]");
 
     /**
