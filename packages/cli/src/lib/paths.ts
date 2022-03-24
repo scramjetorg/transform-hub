@@ -1,6 +1,6 @@
 import { homedir, tmpdir } from "os";
 import { resolve } from "path";
-import { existsSync, mkdirSync, readdirSync, rmdirSync } from "fs";
+import { existsSync, mkdirSync, readdirSync, rmSync } from "fs";
 import { sessionId } from "../utils/sessionId";
 
 export const configFileExt = ".json";
@@ -38,7 +38,7 @@ const clearUnusedSessionDirs = () => {
 
     existingSessions
         .filter((sessionPID) => !currentPids.includes(sessionPID))
-        .forEach((unusedSession: string) => rmdirSync(resolve(siTempDir, `./${unusedSession}`), { recursive: true }));
+        .forEach((unusedSession: string) => rmSync(resolve(siTempDir, `./${unusedSession}`), { recursive: true }));
 };
 
 /**
