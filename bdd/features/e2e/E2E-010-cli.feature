@@ -225,3 +225,14 @@ Feature: CLI tests
         And wait for "1000" ms
         And I execute CLI with "seq rm -" arguments
         And host is still running
+
+    @ci @cli @no-parallel
+    Scenario: E2E-010 TC-024 Check log coloring
+        When I execute CLI with bash command "cat ./data/sample-log.log | $SI util log-color"
+        Then stdout contents are the same as in file "./data/sample-log.log.ansi"
+
+    @ci @cli @no-parallel
+    Scenario: E2E-010 TC-025 Check log no-coloring
+        When I execute CLI with bash command "cat ./data/sample-log.log | $SI util log-color --no-color"
+        Then stdout contents are the same as in file "./data/sample-log.log.plain"
+

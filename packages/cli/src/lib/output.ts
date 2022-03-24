@@ -42,7 +42,7 @@ export async function displayObject(_program: Command, object: any) {
  */
 export async function displayStream(
     _program: Command,
-    response: Promise<Stream | ReadableStream<any>>,
+    response: Stream | ReadableStream<any> | Promise<Stream | ReadableStream<any>>,
     output: Writable = process.stdout
 ): Promise<void> {
     try {

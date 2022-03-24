@@ -8,6 +8,8 @@ import { STHRestAPI } from "@scramjet/types";
 import { getStreamsFromSpawn, defer } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
+import { promisify } from "util";
+import { resolve } from "path";
 
 // eslint-disable-next-line no-nested-ternary
 const si = process.env.SCRAMJET_SPAWN_JS
@@ -55,6 +57,16 @@ Then("the exit status is {int}", function(status: number) {
         assert.equal(stdio[2], status);
     }
     assert.ok(true);
+});
+
+Then("stdout contents are the same as in file {string}", async function(filepath: string) {
+    const res = (this as CustomWorld).cliResources;
+    const fileContents = await promisify(fs.readFile)(
+        resolve(process.cwd(), filepath),
+        { encoding: "utf-8" }
+    );
+
+    assert.equal(fileContents, res.stdio && res.stdio[0]);
 });
 
 Then("I get location {string} of compressed directory", function(filepath: string) {

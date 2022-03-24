@@ -1,0 +1,5 @@
+1648146394823 TRACE ProcessInstanceAdapter Runner process is running [ 484 ]
+1648146394923 TRACE ProcessInstanceAdapter Runner process exited [ 484 ]
+1648146394924 DEBUG ProcessInstanceAdapter Process returned non-zero status code [ 1 ]
+1648146394924 TRACE CSIController Sequence finished with status [ 1 ]
+1648146394924 ERROR CSIController Sequence finished with error [ 1 ]
