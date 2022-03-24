@@ -12,4 +12,5 @@ export * from "./lib/commands/space";
 export * from "./lib/commands/topic";
 export * from "./lib/commands/completion";
 export * from "./lib/commands/template";
+export * from "./lib/commands/util";
 export * from "./types/index";

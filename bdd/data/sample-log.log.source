@@ -1,0 +1,5 @@
+{"level":"TRACE","msg":"Runner process is running","ts":1648146394823,"from":"ProcessInstanceAdapter","Host":{},"data":[484]}
+{"level":"TRACE","msg":"Runner process exited","ts":1648146394923,"from":"ProcessInstanceAdapter","Host":{},"data":[484]}
+{"level":"DEBUG","msg":"Process returned non-zero status code","ts":1648146394924,"from":"ProcessInstanceAdapter","Host":{},"data":[1]}
+{"level":"TRACE","msg":"Sequence finished with status","ts":1648146394924,"from":"CSIController","Host":{},"data":[1]}
+{"level":"ERROR","msg":"Sequence finished with error","ts":1648146394924,"from":"CSIController","Host":{},"data":[1]}
