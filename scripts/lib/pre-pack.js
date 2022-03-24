@@ -163,11 +163,22 @@ class PrePack {
     }
 
     async copyToDist(src, filename) {
-        return this.copy(path.join(src, filename), path.join(this.rootDistPackPath, filename));
+        let srcFilename = filename;
+        let destFilename = filename;
+
+        if (typeof filename !== "string") {
+            srcFilename = filename.src;
+            destFilename = filename.dest;
+        }
+
+        return this.copy(
+            path.join(src, srcFilename),
+            path.join(this.rootDistPackPath, destFilename)
+        );
     }
 
     async copy(input, output) {
-        console.log(`Copy files form ${input} to ${output}`);
+        console.log(`Copy files from ${input} to ${output}`);
 
         return fse.copy(input, output, { recursive: true })
             .catch(err => {

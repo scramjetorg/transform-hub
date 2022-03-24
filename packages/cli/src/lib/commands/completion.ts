@@ -1,9 +1,10 @@
 import { readFileSync } from "fs";
+import { resolve } from "path";
 import { promisify } from "util";
 import { CommandDefinition } from "../../types";
 const exec = promisify(require("child_process").exec);
 
-const bashCompletionPath = require.resolve("../../completion/si");
+const bashCompletionPath = resolve(__dirname, "../../completion/si");
 
 /**
  * Initializes `completion` command.

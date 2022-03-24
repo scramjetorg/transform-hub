@@ -15,7 +15,7 @@
     "test:ava": "ava",
     "preinstall": "tar --version 2>&1 >/dev/null",
     "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack && mkdir -p ../../dist/cli/types && cp ./src/completion ../../dist/cli/completion -rL && cp ./src/types/commander-completion.d.ts ../../dist/cli/types/commander-completion.d.ts -L"
+    "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -39,6 +39,10 @@
     "typedoc-plugin-markdown": "^3.11.14",
     "typescript": "^4.5.5"
   },
+  "assets": [
+    {"src": "src/completion", "dest": "completion"},
+    {"src": "src/types/commander-completion.d.ts", "dest": "types/commander-completion.d.ts"}
+  ],
   "ava": {
     "extensions": [
       "ts"
