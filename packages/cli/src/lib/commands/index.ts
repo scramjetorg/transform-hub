@@ -11,6 +11,7 @@ import { space } from "./space";
 import { topic } from "./topic";
 import { completion } from "./completion";
 import { template } from "./template";
+import { util } from "./util";
 
 export const commands: CommandDefinition[] = [
     auth,
@@ -27,4 +28,5 @@ export const commands: CommandDefinition[] = [
     template,
     // TODO: completion check with version of draft 2.0
     completion,
+    util
 ];

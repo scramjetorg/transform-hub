@@ -1,0 +1,5 @@
+[2m2022-03-24T18:26:34.823Z[0m [2mTRACE[0m [35mProcessInstanceAdapter[0m Runner process is running [2m[ [33m484[39m ][0m
+[2m2022-03-24T18:26:34.923Z[0m [2mTRACE[0m [35mProcessInstanceAdapter[0m Runner process exited [2m[ [33m484[39m ][0m
+[2m2022-03-24T18:26:34.924Z[0m [34mDEBUG[0m [35mProcessInstanceAdapter[0m Process returned non-zero status code [2m[ [33m1[39m ][0m
+[2m2022-03-24T18:26:34.924Z[0m [2mTRACE[0m [35mCSIController[0m Sequence finished with status [2m[ [33m1[39m ][0m
+[2m2022-03-24T18:26:34.924Z[0m [31mERROR[0m [35mCSIController[0m Sequence finished with error [2m[ [33m1[39m ][0m

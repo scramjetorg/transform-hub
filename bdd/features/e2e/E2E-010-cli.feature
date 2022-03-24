@@ -249,3 +249,14 @@ Feature: CLI tests
         And I get instance output without waiting for the end
         Then confirm data named "hello-avengers" will be received
         * stop host
+
+    @ci @cli @no-parallel
+    Scenario: E2E-010 TC-026 Check log coloring
+        When I execute CLI with bash command "cat ./data/sample-log.log.source | $SI util log-color"
+        Then stdout contents are the same as in file "./data/sample-log.log.ansi"
+
+    @ci @cli @no-parallel
+    Scenario: E2E-010 TC-027 Check log no-coloring
+        When I execute CLI with bash command "cat ./data/sample-log.log.source | $SI util log-color --no-color"
+        Then stdout contents are the same as in file "./data/sample-log.log.plain"
+
