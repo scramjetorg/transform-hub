@@ -770,6 +770,7 @@ Then("confirm data defined as {string} received", async function(this: CustomWor
 
 Then("confirm data defined as {string} will be received", async function(this: CustomWorld, data) {
     const response = await waitForValueInStream(this.resources.outStream!, expectedResponses[data]);
+
     assert.equal(response, expectedResponses[data]);
 });
 
