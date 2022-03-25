@@ -15,8 +15,7 @@ export const instance: CommandDefinition = (program) => {
         .command("instance [command]")
         .usage("si inst [subcommand] [options...]")
         .alias("inst")
-        //TODO: remove aka, check with draft 2.0
-        .description("operations on running sequence aka computing instance");
+        .description("operations on running sequence");
 
     instanceCmd
         .command("list")
@@ -53,7 +52,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "The instance id or '-' for the last one started.")
         .description("status data about the instance")
         .action((/* { all, filter, force } */) => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -77,7 +76,7 @@ export const instance: CommandDefinition = (program) => {
         .command("event")
         .description("show event commands")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -89,7 +88,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("[payload]")
         .description("send event with eventName and a JSON formatted event payload")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -100,7 +99,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("<eventName>")
         .description("get the last event occurrence (will wait for the first one if not yet retrieved)")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -122,11 +121,11 @@ export const instance: CommandDefinition = (program) => {
             );
         });
 
-    // FIXME: ustalic z Ala ktore stdin output itd zostawiamy
+    //TODO: zostawic dla Agi do poprawienia czesci zwiazane z output stdio etc
     instanceCmd
         .command("output")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        // FIXME: on which output standard?
+        // TODO:: fix descriptions after output reinvention
         .description("show stream on output")
         .action((id: string) => {
             return displayStream(program, getInstance(program, getInstanceId(id)).getStream("output"));
@@ -135,7 +134,7 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("log")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        // FIXME: description doesn't describe constant work is it correct?
+        // TODO: description doesn't describe constant work
         // .description("Pipe running instance log to stdout")
         .description("show instance log")
         .action((id: string) => {
@@ -147,17 +146,17 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>")
         .description("listen to all stdio - stdin, stdout, stderr of a instance")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
     instanceCmd
         .command("stdin")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        // FIXME: so file is optional or required? Does descrition of default is ok?
-        .argument("[<file>]", "The input file (stdin if not given default)")
+        .argument("[file]", "The input file (stdin if not given default)")
         .description("send file to stdin, if file not given the data will be read from stdin")
         .action((id: string, stream: string) => {
+            // TODO: add file option
             const instanceClient = getInstance(program, getInstanceId(id));
 
             return displayEntity(program, instanceClient.sendStdin(stream ? createReadStream(stream) : process.stdin));
@@ -177,16 +176,13 @@ export const instance: CommandDefinition = (program) => {
             return displayStream(program, getInstance(program, getInstanceId(id)).getStream("stdout"));
         });
 
-    // FIXME: missing help [command] from draft
-
     instanceCmd
-        // FIXME: receives suits better to provides?
         .command("requires")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
         .argument("<topic-name>")
         .description("assign to an instance a topic that will consume the data")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -196,7 +192,7 @@ export const instance: CommandDefinition = (program) => {
         .argument("<topic-name>")
         .description("assign to an instance a topic that will send the data")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 

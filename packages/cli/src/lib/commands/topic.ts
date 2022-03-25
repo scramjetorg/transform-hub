@@ -11,17 +11,14 @@ export const topic: CommandDefinition = (program) => {
     const topicCmd = program
         .command("topic")
         .usage("si topic [subcommand] [options...]")
-        // FIXME: previous: operations on topic
         .description("publish/subscribe operations allows to manage data flow");
-    // FIXME: which description should we leave?
-    // .description("Topic allows to manage data flow by publish–subscribe (pub/sub) messaging operations.");
 
     topicCmd
         .command("create")
         .argument("<topic-name>")
         .description("create topic")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -38,11 +35,11 @@ export const topic: CommandDefinition = (program) => {
 
     topicCmd
         .command("delete")
-        //FIXME: alias rm like in previous delete commands?
+        .alias("rm")
         .argument("<topic-name>")
         .description("delete data from topic")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -50,9 +47,9 @@ export const topic: CommandDefinition = (program) => {
         .command("send")
         .argument("<topic-name>")
         .argument("[<file>]")
-        // FIXME: not in draft, should stay?
+        //TODO: add to draft
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        // FIXME: not in draft, should stay?
+        //TODO: add to draft
         .option("-e, --end", "x-end-stream", false)
         .description("send data on topic from file, directory or directly through the console")
         .action(async (topicName, filename, { contentType, end }) =>

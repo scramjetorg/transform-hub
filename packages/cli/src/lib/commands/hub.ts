@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
+import { getHostClient } from "../common";
 import { sessionConfig } from "../config";
-import { displayObject } from "../output";
+import { displayEntity, displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -10,7 +11,6 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const hub: CommandDefinition = (program) => {
-    //TODO: add commands version, log,
     const hubCmd = program
         .command("hub")
         .usage("si hub [subcommand] [options...]")
@@ -18,16 +18,24 @@ export const hub: CommandDefinition = (program) => {
             "-v, --version [name|id]",
             "display chosen hub version if a name is not provided it displays a version of a current hub"
         )
+        // TODO: missing description
         .option("--driver", "", "scp")
         .option("--provider <value>", "specify provider: aws|cpm")
         .option("--region <value>", "i.e.: us-east-1")
-        .description("allows to run programs in different data centers, computers or devices in local network");
-
-    //TODO: remove after option -v implementation
-    // hostCmd
-    // .command("version")
-    // .description("get version")
-    // .action(async () => displayEntity(program, getHostClient(program).getVersion()));
+        .description("allows to run programs in different data centers, computers or devices in local network")
+        .action(async ({ version }) => {
+            console.log("version: ", version);
+            if (version) {
+                if (typeof version === "boolean") {
+                    await displayEntity(program, getHostClient(program).getVersion());
+                } else {
+                    // display chosen hub version
+                    // FIXME: implement me
+                    throw new Error("Implement me");
+                }
+            }
+        }
+        );
 
     hubCmd
         .command("create")
@@ -36,7 +44,7 @@ export const hub: CommandDefinition = (program) => {
         .option("--file <pathToFile>")
         .description(" create hub with parameters")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
@@ -88,18 +96,12 @@ export const hub: CommandDefinition = (program) => {
     hubCmd
         .command("load")
         .description("monitor CPU, memory and disk usage on the Hub")
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
+        .action(async () => displayEntity(program, getHostClient(program).getLoadCheck()));
 
     hubCmd
         .command("logs")
         .description("display the logs of the Hub")
-        .action(() => {
-            // TODO: implement me
-            throw new Error("Implement me");
-        });
+        .action(async () => displayStream(program, getHostClient(program).getLogStream()));
 
     // TODO: think about it
     // hubCmd
@@ -107,7 +109,7 @@ export const hub: CommandDefinition = (program) => {
     //     .argument("<apiUrl>")
     //     .description("")
     //     .action(() => {
-    //         // TODO: implement me
+    //         // FIXME: implement me
     //         throw new Error("Implement me");
     //     });
 };

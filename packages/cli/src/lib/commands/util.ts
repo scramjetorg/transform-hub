@@ -9,6 +9,7 @@ import { displayStream } from "../output";
  * @param {Command} program Commander object.
  */
 export const util: CommandDefinition = (program) => {
+    //TODO move to si config set --log-color
     /**
      * Set custom value for config and write it to JSON file.
      */
