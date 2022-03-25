@@ -41,13 +41,13 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
 });
 
 When("I execute CLI with {string} arguments without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
-    const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()])
+    const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
-        cmdProcess.stdout.pipe(process.stdout)
-        cmdProcess.stderr.pipe(process.stdout)
+        cmdProcess.stdout.pipe(process.stdout);
+        cmdProcess.stderr.pipe(process.stdout);
     }
-    this.cliResources.commandInProgress = cmdProcess
+    this.cliResources.commandInProgress = cmdProcess;
 });
 
 Then("I get a help information", function() {
@@ -296,6 +296,12 @@ Then("I get the second instance output", { timeout: 30000 }, async function() {
     assert.equal(res.stdio[2], 0);
 });
 
+Then("I get the second instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
+    const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instance2Id || "", ...connectionFlags()]);
+
+    this.cliResources.commandInProgress = cmdProcess;
+});
+
 Then("I send input data {string}", async function(pathToFile: string) {
     const res = (this as CustomWorld).cliResources;
 
@@ -367,12 +373,12 @@ Then("confirm data named {string} received", async function(data) {
     assert.equal(stdio[0], expectedResponses[data]);
 });
 
-Then("confirm data named {string} will be received", {timeout: 10000} ,async function(this: CustomWorld, data) {
-    const expected = expectedResponses[data]
+Then("confirm data named {string} will be received", { timeout: 10000 }, async function(this: CustomWorld, data) {
+    const expected = expectedResponses[data];
 
-    const { stdout } = this.cliResources!.commandInProgress!
+    const { stdout } = this.cliResources!.commandInProgress!;
 
-    const response = await waitForValueInStream(stdout, expected)
+    const response = await waitForValueInStream(stdout, expected);
 
-    assert.equal(response, expected)
+    assert.equal(response, expected);
 });

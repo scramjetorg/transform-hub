@@ -195,8 +195,8 @@ Feature: CLI tests
         And wait for "6000" ms
         Then I start the second sequence
         And wait for "4000" ms
-        And I get the second instance output
-        Then confirm data named "hello-input-out-10" received
+        And I get the second instance output without waiting for the end
+        Then confirm data named "hello-input-out-10" will be received
         * stop host
 
     # This tests writes and uses shared config file so it may fail if run in parallel
