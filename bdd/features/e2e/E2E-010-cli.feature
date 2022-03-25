@@ -156,8 +156,8 @@ Feature: CLI tests
     Scenario: E2E-010 TC-018 API to API
         Given start host
         When I execute CLI with "topic send cities features/e2e/cities.json --end" arguments
-        Then I execute CLI with "topic get cities" arguments
-        Then confirm data named "nyc-city-nl" received
+        Then I execute CLI with "topic get cities" arguments without waiting for the end
+        Then confirm data named "nyc-city-nl" will be received
         * stop host
 
     @ci @cli @starts-host
@@ -167,8 +167,8 @@ Feature: CLI tests
         Then I get Sequence id
         Then I start Sequence
         Then I get instance health
-        Then I execute CLI with "topic get names" arguments
-        Then confirm data named "endless-names-10" received
+        Then I execute CLI with "topic get names" arguments without waiting for the end
+        Then confirm data named "endless-names-10" will be received
         * stop host
 
     @ci @cli @starts-host
