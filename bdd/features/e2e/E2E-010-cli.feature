@@ -228,11 +228,11 @@ Feature: CLI tests
 
     @ci @cli @no-parallel
     Scenario: E2E-010 TC-024 Check log coloring
-        When I execute CLI with bash command "cat ./data/sample-log.log | $SI util log-color"
+        When I execute CLI with bash command "cat ./data/sample-log.log.source | $SI util log-color"
         Then stdout contents are the same as in file "./data/sample-log.log.ansi"
 
     @ci @cli @no-parallel
     Scenario: E2E-010 TC-025 Check log no-coloring
-        When I execute CLI with bash command "cat ./data/sample-log.log | $SI util log-color --no-color"
+        When I execute CLI with bash command "cat ./data/sample-log.log.source | $SI util log-color --no-color"
         Then stdout contents are the same as in file "./data/sample-log.log.plain"
 
