@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
 import { globalConfigFile, sessionConfigFile } from "./paths";
-import { configEnv, GlobalConfigEntity, SessionConfigEntity } from "../types";
+import { configEnv, GlobalConfigEntity, isConfigEnv, isConfigFormat, SessionConfigEntity } from "../types";
 
 abstract class Config {
     abstract getConfig(): any | null;
@@ -104,6 +104,15 @@ class DefaultFileConfig extends FileConfig {
 }
 
 const JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
+const isJWT = (value: string) => Boolean(value.match(JWS_REGEX));
+const isValidUrl = (value: any) => {
+    try {
+        new URL(value);
+        return true;
+    } catch (_) {
+        return false;
+    }
+};
 
 class GlobalConfig extends DefaultFileConfig {
     constructor() {
@@ -123,6 +132,15 @@ class GlobalConfig extends DefaultFileConfig {
     getConfig(): GlobalConfigEntity {
         return super.getConfig();
     }
+    setConfig(config: any): boolean {
+        for (const [key, value] of Object.entries(config)) {
+            if (!this.validateConfigValue(key, value)) return false;
+        }
+        const overlap = { ...this.getConfig(), ...config };
+
+        return this.writeConfig(overlap);
+    }
+
     getDefaultConfig(): GlobalConfigEntity {
         return super.getDefaultConfig();
     }
@@ -161,12 +179,24 @@ class GlobalConfig extends DefaultFileConfig {
     validateConfigValue(key: string, value: any): boolean {
         const valid = super.validateConfigValue(key, value);
 
-        if (key === "token" && valid) {
-            const token = value as GlobalConfigEntity["token"];
-
-            return Boolean(token.match(JWS_REGEX));
+        if (!valid) {
+            return false;
         }
-        return valid;
+        switch (key) {
+        case "apiUrl": return isValidUrl(value);
+        case "format": return isConfigFormat(value);
+        case "middlewareApiUrl": {
+            if (value === this.defaultConfig.middlewareApiUrl) return true;
+            return isValidUrl(value);
+        }
+        case "env" : return isConfigEnv(value);
+        case "token": {
+            if (value === this.defaultConfig.token) return true;
+            return isJWT(value);
+        }
+        default:
+            return true;
+        }
     }
 }
 

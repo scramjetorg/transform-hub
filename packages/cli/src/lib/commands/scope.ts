@@ -44,7 +44,7 @@ export const scope: CommandDefinition = (program) => {
         .argument("<name>")
         .description("save current chosen space and hub under a scope")
         .action(() => {
-            // TODO: implement me
+            // FIXME: implement me
             throw new Error("Implement me");
         });
 
