@@ -3,7 +3,7 @@
 // eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { removeBoundaryQuotes, defer } from "../../lib/utils";
+import { removeBoundaryQuotes, defer, waitForValueInStream } from "../../lib/utils";
 import fs, { createReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
@@ -744,6 +744,12 @@ When("get data named {string}", async function(this: CustomWorld, topic: string)
     console.log("Received data:\n", this.resources.out);
 });
 
+When("get data named {string} without waiting for the end", async function(this: CustomWorld, topic: string) {
+    const stream = await hostClient.getNamedData(topic);
+
+    this.resources.outStream = stream;
+});
+
 Then("get output", async function(this: CustomWorld) {
     const output = await this.resources.instance?.getStream("output");
 
@@ -751,7 +757,19 @@ Then("get output", async function(this: CustomWorld) {
     this.resources.out = await streamToString(output);
 });
 
+Then("get output without waiting for the end", { timeout: 6e4 }, async function(this: CustomWorld) {
+    const output = await this.resources.instance!.getStream("output");
+
+    this.resources.outStream = output;
+});
+
 Then("confirm data defined as {string} received", async function(this: CustomWorld, data) {
     console.log("Received data: ", this.resources.out);
     assert.equal(this.resources.out, expectedResponses[data]);
 });
+
+Then("confirm data defined as {string} will be received", async function(this: CustomWorld, data) {
+    const response = await waitForValueInStream(this.resources.outStream!, expectedResponses[data]);
+    assert.equal(response, expectedResponses[data]);
+});
+

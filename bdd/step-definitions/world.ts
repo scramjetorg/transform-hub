@@ -2,6 +2,7 @@ import { setWorldConstructor, World, setDefaultTimeout } from "@cucumber/cucumbe
 import { ICreateAttachment, ICreateLog } from "@cucumber/cucumber/lib/runtime/attachment_manager";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";
 import { ChildProcessWithoutNullStreams } from "child_process";
+import { Readable } from "stream";
 
 const DEFAULT_TIMEOUT = 20000;
 
@@ -17,7 +18,8 @@ export class CustomWorld implements World {
         instance2?: InstanceClient,
         sequence?: SequenceClient,
         sequence1?: SequenceClient,
-        sequence2?: SequenceClient
+        sequence2?: SequenceClient,
+        outStream?: Readable;
     } = {}
 
     cliResources: {
