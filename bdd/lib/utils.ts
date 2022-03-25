@@ -203,17 +203,18 @@ export function loopStream<T extends unknown>(
 }
 
 export async function waitForValueInStream(stream: Readable, expected: string): Promise<string> {
-    let response = '';
+    let response = "";
+
     await loopStream(
         stream,
         (chunk) => {
-            response += chunk.toString()
-            if(response === expected) {
-                return { action: 'end', data: response }
+            response += chunk.toString();
+            if (response === expected) {
+                return { action: "end", data: response };
             }
-            return { action: 'continue' }
+            return { action: "continue" };
         }
-    )
+    );
 
     return response;
 }
