@@ -5,9 +5,10 @@ import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
 import { STHRestAPI } from "@scramjet/types";
-import { getStreamsFromSpawn, defer } from "../../lib/utils";
+import { getStreamsFromSpawn, defer, waitForValueInStream } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
+import { spawn } from "child_process";
 
 // eslint-disable-next-line no-nested-ternary
 const si = process.env.SCRAMJET_SPAWN_JS
@@ -37,6 +38,16 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
         console.error(res.stdio);
     }
     assert.equal(res.stdio[2], 0);
+});
+
+When("I execute CLI with {string} arguments without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
+    const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()])
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        cmdProcess.stdout.pipe(process.stdout)
+        cmdProcess.stderr.pipe(process.stdout)
+    }
+    this.cliResources.commandInProgress = cmdProcess
 });
 
 Then("I get a help information", function() {
@@ -354,4 +365,14 @@ Then("confirm data named {string} received", async function(data) {
 
     console.log("Received data:\n", stdio[0]);
     assert.equal(stdio[0], expectedResponses[data]);
+});
+
+Then("confirm data named {string} will be received", {timeout: 10000} ,async function(this: CustomWorld, data) {
+    const expected = expectedResponses[data]
+
+    const { stdout } = this.cliResources!.commandInProgress!
+
+    const response = await waitForValueInStream(stdout, expected)
+
+    assert.equal(response, expected)
 });
