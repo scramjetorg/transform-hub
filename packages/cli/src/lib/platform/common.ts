@@ -50,14 +50,7 @@ export const setPlatformDefaults = async (command: Command) => {
         return false;
     }
 
-    const multiManagers = await getMiddlewareClient(command).listMultiManagers();
-
-    if (!multiManagers.length) {
-        return false;
-    }
-
-    const multiManagerClient = middlewareClient.getMultiManagerClient(multiManagers[0].id);
-    const managers = await multiManagerClient.getManagers();
+    const managers = await getMiddlewareClient(command).getManagers();
 
     if (!managers.length) {
         return false;

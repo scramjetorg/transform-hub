@@ -1,8 +1,7 @@
 /* eslint-disable no-console */
 import { ClientProvider, ClientUtils } from "@scramjet/client-utils";
-import { MultiManagerClient } from "@scramjet/multi-manager-api-client";
 import { ManagerClient } from "@scramjet/manager-api-client";
-import { MWRestAPI } from "@scramjet/types";
+import { MWRestAPI, MMRestAPI } from "@scramjet/types";
 
 export class MiddlewareClient implements ClientProvider {
     apiBase: string;
@@ -14,24 +13,12 @@ export class MiddlewareClient implements ClientProvider {
         this.client = utils;
     }
 
-    async addMultiManager(api: string) {
-        return this.client
-            .post<MWRestAPI.MultiManagerResponse>(
-                "add",
-                { api },
-                {
-                    "content-type": "application/json",
-                },
-                { json: true, parse: "json" }
-            );
-    }
-
-    getMultiManagerClient(id: string, mutliManagerApiBase = "/api/v1") {
-        return new MultiManagerClient(`${this.apiBase}/mm/${id}${mutliManagerApiBase}`);
-    }
-
     getManagerClient(id: string, mutliManagerApiBase = "/api/v1") {
         return new ManagerClient(`${this.apiBase}/space/${id}${mutliManagerApiBase}`);
+    }
+
+    async getManagers() {
+        return this.client.get<MMRestAPI.GetManagersResponse>("spaces");
     }
 
     async listMultiManagers() {
