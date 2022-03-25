@@ -20,8 +20,8 @@ export const util: CommandDefinition = (program) => {
      * {@link defaultConfig}
      */
     configCmd
-        .command("log-color")
-        .alias("lc")
+        .command("log-format")
+        .alias("lf")
         .option("--no-color", "dont colorize the values")
         .description("colorifies and prints out nice colorful log files")
         .action(({ color }) => {

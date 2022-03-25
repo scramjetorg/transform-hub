@@ -1,8 +1,6 @@
 name: Release test
 
-on:
-  pull_request:
-    branches: [ release/*, main ]
+on: workflow_run
 
 jobs:
   test-npm-sth:
