@@ -568,7 +568,7 @@ export class Host implements IComponent {
                     csic.id
                 );
 
-                csic.getOutputStream()!.pipe(topic.stream as Writable);
+                csic.getOutputStream()!.pipe(topic.stream as Writable, { end: false });
             }
 
             if (notifyCPM) {
