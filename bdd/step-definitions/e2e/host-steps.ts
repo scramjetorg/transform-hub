@@ -675,6 +675,13 @@ Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
     assert.equal(text, await streamToString(result));
 });
 
+Then("{string} will be {string}", async function(this: CustomWorld, streamName, text) {
+    const stream = await this.resources.instance!.getStream(streamName);
+
+    const response = await waitForValueInStream(stream, text)
+    assert.equal(response, text);
+});
+
 Then("output is {string}", async function(this: CustomWorld, str) {
     const output = await this.resources.instance?.getStream("output");
 

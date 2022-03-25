@@ -101,7 +101,7 @@ Feature: Test our shiny new Python runner
         And send "topic test input" to input
         And sequence "../python/reference-apps/python-topic-consumer.tar.gz" loaded
         And instance started
-        Then "output" is "consumer got: producer got: topic test input"
+        Then "output" will be "consumer got: producer got: topic test input"
         And host is still running
 
     @ci @python
