@@ -5,7 +5,7 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, AppConfig, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, AppConfig, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
@@ -23,6 +23,7 @@ import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
+import { ConfigService } from "@scramjet/sth-config";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 
@@ -89,6 +90,7 @@ export class Host implements IComponent {
     serviceDiscovery = new ServiceDiscovery();
 
     commonLogsPipe = new CommonLogsPipe()
+    publicConfig: PublicSTHConfiguration;
 
     /**
      * Sets listener for connections to socket server.
@@ -111,6 +113,7 @@ export class Host implements IComponent {
      */
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
         this.config = sthConfig;
+        this.publicConfig = ConfigService.getConfigInfo(sthConfig);
 
         this.logger = new ObjLogger(
             this,
@@ -253,7 +256,7 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, () => ({ version }));
-        this.api.get(`${this.apiBase}/config`, () => this.config);
+        this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
         this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {

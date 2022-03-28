@@ -94,7 +94,7 @@ export type STHConfiguration = {
     cpmUrl: string;
 
     /**
-     * Path to the certficate authority file for verifying self-signed CPM certs 
+     * Path to the certficate authority file for verifying self-signed CPM certs
      */
     cpmSslCaPath?: string;
 
@@ -177,3 +177,7 @@ export type STHConfiguration = {
 
     kubernetes: Partial<K8SAdapterConfiguration>
 }
+
+export type PublicSTHConfiguration = Omit<Omit<STHConfiguration, "cpmSslCaPath">, "kubernetes"> & {
+    kubernetes: Omit<Partial<K8SAdapterConfiguration>, "authConfigPath">
+};
