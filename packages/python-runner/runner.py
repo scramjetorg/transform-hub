@@ -107,6 +107,9 @@ class Runner:
         self.logger.info(f'Got message: {message}')
         code, data = json.loads(message.decode())
 
+        if not data:
+            data = {"appConfig":{},"args":[]}
+
         self.logger.info(f'Sending PANG')
         pang_requires_data = {
             'requires': '',
