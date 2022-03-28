@@ -1,4 +1,4 @@
-import { IncomingMessage, OutgoingHttpHeaders, Server } from "http";
+import { ClientRequest, IncomingMessage, OutgoingHttpHeaders, Server } from "http";
 import { Socket } from "net";
 import { Duplex } from "stream";
 import { URL } from "url";
@@ -42,6 +42,8 @@ export type VerserClientConnection = {
      */
     req: IncomingMessage;
 };
+
+export type VerserRequestResult = { incomingMessage: IncomingMessage; clientRequest: ClientRequest }
 
 export type RegisteredChannelCallback = (duplex: Duplex) => void | Promise<void>;
 export type RegisteredChannels = Map<number, RegisteredChannelCallback>;

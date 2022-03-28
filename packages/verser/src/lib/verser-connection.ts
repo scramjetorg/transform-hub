@@ -1,6 +1,9 @@
 import { Duplex, Writable } from "stream";
-import { IncomingHttpHeaders, IncomingMessage, ServerResponse } from "http";
+import { request as httpRequest, Agent, IncomingHttpHeaders,
+    IncomingMessage, RequestOptions, ServerResponse } from "http";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { createConnection, Socket } from "net";
+import { VerserRequestResult } from "../types";
 
 const BPMux = require("bpmux").BPMux;
 
@@ -10,7 +13,7 @@ const BPMux = require("bpmux").BPMux;
  * Provides methods for handling connection to Verser server and streams in connection socket.
  */
 export class VerserConnection {
-    private logger = new ObjLogger(this)
+    private logger = new ObjLogger(this);
 
     private request: IncomingMessage;
     private bpmux: any;
@@ -130,6 +133,32 @@ export class VerserConnection {
         } catch (err) {
             this.logger.error("Error while forwarding request", err);
         }
+    }
+
+    /**
+     * Creates new HTTP request to VerserClient over VerserConnection.
+     *
+     * @param {RequestOptions} options Request options.
+     * @returns {Promise<VerserRequestResult>} Promise resolving to Response and Request objects.
+     */
+    public async makeRequest(
+        options: RequestOptions
+    ): Promise<VerserRequestResult> {
+        const agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+
+        agent.createConnection = () => this.bpmux.multiplex() as Socket;
+
+        return new Promise((resolve, reject) => {
+            const clientRequest = httpRequest({ ...options, agent })
+                .on("response", (incomingMessage: IncomingMessage) => {
+                    resolve({ incomingMessage, clientRequest });
+                })
+                .on("error", (error: Error) => {
+                    reject(error);
+                });
+
+            clientRequest.end();
+        });
     }
 
     /**
