@@ -178,6 +178,6 @@ export type STHConfiguration = {
     kubernetes: Partial<K8SAdapterConfiguration>
 }
 
-export type PublicSTHConfiguration = Omit<Omit<STHConfiguration, "cpmSslCaPath">, "kubernetes"> & {
-    kubernetes: Omit<Partial<K8SAdapterConfiguration>, "authConfigPath">
+export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
+    kubernetes: Omit<Omit<Partial<K8SAdapterConfiguration>, "authConfigPath">, "sequencesRoot">
 };

@@ -85,9 +85,14 @@ export class ConfigService {
     }
 
     static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
-        const { kubernetes: kubeFull, cpmSslCaPath: optionsCpmSslCaPath, ...safe } = config;
+        const {
+            kubernetes: kubeFull,
+            sequencesRoot: optionsSequencesRoot2,
+            cpmSslCaPath: optionsCpmSslCaPath,
+            ...safe
+        } = config;
 
-        const { authConfigPath: optionsAuthConfigPath, ...kubernetes } = kubeFull;
+        const { authConfigPath: optionsAuthConfigPath, sequencesRoot: optionsSequencesRoot, ...kubernetes } = kubeFull;
 
         return { ...safe, kubernetes };
     }
