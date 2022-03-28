@@ -202,7 +202,7 @@ export function loopStream<T extends unknown>(
     });
 }
 
-export async function waitForValueInStream(stream: Readable, expected: string, timeout = 1000): Promise<string> {
+export async function waitForValueInStream(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
 
     await Promise.race([

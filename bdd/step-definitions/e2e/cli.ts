@@ -373,7 +373,7 @@ Then("confirm data named {string} received", async function(data) {
     assert.equal(stdio[0], expectedResponses[data]);
 });
 
-Then("confirm data named {string} will be received", { timeout: 10000 }, async function(this: CustomWorld, data) {
+Then("confirm data named {string} will be received", async function(this: CustomWorld, data) {
     const expected = expectedResponses[data];
 
     const { stdout } = this.cliResources!.commandInProgress!;
