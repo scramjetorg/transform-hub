@@ -25,18 +25,7 @@ export const space: CommandDefinition = (program) => {
         .description("List all existing spaces")
         .action(async () => {
             const mwClient = getMiddlewareClient(program);
-            const mmList = await mwClient.listMultiManagers();
-
-            if (!mmList.length) {
-                console.error("No MultiManagers found");
-                return;
-            }
-
-            // @TODO: get from all MultiManger.
-            const multiManager = mmList[0];
-            const multiManagerClient = mwClient.getMultiManagerClient(multiManager.id);
-
-            const managers = await multiManagerClient.getManagers();
+            const managers = await mwClient.getManagers();
 
             console.log(managers);
         });
@@ -46,10 +35,7 @@ export const space: CommandDefinition = (program) => {
         .description("Use the space")
         .action(async (id: string) => {
             const mwClient = getMiddlewareClient(program);
-            const mmList = await mwClient.listMultiManagers();
-            const multiManager = mmList[0];
-            const multiManagerClient = mwClient.getMultiManagerClient(multiManager.id);
-            const managerClient = multiManagerClient.getManagerClient(id);
+            const managerClient = mwClient.getManagerClient(id);
 
             console.log({ id, ...await managerClient.getVersion() });
             sessionConfig.setLastSpaceId(id);

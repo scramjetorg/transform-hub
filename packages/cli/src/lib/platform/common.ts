@@ -3,8 +3,6 @@ import { Command } from "commander";
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
 import { globalConfig, sessionConfig } from "../config";
 
-let middlewareClient: MiddlewareClient;
-
 /**
  * Returns host client for host pointed by command options.
  *
@@ -12,15 +10,13 @@ let middlewareClient: MiddlewareClient;
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (command: Command): MiddlewareClient => {
-    if (middlewareClient) return middlewareClient;
-
     const mwUrl = globalConfig.getConfig().middlewareApiUrl;
 
     if (!mwUrl) {
         throw new Error("Middleware API URL is not specified");
     }
 
-    middlewareClient = new MiddlewareClient(mwUrl);
+    const middlewareClient = new MiddlewareClient(mwUrl);
 
     if (command.opts().log) {
         middlewareClient.client.addLogger({
@@ -50,20 +46,14 @@ export const setPlatformDefaults = async (command: Command) => {
         return false;
     }
 
-    const multiManagers = await getMiddlewareClient(command).listMultiManagers();
-
-    if (!multiManagers.length) {
-        return false;
-    }
-
-    const multiManagerClient = middlewareClient.getMultiManagerClient(multiManagers[0].id);
-    const managers = await multiManagerClient.getManagers();
+    const middlewareClient = getMiddlewareClient(command);
+    const managers = await middlewareClient.getManagers();
 
     if (!managers.length) {
         return false;
     }
 
-    const managerClient = getMiddlewareClient(command).getManagerClient(managers[0].id);
+    const managerClient = middlewareClient.getManagerClient(managers[0].id);
     const hosts = await managerClient.getHosts();
 
     if (!hosts.length) {
