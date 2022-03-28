@@ -253,6 +253,7 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, () => ({ version }));
+        this.api.get(`${this.apiBase}/config`, () => this.config);
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
         this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
