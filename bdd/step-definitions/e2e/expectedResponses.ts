@@ -25,5 +25,6 @@ export const expectedResponses: { [key:string]: any} = {
         'Name is: Basia\n' +
         'Name is: Natalia\n' +
         'Name is: Monika\n' +
-        'Name is: Wojtek\n'
+        'Name is: Wojtek\n',
+    "python-topics":  "consumer got: producer got: topic test input\n"
 };

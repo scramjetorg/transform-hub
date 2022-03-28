@@ -202,19 +202,22 @@ export function loopStream<T extends unknown>(
     });
 }
 
-export async function waitForValueInStream(stream: Readable, expected: string): Promise<string> {
+export async function waitForValueInStream(stream: Readable, expected: string, timeout = 1000): Promise<string> {
     let response = "";
 
-    await loopStream(
-        stream,
-        (chunk) => {
-            response += chunk.toString();
-            if (response === expected) {
-                return { action: "end", data: response };
+    await Promise.race([
+        loopStream(
+            stream,
+            (chunk) => {
+                response += chunk.toString();
+                if (response === expected) {
+                    return { action: "end", data: response };
+                }
+                return { action: "continue" };
             }
-            return { action: "continue" };
-        }
-    );
+        ),
+        defer(timeout)
+    ]);
 
     return response;
 }
