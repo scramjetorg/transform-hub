@@ -77,14 +77,14 @@ IComponent {
         ];
     }
 
-    getPythonpath() {
+    getPythonpath(sequenceDir: string) {
         let pythonpath = path.resolve(
             __dirname,
             path.resolve(__dirname, require.resolve("@scramjet/python-runner"), "..")
         );
 
-        if (process.env.PYTHONPATH) pythonpath += `:${process.env.PYTHONPATH}`;
-
+        pythonpath += `:${process.env.PYTHONPATH}:${sequenceDir}`;
+        
         return pythonpath;
     }
 
@@ -115,7 +115,7 @@ IComponent {
         const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), {
             env: {
                 PATH: process.env.PATH,
-                PYTHONPATH: this.getPythonpath(),
+                PYTHONPATH: this.getPythonpath(config.sequenceDir),
                 DEVELOPMENT: process.env.DEVELOPMENT,
                 PRODUCTION: process.env.PRODUCTION,
                 SEQUENCE_PATH: sequencePath,

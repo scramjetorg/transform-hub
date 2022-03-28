@@ -1,5 +1,0 @@
-# settings for coverage.py
-
-[run]
-branch = True
-command_line = -m pytest

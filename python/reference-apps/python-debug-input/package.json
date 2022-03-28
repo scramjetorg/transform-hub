@@ -9,7 +9,7 @@
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
   "scripts": {
-    "build:refapps": "mkdir -p dist/ && cp *.py dist/ && cp -rL scramjet/ dist/scramjet",
+    "build:refapps": "mkdir -p dist/__pypackages__/ && cp *.py dist/ && pip3 install -t dist/__pypackages__/ -r requirements.txt",
     "postbuild:refapps": "yarn prepack && yarn packseq",
     "prepack": "PACKAGES_DIR=python node ../../../scripts/publish.js",
     "packseq": "PACKAGES_DIR=python node ../../../scripts/packsequence.js",
