@@ -1,4 +1,4 @@
-import { DeepPartial, STHConfiguration } from "@scramjet/types";
+import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
 import { merge } from "@scramjet/utility";
 import path from "path";
 import { homedir } from "os";
@@ -82,5 +82,18 @@ export class ConfigService {
 
     update(config: DeepPartial<STHConfiguration>) {
         merge(this.config, config);
+    }
+
+    static getConfigInfo(config: STHConfiguration): PublicSTHConfiguration {
+        const {
+            kubernetes: kubeFull,
+            sequencesRoot: optionsSequencesRoot2,
+            cpmSslCaPath: optionsCpmSslCaPath,
+            ...safe
+        } = config;
+
+        const { authConfigPath: optionsAuthConfigPath, sequencesRoot: optionsSequencesRoot, ...kubernetes } = kubeFull;
+
+        return { ...safe, kubernetes };
     }
 }
