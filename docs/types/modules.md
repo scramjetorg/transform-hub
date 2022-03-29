@@ -126,6 +126,7 @@
 - [PortConfig](modules.md#portconfig)
 - [PreRunnerContainerConfiguration](modules.md#prerunnercontainerconfiguration)
 - [ProcessSequenceConfig](modules.md#processsequenceconfig)
+- [PublicSTHConfiguration](modules.md#publicsthconfiguration)
 - [RFunction](modules.md#rfunction)
 - [ReadFunction](modules.md#readfunction)
 - [ReadSequence](modules.md#readsequence)
@@ -373,6 +374,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `cpmSslCaPath?` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpmSslCaPath"``] |
 | `id` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"id"``] |
 | `infoFilePath` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"infoFilePath"``] |
 
@@ -1827,6 +1829,16 @@ ___
 
 ___
 
+### PublicSTHConfiguration
+
+Ƭ **PublicSTHConfiguration**: `Omit`<`Omit`<`Omit`<[`STHConfiguration`](modules.md#sthconfiguration), ``"sequencesRoot"``\>, ``"cpmSslCaPath"``\>, ``"kubernetes"``\> & { `kubernetes`: `Omit`<`Omit`<`Partial`<[`K8SAdapterConfiguration`](modules.md#k8sadapterconfiguration)\>, ``"authConfigPath"``\>, ``"sequencesRoot"``\>  }
+
+#### Defined in
+
+[packages/types/src/sth-configuration.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L181)
+
+___
+
 ### RFunction
 
 Ƭ **RFunction**<`Produces`\>: [`Streamable`](modules.md#streamable)<`Produces`\> \| [`ReadFunction`](modules.md#readfunction)<`Produces`\>
@@ -1979,6 +1991,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `cpmId?` | `string` |
+| `cpmSslCaPath?` | `string` |
 | `cpmUrl?` | `string` |
 | `docker` | `boolean` |
 | `exposeHostIp` | `string` |
@@ -2015,6 +2028,7 @@ ___
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `cpmId` | `string` | CPM id. |
+| `cpmSslCaPath?` | `string` | Path to the certficate authority file for verifying self-signed CPM certs |
 | `cpmUrl` | `string` | CPM url. |
 | `docker` | { `prerunner`: [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) ; `runner`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `runnerImages`: { `node`: `string` ; `python3`: `string`  }  } | Docker related configuration. |
 | `docker.prerunner` | [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) | PreRunner container configuration. |

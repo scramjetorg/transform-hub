@@ -11,6 +11,7 @@
 ### Methods
 
 - [getConfig](ConfigService.md#getconfig)
+- [getConfigInfo](ConfigService.md#getconfiginfo)
 - [getDockerConfig](ConfigService.md#getdockerconfig)
 - [update](ConfigService.md#update)
 
@@ -43,6 +44,26 @@
 #### Defined in
 
 [sth-config/src/config-service.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L75)
+
+___
+
+### getConfigInfo
+
+▸ `Static` **getConfigInfo**(`config`): `PublicSTHConfiguration`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `STHConfiguration` |
+
+#### Returns
+
+`PublicSTHConfiguration`
+
+#### Defined in
+
+[sth-config/src/config-service.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L87)
 
 ___
 
