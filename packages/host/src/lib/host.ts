@@ -272,7 +272,7 @@ export class Host implements IComponent {
             );
 
             return this.serviceDiscovery.getByTopic(params.name)?.stream;
-        }, { checkContentType: false, end: false });
+        }, { checkContentType: false, end: false, checkEndHeader: false });
 
         this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
             const params = req.params || {};
@@ -540,6 +540,7 @@ export class Host implements IComponent {
             let notifyCPM = false;
 
             if (data.requires) {
+                csic.requires = data.requires;
                 notifyCPM = true;
 
                 this.serviceDiscovery.getData(
@@ -559,6 +560,7 @@ export class Host implements IComponent {
             }
 
             if (data.provides) {
+                csic.provides = data.provides;
                 notifyCPM = true;
 
                 this.logger.debug("Sequence provides data", data);
@@ -589,14 +591,21 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             if (csic.provides && csic.provides !== "") {
-                // @TODO not sure why we need that
                 csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
                     {
                         topic: csic.provides,
                         contentType: ""
                     }
                 ) as Writable);
-                //this.serviceDiscovery.removeLocalProvider(cssic.provides);
+            }
+
+            if (csic.requires && csic.requires !== "") {
+                (this.serviceDiscovery.getData(
+                    {
+                        topic: csic.requires,
+                        contentType: ""
+                    }
+                ) as Readable).unpipe(csic.getInputStream()!);
             }
         });
 

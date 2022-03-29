@@ -46,3 +46,19 @@ Feature: E2E test, where we send and receive data from /topic/:name endpoint by 
         And get data named "marvel" without waiting for the end
         * stop host
 
+    @ci @starts-host
+    Scenario: E2E-013 TC-006 Send data from multiple instances to another instance on the same host
+        When start host
+        And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
+        And instance started with arguments "5"
+        And wait for "4000" ms
+        And instance is finished
+        Then send data from file "../dist/reference-apps/avengers-names-output/avengers.json" named "names"
+        And instance started with arguments "5"
+        And wait for "4000" ms
+        And instance is finished
+        And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
+        And instance started
+        And get output without waiting for the end
+        Then confirm data defined as "multiple-names-sources" will be received
+        * stop host
