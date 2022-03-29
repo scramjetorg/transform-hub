@@ -26,5 +26,26 @@ export const expectedResponses: { [key:string]: any} = {
         'Name is: Natalia\n' +
         'Name is: Monika\n' +
         'Name is: Wojtek\n',
+    "multiple-names-sources":
+        'Name is: Alice\n' +
+        'Name is: Ada\n' +
+        'Name is: Aga\n' +
+        'Name is: Michał\n' +
+        'Name is: Patryk\n' +
+        'Name is: Rafał\n' +
+        'Name is: Ant-Man\n' +
+        'Name is: Iron Man\n' +
+        'Name is: Hulk\n' +
+        'Name is: Hawkeye\n' +
+        'Name is: Black Widow\n' +
+        'Name is: Thor\n' +
+        'Name is: Captain America\n' +
+        'Name is: Spider-Man\n' +
+        'Name is: Alice\n' +
+        'Name is: Ada\n' +
+        'Name is: Aga\n' +
+        'Name is: Michał\n' +
+        'Name is: Patryk\n' +
+        'Name is: Rafał\n',
     "python-topics":  "consumer got: producer got: topic test input\n"
 };

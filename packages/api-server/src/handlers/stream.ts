@@ -40,7 +40,7 @@ function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
  * @param {boolean} _default Value to be retured if x-end-stream header is not present.
  * @returns True if x-end-stream header is present or a given value.
  */
-function checkEndHeader(req: IncomingMessage, _default?: boolean) {
+function shouldEndTargetStream(req: IncomingMessage, _default?: boolean) {
     if (typeof req.headers["x-end-stream"] === "string" && ["true", "false", "success"].includes(req.headers["x-end-stream"])) {
         return req.headers["x-end-stream"] === "true";
     }
@@ -105,7 +105,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     const downstream = (
         path: string | RegExp,
         stream: StreamOutput,
-        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true }: StreamConfig = {}
+        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true }: StreamConfig = {}
     ): void => {
         router.post(path, async (req, res, next) => {
             try {
@@ -117,7 +117,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     res.writeContinue();
                 }
 
-                const end = checkEndHeader(req, _end);
+                const end = checkEndHeader ? shouldEndTargetStream(req, _end) : _end;
                 const data = await getWritable(stream, req, res);
 
                 // eslint-disable-next-line no-extra-parens

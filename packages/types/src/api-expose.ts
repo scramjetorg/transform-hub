@@ -44,6 +44,12 @@ export type StreamConfig = {
      * Perform stream content-type type checks
      */
     checkContentType?: boolean;
+
+    /**
+     * Should consider x-end-stream header or just use the 'end'
+     *  @default true
+     */
+    checkEndHeader?: boolean;
 };
 
 export interface APIError extends Error {

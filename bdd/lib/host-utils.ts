@@ -47,11 +47,9 @@ export class HostUtils {
             console.error("Host is supposedly running at", this.hostUrl);
             const hostClient = new HostClient(this.hostUrl);
 
-            assert.equal(
-                (await hostClient.getLoadCheck()).currentLoad, // TODO: change to version and log it
-                200,
-                "Remote host doesn't respond"
-            );
+            const { version } = await hostClient.getVersion();
+
+            assert.ok(typeof version === "string");
 
             return Promise.resolve();
         }
