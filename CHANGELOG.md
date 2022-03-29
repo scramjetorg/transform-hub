@@ -46,6 +46,7 @@ Prominent
 - 8c54e56e - Restore proper STOP/KILL supervisor mechanisms.
 - b214a8d4 - Add HTTPS support to Verser.
 - 7f2484f16 - CLI commands for interacting with Scramjet Cloud Platform
+- 417685b07 - Switch topic requests to https.
 
 New features:
 
@@ -121,7 +122,11 @@ Bugfixes and minor improvements:
 - CLI commands for interacting with Scramjet Cloud Platform
 - Shell autocompletion for cli
 - Session and global configuration for cli
+- Encrypt all Host-Manager communication with TLS
+- Fix the build scripts of @scramjet/cli so that completion is added
+- Add cli utility for coloring JSON logs obtained from remote STH
+- Add /config API endpoint for checking STH/Host config
 
-## @scramjet/transform Hub - v0.19
+## @scramjet/transform Hub - v0.19.2
 
 This is the last release in changelog.
