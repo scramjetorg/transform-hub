@@ -155,7 +155,7 @@ Feature: CLI tests
     @ci @cli @starts-host
     Scenario: E2E-010 TC-018 API to API
         Given start host
-        When I execute CLI with "topic send cities features/e2e/cities.json --end" arguments
+        When I execute CLI with "topic send cities features/e2e/cities.json" arguments
         Then I execute CLI with "topic get cities" arguments without waiting for the end
         Then confirm data named "nyc-city-nl" will be received
         * stop host

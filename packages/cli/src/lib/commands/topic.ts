@@ -14,15 +14,14 @@ export const topic: CommandDefinition = (program) => {
 
     topicCmd.command("send <topic> [<file>]")
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        .option("-e, --end", "x-end-stream", false)
         .description("send data to topic")
-        .action(async (topicName, filename, { contentType, end }) => displayEntity(
+        .action(async (topicName, filename, { contentType }) => displayEntity(
             program,
             getHostClient(program).sendNamedData(
                 topicName,
                 filename ? await getReadStreamFromFile(filename) : process.stdin,
                 contentType,
-                end)
+                false)
         ));
 
     topicCmd.command("get <topic>")
