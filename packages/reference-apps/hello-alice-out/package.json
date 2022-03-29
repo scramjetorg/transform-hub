@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/hello-alice-out",
-  "version": "0.19.0",
+  "version": "0.19.2",
   "main": "index",
   "assets": [
     "data.json"
@@ -21,7 +21,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@scramjet/types": "^0.19.0",
+    "@scramjet/types": "^0.19.2",
     "@types/node": "15.12.5",
     "ts-node": "^10.7.0",
     "typescript": "^4.5.5"

@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-chunk-lengths",
-  "version": "0.19.0",
+  "version": "0.19.2",
   "license": "GPL-3.0",
   "author": "Jan Warchoł <open-source@scramjet.org>",
   "main": "./chunk-lengths.py",
