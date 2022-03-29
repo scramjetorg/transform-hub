@@ -174,14 +174,14 @@ Feature: CLI tests
     @ci @cli @starts-host
     Scenario: E2E-010 TC-020 API to instance
         Given start host
-        When I execute CLI with "topic send names features/e2e/data.json --end" arguments
+        When I execute CLI with "topic send names features/e2e/data.json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz --format json" arguments
         Then I get Sequence id
         Then I start Sequence
         Then I get instance health
         Then I get instance id
-        And I get instance output
-        Then confirm data named "hello-avengers" received
+        And I get instance output without waiting for the end
+        Then confirm data named "hello-avengers" will be received
         * stop host
 
     @ci @cli @starts-host

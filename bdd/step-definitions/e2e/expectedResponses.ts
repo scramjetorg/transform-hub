@@ -3,7 +3,6 @@
 export const expectedResponses: { [key:string]: any} = {
     "endless-names-10": `{"name":"Alice"}\n{"name":"Ada"}\n{"name":"Aga"}\n{"name":"Michał"}\n{"name":"Patryk"}\n{"name":"Rafał"}\n{"name":"Aida"}\n{"name":"Basia"}\n{"name":"Natalia"}\n{"name":"Monika"}\n{"name":"Wojtek"}\n`,
     "nyc-city-nl": `{ \"city\": \"New York\" }\n`,
-    "nyc-city": `{ \"city\": \"New York\" }`,
     "hulkName": "Name is: Hulk\n",
     "hello-avengers":
         'Name is: Ant-Man\n' +

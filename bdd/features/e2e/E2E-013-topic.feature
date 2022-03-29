@@ -3,9 +3,9 @@ Feature: E2E test, where we send and receive data from /topic/:name endpoint by 
     @ci @starts-host
     Scenario: E2E-013 TC-001 Send and get data from API STH
         When start host
-        Then send data "{ \"city\": \"New York\" }" named "cities"
+        Then send json data "{ \"city\": \"New York\" }" named "cities"
         And get data named "cities" without waiting for the end
-        Then confirm data defined as "nyc-city" will be received
+        Then confirm data defined as "nyc-city-nl" will be received
         * stop host
 
     @ci @starts-host
@@ -13,7 +13,7 @@ Feature: E2E test, where we send and receive data from /topic/:name endpoint by 
         When start host
         And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
         And instance started
-        Then send data "{ \"name\": \"Hulk\" }" named "names"
+        Then send json data "{ \"name\": \"Hulk\" }" named "names"
         And wait for "1000" ms
         And get output without waiting for the end
         Then confirm data defined as "hulkName" will be received

@@ -289,6 +289,12 @@ Then("I get instance output", { timeout: 30000 }, async function() {
     assert.equal(res.stdio[2], 0);
 });
 
+Then("I get instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
+    const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instanceId || "", ...connectionFlags()]);
+
+    this.cliResources.commandInProgress = cmdProcess;
+});
+
 Then("I get the second instance output", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
