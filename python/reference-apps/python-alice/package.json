@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-alice",
-  "version": "0.19.0",
+  "version": "0.19.2",
   "main": "./alice.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",
   "license": "GPL-3.0",
