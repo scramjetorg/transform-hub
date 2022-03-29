@@ -26,6 +26,13 @@ export const expectedResponses: { [key:string]: any} = {
         'Name is: Natalia\n' +
         'Name is: Monika\n' +
         'Name is: Wojtek\n',
+    "hello-input-out-5":
+        'Name is: Alice\n' +
+        'Name is: Ada\n' +
+        'Name is: Aga\n' +
+        'Name is: Michał\n' +
+        'Name is: Patryk\n' +
+        'Name is: Rafał\n',
     "multiple-names-sources":
         'Name is: Alice\n' +
         'Name is: Ada\n' +

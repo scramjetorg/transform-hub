@@ -62,3 +62,27 @@ Feature: E2E test, where we send and receive data from /topic/:name endpoint by 
         And get output without waiting for the end
         Then confirm data defined as "multiple-names-sources" will be received
         * stop host
+
+    
+    @ci @starts-host
+    Scenario: E2E-013 TC-007 Send and read data two times 
+        When start host
+        And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
+        And instance started with arguments "5"
+        And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
+        And instance started
+        And get output without waiting for the end
+        Then confirm data defined as "hello-input-out-5" will be received
+        When send kill message to instance
+        And wait for "1000" ms
+        And instance is finished
+        And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
+        And instance started with arguments "10"
+        # We want to verify that nothing else is reading the topic
+        And wait for "2000" ms
+        And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
+        And instance started
+        And get output without waiting for the end
+        Then confirm data defined as "hello-input-out-10" will be received
+        * stop host
+
