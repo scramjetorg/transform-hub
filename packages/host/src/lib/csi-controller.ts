@@ -77,6 +77,11 @@ export class CSIController extends TypedEmitter<Events> {
     apiInputEnabled = true;
 
     /**
+     * Topic to which the output stream should be routed
+     */
+    public outputTopic?: string
+
+    /**
      * Logger.
      *
      * @type {IObjectLogger}
@@ -118,8 +123,7 @@ export class CSIController extends TypedEmitter<Events> {
     constructor(
         id: string,
         sequence: SequenceInfo,
-        appConfig: AppConfig,
-        sequenceArgs: any[] | undefined,
+        payload: STHRestAPI.StartSequencePayload,
         communicationHandler: CommunicationHandler,
         sthConfig: STHConfiguration
     ) {
@@ -127,9 +131,10 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.id = id;
         this.sequence = sequence;
-        this.appConfig = appConfig;
+        this.appConfig = payload.appConfig;
         this.sthConfig = sthConfig;
-        this.sequenceArgs = sequenceArgs;
+        this.sequenceArgs = payload.args;
+        this.outputTopic = payload.outputTopic;
 
         this.communicationHandler = communicationHandler;
 

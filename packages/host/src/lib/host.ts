@@ -5,7 +5,7 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, AppConfig, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
@@ -18,7 +18,7 @@ import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 
-import { pipeToTopic, ServiceDiscovery } from "./sd-adapter";
+import { dataType, pipeToTopic, ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
@@ -454,13 +454,13 @@ export class Host implements IComponent {
         }
 
         const seqId = req.params?.id;
-        const payload = req.body || {};
+        const payload = req.body || {} as STHRestAPI.StartSequencePayload;
         const sequence = this.sequencesStore.get(seqId);
 
         if (sequence) {
             this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
-            const csic = await this.startCSIController(sequence, payload.appConfig as AppConfig, payload.args);
+            const csic = await this.startCSIController(sequence, payload);
 
             this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
@@ -492,8 +492,7 @@ export class Host implements IComponent {
      */
     async startCSIController(
         sequence: SequenceInfo,
-        appConfig: AppConfig,
-        sequenceArgs?: any[]
+        payload: STHRestAPI.StartSequencePayload
     ): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
@@ -501,8 +500,7 @@ export class Host implements IComponent {
         const csic = new CSIController(
             id,
             sequence,
-            appConfig,
-            sequenceArgs,
+            payload,
             communicationHandler,
             this.config
         );
@@ -519,6 +517,19 @@ export class Host implements IComponent {
         this.logger.trace("CSIController started", id);
 
         sequence.instances.add(id);
+
+        if (csic.outputTopic) {
+            csic.provides = csic.outputTopic;
+
+            this.logger.debug("Sequence output routed to topic", csic.outputTopic);
+
+            // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
+            const data: dataType = { topic: csic.outputTopic, contentType: "" };
+            const topic = this.serviceDiscovery.addData(data, csic.id);
+
+            pipeToTopic(csic.getOutputStream()!, topic);
+            this.cpmConnector?.sendTopicInfo({ provides: csic.outputTopic, contentType: "" });
+        }
 
         csic.on("pang", (data) => {
             this.logger.trace("PANG received", data);
@@ -545,7 +556,8 @@ export class Host implements IComponent {
                 );
             }
 
-            if (data.provides) {
+            // Do not route output stream to original topic if --output-topic is specified
+            if (!csic.outputTopic && data.provides) {
                 csic.provides = data.provides;
                 notifyCPM = true;
 

@@ -5,8 +5,8 @@ import { attachStdio, getHostClient, getReadStreamFromFile } from "../common";
 import { getPackagePath, getSequenceId, sessionConfig } from "../config";
 import { displayEntity, displayObject } from "../output";
 
-async function resolveConfigJson(configJson: any, config: any): Promise<any> {
-    return configJson || config ? JSON.parse(configJson || await readFile(config, "utf-8")) : {};
+async function resolveConfigJson(configJson: string, configPath: string): Promise<any> {
+    return configJson || configPath ? JSON.parse(configJson || await readFile(configPath, "utf-8")) : {};
 }
 
 /**
@@ -28,15 +28,16 @@ export const sequence: CommandDefinition = (program) => {
         .option("-d, --detached", "Don't attach to stdio")
         .option("-c, --config <config-path>", "Appconfig path location")
         .option("-C, --config-json <config-string>", "Appconfig as string")
-        .action(async (sequencePackage: string, args: any) => {
-            const { config: configPath, detached } = sequenceCmd.opts();
-            const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
+        .action(async (sequencePackage: string, args: any, opts) => {
+            const { config: configPath, detached, configJson } = opts;
             const seq = await getHostClient(program).sendSequence(
                 sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin
             );
 
             sessionConfig.setLastSequenceId(seq.id);
-            const instance = await seq.start(config, args);
+            const instance = await seq.start({
+                appConfig: await resolveConfigJson(configJson, configPath),
+                args });
 
             sessionConfig.setLastInstanceId(instance.id);
 
@@ -92,11 +93,16 @@ export const sequence: CommandDefinition = (program) => {
         .argument("[args...]")
         .option("-c, --config <config-path>", "Appconfig path location")
         .option("-C, --config-json <config-string>", "Appconfig as string")
-        .action(async (id: string, args: any) => {
-            const { config, configJson } = sequenceCmd.opts();
+        .option("--output-topic <string>", "topic to which the output stream should be routed")
+        .action(async (id: string, args: any, opts) => {
+            const { config: configPath, configJson, outputTopic } = opts;
             const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient(program));
 
-            const instance = await sequenceClient.start(await resolveConfigJson(configJson, config), args);
+            const instance = await sequenceClient.start({
+                appConfig: await resolveConfigJson(configJson, configPath),
+                args,
+                outputTopic
+            });
 
             sessionConfig.setLastInstanceId(instance.id);
             return displayObject(program, instance);

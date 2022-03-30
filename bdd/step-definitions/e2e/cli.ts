@@ -215,6 +215,28 @@ Then("I start Sequence", async function() {
     }
 });
 
+Then("I start Sequence with options {string}", async function(optionsStr: string) {
+    const res = (this as CustomWorld).cliResources;
+    const sequenceId: string = res.sequenceId || "";
+    const options = optionsStr.split(" ");
+
+    try {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, ...options, ...formatFlags(), ...connectionFlags()]);
+        assert.equal(res.stdio[2], 0);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            console.error(res.stdio[0]);
+        }
+
+        const instance = JSON.parse(res.stdio[0].replace("\n", ""));
+
+        res.instanceId = instance._id;
+    } catch (e: any) {
+        console.error(e.stack, res.stdio);
+        assert.fail("Error occurred");
+    }
+});
+
 Then("I get instance id", function() {
     const res = (this as CustomWorld).cliResources;
 
