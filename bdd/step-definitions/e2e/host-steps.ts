@@ -36,7 +36,9 @@ const testPath = "../dist/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
-    this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
+    this.resources.instance = await this.resources.sequence!.start({
+        appConfig: {}, args: instanceArg.split(" ")
+    });
 };
 const assetsLocation = process.env.SCRAMJET_ASSETS_LOCATION || "https://assets.scramjet.org/";
 const streamToString = async (stream: Stream): Promise<string> => {
@@ -236,12 +238,12 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 });
 
 When("instance started", async function(this: CustomWorld) {
-    this.resources.instance = await this.resources.sequence!.start({}, []);
+    this.resources.instance = await this.resources.sequence!.start({ appConfig: {}, args: [] });
 });
 
 When("instances started", async function(this: CustomWorld) {
-    this.resources.instance1 = await this.resources.sequence1!.start({}, []);
-    this.resources.instance2 = await this.resources.sequence2!.start({}, []);
+    this.resources.instance1 = await this.resources.sequence1!.start({ appConfig: {}, args: [] });
+    this.resources.instance2 = await this.resources.sequence2!.start({ appConfig: {}, args: [] });
 
     console.log("Sequences started.");
 });
@@ -259,7 +261,10 @@ When(
     "instance started with arguments {string} and write stream to {string} and timeout after {int} seconds",
     { timeout: -1 },
     async function(this: CustomWorld, instanceArg: string, fileName: string, timeout: number) {
-        this.resources.instance = await this.resources.sequence!.start({}, instanceArg.split(" "));
+        this.resources.instance = await this.resources.sequence!.start({
+            appConfig: {},
+            args: instanceArg.split(" ")
+        });
 
         const stream: any = await this.resources.instance?.getStream("stdout");
         const writeStream = fs.createWriteStream(fileName);

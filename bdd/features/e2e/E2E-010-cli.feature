@@ -225,3 +225,14 @@ Feature: CLI tests
         And wait for "1000" ms
         And I execute CLI with "seq rm -" arguments
         And host is still running
+
+    @ci @cli @starts-host
+    Scenario: E2E-010 TC-024 Rename topic output
+        Given start host
+        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz --format json" arguments
+        Then I get Sequence id
+        Then I start Sequence with options "--output-topic names2"
+        Then I get instance health
+        Then I execute CLI with "topic get names2" arguments without waiting for the end
+        Then confirm data named "endless-names-10" will be received
+        * stop host

@@ -41,7 +41,7 @@ When("starts at least {int} sequences from file {string}", { timeout: 3600 * 48 
         if ((loadCheck as any).status !== 200 || loadCheck.memFree < 512 << 20) {
             rejected = true;
         } else {
-            const instance = await sequence.start(data.appConfig, data.args);
+            const instance = await sequence.start({ appConfig: data.appConfig, args: data.args });
 
             if (instance) {
                 this.resources.instances.push(instance);
