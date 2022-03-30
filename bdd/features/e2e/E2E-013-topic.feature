@@ -86,3 +86,12 @@ Feature: E2E test, where we send and receive data from /topic/:name endpoint by 
         Then confirm data defined as "hello-input-out-10" will be received
         * stop host
 
+    @ci @starts-host
+    Scenario: E2E-013 TC-008 Send data json data from sequence, get it via API 
+        When start host
+        And sequence "../packages/reference-apps/avengers-names-output.tar.gz" loaded
+        And instance started
+        And get data named "avengers" without waiting for the end
+        Then confirm data defined as "hulk-nl" will be received
+        * stop host
+        

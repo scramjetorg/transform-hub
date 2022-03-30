@@ -1,8 +1,9 @@
-import { ReadableStream, WritableStream } from "@scramjet/types";
-import { PassThrough, Stream } from "stream";
+import { APIRoute, ReadableStream, WritableStream } from "@scramjet/types";
+import { Duplex, PassThrough, Readable } from "stream";
 
 import { CPMConnector } from "./cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { getRouter } from "@scramjet/api-server";
 
 /**
  * TODO: Refactor types below.
@@ -17,7 +18,7 @@ export type dataType = {
  */
 export type streamType = {
     contentType: string;
-    stream: Stream;
+    stream: Duplex;
 }
 
 /**
@@ -25,9 +26,32 @@ export type streamType = {
  */
 export type topicDataType = {
     contentType: string,
-    stream: ReadableStream<any> | WritableStream<any>,
+    stream: Duplex,
     localProvider?: string,
     cpmRequest?: boolean
+}
+
+const NEWLINE_BYTE = "\n".charCodeAt(0);
+
+export function pipeToTopic(source: Readable, target: topicDataType) {
+    source.pipe(target.stream, { end: false });
+
+    // for json streams, make sure that the last message will be ended with newline
+    if (target.contentType === "application/x-ndjson") {
+        let lastChunk = Buffer.from([]);
+
+        source
+            .on("data", (chunk) => {
+                lastChunk = chunk as Buffer;
+            })
+            .on("end", () => {
+                const lastByte = lastChunk[lastChunk.length - 1];
+
+                if (lastByte !== NEWLINE_BYTE) {
+                    target.stream!.write("\n");
+                }
+            });
+    }
 }
 
 /**
@@ -44,6 +68,40 @@ export class ServiceDiscovery {
     logger = new ObjLogger(this);
 
     cpmConnector?: CPMConnector;
+
+    public router: APIRoute = getRouter()
+
+    constructor() {
+        this.createTopicsRouter();
+    }
+
+    createTopicsRouter() {
+        this.router.downstream("/:topic", async (req) => {
+            const { topic } = req.params || {};
+
+            this.logger.debug(`Incoming topic '${topic}' request`);
+            let target = this.getByTopic(topic);
+
+            if (!target) {
+                target = this.addData(
+                    { contentType: req.headers["content-type"] || "", topic },
+                    "api"
+                );
+            }
+
+            pipeToTopic(req, target);
+
+            return {};
+        }, { checkContentType: false });
+
+        this.router.upstream("/:topic", (req) => {
+            const { topic } = req.params || {};
+            const contentType = req.headers["content-type"] || "application/x-ndjson";
+            //TODO: what should be the default content type and where to store this information?
+
+            return this.getData({ topic, contentType });
+        });
+    }
 
     /**
      * Sets the CPM connector.
@@ -136,8 +194,7 @@ export class ServiceDiscovery {
      * @param {dataType} dataType Topic configuration.
      * @returns Topic stream.
      */
-    getData(dataType: dataType):
-        ReadableStream<any> | WritableStream<any> | undefined {
+    getData(dataType: dataType): Duplex {
         this.logger.debug("Get data:", dataType);
 
         if (this.dataMap.has(dataType.topic)) {

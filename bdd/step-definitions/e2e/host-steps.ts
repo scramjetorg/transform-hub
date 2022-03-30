@@ -727,7 +727,7 @@ Then("send json data {string} named {string}", async (data: any, topic: string) 
     const ps = new Readable();
     const sendDataP = hostClient.sendNamedData<Stream>(topic, ps, "application/x-ndjson", true);
 
-    ps.push(data + "\n");
+    ps.push(data);
     ps.push(null);
 
     const sendData = await sendDataP;
