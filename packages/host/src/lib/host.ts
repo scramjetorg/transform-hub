@@ -18,7 +18,7 @@ import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 
-import { ServiceDiscovery } from "./sd-adapter";
+import { pipeToTopic, ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
@@ -56,6 +56,8 @@ export class Host implements IComponent {
      * Instance path prefix.
      */
     instanceBase: string;
+
+    topicsBase: string;
 
     socketServer: SocketServer;
 
@@ -139,6 +141,7 @@ export class Host implements IComponent {
 
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
+        this.topicsBase = `${this.config.host.apiBase}/topic`;
 
         if (this.config.host.apiBase.includes(":")) {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
@@ -259,34 +262,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
-        this.api.downstream(`${this.apiBase}/topic/:name`, async (req) => {
-            const params = req.params || {};
-            const sdTarget = this.serviceDiscovery.getByTopic(params.name)?.stream;
-            const end = req.headers["x-end-stream"] === "true";
-
-            this.logger.debug(`Incoming topic '${params.name}' request, end:${end}.`);
-
-            if (sdTarget) {
-                return sdTarget;
-            }
-
-            this.serviceDiscovery.addData(
-                { contentType: req.headers["content-type"] || "", topic: params.name },
-                "api"
-            );
-
-            return this.serviceDiscovery.getByTopic(params.name)?.stream;
-        }, { checkContentType: false, end: false, checkEndHeader: false });
-
-        this.api.upstream(`${this.apiBase}/topic/:name`, (req: ParsedMessage, _res: ServerResponse) => {
-            const params = req.params || {};
-            const contentType = req.headers["content-type"] || "application/x-ndjson";
-            //TODO: what should be the default content type and where to store this information?
-
-            return this.serviceDiscovery.getData(
-                { topic: params.name, contentType: contentType }
-            ) as Readable;
-        });
+        this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
 
@@ -330,6 +306,12 @@ export class Host implements IComponent {
         res.end();
 
         return next();
+    }
+
+    topicsMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
+        req.url = req.url?.substring(this.topicsBase.length);
+
+        return this.serviceDiscovery.router.lookup(req, res, next);
     }
 
     /**
@@ -574,7 +556,7 @@ export class Host implements IComponent {
                     csic.id
                 );
 
-                csic.getOutputStream()!.pipe(topic.stream as Writable, { end: false });
+                pipeToTopic(csic.getOutputStream()!, topic);
             }
 
             if (notifyCPM) {
