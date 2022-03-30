@@ -13,7 +13,7 @@ import { getMiddlewareClient } from "../platform";
 export const hub: CommandDefinition = (program) => {
     const hubCmd = program
         .command("hub")
-        .usage("si hub [subcommand] [options...]")
+        .usage("si hub [command] [options...]")
         .option(
             "-v, --version [name|id]",
             "display chosen hub version if a name is not provided it displays a version of a current hub"
@@ -27,7 +27,7 @@ export const hub: CommandDefinition = (program) => {
             console.log("version: ", version);
             if (version) {
                 if (typeof version === "boolean") {
-                    await displayEntity(program, getHostClient(program).getVersion());
+                    await displayEntity(getHostClient().getVersion());
                 } else {
                     // display chosen hub version
                     // FIXME: implement me
@@ -56,7 +56,7 @@ export const hub: CommandDefinition = (program) => {
             const space = sessionConfig.getConfig().lastSpaceId;
 
             console.log("Space:", space);
-            const managerClient = getMiddlewareClient(program).getManagerClient(space);
+            const managerClient = getMiddlewareClient().getManagerClient(space);
 
             const hosts = await managerClient.getHosts();
 
@@ -70,7 +70,7 @@ export const hub: CommandDefinition = (program) => {
             const hostClient = managerClient.getHostClient(id);
 
             sessionConfig.setLastHubId(id);
-            await displayObject(program, hostClient);
+            displayObject(hostClient);
         });
 
     hubCmd
@@ -86,7 +86,7 @@ export const hub: CommandDefinition = (program) => {
             }
 
             console.log("Space:", space);
-            const managerClient = getMiddlewareClient(program).getManagerClient(space);
+            const managerClient = getMiddlewareClient().getManagerClient(space);
 
             const hosts = await managerClient.getHosts();
 
@@ -96,12 +96,12 @@ export const hub: CommandDefinition = (program) => {
     hubCmd
         .command("load")
         .description("monitor CPU, memory and disk usage on the Hub")
-        .action(async () => displayEntity(program, getHostClient(program).getLoadCheck()));
+        .action(async () => displayEntity(getHostClient().getLoadCheck()));
 
     hubCmd
         .command("logs")
         .description("display the logs of the Hub")
-        .action(async () => displayStream(program, getHostClient(program).getLogStream()));
+        .action(async () => displayStream(getHostClient().getLogStream()));
 
     // TODO: think about it
     // hubCmd

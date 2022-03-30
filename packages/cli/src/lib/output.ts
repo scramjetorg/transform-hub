@@ -1,21 +1,16 @@
 /* eslint-disable no-console */
-import { Command } from "commander";
 import { Readable, Stream, Writable } from "stream";
+import { globalConfig } from "./config";
 
 /**
- * Command from commander contains obj with whole params, that user provides to the console.
- */
-
-/**
- * Helper method to shows output in proper format provided by user.
- * If no value is provided the default will be taken.
- * Default: "pretty".
+ * Displays object.
  *
- * @param {"json" | "pretty"} type get format provided by user form _program.opts.format
- * @param {any} object get object with response from Interface
+ * @param object returned object form
  */
-function display(type: "json" | "pretty" = "pretty", object: any) {
-    if (type === "json") {
+export function displayObject(object: any) {
+    const { format } = globalConfig.getConfig();
+
+    if (globalConfig.isJsonFormat(format)) {
         console.log(JSON.stringify(object));
     } else {
         console.dir(object);
@@ -23,25 +18,13 @@ function display(type: "json" | "pretty" = "pretty", object: any) {
 }
 
 /**
- * Displays object.
- *
- * @param _program commander options object contains user input config etc.
- * @param object returned object form
- */
-export async function displayObject(_program: Command, object: any) {
-    display(_program.opts().format, object);
-}
-
-/**
  * Displays stream.
  *
- * @param {Command} _program commander object.
  * @param {Promise<ResponseStream>} response Response object with stream to be displayed.
  * @param {Writable} output Output stream.
  * @returns {Promise} Promise resolving on stream finish or rejecting on error.
  */
 export async function displayStream(
-    _program: Command,
     response: Stream | ReadableStream<any> | Promise<Stream | ReadableStream<any>>,
     output: Writable = process.stdout
 ): Promise<void> {
@@ -64,10 +47,9 @@ export async function displayStream(
 /**
  * Displays reponse data.
  *
- * @param _program { _program } commander object
- * @param {Promise<Response|void>} response Response object with data to be displayed.
+ * @param response Response object with data to be displayed.
  */
-export async function displayEntity(_program: Command, response: Promise<any>): Promise<void> {
+export async function displayEntity(response: Promise<any>): Promise<void> {
     // todo: different displays depending on _program.opts().format
     const res = await response.catch(e => {
         console.error(e);
@@ -77,5 +59,5 @@ export async function displayEntity(_program: Command, response: Promise<any>): 
         return;
     }
 
-    display(_program.opts().format, res);
+    displayObject(res);
 }

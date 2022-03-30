@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
 import { globalConfigFile, sessionConfigFile } from "./paths";
-import { configEnv, GlobalConfigEntity, isConfigEnv, isConfigFormat, SessionConfigEntity } from "../types";
+import { configEnv, configFormat, GlobalConfigEntity, isConfigEnv, isConfigFormat, SessionConfigEntity } from "../types";
 
 abstract class Config {
     abstract getConfig(): any | null;
@@ -152,6 +152,12 @@ class GlobalConfig extends DefaultFileConfig {
     }
     isProductionEnv(env: configEnv): boolean {
         return env === "production";
+    }
+    isJsonFormat(format: configFormat):boolean {
+        return format === "json";
+    }
+    isPrettyFormat(format: configFormat):boolean {
+        return format === "pretty";
     }
 
     setApiUrl(apiUrl: string): boolean {

@@ -12,7 +12,7 @@ export const space: CommandDefinition = (program) => {
     const spaceCmd = program
         .command("space")
         .alias("spc")
-        .usage("si space [subcommand] [options...]")
+        .usage("si space [command] [options...]")
         .option("-c, --stdout", "output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
         //TODO: can't set single - add in tutorial and web decumentation
@@ -33,7 +33,7 @@ export const space: CommandDefinition = (program) => {
         .alias("ls")
         .description("List all existing spaces")
         .action(async () => {
-            const mwClient = getMiddlewareClient(program);
+            const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
 
             console.log(managers);
@@ -44,7 +44,7 @@ export const space: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Use the space")
         .action(async (name: string) => {
-            const mwClient = getMiddlewareClient(program);
+            const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(name);
 
             console.log({ name, ...await managerClient.getVersion() });

@@ -20,14 +20,14 @@ export const config: CommandDefinition = (program) => {
     const configCmd = program
         .command("config")
         .alias("c")
-        .usage("si config [subcommand] ")
+        .usage("si config [command] ")
         .description("config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");
 
     configCmd
         .command("print")
         .alias("p")
         .description("Print out the current config")
-        .action(() => displayObject(program, globalConfig.getConfig()));
+        .action(() => displayObject(globalConfig.getConfig()));
 
     const setCmd = configCmd
         .command("set")
@@ -64,8 +64,6 @@ export const config: CommandDefinition = (program) => {
         .command("log")
         .option("--debug <boolean>", `specify log to show extended view (default: ${defaultLog})`)
         .option("--format <format>", `specify format between "pretty" or "json" (default: ${defaultFormat})`)
-        // TODO: missing description
-        .option("--colored <boolean>", "")
         .description("specify log options")
         .action(({ debug, format, colored }) => {
             const setValue = (value: any, setCallback: (val: typeof value) => boolean,

@@ -12,7 +12,7 @@ export const scope: CommandDefinition = (program) => {
     const scopeCmd = program
         .command("scope")
         .alias("s")
-        .usage("si scope [subcommand] [options...]")
+        .usage("si scope [command] [options...]")
         .description("manage scopes that store pairs of spaces and hubs used when working");
 
     scopeCmd.command("list").alias("ls").description("list all created scopes").action(listScopes);
@@ -21,7 +21,7 @@ export const scope: CommandDefinition = (program) => {
         .command("print")
         .argument("<name>")
         .description("see json file under the scope")
-        .action(async (name: string) => {
+        .action((name: string) => {
             const scopeConfig = getScope(name);
 
             if (!scopeConfig) {
@@ -30,7 +30,7 @@ export const scope: CommandDefinition = (program) => {
                 return;
             }
 
-            await displayObject(program, scopeConfig);
+            displayObject(scopeConfig);
         });
 
     scopeCmd
