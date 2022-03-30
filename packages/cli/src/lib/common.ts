@@ -18,24 +18,23 @@ let hostClient: HostClient;
 /**
  * Returns host client for host pointed by command options.
  *
- * @param {Command} command Command object.
  * @returns {HostClient} Host client.
  */
-export const getHostClient = (command: Command): HostClient => {
+export const getHostClient = (): HostClient => {
     if (hostClient) return hostClient;
-    const env = globalConfig.getEnv();
+
+    const { lastSpaceId, lastHubId, apiUrl } = sessionConfig.getConfig();
+    const { env, log } = globalConfig.getConfig();
 
     if (globalConfig.isDevelopmentEnv(env)) {
-        hostClient = new HostClient(command.opts().apiUrl);
+        hostClient = new HostClient(apiUrl);
     } else if (globalConfig.isProductionEnv(env)) {
-        const sessionConf = sessionConfig.getConfig();
-
-        hostClient = getMiddlewareClient(command)
-            .getManagerClient(sessionConf.lastSpaceId)
-            .getHostClient(sessionConf.lastHubId);
+        hostClient = getMiddlewareClient()
+            .getManagerClient(lastSpaceId)
+            .getHostClient(lastHubId);
     }
 
-    if (command.opts().log) {
+    if (log) {
         hostClient.client.addLogger({
             ok(result) {
                 const { status, statusText, url } = result;
@@ -59,11 +58,10 @@ export const getHostClient = (command: Command): HostClient => {
 /**
  * Returns instance client for instance with given `id` on default host.
  *
- * @param {Command} command Command object.
  * @param {string} id Instance client.
  * @returns {InstanceClient} Instance client.
  */
-export const getInstance = (command: Command, id: string) => InstanceClient.from(id, getHostClient(command));
+export const getInstance = (id: string) => InstanceClient.from(id, getHostClient());
 
 /**
  * Attaches stdio to instance streams.
@@ -74,7 +72,6 @@ export const getInstance = (command: Command, id: string) => InstanceClient.from
  */
 export const attachStdio = (command: Command, instanceClient: InstanceClient) => {
     return displayEntity(
-        command,
         Promise.all([
             instanceClient.sendStdin(process.stdin),
             instanceClient.getStream("stdout").then((out) => out.pipe(process.stdout)),

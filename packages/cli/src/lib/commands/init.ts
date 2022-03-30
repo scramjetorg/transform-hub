@@ -4,7 +4,7 @@ export const init: CommandDefinition = (program) => {
     const initCmd = program
         .command("init")
         .alias("i")
-        .usage("si init [subcommand] [options...]");
+        .usage("si init [command] [options...]");
 
     initCmd
         .command("template")

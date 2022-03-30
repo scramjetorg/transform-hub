@@ -15,7 +15,7 @@ export const sequence: CommandDefinition = (program) => {
     const sequenceCmd = program
         .command("sequence")
         .alias("seq")
-        .usage("si seq [subcommand] [options...]")
+        .usage("si seq [command] [options...]")
         .description(`operations on a program to be executed on the Host,
          consisting of one or more functions executed one after another`);
 
@@ -23,7 +23,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("list")
         .alias("ls")
         .description("list the sequences")
-        .action(async () => displayEntity(program, getHostClient(program).listSequences()));
+        .action(async () => displayEntity(getHostClient().listSequences()));
 
     sequenceCmd
         .command("pack")
@@ -40,13 +40,13 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<package>", "The file to upload or '-' to use the last packed.")
         .description("send package or folder to the hub")
         .action(async (sequencePackage: string) => {
-            const seq = await getHostClient(program).sendSequence(
+            const seq = await getHostClient().sendSequence(
                 await getReadStreamFromFile(getPackagePath(sequencePackage))
             );
 
             sessionConfig.setLastSequenceId(seq.id);
 
-            return displayObject(program, seq);
+            return displayObject(seq);
         });
 
     sequenceCmd
@@ -83,12 +83,12 @@ export const sequence: CommandDefinition = (program) => {
                 console.error("Unable to read configuration");
                 return Promise.resolve();
             }
-            const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient(program));
+            const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
             const instance = await sequenceClient.start(appConfig, args);
 
             sessionConfig.setLastInstanceId(instance.id);
-            return displayObject(program, instance);
+            return displayObject(instance);
         });
 
     sequenceCmd
@@ -105,9 +105,10 @@ export const sequence: CommandDefinition = (program) => {
         .description("")
         //     .description("Uploads a package and immediately executes it with given arguments"
         .action(async (sequencePackage: string, args: any) => {
+            //FIXME: implement me, get rid of sequenceCmd.opts()
             const { config: configPath, detached } = sequenceCmd.opts();
             const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
-            const seq = await getHostClient(program).sendSequence(
+            const seq = await getHostClient().sendSequence(
                 sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin
             );
 
@@ -125,18 +126,14 @@ export const sequence: CommandDefinition = (program) => {
         .command("get")
         .argument("<id>", "The sequence id to start or '-' for the last uploaded.")
         .description("obtain basic information about a sequence")
-        .action(async (id: string) => {
-            return displayEntity(program, getHostClient(program).getSequence(getSequenceId(id)));
-        });
+        .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id))));
 
     sequenceCmd
         .command("delete")
         .alias("rm")
         .argument("<id>", "The sequence id to remove or '-' for the last uploaded.")
         .description("delete the sequence")
-        .action(async (id: string) => {
-            return displayEntity(program, getHostClient(program).deleteSequence(getSequenceId(id)));
-        });
+        .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id))));
 
     sequenceCmd
         .command("prune")

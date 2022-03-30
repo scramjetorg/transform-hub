@@ -16,14 +16,14 @@ const getExitCode = (_err: ClientError) => 1;
 const program = new CommandClass() as Command;
 const errorHandler = (err: ClientError) => {
     process.exitCode = getExitCode(err);
-    const opts = program.opts();
+    const { format, log } = globalConfig.getConfig();
 
-    if (opts.format === "json") {
+    if (globalConfig.isJsonFormat(format)) {
         console.log(
             JSON.stringify({
                 error: true,
                 code: err?.code,
-                stack: opts.log ? err?.stack : undefined,
+                stack: log ? err?.stack : undefined,
                 message: err?.message,
                 reason: err?.reason?.message,
             })
@@ -50,7 +50,7 @@ const errorHandler = (err: ClientError) => {
             Authorization: `Bearer ${token}`,
         });
 
-        await setPlatformDefaults(program);
+        await setPlatformDefaults();
     }
 
     /**
@@ -73,8 +73,7 @@ const errorHandler = (err: ClientError) => {
      */
     program
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
-        .parse(process.argv)
-        .opts();
+        .parse(process.argv);
 
     await new Promise((res) => program.hook("postAction", res));
 })().catch(errorHandler);

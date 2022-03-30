@@ -39,6 +39,6 @@ export const util: CommandDefinition = (program) => {
                 })
                 .stringify(parser);
 
-            return displayStream(program, out);
+            return displayStream(out);
         });
 };

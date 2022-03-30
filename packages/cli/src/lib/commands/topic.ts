@@ -10,7 +10,7 @@ import { displayEntity, displayStream } from "../output";
 export const topic: CommandDefinition = (program) => {
     const topicCmd = program
         .command("topic")
-        .usage("si topic [subcommand] [options...]")
+        .usage("si topic [command] [options...]")
         .description("publish/subscribe operations allows to manage data flow");
 
     topicCmd
@@ -31,7 +31,7 @@ export const topic: CommandDefinition = (program) => {
         )
         .option("-e, --end <boolean>", "close topic stream after processing the request, x-end-stream (default: false)")
         .description("get data from topic")
-        .action(async (topicName) => displayStream(program, getHostClient(program).getNamedData(topicName)));
+        .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
 
     topicCmd
         .command("delete")
@@ -54,8 +54,7 @@ export const topic: CommandDefinition = (program) => {
         .description("send data on topic from file, directory or directly through the console")
         .action(async (topicName, filename, { contentType, end }) =>
             displayEntity(
-                program,
-                getHostClient(program).sendNamedData(
+                getHostClient().sendNamedData(
                     topicName,
                     filename ? await getReadStreamFromFile(filename) : process.stdin,
                     contentType,
