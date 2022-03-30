@@ -94,14 +94,16 @@ export const sequence: CommandDefinition = (program) => {
         .option("-c, --config <config-path>", "Appconfig path location")
         .option("-C, --config-json <config-string>", "Appconfig as string")
         .option("--output-topic <string>", "topic to which the output stream should be routed")
+        .option("--input-topic <string>", "topic to which the input stream should be routed")
         .action(async (id: string, args: any, opts) => {
-            const { config: configPath, configJson, outputTopic } = opts;
+            const { config: configPath, configJson, outputTopic, inputTopic } = opts;
             const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient(program));
 
             const instance = await sequenceClient.start({
                 appConfig: await resolveConfigJson(configJson, configPath),
                 args,
-                outputTopic
+                outputTopic,
+                inputTopic
             });
 
             sessionConfig.setLastInstanceId(instance.id);

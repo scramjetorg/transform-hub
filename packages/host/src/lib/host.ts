@@ -518,10 +518,22 @@ export class Host implements IComponent {
 
         sequence.instances.add(id);
 
-        if (csic.outputTopic) {
-            csic.provides = csic.outputTopic;
+        if (csic.inputTopic) {
+            this.logger.trace("Routing topic to sequence input", csic.outputTopic);
 
-            this.logger.debug("Sequence output routed to topic", csic.outputTopic);
+            csic.requires = csic.inputTopic;
+
+            this.serviceDiscovery.getData({ topic: csic.inputTopic, contentType: "" })
+                .pipe(csic.getInputStream());
+
+            csic.confirmInputHook().then(() => {}, (e: any) => this.logger.error(e));
+            this.cpmConnector?.sendTopicInfo({ requires: csic.inputTopic, contentType: "" });
+        }
+
+        if (csic.outputTopic) {
+            this.logger.trace("Routing sequence output to topic", csic.outputTopic);
+
+            csic.provides = csic.outputTopic;
 
             // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
             const data: dataType = { topic: csic.outputTopic, contentType: "" };
@@ -536,7 +548,8 @@ export class Host implements IComponent {
 
             let notifyCPM = false;
 
-            if (data.requires) {
+            // Do not route original topic to input strea, if --input-topic is specified
+            if (!csic.inputTopic && data.requires) {
                 csic.requires = data.requires;
                 notifyCPM = true;
 
