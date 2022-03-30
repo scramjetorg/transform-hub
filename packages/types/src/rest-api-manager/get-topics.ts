@@ -1,9 +1,9 @@
-import { ReadableStream, WritableStream } from "../utils";
-
-export type GetTopicsResponse = Record<
-    string,
-    {
-        contentType: string,
-        stream: ReadableStream<any> | WritableStream<any>
-    }
->
+export type GetTopicsResponse = {
+    name: string;
+    actors: {
+        type: string;
+        role: string;
+        host: string | undefined;
+        stream: boolean;
+    }[];
+}[]
