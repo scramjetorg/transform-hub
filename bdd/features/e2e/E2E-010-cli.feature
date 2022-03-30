@@ -236,3 +236,16 @@ Feature: CLI tests
         Then I execute CLI with "topic get names2" arguments without waiting for the end
         Then confirm data named "endless-names-10" will be received
         * stop host
+
+        @ci @cli @starts-host
+    Scenario: E2E-010 TC-025 Rename topic input
+        Given start host
+        When I execute CLI with "topic send names3 features/e2e/data.json" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz --format json" arguments
+        Then I get Sequence id
+        Then I start Sequence with options "--input-topic names3"
+        Then I get instance health
+        Then I get instance id
+        And I get instance output without waiting for the end
+        Then confirm data named "hello-avengers" will be received
+        * stop host

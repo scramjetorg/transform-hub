@@ -82,6 +82,11 @@ export class CSIController extends TypedEmitter<Events> {
     public outputTopic?: string
 
     /**
+     * Topic to which the input stream should be routed
+     */
+    public inputTopic?: string
+
+    /**
      * Logger.
      *
      * @type {IObjectLogger}
@@ -135,6 +140,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.sthConfig = sthConfig;
         this.sequenceArgs = payload.args;
         this.outputTopic = payload.outputTopic;
+        this.inputTopic = payload.inputTopic;
 
         this.communicationHandler = communicationHandler;
 
