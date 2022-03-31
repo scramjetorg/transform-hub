@@ -1,4 +1,5 @@
-import { APIRoute, ReadableStream, WritableStream } from "@scramjet/types";
+
+import { APIRoute, ReadableStream } from "@scramjet/types";
 import { Duplex, PassThrough, Readable, Writable } from "stream";
 
 import { CPMConnector } from "./cpm-connector";
@@ -48,7 +49,7 @@ function pipeToTopic(source: Readable, target: topicDataType) {
                 const lastByte = lastChunk[lastChunk.length - 1];
 
                 if (lastByte !== NEWLINE_BYTE) {
-                    target.stream!.write("\n");
+                    target.stream.write("\n");
                 }
             });
     }
@@ -129,20 +130,10 @@ export class ServiceDiscovery {
                 contentType: config.contentType,
                 stream: topicStream,
                 localProvider
+
             });
         } else {
             this.logger.trace("Routing data:", config);
-        }
-
-        if (localProvider) {
-            this.logger.trace("Local provider added topic, provider", config.topic, localProvider);
-
-            if (this.cpmConnector) {
-                this.cpmConnector
-                    .sendTopic(config.topic, this.dataMap.get(config.topic)!);
-
-                this.logger.trace("Sending data to cpm");
-            }
         }
 
         return this.dataMap.get(config.topic)!;
@@ -154,9 +145,9 @@ export class ServiceDiscovery {
      * @returns All topics.
      */
     getTopics() {
-        const o: any = [];
-
-        return o;
+        return Array.from(this.dataMap, ([key, value]) => ({
+            ...value, topic: key
+        }));
     }
 
     /**
@@ -210,14 +201,7 @@ export class ServiceDiscovery {
                 if (this.cpmConnector) {
                     this.logger.trace("Requesting CPM for topic", dataType);
 
-                    this.cpmConnector?.getTopic(dataType.topic)
-                        .then(stream => {
-                            this.logger.trace("CPM connected for topic", dataType);
-
-                            stream.pipe(topicData?.stream as WritableStream<any>);
-                        });
-
-                    this.dataMap.set(dataType.topic, { ...topicData, cpmRequest: true });
+                    this.dataMap.set(dataType.topic, topicData);
                 }
             }
 
