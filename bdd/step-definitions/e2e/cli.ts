@@ -337,6 +337,15 @@ Then("I send input data {string}", async function(pathToFile: string) {
     assert.equal(res.stdio[2], 0);
 });
 
+Then("I send input {string}", async function(input: string) {
+    const res = (this as CustomWorld).cliResources;
+
+    const child = spawn("/usr/bin/env", [...si, "inst", "input", res.instanceId!, ...formatFlags(), ...connectionFlags()]);
+
+    child.stdin.write(input);
+    child.stdin.end();
+});
+
 Then("I stop instance {string} {string}", async function(timeout: string, canCallKeepAlive: string) {
     const res = (this as CustomWorld).cliResources;
 
