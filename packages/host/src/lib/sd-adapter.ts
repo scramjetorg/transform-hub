@@ -1,5 +1,5 @@
 import { APIRoute, ReadableStream, WritableStream } from "@scramjet/types";
-import { Duplex, PassThrough, Readable } from "stream";
+import { Duplex, PassThrough, Readable, Writable } from "stream";
 
 import { CPMConnector } from "./cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -33,7 +33,7 @@ export type topicDataType = {
 
 const NEWLINE_BYTE = "\n".charCodeAt(0);
 
-export function pipeToTopic(source: Readable, target: topicDataType) {
+function pipeToTopic(source: Readable, target: topicDataType) {
     source.pipe(target.stream, { end: false });
 
     // for json streams, make sure that the last message will be ended with newline
@@ -240,5 +240,18 @@ export class ServiceDiscovery {
             (this.dataMap.get(topic)?.stream as ReadableStream<any>).unpipe();
             this.dataMap.delete(topic);
         }
+    }
+
+    public routeTopicToStream(topicData: dataType, target: Writable) {
+        this.getData(topicData).pipe(target);
+
+        this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, contentType: topicData.contentType });
+    }
+
+    public routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string) {
+        const topic = this.addData(topicData, localProvider);
+
+        pipeToTopic(source, topic);
+        this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, contentType: topicData.contentType });
     }
 }

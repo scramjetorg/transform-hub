@@ -18,7 +18,7 @@ import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
 
-import { dataType, pipeToTopic, ServiceDiscovery } from "./sd-adapter";
+import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
 import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
@@ -518,74 +518,60 @@ export class Host implements IComponent {
 
         sequence.instances.add(id);
 
-        if (csic.inputTopic) {
-            this.logger.trace("Routing topic to sequence input", csic.outputTopic);
-
-            csic.requires = csic.inputTopic;
-
-            this.serviceDiscovery.getData({ topic: csic.inputTopic, contentType: "" })
-                .pipe(csic.getInputStream());
-
-            csic.confirmInputHook().then(() => {}, (e: any) => this.logger.error(e));
-            this.cpmConnector?.sendTopicInfo({ requires: csic.inputTopic, contentType: "" });
-        }
-
-        if (csic.outputTopic) {
-            this.logger.trace("Routing sequence output to topic", csic.outputTopic);
-
-            csic.provides = csic.outputTopic;
-
-            // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
-            const data: dataType = { topic: csic.outputTopic, contentType: "" };
-            const topic = this.serviceDiscovery.addData(data, csic.id);
-
-            pipeToTopic(csic.getOutputStream()!, topic);
-            this.cpmConnector?.sendTopicInfo({ provides: csic.outputTopic, contentType: "" });
-        }
-
         csic.on("pang", (data) => {
+            // @TODO REFACTOR possibly send only one PANG in Runner and throw on more pangs
             this.logger.trace("PANG received", data);
 
-            let notifyCPM = false;
+            // On First empty PANG
+            if (!data.requires && !data.provides) {
+                if (csic.inputTopic) {
+                    this.logger.trace("Routing topic to sequence input, name from API:", csic.inputTopic);
 
-            // Do not route original topic to input strea, if --input-topic is specified
+                    csic.requires = csic.inputTopic;
+
+                    this.serviceDiscovery.routeTopicToStream(
+                        { topic: csic.inputTopic, contentType: "" },
+                        csic.getInputStream()
+                    );
+                }
+
+                if (csic.outputTopic) {
+                    this.logger.trace("Routing sequence output to topic, name from API", csic.outputTopic);
+
+                    csic.provides = csic.outputTopic;
+
+                    // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
+                    this.serviceDiscovery.routeStreamToTopic(
+                        csic.getOutputStream(),
+                        { topic: csic.outputTopic, contentType: "" },
+                        csic.id
+                    );
+                }
+            }
+
+            // Do not route original topic to input stream, if --input-topic is specified
             if (!csic.inputTopic && data.requires) {
+                this.logger.trace("Routing topic to sequence input, name from Sequence:", data.requires);
+
                 csic.requires = data.requires;
-                notifyCPM = true;
 
-                this.serviceDiscovery.getData(
-                    {
-                        topic: data.requires,
-                        // @TODO this probably should be typed better to not allow undefined
-                        contentType: data.contentType!
-                    }
-                )?.pipe(csic.getInputStream()!);
-
-                csic.confirmInputHook().then(
-                    () => { /* noop */ },
-                    (e: any) => {
-                        this.logger.error(e);
-                    }
+                this.serviceDiscovery.routeTopicToStream(
+                    { topic: data.requires, contentType: data.contentType! },
+                    csic.getInputStream()
                 );
             }
 
             // Do not route output stream to original topic if --output-topic is specified
             if (!csic.outputTopic && data.provides) {
+                this.logger.trace("Routing sequence output to topic, name from Sequence", data.provides);
+
                 csic.provides = data.provides;
-                notifyCPM = true;
 
-                this.logger.debug("Sequence provides data", data);
-
-                const topic = this.serviceDiscovery.addData(
-                    { topic: data.provides, contentType: data.contentType! },
+                this.serviceDiscovery.routeStreamToTopic(
+                    csic.getOutputStream(),
+                    { topic: data.provides, contentType: "" },
                     csic.id
                 );
-
-                pipeToTopic(csic.getOutputStream()!, topic);
-            }
-
-            if (notifyCPM) {
-                this.cpmConnector?.sendTopicInfo(data);
             }
         });
 

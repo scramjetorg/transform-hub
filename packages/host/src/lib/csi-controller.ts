@@ -534,12 +534,6 @@ export class CSIController extends TypedEmitter<Events> {
         return this.upStreams![CC.LOG];
     }
 
-    async confirmInputHook(): Promise<void> {
-        await this.controlDataStream?.whenWrote(
-            [RunnerMessageCode.INPUT_CONTENT_TYPE, { connected: true }]
-        );
-    }
-
     // @TODO discuss this
     async handleSequenceCompleted(message: EncodedMessage<RunnerMessageCode.SEQUENCE_COMPLETED>) {
         this.logger.trace("Got message: SEQUENCE_COMPLETED.");
