@@ -298,7 +298,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.debug("Streams initialized");
 
-        const isInputConnected = await new Promise((res, rej) => {
+        const isInputConnectedPromised = new Promise((res, rej) => {
             this.inputResolver = { res, rej };
         });
 
@@ -330,7 +330,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 this.logger.trace("Waiting for input stream");
 
-                if (isInputConnected) {
+                const connected = await isInputConnectedPromised;
+
+                if (connected) {
                     this.logger.trace("Input stream connected");
 
                     await this.setInputContentType({
