@@ -1,4 +1,5 @@
 import { CommandDefinition } from "../../types";
+import { isDevelopment } from "../../utils/isDevelopment";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { displayEntity, displayStream } from "../output";
 
@@ -13,14 +14,15 @@ export const topic: CommandDefinition = (program) => {
         .usage("si topic [command] [options...]")
         .description("publish/subscribe operations allows to manage data flow");
 
-    topicCmd
-        .command("create")
-        .argument("<topic-name>")
-        .description("create topic")
-        .action(() => {
+    if (isDevelopment())
+        topicCmd
+            .command("create")
+            .argument("<topic-name>")
+            .description("create topic")
+            .action(() => {
             // FIXME: implement me
-            throw new Error("Implement me");
-        });
+                throw new Error("Implement me");
+            });
 
     topicCmd
         .command("get")
@@ -33,15 +35,16 @@ export const topic: CommandDefinition = (program) => {
         .description("get data from topic")
         .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
 
-    topicCmd
-        .command("delete")
-        .alias("rm")
-        .argument("<topic-name>")
-        .description("delete data from topic")
-        .action(() => {
+    if (isDevelopment())
+        topicCmd
+            .command("delete")
+            .alias("rm")
+            .argument("<topic-name>")
+            .description("delete data from topic")
+            .action(() => {
             // FIXME: implement me
-            throw new Error("Implement me");
-        });
+                throw new Error("Implement me");
+            });
 
     topicCmd
         .command("send")

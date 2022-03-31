@@ -7,7 +7,7 @@ import { globalConfig, sessionConfig } from "../config";
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (): MiddlewareClient => {
-    const { middlewareApiUrl, log } = globalConfig.getConfig();
+    const { middlewareApiUrl, debug } = globalConfig.getConfig();
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");
@@ -15,7 +15,7 @@ export const getMiddlewareClient = (): MiddlewareClient => {
 
     const middlewareClient = new MiddlewareClient(middlewareApiUrl);
 
-    if (log) {
+    if (debug) {
         middlewareClient.client.addLogger({
             ok(result: any) {
                 const { status, statusText, url } = result;

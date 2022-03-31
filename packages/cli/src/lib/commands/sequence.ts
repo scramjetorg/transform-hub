@@ -1,9 +1,9 @@
 import { SequenceClient } from "@scramjet/api-client";
 import { readFile } from "fs/promises";
 import { CommandDefinition } from "../../types";
+import { isDevelopment } from "../../utils/isDevelopment";
 import { attachStdio, getHostClient, getReadStreamFromFile, packAction } from "../common";
-import { getPackagePath, getSequenceId, /* , sessionConfig  */
-    sessionConfig } from "../config";
+import { getPackagePath, getSequenceId, sessionConfig } from "../config";
 import { displayEntity, displayObject } from "../output";
 
 /**
@@ -28,7 +28,6 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd
         .command("pack")
         .argument("<path>")
-        // TODO: TO think?? if we use tar.gz shouldn't we use same shortcut names? -O, --to-stdout, -C, --directory=DIR?
         .option("-c, --stdout", "output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
         .description("create archived file (package) with sequence for later use")
@@ -36,7 +35,6 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("send")
-        //TODO: description of package from old version- check if correct
         .argument("<package>", "The file to upload or '-' to use the last packed.")
         .description("send package or folder to the hub")
         .action(async (sequencePackage: string) => {
@@ -51,24 +49,15 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("start")
-        .argument("<id>")
-        // TODO: add description from draft 2.0
-        .option("--hub <provider>", "aws|ovh|gcp")
-        // TODO: old description, waiting for fix + mission description of config file
-        .option("-c, --config <config-path>", "Appconfig path location")
-        // TODO: old description, waiting for fix
-        .option("-C, --config-json <config-string>", "Appconfig as string")
-        // TODO: add description
-        .argument("[args...]")
+        .argument("<id>", "The sequence id to start or '-' for the last uploaded.")
+        // TODO: for future impolemenation
+        // .option("--hub <provider>", "aws|ovh|gcp");
+        .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
+        .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
+        .option("--args <json-string>", "arguments to be passed to first function in Sequence")
         .description("start the sequence with or without given arguments")
-        .action(async (id, args, { hub, config, configJson }) => {
-            // eslint-disable-next-line no-console
-            console.log("id ", id, "hub ", hub, "args ", "config", config, "json", configJson, args);
-            if (hub) {
-                // FIXME: implement me
-                throw new Error("Implement me");
-            }
-            if (config && configJson) {
+        .action(async (id, { config: configFile, configString, args }) => {
+            if (configFile && configString) {
                 // eslint-disable-next-line no-console
                 console.error("Provide one source of configuration");
                 return Promise.resolve();
@@ -76,8 +65,8 @@ export const sequence: CommandDefinition = (program) => {
             let appConfig = {};
 
             try {
-                if (configJson) appConfig = JSON.parse(configJson);
-                if (config) appConfig = JSON.parse(await readFile(config, "utf-8"));
+                if (configString) appConfig = JSON.parse(configString);
+                if (configFile) appConfig = JSON.parse(await readFile(configFile, "utf-8"));
             } catch (_) {
                 // eslint-disable-next-line no-console
                 console.error("Unable to read configuration");
@@ -91,36 +80,38 @@ export const sequence: CommandDefinition = (program) => {
             return displayObject(instance);
         });
 
-    sequenceCmd
-        .command("deploy")
+    if (isDevelopment())
+        sequenceCmd
+            .command("deploy")
         //TODO: add prevoius run functionality
-        .alias("run")
-        .argument("<path>")
+            .alias("run")
+            .argument("<path>")
         // .argument("<package>", "The file to upload or '-' to use the last packed")
         // .argument("[args...]", "Additional args")
+        //TODO: fix description
         // .option("-d, --detached", "Don't attach to stdio")
         // .option("-c, --config <config-path>", "Appconfig path location")
         // .option("-C, --config-json <config-string>", "Appconfig as string")
         // TODO: add description from draft 2.0
-        .description("")
+            .description("")
         //     .description("Uploads a package and immediately executes it with given arguments"
-        .action(async (sequencePackage: string, args: any) => {
+            .action(async (sequencePackage: string, args: any) => {
             //FIXME: implement me, get rid of sequenceCmd.opts()
-            const { config: configPath, detached } = sequenceCmd.opts();
-            const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
-            const seq = await getHostClient().sendSequence(
-                sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin
-            );
+                const { config: configPath, detached } = sequenceCmd.opts();
+                const config = configPath ? JSON.parse(await readFile(configPath, "utf-8")) : {};
+                const seq = await getHostClient().sendSequence(
+                    sequencePackage ? await getReadStreamFromFile(sequencePackage) : process.stdin
+                );
 
-            sessionConfig.setLastSequenceId(seq.id);
-            const instance = await seq.start(config, args);
+                sessionConfig.setLastSequenceId(seq.id);
+                const instance = await seq.start(config, args);
 
-            sessionConfig.setLastInstanceId(instance.id);
+                sessionConfig.setLastInstanceId(instance.id);
 
-            if (!detached) {
-                await attachStdio(program, instance);
-            }
-        });
+                if (!detached) {
+                    await attachStdio(instance);
+                }
+            });
 
     sequenceCmd
         .command("get")
@@ -135,14 +126,15 @@ export const sequence: CommandDefinition = (program) => {
         .description("delete the sequence")
         .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id))));
 
-    sequenceCmd
-        .command("prune")
-        .option("--all")
-        .option("--filter")
-        .option("--force")
-        .description("delete multiple sequences on actual selected hub")
-        .action((/* { all, filter, force } */) => {
+    if (isDevelopment())
+        sequenceCmd
+            .command("prune")
+            .option("--all")
+            .option("--filter")
+            .option("--force")
+            .description("delete multiple sequences on actual selected hub")
+            .action(() => {
             // FIXME: implement me
-            throw new Error("Implement me");
-        });
+                throw new Error("Implement me");
+            });
 };

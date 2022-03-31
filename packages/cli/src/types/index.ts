@@ -15,7 +15,7 @@ export const isConfigFormat = (format: string) => ["pretty", "json"].includes(fo
 export interface GlobalConfigEntity {
     configVersion: number;
     apiUrl: string;
-    log: boolean;
+    debug: boolean;
     format: configFormat;
     middlewareApiUrl: string;
     env: configEnv;

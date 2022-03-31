@@ -2,6 +2,7 @@ import { CommandDefinition } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../scope";
 import { displayObject } from "../output";
 import { globalConfig, sessionConfig } from "../config";
+import { isDevelopment } from "../../utils/isDevelopment";
 
 /**
  * Initializes `scope` command.
@@ -33,20 +34,26 @@ export const scope: CommandDefinition = (program) => {
             displayObject(scopeConfig);
         });
 
-    scopeCmd
-        .command("add")
-        .option("--hub <name> <id>", "add hub to specified scope")
-        .option("--space <name> <apiUrl>", "add space to specified scope")
-        .description("add hub or space to specified scope");
-
-    scopeCmd
-        .command("save")
-        .argument("<name>")
-        .description("save current chosen space and hub under a scope")
-        .action(() => {
+    if (isDevelopment())
+        scopeCmd
+            .command("add")
+            .option("--hub <name> <id>", "add hub to specified scope")
+            .option("--space <name> <apiUrl>", "add space to specified scope")
+            .description("add hub or space to specified scope")
+            .action(() => {
             // FIXME: implement me
-            throw new Error("Implement me");
-        });
+                throw new Error("Implement me");
+            });
+
+    if (isDevelopment())
+        scopeCmd
+            .command("save")
+            .argument("<name>")
+            .description("save current chosen space and hub under a scope")
+            .action(() => {
+            // FIXME: implement me
+                throw new Error("Implement me");
+            });
 
     scopeCmd
         .command("use")

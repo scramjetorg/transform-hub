@@ -9,18 +9,22 @@ import { topic } from "./topic";
 import { completion } from "./completion";
 import { util } from "./util";
 import { init } from "./init";
+import { isDevelopment } from "../../utils/isDevelopment";
+import { globalConfig } from "../config";
+
+const isProductionEnv = globalConfig.isProductionEnv(globalConfig.getEnv());
 
 export const commands: CommandDefinition[] = [
-    scope,
     hub,
     config,
-    scope,
+    // hide scopes and spaces till next sprint (E4 S3)
+    isDevelopment() && isProductionEnv ? scope : () => {},
+    isDevelopment() && isProductionEnv ? space : () => {},
     sequence,
-    space,
     instance,
     topic,
-    init,
-    // TODO: completion check with version of draft 2.0
+    // waiting for working implementation
+    isDevelopment() ? init : () => {},
     completion,
     util
 ];
