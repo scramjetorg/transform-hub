@@ -28,13 +28,17 @@ RUN yarn install --frozen-lock --silent \
 
 FROM node:lts-bullseye-slim as release
 
-RUN set -xe \
-  && mkdir -p /app
-
 WORKDIR /app
+
+# python is required for running python sequences with process adapter
+RUN apt-get update \
+    && apt-get install -y python3 \
+    && rm -rf \
+        /var/lib/apt/lists/* \
+        /usr/share/doc/*
+
 COPY --from=builder /build/dist ./dist
 
-RUN set -xe \
-    && npm install -g ./dist/sth
+RUN npm install -g ./dist/sth
 
 CMD [ "scramjet-transform-hub" ]
