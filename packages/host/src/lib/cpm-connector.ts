@@ -11,9 +11,7 @@ import {
     Instance,
     LoadCheckStatMessage,
     NetworkInfo,
-    ReadableStream,
     STHIDMessageData,
-    WritableStream,
     IObjectLogger
 } from "@scramjet/types";
 import { MessageUtilities } from "@scramjet/model";
@@ -556,20 +554,13 @@ export class CPMConnector extends TypedEmitter<Events> {
         );
     }
 
-    /**
-     * Makes a POST request to Manager with topic data.
-     * @TODO: Consider to make this request via VerserClient.
-     *
-     * @param {string} topic Topic name.
-     * @param topicCfg Topic configuration.
-     */
-    sendTopic(topic: string, topicCfg: { contentType: string, stream: ReadableStream<any> | WritableStream<any> }) {
-        const req = this.makeHttpRequestToCpm("POST", `topic/${topic}`, {
-            "x-end-stream": "true",
-            "content-type": topicCfg.contentType || "application/x-ndjson"
+    async sendTopicsInfo(topics: { provides?: string, requires?: string, contentType?: string }[]) {
+        this.logger.debug("Sending topics information", topics);
+        topics.forEach(async topic => {
+            await this.sendTopicInfo(topic);
         });
 
-        topicCfg.stream.pipe(req);
+        this.logger.trace("Topics information sent");
     }
 
     private makeHttpRequestToCpm(
