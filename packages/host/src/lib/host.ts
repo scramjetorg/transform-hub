@@ -229,6 +229,7 @@ export class Host implements IComponent {
         this.cpmConnector?.on("connect", async () => {
             await this.cpmConnector?.sendSequencesInfo(this.getSequences());
             await this.cpmConnector?.sendInstancesInfo(this.getInstances());
+            await this.cpmConnector?.sendTopicsInfo(this.getTopics());
         });
 
         this.cpmConnector?.connect();
@@ -559,7 +560,7 @@ export class Host implements IComponent {
                 pipeToTopic(csic.getOutputStream()!, topic);
             }
 
-            if (notifyCPM) {
+            if (notifyCPM && this.cpmConnector?.connected) {
                 this.cpmConnector?.sendTopicInfo(data);
             }
         });
@@ -664,6 +665,15 @@ export class Host implements IComponent {
         }
 
         return Array.from(sequence.instances.values());
+    }
+
+    getTopics() {
+        return this.serviceDiscovery.getTopics().map(
+            (topic) => ({
+                name: topic.topic,
+                contentType: topic.contentType
+            })
+        );
     }
 
     /**
