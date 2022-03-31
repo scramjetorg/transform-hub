@@ -125,9 +125,9 @@ Feature: Test our shiny new Python runner
         Then "log" contains "Debug log message"
         And host is still running
 
-    @ci @cli 
+    @ci @python 
     Scenario: E2E-015 TC-014 Rename topic output and input
-        Given start host
+        Given host is running
         When I execute CLI with "seq send ../python/reference-apps/python-topic-producer.tar.gz --format json" arguments
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names3"
@@ -137,4 +137,5 @@ Feature: Test our shiny new Python runner
         Then I start Sequence with options "--input-topic names3"
         And I get instance output without waiting for the end
         Then confirm data named "python-topics" will be received
-        * stop host
+        And host is still running
+        
