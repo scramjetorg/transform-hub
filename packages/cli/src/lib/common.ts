@@ -1,5 +1,4 @@
 import { InstanceClient, HostClient } from "@scramjet/api-client";
-import { Command } from "commander";
 import { access, readdir } from "fs/promises";
 import { createReadStream, createWriteStream, constants, PathLike } from "fs";
 import { resolve } from "path";
@@ -24,7 +23,7 @@ export const getHostClient = (): HostClient => {
     if (hostClient) return hostClient;
 
     const { lastSpaceId, lastHubId, apiUrl } = sessionConfig.getConfig();
-    const { env, log } = globalConfig.getConfig();
+    const { env, debug } = globalConfig.getConfig();
 
     if (globalConfig.isDevelopmentEnv(env)) {
         hostClient = new HostClient(apiUrl);
@@ -34,7 +33,7 @@ export const getHostClient = (): HostClient => {
             .getHostClient(lastHubId);
     }
 
-    if (log) {
+    if (debug) {
         hostClient.client.addLogger({
             ok(result) {
                 const { status, statusText, url } = result;
@@ -66,11 +65,10 @@ export const getInstance = (id: string) => InstanceClient.from(id, getHostClient
 /**
  * Attaches stdio to instance streams.
  *
- * @param {Command} command Command object.
  * @param {InstanceClient} instanceClient Instance client.
  * @returns {Promise<void>} Promise resolving when all stdio streams finish.
  */
-export const attachStdio = (command: Command, instanceClient: InstanceClient) => {
+export const attachStdio = (instanceClient: InstanceClient) => {
     return displayEntity(
         Promise.all([
             instanceClient.sendStdin(process.stdin),

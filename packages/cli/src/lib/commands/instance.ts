@@ -1,8 +1,9 @@
 /* eslint-disable no-console */
 import { createReadStream } from "fs";
 import { CommandDefinition } from "../../types";
-import { /* attachStdio, */ getHostClient, getInstance, getReadStreamFromFile } from "../common";
-import { getInstanceId /* , sessionConfig */ } from "../config";
+import { isDevelopment } from "../../utils/isDevelopment";
+import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
+import { getInstanceId, sessionConfig } from "../config";
 import { displayEntity, displayStream } from "../output";
 
 /**
@@ -24,6 +25,13 @@ export const instance: CommandDefinition = (program) => {
         .action(async () => displayEntity(getHostClient().listInstances()));
 
     instanceCmd
+        .command("use")
+        .argument("<id>", "The instance id")
+        //TOOD: description doesn't match functionality- it's sets instance "-" value
+        .description("select an instance to communicate with")
+        .action(async (id: string) => sessionConfig.setLastInstanceId(id) as unknown as void);
+
+    instanceCmd
         .command("kill")
         .argument("<id>", "The instance id or '-' for the last one started.")
         .description("kill instance without waiting for unfinished tasks")
@@ -43,6 +51,7 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, timeout: string) =>
             displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true)));
 
+    //TODO: status or info should probably removed, ask Michal
     instanceCmd
         .command("status")
         .alias("st")
@@ -65,35 +74,46 @@ export const instance: CommandDefinition = (program) => {
         .description("show info about the instance")
         .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id))));
 
-    instanceCmd
+    //move to long help
+    const eventCmd = instanceCmd
         .command("event")
-        .description("show event commands")
-        .action(() => {
-            // FIXME: implement me
-            throw new Error("Implement me");
-        });
+        .description("show event commands");
 
-    instanceCmd
-        //TODO: wait on draft 2.0 for one command
-        .command("emit|invoke")
-        .argument("<id>")
-        .argument("<eventName>")
+    eventCmd
+        .command("emit")
+        .alias("invoke")
+        .argument("<id>", "The instance id or '-' for the last one started or selected.")
+        .argument("<eventName>", "The event name")
         .argument("[payload]")
         .description("send event with eventName and a JSON formatted event payload")
-        .action(() => {
-            // FIXME: implement me
-            throw new Error("Implement me");
+        .action(async (id: string, eventName: string, message: string) => {
+            const instanceClient = getInstance(getInstanceId(id));
+
+            return displayEntity(instanceClient.sendEvent(eventName, message));
         });
 
-    instanceCmd
-        .command("getEvent")
+    eventCmd
+        .command("get")
         .argument("[options]")
-        .argument("<id>")
-        .argument("<eventName>")
+        .argument("<id>", "The instance id or '-' for the last one started or selected.")
+        .argument("<eventName>", "The event name")
+        .option("-n, --next", "wait for the next event occurrence")
+        .option("-s, --stream", "stream the events (the stream will start with last event)")
         .description("get the last event occurrence (will wait for the first one if not yet retrieved)")
-        .action(() => {
-            // FIXME: implement me
-            throw new Error("Implement me");
+        .action(async (id: string, event: string, { next, stream }) => {
+            if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
+            if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event));
+            return displayEntity(getInstance(getInstanceId(id)).getEvent(event));
+        });
+
+    eventCmd
+        .command("attach")
+        .argument("<id>", "The instance id or '-' for the last one started or selected.")
+        .description("Connect to all stdio - stdin, stdout, stderr of a running instance")
+        .action(async (id: string) => {
+            const inst = getInstance(getInstanceId(id));
+
+            await attachStdio(inst);
         });
 
     instanceCmd
@@ -113,12 +133,10 @@ export const instance: CommandDefinition = (program) => {
             );
         });
 
-    //TODO: zostawic dla Agi do poprawienia czesci zwiazane z output stdio etc
     instanceCmd
         .command("output")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        // TODO:: fix descriptions after output reinvention
-        .description("show stream on output")
+        .description("pipe running instance output to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("output"));
         });
@@ -126,22 +144,22 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("log")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        // TODO: description doesn't describe constant work
-        // .description("Pipe running instance log to stdout")
-        .description("show instance log")
+        .description("Pipe running instance log to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("log"));
         });
 
-    instanceCmd
-        .command("stdio")
-        .argument("<id>")
-        .description("listen to all stdio - stdin, stdout, stderr of a instance")
-        .action(() => {
+    if (isDevelopment())
+        instanceCmd
+            .command("stdio")
+            .argument("<id>")
+            .description("listen to all stdio - stdin, stdout, stderr of a instance")
+            .action(() => {
             // FIXME: implement me
-            throw new Error("Implement me");
-        });
+                throw new Error("Implement me");
+            });
 
+    //move to long help
     instanceCmd
         .command("stdin")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
@@ -153,88 +171,18 @@ export const instance: CommandDefinition = (program) => {
 
             return displayEntity(instanceClient.sendStdin(stream ? createReadStream(stream) : process.stdin));
         });
-
+    //move to long help
     instanceCmd
         .command("stderr")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        .description("show stream on stderr")
+        .description("pipe running instances stderr stream to stdout")
         .action((id: string) => displayStream(getInstance(getInstanceId(id)).getStream("stderr")));
-
+    //move to long help
     instanceCmd
         .command("stdout")
         .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        .description("show stream on stdout")
+        .description("pipe running instances stdout stream to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("stdout"));
         });
-
-    instanceCmd
-        .command("requires")
-        .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        .argument("<topic-name>")
-        .description("assign to an instance a topic that will consume the data")
-        .action(() => {
-            // FIXME: implement me
-            throw new Error("Implement me");
-        });
-
-    instanceCmd
-        .command("provides")
-        .argument("<id>", "The instance id or '-' for the last one started or selected.")
-        .argument("<topic-name>")
-        .description("assign to an instance a topic that will send the data")
-        .action(() => {
-            // FIXME: implement me
-            throw new Error("Implement me");
-        });
-
-    //TODO: cleanup
-    // instanceCmd
-    //     .command("select")
-    //     .argument("<id>", "The instance id")
-    //     .description("Select an instance id as default")
-    //     .action(async (id: string) => sessionConfig.setLastInstanceId(id) as unknown as void);
-
-    // instanceCmd
-    //     .command("invokeEvent")
-    //     .alias("emit")
-    //     .description("Sends event with eventName and a JSON formatted event payload")
-    //     .argument("<id>", "The instance id or '-' for the last one started or selected.")
-    //     .arguments("<eventName> [<payload>]")
-    //     .action(async (id: string, eventName: string, message: string) => {
-    //         const instanceClient = getInstance(program, getInstanceId(id));
-
-    //         return displayEntity(program, instanceClient.sendEvent(eventName, message));
-    //     });
-
-    // /**
-    //  * No eventName.
-    //  * Currently there is no event filtering.
-    //  * Only the last event instance is returned
-    //  */
-    // instanceCmd
-    //     .command("event")
-    //     .description("Get the last event occurence (will wait for the first one if not yet retrieved)")
-    //     .alias("on")
-    //     .argument("<id>", "The instance id or '-' for the last one started or selected.")
-    //     .argument("<eventName>", "The event name")
-    //     .option("-s, --stream", "stream the events (the stream will start with last event)")
-    //     .option("-n, --next", "wait for the next event occurrence")
-    //     .action(async (id: string, event: string, { next, stream }) => {
-    //         if (stream) return displayStream(program, getInstance(program, getInstanceId(id)).getEventStream(event));
-
-    //         if (next) return displayEntity(program, getInstance(program, getInstanceId(id)).getNextEvent(event));
-
-    //         return displayEntity(program, getInstance(program, getInstanceId(id)).getEvent(event));
-    //     });
-
-    // instanceCmd
-    //     .command("attach")
-    //     .argument("<id>", "The instance id or '-' for the last one started or selected.")
-    //     .description("Connect to all stdio - stdin, stdout, stderr of a running instance")
-    //     .action(async (id: string) => {
-    //         const inst = getInstance(program, getInstanceId(id));
-
-    //         await attachStdio(program, inst);
-    //     });
 };

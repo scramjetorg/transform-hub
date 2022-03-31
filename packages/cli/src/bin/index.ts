@@ -16,14 +16,14 @@ const getExitCode = (_err: ClientError) => 1;
 const program = new CommandClass() as Command;
 const errorHandler = (err: ClientError) => {
     process.exitCode = getExitCode(err);
-    const { format, log } = globalConfig.getConfig();
+    const { format, debug } = globalConfig.getConfig();
 
     if (globalConfig.isJsonFormat(format)) {
         console.log(
             JSON.stringify({
                 error: true,
                 code: err?.code,
-                stack: log ? err?.stack : undefined,
+                stack: debug ? err?.stack : undefined,
                 message: err?.message,
                 reason: err?.reason?.message,
             })
@@ -53,26 +53,12 @@ const errorHandler = (err: ClientError) => {
         await setPlatformDefaults();
     }
 
-    /**
-     * Commands
-     * ```
-     * pack [options] [<directory>]
-     * host [command]                operations on host
-     * config|c [command]            configuration file operations
-     * sequence|seq [command]        operations on sequence
-     * instance|inst [command]       operations on instance
-     * help [command]                display help for command
-     */
     for (const command of Object.values(commands)) command(program);
 
-    /**
-     * Options
-     * ```json
-     * -h, --help                    display help for command
-     * ```
-     */
     program
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
+        .version(`${process.env.npm_package_version}`, "-v, --version", "show current version")
+        .addHelpCommand(false)
         .parse(process.argv);
 
     await new Promise((res) => program.hook("postAction", res));

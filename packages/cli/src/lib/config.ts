@@ -119,7 +119,7 @@ class GlobalConfig extends DefaultFileConfig {
         const defaultGlobalConfig: GlobalConfigEntity = {
             configVersion: 1,
             apiUrl: "http://127.0.0.1:8000/api/v1",
-            log: true,
+            debug: true,
             format: "pretty",
             middlewareApiUrl: "",
             env: "development",
@@ -163,8 +163,8 @@ class GlobalConfig extends DefaultFileConfig {
     setApiUrl(apiUrl: string): boolean {
         return this.setConfigValue("apiUrl", apiUrl) as boolean;
     }
-    setLog(log: boolean): boolean {
-        return this.setConfigValue("log", log) as boolean;
+    setDebug(debug: boolean): boolean {
+        return this.setConfigValue("debug", debug) as boolean;
     }
     setFormat(format: string): boolean {
         return this.setConfigValue("format", format) as boolean;
@@ -246,6 +246,19 @@ class SessionConfig extends DefaultFileConfig {
     }
     setScope(scope: string): boolean {
         return this.setConfigValue("scope", scope) as boolean;
+    }
+
+    validateConfigValue(key: string, value: any): boolean {
+        const valid = super.validateConfigValue(key, value);
+
+        if (!valid) {
+            return false;
+        }
+        switch (key) {
+        case "apiUrl": return isValidUrl(value);
+        default:
+            return true;
+        }
     }
 }
 

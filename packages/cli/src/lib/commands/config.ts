@@ -1,6 +1,6 @@
 import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
-import { globalConfig } from "../config";
+import { globalConfig, sessionConfig } from "../config";
 import { displayObject } from "../output";
 
 /**
@@ -14,7 +14,7 @@ export const config: CommandDefinition = (program) => {
         middlewareApiUrl: defaulMiddlewareApiUrl,
         env: defaultEnv,
         token: defaultToken,
-        log: defaultLog,
+        debug: defaultDebug,
         format: defaultFormat } = defaultConfig;
 
     const configCmd = program
@@ -29,14 +29,24 @@ export const config: CommandDefinition = (program) => {
         .description("Print out the current config")
         .action(() => displayObject(globalConfig.getConfig()));
 
+    const useCmd = configCmd
+        .command("use")
+        .description("add properties to session config");
+
+    useCmd
+        .command("apiUrl")
+        .argument("<url>")
+        .description(`specify the hub API url (current: ${sessionConfig.getConfig().apiUrl})`)
+        .action(url => sessionConfig.setApiUrl(url) as unknown as void);
+
     const setCmd = configCmd
         .command("set")
-        .description("use an option to set the values in config");
+        .description("add properties to global config ");
 
     setCmd
         .command("json")
         .argument("<json>")
-        .description("set config from json object")
+        .description("set config properties from json object")
         .action(json => {
             try {
                 if (!globalConfig.setConfig(JSON.parse(json))) {
@@ -52,7 +62,7 @@ export const config: CommandDefinition = (program) => {
     setCmd
         .command("apiUrl")
         .argument("<url>")
-        .description(`specify the hub API url (default: ${defaultApiUrl})`)
+        .description(`specify the Hub API Url (default: ${defaultApiUrl})`)
         .action(url => {
             if (!globalConfig.setApiUrl(url)) {
                 // eslint-disable-next-line no-console
@@ -62,31 +72,25 @@ export const config: CommandDefinition = (program) => {
 
     setCmd
         .command("log")
-        .option("--debug <boolean>", `specify log to show extended view (default: ${defaultLog})`)
+        .option("--debug <boolean>", `specify log to show extended view (default: ${defaultDebug})`)
         .option("--format <format>", `specify format between "pretty" or "json" (default: ${defaultFormat})`)
         .description("specify log options")
-        .action(({ debug, format, colored }) => {
-            const setValue = (value: any, setCallback: (val: typeof value) => boolean,
-                errorMsg:string = `Invalid value: ${value}`) => {
-                if (!setCallback(value)) {
-                // eslint-disable-next-line no-console
-                    console.error(errorMsg);
-                }
-            };
+        .action(({ debug, format }) => {
+            if (debug) {
+                const debugVal = stringToBoolean(debug);
 
-            if (debug) setValue(stringToBoolean(debug), v => globalConfig.setLog(v));
-            if (format) setValue(format, v => globalConfig.setFormat(v));
-            if (colored) {
-                const color = stringToBoolean(debug);
-
-                if (typeof color === "undefined") {
+                if (typeof debugVal === "undefined") {
                     // eslint-disable-next-line no-console
-                    console.error("Invalid boolean value");
-                    return;
+                    console.error("Invalid debug value");
                 }
-                //FIXME: move implementation from util log-format
+                if (!globalConfig.setDebug(debugVal as boolean)) {
+                    // eslint-disable-next-line no-console
+                    console.error("Unable to set debug value");
+                }
+            }
+            if (format && !globalConfig.setFormat(format)) {
                 // eslint-disable-next-line no-console
-                console.error("Implement me");
+                console.error("Unable to set format value");
             }
         });
 
@@ -151,11 +155,8 @@ export const config: CommandDefinition = (program) => {
     resetCmd
         .command("log")
         .description("reset logger")
-        .action(() => {
-            //reset debug, colored, format
-            // FIXME: implement me
-            throw new Error("Implement me");
-        });
+        .action(() => resetValue({ defaultFormat, defaultDebug },
+            ({ defaultFormat: f, defaultDebug: d }) => globalConfig.setFormat(f) && globalConfig.setDebug(d)));
 
     resetCmd
         .command("middlewareApiUrl")

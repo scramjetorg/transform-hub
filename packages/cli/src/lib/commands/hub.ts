@@ -1,7 +1,8 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
+import { isDevelopment } from "../../utils/isDevelopment";
 import { getHostClient } from "../common";
-import { sessionConfig } from "../config";
+import { globalConfig, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
@@ -11,67 +12,55 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const hub: CommandDefinition = (program) => {
+    const isProductionEnv = globalConfig.isProductionEnv(globalConfig.getEnv());
+
     const hubCmd = program
         .command("hub")
         .usage("si hub [command] [options...]")
-        .option(
-            "-v, --version [name|id]",
-            "display chosen hub version if a name is not provided it displays a version of a current hub"
-        )
-        // TODO: missing description
-        .option("--driver", "", "scp")
-        .option("--provider <value>", "specify provider: aws|cpm")
-        .option("--region <value>", "i.e.: us-east-1")
-        .description("allows to run programs in different data centers, computers or devices in local network")
-        .action(async ({ version }) => {
-            console.log("version: ", version);
-            if (version) {
-                if (typeof version === "boolean") {
-                    await displayEntity(getHostClient().getVersion());
-                } else {
-                    // display chosen hub version
-                    // FIXME: implement me
-                    throw new Error("Implement me");
-                }
-            }
-        }
-        );
+        /* TODO: for future implementation
+            .option("--driver", "", "scp")
+            .option("--provider <value>", "specify provider: aws|cpm")
+            .option("--region <value>", "i.e.: us-east-1")
+    */
+        .description("allows to run programs in different data centers, computers or devices in local network");
 
-    hubCmd
-        .command("create")
-        .argument("<name>")
-        .option("--json <json>")
-        .option("--file <pathToFile>")
-        .description(" create hub with parameters")
-        .action(() => {
+    if (isDevelopment() && isProductionEnv)
+        hubCmd
+            .command("create")
+            .argument("<name>")
+            .option("--json <json>")
+            .option("--file <pathToFile>")
+            .description(" create hub with parameters")
+            .action(() => {
             // FIXME: implement me
-            throw new Error("Implement me");
-        });
+                throw new Error("Implement me");
+            });
 
-    hubCmd
-        .command("use")
-        .argument("<name|id>")
-        .description("specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
-        .action(async (id: string) => {
-            const space = sessionConfig.getConfig().lastSpaceId;
+    if (isDevelopment())
+        hubCmd
+            .command("use")
+            .argument("<name|id>")
+            .description("specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
+            .action(async (id: string) => {
+                const space = sessionConfig.getConfig().lastSpaceId;
 
-            console.log("Space:", space);
-            const managerClient = getMiddlewareClient().getManagerClient(space);
+                console.log("Space:", space);
+                const managerClient = getMiddlewareClient().getManagerClient(space);
 
-            const hosts = await managerClient.getHosts();
+                const hosts = await managerClient.getHosts();
 
-            const host = hosts.find((h: any) => h.id === id);
+                const host = hosts.find((h: any) => h.id === id);
 
-            if (!host) {
-                console.error("Host not found");
-                return;
-            }
+                if (!host) {
+                    console.error("Host not found");
+                    return;
+                }
 
-            const hostClient = managerClient.getHostClient(id);
+                const hostClient = managerClient.getHostClient(id);
 
-            sessionConfig.setLastHubId(id);
-            displayObject(hostClient);
-        });
+                sessionConfig.setLastHubId(id);
+                displayObject(hostClient);
+            });
 
     hubCmd
         .command("list")
@@ -94,14 +83,23 @@ export const hub: CommandDefinition = (program) => {
         });
 
     hubCmd
-        .command("load")
-        .description("monitor CPU, memory and disk usage on the Hub")
-        .action(async () => displayEntity(getHostClient().getLoadCheck()));
+        .command("info")
+        /* TODO For future use
+         .argument("[name|id]")
+        .description("display chosen hub version if a name is not provided it displays a version of a current hub")
+         */
+        .description("displays info of a current hub")
+        .action(async () => await displayEntity(getHostClient().getVersion()));
 
     hubCmd
         .command("logs")
         .description("display the logs of the Hub")
         .action(async () => displayStream(getHostClient().getLogStream()));
+
+    hubCmd
+        .command("load")
+        .description("monitor CPU, memory and disk usage on the Hub")
+        .action(async () => displayEntity(getHostClient().getLoadCheck()));
 
     // TODO: think about it
     // hubCmd
@@ -112,4 +110,5 @@ export const hub: CommandDefinition = (program) => {
     //         // FIXME: implement me
     //         throw new Error("Implement me");
     //     });
+    // hubCmd.command("delete");
 };
