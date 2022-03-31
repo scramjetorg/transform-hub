@@ -237,7 +237,7 @@ Feature: CLI tests
         Then confirm data named "endless-names-10" will be received
         * stop host
 
-        @ci @cli @starts-host
+    @ci @cli @starts-host
     Scenario: E2E-010 TC-025 Rename topic input
         Given start host
         When I execute CLI with "topic send names3 features/e2e/data.json" arguments

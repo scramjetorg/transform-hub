@@ -71,8 +71,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     private monitoringInterval?: NodeJS.Timeout;
     private keepAliveRequested?: boolean;
 
-    private inputResolver?: { res: Function, rej: Function };
-
     private stopExpected: boolean = false;
 
     handshakeResolver?: { res: Function, rej: Function };
@@ -139,14 +137,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             const eventData = data as EventMessageData;
 
             this.emitter.emit(eventData.eventName, eventData.message);
-            break;
-        // [RunnerMessageCode.INPUT_CONTENT_TYPE, false
-        case RunnerMessageCode.INPUT_CONTENT_TYPE:
-            if ((data as any).connected) {
-                this.inputResolver?.res(data);
-            } else {
-                this.inputResolver?.rej(data);
-            }
             break;
         default:
             break;
@@ -298,10 +288,6 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.logger.debug("Streams initialized");
 
-        const isInputConnectedPromised = new Promise((res, rej) => {
-            this.inputResolver = { res, rej };
-        });
-
         this.sendHandshakeMessage();
 
         const { appConfig, args } = await this.waitForHandshakeResponse();
@@ -330,19 +316,9 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 this.logger.trace("Waiting for input stream");
 
-                const connected = await isInputConnectedPromised;
-
-                if (connected) {
-                    this.logger.trace("Input stream connected");
-
-                    await this.setInputContentType({
-                        "content-type": sequence[0].contentType
-                    });
-
-                    this.logger.debug("Input ContentType", sequence[0].contentType);
-                } else {
-                    this.logger.debug("No Input stream");
-                }
+                await this.setInputContentType({
+                    "content-type": sequence[0].contentType
+                });
 
                 sequence.shift();
             } else {
