@@ -12,6 +12,7 @@ import { isDevelopment } from "../../utils/isDevelopment";
 export const scope: CommandDefinition = (program) => {
     const scopeCmd = program
         .command("scope")
+        .addHelpCommand(false)
         .alias("s")
         .usage("si scope [command] [options...]")
         .description("manage scopes that store pairs of spaces and hubs used when working");

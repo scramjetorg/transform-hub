@@ -11,6 +11,7 @@ import { displayEntity, displayStream } from "../output";
 export const topic: CommandDefinition = (program) => {
     const topicCmd = program
         .command("topic")
+        .addHelpCommand(false)
         .usage("si topic [command] [options...]")
         .description("publish/subscribe operations allows to manage data flow");
 
@@ -50,9 +51,7 @@ export const topic: CommandDefinition = (program) => {
         .command("send")
         .argument("<topic-name>")
         .argument("[<file>]")
-        //TODO: add to draft
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        //TODO: add to draft
         .option("-e, --end", "x-end-stream", false)
         .description("send data on topic from file, directory or directly through the console")
         .action(async (topicName, filename, { contentType, end }) =>

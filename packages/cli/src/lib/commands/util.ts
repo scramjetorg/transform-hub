@@ -9,7 +9,6 @@ import { displayStream } from "../output";
  * @param {Command} program Commander object.
  */
 export const util: CommandDefinition = (program) => {
-    //TODO move to si config set --log-color
     /**
      * Set custom value for config and write it to JSON file.
      */
@@ -22,6 +21,7 @@ export const util: CommandDefinition = (program) => {
      */
     configCmd
         .command("log-format")
+        .addHelpCommand(false)
         .alias("lf")
         .option("--no-color", "dont colorize the values")
         .description("colorifies and prints out nice colorful log files")
