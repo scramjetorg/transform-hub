@@ -83,7 +83,7 @@ IComponent {
             path.resolve(__dirname, require.resolve("@scramjet/python-runner"), "..")
         );
 
-        pythonpath += `:${process.env.PYTHONPATH}:${sequenceDir}`;
+        pythonpath += `:${process.env.PYTHONPATH}:${sequenceDir}/__pypackages__`;
         
         return pythonpath;
     }
