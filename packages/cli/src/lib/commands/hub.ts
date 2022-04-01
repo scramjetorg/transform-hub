@@ -16,6 +16,7 @@ export const hub: CommandDefinition = (program) => {
 
     const hubCmd = program
         .command("hub")
+        .addHelpCommand(false)
         .usage("si hub [command] [options...]")
         /* TODO: for future implementation
             .option("--driver", "", "scp")
@@ -65,7 +66,7 @@ export const hub: CommandDefinition = (program) => {
     hubCmd
         .command("list")
         .alias("ls")
-        .description("list all hubs")
+        .description("list the hubs")
         .action(async () => {
             const space = sessionConfig.getConfig().lastSpaceId;
 
@@ -84,31 +85,20 @@ export const hub: CommandDefinition = (program) => {
 
     hubCmd
         .command("info")
-        /* TODO For future use
+        /* TODO for future use
          .argument("[name|id]")
         .description("display chosen hub version if a name is not provided it displays a version of a current hub")
          */
-        .description("displays info of a current hub")
+        .description("display info about the hub")
         .action(async () => await displayEntity(getHostClient().getVersion()));
 
     hubCmd
         .command("logs")
-        .description("display the logs of the Hub")
+        .description("pipe running hub log to stdout")
         .action(async () => displayStream(getHostClient().getLogStream()));
 
     hubCmd
         .command("load")
         .description("monitor CPU, memory and disk usage on the Hub")
         .action(async () => displayEntity(getHostClient().getLoadCheck()));
-
-    // TODO: think about it
-    // hubCmd
-    //     .command("set")
-    //     .argument("<apiUrl>")
-    //     .description("")
-    //     .action(() => {
-    //         // FIXME: implement me
-    //         throw new Error("Implement me");
-    //     });
-    // hubCmd.command("delete");
 };

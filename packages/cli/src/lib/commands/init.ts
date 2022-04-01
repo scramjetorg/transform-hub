@@ -3,6 +3,7 @@ import { CommandDefinition } from "../../types";
 export const init: CommandDefinition = (program) => {
     const initCmd = program
         .command("init")
+        .addHelpCommand(false)
         .alias("i")
         .usage("si init [command] [options...]");
 
@@ -16,7 +17,4 @@ export const init: CommandDefinition = (program) => {
             // FIXME: implement me
             throw new Error("Implement me");
         });
-
-    //TODO: idea for future
-    // initCmd.command("sample");
 };

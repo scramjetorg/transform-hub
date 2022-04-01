@@ -11,12 +11,11 @@ import { getMiddlewareClient } from "../platform";
 export const space: CommandDefinition = (program) => {
     const spaceCmd = program
         .command("space")
+        .addHelpCommand(false)
         .alias("spc")
         .usage("si space [command] [options...]")
         .option("-c, --stdout", "output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
-        //TODO: can't set single - add in tutorial and web decumentation
-        // .option("-", "minus sign holds the last used name|id")
         .description("operations on grouped and separated runtime environments that allow sharing the data within them");
 
     spaceCmd
@@ -31,7 +30,7 @@ export const space: CommandDefinition = (program) => {
     spaceCmd
         .command("list")
         .alias("ls")
-        .description("List all existing spaces")
+        .description("list all existing spaces")
         .action(async () => {
             const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
@@ -42,7 +41,7 @@ export const space: CommandDefinition = (program) => {
     spaceCmd
         .command("use")
         .argument("<name>")
-        .description("Use the space")
+        .description("use the space")
         .action(async (name: string) => {
             const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(name);
@@ -55,7 +54,6 @@ export const space: CommandDefinition = (program) => {
         .command("delete")
         .alias("rm")
         .argument("<name|id>")
-        // TODO: for future development, fix description afterwards, so far no 1 knows how we will hanlde spaces
         .description("user can only delete empty space")
         .action(() => {
             // FIXME: implement me
@@ -67,7 +65,6 @@ export const space: CommandDefinition = (program) => {
         .alias("up")
         .argument("<id>", "id of space to update")
         .option("--name", "")
-        // TODO: for future development, fix description afterwards, so far no 1 knows how we will hanlde spaces
         .description("update space parameters")
         .action(() => {
             // FIXME: implement me

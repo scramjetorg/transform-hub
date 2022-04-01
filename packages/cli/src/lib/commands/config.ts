@@ -19,6 +19,7 @@ export const config: CommandDefinition = (program) => {
 
     const configCmd = program
         .command("config")
+        .addHelpCommand(false)
         .alias("c")
         .usage("si config [command] ")
         .description("config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");
@@ -26,12 +27,13 @@ export const config: CommandDefinition = (program) => {
     configCmd
         .command("print")
         .alias("p")
-        .description("Print out the current config")
+        .description("print out the current configuration")
         .action(() => displayObject(globalConfig.getConfig()));
 
     const useCmd = configCmd
         .command("use")
-        .description("add properties to session config");
+        .addHelpCommand(false)
+        .description("add properties to session configuration");
 
     useCmd
         .command("apiUrl")
@@ -41,12 +43,13 @@ export const config: CommandDefinition = (program) => {
 
     const setCmd = configCmd
         .command("set")
+        .addHelpCommand(false)
         .description("add properties to global config ");
 
     setCmd
         .command("json")
         .argument("<json>")
-        .description("set config properties from json object")
+        .description("set configuration properties from json object")
         .action(json => {
             try {
                 if (!globalConfig.setConfig(JSON.parse(json))) {
@@ -138,7 +141,10 @@ export const config: CommandDefinition = (program) => {
             }
         });
 
-    const resetCmd = configCmd.command("reset").description("reset configuration value to default");
+    const resetCmd = configCmd
+        .command("reset")
+        .addHelpCommand(false)
+        .description("reset configuration value to default");
 
     const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
         if (!setCallback(defaultValue)) {
@@ -162,8 +168,6 @@ export const config: CommandDefinition = (program) => {
         .command("middlewareApiUrl")
         .description("reset middlewareApiUrl")
         .action(() => resetValue(defaulMiddlewareApiUrl, v => globalConfig.setMiddlewareApiUrl(v)));
-
-    //TODO: think how we want to reset scope throughout the program
 
     resetCmd
         .command("token")
