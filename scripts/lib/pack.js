@@ -2,8 +2,6 @@ const tar = require("tar");
 const { createWriteStream, readdirSync } = require("fs");
 
 class Pack {
-    PACKAGES_DIR = "packages";
-
     constructor(options) {
         this.options = options || {};
 
@@ -11,8 +9,15 @@ class Pack {
             throw new Error("No output folder specified");
         }
 
+        if (!this.options.packagesDir) {
+            throw new Error("No base folder specified");
+        }
+
         this.currDir = process.cwd();
-        this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
+        this.packagesDir = options.packagesDir || this.packagesDir;
+        this.rootDistPackPath = this.currDir.replace(this.packagesDir, this.options.outDir);
+
+        console.log(`Packing ${this.rootDistPackPath} in ${options.packagesDir}`)
     }
 
     async pack() {
