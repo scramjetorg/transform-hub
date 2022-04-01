@@ -3,7 +3,7 @@ FROM python:3.9-slim-bullseye
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub
 
-ENV PYTHONPATH "${PYTHONPATH}:${PACKAGE_DIR}/dist/__pypackages__"
+ENV PYTHONPATH "${PYTHONPATH}:${PACKAGE_DIR}/__pypackages__"
 
 RUN groupadd -g 1200 runner \
     && useradd -g 1200 -u 1200 -m -d ${HUB_DIR} -s /bin/false runner \
