@@ -125,6 +125,7 @@ IComponent {
         const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env });
 
         if (development()) {
+            this.logger.warn("Development mode! Piping process stdio to main process");
             runnerProcess.stdout.pipe(process.stdout);
             runnerProcess.stderr.pipe(process.stderr);
         }

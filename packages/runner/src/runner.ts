@@ -158,21 +158,17 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.trace("Monitoring interval removed");
         }
 
+        let exitcode = 0;
+
         try {
             this.logger.info("Cleaning up streams");
 
             await this.hostClient.disconnect();
-
-            this.logger.info("Streams clear");
-
-            return 0;
         } catch (e: any) {
-            this.logger.error("Error. Streams not clear", e);
-
-            return 233;
-        } finally {
-            this.logger.info("Clean up completed");
+            exitcode = 223;
         }
+
+        return exitcode;
     }
 
     async setInputContentType(headers: any) {

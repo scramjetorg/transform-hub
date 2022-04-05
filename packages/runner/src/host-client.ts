@@ -58,17 +58,19 @@ class HostClient implements IHostClient {
     async disconnect() {
         this.logger.trace("Disconnecting from host");
 
-        const streamsExitedPromised = this.streams.map(stream =>
+        const streamsExitedPromised: Promise<void>[] = this.streams.map(stream =>
             new Promise(
-                (res, rej) => {
-                    stream!
-                        .on("error", rej)
-                        .on("end", res);
-
+                (res) => {
                     if ("writable" in stream!) {
-                        stream.end();
+                        stream
+                            .on("close", () => {
+                                console.error("END");
+                                res();
+                            })
+                            .end();
                     } else {
                         stream!.destroy();
+                        res();
                     }
                 }
             ));
