@@ -205,6 +205,7 @@ const startHost = async () => {
 };
 
 Given("start host", () => startHost());
+
 Then("stop host", () => hostUtils.stopHost());
 
 Given("host is running", async () => {

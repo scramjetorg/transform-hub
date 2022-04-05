@@ -18,11 +18,6 @@ const si = process.env.SCRAMJET_SPAWN_JS
         ? ["ts-node", "../packages/cli/src/bin/index.ts"] : ["si"]
 ;
 
-const connectionFlags = () => process.env.LOCAL_HOST_BASE_URL
-    ? ["-a", process.env.LOCAL_HOST_BASE_URL]
-    : []
-;
-
 When("I set format json in config", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
@@ -37,7 +32,7 @@ When("I set format json in config", { timeout: 30000 }, async function() {
 When("I execute CLI with bash command {string}", { timeout: 30000 }, async function(cmd: string) {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/bin/bash", ["-c", `${cmd} ${connectionFlags().join(" ")}`], { ...process.env, SI: si.join(" ") });
+    res.stdio = await getStreamsFromSpawn("/bin/bash", [`${cmd}`], { ...process.env, SI: si.join(" ") });
     assert.equal(res.stdio[2], 0);
 });
 
@@ -53,7 +48,7 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
 });
 
 When("I execute CLI with {string} arguments without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
-    const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" "), ...connectionFlags()]);
+    const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
         cmdProcess.stdout.pipe(process.stdout);
@@ -220,7 +215,6 @@ Then("I start Sequence", async function() {
     const res = (this as CustomWorld).cliResources;
     const sequenceId: string = res.sequenceId || "";
 
-    console.log("-----------res", res);
     try {
         res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId]);
         assert.equal(res.stdio[2], 0);
@@ -228,7 +222,6 @@ Then("I start Sequence", async function() {
         if (process.env.SCRAMJET_TEST_LOG) {
             console.error(res.stdio[0]);
         }
-        console.log("-----------res.stdio[0]", res.stdio[0]);
         console.dir(res.stdio[0]);
 
         const instance = JSON.parse(res.stdio[0].replace("\n", ""));
@@ -276,28 +269,27 @@ Then("I get Instance health", { timeout: 10000 }, async function() {
 Then("health outputs 404", async function() {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", res.instanceId || "", ...connectionFlags()]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", res.instanceId || ""]);
     assert.equal(res.stdio[1].includes("404"), true);
 });
 
-Then("I wait for instance health status to change from 200 to 404", { timeout: 20000 }, async function() {
+Then("I wait for Instance health status to change from 200 to 404", { timeout: 20000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
     let success = false;
 
     while (!success) {
-        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", res.instanceId || "", ...connectionFlags()]);
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", res.instanceId || ""]);
 
-        if (res.stdio[1].includes("code \"404\" status")) {
+        if (res.stdio[1].includes("status: 404")) {
             success = true;
-        } else if (!res.stdio[1].includes("status: 200 OK")) {
-            assert.fail();
+            assert.equal(success, true);
         }
 
         await defer(250);
     }
 
-    assert.equal(success, true);
+    // assert.equal(success, true);
 });
 
 Then("I get Instance log", { timeout: 30000 }, async function() {
@@ -307,15 +299,17 @@ Then("I get Instance log", { timeout: 30000 }, async function() {
     assert.equal(res.stdio[2], 0);
 });
 
-Then("I get instance output", { timeout: 30000 }, async function() {
+Then("I get Instance output", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", res.instanceId || "", ...connectionFlags()]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", res.instanceId || ""]);
+
+    console.log("---------output", res.stdio);
     assert.equal(res.stdio[2], 0);
 });
 
-Then("I get instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
-    const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instanceId || "", ...connectionFlags()]);
+Then("I get Instance output without waiting for the end", { timeout: 10000 }, async function(this: CustomWorld) {
+    const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instanceId || ""]);
 
     this.cliResources.commandInProgress = cmdProcess;
 });
@@ -323,12 +317,12 @@ Then("I get instance output without waiting for the end", { timeout: 30000 }, as
 Then("I get the second instance output", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", res.instance2Id || "", ...connectionFlags()]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", res.instance2Id || ""]);
     assert.equal(res.stdio[2], 0);
 });
 
 Then("I get the second instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
-    const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instance2Id || "", ...connectionFlags()]);
+    const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instance2Id || ""]);
 
     this.cliResources.commandInProgress = cmdProcess;
 });
@@ -347,7 +341,7 @@ Then("I stop Instance {string} {string}", async function(timeout: string, canCal
     assert.equal(res.stdio[2], 0);
 });
 
-Then("I get list of sequences", async function() {
+Then("I get list of Sequences", async function() {
     const res = (this as CustomWorld).cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls"]);
@@ -384,14 +378,14 @@ Then("I get Instance info", async function() {
 When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "emit", res.instanceId || "", eventName, eventMsg]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "emit", res.instanceId || "", eventName, eventMsg]);
     assert.equal(res.stdio[2], 0);
 });
 
 Then("I get event {string} with event message {string} from instance", async function(eventName: string, value: string) {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "on", res.instanceId || "", eventName]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "get", res.instanceId || "", eventName]);
     assert.equal(res.stdio[2], 0);
     assert.equal(res.stdio[0].trim(), value);
 });
@@ -400,7 +394,7 @@ Then("confirm data named {string} received", async function(data) {
     const res = (this as CustomWorld).cliResources;
     const stdio = res.stdio || [];
 
-    console.log("Received data:\n", stdio[0]);
+    console.log("Received data:\n", stdio);
     assert.equal(stdio[0], expectedResponses[data]);
 });
 

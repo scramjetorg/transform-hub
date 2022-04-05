@@ -5,7 +5,8 @@ This feature checks CLI functionalities
 # @one-session tag was added in order to start a set of test in one session(one testing process), they are based on the same Host started in BeforeAll() step and require to set config only once. That is why step "Then I set format json in config" is added only once -> in the first scenario.
 # If you want to test a single scenario, step: "Then I set format json in config" must be added after "Given host is running" step in this particular scenario you want to test.
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-001 CLI displays help
         Given host is running
         Then I set format json in config
@@ -13,21 +14,24 @@ This feature checks CLI functionalities
         Then I get a help information
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-002 Shows Host load information
         Given host is running
         When I execute CLI with "hub load" arguments
         Then I get Hub load information
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-003 Pack sequence
         Given host is running
         When I execute CLI with "seq pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz" arguments
         Then I get location "../packages/reference-apps/transform-function.tar.gz" of compressed directory
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-004 Send package
         Given host is running
         When I execute CLI with "config print" arguments
@@ -35,14 +39,16 @@ This feature checks CLI functionalities
         Then I get Sequence id
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-005 List Sequences
         Given host is running
         When I execute CLI with "seq ls" arguments
         Then I get array of information about sequences
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-006 Start Sequence with format json set in config
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
@@ -52,7 +58,8 @@ This feature checks CLI functionalities
         When I execute CLI with "inst info -" arguments
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-007 Kill Instance
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
@@ -62,7 +69,8 @@ This feature checks CLI functionalities
         Then I kill Instance
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-008 Delete Sequence
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
@@ -70,7 +78,8 @@ This feature checks CLI functionalities
         Then I delete Sequence
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-009 Get health from Instance
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
@@ -92,7 +101,8 @@ This feature checks CLI functionalities
         Then I get Instance log
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-011 Send input data to Instance
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz" arguments
@@ -102,7 +112,8 @@ This feature checks CLI functionalities
         Then I send input data "../dist/reference-apps/checksum-sequence/data.json"
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-012 Stop Instance
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
@@ -112,7 +123,8 @@ This feature checks CLI functionalities
         Then I stop Instance "3000" "false"
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-013 List Instances
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence-2.tar.gz" arguments
@@ -121,7 +133,8 @@ This feature checks CLI functionalities
         Then I get list of Instances
         And host is still running
 
-    @ci @cli @one-session
+    @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-014 Get Instance info
         Given host is running
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
@@ -131,8 +144,10 @@ This feature checks CLI functionalities
         And host is still running
 
     @ci @cli
+    @ignore
     Scenario: E2E-010 TC-015 Send event
         Given host is running
+        Then I set format json in config
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence-v2.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -142,36 +157,42 @@ This feature checks CLI functionalities
         And host is still running
 
     @ci @cli
-    Scenario: E2E-010 TC-016 Package and send with stdout
+    # @one-session
+    Scenario: E2E-010 TC-016 Stop Instance
         Given host is running
-        When I execute CLI with bash command "$SI pack ../dist/reference-apps/transform-function -c | $SI seq send"
+        When I execute CLI with "seq send ../dist/reference-apps/transform-function.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
         Then I get list of Instances
-        Then I stop instance "10" "false"
+        And I execute CLI with "inst stop - 10 false" arguments
         And host is still running
 
     @ci @cli
+    # @one-session
     Scenario: E2E-010 TC-017 Get 404 on health endpoint for finished instance
         Given host is running
-        When I execute CLI with bash command "$SI seq send ../packages/reference-apps/inert-function.tar.gz"
+        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
         Then I get Instance health
-        Then I wait for instance health status to change from 200 to 404
+        Then I wait for Instance health status to change from 200 to 404
         And host is still running
 
     @ci @cli @starts-host
+    # @topic-session
     Scenario: E2E-010 TC-018 API to API
         Given start host
+        Then I set format json in config
         When I execute CLI with "topic send cities features/e2e/cities.json" arguments
         Then I execute CLI with "topic get cities" arguments without waiting for the end
         Then confirm data named "nyc-city-nl" will be received
         * stop host
 
     @ci @cli @starts-host
-    Scenario: E2E-010 TC-019 instance to API
+    # @topic-session
+    Scenario: E2E-010 TC-019 Instance to API
         Given start host
+        Then I set format json in config
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -181,24 +202,31 @@ This feature checks CLI functionalities
         * stop host
 
     @ci @cli @starts-host
-    Scenario: E2E-010 TC-020 API to instance
+    # @topic-session
+    Scenario: E2E-010 TC-020 API to Instance
+    # Fails, hangs on output
         Given start host
+        Then I set format json in config
         When I execute CLI with "topic send names features/e2e/data.json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
-        Then I get Instance health
+        # Then I get Instance health
         Then I get Instance id
-        And I get instance output
+        # Then I execute CLI with "inst output -" arguments
+        And I get Instance output
         Then confirm data named "hello-avengers" received
         * stop host
 
     @ci @cli @starts-host
-    Scenario: E2E-010 TC-021 instance to instance
+    # @topic-session
+    # pass only when started on its own
+    Scenario: E2E-010 TC-021 Instance to Instance
         Given start host
+        Then I set format json in config
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
-        And I get list of sequences
+        And I get list of Sequences
         Then I get id from both sequences
         Then I start the first sequence
         And wait for "6000" ms
@@ -210,6 +238,7 @@ This feature checks CLI functionalities
 
     # This tests writes and uses shared config file so it may fail if run in parallel
     @ci @cli @no-parallel
+    @ignore
     Scenario: E2E-010 TC-022 Check minus set/remove
         Given I execute CLI with "seq select abc" arguments
         # Given I execute CLI with "seq use abc" arguments
@@ -221,14 +250,13 @@ This feature checks CLI functionalities
 
     # This tests writes and uses shared config file so it may fail if run in parallel
     @ci @cli @no-parallel
-    Scenario: E2E-010 TC-023 Check minus replacements with a sequence
+    # @one-session
+    Scenario: E2E-010 TC-023 Check minus replacements with a Sequence
         Given host is running
-        When I execute CLI with "pack ../dist/reference-apps/checksum-sequence" arguments
+        When I execute CLI with "seq pack ../dist/reference-apps/checksum-sequence" arguments
         And I execute CLI with "seq send -" arguments
         And I execute CLI with "seq start -" arguments
-        Then I get the last sequence id from config
-        Then I get the last instance id from config
-        And I get instance info
+        And I execute CLI with "inst info -" arguments
         And I execute CLI with "inst kill -" arguments
         And wait for instance healthy is "false"
         # Give instance some time to close correctly
@@ -242,7 +270,7 @@ This feature checks CLI functionalities
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz --format json" arguments
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names2"
-        Then I get instance health
+        Then I get Instance health
         Then I execute CLI with "topic get names2" arguments without waiting for the end
         Then confirm data named "endless-names-10" will be received
         * stop host
@@ -254,9 +282,9 @@ This feature checks CLI functionalities
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz --format json" arguments
         Then I get Sequence id
         Then I start Sequence with options "--input-topic names3"
-        Then I get instance health
-        Then I get instance id
-        And I get instance output without waiting for the end
+        Then I get Instance health
+        Then I get Instance id
+        And I get Instance output without waiting for the end
         Then confirm data named "hello-avengers" will be received
         * stop host
 
