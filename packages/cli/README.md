@@ -40,127 +40,265 @@ This package provides a Scramjet Command Line Interface to communicate with Tran
 
 - [Show help](#show-help)
 - [Manage config](#manage-config)
-- [Hub operations](#hub-operations)
-- [Create a package](#create-a-package)
+  - [Global vs session](#global-vs-session)
+  - [Logs configuration](#logs-configuration)
+- [Show Scramjet Hub parameters](#show-scramjet-hub-parameters)
 - [Sequence operations](#sequence-operations)
+  - [Start sequence](#start-sequence)
 - [Instance operations](#instance-operations)
+  - [Events](#events)
+- [Topic operations](#topic-operations)
 
 ## Show help
 
 Check the available commands by typing `si --help` in the terminal.
 
 ```bash
-USAGE
-   si [options...]
-   si [command] [options...]
-   si [command] [subcommand] [options...]
+Usage:
+    si [options] [command]
 
-GLOBAL OPTIONS
-   -L, --log-level <level>     specify log level (default: "trace")
-   -f, --format <value>        specify display formatting: json or pretty (default: "pretty")
-   -h, --help                  display help for command
-   -v, --version               display version
+Options:
+    -v, --version            show current version
+    -h, --help               display help for command
 
-COMMANDS
-   config, c                   contains default configuration settings that are
-   hub                         allows to run programs in different data centers, computers or devices in local network
-   sequence, seq               operations on sequence of chained functions aka program
-   instance, inst              operations on running sequence aka computing instance
-   topic                       publish/subscribe operations allows to manage data flow
-   template, tmpl, init        create template and start working on your sequence
+Commands:
+    hub                      allows to run programs in different data centers, computers or devices in local network
+    config|c                 config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings
+    sequence|seq             operations on a program, consisting of one or more functions executed one after another
+    instance|inst [command]  operations on running sequence
+    topic                    publish/subscribe operations allows to manage data flow
+    completion               completion operations
+    util|u                   various utilities
 ```
 
 Show subcommand help by providing `--help` or `-h` option after each as in example below.
 
 ```bash
-USAGE
+Usage
     si [command] --help
 
-EXAMPLE
+Example
     si sequence -h
 ```
 
 ## Manage config
 
-1. First set environmental vale.<br />
-   In order to use STH CLI commands the **environment should be set to develop**. If this is the first installation of Scramjet CLI, the **default value** of the environment **is set to `develop` mode**. To check the config values use `si config print` command.<br /><br />
-
-    > Ad. An environmental value that is set to production allows to use commands of the Scramjet Cloud Platform. We encourage you to [sign up for the SCP Beta](https://scramjet.org/#join-beta).
-
-2. Second set STH apiUrl.<br />
-   In order to use STH the hub should be running under the given URL. e.g.: `si config set apiUrl http://0.0.0.0:8080/api/v1`<br /><br />
-
-    > Ad. An URL pattern looks like this: `http://<localhost|IPaddress>:<portNumber>/api/v1`
+Config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings.
 
 ```bash
-
-DESCRIPTION
-    Config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings.
-    File is located under ~/.si/config.
-
-USAGE
-    si config [subcommand]
-
-SUBCOMMANDS
-    print|p                              prints out on the terminal default config
-    set <pathToFile>|{json}              set config from file or pass json object
-    set apiUrl <apiUrl>                  specify the hub API url (default: "http://localhost:8000/api/v1")
-    set middlewareApiUrl <url>           specify middleware API url to use Cloud Platform (default: "")
-    set scope <name>                     specify default scope that should be used when session start
-    set env <production|develop>         specify the environment (default: develop)
-    unset|del <apiUrl|middlewareApiUrl>  unset config value
-
-```
-
-## Hub operations
-
-```bash
-si host version # display the Host version
-si host load    # monitor CPU, memory and disk usage on the Host
-si host logs    # display the logs of the Host.
-```
-
-## Create a package
-
-Usage: `si pack [options] <directory>`
 
 Options:
+    -h, --help  display help for command
 
--   `-c, --stdout output to stdout (ignores -o)`
--   `-o, --output <file.tar.gz> output path - defaults to dirname`
--   `-h, --help display help for command`
+Commands:
+    print|p     print out the current configuration
+    use         add properties to session configuration
+    set         add properties to global config
+    reset       reset configuration value to default
+```
+
+Printed config example, command `si config p`.
+
+```json
+{
+    "configVersion": 1,
+    "apiUrl": "http://127.0.0.1:8000/api/v1",
+    "debug": true,
+    "format": "pretty", // choose the format of data displayed on the terminal
+    "middlewareApiUrl": "",
+    "env": "development", // choose an environment to work with STH (development) or SCP (production)
+    "scope": "",
+    "token": ""
+}
+```
+
+In order to use STH CLI commands the **environment should be set to develop**. If this is the first installation of Scramjet CLI, the default value of the environment is set to `develop`.
+
+> 💡 <small>An environmental value that is set to production allows to use commands of the Scramjet Cloud Platform. We encourage you to [sign up for the SCP Beta](https://scramjet.org/#join-beta).</small>
+
+In order to use STH the Hub should be running under the given URL. e.g.: `si config set apiUrl http://0.0.0.0:8080/api/v1`
+
+> 💡 <small>An URL pattern looks like this: `http://<localhost|IPaddress>:<portNumber>/api/v1`</small>
+
+### Global vs session
+
+```bash
+Usage:
+si config set [options] [command]
+
+Commands:
+  json <json>               set configuration properties from json object
+  apiUrl <url>              specify the Hub API Url (default: http://127.0.0.1:8000/api/v1)
+  log [options]             specify log options
+  middlewareApiUrl <url>    specify middleware API url
+  scope <name>              specify default scope that should be used when session start
+  token <jwt>               specify platform authorization token (default: )
+  env <production|develop>  specify the environment (default: development)
+```
+
+```bash
+
+Usage:
+    si config use [options] [command]
+
+Commands:
+  apiUrl <url>  specify the hub API url (current: http://127.0.0.1:8000/api/v1)
+```
+
+### Logs configuration
+
+```bash
+Usage:
+    index config set log [options]
+
+Options:
+    --debug <boolean>  specify log to show extended view (default: true)
+    --format <format>  specify format between "pretty" or "json" (default: pretty)
+    -h, --help         display help for command
+```
+
+## Show Scramjet Hub parameters
+
+Allows to run programs in different data centers, computers or devices in local network
+
+```bash
+Usage:
+    si hub [command] [options...]
+
+Options:
+    -h, --help  display help for command
+
+Commands:
+    list|ls     list the hubs
+    info        display info about the hub
+    logs        pipe running hub log to stdout
+    load        monitor CPU, memory and disk usage on the Hub
+    set <apiUrl>
+```
 
 ## Sequence operations
 
+Sequence (Transform Sequence) is a list of chained functions with a lightweight application business logic that contains a developer code. The minimal number is one function.
+
 ```bash
-si seq run [options] [package] [args...] # Uploads a package and immediately executes it with given arguments
-si seq send [<sequencePackage>]          # send packed and compressed sequence file
-si seq list|ls                           # list the sequences
-si seq start [options] <id> [args...]    # start the sequence
-si seq get <id>                          # get data about the sequence
-si seq delete|rm <id>                    # delete the sequence
-si seq help [command]                    # display help for command
+Usage:
+    si seq [command] [options...]
+
+Options:
+    -h, --help                   display help for command
+
+Commands:
+    list|ls                      lists available sequences
+    pack [options] <path>        create archived file (package) with sequence for later use
+    send <package>               send package or folder to the hub
+    use|select <id>              specify the hub sequence to use (current: )
+    start [options] <id>         start the sequence with or without given arguments
+    deploy|run [options] <path>  pack (if needed), send and start the sequence
+    get <id>                     obtain basic information about a sequence
+    delete|rm <id>               delete the sequence form Hub
+```
+
+> 💡 <small>Argument id - the sequence id to start or '-' for the last uploaded.</small>
+
+### Start sequence
+
+Before starting the sequence the package has to be prepared. The package is a created archived file with sequence for later use.
+
+```bash
+Usage:
+    si seq pack [options] <path>
+
+Options:
+  -c, --stdout                output to stdout (ignores -o)
+  -o, --output <file.tar.gz>  output path - defaults to dirname
+  -h, --help                  display help for command
+```
+
+After that the sequence should be send on the Hub (STH or SCP Hub) by `si seq send <path-to-file>` command.
+
+Now it can be executed on the Hub. The Sequence Instance will be created and run.
+
+```bash
+Usage:
+    si sequence start [options] <id>
+
+Options:
+    -f, --config-file <path-to-file>   path to configuration file in JSON format to be passed to instance context
+    -s, --config-string <json-string>  configuration in JSON format to be passed to instance context
+    --args <json-string>               arguments to be passed to first function in Sequence
+    -h, --help                         display help for command
+```
+
+All above steps can be done by single command: `si seq deploy`, so sequence will be packed (if needed), sent and started.
+
+```bash
+Usage:
+    si sequence deploy|run [options] <path>
+
+Options:
+    -o, --output <file.tar.gz>         output path - defaults to dirname
+    -f, --config-file <path-to-file>   path to configuration file in JSON format to be passed to instance context
+    -s, --config-string <json-string>  configuration in JSON format to be passed to instance context
+    --args <json-string>               arguments to be passed to first function in Sequence
+    -h, --help                         display help for command
 ```
 
 ## Instance operations
 
+Instance (Sequence Instance) is a running Sequence, that can process an enormous amount of data on the fly without losing persistence.
+
 ```bash
-si inst list|ls                                       # list the instances
-si inst kill <id>                                     # kill instance without waiting for unfinished tasks
-si inst stop <id> <timeout>                           # end instance gracefully waiting for unfinished tasks
-si inst status <id>                                   # status data about the instance
-si inst health <id>                                   # show the instance health status
-si inst info <id>                                     # show info about the instance
-si inst invokeEvent|emit <id> <eventName> [<payload>] # send event with eventName and a JSON formatted event payload
-si inst event|on [options] <id> <event>               # get the last event occurrence (will wait for the first one if not yet retrieved)
-si inst input <id> [<file>]                           # send file to input, if file not given the data will be read from stdin
-si inst output <id>                                   # show stream on output
-si inst log <id>                                      # show instance log
-si inst attach <id>                                   # connect to all stdio - stdin, stdout, stderr of a running instance
-si inst stdin <id> [<file>]                           # send file to stdin, if file not given the data will be read from stdin
-si inst stderr <id>                                   # show stream on stderr
-si inst stdout <id>                                   # show stream on stdout
-si inst help [command]                                # display help for command
+Usage:
+    si inst [command] [options...]
+
+Options:
+    -h, --help                   display help for command
+
+Commands:
+    list|ls                      list the instances
+    use <id>                     select an instance to communicate with
+    health <id>                  display the instance health status
+    info <id>                    display info about the instance
+    log <id>                     pipe running instance log to stdout
+    kill <id>                    kill instance without waiting for unfinished task
+    stop <id> <timeout>          end instance gracefully waiting for unfinished tasks
+    input [options] <id> [file]  send file to input, if file not given the data will be read from stdin
+    output <id>                  pipe running instance output to stdout
+    stdio|attach <id>            listen to all stdio - stdin, stdout, stderr of a running instance
+    event                        show events commands
+    stdin <id> [file]            send file to stdin, if file not given the data will be read from stdin
+    stderr <id>                  pipe running instances stderr stream to stdout
+    stdout <id>                  pipe running instances stdout stream to stdout
+```
+
+> 💡 <small>Argument id - the instance id or '-' for the last one started or selected.</small>
+
+### Events
+
+```bash
+Usage:
+    si inst event [command] [options...]
+
+Commands:
+    emit|invoke <id> <eventName> [payload]   send event with eventName and a JSON formatted event payload
+    on [options] [options] <id> <eventName>  get the last event occurrence (will wait for the first one if not yet retrieved)
+```
+
+## Topic operations
+
+Publish/subscribe operations allows to manage data flow.
+
+```bash
+
+Usage:
+    si topic [command] [options...]
+
+Options:
+  -h, --help                            display help for command
+
+Commands:
+  get [options] <topic-name>            get data from topic
+  send [options] <topic-name> [<file>]  send data on topic from file, directory or directly through the console
 ```
 
 ## Docs <!-- omit in toc -->
