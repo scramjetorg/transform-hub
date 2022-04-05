@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
 
+import findPackage from "find-package-json";
 import commander from "commander";
 import completionMixin, { Command } from "commander-completion";
 import { ClientError, ClientUtils } from "@scramjet/client-utils";
@@ -10,6 +11,7 @@ import { setPlatformDefaults } from "../lib/platform";
 import { globalConfig } from "../lib/config";
 import { initPaths } from "../lib/paths";
 
+const version = findPackage(__dirname).next().value?.version || "unknown";
 const CommandClass = completionMixin(commander).Command;
 
 const getExitCode = (_err: ClientError) => 1;
@@ -57,7 +59,7 @@ const errorHandler = (err: ClientError) => {
 
     program
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
-        .version(`${process.env.npm_package_version}`, "-v, --version", "show current version")
+        .version(`${version}`, "-v, --version", "show current version")
         .addHelpCommand(false)
         .parse(process.argv);
 
