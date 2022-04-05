@@ -23,7 +23,8 @@
     "@scramjet/utility": "^0.19.2",
     "n-readlines": "^1.0.1",
     "node-fetch": "^2.6.7",
-    "scramjet": "^4.36.6"
+    "scramjet": "^4.36.6",
+    "normalize-url": "^7.0.3"
   },
   "devDependencies": {
     "@scramjet/types": "^0.19.2",

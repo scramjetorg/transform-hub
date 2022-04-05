@@ -18,8 +18,7 @@
         "@scramjet/api-client": "^0.19.2",
         "@scramjet/client-utils": "^0.19.2",
         "@scramjet/manager-api-client": "^0.19.2",
-        "@scramjet/multi-manager-api-client": "^0.19.2",
-        "normalize-url": "^7.0.3"
+        "@scramjet/multi-manager-api-client": "^0.19.2"
     },
     "devDependencies": {
         "@scramjet/types": "^0.19.2",
