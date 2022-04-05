@@ -37,6 +37,8 @@ export type RequestConfig = {
      * Defines if payload should be stringified.
      */
     json?: boolean;
+
+    throwOnErrorHttpCode?: boolean
 };
 
 /**

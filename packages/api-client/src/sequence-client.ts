@@ -1,4 +1,4 @@
-import { ClientError, ClientProvider, HttpClient } from "@scramjet/client-utils";
+import { ClientProvider, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
 
 import { InstanceClient } from "./instance-client";
@@ -57,14 +57,14 @@ export class SequenceClient {
             `${this.sequenceURL}/start`,
             payload,
             {},
-            { json: true, parse: "json" }
+            { json: true, parse: "json", throwOnErrorHttpCode: false }
         );
 
-        if (response.id) {
-            return InstanceClient.from(response.id, this.host);
+        if (response.result === "error") {
+            return Promise.reject({ error: response.error });
         }
 
-        throw new ClientError("INVALID_RESPONSE", "Response did not include instance id.");
+        return InstanceClient.from(response.id, this.host);
     }
 
     /**

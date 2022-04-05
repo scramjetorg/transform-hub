@@ -26,7 +26,7 @@ import {
     MessageUtilities,
     InstanceAdapterError
 } from "@scramjet/model";
-import { CommunicationChannel as CC, RunnerMessageCode } from "@scramjet/symbols";
+import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
 import { development } from "@scramjet/sth-config";
 
@@ -208,9 +208,6 @@ export class CSIController extends TypedEmitter<Events> {
 
                 const exitcode = await this.endOfSequence;
 
-                // TODO: if we have a non-zero exit code is this expected?
-                this.logger.trace("Sequence finished with status", exitcode);
-
                 if (exitcode === 0) {
                     this.logger.trace("Sequence finished with success", exitcode);
                 } else {
@@ -230,6 +227,24 @@ export class CSIController extends TypedEmitter<Events> {
         };
 
         this.instancePromise = instanceMain();
+
+        this.instancePromise
+            .then((exitcode) => this.mapRunnerExitCode(exitcode))
+            .catch((error) => this.initResolver?.rej(error));
+    }
+
+    private mapRunnerExitCode(exitcode: number) {
+        switch (exitcode) {
+        case RunnerExitCode.INVALID_ENV_VARS: {
+            return Promise.reject("Runner was started with invalid configuration. This is probably a bug in STH.");
+        }
+        case RunnerExitCode.INVALID_SEQUENCE_PATH: {
+            return Promise.reject(`Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. Check "main" field in sequence package.json`);
+        }
+        default: {
+            return Promise.resolve();
+        }
+        }
     }
 
     async cleanup() {
@@ -546,8 +561,6 @@ export class CSIController extends TypedEmitter<Events> {
             await this.instanceAdapter.remove();
 
             this.logger.trace("Sequence doesn't terminated itself in expected time", runnerExitDelay);
-
-            process.exitCode = 252;
         }
 
         return message;
@@ -573,7 +586,6 @@ export class CSIController extends TypedEmitter<Events> {
                 this.logger.error("Sequence unresponsive, killing");
 
                 await this.instanceAdapter.remove();
-                process.exitCode = 253;
             }
         }
 
