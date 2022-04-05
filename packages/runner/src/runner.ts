@@ -266,16 +266,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.defineControlStream();
 
-        this.hostClient.stdinStream
-            .on("data", (chunk) => {
-                process.stdin.unshift(chunk);
-            })
-            .on("end", () => {
-                process.stdin.emit("end");
-            });
-
-        overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
-        overrideStandardStream(process.stderr, this.hostClient.stderrStream);
+        this.redirectStdIO();
 
         this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
 
@@ -358,6 +349,19 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         await this.cleanup();
         this.exit(0);
+    }
+
+    private redirectStdIO() {
+        this.hostClient.stdinStream
+            .on("data", (chunk) => {
+                process.stdin.unshift(chunk);
+            })
+            .on("end", () => {
+                process.stdin.emit("end");
+            });
+
+        overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
+        overrideStandardStream(process.stderr, this.hostClient.stderrStream);
     }
 
     /**
