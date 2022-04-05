@@ -264,6 +264,9 @@ jobs:
       - name: Run BDD for HUB params
         run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
 
+      - name: Run BDD tests for CLI topics
+        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-cli-topic
+
   test-bdd-ci-sth:
     name: Test bdd-ci STH (Nodejs ${{ matrix.node-version }})
     needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-pre-runner-image]
@@ -323,6 +326,9 @@ jobs:
       - name: Run BDD tests
       # SCRAMJET_SPAWN_JS will run cli test from dist directory
         run: SCRAMJET_TEST_LOG=1 SCRAMJET_SPAWN_JS=1 yarn test:bdd-ci
+
+      - name: Run BDD CLI tests
+        run: SCRAMJET_TEST_LOG=1 SCRAMJET_SPAWN_JS=1 yarn test:bdd-cli
 
 
   test-bdd-ci-no-host-no-docker-sth:
