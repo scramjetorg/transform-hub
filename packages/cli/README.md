@@ -97,7 +97,7 @@ Commands:
     reset       reset configuration value to default
 ```
 
-Printed config example, command `si config p`.
+If you wish you run your programs on your machines, please make sure the environment is set to development. To check the config values use `si config print` command.
 
 ```json
 {
@@ -112,7 +112,9 @@ Printed config example, command `si config p`.
 }
 ```
 
-In order to use STH CLI commands the **environment should be set to develop**. If this is the first installation of Scramjet CLI, the default value of the environment is set to `develop`.
+Please check that the CLI environment is set to development. The CLI interface can work in either the development or production environment.
+
+The CLI **development environment** communicates with the **Transform Hub**. If this is your first installation of Scramjet CLI, the environment should already be set development since it is the default value of the CLI environment.
 
 > 💡 <small>An environmental value that is set to production allows to use commands of the Scramjet Cloud Platform. We encourage you to [sign up for the SCP Beta](https://scramjet.org/#join-beta).</small>
 
