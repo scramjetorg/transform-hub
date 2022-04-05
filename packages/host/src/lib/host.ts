@@ -595,6 +595,9 @@ export class Host implements IComponent {
                     { topic: data.requires, contentType: data.contentType! },
                     csic.getInputStream()
                 );
+
+                this.serviceDiscovery.update({
+                    requires: data.requires, contentType: data.contentType!, topicName: data.requires });
             }
 
             // Do not route output stream to original topic if --output-topic is specified
@@ -608,6 +611,9 @@ export class Host implements IComponent {
                     { topic: data.provides, contentType: "" },
                     csic.id
                 );
+
+                this.serviceDiscovery.update({
+                    provides: data.provides, contentType: data.contentType!, topicName: data.provides });
             }
         });
 

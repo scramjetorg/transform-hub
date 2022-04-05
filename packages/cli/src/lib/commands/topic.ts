@@ -64,4 +64,8 @@ export const topic: CommandDefinition = (program) => {
                 )
             )
         );
+
+    topicCmd.command("ls")
+        .description("List information about topics")
+        .action(async () => displayEntity(getHostClient().getTopics()));
 };
