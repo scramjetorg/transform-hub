@@ -1,20 +1,22 @@
 /* eslint-disable no-console */
 import { ClientError, QueryError } from "./client-error";
 import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } from "./types";
-import { normalizeUrl } from "@scramjet/utility";
 
 /**
  * Provides HTTP communication methods.
  */
 export abstract class ClientUtilsBase implements HttpClient {
     private log?: RequestLogger;
+    private normalizeUrlFn: (url: string) => string;
 
     static headers: Headers = {};
 
     constructor(
         public apiBase: string,
-        private fetch: any
+        private fetch: any,
+        normalizeUrlFn?: (url: string) => string
     ) {
+        this.normalizeUrlFn = normalizeUrlFn || ((url: string) => url);
     }
 
     /**
@@ -105,7 +107,7 @@ export abstract class ClientUtilsBase implements HttpClient {
      * @returns {Promise<T>} Promise resolving to given type.
      */
     async get<T>(url: string): Promise<T> {
-        return this.safeRequest<T>(normalizeUrl(`${this.apiBase}/${url}`), {}, { parse: "json" });
+        return this.safeRequest<T>(this.normalizeUrlFn(`${this.apiBase}/${url}`), {}, { parse: "json" });
     }
 
     /**
@@ -115,7 +117,7 @@ export abstract class ClientUtilsBase implements HttpClient {
      * @returns {Readable} Readable stream.
      */
     async getStream(url: string) {
-        return this.safeRequest<any>(normalizeUrl(`${this.apiBase}/${url}`), {});
+        return this.safeRequest<any>(this.normalizeUrlFn(`${this.apiBase}/${url}`), {});
     }
 
     /**
@@ -139,7 +141,7 @@ export abstract class ClientUtilsBase implements HttpClient {
         }
 
         return this.safeRequest<T>(
-            normalizeUrl(`${this.apiBase}/${url}`),
+            this.normalizeUrlFn(`${this.apiBase}/${url}`),
             {
                 method: "post",
                 body: data,
@@ -157,7 +159,7 @@ export abstract class ClientUtilsBase implements HttpClient {
      */
     async delete<T>(url: string): Promise<T> {
         return this.safeRequest<T>(
-            normalizeUrl(`${this.apiBase}/${url}`),
+            this.normalizeUrlFn(`${this.apiBase}/${url}`),
             {
                 method: "delete",
                 headers: {

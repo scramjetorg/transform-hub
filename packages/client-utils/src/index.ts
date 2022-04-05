@@ -1,5 +1,6 @@
 import { ClientUtilsBase } from "./client-utils";
 import { HttpClientNode as HttpClient, SendStreamOptions } from "./types";
+import { normalizeUrl } from "@scramjet/utility";
 import * as nodefetch from "node-fetch";
 import http from "http";
 import https from "https";
@@ -30,7 +31,7 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
         apiBase: string,
         ca?: string | Buffer
     ) {
-        super(apiBase, nodeFetchWithHttps(ca));
+        super(apiBase, nodeFetchWithHttps(ca), normalizeUrl);
     }
 }
 
