@@ -147,6 +147,8 @@ aaa/
 *.pem
 *.srl
 
-
 # bundled modules
 bundle
+
+# hash.ts files
+packages/**/hash.ts

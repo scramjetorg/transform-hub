@@ -17,6 +17,7 @@ import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
+import { hash } from "../hash";
 
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
@@ -103,6 +104,24 @@ export class Host implements IComponent {
 
             await this.instancesStore[id].handleInstanceConnect(streams);
         });
+    }
+
+    public get service(): string {
+        return "host";
+    }
+
+    public get apiVersion(): string {
+        const matchedVersion = this.apiBase.match(/\/(v\d+)\/?/);
+
+        return matchedVersion && matchedVersion[1] ? matchedVersion[1] : "unknown";
+    }
+
+    public get version(): string {
+        return version;
+    }
+
+    public get versionHash(): string {
+        return hash;
     }
 
     /**
@@ -260,7 +279,7 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
 
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
-        this.api.get(`${this.apiBase}/version`, () => ({ version }));
+        this.api.get(`${this.apiBase}/version`, () => ({ service: this.service, apiVersion: this.apiVersion, version, versionHash: this.versionHash }));
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
