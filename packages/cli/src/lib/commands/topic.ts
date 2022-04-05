@@ -27,4 +27,8 @@ export const topic: CommandDefinition = (program) => {
     topicCmd.command("get <topic>")
         .description("get data from topic")
         .action(async (topicName) => displayStream(program, getHostClient(program).getNamedData(topicName)));
+
+    topicCmd.command("ls")
+        .description("List information about topics")
+        .action(async () => displayEntity(program, getHostClient(program).getTopics()));
 };

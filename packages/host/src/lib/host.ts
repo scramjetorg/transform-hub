@@ -524,11 +524,9 @@ export class Host implements IComponent {
         csic.on("pang", (data) => {
             this.logger.trace("PANG received", data);
 
-            let notifyCPM = false;
-
             if (data.requires) {
                 csic.requires = data.requires;
-                notifyCPM = true;
+
 
                 this.serviceDiscovery.getData(
                     {
@@ -544,11 +542,13 @@ export class Host implements IComponent {
                         this.logger.error(e);
                     }
                 );
+
+                this.serviceDiscovery.update({
+                    requires: data.requires, contentType: data.contentType!, topicName: data.requires });
             }
 
             if (data.provides) {
                 csic.provides = data.provides;
-                notifyCPM = true;
 
                 this.logger.debug("Sequence provides data", data);
 
@@ -558,10 +558,9 @@ export class Host implements IComponent {
                 );
 
                 pipeToTopic(csic.getOutputStream()!, topic);
-            }
 
-            if (notifyCPM && this.cpmConnector?.connected) {
-                this.cpmConnector?.sendTopicInfo(data);
+                this.serviceDiscovery.update({
+                    provides: data.provides, contentType: data.contentType!, topicName: data.provides });
             }
         });
 

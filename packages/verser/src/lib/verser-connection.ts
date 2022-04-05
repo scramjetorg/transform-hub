@@ -157,7 +157,7 @@ export class VerserConnection {
                     reject(error);
                 });
 
-            clientRequest.end();
+            clientRequest.flushHeaders();
         });
     }
 

@@ -78,26 +78,43 @@ export class ServiceDiscovery {
     createTopicsRouter() {
         this.router.downstream("/:topic", async (req) => {
             const { topic } = req.params || {};
+            const contentType = req.headers["content-type"] || "";
+            const cpmRequest = req.headers["cpm"] === "true";
 
             this.logger.debug(`Incoming topic '${topic}' request`);
             let target = this.getByTopic(topic);
 
+
             if (!target) {
                 target = this.addData(
-                    { contentType: req.headers["content-type"] || "", topic },
+                    { contentType, topic },
                     "api"
                 );
             }
 
             pipeToTopic(req, target);
 
+            if (!cpmRequest) {
+                this.update({
+                    provides: topic, contentType: contentType, topicName: topic });
+            } else {
+                this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
+            }
             return {};
         }, { checkContentType: false });
 
         this.router.upstream("/:topic", (req) => {
             const { topic } = req.params || {};
-            const contentType = req.headers["content-type"] || "application/x-ndjson";
             //TODO: what should be the default content type and where to store this information?
+            const contentType = req.headers["content-type"] || "application/x-ndjson";
+            const cpmRequest = req.headers["cpm"] === "true";
+
+            if (!cpmRequest) {
+                this.update({
+                    requires: topic, contentType, topicName: topic });
+            } else {
+                this.logger.debug(`Incoming Upstream CPM request for topic '${topic}'`);
+            }
 
             return this.getData({ topic, contentType });
         });
@@ -198,8 +215,6 @@ export class ServiceDiscovery {
                 this.logger.trace("Local topic provider not found for:", dataType.topic);
 
                 if (this.cpmConnector) {
-                    this.logger.trace("Requesting CPM for topic", dataType);
-
                     this.dataMap.set(dataType.topic, topicData);
                 }
             }
@@ -222,6 +237,14 @@ export class ServiceDiscovery {
             // eslint-disable-next-line no-extra-parens
             (this.dataMap.get(topic)?.stream as ReadableStream<any>).unpipe();
             this.dataMap.delete(topic);
+        }
+    }
+
+    update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
+        this.logger.trace("Topic update. Send topic info to CPM", data);
+
+        if (this.cpmConnector?.connected) {
+            this.cpmConnector?.sendTopicInfo(data);
         }
     }
 }
