@@ -8,7 +8,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-001 CLI displays help
         Given host is running
-        Then I set format json in config
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "--help" arguments
         Then I get a help information
         And host is still running
@@ -16,6 +17,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-002 Shows Host load information
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "hub load" arguments
         Then I get Hub load information
         And host is still running
@@ -23,6 +26,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-003 Pack sequence
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz" arguments
         Then I get location "../packages/reference-apps/transform-function.tar.gz" of compressed directory
         And host is still running
@@ -30,6 +35,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-004 Send package
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "config print" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
@@ -38,6 +45,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-005 List Sequences
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq ls" arguments
         Then I get array of information about sequences
         And host is still running
@@ -45,6 +54,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-006 Start Sequence with format json set in config
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -55,6 +66,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-007 Kill Instance
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -65,6 +78,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-008 Delete Sequence
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I delete Sequence
@@ -73,6 +88,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-009 Get health from Instance
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -84,6 +101,8 @@ This feature checks CLI functionalities
     @ignore
     Scenario: E2E-010 TC-010 Get log from Instance
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         # When I set format json in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
@@ -95,6 +114,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-011 Send input data to Instance
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -105,6 +126,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-012 Stop Instance
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -115,6 +138,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-013 List Instances
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence-2.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -124,6 +149,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-014 Get Instance info
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -133,7 +160,8 @@ This feature checks CLI functionalities
     # @ci @cli
     Scenario: E2E-010 TC-015 Send event
         Given host is running
-        Then I set format json in config
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence-v2.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -145,7 +173,9 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-016 Stop Instance
         Given host is running
-        When I execute CLI with "seq send ../dist/reference-apps/transform-function.tar.gz" arguments
+        Then I set json format
+        Then I use apiUrl in config
+        When I execute CLI with "seq send ../packages/reference-apps/transform-function.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
         Then I get list of Instances
@@ -155,6 +185,8 @@ This feature checks CLI functionalities
     @ci @cli
     Scenario: E2E-010 TC-017 Get 404 on health endpoint for finished instance
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -175,6 +207,7 @@ This feature checks CLI functionalities
     @ci @cli @starts-host
     Scenario: E2E-010 TC-019 Instance to API
         Given start host
+        Then I set json format
         Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         Then I get Sequence id
