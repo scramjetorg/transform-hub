@@ -99,15 +99,19 @@ export const sequence: CommandDefinition = (program) => {
             const { config: configPath, configJson, outputTopic, inputTopic } = opts;
             const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient(program));
 
-            const instance = await sequenceClient.start({
-                appConfig: await resolveConfigJson(configJson, configPath),
-                args,
-                outputTopic,
-                inputTopic
-            });
+            try {
+                const instance = await sequenceClient.start({
+                    appConfig: await resolveConfigJson(configJson, configPath),
+                    args,
+                    outputTopic,
+                    inputTopic
+                });
 
-            sessionConfig.setLastInstanceId(instance.id);
-            return displayObject(program, instance);
+                sessionConfig.setLastInstanceId(instance.id);
+                return displayObject(program, instance);
+            } catch (error) {
+                return displayObject(program, error);
+            }
         });
 
     /**

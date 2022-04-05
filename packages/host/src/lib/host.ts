@@ -457,9 +457,13 @@ export class Host implements IComponent {
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
         const sequence = this.sequencesStore.get(seqId);
 
-        if (sequence) {
-            this.logger.info("Start sequence", sequence.id, sequence.config.name);
+        if (!sequence) {
+            return { opStatus: ReasonPhrases.NOT_FOUND };
+        }
 
+        this.logger.info("Start sequence", sequence.id, sequence.config.name);
+
+        try {
             const csic = await this.startCSIController(sequence, payload);
 
             this.cpmConnector?.sendInstanceInfo({
@@ -473,14 +477,17 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_STARTED);
 
             return {
+                result: "success",
                 opStatus: ReasonPhrases.OK,
                 id: csic.id
             };
+        } catch (error) {
+            return {
+                result: "error",
+                opStatus: ReasonPhrases.BAD_REQUEST,
+                error: error
+            };
         }
-
-        return {
-            opStatus: ReasonPhrases.NOT_FOUND
-        };
     }
 
     /**
@@ -511,6 +518,10 @@ export class Host implements IComponent {
         this.logger.trace("CSIController created", id);
 
         this.instancesStore[id] = csic;
+
+        csic.on("error", (err) => {
+            this.logger.error("CSIController errored", err);
+        });
 
         await csic.start();
 
