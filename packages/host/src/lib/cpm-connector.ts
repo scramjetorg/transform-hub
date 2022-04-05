@@ -19,7 +19,7 @@ import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
 import { networkInterfaces } from "systeminformation";
 import { VerserClient } from "@scramjet/verser";
-import { TypedEmitter } from "@scramjet/utility";
+import { TypedEmitter, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 
 type STHInformation = {
@@ -212,7 +212,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     private get cpmUrl() {
         const protocol = this.isHttps ? "https" : "http";
 
-        return `${protocol}://${this.cpmHostname.replace(/\/$/, "")}`;
+        return normalizeUrl(`${protocol}://${this.cpmHostname.replace(/\/$/, "")}`);
     }
 
     /**

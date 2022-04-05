@@ -20,6 +20,7 @@
     "@scramjet/obj-logger": "^0.19.2",
     "@scramjet/sth-config": "^0.19.2",
     "@scramjet/symbols": "^0.19.2",
+    "@scramjet/utility": "^0.19.2",
     "n-readlines": "^1.0.1",
     "node-fetch": "^2.6.7",
     "scramjet": "^4.36.6"
