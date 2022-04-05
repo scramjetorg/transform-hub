@@ -129,4 +129,8 @@ export class HostClient implements ClientProvider {
     async getNamedData(topic: string): ReturnType<HttpClient["getStream"]> {
         return this.client.getStream(`topic/${topic}`);
     }
+
+    async getTopics(): Promise<STHRestAPI.GetTopicsResponse> {
+        return this.client.get("topics");
+    }
 }
