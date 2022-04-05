@@ -6,3 +6,4 @@ export * from "./read-streamed-json";
 export * from "./typeguards";
 export * from "./typed-emitter";
 export * from "./read-json-file";
+export * from "./normalize-url";
