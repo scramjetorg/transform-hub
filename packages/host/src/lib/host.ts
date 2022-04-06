@@ -120,7 +120,7 @@ export class Host implements IComponent {
         return version;
     }
 
-    public get versionHash(): string {
+    public get build(): string {
         return hash;
     }
 
@@ -280,7 +280,7 @@ export class Host implements IComponent {
 
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
         this.api.get(`${this.apiBase}/version`, (): STHRestAPI.GetVersionResponse =>
-            ({ service: this.service, apiVersion: this.apiVersion, version, versionHash: this.versionHash }));
+            ({ service: this.service, apiVersion: this.apiVersion, version, build: this.build }));
 
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
 
