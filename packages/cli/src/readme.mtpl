@@ -204,7 +204,7 @@ Options:
   -h, --help                  display help for command
 ```
 
-After that the sequence should be send on the Hub (STH or SCP Hub) by `si seq send <path-to-file>` command.
+After the Sequence was packed, the package is ready to be send to the Hub (STH or SCP Hub) by `si seq send <path-to-file>` command.
 
 Now the Sequence can be executed on the Hub. The Sequence Instance will be created and run.
 
