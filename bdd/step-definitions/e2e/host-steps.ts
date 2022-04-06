@@ -532,7 +532,11 @@ When("I get version", async function() {
 Then("it returns the root package version", function() {
     assert.strictEqual(typeof actualApiResponse, "object", "We should get an object");
     console.log(actualApiResponse, version);
-    assert.deepStrictEqual(actualApiResponse, { version });
+
+    // Remove git hash from response to not complicate tests.
+    delete actualApiResponse.build;
+
+    assert.deepStrictEqual(actualApiResponse, { version, service: "host", apiVersion: "v1" });
 });
 
 // ? When I get load-check
