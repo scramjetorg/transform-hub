@@ -41,10 +41,12 @@ export abstract class ClientUtilsBase implements HttpClient {
      * @param {RequestInit} init Request options.
      * @param {RequestConfig} options Request wrapper options.
      */
-    private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream", throwOnErrorHttpCode: true }) {
+    private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
         const fetchInit: RequestInit = init;
 
         fetchInit.headers = { ...ClientUtilsBase.headers, ...fetchInit.headers };
+
+        options.throwOnErrorHttpCode ??= true;
 
         try {
             const response = await this.fetch(input, fetchInit)
