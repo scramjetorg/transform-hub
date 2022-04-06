@@ -78,6 +78,7 @@ export class CSIController extends TypedEmitter<Events> {
     heartBeatPromise?: Promise<string>;
 
     heartBeatTicker?: NodeJS.Timeout;
+    logMux?: PassThrough;
 
     apiOutput = new PassThrough();
     apiInputEnabled = true;
@@ -224,15 +225,11 @@ export class CSIController extends TypedEmitter<Events> {
 
                 await this.cleanup();
 
-                this.logger.info("Cleanup completed succesfully");
-
                 return exitcode;
             } catch (error: any) {
                 this.logger.error("Error caught", error.stack);
 
                 await this.cleanup();
-
-                this.logger.info("Cleanup completed after error caught");
 
                 return 213;
             }
@@ -286,18 +283,13 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async cleanup() {
-        this.logger.trace("Cleanup");
-
         await this.instanceAdapter.cleanup();
 
-        if (this.upStreams) {
-            const logStream = this.upStreams[CC.LOG];
+        this.logMux?.unpipe();
+        this.logMux?.end();
 
-            await new Promise(res => {
-                logStream.on("end", res);
-            });
-            logStream.unpipe();
-        }
+        if (this.upStreams)
+            this.upStreams[CC.LOG].unpipe();
     }
 
     instanceStopped(): Promise<ExitCode> {
@@ -316,7 +308,6 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
-            streams[CC.LOG].pipe(process.stderr);
         }
 
         this.upStreams = [
@@ -437,7 +428,21 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
         this.router.downstream("/stdin", this.upStreams[CC.STDIN], { end: true });
 
-        this.router.upstream("/log", this.upStreams[CC.LOG]);
+        const logStream = this.upStreams[CC.LOG];
+
+        const mux = this.logMux = new PassThrough();
+
+        logStream.pipe(mux, { end: false });
+        this.logger.pipe(mux);
+
+        mux.unpipe = (...args) => {
+            logStream.unpipe(mux);
+            this.logger.unpipe(mux);
+
+            return PassThrough.prototype.unpipe.call(mux, ...args);
+        };
+
+        this.router.upstream("/log", mux);
 
         if (development()) {
             this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
@@ -602,13 +607,15 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Got message: SEQUENCE_COMPLETED.");
 
         try {
-            await promiseTimeout(this.endOfSequence, runnerExitDelay);
+            if (this.instancePromise)
+                await promiseTimeout(this.instancePromise, runnerExitDelay);
 
             this.logger.trace("Sequence terminated itself");
         } catch {
             await this.instanceAdapter.remove();
 
-            this.logger.trace("Sequence doesn't terminated itself in expected time", runnerExitDelay);
+            this.logger.trace("Sequence didn't terminate itself in expected time", runnerExitDelay);
+            process.exitCode = 252;
         }
 
         return message;

@@ -4,6 +4,10 @@ import { PassThrough, Writable } from "stream";
 
 import { getName } from "./utils/get-name";
 
+type ObjLogPipeOptions = {
+    stringified?: boolean;
+};
+
 export class ObjLogger implements IObjectLogger {
     /**
      * @type {PassThrough} Stream used to write logs.
@@ -150,6 +154,12 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
     }
 
+    private _stringifiedOutput?: StringStream;
+    get stringifiedOutput(): StringStream {
+        if (!this._stringifiedOutput) this._stringifiedOutput = this.output.JSONStringify();
+        return this._stringifiedOutput;
+    }
+
     /**
      * Pipes output logger to provided target. The target can be a writable stream
      * or an Instance of class fulfilling IObjectLogger interface.
@@ -168,9 +178,34 @@ export class ObjLogger implements IObjectLogger {
         target = target as Writable;
 
         if (options.stringified || !target.writableObjectMode) {
-            return this.output.JSONStringify().pipe(target);
+            return this.stringifiedOutput.pipe(target);
         }
 
         return this.output.pipe(target);
     }
+
+    /**
+     * Pipes output logger to provided target. The target can be a writable stream
+     * or an instance of class fulfiling IObjectLogger interface.
+     *
+     * @param {Writable | IObjectLogger} target Target for log stream.
+     * @param options Pipe options. Should be the same as passed to @see ObjectLogger.pipe
+     * @returns {Writable} Unpiped stream
+     */
+     unpipe(target: Writable | IObjectLogger | undefined, options: ObjLogPipeOptions = {}) {
+        if (target instanceof ObjLogger) {
+            this.logLevel = target.logLevel;
+
+            target = target.inputLogStream;
+        }
+
+        target = target as Writable;
+
+        if (options.stringified || !target.writableObjectMode) {
+            return this.stringifiedOutput.unpipe(target);
+        }
+
+        return this.output.unpipe(target);
+    }
 }
+

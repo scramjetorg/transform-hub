@@ -30,31 +30,66 @@ import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 
+// async function flushStream(source: Readable | undefined, target: Writable) {
+//     if (!source) return;
+
+//     source
+//         .unpipe(target)
+//         .pause();
+
+//     if (source.readableLength > 0) {
+//         target.end(source.readableLength);
+//     }
+//     await new Promise(res => target.once("close", res));
+// }
+
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
+type OverrideConfig = {
+    write: typeof Writable.prototype.write;
+    drainCb: (...x: any[]) => void;
+    errorCb: (...x: any[]) => void;
+};
 
 export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives):
     obj is SynchronousStreamable<any> {
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
-function overrideStandardStream(oldStream: Writable, newStream: Writable) {
-    if (process.env.PRINT_TO_STDOUT) {
-        const oldWrite = oldStream.write;
+const overrideMap: Map<Writable, OverrideConfig> = new Map();
 
+function overrideStandardStream(oldStream: Writable, newStream: Writable) {
+    if (overrideMap.has(oldStream)) {
+        throw new Error("Attempt to override stream more than once");
+    }
+
+    const write = oldStream.write;
+
+    if (process.env.PRINT_TO_STDOUT) {
         // @ts-ignore
-        oldStream.write = (...args) => { oldWrite.call(oldStream, ...args); return newStream.write(...args); };
+        oldStream.write = (...args) => { write.call(oldStream, ...args); return newStream.write(...args); };
     } else {
         oldStream.write = newStream.write.bind(newStream);
     }
 
-    newStream.on("drain", () => {
-        oldStream.emit("drain");
-    });
+    const drainCb = () => oldStream.emit("drain");
+    const errorCb = (err: any) => oldStream.emit("error", err);
 
-    newStream.on("error", () => {
-        oldStream.emit("error");
-    });
+    newStream.on("drain", drainCb);
+    newStream.on("error", errorCb);
+
+    overrideMap.set(oldStream, { write, drainCb, errorCb });
+}
+
+function revertStandardStream(oldStream: Writable) {
+    if (overrideMap.has(oldStream)) {
+        const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
+
+        oldStream.write = write;
+        oldStream.off("drain", drainCb);
+        oldStream.off("error", errorCb);
+        overrideMap.delete(oldStream);
+    }
 }
 
 /**
@@ -74,8 +109,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     logger: IObjectLogger;
 
-    private inputDataStream: DataStream
-    private outputDataStream: DataStream
+    private inputDataStream: DataStream;
+    private outputDataStream: DataStream;
 
     constructor(
         private sequencePath: string,
@@ -148,27 +183,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             .on("error", (error) => {
                 this.logger.error("Error parsing control message", error);
             });
-    }
-
-    async cleanup(): Promise<number> {
-        this.logger.info("Cleaning up");
-
-        if (this.monitoringInterval) {
-            clearInterval(this.monitoringInterval);
-            this.logger.trace("Monitoring interval removed");
-        }
-
-        let exitcode = 0;
-
-        try {
-            this.logger.info("Cleaning up streams");
-
-            await this.hostClient.disconnect();
-        } catch (e: any) {
-            exitcode = 223;
-        }
-
-        return exitcode;
     }
 
     async setInputContentType(headers: any) {
@@ -262,13 +276,13 @@ export class Runner<X extends AppConfig> implements IComponent {
     async main() {
         await this.hostClient.init(this.instanceId);
 
-        this.logger.pipe(this.hostClient.logStream, { stringified: true });
+        this.redirectOutputs();
 
         this.defineControlStream();
 
-        this.redirectStdIO();
-
-        this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
+        this.hostClient.stdinStream
+            .on("data", (chunk) => process.stdin.unshift(chunk))
+            .on("end", () => process.stdin.emit("end"));
 
         this.logger.debug("Streams initialized");
 
@@ -351,14 +365,38 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.exit(0);
     }
 
-    private redirectStdIO() {
-        this.hostClient.stdinStream
-            .on("data", (chunk) => {
-                process.stdin.unshift(chunk);
-            })
-            .on("end", () => {
-                process.stdin.emit("end");
-            });
+    async cleanup(): Promise<number> {
+        this.logger.info("Cleaning up");
+
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
+            this.logger.trace("Monitoring interval removed");
+        }
+
+        let exitcode = 0;
+
+        try {
+            this.logger.info("Cleaning up streams");
+
+            await this.revertOutputs();
+            await this.hostClient.disconnect();
+        } catch (e: any) {
+            exitcode = 223;
+        }
+
+        return exitcode;
+    }
+
+    private async revertOutputs() {
+        revertStandardStream(process.stdout);
+        revertStandardStream(process.stderr);
+    }
+
+    private redirectOutputs() {
+        this.logger.pipe(this.hostClient.logStream, { stringified: true });
+        this.outputDataStream
+            .JSONStringify()
+            .pipe(this.hostClient.outputStream);
 
         overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
         overrideStandardStream(process.stderr, this.hostClient.stderrStream);

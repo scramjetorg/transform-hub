@@ -64,7 +64,6 @@ class HostClient implements IHostClient {
                     if ("writable" in stream!) {
                         stream
                             .on("close", () => {
-                                console.error("END");
                                 res();
                             })
                             .end();
