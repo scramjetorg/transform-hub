@@ -105,7 +105,8 @@ The CLI **development environment** communicates with the **Transform Hub**. If 
 
 > 💡 <small>An environmental value that is set to production allows to use commands of the Scramjet Cloud Platform. We encourage you to [sign up for the SCP Beta](https://scramjet.org/#join-beta).</small>
 
-In order to use STH the Hub should be running under the given URL. e.g.: `si config set apiUrl http://0.0.0.0:8080/api/v1`
+If you wish to use the open source STH on your own machine, please make sure the STH API URL is set correctly in the CLI. By default the STH starts the API server on `http://0.0.0.0:8080/api/v1`. The API URL can be set in the CLI with the following command:
+`si config set apiUrl http://0.0.0.0:8080/api/v1`
 
 > 💡 <small>An URL pattern looks like this: `http://<localhost|IPaddress>:<portNumber>/api/v1`</small>
 
