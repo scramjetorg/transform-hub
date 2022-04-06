@@ -44,24 +44,27 @@ export const setPlatformDefaults = async () => {
     }
 
     const middlewareClient = getMiddlewareClient();
-    const managers = await middlewareClient.getManagers();
 
-    if (!managers.length) {
+    try {
+        const managers = await middlewareClient.getManagers();
+
+        if (!managers.length) return false;
+
+        const managerClient = middlewareClient.getManagerClient(managers[0].id);
+        const hosts = await managerClient.getHosts();
+
+        if (!hosts.length) return false;
+
+        sessionConfig.setLastSpaceId(managers[0].id);
+        sessionConfig.setLastHubId(hosts[0].id);
+
+        // eslint-disable-next-line no-console
+        console.log(`Defaults set to: Space: ${managers[0].id}, Hub: ${hosts[0].id}`);
+
+        return true;
+    } catch (_) {
+        // eslint-disable-next-line no-console
+        console.error("Warning: Unable to set platform defaults\n");
         return false;
     }
-
-    const managerClient = middlewareClient.getManagerClient(managers[0].id);
-    const hosts = await managerClient.getHosts();
-
-    if (!hosts.length) {
-        return false;
-    }
-
-    sessionConfig.setLastSpaceId(managers[0].id);
-    sessionConfig.setLastHubId(hosts[0].id);
-
-    // eslint-disable-next-line no-console
-    console.log(`Defaults set to: Space: ${managers[0].id}, Hub: ${hosts[0].id}`);
-
-    return true;
 };
