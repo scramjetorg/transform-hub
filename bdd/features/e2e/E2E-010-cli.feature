@@ -175,7 +175,7 @@ This feature checks CLI functionalities
         Given host is running
         Then I set json format
         Then I use apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/transform-function.tar.gz" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
         Then I get list of Instances
