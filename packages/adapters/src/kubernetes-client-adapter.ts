@@ -98,7 +98,7 @@ class KubernetesClientAdapter {
             try {
                 const response = await kubeApi.readNamespacedPodStatus(podName, this._namespace);
                 const status = response.body.status?.phase || "";
-                
+
                 if (expectedStatuses.includes(status)) {
                     return status;
                 }

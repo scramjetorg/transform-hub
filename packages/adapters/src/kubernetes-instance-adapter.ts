@@ -84,6 +84,10 @@ IComponent {
             INSTANCE_ID: instanceId,
         }).map(([name, value]) => ({ name, value }));
 
+        const runnerImage = config.engines.node
+            ? this.adapterConfig.runnerImages.node
+            : this.adapterConfig.runnerImages.python3;
+
         await this.kubeClient.createPod(
             {
                 name: runnerName,
@@ -95,7 +99,7 @@ IComponent {
                 containers: [{
                     env,
                     name: runnerName,
-                    image: config.engines.node ? this.adapterConfig.runnerImages.node: this.adapterConfig.runnerImages.python3,
+                    image: runnerImage,
                     stdin: true,
                     command: ["wait-for-sequence-and-start.sh"],
                     imagePullPolicy: "Always"
@@ -158,9 +162,7 @@ IComponent {
         return new Promise(resolve => setTimeout(resolve, parseInt(ms, 10)));
     }
 
-    /**
-     * Forcefully stops Runner process.
-     */
+    // Forcefully stops Runner process.
     async remove(ms: string = "0") {
         if (!this._runnerName) {
             this.logger.error("Trying to stop non existent runner", this._runnerName);
