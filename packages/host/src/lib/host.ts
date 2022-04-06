@@ -279,7 +279,9 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
 
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
-        this.api.get(`${this.apiBase}/version`, () => ({ service: this.service, apiVersion: this.apiVersion, version, versionHash: this.versionHash }));
+        this.api.get(`${this.apiBase}/version`, (): STHRestAPI.GetVersionResponse =>
+            ({ service: this.service, apiVersion: this.apiVersion, version, versionHash: this.versionHash }));
+
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
 
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
