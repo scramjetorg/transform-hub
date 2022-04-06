@@ -11,10 +11,6 @@ export STDIO_ERR=$PIPES_LOCATION/stderr
 
 export CRASH_LOG=${CRASH_LOG:-$PIPES_LOCATION/crash_log}
 
-mkfifo $STDIO_IN
-mkfifo $STDIO_OUT
-mkfifo $STDIO_ERR
-
 $NODE_EXECUTABLE ${RUNNER} < $STDIO_IN > $STDIO_OUT 2> $STDIO_ERR
 
 {
