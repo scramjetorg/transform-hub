@@ -84,7 +84,7 @@ Commands:
     reset       reset configuration value to default
 ```
 
-If you wish you run your programs on your machines, please make sure the environment is set to development. To check the config values use `si config print` command.
+If you wish to run your programs on your machine(s), please make sure the environment is set to development. To check the config values use `si config print` command.
 
 ```json
 {
