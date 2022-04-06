@@ -192,7 +192,7 @@ Commands:
 
 ### Start sequence
 
-Before starting the sequence the package has to be prepared. The package is a created archived file with sequence for later use.
+Before starting the Sequence the package has to be prepared. The package is an archived directory with the Sequence and all its required dependencies. The package can be easily created with the command presented below.
 
 ```bash
 Usage:
