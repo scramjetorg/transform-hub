@@ -40,11 +40,11 @@ This package provides a Scramjet Command Line Interface to communicate with Tran
 
 - [Show help](#show-help)
 - [Manage config](#manage-config)
-  - [Global vs session](#global-vs-session)
+  - [Global vs session configurations](#global-vs-session-configurations)
   - [Logs configuration](#logs-configuration)
 - [Show Scramjet Hub parameters](#show-scramjet-hub-parameters)
 - [Sequence operations](#sequence-operations)
-  - [Start sequence](#start-sequence)
+  - [Start Sequence](#start-sequence)
 - [Instance operations](#instance-operations)
   - [Events](#events)
 - [Topic operations](#topic-operations)
@@ -65,7 +65,7 @@ Commands:
     hub                      allows to run programs in different data centers, computers or devices in local network
     config|c                 config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings
     sequence|seq             operations on a program, consisting of one or more functions executed one after another
-    instance|inst [command]  operations on running sequence
+    instance|inst [command]  operations on running Sequence
     topic                    publish/subscribe operations allows to manage data flow
     completion               completion operations
     util|u                   various utilities
@@ -97,7 +97,7 @@ Commands:
     reset       reset configuration value to default
 ```
 
-If you wish to run your programs on your machines, please make sure the environment is set to development. To check the config values use `si config print` command.
+If you wish to run your programs on your machine(s), please make sure the environment is set to development. To check the config values use `si config print` command.
 
 ```json
 {
@@ -118,11 +118,12 @@ The CLI **development environment** communicates with the **Transform Hub**. If 
 
 > 💡 <small>An environmental value that is set to production allows to use commands of the Scramjet Cloud Platform. We encourage you to [sign up for the SCP Beta](https://scramjet.org/#join-beta).</small>
 
-In order to use STH the Hub should be running under the given URL. e.g.: `si config set apiUrl http://0.0.0.0:8080/api/v1`
+If you wish to use the open source STH on your own machine, please make sure the STH API URL is set correctly in the CLI. By default the STH starts the API server on `http://0.0.0.0:8080/api/v1`. The API URL can be set in the CLI with the following command:
+`si config set apiUrl http://0.0.0.0:8080/api/v1`
 
 > 💡 <small>An URL pattern looks like this: `http://<localhost|IPaddress>:<portNumber>/api/v1`</small>
 
-### Global vs session
+### Global vs session configurations
 
 ```bash
 Usage:
@@ -190,21 +191,21 @@ Options:
     -h, --help                   display help for command
 
 Commands:
-    list|ls                      lists available sequences
-    pack [options] <path>        create archived file (package) with sequence for later use
+    list|ls                      lists available Sequences
+    pack [options] <path>        create archived file (package) with Sequence for later use
     send <package>               send package or folder to the hub
-    use|select <id>              specify the hub sequence to use (current: )
-    start [options] <id>         start the sequence with or without given arguments
-    deploy|run [options] <path>  pack (if needed), send and start the sequence
-    get <id>                     obtain basic information about a sequence
-    delete|rm <id>               delete the sequence form Hub
+    use|select <id>              specify the hub Sequence to use (current: )
+    start [options] <id>         start the Sequence with or without given arguments
+    deploy|run [options] <path>  pack (if needed), send and start the Sequence
+    get <id>                     obtain basic information about a Sequence
+    delete|rm <id>               delete the Sequence form Hub
 ```
 
-> 💡 <small>Argument id - the sequence id to start or '-' for the last uploaded.</small>
+> 💡 <small>Argument id - the Sequence id to start or '-' for the last uploaded.</small>
 
-### Start sequence
+### Start Sequence
 
-Before starting the Sequence the package has to be prepared. The package is an archived directory with the Sequence and all its dependencies. We will show how to create such package in the step below.
+Before starting the Sequence the package has to be prepared. The package is an archived directory with the Sequence and all its required dependencies. The package can be easily created with the command presented below.
 
 ```bash
 Usage:
@@ -216,9 +217,9 @@ Options:
   -h, --help                  display help for command
 ```
 
-After that the sequence should be send on the Hub (STH or SCP Hub) by `si seq send <path-to-file>` command.
+After the Sequence was packed, the package is ready to be send to the Hub (STH or SCP Hub) by `si seq send <path-to-file>` command.
 
-Now it can be executed on the Hub. The Sequence Instance will be created and run.
+Now the Sequence can be executed on the Hub. The Sequence Instance will be created and run.
 
 ```bash
 Usage:
@@ -231,7 +232,7 @@ Options:
     -h, --help                         display help for command
 ```
 
-All above steps can be done by single command: `si seq deploy`, so sequence will be packed (if needed), sent and started.
+All above steps can be done by single command: `si seq deploy`, so Sequence will be packed (if needed), sent and started.
 
 ```bash
 Usage:
