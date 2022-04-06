@@ -114,7 +114,7 @@ If you wish you run your programs on your machines, please make sure the environ
 
 Please check that the CLI environment is set to development. The CLI interface can work in either the development or production environment.
 
-The CLI **development environment** communicates with the **Transform Hub**. If this is your first installation of Scramjet CLI, the environment should already be set development since it is the default value of the CLI environment.
+The CLI **development environment** communicates with the **Transform Hub**. If this is your first installation of Scramjet CLI, the environment should already be set to development since it is the default value of the CLI environment.
 
 > 💡 <small>An environmental value that is set to production allows to use commands of the Scramjet Cloud Platform. We encourage you to [sign up for the SCP Beta](https://scramjet.org/#join-beta).</small>
 
