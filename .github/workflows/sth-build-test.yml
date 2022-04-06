@@ -47,6 +47,9 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Update saved git hash
+        run: yarn savehash
+
       - name: Build sth Docker image
         run: docker build -q -t scramjetorg/sth:$(jq -r .version package.json) -f Dockerfile ../../
         working-directory: packages/sth

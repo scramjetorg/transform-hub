@@ -8,10 +8,14 @@ const { join, resolve } = require("path");
 const exec = promisify(execCallback);
 
 (async () => {
-    const toPath = process.argv[2] || "";
+    try {
+        const toPath = process.argv[2] || "";
 
-    const hash = await exec("git rev-parse --short HEAD");
-    const contents = `export const hash = "${hash.stdout.trim()}";\n`;
+        const hash = await exec("git rev-parse --short HEAD");
+        const contents = `export const hash = "${hash.stdout.trim()}";\n`;
 
-    await writeFile(resolve(join("./", toPath, "hash.ts")), contents, "utf8");
+        await writeFile(resolve(join("./", toPath, "hash.ts")), contents, "utf8");
+    } catch (err) {
+        console.log(`Saving git hash to file failed: ${err}`);
+    }
 })();
