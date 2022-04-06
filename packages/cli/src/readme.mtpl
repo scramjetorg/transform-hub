@@ -206,7 +206,7 @@ Options:
 
 After that the sequence should be send on the Hub (STH or SCP Hub) by `si seq send <path-to-file>` command.
 
-Now it can be executed on the Hub. The Sequence Instance will be created and run.
+Now the Sequence can be executed on the Hub. The Sequence Instance will be created and run.
 
 ```bash
 Usage:
