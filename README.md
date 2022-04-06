@@ -197,7 +197,7 @@ nvm install 16     # command will install latest LTS Version of Node.js
 ```
 
 > 💡 **Note**:
-> The project is working on Node Long Term Support (LTS) Version. Witch contains Node Package Manager (NPM) in `^8.1.0` version.
+> The project is working on Node Long Term Support (LTS) Version, which contains Node Package Manager (NPM) in `^8.1.0` version.
 > NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
 
 🤓 For more info you can check out the node.js official [webpage](https://nodejs.org).
