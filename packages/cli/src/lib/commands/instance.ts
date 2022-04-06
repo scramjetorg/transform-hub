@@ -124,9 +124,9 @@ export const instance: CommandDefinition = (program) => {
 
     eventCmd
         .command("on")
-        .argument("[options]")
         .argument("<id>", "the instance id or '-' for the last one started or selected.")
         .argument("<eventName>", "the event name")
+        // .argument("[options]")
         .option("-n, --next", "wait for the next event occurrence")
         .option("-s, --stream", "stream the events (the stream will start with last event)")
         .description("get the last event occurrence (will wait for the first one if not yet retrieved)")

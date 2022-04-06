@@ -2,9 +2,6 @@ Feature: CLI tests
 
 This feature checks CLI functionalities
 
-# @one-session tag was added in order to start a set of test in one session(one testing process), they are based on the same Host started in BeforeAll() step and require to set config only once. That is why step "Then I set format json in config" is added only once -> in the first scenario.
-# If you want to test a single scenario, step: "Then I set format json in config" must be added after "Given host is running" step in this particular scenario you want to test.
-
     @ci @cli
     Scenario: E2E-010 TC-001 CLI displays help
         Given host is running
@@ -103,7 +100,6 @@ This feature checks CLI functionalities
         Given host is running
         Then I set json format
         Then I use apiUrl in config
-        # When I set format json in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -157,7 +153,7 @@ This feature checks CLI functionalities
         Then I get Instance info
         And host is still running
 
-    # @ci @cli
+    @ci @cli
     Scenario: E2E-010 TC-015 Send event
         Given host is running
         Then I set json format
@@ -252,10 +248,11 @@ This feature checks CLI functionalities
 
     # This tests writes and uses shared config file so it may fail if run in parallel
     # @ci @cli @no-parallel
+    # This test needs to be refactored, last sequence and last instance is not superted in config any more
     Scenario: E2E-010 TC-022 Check minus set/remove
-        Given I execute CLI with "seq select abc" arguments
+        Given I execute CLI with "seq use abc" arguments
         # Given I execute CLI with "seq use abc" arguments
-        And I execute CLI with "inst select def" arguments
+        And I execute CLI with "inst use def" arguments
         Then I get the last sequence id from config
         And I get the last instance id from config
         And The sequence id equals "abc"

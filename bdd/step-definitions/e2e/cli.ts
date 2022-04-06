@@ -368,8 +368,6 @@ Then("I get the second instance output without waiting for the end", { timeout: 
     const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instance2Id || ""]);
 
     this.cliResources.commandInProgress = cmdProcess;
-
-    assert.equal(cmdProcess.stdio[2], 0);
 });
 
 Then("I send input data {string}", async function(pathToFile: string) {
@@ -430,7 +428,7 @@ When("I send an event named {string} with event message {string} to Instance", a
 Then("I get event {string} with event message {string} from instance", async function(eventName: string, value: string) {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "get", res.instanceId || "", eventName]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "on", res.instanceId || "", eventName]);
     assert.equal(res.stdio[2], 0);
     assert.equal(res.stdio[0].trim(), value);
 });
