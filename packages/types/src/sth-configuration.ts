@@ -73,8 +73,9 @@ export type K8SAdapterConfiguration = {
     namespace: string,
     authConfigPath?: string,
     sthPodHost: string,
-    runnerImage: string,
-    sequencesRoot: string
+    runnerImages: { python3: string, node: string },
+    sequencesRoot: string,
+    timeout?: string
 }
 
 export type STHConfiguration = {

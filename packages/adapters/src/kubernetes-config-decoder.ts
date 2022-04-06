@@ -5,6 +5,10 @@ export const adapterConfigDecoder = JsonDecoder.object<K8SAdapterConfiguration>(
     authConfigPath: JsonDecoder.optional(JsonDecoder.string),
     namespace: JsonDecoder.string,
     sthPodHost: JsonDecoder.string,
-    runnerImage: JsonDecoder.string,
-    sequencesRoot: JsonDecoder.string
+    runnerImages: JsonDecoder.object({
+        python3: JsonDecoder.string,
+        node: JsonDecoder.string
+    }, "K8SImagesDecoder"),
+    sequencesRoot: JsonDecoder.string,
+    timeout:  JsonDecoder.optional(JsonDecoder.string)
 }, "K8SAdapterConfiguration");

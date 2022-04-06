@@ -17,6 +17,8 @@ RUN apt-get update \
 COPY packages/python-runner/*.py ./
 COPY packages/python-runner/requirements.txt ./requirements.txt
 COPY packages/python-runner/docker-entrypoint.sh /usr/local/bin/
+COPY packages/runner/unpack.sh /usr/local/bin/
+COPY packages/runner/wait-for-sequence-and-start.sh /usr/local/bin/
 
 RUN pip install -r requirements.txt
 

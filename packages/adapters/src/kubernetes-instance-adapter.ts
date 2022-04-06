@@ -95,7 +95,7 @@ IComponent {
                 containers: [{
                     env,
                     name: runnerName,
-                    image: this.adapterConfig.runnerImage,
+                    image: config.engines.node ? this.adapterConfig.runnerImages.node: this.adapterConfig.runnerImages.python3,
                     stdin: true,
                     command: ["wait-for-sequence-and-start.sh"],
                     imagePullPolicy: "Always"
@@ -110,7 +110,7 @@ IComponent {
         if (startPodStatus === "Failed") {
             this.logger.error("Runner unable to start", startPodStatus);
 
-            await this.remove();
+            await this.remove(this.adapterConfig.timeout);
 
             // This means runner pod was unable to start. So it went from "Pending" to "Failed" state directly.
             // Return 1 which is Linux exit code for "General Error" since we are not able
@@ -132,14 +132,14 @@ IComponent {
         if (exitPodStatus !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
 
-            await this.remove();
+            await this.remove(this.adapterConfig.timeout);
 
             // This means runner was stopped forcefully or incorrectly (via external kill or sequence error).
             // So we return 137 (SIGKILL).
             return 137;
         }
 
-        await this.remove();
+        await this.remove(this.adapterConfig.timeout);
 
         // @TODO handle error status
         return 0;
@@ -154,13 +154,18 @@ IComponent {
         /** ignore */
     }
 
+    async timeout(ms: string) {
+        return new Promise(resolve => setTimeout(resolve, parseInt(ms, 10)));
+    }
+
     /**
      * Forcefully stops Runner process.
      */
-    async remove() {
+    async remove(ms: string = "0") {
         if (!this._runnerName) {
             this.logger.error("Trying to stop non existent runner", this._runnerName);
         } else {
+            await this.timeout(ms);
             await this.kubeClient.deletePod(this._runnerName, 2);
 
             this._runnerName = undefined;
