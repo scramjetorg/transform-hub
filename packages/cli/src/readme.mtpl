@@ -110,7 +110,7 @@ If you wish to use the open source STH on your own machine, please make sure the
 
 > 💡 <small>An URL pattern looks like this: `http://<localhost|IPaddress>:<portNumber>/api/v1`</small>
 
-### Global vs session
+### Global vs session configurations
 
 ```bash
 Usage:
