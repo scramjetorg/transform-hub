@@ -38,7 +38,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
 
-            displayObject(managers);
+            return displayObject(managers);
         });
 
     spaceCmd
