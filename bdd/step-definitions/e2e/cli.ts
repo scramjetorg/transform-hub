@@ -261,7 +261,7 @@ Then("I start Sequence with options {string}", async function(optionsStr: string
     const options = optionsStr.split(" ");
 
     try {
-        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, ...options]);
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", ["NODE_ENV=development", ...si, "seq", "start", sequenceId, ...options]);
         assert.equal(res.stdio[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
@@ -279,8 +279,6 @@ Then("I start Sequence with options {string}", async function(optionsStr: string
 
 Then("I get Instance id", function() {
     const res = (this as CustomWorld).cliResources;
-
-    console.log("-----this.cliResources ", res);
 
     assert.equal(typeof res.instanceId !== "undefined", true);
 });
@@ -350,14 +348,11 @@ Then("I get Instance output", { timeout: 30000 }, async function() {
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", res.instanceId || ""]);
 
-    console.log("---------output", res.stdio);
     assert.equal(res.stdio[2], 0);
 });
 
 Then("I get Instance output without waiting for the end", { timeout: 10000 }, async function(this: CustomWorld) {
     const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instanceId || ""]);
-
-    console.log("--------this.cliResources", this.cliResources);
 
     this.cliResources.commandInProgress = cmdProcess;
 });
@@ -371,8 +366,6 @@ Then("I get the second instance output", { timeout: 30000 }, async function() {
 
 Then("I get the second instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
     const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instance2Id || ""]);
-
-    console.log("--------this.cliResources", this.cliResources);
 
     this.cliResources.commandInProgress = cmdProcess;
 

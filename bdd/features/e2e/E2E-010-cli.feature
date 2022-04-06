@@ -217,9 +217,8 @@ This feature checks CLI functionalities
         Then confirm data named "endless-names-10" will be received
         * stop host
 
-    # @ci @cli @starts-host
+    @ci @cli @starts-host
     Scenario: E2E-010 TC-020 API to Instance
-    # Fails, hangs on output
         Given start host
         Then I set json format
         Then I use apiUrl in config
@@ -229,13 +228,12 @@ This feature checks CLI functionalities
         Then I start Sequence
         Then I get Instance health
         Then I get Instance id
-        And wait for "20000" ms
+        And wait for "10000" ms
         And I get Instance output without waiting for the end
         Then confirm data named "hello-avengers" will be received
         * stop host
 
-    # @ci @cli @starts-host
-    # passes only when started on its own
+    @ci @cli @starts-host
     Scenario: E2E-010 TC-021 Instance to Instance
         Given start host
         Then I set json format
@@ -264,9 +262,11 @@ This feature checks CLI functionalities
         And The instance id equals "def"
 
     # This tests writes and uses shared config file so it may fail if run in parallel
-    # @ci @cli @no-parallel
+    @ci @cli @no-parallel
     Scenario: E2E-010 TC-023 Check minus replacements with a Sequence
         Given host is running
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq pack ../dist/reference-apps/checksum-sequence" arguments
         And I execute CLI with "seq send -" arguments
         And I execute CLI with "seq start -" arguments
@@ -278,9 +278,11 @@ This feature checks CLI functionalities
         And I execute CLI with "seq rm -" arguments
         And host is still running
 
-    # @ci @cli @starts-host
+    @ci @cli @starts-host
     Scenario: E2E-010 TC-024 Rename topic output
         Given start host
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names2"
@@ -289,9 +291,11 @@ This feature checks CLI functionalities
         Then confirm data named "endless-names-10" will be received
         * stop host
 
-    # @ci @cli @starts-host
+    @ci @cli @starts-host
     Scenario: E2E-010 TC-025 Rename topic input
         Given start host
+        Then I set json format
+        Then I use apiUrl in config
         When I execute CLI with "topic send names3 features/e2e/data.json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         Then I get Sequence id
