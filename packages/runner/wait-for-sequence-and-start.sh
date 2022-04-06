@@ -7,6 +7,6 @@ while true; do
 
     if test -f /package/.ready; then
        docker-entrypoint.sh start-runner;
-       exit $?; 
+       exit $?;
     fi
 done;

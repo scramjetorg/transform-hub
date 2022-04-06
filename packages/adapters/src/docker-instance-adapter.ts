@@ -18,6 +18,7 @@ import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolum
 import { FreePortsFinder, defer } from "@scramjet/utility";
 import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { getRunnerEnvEntries } from "./get-runner-env";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -186,14 +187,13 @@ IComponent {
 
         const networkSetup = await this.getNetworkSetup();
 
-        const envs = [
-            `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`,
-            `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
-            `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
-            `INSTANCES_SERVER_PORT=${instancesServerPort}`,
-            `INSTANCES_SERVER_HOST=${networkSetup.host}`,
-            `INSTANCE_ID=${instanceId}`,
-        ];
+        const envs = getRunnerEnvEntries({
+            sequencePath: path.join(config.sequenceDir, config.entrypointPath),
+            instancesServerPort,
+            instancesServerHost: networkSetup.host,
+            instanceId,
+            pipesPath: ""
+        }).map(([k, v]) => `${k}=${v}`);
 
         this.logger.debug("Runner will start with envs", envs);
 
@@ -201,7 +201,7 @@ IComponent {
             imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
-                { mountPoint: "/package", volume: config.id, writeable: false }
+                { mountPoint: config.sequenceDir, volume: config.id, writeable: false }
             ],
             labels: {
                 "scramjet.sequence.name": config.name
@@ -276,6 +276,10 @@ IComponent {
 
             this.logger.debug("Container removed");
         }
+    }
+
+    async getCrashLog(): Promise<string> {
+        throw new Error("Method not implemented.");
     }
 }
 

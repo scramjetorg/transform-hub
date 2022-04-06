@@ -12,6 +12,7 @@ import {
 import { ChildProcess, spawn } from "child_process";
 
 import path from "path";
+import { getRunnerEnvVariables } from "./get-runner-env";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
 const gotPython = "\n                              _ \n __      _____  _ __  ___ ___| |\n \\ \\ /\\ / / _ \\| '_ \\/ __|_  / |\n  \\ V  V / (_) | | | \\__ \\/ /|_|\n   \\_/\\_/ \\___/|_| |_|___/___(_)  🐍\n";
@@ -20,9 +21,9 @@ const gotPython = "\n                              _ \n __      _____  _ __  ___
  * Adapter for running Instance by Runner executed in separate process.
  */
 class ProcessInstanceAdapter implements
-ILifeCycleAdapterMain,
-ILifeCycleAdapterRun,
-IComponent {
+    ILifeCycleAdapterMain,
+    ILifeCycleAdapterRun,
+    IComponent {
     logger: IObjectLogger;
 
     private runnerProcess?: ChildProcess;
@@ -53,7 +54,7 @@ IComponent {
 
         if (engines.length > 1) {
             throw new Error("Incorrect config passed to SequenceConfig," +
-            "'engines' field can't contain more than one element");
+                "'engines' field can't contain more than one element");
         }
 
         if ("python3" in config.engines) {
@@ -102,22 +103,19 @@ IComponent {
         this.logger.trace("Starting Runner", config.id);
 
         const runnerCommand = this.getRunnerCmd(config);
-
         const sequencePath = path.join(
             config.sequenceDir,
             config.entrypointPath
         );
-
-        const env = {
-            DEVELOPMENT: process.env.DEVELOPMENT,
-            PRODUCTION: process.env.PRODUCTION,
-            SEQUENCE_PATH: sequencePath,
-            INSTANCES_SERVER_PORT: instancesServerPort.toString(),
-            INSTANCES_SERVER_HOST: "127.0.0.1",
-            INSTANCE_ID: instanceId,
+        const env = getRunnerEnvVariables({
+            sequencePath,
+            instancesServerHost: "127.0.0.1",
+            instancesServerPort,
+            instanceId,
+            pipesPath: ""
+        }, {
             PYTHONPATH: this.getPythonpath(config.sequenceDir),
-            PATH: process.env.PATH,
-        };
+        });
 
         this.logger.debug("Spawning Runner process with command", runnerCommand);
         this.logger.trace("Runner process environment", env);
@@ -172,6 +170,10 @@ IComponent {
      */
     async remove() {
         this.runnerProcess?.kill();
+    }
+
+    async getCrashLog(): Promise<string> {
+        throw new Error("Method not implemented.");
     }
 }
 
