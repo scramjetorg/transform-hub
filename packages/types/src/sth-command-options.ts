@@ -24,5 +24,5 @@ export type STHCommandOptions = {
     k8sRunnerPyImage: string
     k8sSequencesRoot: string;
     docker: boolean;
-    k8sTimeout: string
+    k8sRunnerCleanupTimeout: string
 }

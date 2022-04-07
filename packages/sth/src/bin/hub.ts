@@ -29,7 +29,7 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-py-image <image>", "Runner image spawned in Python Pod.")
     .option("--k8s-sequences-root <path>", "Kuberenetes Process Adapter will store sequences here.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
-    .option("--k8s-timeout <timeout>", "Set timeout for deleting Pod.")
+    .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
     .parse(process.argv)
     .opts();
 
@@ -69,7 +69,7 @@ configService.update({
             python3: options.k8sRunnerPyImage
         },
         sequencesRoot: options.k8sSequencesRoot,
-        timeout: options.k8sTimeout
+        timeout: options.k8sRunnerCleanupTimeout
     }
 });
 
