@@ -91,9 +91,10 @@ Options:
     -h, --help  display help for command
 
 Commands:
-    print|p     print out the current configuration
+    print|p     print out the global configuration in json format
+    get         get the value from the session configuration
     use         add properties to session configuration
-    set         add properties to global config
+    set         add properties to global configuration
     reset       reset configuration value to default
 ```
 
@@ -126,14 +127,28 @@ If you wish to use the open source STH on your own machine, please make sure the
 ### Global vs session configurations
 
 ```bash
+
+Usage:
+    si config get [options] [command]
+
+Commands:
+  apiUrl <url>               get the Hub API URL (default: http://127.0.0.1:8000/api/v1)
+  log [options]              get the log options
+  middlewareApiUrl <url>     get middleware API URL
+  scope <name>               get the default scope that should be used when the session starts
+  token <jwt>                get a platform authorization token (default: )
+  env <production|develop>   get the environmental value (default: development)
+```
+
+```bash
 Usage:
 si config set [options] [command]
 
 Commands:
   json <json>               set configuration properties from json object
-  apiUrl <url>              specify the Hub API Url (default: http://127.0.0.1:8000/api/v1)
+  apiUrl <url>              specify the Hub API URL (default: http://127.0.0.1:8000/api/v1)
   log [options]             specify log options
-  middlewareApiUrl <url>    specify middleware API url
+  middlewareApiUrl <url>    specify middleware API URL (default: )
   scope <name>              specify default scope that should be used when session start
   token <jwt>               specify platform authorization token (default: )
   env <production|develop>  specify the environment (default: development)
