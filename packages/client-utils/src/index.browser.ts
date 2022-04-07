@@ -1,3 +1,4 @@
+import normalizeUrl from "normalize-url";
 import { ClientUtilsBase } from "./client-utils";
 import { HttpClientBrowser as HttpClient } from "./types";
 
@@ -12,7 +13,7 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
     constructor(
         apiBase: string,
     ) {
-        super(apiBase, window.fetch.bind(window));
+        super(apiBase, window.fetch.bind(window), normalizeUrl);
     }
 }
 
