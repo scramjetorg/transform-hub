@@ -86,6 +86,14 @@ Then("I get a help information", function() {
     assert.equal(stdio[0]?.includes("Usage:"), true);
 });
 
+Then("I get a version", function() {
+    const res = (this as CustomWorld).cliResources;
+    const stdio = res.stdio || [];
+
+    console.log("Version:", stdio[0]);
+    assert.equal(stdio[2], 0);
+});
+
 Then("the exit status is {int}", function(status: number) {
     const res = (this as CustomWorld).cliResources;
     const stdio = res.stdio || [];
@@ -121,7 +129,7 @@ Then("I get Sequence id", function() {
     assert.equal(typeof res.sequenceId !== "undefined", true);
 });
 
-Then("I get id from both sequences", function() {
+Then("I get id from both Sequences", function() {
     const res = (this as CustomWorld).cliResources;
     const stdio = res.stdio || [];
 
@@ -134,7 +142,7 @@ Then("I get id from both sequences", function() {
     assert.equal(typeof res.sequence1Id && typeof res.sequence2Id !== "undefined", true);
 });
 
-Then("I start the first sequence", async function() {
+Then("I start the first Sequence", async function() {
     const res = (this as CustomWorld).cliResources;
     const sequence1Id: string = res.sequence1Id || "";
 
@@ -157,7 +165,7 @@ Then("I start the first sequence", async function() {
     }
 });
 
-Then("I start the second sequence", async function() {
+Then("I start the second Sequence", async function() {
     const res = (this as CustomWorld).cliResources;
     const sequence2Id: string = res.sequence2Id || "";
 
@@ -187,7 +195,7 @@ Then("I get Hub load information", function() {
     assert.equal(stdio[2], 0);
 });
 
-Then("I get array of information about sequences", function() {
+Then("I get array of information about Sequences", function() {
     const res = (this as CustomWorld).cliResources;
     const stdio = res.stdio || [];
     const arr = JSON.parse((stdio[0] || "").replace("\n", ""));
@@ -364,7 +372,7 @@ Then("I get the second instance output", { timeout: 30000 }, async function() {
     assert.equal(res.stdio[2], 0);
 });
 
-Then("I get the second instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
+Then("I get the second Instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
     const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instance2Id || ""]);
 
     this.cliResources.commandInProgress = cmdProcess;
@@ -425,7 +433,7 @@ When("I send an event named {string} with event message {string} to Instance", a
     assert.equal(res.stdio[2], 0);
 });
 
-Then("I get event {string} with event message {string} from instance", async function(eventName: string, value: string) {
+Then("I get event {string} with event message {string} from Instance", async function(eventName: string, value: string) {
     const res = (this as CustomWorld).cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "on", res.instanceId || "", eventName]);

@@ -12,6 +12,15 @@ This feature checks CLI functionalities
         And host is still running
 
     @ci @cli
+    Scenario: E2E-010 TC-001a Get CLI version
+        Given host is running
+        Then I set json format
+        Then I use apiUrl in config
+        When I execute CLI with "--version" arguments
+        Then I get a version
+        And host is still running
+
+    @ci @cli
     Scenario: E2E-010 TC-002 Shows Host load information
         Given host is running
         Then I set json format
@@ -21,7 +30,7 @@ This feature checks CLI functionalities
         And host is still running
 
     @ci @cli
-    Scenario: E2E-010 TC-003 Pack sequence
+    Scenario: E2E-010 TC-003 Pack Sequence
         Given host is running
         Then I set json format
         Then I use apiUrl in config
@@ -45,11 +54,11 @@ This feature checks CLI functionalities
         Then I set json format
         Then I use apiUrl in config
         When I execute CLI with "seq ls" arguments
-        Then I get array of information about sequences
+        Then I get array of information about Sequences
         And host is still running
 
     @ci @cli
-    Scenario: E2E-010 TC-006 Start Sequence with format json set in config
+    Scenario: E2E-010 TC-006 Get Instance info
         Given host is running
         Then I set json format
         Then I use apiUrl in config
@@ -163,7 +172,7 @@ This feature checks CLI functionalities
         Then I start Sequence
         Then I get Instance info
         Then I send an event named "test-event" with event message "test message" to Instance
-        Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from instance
+        Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
         And host is still running
 
     @ci @cli
@@ -179,7 +188,7 @@ This feature checks CLI functionalities
         And host is still running
 
     @ci @cli
-    Scenario: E2E-010 TC-017 Get 404 on health endpoint for finished instance
+    Scenario: E2E-010 TC-017 Get 404 on health endpoint for finished Instance
         Given host is running
         Then I set json format
         Then I use apiUrl in config
@@ -237,18 +246,18 @@ This feature checks CLI functionalities
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         And I get list of Sequences
-        Then I get id from both sequences
-        Then I start the first sequence
+        Then I get id from both Sequences
+        Then I start the first Sequence
         And wait for "6000" ms
-        Then I start the second sequence
+        Then I start the second Sequence
         And wait for "4000" ms
-        And I get the second instance output without waiting for the end
+        And I get the second Instance output without waiting for the end
         Then confirm data named "hello-input-out-10" will be received
         * stop host
 
     # This tests writes and uses shared config file so it may fail if run in parallel
     # @ci @cli @no-parallel
-    # This test needs to be refactored, last sequence and last instance is not superted in config any more
+    # refactor needed - test disabled due to CLI changes
     Scenario: E2E-010 TC-022 Check minus set/remove
         Given I execute CLI with "seq use abc" arguments
         # Given I execute CLI with "seq use abc" arguments
