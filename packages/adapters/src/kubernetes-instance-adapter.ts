@@ -84,9 +84,9 @@ IComponent {
             INSTANCE_ID: instanceId,
         }).map(([name, value]) => ({ name, value }));
 
-        const runnerImage = config.engines.node
-            ? this.adapterConfig.runnerImages.node
-            : this.adapterConfig.runnerImages.python3;
+        const runnerImage = config.engines.python3
+            ? this.adapterConfig.runnerImages.python3
+            : this.adapterConfig.runnerImages.node;
 
         await this.kubeClient.createPod(
             {
