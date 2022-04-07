@@ -24,9 +24,10 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "runtimeExecutable": "ts-node",
-            "program": "packages/host/src/bin/start.ts",
-            "args": ["--identify-existing"],
+            "preLaunchTask": "yarn build:packages",
+            "runtimeExecutable": "node",
+            "program": "dist/sth/bin/hub.js",
+            "args": ["-E", "--runtime-adapter=process"],
             "outFiles": [
                 "${workspaceFolder}/**/*.js"
             ]

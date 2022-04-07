@@ -191,6 +191,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.emit("end", code);
+        this.logger.end();
     }
 
     startInstance() {
@@ -221,6 +222,7 @@ export class CSIController extends TypedEmitter<Events> {
                     this.logger.trace("Sequence finished with success", exitcode);
                 } else {
                     this.logger.error("Sequence finished with error", exitcode);
+                    this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
                 await this.cleanup();
@@ -284,9 +286,6 @@ export class CSIController extends TypedEmitter<Events> {
 
     async cleanup() {
         await this.instanceAdapter.cleanup();
-
-        this.logMux?.unpipe();
-        this.logMux?.end();
 
         if (this.upStreams)
             this.upStreams[CC.LOG].unpipe();
@@ -433,6 +432,11 @@ export class CSIController extends TypedEmitter<Events> {
         const mux = this.logMux = new PassThrough();
 
         logStream.pipe(mux, { end: false });
+        logStream.on("end", () => {
+            this.logger.info("^--- Log from runner ends here ---^");
+            logStream.unpipe(mux);
+        });
+
         this.logger.pipe(mux);
 
         mux.unpipe = (...args) => {

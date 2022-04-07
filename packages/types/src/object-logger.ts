@@ -54,12 +54,15 @@ export interface IObjectLogger {
     addOutput(output: Writable): void;
 
     write(level: LogEntry["level"], entry: LogEntry | string, ...optionalParams: any[]): void;
+    end(): void;
+
     debug(entry: LogEntry | string, ...optionalParams: any[]): void;
     error(entry: LogEntry | string, ...optionalParams: any[]): void;
     fatal(entry: LogEntry | string, ...optionalParams: any[]): void;
     info(entry: LogEntry | string, ...optionalParams: any[]): void;
     trace(entry: LogEntry | string, ...optionalParams: any[]): void;
     warn(entry: LogEntry | string, ...optionalParams: any[]): void;
+
     pipe(target: Writable | IObjectLogger, options?: { stringified?: boolean }): void;
     unpipe(target: Writable | IObjectLogger): void;
 }

@@ -10,6 +10,11 @@ type ObjLogPipeOptions = {
 
 export class ObjLogger implements IObjectLogger {
     /**
+     * Identifies if you can still write messages.
+     */
+    ended: boolean = false;
+
+    /**
      * @type {PassThrough} Stream used to write logs.
      */
     outputLogStream = new PassThrough({ objectMode: true });
@@ -22,7 +27,7 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: false });
+    inputStringifiedLogStream = new PassThrough({ objectMode: true });;
 
     /**
      * Output stream in object mode.
@@ -66,8 +71,7 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
         this.logLevel = logLevel;
 
-        StringStream
-            .from(this.inputStringifiedLogStream)
+        StringStream.from(this.inputStringifiedLogStream)
             .JSONParse(true)
             .catch((e: any) => {
                 this.error("Error parsing incoming log", e.chunk);
@@ -91,6 +95,9 @@ export class ObjLogger implements IObjectLogger {
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
+        if (this.ended)
+            throw new Error("Cannot write to the stream anymore.");
+
         if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
             return;
         }
@@ -192,7 +199,7 @@ export class ObjLogger implements IObjectLogger {
      * @param options Pipe options. Should be the same as passed to @see ObjectLogger.pipe
      * @returns {Writable} Unpiped stream
      */
-     unpipe(target: Writable | IObjectLogger | undefined, options: ObjLogPipeOptions = {}) {
+    unpipe(target: Writable | IObjectLogger | undefined, options: ObjLogPipeOptions = {}) {
         if (target instanceof ObjLogger) {
             this.logLevel = target.logLevel;
 
@@ -206,6 +213,13 @@ export class ObjLogger implements IObjectLogger {
         }
 
         return this.output.unpipe(target);
+    }
+
+    end() {
+        this.ended = true;
+
+        this.inputStringifiedLogStream.unpipe();
+        this.output.end();
     }
 }
 
