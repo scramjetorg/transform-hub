@@ -47,14 +47,21 @@ const _defaultConfig: STHConfiguration = {
         namespace: "default",
         authConfigPath: undefined,
         sthPodHost: undefined,
-        runnerImage: undefined,
-        sequencesRoot: path.join(homedir(), ".scramjet_k8s_sequences")
+        runnerImages: {
+            python3: "",
+            node: "",
+        },
+        sequencesRoot: path.join(homedir(), ".scramjet_k8s_sequences"),
+        timeout: "0"
     }
 };
 
 merge(_defaultConfig, {
     docker: {
         prerunner: { image: imageConfig.prerunner },
+        runnerImages: imageConfig.runner,
+    },
+    kubernetes: {
         runnerImages: imageConfig.runner,
     }
 });

@@ -20,7 +20,9 @@ export type STHCommandOptions = {
     k8sNamespace: string;
     k8sAuthConfigPath: string;
     k8sSthPodHost: string;
-    k8sRunnerImage: string;
+    k8sRunnerImage: string,
+    k8sRunnerPyImage: string
     k8sSequencesRoot: string;
     docker: boolean;
+    k8sRunnerCleanupTimeout: string
 }

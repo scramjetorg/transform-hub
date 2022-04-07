@@ -25,9 +25,11 @@ const options: STHCommandOptions = program
     .option("--k8s-namespace <namespace>", "Kubernetes namespace used in Sequence and Instance adapters.")
     .option("--k8s-auth-config-path <path>", "Kubernetes authorization config path. If not supplied the mounted service account will be used.")
     .option("--k8s-sth-pod-host <host>", "Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to.")
-    .option("--k8s-runner-image <image>", "Runner image spawned in Pod.")
+    .option("--k8s-runner-image <image>", "Runner image spawned in Nodejs Pod.")
+    .option("--k8s-runner-py-image <image>", "Runner image spawned in Python Pod.")
     .option("--k8s-sequences-root <path>", "Kuberenetes Process Adapter will store sequences here.")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
+    .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
     .parse(process.argv)
     .opts();
 
@@ -62,8 +64,12 @@ configService.update({
         namespace: options.k8sNamespace,
         authConfigPath: options.k8sAuthConfigPath,
         sthPodHost: options.k8sSthPodHost,
-        runnerImage: options.k8sRunnerImage,
-        sequencesRoot: options.k8sSequencesRoot
+        runnerImages: {
+            node: options.k8sRunnerImage,
+            python3: options.k8sRunnerPyImage
+        },
+        sequencesRoot: options.k8sSequencesRoot,
+        timeout: options.k8sRunnerCleanupTimeout
     }
 });
 
