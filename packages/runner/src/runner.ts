@@ -85,7 +85,13 @@ function revertStandardStream(oldStream: Writable) {
     if (overrideMap.has(oldStream)) {
         const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
 
-        oldStream.write = write;
+        // @ts-ignore - this is ok, we're doing this on purpose!
+        delete oldStream.write;
+
+        // if prototypic write is there, then no change needed
+        if (oldStream.write !== write)
+            oldStream.write = write;
+
         oldStream.off("drain", drainCb);
         oldStream.off("error", errorCb);
         overrideMap.delete(oldStream);
@@ -269,8 +275,10 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     private exit(exitCode?: number) {
         if (typeof exitCode !== undefined) process.exitCode = exitCode;
-        // TODO: why we need this?
-        setTimeout(() => process.exit(), 100);
+
+        this.cleanup()
+            .then((code) => { process.exitCode = code; }, (e) => console.error(e?.stack))
+            .finally(() => process.exit());
     }
 
     async main() {
@@ -283,6 +291,9 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.hostClient.stdinStream
             .on("data", (chunk) => process.stdin.unshift(chunk))
             .on("end", () => process.stdin.emit("end"));
+
+        process.stdin.on("pause", () => this.hostClient.stdinStream.pause());
+        process.stdin.on("resume", () => this.hostClient.stdinStream.resume());
 
         this.logger.debug("Streams initialized");
 
@@ -357,16 +368,16 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             this.logger.error("Error occurred during Sequence execution: ", error.stack);
 
-            await this.cleanup();
-            this.exit(20);
+            return this.exit(20);
         }
 
-        await this.cleanup();
-        this.exit(0);
+        return this.exit(0);
     }
 
     async cleanup(): Promise<number> {
         this.logger.info("Cleaning up");
+
+        await this.revertOutputs();
 
         if (this.monitoringInterval) {
             clearInterval(this.monitoringInterval);
@@ -378,7 +389,6 @@ export class Runner<X extends AppConfig> implements IComponent {
         try {
             this.logger.info("Cleaning up streams");
 
-            await this.revertOutputs();
             await this.hostClient.disconnect();
         } catch (e: any) {
             exitcode = 223;
@@ -535,13 +545,13 @@ export class Runner<X extends AppConfig> implements IComponent {
         // eslint-disable-next-line complexity
         await new Promise<void>((res) => {
             /**
-         * @analyze-how-to-pass-in-out-streams
-         * We need to make sure to close input and output streams
-         * after Sequence terminates.
-         *
-         * pipe the last `stream` value to output stream
-         * unless there is NO LAST STREAM
-         */
+             * @analyze-how-to-pass-in-out-streams
+             * We need to make sure to close input and output streams
+             * after Sequence terminates.
+             *
+             * pipe the last `stream` value to output stream
+             * unless there is NO LAST STREAM
+             */
             if (!isSynchronousStreamable(intermediate)) {
                 this.logger.info("Primitive returned as last value");
 
