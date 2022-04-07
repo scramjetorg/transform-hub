@@ -30,9 +30,7 @@ let streams: { [key: string]: Promise<string | undefined> } = {};
 
 const freeport = promisify(require("freeport"));
 
-const packageFile = findPackage(__dirname).next();
-const version = packageFile.value?.version || "unknown";
-const name = packageFile.value?.name || "unknown";
+const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
 const testPath = "../dist/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
@@ -538,7 +536,7 @@ Then("it returns the root package version", function() {
     // Remove git hash from response to not complicate tests.
     delete actualApiResponse.build;
 
-    assert.deepStrictEqual(actualApiResponse, { version, service: name, apiVersion: "v1" });
+    assert.deepStrictEqual(actualApiResponse, { version, service: "@scramjet/host", apiVersion: "v1" });
 });
 
 // ? When I get load-check
