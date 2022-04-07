@@ -41,6 +41,12 @@ export const getHostClient = (): HostClient => {
                 // eslint-disable-next-line no-console
                 console.error("Request ok:", url, `status: ${status} ${statusText}`);
             },
+            end(result) {
+                const { url, type } = result;
+
+                // eslint-disable-next-line no-console
+                console.error("Response ended:", url, { type });
+            },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
