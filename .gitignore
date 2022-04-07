@@ -149,3 +149,6 @@ aaa/
 
 # bundled modules
 bundle
+
+# build.info.json files
+packages/**/build.info.json
