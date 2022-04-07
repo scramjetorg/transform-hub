@@ -47,6 +47,10 @@ Prominent
 - b214a8d4 - Add HTTPS support to Verser.
 - 7f2484f16 - CLI commands for interacting with Scramjet Cloud Platform
 - 417685b07 - Switch topic requests to https.
+- ac15ee4e4 - Do not close topic when producing output stream is ended.
+- 22f1a1656 - Add python3 to STH docker image
+- 7417b7a98 - Enable assigning output topic on sequence start.
+- 018e6975d - CLI commands update
 
 New features:
 
@@ -67,6 +71,9 @@ New features:
 - **Python Instance events** - Handle Instance events in Python Runner
 - **Kubernetes Runtime Adapters** - new Sequence and Instance Adapters allow running programs on Kubernetes
 - **Dockerized Python Runner** - Python programs can now be run in Docker containers
+- **Reusable topics** - Topic streams don't end when input ends, you can always send more input
+- **Python in Docker image** - When running STH from docker image, you will have python installed to run python sequences inside
+
 
 Bugfixes and minor improvements:
 
@@ -126,7 +133,11 @@ Bugfixes and minor improvements:
 - Fix the build scripts of @scramjet/cli so that completion is added
 - Add cli utility for coloring JSON logs obtained from remote STH
 - Add /config API endpoint for checking STH/Host config
+- Fix for adding Python sequence library to path
+- Choosing runner image in kubernetes adapter (so that either python or node runner can be used)
+- Provide more infromation about the service on /version endpoint (service name, commit ID)
+- API base url (e.g. the one provided to CLI) is normalized
 
-## @scramjet/transform Hub - v0.19.2
+## @scramjet/transform Hub - v0.20.0
 
 This is the last release in changelog.
