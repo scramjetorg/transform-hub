@@ -13,7 +13,7 @@
     "test:ava": "ava",
     "prepack": "node ../../scripts/publish.js",
     "prebuild": "yarn savehash",
-    "postbuild": "yarn prepack",
+    "postbuild": "rm -f ./src/build.info.json && yarn prepack",
     "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },
   "author": "Scramjet <open-source@scramjet.org>",

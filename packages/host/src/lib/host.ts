@@ -124,7 +124,7 @@ export class Host implements IComponent {
     }
 
     public get build(): string {
-        return buildInfo.hash || "unknown";
+        return buildInfo.hash || "source";
     }
 
     /**
