@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "isolatedModules": true,
         "outDir": "./dist"
     },
     "extends": "../../tsconfig.base.json",
