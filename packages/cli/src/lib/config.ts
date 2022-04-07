@@ -1,4 +1,5 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
+import { normalizeUrl } from "@scramjet/utility";
 import { globalConfigFile, sessionConfigFile } from "./paths";
 import { configEnv, configFormat, GlobalConfigEntity, isConfigEnv, isConfigFormat, SessionConfigEntity } from "../types";
 
@@ -161,7 +162,7 @@ class GlobalConfig extends DefaultFileConfig {
     }
 
     setApiUrl(apiUrl: string): boolean {
-        return this.setConfigValue("apiUrl", apiUrl) as boolean;
+        return this.setConfigValue("apiUrl", normalizeUrl(apiUrl)) as boolean;
     }
     setDebug(debug: boolean): boolean {
         return this.setConfigValue("debug", debug) as boolean;
@@ -170,7 +171,7 @@ class GlobalConfig extends DefaultFileConfig {
         return this.setConfigValue("format", format) as boolean;
     }
     setMiddlewareApiUrl(middlewareApiUrl: string): boolean {
-        return this.setConfigValue("middlewareApiUrl", middlewareApiUrl) as boolean;
+        return this.setConfigValue("middlewareApiUrl", normalizeUrl(middlewareApiUrl)) as boolean;
     }
     setEnv(env: configEnv): boolean {
         return this.setConfigValue("env", env) as boolean;
