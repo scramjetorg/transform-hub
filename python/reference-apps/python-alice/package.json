@@ -9,7 +9,7 @@
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
   "engines": {
-    "python3": "3.5.0"
+    "python3": "3.9.0"
   },
   "assets": [
     "data.json"

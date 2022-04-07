@@ -8,6 +8,9 @@
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
+  "engines": {
+    "python3": "3.9.0"
+  },
   "scripts": {
     "build:refapps": "mkdir -p dist/__pypackages__/ && cp *.py dist/ && pip3 install -t dist/__pypackages__/ -r requirements.txt",
     "postbuild:refapps": "yarn prepack && yarn packseq",
