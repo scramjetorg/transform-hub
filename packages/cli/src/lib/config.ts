@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
 import { globalConfigFile, sessionConfigFile } from "./paths";
-import { configEnv, GlobalConfigEntity, SessionConfigEntity } from "../types";
+import { configEnv, configFormat, GlobalConfigEntity, isConfigEnv, isConfigFormat, SessionConfigEntity } from "../types";
 
 abstract class Config {
     abstract getConfig(): any | null;
@@ -90,6 +90,10 @@ class DefaultFileConfig extends FileConfig {
 
         return fileConfig ? fileConfig : this.defaultConfig;
     }
+    getDefaultConfig() {
+        return this.defaultConfig;
+    }
+
     validateConfigValue(key: string, value: any): boolean {
         type defaultConfigKey = keyof typeof this.defaultConfig;
         return this.keyExists(key) && typeof value === typeof this.defaultConfig[key as defaultConfigKey];
@@ -100,13 +104,22 @@ class DefaultFileConfig extends FileConfig {
 }
 
 const JWS_REGEX = /^[a-zA-Z0-9\-_]+?\.[a-zA-Z0-9\-_]+?\.([a-zA-Z0-9\-_]+)?$/;
+const isJWT = (value: string) => Boolean(value.match(JWS_REGEX));
+const isValidUrl = (value: any) => {
+    try {
+        new URL(value);
+        return true;
+    } catch (_) {
+        return false;
+    }
+};
 
 class GlobalConfig extends DefaultFileConfig {
     constructor() {
         const defaultGlobalConfig: GlobalConfigEntity = {
             configVersion: 1,
             apiUrl: "http://127.0.0.1:8000/api/v1",
-            log: true,
+            debug: true,
             format: "pretty",
             middlewareApiUrl: "",
             env: "development",
@@ -119,6 +132,18 @@ class GlobalConfig extends DefaultFileConfig {
     getConfig(): GlobalConfigEntity {
         return super.getConfig();
     }
+    setConfig(config: any): boolean {
+        for (const [key, value] of Object.entries(config)) {
+            if (!this.validateConfigValue(key, value)) return false;
+        }
+        const overlap = { ...this.getConfig(), ...config };
+
+        return this.writeConfig(overlap);
+    }
+
+    getDefaultConfig(): GlobalConfigEntity {
+        return super.getDefaultConfig();
+    }
     getEnv(): configEnv {
         return this.getConfig().env;
     }
@@ -128,12 +153,18 @@ class GlobalConfig extends DefaultFileConfig {
     isProductionEnv(env: configEnv): boolean {
         return env === "production";
     }
+    isJsonFormat(format: configFormat):boolean {
+        return format === "json";
+    }
+    isPrettyFormat(format: configFormat):boolean {
+        return format === "pretty";
+    }
 
     setApiUrl(apiUrl: string): boolean {
         return this.setConfigValue("apiUrl", apiUrl) as boolean;
     }
-    setLog(log: boolean): boolean {
-        return this.setConfigValue("log", log) as boolean;
+    setDebug(debug: boolean): boolean {
+        return this.setConfigValue("debug", debug) as boolean;
     }
     setFormat(format: string): boolean {
         return this.setConfigValue("format", format) as boolean;
@@ -154,12 +185,24 @@ class GlobalConfig extends DefaultFileConfig {
     validateConfigValue(key: string, value: any): boolean {
         const valid = super.validateConfigValue(key, value);
 
-        if (key === "token" && valid) {
-            const token = value as GlobalConfigEntity["token"];
-
-            return Boolean(token.match(JWS_REGEX));
+        if (!valid) {
+            return false;
         }
-        return valid;
+        switch (key) {
+        case "apiUrl": return isValidUrl(value);
+        case "format": return isConfigFormat(value);
+        case "middlewareApiUrl": {
+            if (value === this.defaultConfig.middlewareApiUrl) return true;
+            return isValidUrl(value);
+        }
+        case "env" : return isConfigEnv(value);
+        case "token": {
+            if (value === this.defaultConfig.token) return true;
+            return isJWT(value);
+        }
+        default:
+            return true;
+        }
     }
 }
 
@@ -179,6 +222,9 @@ class SessionConfig extends DefaultFileConfig {
     }
     getConfig(): SessionConfigEntity {
         return super.getConfig();
+    }
+    getDefaultConfig(): GlobalConfigEntity {
+        return super.getDefaultConfig();
     }
     setApiUrl(apiUrl: string): boolean {
         return this.setConfigValue("apiUrl", apiUrl) as boolean;
@@ -200,6 +246,19 @@ class SessionConfig extends DefaultFileConfig {
     }
     setScope(scope: string): boolean {
         return this.setConfigValue("scope", scope) as boolean;
+    }
+
+    validateConfigValue(key: string, value: any): boolean {
+        const valid = super.validateConfigValue(key, value);
+
+        if (!valid) {
+            return false;
+        }
+        switch (key) {
+        case "apiUrl": return isValidUrl(value);
+        default:
+            return true;
+        }
     }
 }
 

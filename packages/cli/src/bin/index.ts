@@ -1,29 +1,31 @@
 #!/usr/bin/env ts-node
 /* eslint-disable no-console */
 
+import findPackage from "find-package-json";
 import commander from "commander";
 import completionMixin, { Command } from "commander-completion";
 import { ClientError, ClientUtils } from "@scramjet/client-utils";
 
 import { commands } from "../lib/commands/index";
 import { setPlatformDefaults } from "../lib/platform";
-import { globalConfig, sessionConfig } from "../lib/config";
+import { globalConfig } from "../lib/config";
 import { initPaths } from "../lib/paths";
 
+const version = findPackage(__dirname).next().value?.version || "unknown";
 const CommandClass = completionMixin(commander).Command;
 
 const getExitCode = (_err: ClientError) => 1;
 const program = new CommandClass() as Command;
 const errorHandler = (err: ClientError) => {
     process.exitCode = getExitCode(err);
-    const opts = program.opts();
+    const { format, debug } = globalConfig.getConfig();
 
-    if (opts.format === "json") {
+    if (globalConfig.isJsonFormat(format)) {
         console.log(
             JSON.stringify({
                 error: true,
                 code: err?.code,
-                stack: opts.log ? err?.stack : undefined,
+                stack: debug ? err?.stack : undefined,
                 message: err?.message,
                 reason: err?.reason?.message,
             })
@@ -43,46 +45,23 @@ const errorHandler = (err: ClientError) => {
  */
 (async () => {
     initPaths();
-    const { token, env, middlewareApiUrl, log, format } = globalConfig.getConfig();
-    const { apiUrl } = sessionConfig.getConfig();
+    const { token, env, middlewareApiUrl } = globalConfig.getConfig();
 
     if (token && globalConfig.isProductionEnv(env) && middlewareApiUrl) {
         ClientUtils.setDefaultHeaders({
             Authorization: `Bearer ${token}`,
         });
 
-        await setPlatformDefaults(program);
+        await setPlatformDefaults();
     }
 
-    /**
-     * Commands
-     * ```
-     * pack [options] [<directory>]
-     * host [command]                operations on host
-     * config|c [command]            configuration file operations
-     * sequence|seq [command]        operations on sequence
-     * instance|inst [command]       operations on instance
-     * help [command]                display help for command
-     */
     for (const command of Object.values(commands)) command(program);
 
-    /**
-     * Options
-     * ```json
-     * -L, --log-level <level>       Specify log level (default: "trace")
-     * -a, --api-url <url>           Specify base API url (default: "http://127.0.0.1:8000/api/v1")
-     * -h, --help                    display help for command
-     * -ma, --middleware-api-url <url>           Specify base API url
-     * ```
-     */
     program
-        // .version(version)
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
-        .option("-L, --log", "Logs all API requests in detail", log)
-        .option("-a, --api-url <url>", "Specify base API url", apiUrl)
-        .option("-f, --format <value>", "Specify display formatting: json or pretty", format)
-        .parse(process.argv)
-        .opts();
+        .version(`${version}`, "-v, --version", "show current version")
+        .addHelpCommand(false)
+        .parse(process.argv);
 
     await new Promise((res) => program.hook("postAction", res));
 })().catch(errorHandler);

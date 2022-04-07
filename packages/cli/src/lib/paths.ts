@@ -6,14 +6,19 @@ import { sessionId } from "../utils/sessionId";
 export const configFileExt = ".json";
 export const procPath = "/proc";
 
-export const siDir = resolve(homedir(), "./.sirc");
+export const siDir = resolve(homedir(), "./.si");
 export const scopesDir = resolve(siDir, "./scopes");
 
-export const globalConfigFile = resolve(siDir, `.sth-cli-rc${configFileExt}`);
+export const globalConfigFile = resolve(siDir, `global-config${configFileExt}`);
 
 export const siTempDir = resolve(tmpdir(), "./.si");
 export const sessionDir = resolve(siTempDir, `./${sessionId()}`);
-export const sessionConfigFile = resolve(sessionDir, "./.session-config");
+export const sessionConfigFile = resolve(sessionDir, `./session-config${configFileExt}`);
+
+export const simplyfyPath = (path: string) => {
+    if (path.startsWith(homedir())) return path.replace(homedir(), "~");
+    return path;
+};
 
 const initDir = (dir: string) => {
     if (existsSync(dir)) return;

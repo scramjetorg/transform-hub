@@ -1,28 +1,30 @@
-
 import { CommandDefinition } from "../../types";
-import { auth } from "./auth";
 import { config } from "./config";
-import { host } from "./host";
 import { hub } from "./hub";
 import { instance } from "./instance";
-import { pack } from "./pack";
 import { scope } from "./scope";
 import { sequence } from "./sequence";
 import { space } from "./space";
 import { topic } from "./topic";
 import { completion } from "./completion";
+import { util } from "./util";
+import { init } from "./init";
+import { isDevelopment } from "../../utils/isDevelopment";
+import { globalConfig } from "../config";
+
+const isProductionEnv = globalConfig.isProductionEnv(globalConfig.getEnv());
 
 export const commands: CommandDefinition[] = [
-    auth,
-    scope,
-    pack,
-    host,
     hub,
     config,
-    scope,
+    // hide scopes and spaces till next sprint (E4 S3)
+    isDevelopment() && isProductionEnv ? scope : () => {},
+    isDevelopment() && isProductionEnv ? space : () => {},
     sequence,
-    space,
     instance,
     topic,
-    completion
+    // waiting for working implementation
+    isDevelopment() ? init : () => {},
+    completion,
+    util
 ];

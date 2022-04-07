@@ -1,4 +1,5 @@
 import { CommandDefinition } from "../../types";
+import { isDevelopment } from "../../utils/isDevelopment";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { displayEntity, displayStream } from "../output";
 
@@ -9,22 +10,58 @@ import { displayEntity, displayStream } from "../output";
  */
 export const topic: CommandDefinition = (program) => {
     const topicCmd = program
-        .command("topic [command]")
-        .description("operations on topic");
+        .command("topic")
+        .addHelpCommand(false)
+        .usage("si topic [command] [options...]")
+        .description("publish/subscribe operations allows to manage data flow");
 
-    topicCmd.command("send <topic> [<file>]")
-        .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        .description("send data to topic")
-        .action(async (topicName, filename, { contentType }) => displayEntity(
-            program,
-            getHostClient(program).sendNamedData(
-                topicName,
-                filename ? await getReadStreamFromFile(filename) : process.stdin,
-                contentType,
-                false)
-        ));
+    if (isDevelopment())
+        topicCmd
+            .command("create")
+            .argument("<topic-name>")
+            .description("create topic")
+            .action(() => {
+            // FIXME: implement me
+                throw new Error("Implement me");
+            });
 
-    topicCmd.command("get <topic>")
+    topicCmd
+        .command("get")
+        .argument("<topic-name>")
+        .option(
+            "-t, --content-type <content-type>",
+            "specifies data type of <topic-name> (default: application/x-ndjson)"
+        )
+        .option("-e, --end <boolean>", "close topic stream after processing the request, x-end-stream (default: false)")
         .description("get data from topic")
-        .action(async (topicName) => displayStream(program, getHostClient(program).getNamedData(topicName)));
+        .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
+
+    if (isDevelopment())
+        topicCmd
+            .command("delete")
+            .alias("rm")
+            .argument("<topic-name>")
+            .description("delete data from topic")
+            .action(() => {
+            // FIXME: implement me
+                throw new Error("Implement me");
+            });
+
+    topicCmd
+        .command("send")
+        .argument("<topic-name>")
+        .argument("[<file>]")
+        .option("-t, --content-type <value>", "Content-Type", "text/plain")
+        .option("-e, --end", "x-end-stream", false)
+        .description("send data on topic from file, directory or directly through the console")
+        .action(async (topicName, filename, { contentType, end }) =>
+            displayEntity(
+                getHostClient().sendNamedData(
+                    topicName,
+                    filename ? await getReadStreamFromFile(filename) : process.stdin,
+                    contentType,
+                    end
+                )
+            )
+        );
 };

@@ -117,7 +117,7 @@ Feature: Test our shiny new Python runner
 
     @ignore
     @ci @python
-    Scenario: E2E-015 TC-013 Logger in context can log in instance
+    Scenario: E2E-014 TC-013 Logger in context can log in instance
         Given host is running
         When sequence "../python/reference-apps/python-logs-test.tar.gz" loaded
         And instance started
@@ -125,17 +125,20 @@ Feature: Test our shiny new Python runner
         Then "log" contains "Debug log message"
         And host is still running
 
-    @ci @python 
-    Scenario: E2E-015 TC-014 Rename topic output and input
+    # @ci @python
+    # refactor needed - test disabled due to CLI changes
+    Scenario: E2E-014 TC-014 Rename topic output and input
         Given host is running
-        When I execute CLI with "seq send ../python/reference-apps/python-topic-producer.tar.gz --format json" arguments
+        Then I set json format
+        Then I use apiUrl in config
+        When I execute CLI with "seq send ../python/reference-apps/python-topic-producer.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names3"
-        Then I send input "topic test input"
-        When I execute CLI with "seq send ../python/reference-apps/python-topic-consumer.tar.gz --format json" arguments
+        Then I send input data "topic test input"
+        When I execute CLI with "seq send ../python/reference-apps/python-topic-consumer.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--input-topic names3"
-        And I get instance output without waiting for the end
+        And I get Instance output without waiting for the end
         Then confirm data named "python-topics" will be received
         And host is still running
-        
+

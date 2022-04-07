@@ -324,7 +324,6 @@ jobs:
       # SCRAMJET_SPAWN_JS will run cli test from dist directory
         run: SCRAMJET_TEST_LOG=1 SCRAMJET_SPAWN_JS=1 yarn test:bdd-ci
 
-
   test-bdd-ci-no-host-no-docker-sth:
     name: Test bdd-ci-no-host-no-docker STH (Nodejs ${{ matrix.node-version }})
     needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image]

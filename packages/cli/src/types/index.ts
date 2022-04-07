@@ -8,12 +8,15 @@ import { Command } from "commander-completion";
 export type CommandDefinition = (program: Command) => void;
 
 export type configEnv = "development" | "production";
+export const isConfigEnv = (env: string) => ["development", "production"].includes(env);
+export type configFormat = "pretty" | "json";
+export const isConfigFormat = (format: string) => ["pretty", "json"].includes(format);
 
 export interface GlobalConfigEntity {
     configVersion: number;
     apiUrl: string;
-    log: boolean;
-    format: string;
+    debug: boolean;
+    format: configFormat;
     middlewareApiUrl: string;
     env: configEnv;
     scope: string;

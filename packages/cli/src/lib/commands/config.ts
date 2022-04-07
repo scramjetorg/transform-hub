@@ -1,4 +1,5 @@
-import { CommandDefinition, GlobalConfigEntity } from "../../types";
+import { CommandDefinition } from "../../types";
+import { stringToBoolean } from "../../utils/stringToBoolean";
 import { globalConfig, sessionConfig } from "../config";
 import { displayObject } from "../output";
 
@@ -8,56 +9,178 @@ import { displayObject } from "../output";
  * @param {Command} program Commander object.
  */
 export const config: CommandDefinition = (program) => {
-    /**
-     * Set custom value for config and write it to JSON file.
-     */
-    const configCmd = program.command("config").alias("c").description("configuration file operations");
+    const defaultConfig = globalConfig.getDefaultConfig();
+    const { apiUrl: defaultApiUrl,
+        middlewareApiUrl: defaulMiddlewareApiUrl,
+        env: defaultEnv,
+        token: defaultToken,
+        debug: defaultDebug,
+        format: defaultFormat } = defaultConfig;
 
-    /**
-     * Command: `si config print`
-     * Log: configVersion, apiUrl, logLevel, format
-     * {@link defaultConfig}
-     */
+    const configCmd = program
+        .command("config")
+        .addHelpCommand(false)
+        .alias("c")
+        .usage("si config [command] ")
+        .description("config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");
+
     configCmd
         .command("print")
         .alias("p")
-        .description("Print out the current config")
-        .action(() => displayObject(program, { ...sessionConfig.getConfig(), ...globalConfig.getConfig() }));
+        .description("print out the current configuration")
+        .action(() => displayObject(globalConfig.getConfig()));
 
-    /**
-     * Command: `si config apiUrl`
-     * Default `apiUrl`: {@link defaultConfig.apiUrl}
-     * Log: configVersion, apiUrl, logLevel, format
-     */
-    configCmd
-        .command("apiUrl <apiUrl>")
-        .description("Set the hub API url")
-        .action((value) => globalConfig.setApiUrl(value) as unknown as void);
+    const useCmd = configCmd
+        .command("use")
+        .addHelpCommand(false)
+        .description("add properties to session configuration");
 
-    /**
-     * Command: `si config format`
-     * Default `format`: {@link defaultConfig.format}
-     */
-    configCmd
-        .command("logLevel <logLevel>")
-        .description("Set the hub API url")
-        .action((value) => globalConfig.setLog(value) as unknown as void);
+    useCmd
+        .command("apiUrl")
+        .argument("<url>")
+        .description(`specify the hub API url (current: ${sessionConfig.getConfig().apiUrl})`)
+        .action(url => sessionConfig.setApiUrl(url) as unknown as void);
 
-    configCmd
-        .command("set <key> <value>")
-        .description("Set config value")
-        .action((key, value) => globalConfig.setConfigValue(key, value) as void);
+    const setCmd = configCmd
+        .command("set")
+        .addHelpCommand(false)
+        .description("add properties to global config ");
 
-    configCmd
-        .command("get <key>")
-        .description("Get config value")
-        .action((key: keyof GlobalConfigEntity) => {
-            return displayObject(program, globalConfig.getConfig()[key]);
+    setCmd
+        .command("json")
+        .argument("<json>")
+        .description("set configuration properties from json object")
+        .action(json => {
+            try {
+                if (!globalConfig.setConfig(JSON.parse(json))) {
+                    // eslint-disable-next-line no-console
+                    console.error("Invalid configuration in json object");
+                }
+            } catch (_) {
+                // eslint-disable-next-line no-console
+                console.error("Parsing error: Invalid JSON format");
+            }
         });
 
-    configCmd
-        .command("unset <key>")
-        .alias("del")
-        .description("Unset config value")
-        .action((key) => globalConfig.delConfigValue(key) as unknown as void);
+    setCmd
+        .command("apiUrl")
+        .argument("<url>")
+        .description(`specify the Hub API Url (default: ${defaultApiUrl})`)
+        .action(url => {
+            if (!globalConfig.setApiUrl(url)) {
+                // eslint-disable-next-line no-console
+                console.error("Invalid url");
+            }
+        });
+
+    setCmd
+        .command("log")
+        .option("--debug <boolean>", `specify log to show extended view (default: ${defaultDebug})`)
+        .option("--format <format>", `specify format between "pretty" or "json" (default: ${defaultFormat})`)
+        .description("specify log options")
+        .action(({ debug, format }) => {
+            if (debug) {
+                const debugVal = stringToBoolean(debug);
+
+                if (typeof debugVal === "undefined") {
+                    // eslint-disable-next-line no-console
+                    console.error("Invalid debug value");
+                }
+                if (!globalConfig.setDebug(debugVal as boolean)) {
+                    // eslint-disable-next-line no-console
+                    console.error("Unable to set debug value");
+                }
+            }
+            if (format && !globalConfig.setFormat(format)) {
+                // eslint-disable-next-line no-console
+                console.error("Unable to set format value");
+            }
+        });
+
+    setCmd
+        .command("middlewareApiUrl")
+        .argument("<url>")
+        .description(`specify middleware API url ${defaulMiddlewareApiUrl}`)
+        .action(url => {
+            if (!globalConfig.setMiddlewareApiUrl(url)) {
+                // eslint-disable-next-line no-console
+                console.error("Invalid url");
+            }
+        });
+
+    setCmd
+        .command("scope")
+        .argument("<name>")
+        .description("specify default scope that should be used when session start")
+        .action(scope => {
+            if (!globalConfig.setScope(scope)) {
+                // eslint-disable-next-line no-console
+                console.error(`Invalid name: ${scope}`);
+            }
+        });
+
+    setCmd
+        .command("token")
+        .argument("<jwt>")
+        .description(`specify platform authorization token (default: ${defaultToken})`)
+        .action(token => {
+            if (!globalConfig.setToken(token)) {
+                // eslint-disable-next-line no-console
+                console.error("Invalid token");
+            }
+        });
+
+    setCmd
+        .command("env")
+        .argument("<production|develop>")
+        .description(`specify the environment (default: ${defaultEnv})`)
+        .action(env => {
+            if (!globalConfig.setEnv(env)) {
+                // eslint-disable-next-line no-console
+                console.error("Invalid environment");
+            }
+        });
+
+    const resetCmd = configCmd
+        .command("reset")
+        .addHelpCommand(false)
+        .description("reset configuration value to default");
+
+    const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
+        if (!setCallback(defaultValue)) {
+            // eslint-disable-next-line no-console
+            console.error("Reset failed.");
+        }
+    };
+
+    resetCmd
+        .command("apiUrl")
+        .description("reset apiUrl")
+        .action(() => resetValue(defaultApiUrl, v => globalConfig.setApiUrl(v)));
+
+    resetCmd
+        .command("log")
+        .description("reset logger")
+        .action(() => resetValue({ defaultFormat, defaultDebug },
+            ({ defaultFormat: f, defaultDebug: d }) => globalConfig.setFormat(f) && globalConfig.setDebug(d)));
+
+    resetCmd
+        .command("middlewareApiUrl")
+        .description("reset middlewareApiUrl")
+        .action(() => resetValue(defaulMiddlewareApiUrl, v => globalConfig.setMiddlewareApiUrl(v)));
+
+    resetCmd
+        .command("token")
+        .description("reset token")
+        .action(() => resetValue(defaultToken, v => globalConfig.setToken(v)));
+
+    resetCmd
+        .command("env")
+        .description("reset env")
+        .action(() => resetValue(defaultEnv, v => globalConfig.setEnv(v)));
+
+    resetCmd
+        .command("all")
+        .description("reset all configuration")
+        .action(() => resetValue(defaultConfig, v => globalConfig.setConfig(v)));
 };

@@ -48,6 +48,8 @@
     "test:packages": "lerna run test",
     "test:packages-no-concurrent": "lerna run test --concurrency=1",
     "test:bdd-ci": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"not @starts-host\"",
+    "test:bdd-cli": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@cli --tags=\"not @ci\" --tags=\"not @starts-host\"",
+    "test:bdd-cli-topic": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@cli --tags=\"not @ci\" --tags=\"@starts-host\"",
     "test:bdd-ci-no-host": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"@starts-host\"",
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
     "test:bdd-ci-no-docker": "RUNTIME_ADAPTER=process yarn test:bdd-ci --tags=\"not @docker-specific\"",
