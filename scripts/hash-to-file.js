@@ -12,9 +12,9 @@ const exec = promisify(execCallback);
         const toPath = process.argv[2] || "";
 
         const hash = await exec("git rev-parse --short HEAD");
-        const contents = `export const hash = "${hash.stdout.trim()}";\n`;
+        const contents = { hash: hash.stdout.trim(), timestamp: Date.now() };
 
-        await writeFile(resolve(join("./", toPath, "hash.ts")), contents, "utf8");
+        await writeFile(resolve(join("./", toPath, "build.info.json")), JSON.stringify(contents, null, "  "), "utf8");
     } catch (err) {
         console.log(`Saving git hash to file failed: ${err}`);
     }

@@ -12,12 +12,12 @@ import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@sc
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck } from "@scramjet/load-check";
 import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
+import { readJsonFile } from "@scramjet/utility";
 
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
 import { CommonLogsPipe } from "./common-logs-pipe";
 import { InstanceStore } from "./instance-store";
-import { hash } from "../hash";
 
 import { ServiceDiscovery } from "./sd-adapter";
 import { SocketServer } from "./socket-server";
@@ -26,7 +26,10 @@ import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
 
-const version = findPackage(__dirname).next().value?.version || "unknown";
+const buildInfo = readJsonFile("build.info", __dirname, "..");
+const packageFile = findPackage(__dirname).next();
+const version = packageFile.value?.version || "unknown";
+const name = packageFile.value?.name || "unknown";
 
 export type HostOptions = Partial<{
     identifyExisting: boolean
@@ -107,7 +110,7 @@ export class Host implements IComponent {
     }
 
     public get service(): string {
-        return "host";
+        return name;
     }
 
     public get apiVersion(): string {
@@ -121,7 +124,7 @@ export class Host implements IComponent {
     }
 
     public get build(): string {
-        return hash;
+        return buildInfo.hash || "unknown";
     }
 
     /**

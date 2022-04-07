@@ -14,7 +14,7 @@
     "prepack": "node ../../scripts/publish.js",
     "prebuild": "yarn savehash",
     "postbuild": "yarn prepack",
-    "savehash": "node ../../scripts/hash-to-file.js src/"
+    "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
