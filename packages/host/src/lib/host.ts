@@ -519,8 +519,7 @@ export class Host implements IComponent {
      * Creates new CSIController {@link CSIController} object and handles its events.
      *
      * @param {SequenceInfo} sequence Sequence info object.
-     * @param {AppConfig} appConfig App configuration object.
-     * @param {any[]} [sequenceArgs] Optional arguments to be passed to sequence.
+     * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      */
     async startCSIController(
         sequence: SequenceInfo,

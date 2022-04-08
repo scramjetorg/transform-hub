@@ -47,9 +47,7 @@ export class SequenceClient {
     /**
      * Starts sequence.
      *
-     * @param {any} appConfig Configuration to be passed to Instance context.
-     * @param {any} args Arguments to be passed to first function in Sequence.
-     * @param {string | undefined} topic to which the output stream should be routed 
+     * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      * @returns {Promise<InstanceClient>} Promise resolving to Instance Client.
      */
     async start(payload: STHRestAPI.StartSequencePayload): Promise<InstanceClient> {
