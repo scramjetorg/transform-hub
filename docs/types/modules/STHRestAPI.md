@@ -17,11 +17,13 @@
 - [GetSequenceInstancesResponse](STHRestAPI.md#getsequenceinstancesresponse)
 - [GetSequenceResponse](STHRestAPI.md#getsequenceresponse)
 - [GetSequencesResponse](STHRestAPI.md#getsequencesresponse)
+- [GetTopicsResponse](STHRestAPI.md#gettopicsresponse)
 - [GetVersionResponse](STHRestAPI.md#getversionresponse)
 - [SendEventResponse](STHRestAPI.md#sendeventresponse)
 - [SendKillInstanceResponse](STHRestAPI.md#sendkillinstanceresponse)
 - [SendSequenceResponse](STHRestAPI.md#sendsequenceresponse)
 - [SendStopInstanceResponse](STHRestAPI.md#sendstopinstanceresponse)
+- [StartSequencePayload](STHRestAPI.md#startsequencepayload)
 - [StartSequenceResponse](STHRestAPI.md#startsequenceresponse)
 
 ## Type aliases
@@ -64,7 +66,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L18)
+[packages/types/src/rest-api-sth/index.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L19)
 
 ___
 
@@ -128,7 +130,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/index.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L19)
+[packages/types/src/rest-api-sth/index.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L20)
 
 ___
 
@@ -170,6 +172,16 @@ ___
 
 ___
 
+### GetTopicsResponse
+
+Ƭ **GetTopicsResponse**: { `contentType`: `string` ; `name`: `string`  }[]
+
+#### Defined in
+
+[packages/types/src/rest-api-sth/get-topics.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-topics.ts#L1)
+
+___
+
 ### GetVersionResponse
 
 Ƭ **GetVersionResponse**: `Object`
@@ -178,6 +190,9 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `apiVersion` | `string` |
+| `build` | `string` |
+| `service` | `string` |
 | `version` | `string` |
 
 #### Defined in
@@ -232,16 +247,29 @@ ___
 
 ___
 
-### StartSequenceResponse
+### StartSequencePayload
 
-Ƭ **StartSequenceResponse**: `Object`
+Ƭ **StartSequencePayload**: `Object`
 
 #### Type declaration
 
 | Name | Type |
 | :------ | :------ |
-| `id` | `string` |
+| `appConfig` | [`AppConfig`](../modules.md#appconfig) |
+| `args?` | `any`[] |
+| `inputTopic?` | `string` |
+| `outputTopic?` | `string` |
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/start-sequence.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L1)
+[packages/types/src/rest-api-sth/start-sequence.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L5)
+
+___
+
+### StartSequenceResponse
+
+Ƭ **StartSequenceResponse**: { `id`: `string` ; `result`: ``"success"``  } \| { `error`: `unknown` ; `result`: ``"error"``  }
+
+#### Defined in
+
+[packages/types/src/rest-api-sth/start-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L3)

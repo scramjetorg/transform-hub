@@ -136,11 +136,11 @@ ___
 
 ### GetTopicsResponse
 
-Ƭ **GetTopicsResponse**: `Record`<`string`, { `contentType`: `string` ; `stream`: [`ReadableStream`](../interfaces/ReadableStream.md)<`any`\> \| [`WritableStream`](../interfaces/WritableStream.md)<`any`\>  }\>
+Ƭ **GetTopicsResponse**: { `contentType`: `string` ; `name`: `string`  }[]
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/get-topics.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-topics.ts#L3)
+[packages/types/src/rest-api-manager/get-topics.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-topics.ts#L1)
 
 ___
 

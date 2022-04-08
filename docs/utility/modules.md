@@ -14,7 +14,9 @@
 - [defer](modules.md#defer)
 - [isDefined](modules.md#isdefined)
 - [merge](modules.md#merge)
+- [normalizeUrl](modules.md#normalizeurl)
 - [promiseTimeout](modules.md#promisetimeout)
+- [readJsonFile](modules.md#readjsonfile)
 - [readStreamedJSON](modules.md#readstreamedjson)
 
 ## Functions
@@ -109,6 +111,31 @@ Returns nothing.
 
 ___
 
+### normalizeUrl
+
+▸ **normalizeUrl**(`url`, `options?`): `string`
+
+Normalizes provided URL.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | URL to be normalized. |
+| `options?` | `Options` | - |
+
+#### Returns
+
+`string`
+
+Normalized URL.
+
+#### Defined in
+
+[packages/utility/src/normalize-url.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/normalize-url.ts#L10)
+
+___
+
 ### promiseTimeout
 
 ▸ **promiseTimeout**<`T`\>(`promise`, `timeout`): `Promise`<`T`\>
@@ -137,6 +164,27 @@ Promise that reject after timeout or.
 #### Defined in
 
 [packages/utility/src/promise-timeout.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/promise-timeout.ts#L10)
+
+___
+
+### readJsonFile
+
+▸ **readJsonFile**(`fileName`, ...`path`): `Object`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `fileName` | `string` |
+| `...path` | `string`[] |
+
+#### Returns
+
+`Object`
+
+#### Defined in
+
+[packages/utility/src/read-json-file.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-json-file.ts#L4)
 
 ___
 

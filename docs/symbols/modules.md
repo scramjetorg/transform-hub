@@ -9,6 +9,7 @@
 - [CPMMessageCode](enums/CPMMessageCode.md)
 - [CommunicationChannel](enums/CommunicationChannel.md)
 - [InstanceMessageCode](enums/InstanceMessageCode.md)
+- [RunnerExitCode](enums/RunnerExitCode.md)
 - [RunnerMessageCode](enums/RunnerMessageCode.md)
 - [SequenceMessageCode](enums/SequenceMessageCode.md)
 

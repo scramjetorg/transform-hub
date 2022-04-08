@@ -43,7 +43,7 @@ A method that allows to consume incoming stream from the specified path on the A
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L120)
+[packages/types/src/api-expose.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L126)
 
 ___
 
@@ -66,7 +66,7 @@ Allows to handle dual direction (duplex) streams.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L132)
+[packages/types/src/api-expose.ts:138](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L138)
 
 ___
 
@@ -96,7 +96,7 @@ Simple GET request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L89)
+[packages/types/src/api-expose.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L95)
 
 ▸ **get**(`path`, `msg`): `void`
 
@@ -115,7 +115,7 @@ Alternative GET request hook with dynamic resolution
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L98)
+[packages/types/src/api-expose.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L104)
 
 ___
 
@@ -153,7 +153,7 @@ router.op("post", `${this.apiBase}/start`, (req) => this.handleStartRequest(req)
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L79)
+[packages/types/src/api-expose.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L85)
 
 ___
 
@@ -177,7 +177,7 @@ A method that allows to pass a stream to the specified path on the API server
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L107)
+[packages/types/src/api-expose.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L113)
 
 ___
 
@@ -200,4 +200,4 @@ Allows to register middlewares for specific paths, for all HTTP methods.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L143)
+[packages/types/src/api-expose.ts:149](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L149)

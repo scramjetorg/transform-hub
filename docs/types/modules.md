@@ -1110,9 +1110,12 @@ ___
 | :------ | :------ |
 | `authConfigPath?` | `string` |
 | `namespace` | `string` |
-| `runnerImage` | `string` |
+| `runnerImages` | { `node`: `string` ; `python3`: `string`  } |
+| `runnerImages.node` | `string` |
+| `runnerImages.python3` | `string` |
 | `sequencesRoot` | `string` |
 | `sthPodHost` | `string` |
+| `timeout?` | `string` |
 
 #### Defined in
 
@@ -1835,7 +1838,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L181)
+[packages/types/src/sth-configuration.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L182)
 
 ___
 
@@ -2001,7 +2004,9 @@ ___
 | `instancesServerPort` | `string` |
 | `k8sAuthConfigPath` | `string` |
 | `k8sNamespace` | `string` |
+| `k8sRunnerCleanupTimeout` | `string` |
 | `k8sRunnerImage` | `string` |
+| `k8sRunnerPyImage` | `string` |
 | `k8sSequencesRoot` | `string` |
 | `k8sSthPodHost` | `string` |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) |
@@ -2052,7 +2057,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L80)
+[packages/types/src/sth-configuration.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L81)
 
 ___
 
@@ -2367,6 +2372,7 @@ Configuration options for streaming endpoionts
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `checkContentType?` | `boolean` | Perform stream content-type type checks |
+| `checkEndHeader?` | `boolean` | Should consider x-end-stream header or just use the 'end'  **`default`** true |
 | `encoding?` | `BufferEncoding` | Encoding used in the stream |
 | `end?` | `boolean` | Should request end also end the stream or can the endpoint accept subsequent connections |
 | `json?` | `boolean` | Is the stream a JSON stream? |
