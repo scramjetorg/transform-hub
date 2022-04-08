@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-runner-demo-sprint-5",
-  "version": "0.19.2",
+  "version": "0.20.0",
   "lang": "python",
   "main": "./demo_s5.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",

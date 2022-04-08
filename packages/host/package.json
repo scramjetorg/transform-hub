@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/host",
-  "version": "0.19.2",
+  "version": "0.20.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides the main host subsystem of STH - starts API Servers, creates adapters etc.",
   "main": "./src/index.ts",
   "scripts": {
@@ -19,15 +19,15 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/adapters": "^0.19.2",
-    "@scramjet/api-server": "^0.19.2",
-    "@scramjet/load-check": "^0.19.2",
-    "@scramjet/model": "^0.19.2",
-    "@scramjet/obj-logger": "^0.19.2",
-    "@scramjet/sth-config": "^0.19.2",
-    "@scramjet/symbols": "^0.19.2",
-    "@scramjet/utility": "^0.19.2",
-    "@scramjet/verser": "^0.19.2",
+    "@scramjet/adapters": "^0.20.0",
+    "@scramjet/api-server": "^0.20.0",
+    "@scramjet/load-check": "^0.20.0",
+    "@scramjet/model": "^0.20.0",
+    "@scramjet/obj-logger": "^0.20.0",
+    "@scramjet/sth-config": "^0.20.0",
+    "@scramjet/symbols": "^0.20.0",
+    "@scramjet/utility": "^0.20.0",
+    "@scramjet/verser": "^0.20.0",
     "bpmux": "^8.2.0",
     "find-package-json": "^1.2.0",
     "http-status-codes": "^2.2.0",
@@ -37,7 +37,7 @@
     "systeminformation": "^5.11.6"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.19.2",
+    "@scramjet/types": "^0.20.0",
     "@types/find-package-json": "^1.2.2",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
