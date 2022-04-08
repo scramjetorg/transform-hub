@@ -28,6 +28,7 @@ Adapter for running Instance by Runner executed in separate process.
 - [remove](KubernetesInstanceAdapter.md#remove)
 - [run](KubernetesInstanceAdapter.md#run)
 - [stats](KubernetesInstanceAdapter.md#stats)
+- [timeout](KubernetesInstanceAdapter.md#timeout)
 
 ### Constructors
 
@@ -107,7 +108,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:148](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L148)
+[kubernetes-instance-adapter.ts:152](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L152)
 
 ___
 
@@ -149,15 +150,19 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L153)
+[kubernetes-instance-adapter.ts:157](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L157)
 
 ___
 
 ### remove
 
-▸ **remove**(): `Promise`<`void`\>
+▸ **remove**(`ms?`): `Promise`<`void`\>
 
-Forcefully stops Runner process.
+#### Parameters
+
+| Name | Type | Default value |
+| :------ | :------ | :------ |
+| `ms` | `string` | `"0"` |
 
 #### Returns
 
@@ -169,7 +174,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:160](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L160)
+[kubernetes-instance-adapter.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L166)
 
 ___
 
@@ -220,6 +225,26 @@ ILifeCycleAdapterRun.stats
 #### Defined in
 
 [kubernetes-instance-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L63)
+
+___
+
+### timeout
+
+▸ **timeout**(`ms`): `Promise`<`unknown`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `ms` | `string` |
+
+#### Returns
+
+`Promise`<`unknown`\>
+
+#### Defined in
+
+[kubernetes-instance-adapter.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L161)
 
 ## Constructors
 

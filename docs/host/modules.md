@@ -36,7 +36,7 @@
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L30)
+[packages/host/src/lib/host.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L34)
 
 ___
 
@@ -55,7 +55,7 @@ TODO: Refactor types below.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L10)
+[packages/host/src/lib/sd-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L12)
 
 ___
 
@@ -70,11 +70,11 @@ Topic stream type definition.
 | Name | Type |
 | :------ | :------ |
 | `contentType` | `string` |
-| `stream` | `Stream` |
+| `stream` | `Duplex` |
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L18)
+[packages/host/src/lib/sd-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L20)
 
 ___
 
@@ -91,11 +91,11 @@ Topic details type definition.
 | `contentType` | `string` |
 | `cpmRequest?` | `boolean` |
 | `localProvider?` | `string` |
-| `stream` | `ReadableStream`<`any`\> \| `WritableStream`<`any`\> |
+| `stream` | `Duplex` |
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L26)
+[packages/host/src/lib/sd-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L28)
 
 ## Variables
 

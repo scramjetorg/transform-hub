@@ -149,7 +149,7 @@ Promise resolving to Sequence info.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L94)
+[api-client/src/sequence-client.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L95)
 
 ___
 
@@ -174,7 +174,7 @@ Instance client.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L85)
+[api-client/src/sequence-client.ts:86](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L86)
 
 ___
 
@@ -192,7 +192,7 @@ Promise resolving to list of Instances.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L74)
+[api-client/src/sequence-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L75)
 
 ___
 
@@ -208,22 +208,21 @@ Not implemented.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L101)
+[api-client/src/sequence-client.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L102)
 
 ___
 
 ### start
 
-▸ **start**(`appConfig`, `args`): `Promise`<[`InstanceClient`](InstanceClient.md)\>
+▸ **start**(`payload`): `Promise`<[`InstanceClient`](InstanceClient.md)\>
 
 Starts sequence.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `appConfig` | `any` | Configuration to be passed to Instance context. |
-| `args` | `any` | Arguments to be passed to first function in Sequence. |
+| Name | Type |
+| :------ | :------ |
+| `payload` | `StartSequencePayload` |
 
 #### Returns
 
@@ -233,4 +232,4 @@ Promise resolving to Instance Client.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L54)
+[api-client/src/sequence-client.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L55)

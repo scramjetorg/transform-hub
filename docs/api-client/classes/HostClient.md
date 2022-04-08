@@ -28,6 +28,7 @@ Provides methods to interact with Host.
 - [getLogStream](HostClient.md#getlogstream)
 - [getNamedData](HostClient.md#getnameddata)
 - [getSequence](HostClient.md#getsequence)
+- [getTopics](HostClient.md#gettopics)
 - [getVersion](HostClient.md#getversion)
 - [listInstances](HostClient.md#listinstances)
 - [listSequences](HostClient.md#listsequences)
@@ -206,6 +207,20 @@ Promise resolving to Sequence details.
 #### Defined in
 
 [api-client/src/host-client.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L66)
+
+___
+
+### getTopics
+
+▸ **getTopics**(): `Promise`<`GetTopicsResponse`\>
+
+#### Returns
+
+`Promise`<`GetTopicsResponse`\>
+
+#### Defined in
+
+[api-client/src/host-client.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L133)
 
 ___
 
