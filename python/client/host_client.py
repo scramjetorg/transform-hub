@@ -49,7 +49,7 @@ class HostClient:
         return await self.post(url, data=data)
 
     async def get_sequence(self, id: str) -> str:
-        url = f'/instance/{id}'
+        url = f'/sequence/{id}'
         return await self.get(url)
 
     async def delete_sequence(self, id: str) -> str:

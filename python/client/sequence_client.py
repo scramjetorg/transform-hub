@@ -5,7 +5,7 @@ class SequenceClient:
     def __init__(self, id: str, host: HostClient) -> None:
         self.id = id
         self.host = host
-        self.sequence_url = f'sequence/{id}'
+        self.sequence_url = f'/sequence/{id}'
     
     async def start(self) -> str:
         url = f'{self.sequence_url}/start'
