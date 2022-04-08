@@ -1,46 +1,54 @@
 #!/usr/bin/env node
 
-const { join, resolve } = require("path");
 const { createSolutionBuilderHost, sys } = require("typescript");
-const glob = require("glob");
 const { createSolutionBuilder } = require("typescript");
-const { existsSync } = require("fs");
-const { readClosestPackageJSON } = require("./lib/build-utils");
+const { readClosestPackageJSON, getTSDirectoriesFromPackage, getTSDirectoriesFromGlobs } = require("./lib/build-utils");
+const minimist = require("minimist");
 
-/**
- * @type {typeof import("../package.json")}
- */
-const pkg = readClosestPackageJSON(
-    // process.argv.length > 2 ? resolve(process.cwd(), process.argv[2]) : process.cwd()
-);
+const opts = minimist(process.argv.slice(2), {boolean: ['dirs', 'list', 'workspaces']});
 
-const nodeSystem = createSolutionBuilderHost(sys);
-
-const cwd = resolve(__dirname, '..');
-
-// Todo: choose the right workspace
-const workspaces = Array.isArray(pkg.workspaces) ? {"default": pkg.workspaces} : pkg.workspaces;
-
-const packages = Object.entries(workspaces)
-    .flatMap(([key, entries]) => entries)
-    .map((pattern) => glob.sync(pattern, {cwd}))
-    .flat()
-    .map((x) => resolve(cwd, x))
-    .filter((pkg) => existsSync(join(pkg, 'tsconfig.json')))
-;
-
-packages.forEach(packageDir => {
-    if (packageDir) {
-        nodeSystem.readDirectory(packageDir);
+(function () {
+    if (opts.help || opts.h || opts["?"]) {
+        console.error(`Usage: ${process.argv[1]} [--workspaces] [<workdir>] [<workspace> [<workspaces>...]]`)
+        console.error(`       ${process.argv[1]} --dirs <dir> [<dirs>...] #builds specific directories`)
+        console.error(`       ${process.argv[1]} --config-name=<tsconfig.name.json> # uses name as config`)
+        console.error(`       ${process.argv[1]} --list [--workspaces|--dirs] [<args>...] # prints list of dirs or workspaces`)
+        console.error(`       ${process.argv[1]} --config=<tsconfig.location.json> # builds one specific tsconfig`)
+        process.exit(1);
     }
-})
 
-const solution = createSolutionBuilder(nodeSystem, packages, {
-    dry: false,
-    incremental: true,
-    verbose: false
-});
-
-solution.build();
+    const pkg = readClosestPackageJSON();
+    const nodeSystem = createSolutionBuilderHost(sys);
+    const workspaceFilter = opts._.slice(1);
 
 
+    let packages;
+    if (opts.config) {
+        packages = getTSDirectoriesFromPackage(process.cwd(), dirname(opts.config), pkg, workspaceFilter);
+    } else if (opts.dirs) {
+        packages = getTSDirectoriesFromGlobs(process.cwd(), opts._);
+    } else {
+        packages = getTSDirectoriesFromPackage(process.cwd(), opts._[0], pkg, workspaceFilter);
+    }
+
+    if (opts.list) {
+        console.log(packages.join("\n"));
+        process.exit();
+    }
+
+    packages.forEach(packageDir => {
+        if (packageDir) {
+            nodeSystem.readDirectory(packageDir);
+        }
+    })
+
+    const solution = createSolutionBuilder(nodeSystem, packages, {
+        dry: false,
+        incremental: true,
+        verbose: false
+    });
+
+    const exitcode = solution.build();
+
+    process.exit(exitcode);
+})();

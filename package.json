@@ -108,6 +108,7 @@
     }
   },
   "dependencies": {
+    "minimist": "^1.2.6",
     "scramjet": "^4.36.0"
   }
 }
