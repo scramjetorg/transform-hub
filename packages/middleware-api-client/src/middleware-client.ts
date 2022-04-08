@@ -21,7 +21,7 @@ export class MiddlewareClient implements ClientProvider {
         return this.client.get<MMRestAPI.GetManagersResponse>("spaces");
     }
 
-    async getVersion(): Promise<MWRestAPI.VersionResponse> {
+    async getVersion(): Promise<MWRestAPI.GetVersionResponse> {
         return this.client.get("version");
     }
 }
