@@ -4,7 +4,7 @@
     "description": "Scramjet Middleware API Client",
     "main": "src/index.ts",
     "scripts": {
-        "build": "tsc -p tsconfig.build.json && yarn build:browser",
+        "build": "../../scripts/build-all.js --config-name=tsconfig.build.json && yarn build:browser",
         "build:browser": "esbuild ./src/index.ts --outdir=bundle --bundle --tsconfig=tsconfig.build.json --target=chrome58 --global-name=SCPClient && yarn build:browser:types",
         "build:browser:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.build.json --outDir bundle",
         "clean": "rm -rf ./dist .bic_cache",

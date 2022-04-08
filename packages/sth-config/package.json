@@ -7,7 +7,7 @@
   "license": "ISC",
   "main": "src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && npm run copy:configs",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json && npm run copy:configs",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",

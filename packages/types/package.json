@@ -6,7 +6,7 @@
   "scripts": {
     "clean": "rm -rf ./dist .bic_cache",
     "prepack": "node ../../scripts/publish.js",
-    "build": "tsc -p tsconfig.build.json && npm run test:expose",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json && npm run test:expose",
     "build:docs": "typedoc",
     "test:expose": "scripts/generate.js",
     "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit",

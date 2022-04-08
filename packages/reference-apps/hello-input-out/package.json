@@ -3,7 +3,7 @@
   "version": "0.20.0",
   "main": "index",
   "scripts": {
-    "build:refapps": "tsc -p tsconfig.json",
+    "build:refapps": "node ../../../scripts/build-all.js",
     "postbuild:refapps": "yarn prepack && yarn packseq",
     "clean": "rm -rf ./dist .bic_cache",
     "prepack": "node ../../../scripts/publish.js",

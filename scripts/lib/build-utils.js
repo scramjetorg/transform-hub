@@ -31,8 +31,6 @@ function getTSDirectoriesFromPackage(_cwd, _dir, pkg, workspaceFilter) {
     return getTSDirectoriesFromGlobs(cwd, globs);
 }
 
-
-
 const findClosestPackageJSONLocation = (_cwd) => {
     const cwd = path.resolve(process.cwd(), _cwd || ".");
     const pathParts = cwd.split(path.sep);
