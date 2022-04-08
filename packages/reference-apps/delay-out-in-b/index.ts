@@ -25,12 +25,13 @@ const exp: [
      * @param input - internal stream
      * @returns - transformed stream
      */
-    async function(input: Streamable<any>) {
+    async function(input: Streamable<any>, timesOfExecution = 12000) {
         let h: bigint = BigInt(0);
         let diff = BigInt(0);
+        let i = 1;
 
         await (input as StringStream)
-            .each(o => {
+            .while(o => {
                 h = rht.bigint();
                 diff = h - BigInt(o);
 
@@ -39,6 +40,8 @@ const exp: [
                 }
 
                 diffs.push(diff);
+
+                return i++ < timesOfExecution;
             })
             .catch((e: any) => { console.log(e); })
             .run();
