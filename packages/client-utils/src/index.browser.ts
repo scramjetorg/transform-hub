@@ -17,11 +17,12 @@ export class ClientUtils extends ClientUtilsBase implements HttpClient {
     }
 }
 
-export { ClientError, ClientErrorCode } from "./client-error";
-export { RequestLogger } from "./types";
+export { ClientError } from "./client-error";
+export type { ClientErrorCode } from "./client-error";
+export type { RequestLogger } from "./types";
 
 export interface ClientProvider {
     client: HttpClient;
 }
 
-export { HttpClient };
+export type { HttpClient };
