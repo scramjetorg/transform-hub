@@ -7,6 +7,7 @@
     "postinstall": "pip3 install --upgrade -r requirements.txt --target __pydeps__",
     "build:only": "pip3 install --upgrade -r requirements.txt --target dist",
     "build": "yarn build:only",
+    "clean": "rm -rf dist/",
     "prepack": "node ../../scripts/publish.js",
     "postbuild": "yarn prepack",
     "build:docker": "docker build -t scramjetorg/runner-py:$npm_package_version -f Dockerfile ../../"
