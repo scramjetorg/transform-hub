@@ -12,7 +12,8 @@
     "python3": "3.9.0"
   },
   "scripts": {
-    "build:refapps": "mkdir -p dist/__pypackages__/ && cp *.py dist/ && pip3 install -t dist/__pypackages__/ -r requirements.txt",
+    "build:refapps": "yarn build:refapps:only",
+    "build:refapps:only": "mkdir -p dist/__pypackages__/ && cp *.py dist/ && pip3 install -t dist/__pypackages__/ -r requirements.txt",
     "postbuild:refapps": "yarn prepack && yarn packseq",
     "prepack": "PACKAGES_DIR=python node ../../../scripts/publish.js",
     "packseq": "PACKAGES_DIR=python node ../../../scripts/packsequence.js",

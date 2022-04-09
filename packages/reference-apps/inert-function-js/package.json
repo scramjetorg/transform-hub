@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:refapps": "mkdir -p dist/ && cp index.js dist/",
+    "build:refapps:only": "mkdir -p dist/ && cp index.js dist/",
+    "build:refapps": "yarn build:refapps:only",
     "postbuild:refapps": "yarn prepack && yarn packseq",
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js",
