@@ -14,7 +14,7 @@ function getTSDirectoriesFromGlobs(cwd, globs, tsConfigName = 'tsconfig.json') {
     return packages;
 }
 
-function getTSDirectoriesFromPackage(_cwd, _dir, pkg, workspaceFilter) {
+function getTSDirectoriesFromPackage(_cwd, _dir, pkg, workspaceFilter, tsConfigName = 'tsconfig.json') {
     const cwd = resolve(_cwd, _dir || '.');
     if (!pkg.workspaces) return [cwd];
 
@@ -28,7 +28,7 @@ function getTSDirectoriesFromPackage(_cwd, _dir, pkg, workspaceFilter) {
             return entries;
         });
 
-    return getTSDirectoriesFromGlobs(cwd, globs);
+    return getTSDirectoriesFromGlobs(cwd, globs, tsConfigName);
 }
 
 const findClosestPackageJSONLocation = (_cwd) => {
