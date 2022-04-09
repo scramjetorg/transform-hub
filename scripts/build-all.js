@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-const { createSolutionBuilderHost, sys } = require("typescript");
+const { createSolutionBuilderHost, sys, readConfigFile } = require("typescript");
 const { createSolutionBuilder } = require("typescript");
 const { readClosestPackageJSON, getTSDirectoriesFromPackage, getTSDirectoriesFromGlobs } = require("./lib/build-utils");
 const minimist = require("minimist");
+const { join } = require("path");
 
 const opts = minimist(process.argv.slice(2), {boolean: ['dirs', 'list', 'workspaces']});
 
@@ -20,7 +21,7 @@ const opts = minimist(process.argv.slice(2), {boolean: ['dirs', 'list', 'workspa
     const nodeSystem = createSolutionBuilderHost(sys);
     const workspaceFilter = opts._.slice(1);
     const fast = opts.fast;
-    const configName = opts["config-name"];
+    const configName = opts["config-name"] || "tsconfig.json";
 
 
     let packages;
@@ -43,14 +44,15 @@ const opts = minimist(process.argv.slice(2), {boolean: ['dirs', 'list', 'workspa
         }
     })
 
-    const solution = createSolutionBuilder(nodeSystem, packages, {
+    const rootnames = packages.map(x => join(x, configName));
+    const solution = createSolutionBuilder(nodeSystem, rootnames, {
         dry: false,
         assumeChangesOnlyAffectDirectDependencies: true,
         incremental: true,
         verbose: false
     });
 
-    const exitcode = solution.build(configName);
+    const exitcode = solution.build();
 
     process.exit(exitcode);
 })();
