@@ -1,7 +1,6 @@
 import { HostClient, } from "@scramjet/api-client";
 import { ClientUtils, ClientProvider, HttpClient } from "@scramjet/client-utils";
-import { LoadCheckStat } from "@scramjet/types";
-import { VersionResponse, HostResponse } from "./types/responses";
+import { MRestAPI, LoadCheckStat } from "@scramjet/types";
 
 export class ManagerClient implements ClientProvider {
     client: HttpClient;
@@ -18,11 +17,11 @@ export class ManagerClient implements ClientProvider {
     }
 
     async getHosts() {
-        return this.client.get<HostResponse[]>("list");
+        return this.client.get<MRestAPI.GetHostInfoResponse[]>("list");
     }
 
-    async getVersion(): Promise<VersionResponse> {
-        return this.client.get<VersionResponse>("version");
+    async getVersion(): Promise<MRestAPI.GetVersionResponse> {
+        return this.client.get<MRestAPI.GetVersionResponse>("version");
     }
 
     async getLoad() {

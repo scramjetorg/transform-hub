@@ -1,3 +1,1 @@
-export type GetVersionResponse = {
-    version: string;
-}
+export { GetVersionResponse } from "../rest-api-commons/version";
