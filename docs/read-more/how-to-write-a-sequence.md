@@ -46,11 +46,15 @@ export default async function*() {
         yield i++
     }
 }
+
+
 ```
-You could read this stream using our CLI or API: 
-```bash
-si inst output <instance-id>
-``` 
+### Typescript
+Sequences that only produce data should be typed as [ReadableApp](https://hub.scramjet.org/docs/types/modules#readableapp).  
+[Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/scraping/app.ts).
+
+### Reading from output stream
+You could read this stream using our CLI, REST API, or API Clients.
 
 ## Consuming data (input stream)
 Reading data from a sequence is easy as the input stream conforms to the Readable protocol from NodeJS. There’s a bunch of ways that allow you to read data from streams. Here are some examples of a sequence that reads a stream of weather data objects and saves them to DB.  
@@ -79,6 +83,11 @@ si inst input <instance-id> --content-type "application/x-ndjson"
 ```
 Then you can send it JSON strings separated by newline characters.  
 
+### Typescript
+Sequences that only consumes data should be typed as [WritableApp](https://hub.scramjet.org/docs/types/modules#writableapp).
+
+### Writing to input stream
+
 You can write to instance input stream using our CLI or API.
 
 ## Transforming data
@@ -89,9 +98,9 @@ Using streams:
 export default function(input) {
     const out = new PassThrough()
 
-    input.on('data', (number) => {
-        if(number % 2 === 0) {
-            out.write(number)
+    input.on('data', (num) => {
+        if(num % 2 === 0) {
+            out.write(num)
         }
     })
 
@@ -100,13 +109,16 @@ export default function(input) {
 ```
 ```ts
 export default async function*(input) {
-    for await (const number of input) {
-        if(number % 2 === 0) {
-            yield number
+    for await (const num of input) {
+        if(num % 2 === 0) {
+            yield num
         }
     }
 }
 ```
+### Typescript
+Sequences that transform data should be typed as [TransformApp](https://hub.scramjet.org/docs/types/modules#transformapp).  
+[Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/transform-string-stream/src/index.ts).
 
 ## Sending data between sequences (topics)
 Sometimes you need a bunch of sequences to talk to each other. Topics are the solution. It’s a PubSub system that allows for many writing and reading instances to exchange data. 
@@ -128,7 +140,7 @@ export default function() {
 }
 ```
 ### Reading from a topic 
-To send topic as input stream we need to know what it is before running our Sequence, so we specify a topic config object with two properites: `requires` - with a name of topic, and `contentType` for ensuring proper encoding.
+To send topic as input stream we specify a topic config object with two properites: `requires` - with a name of topic, and `contentType` for ensuring proper encoding.
 ```ts
 const CRITICAL_TEMP_CELCIUS = 40
 
@@ -148,6 +160,17 @@ const app = [
 
 export default app
 ```
+### Typescript
+Writing to a topic requires specifying two additional properties that might not be present on your output stream. You can extend the type of your output stream by [HasTopicInformation](https://hub.scramjet.org/docs/types/modules#hastopicinformation) type.  
+Reading from a topic would require you to type your app as a tuple similar to this example:
+```ts
+const app: [{requires: string, contentType: string}, ReadableApp] = [
+    { requires: 'hello', contentType: 'text/plain' },
+    function(input) { ... }
+]
+```
+
+### Interacting with topics
 Apart from sequences communicating between each other you can also feed/consume a topic using our CLI or API. 
 
 ## Standard streams (stdin/stdout/stderr)
@@ -176,6 +199,14 @@ export default function(input) {
     })
 }
 ```
+### Typescript
+If you typed your sequence using appropriate "App" type (ReadableApp, WritableApp, TransformApp), then the `this` context should be already typed.
+Alternatively, you can use [AppContext](https://hub.scramjet.org/docs/types/AppContext#interface-appcontextappconfigtype-state) to maunally type the `this` context of your sequence.
+```ts
+export default function(this: AppContext) { ... }
+```
+
+### Reading logs
 You can read the logs using CLI or API.
 
 @TODO typescript
