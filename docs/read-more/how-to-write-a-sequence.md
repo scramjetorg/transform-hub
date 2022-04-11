@@ -46,8 +46,6 @@ export default async function*() {
         yield i++
     }
 }
-
-
 ```
 ### Typescript
 Sequences that only produce data should be typed as [ReadableApp](https://hub.scramjet.org/docs/types/modules#readableapp).  
@@ -201,7 +199,7 @@ export default function(input) {
 ```
 ### Typescript
 If you typed your sequence using appropriate "App" type (ReadableApp, WritableApp, TransformApp), then the `this` context should be already typed.
-Alternatively, you can use [AppContext](https://hub.scramjet.org/docs/types/AppContext#interface-appcontextappconfigtype-state) to maunally type the `this` context of your sequence.
+Alternatively, you can use [AppContext](https://hub.scramjet.org/docs/types/AppContext#interface-appcontextappconfigtype-state) to do it maunally.
 ```ts
 export default function(this: AppContext) { ... }
 ```
