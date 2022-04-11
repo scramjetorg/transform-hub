@@ -2,7 +2,7 @@ name: STH build and tests
 
 on:
   pull_request:
-    branches: [ release/*, main ]
+    branches: [ release/*, main, devel ]
 
 jobs:
   analyze-code:
