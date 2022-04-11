@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { Readable, Stream, Writable } from "stream";
 import { globalConfig } from "./config";
+import { MaybePromise } from "@scramjet/types";
 
 /**
  * Displays object.
@@ -49,9 +50,9 @@ export async function displayStream(
  *
  * @param response Response object with data to be displayed.
  */
-export async function displayEntity(response: Promise<any>): Promise<void> {
+export async function displayEntity(response: MaybePromise<any>): Promise<void> {
     // todo: different displays depending on _program.opts().format
-    const res = await response.catch(e => {
+    const res = await Promise.resolve(response).catch((e: any) => {
         console.error(e);
     });
 

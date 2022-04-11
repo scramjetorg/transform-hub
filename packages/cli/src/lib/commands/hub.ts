@@ -90,7 +90,7 @@ export const hub: CommandDefinition = (program) => {
         .description("display chosen hub version if a name is not provided it displays a version of a current hub")
          */
         .description("display info about the hub")
-        .action(async () => await displayEntity(getHostClient().getVersion()));
+        .action(async () => displayEntity(getHostClient().getVersion()));
 
     hubCmd
         .command("logs")
