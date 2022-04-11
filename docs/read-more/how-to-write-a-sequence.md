@@ -52,7 +52,7 @@ Sequences that only produce data should be typed as [ReadableApp](https://hub.sc
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/scraping/app.ts).
 
 ### Reading from output stream
-You could read this stream using our CLI, REST API, or API Clients.
+You could read this stream using our CLI, REST API, or API Client.
 
 ## Consuming data (input stream)
 Reading data from a sequence is easy as the input stream conforms to the Readable protocol from NodeJS. There’s a bunch of ways that allow you to read data from streams. Here are some examples of a sequence that reads a stream of weather data objects and saves them to DB.  
@@ -86,7 +86,7 @@ Sequences that only consumes data should be typed as [WritableApp](https://hub.s
 
 ### Writing to input stream
 
-You can write to instance input stream using our CLI or API.
+You can write to instance input stream using our CLI, REST API, or API Client.
 
 ## Transforming data
 Transforming data is really a combination of consuming and producing, usually with some logic in between. Let’s filter the incoming input stream of numbers to include only the even ones. 
@@ -117,6 +117,19 @@ export default async function*(input) {
 ### Typescript
 Sequences that transform data should be typed as [TransformApp](https://hub.scramjet.org/docs/types/modules#transformapp).  
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/transform-string-stream/src/index.ts).
+
+## Sequence arguments
+Every sequence can be spawned with arbitrary number of arguments
+```bash
+si seq start <sequence-id> --args ['Hello', 123, { abc: 456 }]
+```
+you can access this args using function parameters in your sequence:
+```ts
+export default function(input, param1, param2., param3) {
+    console.log(param1 + ' ' param2 + ' ' param3.abc)
+    // Prints "Hello 123 456" to stdout
+}
+```
 
 ## Sending data between sequences (topics)
 Sometimes you need a bunch of sequences to talk to each other. Topics are the solution. It’s a PubSub system that allows for many writing and reading instances to exchange data. 
@@ -169,7 +182,7 @@ const app: [{requires: string, contentType: string}, ReadableApp] = [
 ```
 
 ### Interacting with topics
-Apart from sequences communicating between each other you can also feed/consume a topic using our CLI or API. 
+Apart from sequences communicating between each other you can also feed/consume a topic using our CLI, REST API, or API Client. 
 
 ## Standard streams (stdin/stdout/stderr)
 Every sequence has access to standard streams of a program. You can read data from stdin. Send additional information to stdout and to stderr. These are separate from input/output streams.
@@ -186,7 +199,7 @@ export default function() {
 }
 ```
 
-These streams are also accessible through CLI or API.
+These streams are also accessible through our CLI, REST API, or API Client.
 ## Debugging (logger)
 If you need to see what’s going on inside of your sequence while it executes, you can use the logger for that. It’s attached to the `this` context of a sequence. 
 
@@ -205,12 +218,4 @@ export default function(this: AppContext) { ... }
 ```
 
 ### Reading logs
-You can read the logs using CLI or API.
-
-@TODO typescript
-@TODO parameters
-@TODO make sure you know how to read numbers
-@TODO test the samples
-@TODO scope of topics
-@TODO api/cli urls
-@TODO what else should be described?
+You can read the logs using our CLI, REST API, or API Client.
