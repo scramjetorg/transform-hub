@@ -51,6 +51,7 @@ It currently supports Node.js based apps, but Python and other languages are com
   - [Run Transform Hub in Docker :robot:](#run-transform-hub-in-docker-robot)
   - [Lerna commands :pencil:](#lerna-commands-pencil)
   - [Autocomplete :zap:](#autocomplete-zap)
+  - [Git branching workflow](#git-branching-workflow)
 - [Sample usage :sunglasses:](#sample-usage-sunglasses)
   - ["Hello Alice" sample :wave:](#hello-alice-sample-wave)
   - [More samples :books:](#more-samples-books)
@@ -493,6 +494,24 @@ si completion install
 For immidiete effect make sure to run `source ~/.bashrc`. Also you can manage completion script by yourself. Running `si completion bash` prints script to the terminal.
 
 ---
+
+## Git branching workflow
+
+There are two important branches: `main` (representing stable version of the
+project) and `devel` (where most of the work happens; this is the default
+branch).
+
+- New features, and especially breaking changes, should go to the `devel` branch.
+- Bugfixes, especially ones that should be published in a bugfix release,
+  should be merged into the `main` branch.
+  - Start such bugfix branches from `main`, and make PRs to `main`.
+  - After a bugfix is merged, `main` should be merged into `devel` to get the
+    bugfix there as well.
+
+The purpose of having two branches is to keep important bugfixes separate from
+new features, so that a bugfix version (a release without new features, just
+bugfixes) can be published immediately if needed.
+
 
 # Sample usage :sunglasses:
 
