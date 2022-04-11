@@ -17,7 +17,7 @@ export const hub: CommandDefinition = (program) => {
     const hubCmd = program
         .command("hub")
         .addHelpCommand(false)
-        .usage("si hub [command] [options...]")
+        .usage("[command] [options...]")
         /* TODO: for future implementation
             .option("--driver", "", "scp")
             .option("--provider <value>", "specify provider: aws|cpm")

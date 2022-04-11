@@ -12,7 +12,7 @@ export const topic: CommandDefinition = (program) => {
     const topicCmd = program
         .command("topic")
         .addHelpCommand(false)
-        .usage("si topic [command] [options...]")
+        .usage("[command] [options...]")
         .description("publish/subscribe operations allows to manage data flow");
 
     if (isDevelopment())

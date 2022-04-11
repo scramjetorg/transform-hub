@@ -14,7 +14,7 @@ export const scope: CommandDefinition = (program) => {
         .command("scope")
         .addHelpCommand(false)
         .alias("s")
-        .usage("si scope [command] [options...]")
+        .usage("[command] [options...]")
         .description("manage scopes that store pairs of spaces and hubs used when working");
 
     scopeCmd.command("list").alias("ls").description("list all created scopes").action(listScopes);
