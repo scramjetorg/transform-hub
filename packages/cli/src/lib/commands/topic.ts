@@ -60,7 +60,7 @@ export const topic: CommandDefinition = (program) => {
                 filename ? await getReadStreamFromFile(filename) : process.stdin,
                 contentType,
                 end
-            )
+            );
         });
 
     topicCmd.command("ls")
