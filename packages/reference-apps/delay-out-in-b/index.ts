@@ -36,7 +36,7 @@ const exp: [
                 diff = h - BigInt(o);
 
                 if (diff < 0) {
-                    this.logger.warn(`Package has been teleported in time! (${h} is less than ${BigInt(o.ts)} at entry ${o.i}: ${o}) or machines time mismatch.`);
+                    this.logger.warn(`Package has been teleported in time! (${h.toString()} is less than ${BigInt(o.ts).toString()} at entry ${o.i}: ${o}) or machines time mismatch.`);
                 }
 
                 diffs.push(diff);
@@ -59,8 +59,6 @@ const exp: [
                     return b + a;
                 }, BigInt(0)
             );
-
-        this.logger.info("Diffs", diffs);
 
         return JSON.stringify({
             units: "ns",
