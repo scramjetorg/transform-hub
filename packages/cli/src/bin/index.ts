@@ -55,7 +55,13 @@ const errorHandler = (err: ClientError) => {
         await setPlatformDefaults();
     }
 
-    for (const command of Object.values(commands)) command(program);
+    console.log("-------process.argsss", process.argv);
+
+    for (const command of Object.values(commands)) {
+        command(program);
+        console.log("----command", command);
+        console.log("----program", program.getOptionValue("--help"));
+    }
 
     program
         .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
