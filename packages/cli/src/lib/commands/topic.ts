@@ -12,7 +12,7 @@ export const topic: CommandDefinition = (program) => {
     const topicCmd = program
         .command("topic")
         .addHelpCommand(false)
-        .usage("si topic [command] [options...]")
+        .usage("[command] [options...]")
         .description("publish/subscribe operations allows to manage data flow");
 
     if (isDevelopment())
@@ -54,16 +54,14 @@ export const topic: CommandDefinition = (program) => {
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .option("-e, --end", "x-end-stream", false)
         .description("send data on topic from file, directory or directly through the console")
-        .action(async (topicName, filename, { contentType, end }) =>
-            displayEntity(
-                getHostClient().sendNamedData(
-                    topicName,
-                    filename ? await getReadStreamFromFile(filename) : process.stdin,
-                    contentType,
-                    end
-                )
+        .action(async (topicName, filename, { contentType, end }) => {
+            await getHostClient().sendNamedData(
+                topicName,
+                filename ? await getReadStreamFromFile(filename) : process.stdin,
+                contentType,
+                end
             )
-        );
+        });
 
     topicCmd.command("ls")
         .description("List information about topics")

@@ -52,7 +52,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("sequence")
         .addHelpCommand(false)
         .alias("seq")
-        .usage("si seq [command] [options...]")
+        .usage("[command] [options...]")
         .description("operations on a program, consisting of one or more functions executed one after another");
 
     sequenceCmd

@@ -13,7 +13,7 @@ export const space: CommandDefinition = (program) => {
         .command("space")
         .addHelpCommand(false)
         .alias("spc")
-        .usage("si space [command] [options...]")
+        .usage("[command] [options...]")
         .option("-c, --stdout", "output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
         .description("operations on grouped and separated runtime environments that allow sharing the data within them");

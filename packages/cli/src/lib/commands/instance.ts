@@ -14,8 +14,8 @@ export const instance: CommandDefinition = (program) => {
     const instanceCmd = program
         .command("instance [command]")
         .addHelpCommand(false)
-        .usage("si inst [command] [options...]")
         .alias("inst")
+        .usage("[command] [options...]")
         .description("operations on running sequence");
 
     instanceCmd

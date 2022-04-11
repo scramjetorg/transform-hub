@@ -17,7 +17,7 @@ export const hub: CommandDefinition = (program) => {
     const hubCmd = program
         .command("hub")
         .addHelpCommand(false)
-        .usage("si hub [command] [options...]")
+        .usage("[command] [options...]")
         /* TODO: for future implementation
             .option("--driver", "", "scp")
             .option("--provider <value>", "specify provider: aws|cpm")
@@ -90,7 +90,7 @@ export const hub: CommandDefinition = (program) => {
         .description("display chosen hub version if a name is not provided it displays a version of a current hub")
          */
         .description("display info about the hub")
-        .action(async () => await displayEntity(getHostClient().getVersion()));
+        .action(async () => displayEntity(getHostClient().getVersion()));
 
     hubCmd
         .command("logs")
