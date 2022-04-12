@@ -47,7 +47,14 @@ const errorHandler = (err: ClientError) => {
     initPaths();
     const { token, env, middlewareApiUrl } = globalConfig.getConfig();
 
-    if (token && globalConfig.isProductionEnv(env) && middlewareApiUrl) {
+    /**
+     * Set the default values for platform only when all required settings 
+     * are provided in the global-config.json file.
+     * Do not set the default platform values when displaying the help commands. 
+     */
+    if (token && globalConfig.isProductionEnv(env) && middlewareApiUrl &&
+        !process.argv.includes((program as any)._helpShortFlag) &&
+        !process.argv.includes((program as any)._helpLongFlag)) {
         ClientUtils.setDefaultHeaders({
             Authorization: `Bearer ${token}`,
         });
