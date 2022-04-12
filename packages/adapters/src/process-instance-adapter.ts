@@ -84,7 +84,7 @@ IComponent {
         );
 
         pythonpath += `:${process.env.PYTHONPATH}:${sequenceDir}/__pypackages__`;
-        
+
         return pythonpath;
     }
 

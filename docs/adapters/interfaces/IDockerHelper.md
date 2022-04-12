@@ -170,7 +170,7 @@ ___
 
 ▸ **listVolumes**(): `Promise`<`string`[]\>
 
-Lists exisiting volumes
+Lists existing volumes
 
 #### Returns
 
@@ -365,7 +365,7 @@ ___
 
 ▸ **wait**(`container`, `options?`): `Promise`<[`ExitData`](../modules.md#exitdata)\>
 
-Waits until containter exits
+Waits until container exits
 
 #### Parameters
 

@@ -32,7 +32,7 @@ const initDir = (dir: string) => {
 
 /**
  * Checks existing si session directories and compares it with list of running sessions.
- * If session no longer exists responding dir is beeing removed.
+ * If session no longer exists responding dir is being removed.
  */
 const clearUnusedSessionDirs = () => {
     if (!existsSync(siTempDir)) return;

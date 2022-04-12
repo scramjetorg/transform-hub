@@ -32,7 +32,7 @@ export type MonitoringMessageData = MonitoringMessageFromRunnerData & {
 
     containerId?: string;
 
-    /** PID of Runner If STH is run with --runtime-adpater='process' option */
+    /** PID of Runner If STH is run with --runtime-adapter='process' option */
     processId?: number;
 }
 

@@ -86,7 +86,7 @@ export const hub: CommandDefinition = (program) => {
     hubCmd
         .command("info")
         /* TODO for future use
-         .argument("[name|id]")
+        .argument("[name|id]")
         .description("display chosen hub version if a name is not provided it displays a version of a current hub")
          */
         .description("display info about the hub")

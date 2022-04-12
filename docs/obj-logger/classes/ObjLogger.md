@@ -171,7 +171,7 @@ ___
 
 ▪ `Static` **levels**: `LogLevel`[]
 
-Logging levels chierarchy.
+Logging levels hierarchy.
 
 #### Defined in
 
@@ -308,7 +308,7 @@ ___
 ▸ **pipe**(`target`, `options?`): `Writable`
 
 Pipes output logger to provided target. The target can be a writable stream
-or an instance of class fulfiling IObjectLogger interface.
+or an Instance of class fulfilling IObjectLogger interface.
 
 #### Parameters
 

@@ -20,7 +20,7 @@ export type Middleware = (req: ParsedMessage, res: ServerResponse, next: NextCal
 export type Decorator = (req: IncomingMessage) => void;
 
 /**
- * Configuration options for streaming endpoionts
+ * Configuration options for streaming endpoints
  */
 export type StreamConfig = {
     /**
@@ -107,7 +107,7 @@ export interface APIBase {
      * A method that allows to pass a stream to the specified path on the API server
      *
      * @param path the request path as string or regex
-     * @param stream the stream that will be sent in reponse body or a method to be called then
+     * @param stream the stream that will be sent in reposnse body or a method to be called then
      * @param config configuration of the stream
      */
     upstream(

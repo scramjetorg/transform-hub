@@ -25,7 +25,7 @@ export type ContainerConfigurationWithExposedPorts = {
 }
 
 /**
- * PreRunner container configuraion.
+ * PreRunner container configuration.
  */
 export type PreRunnerContainerConfiguration = ContainerConfiguration;
 
@@ -59,7 +59,7 @@ export type HostConfig = {
     apiBase: string;
 
     /**
-     * Port number for connecting instances.
+     * Port number for connecting Instances.
      */
     instancesServerPort: number;
 
@@ -95,7 +95,7 @@ export type STHConfiguration = {
     cpmUrl: string;
 
     /**
-     * Path to the certficate authority file for verifying self-signed CPM certs
+     * Path to the certificate authority file for verifying self-signed CPM certs
      */
     cpmSslCaPath?: string;
 
@@ -129,11 +129,11 @@ export type STHConfiguration = {
     host: HostConfig;
 
     /**
-     * Minimum requirements to start new instance.
+     * Minimum requirements to start new Instance.
      */
     instanceRequirements: {
         /**
-         * Free memory required to start instance. In megabytes.
+         * Free memory required to start Instance. In megabytes.
          */
         freeMem: number;
 
@@ -143,7 +143,7 @@ export type STHConfiguration = {
         cpuLoad: number;
 
         /**
-         * Free disk space required to start instance. In megabytes.
+         * Free disk space required to start Instance. In megabytes.
          */
         freeSpace: number;
     },
@@ -160,19 +160,19 @@ export type STHConfiguration = {
 
     /**
      * Time to wait after Runner container exit.
-     * In this additional time instance API is still available.
+     * In this additional time Instance API is still available.
      */
     instanceAdapterExitDelay: number;
 
     /**
-     * Which sequence and instance adpaters should sth use.
+     * Which sequence and instance adapters should STH use.
      * One of 'docker', 'process', 'kubernetes'
      */
-     runtimeAdapter: string,
+    runtimeAdapter: string,
 
     /**
      * Only used when `noDocker` is true
-     * Where should ProcessSequenceAdapter save new sequences
+     * Where should ProcessSequenceAdapter save new Sequences
      */
     sequencesRoot: string
 

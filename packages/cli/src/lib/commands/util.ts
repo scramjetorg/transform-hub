@@ -24,7 +24,7 @@ export const util: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .alias("lf")
         .option("--no-color", "dont colorize the values")
-        .description("colorifies and prints out nice colorful log files")
+        .description("colorizes and prints out nice colorful log files")
         .action(({ color }) => {
             const parser = prettyPrint({ colors: color });
 

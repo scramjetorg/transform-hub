@@ -244,7 +244,7 @@ export interface IDockerHelper {
     removeContainer: (containerId: DockerContainer) => Promise<void>;
 
     /**
-     * Lists exisiting volumes
+     * Lists existing volumes
      *
      * @returns {Promise<DockerVolume[]>} List of existing volumes
      */
@@ -278,7 +278,7 @@ export interface IDockerHelper {
     run: (config: DockerAdapterRunConfig) => Promise<DockerAdapterRunResponse>;
 
     /**
-     * Waits until containter exits
+     * Waits until container exits
      *
      * @param {DockerContainer} container
      *

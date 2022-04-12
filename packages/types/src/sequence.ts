@@ -24,7 +24,7 @@ export type ReadSequence<Produces, Y extends any[] = any[], Z = any> =
     [RFunction<Produces>] |
     [RFunction<Z>, ...TFunctionChain<Z, Produces, Y>];
 /**
- * A Transform Sequence is a sequence that accept input, perform operations on it, and
+ * A Transform Sequence is a Sequence that accept input, perform operations on it, and
  * outputs the result.
  */
 

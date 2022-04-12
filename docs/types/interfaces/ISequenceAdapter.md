@@ -22,7 +22,7 @@
 
 ▸ **identify**(`stream`, `id`): `Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)\>
 
-Identifies new sequence
+Identifies new Sequence
 
 #### Parameters
 
@@ -59,7 +59,7 @@ ___
 
 ▸ **list**(): `Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)[]\>
 
-Identifies existing sequences
+Identifies existing Sequences
 
 #### Returns
 

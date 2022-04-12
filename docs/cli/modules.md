@@ -100,7 +100,7 @@ ___
 
 ▸ **attachStdio**(`instanceClient`): `Promise`<`void`\>
 
-Attaches stdio to instance streams.
+Attaches stdio to Instance streams.
 
 #### Parameters
 
@@ -168,7 +168,7 @@ ___
 
 ▸ **displayEntity**(`response`): `Promise`<`void`\>
 
-Displays reponse data.
+Displays response data.
 
 #### Parameters
 
@@ -279,7 +279,7 @@ ___
 
 ▸ **getInstance**(`id`): `InstanceClient`
 
-Returns instance client for instance with given `id` on default host.
+Returns instance client for Instance with given `id` on default host.
 
 #### Parameters
 
@@ -303,7 +303,7 @@ ___
 
 ▸ **getInstanceId**(`id`): `string`
 
-Gets last instance id if dash is provided, otherwise returns the first argument
+Gets last Instance id if dash is provided, otherwise returns the first argument
 
 #### Parameters
 
@@ -375,7 +375,7 @@ ___
 
 ▸ **getSequenceId**(`id`): `string`
 
-Gets last sequence id if dash is provided, otherwise returns the first argument
+Gets last Sequence id if dash is provided, otherwise returns the first argument
 
 #### Parameters
 

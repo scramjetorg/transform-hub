@@ -2,8 +2,8 @@
 
 # Class: Host
 
-Host provides functionality to manage instances and sequences.
-Using provided servers to set up API and server for communicating with instance controllers.
+Host provides functionality to manage Instances and Sequences.
+Using provided servers to set up API and server for communicating with Instance controllers.
 Can communicate with Manager.
 
 ## Implements
@@ -293,10 +293,10 @@ ___
 Setting up handlers for general Host API endpoints:
 - creating Sequence (passing stream with the compressed package)
 - starting Instance (based on a given Sequence ID passed in the HTTP request body)
-- getting sequence details
-- listing all instances running on the CSH
-- listing all sequences saved on the CSH
-- instance
+- getting Sequence details
+- listing all Instances running on the CSH
+- listing all Sequences saved on the CSH
+- Instance
 
 #### Returns
 
@@ -344,13 +344,13 @@ ___
 
 ▸ **getInstances**(): `GetInstancesResponse`
 
-Returns list of all sequences.
+Returns list of all Sequences.
 
 #### Returns
 
 `GetInstancesResponse`
 
-List of instances.
+List of Instances.
 
 #### Defined in
 
@@ -362,7 +362,7 @@ ___
 
 ▸ **getSequence**(`id`): `OpResponse`<`GetSequenceResponse`\>
 
-Returns sequence information.
+Returns Sequence information.
 
 #### Parameters
 
@@ -386,7 +386,7 @@ ___
 
 ▸ **getSequenceInstances**(`sequenceId`): `GetSequenceInstancesResponse`
 
-Returns list of all instances of given sequence.
+Returns list of all Instances of given Sequence.
 
 #### Parameters
 
@@ -398,7 +398,7 @@ Returns list of all instances of given sequence.
 
 `GetSequenceInstancesResponse`
 
-List of instances.
+List of Instances.
 
 #### Defined in
 
@@ -410,13 +410,13 @@ ___
 
 ▸ **getSequences**(): `GetSequencesResponse`
 
-Returns list of all sequences.
+Returns list of all Sequences.
 
 #### Returns
 
 `GetSequencesResponse`
 
-List of sequences.
+List of Sequences.
 
 #### Defined in
 
@@ -442,9 +442,9 @@ ___
 
 ▸ **handleDeleteSequence**(`req`): `Promise`<`OpResponse`<`DeleteSequenceResponse`\>\>
 
-Handles delete sequence request.
-Removes sequence from the store and sends notification to Manager if connected.
-Note: If instance is started from a given sequence, sequence can not be removed
+Handles delete Sequence request.
+Removes Sequence from the store and sends notification to Manager if connected.
+Note: If Instance is started from a given Sequence, Sequence can not be removed
 and CONFLICT status code is returned.
 
 #### Parameters
@@ -469,15 +469,15 @@ ___
 
 ▸ **handleNewSequence**(`stream`): `Promise`<`OpResponse`<`SendSequenceResponse`\>\>
 
-Handles incoming sequence.
-Uses sequence adapter to unpack and identify sequence.
-Notifies Manager (if connected) about new sequence.
+Handles incoming Sequence.
+Uses Sequence adapter to unpack and identify Sequence.
+Notifies Manager (if connected) about new Sequence.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `stream` | `IncomingMessage` | Stream of packaged sequence. |
+| `stream` | `IncomingMessage` | Stream of packaged Sequence. |
 
 #### Returns
 
@@ -495,11 +495,11 @@ ___
 
 ▸ **handleStartSequence**(`req`): `Promise`<`OpResponse`<`StartSequenceResponse`\>\>
 
-Handles sequence start request.
-Parses request body for sequence configuration and parameters to be passed to first Sequence method.
-Passes obtained parameters to main method staring sequence.
+Handles Sequence start request.
+Parses request body for Sequence configuration and parameters to be passed to first Sequence method.
+Passes obtained parameters to main method staring Sequence.
 
-Notifies Manager (if connected) about new instance.
+Notifies Manager (if connected) about new Instance.
 
 #### Parameters
 
@@ -523,8 +523,8 @@ ___
 
 ▸ **identifyExistingSequences**(): `Promise`<`void`\>
 
-Finds existing sequences.
-Used to recover sequences information after restart.
+Finds existing Sequences.
+Used to recover Sequences information after restart.
 
 #### Returns
 
@@ -540,11 +540,11 @@ ___
 
 ▸ **instanceMiddleware**(`req`, `res`, `next`): `void`
 
-Finds instance with given id passed in request parameters and forwards request to instance router.
-Forwarded request's url is reduced by the instance base path and instance parameter.
+Finds Instance with given id passed in request parameters and forwards request to Instance router.
+Forwarded request's url is reduced by the Instance base path and Instance parameter.
 For example: /api/instance/:id/log -> /log
 
-Ends response with 404 if instance is not found.
+Ends response with 404 if Instance is not found.
 
 #### Parameters
 
@@ -552,7 +552,7 @@ Ends response with 404 if instance is not found.
 | :------ | :------ | :------ |
 | `req` | `ParsedMessage` | Request object. |
 | `res` | `ServerResponse` | Response object. |
-| `next` | `NextCallback` | Function to call when request is not handled by instance middleware. |
+| `next` | `NextCallback` | Function to call when request is not handled by Instance middleware. |
 
 #### Returns
 
@@ -571,20 +571,20 @@ ___
 ▸ **main**(`identifyExisting?`): `Promise`<[`Host`](Host.md)\>
 
 Main method to start Host.
-Performs Hosts's initialization process: starts servers, identifies existing instances,
+Performs Hosts's initialization process: starts servers, identifies existing Instances,
 sets up API and connects to Manager.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `identifyExisting` | `Partial`<{ `identifyExisting`: `boolean`  }\> | Indicates if existing instances should be identified. |
+| `identifyExisting` | `Partial`<{ `identifyExisting`: `boolean`  }\> | Indicates if existing Instances should be identified. |
 
 #### Returns
 
 `Promise`<[`Host`](Host.md)\>
 
-Promise resolving to instance of Host.
+Promise resolving to Instance of Host.
 
 #### Defined in
 
@@ -619,7 +619,7 @@ ___
 
 ▸ **stop**(): `Promise`<`void`\>
 
-Stops all running instances by sending KILL command to every instance
+Stops all running Instances by sending KILL command to every Instance
 using its CSIController [CSIController](CSIController.md)
 
 #### Returns
@@ -666,7 +666,7 @@ Sets used modules with provided configuration.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `apiServer` | `APIExpose` | Server to attach API to. |
-| `socketServer` | [`SocketServer`](SocketServer.md) | Server to listen for connections from instances. |
+| `socketServer` | [`SocketServer`](SocketServer.md) | Server to listen for connections from Instances. |
 | `sthConfig` | `STHConfiguration` | Configuration. |
 
 #### Defined in
