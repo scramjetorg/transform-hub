@@ -23,21 +23,15 @@ export default function(input, param1, param2) {
 ```
 
 ## Producing data (output stream)
-To stream data from a sequence we need it to return values over time. Some constructs in JavaScript that enable that are NodeJS streams, Generators and Iterables. Whatever you return from your sequence will be your ***output*** stream. We can choose whatever the solution is right for us. Here are some examples of a sequence producing a stream of integers every second.  
-Using a stream:
-```ts
-export default function() {
-    const out = new PassThrough()
+To stream data from a sequence we need it to return values over time. Some constructs in JavaScript that enable that are NodeJS streams, Generators and Iterables. Whatever you return from your sequence will be your ***output*** stream. We can choose whatever the solution is right for us.
 
-    let i = 0
-    setInterval(() => {
-        out.write(i++)
-    }, 1000)
+### Flow control (backpressure)
+Every streaming system needs to take backpressure problems into account. Every stream that we are writing to, can signalize that it's being overflown with incoming data. In this situation, if that's possible producing of data should be stopped, until the target stream signalizes that it is ok to write data again.
+If you choose Generators or Iterables for your output stream, the backpressure will be handled for you by Scramjet framework (new values won't be produced if the target stream is overflown).
+### Examples
+Here are some examples of a sequence producing a stream of integers every second.  
 
-    return out
-}
-```
-Using an async generator:
+#### Using an async generator:
 ```ts
 export default async function*() {
     let i = 0
@@ -47,6 +41,32 @@ export default async function*() {
     }
 }
 ```
+
+#### Using a stream:
+With raw streams, we need to handle backpressure ourselves.
+```ts
+export default function() {
+    const out = new PassThrough()
+
+    let i = 0
+
+    const fn = () => {
+        const canWrite = out.write(i++)
+        if(!canWrite) {
+            clearInterval(intervalRef)
+        }
+    }
+
+    let intervalRef = setInterval(fn, 1000)
+
+    out.on('drain', () => {
+      intervalRef = setInterval(fn, 1000)
+    })
+
+    return out
+}
+```
+
 ### Typescript
 Sequences that only produce data should be typed as [ReadableApp](https://hub.scramjet.org/docs/types/modules#readableapp).  
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/scraping/app.ts).
@@ -56,16 +76,8 @@ You could read this stream using our CLI, REST API, or API Client.
 
 ## Consuming data (input stream)
 Reading data from a sequence is easy as the input stream conforms to the Readable protocol from NodeJS. There’s a bunch of ways that allow you to read data from streams. Here are some examples of a sequence that reads a stream of weather data objects and saves them to DB.  
-Using stream events:
 
-```ts
-export default function(input) {
-    input.on('data', (data) => {
-        saveWeatherData(data.time, data.temperature)
-    })
-}
-```
-Using a for loop:
+#### Using a for loop:
 ```ts
 export default async function*(input) {
     for await (const data of input) {
@@ -73,6 +85,16 @@ export default async function*(input) {
     }
 }
 ```
+
+#### Using stream events:
+```ts
+export default function(input) {
+    input.on('data', (data) => {
+        saveWeatherData(data.time, data.temperature)
+    })
+}
+```
+
 ### Input stream encoding
 Note that input stream is special in a way it already encodes your stream using a specified contentType.
 In this case if you wanted to send the stream using our CLI it would look like this:
@@ -89,22 +111,9 @@ Sequences that only consumes data should be typed as [WritableApp](https://hub.s
 You can write to instance input stream using our CLI, REST API, or API Client.
 
 ## Transforming data
-Transforming data is really a combination of consuming and producing, usually with some logic in between. Let’s filter the incoming input stream of numbers to include only the even ones. 
+Transforming data is really a combination of consuming and producing, usually with some logic in between. Let’s filter the incoming input stream of numbers to include only the even ones. We will also have to consider backpressure, because we are producing data.
 
-Using streams:
-```ts
-export default function(input) {
-    const out = new PassThrough()
-
-    input.on('data', (num) => {
-        if(num % 2 === 0) {
-            out.write(num)
-        }
-    })
-
-    return out
-}
-```
+#### Using async iteration and a generator:
 ```ts
 export default async function*(input) {
     for await (const num of input) {
@@ -114,6 +123,27 @@ export default async function*(input) {
     }
 }
 ```
+
+#### Using streams:
+While using raw streams we need to handle backpressure ourselves.
+```ts
+export default function(input) {
+    const out = new PassThrough()
+
+    input.on('data', (num) => {
+        if(num % 2 === 0) {
+            const canWrite = out.write(num)
+            if(!canWrite)
+                input.pause()
+        }
+    })
+
+    out.on('drain', () => input.resume())
+
+    return out
+}
+```
+
 ### Typescript
 Sequences that transform data should be typed as [TransformApp](https://hub.scramjet.org/docs/types/modules#transformapp).  
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/transform-string-stream/src/index.ts).
