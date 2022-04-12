@@ -70,40 +70,6 @@ export const sequence: CommandDefinition = (program) => {
         .action((path, { stdout, output }) => packAction(path, { stdout, output }));
 
     sequenceCmd
-        .command("prune")
-        // .option("--all")
-        // .option("--filter")
-        .option("-f,--force", "Removes also active sequences")
-        .action(async ({ force }) => {
-            const seqs = await getHostClient().listSequences();
-
-            const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
-
-            for (const seq of seqs) {
-                if (seq.instances.length) {
-                    if (!force) {
-                        displayMessage(`Sequence ${seq.id} has running instances, use --force to kill those.`);
-                        continue;
-                    }
-                    // maybe we should stop
-                    displayMessage(`Killing instances of sequence ${seq.id}`);
-                    await Promise.all(
-                        seq.instances.map(async (id) => {
-                            if (lastInstanceId === id) sessionConfig.setLastInstanceId("");
-
-                            return getInstance(id).kill();
-                        })
-                    );
-                }
-
-                await getHostClient().deleteSequence(seq.id);
-
-                if (lastSequenceId === seq.id) sessionConfig.setLastSequenceId("");
-            }
-        })
-    ;
-
-    sequenceCmd
         .command("send")
         .argument("<package>", "The file to upload or '-' to use the last packed.")
         .description("send package or folder to the hub")
@@ -174,15 +140,37 @@ export const sequence: CommandDefinition = (program) => {
         .description("delete the sequence form Hub")
         .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id))));
 
-    // if (isDevelopment())
-    //     sequenceCmd
-    //         .command("prune")
-    //         .option("--all")
-    //         .option("--filter")
-    //         .option("--force")
-    //         .description("delete multiple sequences on actual selected hub")
-    //         .action(() => {
-    //         // FIXME: implement me
-    //             throw new Error("Implement me");
-    //         });
+    sequenceCmd
+        .command("prune")
+        // .option("--all")
+        // .option("--filter")
+        .option("-f,--force", "Removes also active sequences")
+        .description("delete multiple sequences on actualy selected hub")
+        .action(async ({ force }) => {
+            const seqs = await getHostClient().listSequences();
+
+            const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
+
+            for (const seq of seqs) {
+                if (seq.instances.length) {
+                    if (!force) {
+                        displayMessage(`Sequence ${seq.id} has running instances, use --force to kill those.`);
+                        continue;
+                    }
+                    // maybe we should stop
+                    displayMessage(`Killing instances of sequence ${seq.id}`);
+                    await Promise.all(
+                        seq.instances.map(async (id) => {
+                            if (lastInstanceId === id) sessionConfig.setLastInstanceId("");
+
+                            return getInstance(id).kill();
+                        })
+                    );
+                }
+
+                await getHostClient().deleteSequence(seq.id);
+
+                if (lastSequenceId === seq.id) sessionConfig.setLastSequenceId("");
+            }
+        });
 };
