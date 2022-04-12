@@ -69,7 +69,7 @@ We provide support for contributors via test cases. If you expect a certain type
 
 ### Help wanted 👩‍🎓🧑👱‍♀️
 
-The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://scr.je/ddoc) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
+The project need's your help! There's lots of work to do and we have a lot of plans. If you want to help and be part of the Scramjet team, please reach out to us, [on discord](https://scr.je/join-community-mg1) or email us: [opensource@scramjet.org](mailto:opensource@scramjet.org).
 
 ### Donation 💸
 
