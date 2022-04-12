@@ -3,9 +3,9 @@ import { lstatSync } from "fs";
 import { readFile } from "fs/promises";
 import { CommandDefinition } from "../../types";
 import { isDevelopment } from "../../utils/isDevelopment";
-import { getHostClient, getReadStreamFromFile, packAction } from "../common";
+import { getHostClient, getInstance, getReadStreamFromFile, packAction } from "../common";
 import { getPackagePath, getSequenceId, sessionConfig } from "../config";
-import { displayEntity, displayObject } from "../output";
+import { displayEntity, displayMessage, displayObject } from "../output";
 
 const sendPackage = async (sequencePackage: string) => {
     const seq = await getHostClient().sendSequence(
@@ -68,6 +68,30 @@ export const sequence: CommandDefinition = (program) => {
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
         .description("create archived file (package) with sequence for later use")
         .action((path, { stdout, output }) => packAction(path, { stdout, output }));
+
+    sequenceCmd
+        .command("prune")
+        .option("-f,--force", "Removes also active sequences")
+        .action(async ({ force }) => {
+            const seqs = await getHostClient().listSequences();
+
+            for (const seq of seqs) {
+                if (seq.instances.length) {
+                    if (!force) {
+                        displayMessage(`Sequence ${seq.id} has running instances, use --force to kill those.`);
+                        continue;
+                    }
+                    // maybe we should stop
+                    displayMessage(`Killing instances of sequence ${seq.id}`);
+                    await Promise.all(
+                        seq.instances.map(async (id) => getInstance(id).kill())
+                    );
+                }
+
+                await getHostClient().deleteSequence(seq.id);
+            }
+        })
+    ;
 
     sequenceCmd
         .command("send")
