@@ -4,9 +4,10 @@
     "description": "Scramjet Middleware API Client",
     "main": "src/index.ts",
     "scripts": {
-        "build": "tsc -p tsconfig.build.json && yarn build:browser",
-        "build:browser": "esbuild ./src/index.ts --outdir=bundle --bundle --tsconfig=tsconfig.build.json --target=chrome58 --global-name=SCPClient && yarn build:browser:types",
-        "build:browser:types": "tsc --emitDeclarationOnly --declaration --project tsconfig.build.json --outDir bundle",
+        "build": "tsc -p tsconfig.build.json && yarn build:browser:iife && yarn build:browser:esm && yarn build:browser:cjs",
+        "build:browser:iife": "esbuild ./src/index.ts --outfile=dist/bundle/mw-api-client.js --bundle --tsconfig=tsconfig.build.json --format=iife --global-name=SCPClient",
+        "build:browser:cjs": "esbuild ./src/index.ts --outfile=dist/bundle/mw-api-client.cjs.js --bundle --tsconfig=tsconfig.build.json --format=cjs",
+        "build:browser:esm": "esbuild ./src/index.ts --outfile=dist/bundle/mw-api-client.esm.js --bundle --tsconfig=tsconfig.build.json --format=esm",
         "clean": "rm -rf ./dist .bic_cache",
         "watch": "tsc -b --watch",
         "test": "npm run test:ava",
@@ -23,7 +24,7 @@
     "devDependencies": {
         "@scramjet/types": "^0.20.0",
         "ava": "^3.15.0",
-        "esbuild": "0.14.23",
+        "esbuild": "0.14.29",
         "ts-node": "^10.7.0",
         "typedoc": "^0.22.12",
         "typedoc-plugin-markdown": "^3.11.14",
