@@ -1,4 +1,6 @@
 import { SequenceClient } from "@scramjet/api-client";
+import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
+import { defer } from "@scramjet/utility";
 import { lstatSync } from "fs";
 import { readFile } from "fs/promises";
 import { CommandDefinition } from "../../types";
@@ -18,7 +20,7 @@ const sendPackage = async (sequencePackage: string) => {
 };
 
 const startSequence = async (id: string, { configFile, configString, args, outputTopic, inputTopic }:
-    {configFile: any, configString: string, args?: any[], outputTopic? : string, inputTopic?: string}) => {
+    { configFile: any, configString: string, args?: any[], outputTopic?: string, inputTopic?: string }) => {
     if (configFile && configString) {
         // eslint-disable-next-line no-console
         console.error("Provide one source of configuration");
@@ -69,6 +71,37 @@ export const sequence: CommandDefinition = (program) => {
         .description("create archived file (package) with sequence for later use")
         .action((path, { stdout, output }) => packAction(path, { stdout, output }));
 
+    const waitForInstanceKills = async (seq: GetSequenceResponse, timeout: number) => {
+        const ts = Date.now();
+
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+            const { instances } = await getHostClient().getSequence(seq.id);
+
+            await defer(500);
+
+            if (!instances.length) break;
+
+            if (Date.now() - ts < timeout) {
+                throw new Error();
+            }
+        }
+    };
+
+    const killAllSequenceInstances = async (seq: GetSequenceResponse, lastInstanceId: string) => {
+        displayMessage(`Killing instances of sequence ${seq.id}`);
+        await Promise.all(
+            seq.instances.map(async (id) => {
+                if (lastInstanceId === id)
+                    sessionConfig.setLastInstanceId("");
+
+                return getInstance(id).kill();
+            })
+        ).catch(() => {
+            throw new Error(`Could not kill all instances of sequence ${seq.id}`);
+        });
+    };
+
     sequenceCmd
         .command("send")
         .argument("<package>", "The file to upload or '-' to use the last packed.")
@@ -86,8 +119,8 @@ export const sequence: CommandDefinition = (program) => {
         sequenceCmd
             .command("start")
             .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
-        // TODO: for future impolemenation
-        // .option("--hub <provider>", "aws|ovh|gcp");
+            // TODO: for future impolemenation
+            // .option("--hub <provider>", "aws|ovh|gcp");
             .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
             .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
             .option("--output-topic <string>", "topic to which the output stream should be routed")
@@ -118,7 +151,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("--args <json-string>", "arguments to be passed to first function in Sequence")
         .description("pack (if needed), send and start the sequence")
         .action(async (path: string, { output, configFile, configString, args }:
-                {output: string, configFile: any, configString: string, args: any}) => {
+            { output: string, configFile: any, configString: string, args: any }) => {
             if (lstatSync(path).isDirectory()) {
                 await packAction(path, { stdout: false, output });
                 await sendPackage("-");
@@ -145,32 +178,38 @@ export const sequence: CommandDefinition = (program) => {
         // .option("--all")
         // .option("--filter")
         .option("-f,--force", "Removes also active sequences")
-        .description("delete multiple sequences on actualy selected hub")
         .action(async ({ force }) => {
             const seqs = await getHostClient().listSequences();
-
             const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
+            const timeout = 10e3;
+            let fullSuccess = true;
 
             for (const seq of seqs) {
-                if (seq.instances.length) {
-                    if (!force) {
-                        displayMessage(`Sequence ${seq.id} has running instances, use --force to kill those.`);
-                        continue;
+                try {
+                    if (seq.instances.length) {
+                        if (!force) {
+                            displayMessage(`Sequence ${seq.id} has running instances, use --force to kill those.`);
+                            continue;
+                        }
+                        // maybe we should stop instead of kill?
+                        await killAllSequenceInstances(seq, lastInstanceId);
+                        await waitForInstanceKills(seq, timeout);
                     }
-                    // maybe we should stop
-                    displayMessage(`Killing instances of sequence ${seq.id}`);
-                    await Promise.all(
-                        seq.instances.map(async (id) => {
-                            if (lastInstanceId === id) sessionConfig.setLastInstanceId("");
 
-                            return getInstance(id).kill();
-                        })
-                    );
+                    await getHostClient().deleteSequence(seq.id);
+
+                    if (lastSequenceId === seq.id) sessionConfig.setLastSequenceId("");
+                } catch (e: any) {
+                    fullSuccess = false;
+
+                    displayMessage(`WARN: Could not delete sequence ${seq.id}`);
+                    if (isDevelopment())
+                        displayMessage("error stack", e?.stack);
                 }
 
-                await getHostClient().deleteSequence(seq.id);
-
-                if (lastSequenceId === seq.id) sessionConfig.setLastSequenceId("");
+                if (!fullSuccess)
+                    throw new Error("Some sequences may have not been deleted.");
             }
-        });
+        })
+    ;
 };
