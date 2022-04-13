@@ -178,6 +178,8 @@ export const sequence: CommandDefinition = (program) => {
         // .option("--all")
         // .option("--filter")
         .option("-f,--force", "Removes also active sequences")
+        .description("remove all Sequences from the current scope (use with caution)")
+        
         .action(async ({ force }) => {
             const seqs = await getHostClient().listSequences();
             const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
