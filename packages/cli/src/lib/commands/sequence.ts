@@ -82,7 +82,7 @@ export const sequence: CommandDefinition = (program) => {
 
             if (!instances.length) break;
 
-            if (Date.now() - ts < timeout) {
+            if (Date.now() - ts > timeout) {
                 throw new Error();
             }
         }
