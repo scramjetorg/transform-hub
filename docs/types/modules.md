@@ -176,6 +176,7 @@
 
 ### Namespaces
 
+- [MHRestAPI](modules/MHRestAPI.md)
 - [MMRestAPI](modules/MMRestAPI.md)
 - [MRestAPI](modules/MRestAPI.md)
 - [MWRestAPI](modules/MWRestAPI.md)

@@ -4,11 +4,20 @@
 
 ## Table of contents
 
+### References
+
+- [GetVersionResponse](MWRestAPI.md#getversionresponse)
+
 ### Type aliases
 
 - [MultiManagerResponse](MWRestAPI.md#multimanagerresponse)
 - [MultiManagersResponse](MWRestAPI.md#multimanagersresponse)
-- [VersionResponse](MWRestAPI.md#versionresponse)
+
+## References
+
+### GetVersionResponse
+
+Re-exports [GetVersionResponse](MRestAPI.md#getversionresponse)
 
 ## Type aliases
 
@@ -37,19 +46,3 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-middleware/get-multi-managers.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-middleware/get-multi-managers.ts#L3)
-
-___
-
-### VersionResponse
-
-Ƭ **VersionResponse**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `version` | `string` |
-
-#### Defined in
-
-[packages/types/src/rest-api-middleware/get-version.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-middleware/get-version.ts#L1)

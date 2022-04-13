@@ -320,7 +320,7 @@ Stops running servers.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:752](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L752)
+[packages/host/src/lib/host.ts:751](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L751)
 
 ___
 
@@ -354,7 +354,7 @@ List of instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:659](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L659)
+[packages/host/src/lib/host.ts:658](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L658)
 
 ___
 
@@ -378,7 +378,7 @@ Sequence info object.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:674](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L674)
+[packages/host/src/lib/host.ts:673](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L673)
 
 ___
 
@@ -402,7 +402,7 @@ List of instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:711](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L711)
+[packages/host/src/lib/host.ts:710](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L710)
 
 ___
 
@@ -420,7 +420,7 @@ List of sequences.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:696](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L696)
+[packages/host/src/lib/host.ts:695](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L695)
 
 ___
 
@@ -434,7 +434,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:722](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L722)
+[packages/host/src/lib/host.ts:721](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L721)
 
 ___
 
@@ -603,7 +603,7 @@ Creates new CSIController [CSIController](CSIController.md) object and handles i
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `sequence` | `SequenceInfo` | Sequence info object. |
-| `payload` | `StartSequencePayload` | - |
+| `payload` | `StartSequencePayload` | App start configuration. |
 
 #### Returns
 
@@ -611,7 +611,7 @@ Creates new CSIController [CSIController](CSIController.md) object and handles i
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:525](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L525)
+[packages/host/src/lib/host.ts:524](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L524)
 
 ___
 
@@ -628,7 +628,7 @@ using its CSIController [CSIController](CSIController.md)
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:735](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L735)
+[packages/host/src/lib/host.ts:734](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L734)
 
 ___
 

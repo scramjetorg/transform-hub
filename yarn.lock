@@ -1314,6 +1314,19 @@
   resolved "https://registry.yarnpkg.com/@panva/asn1.js/-/asn1.js-1.0.0.tgz#dd55ae7b8129e02049f009408b97c61ccf9032f6"
   integrity sha512-UdkG3mLEqXgnlKsWanWcgb6dOjUzJ+XC5f+aWw30qrtjxeNUSfKX1cd5FBzOaXQumoe9nIqeZUvrRJS03HCCtw==
 
+"@scramjet/symbols@^0.19.2":
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.19.2.tgz#3739e2851021514ea800714b29ddd6cabfde5753"
+  integrity sha512-X2T7c7HNDxYwBpp19r2IfIQ4LxvJDuAObZqX9vP5hg1uSZmdUwe0Uy1drG5BUNqbLPA1RfZXtSU2YJSZWE7lGA==
+
+"@scramjet/types@^0.19.2":
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.19.2.tgz#9e705a9019403b5594327218bb688733ccd12f04"
+  integrity sha512-jiVQokkvvdo89VM9CJTLRP3Wnqqa20mDiRWboGFGB0htnMYehNWGLzKhgJfjJC7PJD17Znd55PAiLsrMFc1fng==
+  dependencies:
+    "@scramjet/symbols" "^0.19.2"
+    http-status-codes "^2.2.0"
+
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"

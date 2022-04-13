@@ -12,19 +12,22 @@
 - [GetHealthResponse](STHRestAPI.md#gethealthresponse)
 - [GetInstanceResponse](STHRestAPI.md#getinstanceresponse)
 - [GetInstancesResponse](STHRestAPI.md#getinstancesresponse)
-- [GetLoadCheckResponse](STHRestAPI.md#getloadcheckresponse)
 - [GetNextEventResponse](STHRestAPI.md#getnexteventresponse)
 - [GetSequenceInstancesResponse](STHRestAPI.md#getsequenceinstancesresponse)
 - [GetSequenceResponse](STHRestAPI.md#getsequenceresponse)
 - [GetSequencesResponse](STHRestAPI.md#getsequencesresponse)
 - [GetTopicsResponse](STHRestAPI.md#gettopicsresponse)
-- [GetVersionResponse](STHRestAPI.md#getversionresponse)
 - [SendEventResponse](STHRestAPI.md#sendeventresponse)
 - [SendKillInstanceResponse](STHRestAPI.md#sendkillinstanceresponse)
 - [SendSequenceResponse](STHRestAPI.md#sendsequenceresponse)
 - [SendStopInstanceResponse](STHRestAPI.md#sendstopinstanceresponse)
 - [StartSequencePayload](STHRestAPI.md#startsequencepayload)
 - [StartSequenceResponse](STHRestAPI.md#startsequenceresponse)
+
+### References
+
+- [GetLoadCheckResponse](STHRestAPI.md#getloadcheckresponse)
+- [GetVersionResponse](STHRestAPI.md#getversionresponse)
 
 ## Type aliases
 
@@ -114,16 +117,6 @@ ___
 
 ___
 
-### GetLoadCheckResponse
-
-Ƭ **GetLoadCheckResponse**: [`LoadCheckStat`](../modules.md#loadcheckstat)
-
-#### Defined in
-
-[packages/types/src/rest-api-sth/get-load-check.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-load-check.ts#L3)
-
-___
-
 ### GetNextEventResponse
 
 Ƭ **GetNextEventResponse**: `any`
@@ -154,7 +147,7 @@ ___
 | :------ | :------ |
 | `config` | [`SequenceConfig`](../modules.md#sequenceconfig) |
 | `id` | `string` |
-| `instances` | `string`[] |
+| `instances` | readonly `string`[] |
 
 #### Defined in
 
@@ -179,25 +172,6 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-sth/get-topics.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-topics.ts#L1)
-
-___
-
-### GetVersionResponse
-
-Ƭ **GetVersionResponse**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `apiVersion` | `string` |
-| `build` | `string` |
-| `service` | `string` |
-| `version` | `string` |
-
-#### Defined in
-
-[packages/types/src/rest-api-sth/version.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/version.ts#L1)
 
 ___
 
@@ -273,3 +247,15 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-sth/start-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L3)
+
+## References
+
+### GetLoadCheckResponse
+
+Re-exports [GetLoadCheckResponse](MMRestAPI.md#getloadcheckresponse)
+
+___
+
+### GetVersionResponse
+
+Re-exports [GetVersionResponse](MRestAPI.md#getversionresponse)
