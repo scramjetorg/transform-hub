@@ -42,6 +42,16 @@ const startSequence = async (id: string, { configFile, configString, args, outpu
     return displayObject(instance);
 };
 
+function parseSequenceArgs(argsStr: string | undefined): any[] {
+    try {
+        return argsStr ? JSON.parse(argsStr) : [];
+    } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error("Error parsing arguments JSON string, defaulting to empty array.", (err as Error).message);
+        return [];
+    }
+}
+
 /**
  * Initializes `sequence` command.
  *
@@ -95,7 +105,7 @@ export const sequence: CommandDefinition = (program) => {
             .option("--args <json-string>", "arguments to be passed to first function in Sequence")
             .description("start the sequence with or without given arguments")
             .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr }) => {
-                const args = argsStr ? JSON.parse(argsStr) : [];
+                const args = parseSequenceArgs(argsStr);
 
                 await startSequence(id, { configFile, configString, args, outputTopic, inputTopic });
             }
@@ -109,7 +119,7 @@ export const sequence: CommandDefinition = (program) => {
             .option("--args <json-string>", "arguments to be passed to first function in Sequence")
             .description("start the sequence with or without given arguments")
             .action(async (id, { configFile, configString, args: argsStr }) => {
-                const args = argsStr ? JSON.parse(argsStr) : [];
+                const args = parseSequenceArgs(argsStr);
 
                 await startSequence(id, { configFile, configString, args });
             }
