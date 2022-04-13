@@ -1,5 +1,5 @@
 {
-  "name": "@scramjet/python-runner",
+  "name": "@scramjet/runner-py",
   "version": "0.22.0",
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./runner.py",

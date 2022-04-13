@@ -1,4 +1,4 @@
-# `@scramjet/python-runner` <!-- omit in toc -->
+# `@scramjet/runner-py` <!-- omit in toc -->
 
 This package executes sequences written in Python and provides control mechanisms to them.
 

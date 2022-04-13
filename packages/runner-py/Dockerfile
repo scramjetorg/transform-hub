@@ -14,9 +14,9 @@ RUN apt-get update \
     && apt-get install -y git gosu tini --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-COPY packages/python-runner/*.py ./
-COPY packages/python-runner/requirements.txt ./requirements.txt
-COPY packages/python-runner/docker-entrypoint.sh /usr/local/bin/
+COPY packages/runner-py/*.py ./
+COPY packages/runner-py/requirements.txt ./requirements.txt
+COPY packages/runner-py/docker-entrypoint.sh /usr/local/bin/
 COPY packages/runner/unpack.sh /usr/local/bin/
 COPY packages/runner/wait-for-sequence-and-start.sh /usr/local/bin/
 

@@ -58,7 +58,7 @@ IComponent {
 
         if ("python3" in config.engines) {
             this.logger.trace(gotPython);
-            const runnerPath = path.resolve(__dirname, require.resolve("@scramjet/python-runner"));
+            const runnerPath = path.resolve(__dirname, require.resolve("@scramjet/runner-py"));
 
             return [
                 "/usr/bin/env",
@@ -82,7 +82,8 @@ IComponent {
         // are installed next to runner.py script (rather than in __pypackages__),
         // but that directory is automatically included in PYTHONPATH.
         let pythonpath = path.resolve(
-            __dirname, require.resolve("@scramjet/python-runner"), "../__pypackages__"
+            __dirname,
+            path.resolve(__dirname, require.resolve("@scramjet/runner-py"), "../__pypackages__")
         );
 
         if (process.env.PYTHONPATH) pythonpath += `:${process.env.PYTHONPATH}`;
