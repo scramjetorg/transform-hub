@@ -323,7 +323,7 @@ This feature checks CLI functionalities
         Then stdout contents are the same as in file "./data/sample-log.log.plain"
 
     @ci @cli @starts-host
-    Scenario: E2E-010 TC-028 Rename topic input
+    Scenario: E2E-010 TC-028 Start sequence with multiple JSON arguments
         Given start host
         Then I set json format
         Then I use apiUrl in config
