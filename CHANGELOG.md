@@ -137,6 +137,7 @@ Bugfixes and minor improvements:
 - Choosing runner image in kubernetes adapter (so that either python or node runner can be used)
 - Provide more information about the service on /version endpoint (service name, commit ID)
 - API base url (e.g. the one provided to CLI) is normalized
+- Fixes for CLI
 
 ## @scramjet/transform Hub - v0.20.0
 
