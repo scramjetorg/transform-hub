@@ -530,6 +530,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 const shouldSerialize = stream.contentType &&
                 ["application/x-ndjson", "text/x-ndjson"].includes(stream.contentType) ||
+                stream.readableObjectMode ||
                 stream instanceof DataStream && !(
                     stream instanceof StringStream || stream instanceof BufferStream
                 );
