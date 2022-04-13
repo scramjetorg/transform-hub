@@ -94,8 +94,12 @@ export const sequence: CommandDefinition = (program) => {
             .option("--input-topic <string>", "topic to which the input stream should be routed")
             .option("--args <json-string>", "arguments to be passed to first function in Sequence")
             .description("start the sequence with or without given arguments")
-            .action(async (id, { configFile, configString, outputTopic, inputTopic, args }) =>
-                startSequence(id, { configFile, configString, args, outputTopic, inputTopic }));
+            .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr }) => {
+                const args = argsStr ? JSON.parse(argsStr) : [];
+
+                await startSequence(id, { configFile, configString, args, outputTopic, inputTopic });
+            }
+            );
     else
         sequenceCmd
             .command("start")
@@ -104,8 +108,12 @@ export const sequence: CommandDefinition = (program) => {
             .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
             .option("--args <json-string>", "arguments to be passed to first function in Sequence")
             .description("start the sequence with or without given arguments")
-            .action(async (id, { configFile, configString, args }) =>
-                startSequence(id, { configFile, configString, args }));
+            .action(async (id, { configFile, configString, args: argsStr }) => {
+                const args = argsStr ? JSON.parse(argsStr) : [];
+
+                await startSequence(id, { configFile, configString, args });
+            }
+            );
 
     sequenceCmd
         .command("deploy")
