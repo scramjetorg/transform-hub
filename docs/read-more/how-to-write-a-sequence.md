@@ -51,16 +51,17 @@ export default function() {
     let i = 0
 
     const fn = () => {
-        const canWrite = out.write(i++)
-        if(!canWrite) {
+        const canWrite = out.write((i++).toString())
+
+        if (!canWrite) {
             clearInterval(intervalRef)
         }
     }
 
     let intervalRef = setInterval(fn, 1000)
 
-    out.on('drain', () => {
-      intervalRef = setInterval(fn, 1000)
+    out.on("drain", () => {
+        intervalRef = setInterval(fn, 1000)
     })
 
     return out
@@ -88,10 +89,13 @@ export default async function*(input) {
 
 #### Using stream events:
 ```ts
-export default function(input) {
+export default async function(input) {
     input.on('data', (data) => {
         saveWeatherData(data.time, data.temperature)
     })
+
+    // Since we're only consuming input, we want to end our sequence when it finishes
+    await events.once(input, 'end')
 }
 ```
 
@@ -132,7 +136,7 @@ export default function(input) {
 
     input.on('data', (num) => {
         if(num % 2 === 0) {
-            const canWrite = out.write(num)
+            const canWrite = out.write(num.toString())
             if(!canWrite)
                 input.pause()
         }
@@ -151,13 +155,15 @@ Sequences that transform data should be typed as [TransformApp](https://hub.scra
 ## Sequence arguments
 Every sequence can be spawned with arbitrary number of arguments
 ```bash
-si seq start <sequence-id> --args ['Hello', 123, { abc: 456 }]
+si seq start <sequence-id> --args "['Hello', 123, { abc: 456 }]"
 ```
 you can access this args using function parameters in your sequence:
 ```ts
-export default function(input, param1, param2., param3) {
-    console.log(param1 + ' ' param2 + ' ' param3.abc)
+export default function(input, param1, param2, param3) {
+    console.log(param1 + ' ' + param2 + ' ' + param3.abc)
     // Prints "Hello 123 456" to stdout
+
+    // ...
 }
 ```
 
@@ -207,7 +213,7 @@ Reading from a topic would require you to type your app as a tuple similar to th
 ```ts
 const app: [{requires: string, contentType: string}, ReadableApp] = [
     { requires: 'hello', contentType: 'text/plain' },
-    function(input) { ... }
+    function(input) { /*...*/ }
 ]
 ```
 
@@ -218,7 +224,7 @@ Apart from sequences communicating between each other you can also feed/consume 
 Every sequence has access to standard streams of a program. You can read data from stdin. Send additional information to stdout and to stderr. These are separate from input/output streams.
 
 ```ts
-export default function() {
+export default async function() {
     process.stdin.on('data', (dataBuf) => {
         process.stdout.write('Echo: ' + dataBuf.toString('utf-8'))
     })
@@ -226,6 +232,8 @@ export default function() {
     process.stdin.on('error', (err) => {
         process.stderr.write('Error: ' + err)
     })
+
+    await events.once(process.stdin, 'end')       
 }
 ```
 
@@ -238,6 +246,8 @@ export default function(input) {
     input.on('error', (err) => {
         this.logger.error('Something went wrong', err)
     })
+
+    // ...
 }
 ```
 ### Typescript
