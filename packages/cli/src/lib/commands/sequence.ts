@@ -89,7 +89,7 @@ export const sequence: CommandDefinition = (program) => {
     };
 
     const killAllSequenceInstances = async (seq: GetSequenceResponse, lastInstanceId: string) => {
-        displayMessage(`Killing instances of sequence ${seq.id}`);
+        displayMessage(`Killing instances of Sequence ${seq.id}`);
         await Promise.all(
             seq.instances.map(async (id) => {
                 if (lastInstanceId === id)
@@ -179,7 +179,7 @@ export const sequence: CommandDefinition = (program) => {
         // .option("--filter")
         .option("-f,--force", "Removes also active sequences")
         .description("remove all Sequences from the current scope (use with caution)")
-        
+
         .action(async ({ force }) => {
             const seqs = await getHostClient().listSequences();
             const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
@@ -193,7 +193,6 @@ export const sequence: CommandDefinition = (program) => {
                             displayMessage(`Sequence ${seq.id} has running instances, use --force to kill those.`);
                             continue;
                         }
-                        // maybe we should stop instead of kill?
                         await killAllSequenceInstances(seq, lastInstanceId);
                         await waitForInstanceKills(seq, timeout);
                     }
@@ -207,11 +206,13 @@ export const sequence: CommandDefinition = (program) => {
                     displayMessage(`WARN: Could not delete sequence ${seq.id}`);
                     if (isDevelopment())
                         displayMessage("error stack", e?.stack);
+                    displayMessage("Please try to run 'si seq prune -f' again to remove all Sequences.");
                 }
 
                 if (!fullSuccess)
                     throw new Error("Some sequences may have not been deleted.");
             }
+            displayMessage("Sequences removed successfully.");
         })
     ;
 };
