@@ -321,3 +321,17 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-027 Check log no-coloring
         When I execute CLI with bash command "cat ./data/sample-log.log.source | $SI util log-format --no-color"
         Then stdout contents are the same as in file "./data/sample-log.log.plain"
+
+    @ci @cli @starts-host
+    Scenario: E2E-010 TC-028 Start sequence with multiple JSON arguments
+        Given start host
+        Then I set json format
+        Then I use apiUrl in config
+        When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz" arguments
+        Then I get Sequence id
+        Then I start Sequence with options "--args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
+        Then I get Instance health
+        Then I get Instance id
+        And I get Instance output without waiting for the end
+        Then confirm data named "args-on-output" will be received
+        * stop host
