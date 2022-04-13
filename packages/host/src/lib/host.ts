@@ -36,8 +36,8 @@ export type HostOptions = Partial<{
 }>;
 
 /**
- * Host provides functionality to manage instances and sequences.
- * Using provided servers to set up API and server for communicating with instance controllers.
+ * Host provides functionality to manage Instances and Sequences.
+ * Using provided servers to set up API and server for communicating with Instance controllers.
  * Can communicate with Manager.
  */
 export class Host implements IComponent {
@@ -132,7 +132,7 @@ export class Host implements IComponent {
      * Sets used modules with provided configuration.
      *
      * @param {APIExpose} apiServer Server to attach API to.
-     * @param {SocketServer} socketServer Server to listen for connections from instances.
+     * @param {SocketServer} socketServer Server to listen for connections from Instances.
      * @param {STHConfiguration} sthConfig Configuration.
      */
     constructor(apiServer: APIExpose, socketServer: SocketServer, sthConfig: STHConfiguration) {
@@ -193,11 +193,11 @@ export class Host implements IComponent {
 
     /**
      * Main method to start Host.
-     * Performs Hosts's initialization process: starts servers, identifies existing instances,
+     * Performs Hosts's initialization process: starts servers, identifies existing Instances,
      * sets up API and connects to Manager.
      *
-     * @param {HostOptions} identifyExisting Indicates if existing instances should be identified.
-     * @returns {Promise<this>} Promise resolving to instance of Host.
+     * @param {HostOptions} identifyExisting Indicates if existing Instances should be identified.
+     * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
     async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<this> {
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
@@ -261,10 +261,10 @@ export class Host implements IComponent {
      * Setting up handlers for general Host API endpoints:
      * - creating Sequence (passing stream with the compressed package)
      * - starting Instance (based on a given Sequence ID passed in the HTTP request body)
-     * - getting sequence details
-     * - listing all instances running on the CSH
-     * - listing all sequences saved on the CSH
-     * - instance
+     * - getting Sequence details
+     * - listing all Instances running on the CSH
+     * - listing all Sequences saved on the CSH
+     * - Instance
      */
     attachHostAPIs() {
         this.api.use("*", corsMiddleware);
@@ -297,15 +297,15 @@ export class Host implements IComponent {
     }
 
     /**
-     * Finds instance with given id passed in request parameters and forwards request to instance router.
-     * Forwarded request's url is reduced by the instance base path and instance parameter.
+     * Finds Instance with given id passed in request parameters and forwards request to Instance router.
+     * Forwarded request's url is reduced by the Instance base path and Instance parameter.
      * For example: /api/instance/:id/log -> /log
      *
-     * Ends response with 404 if instance is not found.
+     * Ends response with 404 if Instance is not found.
      *
      * @param {Request} req Request object.
      * @param {ServerResponse} res Response object.
-     * @param {NextCallback} next Function to call when request is not handled by instance middleware.
+     * @param {NextCallback} next Function to call when request is not handled by Instance middleware.
      * @returns {Middleware} Instance middleware.
      */
     instanceMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
@@ -340,9 +340,9 @@ export class Host implements IComponent {
     }
 
     /**
-     * Handles delete sequence request.
-     * Removes sequence from the store and sends notification to Manager if connected.
-     * Note: If instance is started from a given sequence, sequence can not be removed
+     * Handles delete Sequence request.
+     * Removes Sequence from the store and sends notification to Manager if connected.
+     * Note: If Instance is started from a given Sequence, Sequence can not be removed
      * and CONFLICT status code is returned.
      *
      * @param {ParsedMessage} req Request object.
@@ -351,7 +351,7 @@ export class Host implements IComponent {
     async handleDeleteSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.DeleteSequenceResponse>> {
         const id = req.params?.id;
 
-        this.logger.trace("Deleting sequence...", id);
+        this.logger.trace("Deleting Sequence...", id);
 
         const sequenceInfo = this.sequencesStore.get(id);
 
@@ -362,11 +362,11 @@ export class Host implements IComponent {
         }
 
         if (sequenceInfo.instances.size > 0) {
-            this.logger.warn("Can't remove sequence in use:", id);
+            this.logger.warn("Can't remove Sequence in use:", id);
 
             return {
                 opStatus: ReasonPhrases.CONFLICT,
-                error: "Can't remove sequence in use."
+                error: "Can't remove Sequence in use."
             };
         }
 
@@ -385,18 +385,18 @@ export class Host implements IComponent {
                 id
             };
         } catch (error: any) {
-            this.logger.error("Error removing sequence!", error);
+            this.logger.error("Error removing Sequence!", error);
 
             return {
                 opStatus: ReasonPhrases.INTERNAL_SERVER_ERROR,
-                error: `Error removing sequence: ${error.message}`
+                error: `Error removing Sequence: ${error.message}`
             };
         }
     }
 
     /**
-     * Finds existing sequences.
-     * Used to recover sequences information after restart.
+     * Finds existing Sequences.
+     * Used to recover Sequences information after restart.
      */
     async identifyExistingSequences() {
         const sequenceAdapter = getSequenceAdapter(this.config);
@@ -418,15 +418,15 @@ export class Host implements IComponent {
     }
 
     /**
-     * Handles incoming sequence.
-     * Uses sequence adapter to unpack and identify sequence.
-     * Notifies Manager (if connected) about new sequence.
+     * Handles incoming Sequence.
+     * Uses Sequence adapter to unpack and identify Sequence.
+     * Notifies Manager (if connected) about new Sequence.
      *
-     * @param {IncomingMessage} stream Stream of packaged sequence.
+     * @param {IncomingMessage} stream Stream of packaged Sequence.
      * @returns {Promise} Promise resolving to operation result.
      */
     async handleNewSequence(stream: IncomingMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        this.logger.info("New sequence incoming");
+        this.logger.info("New Sequence incoming");
 
         const id = IDProvider.generate();
 
@@ -462,11 +462,11 @@ export class Host implements IComponent {
     }
 
     /**
-     * Handles sequence start request.
-     * Parses request body for sequence configuration and parameters to be passed to first Sequence method.
-     * Passes obtained parameters to main method staring sequence.
+     * Handles Sequence start request.
+     * Parses request body for Sequence configuration and parameters to be passed to first Sequence method.
+     * Passes obtained parameters to main method staring Sequence.
      *
-     * Notifies Manager (if connected) about new instance.
+     * Notifies Manager (if connected) about new Instance.
      *
      * @param {ParsedMessage} req Request object.
      * @returns {Promise<STHRestAPI.StartSequenceResponse>} Promise resolving to operation result object.
@@ -560,7 +560,7 @@ export class Host implements IComponent {
             // On First empty PANG
             if (!data.requires && !data.provides) {
                 if (csic.inputTopic) {
-                    this.logger.trace("Routing topic to sequence input, name from API:", csic.inputTopic);
+                    this.logger.trace("Routing topic to Sequence input, name from API:", csic.inputTopic);
 
                     csic.requires = csic.inputTopic;
 
@@ -571,7 +571,7 @@ export class Host implements IComponent {
                 }
 
                 if (csic.outputTopic) {
-                    this.logger.trace("Routing sequence output to topic, name from API", csic.outputTopic);
+                    this.logger.trace("Routing Sequence output to topic, name from API", csic.outputTopic);
 
                     csic.provides = csic.outputTopic;
 
@@ -651,9 +651,9 @@ export class Host implements IComponent {
     }
 
     /**
-     * Returns list of all sequences.
+     * Returns list of all Sequences.
      *
-     * @returns {STHRestAPI.GetInstancesResponse} List of instances.
+     * @returns {STHRestAPI.GetInstancesResponse} List of Instances.
      */
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.info("List Instances");
@@ -665,7 +665,7 @@ export class Host implements IComponent {
     }
 
     /**
-     * Returns sequence information.
+     * Returns Sequence information.
      *
      * @param {string} id Instance ID.
      * @returns {STHRestAPI.GetSequenceResponse} Sequence info object.
@@ -688,9 +688,9 @@ export class Host implements IComponent {
     }
 
     /**
-     * Returns list of all sequences.
+     * Returns list of all Sequences.
      *
-     * @returns {STHRestAPI.GetSequencesResponse} List of sequences.
+     * @returns {STHRestAPI.GetSequencesResponse} List of Sequences.
      */
     getSequences(): STHRestAPI.GetSequencesResponse {
         return Array.from(this.sequencesStore.values())
@@ -702,10 +702,10 @@ export class Host implements IComponent {
     }
 
     /**
-     * Returns list of all instances of given sequence.
+     * Returns list of all Instances of given Sequence.
      *
      * @param {string} sequenceId Sequence ID.
-     * @returns List of instances.
+     * @returns List of Instances.
      */
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
         // @TODO: this should probably return error response when there's not corresponding Sequence
@@ -728,7 +728,7 @@ export class Host implements IComponent {
     }
 
     /**
-     * Stops all running instances by sending KILL command to every instance
+     * Stops all running Instances by sending KILL command to every Instance
      * using its CSIController {@link CSIController}
      */
     async stop() {

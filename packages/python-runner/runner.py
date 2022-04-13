@@ -109,6 +109,10 @@ class Runner:
 
         if not data:
             data = {"appConfig":{},"args":[]}
+        if 'appConfig' not in data:
+            data['appConfig'] = {}
+        if 'args' not in data:
+            data['args'] = []
 
         self.logger.info(f'Sending PANG')
         pang_requires_data = {

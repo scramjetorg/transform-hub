@@ -4,7 +4,7 @@
 
 Service Discovery provides methods to manage topics.
 Its functionality covers creating, storing, removing topics
-and requesting Manager when instance requires data but data is not available locally.
+and requesting Manager when Instance requires data but data is not available locally.
 
 ## Table of contents
 
@@ -239,7 +239,7 @@ Sets the CPM connector.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `cpmConnector` | [`CPMConnector`](CPMConnector.md) | Manager connector instance used to communicate with Manager. |
+| `cpmConnector` | [`CPMConnector`](CPMConnector.md) | Manager connector Instance used to communicate with Manager. |
 
 #### Returns
 

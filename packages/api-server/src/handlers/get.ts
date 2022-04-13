@@ -25,7 +25,7 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
      * Writes output to response stream. If no data is provided ends response with empty response status.
      *
      * @param {object} data Output data.
-     * @param {ServerResponse} res Resposne object.
+     * @param {ServerResponse} res Response object.
      * @param {NextCallback} next Next callback.
      * @returns Unused.
      */

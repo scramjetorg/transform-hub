@@ -3,7 +3,7 @@
 # Class: Runner<X\>
 
 Runtime environment for sequence code.
-Communicates with Host with data transfered to/from sequence, health info,
+Communicates with Host with data transferred to/from Sequence, health info,
 reacts to control messages such as stopping etc.
 
 ## Type parameters

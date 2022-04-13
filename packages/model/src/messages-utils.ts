@@ -4,7 +4,7 @@ import { getMessage } from "./get-message";
 
 // TODO: this serializes the message to array and deserializeMessage from string.
 /**
- * Serizalized message.
+ * Serialized message.
  *
  * @param msg - an object of message type
  * @return - a serializable message in a format [msgCode, {msgBody}]

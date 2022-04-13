@@ -12,7 +12,7 @@ const MB = 1024 * 1024;
  */
 export class LoadCheck implements IComponent {
     /**
-     * Congiguration object with requirements to determine if machine is overloaded.
+     * Configuration object with requirements to determine if machine is overloaded.
      *
      * @type {LoadCheckConfig}
      */
@@ -26,7 +26,7 @@ export class LoadCheck implements IComponent {
     constants: LoadCheckContstants;
 
     /**
-     * Logger instance.
+     * Logger Instance.
      *
      * @type {IObjectLogger}
      */
@@ -81,7 +81,7 @@ export class LoadCheck implements IComponent {
             dsk: check.fsSize[0].available > this.constants.MIN_INSTANCE_REQUIREMENTS.freeSpace
         };
 
-        this.logger.trace("Contidions", conditionsMet);
+        this.logger.trace("Conditions", conditionsMet);
 
         return !(conditionsMet.cpu && conditionsMet.mem && conditionsMet.dsk);
     }

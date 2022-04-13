@@ -135,8 +135,9 @@ Bugfixes and minor improvements:
 - Add /config API endpoint for checking STH/Host config
 - Fix for adding Python sequence library to path
 - Choosing runner image in kubernetes adapter (so that either python or node runner can be used)
-- Provide more infromation about the service on /version endpoint (service name, commit ID)
+- Provide more information about the service on /version endpoint (service name, commit ID)
 - API base url (e.g. the one provided to CLI) is normalized
+- Fixes for CLI
 
 ## @scramjet/transform Hub - v0.20.0
 

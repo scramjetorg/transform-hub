@@ -5,7 +5,7 @@ import { InstanceClient } from "./instance-client";
 
 /**
  * Sequence client.
- * Provides methods to interact with sequence.
+ * Provides methods to interact with Sequence.
  */
 export class SequenceClient {
     private _id: string;
@@ -24,7 +24,7 @@ export class SequenceClient {
     }
 
     /**
-     * Creates SequenceClient instance for sequence with given id and host.
+     * Creates SequenceClient instance for Sequence with given id and host.
      *
      * @param {string} id Sequence id
      * @param {ClientProvider} host Host client
@@ -66,7 +66,7 @@ export class SequenceClient {
     }
 
     /**
-     * Returns list of all instances creteated from sequnece.
+     * Returns list of all Instances created from Sequence.
      *
      * @returns {Promise<string[]>} Promise resolving to list of Instances.
      */
@@ -75,7 +75,7 @@ export class SequenceClient {
     }
 
     /**
-     * Return Instance Client for given instance id.
+     * Return Instance Client for given Instance id.
      *
      * @param {string} id Instance id.
      * @param {ClientProvider} host Host client.
@@ -86,7 +86,7 @@ export class SequenceClient {
     }
 
     /**
-     * Returns sequence details.
+     * Returns Sequence details.
      *
      * @returns {Promise<STHRestAPI.GetSequenceResponse>} Promise resolving to Sequence info.
      */

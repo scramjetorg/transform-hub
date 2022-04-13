@@ -2,7 +2,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
 
 export type MonitoringRateMessageData = {
 
-    /** Indicates how frequently should monitoring messages be emitted (in miliseconds). */
+    /** Indicates how frequently should monitoring messages be emitted (in milliseconds). */
     monitoringRate: number;
 }
 

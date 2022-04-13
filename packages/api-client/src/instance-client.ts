@@ -7,7 +7,7 @@ export type InstanceOutputStream = "stdout" | "stderr" | "output" | "log";
 
 /**
  * Instance client.
- * Provides methods to interact with instance.
+ * Provides methods to interact with Instance.
  */
 export class InstanceClient {
     private _id: string;
@@ -45,10 +45,10 @@ export class InstanceClient {
     }
 
     /**
-     * Send stop command to instance.
+     * Send stop command to Instance.
      *
      * @param {number} timeout Timeout in milliseconds to graceful stop
-     * @param {boolean} canCallKeepalive If true, instance can call keepAlive.
+     * @param {boolean} canCallKeepalive If true, Instance can call keepAlive.
      * @returns {Promise<SendStopInstanceResponse>} Promise resolving to stop Instance result.
      */
     async stop(timeout: number, canCallKeepalive: boolean): Promise<STHRestAPI.SendStopInstanceResponse> {
@@ -67,7 +67,7 @@ export class InstanceClient {
     }
 
     /**
-     * Send kill command to instance
+     * Send kill command to Instance
      *
      * @returns {Promise<SendKillInstanceResponse>} Promise resolving to kill Instance result.
      */
@@ -100,7 +100,7 @@ export class InstanceClient {
     }
 
     /**
-     * Waits and returns next event sent by instance.
+     * Waits and returns next event sent by Instance.
      *
      * @param {string} eventName Event name.
      * @returns {Promise<STHRestAPI.GetEventResponse>} Promise resolving to event data.
@@ -110,7 +110,7 @@ export class InstanceClient {
     }
 
     /**
-     * Return last data from event givent in eventName.
+     * Return last data from event given in eventName.
      * Waits for event if it was never fired.
      *
      * @param {string} eventName Event name.
@@ -131,7 +131,7 @@ export class InstanceClient {
     }
 
     /**
-     * Returns instance health.
+     * Returns Instance health.
      *
      * @returns {Promise<STHRestAPI.GetInstanceHealthResponse>} Promise resolving to Instance health.
      */
@@ -140,7 +140,7 @@ export class InstanceClient {
     }
 
     /**
-     * Returns instance info.
+     * Returns Instance info.
      *
      * @returns {Promise<STHRestAPI.GetInstanceResponse>} Promise resolving to Instance info.
      */
@@ -149,7 +149,7 @@ export class InstanceClient {
     }
 
     /**
-     * Returns readable stream from instance.
+     * Returns readable stream from Instance.
      * Stream can be one of type {@link InstanceOutputStream}.
      *
      * @param {string} streamId Stream id.
@@ -160,7 +160,7 @@ export class InstanceClient {
     }
 
     /**
-     * Sends stream to one of the instance inputs.
+     * Sends stream to one of the Instance inputs.
      *
      * @param {string} streamId Target input stream.
      * @param {Readable|string} stream Stream to send.
@@ -172,9 +172,9 @@ export class InstanceClient {
     }
 
     /**
-     * Pipes given stream to instance "input".
+     * Pipes given stream to Instance "input".
      *
-     * @param {Readable|string} stream Stream to be piped. Or string writen to "stdin" stream.
+     * @param {Readable|string} stream Stream to be piped. Or string written to "stdin" stream.
      * @param {SendStreamOptions} options Request options
      * @returns {Promise<STHRestAPI.SendStreamResponse>} Promise resolving to send stream result.
      */
@@ -183,9 +183,9 @@ export class InstanceClient {
     }
 
     /**
-     * Pipes given stream to instance "stdin".
+     * Pipes given stream to Instance "stdin".
      *
-     * @param {Readable|string} stream Stream to be piped. Or string writen to "stdin" stream.
+     * @param {Readable|string} stream Stream to be piped. Or string written to "stdin" stream.
      * @returns {Promise<STHRestAPI.SendStreamResponse>} Promise resolving to send stream result.
      */
     async sendStdin(stream: Parameters<HttpClient["sendStream"]>[1] | string) {

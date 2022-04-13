@@ -17,7 +17,7 @@ export class HostClient implements ClientProvider {
     }
 
     /**
-     * Returns list of all sequences on Host.
+     * Returns list of all Sequences on Host.
      *
      * @returns {Promise<STHRestAPI.GetSequencesResponse[]>} Promise resolving to list of Sequences.
      */
@@ -26,7 +26,7 @@ export class HostClient implements ClientProvider {
     }
 
     /**
-     * Returns list of all instances on Host.
+     * Returns list of all Instances on Host.
      *
      * @returns {Promise<STHRestAPI.GetInstancesResponse>} Promise resolving to list of Instances.
      */
@@ -44,9 +44,9 @@ export class HostClient implements ClientProvider {
     }
 
     /**
-     * Uploads sequence to Host.
+     * Uploads Sequence to Host.
      *
-     * @param sequencePackage Stream with packad sequence.
+     * @param sequencePackage Stream with packed Sequence.
      * @returns {SequenceClient} Sequence client.
      */
     async sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1]): Promise<SequenceClient> {
@@ -58,9 +58,9 @@ export class HostClient implements ClientProvider {
     }
 
     /**
-     * Returns sequence details.
+     * Returns Sequence details.
      *
-     * @param {string} sequenceId Seqeuence id.
+     * @param {string} sequenceId Sequence id.
      * @returns {Promise<STHRestAPI.GetSequenceResponse>} Promise resolving to Sequence details.
      */
     async getSequence(sequenceId: string) {
@@ -68,7 +68,7 @@ export class HostClient implements ClientProvider {
     }
 
     /**
-     * Deletes sequence with given id.
+     * Deletes Sequence with given id.
      *
      * @param {string} sequenceId Sequence id
      * @returns {STHRestAPI.Promise<DeleteSequenceResponse>} Promise resolving to delete Sequence result.
@@ -79,7 +79,7 @@ export class HostClient implements ClientProvider {
 
     // REVIEW: move this to InstanceClient..getInfo()?
     /**
-     * Returns instance details.
+     * Returns Instance details.
      *
      * @param {string} instanceId Instance id.
      * @returns {Promise<STHRestAPI.GetInstanceResponse>} Promise resolving to Instance details.

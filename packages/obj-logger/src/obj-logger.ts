@@ -46,7 +46,7 @@ export class ObjLogger implements IObjectLogger {
     outputs: Writable[] = [];
 
     /**
-     * Logging levels chierarchy.
+     * Logging levels hierarchy.
      */
     static levels: LogLevel[] = ["FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"];
 
@@ -152,7 +152,7 @@ export class ObjLogger implements IObjectLogger {
 
     /**
      * Pipes output logger to provided target. The target can be a writable stream
-     * or an instance of class fulfiling IObjectLogger interface.
+     * or an Instance of class fulfilling IObjectLogger interface.
      *
      * @param {Writable | IObjectLogger} target Target for log stream.
      * @param options Pipe options. If option `stringified` is set to true, the output will be stringified.

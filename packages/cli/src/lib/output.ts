@@ -47,7 +47,7 @@ export async function displayStream(
 }
 
 /**
- * Displays reponse data.
+ * Displays response data.
  *
  * @param response Response object with data to be displayed.
  */

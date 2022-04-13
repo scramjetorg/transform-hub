@@ -109,7 +109,7 @@ When Prerunner finishes, it will return JSON with sequence information.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `stream` | `Readable` | Stream containing sequence to be indentified. |
+| `stream` | `Readable` | Stream containing sequence to be identified. |
 | `id` | `string` | Id for the new docker volume where sequence will be stored. |
 
 #### Returns

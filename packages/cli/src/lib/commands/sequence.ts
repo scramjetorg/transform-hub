@@ -129,7 +129,7 @@ export const sequence: CommandDefinition = (program) => {
         sequenceCmd
             .command("start")
             .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
-            // TODO: for future impolemenation
+            // TODO: for future implementation
             // .option("--hub <provider>", "aws|ovh|gcp");
             .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
             .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
@@ -165,7 +165,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
         .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
         .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
-        // TODO: check if output-topic and input-topic should be added after developement
+        // TODO: check if output-topic and input-topic should be added after development
         .option("--args <json-string>", "arguments to be passed to first function in Sequence")
         .description("pack (if needed), send and start the sequence")
         .action(async (path: string, { output, configFile, configString, args }:

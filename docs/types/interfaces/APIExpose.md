@@ -213,7 +213,7 @@ A method that allows to pass a stream to the specified path on the API server
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `path` | `string` \| `RegExp` | the request path as string or regex |
-| `stream` | [`StreamInput`](../modules.md#streaminput) | the stream that will be sent in reponse body or a method to be called then |
+| `stream` | [`StreamInput`](../modules.md#streaminput) | the stream that will be sent in reposnse body or a method to be called then |
 | `config?` | [`StreamConfig`](../modules.md#streamconfig) | configuration of the stream |
 
 #### Returns

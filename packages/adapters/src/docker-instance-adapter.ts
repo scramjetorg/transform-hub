@@ -125,7 +125,7 @@ IComponent {
         const sthDockerNetwork = interfaces.find(net => net.Name === STH_DOCKER_NETWORK);
 
         if (!sthDockerNetwork) {
-            // STH docker network should be created in Host intitialization
+            // STH docker network should be created in Host initialization
             throw new Error(`Couldn't find sth docker network: ${sthDockerNetwork}`);
         }
 
@@ -270,7 +270,7 @@ IComponent {
      */
     async remove() {
         if (this.resources.containerId) {
-            this.logger.debug("Forcefully stopping containter", this.resources.containerId);
+            this.logger.debug("Forcefully stopping container", this.resources.containerId);
 
             await this.dockerHelper.stopContainer(this.resources.containerId);
 

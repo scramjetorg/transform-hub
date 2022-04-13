@@ -62,7 +62,7 @@ function overrideStandardStream(oldStream: Writable, newStream: Writable) {
 
 /**
  * Runtime environment for sequence code.
- * Communicates with Host with data transfered to/from sequence, health info,
+ * Communicates with Host with data transferred to/from Sequence, health info,
  * reacts to control messages such as stopping etc.
  */
 export class Runner<X extends AppConfig> implements IComponent {
@@ -246,7 +246,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         } catch (err: any) {
             sequenceError = err;
 
-            this.logger.error("Error stopping sequence", err);
+            this.logger.error("Error stopping Sequence", err);
         }
 
         if (!data.canCallKeepalive || !this.keepAliveRequested) {
@@ -306,7 +306,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.debug("Sequence", sequence);
 
             if (sequence.length && typeof sequence[0] !== "function") {
-                this.logger.debug("First sequence object is not a function:", sequence[0]);
+                this.logger.debug("First Sequence object is not a function:", sequence[0]);
 
                 MessageUtils.writeMessageOnStream(
                     [RunnerMessageCode.PANG, {
@@ -357,7 +357,7 @@ export class Runner<X extends AppConfig> implements IComponent {
         } catch (error: any) {
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
 
-            this.logger.error("Error occured during sequence execution: ", error.stack);
+            this.logger.error("Error occurred during Sequence execution: ", error.stack);
 
             await this.cleanup();
             this.exit(20);
@@ -422,7 +422,7 @@ export class Runner<X extends AppConfig> implements IComponent {
     async runSequence(sequence: any[], args: any[] = []): Promise<void> {
         if (!sequence.length) {
             await this.cleanup();
-            this.logger.error("Empty sequence");
+            this.logger.error("Empty Sequence");
 
             //TODO: investigate why we need to wait
             this.exit(22);
@@ -482,7 +482,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                     stream = DataStream.from(intermediate as Readable);
                 }
             } else {
-                this.logger.info("All sequences processed.");
+                this.logger.info("All Sequences processed.");
 
                 intermediate = await out;
 
@@ -526,7 +526,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
                 res();
             } else if (stream && this.hostClient.outputStream) {
-                this.logger.trace("Piping sequence output", typeof stream);
+                this.logger.trace("Piping Sequence output", typeof stream);
 
                 const shouldSerialize = stream.contentType &&
                 ["application/x-ndjson", "text/x-ndjson"].includes(stream.contentType) ||

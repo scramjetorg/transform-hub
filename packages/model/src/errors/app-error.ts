@@ -9,7 +9,7 @@ export class AppError extends Error implements IAppError, IAppErrorData {
     data?: any;
 
     constructor(code: AppErrorCode) {
-        super("Application Error Occured");
+        super("Application Error Occurred");
 
         this.code = code;
     }

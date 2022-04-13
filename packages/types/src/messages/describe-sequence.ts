@@ -5,7 +5,7 @@ import { RunnerMessageCode } from "@scramjet/symbols";
  *
  * * C - Concurrency - the function accepts and processes more than one item at the
  *   same time, and therefore can be composed with consecutive ones.
- * * S - Sequentiality - the function can be executed on a different host to it's neighbours.
+ * * S - Sequentiality - the function can be executed on a different host to it's neighbors.
  * * P - Parallelism - the function can be spawned to multiple hosts at the same time
  */
 type ScalabilityOptions = "CSP" | "CS" | "CP" | "SP" | "C" | "S" | "V" | "";

@@ -58,7 +58,7 @@ function pipeToTopic(source: Readable, target: topicDataType) {
 /**
  * Service Discovery provides methods to manage topics.
  * Its functionality covers creating, storing, removing topics
- * and requesting Manager when instance requires data but data is not available locally.
+ * and requesting Manager when Instance requires data but data is not available locally.
  */
 export class ServiceDiscovery {
     dataMap = new Map<
@@ -123,7 +123,7 @@ export class ServiceDiscovery {
     /**
      * Sets the CPM connector.
      *
-     * @param {CPMConnector} cpmConnector Manager connector instance used to communicate with Manager.
+     * @param {CPMConnector} cpmConnector Manager connector Instance used to communicate with Manager.
      */
     setConnector(cpmConnector: CPMConnector) {
         this.cpmConnector = cpmConnector;
@@ -133,7 +133,7 @@ export class ServiceDiscovery {
      * Stores given topic.
      *
      * @param {dataType} config Topic configuration.
-     * @param {string} [localProvider] Provider identifier. It not set topic will be considered as extarnal.
+     * @param {string} [localProvider] Provider identifier. It not set topic will be considered as external.
      * @returns added topic data.
      */
     addData(config: dataType, localProvider?: string) {

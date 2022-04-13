@@ -274,7 +274,7 @@ const getDashDefaultValue = (id: string, def: string) => {
 };
 
 /**
- * Gets last sequence id if dash is provided, otherwise returns the first argument
+ * Gets last Sequence id if dash is provided, otherwise returns the first argument
  *
  * @param id - dash or anything else
  * @returns the correct id
@@ -282,7 +282,7 @@ const getDashDefaultValue = (id: string, def: string) => {
 export const getSequenceId = (id: string) => getDashDefaultValue(id, sessionConfig.getConfig().lastSequenceId);
 
 /**
- * Gets last instance id if dash is provided, otherwise returns the first argument
+ * Gets last Instance id if dash is provided, otherwise returns the first argument
  *
  * @param id - dash or anything else
  * @returns the correct id

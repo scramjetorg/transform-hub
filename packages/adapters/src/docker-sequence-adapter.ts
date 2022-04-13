@@ -49,7 +49,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         await this.fetch(this.config.docker.prerunner.image);
 
-        this.logger.trace("Initiazation done");
+        this.logger.trace("Initialization done");
     }
 
     /**
@@ -122,7 +122,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      * with created volume mounted to unpack sequence on it.
      * When Prerunner finishes, it will return JSON with sequence information.
      *
-     * @param {Readable} stream Stream containing sequence to be indentified.
+     * @param {Readable} stream Stream containing sequence to be identified.
      * @param {string} id Id for the new docker volume where sequence will be stored.
      * @returns {Promise<SequenceConfig>} Promise resolving to sequence config.
      */
@@ -238,7 +238,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     async remove(config: SequenceConfig) {
         if (config.type !== "docker") {
-            throw new Error(`Incorrect SequenceConfig pased to DockerSequenceAdapter: ${config.type}`);
+            throw new Error(`Incorrect SequenceConfig passed to DockerSequenceAdapter: ${config.type}`);
         }
 
         await this.dockerHelper.removeVolume(config.id);

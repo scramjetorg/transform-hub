@@ -82,7 +82,7 @@ ClientProvider.client
 
 ▸ **deleteSequence**(`sequenceId`): `Promise`<`DeleteSequenceResponse`\>
 
-Deletes sequence with given id.
+Deletes Sequence with given id.
 
 #### Parameters
 
@@ -106,7 +106,7 @@ ___
 
 ▸ **getInstanceInfo**(`instanceId`): `Promise`<`Instance`\>
 
-Returns instance details.
+Returns Instance details.
 
 #### Parameters
 
@@ -190,13 +190,13 @@ ___
 
 ▸ **getSequence**(`sequenceId`): `Promise`<`GetSequenceResponse`\>
 
-Returns sequence details.
+Returns Sequence details.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `sequenceId` | `string` | Seqeuence id. |
+| `sequenceId` | `string` | Sequence id. |
 
 #### Returns
 
@@ -246,7 +246,7 @@ ___
 
 ▸ **listInstances**(): `Promise`<`GetInstancesResponse`\>
 
-Returns list of all instances on Host.
+Returns list of all Instances on Host.
 
 #### Returns
 
@@ -264,7 +264,7 @@ ___
 
 ▸ **listSequences**(): `Promise`<`GetSequencesResponse`\>
 
-Returns list of all sequences on Host.
+Returns list of all Sequences on Host.
 
 #### Returns
 
@@ -316,13 +316,13 @@ ___
 
 ▸ **sendSequence**(`sequencePackage`): `Promise`<[`SequenceClient`](SequenceClient.md)\>
 
-Uploads sequence to Host.
+Uploads Sequence to Host.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `sequencePackage` | `string` \| `Readable` | Stream with packad sequence. |
+| `sequencePackage` | `string` \| `Readable` | Stream with packed Sequence. |
 
 #### Returns
 

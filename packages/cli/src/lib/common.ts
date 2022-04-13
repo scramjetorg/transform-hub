@@ -55,7 +55,7 @@ export const getHostClient = (): HostClient => {
 };
 
 /**
- * Returns instance client for instance with given `id` on default host.
+ * Returns instance client for Instance with given `id` on default host.
  *
  * @param {string} id Instance client.
  * @returns {InstanceClient} Instance client.
@@ -63,7 +63,7 @@ export const getHostClient = (): HostClient => {
 export const getInstance = (id: string) => InstanceClient.from(id, getHostClient());
 
 /**
- * Attaches stdio to instance streams.
+ * Attaches stdio to Instance streams.
  *
  * @param {InstanceClient} instanceClient Instance client.
  * @returns {Promise<void>} Promise resolving when all stdio streams finish.

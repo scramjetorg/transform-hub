@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-healthy-sequence-py",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "main": "./main.py",
   "author": "Michał Piotrowski <open-source@scramjet.org>",
   "license": "GPL-3.0",

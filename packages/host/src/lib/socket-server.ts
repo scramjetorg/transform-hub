@@ -52,7 +52,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                     });
                 });
 
-                this.logger.info("Connection from instance", id);
+                this.logger.info("Connection from Instance", id);
 
                 let runner = this.runnerConnectionsInProgress.get(id);
 
@@ -68,7 +68,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                 });
 
                 connection.on("error", (err) => {
-                    this.logger.error("Error on instance in stream", id, channel, err);
+                    this.logger.error("Error on Instance in stream", id, channel, err);
                 });
 
                 this.logger.info("Connection on channel", channel);

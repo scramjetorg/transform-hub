@@ -58,8 +58,8 @@ export const instance: CommandDefinition = (program) => {
 
     /**
      * @canCallKeepAlive
-     * if true instance can prolong its lifetime
-     * if false instance will end after timeout
+     * if true Instance can prolong its lifetime
+     * if false Instance will end after timeout
      */
     instanceCmd
         .command("stop")

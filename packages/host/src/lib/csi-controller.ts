@@ -239,7 +239,7 @@ export class CSIController extends TypedEmitter<Events> {
             return Promise.reject("Runner was started with invalid configuration. This is probably a bug in STH.");
         }
         case RunnerExitCode.INVALID_SEQUENCE_PATH: {
-            return Promise.reject(`Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. Check "main" field in sequence package.json`);
+            return Promise.reject(`Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. Check "main" field in Sequence package.json`);
         }
         default: {
             return Promise.resolve();
@@ -594,7 +594,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     // TODO: move this to host (it's needed for both Stop and Complete signals)
     handleKeepAliveCommand(message: EncodedMessage<RunnerMessageCode.ALIVE>) {
-        this.logger.trace("Got keep-alive message from sequence");
+        this.logger.trace("Got keep-alive message from Sequence");
 
         this.keepAliveRequested = true;
 

@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/verser",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "description": "This package is part of Scramjet Transform Hub. The package provides a reverse server functionality used among Scramjet modules.",
   "main": "./src/index.ts",
   "scripts": {
@@ -15,13 +15,13 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "dependencies": {
-    "@scramjet/obj-logger": "^0.20.0",
-    "@scramjet/utility": "^0.20.0",
+    "@scramjet/obj-logger": "^0.20.1",
+    "@scramjet/utility": "^0.20.1",
     "bpmux": "^8.2.0"
   },
   "devDependencies": {
-    "@scramjet/api-server": "^0.20.0",
-    "@scramjet/types": "^0.20.0",
+    "@scramjet/api-server": "^0.20.1",
+    "@scramjet/types": "^0.20.1",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.7.0",
