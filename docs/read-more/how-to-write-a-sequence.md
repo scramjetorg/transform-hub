@@ -155,7 +155,7 @@ Sequences that transform data should be typed as [TransformApp](https://hub.scra
 ## Sequence arguments
 Every sequence can be spawned with arbitrary number of arguments
 ```bash
-si seq start <sequence-id> --args "['Hello', 123, { abc: 456 }]"
+si seq start <sequence-id> --args '["Hello", 123, { "abc": 456 }]'
 ```
 you can access this args using function parameters in your sequence:
 ```ts
@@ -254,7 +254,7 @@ export default function(input) {
 If you typed your sequence using appropriate "App" type (ReadableApp, WritableApp, TransformApp), then the `this` context should be already typed.
 Alternatively, you can use [AppContext](https://hub.scramjet.org/docs/types/AppContext#interface-appcontextappconfigtype-state) to do it maunally.
 ```ts
-export default function(this: AppContext) { ... }
+export default function(this: AppContext<{}, void>) { ... }
 ```
 
 ### Reading logs
