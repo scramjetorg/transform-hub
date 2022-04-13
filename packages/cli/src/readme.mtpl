@@ -186,6 +186,7 @@ Commands:
     deploy|run [options] <path>  pack (if needed), send and start the Sequence
     get <id>                     obtain basic information about a Sequence
     delete|rm <id>               delete the Sequence form Hub
+    prune                        remove all Sequences from the current scope (use with caution)
 ```
 
 > 💡 <small>Argument id - the Sequence id to start or '-' for the last uploaded.</small>

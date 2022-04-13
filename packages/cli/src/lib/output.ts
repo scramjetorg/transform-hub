@@ -2,6 +2,7 @@
 import { Readable, Stream, Writable } from "stream";
 import { globalConfig } from "./config";
 import { MaybePromise } from "@scramjet/types";
+import { inspect } from "util";
 
 /**
  * Displays object.
@@ -61,4 +62,11 @@ export async function displayEntity(response: MaybePromise<any>): Promise<void> 
     }
 
     displayObject(res);
+}
+
+export function displayMessage(message: string, ...args: any[]): void {
+    console.error(message);
+    for (const a of args) {
+        console.error(">", inspect(a));
+    }
 }

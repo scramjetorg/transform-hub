@@ -120,7 +120,7 @@ class GlobalConfig extends DefaultFileConfig {
         const defaultGlobalConfig: GlobalConfigEntity = {
             configVersion: 1,
             apiUrl: "http://127.0.0.1:8000/api/v1",
-            debug: true,
+            debug: false,
             format: "pretty",
             middlewareApiUrl: "",
             env: "development",
