@@ -73,7 +73,7 @@ Sequences that only produce data should be typed as [ReadableApp](https://hub.sc
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/scraping/app.ts).
 
 ### Reading from output stream
-You could read this stream using our CLI, REST API, or API Client.
+You could read this stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 
 ## Consuming data (input stream)
 Reading data from a sequence is easy as the input stream conforms to the Readable protocol from NodeJS. There’s a bunch of ways that allow you to read data from streams. Here are some examples of a sequence that reads a stream of weather data objects and saves them to DB.  
@@ -112,7 +112,7 @@ Sequences that only consumes data should be typed as [WritableApp](https://hub.s
 
 ### Writing to input stream
 
-You can write to instance input stream using our CLI, REST API, or API Client.
+You can write to instance input stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 
 ## Transforming data
 Transforming data is really a combination of consuming and producing, usually with some logic in between. Let’s filter the incoming input stream of numbers to include only the even ones. We will also have to consider backpressure, because we are producing data.
@@ -218,7 +218,7 @@ const app: [{requires: string, contentType: string}, ReadableApp] = [
 ```
 
 ### Interacting with topics
-Apart from sequences communicating between each other you can also feed/consume a topic using our CLI, REST API, or API Client. 
+Apart from sequences communicating between each other you can also feed/consume a topic using our our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/HostClient).
 
 ## Standard streams (stdin/stdout/stderr)
 Every sequence has access to standard streams of a program. You can read data from stdin. Send additional information to stdout and to stderr. These are separate from input/output streams.
@@ -237,7 +237,7 @@ export default async function() {
 }
 ```
 
-These streams are also accessible through our CLI, REST API, or API Client.
+These streams are also accessible through our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 ## Debugging (logger)
 If you need to see what’s going on inside of your sequence while it executes, you can use the logger for that. It’s attached to the `this` context of a sequence. 
 
@@ -258,4 +258,4 @@ export default function(this: AppContext<{}, void>) { ... }
 ```
 
 ### Reading logs
-You can read the logs using our CLI, REST API, or API Client.
+You can read the logs using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
