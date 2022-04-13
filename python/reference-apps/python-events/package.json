@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-events",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "main": "./events.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",
   "license": "GPL-3.0",
