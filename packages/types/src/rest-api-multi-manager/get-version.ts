@@ -1,1 +1,1 @@
-export { GetVersionResponse } from "../rest-api-commons/version";
+export { GetVersionResponse } from "../rest-api-commons";
