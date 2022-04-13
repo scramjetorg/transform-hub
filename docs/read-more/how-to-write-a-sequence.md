@@ -23,10 +23,10 @@ export default function(input, param1, param2) {
 ```
 
 ## Producing data (output stream)
-To stream data from a Sequence we need it to return values over time. Some constructs in JavaScript that enable that are NodeJS streams, Generators and Iterables. Whatever you return from your Sequence will be your ***output*** stream. We can choose whatever the solution is right for us.
+To stream data from a Sequence you need to return values over time. Some constructs in JavaScript that enable that are NodeJS streams, Generators and Iterables. Whatever you return from your Sequence will be your ***output*** stream. You can choose whatever the solution is right for you.
 
 ### Flow control (backpressure)
-Every streaming system needs to take backpressure problems into account. Every stream that we are writing to, can signalize that it's being overflown with incoming data. In this situation, if that's possible producing of data should be stopped, until the target stream signalizes that it is ok to write data again.
+Every streaming system needs to take backpressure problems into account. Every stream that you are writing to, can signalize that it's being overflown with incoming data. In this situation, if that's possible producing of data should be stopped, until the target stream signalizes that it is ok to write data again.
 If you choose Generators or Iterables for your output stream, the backpressure will be handled for you by Scramjet framework (new values won't be produced if the target stream is overflown).
 ### Examples
 Here are some examples of a Sequence producing a stream of integers every second.  
@@ -43,7 +43,7 @@ export default async function*() {
 ```
 
 #### Using a stream:
-With raw streams, we need to handle backpressure ourselves.
+With raw streams, you need to handle backpressure yourself.
 ```ts
 export default function() {
     const out = new PassThrough()
@@ -60,6 +60,7 @@ export default function() {
 
     let intervalRef = setInterval(fn, 1000)
 
+    // When the output stream is ready to accept new data you can start producing new values again
     out.on("drain", () => {
         intervalRef = setInterval(fn, 1000)
     })
@@ -105,7 +106,7 @@ In this case if you wanted to send the stream using our CLI it would look like t
 ```bash
 si inst input <instance-id> --content-type "application/x-ndjson"
 ```
-Then you can send it JSON strings separated by newline characters.  
+Then you can send JSON strings separated by newline characters.  
 
 ### Typescript
 Sequences that only consumes data should be typed as [WritableApp](https://hub.scramjet.org/docs/types/modules#writableapp).
@@ -115,7 +116,7 @@ Sequences that only consumes data should be typed as [WritableApp](https://hub.s
 You can write to Instance input stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 
 ## Transforming data
-Transforming data is really a combination of consuming and producing, usually with some logic in between. Let’s filter the incoming input stream of numbers to include only the even ones. We will also have to consider backpressure, because we are producing data.
+Transforming data is really a combination of consuming and producing, usually with some logic in between. Let’s filter the incoming input stream of numbers to include only the even ones. You will also have to consider backpressure when you are producing data.
 
 #### Using async iteration and a generator:
 ```ts
@@ -129,7 +130,7 @@ export default async function*(input) {
 ```
 
 #### Using streams:
-While using raw streams we need to handle backpressure ourselves.
+While using raw streams you need to handle backpressure yourself.
 ```ts
 export default function(input) {
     const out = new PassThrough()
@@ -142,6 +143,7 @@ export default function(input) {
         }
     })
 
+    // When the output stream is ready to accept new data we can start consuming input again
     out.on('drain', () => input.resume())
 
     return out
@@ -187,7 +189,7 @@ export default function() {
 }
 ```
 ### Reading from a topic 
-To send topic as input stream we specify a topic config object with two properites: `requires` - with a name of topic, and `contentType` for ensuring proper encoding.
+To send topic as input stream you specify a topic config object with two properites: `requires` - with a name of topic, and `contentType` for ensuring proper encoding.
 ```ts
 const CRITICAL_TEMP_CELCIUS = 40
 
@@ -226,10 +228,12 @@ Every Sequence has access to standard streams of a program. You can read data fr
 ```ts
 export default async function() {
     process.stdin.on('data', (dataBuf) => {
+        // console.log and process.stdout are writing to the same stdout stream
         process.stdout.write('Echo: ' + dataBuf.toString('utf-8'))
     })
 
     process.stdin.on('error', (err) => {
+        // console.error and process.stderr are writing to the same stderr stream
         process.stderr.write('Error: ' + err)
     })
 
@@ -240,6 +244,7 @@ export default async function() {
 These streams are also accessible through our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 ## Debugging (logger)
 If you need to see what’s going on inside of your Sequence while it executes, you can use the logger for that. It’s attached to the `this` context of a Sequence. 
+Note that `logger` is separate from `console` object. `Logger` writes to the designated `log` stream, while `console` uses standard `stdout` and `stderr` streams.
 
 ```ts
 export default function(input) {
