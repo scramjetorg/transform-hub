@@ -4,7 +4,7 @@ Sequence is a program that produces, consumes or transforms data. It’s a funct
 ```ts
 /** The function parameters are
 * input stream
-* ...params passed to instance on start
+* ...params passed to Instance on start
 */
 export default function(input, param1, param2) {
     const out = new PassThrough()
@@ -23,13 +23,13 @@ export default function(input, param1, param2) {
 ```
 
 ## Producing data (output stream)
-To stream data from a sequence we need it to return values over time. Some constructs in JavaScript that enable that are NodeJS streams, Generators and Iterables. Whatever you return from your sequence will be your ***output*** stream. We can choose whatever the solution is right for us.
+To stream data from a Sequence we need it to return values over time. Some constructs in JavaScript that enable that are NodeJS streams, Generators and Iterables. Whatever you return from your Sequence will be your ***output*** stream. We can choose whatever the solution is right for us.
 
 ### Flow control (backpressure)
 Every streaming system needs to take backpressure problems into account. Every stream that we are writing to, can signalize that it's being overflown with incoming data. In this situation, if that's possible producing of data should be stopped, until the target stream signalizes that it is ok to write data again.
 If you choose Generators or Iterables for your output stream, the backpressure will be handled for you by Scramjet framework (new values won't be produced if the target stream is overflown).
 ### Examples
-Here are some examples of a sequence producing a stream of integers every second.  
+Here are some examples of a Sequence producing a stream of integers every second.  
 
 #### Using an async generator:
 ```ts
@@ -76,7 +76,7 @@ Sequences that only produce data should be typed as [ReadableApp](https://hub.sc
 You could read this stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 
 ## Consuming data (input stream)
-Reading data from a sequence is easy as the input stream conforms to the Readable protocol from NodeJS. There’s a bunch of ways that allow you to read data from streams. Here are some examples of a sequence that reads a stream of weather data objects and saves them to DB.  
+Reading data from a Sequence is easy as the input stream conforms to the Readable protocol from NodeJS. There’s a bunch of ways that allow you to read data from streams. Here are some examples of a Sequence that reads a stream of weather data objects and saves them to DB.  
 
 #### Using a for loop:
 ```ts
@@ -94,7 +94,7 @@ export default async function(input) {
         saveWeatherData(data.time, data.temperature)
     })
 
-    // Since we're only consuming input, we want to end our sequence when it finishes
+    // Since we're only consuming input, we want to end our Sequence when it finishes
     await events.once(input, 'end')
 }
 ```
@@ -112,7 +112,7 @@ Sequences that only consumes data should be typed as [WritableApp](https://hub.s
 
 ### Writing to input stream
 
-You can write to instance input stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
+You can write to Instance input stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 
 ## Transforming data
 Transforming data is really a combination of consuming and producing, usually with some logic in between. Let’s filter the incoming input stream of numbers to include only the even ones. We will also have to consider backpressure, because we are producing data.
@@ -153,11 +153,11 @@ Sequences that transform data should be typed as [TransformApp](https://hub.scra
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/transform-string-stream/src/index.ts).
 
 ## Sequence arguments
-Every sequence can be spawned with arbitrary number of arguments
+Every Sequence can be spawned with arbitrary number of arguments
 ```bash
 si seq start <sequence-id> --args '["Hello", 123, { "abc": 456 }]'
 ```
-you can access this args using function parameters in your sequence:
+you can access this args using function parameters in your Sequence:
 ```ts
 export default function(input, param1, param2, param3) {
     console.log(param1 + ' ' + param2 + ' ' + param3.abc)
@@ -167,8 +167,8 @@ export default function(input, param1, param2, param3) {
 }
 ```
 
-## Sending data between sequences (topics)
-Sometimes you need a bunch of sequences to talk to each other. Topics are the solution. It’s a PubSub system that allows for many writing and reading instances to exchange data. 
+## Sending data between Sequences (topics)
+Sometimes you need a bunch of Sequences to talk to each other. Topics are the solution. It’s a PubSub system that allows for many writing and reading Instances to exchange data. 
 Topics are either attached to the input stream or routed from the output stream.
 ### Writing to a topic 
 To have your output stream routed to a topic, it needs to have a property `topic` with a topic name and `contentType` for proper consumer encoding. 
@@ -218,10 +218,10 @@ const app: [{requires: string, contentType: string}, ReadableApp] = [
 ```
 
 ### Interacting with topics
-Apart from sequences communicating between each other you can also feed/consume a topic using our our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/HostClient).
+Apart from Sequences communicating between each other you can also feed/consume a topic using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/HostClient).
 
 ## Standard streams (stdin/stdout/stderr)
-Every sequence has access to standard streams of a program. You can read data from stdin. Send additional information to stdout and to stderr. These are separate from input/output streams.
+Every Sequence has access to standard streams of a program. You can read data from stdin. Send additional information to stdout and to stderr. These are separate from input/output streams.
 
 ```ts
 export default async function() {
@@ -239,7 +239,7 @@ export default async function() {
 
 These streams are also accessible through our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
 ## Debugging (logger)
-If you need to see what’s going on inside of your sequence while it executes, you can use the logger for that. It’s attached to the `this` context of a sequence. 
+If you need to see what’s going on inside of your Sequence while it executes, you can use the logger for that. It’s attached to the `this` context of a Sequence. 
 
 ```ts
 export default function(input) {
@@ -251,7 +251,7 @@ export default function(input) {
 }
 ```
 ### Typescript
-If you typed your sequence using appropriate "App" type (ReadableApp, WritableApp, TransformApp), then the `this` context should be already typed.
+If you typed your Sequence using appropriate "App" type (ReadableApp, WritableApp, TransformApp), then the `this` context should be already typed.
 Alternatively, you can use [AppContext](https://hub.scramjet.org/docs/types/AppContext#interface-appcontextappconfigtype-state) to do it maunally.
 ```ts
 export default function(this: AppContext<{}, void>) { ... }
