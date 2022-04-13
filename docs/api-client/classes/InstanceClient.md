@@ -3,7 +3,7 @@
 # Class: InstanceClient
 
 Instance client.
-Provides methods to interact with instance.
+Provides methods to interact with Instance.
 
 ## Table of contents
 
@@ -144,7 +144,7 @@ ___
 
 ▸ **getEvent**(`eventName`): `Promise`<`any`\>
 
-Return last data from event givent in eventName.
+Return last data from event given in eventName.
 Waits for event if it was never fired.
 
 #### Parameters
@@ -193,7 +193,7 @@ ___
 
 ▸ **getHealth**(): `Promise`<`GetHealthResponse`\>
 
-Returns instance health.
+Returns Instance health.
 
 #### Returns
 
@@ -211,7 +211,7 @@ ___
 
 ▸ **getInfo**(): `Promise`<`Instance`\>
 
-Returns instance info.
+Returns Instance info.
 
 #### Returns
 
@@ -229,7 +229,7 @@ ___
 
 ▸ **getNextEvent**(`eventName`): `Promise`<`any`\>
 
-Waits and returns next event sent by instance.
+Waits and returns next event sent by Instance.
 
 #### Parameters
 
@@ -253,7 +253,7 @@ ___
 
 ▸ **getStream**(`streamId`): `Promise`<`Readable`\>
 
-Returns readable stream from instance.
+Returns readable stream from Instance.
 Stream can be one of type [InstanceOutputStream](../modules.md#instanceoutputstream).
 
 #### Parameters
@@ -278,7 +278,7 @@ ___
 
 ▸ **kill**(): `Promise`<`ControlMessageResponse`\>
 
-Send kill command to instance
+Send kill command to Instance
 
 #### Returns
 
@@ -321,13 +321,13 @@ ___
 
 ▸ **sendInput**(`stream`, `options?`): `Promise`<`any`\>
 
-Pipes given stream to instance "input".
+Pipes given stream to Instance "input".
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `stream` | `string` \| `Readable` | Stream to be piped. Or string writen to "stdin" stream. |
+| `stream` | `string` \| `Readable` | Stream to be piped. Or string written to "stdin" stream. |
 | `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\> | Request options |
 
 #### Returns
@@ -346,13 +346,13 @@ ___
 
 ▸ **sendStdin**(`stream`): `Promise`<`any`\>
 
-Pipes given stream to instance "stdin".
+Pipes given stream to Instance "stdin".
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `stream` | `string` \| `Readable` | Stream to be piped. Or string writen to "stdin" stream. |
+| `stream` | `string` \| `Readable` | Stream to be piped. Or string written to "stdin" stream. |
 
 #### Returns
 
@@ -370,7 +370,7 @@ ___
 
 ▸ **sendStream**(`streamId`, `stream`, `options?`): `Promise`<`any`\>
 
-Sends stream to one of the instance inputs.
+Sends stream to one of the Instance inputs.
 
 #### Parameters
 
@@ -396,14 +396,14 @@ ___
 
 ▸ **stop**(`timeout`, `canCallKeepalive`): `Promise`<`ControlMessageResponse`\>
 
-Send stop command to instance.
+Send stop command to Instance.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `timeout` | `number` | Timeout in milliseconds to graceful stop |
-| `canCallKeepalive` | `boolean` | If true, instance can call keepAlive. |
+| `canCallKeepalive` | `boolean` | If true, Instance can call keepAlive. |
 
 #### Returns
 

@@ -186,7 +186,7 @@ ___
 
 ▸ **serializeMessage**<`T`\>(`msg`): `RunnerMessage` \| `CPMMessage`
 
-Serizalized message.
+Serialized message.
 
 #### Type parameters
 

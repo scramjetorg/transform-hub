@@ -744,7 +744,7 @@ ___
 Ƭ **EventMessage**: { `msgCode`: `RunnerMessageCode.EVENT`  } & [`EventMessageData`](modules.md#eventmessagedata)
 
 TODO update
-Event message emitted by sequence and handeled in the context.
+Event message emitted by Sequence and handled in the context.
 
 #### Defined in
 
@@ -929,7 +929,7 @@ Host process configuration.
 | `hostname` | `string` | Hostname. |
 | `id?` | `string` | Custom host identifier. |
 | `infoFilePath` | `string` | Host information filepath. |
-| `instancesServerPort` | `number` | Port number for connecting instances. |
+| `instancesServerPort` | `number` | Port number for connecting Instances. |
 | `port` | `number` | API port. |
 
 #### Defined in
@@ -1127,7 +1127,7 @@ ___
 
 Ƭ **KeepAliveMessage**: { `msgCode`: `RunnerMessageCode.ALIVE`  } & [`KeepAliveMessageData`](modules.md#keepalivemessagedata)
 
-Message instrucing how much longer to keep Sequence alive.
+Message instructing how much longer to keep Sequence alive.
 This message type is sent from Runner.
 
 #### Defined in
@@ -1144,7 +1144,7 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `keepAlive` | `number` | Information on how much longer the Sequence will be active (in miliseconds). |
+| `keepAlive` | `number` | Information on how much longer the Sequence will be active (in milliseconds). |
 
 #### Defined in
 
@@ -1336,7 +1336,7 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `err?` | [`WritableStream`](interfaces/WritableStream.md)<`any`\> | Errror stream |
+| `err?` | [`WritableStream`](interfaces/WritableStream.md)<`any`\> | Error stream |
 | `out` | [`WritableStream`](interfaces/WritableStream.md)<`any`\> | Output stream |
 
 #### Defined in
@@ -1588,7 +1588,7 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `monitoringRate` | `number` | Indicates how frequently should monitoring messages be emitted (in miliseconds). |
+| `monitoringRate` | `number` | Indicates how frequently should monitoring messages be emitted (in milliseconds). |
 
 #### Defined in
 
@@ -1814,7 +1814,7 @@ ___
 
 Ƭ **PreRunnerContainerConfiguration**: [`ContainerConfiguration`](modules.md#containerconfiguration)
 
-PreRunner container configuraion.
+PreRunner container configuration.
 
 #### Defined in
 
@@ -2033,7 +2033,7 @@ ___
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `cpmId` | `string` | CPM id. |
-| `cpmSslCaPath?` | `string` | Path to the certficate authority file for verifying self-signed CPM certs |
+| `cpmSslCaPath?` | `string` | Path to the certificate authority file for verifying self-signed CPM certs |
 | `cpmUrl` | `string` | CPM url. |
 | `docker` | { `prerunner`: [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) ; `runner`: [`RunnerContainerConfiguration`](modules.md#runnercontainerconfiguration) ; `runnerImages`: { `node`: `string` ; `python3`: `string`  }  } | Docker related configuration. |
 | `docker.prerunner` | [`PreRunnerContainerConfiguration`](modules.md#prerunnercontainerconfiguration) | PreRunner container configuration. |
@@ -2043,17 +2043,17 @@ ___
 | `docker.runnerImages.python3` | `string` | - |
 | `host` | [`HostConfig`](modules.md#hostconfig) | Host configuration. |
 | `identifyExisting` | `boolean` | Should we identify existing sequences. |
-| `instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time instance API is still available. |
-| `instanceRequirements` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } | Minimum requirements to start new instance. |
+| `instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time Instance API is still available. |
+| `instanceRequirements` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } | Minimum requirements to start new Instance. |
 | `instanceRequirements.cpuLoad` | `number` | Required free CPU. In percentage. |
-| `instanceRequirements.freeMem` | `number` | Free memory required to start instance. In megabytes. |
-| `instanceRequirements.freeSpace` | `number` | Free disk space required to start instance. In megabytes. |
+| `instanceRequirements.freeMem` | `number` | Free memory required to start Instance. In megabytes. |
+| `instanceRequirements.freeSpace` | `number` | Free disk space required to start Instance. In megabytes. |
 | `kubernetes` | `Partial`<[`K8SAdapterConfiguration`](modules.md#k8sadapterconfiguration)\> | - |
 | `logColors` | `boolean` | Enable colors in logging. |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) | Logging level. |
-| `runtimeAdapter` | `string` | Which sequence and instance adpaters should sth use. One of 'docker', 'process', 'kubernetes' |
+| `runtimeAdapter` | `string` | Which sequence and instance adapters should STH use. One of 'docker', 'process', 'kubernetes' |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. |
-| `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new sequences |
+| `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
 
 #### Defined in
 
@@ -2108,7 +2108,7 @@ ___
 
 Ƭ **SequenceCompleteMessage**: { `msgCode`: `RunnerMessageCode.SEQUENCE_COMPLETED`  } & [`EmptyMessageData`](modules.md#emptymessagedata)
 
-Message from the Runner indicating that the sequence has completed sending it's data
+Message from the Runner indicating that the Sequence has completed sending it's data
 and now can be asked to exit with high probability of accepting the exit gracefully.
 
 #### Defined in
@@ -2131,7 +2131,7 @@ ___
 
 Ƭ **SequenceEndMessage**: { `msgCode`: `RunnerMessageCode.SEQUENCE_COMPLETED`  } & [`SequenceEndMessageData`](modules.md#sequenceendmessagedata)
 
-Message from the Runner indicating that the sequence has called the end method
+Message from the Runner indicating that the Sequence has called the end method
 on context and it should be safe to terminate it without additional waiting,
 unless it exits correctly itself.
 
@@ -2308,7 +2308,7 @@ ___
 
 ▸ (`timeout`, `canCallKeepalive`): `MaybePromise`<`void`\>
 
-A callback that will be called when the sequence is being stopped gracefully.
+A callback that will be called when the Sequence is being stopped gracefully.
 
 ##### Parameters
 
@@ -2365,7 +2365,7 @@ ___
 
 Ƭ **StreamConfig**: `Object`
 
-Configuration options for streaming endpoionts
+Configuration options for streaming endpoints
 
 #### Type declaration
 
@@ -2591,7 +2591,7 @@ ___
 
 Ƭ **TransformSeqence**<`Consumes`, `Produces`, `Z`, `X`\>: [[`TFunction`](modules.md#tfunction)<`Consumes`, `Produces`\>] \| [...TFunctionChain<Consumes, Z, X\>, [`TFunction`](modules.md#tfunction)<`Z`, `Produces`\>]
 
-A Transform Sequence is a sequence that accept input, perform operations on it, and
+A Transform Sequence is a Sequence that accept input, perform operations on it, and
 outputs the result.
 
 #### Type parameters

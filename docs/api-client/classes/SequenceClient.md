@@ -3,7 +3,7 @@
 # Class: SequenceClient
 
 Sequence client.
-Provides methods to interact with sequence.
+Provides methods to interact with Sequence.
 
 ## Table of contents
 
@@ -114,7 +114,7 @@ Sequence id.
 
 ▸ `Static` **from**(`id`, `host`): [`SequenceClient`](SequenceClient.md)
 
-Creates SequenceClient instance for sequence with given id and host.
+Creates SequenceClient instance for Sequence with given id and host.
 
 #### Parameters
 
@@ -139,7 +139,7 @@ ___
 
 ▸ **getInfo**(): `Promise`<`GetSequenceResponse`\>
 
-Returns sequence details.
+Returns Sequence details.
 
 #### Returns
 
@@ -157,7 +157,7 @@ ___
 
 ▸ **getInstance**(`id`, `host`): `Promise`<[`InstanceClient`](InstanceClient.md)\>
 
-Return Instance Client for given instance id.
+Return Instance Client for given Instance id.
 
 #### Parameters
 
@@ -182,7 +182,7 @@ ___
 
 ▸ **listInstances**(): `Promise`<`string`[]\>
 
-Returns list of all instances creteated from sequnece.
+Returns list of all Instances created from Sequence.
 
 #### Returns
 

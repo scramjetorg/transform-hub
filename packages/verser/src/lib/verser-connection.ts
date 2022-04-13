@@ -74,7 +74,7 @@ export class VerserConnection {
     /**
      * Forwards data from the request to the new duplex stream multiplexed in the socket.
      *
-     * @param req {Incomingmessage} Request object.
+     * @param req {IncomingMessage} Request object.
      * @param res {ServerResponse} Response object.
      */
     async forward(req: IncomingMessage, res: ServerResponse) {

@@ -250,7 +250,7 @@ ___
 
 ▸ **listVolumes**(): `Promise`<`string`[]\>
 
-Lists exisiting volumes
+Lists existing volumes
 
 #### Returns
 
@@ -381,7 +381,7 @@ ___
 
 ▸ **startContainer**(`containerId`): `Promise`<`void`\>
 
-Start continer with provided id.
+Start container with provided id.
 
 #### Parameters
 
@@ -500,7 +500,7 @@ Waits for container status change.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `container` | `string` | Container id. |
-| `options` | [`DockerAdapterWaitOptions`](../modules.md#dockeradapterwaitoptions) | Condition to be fullfilled. @see {DockerAdapterWaitOptions} |
+| `options` | [`DockerAdapterWaitOptions`](../modules.md#dockeradapterwaitoptions) | Condition to be fulfilled. @see {DockerAdapterWaitOptions} |
 
 #### Returns
 

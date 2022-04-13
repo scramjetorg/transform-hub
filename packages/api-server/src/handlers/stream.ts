@@ -37,7 +37,7 @@ function checkAccepts(acc: string | undefined, text: boolean, json: boolean) {
  * Checks if x-stream-end is set to true.
  *
  * @param {IncomingMessage} req Request object.
- * @param {boolean} _default Value to be retured if x-end-stream header is not present.
+ * @param {boolean} _default Value to be returned if x-end-stream header is not present.
  * @returns True if x-end-stream header is present or a given value.
  */
 function shouldEndTargetStream(req: IncomingMessage, _default?: boolean) {
@@ -52,7 +52,7 @@ function shouldEndTargetStream(req: IncomingMessage, _default?: boolean) {
  * Creates methods to handle stream specific requests.
  *
  * @param {SequentialCeroRouter} router Router to create handlers for.
- * @returns Object with hadlers.
+ * @returns Object with handlers.
  */
 export function createStreamHandlers(router: SequentialCeroRouter) {
     const decorator = (

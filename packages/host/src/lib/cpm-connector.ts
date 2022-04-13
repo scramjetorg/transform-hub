@@ -144,7 +144,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     cpmId: string;
 
     /**
-     * VerserClient instance used for connecting with Verser.
+     * VerserClient Instance used for connecting with Verser.
      *
      * @type {VerserClient}
      */
@@ -158,7 +158,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     loadInterval?: NodeJS.Timeout;
 
     /**
-     * Loaded certficiate authority file for connecting to CPM via HTTPS
+     * Loaded certificate authority file for connecting to CPM via HTTPS
      */
     _cpmSslCa?: string | Buffer;
 
@@ -481,7 +481,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Sends list of sequence to Manager via communication channel.
      *
-     * @param sequences List of sequences to send.
+     * @param sequences List of Sequences to send.
      */
     async sendSequencesInfo(sequences: STHRestAPI.GetSequencesResponse): Promise<void> {
         this.logger.trace("Sending sequences information, total sequences", sequences.length);
@@ -494,9 +494,9 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     /**
-     * Sends list of sequence to Manager via communication channel.
+     * Sends list of Sequences to Manager via communication channel.
      *
-     * @param instances List of instances to send.
+     * @param instances List of Instances to send.
      */
     async sendInstancesInfo(instances: Instance[]): Promise<void> {
         this.logger.trace("Sending instances information");
@@ -509,7 +509,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     /**
-     * Sends sequence status to Manager via communication channel.
+     * Sends Sequence status to Manager via communication channel.
      *
      * @param {string} sequenceId Sequence id.
      * @param {SequenceMessageCode} seqStatus Sequence status.
@@ -525,7 +525,7 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     /**
-     * Sends instance information to Manager via communication channel.
+     * Sends Instance information to Manager via communication channel.
      *
      * @param {string} instance Instance details.
      * @param {SequenceMessageCode} instanceStatus Instance status.

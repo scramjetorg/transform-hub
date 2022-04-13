@@ -12,7 +12,7 @@ const getScopePath = (scopeName: string) => {
 };
 
 /**
- * Prints list of avaliable scopes
+ * Prints list of available scopes
  */
 export const listScopes = () => {
     if (existsSync(scopesDir))
@@ -41,7 +41,7 @@ export const getScope = (scopeName: string) => {
 };
 
 /**
- * Check if scope is exists.
+ * Check if scope exists.
  *
  * @param scopeName - scope name
  * @returns true if scope exists, false otherwise

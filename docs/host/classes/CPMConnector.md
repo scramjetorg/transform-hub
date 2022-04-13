@@ -116,7 +116,7 @@ ___
 
 • `Optional` **\_cpmSslCa**: `string` \| `Buffer`
 
-Loaded certficiate authority file for connecting to CPM via HTTPS
+Loaded certificate authority file for connecting to CPM via HTTPS
 
 #### Defined in
 
@@ -284,7 +284,7 @@ ___
 
 • **verserClient**: `VerserClient`
 
-VerserClient instance used for connecting with Verser.
+VerserClient Instance used for connecting with Verser.
 
 #### Defined in
 
@@ -896,7 +896,7 @@ ___
 
 ▸ **sendInstanceInfo**(`instance`, `instanceStatus`): `Promise`<`void`\>
 
-Sends instance information to Manager via communication channel.
+Sends Instance information to Manager via communication channel.
 
 #### Parameters
 
@@ -919,13 +919,13 @@ ___
 
 ▸ **sendInstancesInfo**(`instances`): `Promise`<`void`\>
 
-Sends list of sequence to Manager via communication channel.
+Sends list of Sequences to Manager via communication channel.
 
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `instances` | `Instance`[] | List of instances to send. |
+| `instances` | `Instance`[] | List of Instances to send. |
 
 #### Returns
 
@@ -941,7 +941,7 @@ ___
 
 ▸ **sendSequenceInfo**(`sequenceId`, `seqStatus`): `Promise`<`void`\>
 
-Sends sequence status to Manager via communication channel.
+Sends Sequence status to Manager via communication channel.
 
 #### Parameters
 
@@ -970,7 +970,7 @@ Sends list of sequence to Manager via communication channel.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `sequences` | `GetSequencesResponse` | List of sequences to send. |
+| `sequences` | `GetSequencesResponse` | List of Sequences to send. |
 
 #### Returns
 

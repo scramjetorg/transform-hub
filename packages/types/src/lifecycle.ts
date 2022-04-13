@@ -24,7 +24,7 @@ export interface ILifeCycleAdapter {
     /**
       * Starts Runner.
       *
-      * @param {InstanceConifg} Runner configuraion.
+      * @param {InstanceConifg} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
     run(config: InstanceConifg): Promise<ExitCode>;
@@ -43,7 +43,7 @@ export interface ILifeCycleAdapter {
 
     monitorRate(rps: number): this;
 
-    // TODO: THIS is forcefull removal - let's think about refactor.
+    // TODO: THIS is forceful removal - let's think about refactor.
     remove(): MaybePromise<void>;
 
     stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;

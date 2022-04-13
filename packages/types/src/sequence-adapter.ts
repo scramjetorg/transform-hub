@@ -17,12 +17,12 @@ export interface ISequenceAdapter {
     init(): Promise<void>;
 
     /**
-     * Identifies existing sequences
+     * Identifies existing Sequences
      */
     list(): Promise<SequenceConfig[]>;
 
     /**
-     * Identifies new sequence
+     * Identifies new Sequence
      */
     identify(stream: Readable, id: string): Promise<SequenceConfig>;
 

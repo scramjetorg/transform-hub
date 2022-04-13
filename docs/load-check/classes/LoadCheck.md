@@ -32,7 +32,7 @@ Provides methods to monitor resources usage and determine if machine is not over
 
 • **config**: `LoadCheckConfig`
 
-Congiguration object with requirements to determine if machine is overloaded.
+Configuration object with requirements to determine if machine is overloaded.
 
 #### Defined in
 
@@ -56,7 +56,7 @@ ___
 
 • **logger**: `ObjLogger`
 
-Logger instance.
+Logger Instance.
 
 #### Implementation of
 

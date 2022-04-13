@@ -11,7 +11,7 @@ type Events = {
  * Verser class.
  *
  * When instanced it sets up a listener for incoming "CONNECT" connections on the provided server.
- * When a new connection is received it emits "connect" event with  VerserConnection instance
+ * When a new connection is received it emits "connect" event with VerserConnection instance
  */
 export class Verser extends TypedEmitter<Events> {
     private server: Server;

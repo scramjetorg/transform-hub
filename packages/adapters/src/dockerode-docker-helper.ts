@@ -126,7 +126,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
     }
 
     /**
-     * Start continer with provided id.
+     * Start container with provided id.
      *
      * @param containerId Container id.
      * @returns Promise resolving when container has been started.
@@ -304,7 +304,7 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * Waits for container status change.
      *
      * @param container Container id.
-     * @param options Condition to be fullfilled. @see {DockerAdapterWaitOptions}
+     * @param options Condition to be fulfilled. @see {DockerAdapterWaitOptions}
      * @returns Container exit code.
      */
     async wait(container: DockerContainer, options: DockerAdapterWaitOptions = {}): Promise<ExitData> {

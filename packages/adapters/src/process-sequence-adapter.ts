@@ -134,7 +134,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      */
     async remove(config: SequenceConfig) {
         if (config.type !== "process") {
-            throw new Error(`Incorrect SequenceConfig pased to ProcessSequenceAdapter: ${config.type}`);
+            throw new Error(`Incorrect SequenceConfig passed to ProcessSequenceAdapter: ${config.type}`);
         }
 
         const sequenceDir = path.join(this.config.sequencesRoot, config.id);

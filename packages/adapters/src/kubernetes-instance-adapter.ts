@@ -130,8 +130,8 @@ IComponent {
 
         const exitPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Succeeded", "Failed", "Unknown"]);
 
-        this.logger.debug("For some reasone this wont be printed", exitPodStatus);
-        console.log("And this willl :(", exitPodStatus);
+        this.logger.debug("For some reason this wont be printed", exitPodStatus);
+        console.log("And this will :(", exitPodStatus);
 
         if (exitPodStatus !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);

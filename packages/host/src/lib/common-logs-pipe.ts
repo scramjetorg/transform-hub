@@ -8,7 +8,7 @@ export class CommonLogsPipe {
 
     constructor(bufferLength = 1e5) {
         this.pipe = new ReReadable({ length: bufferLength });
-        // drain the outStream so that it never pauses the participating inStreams from instances
+        // drain the outStream so that it never pauses the participating inStreams from Instances
         this.pipe.rewind().resume();
     }
 

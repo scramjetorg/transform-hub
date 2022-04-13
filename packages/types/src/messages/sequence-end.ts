@@ -5,7 +5,7 @@ export type SequenceEndMessageData = {
 }
 
 /**
- * Message from the Runner indicating that the sequence has called the end method
+ * Message from the Runner indicating that the Sequence has called the end method
  * on context and it should be safe to terminate it without additional waiting,
  * unless it exits correctly itself.
  */

@@ -74,7 +74,7 @@ ___
 
 • `Optional` **initialState**: `State`
 
-Holds the previous state if there was a previous process in existance and it called the
+Holds the previous state if there was a previous process in existence and it called the
 {@link this#save}.
 
 #### Defined in
@@ -98,10 +98,10 @@ ___
 ▸ **addKillHandler**(`handler`): [`AppContext`](AppContext.md)<`AppConfigType`, `State`\>
 
 This method can be overridden to handle the kill signal from the Runner and perform
-the final cleanup. This method is synchroneous and once it's exits the process will be
+the final cleanup. This method is synchronous and once it's exits the process will be
 synchronously terminated.
 
-The method can call @{see this.state} as many times as it likes, the valkue from the
+The method can call @{see this.state} as many times as it likes, the value from the
 last call will be made sure to be saved before the process will be terminated.
 
 If this methods fails to exit within `100 ms` the process will be forcefully terminated
@@ -161,10 +161,10 @@ a graceful shutdown. The platform will provide a grace period in order to save c
 work and provide.
 
 This method can be called under two conditions:
-* the instance will be terminated for extraneous reasons
-* the instance was not able to confirm if the Sequence is alive
+* the Instance will be terminated for extraneous reasons
+* the Instance was not able to confirm if the Sequence is alive
 
-The method can call @{see this.state} as many times as it likes, the valkue from the
+The method can call @{see this.state} as many times as it likes, the value from the
 last call will be made sure to be saved before the process will be terminated.
 
 #### Parameters
@@ -209,15 +209,15 @@ ___
 
 ▸ **destroy**(`error?`): [`AppContext`](AppContext.md)<`AppConfigType`, `State`\>
 
-Calling this method will inform the Instance that the Sequence has enountered a fatal
+Calling this method will inform the Instance that the Sequence has encountered a fatal
 exception and should not be kept alive.
 
-If the Sequence is Writable or Inert then it will call the stopHandler immediatelly.
+If the Sequence is Writable or Inert then it will call the stopHandler immediately.
 If the Sequence is Readable of Transform then it will call the stopHandler when any
 error occurs on the readable side or it reaches end and all the data is passed to the
-neighours.
+neighbors.
 
-This method will be called automatically when the readable side of the sequence errors
+This method will be called automatically when the readable side of the Sequence errors
 out.
 
 #### Parameters
@@ -283,11 +283,11 @@ ___
 Calling this method will inform the Instance that the Sequence has completed the
 operation and can be gracefully terminated.
 
-If the Sequence is Writable or Inert then it will call the stopHandler immediatelly.
+If the Sequence is Writable or Inert then it will call the stopHandler immediately.
 If the Sequence is Readable of Transform then it will call the stopHandler when all the
-data is passed to the neighours.
+data is passed to the neighbors.
 
-This method will be called automatically when the readable side of the sequence ends.
+This method will be called automatically when the readable side of the Sequence ends.
 
 #### Returns
 
@@ -316,7 +316,7 @@ stop it.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `milliseconds?` | `number` | provides information on how long the process should wait before assuming that the sequence is stale and attempt to kill it.  If the method is called after {@link AutoAppContext.addStopHandler \| stop has been issued} this parameter value should not exceed the given timeout and another stop command will be called again when the lower |
+| `milliseconds?` | `number` | provides information on how long the process should wait before assuming that the Sequence is stale and attempt to kill it.  If the method is called after {@link AutoAppContext.addStopHandler \| stop has been issued} this parameter value should not exceed the given timeout and another stop command will be called again when the lower |
 
 #### Returns
 
@@ -374,7 +374,7 @@ ___
 ▸ **save**(`state`): [`AppContext`](AppContext.md)<`AppConfigType`, `State`\>
 
 This method can be used to ensure that the data is passed here will be stored for
-another process. The operation is synchroneous and blocking.
+another process. The operation is synchronous and blocking.
 
 You can call the method as many times as you want, the last state will be safely
 passed to the process that will take over after this one is terminated.

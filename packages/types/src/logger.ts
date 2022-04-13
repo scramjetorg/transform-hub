@@ -3,7 +3,7 @@ import { WritableStream } from "./utils";
 export type LoggerOutput = {
     /** Output stream */
     out: WritableStream<any>;
-    /** Errror stream */
+    /** Error stream */
     err?: WritableStream<any>;
 }
 

@@ -11,6 +11,6 @@ export type EventMessageData = {
 
 /**
  * TODO update
- * Event message emitted by sequence and handeled in the context.
+ * Event message emitted by Sequence and handled in the context.
  */
 export type EventMessage = { msgCode: RunnerMessageCode.EVENT } & EventMessageData;
