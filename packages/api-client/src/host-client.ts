@@ -107,6 +107,15 @@ export class HostClient implements ClientProvider {
     }
 
     /**
+     * Returns Host public configuration.
+     *
+     * @returns {Promise<GetConfigResponse>} Promise resolving to Host configuration (public part).
+     */
+    async getConfig() {
+        return this.client.get<STHRestAPI.GetConfigResponse>("config");
+    }
+
+    /**
      * Sends data to the topic.
      * Topics are a part of Service Discovery feature enabling data exchange through Topics API.
      *
