@@ -48,9 +48,7 @@ function parseSequenceArgs(argsStr: string | undefined): any[] {
     try {
         return argsStr ? JSON.parse(argsStr) : [];
     } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error("Error parsing arguments JSON string, defaulting to empty array.", (err as Error).message);
-        return [];
+        throw new Error(`Error while parsing the provided Instance arguments. '${(err as Error).message}'`);
     }
 }
 
