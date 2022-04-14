@@ -133,7 +133,7 @@ Feature: Test our shiny new Python runner
         When I execute CLI with "seq send ../python/reference-apps/python-topic-producer.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names3"
-        Then I send input data "topic test input"
+        Then I send input data "topic test input" with options "--end"
         When I execute CLI with "seq send ../python/reference-apps/python-topic-consumer.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--input-topic names3"

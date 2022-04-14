@@ -406,6 +406,19 @@ Then("I send input data {string}", async function(data: string) {
     assert.equal(statusCode, 0);
 });
 
+Then("I send input data {string} with options {string}", async function(data: string, options: string) {
+    const res = (this as CustomWorld).cliResources;
+
+    const inputCmdProc = spawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || "", ...options.split(' ')]);
+
+    inputCmdProc.stdin.write(data);
+    inputCmdProc.stdin.end();
+
+    const [statusCode] = await once(inputCmdProc, 'exit');
+
+    assert.equal(statusCode, 0);
+});
+
 Then("I stop Instance {string} {string}", async function(timeout: string, canCallKeepAlive: string) {
     const res = (this as CustomWorld).cliResources;
 
