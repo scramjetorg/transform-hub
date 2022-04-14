@@ -21,6 +21,7 @@
     "@scramjet/sth-config": "^0.20.1",
     "@scramjet/symbols": "^0.20.1",
     "@scramjet/utility": "^0.20.1",
+    "abort-controller": "^3.0.0",
     "n-readlines": "^1.0.1",
     "node-fetch": "^2.6.7",
     "normalize-url": "^5.3.1",
