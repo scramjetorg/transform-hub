@@ -32,7 +32,6 @@ export const topic: CommandDefinition = (program) => {
             "-t, --content-type <content-type>",
             "specifies data type of <topic-name> (default: application/x-ndjson)"
         )
-        .option("-e, --end <boolean>", "close topic stream after processing the request, x-end-stream (default: false)")
         .description("get data from topic")
         .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
 
@@ -52,14 +51,12 @@ export const topic: CommandDefinition = (program) => {
         .argument("<topic-name>")
         .argument("[<file>]")
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        .option("-e, --end", "x-end-stream", false)
         .description("send data on topic from file, directory or directly through the console")
-        .action(async (topicName, filename, { contentType, end }) => {
+        .action(async (topicName, filename, { contentType }) => {
             await getHostClient().sendNamedData(
                 topicName,
                 filename ? await getReadStreamFromFile(filename) : process.stdin,
-                contentType,
-                end
+                contentType
             );
         });
 

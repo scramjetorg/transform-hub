@@ -386,6 +386,13 @@ Then("I send input data from file {string}", async function(pathToFile: string) 
     assert.equal(res.stdio[2], 0);
 });
 
+Then("I send input data from file {string} with options {string}", async function(pathToFile: string, options: string) {
+    const res = (this as CustomWorld).cliResources;
+
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || "", pathToFile, ...options.split(" ")]);
+    assert.equal(res.stdio[2], 0);
+});
+
 Then("I send input data {string}", async function(data: string) {
     const res = (this as CustomWorld).cliResources;
 
