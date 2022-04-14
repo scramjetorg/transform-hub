@@ -386,10 +386,30 @@ Then("I send input data from file {string}", async function(pathToFile: string) 
     assert.equal(res.stdio[2], 0);
 });
 
+Then("I send input data from file {string} with options {string}", async function(pathToFile: string, options: string) {
+    const res = (this as CustomWorld).cliResources;
+
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || "", pathToFile, ...options.split(" ")]);
+    assert.equal(res.stdio[2], 0);
+});
+
 Then("I send input data {string}", async function(data: string) {
     const res = (this as CustomWorld).cliResources;
 
     const inputCmdProc = spawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || ""]);
+
+    inputCmdProc.stdin.write(data);
+    inputCmdProc.stdin.end();
+
+    const [statusCode] = await once(inputCmdProc, 'exit');
+
+    assert.equal(statusCode, 0);
+});
+
+Then("I send input data {string} with options {string}", async function(data: string, options: string) {
+    const res = (this as CustomWorld).cliResources;
+
+    const inputCmdProc = spawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || "", ...options.split(' ')]);
 
     inputCmdProc.stdin.write(data);
     inputCmdProc.stdin.end();

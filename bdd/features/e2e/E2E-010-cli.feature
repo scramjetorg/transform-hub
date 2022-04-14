@@ -335,3 +335,17 @@ This feature checks CLI functionalities
         And I get Instance output without waiting for the end
         Then confirm data named "args-on-output" will be received
         * stop host
+
+    @ci @cli
+    Scenario: E2E-010 TC-029 Send input data to Instance and close input stream
+        Given host is running
+        Then I set json format
+        Then I use apiUrl in config
+        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz" arguments
+        Then I get Sequence id
+        Then I start Sequence
+        And I get Instance id
+        Then I send input data from file "../dist/reference-apps/checksum-sequence/data.json" with options "--end"
+        Then I get Instance output
+        Then confirm data named "checksum" received
+        And host is still running

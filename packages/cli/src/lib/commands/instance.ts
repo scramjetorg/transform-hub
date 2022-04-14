@@ -74,14 +74,15 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "the instance id or '-' for the last one started or selected.")
         .argument("[file]", "the input file (stdin if not given default)")
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
+        .option("-e, --end", "Close input stream of the instance when this stream ends. \"x-end-stream\" header", false)
         .description("send file to input, if file not given the data will be read from stdin")
-        .action(async (id: string, filename: string, { contentType }) => {
+        .action(async (id: string, filename: string, { contentType, end }) => {
             const instanceClient = getInstance(getInstanceId(id));
 
             return displayEntity(
                 instanceClient.sendInput(filename
                     ? await getReadStreamFromFile(filename)
-                    : process.stdin, { type: contentType, })
+                    : process.stdin, { type: contentType, end })
             );
         });
 
