@@ -45,7 +45,7 @@ export abstract class ClientUtilsBase implements HttpClient {
      * @param {RequestConfig} options Request wrapper options.
      */
     private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
-        const AbortController = globalThis.AbortController || await import('abort-controller')
+        const AbortController = globalThis.AbortController || await import("abort-controller");
         const abortController = new AbortController();
 
         const fetchInit: RequestInit = { ...init, signal: abortController.signal };
