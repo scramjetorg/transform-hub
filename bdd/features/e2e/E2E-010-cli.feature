@@ -125,7 +125,7 @@ This feature checks CLI functionalities
         Then I get Sequence id
         Then I start Sequence
         And I get Instance id
-        Then I send input data "../dist/reference-apps/checksum-sequence/data.json"
+        Then I send input data from file "../dist/reference-apps/checksum-sequence/data.json"
         And host is still running
 
     @ci @cli

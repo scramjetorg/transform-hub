@@ -11,6 +11,7 @@ import { CustomWorld } from "../world";
 import { spawn } from "child_process";
 import { promisify } from "util";
 import { resolve } from "path";
+import { once } from "events";
 
 // eslint-disable-next-line no-nested-ternary
 const si = process.env.SCRAMJET_SPAWN_JS
@@ -378,11 +379,24 @@ Then("I get the second Instance output without waiting for the end", { timeout: 
     this.cliResources.commandInProgress = cmdProcess;
 });
 
-Then("I send input data {string}", async function(pathToFile: string) {
+Then("I send input data from file {string}", async function(pathToFile: string) {
     const res = (this as CustomWorld).cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || "", pathToFile]);
     assert.equal(res.stdio[2], 0);
+});
+
+Then("I send input data {string}", async function(data: string) {
+    const res = (this as CustomWorld).cliResources;
+
+    const inputCmdProc = spawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || ""]);
+
+    inputCmdProc.stdin.write(data);
+    inputCmdProc.stdin.end();
+
+    const [statusCode] = await once(inputCmdProc, 'exit');
+
+    assert.equal(statusCode, 0);
 });
 
 Then("I stop Instance {string} {string}", async function(timeout: string, canCallKeepAlive: string) {
