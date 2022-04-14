@@ -8,6 +8,7 @@ export * from "./get-instances";
 export * from "./start-sequence";
 export * from "./common";
 export * from "./get-version";
+export * from "./get-config";
 export * from "./send-kill-instance";
 export * from "./send-stop-instance";
 export * from "./get-load-check";
