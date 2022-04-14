@@ -45,7 +45,9 @@ export abstract class ClientUtilsBase implements HttpClient {
      * @param {RequestConfig} options Request wrapper options.
      */
     private async safeRequest<T>(input: RequestInfo, init: RequestInit, options: RequestConfig = { parse: "stream" }) {
-        const fetchInit: RequestInit = init;
+        const abortController = new AbortController();
+
+        const fetchInit: RequestInit = { ...init, signal: abortController.signal };
 
         fetchInit.headers = { ...ClientUtilsBase.headers, ...fetchInit.headers };
 
@@ -91,6 +93,9 @@ export abstract class ClientUtilsBase implements HttpClient {
             }
 
             if (options.parse === "stream") {
+                response.body.on("close", () => {
+                    abortController.abort();
+                });
                 return response.body as Promise<T>;
             }
 
