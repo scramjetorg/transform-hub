@@ -1314,6 +1314,19 @@
   resolved "https://registry.yarnpkg.com/@panva/asn1.js/-/asn1.js-1.0.0.tgz#dd55ae7b8129e02049f009408b97c61ccf9032f6"
   integrity sha512-UdkG3mLEqXgnlKsWanWcgb6dOjUzJ+XC5f+aWw30qrtjxeNUSfKX1cd5FBzOaXQumoe9nIqeZUvrRJS03HCCtw==
 
+"@scramjet/symbols@^0.19.2":
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.19.2.tgz#3739e2851021514ea800714b29ddd6cabfde5753"
+  integrity sha512-X2T7c7HNDxYwBpp19r2IfIQ4LxvJDuAObZqX9vP5hg1uSZmdUwe0Uy1drG5BUNqbLPA1RfZXtSU2YJSZWE7lGA==
+
+"@scramjet/types@^0.19.2":
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.19.2.tgz#9e705a9019403b5594327218bb688733ccd12f04"
+  integrity sha512-jiVQokkvvdo89VM9CJTLRP3Wnqqa20mDiRWboGFGB0htnMYehNWGLzKhgJfjJC7PJD17Znd55PAiLsrMFc1fng==
+  dependencies:
+    "@scramjet/symbols" "^0.19.2"
+    http-status-codes "^2.2.0"
+
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.yarnpkg.com/@sindresorhus/is/-/is-0.14.0.tgz#9fb3a3cf3132328151f353de4632e01e52102bea"
@@ -1696,6 +1709,13 @@ abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
   integrity sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==
+
+abort-controller@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/abort-controller/-/abort-controller-3.0.0.tgz#eaf54d53b62bae4138e809ca225c8439a6efb392"
+  integrity sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==
+  dependencies:
+    event-target-shim "^5.0.0"
 
 acorn-jsx@^5.3.1:
   version "5.3.2"
@@ -3689,6 +3709,11 @@ esutils@^2.0.2, esutils@^2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/esutils/-/esutils-2.0.3.tgz#74d2eb4de0b8da1293711910d50775b9b710ef64"
   integrity sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g==
+
+event-target-shim@^5.0.0:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/event-target-shim/-/event-target-shim-5.0.1.tgz#5d4d3ebdf9583d63a5333ce2deb7480ab2b05789"
+  integrity sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==
 
 eventemitter3@^4.0.4:
   version "4.0.7"
