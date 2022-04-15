@@ -50,16 +50,16 @@ export const setPlatformDefaults = async () => {
 
         if (!managers.length) return false;
 
-        const selectedManager = managers[0]
+        const selectedManager = managers[0];
 
         const managerClient = middlewareClient.getManagerClient(selectedManager.id);
         const hosts = await managerClient.getHosts();
 
         if (!hosts.length) return false;
-        
+
         // Select the first healthy one, if there are none, default to the first one
         const selectedHost = hosts.find((host) => host.healthy) ?? hosts[0];
-        
+
         sessionConfig.setLastSpaceId(selectedManager.id);
         sessionConfig.setLastHubId(selectedHost.id);
 
