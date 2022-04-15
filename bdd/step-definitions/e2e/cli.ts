@@ -292,6 +292,15 @@ Then("I get Instance id", function() {
     assert.equal(typeof res.instanceId !== "undefined", true);
 });
 
+Then("I get Instance id after deployment", function() {
+    const res = (this as CustomWorld).cliResources;
+    const stdio = res.stdio![0].split("\n");
+    const json = JSON.parse(stdio[1]);
+
+    (this as CustomWorld).cliResources.instanceId = json._id;
+    assert.equal(typeof json._id !== "undefined", true);
+});
+
 Then("I kill Instance", async function() {
     const res = (this as CustomWorld).cliResources;
 

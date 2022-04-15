@@ -336,8 +336,19 @@ This feature checks CLI functionalities
         Then confirm data named "args-on-output" will be received
         * stop host
 
+        @ci @cli @starts-host
+    Scenario: E2E-010 TC-029 Deploy sequence with multiple JSON arguments
+        Given start host
+        Then I set json format
+        Then I use apiUrl in config
+        When I execute CLI with "seq deploy ../dist/reference-apps/args-to-output --args [\"Hello\",123,{\"abc\":456},[\"789\"]]" arguments
+        Then I get Instance id after deployment
+        And I get Instance output without waiting for the end
+        Then confirm data named "args-on-output" will be received
+        * stop host
+
     @ci @cli
-    Scenario: E2E-010 TC-029 Send input data to Instance and close input stream
+    Scenario: E2E-010 TC-030 Send input data to Instance and close input stream
         Given host is running
         Then I set json format
         Then I use apiUrl in config
