@@ -50,16 +50,21 @@ export const setPlatformDefaults = async () => {
 
         if (!managers.length) return false;
 
-        const managerClient = middlewareClient.getManagerClient(managers[0].id);
+        const selectedManager = managers[0];
+
+        const managerClient = middlewareClient.getManagerClient(selectedManager.id);
         const hosts = await managerClient.getHosts();
 
         if (!hosts.length) return false;
 
-        sessionConfig.setLastSpaceId(managers[0].id);
-        sessionConfig.setLastHubId(hosts[0].id);
+        // Select the first healthy one, if there are none, default to the first one
+        const selectedHost = hosts.find((host) => host.healthy) ?? hosts[0];
+
+        sessionConfig.setLastSpaceId(selectedManager.id);
+        sessionConfig.setLastHubId(selectedHost.id);
 
         // eslint-disable-next-line no-console
-        console.log(`Defaults set to: Space: ${managers[0].id}, Hub: ${hosts[0].id}`);
+        console.log(`Defaults set to: Space: ${selectedManager.id}, Hub: ${selectedHost.id}`);
 
         return true;
     } catch (_) {
