@@ -14,6 +14,9 @@ import { StringDecoder } from "string_decoder";
 import { ReadStream } from "fs";
 import { PassThrough } from "stream";
 import { defer } from "../../lib/utils";
+import { promisify } from "util";
+
+const freeport = promisify(require("freeport"));
 
 const AWAITING_POLL_DEFER_TIME = 250;
 
@@ -30,35 +33,57 @@ process.on("exit", (sig) => {
     });
 });
 
-When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
+async function startHubWithParams({ resources }: CustomWorld, params: string[]) {
     return new Promise<void>((resolve, reject) => {
-        this.resources.hub = spawn(
-            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params.split(" ")],
+        const hub = resources.hub = spawn(
+            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params],
             {
                 detached: true
             }
         );
 
-        spawned.add(this.resources.hub);
+        spawned.add(hub);
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            this.resources.hub?.stdout?.pipe(process.stdout);
-            this.resources.hub?.stderr?.pipe(process.stderr);
+            hub.stdout?.pipe(process.stdout);
+            hub.stderr?.pipe(process.stderr);
         }
 
-        this.resources.hub.on("error", reject);
+        hub.on("error", reject);
 
         const decoder = new StringDecoder();
-
-        this.resources.hub.stdout?.on("data", (data: Buffer) => {
+        const listener = (data: Buffer) => {
             const decodedData = decoder.write(data);
 
             if (decodedData.match(/API on/)) {
-                this.resources.startOutput = decodedData;
+                hub.stdout?.off("data", listener);
+                resources.startOutput = decodedData;
                 resolve();
             }
-        });
+        };
+
+        hub.stdout?.on("data", listener);
     });
+}
+
+When("hub process is started with random ports and parameters {string}",
+    async function(this: CustomWorld, params: string) {
+        const apiPort = await freeport();
+        const instancesServerPort = await freeport();
+
+        process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
+        process.env.LOCAL_HOST_PORT = apiPort.toString();
+        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+
+        return startHubWithParams(this, [
+            "-P", apiPort,
+            "--instances-server-port", instancesServerPort,
+            ...params.split(" ")
+        ]);
+    });
+
+When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
+    return startHubWithParams(this, params.split(" "));
 });
 
 Then("API is available on port {int}", async function(this: CustomWorld, port: number) {
@@ -66,6 +91,16 @@ Then("API is available on port {int}", async function(this: CustomWorld, port: n
     const version = await hostClient.getVersion();
 
     assert.ok(version);
+});
+
+Then("I get list of sequences", async function(this: CustomWorld) {
+    assert.notStrictEqual(process.env.LOCAL_HOST_BASE_URL, undefined);
+
+    const hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
+
+    await hostClient.getConfig();
+
+    this.cliResources.sequences = await hostClient.listSequences();
 });
 
 Then("API starts with {string} server name", async function(this: CustomWorld, server: string) {

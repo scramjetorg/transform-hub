@@ -246,7 +246,7 @@ This feature checks CLI functionalities
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         And I get list of Sequences
-        And There are some sequences
+        And there are some sequences
         Then I get id from both Sequences
         Then I start the first Sequence
         And wait for "6000" ms

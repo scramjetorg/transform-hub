@@ -436,7 +436,7 @@ Then("I get list of Sequences", async function() {
     assert.equal(res.sequences.length > 0, true);
 });
 
-Then("There are some sequences", async function() {
+Then("there are some sequences", async function() {
     const { sequences } = (this as CustomWorld).cliResources;
 
     assert.equal(sequences.length > 0, true);
@@ -449,7 +449,6 @@ Then('I see a sequence called {string}', function(string: string) {
 
     // Write code here that turns the phrase above into concrete actions
     sequenceFound = sequences.find(({ id }: { id: string }) => {
-        console.error(id, string);
         return id === string;
     });
 
