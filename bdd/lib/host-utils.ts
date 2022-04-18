@@ -41,7 +41,7 @@ export class HostUtils {
         }
     }
 
-    async spawnHost() {
+    async spawnHost(...extraArgs: any[]): Promise<string> {
         if (this.hostUrl) {
             // eslint-disable-next-line no-console
             console.error("Host is supposedly running at", this.hostUrl);
@@ -51,10 +51,10 @@ export class HostUtils {
 
             assert.ok(typeof version === "string");
 
-            return Promise.resolve();
+            return Promise.resolve("");
         }
 
-        return new Promise<void>((resolve) => {
+        return new Promise<string>((resolve) => {
             const command: string[] = [...hostExecutableCommand];
 
             if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
@@ -66,24 +66,29 @@ export class HostUtils {
                 console.log("Spawning with command:", ...command);
             }
 
-            this.host = spawn("/usr/bin/env", command);
+            if (extraArgs.length) command.push(...extraArgs);
+
+            const hub = this.host = spawn("/usr/bin/env", command);
 
             this.hostProcessStopped = false;
 
             if (process.env.SCRAMJET_TEST_LOG) {
-                this.host?.stdout?.pipe(process.stdout);
-                this.host?.stderr?.pipe(process.stderr);
+                hub.stdout?.pipe(process.stdout);
+                hub.stderr?.pipe(process.stderr);
             }
 
             const decoder = new StringDecoder();
 
-            this.host.stdout?.on("data", (data) => {
+            const listener = (data: Buffer) => {
                 const decodedData = decoder.write(data);
 
                 if (decodedData.match(/API on/)) {
-                    resolve();
+                    hub.stdout?.off("data", listener);
+                    resolve(decodedData);
                 }
-            });
+            };
+
+            hub.stdout?.on("data", listener);
 
             this.host.on("exit", (code, signal) => {
                 // eslint-disable-next-line no-console

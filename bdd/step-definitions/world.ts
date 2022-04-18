@@ -1,6 +1,7 @@
 import { setWorldConstructor, World, setDefaultTimeout } from "@cucumber/cucumber";
 import { ICreateAttachment, ICreateLog } from "@cucumber/cucumber/lib/runtime/attachment_manager";
 import { InstanceClient, SequenceClient } from "@scramjet/api-client";
+import { STHRestAPI } from "@scramjet/types";
 import { ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
 
@@ -32,7 +33,8 @@ export class CustomWorld implements World {
         instanceId?: string;
         instance1Id?: string;
         instance2Id?: string;
-        sequences?: any;
+        sequences?: STHRestAPI.GetSequencesResponse;
+        instances?: STHRestAPI.GetInstancesResponse;
         commandInProgress?: ChildProcessWithoutNullStreams
     } = {};
 

@@ -24,8 +24,8 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
-import { readFile } from "fs/promises";
-import { isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
+import { readConfigFile, isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
+import { inspect } from "util";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -223,8 +223,16 @@ export class Host implements IComponent {
 
         await this.socketServer.start();
 
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
+        this.attachListeners();
+        this.attachHostAPIs();
 
+        await this.connectToCPM();
+        await this.performStartup();
+        await this.startListening();
+    }
+
+    private async startListening() {
+        this.api.server.listen(this.config.host.port, this.config.host.hostname);
         await new Promise<void>(res => {
             this.api?.server.once("listening", () => {
                 const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
@@ -234,13 +242,6 @@ export class Host implements IComponent {
                 res();
             });
         });
-
-        this.attachListeners();
-        this.attachHostAPIs();
-
-        await this.connectToCPM();
-
-        await this.performStartup();
     }
 
     async performStartup() {
@@ -250,17 +251,20 @@ export class Host implements IComponent {
 
         // Load the config
         try {
-            const configString = await readFile(this.config.startupConfig, "utf-8");
-
-            _config = JSON.parse(configString);
-            this.logger.debug("Sequence config loaded", configString, _config);
+            _config = await readConfigFile(this.config.startupConfig);
+            this.logger.debug("Sequence config loaded", _config);
         } catch {
             throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
         }
 
         // Validate the config
-        if (_config && !Array.isArray(_config.sequences) || _config.sequences.some((x: any) => !isStartSequenceDTO(x)))
-            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", "Startup config validation failed");
+        if (_config && !Array.isArray(_config.sequences))
+            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", "Startup config doesn't contain array of sequences");
+
+        for (const seq of _config.sequences) {
+            if (!isStartSequenceDTO(seq))
+                throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", `Startup config invalid: ${inspect(seq)}`);
+        }
 
         const startupConfig: StartSequenceDTO[] = _config.sequences;
 
@@ -278,6 +282,7 @@ export class Host implements IComponent {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args
                 });
+                this.logger.debug("Starting sequence based on config", seqenceConfig);
             })
             .run();
     }

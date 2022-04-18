@@ -433,22 +433,29 @@ Then("I get list of Sequences", async function() {
     assert.equal(res.stdio[2], 0);
     res.sequences = JSON.parse(res.stdio[0].replace("\n", ""));
 
-    assert.equal(res.sequences.length > 0, true);
+    assert.notEqual(res.sequences, undefined);
+    assert.notEqual(res.sequences?.length, 0);
 });
 
 Then("there are some sequences", async function() {
     const { sequences } = (this as CustomWorld).cliResources;
 
-    assert.equal(sequences.length > 0, true);
+    assert.notEqual(sequences, undefined);
+    assert.notEqual(sequences?.length, 0);
 });
 
-let sequenceFound;
+Then("there are some instances", async function() {
+    const { instances } = (this as CustomWorld).cliResources;
+
+    assert.notEqual(instances, undefined);
+    assert.notEqual(instances?.length, 0);
+});
 
 Then('I see a sequence called {string}', function(string: string) {
     const { sequences } = (this as CustomWorld).cliResources;
 
     // Write code here that turns the phrase above into concrete actions
-    sequenceFound = sequences.find(({ id }: { id: string }) => {
+    const sequenceFound = sequences?.find(({ id }: { id: string }) => {
         return id === string;
     });
 

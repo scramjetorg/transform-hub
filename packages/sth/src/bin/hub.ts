@@ -4,6 +4,8 @@ import { Command } from "commander";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
 import { STHCommandOptions } from "@scramjet/types";
 import { resolve } from "path";
+import { HostError } from "@scramjet/model";
+import { inspect } from "util";
 
 const program = new Command();
 const options: STHCommandOptions = program
@@ -32,8 +34,8 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instances-server-port <port>", "Port on which server that instances connect to should run.")
-    .option("-D, --sequences-root <path>", "Only works with --no-docker option. Where should ProcessSequenceAdapter save new sequences")
-    .option("-S, --startup-config <path>", "Only works with --no-docker option. The configuration of startup sequences.")
+    .option("-D, --sequences-root <path>", "Only works with process adapter. Where should ProcessSequenceAdapter save new sequences.")
+    .option("-S, --startup-config <path>", "Only works with process adapter. The configuration of startup sequences.")
     .parse(process.argv)
     .opts();
 
@@ -83,9 +85,17 @@ configService.update({
 require("@scramjet/host").startHost({}, configService.getConfig(), {
     identifyExisting: options.identifyExisting
 })
-    .catch((e: Error & { exitCode?: number }) => {
-        // eslint-disable-next-line no-console
-        console.error(e.stack);
+    .catch((e: (Error | HostError) & { exitCode?: number }) => {
+        if ((e as HostError).code) {
+            const hostError = e as HostError;
+
+            // eslint-disable-next-line no-console
+            console.error(`Error occured with code: ${hostError.code}\nData:${inspect(hostError.data)}\n${e.stack}`);
+        } else {
+            // eslint-disable-next-line no-console
+            console.error(e.stack);
+        }
+
         process.exitCode = e.exitCode || 1;
         process.exit();
     });

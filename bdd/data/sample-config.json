@@ -1,0 +1,5 @@
+{
+  "sequences": [
+    { "id": "args-config-test", "args": ["123", "false", "abc", "{\"a\": 1}"], "appConfig": {"x": 1} }
+  ]
+}

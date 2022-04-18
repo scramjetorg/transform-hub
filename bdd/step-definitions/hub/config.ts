@@ -7,14 +7,14 @@ import { defaultConfig } from "@scramjet/sth-config";
 import Dockerode = require("dockerode");
 
 import { strict as assert } from "assert";
-import { ChildProcess, spawn } from "child_process";
+import { ChildProcess } from "child_process";
 import { SIGTERM } from "constants";
-import path = require("path");
-import { StringDecoder } from "string_decoder";
 import { ReadStream } from "fs";
 import { PassThrough } from "stream";
-import { defer } from "../../lib/utils";
+import { defer, streamToString } from "../../lib/utils";
 import { promisify } from "util";
+import { readFile } from "fs/promises";
+import { HostUtils } from "../../lib/host-utils";
 
 const freeport = promisify(require("freeport"));
 
@@ -34,36 +34,17 @@ process.on("exit", (sig) => {
 });
 
 async function startHubWithParams({ resources }: CustomWorld, params: string[]) {
-    return new Promise<void>((resolve, reject) => {
-        const hub = resources.hub = spawn(
-            "node", [path.resolve(__dirname, "../../../dist/sth/bin/hub"), ...params],
-            {
-                detached: true
-            }
-        );
+    const hostUtils = new HostUtils();
+    const out = await hostUtils.spawnHost(...params);
 
-        spawned.add(hub);
+    resources.hub = hostUtils.host;
+    resources.startOutput = out;
+}
 
-        if (process.env.SCRAMJET_TEST_LOG) {
-            hub.stdout?.pipe(process.stdout);
-            hub.stderr?.pipe(process.stderr);
-        }
+function getHostClient() {
+    assert.notStrictEqual(process.env.LOCAL_HOST_BASE_URL, undefined);
 
-        hub.on("error", reject);
-
-        const decoder = new StringDecoder();
-        const listener = (data: Buffer) => {
-            const decodedData = decoder.write(data);
-
-            if (decodedData.match(/API on/)) {
-                hub.stdout?.off("data", listener);
-                resources.startOutput = decodedData;
-                resolve();
-            }
-        };
-
-        hub.stdout?.on("data", listener);
-    });
+    return new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
 }
 
 When("hub process is started with random ports and parameters {string}",
@@ -71,13 +52,13 @@ When("hub process is started with random ports and parameters {string}",
         const apiPort = await freeport();
         const instancesServerPort = await freeport();
 
-        process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
         process.env.LOCAL_HOST_PORT = apiPort.toString();
         process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+        process.env.SCRAMJET_HOST_BASE_URL =
+            process.env.LOCAL_HOST_BASE_URL =
+                `http://localhost:${apiPort}/api/v1`;
 
         return startHubWithParams(this, [
-            "-P", apiPort,
-            "--instances-server-port", instancesServerPort,
             ...params.split(" ")
         ]);
     });
@@ -94,13 +75,29 @@ Then("API is available on port {int}", async function(this: CustomWorld, port: n
 });
 
 Then("I get list of sequences", async function(this: CustomWorld) {
-    assert.notStrictEqual(process.env.LOCAL_HOST_BASE_URL, undefined);
-
-    const hostClient = new HostClient(process.env.LOCAL_HOST_BASE_URL as string);
-
-    await hostClient.getConfig();
+    const hostClient = getHostClient();
 
     this.cliResources.sequences = await hostClient.listSequences();
+});
+
+Then("I get list of instances", async function(this: CustomWorld) {
+    const hostClient = getHostClient();
+
+    this.cliResources.instances = await hostClient.listInstances();
+});
+
+Then("the output of an instance of {string} is as in {string} file", async function(this: CustomWorld, sequenceId, outputContentsFile) {
+    const fileData = await readFile(outputContentsFile, "utf-8");
+    const hostClient = getHostClient();
+    const instance = this.cliResources.instances?.find(inst => inst.sequence === sequenceId);
+
+    if (!instance) throw new Error("Instance not found");
+
+    const instClient = InstanceClient.from(instance.id, hostClient);
+
+    const out = await streamToString(await instClient.getStream("output"));
+
+    assert.strictEqual(out, fileData);
 });
 
 Then("API starts with {string} server name", async function(this: CustomWorld, server: string) {
@@ -120,7 +117,7 @@ Then("exit hub process", async function(this: CustomWorld) {
     const hub = this.resources.hub as ChildProcess;
 
     await new Promise<void>((resolve) => {
-        hub.on("close", resolve);
+        hub.on("exit", resolve);
         hub.kill(SIGTERM);
     });
 
@@ -220,3 +217,4 @@ Then("last container memory limit is {int}", async function(this: CustomWorld, m
         assert.equal(inspect.HostConfig?.Memory, maxMem * 1024 * 1024);
     }
 });
+
