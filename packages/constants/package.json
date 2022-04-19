@@ -1,7 +1,7 @@
 {
   "name": "@scramjet/constants",
   "version": "0.20.1",
-  "description": "This package is part of Scramjet Transform Hub. The package holds the constants used for error messages.",
+  "description": "This package is part of Scramjet Transform Hub. The package holds the constants values used (among others) by error messages in the Scramjet Transform Hub.",
   "main": "./src/index.ts",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
