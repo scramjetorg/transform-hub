@@ -9,7 +9,7 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
         And I see a sequence called "hello-alice-out"
         * exit hub process
 
-#   @ci @starts-host
+    @ci @starts-host
     Scenario: HUB-002 TC-002 Start host with instances started
         When hub process is started with random ports and parameters "--sequences-root ../dist/reference-apps/ --identify-existing --startup-config data/sample-config.json --runtime-adapter=process"
         Then host is running
