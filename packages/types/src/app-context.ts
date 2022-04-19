@@ -176,4 +176,6 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
 
     readonly config: AppConfigType;
     readonly AppError: AppErrorConstructor;
+
+    exitTimeout: number;
 }

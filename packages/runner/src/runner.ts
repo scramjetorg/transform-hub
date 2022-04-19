@@ -353,7 +353,7 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
             this.logger.trace(`Sequence completed. Waiting ${exitDelay}ms with exit.`);
 
-            await defer(exitDelay);
+            await defer(this._context?.exitTimeout);
         } catch (error: any) {
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
 
