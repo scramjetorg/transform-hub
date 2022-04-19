@@ -177,5 +177,6 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     readonly config: AppConfigType;
     readonly AppError: AppErrorConstructor;
 
+    /** Allows setting timeout in millis to exit the sequence after exit called (default 10000) */
     exitTimeout: number;
 }

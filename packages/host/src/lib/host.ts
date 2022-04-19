@@ -32,10 +32,6 @@ const packageFile = findPackage(__dirname).next();
 const version = packageFile.value?.version || "unknown";
 const name = packageFile.value?.name || "unknown";
 
-export type HostOptions = Partial<{
-    identifyExisting: boolean
-}>;
-
 const PARALLEL_SEQUENCE_STARTUP = 4;
 
 /**
@@ -202,7 +198,7 @@ export class Host implements IComponent {
      * @param {HostOptions} identifyExisting Indicates if existing Instances should be identified.
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
-    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<void> {
+    async main(): Promise<void> {
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
@@ -211,7 +207,7 @@ export class Host implements IComponent {
 
         this.logger.trace("Host main called", { version });
 
-        if (identifyExisiting) {
+        if (this.config.identifyExisting) {
             await this.identifyExistingSequences();
         }
 

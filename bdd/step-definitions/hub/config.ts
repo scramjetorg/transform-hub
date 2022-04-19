@@ -41,6 +41,21 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[]) 
     resources.startOutput = out;
 }
 
+Then("hub exits by itself", async function(this: CustomWorld) {
+    const hub = this.resources.hub as ChildProcess;
+
+    assert.notStrictEqual(typeof hub, "undefined", "Hub is not defined");
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        if (typeof hub.exitCode === "number") {
+            return true;
+        }
+
+        await defer(250);
+    }
+});
+
 function getHostClient() {
     assert.notStrictEqual(process.env.LOCAL_HOST_BASE_URL, undefined);
 

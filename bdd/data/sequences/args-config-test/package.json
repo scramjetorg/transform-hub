@@ -1,0 +1,13 @@
+{
+  "name": "@scramjet/args-config-test",
+  "version": "0.20.0",
+  "description": "",
+  "license": "ISC",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "private": true
+}

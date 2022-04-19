@@ -54,7 +54,8 @@ const _defaultConfig: STHConfiguration = {
         sequencesRoot: path.join(homedir(), ".scramjet_k8s_sequences"),
         timeout: "0"
     },
-    startupConfig: ""
+    startupConfig: "",
+    exitWithLastInstance: false
 };
 
 merge(_defaultConfig, {

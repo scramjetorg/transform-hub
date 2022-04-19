@@ -26,4 +26,5 @@ export type STHCommandOptions = {
     docker: boolean;
     k8sRunnerCleanupTimeout: string
     startupConfig: string;
+    exitWithLastInstance: boolean;
 }

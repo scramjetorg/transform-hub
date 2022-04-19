@@ -185,7 +185,12 @@ export type STHConfiguration = {
      * Provides the location of a config file with the list of sequences
      * to be started along with the host
      */
-     startupConfig: string,
+    startupConfig: string,
+
+    /**
+     * Should the hub exit when the last instance ends
+     */
+    exitWithLastInstance: boolean,
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
