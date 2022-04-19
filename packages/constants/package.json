@@ -1,41 +1,23 @@
 {
-  "name": "@scramjet/sth-constans",
+  "name": "@scramjet/constants",
   "version": "0.20.1",
-  "description": "This package is part of Scramjet Transform Hub. The package provides constant values used in Scramjet Transform Hub.",
-  "main": "src/index.ts",
+  "description": "This package is part of Scramjet Transform Hub. The package holds the constants values used (among others) by error messages in the Scramjet Transform Hub.",
+  "main": "./src/index.ts",
   "scripts": {
-    "start": "ts-node ./src/index",
     "build": "tsc -p tsconfig.build.json",
-    "build:docker": "docker build -t scramjetorg/sth:$npm_package_version -f Dockerfile ../../",
-    "build:esbuild": "esbuild src/**/*.ts --tsconfig=tsconfig.build.json --outdir=dist/ --bundle --platform=node --external:@scramjet/runner --external:ssh2 --external:cpu-features",
-    "postbuild:esbuild": "mkdir -p ../../dist/sth && cp -r dist/** ../../dist/sth  && cp package.json ../../dist/sth",
+    "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "echo no tests yet -- # npm run test:ava",
-    "test:ava": "ava",
     "prepack": "node ../../scripts/publish.js",
+    "test": "tsc --noEmit",
     "postbuild": "yarn prepack"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "15.12.5",
-    "ava": "^3.15.0",
-    "ts-node": "^10.7.0",
     "typedoc": "^0.22.12",
     "typedoc-plugin-markdown": "^3.11.14",
     "typescript": "^4.5.5"
-  },
-  "ava": {
-    "extensions": [
-      "ts"
-    ],
-    "files": [
-      "**/*.spec.ts"
-    ],
-    "require": [
-      "ts-node/register"
-    ]
   },
   "repository": {
     "type": "git",
