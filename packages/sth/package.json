@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "ts-node ./src/index",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
     "build:docker": "docker build -t scramjetorg/sth:$npm_package_version -f Dockerfile ../../",
     "build:esbuild": "esbuild src/**/*.ts --tsconfig=tsconfig.build.json --outdir=dist/ --bundle --platform=node --external:@scramjet/runner --external:ssh2 --external:cpu-features",
     "postbuild:esbuild": "mkdir -p ../../dist/sth && cp -r dist/** ../../dist/sth  && cp package.json ../../dist/sth",

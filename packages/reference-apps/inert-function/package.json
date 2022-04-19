@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:refapps": "tsc -p tsconfig.json",
+    "build:refapps": "node ../../../scripts/build-all.js",
     "postbuild:refapps": "yarn prepack && yarn packseq",
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js",

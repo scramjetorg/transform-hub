@@ -9,8 +9,7 @@
   },
   "scripts": {
     "test": "ava",
-    "clean": "rm -rf ./dist .bic_cache",
-    "postbuild": "yarn prepack"
+    "clean": "rm -rf ./dist .bic_cache"
   },
   "ava": {
     "extensions": [

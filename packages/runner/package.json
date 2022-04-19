@@ -4,7 +4,7 @@
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./src/bin/start-runner.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
     "build:docker": "docker build -t scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",

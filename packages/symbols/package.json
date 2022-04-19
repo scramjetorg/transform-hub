@@ -4,7 +4,7 @@
   "description": "This package is part of Scramjet Transform Hub. The package holds the symbols and enumerations for STH.",
   "main": "./src/index.ts",
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "prepack": "node ../../scripts/publish.js",

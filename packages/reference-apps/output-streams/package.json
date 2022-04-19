@@ -7,7 +7,7 @@
     "prepack": "node ../../../scripts/publish.js",
     "packseq": "node ../../../scripts/packsequence.js",
     "clean": "rm -rf ./dist .bic_cache",
-    "build:refapps": "tsc -p tsconfig.json",
+    "build:refapps": "node ../../../scripts/build-all.js",
     "postbuild:refapps": "yarn prepack && yarn packseq"
   },
   "author": "Scramjet <open-source@scramjet.org>",
