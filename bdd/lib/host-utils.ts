@@ -2,10 +2,11 @@ import { HostClient } from "@scramjet/api-client";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { SIGTERM } from "constants";
+import { resolve } from "path";
 import { StringDecoder } from "string_decoder";
 
 const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
-    ? ["npx", "ts-node", "../packages/sth/src/bin/hub.ts"]
+    ? [resolve(require.resolve("ts-node"), "../bin.js"), "../packages/sth/src/bin/hub.ts"]
     : ["node", "../dist/sth/bin/hub.js"]
 ;
 

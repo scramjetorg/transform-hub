@@ -14,14 +14,14 @@ Feature: HUB-001 Host configuration
 
     @ci @starts-host
     Scenario: HUB-001 TC-007  Set API server name (--hostname)
-        When hub process is started with parameters "--hostname 0.0.0.0"
-        Then API starts with "0.0.0.0" server name
+        When hub process is started with parameters "--hostname 0.0.0.0 -P 9001"
+        Then API starts with "0.0.0.0:9001" server name
         * exit hub process
 
     @ci @starts-host
     Scenario: HUB-001 TC-008  Set API server name (-H)
-        When hub process is started with parameters "-H 0.0.0.0"
-        Then API starts with "0.0.0.0" server name
+        When hub process is started with parameters "-H 0.0.0.0 -P 9001"
+        Then API starts with "0.0.0.0:9001" server name
         * exit hub process
 
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)

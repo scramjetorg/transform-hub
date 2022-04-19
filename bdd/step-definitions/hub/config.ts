@@ -101,7 +101,7 @@ Then("the output of an instance of {string} is as in {string} file", async funct
 });
 
 Then("API starts with {string} server name", async function(this: CustomWorld, server: string) {
-    const hostClient = new HostClient(`http://${server}:8000/api/v1`);
+    const hostClient = new HostClient(`http://${server}/api/v1`);
     const version = await hostClient.getVersion();
 
     assert.ok(version);
