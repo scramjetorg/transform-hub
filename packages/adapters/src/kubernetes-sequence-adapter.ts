@@ -80,16 +80,16 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
      */
     async list(): Promise<SequenceConfig[]> {
         const storedSequencesIds = await fs.readdir(this.adapterConfig.sequencesRoot);
-        const sequencesConfigs = await Promise.all(
+        const sequencesConfigs = (await Promise.all(
             storedSequencesIds
                 .map((id) => getRunnerConfigForStoredSequence(this.adapterConfig.sequencesRoot, id))
                 .map((configPromised) => configPromised.catch(() => null))
-        );
-
-        this.logger.debug("Listed stored sequences", sequencesConfigs);
-
-        return sequencesConfigs
+        ))
             .filter(isDefined);
+
+        this.logger.debug(`Found ${sequencesConfigs.length} stored sequences`);
+
+        return sequencesConfigs;
     }
 
     /**
