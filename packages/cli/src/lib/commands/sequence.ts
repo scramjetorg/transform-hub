@@ -166,13 +166,15 @@ export const sequence: CommandDefinition = (program) => {
         // TODO: check if output-topic and input-topic should be added after development
         .option("--args <json-string>", "arguments to be passed to first function in Sequence")
         .description("pack (if needed), send and start the sequence")
-        .action(async (path: string, { output, configFile, configString, args }:
-            { output: string, configFile: any, configString: string, args: any }) => {
+        .action(async (path: string, { output, configFile, configString, args: argsStr }:
+            { output: string, configFile: any, configString: string, args: string }) => {
             if (lstatSync(path).isDirectory()) {
                 await packAction(path, { stdout: false, output });
                 await sendPackage("-");
             } else
                 await sendPackage(path);
+            const args = parseSequenceArgs(argsStr);
+
             await startSequence("-", { configFile, configString, args });
         });
 
