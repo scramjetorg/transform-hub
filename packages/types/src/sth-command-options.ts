@@ -11,6 +11,7 @@ export type STHCommandOptions = {
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;
+    runnerPyImage: string;
     runnerMaxMem: number;
     prerunnerImage: string;
     prerunnerMaxMem: number;

@@ -22,7 +22,8 @@ const options: STHCommandOptions = program
     .option("-X, --exit-with-last-instance", "Exits host when no more instances exist.")
     .option("-S, --startup-config <path>", "Only works with process adapter. The configuration of startup sequences.")
     .option("-D, --sequences-root <path>", "Only works with --runtime-adapter='process' option. Where should ProcessSequenceAdapter save new sequences")
-    .option("--runner-image <image name>", "Image used by runner")
+    .option("--runner-image <image name>", "Image used by docker runner for Node.js")
+    .option("--runner-py-image <image>", "Image used by docker runner for Python")
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
@@ -52,9 +53,12 @@ configService.update({
             maxMem: options.prerunnerMaxMem
         },
         runner: {
-            image: options.runnerImage,
             maxMem: options.runnerMaxMem,
             hostIp: options.exposeHostIp
+        },
+        runnerImages: {
+            node: options.runnerImage,
+            python3: options.runnerPyImage
         }
     },
     host: {

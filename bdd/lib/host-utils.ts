@@ -58,16 +58,7 @@ export class HostUtils {
         return new Promise<string>((resolve) => {
             const command: string[] = [...hostExecutableCommand];
 
-            if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
-            if (process.env.LOCAL_HOST_INSTANCES_SERVER_PORT) command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
-            if (process.env.CPM_URL) command.push("-C", process.env.CPM_URL);
-            if (process.env.RUNTIME_ADAPTER) command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
-            if (process.env.SCRAMJET_TEST_LOG) {
-                // eslint-disable-next-line no-console
-                console.log("Spawning with command:", ...command);
-            }
-
-            if (extraArgs.length) command.push(...extraArgs);
+            this.setArgs(command, extraArgs);
 
             const hub = this.host = spawn("/usr/bin/env", command);
 
@@ -101,5 +92,23 @@ export class HostUtils {
                 }
             });
         });
+    }
+
+    // eslint-disable-next-line complexity
+    private setArgs(command: string[], extraArgs: string[]) {
+        if (!extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
+            command.push("-P", process.env.LOCAL_HOST_PORT);
+        if (!extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
+            command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
+        if (!extraArgs.includes("-C") && !command.includes("--cpm-url") && process.env.CPM_URL)
+            command.push("-C", process.env.CPM_URL);
+        if (!extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
+            command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
+        if (extraArgs.length) command.push(...extraArgs);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            // eslint-disable-next-line no-console
+            console.log("Spawning with command:", ...command);
+        }
     }
 }
