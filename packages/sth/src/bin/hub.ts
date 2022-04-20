@@ -31,7 +31,7 @@ const options: STHCommandOptions = program
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
     .parse(process.argv)
-    .opts();
+    .opts() as STHCommandOptions;
 
 const configService = new ConfigService();
 
