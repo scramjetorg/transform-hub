@@ -199,51 +199,45 @@ This feature checks CLI functionalities
         Then I wait for Instance health status to change from 200 to 404
         And host is still running
 
-    @ci @cli
+    @ci @cli @topic
     Scenario: E2E-010 TC-018 API to API
-        # Given start host
         Given host is running
         Then I set json format
         Then I use apiUrl in config
         When I execute CLI with "topic send cities features/e2e/cities.json" arguments
         Then I execute CLI with "topic get cities" arguments without waiting for the end
         Then confirm data named "nyc-city-nl" will be received
-        # * stop host
+        And host is still running
 
-    @ci @cli
+    @ci @cli @topic
     Scenario: E2E-010 TC-019 Instance to API
-        # Given start host
         Given host is running
         Then I set json format
         Then I use apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         Then I get Sequence id
-        Then I start Sequence
+        Then I start Sequence with options "--output-topic names5"
         Then I get Instance health
-        Then I execute CLI with "topic get names" arguments without waiting for the end
+        Then I execute CLI with "topic get names5" arguments without waiting for the end
         Then confirm data named "endless-names-10" will be received
-        # * stop host
+        And host is still running
 
-    @ci @cli
+    @ci @cli @topic
     Scenario: E2E-010 TC-020 API to Instance
-        # Given start host
         Given host is running
         Then I set json format
         Then I use apiUrl in config
-        When I execute CLI with "topic send names features/e2e/data.json" arguments
+        When I execute CLI with "topic send names6 features/e2e/data.json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         Then I get Sequence id
-        Then I start Sequence
-        Then I get Instance health
+        Then I start Sequence with options "--input-topic names6"
         Then I get Instance id
-        And wait for "10000" ms
         And I get Instance output without waiting for the end
         Then confirm data named "hello-avengers" will be received
-        # * stop host
+        And host is still running
 
-    @ci @cli
+    @ci @cli @test
     Scenario: E2E-010 TC-021 Instance to Instance
-        # Given start host
         Given host is running
         Then I set json format
         Then I use apiUrl in config
@@ -251,13 +245,14 @@ This feature checks CLI functionalities
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         And I get list of Sequences
         Then I get id from both Sequences
-        Then I start the first Sequence
-        And wait for "6000" ms
-        Then I start the second Sequence
-        And wait for "10000" ms
+        Then I start the first Sequence with options "--output-topic names7"
+        And wait for "1000" ms
+        Then I start the second Sequence with options "--input-topic names7"
+        And wait for "1000" ms
         And I get the second Instance output without waiting for the end
+        And wait for "1000" ms
         Then confirm data named "hello-input-out-10" will be received
-        # * stop host
+        And host is still running
 
     # This tests writes and uses shared config file so it may fail if run in parallel
     # @ci @cli @no-parallel
@@ -287,9 +282,8 @@ This feature checks CLI functionalities
         And I execute CLI with "seq rm -" arguments
         And host is still running
 
-    @ci @cli
+    @ci @cli @topic
     Scenario: E2E-010 TC-024 Rename topic output
-        # Given start host
         Given host is running
         Then I set json format
         Then I use apiUrl in config
@@ -299,11 +293,10 @@ This feature checks CLI functionalities
         Then I get Instance health
         Then I execute CLI with "topic get names2" arguments without waiting for the end
         Then confirm data named "endless-names-10" will be received
-        # * stop host
+        And host is still running
 
-    @ci @cli
+    @ci @cli @topic
     Scenario: E2E-010 TC-025 Rename topic input
-        # Given start host
         Given host is running
         Then I set json format
         Then I use apiUrl in config
@@ -315,7 +308,7 @@ This feature checks CLI functionalities
         Then I get Instance id
         And I get Instance output without waiting for the end
         Then confirm data named "hello-avengers" will be received
-        # * stop host
+        And host is still running
 
     # @ci @cli @no-parallel
     Scenario: E2E-010 TC-026 Check log coloring

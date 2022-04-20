@@ -142,12 +142,13 @@ Then("I get id from both Sequences", function() {
     assert.equal(typeof res.sequence1Id && typeof res.sequence2Id !== "undefined", true);
 });
 
-Then("I start the first Sequence", async function() {
+Then("I start the first Sequence with options {string}", async function(optionsStr: string) {
     const res = (this as CustomWorld).cliResources;
     const sequence1Id: string = res.sequence1Id || "";
+    const options = optionsStr.split(" ");
 
     try {
-        res.stdio1 = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequence1Id]);
+        res.stdio1 = await getStreamsFromSpawn("/usr/bin/env", ["NODE_ENV=development", ...si, "seq", "start", sequence1Id, ...options]);
         assert.equal(res.stdio1[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
@@ -165,12 +166,13 @@ Then("I start the first Sequence", async function() {
     }
 });
 
-Then("I start the second Sequence", async function() {
+Then("I start the second Sequence with options {string}", async function(optionsStr: string) {
     const res = (this as CustomWorld).cliResources;
     const sequence2Id: string = res.sequence2Id || "";
+    const options = optionsStr.split(" ");
 
     try {
-        res.stdio2 = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequence2Id]);
+        res.stdio2 = await getStreamsFromSpawn("/usr/bin/env", ["NODE_ENV=development", ...si, "seq", "start", sequence2Id, ...options]);
         assert.equal(res.stdio2[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
