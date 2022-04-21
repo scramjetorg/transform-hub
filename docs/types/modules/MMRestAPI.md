@@ -8,12 +8,16 @@
 
 - [ControlMessageResponse](MMRestAPI.md#controlmessageresponse)
 - [GetInfoReposnse](MMRestAPI.md#getinforeposnse)
+- [GetLoadCheckResponse](MMRestAPI.md#getloadcheckresponse)
 - [GetManagerResponse](MMRestAPI.md#getmanagerresponse)
 - [GetManagersResponse](MMRestAPI.md#getmanagersresponse)
-- [GetVersionResponse](MMRestAPI.md#getversionresponse)
 - [OpResponse](MMRestAPI.md#opresponse)
 - [SendStartManagerResponse](MMRestAPI.md#sendstartmanagerresponse)
 - [SendStopManagerResponse](MMRestAPI.md#sendstopmanagerresponse)
+
+### References
+
+- [GetVersionResponse](MMRestAPI.md#getversionresponse)
 
 ## Type aliases
 
@@ -52,6 +56,16 @@ ___
 
 ___
 
+### GetLoadCheckResponse
+
+Ƭ **GetLoadCheckResponse**: [`LoadCheckStat`](../modules.md#loadcheckstat)
+
+#### Defined in
+
+[packages/types/src/rest-api-commons/load-check.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-commons/load-check.ts#L3)
+
+___
+
 ### GetManagerResponse
 
 Ƭ **GetManagerResponse**: `Object`
@@ -75,22 +89,6 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-multi-manager/get-managers.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-multi-manager/get-managers.ts#L3)
-
-___
-
-### GetVersionResponse
-
-Ƭ **GetVersionResponse**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `version` | `string` |
-
-#### Defined in
-
-[packages/types/src/rest-api-multi-manager/get-version.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-multi-manager/get-version.ts#L1)
 
 ___
 
@@ -139,3 +137,9 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-multi-manager/stop-manager.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-multi-manager/stop-manager.ts#L1)
+
+## References
+
+### GetVersionResponse
+
+Re-exports [GetVersionResponse](MRestAPI.md#getversionresponse)
