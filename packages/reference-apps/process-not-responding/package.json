@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/process-not-responding",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "main": "index.js",
   "scripts": {
     "build:refapps": "node ../../../scripts/build-all.js",
