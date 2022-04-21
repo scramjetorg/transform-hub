@@ -23,6 +23,7 @@ Provides methods to interact with Host.
 ### Methods
 
 - [deleteSequence](HostClient.md#deletesequence)
+- [getConfig](HostClient.md#getconfig)
 - [getInstanceInfo](HostClient.md#getinstanceinfo)
 - [getLoadCheck](HostClient.md#getloadcheck)
 - [getLogStream](HostClient.md#getlogstream)
@@ -99,6 +100,24 @@ Promise resolving to delete Sequence result.
 #### Defined in
 
 [api-client/src/host-client.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L76)
+
+___
+
+### getConfig
+
+▸ **getConfig**(): `Promise`<`PublicSTHConfiguration`\>
+
+Returns Host public configuration.
+
+#### Returns
+
+`Promise`<`PublicSTHConfiguration`\>
+
+Promise resolving to Host configuration (public part).
+
+#### Defined in
+
+[api-client/src/host-client.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L114)
 
 ___
 
@@ -182,7 +201,7 @@ Promise resolving to readable stream.
 
 #### Defined in
 
-[api-client/src/host-client.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L129)
+[api-client/src/host-client.ts:138](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L138)
 
 ___
 
@@ -220,7 +239,7 @@ ___
 
 #### Defined in
 
-[api-client/src/host-client.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L133)
+[api-client/src/host-client.ts:142](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L142)
 
 ___
 
@@ -308,7 +327,7 @@ TODO: comment.
 
 #### Defined in
 
-[api-client/src/host-client.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L119)
+[api-client/src/host-client.ts:128](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/host-client.ts#L128)
 
 ___
 

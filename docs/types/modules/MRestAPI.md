@@ -152,11 +152,14 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `apiVersion` | `string` |
+| `build` | `string` |
+| `service` | `string` |
 | `version` | `string` |
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/get-version.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-version.ts#L1)
+[packages/types/src/rest-api-commons/version.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-commons/version.ts#L1)
 
 ___
 

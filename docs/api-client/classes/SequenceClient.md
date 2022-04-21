@@ -149,7 +149,7 @@ Promise resolving to Sequence info.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L95)
+[api-client/src/sequence-client.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L93)
 
 ___
 
@@ -174,7 +174,7 @@ Instance client.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:86](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L86)
+[api-client/src/sequence-client.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L84)
 
 ___
 
@@ -192,7 +192,7 @@ Promise resolving to list of Instances.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L75)
+[api-client/src/sequence-client.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L73)
 
 ___
 
@@ -208,7 +208,7 @@ Not implemented.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:102](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L102)
+[api-client/src/sequence-client.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L100)
 
 ___
 
@@ -220,9 +220,9 @@ Starts sequence.
 
 #### Parameters
 
-| Name | Type |
-| :------ | :------ |
-| `payload` | `StartSequencePayload` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `payload` | `StartSequencePayload` | App start configuration. |
 
 #### Returns
 
@@ -232,4 +232,4 @@ Promise resolving to Instance Client.
 
 #### Defined in
 
-[api-client/src/sequence-client.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L55)
+[api-client/src/sequence-client.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/sequence-client.ts#L53)
