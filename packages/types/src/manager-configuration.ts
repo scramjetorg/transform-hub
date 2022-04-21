@@ -13,24 +13,9 @@ export type ManagerConfiguration = {
     apiBase: string;
 
     /**
-     * MultiManager server hostname
-     */
-    hostname: string;
-
-    /**
-     * Allow to connect Host providing id but hasn't been registered in Manager.
-     */
-    allowUnknownHosts: boolean;
-
-    /**
      * Manager id.
      */
     id: string;
-
-    /**
-     * Port for server listening for incoming Host connections.
-     */
-    sthServerPort: number;
 
     /**
      * Host controller configuration.
