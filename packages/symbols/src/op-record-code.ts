@@ -24,7 +24,7 @@ export enum OpRecordCode {
 
     /**
      * The message codes related to the operation on a Sequence.
-     * They are trigger in response for the user operations performed by the API.
+     * They are triggered in response to the user operations performed by the API.
      */
 
     GET_SEQUENCE = 11200,
