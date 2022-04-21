@@ -15,7 +15,6 @@ export type OpRecord = {
     /**
     * The generated unique request ID for operations coming from the API.
     */
-
     requestId: string;
 
     /**
