@@ -138,7 +138,15 @@ Bugfixes and minor improvements:
 - Provide more information about the service on /version endpoint (service name, commit ID)
 - API base url (e.g. the one provided to CLI) is normalized
 - Fixes for CLI
+- Make version endpoint type consistent
+- Fix passing args to Sequence through CLI
+- Introduce si seq prune for bulk Sequence removal
+- Add docs on how to write a Sequence
+- Enable ending input stream through CLI
+- Enable closing HTTP connection in API Clients
+- Select first healthy hub as default in CLI
+- Make rebuilding STH much faster
 
-## @scramjet/transform Hub - v0.20.0
+## @scramjet/transform Hub - v0.21.0
 
 This is the last release in changelog.
