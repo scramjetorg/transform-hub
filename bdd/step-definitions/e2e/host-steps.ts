@@ -133,14 +133,12 @@ BeforeAll({ timeout: 10e3 }, async () => {
             ok(result: any) {
                 const { status, statusText, url } = result;
 
-                // eslint-disable-next-line no-console
                 console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
             },
             error(error: any) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
-                // eslint-disable-next-line no-console
                 console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
             },
         });
@@ -221,20 +219,12 @@ Then("host is still running", async () => {
     assert.ok(await hostClient.getLoadCheck());
 });
 
-When("wait for {string} ms", { timeout: 25000 }, async (timeoutMs: number) => {
+When("wait for {string} ms", async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
-When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
+When("sequence {string} loaded", async function(this: CustomWorld, packagePath: string) {
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
-    console.log("Package successfully loaded, sequence started.");
-});
-
-When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
-    hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
-
-    this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
-    console.log("Package successfully loaded, sequence started.");
 });
 
 When("instance started", async function(this: CustomWorld) {
@@ -244,18 +234,46 @@ When("instance started", async function(this: CustomWorld) {
 When("instances started", async function(this: CustomWorld) {
     this.resources.instance1 = await this.resources.sequence1!.start({ appConfig: {}, args: [] });
     this.resources.instance2 = await this.resources.sequence2!.start({ appConfig: {}, args: [] });
-
-    console.log("Sequences started.");
 });
 
 When(
     "instance started with url from assets argument {string}",
-    { timeout: 25000 },
     async function(this: CustomWorld, assetUrl: string) {
         return startWith.call(this, `${assetsLocation}${assetUrl}`);
     }
 );
-When("instance started with arguments {string}", { timeout: 25000 }, startWith);
+
+When("instance started with arguments {string}", startWith);
+
+When("start Instance with output topic name {string}", async function(this: CustomWorld, topicOut: string) {
+    this.resources.instance = await this.resources.sequence!.start({
+        appConfig: {},
+        outputTopic: topicOut
+    });
+});
+
+When("start Instance with input topic name {string}", async function(this: CustomWorld, topicIn: string) {
+    this.resources.instance = await this.resources.sequence!.start({
+        appConfig: {},
+        inputTopic: topicIn
+    });
+});
+
+When("start Instance with args {string} and output topic name {string}", async function(this: CustomWorld, instanceArg: string, topicOut: string) {
+    this.resources.instance = await this.resources.sequence!.start({
+        appConfig: {},
+        args: instanceArg.split(" "),
+        outputTopic: topicOut
+    });
+});
+
+When("start Instance with args {string} and input topic name {string}", async function(this: CustomWorld, instanceArg: string, topicIn: string) {
+    this.resources.instance = await this.resources.sequence!.start({
+        appConfig: {},
+        args: instanceArg.split(" "),
+        inputTopic: topicIn
+    });
+});
 
 When(
     "instance started with arguments {string} and write stream to {string} and timeout after {int} seconds",
