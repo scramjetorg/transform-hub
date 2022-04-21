@@ -2,7 +2,7 @@ export enum OpRecordCode {
 
     /**
      * The message codes related to the operation on an Instance.
-     * They are trigger in response for the user operations performed by the API.
+     * They are triggered in response to the user operations performed by the API.
      */
 
     GET_INSTANCE = 12200,
