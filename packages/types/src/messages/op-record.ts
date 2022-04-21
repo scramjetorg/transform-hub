@@ -9,8 +9,8 @@ export type OpRecord = {
     endedAt?: number;
     objectId: string;
     objectType: string;
-    bytesWritten?: number;
-    bytesRead?: number;
+    tx?: number;
+    rx?: number;
     requestedURL?: string;
 
 }
