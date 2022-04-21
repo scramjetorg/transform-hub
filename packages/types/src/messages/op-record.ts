@@ -8,6 +8,11 @@ export type OpRecord = {
     opCode: OpRecordCode;
 
     /**
+    * The operation state from the OpState enumeration.
+    */
+    opState: string;
+
+    /**
     * The generated unique request ID for operations coming from the API.
     */
 
@@ -19,29 +24,9 @@ export type OpRecord = {
     requestorId: string;
 
     /**
-    * The address of the original requestor for operations coming from the API .
-    */
-    requestorIP?: string;
-
-    /**
     * The timestamp of when the operation was registered.
     */
     receivedAt: number;
-
-    /**
-    * The timestamp of when the operation was finished (if applicable).
-    */
-    endedAt?: number;
-
-    /**
-    * An instance of the object which the operation concerns, e.g. Host.
-    */
-    objectId: string;
-
-    /**
-    * A type of the object which the operation concerns, e.g. Host ID.
-    */
-    objectType: string;
 
     /**
     * The data written to the request stream. 
@@ -52,11 +37,6 @@ export type OpRecord = {
     * The data received in the request stream
     */
     rx?: number;
-
-    /**
-    * The full API URL of the operations coming from the API.
-    */
-    requestedURL?: string;
 
 }
 
