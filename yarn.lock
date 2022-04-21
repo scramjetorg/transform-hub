@@ -2163,6 +2163,19 @@
     "@scramjet/utility" "^0.22.0"
     "bpmux" "^8.2.0"
 
+"@scramjet/symbols@^0.19.2":
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.19.2.tgz#3739e2851021514ea800714b29ddd6cabfde5753"
+  integrity sha512-X2T7c7HNDxYwBpp19r2IfIQ4LxvJDuAObZqX9vP5hg1uSZmdUwe0Uy1drG5BUNqbLPA1RfZXtSU2YJSZWE7lGA==
+
+"@scramjet/types@^0.19.0":
+  version "0.19.2"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.19.2.tgz#9e705a9019403b5594327218bb688733ccd12f04"
+  integrity sha512-jiVQokkvvdo89VM9CJTLRP3Wnqqa20mDiRWboGFGB0htnMYehNWGLzKhgJfjJC7PJD17Znd55PAiLsrMFc1fng==
+  dependencies:
+    "@scramjet/symbols" "^0.19.2"
+    http-status-codes "^2.2.0"
+
 "@sindresorhus/is@^0.14.0":
   "integrity" "sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ=="
   "resolved" "https://registry.npmjs.org/@sindresorhus/is/-/is-0.14.0.tgz"
