@@ -1,7 +1,6 @@
 import { OpRecordCode } from "@scramjet/symbols";
 
 export type OpRecord = {
-
     /**
     * The type of recorded operation is identified by the code value from the OpRecord enumeration.
     */
