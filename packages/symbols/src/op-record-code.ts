@@ -5,40 +5,40 @@ export enum OpRecordCode {
      * They are triggered in response to the user operations performed by the API.
      */
 
-    GET_INSTANCE = 12200,
-    GET_INSTANCE_STDOUT = 12201,
-    GET_INSTANCE_STDERR = 12202,
-    GET_INSTANCE_STDIN = 12203,
-    GET_INSTANCE_LOG = 12204,
-    GET_INSTANCE_MONITORING = 12205,
-    GET_INSTANCE_OUTPUT = 12206,
-    GET_INSTANCE_HEALTH = 12208,
-    GET_INSTANCE_EVENTS = 12209,
-    GET_INSTANCE_EVENT = 12210,
-    GET_INSTANCE_EVENT_ONCE = 12211,
-    POST_INSTANCE_INPUT = 12107,
-    POST_INSTANCE_MONITORING_RATE = 12112,
-    POST_INSTANCE_EVENT = 12110,
-    POST_STOP_INSTANCE = 12114,
-    POST_KILL_INSTANCE = 12115,
+    GET_INSTANCE = 11200,
+    GET_INSTANCE_STDOUT = 11201,
+    GET_INSTANCE_STDERR = 11202,
+    GET_INSTANCE_STDIN = 11203,
+    GET_INSTANCE_LOG = 11204,
+    GET_INSTANCE_MONITORING = 11205,
+    GET_INSTANCE_OUTPUT = 11206,
+    GET_INSTANCE_HEALTH = 11208,
+    GET_INSTANCE_EVENTS = 11209,
+    GET_INSTANCE_EVENT = 11210,
+    GET_INSTANCE_EVENT_ONCE = 11211,
+    POST_INSTANCE_INPUT = 11107,
+    POST_INSTANCE_MONITORING_RATE = 11112,
+    POST_INSTANCE_EVENT = 11110,
+    POST_STOP_INSTANCE = 11114,
+    POST_KILL_INSTANCE = 11115,
 
     /**
      * The message codes related to the operation on a Sequence.
      * They are triggered in response to the user operations performed by the API.
      */
 
-    GET_SEQUENCE = 11200,
-    DELETE_SEQUENCE = 11400,
-    POST_SEQUENCE = 11100,
-    POST_START_INSTANCE = 11117,
+    GET_SEQUENCE = 10200,
+    DELETE_SEQUENCE = 10400,
+    POST_SEQUENCE = 10100,
+    POST_START_INSTANCE = 10117,
 
     /**
      * The message codes related to the operation on Topics.
      * They are triggered in response to the user operations performed by the API.
      */
 
-    GET_TOPIC = 13200,
-    POST_TOPIC = 13100,
+    GET_TOPIC = 12200,
+    POST_TOPIC = 12100,
 
     /**
      * The message codes for the events which originate from within the system itself and
