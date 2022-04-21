@@ -34,7 +34,7 @@ export enum OpRecordCode {
 
     /**
      * The message codes related to the operation on Topics.
-     * They are trigger in response for the user operations performed by the API.
+     * They are triggered in response to the user operations performed by the API.
      */
 
     GET_TOPIC = 13200,
