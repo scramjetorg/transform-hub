@@ -246,10 +246,10 @@ This feature checks CLI functionalities
         Given host is running
         Then I set json format
         Then I use apiUrl in config
-        When I execute CLI with "topic send names3 features/e2e/data.json" arguments
+        When I execute CLI with "topic send names4 features/e2e/data.json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         Then I get Sequence id
-        Then I start Sequence with options "--input-topic names3"
+        Then I start Sequence with options "--input-topic names4"
         Then I get Instance health
         Then I get Instance id
         And I get Instance output without waiting for the end
