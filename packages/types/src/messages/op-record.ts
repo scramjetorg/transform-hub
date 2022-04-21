@@ -38,5 +38,10 @@ export type OpRecord = {
     */
     rx?: number;
 
+    /**
+    * An instance of the object which the operation concerns, e.g. Host.
+    */
+    objectId: string;
+
 }
 
