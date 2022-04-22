@@ -2,10 +2,11 @@ import { HostClient } from "@scramjet/api-client";
 import { strict as assert } from "assert";
 import { ChildProcess, spawn } from "child_process";
 import { SIGTERM } from "constants";
+import path from "path";
 import { StringDecoder } from "string_decoder";
 
 const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
-    ? ["npx", "ts-node", "../packages/sth/src/bin/hub.ts"]
+    ? [path.resolve(require.resolve("ts-node"), "../bin.js"), "../packages/sth/src/bin/hub.ts"]
     : ["node", "../dist/sth/bin/hub.js"]
 ;
 
@@ -41,7 +42,7 @@ export class HostUtils {
         }
     }
 
-    async spawnHost() {
+    async spawnHost(...extraArgs: any[]): Promise<string> {
         if (this.hostUrl) {
             // eslint-disable-next-line no-console
             console.error("Host is supposedly running at", this.hostUrl);
@@ -51,39 +52,35 @@ export class HostUtils {
 
             assert.ok(typeof version === "string");
 
-            return Promise.resolve();
+            return Promise.resolve("");
         }
 
-        return new Promise<void>((resolve) => {
+        return new Promise<string>((resolve) => {
             const command: string[] = [...hostExecutableCommand];
 
-            if (process.env.LOCAL_HOST_PORT) command.push("-P", process.env.LOCAL_HOST_PORT);
-            if (process.env.LOCAL_HOST_INSTANCES_SERVER_PORT) command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
-            if (process.env.CPM_URL) command.push("-C", process.env.CPM_URL);
-            if (process.env.RUNTIME_ADAPTER) command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
-            if (process.env.SCRAMJET_TEST_LOG) {
-                // eslint-disable-next-line no-console
-                console.log("Spawning with command:", ...command);
-            }
+            this.setArgs(command, extraArgs);
 
-            this.host = spawn("/usr/bin/env", command);
+            const hub = this.host = spawn("/usr/bin/env", command);
 
             this.hostProcessStopped = false;
 
             if (process.env.SCRAMJET_TEST_LOG) {
-                this.host?.stdout?.pipe(process.stdout);
-                this.host?.stderr?.pipe(process.stderr);
+                hub.stdout?.pipe(process.stdout);
+                hub.stderr?.pipe(process.stderr);
             }
 
             const decoder = new StringDecoder();
 
-            this.host.stdout?.on("data", (data) => {
+            const listener = (data: Buffer) => {
                 const decodedData = decoder.write(data);
 
                 if (decodedData.match(/API on/)) {
-                    resolve();
+                    hub.stdout?.off("data", listener);
+                    resolve(decodedData);
                 }
-            });
+            };
+
+            hub.stdout?.on("data", listener);
 
             this.host.on("exit", (code, signal) => {
                 // eslint-disable-next-line no-console
@@ -95,5 +92,23 @@ export class HostUtils {
                 }
             });
         });
+    }
+
+    // eslint-disable-next-line complexity
+    private setArgs(command: string[], extraArgs: string[]) {
+        if (!extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
+            command.push("-P", process.env.LOCAL_HOST_PORT);
+        if (!extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
+            command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
+        if (!extraArgs.includes("-C") && !command.includes("--cpm-url") && process.env.CPM_URL)
+            command.push("-C", process.env.CPM_URL);
+        if (!extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
+            command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
+        if (extraArgs.length) command.push(...extraArgs);
+
+        if (process.env.SCRAMJET_TEST_LOG) {
+            // eslint-disable-next-line no-console
+            console.log("Spawning with command:", ...command);
+        }
     }
 }

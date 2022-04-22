@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "@scramjet/types": "^0.20.1",
+    "@scramjet/model": "^0.20.1",
     "@types/node": "15.12.5",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",

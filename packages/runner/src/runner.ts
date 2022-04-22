@@ -38,9 +38,6 @@ export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primit
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
-// @TODO make this a parameter, we could be extending that bc our CLI tests execute commands slow, even ~3s/command
-const exitDelay = 10000;
-
 function overrideStandardStream(oldStream: Writable, newStream: Writable) {
     if (process.env.PRINT_TO_STDOUT) {
         const oldWrite = oldStream.write;
@@ -351,9 +348,9 @@ export class Runner<X extends AppConfig> implements IComponent {
             await this.runSequence(sequence, args);
 
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
-            this.logger.trace(`Sequence completed. Waiting ${exitDelay}ms with exit.`);
+            this.logger.trace(`Sequence completed. Waiting ${this.context.exitTimeout}ms with exit.`);
 
-            await defer(exitDelay);
+            await defer(this.context.exitTimeout);
         } catch (error: any) {
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
 

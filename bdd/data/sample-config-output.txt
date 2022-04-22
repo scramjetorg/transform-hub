@@ -1,0 +1,5 @@
+config: {"x":1}
+string, "123"
+string, "false"
+string, "abc"
+string, "{\"a\": 1}"

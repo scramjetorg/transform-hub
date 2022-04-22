@@ -11,6 +11,7 @@ export type STHCommandOptions = {
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;
+    runnerPyImage: string;
     runnerMaxMem: number;
     prerunnerImage: string;
     prerunnerMaxMem: number;
@@ -25,4 +26,6 @@ export type STHCommandOptions = {
     k8sSequencesRoot: string;
     docker: boolean;
     k8sRunnerCleanupTimeout: string
+    startupConfig: string;
+    exitWithLastInstance: boolean;
 }

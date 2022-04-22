@@ -2,6 +2,7 @@ import { SequenceConfig } from "./runner-config";
 import { Readable } from "stream";
 import { InstanceId } from "./instance";
 import { IObjectLogger } from "./object-logger";
+
 export type SequenceInfo = {
     id: string;
     config: SequenceConfig;

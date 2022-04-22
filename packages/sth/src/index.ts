@@ -12,10 +12,8 @@ export class STH {
     async start(): Promise<Host> {
         this.host = await startHost(
             {},
-            this.config,
-            {
-                identifyExisting: this.config.identifyExisting
-            })
+            this.config
+        )
             .catch((e: Error & { exitCode?: number }) => {
                 // eslint-disable-next-line no-console
                 console.error(e.stack);

@@ -7,5 +7,5 @@
  * @param {number} timeout - timeout in milliseconds.
  * @returns {Promise<void>} - promise that resolves after timeout.
  */
-export const defer = (timeout: number): Promise<void> =>
-    new Promise(res => setTimeout(res, timeout));
+export const defer = (timeout?: number): Promise<void> =>
+    timeout ? new Promise(res => setTimeout(res, timeout)) : Promise.resolve();

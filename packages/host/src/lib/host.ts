@@ -5,14 +5,13 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, StartSequenceDTO, STHConfiguration, STHRestAPI } from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck } from "@scramjet/load-check";
 import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
-import { readJsonFile } from "@scramjet/utility";
 
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
@@ -25,15 +24,15 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
+import { readConfigFile, isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
+import { inspect } from "util";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
 const version = packageFile.value?.version || "unknown";
 const name = packageFile.value?.name || "unknown";
 
-export type HostOptions = Partial<{
-    identifyExisting: boolean
-}>;
+const PARALLEL_SEQUENCE_STARTUP = 4;
 
 /**
  * Host provides functionality to manage Instances and Sequences.
@@ -199,7 +198,7 @@ export class Host implements IComponent {
      * @param {HostOptions} identifyExisting Indicates if existing Instances should be identified.
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
-    async main({ identifyExisting: identifyExisiting = true }: HostOptions = {}): Promise<this> {
+    async main(): Promise<void> {
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
@@ -208,7 +207,7 @@ export class Host implements IComponent {
 
         this.logger.trace("Host main called", { version });
 
-        if (identifyExisiting) {
+        if (this.config.identifyExisting) {
             await this.identifyExistingSequences();
         }
 
@@ -220,8 +219,16 @@ export class Host implements IComponent {
 
         await this.socketServer.start();
 
-        this.api.server.listen(this.config.host.port, this.config.host.hostname);
+        this.attachListeners();
+        this.attachHostAPIs();
 
+        await this.connectToCPM();
+        await this.performStartup();
+        await this.startListening();
+    }
+
+    private async startListening() {
+        this.api.server.listen(this.config.host.port, this.config.host.hostname);
         await new Promise<void>(res => {
             this.api?.server.once("listening", () => {
                 const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
@@ -231,30 +238,68 @@ export class Host implements IComponent {
                 res();
             });
         });
+    }
 
-        this.attachListeners();
-        this.attachHostAPIs();
+    async performStartup() {
+        if (!this.config.startupConfig) return;
 
-        if (this.cpmConnector) {
-            this.connectToCPM();
+        let _config;
+
+        // Load the config
+        try {
+            _config = await readConfigFile(this.config.startupConfig);
+            this.logger.debug("Sequence config loaded", _config);
+        } catch {
+            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
         }
 
-        return this;
+        // Validate the config
+        if (_config && !Array.isArray(_config.sequences))
+            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", "Startup config doesn't contain array of sequences");
+
+        for (const seq of _config.sequences) {
+            if (!isStartSequenceDTO(seq))
+                throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", `Startup config invalid: ${inspect(seq)}`);
+        }
+
+        const startupConfig: StartSequenceDTO[] = _config.sequences;
+
+        await DataStream.from(startupConfig)
+            .setOptions({ maxParallel: PARALLEL_SEQUENCE_STARTUP })
+            .map(async (seqenceConfig: StartSequenceDTO) => {
+                const sequence = this.sequencesStore.get(seqenceConfig.id);
+
+                if (!sequence) {
+                    this.logger.warn("Sequence id not found for startup config", seqenceConfig);
+                    return;
+                }
+
+                await this.startCSIController(sequence, {
+                    appConfig: seqenceConfig.appConfig || {},
+                    args: seqenceConfig.args
+                });
+                this.logger.debug("Starting sequence based on config", seqenceConfig);
+            })
+            .run();
     }
 
     /**
      * Initializes connector and connects to Manager.
      */
-    connectToCPM() {
-        this.cpmConnector?.init();
+    async connectToCPM() {
+        const connector = this.cpmConnector;
 
-        this.cpmConnector?.on("connect", async () => {
-            await this.cpmConnector?.sendSequencesInfo(this.getSequences());
-            await this.cpmConnector?.sendInstancesInfo(this.getInstances());
-            await this.cpmConnector?.sendTopicsInfo(this.getTopics());
+        if (!connector) return;
+
+        connector.init();
+
+        connector.on("connect", async () => {
+            await connector.sendSequencesInfo(this.getSequences());
+            await connector.sendInstancesInfo(this.getInstances());
+            await connector.sendTopicsInfo(this.getTopics());
         });
 
-        this.cpmConnector?.connect();
+        await connector.connect();
     }
 
     /**
@@ -410,8 +455,8 @@ export class Host implements IComponent {
 
             for (const config of configs) {
                 this.sequencesStore.set(config.id, { id: config.id, config: config, instances: new Set() });
-                this.logger.trace("Sequence found", config);
             }
+            this.logger.trace(`${configs.length} sequences identified`);
         } catch (e: any) {
             this.logger.warn("Error while trying to identify existing sequences.", e);
         }

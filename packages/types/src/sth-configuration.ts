@@ -171,12 +171,26 @@ export type STHConfiguration = {
     runtimeAdapter: string,
 
     /**
+     * Kubernetes adapter configuration
+     */
+    kubernetes: Partial<K8SAdapterConfiguration>
+
+    /**
      * Only used when `noDocker` is true
      * Where should ProcessSequenceAdapter save new Sequences
      */
-    sequencesRoot: string
+    sequencesRoot: string,
 
-    kubernetes: Partial<K8SAdapterConfiguration>
+    /**
+     * Provides the location of a config file with the list of sequences
+     * to be started along with the host
+     */
+    startupConfig: string,
+
+    /**
+     * Should the hub exit when the last instance ends
+     */
+    exitWithLastInstance: boolean,
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

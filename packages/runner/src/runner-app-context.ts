@@ -29,6 +29,7 @@ implements AppContext<AppConfigType, State> {
     monitorStream: WritableStream<any>;
     emitter: EventEmitter;
     initialState?: State;
+    exitTimeout: number = 10000;
     logger: IObjectLogger = new ObjLogger("Sequence");
 
     constructor(config: AppConfigType, monitorStream: WritableStream<any>,
