@@ -25,6 +25,7 @@ The tests check topic functionalities, where we send and receive data from /topi
         Given host is running
         And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
         And start Instance with input topic name "avngr"
+        And wait for "4000" ms
         Then send json data "{ \"name\": \"Hulk\" }" named "avngr"
         And get output without waiting for the end
         Then confirm data defined as "hulkName" will be received
