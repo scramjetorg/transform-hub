@@ -1,1 +1,1 @@
-git+https://github.com/scramjetorg/framework-python#egg=scramjet_framework_python
+scramjet-framework-py
