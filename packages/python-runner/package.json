@@ -4,6 +4,7 @@
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./runner.py",
   "scripts": {
+    "python:version": "export VERSION=$(python3 -V 2>&1|awk '{print $2}') && export PYTHONVERSION=${VERSION:-3.9}",
     "postinstall": "pip3 install --upgrade -r requirements.txt --target __pydeps__",
     "build:only": "pip3 install --upgrade -r requirements.txt --target dist",
     "build": "yarn build:only",

@@ -1,4 +1,5 @@
-FROM node:lts-bullseye-slim AS target
+ARG IMAGE=node:lts-bullseye-slim
+FROM $IMAGE AS target
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub
@@ -13,7 +14,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 
-FROM node:lts-bullseye-slim AS builder
+FROM $IMAGE AS builder
 
 WORKDIR /app/
 

@@ -1,4 +1,5 @@
-FROM python:3.9-slim-bullseye
+ARG IMAGE=python:3.9-slim-bullseye
+FROM $IMAGE
 
 ENV PACKAGE_DIR=/package \
     HUB_DIR=/opt/transform-hub

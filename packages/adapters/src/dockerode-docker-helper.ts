@@ -11,6 +11,7 @@ import {
     DockerCreateNetworkConfig, DockerNetwork
 } from "./types";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { exec } from "child_process";
 
 /**
  * Configuration for volumes to be mounted to container.
@@ -196,6 +197,39 @@ export class DockerodeDockerHelper implements IDockerHelper {
         })();
 
         return this.pulledImages[name];
+    }
+
+    async buildImage(name: string, version: string, dockerfilePath: string) {
+        this.logger.trace("Start building image", name);
+
+        //TODO: cannot tag image with dockerode, fix?
+        // const buildStream = await this.dockerode.buildImage({
+        //     context: path.resolve(__dirname, "../../../packages/python-runner"),
+        //     src: ["Dockerfile"]
+        // }, { t: `scramjetorg/runner-py:${pythonVersion}` }
+        // );
+
+        const context = " .";
+        const buildArgs = ` --build-arg IMAGE=${version}`;
+        const command = "docker build -t " + name + buildArgs + " -f " + dockerfilePath + context;
+
+        var child = exec(command, (error, stdout, stderr) => {
+            if (error) {
+                this.logger.error(`error: ${error.message}`);
+                return;
+            }
+            if (stderr) {
+                this.logger.error(`stderr: ${stderr}`);
+                return;
+            }
+            //TODO: remove?
+            this.logger.info(`stdout: ${stdout}`);
+        });
+        // Wait for build to finish
+        await new Promise((resolve) => {
+            child.on("close", resolve);
+        });
+        this.logger.trace("Image built");
     }
 
     /**
