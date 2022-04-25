@@ -19,7 +19,7 @@ import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 
-/**
+/**config: 
  * Adapter for preparing Sequence to be run in Docker container.
  */
 class DockerSequenceAdapter implements ISequenceAdapter {
@@ -59,6 +59,17 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      */
     async fetch(name: string) {
         await this.dockerHelper.pullImage(name, true);
+    }
+
+    /**
+     * Build image.
+     *
+     * @param {string} name Docker image name
+     * @param {string} version Engine version
+     * @param {string} dockerfilePath Dockerfile path
+     */
+    async build(name: string, version: string, dockerfilePath: string) {
+        await this.dockerHelper.buildImage(name, version, dockerfilePath);
     }
 
     /**
@@ -157,7 +168,12 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             const config = await this.parsePackage(streams, wait, volumeId);
 
-            await this.fetch(config.container.image);
+            if (!process.env.CI_HOST && config.engines) {
+                const version = this.resolveVersion(config);
+                const dockerfilePath = this.resolveDockerfilePath(config);
+
+                await this.build(config.container.image, version, dockerfilePath);
+            } else await this.fetch(config.container.image);
 
             return config;
         } catch (err: any) {
@@ -168,6 +184,18 @@ class DockerSequenceAdapter implements ISequenceAdapter {
                 throw new SequenceAdapterError("PRERUNNER_ERROR", err);
             }
         }
+    }
+
+    private resolveVersion(config: SequenceConfig) {
+        if (config.engines.python3) return `python:${config.engines.python3}-slim-bullseye`;
+        const nodeVersion = config.engines.node.replace(">", "");
+
+        return `node:${nodeVersion}-bullseye-slim`;
+    }
+
+    private resolveDockerfilePath(config: SequenceConfig): string {
+        if (config.engines.python3) return "packages/python-runner/Dockerfile";
+        return "packages/runner/Dockerfile";
     }
 
     /**
@@ -215,9 +243,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         const container = Object.assign({}, this.config.docker.runner);
 
-        container.image = "python3" in engines
-            ? this.config.docker.runnerImages.python3
-            : this.config.docker.runnerImages.node;
+        container.image = this.resolveImageName(engines);
 
         return {
             type: "docker",
@@ -229,6 +255,17 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             entrypointPath: validPackageJson.main,
             id: volumeId
         };
+    }
+
+    private resolveImageName(engines: Record<string, string>): string {
+        if (process.env.CI_IMAGE) {
+            return "python3" in engines
+                ? this.config.docker.runnerImages.python3
+                : this.config.docker.runnerImages.node;
+        }
+        return "python3" in engines
+            ? `scramjetorg/runner-py:0.20.1-python${engines.python3}`
+            : `scramjetorg/runner:0.20.1-node${engines.node.replace(">", "")}`;
     }
 
     /**

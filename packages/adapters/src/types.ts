@@ -294,6 +294,8 @@ export interface IDockerHelper {
      */
     pullImage(name: string, fetchOnlyIfNotExists?: boolean): Promise<void>
 
+    buildImage(name: string, version: string, dockerfilePath: string): Promise<void>
+
     listNetworks(): Promise<NetworkInspectInfo[]>
 
     inspectNetwork(id: string): Promise<DockerNetwork>
