@@ -1,12 +1,12 @@
 import { IDProvider } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { NextCallback, ParsedMessage,  } from "@scramjet/types";
+import { NextCallback, ParsedMessage } from "@scramjet/types";
 import { ServerResponse } from "http";
 import { AuditedRequest, Auditor } from "../auditor";
 
 const ACTIVE_REQUEST_AUDIT_INTERVAL = 1000;
 
-export const logger = new ObjLogger("Audit");
+export const logger = new ObjLogger("AuditMiddleware");
 export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: ServerResponse, next: NextCallback) => {
     const request = req as AuditedRequest;
 
@@ -35,22 +35,24 @@ export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: S
 
     Promise.all([
         new Promise((resolve, reject) => {
-            req.on("end", resolve);
-            req.on("close", reject);
-            req.on("error", reject);
+            req.once("end", resolve);
+            req.once("close", reject);
+            req.once("error", reject);
         }),
         new Promise((resolve, reject) => {
-            res.on("finish", resolve);
-            res.on("error", reject);
-        })
+            res.once("finish", resolve);
+            res.once("error", reject);
+        }),
     ])
-    .then(() => {
-        auditor.auditRequest(request, "END");
-    }).catch(() => {
-        auditor.auditRequest(request, "ERROR");
-    }).finally(() => {
-        clearInterval(interval);
-    });
+        .then(() => {
+            auditor.auditRequest(request, "END");
+        })
+        .catch(() => {
+            auditor.auditRequest(request, "ERROR");
+        })
+        .finally(() => {
+            clearInterval(interval);
+        });
 
     return next();
 };

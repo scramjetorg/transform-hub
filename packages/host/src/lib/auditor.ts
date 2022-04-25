@@ -2,6 +2,8 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { OpRecord, ParsedMessage } from "@scramjet/types";
 import { OpRecordCode } from "@scramjet/symbols";
 import { StringStream } from "scramjet";
+import { ReReadable } from "rereadable-stream";
+import { IncomingMessage, ServerResponse } from "http";
 
 const MIN_MSG_CODE = 10000;
 const OBJ_TYPE_CODE_DELTA = 1000;
@@ -16,6 +18,25 @@ export type AuditedRequest = ParsedMessage & { auditData: AuditData };
 export class Auditor {
     auditStream = new StringStream();
     logger = new ObjLogger(this);
+
+    outStream = new ReReadable({ length: 1e5 });
+
+    getOutputStream(req: IncomingMessage, res: ServerResponse) {
+        this.logger.info("request", req.url, req.method);
+
+        req.socket.on("end", () => {
+            this.logger.info("request close", req.url, req.method);
+            res.end();
+        });
+
+        this.logger.info("Getting output stream");
+        return this.outStream.rewind();
+    }
+
+    constructor() {
+        this.outStream.rewind().resume();
+        this.auditStream.pipe(this.outStream);
+    }
 
     write(msg: OpRecord) {
         this.auditStream.write(JSON.stringify(msg) + "\n");
