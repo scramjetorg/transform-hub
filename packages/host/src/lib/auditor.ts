@@ -1,66 +1,33 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { ParsedMessage } from "@scramjet/types";
+import { OpRecord, ParsedMessage } from "@scramjet/types";
+import { OpRecordCode } from "@scramjet/symbols";
 import { StringStream } from "scramjet";
+
+const MIN_MSG_CODE = 10000;
+const OBJ_TYPE_CODE_DELTA = 1000;
+const REQ_METHOD_CODE_DELTA = 100;
 
 type AuditData = {
     id: string;
     object?: string;
 }
 export type AuditedRequest = ParsedMessage & { auditData: AuditData };
-export type AuditorMessage = {
-    /**
-     * Operation type.
-     */
-    op: number;
-
-    /**
-     * Request status.
-     */
-    status: "START" | "ACTIVE" | "END" | "ERROR";
-
-    /**
-     * Object id the request is about.
-     */
-    object: string;
-
-    /**
-     * Unique request id.
-     */
-    reqId?: string;
-
-    /*
-     * Downstream bytes sent (bytes received)
-     */
-    rx?: number;
-
-    /*
-     * Upstream bytes sent (bytes sent)
-     */
-    tx?: number;
-
-    /**
-     * User assigned string.
-     */
-    user: string;
-}
 
 export class Auditor {
     auditStream = new StringStream();
     logger = new ObjLogger(this);
 
-    write(msg: AuditorMessage) {
-        this.auditStream.write(JSON.stringify({
-            ...msg,
-            ts: Date.now()
-        }) + "\n");
+    write(msg: OpRecord) {
+        this.auditStream.write(JSON.stringify(msg) + "\n");
     }
 
     /**
+     * Calculates the operation code from the request.
      *
      * @param {IncommingMessage} req Request.
-     * @returns {number} Operation code. 0 if not found.
+     * @returns {number} Operation code. 0 if request should not be audited.
      */
-    getOpCode(req: ParsedMessage): number {
+    getOpCode(req: ParsedMessage): OpRecordCode {
         const { type, op } = req.params || {};
 
         const i = ["sequence", "instance", "topic"].indexOf(type);
@@ -69,9 +36,9 @@ export class Auditor {
             return 0;
         }
 
-        let code = 10000 + i * 1000;
+        let code = MIN_MSG_CODE + i * OBJ_TYPE_CODE_DELTA;
 
-        code += (["post", "get", "put", "delete"].indexOf(req.method!.toLowerCase()) + 1) * 100;
+        code += (["post", "get", "put", "delete"].indexOf(req.method!.toLowerCase()) + 1) * REQ_METHOD_CODE_DELTA;
         code += [
             // Instance endpoints
             "stdout", "stderr", "stdin", "log", "monitoring",
@@ -86,18 +53,20 @@ export class Auditor {
         return code;
     }
 
-    auditRequest(req: AuditedRequest, status: AuditorMessage["status"]) {
-        const op = this.getOpCode(req);
+    auditRequest(req: AuditedRequest, status: OpRecord["opState"]) {
+        const opCode = this.getOpCode(req);
+        const requestorId = req.headers["x-mw-user"] as string || "system";
 
-        if (op) {
+        if (opCode) {
             this.write({
-                status,
-                op,
-                reqId: req.auditData.id,
-                object: (req.params || {}).id,
-                user: req.headers["x-mw-user"] as string,
+                opState: status,
+                opCode,
+                requestId: req.auditData.id,
+                objectId: (req.params || {}).id,
+                requestorId,
                 rx: req.socket.bytesRead,
-                tx: req.socket.bytesWritten
+                tx: req.socket.bytesWritten,
+                receivedAt: Date.now()
             });
         }
     }

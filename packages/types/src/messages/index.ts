@@ -19,3 +19,4 @@ export { STHIDMessageData, CPMMessageSTHID } from "./sth-id";
 export { InstanceBulkMessage, InstanceMessage, InstanceMessageData } from "./instance";
 export { SequenceBulkMessage, SequenceMessage, SequenceMessageData } from "./sequence";
 export { SequenceStoppedMessageData } from "./sequence-stopped";
+export { OpRecord } from "./op-record";
