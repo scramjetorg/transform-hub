@@ -2,7 +2,7 @@ import findPackage from "find-package-json";
 import { ReasonPhrases } from "http-status-codes";
 
 import { Readable, Writable } from "stream";
-import { IncomingMessage, Server, ServerResponse } from "http";
+import { IncomingMessage, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
 import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, StartSequenceDTO, STHConfiguration, STHRestAPI } from "@scramjet/types";
@@ -171,7 +171,6 @@ export class Host implements IComponent {
         }
 
         if (this.config.cpmUrl) {
-
             this.cpmConnector = new CPMConnector(
                 this.config.cpmUrl,
                 this.config.cpmId,
