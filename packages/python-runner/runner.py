@@ -6,6 +6,7 @@ import json
 from pyee import EventEmitter
 import importlib.util
 from io import DEFAULT_BUFFER_SIZE as CHUNK_SIZE
+import types
 
 from scramjet.streams import Stream
 from logging_setup import LoggingSetup
@@ -184,7 +185,6 @@ class Runner:
         # switch to sequence dir so that relative paths will work
         os.chdir(os.path.dirname(self.seq_path))
 
-
     async def run_instance(self, config, args):
         context = AppContext(self, config)
         input_stream = Stream()
@@ -205,7 +205,9 @@ class Runner:
             self.logger.info(f'Sending PANG with {consumes}')
             send_encoded_msg(monitoring, msg_codes.PANG, consumes)
 
-        if asyncio.iscoroutine(result):
+        if isinstance(result, types.AsyncGeneratorType):
+            result = Stream.read_from(result)
+        elif asyncio.iscoroutine(result):
             result = await result
         if result:
             await self.forward_output_stream(result)
