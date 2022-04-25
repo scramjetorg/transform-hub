@@ -171,7 +171,6 @@ export class Host implements IComponent {
         }
 
         if (this.config.cpmUrl) {
-            (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
 
             this.cpmConnector = new CPMConnector(
                 this.config.cpmUrl,
