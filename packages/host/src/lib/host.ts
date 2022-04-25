@@ -170,9 +170,9 @@ export class Host implements IComponent {
             throw new HostError("API_CONFIGURATION_ERROR", "Can't expose an API on paths including a semicolon...");
         }
 
-        if (this.config.cpmUrl) {
-            (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
+        (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
 
+        if (this.config.cpmUrl) {
             this.cpmConnector = new CPMConnector(
                 this.config.cpmUrl,
                 this.config.cpmId,
