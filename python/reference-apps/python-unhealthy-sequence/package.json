@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-unhealthy-sequence-py",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "main": "./unhealthy.py",
   "author": "Michał Piotrowski <open-source@scramjet.org>",
   "license": "GPL-3.0",
