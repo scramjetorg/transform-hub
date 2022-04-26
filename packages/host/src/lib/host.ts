@@ -26,6 +26,8 @@ import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
 import { readConfigFile, isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
 import { inspect } from "util";
+import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
+import { Auditor } from "./auditor";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -40,6 +42,12 @@ const PARALLEL_SEQUENCE_STARTUP = 4;
  * Can communicate with Manager.
  */
 export class Host implements IComponent {
+    /**
+     * Host auditor.
+     * @type {Auditor}
+     */
+    auditor: Auditor;
+
     /**
      * Configuration.
      */
@@ -95,6 +103,7 @@ export class Host implements IComponent {
     serviceDiscovery = new ServiceDiscovery();
 
     commonLogsPipe = new CommonLogsPipe()
+
     publicConfig: PublicSTHConfiguration;
 
     /**
@@ -152,6 +161,9 @@ export class Host implements IComponent {
         prettyLog.pipe(process.stdout);
 
         this.logger.info("Log Level", sthConfig.logLevel);
+
+        this.auditor = new Auditor();
+        this.auditor.logger.pipe(this.logger);
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
@@ -312,9 +324,16 @@ export class Host implements IComponent {
      * - Instance
      */
     attachHostAPIs() {
+        this.api.use(`${this.apiBase}/:type/:id/:op`, auditMiddleware(this.auditor));
+        this.api.use(`${this.apiBase}/:type/:id`, auditMiddleware(this.auditor));
+        this.api.use(`${this.apiBase}/:type`, auditMiddleware(this.auditor));
+
+        auditMiddlewareLogger.pipe(this.logger);
+
         this.api.use("*", corsMiddleware);
         this.api.use("*", optionsMiddleware);
 
+        this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.auditor.getOutputStream(req, res));
         this.api.downstream(`${this.apiBase}/sequence`,
             async (req) => this.handleNewSequence(req), { end: true }
         );
