@@ -191,6 +191,11 @@ export type STHConfiguration = {
      * Should the hub exit when the last instance ends
      */
     exitWithLastInstance: boolean,
+
+    /**
+     * Heartbeat interval in miliseconds
+     */
+    heartBeatInterval: number,
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

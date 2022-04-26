@@ -55,7 +55,8 @@ const _defaultConfig: STHConfiguration = {
         timeout: "0"
     },
     startupConfig: "",
-    exitWithLastInstance: false
+    exitWithLastInstance: false,
+    heartBeatInterval: 10000
 };
 
 merge(_defaultConfig, {

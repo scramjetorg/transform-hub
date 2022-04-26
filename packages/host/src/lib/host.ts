@@ -24,7 +24,7 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
-import { readConfigFile, isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
+import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { Auditor } from "./auditor";
@@ -459,10 +459,12 @@ export class Host implements IComponent {
     heartBeat() {
         Promise.all(
             Object.values(this.instancesStore).map(csiController =>
-                csiController.heartBeatPromise?.then((id) => this.auditor.auditInstanceHeartBeat(id))
-                    .catch(() => {
-                        this.logger.error("HeartBeat promise rejected", csiController.id);
-                    })
+                Promise.race([
+                    csiController.heartBeatPromise?.then((id) => this.auditor.auditInstanceHeartBeat(id)),
+                    defer(this.config.heartBeatInterval).then(() => { throw new Error("HeartBeat promise not resolved"); })
+                ]).catch((error) => {
+                    this.logger.error("Instance heartbeat error", csiController.id, error.message);
+                })
             )
         ).catch((err) => {
             this.logger.error("Error sending audit messages", err);
@@ -472,7 +474,7 @@ export class Host implements IComponent {
     }
 
     async handleAuditRequest(req: ParsedMessage, res: ServerResponse) {
-        const i = setInterval(() => this.heartBeat(), 10000);
+        const i = setInterval(() => this.heartBeat(), this.config.heartBeatInterval);
 
         req.socket.on("end", () => {
             clearInterval(i);
