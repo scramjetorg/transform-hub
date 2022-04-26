@@ -91,4 +91,32 @@ export class Auditor {
             });
         }
     }
+
+    auditInstanceHeartBeat(id: string) {
+        this.logger.info("Instance heartbeat", id);
+        this.write({
+            opState: "ACTIVE",
+            opCode: OpRecordCode.HEARTBEAT,
+            requestId: "",
+            objectId: id,
+            requestorId: "system",
+            rx: 0,
+            tx: 0,
+            receivedAt: Date.now()
+        });
+    }
+
+    auditHostHeartBeat() {
+        this.logger.info("Host heartbeat");
+        this.write({
+            opState: "ACTIVE",
+            opCode: OpRecordCode.HEARTBEAT,
+            requestId: "",
+            objectId: "Host",
+            requestorId: "system",
+            rx: 0,
+            tx: 0,
+            receivedAt: Date.now()
+        });
+    }
 }

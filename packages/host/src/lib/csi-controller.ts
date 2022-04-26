@@ -45,7 +45,7 @@ const runnerExitDelay = 11000;
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
     error: (error: any) => void,
-    end: (code: number) => void,
+    end: (code: number) => void
 }
 
 /**
@@ -69,9 +69,15 @@ export class CSIController extends TypedEmitter<Events> {
     } = {};
     provides?: string;
     requires?: string;
+
     initResolver?: { res: Function, rej: Function };
     startResolver?: { res: Function, rej: Function };
+    heartBeatResolver?: { res: Function, rej: Function };
+
     startPromise: Promise<void>;
+    heartBeatPromise?: Promise<string>;
+
+    heartBeatTicker?: NodeJS.Timeout;
 
     apiOutput = new PassThrough();
     apiInputEnabled = true;
@@ -170,6 +176,8 @@ export class CSIController extends TypedEmitter<Events> {
     async main() {
         this.logger.trace("Instance started");
 
+        this.heartBeatStart();
+
         let code = 0;
 
         try {
@@ -230,7 +238,26 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.instancePromise
             .then((exitcode) => this.mapRunnerExitCode(exitcode))
-            .catch((error) => this.initResolver?.rej(error));
+            .catch((error) => this.initResolver?.rej(error))
+            .finally(() => this.heartBeatStop());
+    }
+
+    heartBeatStart(): void {
+        this.heartBeatTicker = setInterval(() => {
+            this.heartBeatTick();
+        }, 5000);
+    }
+
+    heartBeatTick(): void {
+        this.heartBeatResolver?.res(this.id);
+        this.heartBeatPromise = new Promise((res, rej) => {
+            this.heartBeatResolver = { res, rej };
+        });
+    }
+
+    heartBeatStop(): void {
+        clearInterval(this.heartBeatTicker!);
+        this.heartBeatResolver?.res();
     }
 
     private mapRunnerExitCode(exitcode: number) {

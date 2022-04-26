@@ -324,16 +324,14 @@ export class Host implements IComponent {
      * - Instance
      */
     attachHostAPIs() {
-        this.api.use(`${this.apiBase}/:type/:id/:op`, auditMiddleware(this.auditor));
-        this.api.use(`${this.apiBase}/:type/:id`, auditMiddleware(this.auditor));
-        this.api.use(`${this.apiBase}/:type`, auditMiddleware(this.auditor));
+        this.api.use(`${this.apiBase}/:type/:id?/:op?`, auditMiddleware(this.auditor));
 
         auditMiddlewareLogger.pipe(this.logger);
 
         this.api.use("*", corsMiddleware);
         this.api.use("*", optionsMiddleware);
 
-        this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.auditor.getOutputStream(req, res));
+        this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
         this.api.downstream(`${this.apiBase}/sequence`,
             async (req) => this.handleNewSequence(req), { end: true }
         );
@@ -456,6 +454,31 @@ export class Host implements IComponent {
                 error: `Error removing Sequence: ${error.message}`
             };
         }
+    }
+
+    heartBeat() {
+        Promise.all(
+            Object.values(this.instancesStore).map(csiController =>
+                csiController.heartBeatPromise?.then((id) => this.auditor.auditInstanceHeartBeat(id))
+                    .catch(() => {
+                        this.logger.error("HeartBeat promise rejected", csiController.id);
+                    })
+            )
+        ).catch((err) => {
+            this.logger.error("Error sending audit messages", err);
+        });
+
+        this.auditor.auditHostHeartBeat();
+    }
+
+    async handleAuditRequest(req: ParsedMessage, res: ServerResponse) {
+        const i = setInterval(() => this.heartBeat(), 10000);
+
+        req.socket.on("end", () => {
+            clearInterval(i);
+        });
+
+        return this.auditor.getOutputStream(req, res);
     }
 
     /**
