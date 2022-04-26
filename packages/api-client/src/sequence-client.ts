@@ -45,7 +45,7 @@ export class SequenceClient {
     }
 
     /**
-     * Starts sequence.
+     * Starts Sequence.
      *
      * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      * @returns {Promise<InstanceClient>} Promise resolving to Instance Client.

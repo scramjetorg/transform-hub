@@ -204,10 +204,9 @@ Then("I get array of information about Sequences", function() {
     assert.equal(Array.isArray(arr), true);
 });
 
-Then('I get the last instance id from config', async function() {
+Then("I get the last instance id from config", async function() {
     const res = (this as CustomWorld).cliResources;
 
-    // Write code here that turns the phrase above into concrete actions
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "p", "--format", "json"]);
     res.instanceId = JSON.parse(res.stdio[0]).lastInstanceId;
 
@@ -215,7 +214,7 @@ Then('I get the last instance id from config', async function() {
     assert.ok(res.instanceId.length > 0, "Instance id is not empty");
 });
 
-Then('I get the last sequence id from config', async function() {
+Then("I get the last sequence id from config", async function() {
     const res = (this as CustomWorld).cliResources;
 
     // Write code here that turns the phrase above into concrete actions
@@ -230,13 +229,13 @@ Then('I get the last sequence id from config', async function() {
     assert.ok(res.sequenceId.length > 0, "Sequence id is not empty");
 });
 
-Then('The sequence id equals {string}', function(str: string) {
+Then("The sequence id equals {string}", function(str: string) {
     const res = (this as CustomWorld).cliResources;
 
     assert.strictEqual(str, res.sequenceId);
 });
 
-Then('The instance id equals {string}', function(str: string) {
+Then("The instance id equals {string}", function(str: string) {
     const res = (this as CustomWorld).cliResources;
 
     assert.strictEqual(str, res.instanceId);
@@ -328,13 +327,6 @@ Then("I get Instance health", { timeout: 10000 }, async function() {
     assert.equal(typeof msg.healthy !== "undefined", true);
 });
 
-Then("health outputs 404", async function() {
-    const res = (this as CustomWorld).cliResources;
-
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", res.instanceId || ""]);
-    assert.equal(res.stdio[1].includes("404"), true);
-});
-
 Then("I wait for Instance health status to change from 200 to 404", { timeout: 20000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
@@ -373,13 +365,6 @@ Then("I get Instance output without waiting for the end", { timeout: 10000 }, as
     const cmdProcess = await spawn("/usr/bin/env", [...si, "inst", "output", this.cliResources.instanceId || ""]);
 
     this.cliResources.commandInProgress = cmdProcess;
-});
-
-Then("I get the second instance output", { timeout: 30000 }, async function() {
-    const res = (this as CustomWorld).cliResources;
-
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "output", res.instance2Id || ""]);
-    assert.equal(res.stdio[2], 0);
 });
 
 Then("I get the second Instance output without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld) {
@@ -482,17 +467,6 @@ Then("I get list of Instances", async function() {
     const instanceFound = instances.some(({ id }) => id === res.instanceId);
 
     assert.equal(instanceFound, true);
-});
-
-Then("I get Instance info", async function() {
-    const res = (this as CustomWorld).cliResources;
-
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "info", res.instanceId || ""]);
-    assert.equal(res.stdio[2], 0);
-    const info = JSON.parse(res.stdio[0].replace("\n", ""));
-    const seqId = info.sequence;
-
-    assert.equal(seqId, res.sequenceId);
 });
 
 When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
