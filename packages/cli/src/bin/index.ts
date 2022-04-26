@@ -25,6 +25,7 @@ const errorHandler = (err: ClientError) => {
             JSON.stringify({
                 error: true,
                 code: err?.code,
+                status: err?.status,
                 stack: debug ? err?.stack : undefined,
                 message: err?.message,
                 reason: err?.reason?.message,

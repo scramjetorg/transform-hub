@@ -37,7 +37,8 @@ export type ClientErrorCode =
     | "UNKNOWN_ERROR"
     | "CANNOT_CONNECT"
     | "INVALID_RESPONSE"
-    | "INSUFFICIENT_RESOURCES";
+    | "INSUFFICIENT_RESOURCES"
+    | "UNPROCESSABLE_ENTITY";
 
 export class ClientError extends Error {
     reason?: Error;
@@ -46,11 +47,11 @@ export class ClientError extends Error {
     status?: string;
     body: any;
 
-    constructor(code: ClientErrorCode, reason?: Error | string, message?: string, source?: Error) {
+    constructor(code: ClientErrorCode, reason?: Error | string, message?: string, source?: Error, status?: string) {
         super(message || (reason instanceof Error ? reason.message : reason));
 
         this.code = code;
-
+        this.status = status;
         if (reason instanceof Error) this.reason = reason;
         if (source instanceof Error) this.source = source;
         if (reason instanceof QueryError) this.body = reason.body;
@@ -63,16 +64,17 @@ export class ClientError extends Error {
             if (error.code) {
                 const code = error.code.toString();
 
-                if (code === "400") return new this("BAD_PARAMETERS", error, message, source);
-                if (code === "401") return new this("NEED_AUTHENTICATION", error, message, source);
-                if (code === "403") return new this("NOT_AUTHORIZED", error, message, source);
-                if (code === "404") return new this("NOT_FOUND", error, message, source);
-                if (code === "410") return new this("GONE", error, message, source);
-                if (code === "507") return new this("INSUFFICIENT_RESOURCES", error, message, source);
-                if (code === "ECONNREFUSED") return new this("CANNOT_CONNECT", error, message, source);
-                if (+error.code >= 500) return new this("SERVER_ERROR", error, message, source);
-                if (+error.code >= 400) return new this("REQUEST_ERROR", error, message, source);
-                return new this("UNKNOWN_ERROR", error, `Response code is "${error.code}"`, source);
+                if (code === "400") return new this("BAD_PARAMETERS", error, message, source, code);
+                if (code === "401") return new this("NEED_AUTHENTICATION", error, message, source, code);
+                if (code === "403") return new this("NOT_AUTHORIZED", error, message, source, code);
+                if (code === "404") return new this("NOT_FOUND", error, message, source, code);
+                if (code === "410") return new this("GONE", error, message, source, code);
+                if (code === "422") return new this("UNPROCESSABLE_ENTITY", error, message, source, code);
+                if (code === "507") return new this("INSUFFICIENT_RESOURCES", error, message, source, code);
+                if (code === "ECONNREFUSED") return new this("CANNOT_CONNECT", error, message, source, code);
+                if (+error.code >= 500) return new this("SERVER_ERROR", error, message, source, code);
+                if (+error.code >= 400) return new this("REQUEST_ERROR", error, message, source, code);
+                return new this("UNKNOWN_ERROR", error, `Response code is "${error.code}"`, source, code);
             }
             return new this("CANNOT_CONNECT", error);
         }
@@ -82,8 +84,9 @@ export class ClientError extends Error {
     async toJSON() {
         return new Promise((res, rej) => {
             try {
+                // TODO: create  a JSON Error based on body (which can be a stream) and other ClientError properties.
                 if (this.body) {
-                    res(JSON.parse(this.body));
+                    res(typeof this.body === "string" ? res(JSON.parse(this.body)) : res(this.body));
                 } else {
                     rej();
                 }
