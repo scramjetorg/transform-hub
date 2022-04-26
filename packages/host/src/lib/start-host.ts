@@ -3,6 +3,14 @@ import { STHConfiguration } from "@scramjet/types";
 import { Host } from "./host";
 import { SocketServer } from "./socket-server";
 
+function createHost(apiServerConfig: ServerConfig, sthConfig: STHConfiguration) {
+    const apiServer = createServer(apiServerConfig);
+    const tcpServer = new SocketServer(sthConfig.host.instancesServerPort);
+    const host = new Host(apiServer, tcpServer, sthConfig);
+
+    return host;
+}
+
 /**
  * Starts Host module.
  *
@@ -14,12 +22,9 @@ export async function startHost(
     apiServerConfig: ServerConfig,
     sthConfig: STHConfiguration
 ): Promise<Host> {
-    const apiServer = createServer(apiServerConfig);
-    const tcpServer = new SocketServer(sthConfig.host.instancesServerPort);
-    const host = new Host(apiServer, tcpServer, sthConfig);
+    const host = createHost(apiServerConfig, sthConfig);
 
     await host.main();
 
     return host;
 }
-

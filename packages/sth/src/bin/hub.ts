@@ -91,6 +91,11 @@ configService.update({
 // so the config is changed before compile time, not in runtime.
 require("@scramjet/host").startHost({}, configService.getConfig())
     .then(async (host: Host) => {
+        host.logger.info(
+            "You know what? You can now sign up for the beta version of Scramjet Cloud Platform!",
+            { "The link is here": "https://scr.je/3xod3" }
+        );
+
         // Host..main is done, so we can now wait until all sequences exited.
         // If no sequences started, we exit as well...
         if (options.exitWithLastInstance) {
