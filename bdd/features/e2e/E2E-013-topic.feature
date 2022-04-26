@@ -23,9 +23,9 @@ The tests check topic functionalities, where we send and receive data from /topi
     @ci
     Scenario: E2E-013 TC-003 API to Instance
         Given host is running
+        Then send json data "{ \"name\": \"Hulk\" }" named "avngr"
         And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
         And start Instance with input topic name "avngr"
-        Then send json data "{ \"name\": \"Hulk\" }" named "avngr"
         And get output without waiting for the end
         Then confirm data defined as "hulkName" will be received
         And host is still running
