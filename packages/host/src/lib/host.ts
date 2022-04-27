@@ -24,7 +24,7 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
-import { readConfigFile, isStartSequenceDTO, readJsonFile } from "@scramjet/utility";
+import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { Auditor } from "./auditor";
@@ -324,16 +324,14 @@ export class Host implements IComponent {
      * - Instance
      */
     attachHostAPIs() {
-        this.api.use(`${this.apiBase}/:type/:id/:op`, auditMiddleware(this.auditor));
-        this.api.use(`${this.apiBase}/:type/:id`, auditMiddleware(this.auditor));
-        this.api.use(`${this.apiBase}/:type`, auditMiddleware(this.auditor));
+        this.api.use(`${this.apiBase}/:type/:id?/:op?`, auditMiddleware(this.auditor));
 
         auditMiddlewareLogger.pipe(this.logger);
 
         this.api.use("*", corsMiddleware);
         this.api.use("*", optionsMiddleware);
 
-        this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.auditor.getOutputStream(req, res));
+        this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
         this.api.downstream(`${this.apiBase}/sequence`,
             async (req) => this.handleNewSequence(req), { end: true }
         );
@@ -456,6 +454,33 @@ export class Host implements IComponent {
                 error: `Error removing Sequence: ${error.message}`
             };
         }
+    }
+
+    heartBeat() {
+        Promise.all(
+            Object.values(this.instancesStore).map(csiController =>
+                Promise.race([
+                    csiController.heartBeatPromise?.then((id) => this.auditor.auditInstanceHeartBeat(id)),
+                    defer(this.config.heartBeatInterval).then(() => { throw new Error("HeartBeat promise not resolved"); })
+                ]).catch((error) => {
+                    this.logger.error("Instance heartbeat error", csiController.id, error.message);
+                })
+            )
+        ).catch((err) => {
+            this.logger.error("Error sending audit messages", err);
+        });
+
+        this.auditor.auditHostHeartBeat();
+    }
+
+    async handleAuditRequest(req: ParsedMessage, res: ServerResponse) {
+        const i = setInterval(() => this.heartBeat(), this.config.heartBeatInterval);
+
+        req.socket.on("end", () => {
+            clearInterval(i);
+        });
+
+        return this.auditor.getOutputStream(req, res);
     }
 
     /**

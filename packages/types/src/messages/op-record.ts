@@ -14,7 +14,7 @@ export type OpRecord = {
     /**
     * The generated unique request ID for operations coming from the API.
     */
-    requestId: string;
+    requestId?: string;
 
     /**
     * The requestor can be either a user who performed the operation or the system.
@@ -27,7 +27,7 @@ export type OpRecord = {
     receivedAt: number;
 
     /**
-    * The data written to the request stream. 
+    * The data written to the request stream.
     */
     tx?: number;
 

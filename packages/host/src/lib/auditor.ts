@@ -39,7 +39,11 @@ export class Auditor {
     }
 
     write(msg: OpRecord) {
-        this.auditStream.write(JSON.stringify(msg) + "\n");
+        try {
+            this.auditStream.write(JSON.stringify(msg) + "\n");
+        } catch (e) {
+            this.logger.error("Failed to write audit message", e);
+        }
     }
 
     /**
@@ -90,5 +94,27 @@ export class Auditor {
                 receivedAt: Date.now()
             });
         }
+    }
+
+    auditInstanceHeartBeat(id: string) {
+        this.logger.info("Instance heartbeat", id);
+        this.write({
+            opState: "ACTIVE",
+            opCode: OpRecordCode.INSTANCE_HEARTBEAT,
+            objectId: id,
+            requestorId: "system",
+            receivedAt: Date.now()
+        });
+    }
+
+    auditHostHeartBeat() {
+        this.logger.info("Host heartbeat");
+        this.write({
+            opState: "ACTIVE",
+            opCode: OpRecordCode.HOST_HEARTBEAT,
+            objectId: "",
+            requestorId: "system",
+            receivedAt: Date.now()
+        });
     }
 }

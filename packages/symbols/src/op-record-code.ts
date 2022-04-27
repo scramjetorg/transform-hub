@@ -50,11 +50,13 @@ export enum OpRecordCode {
      * by the CSI Controller, the Host and the Manager.
      * It indicates whether the services are still operational.
      */
-    HEARTBEAT = -1, // NOT YET IMPLEMENTED
+    HOST_HEARTBEAT = 13010,
+    INSTANCE_HEARTBEAT = 13012,
+    MANAGER_HEARTBEAT = 13020,
 
     /**
-     * The INSTANCE_STOPPED message is sent when an Instance terminated not 
-     * in response to the API request but gracefully by itself or by throwing an error. 
+     * The INSTANCE_STOPPED message is sent when an Instance terminated not
+     * in response to the API request but gracefully by itself or by throwing an error.
      */
     INSTANCE_STOPPED = -1 // NOT YET IMPLEMENTED
 }
