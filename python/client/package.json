@@ -1,0 +1,21 @@
+{
+    "name": "@scramjet/python-api-client",
+    "version": "0.21.0",
+    "description": "This package is part of Scramjet Transform Hub. The package provides the Python API Client for use with Scramjet Transform Hub.",
+    "main": "./__init__.py",
+    "scripts": {
+      "build": "mkdir -p dist/__pypackages__/ && cp *.py dist/ && pip3 install -t dist/__pypackages__/ -r requirements.txt",
+      "install": "pip3 install -r requirements-dev.txt",
+      "clean": "rm -rf dist/ __pycache__",
+      "prepack": "PACKAGES_DIR=python node ../../scripts/publish.js",
+      "postbuild": "yarn prepack",
+      "test": "behave"
+    },
+    "author": "Scramjet <opensource@scramjet.org>",
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/scramjetorg/transform-hub.git"
+    }
+}
+  
