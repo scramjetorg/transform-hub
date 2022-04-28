@@ -33,7 +33,7 @@ export default function (input, param1, param2) {
 
 ## Producing data (output stream)
 
-To stream data from a Sequence you need to return values over time. Some constructs in JavaScript that enable that are NodeJS streams, Generators and Iterables. Whatever you return from your Sequence will be your **_output_** stream. You can choose whatever the solution is right for you.
+To stream data from a Sequence, you need to return values over time. Some constructs in JavaScript which enable that are NodeJS streams, Generators and Iterables. Whatever you return from your Sequence will be your **_output_** stream. You can choose whichever solution is right for you.
 
 ### Flow control (backpressure)
 
