@@ -87,10 +87,20 @@ configService.update({
     }
 });
 
+const tips = [
+    ["Run Sequences in our cloud.", { "Check it": "out as a beta tester", here: "https://scr.je/join-beta-sth" }],
+    ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "check the": "beta version", "at-this-link": "https://scr.je/join-beta-sth" }],
+    ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scr.je/join-beta-sth" }]
+];
+
 // before here we actually load the host and we have the config imported elsewhere
 // so the config is changed before compile time, not in runtime.
 require("@scramjet/host").startHost({}, configService.getConfig())
     .then(async (host: Host) => {
+        const [message, extra] = tips[~~(Math.random() * 100 * tips.length) % tips.length] as [string, object];
+
+        host.logger.info(message, extra);
+
         // Host..main is done, so we can now wait until all sequences exited.
         // If no sequences started, we exit as well...
         if (options.exitWithLastInstance) {
