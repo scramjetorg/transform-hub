@@ -48,7 +48,7 @@ export abstract class ClientUtilsBase implements HttpClient {
         const AbortController = globalThis.AbortController || (await import("abort-controller")).AbortController;
         const abortController = new AbortController();
 
-        const fetchInit: RequestInit = { ...init, signal: abortController.signal };
+        const fetchInit: RequestInit = { signal: abortController.signal, ...init };
 
         fetchInit.headers = { ...ClientUtilsBase.headers, ...fetchInit.headers };
 
@@ -94,9 +94,6 @@ export abstract class ClientUtilsBase implements HttpClient {
             }
 
             if (options.parse === "stream") {
-                response.body.on("close", () => {
-                    abortController.abort();
-                });
                 return response.body as Promise<T>;
             }
 
