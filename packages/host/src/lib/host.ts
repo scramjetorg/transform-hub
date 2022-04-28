@@ -480,6 +480,10 @@ export class Host implements IComponent {
             clearInterval(i);
         });
 
+        req.socket.on("error", () => {
+            clearInterval(i);
+        });
+
         return this.auditor.getOutputStream(req, res);
     }
 
