@@ -24,7 +24,7 @@ export class MultiManagerClient implements ClientProvider {
                 manager: config,
             },
             {
-                "content-type": "application/json",
+                headers: { "content-type": "application/json" },
             },
             { json: true, parse: "json" }
         );

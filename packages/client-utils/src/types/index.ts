@@ -46,25 +46,35 @@ export type RequestConfig = {
  */
 export interface HttpClient {
     addLogger(logger: RequestLogger): void;
-    get<T>(url: string): Promise<T>;
-    getStream(url: string): Promise<any>;
-    post<T>(url: string, data: any, headers?: Headers, options?: { json: boolean } & RequestConfig): Promise<T>;
-    delete<T>(url: string): Promise<T>;
-    sendStream<T>(url: string, stream: any, options?: SendStreamOptions): Promise<T>;
+    get<T>(url: string, requestInit?: RequestInit): Promise<T>;
+    getStream(url: string, requestInit?: RequestInit): Promise<any>;
+    post<T>(url: string, data: any, requestInit?: RequestInit, options?: { json: boolean } & RequestConfig): Promise<T>;
+    delete<T>(url: string, requestInit?: RequestInit): Promise<T>;
+    sendStream<T>(url: string, stream: any, requestInit?: RequestInit, options?: SendStreamOptions): Promise<T>;
 }
 
 /**
  * Nodejs HttpClient interface.
  */
 export interface HttpClientNode extends HttpClient {
-    getStream(url: string): Promise<Readable>;
-    sendStream<T>(url: string, stream: Readable | string, options?: SendStreamOptions): Promise<T>;
+    getStream(url: string, requestInit?: RequestInit): Promise<Readable>;
+    sendStream<T>(
+        url: string,
+        stream: Readable | string,
+        requestInit?: RequestInit,
+        options?: SendStreamOptions
+    ): Promise<T>;
 }
 
 /**
  * Browser HttpClient interface.
  */
 export interface HttpClientBrowser extends HttpClient {
-    getStream(url: string): Promise<Response["body"]>;
-    sendStream<T>(url: string, stream: ReadableStream<any> | string, options?: SendStreamOptions): Promise<T>;
+    getStream(url: string, requestInit?: RequestInit): Promise<Response["body"]>;
+    sendStream<T>(
+        url: string,
+        stream: ReadableStream<any> | string,
+        requestInit?: RequestInit,
+        options?: SendStreamOptions
+    ): Promise<T>;
 }

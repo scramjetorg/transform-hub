@@ -357,7 +357,7 @@ When("compare checksums of content sent from file {string}", async function(this
         .update(await readFile(filePath))
         .digest("hex");
 
-    await this.resources.instance?.sendStream("input", readStream, {
+    await this.resources.instance?.sendStream("input", readStream, {}, {
         type: "application/octet-stream",
         end: true,
     });
@@ -649,7 +649,7 @@ When("stream sequence logs to stderr", async function(this: CustomWorld) {
 });
 
 When("send data", async function(this: CustomWorld) {
-    const status = await this.resources.instance?.sendStream("input", "{\"a\": 1}", {
+    const status = await this.resources.instance?.sendStream("input", "{\"a\": 1}", {}, {
         type: "application/x-ndjson",
         end: true,
     });
@@ -658,7 +658,7 @@ When("send data", async function(this: CustomWorld) {
 });
 
 When("send {string} to input", async function(this: CustomWorld, str) {
-    const status = await this.resources.instance?.sendStream("input", str, {
+    const status = await this.resources.instance?.sendStream("input", str, {}, {
         type: "text/plain",
         end: true,
     });
@@ -667,16 +667,18 @@ When("send {string} to input", async function(this: CustomWorld, str) {
 });
 
 When("send file {string} as text input", async function(this: CustomWorld, path) {
-    const status = await this.resources.instance?.sendStream("input", createReadStream(path), {
-        type: "text/plain",
-        end: true,
-    });
+    const status = await this.resources.instance?.sendStream("input", createReadStream(path), {},
+        {
+            type: "text/plain",
+            end: true,
+        }
+    );
 
     console.log(status);
 });
 
 When("send file {string} as binary input", async function(this: CustomWorld, path) {
-    const status = await this.resources.instance?.sendStream("input", createReadStream(path), {
+    const status = await this.resources.instance?.sendStream("input", createReadStream(path), {}, {
         type: "application/octet-stream",
         end: true,
     });
@@ -749,7 +751,7 @@ Then(
 
 Then("send json data {string} named {string}", async (data: any, topic: string) => {
     const ps = new Readable();
-    const sendDataP = hostClient.sendNamedData<Stream>(topic, ps, "application/x-ndjson", true);
+    const sendDataP = hostClient.sendNamedData<Stream>(topic, ps, {}, "application/x-ndjson", true);
 
     ps.push(data);
     ps.push(null);
@@ -761,7 +763,7 @@ Then("send json data {string} named {string}", async (data: any, topic: string) 
 
 Then("send data from file {string} named {string}", async (path: any, topic: string) => {
     const readStream = fs.createReadStream(path);
-    const sendData = await hostClient.sendNamedData<Writable>(topic, readStream, "application/x-ndjson", true);
+    const sendData = await hostClient.sendNamedData<Writable>(topic, readStream, {}, "application/x-ndjson", true);
 
     assert.ok(sendData);
 });

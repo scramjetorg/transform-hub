@@ -164,22 +164,24 @@ export class InstanceClient {
      *
      * @param {string} streamId Target input stream.
      * @param {Readable|string} stream Stream to send.
+     * @param {RequestInit} [requestInit] RequestInit object to be passed to fetch.
      * @param {SendStreamOptions} [options] Stream options.
      * @returns {Promise<STHRestAPI.SendStreamResponse>} Promise resolving to send stream result.
      */
-    async sendStream(streamId: InstanceInputStream, stream: Parameters<HttpClient["sendStream"]>[1] | string, options?: SendStreamOptions) {
-        return this.clientUtils.sendStream<any>(`${this.instanceURL}/${streamId}`, stream, options);
+    async sendStream(streamId: InstanceInputStream, stream: Parameters<HttpClient["sendStream"]>[1] | string, requestInit?: RequestInit, options?: SendStreamOptions) {
+        return this.clientUtils.sendStream<any>(`${this.instanceURL}/${streamId}`, stream, requestInit, options);
     }
 
     /**
      * Pipes given stream to Instance "input".
      *
      * @param {Readable|string} stream Stream to be piped. Or string written to "stdin" stream.
-     * @param {SendStreamOptions} options Request options
+     * @param {RequestInit} [requestInit] RequestInit object to be passed to fetch.
+     * @param {SendStreamOptions} [options] Request options
      * @returns {Promise<STHRestAPI.SendStreamResponse>} Promise resolving to send stream result.
      */
-    async sendInput(stream: Parameters<HttpClient["sendStream"]>[1] | string, options?: SendStreamOptions) {
-        return this.sendStream("input", stream, options);
+    async sendInput(stream: Parameters<HttpClient["sendStream"]>[1] | string, requestInit?: RequestInit, options?: SendStreamOptions) {
+        return this.sendStream("input", stream, requestInit, options);
     }
 
     /**

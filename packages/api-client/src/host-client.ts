@@ -37,20 +37,22 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host log stream.
      *
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns Promise resolving to response with log stream.
      */
-    async getLogStream(): ReturnType<HttpClient["getStream"]> {
-        return this.client.getStream("log");
+    async getLogStream(requestInit?: RequestInit): ReturnType<HttpClient["getStream"]> {
+        return this.client.getStream("log", requestInit);
     }
 
     /**
      * Uploads Sequence to Host.
      *
      * @param sequencePackage Stream with packed Sequence.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns {SequenceClient} Sequence client.
      */
-    async sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1]): Promise<SequenceClient> {
-        const response = await this.client.sendStream<any>("sequence", sequencePackage, {
+    async sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit): Promise<SequenceClient> {
+        const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
             parseResponse: "json",
         });
 
@@ -91,7 +93,7 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host load-check.
      *
-     * @returns {Promise<GetLoadCheckResponse>} Promise resolving to Host load check data.
+     * @returns {Promise<STHRestAPI.GetLoadCheckResponse>} Promise resolving to Host load check data.
      */
     async getLoadCheck() {
         return this.client.get<STHRestAPI.GetLoadCheckResponse>("load-check");
@@ -100,7 +102,7 @@ export class HostClient implements ClientProvider {
     /**
      * Returns Host version.
      *
-     * @returns {Promise<GetVersionResponse>} Promise resolving to Host version.
+     * @returns {Promise<STHRestAPI.GetVersionResponse>} Promise resolving to Host version.
      */
     async getVersion() {
         return this.client.get<STHRestAPI.GetVersionResponse>("version");
@@ -121,22 +123,30 @@ export class HostClient implements ClientProvider {
      *
      * @param {string} topic Topic name.
      * @param stream Stream to be piped to topic.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @param {string} [contentType] Content type to be set in headers.
      * @param {boolean} end Indicates if "end" event from stream should be passed to topic.
      * @returns TODO: comment.
      */
-    async sendNamedData<T>(topic: string, stream: Parameters<HttpClient["sendStream"]>[1], contentType?: string, end?: boolean) {
-        return this.client.sendStream<T>(`topic/${topic}`, stream, { type: contentType, end: end });
+    async sendNamedData<T>(
+        topic: string,
+        stream: Parameters<HttpClient["sendStream"]>[1],
+        requestInit?: RequestInit,
+        contentType?: string,
+        end?: boolean
+    ) {
+        return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });
     }
 
     /**
      * Returns stream from given topic.
      *
      * @param topic Topic name.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns Promise resolving to readable stream.
      */
-    async getNamedData(topic: string): ReturnType<HttpClient["getStream"]> {
-        return this.client.getStream(`topic/${topic}`);
+    async getNamedData(topic: string, requestInit?: RequestInit): ReturnType<HttpClient["getStream"]> {
+        return this.client.getStream(`topic/${topic}`, requestInit);
     }
 
     async getTopics(): Promise<STHRestAPI.GetTopicsResponse> {
