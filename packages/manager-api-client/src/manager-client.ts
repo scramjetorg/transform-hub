@@ -50,10 +50,10 @@ export class ManagerClient implements ClientProvider {
     }
 
     async getSequences() {
-        return this.client.get<MRestAPI.GetSequencesResponse>('sequences')
+        return this.client.get<MRestAPI.GetSequencesResponse>("sequences");
     }
 
     async getInstances() {
-        return this.client.get<MRestAPI.GetInstancesResponse>('instances')
+        return this.client.get<MRestAPI.GetInstancesResponse>("instances");
     }
 }
