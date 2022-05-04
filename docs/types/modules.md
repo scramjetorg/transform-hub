@@ -116,6 +116,7 @@
 - [NetworkInfo](modules.md#networkinfo)
 - [NetworkInfoMessage](modules.md#networkinfomessage)
 - [NextCallback](modules.md#nextcallback)
+- [OpRecord](modules.md#oprecord)
 - [OpResolver](modules.md#opresolver)
 - [OpResponse](modules.md#opresponse)
 - [PangMessageData](modules.md#pangmessagedata)
@@ -151,6 +152,7 @@
 - [SequencePackageJSONScramjetConfig](modules.md#sequencepackagejsonscramjetconfig)
 - [SequencePackageJSONScramjetSection](modules.md#sequencepackagejsonscramjetsection)
 - [SequenceStoppedMessageData](modules.md#sequencestoppedmessagedata)
+- [StartSequenceDTO](modules.md#startsequencedto)
 - [StatusMessage](modules.md#statusmessage)
 - [StatusMessageData](modules.md#statusmessagedata)
 - [StopHandler](modules.md#stophandler)
@@ -941,7 +943,7 @@ ___
 
 ### HostErrorCode
 
-Ƭ **HostErrorCode**: ``"UNINITIALIZED_STREAM"`` \| ``"UNATTACHED_STREAMS"`` \| ``"UNKNOWN_CHANNEL"`` \| ``"LOG_NOT_AVAILABLE"`` \| ``"SEQUENCE_IDENTIFICATION_FAILED"`` \| ``"UNKNOWN_SEQUENCE"`` \| ``"UNKNOWN_INSTANCE"`` \| ``"EVENT_NAME_MISSING"`` \| ``"CONTROLLER_ERROR"`` \| ``"SOCKET_TAKEN"`` \| ``"API_CONFIGURATION_ERROR"``
+Ƭ **HostErrorCode**: ``"UNINITIALIZED_STREAM"`` \| ``"UNATTACHED_STREAMS"`` \| ``"UNKNOWN_CHANNEL"`` \| ``"LOG_NOT_AVAILABLE"`` \| ``"SEQUENCE_IDENTIFICATION_FAILED"`` \| ``"UNKNOWN_SEQUENCE"`` \| ``"UNKNOWN_INSTANCE"`` \| ``"EVENT_NAME_MISSING"`` \| ``"CONTROLLER_ERROR"`` \| ``"SOCKET_TAKEN"`` \| ``"API_CONFIGURATION_ERROR"`` \| ``"SEQUENCE_STARTUP_CONFIG_READ_ERROR"``
 
 #### Defined in
 
@@ -1356,14 +1358,11 @@ Manager configuration type definition.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `allowUnknownHosts` | `boolean` | Allow to connect Host providing id but hasn't been registered in Manager. |
 | `apiBase` | `string` | MultiManager api base. |
-| `hostname` | `string` | MultiManager server hostname |
 | `id` | `string` | Manager id. |
 | `logColors` | `boolean` | Enables/disables colorized logs. |
 | `sthController` | { `unhealthyTimeoutMs`: `number`  } | Host controller configuration. |
 | `sthController.unhealthyTimeoutMs` | `number` | Number of milliseconds to wait for next LOAD message from `host` before marking it as unhealthy |
-| `sthServerPort` | `number` | Port for server listening for incoming Host connections. |
 
 #### Defined in
 
@@ -1684,6 +1683,29 @@ ___
 
 ___
 
+### OpRecord
+
+Ƭ **OpRecord**: `Object`
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `objectId` | `string` | An instance of the object which the operation concerns, e.g. Instance ID. |
+| `opCode` | `OpRecordCode` | The type of recorded operation is identified by the code value from the OpRecord enumeration. |
+| `opState` | `string` | The operation state from the OpState enumeration. |
+| `receivedAt` | `number` | The timestamp of when the operation was registered. |
+| `requestId?` | `string` | The generated unique request ID for operations coming from the API. |
+| `requestorId` | `string` | The requestor can be either a user who performed the operation or the system. |
+| `rx?` | `number` | The data received in the request stream |
+| `tx?` | `number` | The data written to the request stream. |
+
+#### Defined in
+
+[packages/types/src/messages/op-record.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/op-record.ts#L3)
+
+___
+
 ### OpResolver
 
 Ƭ **OpResolver**: (`req`: [`ParsedMessage`](modules.md#parsedmessage), `res?`: `ServerResponse`) => `MaybePromise`<`any`\>
@@ -1839,7 +1861,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:182](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L182)
+[packages/types/src/sth-configuration.ts:201](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L201)
 
 ___
 
@@ -1998,6 +2020,7 @@ ___
 | `cpmSslCaPath?` | `string` |
 | `cpmUrl?` | `string` |
 | `docker` | `boolean` |
+| `exitWithLastInstance` | `boolean` |
 | `exposeHostIp` | `string` |
 | `hostname` | `string` |
 | `id?` | `string` |
@@ -2016,8 +2039,10 @@ ___
 | `prerunnerMaxMem` | `number` |
 | `runnerImage` | `string` |
 | `runnerMaxMem` | `number` |
+| `runnerPyImage` | `string` |
 | `runtimeAdapter` | `string` |
 | `sequencesRoot` | `string` |
+| `startupConfig` | `string` |
 
 #### Defined in
 
@@ -2042,6 +2067,8 @@ ___
 | `docker.runnerImages` | { `node`: `string` ; `python3`: `string`  } | - |
 | `docker.runnerImages.node` | `string` | - |
 | `docker.runnerImages.python3` | `string` | - |
+| `exitWithLastInstance` | `boolean` | Should the hub exit when the last instance ends |
+| `heartBeatInterval` | `number` | Heartbeat interval in miliseconds |
 | `host` | [`HostConfig`](modules.md#hostconfig) | Host configuration. |
 | `identifyExisting` | `boolean` | Should we identify existing sequences. |
 | `instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time Instance API is still available. |
@@ -2049,12 +2076,13 @@ ___
 | `instanceRequirements.cpuLoad` | `number` | Required free CPU. In percentage. |
 | `instanceRequirements.freeMem` | `number` | Free memory required to start Instance. In megabytes. |
 | `instanceRequirements.freeSpace` | `number` | Free disk space required to start Instance. In megabytes. |
-| `kubernetes` | `Partial`<[`K8SAdapterConfiguration`](modules.md#k8sadapterconfiguration)\> | - |
+| `kubernetes` | `Partial`<[`K8SAdapterConfiguration`](modules.md#k8sadapterconfiguration)\> | Kubernetes adapter configuration |
 | `logColors` | `boolean` | Enable colors in logging. |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) | Logging level. |
 | `runtimeAdapter` | `string` | Which sequence and instance adapters should STH use. One of 'docker', 'process', 'kubernetes' |
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
+| `startupConfig` | `string` | Provides the location of a config file with the list of sequences to be started along with the host |
 
 #### Defined in
 
@@ -2172,7 +2200,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L5)
+[packages/types/src/sequence-adapter.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L6)
 
 ___
 
@@ -2268,6 +2296,24 @@ ___
 #### Defined in
 
 [packages/types/src/messages/sequence-stopped.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence-stopped.ts#L1)
+
+___
+
+### StartSequenceDTO
+
+Ƭ **StartSequenceDTO**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `appConfig?` | [`AppConfig`](modules.md#appconfig) |
+| `args?` | `string`[] |
+| `id` | `string` |
+
+#### Defined in
+
+[packages/types/src/dto/start-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/dto/start-sequence.ts#L3)
 
 ___
 

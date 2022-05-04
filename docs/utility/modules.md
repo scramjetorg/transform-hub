@@ -13,9 +13,11 @@
 
 - [defer](modules.md#defer)
 - [isDefined](modules.md#isdefined)
+- [isStartSequenceDTO](modules.md#isstartsequencedto)
 - [merge](modules.md#merge)
 - [normalizeUrl](modules.md#normalizeurl)
 - [promiseTimeout](modules.md#promisetimeout)
+- [readConfigFile](modules.md#readconfigfile)
 - [readJsonFile](modules.md#readjsonfile)
 - [readStreamedJSON](modules.md#readstreamedjson)
 
@@ -23,7 +25,7 @@
 
 ### defer
 
-▸ **defer**(`timeout`): `Promise`<`void`\>
+▸ **defer**(`timeout?`): `Promise`<`void`\>
 
 Returns a promise that resolves after the specified duration.
 
@@ -35,7 +37,7 @@ await defer(10 * 1000);
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `timeout` | `number` | timeout in milliseconds. |
+| `timeout?` | `number` | timeout in milliseconds. |
 
 #### Returns
 
@@ -76,6 +78,26 @@ Returns true if given value is defined.
 #### Defined in
 
 [packages/utility/src/typeguards/is-defined.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-defined.ts#L7)
+
+___
+
+### isStartSequenceDTO
+
+▸ **isStartSequenceDTO**(`arg`): arg is StartSequenceDTO
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `arg` | `any` |
+
+#### Returns
+
+arg is StartSequenceDTO
+
+#### Defined in
+
+[packages/utility/src/typeguards/dto/sequence-start.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/dto/sequence-start.ts#L3)
 
 ___
 
@@ -164,6 +186,26 @@ Promise that reject after timeout or.
 #### Defined in
 
 [packages/utility/src/promise-timeout.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/promise-timeout.ts#L10)
+
+___
+
+### readConfigFile
+
+▸ **readConfigFile**(`filename`): `Promise`<`any`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `filename` | `string` |
+
+#### Returns
+
+`Promise`<`any`\>
+
+#### Defined in
+
+[packages/utility/src/read-config-file.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-config-file.ts#L3)
 
 ___
 

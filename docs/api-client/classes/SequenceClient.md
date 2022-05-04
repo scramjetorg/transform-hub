@@ -216,7 +216,7 @@ ___
 
 ▸ **start**(`payload`): `Promise`<[`InstanceClient`](InstanceClient.md)\>
 
-Starts sequence.
+Starts Sequence.
 
 #### Parameters
 

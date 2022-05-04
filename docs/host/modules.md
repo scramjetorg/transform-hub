@@ -13,32 +13,37 @@
 - [ServiceDiscovery](classes/ServiceDiscovery.md)
 - [SocketServer](classes/SocketServer.md)
 
-### Type aliases
-
-- [HostOptions](modules.md#hostoptions)
-- [dataType](modules.md#datatype)
-- [streamType](modules.md#streamtype)
-- [topicDataType](modules.md#topicdatatype)
-
 ### Variables
 
 - [InstanceStore](modules.md#instancestore)
+
+### Type aliases
+
+- [dataType](modules.md#datatype)
+- [streamType](modules.md#streamtype)
+- [topicDataType](modules.md#topicdatatype)
 
 ### Functions
 
 - [startHost](modules.md#starthost)
 
-## Type aliases
+## Variables
 
-### HostOptions
+### InstanceStore
 
-Ƭ **HostOptions**: `Partial`<{ `identifyExisting`: `boolean`  }\>
+• `Const` **InstanceStore**: `Object` = `{}`
+
+Object storing Instance controllers.
+
+#### Index signature
+
+▪ [key: `string`]: [`CSIController`](classes/CSIController.md)
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L34)
+[packages/host/src/lib/instance-store.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/instance-store.ts#L6)
 
-___
+## Type aliases
 
 ### dataType
 
@@ -97,27 +102,11 @@ Topic details type definition.
 
 [packages/host/src/lib/sd-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L28)
 
-## Variables
-
-### InstanceStore
-
-• `Const` **InstanceStore**: `Object` = `{}`
-
-Object storing Instance controllers.
-
-#### Index signature
-
-▪ [key: `string`]: [`CSIController`](classes/CSIController.md)
-
-#### Defined in
-
-[packages/host/src/lib/instance-store.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/instance-store.ts#L6)
-
 ## Functions
 
 ### startHost
 
-▸ **startHost**(`apiServerConfig`, `sthConfig`, `hostOptions`): `Promise`<[`Host`](classes/Host.md)\>
+▸ **startHost**(`apiServerConfig`, `sthConfig`): `Promise`<[`Host`](classes/Host.md)\>
 
 Starts Host module.
 
@@ -127,7 +116,6 @@ Starts Host module.
 | :------ | :------ | :------ |
 | `apiServerConfig` | `ServerConfig` | api server configuration |
 | `sthConfig` | `STHConfiguration` | sth configuration |
-| `hostOptions` | `Partial`<{ `identifyExisting`: `boolean`  }\> | host options |
 
 #### Returns
 
@@ -135,4 +123,4 @@ Starts Host module.
 
 #### Defined in
 
-[packages/host/src/lib/start-host.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/start-host.ts#L13)
+[packages/host/src/lib/start-host.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/start-host.ts#L21)

@@ -66,7 +66,7 @@ reacts to control messages such as stopping etc.
 
 #### Defined in
 
-[runner.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L236)
+[runner.ts:233](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L233)
 
 ___
 
@@ -80,7 +80,7 @@ ___
 
 #### Defined in
 
-[runner.ts:156](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L156)
+[runner.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L153)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 #### Defined in
 
-[runner.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L120)
+[runner.ts:117](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L117)
 
 ___
 
@@ -114,7 +114,7 @@ ___
 
 #### Defined in
 
-[runner.ts:146](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L146)
+[runner.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L143)
 
 ___
 
@@ -128,7 +128,7 @@ ___
 
 #### Defined in
 
-[runner.ts:410](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L410)
+[runner.ts:407](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L407)
 
 ___
 
@@ -142,7 +142,7 @@ ___
 
 #### Defined in
 
-[runner.ts:220](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L220)
+[runner.ts:217](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L217)
 
 ___
 
@@ -162,7 +162,7 @@ ___
 
 #### Defined in
 
-[runner.ts:194](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L194)
+[runner.ts:191](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L191)
 
 ___
 
@@ -176,7 +176,7 @@ ___
 
 #### Defined in
 
-[runner.ts:562](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L562)
+[runner.ts:559](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L559)
 
 ___
 
@@ -199,7 +199,7 @@ set up streams process.stdin, process.stdout, process.stderr, fifo downstream, f
 
 #### Defined in
 
-[runner.ts:376](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L376)
+[runner.ts:373](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L373)
 
 ___
 
@@ -213,7 +213,7 @@ ___
 
 #### Defined in
 
-[runner.ts:269](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L269)
+[runner.ts:266](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L266)
 
 ___
 
@@ -234,7 +234,7 @@ ___
 
 #### Defined in
 
-[runner.ts:422](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L422)
+[runner.ts:419](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L419)
 
 ___
 
@@ -248,7 +248,7 @@ ___
 
 #### Defined in
 
-[runner.ts:398](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L398)
+[runner.ts:395](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L395)
 
 ___
 
@@ -268,7 +268,7 @@ ___
 
 #### Defined in
 
-[runner.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L181)
+[runner.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L178)
 
 ___
 
@@ -282,7 +282,7 @@ ___
 
 #### Defined in
 
-[runner.ts:404](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L404)
+[runner.ts:401](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L401)
 
 ## Constructors
 
@@ -306,7 +306,7 @@ ___
 
 #### Defined in
 
-[runner.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L83)
+[runner.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L80)
 
 ## Accessors
 
@@ -320,7 +320,7 @@ ___
 
 #### Defined in
 
-[runner.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L110)
+[runner.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L107)
 
 ## Properties
 
@@ -337,7 +337,7 @@ ___
 
 #### Defined in
 
-[runner.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L76)
+[runner.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L73)
 
 ___
 
@@ -351,4 +351,4 @@ IComponent.logger
 
 #### Defined in
 
-[runner.ts:78](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L78)
+[runner.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L75)
