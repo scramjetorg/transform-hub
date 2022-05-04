@@ -90,7 +90,7 @@ export class ClientError extends Error {
         return new Promise((res, rej) => {
             try {
                 // TODO: create  a JSON Error based on body (which can be a stream) and other ClientError properties.
-                if (this.message.toString) {
+                if (this.body) {
                     res(typeof this.body === "string" ? JSON.parse(this.body) : this.body);
                 } else {
                     rej();
