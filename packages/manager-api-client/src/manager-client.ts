@@ -31,18 +31,19 @@ export class ManagerClient implements ClientProvider {
     async sendNamedData<T>(
         topic: string,
         stream: Parameters<HttpClient["sendStream"]>[1],
+        requestInit?: RequestInit,
         contentType?: string,
         end?: boolean
     ) {
-        return this.client.sendStream<T>(`topic/${topic}`, stream, { type: contentType, end: end });
+        return this.client.sendStream<T>(`topic/${topic}`, stream, requestInit, { type: contentType, end: end });
     }
 
-    async getNamedData(topic: string) {
-        return this.client.getStream(`topic/${topic}`);
+    async getNamedData(topic: string, requestInit?: RequestInit) {
+        return this.client.getStream(`topic/${topic}`, requestInit);
     }
 
-    async getLogStream() {
-        return this.client.getStream("log");
+    async getLogStream(requestInit?: RequestInit) {
+        return this.client.getStream("log", requestInit);
     }
 
     async getConfig() {

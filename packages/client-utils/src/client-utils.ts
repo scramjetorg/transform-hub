@@ -48,7 +48,7 @@ export abstract class ClientUtilsBase implements HttpClient {
         const AbortController = globalThis.AbortController || (await import("abort-controller")).AbortController;
         const abortController = new AbortController();
 
-        const fetchInit: RequestInit = { ...init, signal: abortController.signal };
+        const fetchInit: RequestInit = { signal: abortController.signal, ...init };
 
         fetchInit.headers = { ...ClientUtilsBase.headers, ...fetchInit.headers };
 
@@ -94,9 +94,6 @@ export abstract class ClientUtilsBase implements HttpClient {
             }
 
             if (options.parse === "stream") {
-                response.body.on("close", () => {
-                    abortController.abort();
-                });
                 return response.body as Promise<T>;
             }
 
@@ -110,20 +107,22 @@ export abstract class ClientUtilsBase implements HttpClient {
      * Performs get using request wrapper.
      *
      * @param {string} url Request URL.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns {Promise<T>} Promise resolving to given type.
      */
-    async get<T>(url: string): Promise<T> {
-        return this.safeRequest<T>(this.normalizeUrlFn(`${this.apiBase}/${url}`), {}, { parse: "json" });
+    async get<T>(url: string, requestInit: RequestInit = {}): Promise<T> {
+        return this.safeRequest<T>(this.normalizeUrlFn(`${this.apiBase}/${url}`), requestInit, { parse: "json" });
     }
 
     /**
      * Performs get request for streamed data.
      *
      * @param {string} url Request URL.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns {Readable} Readable stream.
      */
-    async getStream(url: string) {
-        return this.safeRequest<any>(this.normalizeUrlFn(`${this.apiBase}/${url}`), {});
+    async getStream(url: string, requestInit: RequestInit = {}) {
+        return this.safeRequest<any>(this.normalizeUrlFn(`${this.apiBase}/${url}`), requestInit);
     }
 
     /**
@@ -131,27 +130,28 @@ export abstract class ClientUtilsBase implements HttpClient {
      *
      * @param url Request URL.
      * @param data Data to be send.
-     * @param headers Request headers.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @param config Request config.
      * @returns {Promise<T>} Promise resolving to given type.
      */
     async post<T>(
         url: string,
         data: any,
-        headers: Headers = {},
+        requestInit: RequestInit = {},
         config: RequestConfig = { parse: "stream", json: false }
     ): Promise<T> {
         if (config.json) {
-            headers["Content-Type"] = "application/json";
+            requestInit.headers ||= {} as Headers;
+            (requestInit.headers as Headers)["Content-Type"] = "application/json";
             data = JSON.stringify(data);
         }
 
         return this.safeRequest<T>(
             this.normalizeUrlFn(`${this.apiBase}/${url}`),
             {
+                ...requestInit,
                 method: "post",
-                body: data,
-                headers,
+                body: data
             },
             config
         );
@@ -160,17 +160,19 @@ export abstract class ClientUtilsBase implements HttpClient {
     /**
      * Performs DELETE request.
      *
-     * @param url Request URL.
+     * @param {string} url Request URL.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns {Promise<T>} Promise resolving to given type.
      */
-    async delete<T>(url: string): Promise<T> {
+    async delete<T>(url: string, requestInit: RequestInit = {}): Promise<T> {
+        requestInit.headers ||= {} as Headers;
+        (requestInit.headers as Headers)["Content-Type"] = "application/json";
+
         return this.safeRequest<T>(
             this.normalizeUrlFn(`${this.apiBase}/${url}`),
             {
-                method: "delete",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                ...requestInit,
+                method: "delete"
             },
             { parse: "json" }
         );
@@ -181,24 +183,27 @@ export abstract class ClientUtilsBase implements HttpClient {
      *
      * @param {string} url Request url.
      * @param {Readable|string} stream stream to be send.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @param {SendStreamOptions} options send stream options.
-
      * @returns {Promise<T>} Promise resolving to response of given type.
      */
     async sendStream<T>(
         url: string,
         stream: any | string,
+        requestInit: RequestInit = {},
         { type = "application/octet-stream", end, parseResponse = "stream" }: SendStreamOptions = {}
     ): Promise<T> {
-        const headers: Headers = {
+        requestInit.headers ||= {} as Headers;
+
+        Object.assign(requestInit.headers, {
             "content-type": type,
             expect: "100-continue"
-        };
+        });
 
         if (typeof end !== "undefined") {
-            headers["x-end-stream"] = end ? "true" : "false";
+            (requestInit.headers as Headers)["x-end-stream"] = end ? "true" : "false";
         }
 
-        return this.post<T>(url, stream, headers, { parse: parseResponse });
+        return this.post<T>(url, stream, requestInit, { parse: parseResponse });
     }
 }
