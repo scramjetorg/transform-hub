@@ -16,7 +16,7 @@ const CommandClass = completionMixin(commander).Command;
 
 const getExitCode = (_err: ClientError) => 1;
 const program = new CommandClass() as Command;
-const errorHandler = (err: ClientError) => {
+const errorHandler = async (err: ClientError) => {
     process.exitCode = getExitCode(err);
     const { format, debug } = globalConfig.getConfig();
 
@@ -30,7 +30,7 @@ const errorHandler = (err: ClientError) => {
                 message: err?.message,
                 reason: err?.reason?.message,
                 apiStatusCode: err?.status,
-                apiError: err?.toJSON()
+                apiError: await err?.toJSON().then((body) => body).catch(() => undefined),
             })
         );
     } else {
