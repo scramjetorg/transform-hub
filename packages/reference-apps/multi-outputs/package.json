@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/multi-outputs",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.21.0",
+    "@scramjet/types": "^0.22.0",
     "@types/node": "15.12.5"
   },
   "scramjet": {

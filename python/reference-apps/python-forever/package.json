@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/python-forever-test",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "main": "./forever.py",
   "author": "Jan Warchoł <open-source@scramjet.org>",
   "license": "GPL-3.0",
