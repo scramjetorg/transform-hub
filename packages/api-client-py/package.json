@@ -5,11 +5,11 @@
     "main": "./__init__.py",
     "scripts": {
       "build": "yarn build:only",
-      "build:only": "mkdir -p dist/__pydeps__/ && cp client/*.py dist/ && pip3 install -t dist/__pydeps__/ -r requirements.txt",
-      "install": "pip3 install -r requirements-dev.txt",
+      "build:only": "mkdir -p dist/__pypackages__/ && cp client/*.py dist/",
       "clean": "rm -rf dist/ __pycache__",
       "prepack": "node ../../scripts/publish.js",
       "postbuild": "yarn prepack",
+      "pretest:bdd": "pip3 install -r requirements-dev.txt",
       "test:bdd": "behave"
     },
     "author": "Scramjet <opensource@scramjet.org>",
