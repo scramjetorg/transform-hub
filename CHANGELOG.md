@@ -9,12 +9,12 @@ Prominent
 - f31916d7 - Fixes for stream ending with `x-stream-end` header.
 - ceb4362d - Make `fetchOnlyIfExists` truly optional in docker image pulling procedure.
 - 250d9f31 - Fix docker adapter to wait until image pull is finished.
-- 547eeb8e - Allow to publish sequence ports, both TCP and UDP
+- 547eeb8e - Allow to publish Sequence ports, both TCP and UDP
 - 48d59c69 - Temporary restoring wait before detaching endpoint
 - 424bd67d - Colorize logger function name, update logs
 - da503b9b - Enable starting runner with ts-node in --no-docker mode, which is very useful for development contributors
 - 542080ed - Introducing in consistent response type from STH API endpoints, also implementation of type-layer error mechanism for StartSequence and DeleteSequence
-- a60bf30e - Added configurable instance adapter exit delay to sth config
+- a60bf30e - Added configurable Instance Adapter exit delay to sth config
 - 9eb223dc - Improved error handling in api server
 - c37bed19 - Reduce size of Common Logs Pipe buffer
 - 80c46760 - Improve Dockerfile for runner
@@ -29,7 +29,7 @@ Prominent
 - 3f0b4494 - Listen and reconnect on VerserClient error in Host to Manager connection
 - d0f7bdc4 - Python runner work in progress
 - f0963d02 - Logger upgrade, now it operates on objects not strings
-- e89113b2 - CLI: fix for saving instance id in config
+- e89113b2 - CLI: fix for saving Instance id in config
 - 5217044e - Introduce a new, faster building for development using esbuild
 - fe364b1a - Add support for complex packages in python apps
 - 2d193278 - Introduce HTTPS support in the API Server
@@ -49,20 +49,22 @@ Prominent
 - 417685b07 - Switch topic requests to https.
 - ac15ee4e4 - Do not close topic when producing output stream is ended.
 - 22f1a1656 - Add python3 to STH docker image
-- 7417b7a98 - Enable assigning output topic on sequence start.
+- 7417b7a98 - Enable assigning output topic on Sequence start.
 - 018e6975d - CLI commands update
+- 913b8877 - IaC startup mode (#239)
+- 93391784 - Introduce Auditor class to provide audit stream
 
 New features:
 
-- **Topics** - You can now send data to STH without having to have a sequence
+- **Topics** - You can now send data to STH without having to have a Sequence
 - **Cloud Platform Connection** - Scramjet will allow to connect multiple STH to allow multipoint data sharing between them
-- **New Adapters** - New adapters added to instance and sequence which doesn't depend on Docker
-- **Log endpoint** - New endpoint '/logs' that streams all instances logs
+- **New Adapters** - New adapters added to Instance and Sequence which doesn't depend on Docker
+- **Log endpoint** - New endpoint '/logs' that streams all Instances logs
 - **Verser module** - New module for reverse server functionality
 - **Comments** - Improved code documentation
 - **TCP Runner** - Connection between Runner and Host is replaced from socket to TCP
-- **CLI extension** - Last uploaded/added sequence can now be referenced when starting etc. This will massively improve the CLI experience, as there's no longer need to parse the previous command line if we want to do quick deployment of a sequence
-- **Python runner WIP** - Running STH without docker can now spawn sequences written in python
+- **CLI extension** - Last uploaded/added Sequence can now be referenced when starting etc. This will massively improve the CLI experience, as there's no longer need to parse the previous command line if we want to do quick deployment of a Sequence
+- **Python runner WIP** - Running STH without docker can now spawn Sequences written in python
 - **HTTPS Upgrade** - The API server can now be secured using HTTPS
 - **Instance stop improvement** - Support for graceful stop of Instance in Python Runner
 - **Typed responses for api-client** - Integrate sapphire fetch wrapper in api-cli
@@ -72,7 +74,9 @@ New features:
 - **Kubernetes Runtime Adapters** - new Sequence and Instance Adapters allow running programs on Kubernetes
 - **Dockerized Python Runner** - Python programs can now be run in Docker containers
 - **Reusable topics** - Topic streams don't end when input ends, you can always send more input
-- **Python in Docker image** - When running STH from docker image, you will have python installed to run python sequences inside
+- **Python in Docker image** - When running STH from docker image, you will have python installed to run python Sequences inside
+- **Infrastructure as Code mode** - allow configuring Sequences that should be started automatically when STH is started.
+- **Audit stream** - Adds middleware to Host API Server to intercept all requests and push their details to Audit stream.
 
 
 Bugfixes and minor improvements:
@@ -133,7 +137,7 @@ Bugfixes and minor improvements:
 - Fix the build scripts of @scramjet/cli so that completion is added
 - Add cli utility for coloring JSON logs obtained from remote STH
 - Add /config API endpoint for checking STH/Host config
-- Fix for adding Python sequence library to path
+- Fix for adding Python Sequence library to path
 - Choosing runner image in kubernetes adapter (so that either python or node runner can be used)
 - Provide more information about the service on /version endpoint (service name, commit ID)
 - API base url (e.g. the one provided to CLI) is normalized
@@ -146,7 +150,9 @@ Bugfixes and minor improvements:
 - Enable closing HTTP connection in API Clients
 - Select first healthy hub as default in CLI
 - Make rebuilding STH much faster
+- Ability to pass a RequestInit object to stream requests in Api clients (Fix ClientUtils for browser)
 
-## @scramjet/transform Hub - v0.21.0
+
+## @scramjet/transform Hub - v0.22.0
 
 This is the last release in changelog.

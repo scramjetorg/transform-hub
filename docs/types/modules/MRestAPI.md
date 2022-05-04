@@ -48,19 +48,11 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `config` | { `allowUnknownHosts`: `boolean` ; `apiBase`: `string` ; `hostname`: `string` ; `id`: `string` ; `logColors`: `boolean` ; `sthController`: { `unhealthyTimeoutMs`: `number`  } ; `sthServerPort`: `number`  } |
-| `config.allowUnknownHosts` | `boolean` |
-| `config.apiBase` | `string` |
-| `config.hostname` | `string` |
-| `config.id` | `string` |
-| `config.logColors` | `boolean` |
-| `config.sthController` | { `unhealthyTimeoutMs`: `number`  } |
-| `config.sthController.unhealthyTimeoutMs` | `number` |
-| `config.sthServerPort` | `number` |
+| `config` | [`ManagerConfiguration`](../modules.md#managerconfiguration) |
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/get-config.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-config.ts#L1)
+[packages/types/src/rest-api-manager/get-config.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-config.ts#L3)
 
 ___
 

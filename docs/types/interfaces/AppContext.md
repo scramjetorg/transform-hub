@@ -20,6 +20,7 @@ interruption.
 - [AppError](AppContext.md#apperror)
 - [config](AppContext.md#config)
 - [definition](AppContext.md#definition)
+- [exitTimeout](AppContext.md#exittimeout)
 - [initialState](AppContext.md#initialstate)
 - [logger](AppContext.md#logger)
 
@@ -67,6 +68,18 @@ Provides automated definition as understood by the system
 #### Defined in
 
 [packages/types/src/app-context.ts:168](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L168)
+
+___
+
+### exitTimeout
+
+• **exitTimeout**: `number`
+
+Allows setting timeout in millis to exit the sequence after exit called (default 10000)
+
+#### Defined in
+
+[packages/types/src/app-context.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-context.ts#L181)
 
 ___
 

@@ -319,7 +319,7 @@ ___
 
 ### sendInput
 
-▸ **sendInput**(`stream`, `options?`): `Promise`<`any`\>
+▸ **sendInput**(`stream`, `requestInit?`, `options?`): `Promise`<`any`\>
 
 Pipes given stream to Instance "input".
 
@@ -328,7 +328,8 @@ Pipes given stream to Instance "input".
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `stream` | `string` \| `Readable` | Stream to be piped. Or string written to "stdin" stream. |
-| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\> | Request options |
+| `requestInit?` | `RequestInit` | - |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\> | - |
 
 #### Returns
 
@@ -338,7 +339,7 @@ Promise resolving to send stream result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:181](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L181)
+[api-client/src/instance-client.ts:183](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L183)
 
 ___
 
@@ -362,13 +363,13 @@ Promise resolving to send stream result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:191](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L191)
+[api-client/src/instance-client.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L193)
 
 ___
 
 ### sendStream
 
-▸ **sendStream**(`streamId`, `stream`, `options?`): `Promise`<`any`\>
+▸ **sendStream**(`streamId`, `stream`, `requestInit?`, `options?`): `Promise`<`any`\>
 
 Sends stream to one of the Instance inputs.
 
@@ -378,6 +379,7 @@ Sends stream to one of the Instance inputs.
 | :------ | :------ | :------ |
 | `streamId` | [`InstanceInputStream`](../modules.md#instanceinputstream) | Target input stream. |
 | `stream` | `string` \| `Readable` | Stream to send. |
+| `requestInit?` | `RequestInit` | - |
 | `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\> | - |
 
 #### Returns
@@ -388,7 +390,7 @@ Promise resolving to send stream result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:170](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L170)
+[api-client/src/instance-client.ts:171](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L171)
 
 ___
 
