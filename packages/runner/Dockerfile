@@ -9,7 +9,7 @@ RUN groupadd -g 1200 runner \
     && chown runner:runner ${PACKAGE_DIR}
 
 RUN apt-get update \
-    && apt-get install -y gosu --no-install-recommends \
+    && apt-get install -y gosu tini --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 
@@ -48,5 +48,6 @@ COPY ./packages/runner/docker-entrypoint.sh /usr/local/bin/
 COPY ./packages/runner/unpack.sh /usr/local/bin/
 COPY ./packages/runner/wait-for-sequence-and-start.sh /usr/local/bin/
 
-ENTRYPOINT [ "docker-entrypoint.sh" ]
+ENTRYPOINT [ "/usr/bin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "start-runner" ]
+

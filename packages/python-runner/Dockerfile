@@ -11,7 +11,7 @@ RUN groupadd -g 1200 runner \
     && chown runner:runner ${PACKAGE_DIR}
 
 RUN apt-get update \
-    && apt-get install -y git gosu --no-install-recommends \
+    && apt-get install -y git gosu tini --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY packages/python-runner/*.py ./
@@ -22,5 +22,6 @@ COPY packages/runner/wait-for-sequence-and-start.sh /usr/local/bin/
 
 RUN pip install -r requirements.txt
 
-ENTRYPOINT [ "docker-entrypoint.sh" ]
+ENTRYPOINT [ "/usr/bin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "start-runner" ]
+
