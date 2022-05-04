@@ -56,7 +56,7 @@ export abstract class ClientUtilsBase implements HttpClient {
 
         try {
             const response = await this.fetch(input, fetchInit)
-                .then((result: any) => {
+                .then(async (result: any) => {
                     if (!options.throwOnErrorHttpCode || result.ok) {
                         if (this.log) {
                             this.log.ok(result);
@@ -65,11 +65,14 @@ export abstract class ClientUtilsBase implements HttpClient {
                         return result;
                     }
 
+                    const errorBodyJson = await result.json();
+
                     const fetchError = new QueryError(
                         input.toString(),
+                        errorBodyJson.error.code,
                         result.status,
+                        errorBodyJson,
                         result,
-                        result.body
                     );
 
                     throw fetchError;

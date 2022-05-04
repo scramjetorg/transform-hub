@@ -21,14 +21,16 @@ const errorHandler = (err: ClientError) => {
     const { format, debug } = globalConfig.getConfig();
 
     if (globalConfig.isJsonFormat(format)) {
+        // TODO Check if it is a CLI or an API Client Error.
         console.log(
             JSON.stringify({
                 error: true,
                 code: err?.code,
-                status: err?.status,
                 stack: debug ? err?.stack : undefined,
                 message: err?.message,
                 reason: err?.reason?.message,
+                apiStatusCode: err?.status,
+                apiError: err?.body
             })
         );
     } else {
