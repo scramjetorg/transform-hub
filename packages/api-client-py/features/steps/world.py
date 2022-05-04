@@ -1,6 +1,6 @@
 import os
-from host_client import HostClient
-from sequence_client import SequenceClient
+from client.host_client import HostClient
+from client.sequence_client import SequenceClient
 
 DEFAULT_VALUE = "http://localhost:8000/api/v1"
 api_url = os.environ.get('LOCAL_HOST_BASE_URL') or DEFAULT_VALUE

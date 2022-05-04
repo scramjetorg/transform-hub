@@ -1,7 +1,7 @@
 from behave import *
 
 from world import api_url, host_client as host
-from sequence_client import SequenceClient
+from client.sequence_client import SequenceClient
 
 import asyncio
 import json

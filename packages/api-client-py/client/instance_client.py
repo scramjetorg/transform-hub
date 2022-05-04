@@ -1,4 +1,4 @@
-from host_client import HostClient
+from client.host_client import HostClient
 
 INSTANCE_INPUT_STREAM = (
     'stdin',
