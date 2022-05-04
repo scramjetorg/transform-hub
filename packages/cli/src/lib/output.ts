@@ -54,7 +54,7 @@ export async function displayStream(
 export async function displayEntity(response: MaybePromise<any>): Promise<void> {
     // todo: different displays depending on _program.opts().format
     const res = await Promise.resolve(response).catch((e: any) => {
-        console.error(e);
+        throw e;
     });
 
     if (!res) {

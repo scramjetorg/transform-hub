@@ -65,11 +65,11 @@ export abstract class ClientUtilsBase implements HttpClient {
                         return result;
                     }
 
-                    const errorBodyJson = await result.json();
+                    const errorBodyJson = await result.text();
 
                     const fetchError = new QueryError(
                         input.toString(),
-                        errorBodyJson.error.code,
+                        errorBodyJson.error?.code,
                         result.status,
                         errorBodyJson,
                         result,
@@ -84,7 +84,6 @@ export abstract class ClientUtilsBase implements HttpClient {
                     if (error instanceof QueryError) {
                         throw error;
                     }
-
                     throw new QueryError(input.toString(), error.code);
                 });
 

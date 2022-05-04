@@ -30,7 +30,7 @@ const errorHandler = (err: ClientError) => {
                 message: err?.message,
                 reason: err?.reason?.message,
                 apiStatusCode: err?.status,
-                apiError: err?.body
+                apiError: err?.toJSON()
             })
         );
     } else {
