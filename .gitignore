@@ -137,7 +137,7 @@ aaa/
 
 **/__pycache__/
 
-**/__pydeps__/**
+**/__pypackages__/**
 
 # keys
 *.crt
