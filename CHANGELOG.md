@@ -51,6 +51,8 @@ Prominent
 - 22f1a1656 - Add python3 to STH docker image
 - 7417b7a98 - Enable assigning output topic on sequence start.
 - 018e6975d - CLI commands update
+- 913b8877 - IaC startup mode (#239)
+- 93391784 - Introduce Auditor class to provide audit stream
 
 New features:
 
@@ -73,6 +75,8 @@ New features:
 - **Dockerized Python Runner** - Python programs can now be run in Docker containers
 - **Reusable topics** - Topic streams don't end when input ends, you can always send more input
 - **Python in Docker image** - When running STH from docker image, you will have python installed to run python sequences inside
+- **Infrastructure as Code mode** - allow configuring sequences that should be started automatically when STH is started.
+- **Audit stream** - Adds middleware to Host API Server to intercept all requests and push their details to Audit stream.
 
 
 Bugfixes and minor improvements:
@@ -146,7 +150,9 @@ Bugfixes and minor improvements:
 - Enable closing HTTP connection in API Clients
 - Select first healthy hub as default in CLI
 - Make rebuilding STH much faster
+- Ability to pass a RequestInit object to stream requests in Api clients (Fix ClientUtils for browser)
 
-## @scramjet/transform Hub - v0.21.0
+
+## @scramjet/transform Hub - v0.22.0
 
 This is the last release in changelog.
