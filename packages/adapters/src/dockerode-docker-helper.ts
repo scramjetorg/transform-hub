@@ -175,9 +175,14 @@ export class DockerodeDockerHelper implements IDockerHelper {
         if (fetchOnlyIfNotExists) {
             this.logger.trace("Checking image", name);
 
-            if (this.pulledImages[name]) return this.pulledImages[name];
+            if (this.pulledImages[name]) {
+                this.logger.trace("Image already pulled");
+
+                return this.pulledImages[name];
+            }
 
             if (await this.isImageInLocalRegistry(name)) {
+                this.logger.trace("Image found in local registry");
                 this.pulledImages[name] = Promise.resolve();
 
                 return this.pulledImages[name];
