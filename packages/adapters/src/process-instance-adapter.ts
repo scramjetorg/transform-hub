@@ -10,6 +10,7 @@ import {
     SequenceConfig
 } from "@scramjet/types";
 import { ChildProcess, spawn } from "child_process";
+import { createReadStream, createWriteStream } from "fs";
 
 import path from "path";
 
@@ -125,9 +126,16 @@ IComponent {
             }
         });
 
+        const runnerLogFile = path.resolve(__dirname, "runner-startup.log");
+
         if (development()) {
             runnerProcess.stdout.pipe(process.stdout);
             runnerProcess.stderr.pipe(process.stderr);
+        } else {
+            const runnerLog = createWriteStream(runnerLogFile);
+
+            runnerProcess.stdout.pipe(runnerLog);
+            runnerProcess.stderr.pipe(runnerLog);
         }
 
         this.logger.trace("Runner process is running", runnerProcess.pid);
@@ -149,6 +157,11 @@ IComponent {
 
         if (statusCode > 0) {
             this.logger.debug("Process returned non-zero status code", statusCode);
+
+            if (!development()) {
+                this.logger.debug("Forwarding stdout & stderr from runner:");
+                createReadStream(runnerLogFile).pipe(process.stderr);
+            }
         }
 
         return statusCode;
