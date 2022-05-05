@@ -1,6 +1,6 @@
 import { APIErrorCode } from "@scramjet/symbols";
 
-export type AcknowledgeMessageData = {
+export type APIErrorMessage = {
 
     /** A unique reference number for a given error type.  */
     code: APIErrorCode;
