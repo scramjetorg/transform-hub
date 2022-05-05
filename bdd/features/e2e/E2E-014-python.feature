@@ -141,3 +141,11 @@ Feature: Test our shiny new Python runner
         Then confirm data named "python-topics" will be received
         And host is still running
 
+    @ci @python @test
+    Scenario: E2E-014 TC-015 Create Stream from async generator
+        Given host is running
+        When sequence "../python/reference-apps/python-gen-async.tar.gz" loaded
+        And instance started
+        And send "1" to input
+        Then "output" is "saved to db: 1"
+        And host is still running

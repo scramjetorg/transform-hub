@@ -101,6 +101,36 @@ jobs:
           name:  dockerRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
           path: '*.tar.gz'
           retention-days: 1
+  
+  build-docker-runner-py-image:
+    name: Build runner-py docker image (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ['3.9']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: build runner Docker image
+        run: docker build -q -t scramjetorg/runner-py:$(jq -r .version package.json) -f Dockerfile ../../
+        working-directory: packages/python-runner
+
+      - name: Export Docker images
+        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerRunnerPyImg-$name-$tag-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+
+      - name: Zip Docker images
+        run: pigz docker*Img*.tar
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name:  dockerRunnerPyImg-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          path: '*.tar.gz'
+          retention-days: 1
 
   build-docker-pre-runner-image:
     name: Build pre-runner docker image (Nodejs ${{ matrix.node-version }})
@@ -269,7 +299,7 @@ jobs:
 
   test-bdd-ci-sth:
     name: Test bdd-ci STH (Nodejs ${{ matrix.node-version }})
-    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-pre-runner-image]
+    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -277,6 +307,7 @@ jobs:
       fail-fast: true
       matrix:
         node-version: [14.x, 16.x]
+        python-version: ['3.9']
 
     steps:
       - uses: actions/checkout@v3
@@ -300,6 +331,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dockerRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+      
+      - name: Download dockerImg artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerRunnerPyImg-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
       - name: Download dockerPreRunnerImg artifact
         uses: actions/download-artifact@v2
