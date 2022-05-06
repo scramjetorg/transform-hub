@@ -6,208 +6,22 @@ on:
 
 jobs:
   analyze-code:
-    name: Analyze the source code
-
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          cache: 'yarn'
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --silent
-
-      - name: Run Linter
-        run: yarn lint
+    uses: ./.github/workflows/analyze-code.yml
 
   build-docker-sth-image:
-    name: Build sth docker image (Nodejs ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          cache: 'yarn'
-          node-version: ${{ matrix.node-version }}
-
-      - name: Update saved git hash
-        run: yarn savehash
-
-      - name: Build sth Docker image
-        run: docker build -q -t scramjetorg/sth:$(jq -r .version package.json) -f Dockerfile ../../
-        working-directory: packages/sth
-
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerSthImg-$name-$tag-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
-
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name:  dockerSthImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-          path: '*.tar.gz'
-          retention-days: 1
+    uses: ./.github/workflows/build-docker-sth.yml
 
   build-docker-runner-image:
-    name: Build runner docker image (Nodejs ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          cache: 'yarn'
-          node-version: ${{ matrix.node-version }}
-
-      - name: build runner Docker image
-        run: docker build -q -t scramjetorg/runner:$(jq -r .version package.json) -f Dockerfile ../../
-        working-directory: packages/runner
-
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerRunnerImg-$name-$tag-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
-
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name:  dockerRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-          path: '*.tar.gz'
-          retention-days: 1
+    uses: ./.github/workflows/build-docker-runner-node.yml
 
   build-docker-runner-py-image:
-    name: Build runner-py docker image (Python ${{ matrix.python-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ['3.9']
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: build runner Docker image
-        run: docker build -q -t scramjetorg/runner-py:$(jq -r .version package.json) -f Dockerfile ../../
-        working-directory: packages/python-runner
-
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerRunnerPyImg-$name-$tag-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
-
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name:  dockerRunnerPyImg-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-          path: '*.tar.gz'
-          retention-days: 1
+    uses: ./.github/workflows/build-docker-runner-python.yml
 
   build-docker-pre-runner-image:
-    name: Build pre-runner docker image (Nodejs ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          cache: 'yarn'
-          node-version: ${{ matrix.node-version }}
-
-      - name: Build runner Docker image
-        run: docker build -q -t scramjetorg/pre-runner:$(jq -r .version package.json) .
-        working-directory: packages/pre-runner
-
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerPreRunnerImg-$name-$tag-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
-
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name:  dockerPreRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-          path: '*.tar.gz'
-          retention-days: 1
+    uses: ./.github/workflows/build-docker-prerunner.yml
 
   build-sth:
-    name: Build STH (Nodejs ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          cache: 'yarn'
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --silent
-
-      - name: Build packages
-        run: yarn build:packages
-
-      - name: Run packages tests
-        run: yarn test:packages-no-concurrent
-
-      - name: Create artifact
-        run: tar --exclude=dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
-          path: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
-          retention-days: 1
+    uses: ./.github/workflows/build-docker-sth.yml
 
   build-refapps:
     name: Build STH refapps (Nodejs ${{ matrix.node-version }})
@@ -225,7 +39,6 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
-          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -235,7 +48,7 @@ jobs:
         run: yarn build:refapps
 
       - name: Create artifact
-        run: tar --exclude=dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist
+        run: tar --exclude=dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/.*
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
@@ -304,7 +117,6 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
-          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Run BDD for HUB params
@@ -373,7 +185,6 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
-          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -433,7 +244,6 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
-          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -489,7 +299,6 @@ jobs:
         - name: Setup Nodejs ${{ matrix.node-version }}
           uses: actions/setup-node@v2
           with:
-            cache: 'yarn'
             node-version: ${{ matrix.node-version }}
 
         - name: Install dependencies

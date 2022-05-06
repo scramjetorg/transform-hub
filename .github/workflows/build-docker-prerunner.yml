@@ -1,0 +1,39 @@
+name: Reusable workflow example
+
+on: workflow_call
+
+jobs:
+  build-docker-prerunner-image:
+    name: Build pre-runner docker image (Nodejs ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [14.x, 16.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Nodejs ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Build runner Docker image
+        run: docker build -q -t scramjetorg/pre-runner:$(jq -r .version package.json) .
+        working-directory: packages/pre-runner
+
+      - name: Export Docker images
+        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerPreRunnerImg-$name-$tag-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+
+      - name: Zip Docker images
+        run: pigz docker*Img*.tar
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name:  dockerPreRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          path: '*.tar.gz'
+          retention-days: 1
