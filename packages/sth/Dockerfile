@@ -4,7 +4,7 @@ WORKDIR /build
 
 COPY package.json yarn.lock lerna.json tsconfig.base.json ./
 
-RUN yarn install --frozen-lock
+RUN yarn install --ignore-engines  --frozen-lock
 
 COPY packages/adapters ./packages/adapters
 COPY packages/api-server ./packages/api-server
@@ -23,7 +23,7 @@ COPY scripts ./scripts
 COPY conf ./conf
 COPY LICENSE ./
 
-RUN yarn install --frozen-lock --silent \
+RUN yarn install --ignore-engines  --frozen-lock --silent \
   && yarn build:packages
 
 FROM node:lts-bullseye-slim as release

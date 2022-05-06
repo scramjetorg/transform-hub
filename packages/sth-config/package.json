@@ -12,9 +12,11 @@
     "clean": "rm -rf ./dist .bic_cache",
     "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
     "test": "npm run test:ava",
-    "test:ava": "ava",
-    "postbuild": "yarn copy:configs"
+    "test:ava": "ava"
   },
+  "assets": [
+    {"src": "src/image-config.json", "dest": "image-config.json"}
+  ],
   "ava": {
     "extensions": [
       "ts"

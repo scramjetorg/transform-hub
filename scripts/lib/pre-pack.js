@@ -1,9 +1,9 @@
 const fse = require("fs-extra");
 const glob = require("glob");
 const path = require("path");
-const { exec } = require("child_process");
 const { promises: { access }, constants } = require("fs");
 const { chmod, readFile, writeFile } = require("fs/promises");
+const { runCommand } = require("./build-utils");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
@@ -129,12 +129,8 @@ class PrePack {
         ));
     }
 
-    async install(lockOnly = false) {
-        return new Promise((res, rej) =>
-            exec(`cd ${this.rootDistPackPath} && npm i${lockOnly ? " --package-lock-only" : ""}`)
-                .on("exit", (err) => err ? rej(err) : res())
-                .stderr.pipe(process.stderr)
-        );
+    async install(extraParams = "") {
+        return runCommand(`cd ${this.rootDistPackPath} && npx -y npm@8 install${extraParams}`);
     }
 
     async isReadable(file) {

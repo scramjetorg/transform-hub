@@ -7,7 +7,7 @@ jobs:
   security-check:
     name: Analyze the source code
 
-    runs-on: ubuntu-latest 
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     strategy:
@@ -18,13 +18,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Setup Nodejs ${{ matrix.node-version }}
+      - name: Setup Nodejs ${{ inputs.node-version }}
         uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --ignore-engines  --frozen-lockfile
 
       - name: Checks for known security issues with the installed packages
         run: yarn audit

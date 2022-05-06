@@ -2,29 +2,15 @@
 
 const { createSolutionBuilderHost, sys } = require("typescript");
 const { createSolutionBuilder } = require("typescript");
-const { readClosestPackageJSON, getTSDirectoriesFromPackage, getTSDirectoriesFromGlobs } = require("./lib/build-utils");
+const { readClosestPackageJSON, runCommand, getPackageList } = require("./lib/build-utils");
 const minimist = require("minimist");
 const { join, dirname } = require("path");
 
 const { DataStream } = require("scramjet");
 const PrePack = require("./lib/pre-pack");
 const { writeFile } = require("fs/promises");
-const { exec } = require("child_process");
 
 const opts = minimist(process.argv.slice(2), { boolean: ["dirs", "list", "workspaces"] });
-
-function getPackageList(pkg, workspaceFilter, configName) {
-    let packages;
-
-    if (opts.config) {
-        packages = getTSDirectoriesFromPackage(process.cwd(), dirname(opts.config), pkg, workspaceFilter, configName);
-    } else if (opts.dirs) {
-        packages = getTSDirectoriesFromGlobs(process.cwd(), opts._, configName);
-    } else {
-        packages = getTSDirectoriesFromPackage(process.cwd(), opts._[0], pkg, workspaceFilter, configName);
-    }
-    return packages;
-}
 
 if (opts.help || opts.h || opts["?"]) {
     console.error(`Usage: ${process.argv[1]} [--workspaces] [<workdir>] [<workspace> [<workspaces>...]] [--config-name=<tsconfig.name.json>] [--fast] [--copy-dist]`);
@@ -37,11 +23,9 @@ if (opts.help || opts.h || opts["?"]) {
 (async function() {
     const pkg = readClosestPackageJSON();
     const nodeSystem = createSolutionBuilderHost(sys);
-    const workspaceFilter = opts._.slice(1);
-    // const fast = opts.fast;
     const configName = opts["config-name"] || "tsconfig.json";
 
-    const packages = getPackageList(pkg, workspaceFilter, configName);
+    const packages = getPackageList(pkg, configName, opts);
 
     if (opts.list) {
         console.log(packages.join("\n"));
@@ -91,14 +75,13 @@ if (opts.help || opts.h || opts["?"]) {
         await writeFile(join(outDir, "package.json"), "{\"private\": true, \"workspaces\": [\"**\"]}");
 
         if (!process.env.NO_INSTALL) {
-            await new Promise((res, rej) =>
-                exec(`cd ${outDir} && npm i`)
-                    .on("exit", (err) => err ? rej(err) : res())
-                    .stderr.pipe(process.stderr)
-            );
+            console.error(`Installing packages in ${outDir}`);
 
+            const cmd = `cd ${outDir} && pwd >&2 && npx npm@8 install -ws --no-audit`;
+
+            await runCommand(cmd, true);
             await DataStream.from(prepacks)
-                .do(pack => pack.install(true))
+                .do((/** @type {PrePack} */ pack) => pack.install())
                 .run();
         }
     }
@@ -107,4 +90,3 @@ if (opts.help || opts.h || opts["?"]) {
         console.error(e.stack);
         process.exitCode = e.exitCode || 10;
     });
-

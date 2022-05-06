@@ -8,7 +8,6 @@ on:
         default: '16.x'
         type: string
 
-
 jobs:
   analyze-code:
     name: Analyze the source code
@@ -23,13 +22,10 @@ jobs:
         uses: actions/setup-node@v2
         with:
           cache: 'yarn'
-          node-version: ${{ matrix.node-version }}
-
-      - name: ls cache
-        run: echo "${$( yarn cache dir )}" && find $( yarn cache dir ) -max_depth 2 -type d
+          node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --prefer-offline --silent
+        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
 
       - name: Run Linter
         run: yarn lint

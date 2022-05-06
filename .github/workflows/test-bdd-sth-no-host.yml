@@ -1,0 +1,69 @@
+name: Reusable workflow example
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        default: '16.x'
+        type: string
+
+jobs:
+  test-bdd-ci-no-host-sth:
+    name: Test BDD with STH starts as process (Nodejs ${{ inputs.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
+
+      - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
+
+      - name: Download reference apps (latest release)
+        run: gh release download --repo scramjetorg/reference-apps --pattern '*.tar.gz' --dir packages/reference-apps
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAMJET_BOT_TOKEN }}
+
+      - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
+
+      - name: Download dockerSthImg artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerSthImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+      - name: Download dockerImg artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+      - name: Download dockerPreRunnerImg artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerPreRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+      - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        run: pigz -d docker*Img*.tar.gz
+
+      - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+
+      - name: Load Docker images
+        run: ls -1  docker*Img*.tar| while read line; do docker load -i $line; done
+
+      - name: Setup Nodejs ${{ inputs.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Run BDD for HUB params
+        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
+

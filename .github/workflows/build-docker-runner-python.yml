@@ -1,6 +1,12 @@
 name: Reusable workflow example
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        default: '16.x'
+        type: string
 
 jobs:
   build-docker-runner-python-image:

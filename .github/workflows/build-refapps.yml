@@ -1,43 +1,39 @@
 name: Reusable workflow example
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        default: '16.x'
+        type: string
 
 jobs:
-  build-sth:
-    name: Build Reference Apps Nodejs ${{ matrix.node-version }}
+  build-refapps:
+    name: Build Reference Apps Nodejs ${{ inputs.node-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Nodejs ${{ matrix.node-version }}
+      - name: Setup Nodejs ${{ inputs.node-version }}
         uses: actions/setup-node@v2
         with:
-          cache: 'yarn'
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --prefer-offline --silent
+        run: yarn install --ignore-engines  --frozen-lockfile --silent
 
-      - name: Build packages
-        run: yarn build:packages
-
-      - name: Run packages tests
-        run: yarn test:packages-no-concurrent
+      - name: Build refapps
+        run: yarn build:refapps
 
       - name: Create artifact
-        run: tar --exclude=dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/
+        run: tar --use-compress-program="pigz --best --recursive" -cf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz dist/.
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
-          path: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+          name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
+          path: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
           retention-days: 1
-
