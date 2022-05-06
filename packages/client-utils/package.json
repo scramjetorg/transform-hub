@@ -6,12 +6,10 @@
   "browser": "./src/index.browser.ts",
   "scripts": {
     "start": "ts-node ./src/index",
-    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
-    "test": "nyc ava",
-    "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack"
+    "test": "nyc ava"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "MIT",

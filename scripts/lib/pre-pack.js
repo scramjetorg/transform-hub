@@ -225,7 +225,7 @@ class PrePack {
         } = content;
         const priv = !this.options.public && this.rootPackageJson.private;
         const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, rp);
-        const main = srcRe(_main);
+        const main = _main && srcRe(_main);
         const browser = _browser && srcRe(_browser);
         const bin = _bin && (typeof _bin === "string"
             ? srcRe(_bin)

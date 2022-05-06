@@ -9,14 +9,12 @@
   "scripts": {
     "start": "ts-node ./src/bin/index",
     "start:dev": "NODE_ENV=development ts-node ./src/bin/index",
-    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "clean": "rm -rf ./dist .bic_cache",
     "cloc": "cloc src --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
     "test": "echo no tests yet -- # npm run test:ava",
     "test:ava": "ava",
-    "preinstall": "tar --version 2>&1 >/dev/null",
-    "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack"
+    "preinstall": "tar --version 2>&1 >/dev/null"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

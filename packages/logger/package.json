@@ -5,13 +5,11 @@
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
-    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "test": "npm run test:ava",
     "test:ava": "nyc ava",
-    "clean": "rm -rf ./dist .bic_cache",
-    "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack"
+    "clean": "rm -rf ./dist .bic_cache"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

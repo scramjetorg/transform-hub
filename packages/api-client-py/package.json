@@ -1,21 +1,19 @@
 {
-    "name": "@scramjet/api-client-py",
-    "version": "0.21.0",
-    "description": "This package is part of Scramjet Transform Hub. The package provides the Python API Client for use with Scramjet Transform Hub.",
-    "main": "./__init__.py",
-    "scripts": {
-      "build": "yarn build:only",
-      "build:only": "mkdir -p dist/__pypackages__/ && cp client/*.py dist/",
-      "clean": "rm -rf dist/ __pycache__",
-      "prepack": "node ../../scripts/publish.js",
-      "postbuild": "yarn prepack",
-      "pretest:bdd": "pip3 install -r requirements-dev.txt",
-      "test:bdd": "behave"
-    },
-    "author": "Scramjet <opensource@scramjet.org>",
-    "license": "MIT",
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/scramjetorg/transform-hub.git"
-    }
+  "name": "@scramjet/api-client-py",
+  "version": "0.21.0",
+  "description": "This package is part of Scramjet Transform Hub. The package provides the Python API Client for use with Scramjet Transform Hub.",
+  "main": "./__init__.py",
+  "scripts": {
+    "build": "yarn build:only",
+    "build:only": "mkdir -p dist/__pypackages__/ && cp client/*.py dist/",
+    "clean": "rm -rf dist/ __pycache__",
+    "pretest:bdd": "pip3 install -r requirements-dev.txt",
+    "test:bdd": "behave"
+  },
+  "author": "Scramjet <opensource@scramjet.org>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
 }
