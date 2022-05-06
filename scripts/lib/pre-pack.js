@@ -129,9 +129,9 @@ class PrePack {
         ));
     }
 
-    async install() {
+    async install(lockOnly = false) {
         return new Promise((res, rej) =>
-            exec(`cd ${this.rootDistPackPath} && npm i`)
+            exec(`cd ${this.rootDistPackPath} && npm i${lockOnly ? " --package-lock-only" : ""}`)
                 .on("exit", (err) => err ? rej(err) : res())
                 .stderr.pipe(process.stderr)
         );
