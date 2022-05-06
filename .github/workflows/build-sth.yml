@@ -1,26 +1,26 @@
 name: Reusable workflow example
 
-on:
-  workflow_call:
-    inputs:
-      node-version:
-        required: true
-        type: string
+on: workflow_call
 
 jobs:
   build-sth:
-    name: Build STH Packages Nodejs ${{ inputs.node-version }}
+    name: Build STH Packages Nodejs ${{ matrix.node-version }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [14.x, 16.x]
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Setup Nodejs ${{ inputs.node-version }}
+      - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
           cache: 'yarn'
-          node-version: ${{ inputs.node-version }}
+          node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile --silent
@@ -32,12 +32,12 @@ jobs:
         run: yarn test:packages-no-concurrent
 
       - name: Create artifact
-        run: tar --exclude=dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz dist/
+        run: tar --exclude=dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
-          path: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
+          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+          path: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
           retention-days: 1
 

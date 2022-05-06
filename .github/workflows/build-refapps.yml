@@ -1,11 +1,6 @@
 name: Reusable workflow example
 
-on:
-  workflow_call:
-    inputs:
-      node-version:
-        required: true
-        type: string
+on: workflow_call
 
 jobs:
   build-sth:
