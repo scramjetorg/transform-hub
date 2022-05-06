@@ -4,6 +4,7 @@ on:
   workflow_call:
     inputs:
       node-version:
+        required: false
         default: '16.x'
         type: string
 
@@ -24,8 +25,11 @@ jobs:
           cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
+      - name: ls cache
+        run: echo "${$( yarn cache dir )}" && find $( yarn cache dir ) -max_depth 2 -type d
+
       - name: Install dependencies
-        run: yarn install --frozen-lockfile --offline --silent
+        run: yarn install --frozen-lockfile --prefer-offline --silent
 
       - name: Run Linter
         run: yarn lint
