@@ -200,7 +200,7 @@ jobs:
         run: yarn test:packages-no-concurrent
 
       - name: Create artifact
-        run: tar --exclude=dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/.*
+        run: tar --exclude=dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
@@ -235,7 +235,7 @@ jobs:
         run: yarn build:refapps
 
       - name: Create artifact
-        run: tar --exclude=dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/.*
+        run: tar --exclude=dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
