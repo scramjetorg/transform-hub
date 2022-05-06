@@ -38,8 +38,8 @@
     "@scramjet/types": "^0.22.0",
     "ava": "^3.15.0",
     "typed-emitter": "^1.4.0",
-    "typedoc": "^0.22.12",
-    "typedoc-plugin-markdown": "^3.11.14"
+    "typedoc": "^0.22.15",
+    "typedoc-plugin-markdown": "^3.12.1"
   },
   "dependencies": {
     "normalize-url": "^5.3.1"

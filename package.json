@@ -22,7 +22,7 @@
     "prebuild:refapps": "scripts/build-all.js --dirs packages/reference-apps/* --config-name=tsconfig.json",
     "build:refapps": "LOCAL_PACKAGES=true lerna run build:refapps:only",
     "postbuild:refapps": "LOCAL_PACKAGES=true lerna run postbuild:refapps",
-    "prebuild:packages": "NO_INSTALL=true scripts/build-all.js --dirs packages/* --config-name=tsconfig.build.json --copy-dist",
+    "prebuild:packages": "scripts/build-all.js --dirs packages/* --config-name=tsconfig.build.json --copy-dist",
     "build:packages": "LOCAL_PACKAGES=true lerna run build:only",
     "build:all-packages": "LOCAL_PACKAGES=true lerna run build && LOCAL_PACKAGES=true lerna run build:refapps",
     "build:docker": "lerna run build:docker",
