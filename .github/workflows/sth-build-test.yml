@@ -5,25 +5,35 @@ on:
     branches: [ release/*, main, devel ]
 
 jobs:
+  preinstall-deps:
+    uses: ./.github/workflows/preinstall-deps.yml
+
   analyze-code:
+    needs: [preinstall-deps]
     uses: ./.github/workflows/analyze-code.yml
 
   build-docker-sth-image:
+    needs: [preinstall-deps]
     uses: ./.github/workflows/build-docker-sth.yml
 
   build-docker-runner-image:
+    needs: [preinstall-deps]
     uses: ./.github/workflows/build-docker-runner-node.yml
 
   build-docker-runner-py-image:
+    needs: [preinstall-deps]
     uses: ./.github/workflows/build-docker-runner-python.yml
 
   build-docker-pre-runner-image:
+    needs: [preinstall-deps]
     uses: ./.github/workflows/build-docker-prerunner.yml
 
   build-sth:
+    needs: [preinstall-deps]
     uses: ./.github/workflows/build-docker-sth.yml
 
   build-refapps:
+    needs: [preinstall-deps]
     uses: ./.github/workflows/build-refapps.yml
 
   test-bdd-ci-no-host-sth:
