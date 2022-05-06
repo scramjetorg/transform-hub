@@ -335,7 +335,7 @@ Then("I wait for Instance health status to change from 200 to 404", { timeout: 2
     while (!success) {
         res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", res.instanceId || ""]);
 
-        if (res.stdio[1].includes("status: 404")) {
+        if (res.stdio[0].includes("404")) {
             success = true;
             assert.equal(success, true);
         }

@@ -16,11 +16,12 @@ const CommandClass = completionMixin(commander).Command;
 
 const getExitCode = (_err: ClientError) => 1;
 const program = new CommandClass() as Command;
-const errorHandler = (err: ClientError) => {
+const errorHandler = async (err: ClientError) => {
     process.exitCode = getExitCode(err);
     const { format, debug } = globalConfig.getConfig();
 
     if (globalConfig.isJsonFormat(format)) {
+        // TODO Check if it is a CLI or an API Client Error.
         console.log(
             JSON.stringify({
                 error: true,
@@ -28,6 +29,8 @@ const errorHandler = (err: ClientError) => {
                 stack: debug ? err?.stack : undefined,
                 message: err?.message,
                 reason: err?.reason?.message,
+                apiStatusCode: err?.status,
+                apiError: await err?.toJSON().then((body) => body).catch(() => undefined),
             })
         );
     } else {
