@@ -21,6 +21,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -45,6 +46,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Update saved git hash
@@ -83,6 +85,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: build runner Docker image
@@ -101,7 +104,7 @@ jobs:
           name:  dockerRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
           path: '*.tar.gz'
           retention-days: 1
-  
+
   build-docker-runner-py-image:
     name: Build runner-py docker image (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -148,6 +151,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Build runner Docker image
@@ -183,6 +187,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -220,6 +225,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -298,6 +304,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Run BDD for HUB params
@@ -343,7 +350,7 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dockerRunnerImg-${{ matrix.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-      
+
       - name: Download dockerImg artifact
         uses: actions/download-artifact@v2
         with:
@@ -366,6 +373,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -374,7 +382,7 @@ jobs:
       - name: Run BDD tests
       # SCRAMJET_SPAWN_JS will run cli test from dist directory
         run: SCRAMJET_TEST_LOG=1 SCRAMJET_SPAWN_JS=1 yarn test:bdd-ci
-      
+
       - name: Run BDD Python Api-Client tests
         run: yarn test:bdd-ci-py
 
@@ -425,6 +433,7 @@ jobs:
       - name: Setup Nodejs ${{ matrix.node-version }}
         uses: actions/setup-node@v2
         with:
+          cache: 'yarn'
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
@@ -480,6 +489,7 @@ jobs:
         - name: Setup Nodejs ${{ matrix.node-version }}
           uses: actions/setup-node@v2
           with:
+            cache: 'yarn'
             node-version: ${{ matrix.node-version }}
 
         - name: Install dependencies
