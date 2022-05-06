@@ -16,7 +16,7 @@ class PrePack {
             throw new Error("No output folder specified");
         }
 
-        this.currDir = process.cwd();
+        this.currDir = options.cwd || process.cwd();
         this.rootDir = path.resolve(__dirname, "../..");
         this.currDirDist = path.join(this.currDir, "dist");
 
@@ -33,13 +33,6 @@ class PrePack {
         this.rootPackageJson = null;
         this.currPackageJson = null;
         this.packagesMap = null;
-
-        console.log(this.options, {
-            currDir: this.currDir,
-            rootDir: this.rootDir,
-            currDirDist: this.currDirDist,
-            rootDistPackPath: this.rootDistPackPath
-        });
     }
 
     async build() {
@@ -50,7 +43,6 @@ class PrePack {
                     throw new Error("Package has no name!");
 
                 this.rootDistPackPath = path.join(this.rootDir, "dist", this.currPackageJson.name.replace(/[^\w\d]+/g, "-").replace(/^\-|\-$/, ""));
-                console.log(this.rootDistPackPath);
             }
 
             await this.readRootPackage();
