@@ -7,17 +7,16 @@ on:
         required: false
         default: '16.x'
         type: string
+      python-version:
+        required: false
+        default: '3.9'
+        type: string
 
 jobs:
   test-bdd-sth:
     name: Test bdd-ci STH (Nodejs ${{ inputs.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ['3.9']
 
     steps:
       - uses: actions/checkout@v3
@@ -45,7 +44,7 @@ jobs:
       - name: Download dockerImg Runner Python artifact
         uses: actions/download-artifact@v2
         with:
-          name: dockerRunnerPyImg-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name: dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
       - name: Download dockerPreRunnerImg artifact
         uses: actions/download-artifact@v2

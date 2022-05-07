@@ -7,17 +7,16 @@ on:
         required: false
         default: '16.x'
         type: string
+      python-version:
+        required: false
+        default: '3.9'
+        type: string
 
 jobs:
   build-docker-runner-python-image:
-    name: Build runner-py docker image (Python ${{ matrix.python-version }})
+    name: Build runner-py docker image (Python ${{ inputs.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        python-version: ['3.9']
 
     steps:
       - uses: actions/checkout@v3
@@ -27,7 +26,7 @@ jobs:
         working-directory: packages/python-runner
 
       - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerRunnerPyImg-$name-$tag-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerRunnerPyImg-$name-$tag-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
 
       - name: Zip Docker images
         run: pigz docker*Img*.tar
@@ -35,6 +34,6 @@ jobs:
       - name: Archive production artifacts
         uses: actions/upload-artifact@v2
         with:
-          name:  dockerRunnerPyImg-${{ matrix.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name:  dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
           path: '*.tar.gz'
           retention-days: 1

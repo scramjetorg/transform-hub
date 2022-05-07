@@ -7,6 +7,10 @@ on:
         required: false
         default: '16.x'
         type: string
+      python-version:
+        required: false
+        default: '3.9'
+        type: string
 
 jobs:
   test-bdd-ci-no-host-sth:
@@ -44,6 +48,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: dockerRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+
+      - name: Download dockerImg Runner Python artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
       - name: Download dockerPreRunnerImg artifact
         uses: actions/download-artifact@v2
