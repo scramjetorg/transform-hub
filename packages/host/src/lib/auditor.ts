@@ -1,6 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { OpRecord, ParsedMessage } from "@scramjet/types";
-import { OpRecordCode } from "@scramjet/symbols";
+import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 import { StringStream } from "scramjet";
 import { ReReadable } from "rereadable-stream";
 import { IncomingMessage, ServerResponse } from "http";
@@ -13,6 +13,7 @@ type AuditData = {
     id: string;
     object?: string;
 }
+
 export type AuditedRequest = ParsedMessage & { auditData: AuditData };
 
 export class Auditor {
@@ -57,13 +58,16 @@ export class Auditor {
 
         const i = ["sequence", "instance", "topic"].indexOf(type);
 
-        if (i === -1) {
+        if (!~i) {
             return 0;
         }
 
         let code = MIN_MSG_CODE + i * OBJ_TYPE_CODE_DELTA;
 
+        // post = 100, get = 200, put = 300, delete = 400
         code += (["post", "get", "put", "delete"].indexOf(req.method!.toLowerCase()) + 1) * REQ_METHOD_CODE_DELTA;
+
+        // stdout 1, stderr 2, stdin 3...
         code += [
             // Instance endpoints
             "stdout", "stderr", "stdin", "log", "monitoring",
@@ -78,9 +82,13 @@ export class Auditor {
         return code;
     }
 
+    getRequestorId(req: ParsedMessage): string {
+        return req.headers["x-mw-user"] as string || "system";
+    }
+
     auditRequest(req: AuditedRequest, status: OpRecord["opState"]) {
         const opCode = this.getOpCode(req);
-        const requestorId = req.headers["x-mw-user"] as string || "system";
+        const requestorId = this.getRequestorId(req);
 
         if (opCode) {
             this.write({
@@ -113,6 +121,28 @@ export class Auditor {
             opState: "ACTIVE",
             opCode: OpRecordCode.HOST_HEARTBEAT,
             objectId: "",
+            requestorId: "system",
+            receivedAt: Date.now()
+        });
+    }
+
+    auditInstance(id: string, state: InstanceMessageCode) {
+        this.logger.info("Instance state", id, state);
+        this.write({
+            opState: "",
+            opCode: state,
+            objectId: id,
+            requestorId: "system",
+            receivedAt: Date.now()
+        });
+    }
+
+    auditSequence(id: string, state: SequenceMessageCode) {
+        this.logger.info("Sequence state", id, state);
+        this.write({
+            opState: "",
+            opCode: state,
+            objectId: id,
             requestorId: "system",
             receivedAt: Date.now()
         });
