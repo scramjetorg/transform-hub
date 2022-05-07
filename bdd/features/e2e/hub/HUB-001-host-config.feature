@@ -26,7 +26,7 @@ Feature: HUB-001 Host configuration
 
     @starts-host @docker-specific
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
-        When hub process is started with random ports and parameters "--runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
+        When hub process is started with parameters "-P 9002 --instances-server-port 19002 --runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started
         And get runner container information
@@ -35,7 +35,7 @@ Feature: HUB-001 Host configuration
 
     @starts-host @docker-specific
     Scenario: HUB-001 TC-010  Default runner image for js/ts sequences
-        When hub process is started with random ports and parameter ""
+        When hub process is started with parameters "-P 9002 --instances-server-port 19002"
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started
         And get runner container information

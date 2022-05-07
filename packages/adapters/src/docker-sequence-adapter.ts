@@ -99,7 +99,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
                 maxMem: this.config.docker.prerunner?.maxMem || 0
             });
 
-            this.logger.debug("Identify started", volume);
+            this.logger.debug("Identify started", volume, this.config.docker.prerunner?.maxMem || 0);
 
             const ret = await this.parsePackage(streams, wait, volume);
 
@@ -145,10 +145,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         this.logger.info(`Volume created in ${volSecs}s`, volumeId);
 
         let runResult: DockerAdapterRunResponse;
-
         const prerunnerStart = new Date();
 
-        this.logger.debug("Starting PreRunner", this.config);
+        this.logger.debug("Starting PreRunner", this.config.docker.prerunner);
 
         try {
             runResult = await this.dockerHelper.run({

@@ -48,7 +48,7 @@ jobs:
       node-version: 16.x
 
   test-bdd-ci-no-host-sth:
-    needs: [analyze-code, build-sth, build-refapps, build-docker-runner-image, build-docker-pre-runner-image]
+    needs: [analyze-code, build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
     uses: ./.github/workflows/test-bdd-sth-no-host.yml
     with:
       node-version: 16.x
