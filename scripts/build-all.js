@@ -72,7 +72,8 @@ if (opts.help || opts.h || opts["?"]) {
             .do(pack => console.error(`${pack.currDir} done in ${Date.now() - pack.startTs} millis`))
             .run();
 
-        await writeFile(join(outDir, "package.json"), "{\"private\": true, \"workspaces\": [\"**\"]}");
+        if (!process.env.NO_WORKSPACE)
+            await writeFile(join(outDir, "package.json"), "{\"private\": true, \"workspaces\": [\"**\"]}");
 
         if (!process.env.NO_INSTALL) {
             console.error(`Installing packages in ${outDir}`);

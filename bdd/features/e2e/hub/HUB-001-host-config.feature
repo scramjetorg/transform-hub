@@ -35,7 +35,7 @@ Feature: HUB-001 Host configuration
 
     @starts-host @docker-specific
     Scenario: HUB-001 TC-010  Default runner image for js/ts sequences
-        When hub process is started with random ports and parameter
+        When hub process is started with random ports and parameter ""
         And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
         And instance started
         And get runner container information

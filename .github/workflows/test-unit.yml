@@ -30,9 +30,6 @@ jobs:
       - name: Unzip dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
 
-      - name: List dirs in dist
-        run: find dist -maxdepth 2 -type d; ls -la dist/node_modules/@scramjet/
-
       - name: Install dependencies
         run: yarn install --ignore-engines --frozen-lockfile --cache-folder=$( $( dirname yarn cache dir ) )
 

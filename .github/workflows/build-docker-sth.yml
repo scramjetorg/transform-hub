@@ -23,6 +23,14 @@ jobs:
           cache: 'yarn'
           node-version: ${{ inputs.node-version }}
 
+      - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
+
+      - name: Unzip dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+
       - name: Update saved git hash
         run: yarn savehash
 
