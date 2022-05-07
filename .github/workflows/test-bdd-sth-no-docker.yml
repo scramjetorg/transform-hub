@@ -32,19 +32,8 @@ jobs:
         with:
           name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
-      # - name: Download dockerSthImg artifact
-      #   uses: actions/download-artifact@v2
-      #   with:
-      #     name: dockerSthImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-
-      # - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
-      #   run: pigz -d dockerSthImg-scramjetorg_sth-$(jq -r .version package.json)-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-
       - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
-
-      # - name: Load Docker images
-      #   run: docker load -i dockerSthImg-scramjetorg_sth-$(jq -r .version package.json)-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar
 
       - name: Setup Nodejs ${{ inputs.node-version }}
         uses: actions/setup-node@v2

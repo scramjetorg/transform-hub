@@ -21,6 +21,7 @@ jobs:
       node-version: 14.x
 
   build-docker-sth-image:
+    needs: [analyze-code, build-sth]
     uses: ./.github/workflows/build-docker-sth.yml
     with:
       node-version: 14.x
@@ -47,13 +48,13 @@ jobs:
       node-version: 14.x
 
   test-bdd-ci-no-host-sth:
-    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
+    needs: [analyze-code, build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
     uses: ./.github/workflows/test-bdd-sth-no-host.yml
     with:
       node-version: 14.x
 
   test-bdd-ci-sth:
-    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
+    needs: [analyze-code, build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
     uses: ./.github/workflows/test-bdd-sth-docker.yml
     with:
       node-version: 14.x

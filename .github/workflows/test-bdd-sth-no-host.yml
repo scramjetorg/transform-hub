@@ -39,11 +39,6 @@ jobs:
         with:
           name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
-      - name: Download dockerSthImg artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dockerSthImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-
       - name: Download dockerImg artifact
         uses: actions/download-artifact@v2
         with:
