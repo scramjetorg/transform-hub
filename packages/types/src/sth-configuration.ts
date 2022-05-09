@@ -78,6 +78,8 @@ export type K8SAdapterConfiguration = {
     timeout?: string
 }
 
+export type Adapter = "docker" | "process" | "kubernetes"
+
 export type STHConfiguration = {
     /**
      * Logging level.
@@ -166,9 +168,8 @@ export type STHConfiguration = {
 
     /**
      * Which sequence and instance adapters should STH use.
-     * One of 'docker', 'process', 'kubernetes'
      */
-    runtimeAdapter: string,
+    runtimeAdapter: Adapter,
 
     /**
      * Kubernetes adapter configuration
