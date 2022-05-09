@@ -2,7 +2,7 @@ import findPackage from "find-package-json";
 import { ReasonPhrases } from "http-status-codes";
 
 import { Readable, Writable } from "stream";
-import { IncomingMessage, Server, ServerResponse } from "http";
+import { Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
 import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, StartSequenceDTO, STHConfiguration, STHRestAPI } from "@scramjet/types";
@@ -441,6 +441,7 @@ export class Host implements IComponent {
             this.logger.trace("Sequence removed:", id);
 
             this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
+            this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
                 opStatus: ReasonPhrases.OK,
@@ -518,7 +519,7 @@ export class Host implements IComponent {
      * @param {IncomingMessage} stream Stream of packaged Sequence.
      * @returns {Promise} Promise resolving to operation result.
      */
-    async handleNewSequence(stream: IncomingMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+    async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         this.logger.info("New Sequence incoming");
 
         const id = IDProvider.generate();
@@ -539,6 +540,8 @@ export class Host implements IComponent {
             this.logger.info("Sequence identified", config);
 
             await this.cpmConnector?.sendSequenceInfo(config.id, SequenceMessageCode.SEQUENCE_CREATED);
+
+            this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             return {
                 id: config.id,
@@ -571,9 +574,9 @@ export class Host implements IComponent {
             };
         }
 
-        const seqId = req.params?.id;
+        const id = req.params?.id;
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
-        const sequence = this.sequencesStore.get(seqId);
+        const sequence = this.sequencesStore.get(id);
 
         if (!sequence) {
             return { opStatus: ReasonPhrases.NOT_FOUND };
@@ -588,11 +591,13 @@ export class Host implements IComponent {
                 id: csic.id,
                 appConfig: csic.appConfig,
                 sequenceArgs: csic.sequenceArgs,
-                sequence: seqId,
+                sequence: id,
                 ports: csic.info.ports,
                 created: csic.info.created,
                 started: csic.info.started
             }, InstanceMessageCode.INSTANCE_STARTED);
+
+            this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_STARTED);
 
             return {
                 result: "success",
@@ -720,6 +725,8 @@ export class Host implements IComponent {
                 id: csic.id,
                 sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);
+
+            this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
 
             if (csic.provides && csic.provides !== "") {
                 csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(

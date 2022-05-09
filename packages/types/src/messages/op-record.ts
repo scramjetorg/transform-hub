@@ -1,10 +1,10 @@
-import { OpRecordCode } from "@scramjet/symbols";
+import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 
 export type OpRecord = {
     /**
     * The type of recorded operation is identified by the code value from the OpRecord enumeration.
     */
-    opCode: OpRecordCode;
+    opCode: OpRecordCode | SequenceMessageCode | InstanceMessageCode;
 
     /**
     * The operation state from the OpState enumeration.
