@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Test STH - Unit tests
 
 on:
   workflow_call:

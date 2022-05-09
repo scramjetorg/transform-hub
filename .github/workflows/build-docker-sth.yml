@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Build STH Docker Image
 
 on:
   workflow_call:

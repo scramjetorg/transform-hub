@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Build STH Packages
 
 on:
   workflow_call:

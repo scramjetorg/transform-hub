@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Build Runner Docker Image Node
 
 on:
   workflow_call:

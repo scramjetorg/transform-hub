@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Build Runner Docker Image Python
 
 on:
   workflow_call:

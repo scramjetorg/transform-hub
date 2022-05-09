@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Test STH - CLI suite with Process Adapter
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   test-bdd-ci-no-host-no-docker-sth:
-    name: Test STH Command Line (Nodejs ${{ inputs.node-version }})
+    name: Test STH - CLI suite with Process Adapter (Nodejs ${{ inputs.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

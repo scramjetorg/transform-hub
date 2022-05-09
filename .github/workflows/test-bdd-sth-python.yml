@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Test STH - API suite in Python
 
 on:
   workflow_call:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   test-bdd-sth-py:
-    name: Test bdd-ci STH (Python ${{ inputs.python-version }})
+    name: Test STH - API suite in Python (Python ${{ inputs.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
 

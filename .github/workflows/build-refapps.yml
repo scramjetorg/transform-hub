@@ -1,4 +1,4 @@
-name: Reusable workflow example
+name: Build Reference Apps
 
 on:
   workflow_call:
@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-refapps:
-    name: Build Reference Apps Nodejs ${{ inputs.node-version }}
+    name: Build Reference Apps (Nodejs ${{ inputs.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
