@@ -79,11 +79,8 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, filename: string, { contentType, end }) => {
             const instanceClient = getInstance(getInstanceId(id));
 
-            return displayEntity(
-                instanceClient.sendInput(filename
-                    ? await getReadStreamFromFile(filename)
-                    : process.stdin, {}, { type: contentType, end })
-            );
+            await instanceClient.sendInput(filename ? await getReadStreamFromFile(filename) : process.stdin, {},
+                { type: contentType, end });
         });
 
     instanceCmd
