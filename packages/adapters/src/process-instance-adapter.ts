@@ -78,12 +78,16 @@ IComponent {
     }
 
     getPythonpath(sequenceDir: string) {
+        // This is for running from source. When the package is built, dependencies
+        // are installed next to runner.py script (rather than in __pypackages__),
+        // but that directory is automatically included in PYTHONPATH.
         let pythonpath = path.resolve(
-            __dirname,
-            path.resolve(__dirname, require.resolve("@scramjet/python-runner"), "..")
+            __dirname, require.resolve("@scramjet/python-runner"), "../__pypackages__"
         );
 
-        pythonpath += `:${process.env.PYTHONPATH}:${sequenceDir}/__pypackages__`;
+        if (process.env.PYTHONPATH) pythonpath += `:${process.env.PYTHONPATH}`;
+
+        pythonpath += `:${sequenceDir}/__pypackages__`;
 
         return pythonpath;
     }
@@ -104,26 +108,21 @@ IComponent {
             config.entrypointPath
         );
 
-        this.logger.debug("Spawning Runner process with command", runnerCommand, "and envs: ", {
+        const env = {
             DEVELOPMENT: process.env.DEVELOPMENT,
             PRODUCTION: process.env.PRODUCTION,
             SEQUENCE_PATH: sequencePath,
-            INSTANCES_SERVER_PORT: instancesServerPort,
-            INSTANCE_ID: instanceId
-        });
+            INSTANCES_SERVER_PORT: instancesServerPort.toString(),
+            INSTANCES_SERVER_HOST: "127.0.0.1",
+            INSTANCE_ID: instanceId,
+            PYTHONPATH: this.getPythonpath(config.sequenceDir),
+            PATH: process.env.PATH,
+        };
 
-        const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), {
-            env: {
-                PATH: process.env.PATH,
-                PYTHONPATH: this.getPythonpath(config.sequenceDir),
-                DEVELOPMENT: process.env.DEVELOPMENT,
-                PRODUCTION: process.env.PRODUCTION,
-                SEQUENCE_PATH: sequencePath,
-                INSTANCES_SERVER_PORT: instancesServerPort.toString(),
-                INSTANCES_SERVER_HOST: "127.0.0.1",
-                INSTANCE_ID: instanceId,
-            }
-        });
+        this.logger.debug("Spawning Runner process with command", runnerCommand);
+        this.logger.trace("Runner process environment", env);
+
+        const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env });
 
         if (development()) {
             runnerProcess.stdout.pipe(process.stdout);

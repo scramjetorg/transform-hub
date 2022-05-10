@@ -4,7 +4,17 @@ As the "problem scope" of the business problem that our technology solves is qui
 
 We use [Cucumber](https://cucumber.io/) as a software tool to support the BDD process and [Gherkin](https://cucumber.io/docs/gherkin/) syntax that allows us to write tests in a human-readable language.
 
-If you use Visual Studio Code, you can install the [Cucumber (Gherkin) Full Support](https://marketplace.visualstudio.com/items?itemName=alexkrechik.cucumberautocomplete&ssr=false#review-details) extension which will be very useful for writing BDD tests.
+If you use Visual Studio Code as your IDE, please install the [Cucumber (Gherkin) Full Support](https://marketplace.visualstudio.com/items?itemName=alexkrechik.cucumberautocomplete&ssr=false#review-details) extension. It will be very useful for writing or editing BDD tests. After installing it, please make sure that in your local .vscode/ directory file `settings.json` exists:
+
+```json
+{
+  "cucumberautocomplete.steps": [
+    "./bdd/step-definitions/**/*.ts"
+  ],
+  "cucumberautocomplete.strictGherkinCompletion": true
+}
+
+```
 
 ---
 
@@ -12,7 +22,7 @@ If you use Visual Studio Code, you can install the [Cucumber (Gherkin) Full Supp
 
 ## How to run BDD tests :cucumber:
 
-The following instructions apply to the state of the repository from `release/0.14`.
+The following instructions apply to the state of the repository from `release/0.22`.
 
 BDD tests are located in a `bdd` folder, to execute them simply follow the steps below.
 
@@ -24,11 +34,11 @@ Before start running any test, please make sure that all the packages are instal
 yarn clean && yarn install && yarn build:all
 ```
 
-This command will remove all the 'dist' folders (if there were any), after that it will install and build all the packages including 'reference-apps' package, which contains all the applications that we use in our BDD tests. After executing the command from above every single application will be also compressed into `.tar.gz` file. We also need them for the BDD tests execution.
+This command will remove all the 'dist' folders (if there were any), after that it will install dependencies, compile the code in all the packages including 'reference-apps' package, which contains all the Sequences that we use in our BDD tests. After executing the command from above, every Sequence will be also compressed into `.tar.gz` file. Those compressed files are ready-to-use Sequence packages, that we use in BDD tests scenarios.
 
 ### Executing BDD tests :rocket:
 
-The test scenarios are located in `.feature` files, and these in separate folders named according to the subject of the testing, and these in `features` directory in `bdd` folder.
+The test scenarios are located in `*.feature` files, and these in separate folders named according to the subject of the testing, and these in `features` directory in `bdd` folder.
 Every scenario has its own title and unique index number. We can use those indexes to either execute one test or a bulk of tests, for example:
 
 - to execute one particular test named `Scenario: E2E-001 TC-002 API test - Get instance output` run the following command:
@@ -79,7 +89,7 @@ Scenario can have more that one tag, can have two or even more, for example:
 
 ![tags.png](../images/tags.png)
 
-In the situation like this above, when you want to execute tests with `@ci` tag but without `@starts-host`tag, command like this below will do the job:
+In the situation like this above, when you want to execute tests with `@ci` tag but without `@starts-host` tag, command like this below will do the job:
 
 ```bash
 yarn test:bdd --tags="@ci" --tags="not @starts-host"
@@ -87,13 +97,13 @@ yarn test:bdd --tags="@ci" --tags="not @starts-host"
 
 ### Python tests :snake:
 
-Python BDD tests are not enabled in CI yet. They are tagged `@python` and require compiling python sequences, which can be done with the following command:
+Python BDD tests are tagged `@python` and require compiling python Sequences, which can be done with the following command:
 
 ```bash
-for seq_name in `ls python/reference-apps/`; do si pack "python/reference-apps/$seq_name" -o "$seq_name.tar.gz"; done
+for seq_name in `ls python/reference-apps/`; do si seq pack "python/reference-apps/$seq_name" -o "$seq_name.tar.gz"; done
 ```
 
-Also, python runner does not support Docker yet, so run tests with
+Also, python runner does not support Docker yet, so run tests with command:
 
 ```bash
 RUNTIME_ADAPTER=process yarn test:bdd --tags=@python
@@ -151,7 +161,7 @@ If you want to run a particular test file, go to directory where the test file i
 
     npx ava
 
-For example if you want to run unit test for runner package, go to runner's test directory and run the test:
+For example if you want to run unit test for the Runner package, go to runner's test directory and run the test:
 
     cd packages/runner/test
     npx ava
