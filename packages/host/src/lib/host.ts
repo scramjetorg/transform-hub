@@ -184,7 +184,11 @@ export class Host implements IComponent {
 
         (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
 
-        if (this.config.cpmUrl) {
+        if (!!this.config.cpmUrl !== !!this.config.cpmId) {
+            throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
+        }
+
+        if (this.config.cpmUrl && this.config.cpmId) {
             this.cpmConnector = new CPMConnector(
                 this.config.cpmUrl,
                 this.config.cpmId,
@@ -195,6 +199,7 @@ export class Host implements IComponent {
                 },
                 this.api.server
             );
+
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
             this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
