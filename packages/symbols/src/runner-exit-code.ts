@@ -1,4 +1,5 @@
 export enum RunnerExitCode {
     INVALID_ENV_VARS = 20,
     INVALID_SEQUENCE_PATH = 21,
+    SEQUENCE_FAILED_ON_START = 22,
 }

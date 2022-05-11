@@ -31,7 +31,7 @@ import { PassThrough, Readable } from "stream";
 import { development } from "@scramjet/sth-config";
 
 import { DataStream } from "scramjet";
-import { EventEmitter } from "events";
+import { EventEmitter, once } from "events";
 import { ServerResponse } from "http";
 import { getRouter } from "@scramjet/api-server";
 
@@ -268,6 +268,9 @@ export class CSIController extends TypedEmitter<Events> {
         case RunnerExitCode.INVALID_SEQUENCE_PATH: {
             return Promise.reject(`Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. Check "main" field in Sequence package.json`);
         }
+        case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
+            return Promise.reject("Sequence failed on start");
+        }
         default: {
             return Promise.resolve();
         }
@@ -395,7 +398,9 @@ export class CSIController extends TypedEmitter<Events> {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
-            this.initResolver?.res();
+            await once(this, "pang").then(() => {
+                this.initResolver?.res();
+            });
         } catch (e: any) {
             this.initResolver?.rej(e);
         }

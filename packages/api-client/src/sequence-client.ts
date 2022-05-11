@@ -59,7 +59,7 @@ export class SequenceClient {
         );
 
         if (response.result === "error") {
-            return Promise.reject({ error: response.error });
+            return Promise.reject(response.error);
         }
 
         return InstanceClient.from(response.id, this.host);

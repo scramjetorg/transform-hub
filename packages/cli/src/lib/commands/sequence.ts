@@ -7,7 +7,7 @@ import { CommandDefinition } from "../../types";
 import { isDevelopment } from "../../utils/isDevelopment";
 import { getHostClient, getInstance, getReadStreamFromFile, packAction } from "../common";
 import { getPackagePath, getSequenceId, sessionConfig } from "../config";
-import { displayEntity, displayMessage, displayObject } from "../output";
+import { displayEntity, displayError, displayMessage, displayObject } from "../output";
 
 const sendPackage = async (sequencePackage: string) => {
     const seq = await getHostClient().sendSequence(
@@ -38,10 +38,15 @@ const startSequence = async (id: string, { configFile, configString, args, outpu
     }
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
-    const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic });
+    try {
+        const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic });
 
-    sessionConfig.setLastInstanceId(instance.id);
-    return displayObject(instance);
+        sessionConfig.setLastInstanceId(instance.id);
+        return displayObject(instance);
+    } catch (error: any) {
+        displayError(error);
+        process.exit(1);
+    }
 };
 
 function parseSequenceArgs(argsStr: string | undefined): any[] {
