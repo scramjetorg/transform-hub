@@ -261,6 +261,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private mapRunnerExitCode(exitcode: number) {
+        // eslint-disable-next-line default-case
         switch (exitcode) {
         case RunnerExitCode.INVALID_ENV_VARS: {
             return Promise.reject("Runner was started with invalid configuration. This is probably a bug in STH.");
@@ -273,11 +274,11 @@ export class CSIController extends TypedEmitter<Events> {
         }
         }
 
-        if(exitcode > 0) {
-            return Promise.reject('Runner failed')
+        if (exitcode > 0) {
+            return Promise.reject("Runner failed");
         }
 
-        return Promise.resolve()
+        return Promise.resolve();
     }
 
     async cleanup() {
@@ -401,7 +402,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
-            await once(this, "pang")
+            await once(this, "pang");
             this.initResolver?.res();
         } catch (e: any) {
             this.initResolver?.rej(e);

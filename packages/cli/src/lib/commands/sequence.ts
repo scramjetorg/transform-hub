@@ -45,7 +45,7 @@ const startSequence = async (id: string, { configFile, configString, args, outpu
         return displayObject(instance);
     } catch (error: any) {
         displayError(error);
-        process.exit(1);
+        return process.exit(1);
     }
 };
 
