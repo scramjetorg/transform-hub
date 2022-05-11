@@ -19,7 +19,7 @@ export const topic: CommandDefinition = (program) => {
         topicCmd
             .command("create")
             .argument("<topic-name>")
-            .description("create topic")
+            .description("TO BE IMPLEMENTED / create topic")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");
@@ -40,7 +40,7 @@ export const topic: CommandDefinition = (program) => {
             .command("delete")
             .alias("rm")
             .argument("<topic-name>")
-            .description("delete data from topic")
+            .description("TO BE IMPLEMENTED / delete data from topic")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");

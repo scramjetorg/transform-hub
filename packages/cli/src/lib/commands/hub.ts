@@ -31,37 +31,36 @@ export const hub: CommandDefinition = (program) => {
             .argument("<name>")
             .option("--json <json>")
             .option("--file <pathToFile>")
-            .description(" create hub with parameters")
+            .description("TO BE IMPLEMENTED / create hub with parameters")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");
             });
 
-    if (isDevelopment())
-        hubCmd
-            .command("use")
-            .argument("<name|id>")
-            .description("specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
-            .action(async (id: string) => {
-                const space = sessionConfig.getConfig().lastSpaceId;
+    hubCmd
+        .command("use")
+        .argument("<name|id>")
+        .description("specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
+        .action(async (id: string) => {
+            const space = sessionConfig.getConfig().lastSpaceId;
 
-                console.log("Space:", space);
-                const managerClient = getMiddlewareClient().getManagerClient(space);
+            console.log("Space:", space);
+            const managerClient = getMiddlewareClient().getManagerClient(space);
 
-                const hosts = await managerClient.getHosts();
+            const hosts = await managerClient.getHosts();
 
-                const host = hosts.find((h: any) => h.id === id);
+            const host = hosts.find((h: any) => h.id === id);
 
-                if (!host) {
-                    console.error("Host not found");
-                    return;
-                }
+            if (!host) {
+                console.error("Host not found");
+                return;
+            }
 
-                const hostClient = managerClient.getHostClient(id);
+            const hostClient = managerClient.getHostClient(id);
 
-                sessionConfig.setLastHubId(id);
-                displayObject(hostClient);
-            });
+            sessionConfig.setLastHubId(id);
+            displayObject(hostClient);
+        });
 
     hubCmd
         .command("list")

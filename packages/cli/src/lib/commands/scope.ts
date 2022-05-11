@@ -40,7 +40,7 @@ export const scope: CommandDefinition = (program) => {
             .command("add")
             .option("--hub <name> <id>", "add hub to specified scope")
             .option("--space <name> <apiUrl>", "add space to specified scope")
-            .description("add hub or space to specified scope")
+            .description("TO BE IMPLEMENTED / add hub or space to specified scope")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");
@@ -50,7 +50,7 @@ export const scope: CommandDefinition = (program) => {
         scopeCmd
             .command("save")
             .argument("<name>")
-            .description("save current chosen space and hub under a scope")
+            .description("TO BE IMPLEMENTED / save current chosen space and hub under a scope")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");

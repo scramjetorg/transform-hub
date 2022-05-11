@@ -123,38 +123,22 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<id>", "The sequence id")
         .action(async (id: string) => sessionConfig.setLastSequenceId(id) as unknown as void);
 
-    if (isDevelopment())
-        sequenceCmd
-            .command("start")
-            .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
-            // TODO: for future implementation
-            // .option("--hub <provider>", "aws|ovh|gcp");
-            .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
-            .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
-            .option("--output-topic <string>", "topic to which the output stream should be routed")
-            .option("--input-topic <string>", "topic to which the input stream should be routed")
-            .option("--args <json-string>", "arguments to be passed to first function in Sequence")
-            .description("start the sequence with or without given arguments")
-            .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr }) => {
-                const args = parseSequenceArgs(argsStr);
+    sequenceCmd
+        .command("start")
+        .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
+        // TODO: for future implementation
+        // .option("--hub <provider>", "aws|ovh|gcp");
+        .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
+        .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
+        .option("--output-topic <string>", "topic to which the output stream should be routed")
+        .option("--input-topic <string>", "topic to which the input stream should be routed")
+        .option("--args <json-string>", "arguments to be passed to first function in Sequence")
+        .description("start the sequence with or without given arguments")
+        .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr }) => {
+            const args = parseSequenceArgs(argsStr);
 
-                await startSequence(id, { configFile, configString, args, outputTopic, inputTopic });
-            }
-            );
-    else
-        sequenceCmd
-            .command("start")
-            .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
-            .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
-            .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
-            .option("--args <json-string>", "arguments to be passed to first function in Sequence")
-            .description("start the sequence with or without given arguments")
-            .action(async (id, { configFile, configString, args: argsStr }) => {
-                const args = parseSequenceArgs(argsStr);
-
-                await startSequence(id, { configFile, configString, args });
-            }
-            );
+            await startSequence(id, { configFile, configString, args, outputTopic, inputTopic });
+        });
 
     sequenceCmd
         .command("deploy")
