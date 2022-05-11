@@ -401,9 +401,8 @@ export class CSIController extends TypedEmitter<Events> {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
-            await once(this, "pang").then(() => {
-                this.initResolver?.res();
-            });
+            await once(this, "pang")
+            this.initResolver?.res();
         } catch (e: any) {
             this.initResolver?.rej(e);
         }
