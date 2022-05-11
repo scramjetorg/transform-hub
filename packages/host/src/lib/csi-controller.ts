@@ -271,10 +271,13 @@ export class CSIController extends TypedEmitter<Events> {
         case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
             return Promise.reject("Sequence failed on start");
         }
-        default: {
-            return Promise.resolve();
         }
+
+        if(exitcode > 0) {
+            return Promise.reject('Runner failed')
         }
+
+        return Promise.resolve()
     }
 
     async cleanup() {
