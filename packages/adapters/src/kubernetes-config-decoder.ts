@@ -10,5 +10,9 @@ export const adapterConfigDecoder = JsonDecoder.object<K8SAdapterConfiguration>(
         node: JsonDecoder.string
     }, "K8SImagesDecoder"),
     sequencesRoot: JsonDecoder.string,
-    timeout:  JsonDecoder.optional(JsonDecoder.string)
+    timeout:  JsonDecoder.optional(JsonDecoder.string),
+    runnerResourcesRequestsMemory: JsonDecoder.optional(JsonDecoder.string),
+    runnerResourcesRequestsCpu: JsonDecoder.optional(JsonDecoder.string),
+    runnerResourcesLimitsMemory: JsonDecoder.optional(JsonDecoder.string),
+    runnerResourcesLimitsCpu: JsonDecoder.optional(JsonDecoder.string)
 }, "K8SAdapterConfiguration");

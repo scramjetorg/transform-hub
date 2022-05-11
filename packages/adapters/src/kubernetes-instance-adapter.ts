@@ -66,6 +66,19 @@ IComponent {
         };
     }
 
+    private get runnerResourcesConfig() {
+        return {
+            requests: {
+                memory:  this.adapterConfig.runnerResourcesRequestsMemory || "128M",
+                cpu: this.adapterConfig.runnerResourcesRequestsCpu || "250m"
+            },
+            limits: {
+                memory: this.adapterConfig.runnerResourcesLimitsMemory || "1G",
+                cpu: this.adapterConfig.runnerResourcesLimitsCpu || "1000m"
+            }
+        };
+    }
+
     async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
@@ -102,7 +115,8 @@ IComponent {
                     image: runnerImage,
                     stdin: true,
                     command: ["wait-for-sequence-and-start.sh"],
-                    imagePullPolicy: "Always"
+                    imagePullPolicy: "Always",
+                    resources: this.runnerResourcesConfig
                 }],
                 restartPolicy: "Never",
             },
