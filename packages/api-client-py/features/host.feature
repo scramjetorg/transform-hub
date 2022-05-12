@@ -22,14 +22,14 @@ Feature: Python Host-Client BDD tests
   @ci
   Scenario: Send sequence to host
     Given host is running
-    When sequence ../../python/reference-apps/python-alice.tar.gz loaded
+    When sequence ../../packages/reference-apps/python-alice.tar.gz loaded
     Then returns response with id
     Then host is still running
   
   @ci
   Scenario: Get sequence from host
     Given host is running
-    When sequence ../../python/reference-apps/python-alice.tar.gz loaded
+    When sequence ../../packages/reference-apps/python-alice.tar.gz loaded
     When - sequence get
     Then returns response with id
     Then host is still running
@@ -37,7 +37,7 @@ Feature: Python Host-Client BDD tests
   @ci 
   Scenario: Delete sequence from host
     Given host is running
-    When sequence ../../python/reference-apps/python-alice.tar.gz loaded
+    When sequence ../../packages/reference-apps/python-alice.tar.gz loaded
     When - sequence removed
     Then returns response with opStatus == OK
     Then host is still running

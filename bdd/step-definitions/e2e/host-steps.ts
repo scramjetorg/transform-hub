@@ -4,7 +4,7 @@
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer, waitForValueInStream } from "../../lib/utils";
-import fs, { createReadStream } from "fs";
+import fs, { createReadStream, existsSync } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
@@ -221,10 +221,16 @@ When("wait for {string} ms", async (timeoutMs: number) => {
 });
 
 When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
+    if (!existsSync(packagePath))
+        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn download-refapps'?`);
+
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
+    if (!existsSync(packagePath))
+        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn download-refapps'?`);
+
     hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
 
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));

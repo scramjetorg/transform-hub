@@ -18,7 +18,7 @@
   "scripts": {
     "build": "yarn build:all",
     "build:packages-esbuild": "lerna run build:esbuild",
-    "build:all": "yarn build:packages && yarn build:refapps && yarn build:docker",
+    "build:all": "yarn build:packages && yarn build:refapps && yarn download-refapps && yarn build:docker",
     "prebuild:refapps": "scripts/build-all.js --dirs packages/reference-apps/* --config-name=tsconfig.json",
     "build:refapps": "LOCAL_PACKAGES=true lerna run build:refapps:only",
     "postbuild:refapps": "LOCAL_PACKAGES=true lerna run postbuild:refapps",
@@ -47,6 +47,7 @@
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "lerna link",
     "prepare": "npx husky install",
+    "download-refapps": "cd packages/reference-apps && curl -# https://api.github.com/repos/scramjetorg/reference-apps/releases/latest | jq -r '.assets[].browser_download_url' | xargs -n 1 curl -LO#",
     "test": "lerna run test",
     "test:packages": "lerna run test",
     "test:packages-no-concurrent": "lerna run test --concurrency=1",
@@ -101,7 +102,6 @@
     "packages": [
       "packages/*",
       "packages/reference-apps/*",
-      "python/reference-apps/*",
       "bdd"
     ]
   },
