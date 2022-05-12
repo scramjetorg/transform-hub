@@ -650,12 +650,6 @@ export class Host implements IComponent {
             this.logger.error("CSIController errored", err);
         });
 
-        await csic.start();
-
-        this.logger.trace("CSIController started", id);
-
-        sequence.instances.add(id);
-
         csic.on("pang", (data) => {
             // @TODO REFACTOR possibly send only one PANG in Runner and throw on more pangs
             this.logger.trace("PANG received", data);
@@ -751,6 +745,12 @@ export class Host implements IComponent {
                 ) as Readable).unpipe(csic.getInputStream()!);
             }
         });
+
+        await csic.start();
+
+        this.logger.trace("CSIController started", id);
+
+        sequence.instances.add(id);
 
         return csic;
     }
