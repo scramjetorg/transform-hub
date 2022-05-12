@@ -70,3 +70,9 @@ export function displayMessage(message: string, ...args: any[]): void {
         console.error(">", inspect(a));
     }
 }
+
+export function displayError(error: Error | string) {
+    const message = error instanceof Error ? error.message : error;
+
+    console.error("\x1b[31m%s\x1b[0m", "Error:", message);
+}
