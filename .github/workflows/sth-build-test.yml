@@ -204,43 +204,10 @@ jobs:
           path: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
           retention-days: 1
 
-  build-refapps:
-    name: Build STH refapps (Nodejs ${{ matrix.node-version }})
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [14.x, 16.x]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Nodejs ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile --silent
-
-      - name: Build refapps
-        run: yarn build:refapps
-
-      - name: Create artifact
-        run: tar --exclude=dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz --use-compress-program="pigz --best --recursive" -cf dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz dist/.*
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
-          path: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
-          retention-days: 1
 
   test-bdd-ci-no-host-sth:
     name: Test bdd-ci-no-host STH (Nodejs ${{ matrix.node-version }})
-    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-pre-runner-image]
+    needs: [analyze-code, build-sth, build-docker-sth-image, build-docker-runner-image, build-docker-pre-runner-image]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -260,10 +227,10 @@ jobs:
         with:
           name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
 
-      - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+      - name: Download reference apps (latest release)
+        run: gh release download --repo scramjetorg/reference-apps --pattern '*.tar.gz' --dir packages/reference-apps
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAMJET_BOT_TOKEN }}
 
       - name: Download dockerSthImg artifact
         uses: actions/download-artifact@v2
@@ -299,7 +266,7 @@ jobs:
 
   test-bdd-ci-sth:
     name: Test bdd-ci STH (Nodejs ${{ matrix.node-version }})
-    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
+    needs: [analyze-code, build-sth, build-docker-sth-image, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -317,10 +284,10 @@ jobs:
         with:
           name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
 
-      - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+      - name: Download reference apps (latest release)
+        run: gh release download --repo scramjetorg/reference-apps --pattern '*.tar.gz' --dir packages/reference-apps
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAMJET_BOT_TOKEN }}
 
       - name: Download dockerSthImg artifact
         uses: actions/download-artifact@v2
@@ -368,7 +335,7 @@ jobs:
 
   test-bdd-ci-no-host-no-docker-sth:
     name: Test bdd-ci-no-host-no-docker STH (Nodejs ${{ matrix.node-version }})
-    needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image]
+    needs: [analyze-code, build-sth, build-docker-sth-image]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -385,10 +352,10 @@ jobs:
         with:
           name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
 
-      - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+      - name: Download reference apps (latest release)
+        run: gh release download --repo scramjetorg/reference-apps --pattern '*.tar.gz' --dir packages/reference-apps
+        env:
+          GITHUB_TOKEN: ${{ secrets.SCRAMJET_BOT_TOKEN }}
 
       - name: Download dockerSthImg artifact
         uses: actions/download-artifact@v2
@@ -417,7 +384,7 @@ jobs:
 
   test-bdd-ci-sth-no-docker:
       name: Test bdd-ci-no-docker STH (Nodejs ${{ matrix.node-version }})
-      needs: [analyze-code, build-sth, build-refapps, build-docker-sth-image]
+      needs: [analyze-code, build-sth, build-docker-sth-image]
       runs-on: ubuntu-latest
       timeout-minutes: 20
 
@@ -434,10 +401,10 @@ jobs:
           with:
             name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
 
-        - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz artifact
-          uses: actions/download-artifact@v2
-          with:
-            name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ matrix.node-version }}.tar.gz
+        - name: Download reference apps (latest release)
+          run: gh release download --repo scramjetorg/reference-apps --pattern '*.tar.gz' --dir packages/reference-apps
+          env:
+            GITHUB_TOKEN: ${{ secrets.SCRAMJET_BOT_TOKEN }}
 
         - name: Download dockerSthImg artifact
           uses: actions/download-artifact@v2
