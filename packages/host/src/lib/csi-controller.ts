@@ -31,7 +31,7 @@ import { PassThrough, Readable } from "stream";
 import { development } from "@scramjet/sth-config";
 
 import { DataStream } from "scramjet";
-import { EventEmitter } from "events";
+import { EventEmitter, once } from "events";
 import { ServerResponse } from "http";
 import { getRouter } from "@scramjet/api-server";
 
@@ -261,6 +261,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private mapRunnerExitCode(exitcode: number) {
+        // eslint-disable-next-line default-case
         switch (exitcode) {
         case RunnerExitCode.INVALID_ENV_VARS: {
             return Promise.reject("Runner was started with invalid configuration. This is probably a bug in STH.");
@@ -268,10 +269,16 @@ export class CSIController extends TypedEmitter<Events> {
         case RunnerExitCode.INVALID_SEQUENCE_PATH: {
             return Promise.reject(`Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. Check "main" field in Sequence package.json`);
         }
-        default: {
-            return Promise.resolve();
+        case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
+            return Promise.reject("Sequence failed on start");
         }
         }
+
+        if (exitcode > 0) {
+            return Promise.reject("Runner failed");
+        }
+
+        return Promise.resolve();
     }
 
     async cleanup() {
@@ -395,6 +402,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.hookupStreams(streams);
             this.createInstanceAPIRouter();
 
+            await once(this, "pang");
             this.initResolver?.res();
         } catch (e: any) {
             this.initResolver?.rej(e);

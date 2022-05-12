@@ -18,7 +18,7 @@ import {
 } from "@scramjet/types";
 import { RunnerError } from "@scramjet/model";
 import { ObjLogger } from "@scramjet/obj-logger";
-import { RunnerMessageCode } from "@scramjet/symbols";
+import { RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { defer } from "@scramjet/utility";
 
 import { BufferStream, DataStream, StringStream } from "scramjet";
@@ -341,7 +341,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             //TODO: investigate why we need to wait
             await this.cleanup();
-            this.exit(21);
+            this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
         }
 
         try {
@@ -412,21 +412,17 @@ export class Runner<X extends AppConfig> implements IComponent {
                 ? sequenceFromFile.default
                 : sequenceFromFile;
 
-        return Array.isArray(_sequence) ? _sequence : [_sequence];
+        const sequenceArr = Array.isArray(_sequence) ? _sequence : [_sequence];
+
+        if (!sequenceArr.length) {
+            throw new Error("Empty Sequence");
+        }
+
+        return sequenceArr;
     }
 
     // eslint-disable-next-line complexity
     async runSequence(sequence: any[], args: any[] = []): Promise<void> {
-        if (!sequence.length) {
-            await this.cleanup();
-            this.logger.error("Empty Sequence");
-
-            //TODO: investigate why we need to wait
-            this.exit(22);
-
-            return;
-        }
-
         /**
          * @analyze-how-to-pass-in-out-streams
          * Output stream will be returned from the Sequence:
