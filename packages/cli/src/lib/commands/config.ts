@@ -22,34 +22,34 @@ export const config: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .alias("c")
         .usage("[command] ")
-        .description("config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");
+        .description("Config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings");
 
     configCmd
         .command("print")
         .alias("p")
-        .description("print out the current configuration")
+        .description("Print out the current configuration")
         .action(() => displayObject(globalConfig.getConfig()));
 
     const useCmd = configCmd
         .command("use")
         .addHelpCommand(false)
-        .description("add properties to session configuration");
+        .description("Add properties to the session configuration");
 
     useCmd
         .command("apiUrl")
         .argument("<url>")
-        .description(`specify the hub API url (current: ${sessionConfig.getConfig().apiUrl})`)
+        .description(`Specify the Hub API url (current: ${sessionConfig.getConfig().apiUrl})`)
         .action(url => sessionConfig.setApiUrl(url) as unknown as void);
 
     const setCmd = configCmd
         .command("set")
         .addHelpCommand(false)
-        .description("add properties to global config ");
+        .description("Add properties to the global config ");
 
     setCmd
         .command("json")
         .argument("<json>")
-        .description("set configuration properties from json object")
+        .description("Set configuration properties from a json object")
         .action(json => {
             try {
                 if (!globalConfig.setConfig(JSON.parse(json))) {
@@ -65,7 +65,7 @@ export const config: CommandDefinition = (program) => {
     setCmd
         .command("apiUrl")
         .argument("<url>")
-        .description(`specify the Hub API Url (default: ${defaultApiUrl})`)
+        .description(`Specify the Hub API Url (default: ${defaultApiUrl})`)
         .action(url => {
             if (!globalConfig.setApiUrl(url)) {
                 // eslint-disable-next-line no-console
@@ -75,9 +75,9 @@ export const config: CommandDefinition = (program) => {
 
     setCmd
         .command("log")
-        .option("--debug <boolean>", `specify log to show extended view (default: ${defaultDebug})`)
-        .option("--format <format>", `specify format between "pretty" or "json" (default: ${defaultFormat})`)
-        .description("specify log options")
+        .option("--debug <boolean>", `Specify log to show extended view (default: ${defaultDebug})`)
+        .option("--format <format>", `Specify format between "pretty" or "json" (default: ${defaultFormat})`)
+        .description("Specify log options")
         .action(({ debug, format }) => {
             if (debug) {
                 const debugVal = stringToBoolean(debug);
@@ -100,7 +100,7 @@ export const config: CommandDefinition = (program) => {
     setCmd
         .command("middlewareApiUrl")
         .argument("<url>")
-        .description(`specify middleware API url ${defaulMiddlewareApiUrl}`)
+        .description(`Specify middleware API url ${defaulMiddlewareApiUrl}`)
         .action(url => {
             if (!globalConfig.setMiddlewareApiUrl(url)) {
                 // eslint-disable-next-line no-console
@@ -111,7 +111,7 @@ export const config: CommandDefinition = (program) => {
     setCmd
         .command("scope")
         .argument("<name>")
-        .description("specify default scope that should be used when session start")
+        .description("Specify default scope that should be used when session start")
         .action(scope => {
             if (!globalConfig.setScope(scope)) {
                 // eslint-disable-next-line no-console
@@ -122,7 +122,7 @@ export const config: CommandDefinition = (program) => {
     setCmd
         .command("token")
         .argument("<jwt>")
-        .description(`specify platform authorization token (default: ${defaultToken})`)
+        .description(`Specify platform authorization token (default: ${defaultToken})`)
         .action(token => {
             if (!globalConfig.setToken(token)) {
                 // eslint-disable-next-line no-console
@@ -133,7 +133,7 @@ export const config: CommandDefinition = (program) => {
     setCmd
         .command("env")
         .argument("<production|develop>")
-        .description(`specify the environment (default: ${defaultEnv})`)
+        .description(`Specify the environment (default: ${defaultEnv})`)
         .action(env => {
             if (!globalConfig.setEnv(env)) {
                 // eslint-disable-next-line no-console
@@ -144,7 +144,7 @@ export const config: CommandDefinition = (program) => {
     const resetCmd = configCmd
         .command("reset")
         .addHelpCommand(false)
-        .description("reset configuration value to default");
+        .description("Reset configuration value to default");
 
     const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
         if (!setCallback(defaultValue)) {
@@ -155,32 +155,32 @@ export const config: CommandDefinition = (program) => {
 
     resetCmd
         .command("apiUrl")
-        .description("reset apiUrl")
+        .description("Reset apiUrl")
         .action(() => resetValue(defaultApiUrl, v => globalConfig.setApiUrl(v)));
 
     resetCmd
         .command("log")
-        .description("reset logger")
+        .description("Reset logger")
         .action(() => resetValue({ defaultFormat, defaultDebug },
             ({ defaultFormat: f, defaultDebug: d }) => globalConfig.setFormat(f) && globalConfig.setDebug(d)));
 
     resetCmd
         .command("middlewareApiUrl")
-        .description("reset middlewareApiUrl")
+        .description("Reset middlewareApiUrl")
         .action(() => resetValue(defaulMiddlewareApiUrl, v => globalConfig.setMiddlewareApiUrl(v)));
 
     resetCmd
         .command("token")
-        .description("reset token")
+        .description("Reset token")
         .action(() => resetValue(defaultToken, v => globalConfig.setToken(v)));
 
     resetCmd
         .command("env")
-        .description("reset env")
+        .description("Reset env")
         .action(() => resetValue(defaultEnv, v => globalConfig.setEnv(v)));
 
     resetCmd
         .command("all")
-        .description("reset all configuration")
+        .description("Reset all configuration")
         .action(() => resetValue(defaultConfig, v => globalConfig.setConfig(v)));
 };

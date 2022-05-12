@@ -68,9 +68,14 @@ const errorHandler = async (err: ClientError) => {
     for (const command of Object.values(commands)) command(program);
 
     program
-        .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
-        .version(`${version}`, "-v, --version", "show current version")
+        .description(
+            `This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.\n
+Read more about Scramjet at https://scramjet.org/ 🚀`)
+        .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
         .addHelpCommand(false)
+        .addHelpText(
+            "afterAll",
+            "\nTo find out more about CLI, please check out our docs at https://hub.scramjet.org/docs/cli\n")
         .parse(process.argv);
 
     await new Promise((res) => program.hook("postAction", res));

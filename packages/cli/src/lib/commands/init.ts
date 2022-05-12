@@ -11,8 +11,8 @@ export const init: CommandDefinition = (program) => {
         .command("template")
         .alias("tmpl")
         .argument("<projectName>")
-        .option("--lang <ts|js|py>", "choose the language to develop the sequence")
-        .description("create necessary files and start working on your sequence")
+        .option("--lang <ts|js|py>", "Choose the language to develop the Sequence")
+        .description("Create all the necessary files and start working on your Sequence")
         .action((/* projectName, { lang } */) => {
             // FIXME: implement me
             throw new Error("Implement me");

@@ -63,20 +63,20 @@ export const sequence: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .alias("seq")
         .usage("[command] [options...]")
-        .description("operations on a program, consisting of one or more functions executed one after another");
+        .description("Operations on a Sequence package, consisting of one or more functions executed one after another");
 
     sequenceCmd
         .command("list")
         .alias("ls")
-        .description("lists available sequences")
+        .description("Lists all available Sequences")
         .action(async () => displayEntity(getHostClient().listSequences()));
 
     sequenceCmd
         .command("pack")
         .argument("<path>")
-        .option("-c, --stdout", "output to stdout (ignores -o)")
-        .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
-        .description("create archived file (package) with sequence for later use")
+        .option("-c, --stdout", "Output to stdout (ignores -o)")
+        .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
+        .description("Create archived file (package) with the Sequence for later use")
         .action((path, { stdout, output }) => packAction(path, { stdout, output }));
 
     const waitForInstanceKills = async (seq: GetSequenceResponse, timeout: number) => {
@@ -97,7 +97,7 @@ export const sequence: CommandDefinition = (program) => {
     };
 
     const killAllSequenceInstances = async (seq: GetSequenceResponse, lastInstanceId: string) => {
-        displayMessage(`Killing instances of Sequence ${seq.id}`);
+        displayMessage(`Killing instances of the Sequence ${seq.id}`);
         await Promise.all(
             seq.instances.map(async (id) => {
                 if (lastInstanceId === id)
@@ -106,34 +106,35 @@ export const sequence: CommandDefinition = (program) => {
                 return getInstance(id).kill();
             })
         ).catch(() => {
-            throw new Error(`Could not kill all instances of sequence ${seq.id}`);
+            throw new Error(`Could not kill all instances of the Sequence ${seq.id}`);
         });
     };
 
     sequenceCmd
         .command("send")
-        .argument("<package>", "The file to upload or '-' to use the last packed.")
-        .description("send package or folder to the hub")
+        .argument("<package>", "The file to upload or '-' to use the last packed")
+        .description("Send the Sequence package to the Hub")
         .action(async (sequencePackage: string) => sendPackage(sequencePackage));
 
     sequenceCmd
         .command("use")
         .alias("select")
-        .description(`specify the hub sequence to use (current: ${sessionConfig.getConfig().lastSequenceId})`)
-        .argument("<id>", "The sequence id")
+        .description("Select the Sequence to communicate with by using '-' alias instead of Sequence id")
+        .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.getConfig().lastSequenceId}`)
+        .argument("<id>", "Sequence id")
         .action(async (id: string) => sessionConfig.setLastSequenceId(id) as unknown as void);
 
     sequenceCmd
         .command("start")
-        .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
+        .argument("<id>", "Sequence id to start or '-' for the last uploaded")
         // TODO: for future implementation
         // .option("--hub <provider>", "aws|ovh|gcp");
-        .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
-        .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
-        .option("--output-topic <string>", "topic to which the output stream should be routed")
-        .option("--input-topic <string>", "topic to which the input stream should be routed")
-        .option("--args <json-string>", "arguments to be passed to first function in Sequence")
-        .description("start the sequence with or without given arguments")
+        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
+        .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
+        .option("--output-topic <string>", "Topic to which the output stream should be routed")
+        .option("--input-topic <string>", "Topic to which the input stream should be routed")
+        .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
+        .description("Start the Sequence with or without given arguments")
         .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr }) => {
             const args = parseSequenceArgs(argsStr);
 
@@ -144,12 +145,12 @@ export const sequence: CommandDefinition = (program) => {
         .command("deploy")
         .alias("run")
         .argument("<path>")
-        .option("-o, --output <file.tar.gz>", "output path - defaults to dirname")
-        .option("-f, --config-file <path-to-file>", "path to configuration file in JSON format to be passed to instance context")
-        .option("-s, --config-string <json-string>", "configuration in JSON format to be passed to instance context")
+        .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
+        .option("-f, --config-file <path-to-file>", "Path to configuration file in JSON format to be passed to the Instance context")
+        .option("-s, --config-string <json-string>", "Configuration in JSON format to be passed to the Instance context")
         // TODO: check if output-topic and input-topic should be added after development
-        .option("--args <json-string>", "arguments to be passed to first function in Sequence")
-        .description("pack (if needed), send and start the sequence")
+        .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
+        .description("Pack (if needed), send and start the Sequence")
         .action(async (path: string, { output, configFile, configString, args: argsStr }:
             { output: string, configFile: any, configString: string, args: string }) => {
             if (lstatSync(path).isDirectory()) {
@@ -164,23 +165,23 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("get")
-        .argument("<id>", "the sequence id to start or '-' for the last uploaded.")
-        .description("obtain basic information about a sequence")
+        .argument("<id>", "Sequence id to start or '-' for the last uploaded")
+        .description("Obtain a basic information about the Sequence")
         .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id))));
 
     sequenceCmd
         .command("delete")
         .alias("rm")
-        .argument("<id>", "the sequence id to remove or '-' for the last uploaded.")
-        .description("delete the sequence form Hub")
+        .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
+        .description("Delete the Sequence from the Hub")
         .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id))));
 
     sequenceCmd
         .command("prune")
         // .option("--all")
         // .option("--filter")
-        .option("-f,--force", "Removes also active sequences")
-        .description("remove all Sequences from the current scope (use with caution)")
+        .option("-f,--force", "Removes also active Sequences (with its running Instances)")
+        .description("Remove all Sequences from the current scope (use with caution)")
 
         .action(async ({ force }) => {
             const seqs = await getHostClient().listSequences();
@@ -192,7 +193,7 @@ export const sequence: CommandDefinition = (program) => {
                 try {
                     if (seq.instances.length) {
                         if (!force) {
-                            displayMessage(`Sequence ${seq.id} has running instances, use --force to kill those.`);
+                            displayMessage(`Sequence ${seq.id} has running Instances, use --force to kill those.`);
                             continue;
                         }
                         await killAllSequenceInstances(seq, lastInstanceId);
@@ -205,14 +206,14 @@ export const sequence: CommandDefinition = (program) => {
                 } catch (e: any) {
                     fullSuccess = false;
 
-                    displayMessage(`WARN: Could not delete sequence ${seq.id}`);
+                    displayMessage(`WARN: Could not delete Sequence ${seq.id}`);
                     if (isDevelopment())
                         displayMessage("error stack", e?.stack);
                     displayMessage("Please try to run 'si seq prune -f' again to remove all Sequences.");
                 }
 
                 if (!fullSuccess)
-                    throw new Error("Some sequences may have not been deleted.");
+                    throw new Error("Some Sequences may have not been deleted.");
             }
             displayMessage("Sequences removed successfully.");
         })

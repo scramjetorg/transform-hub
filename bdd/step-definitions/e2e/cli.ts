@@ -269,7 +269,7 @@ Then("I start Sequence with options {string}", async function(optionsStr: string
     const options = optionsStr.split(" ");
 
     try {
-        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "start", sequenceId, ...options]);
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", ["NODE_ENV=development", ...si, "seq", "start", sequenceId, ...options]);
         assert.equal(res.stdio[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
