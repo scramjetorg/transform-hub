@@ -63,19 +63,6 @@ This feature checks CLI functionalities
         Then I wait for Instance health status to change from 200 to 404
         And host is still running
 
-    # Test E2E-010 TC-010 works but it is ignored, because changes need to be made in CLI to end the displayed stream.
-    @ignore
-    Scenario: E2E-010 TC-006 Get log from Instance
-        Given host is running
-        Then I set json format
-        Then I use apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        And I get Instance id
-        Then I get Instance log
-        And host is still running
-
     @ci @cli
     Scenario: E2E-010 TC-007 Send input data to Instance
         Given host is running
@@ -255,25 +242,3 @@ This feature checks CLI functionalities
         And I get Instance output without waiting for the end
         Then confirm data named "hello-avengers" will be received
         And host is still running
-
-    # This tests writes and uses shared config file so it may fail if run in parallel
-    # @ci @cli @no-parallel
-    # refactor needed - test disabled due to CLI changes
-    Scenario: E2E-010 TC-020 Check minus set/remove
-        Given I execute CLI with "seq use abc" arguments
-        # Given I execute CLI with "seq use abc" arguments
-        And I execute CLI with "inst use def" arguments
-        Then I get the last sequence id from config
-        And I get the last instance id from config
-        And The sequence id equals "abc"
-        And The instance id equals "def"
-
-    # @ci @cli @no-parallel
-    Scenario: E2E-010 TC-021 Check log coloring
-        When I execute CLI with bash command "cat ./data/sample-log.log.source | $SI util log-format"
-        Then stdout contents are the same as in file "./data/sample-log.log.ansi"
-
-    # @ci @cli @no-parallel
-    Scenario: E2E-010 TC-022 Check log no-coloring
-        When I execute CLI with bash command "cat ./data/sample-log.log.source | $SI util log-format --no-color"
-        Then stdout contents are the same as in file "./data/sample-log.log.plain"

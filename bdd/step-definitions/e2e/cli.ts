@@ -9,8 +9,6 @@ import { getStreamsFromSpawn, defer, waitForValueInStream } from "../../lib/util
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
-import { promisify } from "util";
-import { resolve } from "path";
 import { once } from "events";
 
 // eslint-disable-next-line no-nested-ternary
@@ -18,17 +16,6 @@ const si = process.env.SCRAMJET_SPAWN_JS
     ? ["node", "../dist/cli/bin"] : process.env.SCRAMJET_SPAWN_TS
         ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"] : ["si"]
 ;
-
-When("I set format json in config", { timeout: 30000 }, async function() {
-    const res = (this as CustomWorld).cliResources;
-
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "json", `{ "apiUrl": "${process.env.LOCAL_HOST_BASE_URL}", "format": "json"}`]);
-
-    if (process.env.SCRAMJET_TEST_LOG) {
-        console.error(res.stdio);
-    }
-    assert.equal(res.stdio[2], 0);
-});
 
 When("I set json format", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
@@ -49,13 +36,6 @@ When("I use apiUrl in config", { timeout: 30000 }, async function() {
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error(res.stdio);
     }
-    assert.equal(res.stdio[2], 0);
-});
-
-When("I execute CLI with bash command {string}", { timeout: 30000 }, async function(cmd: string) {
-    const res = (this as CustomWorld).cliResources;
-
-    res.stdio = await getStreamsFromSpawn("/bin/bash", [`${cmd}`], { ...process.env, SI: si.join(" ") });
     assert.equal(res.stdio[2], 0);
 });
 
@@ -93,27 +73,6 @@ Then("I get a version", function() {
 
     console.log("Version:", stdio[0]);
     assert.equal(stdio[2], 0);
-});
-
-Then("the exit status is {int}", function(status: number) {
-    const res = (this as CustomWorld).cliResources;
-    const stdio = res.stdio || [];
-
-    if (stdio[2] !== status) {
-        console.error(stdio);
-        assert.equal(stdio[2], status);
-    }
-    assert.ok(true);
-});
-
-Then("stdout contents are the same as in file {string}", async function(filepath: string) {
-    const res = (this as CustomWorld).cliResources;
-    const fileContents = await promisify(fs.readFile)(
-        resolve(process.cwd(), filepath),
-        { encoding: "utf-8" }
-    );
-
-    assert.equal(fileContents, res.stdio && res.stdio[0]);
 });
 
 Then("I get location {string} of compressed directory", function(filepath: string) {
@@ -202,43 +161,6 @@ Then("I get array of information about Sequences", function() {
     const arr = JSON.parse((stdio[0] || "").replace("\n", ""));
 
     assert.equal(Array.isArray(arr), true);
-});
-
-Then("I get the last instance id from config", async function() {
-    const res = (this as CustomWorld).cliResources;
-
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "p", "--format", "json"]);
-    res.instanceId = JSON.parse(res.stdio[0]).lastInstanceId;
-
-    assert.ok(typeof res.instanceId === "string", "instanceId must be defined");
-    assert.ok(res.instanceId.length > 0, "Instance id is not empty");
-});
-
-Then("I get the last sequence id from config", async function() {
-    const res = (this as CustomWorld).cliResources;
-
-    // Write code here that turns the phrase above into concrete actions
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "p", "--format", "json"]);
-    if (process.env.SCRAMJET_TEST_LOG) {
-        console.error(res.stdio);
-    }
-
-    res.sequenceId = JSON.parse(res.stdio[0]).lastSequenceId;
-
-    assert.ok(typeof res.sequenceId === "string", "sequenceId must be defined");
-    assert.ok(res.sequenceId.length > 0, "Sequence id is not empty");
-});
-
-Then("The sequence id equals {string}", function(str: string) {
-    const res = (this as CustomWorld).cliResources;
-
-    assert.strictEqual(str, res.sequenceId);
-});
-
-Then("The instance id equals {string}", function(str: string) {
-    const res = (this as CustomWorld).cliResources;
-
-    assert.strictEqual(str, res.instanceId);
 });
 
 Then("I start Sequence", async function() {
@@ -346,13 +268,6 @@ Then("I wait for Instance health status to change from 200 to 404", { timeout: 2
     // assert.equal(success, true);
 });
 
-Then("I get Instance log", { timeout: 30000 }, async function() {
-    const res = (this as CustomWorld).cliResources;
-
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "log", res.instanceId || ""]);
-    assert.equal(res.stdio[2], 0);
-});
-
 Then("I get Instance output", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
@@ -385,19 +300,6 @@ Then("I send input data from file {string} with options {string}", async functio
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || "", pathToFile, ...options.split(" ")]);
     assert.equal(res.stdio[2], 0);
-});
-
-Then("I send input data {string}", async function(data: string) {
-    const res = (this as CustomWorld).cliResources;
-
-    const inputCmdProc = spawn("/usr/bin/env", [...si, "inst", "input", res.instanceId || ""]);
-
-    inputCmdProc.stdin.write(data);
-    inputCmdProc.stdin.end();
-
-    const [statusCode] = await once(inputCmdProc, 'exit');
-
-    assert.equal(statusCode, 0);
 });
 
 Then("I send input data {string} with options {string}", async function(data: string, options: string) {

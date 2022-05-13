@@ -24,14 +24,6 @@ Feature: HUB-001 Host configuration
         Then API starts with "0.0.0.0:9001" server name
         * exit hub process
 
-    Scenario: HUB-001 TC-009  Set runner image (--runner-image)
-        When hub process is started with random ports and parameters "-P 8000 --runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
-        And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
-        And instance started
-        And get runner container information
-        Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
-        * exit hub process
-
     @ci @starts-host @docker-specific
     Scenario: HUB-001 TC-010  Default runner image for js/ts sequences
         When hub process is started with random ports and parameters "-P 8000"
@@ -48,15 +40,6 @@ Feature: HUB-001 Host configuration
         And instance started
         And get runner container information
         Then container memory limit is 128
-        * exit hub process
-
-    Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
-        When hub process is started with random ports and parameters "-P 8000 --prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
-        And get all containers
-        And send fake stream as sequence
-        And get last container info
-        And last container uses "repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7" image
-        And end fake stream
         * exit hub process
 
     @ci @starts-host @docker-specific
