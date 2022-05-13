@@ -35,7 +35,7 @@ export const completion: CommandDefinition = (program) => {
     * Prints the bash completion script
     */
     completionCmd.command("bash")
-        .description("print out bash completion script")
+        .description("Print out bash completion script")
         .action(() => console.log(readFileSync(bashCompletionPath, {encoding:"utf8", flag:"r"}))); //eslint-disable-line
 
     /**
@@ -43,7 +43,7 @@ export const completion: CommandDefinition = (program) => {
     * Installs bash completion script in .bashrc
     */
     completionCmd.command("install")
-        .description("installs bash completion script in .bashrc")
+        .description("Installs bash completion script in .bashrc")
         .action(async () => {
             await exec("bash -c 'si completion bash >>$HOME/.bashrc'");
             console.log("Scramjet CLI completion installed in .bashrc. Please run source ~/.bashrc for immediate effect."); //eslint-disable-line

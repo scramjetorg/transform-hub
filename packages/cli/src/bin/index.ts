@@ -10,6 +10,7 @@ import { commands } from "../lib/commands/index";
 import { setPlatformDefaults } from "../lib/platform";
 import { globalConfig } from "../lib/config";
 import { initPaths } from "../lib/paths";
+import chalk from "chalk";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const CommandClass = completionMixin(commander).Command;
@@ -68,9 +69,16 @@ const errorHandler = async (err: ClientError) => {
     for (const command of Object.values(commands)) command(program);
 
     program
-        .description("https://github.com/scramjetorg/scramjet-sequence-template#dictionary")
-        .version(`${version}`, "-v, --version", "show current version")
+        .description(
+            "This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
+        .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
         .addHelpCommand(false)
+        .addHelpText(
+            "afterAll",
+            chalk.greenBright("\nTo find out more about CLI, please check out our docs at https://hub.scramjet.org/docs/cli\n"))
+        .addHelpText(
+            "afterAll",
+            `${chalk.hex("#7ed2e4")("Read more about Scramjet at https://scramjet.org/ 🚀\n")}`)
         .parse(process.argv);
 
     await new Promise((res) => program.hook("postAction", res));

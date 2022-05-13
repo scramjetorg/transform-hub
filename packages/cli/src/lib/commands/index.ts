@@ -17,9 +17,8 @@ const isProductionEnv = globalConfig.isProductionEnv(globalConfig.getEnv());
 export const commands: CommandDefinition[] = [
     hub,
     config,
-    // hide scopes and spaces till next sprint (E4 S3)
-    isDevelopment() && isProductionEnv ? scope : () => {},
-    isDevelopment() && isProductionEnv ? space : () => {},
+    isProductionEnv ? scope : () => {},
+    isProductionEnv ? space : () => {},
     sequence,
     instance,
     topic,

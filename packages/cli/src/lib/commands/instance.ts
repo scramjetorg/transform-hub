@@ -16,44 +16,45 @@ export const instance: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .alias("inst")
         .usage("[command] [options...]")
-        .description("operations on running sequence");
+        .description("Operations on the running Sequence");
 
     instanceCmd
         .command("list")
         .alias("ls")
-        .description("list the instances")
+        .description("List the Instances")
         .action(async () => displayEntity(getHostClient().listInstances()));
 
     instanceCmd
         .command("use")
-        .argument("<id>", "the instance id")
-        .description("select an instance to communicate with")
+        .argument("<id>", "Instance id")
+        .description("Select the Instance to communicate with by using '-' alias instead of Instance id")
+        .addHelpText("after", `\nCurrent Instance id saved under '-' : ${sessionConfig.getConfig().lastInstanceId}`)
         .action(async (id: string) => sessionConfig.setLastInstanceId(id) as unknown as void);
 
     instanceCmd
         .command("health")
-        .argument("<id>", "the instance id or '-' for the last one started.")
-        .description("display the instance health status")
+        .argument("<id>", "Instance id or '-' for the last one started")
+        .description("Display Instance health status")
         .action((id: string) => displayEntity(getInstance(getInstanceId(id)).getHealth()));
 
     instanceCmd
         .command("info")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .description("display info about the instance")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Display the info about the Instance")
         .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id))));
 
     instanceCmd
         .command("log")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .description("pipe running instance log to stdout")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Pipe the running Instance log to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("log"));
         });
 
     instanceCmd
         .command("kill")
-        .argument("<id>", "the instance id or '-' for the last one started.")
-        .description("kill instance without waiting for unfinished task")
+        .argument("<id>", "Instance id or '-' for the last one started")
+        .description("Kill the Instance without waiting for the unfinished task")
         .action(async (id: string) => displayEntity(getInstance(getInstanceId(id)).kill()));
 
     /**
@@ -63,19 +64,19 @@ export const instance: CommandDefinition = (program) => {
      */
     instanceCmd
         .command("stop")
-        .argument("<id>", "the instance id or '-' for the last one started.")
-        .argument("<timeout>", "timeout in milliseconds.")
-        .description("end instance gracefully waiting for unfinished tasks")
+        .argument("<id>", "Instance id or '-' for the last one started")
+        .argument("<timeout>", "Timeout in milliseconds")
+        .description("End the Instance gracefully waiting for the unfinished tasks")
         .action(async (id: string, timeout: string) =>
             displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true)));
 
     instanceCmd
         .command("input")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .argument("[file]", "the input file (stdin if not given default)")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .argument("[file]", "File with data")
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
-        .option("-e, --end", "Close input stream of the instance when this stream ends. \"x-end-stream\" header", false)
-        .description("send file to input, if file not given the data will be read from stdin")
+        .option("-e, --end", "Close the input stream of the Instance when this stream ends, \"x-end-stream\" header", false)
+        .description("Send a file to input, if no file given the data will be read directly from the console input (stdin)")
         .action(async (id: string, filename: string, { contentType, end }) => {
             const instanceClient = getInstance(getInstanceId(id));
 
@@ -85,8 +86,8 @@ export const instance: CommandDefinition = (program) => {
 
     instanceCmd
         .command("output")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .description("pipe running instance output to stdout")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Pipe the running Instance output to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("output"));
         });
@@ -94,8 +95,8 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("stdio")
         .alias("attach")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .description("listen to all stdio - stdin, stdout, stderr of a running instance")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Listen to all stdio - stdin, stdout, stderr of the running Instance")
         .action(async (id: string) => {
             const inst = getInstance(getInstanceId(id));
 
@@ -105,15 +106,15 @@ export const instance: CommandDefinition = (program) => {
     const eventCmd = instanceCmd
         .command("event")
         .addHelpCommand(false)
-        .description("show events commands");
+        .description("Show event commands");
 
     eventCmd
         .command("emit")
         .alias("invoke")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .argument("<eventName>", "the event name")
-        .argument("[payload]", "pass JSON data to the instance")
-        .description("send event with eventName and a JSON formatted event payload")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .argument("<eventName>", "The event name")
+        .argument("[payload]", "Pass a JSON data to the Instance")
+        .description("Send event with eventName and a JSON formatted event payload")
         .action(async (id: string, eventName: string, message: string) => {
             const instanceClient = getInstance(getInstanceId(id));
 
@@ -122,12 +123,12 @@ export const instance: CommandDefinition = (program) => {
 
     eventCmd
         .command("on")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .argument("<eventName>", "the event name")
+        .argument("<id>", "The instance id or '-' for the last one started or selected")
+        .argument("<eventName>", "The event name")
         // .argument("[options]")
-        .option("-n, --next", "wait for the next event occurrence")
-        .option("-s, --stream", "stream the events (the stream will start with last event)")
-        .description("get the last event occurrence (will wait for the first one if not yet retrieved)")
+        .option("-n, --next", "Wait for the next event occurrence")
+        .option("-s, --stream", "Stream the events (the stream will start with last event)")
+        .description("Get the last event occurrence (will wait for the first one if not yet retrieved)")
         .action(async (id: string, event: string, { next, stream }) => {
             if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
             if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event));
@@ -136,9 +137,9 @@ export const instance: CommandDefinition = (program) => {
 
     instanceCmd
         .command("stdin")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .argument("[file]", "the input file (stdin if not given default)")
-        .description("send file to stdin, if file not given the data will be read from stdin")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .argument("[file]", "The input file (stdin if not given default)")
+        .description("Send a file to stdin, if no file given the data will be read from stdin")
         .action((id: string, file: string) => {
             const instanceClient = getInstance(getInstanceId(id));
 
@@ -147,14 +148,14 @@ export const instance: CommandDefinition = (program) => {
 
     instanceCmd
         .command("stderr")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .description("pipe running instances stderr stream to stdout")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Pipe the running Instance stderr stream to stdout")
         .action((id: string) => displayStream(getInstance(getInstanceId(id)).getStream("stderr")));
 
     instanceCmd
         .command("stdout")
-        .argument("<id>", "the instance id or '-' for the last one started or selected.")
-        .description("pipe running instances stdout stream to stdout")
+        .argument("<id>", "Instance id or '-' for the last one started or selected")
+        .description("Pipe the running Instance stdout stream to stdout")
         .action((id: string) => {
             return displayStream(getInstance(getInstanceId(id)).getStream("stdout"));
         });

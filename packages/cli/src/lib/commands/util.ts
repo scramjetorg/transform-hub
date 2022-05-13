@@ -12,7 +12,7 @@ export const util: CommandDefinition = (program) => {
     /**
      * Set custom value for config and write it to JSON file.
      */
-    const configCmd = program.command("util").alias("u").description("various utilities");
+    const configCmd = program.command("util").alias("u").description("Various utilities");
 
     /**
      * Command: `si config print`
@@ -21,10 +21,9 @@ export const util: CommandDefinition = (program) => {
      */
     configCmd
         .command("log-format")
-        .addHelpCommand(false)
         .alias("lf")
-        .option("--no-color", "dont colorize the values")
-        .description("colorizes and prints out nice colorful log files")
+        .option("--no-color", "Do not colorize the values")
+        .description("Colorizes and prints out nice colorful log files")
         .action(({ color }) => {
             const parser = prettyPrint({ colors: color });
 

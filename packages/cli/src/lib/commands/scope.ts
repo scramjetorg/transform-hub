@@ -15,14 +15,14 @@ export const scope: CommandDefinition = (program) => {
         .addHelpCommand(false)
         .alias("s")
         .usage("[command] [options...]")
-        .description("manage scopes that store pairs of spaces and hubs used when working");
+        .description("Manage scopes that store pairs of spaces and Hubs used when working");
 
-    scopeCmd.command("list").alias("ls").description("list all created scopes").action(listScopes);
+    scopeCmd.command("list").alias("ls").description("List all created scopes").action(listScopes);
 
     scopeCmd
         .command("print")
         .argument("<name>")
-        .description("see json file under the scope")
+        .description("See json file under the scope")
         .action((name: string) => {
             const scopeConfig = getScope(name);
 
@@ -38,9 +38,9 @@ export const scope: CommandDefinition = (program) => {
     if (isDevelopment())
         scopeCmd
             .command("add")
-            .option("--hub <name> <id>", "add hub to specified scope")
-            .option("--space <name> <apiUrl>", "add space to specified scope")
-            .description("add hub or space to specified scope")
+            .option("--hub <name> <id>", "Add a Hub to specified scope")
+            .option("--space <name> <apiUrl>", "Add space to specified scope")
+            .description("TO BE IMPLEMENTED / Add a Hub or space to specified scope")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");
@@ -50,7 +50,7 @@ export const scope: CommandDefinition = (program) => {
         scopeCmd
             .command("save")
             .argument("<name>")
-            .description("save current chosen space and hub under a scope")
+            .description("TO BE IMPLEMENTED / Save current chosen space and Hub under a scope")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");
@@ -59,7 +59,7 @@ export const scope: CommandDefinition = (program) => {
     scopeCmd
         .command("use")
         .argument("<name>")
-        .description("work on the selected scope")
+        .description("Work on the selected scope")
         .action((name: string) => {
             if (!scopeExists(name)) {
                 // eslint-disable-next-line no-console
@@ -72,7 +72,7 @@ export const scope: CommandDefinition = (program) => {
     scopeCmd
         .command("delete")
         .argument("<name>")
-        .description("delete specific scope")
+        .description("Delete specific scope")
         .action((name: string) => {
             if (globalConfig.getConfig().scope === name) {
                 // eslint-disable-next-line no-console
