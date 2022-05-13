@@ -75,7 +75,11 @@ export type K8SAdapterConfiguration = {
     sthPodHost: string,
     runnerImages: { python3: string, node: string },
     sequencesRoot: string,
-    timeout?: string
+    timeout?: string,
+    runnerResourcesRequestsMemory?: string,
+    runnerResourcesRequestsCpu?: string,
+    runnerResourcesLimitsMemory?: string,
+    runnerResourcesLimitsCpu?: string
 }
 
 export type STHConfiguration = {

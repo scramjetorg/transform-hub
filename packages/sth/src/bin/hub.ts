@@ -38,6 +38,10 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instances-server-port <port>", "Port on which server that instances connect to should run.")
+    .option("--k8s-runner-resources-requests-cpu <memory>", "Memory requests for pod CPU")
+    .option("--k8s-runner-resources-requests-memory <memory>", "Memory requests for pod memory")
+    .option("--k8s-runner-resources-limits-cpu <memory>", "Set limits for CPU")
+    .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory")
     .parse(process.argv)
     .opts() as STHCommandOptions;
 
@@ -83,7 +87,11 @@ configService.update({
             python3: options.k8sRunnerPyImage
         },
         sequencesRoot: options.k8sSequencesRoot,
-        timeout: options.k8sRunnerCleanupTimeout
+        timeout: options.k8sRunnerCleanupTimeout,
+        runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
+        runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
+        runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
+        runnerResourcesLimitsMemory: options.k8sRunnerResourcesLimitsMemory
     }
 });
 
