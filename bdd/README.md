@@ -95,20 +95,6 @@ In the situation like this above, when you want to execute tests with `@ci` tag 
 yarn test:bdd --tags="@ci" --tags="not @starts-host"
 ```
 
-### Python tests :snake:
-
-Python BDD tests are tagged `@python` and require compiling python Sequences, which can be done with the following command:
-
-```bash
-for seq_name in `ls python/reference-apps/`; do si seq pack "python/reference-apps/$seq_name" -o "$seq_name.tar.gz"; done
-```
-
-Also, python runner does not support Docker yet, so run tests with command:
-
-```bash
-RUNTIME_ADAPTER=process yarn test:bdd --tags=@python
-```
-
 ### Results :bar_chart:
 
 The results of the performed test will be displayed in the console as a summary of executed tests. There is also a report generated in `html` which illustrates the results in a very user friendly form. Html report is generated every time we run a BDD test, those html's are saved in `bdd/reports` folder.
