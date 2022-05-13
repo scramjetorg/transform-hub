@@ -10,13 +10,17 @@ import { getPackagePath, getSequenceId, sessionConfig } from "../config";
 import { displayEntity, displayError, displayMessage, displayObject } from "../output";
 
 const sendPackage = async (sequencePackage: string) => {
-    const seq = await getHostClient().sendSequence(
-        await getReadStreamFromFile(getPackagePath(sequencePackage))
-    );
+    try {
+        const seq = await getHostClient().sendSequence(
+            await getReadStreamFromFile(getPackagePath(sequencePackage))
+        );
 
-    sessionConfig.setLastSequenceId(seq.id);
+        sessionConfig.setLastSequenceId(seq.id);
 
-    return displayObject(seq);
+        return displayObject(seq);
+    } catch (e: any) {
+        return displayError(e);
+    }
 };
 
 const startSequence = async (id: string, { configFile, configString, args, outputTopic, inputTopic }:
