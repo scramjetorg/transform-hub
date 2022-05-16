@@ -1,6 +1,5 @@
 Feature: Ports e2e tests
 
-    @ci
     Scenario: E2E-008 TC-001 API test for basic Host endpoints
         Given host is running
         When I get version
