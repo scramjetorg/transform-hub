@@ -1,8 +1,6 @@
 /* eslint-disable no-console */
 import { strict as assert, fail } from "assert";
 import { When } from "@cucumber/cucumber";
-import { getOccurenceNumber, removeFile, getOccurenceFileNumber } from "../../lib/utils";
-import { resolve } from "path";
 
 const lineByLine = require("n-readlines");
 
@@ -45,45 +43,4 @@ When("calculated avereage delay time is lower than {float} ms", async (acceptedD
 
     assert.equal(averageIsOk, true, "Average time is: " + delayAverage);
     console.log(`Average delay time ${delayAverage}ms is lower than ${acceptedDelay}ms`);
-});
-
-When("memory dump file {word} was created", async (fileName) => {
-    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
-
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
-    const occurenceFile = await getOccurenceFileNumber(filePath);
-
-    assert.ok(occurenceFile >= 1, " memory dump file not created");
-});
-
-When("search word {word} and find {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
-    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
-
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
-    const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
-
-    console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
-    console.log(`Serialized Value ${searchedValue} was found ${occurenceNumber} times in file ${fileName}.`);
-    assert.equal(occurenceNumber, expectedFoundWordNumber, " incorrect number of words in core dump.");
-});
-
-When("search word {word} and find more than {int} occurences in location {word} file", async (searchedValue, expectedFoundWordNumber, fileName) => {
-    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
-
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
-    const occurenceNumber = await getOccurenceNumber(searchedValue, filePath);
-
-    console.log("current: ", occurenceNumber, "expected: ", expectedFoundWordNumber);
-    console.log(`Unserialized value ${searchedValue} was found ${occurenceNumber} times in file ${fileName}.`);
-
-    assert.ok(occurenceNumber >= expectedFoundWordNumber, " incorrect number of words in core dump.");
-});
-
-When("remove core dump file from {word}", async (fileName) => {
-    assert.notStrictEqual(typeof process.env.CSI_COREDUMP_VOLUME, "undefined", "CORE_DUMP_VOLUME env var must be set");
-
-    const filePath = resolve(process.env.CSI_COREDUMP_VOLUME || "", fileName);
-    const occurenceNumber = await removeFile(filePath);
-
-    assert.equal(occurenceNumber, 1, " cannot remove core.dump file.");
 });

@@ -162,46 +162,6 @@ Before(() => {
 
 After({ tags: "@runner-cleanup" }, killRunner);
 
-const startHost = async () => {
-    let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
-
-    if (!apiUrl) {
-        const apiPort = await freeport();
-        const instancesServerPort = await freeport();
-
-        process.env.LOCAL_HOST_PORT = apiPort.toString();
-        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
-
-        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
-
-        console.error(`Starting host on port: ${apiPort}`);
-    }
-    hostClient = new HostClient(apiUrl);
-
-    if (process.env.SCRAMJET_TEST_LOG) {
-        hostClient.client.addLogger({
-            request(url: any) {
-                console.error(new Date().toISOString(), "Starting request to", url);
-            },
-            ok(result: any) {
-                const { status, statusText, url } = result;
-
-                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
-            },
-            error(error: any) {
-                const { code, reason: result } = error;
-                const { message } = result || {};
-
-                console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
-            },
-        });
-    }
-    await hostUtils.spawnHost();
-};
-
-Given("start host", () => startHost());
-Then("stop host", () => hostUtils.stopHost());
-
 Given("host is running", async () => {
     const apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
@@ -233,11 +193,6 @@ When("sequence {string} is loaded", { timeout: 15000 }, async function(this: Cus
 
 When("instance started", async function(this: CustomWorld) {
     this.resources.instance = await this.resources.sequence!.start({ appConfig: {}, args: [] });
-});
-
-When("instances started", async function(this: CustomWorld) {
-    this.resources.instance1 = await this.resources.sequence1!.start({ appConfig: {}, args: [] });
-    this.resources.instance2 = await this.resources.sequence2!.start({ appConfig: {}, args: [] });
 });
 
 When(
@@ -629,34 +584,6 @@ When("instance is finished", async function(this: CustomWorld) {
         });
 });
 
-When("stop instance", { timeout: 60 * 1000 }, async function(this: CustomWorld) {
-    await this.resources.instance?.stop(0, false);
-});
-
-When("stream sequence logs to stderr", async function(this: CustomWorld) {
-    this.resources.instance
-        ?.getStream("log")
-        .then((data) => data?.pipe(process.stderr))
-        .catch((e) => console.error(e));
-    this.resources.instance
-        ?.getStream("stdout")
-        .then((data) => data?.pipe(process.stderr))
-        .catch((e) => console.error(e));
-    this.resources.instance
-        ?.getStream("stderr")
-        .then((data) => data?.pipe(process.stderr))
-        .catch((e) => console.error(e));
-});
-
-When("send data", async function(this: CustomWorld) {
-    const status = await this.resources.instance?.sendStream("input", "{\"a\": 1}", {}, {
-        type: "application/x-ndjson",
-        end: true,
-    });
-
-    console.log(status);
-});
-
 When("send {string} to input", async function(this: CustomWorld, str) {
     const status = await this.resources.instance?.sendStream("input", str, {}, {
         type: "text/plain",
@@ -711,16 +638,6 @@ Then("{string} will be data named {string}", async function(this: CustomWorld, s
     assert.equal(response, expectedResponses[dataName]);
 });
 
-Then("output is {string}", async function(this: CustomWorld, str) {
-    const output = await this.resources.instance?.getStream("output");
-
-    if (!output) assert.fail("No output!");
-
-    const outputString = await streamToString(output);
-
-    assert(outputString, str);
-});
-
 Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
     const output = await this.resources.instance?.getStream(stream);
 
@@ -768,32 +685,14 @@ Then("send data from file {string} named {string}", async (path: any, topic: str
     assert.ok(sendData);
 });
 
-When("get data named {string}", async function(this: CustomWorld, topic: string) {
-    const stream = await hostClient.getNamedData(topic);
-
-    if (!stream) assert.fail("No data!");
-    this.resources.out = await streamToString(stream);
-});
-
 When("get data named {string} without waiting for the end", async function(this: CustomWorld, topic: string) {
     this.resources.outStream = await hostClient.getNamedData(topic);
-});
-
-Then("get output", async function(this: CustomWorld) {
-    const output = await this.resources.instance?.getStream("output");
-
-    if (!output) assert.fail("No output!");
-    this.resources.out = await streamToString(output);
 });
 
 Then("get output without waiting for the end", { timeout: 6e4 }, async function(this: CustomWorld) {
     const output = await this.resources.instance!.getStream("output");
 
     this.resources.outStream = output;
-});
-
-Then("confirm data defined as {string} received", async function(this: CustomWorld, data) {
-    assert.equal(this.resources.out, expectedResponses[data]);
 });
 
 Then("confirm data defined as {string} will be received", async function(this: CustomWorld, data) {
