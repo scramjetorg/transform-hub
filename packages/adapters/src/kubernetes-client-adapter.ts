@@ -4,6 +4,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { defer } from "@scramjet/utility";
 import { Writable, Readable } from "stream";
 import http from "http";
+import { HttpError } from "@kubernetes/client-node";
 
 const POD_STATUS_CHECK_INTERVAL_MS = 500;
 const POD_STATUS_FAIL_LIMIT = 10;
@@ -131,7 +132,11 @@ class KubernetesClientAdapter {
 
                 success = true;
             } catch (err: any) {
-                this.logger.error(`Failed to run: ${name}.`, err);
+                if (err instanceof HttpError) {
+                    this.logger.error(`Running "${name}" responded with error`, err.body.message);
+                } else {
+                    this.logger.error(`Failed to run: ${name}.`, err);
+                }
 
                 await defer(sleepMs);
 
