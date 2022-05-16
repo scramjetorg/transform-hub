@@ -39,7 +39,7 @@ When("I use apiUrl in config", { timeout: 30000 }, async function() {
     assert.equal(res.stdio[2], 0);
 });
 
-When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
+When("I execute CLI with {string} arguments", { timeout: 60000 }, async function(args: string) {
     const res = (this as CustomWorld).cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" ")]);
