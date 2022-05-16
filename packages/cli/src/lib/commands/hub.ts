@@ -74,9 +74,7 @@ export const hub: CommandDefinition = (program) => {
                 return;
             }
 
-            console.log("Space:", space);
             const managerClient = getMiddlewareClient().getManagerClient(space);
-
             const hosts = await managerClient.getHosts();
 
             console.log("Hubs", hosts);
