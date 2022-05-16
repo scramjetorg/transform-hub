@@ -133,7 +133,7 @@ class KubernetesClientAdapter {
                 success = true;
             } catch (err: any) {
                 if (err instanceof HttpError) {
-                    this.logger.error(`Running "${name}" responded with error`, err.body.message);
+                    this.logger.error(`Running "${name}" responded with error`, err?.body?.message);
                 } else {
                     this.logger.error(`Failed to run: ${name}.`, err);
                 }
