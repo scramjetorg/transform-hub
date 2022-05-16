@@ -39,11 +39,10 @@ When("I use apiUrl in config", { timeout: 30000 }, async function() {
     assert.equal(res.stdio[2], 0);
 });
 
-When("I execute CLI with {string} arguments", { timeout: 60000 }, async function(args: string) {
+When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
     const res = (this as CustomWorld).cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" ")]);
-    console.log(res.stdio[0]);
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error(res.stdio);
     }
@@ -395,10 +394,16 @@ Then("confirm data named {string} received", async function(data) {
 
 Then("confirm data named {string} will be received", async function(this: CustomWorld, data) {
     const expected = expectedResponses[data];
-
     const { stdout } = this.cliResources!.commandInProgress!;
-
     const response = await waitForValueInStream(stdout, expected);
 
     assert.equal(response, expected);
+});
+
+Then("confirm logs received", async function(this: CustomWorld) {
+    const expected = expectedResponses[""];
+    const { stdout } = this.cliResources!.commandInProgress!;
+    const response = await waitForValueInStream(stdout, expected);
+
+    assert.ok(response);
 });

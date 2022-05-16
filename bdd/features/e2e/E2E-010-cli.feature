@@ -72,7 +72,8 @@ This feature checks CLI functionalities
         Then I get Sequence id
         Then I start Sequence
         And I get Instance id
-        When I execute CLI with "inst log -" arguments
+        When I execute CLI with "inst log -" arguments without waiting for the end
+        Then confirm logs received
         And host is still running
 
     @cli
