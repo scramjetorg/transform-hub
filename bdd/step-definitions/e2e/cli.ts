@@ -43,7 +43,7 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
     const res = (this as CustomWorld).cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" ")]);
-
+    console.log(res.stdio[0]);
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error(res.stdio);
     }
@@ -174,7 +174,6 @@ Then("I start Sequence", async function() {
         if (process.env.SCRAMJET_TEST_LOG) {
             console.error(res.stdio[0]);
         }
-        console.dir(res.stdio[0]);
 
         const instance = JSON.parse(res.stdio[0].replace("\n", ""));
 

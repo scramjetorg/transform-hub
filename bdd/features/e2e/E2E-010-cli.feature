@@ -64,6 +64,18 @@ This feature checks CLI functionalities
         And host is still running
 
     @cli
+    Scenario: E2E-010 TC-006 Get log from Instance
+        Given host is running
+        Then I set json format
+        Then I use apiUrl in config
+        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
+        Then I get Sequence id
+        Then I start Sequence
+        And I get Instance id
+        When I execute CLI with "inst log -" arguments
+        And host is still running
+
+    @cli
     Scenario: E2E-010 TC-007 Send input data to Instance
         Given host is running
         Then I set json format
