@@ -1,6 +1,5 @@
 Feature: Process large file test
 
-    @ci
     Scenario: PT-003 TC-002 Sequence processes file larger than accesible RAM
         Given host is running
         When sequence "../packages/reference-apps/big-file-sequence.tar.gz" loaded
