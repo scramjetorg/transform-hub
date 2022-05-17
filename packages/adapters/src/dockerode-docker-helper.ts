@@ -1,5 +1,6 @@
 import Dockerode from "dockerode";
 import { PassThrough } from "stream";
+import { appendFile } from "fs";
 
 import {
     DockerAdapterRunConfig,
@@ -173,6 +174,8 @@ export class DockerodeDockerHelper implements IDockerHelper {
 
     async pullImage(name: string, fetchOnlyIfNotExists = true) {
         if (fetchOnlyIfNotExists) {
+            const start = new Date();
+
             this.logger.trace("Checking image", name);
 
             if (this.pulledImages[name]) return this.pulledImages[name];
@@ -180,11 +183,21 @@ export class DockerodeDockerHelper implements IDockerHelper {
             if (await this.isImageInLocalRegistry(name)) {
                 this.pulledImages[name] = Promise.resolve();
 
+                const seconds = (new Date().getTime() - start.getTime()) / 1000;
+
+                appendFile("timing-log.ndjson", JSON.stringify({
+                    operation: "checking image",
+                    image: name,
+                    time: seconds,
+                }) + "\n", () => {});
+
                 return this.pulledImages[name];
             }
         }
 
         this.pulledImages[name] = (async () => {
+            const start = new Date();
+
             this.logger.trace("Start pulling image", name);
 
             const pullStream = await this.dockerode.pull(name);
@@ -192,7 +205,15 @@ export class DockerodeDockerHelper implements IDockerHelper {
             // Wait for pull to finish
             await new Promise(res => this.dockerode.modem.followProgress(pullStream, res));
 
-            this.logger.trace("Image pulled");
+            const seconds = (new Date().getTime() - start.getTime()) / 1000;
+
+            appendFile("timing-log.ndjson", JSON.stringify({
+                operation: "docker pull",
+                image: name,
+                time: seconds,
+            }) + "\n", () => {});
+
+            this.logger.trace(`Image pulled in ${seconds}s`);
         })();
 
         return this.pulledImages[name];
