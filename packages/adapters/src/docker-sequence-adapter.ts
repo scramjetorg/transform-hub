@@ -7,6 +7,7 @@ import {
     IObjectLogger
 } from "@scramjet/types";
 import { Readable } from "stream";
+import { appendFile } from "fs";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import {
     DockerAdapterResources,
@@ -127,13 +128,25 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<SequenceConfig>} Promise resolving to sequence config.
      */
     async identify(stream: Readable, id: string): Promise<SequenceConfig> {
+        const volStart = new Date();
+
         const volumeId = await this.createVolume(id);
+
+        const volSecs = (new Date().getTime() - volStart.getTime()) / 1000;
+
+        appendFile("timing-log.ndjson", JSON.stringify({
+            operation: "creating volume",
+            volumeId: volumeId,
+            time: volSecs,
+        }) + "\n", () => {});
 
         this.resources.volumeId = volumeId;
 
-        this.logger.info("Volume created", volumeId);
+        this.logger.info(`Volume created in ${volSecs}s`, volumeId);
 
         let runResult: DockerAdapterRunResponse;
+
+        const prerunnerStart = new Date();
 
         this.logger.debug("Starting PreRunner", this.config);
 
@@ -149,6 +162,13 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
             throw new SequenceAdapterError("DOCKER_ERROR");
         }
+
+        const startSecs = (new Date().getTime() - prerunnerStart.getTime()) / 1000;
+
+        appendFile("timing-log.ndjson", JSON.stringify({
+            operation: "starting pre-runner",
+            time: startSecs,
+        }) + "\n", () => {});
 
         try {
             const { streams, wait } = runResult;
@@ -199,7 +219,16 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         wait: Function,
         volumeId: DockerVolume
     ): Promise<DockerSequenceConfig> {
+        const parseStart = new Date();
+
         const [preRunnerResult] = (await Promise.all([readStreamedJSON(streams.stdout as Readable), wait])) as any;
+
+        const parseSecs = (new Date().getTime() - parseStart.getTime()) / 1000;
+
+        appendFile("timing-log.ndjson", JSON.stringify({
+            operation: "waiting for pre-runner",
+            time: parseSecs,
+        }) + "\n", () => {});
 
         this.logger.debug("PreRunner response", preRunnerResult);
 
