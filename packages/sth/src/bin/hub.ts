@@ -38,10 +38,10 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-cleanup-timeout <timeout>", "Set timeout for deleting runner Pod after failure in ms")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instances-server-port <port>", "Port on which server that instances connect to should run.")
-    .option("--k8s-runner-resources-requests-cpu <memory>", "Memory requests for pod CPU")
-    .option("--k8s-runner-resources-requests-memory <memory>", "Memory requests for pod memory")
-    .option("--k8s-runner-resources-limits-cpu <memory>", "Set limits for CPU")
-    .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory")
+    .option("--k8s-runner-resources-requests-cpu <cpu_unit>", "Requests CPU for pod in cpu units [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
+    .option("--k8s-runner-resources-requests-memory <memory>", "Requests memory for pod e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
+    .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
+    .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .parse(process.argv)
     .opts() as STHCommandOptions;
 
