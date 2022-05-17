@@ -149,6 +149,7 @@ IComponent {
 
         if (exitPodStatus !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
+            this.logger.error("Container failure reason is: ", await this.kubeClient.getPodTerminatedContainerReason(runnerName));
 
             await this.remove(this.adapterConfig.timeout);
 
