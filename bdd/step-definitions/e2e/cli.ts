@@ -404,5 +404,5 @@ Then("confirm instance logs received", async function(this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
     const response = await waitForValueInStream(stdout, "");
 
-    assert.ok(response);
+    assert.ok(response.includes('"level":"DEBUG","msg":"Streams initialized"'));
 });
