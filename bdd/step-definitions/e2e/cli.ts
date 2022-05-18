@@ -393,18 +393,11 @@ Then("confirm data named {string} received", async function(data) {
 });
 
 Then("confirm data named {string} will be received", async function(this: CustomWorld, data) {
-    if (data === "") {
-        const { stdout } = this.cliResources!.commandInProgress!;
-        const response = await waitForValueInStream(stdout, "");
+    const expected = expectedResponses[data];
+    const { stdout } = this.cliResources!.commandInProgress!;
+    const response = await waitForValueInStream(stdout, expected);
 
-        assert.ok(response);
-    } else {
-        const expected = expectedResponses[data];
-        const { stdout } = this.cliResources!.commandInProgress!;
-        const response = await waitForValueInStream(stdout, expected);
-
-        assert.equal(response, expected);
-    }
+    assert.equal(response, expected);
 });
 
 Then("confirm instance logs received", async function(this: CustomWorld) {
