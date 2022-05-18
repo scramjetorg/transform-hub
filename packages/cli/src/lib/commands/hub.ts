@@ -25,7 +25,7 @@ export const hub: CommandDefinition = (program) => {
     */
         .description("Allows to run programs in different data centers, computers or devices in local network");
 
-    if (isDevelopment() && isProductionEnv)
+    if (isDevelopment() && isProductionEnv) {
         hubCmd
             .command("create")
             .argument("<name>")
@@ -36,60 +36,72 @@ export const hub: CommandDefinition = (program) => {
             // FIXME: implement me
                 throw new Error("Implement me");
             });
+    }
 
-    hubCmd
-        .command("use")
-        .argument("<name|id>")
-        .description("Specify the Hub you want to work with, all subsequent requests will be sent to this Hub")
-        .action(async (id: string) => {
-            const space = sessionConfig.getConfig().lastSpaceId;
+    if (isProductionEnv) {
+        hubCmd
+            .command("use")
+            .argument("<name|id>")
+            .description("Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub")
+            .action(async (id: string) => {
+                const space = sessionConfig.getConfig().lastSpaceId;
 
-            console.log("Space:", space);
-            const managerClient = getMiddlewareClient().getManagerClient(space);
+                console.log("Default space:", space);
+                const managerClient = getMiddlewareClient().getManagerClient(space);
+                const hosts = await managerClient.getHosts();
+                const host = hosts.find((h: any) => h.id === id);
 
-            const hosts = await managerClient.getHosts();
+                if (!host) {
+                    console.error("Host not found");
+                    return;
+                }
+                console.log("Hub set as default:", host);
+                managerClient.getHostClient(id);
+                sessionConfig.setLastHubId(id);
+            });
+    }
 
-            const host = hosts.find((h: any) => h.id === id);
+    if (isProductionEnv) {
+        hubCmd
+            .command("list")
+            .alias("ls")
+            .description("List all the Hubs in the default space")
+            .action(async () => {
+                const space = sessionConfig.getConfig().lastSpaceId;
 
-            if (!host) {
-                console.error("Host not found");
-                return;
-            }
+                if (!space) {
+                    console.error("No space selected");
+                    return;
+                }
 
-            const hostClient = managerClient.getHostClient(id);
+                const managerClient = getMiddlewareClient().getManagerClient(space);
+                const hosts = await managerClient.getHosts();
 
-            sessionConfig.setLastHubId(id);
-            displayObject(hostClient);
-        });
+                console.log("Hubs", hosts);
+                console.log("Default space:", space);
+            });
+    }
 
-    hubCmd
-        .command("list")
-        .alias("ls")
-        .description("List the Hubs")
-        .action(async () => {
-            const space = sessionConfig.getConfig().lastSpaceId;
-
-            if (!space) {
-                console.error("No space selected");
-                return;
-            }
-
-            console.log("Space:", space);
-            const managerClient = getMiddlewareClient().getManagerClient(space);
-
-            const hosts = await managerClient.getHosts();
-
-            console.log("Hubs", hosts);
-        });
-
-    hubCmd
-        .command("info")
+    if (isProductionEnv) {
+        hubCmd
+            .command("info")
         /* TODO for future use
         .argument("[name|id]")
         .description("display chosen hub version if a name is not provided it displays a version of a current hub")
-         */
-        .description("Display info about the Hub")
-        .action(async () => displayEntity(getHostClient().getVersion()));
+        */
+            .description("Display info about the default Hub")
+            .action(async () => {
+                const space = sessionConfig.getConfig().lastSpaceId;
+                const id = sessionConfig.getConfig().lastHubId;
+                const managerClient = getMiddlewareClient().getManagerClient(space);
+                const hosts = await managerClient.getHosts();
+                const host = hosts.find((h: any) => h.id === id);
+
+                console.log("Default space:", space);
+                console.log("Hub details:");
+                displayObject(host);
+            });
+    }
 
     hubCmd
         .command("logs")
@@ -100,4 +112,10 @@ export const hub: CommandDefinition = (program) => {
         .command("load")
         .description("Monitor CPU, memory and disk usage on the Hub")
         .action(async () => displayEntity(getHostClient().getLoadCheck()));
+
+    hubCmd
+        .command("version")
+        .alias("v")
+        .description("Display version of the default Hub")
+        .action(async () => displayEntity(getHostClient().getVersion()));
 };
