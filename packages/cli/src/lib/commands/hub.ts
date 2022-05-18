@@ -25,7 +25,7 @@ export const hub: CommandDefinition = (program) => {
     */
         .description("Allows to run programs in different data centers, computers or devices in local network");
 
-    if (isDevelopment() && isProductionEnv)
+    if (isDevelopment() && isProductionEnv) {
         hubCmd
             .command("create")
             .argument("<name>")
@@ -36,8 +36,9 @@ export const hub: CommandDefinition = (program) => {
             // FIXME: implement me
                 throw new Error("Implement me");
             });
+    }
 
-    if (isProductionEnv)
+    if (isProductionEnv) {
         hubCmd
             .command("use")
             .argument("<name|id>")
@@ -58,8 +59,9 @@ export const hub: CommandDefinition = (program) => {
                 managerClient.getHostClient(id);
                 sessionConfig.setLastHubId(id);
             });
+    }
 
-    if (isProductionEnv)
+    if (isProductionEnv) {
         hubCmd
             .command("list")
             .alias("ls")
@@ -78,8 +80,9 @@ export const hub: CommandDefinition = (program) => {
                 console.log("Hubs", hosts);
                 console.log("Default space:", space);
             });
+    }
 
-    if (isProductionEnv)
+    if (isProductionEnv) {
         hubCmd
             .command("info")
         /* TODO for future use
@@ -98,6 +101,7 @@ export const hub: CommandDefinition = (program) => {
                 console.log("Hub details:");
                 displayObject(host);
             });
+    }
 
     hubCmd
         .command("logs")
