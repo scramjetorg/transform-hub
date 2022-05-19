@@ -43,7 +43,6 @@ When("I execute CLI with {string} arguments", { timeout: 30000 }, async function
     const res = (this as CustomWorld).cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" ")]);
-
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error(res.stdio);
     }
@@ -174,7 +173,6 @@ Then("I start Sequence", async function() {
         if (process.env.SCRAMJET_TEST_LOG) {
             console.error(res.stdio[0]);
         }
-        console.dir(res.stdio[0]);
 
         const instance = JSON.parse(res.stdio[0].replace("\n", ""));
 
@@ -396,10 +394,15 @@ Then("confirm data named {string} received", async function(data) {
 
 Then("confirm data named {string} will be received", async function(this: CustomWorld, data) {
     const expected = expectedResponses[data];
-
     const { stdout } = this.cliResources!.commandInProgress!;
-
     const response = await waitForValueInStream(stdout, expected);
 
     assert.equal(response, expected);
+});
+
+Then("confirm instance logs received", async function(this: CustomWorld) {
+    const { stdout } = this.cliResources!.commandInProgress!;
+    const response = await waitForValueInStream(stdout, "");
+
+    assert.ok(response.includes('"level":"DEBUG","msg":"Streams initialized"'));
 });
