@@ -121,6 +121,13 @@ class KubernetesClientAdapter {
         }
     }
 
+    async getPodTerminatedContainerReason(podName: string): Promise<string | undefined> {
+        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+        const response = await kubeApi.readNamespacedPod(podName, this._namespace);
+
+        return response.body.status?.containerStatuses?.[0].state?.terminated?.reason;
+    }
+
     private async runWithRetries(retries: number, name: string, callback: any) {
         let tries = 0;
         let sleepMs = 1000;
@@ -137,7 +144,11 @@ class KubernetesClientAdapter {
 
                 success = true;
             } catch (err: any) {
-                this.logger.error(`Failed to run: ${name}.`, err);
+                if (err instanceof HttpError) {
+                    this.logger.error(`Running "${name}" responded with error`, err?.body?.message);
+                } else {
+                    this.logger.error(`Failed to run: ${name}.`, err);
+                }
 
                 await defer(sleepMs);
 
