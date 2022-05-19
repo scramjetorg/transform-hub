@@ -77,8 +77,7 @@ export const hub: CommandDefinition = (program) => {
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
 
-                console.log("Hubs", hosts);
-                console.log("Default space:", space);
+                displayObject(hosts);
             });
     }
 
@@ -97,9 +96,8 @@ export const hub: CommandDefinition = (program) => {
                 const hosts = await managerClient.getHosts();
                 const host = hosts.find((h: any) => h.id === id);
 
-                console.log("Default space:", space);
-                console.log("Hub details:");
                 displayObject(host);
+                displayObject(space);
             });
     }
 
@@ -115,7 +113,6 @@ export const hub: CommandDefinition = (program) => {
 
     hubCmd
         .command("version")
-        .alias("v")
         .description("Display version of the default Hub")
         .action(async () => displayEntity(getHostClient().getVersion()));
 };
