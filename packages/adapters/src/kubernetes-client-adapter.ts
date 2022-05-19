@@ -4,6 +4,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { defer } from "@scramjet/utility";
 import { Writable, Readable } from "stream";
 import http from "http";
+import { HttpError } from "@kubernetes/client-node";
 
 const POD_STATUS_CHECK_INTERVAL_MS = 500;
 const POD_STATUS_FAIL_LIMIT = 10;
@@ -103,9 +104,14 @@ class KubernetesClientAdapter {
                     return status;
                 }
             } catch (err: any) {
-                this.logger.error("Failed to get pod status", err);
+                if (err instanceof HttpError) {
+                    this.logger.error(`Status for "${podName}" pod responded with error`, err?.body?.message);
+                } else {
+                    this.logger.error(`Failed to get pod status: ${podName}.`, err);
+                }
 
                 failCount++;
+
                 if (failCount > POD_STATUS_FAIL_LIMIT) {
                     throw new Error("Reached the limit of failed pod status requests");
                 }
