@@ -77,18 +77,18 @@ jobs:
     with:
       node-version: 16.x
 
-  trigger-compatibility-test:
-    name: STH-CPM compatibility test (from platform-tests)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: convictional/trigger-workflow-and-wait@v1.6.1
-        with:
-          owner: scramjetorg
-          repo: platform-tests
-          github_token: ${{ secrets.SCRAMJET_BOT_TOKEN }}
-          github_user: ${{ secrets.WORKFLOW_TRIGGER_USERNAME }}
-          workflow_file_name: compatibility-check.yml
-          client_payload: |
-            {
-              "sth-version": "${{ github.event.pull_request.head.sha }}"
-            }
+  # trigger-compatibility-test:
+  #   name: STH-CPM compatibility test (from platform-tests)
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: convictional/trigger-workflow-and-wait@v1.6.1
+  #       with:
+  #         owner: scramjetorg
+  #         repo: platform-tests
+  #         github_token: ${{ secrets.SCRAMJET_BOT_TOKEN }}
+  #         github_user: ${{ secrets.WORKFLOW_TRIGGER_USERNAME }}
+  #         workflow_file_name: compatibility-check.yml
+  #         client_payload: |
+  #           {
+  #             "sth-version": "${{ github.event.pull_request.head.sha }}"
+  #           }
