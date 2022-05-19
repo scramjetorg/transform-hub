@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { SequenceClient } from "@scramjet/api-client";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { defer } from "@scramjet/utility";
@@ -26,7 +27,6 @@ const sendPackage = async (sequencePackage: string) => {
 const startSequence = async (id: string, { configFile, configString, args, outputTopic, inputTopic }:
     { configFile: any, configString: string, args?: any[], outputTopic?: string, inputTopic?: string }) => {
     if (configFile && configString) {
-        // eslint-disable-next-line no-console
         console.error("Provide one source of configuration");
         return Promise.resolve();
     }
@@ -36,7 +36,6 @@ const startSequence = async (id: string, { configFile, configString, args, outpu
         if (configString) appConfig = JSON.parse(configString);
         if (configFile) appConfig = JSON.parse(await readFile(configFile, "utf-8"));
     } catch (_) {
-        // eslint-disable-next-line no-console
         console.error("Unable to read configuration");
         return Promise.reject();
     }

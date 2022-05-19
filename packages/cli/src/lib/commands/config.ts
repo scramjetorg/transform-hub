@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
 import { globalConfig, sessionConfig } from "../config";
@@ -53,11 +55,9 @@ export const config: CommandDefinition = (program) => {
         .action(json => {
             try {
                 if (!globalConfig.setConfig(JSON.parse(json))) {
-                    // eslint-disable-next-line no-console
                     console.error("Invalid configuration in json object");
                 }
             } catch (_) {
-                // eslint-disable-next-line no-console
                 console.error("Parsing error: Invalid JSON format");
             }
         });
@@ -68,7 +68,6 @@ export const config: CommandDefinition = (program) => {
         .description(`Specify the Hub API Url (default: ${defaultApiUrl})`)
         .action(url => {
             if (!globalConfig.setApiUrl(url)) {
-                // eslint-disable-next-line no-console
                 console.error("Invalid url");
             }
         });
@@ -83,16 +82,13 @@ export const config: CommandDefinition = (program) => {
                 const debugVal = stringToBoolean(debug);
 
                 if (typeof debugVal === "undefined") {
-                    // eslint-disable-next-line no-console
                     console.error("Invalid debug value");
                 }
                 if (!globalConfig.setDebug(debugVal as boolean)) {
-                    // eslint-disable-next-line no-console
                     console.error("Unable to set debug value");
                 }
             }
             if (format && !globalConfig.setFormat(format)) {
-                // eslint-disable-next-line no-console
                 console.error("Unable to set format value");
             }
         });
@@ -103,7 +99,6 @@ export const config: CommandDefinition = (program) => {
         .description(`Specify middleware API url ${defaulMiddlewareApiUrl}`)
         .action(url => {
             if (!globalConfig.setMiddlewareApiUrl(url)) {
-                // eslint-disable-next-line no-console
                 console.error("Invalid url");
             }
         });
@@ -114,7 +109,6 @@ export const config: CommandDefinition = (program) => {
         .description("Specify default scope that should be used when session start")
         .action(scope => {
             if (!globalConfig.setScope(scope)) {
-                // eslint-disable-next-line no-console
                 console.error(`Invalid name: ${scope}`);
             }
         });
@@ -125,7 +119,6 @@ export const config: CommandDefinition = (program) => {
         .description(`Specify platform authorization token (default: ${defaultToken})`)
         .action(token => {
             if (!globalConfig.setToken(token)) {
-                // eslint-disable-next-line no-console
                 console.error("Invalid token");
             }
         });
@@ -136,7 +129,6 @@ export const config: CommandDefinition = (program) => {
         .description(`Specify the environment (default: ${defaultEnv})`)
         .action(env => {
             if (!globalConfig.setEnv(env)) {
-                // eslint-disable-next-line no-console
                 console.error("Invalid environment");
             }
         });
@@ -148,7 +140,6 @@ export const config: CommandDefinition = (program) => {
 
     const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
         if (!setCallback(defaultValue)) {
-            // eslint-disable-next-line no-console
             console.error("Reset failed.");
         }
     };

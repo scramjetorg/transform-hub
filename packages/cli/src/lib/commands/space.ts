@@ -2,6 +2,7 @@
 import { CommandDefinition } from "../../types";
 import { isDevelopment } from "../../utils/isDevelopment";
 import { sessionConfig } from "../config";
+import { displayObject } from "../output";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -37,7 +38,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
 
-            console.log(managers);
+            displayObject(managers);
         });
 
     spaceCmd
@@ -48,7 +49,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(name);
 
-            console.log("Using space:", { name, ...await managerClient.getVersion() });
+            displayObject({ name, ...await managerClient.getVersion() });
             sessionConfig.setLastSpaceId(name);
         });
 
