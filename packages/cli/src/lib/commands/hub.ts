@@ -45,8 +45,6 @@ export const hub: CommandDefinition = (program) => {
             .description("Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub")
             .action(async (id: string) => {
                 const space = sessionConfig.getConfig().lastSpaceId;
-
-                console.log("Default space:", space);
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
                 const host = hosts.find((h: any) => h.id === id);
@@ -55,7 +53,6 @@ export const hub: CommandDefinition = (program) => {
                     console.error("Host not found");
                     return;
                 }
-                console.log("Hub set as default:", host);
                 managerClient.getHostClient(id);
                 sessionConfig.setLastHubId(id);
             });
