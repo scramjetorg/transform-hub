@@ -38,4 +38,4 @@ COPY --from=builder /build/dist ./dist
 
 RUN npm install -g ./dist/sth
 
-CMD [ "scramjet-transform-hub", "--runtime-adapter=process" ]
+CMD [ "scramjet-transform-hub" ]
