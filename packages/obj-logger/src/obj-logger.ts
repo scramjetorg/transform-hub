@@ -219,7 +219,7 @@ export class ObjLogger implements IObjectLogger {
         this.ended = true;
 
         this.inputStringifiedLogStream.unpipe();
-        this.output.end();
+        this.outputLogStream.end();
     }
 }
 

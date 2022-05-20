@@ -48,7 +48,7 @@
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "lerna link",
     "prepare": "npx husky install",
-    "download-refapps": "cd packages/reference-apps && curl -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q --continue",
+    "download-refapps": "cd packages/reference-apps && curl -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q",
     "test": "lerna run test",
     "test:packages": "lerna run test",
     "test:packages-no-concurrent": "lerna run test --concurrency=1",

@@ -12,6 +12,7 @@ import {
 import { ChildProcess, spawn } from "child_process";
 
 import path from "path";
+import { Readable } from "stream";
 import { getRunnerEnvVariables } from "./get-runner-env";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
@@ -27,6 +28,7 @@ class ProcessInstanceAdapter implements
     logger: IObjectLogger;
 
     private runnerProcess?: ChildProcess;
+    crashLogStreams?: Readable[];
 
     constructor() {
         this.logger = new ObjLogger(this);
@@ -122,6 +124,8 @@ class ProcessInstanceAdapter implements
 
         const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env });
 
+        this.crashLogStreams = [runnerProcess.stdout, runnerProcess.stderr];
+
         if (development()) {
             this.logger.warn("Development mode! Piping process stdio to main process");
             runnerProcess.stdout.pipe(process.stdout);
@@ -173,7 +177,18 @@ class ProcessInstanceAdapter implements
     }
 
     async getCrashLog(): Promise<string> {
-        throw new Error("Method not implemented.");
+        if (!this.crashLogStreams) return "";
+
+        const str = await Promise.all(this.crashLogStreams?.map(async stream => {
+            let data = "";
+
+            for await (const item of stream) {
+                data = `${data}${item}`;
+            }
+            return data;
+        }));
+
+        return `STDOUT:\n${str[0]}\nSTDERR:\n${str[1]}`;
     }
 }
 

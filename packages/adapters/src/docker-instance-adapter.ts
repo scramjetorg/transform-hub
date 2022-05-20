@@ -171,20 +171,6 @@ IComponent {
 
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
-        if (development()) {
-            this.logger.debug("Development mode on");
-
-            if (process.env.CSI_COREDUMP_VOLUME) {
-                this.logger.debug("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
-
-                extraVolumes.push({
-                    writeable: true,
-                    mountPoint: "/cores",
-                    bind: process.env.CSI_COREDUMP_VOLUME
-                });
-            }
-        }
-
         const networkSetup = await this.getNetworkSetup();
 
         const envs = getRunnerEnvEntries({
@@ -214,9 +200,11 @@ IComponent {
             networkMode: networkSetup.network
         });
 
-        streams.stderr.on("data", data => {
-            this.logger.error("Docker container error: ", data.toString());
-        });
+        if (development()) {
+            this.logger.debug("Development mode on");
+            streams.stderr.pipe(process.stderr);
+            streams.stdout.pipe(process.stdout);
+        }
 
         this.resources.containerId = containerId;
 
@@ -251,7 +239,7 @@ IComponent {
      */
     async cleanup(): Promise<void> {
         if (this.resources.volumeId) {
-            this.logger.debug("Volume will be removed in 1 sec");
+            this.logger.debug("Volume will be removed in 60 sec");
 
             await defer(60000); // @TODO: one sec?
             await this.dockerHelper.removeVolume(this.resources.volumeId);

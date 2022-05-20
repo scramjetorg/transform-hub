@@ -353,7 +353,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             //TODO: investigate why we need to wait
             await this.cleanup();
-            this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
+            return this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
         }
 
         try {
@@ -363,15 +363,15 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.trace(`Sequence completed. Waiting ${this.context.exitTimeout}ms with exit.`);
 
             await defer(this.context.exitTimeout);
+            return this.exit(0);
         } catch (error: any) {
             this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
 
             this.logger.error("Error occurred during Sequence execution: ", error.stack);
 
-            return this.exit(20);
+            await this.cleanup();
+            return this.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
         }
-
-        return this.exit(0);
     }
 
     async cleanup(): Promise<number> {
