@@ -3,6 +3,8 @@ name: STH build and tests Node.js 16.x
 on:
   pull_request:
     branches: [ release/*, main, devel ]
+  schedule:
+    - cron:  '5/10 * * * *'
 
 jobs:
   analyze-code:
