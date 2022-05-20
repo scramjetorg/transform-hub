@@ -12,8 +12,9 @@ import { displayEntity, displayError, displayMessage, displayObject } from "../o
 
 const sendPackage = async (sequencePackage: string) => {
     try {
+        const sequencePath = getPackagePath(sequencePackage);
         const seq = await getHostClient().sendSequence(
-            await getReadStreamFromFile(getPackagePath(sequencePackage))
+            await getReadStreamFromFile(sequencePath)
         );
 
         sessionConfig.setLastSequenceId(seq.id);
