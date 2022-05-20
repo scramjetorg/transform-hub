@@ -85,7 +85,7 @@ This feature checks CLI functionalities
         Then I get Sequence id
         Then I start Sequence
         And I get Instance id
-        Then I send input data from file "../dist/reference-apps/checksum-sequence/data.json"
+        Then I send input data from file "data/test-data/checksum.json"
         And host is still running
 
     @cli
@@ -97,7 +97,7 @@ This feature checks CLI functionalities
         Then I get Sequence id
         Then I start Sequence
         And I get Instance id
-        Then I send input data from file "../dist/reference-apps/checksum-sequence/data.json" with options "--end"
+        Then I send input data from file "data/test-data/checksum.json" with options "--end"
         Then I get Instance output
         Then confirm data named "checksum" received
         And host is still running
