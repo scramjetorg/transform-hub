@@ -27,9 +27,7 @@ jobs:
           name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
       - name: Download reference apps (latest release)
-        run: gh release download --repo scramjetorg/reference-apps --pattern '*.tar.gz' --dir packages/reference-apps
-        env:
-          GITHUB_TOKEN: ${{ secrets.SCRAMJET_BOT_TOKEN }}
+        run: yarn download-refapps
 
       - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         uses: actions/download-artifact@v2
