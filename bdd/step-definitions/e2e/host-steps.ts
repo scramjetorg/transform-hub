@@ -4,7 +4,7 @@
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import { removeBoundaryQuotes, defer, waitForValueInStream } from "../../lib/utils";
-import fs, { createReadStream, existsSync } from "fs";
+import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
 import { PassThrough, Readable, Stream, Writable } from "stream";
@@ -32,7 +32,7 @@ const freeport = promisify(require("freeport"));
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
-const testPath = "../dist/reference-apps/hello-alice-out/";
+const testPath = "../packages/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
@@ -122,6 +122,7 @@ BeforeAll({ timeout: 10e3 }, async () => {
         console.error(`Starting host on port: ${apiPort}`);
     }
     hostClient = new HostClient(apiUrl);
+
     if (process.env.SCRAMJET_TEST_LOG) {
         hostClient.client.addLogger({
             request(url: any) {
@@ -162,6 +163,67 @@ Before(() => {
 
 After({ tags: "@runner-cleanup" }, killRunner);
 
+const startHost = async () => {
+    let apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
+
+    if (!apiUrl) {
+        const apiPort = await freeport();
+        const instancesServerPort = await freeport();
+
+        process.env.LOCAL_HOST_PORT = apiPort.toString();
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
+
+        process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
+
+        console.error(`Starting host on port: ${apiPort}`);
+    }
+    hostClient = new HostClient(apiUrl);
+
+    if (process.env.SCRAMJET_TEST_LOG) {
+        hostClient.client.addLogger({
+            request(url: any) {
+                console.error(new Date().toISOString(), "Starting request to", url);
+            },
+            ok(result: any) {
+                const { status, statusText, url } = result;
+
+                console.error(new Date().toISOString(), "Request ok:", url, `status: ${status} ${statusText}`);
+            },
+            error(error: any) {
+                const { code, reason: result } = error;
+                const { message } = result || {};
+
+                console.error(new Date().toISOString(), `Request failed with code "${code}" status: ${message}`);
+            },
+        });
+    }
+    await hostUtils.spawnHost();
+};
+
+Given("start host", () => startHost());
+Then("stop host", () => hostUtils.stopHost());
+
+Then("send fake stream as sequence", async function(this: CustomWorld) {
+    this.resources.pkgFake = new PassThrough();
+
+    this.resources.sequenceSendPromise = hostClient.sendSequence(
+        this.resources.pkgFake as unknown as ReadStream
+    ).catch((err: any) => console.log(err));
+
+    this.resources.pkgFake.write(
+        Buffer.from([0x1f8b0800000000000003])
+    );
+});
+
+Then("end fake stream", async function(this: CustomWorld): Promise<void> {
+    return new Promise(res => {
+        this.resources.pkgFake.on("close", async () => {
+            await defer(50);
+            res();
+        }).end();
+    });
+});
+
 Given("host is running", async () => {
     const apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
@@ -190,8 +252,6 @@ When("sequence {string} loaded", { timeout: 50000 }, async function(this: Custom
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath))
         assert.fail(`"${packagePath}" does not exist, did you forget 'yarn download-refapps'?`);
-
-    hostClient = new HostClient("http://0.0.0.0:8000/api/v1");
 
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");

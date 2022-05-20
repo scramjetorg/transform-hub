@@ -1,0 +1,39 @@
+name: Build Runner Docker Image Python
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        default: '16.x'
+        type: string
+      python-version:
+        required: false
+        default: '3.9'
+        type: string
+
+jobs:
+  build-docker-runner-python-image:
+    name: Build runner-py docker image (Python ${{ inputs.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: build runner Docker image
+        run: docker build -q -t scramjetorg/runner-py:$(jq -r .version package.json) -f Dockerfile ../../
+        working-directory: packages/python-runner
+
+      - name: Export Docker images
+        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerRunnerPyImg-$name-$tag-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+
+      - name: Zip Docker images
+        run: pigz docker*Img*.tar
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name:  dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          path: '*.tar.gz'
+          retention-days: 1

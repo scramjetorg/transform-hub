@@ -16,7 +16,7 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^7.3.2",
-    "@cucumber/pretty-formatter": "^1.0.0-alpha.1",
+    "@cucumber/pretty-formatter": "^1.0.0-alpha.2",
     "@scramjet/types": "^0.22.0"
   },
   "scripts": {

@@ -19,7 +19,7 @@ WORKDIR /app/
 
 COPY package.json yarn.lock lerna.json tsconfig.base.json LICENSE ./
 
-RUN yarn install --frozen-lockfile --silent
+RUN yarn install --ignore-engines  --frozen-lockfile --silent
 
 COPY packages/types ./packages/types
 COPY packages/utility ./packages/utility
@@ -30,7 +30,7 @@ COPY packages/model ./packages/model
 COPY packages/runner ./packages/runner
 COPY scripts ./scripts
 
-RUN yarn install --frozen-lockfile --silent
+RUN yarn install --ignore-engines  --frozen-lockfile --silent
 
 RUN LOCAL_PACKAGES=true NO_INSTALL=true yarn build:packages
 
@@ -40,7 +40,7 @@ COPY --from=builder /app/dist ${HUB_DIR}
 
 WORKDIR ${HUB_DIR}/runner
 
-RUN yarn install --frozen-lockfile --production --silent \
+RUN yarn install --ignore-engines  --frozen-lockfile --production --silent \
     && yarn cache clean \
     && chmod +x ./bin/start-runner.js
 

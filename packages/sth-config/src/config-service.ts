@@ -78,7 +78,7 @@ export class ConfigService {
         this.config = defaultConfig;
 
         if (config) {
-            merge(this.config, config);
+            this.update(config);
         }
     }
 

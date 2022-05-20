@@ -9,8 +9,6 @@ import Dockerode = require("dockerode");
 import { strict as assert } from "assert";
 import { ChildProcess } from "child_process";
 import { SIGTERM } from "constants";
-import { ReadStream } from "fs";
-import { PassThrough } from "stream";
 import { defer, streamToString } from "../../lib/utils";
 import { promisify } from "util";
 import { readFile } from "fs/promises";
@@ -161,29 +159,6 @@ Then("container uses node image defined in sth-config", async function(this: Cus
 
 Then("get all containers", async function(this: CustomWorld) {
     this.resources.containers = await new Dockerode().listContainers();
-});
-
-Then("send fake stream as sequence", async function(this: CustomWorld) {
-    const hostClient = new HostClient("http://localhost:8000/api/v1");
-
-    this.resources.pkgFake = new PassThrough();
-
-    this.resources.sequenceSendPromise = hostClient.sendSequence(
-        this.resources.pkgFake as unknown as ReadStream
-    ).catch((err: any) => console.log(err));
-
-    this.resources.pkgFake.write(
-        Buffer.from([0x1f8b0800000000000003])
-    );
-});
-
-Then("end fake stream", async function(this: CustomWorld): Promise<void> {
-    return new Promise(res => {
-        this.resources.pkgFake.on("close", async () => {
-            await defer(50);
-            res();
-        }).end();
-    });
 });
 
 Then("get last container info", async function(this: CustomWorld) {

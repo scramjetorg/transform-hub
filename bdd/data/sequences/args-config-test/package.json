@@ -9,5 +9,8 @@
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
+  "devDependencies": {
+    "@scramjet/types": "0.22.0"
+  },
   "private": true
 }

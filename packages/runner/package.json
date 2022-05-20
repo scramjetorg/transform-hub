@@ -4,15 +4,13 @@
   "description": "This package is part of Scramjet Transform Hub. The package executes the remote runners and provides communication with them through abstraction layer provided by adapters.",
   "main": "./src/bin/start-runner.ts",
   "scripts": {
-    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docker": "docker build -t scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$npm_package_version",
     "clean": "rm -rf ./dist .bic_cache",
     "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
-    "postbuild": "yarn prepack",
-    "prepack": "node ../../scripts/publish.js",
     "build:esbuild": "esbuild src/**/*.ts --tsconfig=tsconfig.build.json --outdir=dist --bundle --platform=node --external:@scramjet/runner --external:ssh2 --external:cpu-features",
     "postbuild:esbuild": "mkdir -p ../../dist/runner && cp -r dist/** ../../dist/runner && cp package.json ../../dist/runner"
   },
@@ -34,9 +32,9 @@
     "proxyquire": "^2.1.3",
     "sinon": "^11.1.2",
     "ts-node": "^10.7.0",
-    "typedoc": "^0.22.12",
-    "typedoc-plugin-markdown": "^3.11.14",
-    "typescript": "^4.5.5"
+    "typedoc": "^0.22.15",
+    "typedoc-plugin-markdown": "^3.12.1",
+    "typescript": "^4.6.4"
   },
   "ava": {
     "extensions": [

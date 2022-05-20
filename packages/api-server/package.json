@@ -5,13 +5,11 @@
   "main": "./src/index.ts",
   "scripts": {
     "start": "ts-node ./src/index",
-    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "build:docs": "typedoc",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "npm run test:ava",
-    "test:ava": "ava",
-    "prepack": "node ../../scripts/publish.js",
-    "postbuild": "yarn prepack"
+    "test:ava": "ava"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -26,15 +24,15 @@
   "devDependencies": {
     "@scramjet/types": "^0.22.0",
     "@types/node": "15.12.5",
-    "@types/sinon": "10.0.11",
+    "@types/sinon": "^10.0.11",
     "@types/trouter": "^3.1.1",
     "ava": "^3.15.0",
     "sinon": "^11.1.2",
     "trouter": "^3.2.0",
     "ts-node": "^10.7.0",
-    "typedoc": "^0.22.12",
-    "typedoc-plugin-markdown": "^3.11.14",
-    "typescript": "^4.5.5"
+    "typedoc": "^0.22.15",
+    "typedoc-plugin-markdown": "^3.12.1",
+    "typescript": "^4.6.4"
   },
   "ava": {
     "extensions": [

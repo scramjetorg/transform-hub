@@ -2,29 +2,26 @@ FROM node:lts-bullseye-slim as builder
 
 WORKDIR /build
 
-COPY package.json yarn.lock lerna.json tsconfig.base.json ./
+COPY ./dist/package.json ./dist/package.json
+RUN cd dist && npm i -s npm@8
 
-RUN yarn install --frozen-lock
-
-COPY packages/adapters ./packages/adapters
-COPY packages/api-server ./packages/api-server
-COPY packages/sth-config ./packages/sth-config
-COPY packages/host ./packages/host
-COPY packages/logger ./packages/logger
-COPY packages/obj-logger ./packages/obj-logger
-COPY packages/model ./packages/model
-COPY packages/sth ./packages/sth
-COPY packages/symbols ./packages/symbols
-COPY packages/types ./packages/types
-COPY packages/load-check ./packages/load-check
-COPY packages/utility ./packages/utility
-COPY packages/verser ./packages/verser
-COPY scripts ./scripts
-COPY conf ./conf
+COPY ./dist/adapters ./dist/adapters
+COPY ./dist/api-server ./dist/api-server
+COPY ./dist/sth-config ./dist/sth-config
+COPY ./dist/host ./dist/host
+COPY ./dist/logger ./dist/logger
+COPY ./dist/obj-logger ./dist/obj-logger
+COPY ./dist/model ./dist/model
+COPY ./dist/sth ./dist/sth
+COPY ./dist/symbols ./dist/symbols
+COPY ./dist/types ./dist/types
+COPY ./dist/load-check ./dist/load-check
+COPY ./dist/utility ./dist/utility
+COPY ./dist/verser ./dist/verser
 COPY LICENSE ./
 
-RUN yarn install --frozen-lock --silent \
-  && yarn build:packages
+RUN cd dist && npx npm i
+RUN cd dist && npx npm r npm@8
 
 FROM node:lts-bullseye-slim as release
 

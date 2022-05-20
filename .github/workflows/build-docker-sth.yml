@@ -1,0 +1,52 @@
+name: Build STH Docker Image
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        default: '16.x'
+        type: string
+
+jobs:
+  build-docker-sth-image:
+    name: Build STH Docker image (Nodejs ${{ inputs.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Nodejs ${{ inputs.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          cache: 'yarn'
+          node-version: ${{ inputs.node-version }}
+
+      - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
+
+      - name: Unzip dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+        run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+
+      - name: Update saved git hash
+        run: yarn savehash
+
+      - name: Build sth Docker image
+        run: docker build -q -t scramjetorg/sth:$(jq -r .version package.json) -f Dockerfile ../../
+        working-directory: packages/sth
+
+      - name: Export Docker images
+        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerSthImg-$name-$tag-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+
+      - name: Zip Docker images
+        run: pigz docker*Img*.tar
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name:  dockerSthImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          path: '*.tar.gz'
+          retention-days: 1
