@@ -43,23 +43,23 @@ The tests check topic functionalities, where we send and receive data from /topi
         And get data named "marvel" without waiting for the end
         And host is still running
 
-    #@ci - TODO: removed, test has a race condition, we should wait until data is received
-    Scenario: E2E-013 TC-006 Send data from multiple Instances to another Instance on the same host
-        Given host is running
-        And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
-        * start Instance with args "5" and output topic name "5names"
-        And wait for "4000" ms
-        And instance is finished
-        Then send data from file "../dist/reference-apps/avengers-names-output/avengers.json" named "5names"
-        * start Instance with args "5" and output topic name "5names"
-        And wait for "4000" ms
-        And instance is finished
-        And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
-        * start Instance with input topic name "5names"
-        And wait for "4000" ms
-        And get output without waiting for the end
-        Then confirm data defined as "multiple-names-sources" will be received
-        And host is still running
+    # TODO: disabled, test has a race condition, we should wait until data is received
+    # Scenario: E2E-013 TC-006 Send data from multiple Instances to another Instance on the same host
+    #     Given host is running
+    #     And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
+    #     * start Instance with args "5" and output topic name "5names"
+    #     And wait for "4000" ms
+    #     And instance is finished
+    #     Then send data from file "../dist/reference-apps/avengers-names-output/avengers.json" named "5names"
+    #     * start Instance with args "5" and output topic name "5names"
+    #     And wait for "4000" ms
+    #     And instance is finished
+    #     And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
+    #     * start Instance with input topic name "5names"
+    #     And wait for "4000" ms
+    #     And get output without waiting for the end
+    #     Then confirm data defined as "multiple-names-sources" will be received
+    #     And host is still running
 
     Scenario: E2E-013 TC-007 Send and read data two times
         Given host is running
