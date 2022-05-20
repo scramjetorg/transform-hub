@@ -2,7 +2,7 @@ Feature: CLI tests
 
 This feature checks CLI functionalities
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-001 CLI displays help, version, hub load
         Given host is running
         Then I set json format
@@ -15,7 +15,7 @@ This feature checks CLI functionalities
         Then I get Hub load information
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-002 Pack Sequence
         Given host is running
         Then I set json format
@@ -24,7 +24,7 @@ This feature checks CLI functionalities
         Then I get location "../packages/reference-apps/transform-function.tar.gz" of compressed directory
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-003 Send, list and delete Sequence
         Given host is running
         Then I set json format
@@ -37,7 +37,7 @@ This feature checks CLI functionalities
         Then I delete Sequence
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-004 Get Instance info, health, kill Instance
         Given host is running
         Then I set json format
@@ -51,7 +51,7 @@ This feature checks CLI functionalities
         Then I kill Instance
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-005 Get 404 on health endpoint for finished Instance
         Given host is running
         Then I set json format
@@ -63,7 +63,7 @@ This feature checks CLI functionalities
         Then I wait for Instance health status to change from 200 to 404
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-006 Get log from Instance
         Given host is running
         Then I set json format
@@ -76,7 +76,7 @@ This feature checks CLI functionalities
         Then confirm instance logs received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-007 Send input data to Instance
         Given host is running
         Then I set json format
@@ -88,7 +88,7 @@ This feature checks CLI functionalities
         Then I send input data from file "data/test-data/checksum.json"
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-008 Send input data to Instance and close input stream
         Given host is running
         Then I set json format
@@ -102,7 +102,7 @@ This feature checks CLI functionalities
         Then confirm data named "checksum" received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-009 List Instances and stop Instance
         Given host is running
         Then I set json format
@@ -115,7 +115,7 @@ This feature checks CLI functionalities
         Then I stop Instance "3000" "false"
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-010 Send event
         Given host is running
         Then I set json format
@@ -128,7 +128,7 @@ This feature checks CLI functionalities
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-011 Start Sequence with multiple JSON arguments
         Given host is running
         Then I set json format
@@ -142,7 +142,7 @@ This feature checks CLI functionalities
         Then confirm data named "args-on-output" will be received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-012 Deploy Sequence with multiple JSON arguments
         Given host is running
         Then I set json format
@@ -154,7 +154,7 @@ This feature checks CLI functionalities
         And host is still running
 
     # This tests writes and uses shared config file so it may fail if run in parallel
-    @cli @no-parallel
+    @ci @cli @no-parallel
     Scenario: E2E-010 TC-013 Check minus replacements with a Sequence
         Given host is running
         Then I set json format
@@ -170,7 +170,7 @@ This feature checks CLI functionalities
         And I execute CLI with "seq rm -" arguments
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-014 API to API
         Given host is running
         Then I set json format
@@ -180,7 +180,7 @@ This feature checks CLI functionalities
         Then confirm data named "nyc-city-nl" will be received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-015 Instance to API
         Given host is running
         Then I set json format
@@ -193,7 +193,7 @@ This feature checks CLI functionalities
         Then confirm data named "endless-names-10" will be received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-016 API to Instance
         Given host is running
         Then I set json format
@@ -209,7 +209,7 @@ This feature checks CLI functionalities
         Then confirm data named "hello-avengers" will be received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-017 Instance to Instance
         Given host is running
         Then I set json format
@@ -228,7 +228,7 @@ This feature checks CLI functionalities
         Then confirm data named "hello-input-out-10" will be received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-018 Rename topic output
         Given host is running
         Then I set json format
@@ -241,7 +241,7 @@ This feature checks CLI functionalities
         Then confirm data named "endless-names-10" will be received
         And host is still running
 
-    @cli
+    @ci @cli
     Scenario: E2E-010 TC-019 Rename topic input
         Given host is running
         Then I set json format
