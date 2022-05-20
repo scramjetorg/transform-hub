@@ -12,6 +12,8 @@ const REQ_METHOD_CODE_DELTA = 100;
 type AuditData = {
     id: string;
     object?: string;
+    rx: number;
+    tx: number;
 }
 
 export type AuditedRequest = ParsedMessage & { auditData: AuditData };
@@ -83,12 +85,14 @@ export class Auditor {
     }
 
     getRequestorId(req: ParsedMessage): string {
-        return req.headers["x-mw-user"] as string || "system";
+        return req.headers["x-mw-billable"] as string || "system";
     }
 
     auditRequest(req: AuditedRequest, status: OpRecord["opState"]) {
         const opCode = this.getOpCode(req);
         const requestorId = this.getRequestorId(req);
+
+        this.logger.trace("Requestor, tx, rx", requestorId, req.auditData.rx, req.auditData.tx);
 
         if (opCode) {
             this.write({
@@ -97,8 +101,8 @@ export class Auditor {
                 requestId: req.auditData.id,
                 objectId: (req.params || {}).id,
                 requestorId,
-                rx: req.socket.bytesRead,
-                tx: req.socket.bytesWritten,
+                rx: req.auditData.rx,
+                tx: req.auditData.tx,
                 receivedAt: Date.now()
             });
         }
