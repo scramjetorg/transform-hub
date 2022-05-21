@@ -1,6 +1,6 @@
 Feature: Sample e2e tests
 
-    @ci
+    @ci-instance-node
     Scenario: E2E-001 TC-002 API test - Get instance output
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded

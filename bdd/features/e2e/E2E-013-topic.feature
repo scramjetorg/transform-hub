@@ -2,7 +2,7 @@ Feature: E2E topic tests
 
 The tests check topic functionalities, where we send and receive data from /topic/:name endpoint by using api-client
 
-    @ci
+    @ci-api
     Scenario: E2E-013 TC-001 API to API
         Given host is running
         Then send json data "{ \"city\": \"New York\" }" named "city"
@@ -10,7 +10,7 @@ The tests check topic functionalities, where we send and receive data from /topi
         Then confirm data defined as "nyc-city-nl" will be received
         And host is still running
 
-    @ci
+    @ci-api
     Scenario: E2E-013 TC-002 Istance to API
         Given host is running
         And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
@@ -20,7 +20,7 @@ The tests check topic functionalities, where we send and receive data from /topi
         Then confirm data defined as "endless-names-10" will be received
         And host is still running
 
-    @ci
+    @ci-api
     Scenario: E2E-013 TC-003 API to Instance
         Given host is running
         Then send json data "{ \"name\": \"Hulk\" }" named "avngr"
@@ -30,7 +30,7 @@ The tests check topic functionalities, where we send and receive data from /topi
         Then confirm data defined as "hulkName" will be received
         And host is still running
 
-    @ci
+    @ci-api
     Scenario: E2E-013 TC-004 Instance to Instance
         Given host is running
         And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
@@ -41,7 +41,7 @@ The tests check topic functionalities, where we send and receive data from /topi
         Then confirm data defined as "hello-input-out-10" will be received
         And host is still running
 
-    @ci
+    @ci-api
     Scenario: E2E-013 TC-005 Send data from file to STH SD API and get it from STH SD API
         Given host is running
         Then send data from file "../dist/reference-apps/avengers-names-output/avengers.json" named "marvel"
@@ -66,7 +66,7 @@ The tests check topic functionalities, where we send and receive data from /topi
     #     Then confirm data defined as "multiple-names-sources" will be received
     #     And host is still running
 
-    @ci
+    @ci-api
     Scenario: E2E-013 TC-007 Send and read data two times
         Given host is running
         And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
@@ -88,7 +88,7 @@ The tests check topic functionalities, where we send and receive data from /topi
         Then confirm data defined as "hello-input-out-10" will be received
         And host is still running
 
-    @ci
+    @ci-api
     Scenario: E2E-013 TC-008 Send data json data from Sequence, get it via API
         Given host is running
         And sequence "../packages/reference-apps/avengers-names-output.tar.gz" loaded

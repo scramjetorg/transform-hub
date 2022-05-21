@@ -1,4 +1,4 @@
-name: Test STH - CLI suite with Process Adapter
+name: Test STH - Main suite with Process Adapter
 
 on:
   workflow_call:
@@ -7,10 +7,16 @@ on:
         required: false
         default: '16.x'
         type: string
+      test-name:
+        required: true
+        type: string
+      test-title:
+        required: true
+        type: string
 
 jobs:
-  test-bdd-ci-no-host-no-docker-sth:
-    name: Test STH - CLI suite with Process Adapter (Nodejs ${{ inputs.node-version }})
+  test-bdd-sth:
+    name: ${{ inputs.test-title }} (${{ inputs.test-name }}, Adapter "docker", Nodejs ${{ inputs.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -27,7 +33,7 @@ jobs:
         with:
           name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
-      - name: Unzip dist-*-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
+      - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
 
       - name: Setup Nodejs ${{ inputs.node-version }}
@@ -38,7 +44,5 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
 
-      - name: Run BDD for HUB params
-        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host-no-docker
-
-
+      - name: Run BDD tests
+        run: RUNTIME_ADAPTER=process SCRAMJET_TEST_LOG=1 SCRAMJET_SPAWN_JS=1 yarn ${{ inputs.test-name }}

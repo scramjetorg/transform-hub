@@ -1,6 +1,6 @@
 Feature: Test our shiny new Python runner
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-001 Run simple python sequence with input and output
         Given host is running
         When sequence "../packages/reference-apps/python-hello.tar.gz" loaded
@@ -9,7 +9,7 @@ Feature: Test our shiny new Python runner
         Then "output" is "Hello python runner!"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-002 Python sequences can use stdin and stdout
         Given host is running
         When sequence "../packages/reference-apps/python-stdinout.tar.gz" loaded
@@ -18,7 +18,7 @@ Feature: Test our shiny new Python runner
         Then "stdout" is "Got on stdin: python runner"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-003 Exceptions thrown in python sequences appear in stderr
         Given host is running
         When sequence "../packages/reference-apps/python-exception-test.tar.gz" loaded
@@ -26,7 +26,7 @@ Feature: Test our shiny new Python runner
         Then "stderr" contains "TestException: This exception should appear on stderr"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-004 Arguments can be passed to Python sequences
         Given host is running
         When sequence "../packages/reference-apps/python-debug-args.tar.gz" loaded
@@ -34,7 +34,7 @@ Feature: Test our shiny new Python runner
         Then "output" is "{'named_arg': 'foo', 'wildcard_args': ('3', '4', 'bar')}"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-005 Python sequences can be killed
         Given host is running
         When sequence "../packages/reference-apps/python-forever.tar.gz" loaded
@@ -44,7 +44,7 @@ Feature: Test our shiny new Python runner
         Then runner has ended execution
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-006 Text input is decoded and split into lines
         Input contains multibyte chars which should be counted as 1 letter each.
         Given host is running
@@ -54,7 +54,7 @@ Feature: Test our shiny new Python runner
         Then "output" is "4,8,5,"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-007 Binary input is not decoded and not split into lines
         Input contains multibyte chars; each byte should be counted separately.
         Given host is running
@@ -64,7 +64,7 @@ Feature: Test our shiny new Python runner
         Then "output" is "20,"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-008 Instance can run stop handler before it shuts down
         Given host is running
         When sequence "../packages/reference-apps/python-stop-handler.tar.gz" loaded
@@ -76,7 +76,7 @@ Feature: Test our shiny new Python runner
         And kept instance stream "stdout" should be "Cleaning up... Cleanup done.\n"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-009 Instance by default reports as healthy
         Given host is running
         When sequence "../packages/reference-apps/python-forever.tar.gz" loaded
@@ -84,7 +84,7 @@ Feature: Test our shiny new Python runner
         Then instance health is "true"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-010 User can override health check method
         Given host is running
         When sequence "../packages/reference-apps/python-unhealthy-sequence.tar.gz" loaded
@@ -92,7 +92,7 @@ Feature: Test our shiny new Python runner
         Then instance health is "false"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-011 Send data between python instances using topics
         Given host is running
         When sequence "../packages/reference-apps/python-topic-producer.tar.gz" loaded
@@ -103,7 +103,7 @@ Feature: Test our shiny new Python runner
         Then "output" will be data named "python-topics"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-012 Sequence can receive and emit events
         Given host is running
         When sequence "../packages/reference-apps/python-events.tar.gz" loaded
@@ -115,7 +115,7 @@ Feature: Test our shiny new Python runner
             """
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-013 Logger in context can log in instance
         Given host is running
         When sequence "../packages/reference-apps/python-logs-test.tar.gz" loaded
@@ -124,7 +124,7 @@ Feature: Test our shiny new Python runner
         Then "log" contains "Debug log message"
         And host is still running
 
-    @ci @python
+    @ci-instance-python
     Scenario: E2E-014 TC-014 Rename topic output and input
         Given host is running
         Then I set json format
@@ -140,7 +140,7 @@ Feature: Test our shiny new Python runner
         Then confirm data named "python-topics" will be received
         And host is still running
 
-    @ci @python @test
+    @ci-instance-python @test
     Scenario: E2E-014 TC-015 Create Stream from async generator
         Given host is running
         When sequence "../packages/reference-apps/python-gen-async.tar.gz" loaded

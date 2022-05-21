@@ -1,24 +1,24 @@
 Feature: HUB-001 Host configuration
 
-    @ci @starts-host
+    @ci-hub @starts-host
     Scenario: HUB-001 TC-001 Set host port (-P)
         When hub process is started with parameters "-P 9001 --instances-server-port 19001"
         Then API is available on port 9001
         * exit hub process
 
-    @ci @starts-host
+    @ci-hub @starts-host
     Scenario: HUB-001 TC-002 Set host port (--port)
         When hub process is started with parameters "--port 9001 --instances-server-port 19001"
         Then API is available on port 9001
         * exit hub process
 
-    @ci @starts-host
+    @ci-hub @starts-host
     Scenario: HUB-001 TC-007  Set API server name (--hostname)
         When hub process is started with parameters "--hostname 0.0.0.0 -P 9001 --instances-server-port 19001"
         Then API starts with "0.0.0.0:9001" server name
         * exit hub process
 
-    @ci @starts-host
+    @ci-hub @starts-host
     Scenario: HUB-001 TC-008  Set API server name (-H)
         When hub process is started with parameters "-H 0.0.0.0 -P 9001 --instances-server-port 19001"
         Then API starts with "0.0.0.0:9001" server name

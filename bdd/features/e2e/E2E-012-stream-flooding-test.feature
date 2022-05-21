@@ -1,6 +1,6 @@
 Feature: Stream flooding tests. Ensure that even if a large amount of data is sent or received, the Instance is able to respond to events.
 
-    @ci @runner-cleanup
+    @ci-api @runner-cleanup
     Scenario: E2E-012 TC-001 Flood stdin of Instance, do not consume it and check if Instance responds to event sent.
         Given host is running
         When sequence "../packages/reference-apps/event-sequence-v2.tar.gz" loaded
@@ -14,7 +14,7 @@ Feature: Stream flooding tests. Ensure that even if a large amount of data is se
         Then instance response body is "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}"
         Then host is still running
 
-    @ci @runner-cleanup
+    @ci-api @runner-cleanup
     Scenario: E2E-012 TC-002 Instance floods wrtites stdout, then Host checks whether even sent by Instance can be still received.
         Given host is running
         When sequence "../packages/reference-apps/flood-stdout-sequence.tar.gz" loaded

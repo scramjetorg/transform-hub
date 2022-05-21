@@ -36,5 +36,3 @@ jobs:
       - name: Run packages tests
         run: yarn test:packages-no-concurrent
 
-      - name: Run BDD for HUB params
-        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host-no-docker
