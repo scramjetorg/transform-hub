@@ -35,6 +35,10 @@ async function startHubWithParams({ resources }: CustomWorld, params: string[]) 
     const hostUtils = new HostUtils();
     const out = await hostUtils.spawnHost(...params);
 
+    if (!hostUtils.host) throw new Error("Missing host from utils.");
+
+    spawned.add(hostUtils.host);
+
     resources.hub = hostUtils.host;
     resources.startOutput = out;
 }
