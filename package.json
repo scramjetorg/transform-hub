@@ -60,11 +60,12 @@
 
     "test": "yarn test:packages",
     "test:packages": "lerna run test",
+    "test:packages-no-concurrent": "lerna run test --concurrency=1",
 
     "test:bdd-ci-hub": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-hub",
 
     "test:bdd-ci-api": "yarn test:bdd-ci-api-py && yarn test:bdd-ci-api-node",
-    "test:bdd-ci-api-py": "yarn --cwd=./packages/api-client-py run test:bdd --format=@cucumber/pretty-formatter -t @ci ",
+    "test:bdd-ci-api-py": "yarn --cwd=./packages/api-client-py run test:bdd -f pretty -t @ci ",
     "test:bdd-ci-api-node": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-api",
 
     "test:bdd-ci-python": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-instance-python",
