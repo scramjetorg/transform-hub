@@ -244,14 +244,14 @@ When("wait for {string} ms", async (timeoutMs: number) => {
 
 When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath))
-        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn download-refapps'?`);
+        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath))
-        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn download-refapps'?`);
+        assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
     this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");

@@ -22,9 +22,6 @@ jobs:
         with:
           name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
-      - name: Download reference apps (latest release)
-        run: yarn download-refapps
-
       - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         uses: actions/download-artifact@v2
         with:
