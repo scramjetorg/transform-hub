@@ -1548,10 +1548,6 @@
     "http-status-codes" "^2.2.0"
     "scramjet" "^4.36.6"
 
-"@scramjet/args-config-test@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/args-config-test":
-  "resolved" "file:packages/reference-apps/args-config-test"
-  "version" "0.22.0"
-
 "@scramjet/args-to-output@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/args-to-output":
   "resolved" "file:packages/reference-apps/args-to-output"
   "version" "0.22.0"
@@ -1561,18 +1557,6 @@
   "version" "0.22.0"
   dependencies:
     "JSONStream" "^1.3.5"
-    "scramjet" "^4.36.6"
-
-"@scramjet/big-file-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/big-file-sequence":
-  "resolved" "file:packages/reference-apps/big-file-sequence"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/can-keep-alive@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/can-keep-alive":
-  "resolved" "file:packages/reference-apps/can-keep-alive"
-  "version" "0.22.0"
-  dependencies:
     "scramjet" "^4.36.6"
 
 "@scramjet/checksum-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/checksum-sequence":
@@ -1590,6 +1574,7 @@
     "@scramjet/middleware-api-client" "^0.22.0"
     "@scramjet/obj-logger" "^0.22.0"
     "@scramjet/utility" "^0.22.0"
+    "chalk" "^4.0.0"
     "commander" "^8.3.0"
     "commander-completion" "^1.0.1"
     "find-package-json" "^1.2.0"
@@ -1627,82 +1612,8 @@
     "normalize-url" "^5.3.1"
     "scramjet" "^4.36.6"
 
-"@scramjet/csv-transform@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/csv-transform":
-  "resolved" "file:packages/reference-apps/csv-transform"
-  "version" "0.22.0"
-
-"@scramjet/delay-out-in-a@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/delay-out-in-a":
-  "resolved" "file:packages/reference-apps/delay-out-in-a"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/delay-out-in-b@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/delay-out-in-b":
-  "resolved" "file:packages/reference-apps/delay-out-in-b"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/durability-preservation-event@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/durability-preservation-event":
-  "resolved" "file:packages/reference-apps/durability-preservation-event"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/durability-preservation-tcp@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/durability-preservation-tcp":
-  "resolved" "file:packages/reference-apps/durability-preservation-tcp"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/durability-preservation@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/durability-preservation":
-  "resolved" "file:packages/reference-apps/durability-preservation"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/endless-names-output@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/endless-names-output":
-  "resolved" "file:packages/reference-apps/endless-names-output"
-  "version" "0.22.0"
-
-"@scramjet/event-sequence-2@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/event-sequence-2":
-  "resolved" "file:packages/reference-apps/event-sequence-2"
-  "version" "0.22.0"
-
-"@scramjet/event-sequence-v2@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/event-sequence-v2":
-  "resolved" "file:packages/reference-apps/event-sequence-v2"
-  "version" "0.22.0"
-
-"@scramjet/event-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/event-sequence":
-  "resolved" "file:packages/reference-apps/event-sequence"
-  "version" "0.22.0"
-
-"@scramjet/flood-stdout-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/flood-stdout-sequence":
-  "resolved" "file:packages/reference-apps/flood-stdout-sequence"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/healthy-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/healthy-sequence":
-  "resolved" "file:packages/reference-apps/healthy-sequence"
-  "version" "0.22.0"
-
 "@scramjet/hello-alice-out@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/hello-alice-out":
   "resolved" "file:packages/reference-apps/hello-alice-out"
-  "version" "0.22.0"
-  dependencies:
-    "JSONStream" "^1.3.5"
-    "scramjet" "^4.36.6"
-
-"@scramjet/hello-hulk-out@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/hello-hulk-out":
-  "resolved" "file:packages/reference-apps/hello-hulk-out"
-  "version" "0.22.0"
-  dependencies:
-    "JSONStream" "^1.3.5"
-    "scramjet" "^4.36.6"
-
-"@scramjet/hello-input-out@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/hello-input-out":
-  "resolved" "file:packages/reference-apps/hello-input-out"
   "version" "0.22.0"
   dependencies:
     "JSONStream" "^1.3.5"
@@ -1848,10 +1759,6 @@
     "@scramjet/client-utils" "^0.22.0"
     "@scramjet/manager-api-client" "^0.22.0"
 
-"@scramjet/multi-outputs@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/multi-outputs":
-  "resolved" "file:packages/reference-apps/multi-outputs"
-  "version" "0.22.0"
-
 "@scramjet/obj-logger@^0.22.0":
   "resolved" "file:packages/obj-logger"
   "version" "0.22.0"
@@ -1864,80 +1771,8 @@
   dependencies:
     "scramjet" "^4.36.6"
 
-"@scramjet/output-streams@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/output-streams":
-  "resolved" "file:packages/reference-apps/output-streams"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/ports-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/ports-sequence":
-  "resolved" "file:packages/reference-apps/ports-sequence"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
 "@scramjet/pre-runner@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/pre-runner":
   "resolved" "file:packages/pre-runner"
-  "version" "0.22.0"
-
-"@scramjet/process-not-responding@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/process-not-responding":
-  "resolved" "file:packages/reference-apps/process-not-responding"
-  "version" "0.22.0"
-
-"@scramjet/python-alice@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-alice":
-  "resolved" "file:python/reference-apps/python-alice"
-  "version" "0.22.0"
-
-"@scramjet/python-christmas-surprise@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-s3-demo":
-  "resolved" "file:python/reference-apps/python-s3-demo"
-  "version" "0.22.0"
-
-"@scramjet/python-chunk-lengths@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-chunk-lengths":
-  "resolved" "file:python/reference-apps/python-chunk-lengths"
-  "version" "0.22.0"
-
-"@scramjet/python-debug-args@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-debug-args":
-  "resolved" "file:python/reference-apps/python-debug-args"
-  "version" "0.22.0"
-
-"@scramjet/python-debug-input@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-debug-input":
-  "resolved" "file:python/reference-apps/python-debug-input"
-  "version" "0.22.0"
-
-"@scramjet/python-events@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-events":
-  "resolved" "file:python/reference-apps/python-events"
-  "version" "0.22.0"
-
-"@scramjet/python-exception-test@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-exception-test":
-  "resolved" "file:python/reference-apps/python-exception-test"
-  "version" "0.22.0"
-
-"@scramjet/python-forever-test@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-forever":
-  "resolved" "file:python/reference-apps/python-forever"
-  "version" "0.22.0"
-
-"@scramjet/python-gen-async@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-gen-async":
-  "resolved" "file:python/reference-apps/python-gen-async"
-  "version" "0.20.1"
-
-"@scramjet/python-healthy-sequence-py@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-healthy-sequence":
-  "resolved" "file:python/reference-apps/python-healthy-sequence"
-  "version" "0.22.0"
-
-"@scramjet/python-hello-python@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-hello":
-  "resolved" "file:python/reference-apps/python-hello"
-  "version" "0.22.0"
-
-"@scramjet/python-logs-test@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-logs-test":
-  "resolved" "file:python/reference-apps/python-logs-test"
-  "version" "0.22.0"
-
-"@scramjet/python-runner-demo-sprint-5@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-s5-demo":
-  "resolved" "file:python/reference-apps/python-s5-demo"
-  "version" "0.22.0"
-
-"@scramjet/python-runner-demo-sprint-7@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-s7-demo":
-  "resolved" "file:python/reference-apps/python-s7-demo"
   "version" "0.22.0"
 
 "@scramjet/python-runner@^0.22.0":
@@ -1948,106 +1783,12 @@
   "resolved" "file:packages/python-runner"
   "version" "0.22.0"
 
-"@scramjet/python-stdinout@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-stdinout":
-  "resolved" "file:python/reference-apps/python-stdinout"
-  "version" "0.22.0"
-
-"@scramjet/python-stop-handler@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-stop-handler":
-  "resolved" "file:python/reference-apps/python-stop-handler"
-  "version" "0.22.0"
-
-"@scramjet/python-topic-consumer-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-topic-consumer":
-  "resolved" "file:python/reference-apps/python-topic-consumer"
-  "version" "0.22.0"
-
-"@scramjet/python-topic-producer-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-topic-producer":
-  "resolved" "file:python/reference-apps/python-topic-producer"
-  "version" "0.22.0"
-
-"@scramjet/python-unhealthy-sequence-py@file:/home/mczapracki/src/scramjetorg/transform-hub/python/reference-apps/python-unhealthy-sequence":
-  "resolved" "file:python/reference-apps/python-unhealthy-sequence"
-  "version" "0.22.0"
-
-"@scramjet/reference-inert-1-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/inert-sequence-1":
-  "resolved" "file:packages/reference-apps/inert-sequence-1"
-  "version" "0.22.0"
-
-"@scramjet/reference-inert-2-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/inert-sequence-2":
-  "resolved" "file:packages/reference-apps/inert-sequence-2"
-  "version" "0.22.0"
-
-"@scramjet/reference-inert-2-with-delay@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/inert-sequence-2-with-delay":
-  "resolved" "file:packages/reference-apps/inert-sequence-2-with-delay"
-  "version" "0.22.0"
-  dependencies:
-    "scramjet" "^4.36.6"
-
-"@scramjet/reference-inert-3-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/inert-sequence-3":
-  "resolved" "file:packages/reference-apps/inert-sequence-3"
-  "version" "0.22.0"
-
-"@scramjet/reference-inert-function-js@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/inert-function-js":
-  "resolved" "file:packages/reference-apps/inert-function-js"
-  "version" "0.22.0"
-
-"@scramjet/reference-inert-function@^0.22.0":
-  "resolved" "file:packages/reference-apps/inert-function"
-  "version" "0.22.0"
-
-"@scramjet/reference-inert-function@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/inert-function":
-  "resolved" "file:packages/reference-apps/inert-function"
-  "version" "0.22.0"
-
-"@scramjet/reference-read-1-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/read-sequence-1":
-  "resolved" "file:packages/reference-apps/read-sequence-1"
-  "version" "0.22.0"
-
-"@scramjet/reference-read-2-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/read-sequence-2":
-  "resolved" "file:packages/reference-apps/read-sequence-2"
-  "version" "0.22.0"
-
-"@scramjet/reference-read-3-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/read-sequence-3":
-  "resolved" "file:packages/reference-apps/read-sequence-3"
-  "version" "0.22.0"
-
-"@scramjet/reference-read-function@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/read-function":
-  "resolved" "file:packages/reference-apps/read-function"
-  "version" "0.22.0"
-
-"@scramjet/reference-timings@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/timings-test":
-  "resolved" "file:packages/reference-apps/timings-test"
-  "version" "0.22.0"
-
-"@scramjet/reference-transform-1-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/transform-sequence-1":
-  "resolved" "file:packages/reference-apps/transform-sequence-1"
-  "version" "0.22.0"
-
-"@scramjet/reference-transform-2-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/transform-sequence-2":
-  "resolved" "file:packages/reference-apps/transform-sequence-2"
-  "version" "0.22.0"
-
-"@scramjet/reference-transform-3-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/transform-sequence-3":
-  "resolved" "file:packages/reference-apps/transform-sequence-3"
-  "version" "0.22.0"
+"@scramjet/reference-simple-stdio@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/simple-stdio":
+  "resolved" "file:packages/reference-apps/simple-stdio"
+  "version" "0.19.2"
 
 "@scramjet/reference-transform-function@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/transform-function":
   "resolved" "file:packages/reference-apps/transform-function"
-  "version" "0.22.0"
-
-"@scramjet/reference-write-1-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/write-sequence-1":
-  "resolved" "file:packages/reference-apps/write-sequence-1"
-  "version" "0.22.0"
-
-"@scramjet/reference-write-2-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/write-sequence-2":
-  "resolved" "file:packages/reference-apps/write-sequence-2"
-  "version" "0.22.0"
-
-"@scramjet/reference-write-3-seq@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/write-sequence-3":
-  "resolved" "file:packages/reference-apps/write-sequence-3"
-  "version" "0.22.0"
-
-"@scramjet/reference-write-function@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/write-function":
-  "resolved" "file:packages/reference-apps/write-function"
   "version" "0.22.0"
 
 "@scramjet/runner@^0.22.0":
@@ -2069,18 +1810,6 @@
     "@scramjet/symbols" "^0.22.0"
     "@scramjet/utility" "^0.22.0"
     "scramjet" "^4.36.6"
-
-"@scramjet/sequence-20s-kill-handler@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/sequence-20s-kill-handler":
-  "resolved" "file:packages/reference-apps/sequence-20s-kill-handler"
-  "version" "0.22.0"
-
-"@scramjet/sequence-20s@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/sequence-20s":
-  "resolved" "file:packages/reference-apps/sequence-20s"
-  "version" "0.22.0"
-
-"@scramjet/sequence-with-error@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/sequence-with-error":
-  "resolved" "file:packages/reference-apps/sequence-with-error"
-  "version" "0.22.0"
 
 "@scramjet/stdio-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/stdio-sequence":
   "resolved" "file:packages/reference-apps/stdio-sequence"
@@ -2109,6 +1838,11 @@
     "@scramjet/sth-config" "^0.22.0"
     "commander" "^8.3.0"
 
+"@scramjet/symbols@^0.19.2":
+  "integrity" "sha512-X2T7c7HNDxYwBpp19r2IfIQ4LxvJDuAObZqX9vP5hg1uSZmdUwe0Uy1drG5BUNqbLPA1RfZXtSU2YJSZWE7lGA=="
+  "resolved" "https://registry.npmjs.org/@scramjet/symbols/-/symbols-0.19.2.tgz"
+  "version" "0.19.2"
+
 "@scramjet/symbols@^0.22.0":
   "resolved" "file:packages/symbols"
   "version" "0.22.0"
@@ -2116,6 +1850,14 @@
 "@scramjet/symbols@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/symbols":
   "resolved" "file:packages/symbols"
   "version" "0.22.0"
+
+"@scramjet/types@^0.19.0":
+  "integrity" "sha512-jiVQokkvvdo89VM9CJTLRP3Wnqqa20mDiRWboGFGB0htnMYehNWGLzKhgJfjJC7PJD17Znd55PAiLsrMFc1fng=="
+  "resolved" "https://registry.npmjs.org/@scramjet/types/-/types-0.19.2.tgz"
+  "version" "0.19.2"
+  dependencies:
+    "@scramjet/symbols" "^0.19.2"
+    "http-status-codes" "^2.2.0"
 
 "@scramjet/types@^0.22.0":
   "resolved" "file:packages/types"
@@ -2130,10 +1872,6 @@
   dependencies:
     "@scramjet/symbols" "^0.22.0"
     "http-status-codes" "^2.2.0"
-
-"@scramjet/unhealthy-sequence@file:/home/mczapracki/src/scramjetorg/transform-hub/packages/reference-apps/unhealthy-sequence":
-  "resolved" "file:packages/reference-apps/unhealthy-sequence"
-  "version" "0.22.0"
 
 "@scramjet/utility@^0.22.0":
   "resolved" "file:packages/utility"
@@ -2162,19 +1900,6 @@
     "@scramjet/obj-logger" "^0.22.0"
     "@scramjet/utility" "^0.22.0"
     "bpmux" "^8.2.0"
-
-"@scramjet/symbols@^0.19.2":
-  version "0.19.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.19.2.tgz#3739e2851021514ea800714b29ddd6cabfde5753"
-  integrity sha512-X2T7c7HNDxYwBpp19r2IfIQ4LxvJDuAObZqX9vP5hg1uSZmdUwe0Uy1drG5BUNqbLPA1RfZXtSU2YJSZWE7lGA==
-
-"@scramjet/types@^0.19.0":
-  version "0.19.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.19.2.tgz#9e705a9019403b5594327218bb688733ccd12f04"
-  integrity sha512-jiVQokkvvdo89VM9CJTLRP3Wnqqa20mDiRWboGFGB0htnMYehNWGLzKhgJfjJC7PJD17Znd55PAiLsrMFc1fng==
-  dependencies:
-    "@scramjet/symbols" "^0.19.2"
-    http-status-codes "^2.2.0"
 
 "@sindresorhus/is@^0.14.0":
   "integrity" "sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ=="
@@ -9481,12 +9206,7 @@
     "minimatch" "^5.0.1"
     "shiki" "^0.10.1"
 
-"typescript@^4.3.4", "typescript@>=2.7", "typescript@>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta":
-  "integrity" "sha512-yNIatDa5iaofVozS/uQJEl3JRWLKKGJKh6Yaiv0GLGSuhpFJe7P3SbHZ8/yjAHRQwKRoA6YZqlfjXWmVzoVSMw=="
-  "resolved" "https://registry.npmjs.org/typescript/-/typescript-4.6.3.tgz"
-  "version" "4.6.3"
-
-"typescript@^4.6.4", "typescript@4.0.x || 4.1.x || 4.2.x || 4.3.x || 4.4.x || 4.5.x || 4.6.x":
+"typescript@^4.3.4", "typescript@^4.6.4", "typescript@>=2.7", "typescript@>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta", "typescript@4.0.x || 4.1.x || 4.2.x || 4.3.x || 4.4.x || 4.5.x || 4.6.x":
   "integrity" "sha512-9ia/jWHIEbo49HfjrLGfKbZSuWo9iTMwXO+Ca3pRsSpbsMbc7/IU8NKdCZVRRBafVPGnoJeFL76ZOAA84I9fEg=="
   "resolved" "https://registry.npmjs.org/typescript/-/typescript-4.6.4.tgz"
   "version" "4.6.4"
