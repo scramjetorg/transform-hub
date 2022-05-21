@@ -242,7 +242,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.instancePromise
             .then((exitcode) => this.mapRunnerExitCode(exitcode))
             .catch((error) => this.initResolver?.rej(error))
-            .finally(() => this.heartBeatStop());
+            .finally(() => this.heartBeatStop())
+            .finally(() => this.finalize());
     }
 
     heartBeatStart(): void {
@@ -287,8 +288,11 @@ export class CSIController extends TypedEmitter<Events> {
     async cleanup() {
         await this.instanceAdapter.cleanup();
 
-        if (this.upStreams)
-            this.upStreams[CC.LOG].unpipe();
+        this.logger.info("Cleanup completed");
+    }
+
+    async finalize() {
+        this.logger.end();
     }
 
     instanceStopped(): Promise<ExitCode> {

@@ -120,8 +120,8 @@ Feature: Test our shiny new Python runner
         Given host is running
         When sequence "../packages/reference-apps/python-logs-test.tar.gz" loaded
         And instance started
-        And send kill message to instance
         Then "log" contains "Debug log message"
+        And send kill message to instance
         And host is still running
 
     @ci-instance-python

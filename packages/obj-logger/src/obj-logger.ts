@@ -218,6 +218,8 @@ export class ObjLogger implements IObjectLogger {
     }
 
     end() {
+        if (this.ended) return;
+
         this.warn("^--- Log ends here... ---^", new Error().stack);
         this.ended = true;
 

@@ -705,13 +705,21 @@ Then("{string} will be data named {string}", async function(this: CustomWorld, s
 });
 
 Then("{string} contains {string}", async function(this: CustomWorld, stream, text) {
-    const output = await this.resources.instance?.getStream(stream);
+    const output = (await this.resources.instance?.getStream(stream))?.pipe(new PassThrough({ encoding: "utf-8" }));
 
     if (!output) assert.fail("No output!");
 
-    const outputString = await streamToString(output);
+    let last = "";
 
-    assert.equal(outputString.includes(text), true);
+    for await (const chunk of output) {
+        if (`${last}${chunk}`.includes(text)) return;
+        last = chunk;
+        if (process.env.SCRAMJET_TEST_LOG) {
+            console.error({ chunk });
+        }
+    }
+
+    assert.fail("Text not found matched in string");
 });
 
 When("instance health is {string}", async function(this: CustomWorld, health: string) {

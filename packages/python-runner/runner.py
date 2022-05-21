@@ -161,6 +161,7 @@ class Runner:
             self.logger.error('Error stopping sequence', e)
             send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, e)
 
+        await self.cleanup()
 
     async def setup_heartbeat(self):
         while True:
@@ -215,8 +216,10 @@ class Runner:
             self.logger.debug('Sequence returned no output.')
 
         self.logger.info('Finished.')
-        self.streams[CC.LOG].close()
+        await self.cleanup();
 
+    async def cleanup(self):
+        self.streams[CC.LOG].write_eof()
 
     async def connect_input_stream(self, input_stream):
         if hasattr(self.sequence, "requires"):

@@ -147,7 +147,7 @@ This feature checks CLI functionalities
         Given host is running
         Then I set json format
         Then I use apiUrl in config
-        When I execute CLI with "seq deploy ../dist/reference-apps/args-to-output --args [\"Hello\",123,{\"abc\":456},[\"789\"]]" arguments
+        When I execute CLI with "seq deploy data/sequeces/args-to-output --args [\"Hello\",123,{\"abc\":456},[\"789\"]]" arguments
         Then I get Instance id after deployment
         And I get Instance output without waiting for the end
         Then confirm data named "args-on-output" will be received

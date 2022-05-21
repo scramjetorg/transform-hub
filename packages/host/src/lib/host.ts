@@ -854,7 +854,12 @@ export class Host implements IComponent {
      * Stops running servers.
      */
     async cleanup() {
-        this.logger.trace("Cleaning up");
+        this.logger.info("Cleaning up");
+
+        const instancesStore = this.instancesStore;
+
+        this.logger.trace("Finalizing remaining instances");
+        await Promise.all(Object.values(instancesStore).map(csi => csi.finalize()));
 
         this.instancesStore = {};
         this.sequencesStore = new Map();
