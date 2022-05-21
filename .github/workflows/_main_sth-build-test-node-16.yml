@@ -48,7 +48,7 @@ jobs:
       node-version: 16.x
 
   test-bdd-hub:
-    needs: [build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
+    needs: [build-sth, build-refapps]
     uses: ./.github/workflows/test-bdd-process.yml
     with:
       test-title: STH command line test
@@ -56,7 +56,7 @@ jobs:
       test-name: test:bdd-ci-hub
 
   test-bdd-ci-sth-api:
-    needs: [build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
+    needs: [build-sth, build-refapps]
     uses: ./.github/workflows/test-bdd-process.yml
     with:
       test-title: STH API tests
@@ -64,7 +64,7 @@ jobs:
       test-name: test:bdd-ci-api
 
   test-bdd-ci-sth-process-python:
-    needs: [build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
+    needs: [build-sth, build-refapps]
     uses: ./.github/workflows/test-bdd-process.yml
     with:
       test-title: STH Python Sequences Test
@@ -88,7 +88,7 @@ jobs:
       test-name: test:bdd-ci-python
 
   test-bdd-ci-sth-docker-node:
-    needs: [build-sth, build-refapps]
+    needs: [build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
     uses: ./.github/workflows/test-bdd-docker.yml
     with:
       test-title: STH Node.js Sequences Test
