@@ -398,8 +398,10 @@ export class Runner<X extends AppConfig> implements IComponent {
     }
 
     private async revertOutputs() {
+        this.logger.unpipe(this.hostClient.logStream);
         revertStandardStream(process.stdout);
         revertStandardStream(process.stderr);
+        this.logger.addOutput(process.stderr);
     }
 
     private redirectOutputs() {

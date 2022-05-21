@@ -151,6 +151,10 @@ Then("container memory limit is {int}", async function(this: CustomWorld, maxMem
     assert.equal(this.resources.containerInspect.HostConfig.Memory / 1024 ** 2, maxMem);
 });
 
+Then("container uses {string} image", async function(this: CustomWorld, image: string) {
+    assert.equal(this.resources.containerInfo.Image, image);
+});
+
 Then("container uses node image defined in sth-config", async function(this: CustomWorld) {
     const defaultRunnerImage = defaultConfig.docker.runnerImages.node;
 
@@ -175,6 +179,10 @@ Then("get last container info", async function(this: CustomWorld) {
             await defer(AWAITING_POLL_DEFER_TIME);
         }
     }
+});
+
+When("last container uses {string} image", async function(this: CustomWorld, image: string) {
+    assert.equal(this.resources.lastContainer.Image, image);
 });
 
 Then("last container memory limit is {int}", async function(this: CustomWorld, maxMem: number) {
