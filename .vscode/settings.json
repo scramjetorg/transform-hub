@@ -2,5 +2,8 @@
   "cucumberautocomplete.steps": [
     "./bdd/step-definitions/**/*.ts"
   ],
-  "cucumberautocomplete.strictGherkinCompletion": true
+  "cucumberautocomplete.strictGherkinCompletion": true,
+  "python.analysis.extraPaths": [
+    "./packages/python-runner/__pypackages__"
+  ]
 }

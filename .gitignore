@@ -153,3 +153,4 @@ bundle
 # build.info.json files
 packages/**/build.info.json
 .eslintcache_scramjet-csi
+bdd/timing-log.ndjson
