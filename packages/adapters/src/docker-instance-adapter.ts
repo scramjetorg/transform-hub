@@ -15,10 +15,11 @@ import {
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
-import { FreePortsFinder, defer } from "@scramjet/utility";
+import { FreePortsFinder, defer, streamToString } from "@scramjet/utility";
 import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { getRunnerEnvEntries } from "./get-runner-env";
+import { Readable } from "stream";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -32,6 +33,7 @@ IComponent {
     private resources: DockerAdapterResources = {};
 
     logger: IObjectLogger;
+    crashLogStreams?: Readable[];
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -167,7 +169,7 @@ IComponent {
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
 
-        this.logger.info("Instance preparation done");
+        this.logger.info("Instance preparation done for config", config);
 
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
@@ -199,6 +201,8 @@ IComponent {
             maxMem: config.container.maxMem,
             networkMode: networkSetup.network
         });
+
+        this.crashLogStreams = [streams.stdout, streams.stderr] as Readable[];
 
         if (development()) {
             this.logger.debug("Development mode on");
@@ -267,7 +271,9 @@ IComponent {
     }
 
     async getCrashLog(): Promise<string[]> {
-        return ["Crashlog not implemented"];
+        if (!this.crashLogStreams) return [];
+
+        return Promise.all(this.crashLogStreams?.map(streamToString()));
     }
 }
 

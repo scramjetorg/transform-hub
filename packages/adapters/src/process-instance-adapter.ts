@@ -1,5 +1,6 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { development } from "@scramjet/sth-config";
+import { streamToString } from "@scramjet/utility";
 import {
     ExitCode,
     IComponent,
@@ -179,16 +180,7 @@ class ProcessInstanceAdapter implements
     async getCrashLog(): Promise<string[]> {
         if (!this.crashLogStreams) return [];
 
-        const str = await Promise.all(this.crashLogStreams?.map(async stream => {
-            let data = "";
-
-            for await (const item of stream) {
-                data = `${data}${item}`;
-            }
-            return data;
-        }));
-
-        return str;
+        return Promise.all(this.crashLogStreams?.map(streamToString()));
     }
 }
 

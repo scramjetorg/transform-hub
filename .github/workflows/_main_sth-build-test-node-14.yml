@@ -53,7 +53,7 @@ jobs:
     with:
       test-title: STH command line test
       node-version: 14.x
-      test-name: test:bdd-ci-hub-process
+      test-name: test:bdd-ci-hub
 
   test-bdd-ci-sth-api:
     needs: [analyze-code, build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
