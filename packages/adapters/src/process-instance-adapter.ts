@@ -176,8 +176,8 @@ class ProcessInstanceAdapter implements
         this.runnerProcess?.kill();
     }
 
-    async getCrashLog(): Promise<string> {
-        if (!this.crashLogStreams) return "";
+    async getCrashLog(): Promise<string[]> {
+        if (!this.crashLogStreams) return [];
 
         const str = await Promise.all(this.crashLogStreams?.map(async stream => {
             let data = "";
@@ -188,7 +188,7 @@ class ProcessInstanceAdapter implements
             return data;
         }));
 
-        return `STDOUT:\n${str[0]}\nSTDERR:\n${str[1]}`;
+        return str;
     }
 }
 

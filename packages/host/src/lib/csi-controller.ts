@@ -191,12 +191,12 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.emit("end", code);
-        this.logger.end();
+        // removed log close from here - should be done in cleanup in GC.
     }
 
     startInstance() {
         this._instanceAdapter = getInstanceAdapter(this.sthConfig);
-        this._instanceAdapter.logger.pipe(this.logger);
+        this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
         const instanceConfig: InstanceConifg = {
             ...this.sequence.config,
@@ -433,7 +433,6 @@ export class CSIController extends TypedEmitter<Events> {
 
         logStream.pipe(mux, { end: false });
         logStream.on("end", () => {
-            this.logger.info("^--- Log from runner ends here ---^");
             logStream.unpipe(mux);
         });
 

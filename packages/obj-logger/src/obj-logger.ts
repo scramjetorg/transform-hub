@@ -175,7 +175,10 @@ export class ObjLogger implements IObjectLogger {
      * @param options Pipe options. If option `stringified` is set to true, the output will be stringified.
      * @returns {Writable} Piped stream
      */
-    pipe(target: Writable | IObjectLogger, options: { stringified?: boolean } = {}): Writable {
+    pipe(
+        target: Writable | IObjectLogger,
+        { end, stringified }: { end?: boolean, stringified?: boolean } = {}
+    ): Writable {
         if (target instanceof ObjLogger) {
             this.logLevel = target.logLevel;
 
@@ -184,11 +187,10 @@ export class ObjLogger implements IObjectLogger {
 
         target = target as Writable;
 
-        if (options.stringified || !target.writableObjectMode) {
-            return this.stringifiedOutput.pipe(target);
-        }
+        if (stringified || !target.writableObjectMode)
+            return this.stringifiedOutput.pipe(target, { end });
 
-        return this.output.pipe(target);
+        return this.output.pipe(target, { end });
     }
 
     /**
@@ -216,6 +218,7 @@ export class ObjLogger implements IObjectLogger {
     }
 
     end() {
+        this.warn("^--- Log ends here... ---^", new Error().stack);
         this.ended = true;
 
         this.inputStringifiedLogStream.unpipe();

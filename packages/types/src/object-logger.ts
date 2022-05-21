@@ -63,6 +63,6 @@ export interface IObjectLogger {
     trace(entry: LogEntry | string, ...optionalParams: any[]): void;
     warn(entry: LogEntry | string, ...optionalParams: any[]): void;
 
-    pipe(target: Writable | IObjectLogger, options?: { stringified?: boolean }): void;
+    pipe(target: Writable | IObjectLogger, options?: { end?: boolean; stringified?: boolean }): void;
     unpipe(target: Writable | IObjectLogger): void;
 }
