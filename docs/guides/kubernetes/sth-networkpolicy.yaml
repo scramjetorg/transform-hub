@@ -33,8 +33,24 @@ spec:
   ingress:
     - {}
   egress:
-  - ports:
-      - port: 8001
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+    - to:
+        - podSelector:
+            matchLabels:
+              app: sth
+      ports:
+        - port: 8001
+          protocol: TCP
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: coredns
+      ports:
+        - port: 53
+          protocol: UDP
   policyTypes:
     - Ingress
     - Egress

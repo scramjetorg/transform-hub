@@ -58,6 +58,11 @@ sth-9cbc9f6d9-kr9jp    1/1     Running            0          26m     10.100.9.24
 So, now you can check version of transform-hub:
 
 ```bash
-curl -s http://k8s-node-dev06:30030/api/v1/version
-{"version":"0.16.0"}
+curl -s http://k8s-node-dev06:30030/api/v1/version |jq
+{
+  "service": "@scramjet/host",
+  "apiVersion": "v1",
+  "version": "0.22.0",
+  "build": "dae66dc"
+}
 ```

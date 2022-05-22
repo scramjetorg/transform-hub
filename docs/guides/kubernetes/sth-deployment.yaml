@@ -22,7 +22,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: sth
-        image: scramjetorg/sth:0.18.0
+        image: scramjetorg/sth:0.22.0
         command: ["scramjet-transform-hub"]
         env:
         - name: DEVELOPMENT
@@ -33,9 +33,15 @@ spec:
               fieldPath: metadata.name
         args:
           - "--runtime-adapter=kubernetes"
-          - "--k8s-runner-image=scramjetorg/runner:0.18.0"
+          - "--k8s-runner-image=scramjetorg/runner:0.22.0"
+          - "--k8s-runner-py-image=scramjetorg/runner-py:0.22.0"
           - "--k8s-namespace=default"
           - "--k8s-sth-pod-host=sth-runner"
+          - "--k8s-runner-cleanup-timeout=10000"
+          - "--k8s-runner-resources-requests-cpu=250m"
+          - "--k8s-runner-resources-requests-memory=256M"
+          - "--k8s-runner-resources-limits-cpu=500m"
+          - "--k8s-runner-resources-limits-memory=512M"
         ports:
         - name: sth-api
           containerPort: 8000
