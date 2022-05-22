@@ -41,6 +41,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 
 const runnerExitDelay = 11000;
+const csiLifetimeExtensionDelay = 180e3;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
@@ -293,6 +294,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     async finalize() {
         this.logger.end();
+        await defer(csiLifetimeExtensionDelay);
     }
 
     instanceStopped(): Promise<ExitCode> {

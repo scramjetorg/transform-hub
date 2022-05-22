@@ -9,7 +9,7 @@ Feature: Test our shiny new Python runner
         Then "output" is "Hello python runner!"
         And host is still running
 
-    @ci-instance-python @not-github
+    @ci-instance-python
     Scenario: E2E-014 TC-002 Python sequences can use stdin and stdout
         Given host is running
         When sequence "../packages/reference-apps/python-stdinout.tar.gz" loaded
@@ -18,7 +18,7 @@ Feature: Test our shiny new Python runner
         Then "stdout" is "Got on stdin: python runner"
         And host is still running
 
-    @ci-instance-python @not-github
+    @ci-instance-python
     Scenario: E2E-014 TC-003 Exceptions thrown in python sequences appear in stderr
         Given host is running
         When sequence "../packages/reference-apps/python-exception-test.tar.gz" loaded
@@ -140,7 +140,7 @@ Feature: Test our shiny new Python runner
         Then confirm data named "python-topics" will be received
         And host is still running
 
-    @ci-instance-python @test
+    @ci-instance-python
     Scenario: E2E-014 TC-015 Create Stream from async generator
         Given host is running
         When sequence "../packages/reference-apps/python-gen-async.tar.gz" loaded

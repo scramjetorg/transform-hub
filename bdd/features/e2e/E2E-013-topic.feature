@@ -11,7 +11,7 @@ The tests check topic functionalities, where we send and receive data from /topi
         And host is still running
 
     @ci-api
-    Scenario: E2E-013 TC-002 Istance to API
+    Scenario: E2E-013 TC-002 Instance to API
         Given host is running
         And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
         And start Instance with output topic name "ranger"
@@ -48,8 +48,19 @@ The tests check topic functionalities, where we send and receive data from /topi
         And get data named "marvel" without waiting for the end
         And host is still running
 
+    @ci-api
+    Scenario: E2E-013 TC-006 API to Instance with delay
+        Given host is running
+        Then send json data "{ \"name\": \"Hulk\" }" named "avngr"
+        And sequence "../packages/reference-apps/hello-input-out.tar.gz" loaded
+        And start Instance with input topic name "avngr"
+        And wait for "10000" ms
+        And get output without waiting for the end
+        Then confirm data defined as "hulkName" will be received
+        And host is still running
+
     # TODO: disabled, test has a race condition, we should wait until data is received
-    # Scenario: E2E-013 TC-006 Send data from multiple Instances to another Instance on the same host
+    # Scenario: E2E-013 TC-007 Send data from multiple Instances to another Instance on the same host
     #     Given host is running
     #     And sequence "../packages/reference-apps/endless-names-output.tar.gz" loaded
     #     * start Instance with args "5" and output topic name "5names"
