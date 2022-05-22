@@ -1,4 +1,3 @@
-import { development } from "@scramjet/sth-config";
 import { InstanceAdapterError } from "@scramjet/model";
 import {
     ContainerConfiguration,
@@ -33,7 +32,7 @@ IComponent {
     private resources: DockerAdapterResources = {};
 
     logger: IObjectLogger;
-    crashLogStreams?: Readable[];
+    crashLogStreams?: Promise<string[]>;
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -202,13 +201,7 @@ IComponent {
             networkMode: networkSetup.network
         });
 
-        this.crashLogStreams = [streams.stdout, streams.stderr] as Readable[];
-
-        if (development()) {
-            this.logger.debug("Development mode on");
-            streams.stderr.pipe(process.stderr);
-            streams.stdout.pipe(process.stdout);
-        }
+        this.crashLogStreams = Promise.all(([streams.stdout, streams.stderr] as Readable[]).map(streamToString));
 
         this.resources.containerId = containerId;
 
@@ -273,7 +266,7 @@ IComponent {
     async getCrashLog(): Promise<string[]> {
         if (!this.crashLogStreams) return [];
 
-        return Promise.all(this.crashLogStreams?.map(streamToString()));
+        return this.crashLogStreams;
     }
 }
 

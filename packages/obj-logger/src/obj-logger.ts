@@ -3,6 +3,7 @@ import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
 import { PassThrough, Writable } from "stream";
 
 import { getName } from "./utils/get-name";
+import { JSONParserStream } from "./utils/streams";
 
 type ObjLogPipeOptions = {
     stringified?: boolean;
@@ -71,16 +72,10 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
         this.logLevel = logLevel;
 
-        StringStream.from(this.inputStringifiedLogStream)
-            .JSONParse(true)
-            .catch((e: any) => {
-                this.error("Error parsing incoming log", e.chunk);
-            })
-            .pipe(this.inputLogStream);
-
-        DataStream
-            .from(this.inputLogStream)
-            .each((entry: LogEntry) => {
+        this.inputStringifiedLogStream
+            .pipe(new JSONParserStream())
+            .pipe(this.inputLogStream)
+            .on("data", (entry: LogEntry) => {
                 const a: any = { ...entry };
 
                 a.from = entry.from || this.name;
@@ -220,11 +215,8 @@ export class ObjLogger implements IObjectLogger {
     end() {
         if (this.ended) return;
 
-        this.warn("^--- Log ends here... ---^", new Error().stack);
         this.ended = true;
-
-        this.inputStringifiedLogStream.unpipe();
-        this.outputLogStream.end();
+        this.inputStringifiedLogStream.end();
     }
 }
 

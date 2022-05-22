@@ -234,16 +234,15 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.debug("Handling KILL request");
 
         this.context.killHandler();
-        await this.cleanup();
 
         //TODO: investigate why we need to wait (process.tick - no all logs)
         if (!this.stopExpected) {
             this.logger.trace("Exiting (unexpected, 137)");
-            this.exit(137);
-        } else {
-            this.logger.trace("Exiting (expected)");
-            this.exit();
+            return this.exit(137);
         }
+
+        this.logger.trace("Exiting (expected)");
+        return this.exit();
     }
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
@@ -273,11 +272,12 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.keepAliveRequested = true;
     }
 
-    private exit(exitCode?: number) {
-        if (typeof exitCode !== undefined) process.exitCode = exitCode;
+    private async exit(exitCode?: number) {
+        //TODO: we need to wait a bit for the logs to flush - we shouldn't need to as cleanup should wait.
+        await defer(200);
 
         this.cleanup()
-            .then((code) => { process.exitCode = code; }, (e) => console.error(e?.stack))
+            .then((code) => { process.exitCode = exitCode || code; }, (e) => console.error(e?.stack))
             .finally(() => process.exit());
     }
 
@@ -312,7 +312,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             sequence = this.getSequence();
-            this.logger.debug("Sequence", sequence);
+            // this.logger.debug("Sequence", sequence);
 
             if (sequence.length && typeof sequence[0] !== "function") {
                 this.logger.debug("First Sequence object is not a function:", sequence[0]);
@@ -351,8 +351,6 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("Sequence error:", error.stack);
             }
 
-            //TODO: investigate why we need to wait
-            await this.cleanup();
             return this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
         }
 
@@ -365,11 +363,8 @@ export class Runner<X extends AppConfig> implements IComponent {
             await defer(this.context.exitTimeout);
             return this.exit(0);
         } catch (error: any) {
-            this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
-
             this.logger.error("Error occurred during Sequence execution: ", error.stack);
 
-            await this.cleanup();
             return this.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
         }
     }

@@ -1,5 +1,4 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { development } from "@scramjet/sth-config";
 import { streamToString } from "@scramjet/utility";
 import {
     ExitCode,
@@ -13,7 +12,6 @@ import {
 import { ChildProcess, spawn } from "child_process";
 
 import path from "path";
-import { Readable } from "stream";
 import { getRunnerEnvVariables } from "./get-runner-env";
 
 const isTSNode = !!(process as any)[Symbol.for("ts-node.register.instance")];
@@ -29,7 +27,7 @@ class ProcessInstanceAdapter implements
     logger: IObjectLogger;
 
     private runnerProcess?: ChildProcess;
-    crashLogStreams?: Readable[];
+    private crashLogStreams?: Promise<string[]>;
 
     constructor() {
         this.logger = new ObjLogger(this);
@@ -125,13 +123,7 @@ class ProcessInstanceAdapter implements
 
         const runnerProcess = spawn(runnerCommand[0], runnerCommand.slice(1), { env });
 
-        this.crashLogStreams = [runnerProcess.stdout, runnerProcess.stderr];
-
-        if (development()) {
-            this.logger.warn("Development mode! Piping process stdio to main process");
-            runnerProcess.stdout.pipe(process.stdout);
-            runnerProcess.stderr.pipe(process.stderr);
-        }
+        this.crashLogStreams = Promise.all([runnerProcess.stdout, runnerProcess.stderr].map(streamToString));
 
         this.logger.trace("Runner process is running", runnerProcess.pid);
 
@@ -180,7 +172,7 @@ class ProcessInstanceAdapter implements
     async getCrashLog(): Promise<string[]> {
         if (!this.crashLogStreams) return [];
 
-        return Promise.all(this.crashLogStreams?.map(streamToString()));
+        return this.crashLogStreams;
     }
 }
 
