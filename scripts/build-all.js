@@ -8,7 +8,7 @@ const { join, dirname } = require("path");
 
 const { DataStream } = require("scramjet");
 const PrePack = require("./lib/pre-pack");
-const { writeFile } = require("fs/promises");
+const { writeFile, access } = require("fs/promises");
 
 const opts = minimist(process.argv.slice(2), { boolean: ["dirs", "list", "workspaces"] });
 
@@ -20,6 +20,16 @@ if (opts.help || opts.h || opts["?"]) {
     process.exit(1);
 }
 
+const exists = async (path) => {
+    try {
+        await access(path);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+// eslint-disable-next-line complexity
 (async function() {
     const pkg = readClosestPackageJSON();
     const nodeSystem = createSolutionBuilderHost(sys);
@@ -71,6 +81,8 @@ if (opts.help || opts.h || opts["?"]) {
             .do(pack => pack.build())
             .do(pack => console.error(`${pack.currDir} done in ${Date.now() - pack.startTs} millis`))
             .run();
+
+        if (opts.fast && exists(join(outDir, "package-lock.json"))) return;
 
         if (!process.env.NO_WORKSPACE)
             await writeFile(join(outDir, "package.json"), "{\"private\": true, \"workspaces\": [\"**\"]}");

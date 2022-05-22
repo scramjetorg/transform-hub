@@ -2,8 +2,10 @@
 import { SequenceClient } from "@scramjet/api-client";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { defer } from "@scramjet/utility";
-import { lstatSync } from "fs";
+import { createWriteStream, lstatSync } from "fs";
 import { readFile } from "fs/promises";
+import { resolve } from "path";
+import { PassThrough } from "stream";
 import { CommandDefinition } from "../../types";
 import { isDevelopment } from "../../utils/isDevelopment";
 import { getHostClient, getInstance, getReadStreamFromFile, packAction } from "../common";
@@ -86,7 +88,12 @@ export const sequence: CommandDefinition = (program) => {
         .option("-c, --stdout", "Output to stdout (ignores -o)")
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
         .description("Create archived file (package) with the Sequence for later use")
-        .action((path, { stdout, output }) => packAction(path, { stdout, output }));
+        .action((path, { stdout, output: fileoutput }) => {
+            const outputPath = fileoutput ? resolve(fileoutput) : resolve(path);
+            const output = stdout ? new PassThrough() : createWriteStream(outputPath);
+
+            return packAction(path, { output });
+        });
 
     const waitForInstanceKills = async (seq: GetSequenceResponse, timeout: number) => {
         const ts = Date.now();
@@ -150,6 +157,13 @@ export const sequence: CommandDefinition = (program) => {
             await startSequence(id, { configFile, configString, args, outputTopic, inputTopic });
         });
 
+    type DeployArgs = {
+        output: string;
+        configFile: any;
+        configString: string;
+        args: string;
+    };
+
     sequenceCmd
         .command("deploy")
         .alias("run")
@@ -160,11 +174,22 @@ export const sequence: CommandDefinition = (program) => {
         // TODO: check if output-topic and input-topic should be added after development
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
         .description("Pack (if needed), send and start the Sequence")
-        .action(async (path: string, { output, configFile, configString, args: argsStr }:
-            { output: string, configFile: any, configString: string, args: string }) => {
+        .action(async (path: string, { output: fileoutput, configFile, configString, args: argsStr }: DeployArgs) => {
+            const output = new PassThrough();
+
+            if (fileoutput) {
+                const outputPath = resolve(process.cwd(), fileoutput);
+
+                output.pipe(createWriteStream(outputPath));
+                sessionConfig.setLastPackagePath(outputPath);
+            }
+
             if (lstatSync(path).isDirectory()) {
-                await packAction(path, { stdout: false, output });
-                await sendPackage("-");
+                await packAction(path, { output });
+                console.error("Packed!");
+                const seq = await getHostClient().sendSequence(output);
+
+                sessionConfig.setLastSequenceId(seq.id);
             } else
                 await sendPackage(path);
             const args = parseSequenceArgs(argsStr);
