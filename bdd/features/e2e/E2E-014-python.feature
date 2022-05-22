@@ -9,7 +9,9 @@ Feature: Test our shiny new Python runner
         Then "output" is "Hello python runner!"
         And host is still running
 
-    @ci-instance-python
+    # TODO: There's an inconsistency between node and python to fix.
+    #       Exceptions need to be handled so they land in crashlog.
+    @ci-instance-python @not-github
     Scenario: E2E-014 TC-002 Python sequences can use stdin and stdout
         Given host is running
         When sequence "../packages/reference-apps/python-stdinout.tar.gz" loaded
@@ -20,7 +22,7 @@ Feature: Test our shiny new Python runner
 
     # TODO: There's an inconsistency between node and python to fix.
     #       Exceptions need to be handled so they land in crashlog.
-    # @ci-instance-python
+    @ci-instance-python @not-github
     Scenario: E2E-014 TC-003 Exceptions thrown in python sequences appear in stderr
         Given host is running
         When sequence "../packages/reference-apps/python-exception-test.tar.gz" loaded
