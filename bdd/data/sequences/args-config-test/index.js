@@ -18,4 +18,4 @@ module.exports = function(_stream, ...args) {
     }
     return out;
 };
-exports.default = exp;
+

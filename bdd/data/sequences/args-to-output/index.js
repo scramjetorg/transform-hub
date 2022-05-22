@@ -13,4 +13,5 @@ const exp = function(_stream, arg1, arg2, arg3, arg4) {
     return out;
 };
 
-export default exp;
+module.exports = exp;
+exports.default = exp;

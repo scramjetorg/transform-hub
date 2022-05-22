@@ -714,9 +714,6 @@ Then("{string} contains {string}", async function(this: CustomWorld, stream, tex
     for await (const chunk of output) {
         if (`${last}${chunk}`.includes(text)) return;
         last = chunk;
-        if (process.env.SCRAMJET_TEST_LOG) {
-            console.error({ chunk });
-        }
     }
 
     assert.fail("Text not found matched in string");
