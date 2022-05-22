@@ -5,7 +5,7 @@ import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
 import { STHRestAPI } from "@scramjet/types";
-import { getStreamsFromSpawn, defer, waitForValueInStream } from "../../lib/utils";
+import { getStreamsFromSpawn, defer, waitUntilStreamEquals, waitUntilStreamContains } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -247,23 +247,20 @@ Then("I get Instance health", { timeout: 10000 }, async function() {
     assert.equal(typeof msg.healthy !== "undefined", true);
 });
 
-Then("I wait for Instance health status to change from 200 to 404", { timeout: 20000 }, async function() {
+Then("I wait for Instance to have ended", { timeout: 20000 }, async function() {
     const res = (this as CustomWorld).cliResources;
-
     let success = false;
 
+    setTimeout(() => { success = true; }, 19000);
+
     while (!success) {
-        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", res.instanceId || ""]);
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "info", res.instanceId || ""]);
 
-        if (res.stdio[0].includes("404")) {
-            success = true;
-            assert.equal(success, true);
-        }
+        const data = JSON.parse(res.stdio[0]) as STHRestAPI.GetInstanceResponse;
 
-        await defer(250);
+        if (data.ended) return;
+        await defer(500);
     }
-
-    // assert.equal(success, true);
 });
 
 Then("I get Instance output", { timeout: 30000 }, async function() {
@@ -395,14 +392,13 @@ Then("confirm data named {string} received", async function(data) {
 Then("confirm data named {string} will be received", async function(this: CustomWorld, data) {
     const expected = expectedResponses[data];
     const { stdout } = this.cliResources!.commandInProgress!;
-    const response = await waitForValueInStream(stdout, expected);
+    const response = await waitUntilStreamEquals(stdout, expected);
 
     assert.equal(response, expected);
 });
 
 Then("confirm instance logs received", async function(this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
-    const response = await waitForValueInStream(stdout, "");
 
-    assert.ok(response.includes('"level":"DEBUG","msg":"Streams initialized"'));
+    await waitUntilStreamContains(stdout, "");
 });

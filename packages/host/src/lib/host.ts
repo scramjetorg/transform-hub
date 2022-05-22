@@ -429,12 +429,18 @@ export class Host implements IComponent {
         }
 
         if (sequenceInfo.instances.size > 0) {
-            this.logger.warn("Can't remove Sequence in use:", id);
+            const instances = [...sequenceInfo.instances].every(
+                instanceId => this.instancesStore[instanceId]?.finalizingPromise?.cancel()
+            );
 
-            return {
-                opStatus: ReasonPhrases.CONFLICT,
-                error: "Can't remove Sequence in use."
-            };
+            if (instances) {
+                this.logger.warn("Can't remove Sequence in use:", id);
+
+                return {
+                    opStatus: ReasonPhrases.CONFLICT,
+                    error: "Can't remove Sequence in use."
+                };
+            }
         }
 
         try {
@@ -639,8 +645,8 @@ export class Host implements IComponent {
             this.config
         );
 
-        csic.logger.pipe(this.logger);
-        communicationHandler.logger.pipe(this.logger);
+        csic.logger.pipe(this.logger, { end: false });
+        communicationHandler.logger.pipe(this.logger, { end: false });
 
         this.logger.trace("CSIController created", id);
 

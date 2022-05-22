@@ -42,6 +42,7 @@ import {
 import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
 import { NetworkInfo } from "./network-info";
+import { SequenceCompleteMessageData } from "./messages/sequence-complete";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -74,6 +75,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.PING ? PingMessageData :
     T extends RunnerMessageCode.PONG ? HandshakeAcknowledgeMessageData :
     T extends RunnerMessageCode.PANG ? PangMessageData :
+    T extends RunnerMessageCode.SEQUENCE_COMPLETED ? SequenceCompleteMessageData :
     T extends RunnerMessageCode.SEQUENCE_STOPPED ? SequenceStoppedMessageData :
     T extends RunnerMessageCode.EVENT ? EventMessageData :
     T extends CPMMessageCode.STH_ID ? STHIDMessageData :

@@ -51,7 +51,7 @@ This feature checks CLI functionalities
         Then I kill Instance
         And host is still running
 
-    @ci-api @cli
+    @ci-api @cli @not-github
     Scenario: E2E-010 TC-005 Get 404 on health endpoint for finished Instance
         Given host is running
         Then I set json format
@@ -60,7 +60,7 @@ This feature checks CLI functionalities
         Then I get Sequence id
         Then I start Sequence
         Then I get Instance health
-        Then I wait for Instance health status to change from 200 to 404
+        Then I wait for Instance to have ended
         And host is still running
 
     @ci-api @cli
@@ -161,7 +161,7 @@ This feature checks CLI functionalities
         Given host is running
         Then I set json format
         Then I use apiUrl in config
-        When I execute CLI with "seq pack data/sequences/simple-stdio" arguments
+        When I execute CLI with "seq pack data/sequences/simple-stdio -o data/simple-stdio.tar.gz" arguments
         And I execute CLI with "seq send -" arguments
         And I execute CLI with "seq start -" arguments
         And I execute CLI with "inst info -" arguments
@@ -211,7 +211,8 @@ This feature checks CLI functionalities
         Then confirm data named "hello-avengers" will be received
         And host is still running
 
-    @ci-api @cli
+    # TODO: need to test this via separate two sequences
+    @ci-api @cli @not-github
     Scenario: E2E-010 TC-017 Instance to Instance
         Given host is running
         Then I set json format

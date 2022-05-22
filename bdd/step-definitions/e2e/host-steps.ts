@@ -3,7 +3,7 @@
 // eslint-disable-next-line no-extra-parens
 import { Given, When, Then, Before, After, BeforeAll, AfterAll } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
-import { removeBoundaryQuotes, defer, waitForValueInStream } from "../../lib/utils";
+import { removeBoundaryQuotes, defer, waitUntilStreamEquals } from "../../lib/utils";
 import fs, { createReadStream, existsSync, ReadStream } from "fs";
 import { HostClient, InstanceOutputStream } from "@scramjet/api-client";
 import { HostUtils } from "../../lib/host-utils";
@@ -507,6 +507,12 @@ When("wait for instance healthy is {string}", async function(this: CustomWorld, 
     assert.equal(healthy, resp);
 });
 
+Then("get instance info", async function(this: CustomWorld) {
+    const info = this.resources.instance?.getInfo();
+
+    assert.ok(info, "No response on info");
+});
+
 Then("instance response body is {string}", async (expectedResp: string) => {
     const resp = JSON.stringify(actualResponse());
 
@@ -651,43 +657,30 @@ When("instance is finished", async function(this: CustomWorld) {
 });
 
 When("send {string} to input", async function(this: CustomWorld, str) {
-    const status = await this.resources.instance?.sendStream("input", str, {}, {
+    await this.resources.instance?.sendStream("input", str, {}, {
         type: "text/plain",
         end: true,
     });
-
-    console.log(status);
 });
 
 When("send file {string} as text input", async function(this: CustomWorld, path) {
-    const status = await this.resources.instance?.sendStream("input", createReadStream(path), {},
+    await this.resources.instance?.sendStream("input", createReadStream(path), {},
         {
             type: "text/plain",
             end: true,
         }
     );
-
-    console.log(status);
 });
 
 When("send file {string} as binary input", async function(this: CustomWorld, path) {
-    const status = await this.resources.instance?.sendStream("input", createReadStream(path), {}, {
+    await this.resources.instance?.sendStream("input", createReadStream(path), {}, {
         type: "application/octet-stream",
         end: true,
     });
-
-    console.log(status);
 });
 
 When("send {string} to stdin", async function(this: CustomWorld, str) {
-    const pipe = new Readable();
-
-    pipe.push(str);
-    pipe.push(null);
-
-    const status = await this.resources.instance?.sendStream("stdin", pipe);
-
-    console.log(status);
+    await this.resources.instance?.sendStream("stdin", Readable.from(str));
 });
 
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
@@ -699,7 +692,7 @@ Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
 
 Then("{string} will be data named {string}", async function(this: CustomWorld, streamName, dataName) {
     const stream = await this.resources.instance!.getStream(streamName);
-    const response = await waitForValueInStream(stream, expectedResponses[dataName]);
+    const response = await waitUntilStreamEquals(stream, expectedResponses[dataName]);
 
     assert.equal(response, expectedResponses[dataName]);
 });
@@ -767,8 +760,14 @@ Then("get output without waiting for the end", { timeout: 6e4 }, async function(
 });
 
 Then("confirm data defined as {string} will be received", async function(this: CustomWorld, data) {
-    const response = await waitForValueInStream(this.resources.outStream!, expectedResponses[data]);
+    const response = await waitUntilStreamEquals(this.resources.outStream!, expectedResponses[data]);
 
     assert.equal(response, expectedResponses[data]);
 });
 
+Then("confirm json {string} will be received", async function(this: CustomWorld, dataString) {
+    const data = JSON.parse(dataString);
+    const response = await waitUntilStreamEquals(this.resources.outStream!, data);
+
+    assert.equal(response, data);
+});

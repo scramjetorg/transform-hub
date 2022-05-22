@@ -1,14 +1,18 @@
-const rl = require("node:readline");
-const { PassThrough } = require("node:stream");
+const { createInterface } = require("node:readline");
 
-module.exports = async () => {
-    const lines = new PassThrough();
+module.exports = async function(_input, nowait) {
+    /**
+     * @this {import("@scramjet/types").AppContext}
+     */
+    const lines = createInterface({ input: process.stdin });
 
-    rl.createInterface(process.stdin, lines);
+    this.logger.info("Working...");
     for await (const line of lines) {
+        this.logger.info("line", line);
         process.stdout.write(">>> ");
         process.stdout.write(line);
     }
 
-    await new Promise(res => setTimeout(res, 5e3));
+    this.exitTimeout = 0;
+    if (!nowait) await new Promise(res => setTimeout(res, 5e3));
 };

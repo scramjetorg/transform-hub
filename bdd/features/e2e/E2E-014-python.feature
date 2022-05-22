@@ -140,7 +140,7 @@ Feature: Test our shiny new Python runner
         Then confirm data named "python-topics" will be received
         And host is still running
 
-    @ci-instance-python @test
+    @ci-instance-python
     Scenario: E2E-014 TC-015 Create Stream from async generator
         Given host is running
         When sequence "../packages/reference-apps/python-gen-async.tar.gz" loaded

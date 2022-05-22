@@ -168,55 +168,36 @@ export function removeBoundaryQuotes(str: string) {
     return str;
 }
 
-export function loopStream<T extends unknown>(
-    stream: Readable,
-    iter: (chunk: string | Buffer) => { action: "continue" } | { action: "end"; data: T; unconsumedData?: Buffer }
-): Promise<T> {
-    return new Promise((res, rej) => {
-        const onReadable = () => {
-            let chunk;
+export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 10000): Promise<boolean> {
+    let response = "";
 
-            while ((chunk = stream.read()) !== null) {
-                const result = iter(chunk);
-
-                if (result.action === "continue") {
-                    continue;
-                }
-
-                stream.off("error", rej);
-                stream.off("readable", onReadable);
-                if (result.unconsumedData?.length) {
-                    stream.unshift(result.unconsumedData);
-                }
-
-                res(result.data);
-                break;
+    return Promise.race([
+        (async () => {
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
+                response = `${response}${chunk}`;
+                if (response.includes(expected)) return true;
             }
-        };
-
-        stream.on("error", rej);
-
-        // run it in case readable was already triggered
-        onReadable();
-        stream.on("readable", onReadable);
-    });
+            throw new Error("End of stream reached");
+        })(),
+        defer(timeout).then(() => {
+            throw new Error("Timeout reached");
+        })
+    ]);
 }
 
-export async function waitForValueInStream(stream: Readable, expected: string, timeout = 10000): Promise<string> {
+export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
 
     await Promise.race([
-        loopStream(
-            stream,
-            (chunk) => {
-                response += chunk.toString();
-                if (response === expected) {
-                    return { action: "end", data: response };
-                }
-                return { action: "continue" };
+        (async () => {
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
+                response += chunk;
+
+                if (response === expected) return expected;
             }
-        ),
-        defer(timeout)
+            throw new Error("End of stream reached");
+        })(),
+        defer(timeout).then(() => { throw new Error("Timeout reached"); })
     ]);
 
     return response;

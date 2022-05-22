@@ -1,6 +1,6 @@
 import { DataStream, StringStream } from "scramjet";
 import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
-import { PassThrough, Writable } from "stream";
+import { PassThrough, Readable, Writable } from "stream";
 
 import { getName } from "./utils/get-name";
 import { JSONParserStream } from "./utils/streams";
@@ -54,6 +54,11 @@ export class ObjLogger implements IObjectLogger {
      * Additional output streams.
      */
     outputs: Writable[] = [];
+
+    /**
+     * Other logger sources
+     */
+    sources: Set<Readable|IObjectLogger> = new Set();
 
     /**
      * Logging levels hierarchy.
@@ -162,6 +167,20 @@ export class ObjLogger implements IObjectLogger {
         return this._stringifiedOutput;
     }
 
+    addObjectLoggerSource(source: IObjectLogger): void {
+        if (this.sources.has(source)) return;
+
+        this.sources.add(source);
+        source.outputLogStream.on("data", (entry) => this.inputLogStream.write(entry));
+    }
+
+    addSerializedLoggerSource(source: Readable): void {
+        if (this.sources.has(source)) return;
+
+        this.sources.add(source);
+        source.on("data", (entry) => this.inputStringifiedLogStream.write(entry));
+    }
+
     /**
      * Pipes output logger to provided target. The target can be a writable stream
      * or an Instance of class fulfilling IObjectLogger interface.
@@ -173,11 +192,12 @@ export class ObjLogger implements IObjectLogger {
     pipe(
         target: Writable | IObjectLogger,
         { end, stringified }: { end?: boolean, stringified?: boolean } = {}
-    ): Writable {
+    ): typeof target {
         if (target instanceof ObjLogger) {
             this.logLevel = target.logLevel;
 
-            target = target.inputLogStream;
+            target.addObjectLoggerSource(this);
+            return target;
         }
 
         target = target as Writable;

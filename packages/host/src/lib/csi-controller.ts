@@ -36,15 +36,17 @@ import { ServerResponse } from "http";
 import { getRouter } from "@scramjet/api-server";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
-import { defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
+import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 
 const runnerExitDelay = 11000;
+const csiLifetimeExtensionDelay = 180e3;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
     error: (error: any) => void,
+    stop: (code: number) => void
     end: (code: number) => void
 }
 
@@ -63,9 +65,10 @@ export class CSIController extends TypedEmitter<Events> {
     controlDataStream?: DataStream;
     router?: APIRoute;
     info: {
-        ports?: any,
-        created?: Date,
-        started?: Date
+        ports?: any;
+        created?: Date;
+        started?: Date;
+        ended?: Date;
     } = {};
     provides?: string;
     requires?: string;
@@ -101,6 +104,7 @@ export class CSIController extends TypedEmitter<Events> {
     logger: IObjectLogger;
 
     private _instanceAdapter?: ILifeCycleAdapterRun;
+    finalizingPromise?: CancellablePromise;
 
     get instanceAdapter(): ILifeCycleAdapterRun {
         if (!this._instanceAdapter) {
@@ -190,6 +194,12 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.error("Instance caused error, code:", e);
         }
 
+        this.emit("stop", code);
+
+        this.info.ended = new Date();
+
+        await this.finalize();
+
         this.emit("end", code);
         // removed log close from here - should be done in cleanup in GC.
     }
@@ -237,13 +247,12 @@ export class CSIController extends TypedEmitter<Events> {
             }
         };
 
-        this.instancePromise = instanceMain();
+        this.instancePromise = instanceMain()
+            .then((exitcode) => this.mapRunnerExitCode(exitcode))
+            .catch((error) => this.initResolver?.rej(error));
 
         this.instancePromise
-            .then((exitcode) => this.mapRunnerExitCode(exitcode))
-            .catch((error) => this.initResolver?.rej(error))
-            .finally(() => this.heartBeatStop())
-            .finally(() => this.finalize());
+            .finally(() => this.heartBeatStop());
     }
 
     heartBeatStart(): void {
@@ -292,7 +301,11 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async finalize() {
+        await defer(runnerExitDelay);
         this.logger.end();
+        this.finalizingPromise = cancellableDefer(csiLifetimeExtensionDelay);
+
+        await this.finalizingPromise;
     }
 
     instanceStopped(): Promise<ExitCode> {
@@ -311,7 +324,7 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
-            streams[CC.LOG].pipe(this.logger.inputStringifiedLogStream);
+            this.logger.addSerializedLoggerSource(streams[CC.LOG]);
         }
 
         this.upStreams = [
@@ -424,9 +437,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.router = getRouter();
 
-        this.router.get("/", () => {
-            return this.getInfo();
-        });
+        this.router.get("/", () => this.getInfo());
 
         this.router.upstream("/stdout", this.upStreams[CC.STDOUT]);
         this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
@@ -566,6 +577,7 @@ export class CSIController extends TypedEmitter<Events> {
         await defer(timeout);
 
         if (!this.keepAliveRequested) {
+            // TODO: shouldn't this be just this.handleKill();
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
         }
 
@@ -591,6 +603,7 @@ export class CSIController extends TypedEmitter<Events> {
             ports: this.info.ports,
             started: this.info.started,
             created: this.info.created,
+            ended: this.info.ended,
             id: this.id,
             sequence: this.sequence.id,
             appConfig: this.appConfig,
