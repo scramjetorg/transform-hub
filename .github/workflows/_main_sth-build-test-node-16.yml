@@ -69,7 +69,7 @@ jobs:
     with:
       test-title: STH API tests
       node-version: 16.x
-      test-name: test:bdd-ci-api-python
+      test-name: test:bdd-ci-api-py
 
   test-bdd-ci-sth-process-python:
     needs: [build-sth, build-refapps]
