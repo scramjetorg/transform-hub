@@ -86,6 +86,7 @@ This feature checks CLI functionalities
         Then I start Sequence
         And I get Instance id
         Then I send input data from file "data/test-data/checksum.json"
+        Then I kill Instance
         And host is still running
 
     @ci-api @cli
