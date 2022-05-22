@@ -639,8 +639,8 @@ export class Host implements IComponent {
             this.config
         );
 
-        csic.logger.pipe(this.logger);
-        communicationHandler.logger.pipe(this.logger);
+        csic.logger.pipe(this.logger, { end: false });
+        communicationHandler.logger.pipe(this.logger, { end: false });
 
         this.logger.trace("CSIController created", id);
 

@@ -1,4 +1,4 @@
-import { PassThrough, Writable } from "stream";
+import { PassThrough, Readable, Writable } from "stream";
 
 import { DataStream } from "scramjet";
 
@@ -62,6 +62,9 @@ export interface IObjectLogger {
     info(entry: LogEntry | string, ...optionalParams: any[]): void;
     trace(entry: LogEntry | string, ...optionalParams: any[]): void;
     warn(entry: LogEntry | string, ...optionalParams: any[]): void;
+
+    addObjectLoggerSource(source: IObjectLogger): void;
+    addSerializedLoggerSource(source: Readable): void;
 
     pipe(target: Writable | IObjectLogger, options?: { end?: boolean; stringified?: boolean }): void;
     unpipe(target: Writable | IObjectLogger): void;
