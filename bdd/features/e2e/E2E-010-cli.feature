@@ -211,7 +211,8 @@ This feature checks CLI functionalities
         Then confirm data named "hello-avengers" will be received
         And host is still running
 
-    @ci-api @cli
+    # TODO: need to test this via separate two sequences
+    @ci-api @cli @not-github
     Scenario: E2E-010 TC-017 Instance to Instance
         Given host is running
         Then I set json format
