@@ -219,5 +219,8 @@ export async function waitForValueInStream(stream: Readable, expected: string, t
         defer(timeout)
     ]);
 
+    // eslint-disable-next-line no-console
+    console.error({ response });
+
     return response;
 }
