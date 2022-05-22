@@ -42,7 +42,7 @@ jobs:
       node-version: 14.x
 
   test-sth-unit:
-    needs: [analyze-code, build-sth]
+    needs: [build-sth]
     uses: ./.github/workflows/test-unit.yml
     with:
       node-version: 14.x
