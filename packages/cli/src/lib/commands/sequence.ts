@@ -89,8 +89,11 @@ export const sequence: CommandDefinition = (program) => {
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
         .description("Create archived file (package) with the Sequence for later use")
         .action((path, { stdout, output: fileoutput }) => {
-            const outputPath = fileoutput ? resolve(fileoutput) : resolve(path);
-            const output = stdout ? new PassThrough() : createWriteStream(outputPath);
+            const outputPath = fileoutput ? resolve(fileoutput) : `${resolve(path)}.tar.gz`;
+            const output = stdout ? process.stdout : createWriteStream(outputPath);
+
+            if (!stdout)
+                sessionConfig.setLastPackagePath(outputPath);
 
             return packAction(path, { output });
         });
@@ -178,7 +181,7 @@ export const sequence: CommandDefinition = (program) => {
             const output = new PassThrough();
 
             if (fileoutput) {
-                const outputPath = resolve(process.cwd(), fileoutput);
+                const outputPath = fileoutput ? resolve(fileoutput) : `${resolve(path)}.tar.gz`;
 
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
@@ -186,7 +189,6 @@ export const sequence: CommandDefinition = (program) => {
 
             if (lstatSync(path).isDirectory()) {
                 await packAction(path, { output });
-                console.error("Packed!");
                 const seq = await getHostClient().sendSequence(output);
 
                 sessionConfig.setLastSequenceId(seq.id);

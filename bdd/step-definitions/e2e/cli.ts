@@ -214,7 +214,7 @@ Then("I get Instance id", function() {
 Then("I get Instance id after deployment", function() {
     const res = (this as CustomWorld).cliResources;
     const stdio = res.stdio![0].split("\n");
-    const json = JSON.parse(stdio[1]);
+    const json = JSON.parse(stdio[0]);
 
     (this as CustomWorld).cliResources.instanceId = json._id;
     assert.equal(typeof json._id !== "undefined", true);

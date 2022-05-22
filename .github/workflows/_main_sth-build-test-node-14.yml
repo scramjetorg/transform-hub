@@ -55,13 +55,21 @@ jobs:
       node-version: 14.x
       test-name: test:bdd-ci-hub
 
-  test-bdd-ci-sth-api:
+  test-bdd-ci-sth-api-node:
     needs: [build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
     uses: ./.github/workflows/test-bdd-process.yml
     with:
       test-title: STH API tests
       node-version: 14.x
-      test-name: test:bdd-ci-api
+      test-name: test:bdd-ci-api-node
+
+  test-bdd-ci-sth-api-python:
+    needs: [build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
+    uses: ./.github/workflows/test-bdd-process.yml
+    with:
+      test-title: STH API tests
+      node-version: 14.x
+      test-name: test:bdd-ci-api-python
 
   test-bdd-ci-sth-process-python:
     needs: [build-sth, build-refapps, build-docker-runner-image, build-docker-runner-py-image, build-docker-pre-runner-image]
