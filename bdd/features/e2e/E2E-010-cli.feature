@@ -51,7 +51,7 @@ This feature checks CLI functionalities
         Then I kill Instance
         And host is still running
 
-    @ci-api @cli
+    @ci-api @cli @not-github
     Scenario: E2E-010 TC-005 Get 404 on health endpoint for finished Instance
         Given host is running
         Then I set json format
@@ -60,7 +60,7 @@ This feature checks CLI functionalities
         Then I get Sequence id
         Then I start Sequence
         Then I get Instance health
-        Then I wait for Instance health status to change from 200 to 404
+        Then I wait for Instance to have ended
         And host is still running
 
     @ci-api @cli

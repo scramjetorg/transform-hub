@@ -168,6 +168,23 @@ export function removeBoundaryQuotes(str: string) {
     return str;
 }
 
+export async function waitUntilStreamContains(stream: Readable, expected: string, timeout = 10000): Promise<boolean> {
+    let response = "";
+
+    return Promise.race([
+        (async () => {
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
+                response = `${response}${chunk}`;
+                if (response.includes(expected)) return true;
+            }
+            throw new Error("End of stream reached");
+        })(),
+        defer(timeout).then(() => {
+            throw new Error("Timeout reached");
+        })
+    ]);
+}
+
 export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
 
@@ -180,7 +197,7 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
             }
             throw new Error("End of stream reached");
         })(),
-        defer(timeout).then(() => Promise.reject("Timeout reached"))
+        defer(timeout).then(() => { throw new Error("Timeout reached"); })
     ]);
 
     return response;

@@ -603,6 +603,7 @@ export class CSIController extends TypedEmitter<Events> {
             ports: this.info.ports,
             started: this.info.started,
             created: this.info.created,
+            ended: this.info.ended,
             id: this.id,
             sequence: this.sequence.id,
             appConfig: this.appConfig,

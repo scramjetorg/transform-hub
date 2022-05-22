@@ -7,5 +7,6 @@ export type Instance = {
     sequence: string,
     ports?: Record<string, number>
     created?: Date,
-    started?: Date
+    started?: Date,
+    ended?: Date,
 }
