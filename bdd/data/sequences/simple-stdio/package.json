@@ -1,0 +1,12 @@
+{
+  "name": "@scramjet/reference-simple-stdio",
+  "version": "0.19.2",
+  "description": "",
+  "main": "index.js",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}

@@ -20,6 +20,8 @@ export interface ILifeCycleAdapterMain {
 
     // TODO: THIS is forceful removal - let's think about refactor.
     remove(): MaybePromise<void>;
+
+    getCrashLog(): Promise<string[]>
 }
 // @TODO create ISequenceAdapter interface
 

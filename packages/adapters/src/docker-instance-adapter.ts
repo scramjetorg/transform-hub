@@ -1,4 +1,3 @@
-import { development } from "@scramjet/sth-config";
 import { InstanceAdapterError } from "@scramjet/model";
 import {
     ContainerConfiguration,
@@ -15,9 +14,11 @@ import {
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 import { DockerAdapterResources, DockerAdapterRunPortsConfig, DockerAdapterVolumeConfig, IDockerHelper } from "./types";
-import { FreePortsFinder, defer } from "@scramjet/utility";
+import { FreePortsFinder, defer, streamToString } from "@scramjet/utility";
 import { STH_DOCKER_NETWORK, isHostSpawnedInDockerContainer, getHostname } from "./docker-networking";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { getRunnerEnvEntries } from "./get-runner-env";
+import { Readable } from "stream";
 
 /**
  * Adapter for running Instance by Runner executed in Docker container.
@@ -31,6 +32,7 @@ IComponent {
     private resources: DockerAdapterResources = {};
 
     logger: IObjectLogger;
+    crashLogStreams?: Promise<string[]>;
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -166,34 +168,19 @@ IComponent {
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
 
-        this.logger.info("Instance preparation done");
+        this.logger.info("Instance preparation done for config", config);
 
         const extraVolumes: DockerAdapterVolumeConfig[] = [];
 
-        if (development()) {
-            this.logger.debug("Development mode on");
-
-            if (process.env.CSI_COREDUMP_VOLUME) {
-                this.logger.debug("CSI_COREDUMP_VOLUME", process.env.CSI_COREDUMP_VOLUME);
-
-                extraVolumes.push({
-                    writeable: true,
-                    mountPoint: "/cores",
-                    bind: process.env.CSI_COREDUMP_VOLUME
-                });
-            }
-        }
-
         const networkSetup = await this.getNetworkSetup();
 
-        const envs = [
-            `SEQUENCE_PATH=${path.join("/package", config.entrypointPath)}`,
-            `DEVELOPMENT=${process.env.DEVELOPMENT ?? ""}`,
-            `PRODUCTION=${process.env.PRODUCTION ?? ""}`,
-            `INSTANCES_SERVER_PORT=${instancesServerPort}`,
-            `INSTANCES_SERVER_HOST=${networkSetup.host}`,
-            `INSTANCE_ID=${instanceId}`,
-        ];
+        const envs = getRunnerEnvEntries({
+            sequencePath: path.join(config.sequenceDir, config.entrypointPath),
+            instancesServerPort,
+            instancesServerHost: networkSetup.host,
+            instanceId,
+            pipesPath: ""
+        }).map(([k, v]) => `${k}=${v}`);
 
         this.logger.debug("Runner will start with envs", envs);
 
@@ -201,7 +188,7 @@ IComponent {
             imageName: config.container.image,
             volumes: [
                 ...extraVolumes,
-                { mountPoint: "/package", volume: config.id, writeable: false }
+                { mountPoint: config.sequenceDir, volume: config.id, writeable: false }
             ],
             labels: {
                 "scramjet.sequence.name": config.name
@@ -214,9 +201,7 @@ IComponent {
             networkMode: networkSetup.network
         });
 
-        streams.stderr.on("data", data => {
-            this.logger.error("Docker container error: ", data.toString());
-        });
+        this.crashLogStreams = Promise.all(([streams.stdout, streams.stderr] as Readable[]).map(streamToString));
 
         this.resources.containerId = containerId;
 
@@ -251,7 +236,7 @@ IComponent {
      */
     async cleanup(): Promise<void> {
         if (this.resources.volumeId) {
-            this.logger.debug("Volume will be removed in 1 sec");
+            this.logger.debug("Volume will be removed in 60 sec");
 
             await defer(60000); // @TODO: one sec?
             await this.dockerHelper.removeVolume(this.resources.volumeId);
@@ -276,6 +261,12 @@ IComponent {
 
             this.logger.debug("Container removed");
         }
+    }
+
+    async getCrashLog(): Promise<string[]> {
+        if (!this.crashLogStreams) return [];
+
+        return this.crashLogStreams;
     }
 }
 

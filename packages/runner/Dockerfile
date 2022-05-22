@@ -1,12 +1,14 @@
 FROM node:lts-bullseye-slim AS target
 
 ENV PACKAGE_DIR=/package \
-    HUB_DIR=/opt/transform-hub
+    HUB_DIR=/opt/transform-hub \
+    RUNNER_USER=runner \
+    RUNNER_GROUP=runner
 
-RUN groupadd -g 1200 runner \
-    && useradd -g 1200 -u 1200 -m -d ${HUB_DIR} -s /bin/false runner \
+RUN groupadd -g 1200 ${RUNNER_GROUP} \
+    && useradd -g 1200 -u 1200 -m -d ${HUB_DIR} -s /bin/false ${RUNNER_USER} \
     && mkdir -p ${PACKAGE_DIR} \
-    && chown runner:runner ${PACKAGE_DIR}
+    && chown ${RUNNER_USER}:${RUNNER_GROUP} ${PACKAGE_DIR}
 
 RUN apt-get update \
     && apt-get install -y gosu tini --no-install-recommends \
@@ -47,6 +49,9 @@ RUN yarn install --ignore-engines  --frozen-lockfile --production --silent \
 COPY ./packages/runner/docker-entrypoint.sh /usr/local/bin/
 COPY ./packages/runner/unpack.sh /usr/local/bin/
 COPY ./packages/runner/wait-for-sequence-and-start.sh /usr/local/bin/
+
+RUN mkdir /pipes \
+    && chown ${RUNNER_USER}:${RUNNER_GROUP} /pipes
 
 ENTRYPOINT [ "/usr/bin/tini", "--", "docker-entrypoint.sh" ]
 CMD [ "start-runner" ]

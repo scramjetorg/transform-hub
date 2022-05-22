@@ -8,11 +8,12 @@ type CommonSequenceConfig = {
     engines: Record<string, string>;
     id: string;
     /**
-     * Relative path from sequence package root to JS file 
+     * Relative path from sequence package root to JS file
      */
     entrypointPath: string;
     name: string;
     version: string;
+    sequenceDir: string;
 }
 
 export type DockerSequenceConfig = CommonSequenceConfig & {
@@ -24,13 +25,11 @@ export type DockerSequenceConfig = CommonSequenceConfig & {
 };
 
 export type ProcessSequenceConfig = CommonSequenceConfig & {
-    type: "process",
-    sequenceDir: string
+    type: "process"
 }
 
 export type KubernetesSequenceConfig = CommonSequenceConfig & {
-    type: "kubernetes",
-    sequenceDir: string
+    type: "kubernetes"
 }
 
 export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig

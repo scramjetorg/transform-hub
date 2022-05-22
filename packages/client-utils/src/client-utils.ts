@@ -27,6 +27,7 @@ export abstract class ClientUtilsBase implements HttpClient {
     public addLogger(logger: Partial<RequestLogger>) {
         this.log = {
             request: () => 0,
+            end: () => 0,
             ok: () => 0,
             error: () => 0,
             ...logger
@@ -88,11 +89,11 @@ export abstract class ClientUtilsBase implements HttpClient {
                 });
 
             if (options.parse === "json") {
-                return response.json() as Promise<T>;
+                return response.json() as T;
             }
 
             if (options.parse === "text") {
-                return response.text() as Promise<T>;
+                return response.text() as T;
             }
 
             if (options.parse === "stream") {

@@ -16,6 +16,7 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { createReadStream } from "fs";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
+import { getRunnerEnvEntries } from "./get-runner-env";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -88,14 +89,14 @@ IComponent {
 
         this.logger.debug("Creating Runner Pod");
 
-        const env = Object.entries({
-            SEQUENCE_PATH: path.join("/package", config.entrypointPath),
-            DEVELOPMENT: process.env.DEVELOPMENT ?? "",
-            PRODUCTION: process.env.PRODUCTION ?? "",
-            INSTANCES_SERVER_PORT: instancesServerPort.toString(),
-            INSTANCES_SERVER_HOST: this.adapterConfig.sthPodHost,
-            INSTANCE_ID: instanceId,
-        }).map(([name, value]) => ({ name, value }));
+        const env =
+            getRunnerEnvEntries({
+                sequencePath: path.join("/package", config.entrypointPath),
+                instancesServerPort,
+                instancesServerHost: this.adapterConfig.sthPodHost,
+                instanceId,
+                pipesPath: ""
+            }).map(([name, value]) => ({ name, value }));
 
         const runnerImage = config.engines.python3
             ? this.adapterConfig.runnerImages.python3
@@ -140,12 +141,12 @@ IComponent {
 
         const compressedStream = createReadStream(path.join(config.sequenceDir, "compressed.tar.gz"));
 
-        await this.kubeClient.exec(runnerName, runnerName, "unpack.sh", process.stdout, process.stderr, compressedStream, 2);
+        await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, process.stderr, compressedStream, 2);
 
         const exitPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Succeeded", "Failed", "Unknown"]);
 
-        this.logger.debug("For some reason this wont be printed", exitPodStatus);
-        console.log("And this will :(", exitPodStatus);
+        // this.logger.debug("For some reasone this wont be printed", exitPodStatus);
+        // console.log("And this willl :(", exitPodStatus);
 
         if (exitPodStatus !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
@@ -157,6 +158,7 @@ IComponent {
             // So we return 137 (SIGKILL).
             return 137;
         }
+        this.logger.error("Runner stopped without issues");
 
         await this.remove(this.adapterConfig.timeout);
 
@@ -187,6 +189,10 @@ IComponent {
 
             this._runnerName = undefined;
         }
+    }
+
+    async getCrashLog(): Promise<string[]> {
+        return ["Crashlog not implemented"];
     }
 }
 

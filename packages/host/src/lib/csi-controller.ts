@@ -78,6 +78,7 @@ export class CSIController extends TypedEmitter<Events> {
     heartBeatPromise?: Promise<string>;
 
     heartBeatTicker?: NodeJS.Timeout;
+    logMux?: PassThrough;
 
     apiOutput = new PassThrough();
     apiInputEnabled = true;
@@ -190,11 +191,12 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.emit("end", code);
+        // removed log close from here - should be done in cleanup in GC.
     }
 
     startInstance() {
         this._instanceAdapter = getInstanceAdapter(this.sthConfig);
-        this._instanceAdapter.logger.pipe(this.logger);
+        this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
         const instanceConfig: InstanceConifg = {
             ...this.sequence.config,
@@ -220,6 +222,7 @@ export class CSIController extends TypedEmitter<Events> {
                     this.logger.trace("Sequence finished with success", exitcode);
                 } else {
                     this.logger.error("Sequence finished with error", exitcode);
+                    this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
                 await this.cleanup();
@@ -239,7 +242,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.instancePromise
             .then((exitcode) => this.mapRunnerExitCode(exitcode))
             .catch((error) => this.initResolver?.rej(error))
-            .finally(() => this.heartBeatStop());
+            .finally(() => this.heartBeatStop())
+            .finally(() => this.finalize());
     }
 
     heartBeatStart(): void {
@@ -284,8 +288,11 @@ export class CSIController extends TypedEmitter<Events> {
     async cleanup() {
         await this.instanceAdapter.cleanup();
 
-        if (this.upStreams)
-            this.upStreams[CC.LOG].unpipe();
+        this.logger.info("Cleanup completed");
+    }
+
+    async finalize() {
+        this.logger.end();
     }
 
     instanceStopped(): Promise<ExitCode> {
@@ -304,6 +311,7 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
+            streams[CC.LOG].pipe(this.logger.inputStringifiedLogStream);
         }
 
         this.upStreams = [
@@ -424,7 +432,25 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
         this.router.downstream("/stdin", this.upStreams[CC.STDIN], { end: true });
 
-        this.router.upstream("/log", this.upStreams[CC.LOG]);
+        const logStream = this.upStreams[CC.LOG];
+
+        const mux = this.logMux = new PassThrough();
+
+        logStream.pipe(mux, { end: false });
+        logStream.on("end", () => {
+            logStream.unpipe(mux);
+        });
+
+        this.logger.pipe(mux);
+
+        mux.unpipe = (...args) => {
+            logStream.unpipe(mux);
+            this.logger.unpipe(mux);
+
+            return PassThrough.prototype.unpipe.call(mux, ...args);
+        };
+
+        this.router.upstream("/log", mux);
 
         if (development()) {
             this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
@@ -589,13 +615,15 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Got message: SEQUENCE_COMPLETED.");
 
         try {
-            await promiseTimeout(this.endOfSequence, runnerExitDelay);
+            if (this.instancePromise)
+                await promiseTimeout(this.instancePromise, runnerExitDelay);
 
             this.logger.trace("Sequence terminated itself");
         } catch {
             await this.instanceAdapter.remove();
 
-            this.logger.trace("Sequence doesn't terminated itself in expected time", runnerExitDelay);
+            this.logger.trace("Sequence didn't terminate itself in expected time", runnerExitDelay);
+            process.exitCode = 252;
         }
 
         return message;

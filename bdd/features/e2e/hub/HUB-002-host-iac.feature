@@ -1,6 +1,6 @@
 Feature: HUB-002 Host started in Infrastructure as Code mode
 
-    @starts-host
+    @ci-hub @starts-host
     Scenario: HUB-002 TC-001 Start host with existing sequences
         When hub process is started with random ports and parameters "--sequences-root data/sequences/ --identify-existing --runtime-adapter=process"
         Then host is running
@@ -9,7 +9,7 @@ Feature: HUB-002 Host started in Infrastructure as Code mode
         And I see a sequence called "args-config-test"
         * exit hub process
 
-    @starts-host
+    @ci-hub @starts-host
     Scenario: HUB-002 TC-002 Start host with instances started
         When hub process is started with random ports and parameters "--sequences-root data/sequences/ --identify-existing --startup-config data/sample-config.json --runtime-adapter=process"
         Then host is running

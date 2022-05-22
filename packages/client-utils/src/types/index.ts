@@ -20,6 +20,7 @@ export type Headers = Record<string, string>;
  */
 export type RequestLogger = {
     request: (...req: any) => void;
+    end: (...req: any) => void;
     ok: (res: any) => void;
     error: (res: ClientError) => void;
 };

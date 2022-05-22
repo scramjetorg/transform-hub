@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import { createReadStream } from "fs";
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
 import { getInstanceId, sessionConfig } from "../config";
@@ -140,10 +139,14 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .argument("[file]", "The input file (stdin if not given default)")
         .description("Send a file to stdin, if no file given the data will be read from stdin")
-        .action((id: string, file: string) => {
+        .action(async (id: string, file: string) => {
             const instanceClient = getInstance(getInstanceId(id));
 
-            return displayEntity(instanceClient.sendStdin(file ? createReadStream(file) : process.stdin));
+            return displayEntity(instanceClient.sendStdin(
+                file
+                    ? await getReadStreamFromFile(file)
+                    : process.stdin
+            ));
         });
 
     instanceCmd

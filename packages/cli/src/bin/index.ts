@@ -15,6 +15,12 @@ import chalk from "chalk";
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const CommandClass = completionMixin(commander).Command;
 
+async function jsonize(err: ClientError) {
+    if (!err.toJSON) return undefined;
+
+    return await err.toJSON().then((body) => body).catch(() => undefined);
+}
+
 const getExitCode = (_err: ClientError) => 1;
 const program = new CommandClass() as Command;
 const errorHandler = async (err: ClientError) => {
@@ -31,11 +37,12 @@ const errorHandler = async (err: ClientError) => {
                 message: err?.message,
                 reason: err?.reason?.message,
                 apiStatusCode: err?.status,
-                apiError: await err?.toJSON().then((body) => body).catch(() => undefined),
+                apiError: await jsonize(err),
             })
         );
-    } else {
+    } else if (err) {
         console.error(err.stack);
+
         if (err.reason) {
             console.error("Caused by:");
             console.error(err.reason.stack);

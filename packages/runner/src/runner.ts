@@ -30,31 +30,72 @@ import { RunnerAppContext, RunnerProxy } from "./runner-app-context";
 import { mapToInputDataStream, readInputStreamHeaders } from "./input-stream";
 import { MessageUtils } from "./message-utils";
 
+// async function flushStream(source: Readable | undefined, target: Writable) {
+//     if (!source) return;
+
+//     source
+//         .unpipe(target)
+//         .pause();
+
+//     if (source.readableLength > 0) {
+//         target.end(source.readableLength);
+//     }
+//     await new Promise(res => target.once("close", res));
+// }
+
 type MaybeArray<T> = T | T[];
 type Primitives = string | number | boolean | void | null;
+type OverrideConfig = {
+    write: typeof Writable.prototype.write;
+    drainCb: (...x: any[]) => void;
+    errorCb: (...x: any[]) => void;
+};
 
 export function isSynchronousStreamable(obj: SynchronousStreamable<any> | Primitives):
     obj is SynchronousStreamable<any> {
     return !["string", "number", "boolean", "undefined", "null"].includes(typeof obj);
 }
 
-function overrideStandardStream(oldStream: Writable, newStream: Writable) {
-    if (process.env.PRINT_TO_STDOUT) {
-        const oldWrite = oldStream.write;
+const overrideMap: Map<Writable, OverrideConfig> = new Map();
 
+function overrideStandardStream(oldStream: Writable, newStream: Writable) {
+    if (overrideMap.has(oldStream)) {
+        throw new Error("Attempt to override stream more than once");
+    }
+
+    const write = oldStream.write;
+
+    if (process.env.PRINT_TO_STDOUT) {
         // @ts-ignore
-        oldStream.write = (...args) => { oldWrite.call(oldStream, ...args); return newStream.write(...args); };
+        oldStream.write = (...args) => { write.call(oldStream, ...args); return newStream.write(...args); };
     } else {
         oldStream.write = newStream.write.bind(newStream);
     }
 
-    newStream.on("drain", () => {
-        oldStream.emit("drain");
-    });
+    const drainCb = () => oldStream.emit("drain");
+    const errorCb = (err: any) => oldStream.emit("error", err);
 
-    newStream.on("error", () => {
-        oldStream.emit("error");
-    });
+    newStream.on("drain", drainCb);
+    newStream.on("error", errorCb);
+
+    overrideMap.set(oldStream, { write, drainCb, errorCb });
+}
+
+function revertStandardStream(oldStream: Writable) {
+    if (overrideMap.has(oldStream)) {
+        const { write, drainCb, errorCb } = overrideMap.get(oldStream) as OverrideConfig;
+
+        // @ts-ignore - this is ok, we're doing this on purpose!
+        delete oldStream.write;
+
+        // if prototypic write is there, then no change needed
+        if (oldStream.write !== write)
+            oldStream.write = write;
+
+        oldStream.off("drain", drainCb);
+        oldStream.off("error", errorCb);
+        overrideMap.delete(oldStream);
+    }
 }
 
 /**
@@ -74,8 +115,8 @@ export class Runner<X extends AppConfig> implements IComponent {
 
     logger: IObjectLogger;
 
-    private inputDataStream: DataStream
-    private outputDataStream: DataStream
+    private inputDataStream: DataStream;
+    private outputDataStream: DataStream;
 
     constructor(
         private sequencePath: string,
@@ -150,31 +191,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             });
     }
 
-    async cleanup(): Promise<number> {
-        this.logger.info("Cleaning up");
-
-        if (this.monitoringInterval) {
-            clearInterval(this.monitoringInterval);
-            this.logger.trace("Monitoring interval removed");
-        }
-
-        try {
-            this.logger.info("Cleaning up streams");
-
-            await this.hostClient.disconnect();
-
-            this.logger.info("Streams clear");
-
-            return 0;
-        } catch (e: any) {
-            this.logger.error("Error. Streams not clear", e);
-
-            return 233;
-        } finally {
-            this.logger.info("Clean up completed");
-        }
-    }
-
     async setInputContentType(headers: any) {
         const contentType = headers["content-type"];
 
@@ -218,16 +234,15 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.debug("Handling KILL request");
 
         this.context.killHandler();
-        await this.cleanup();
 
         //TODO: investigate why we need to wait (process.tick - no all logs)
         if (!this.stopExpected) {
             this.logger.trace("Exiting (unexpected, 137)");
-            this.exit(137);
-        } else {
-            this.logger.trace("Exiting (expected)");
-            this.exit();
+            return this.exit(137);
         }
+
+        this.logger.trace("Exiting (expected)");
+        return this.exit();
     }
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
@@ -257,31 +272,28 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.keepAliveRequested = true;
     }
 
-    private exit(exitCode?: number) {
-        if (typeof exitCode !== undefined) process.exitCode = exitCode;
-        // TODO: why we need this?
-        setTimeout(() => process.exit(), 100);
+    private async exit(exitCode?: number) {
+        //TODO: we need to wait a bit for the logs to flush - we shouldn't need to as cleanup should wait.
+        await defer(200);
+
+        this.cleanup()
+            .then((code) => { process.exitCode = exitCode || code; }, (e) => console.error(e?.stack))
+            .finally(() => process.exit());
     }
 
     async main() {
         await this.hostClient.init(this.instanceId);
 
-        this.logger.pipe(this.hostClient.logStream, { stringified: true });
+        this.redirectOutputs();
 
         this.defineControlStream();
 
         this.hostClient.stdinStream
-            .on("data", (chunk) => {
-                process.stdin.unshift(chunk);
-            })
-            .on("end", () => {
-                process.stdin.emit("end");
-            });
+            .on("data", (chunk) => process.stdin.unshift(chunk))
+            .on("end", () => process.stdin.emit("end"));
 
-        overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
-        overrideStandardStream(process.stderr, this.hostClient.stderrStream);
-
-        this.outputDataStream.JSONStringify().pipe(this.hostClient.outputStream);
+        process.stdin.on("pause", () => this.hostClient.stdinStream.pause());
+        process.stdin.on("resume", () => this.hostClient.stdinStream.resume());
 
         this.logger.debug("Streams initialized");
 
@@ -300,7 +312,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         try {
             sequence = this.getSequence();
-            this.logger.debug("Sequence", sequence);
+            // this.logger.debug("Sequence", sequence);
 
             if (sequence.length && typeof sequence[0] !== "function") {
                 this.logger.debug("First Sequence object is not a function:", sequence[0]);
@@ -339,9 +351,7 @@ export class Runner<X extends AppConfig> implements IComponent {
                 this.logger.error("Sequence error:", error.stack);
             }
 
-            //TODO: investigate why we need to wait
-            await this.cleanup();
-            this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
+            return this.exit(RunnerExitCode.SEQUENCE_FAILED_ON_START);
         }
 
         try {
@@ -351,17 +361,52 @@ export class Runner<X extends AppConfig> implements IComponent {
             this.logger.trace(`Sequence completed. Waiting ${this.context.exitTimeout}ms with exit.`);
 
             await defer(this.context.exitTimeout);
+            return this.exit(0);
         } catch (error: any) {
-            this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_COMPLETED, {}]);
-
             this.logger.error("Error occurred during Sequence execution: ", error.stack);
 
-            await this.cleanup();
-            this.exit(20);
+            return this.exit(RunnerExitCode.SEQUENCE_FAILED_DURING_EXECUTION);
+        }
+    }
+
+    async cleanup(): Promise<number> {
+        this.logger.info("Cleaning up");
+
+        await this.revertOutputs();
+
+        if (this.monitoringInterval) {
+            clearInterval(this.monitoringInterval);
+            this.logger.trace("Monitoring interval removed");
         }
 
-        await this.cleanup();
-        this.exit(0);
+        let exitcode = 0;
+
+        try {
+            this.logger.info("Cleaning up streams");
+
+            await this.hostClient.disconnect();
+        } catch (e: any) {
+            exitcode = 223;
+        }
+
+        return exitcode;
+    }
+
+    private async revertOutputs() {
+        this.logger.unpipe(this.hostClient.logStream);
+        revertStandardStream(process.stdout);
+        revertStandardStream(process.stderr);
+        this.logger.addOutput(process.stderr);
+    }
+
+    private redirectOutputs() {
+        this.logger.pipe(this.hostClient.logStream, { stringified: true });
+        this.outputDataStream
+            .JSONStringify()
+            .pipe(this.hostClient.outputStream);
+
+        overrideStandardStream(process.stdout, this.hostClient.stdoutStream);
+        overrideStandardStream(process.stderr, this.hostClient.stderrStream);
     }
 
     /**
@@ -497,13 +542,13 @@ export class Runner<X extends AppConfig> implements IComponent {
         // eslint-disable-next-line complexity
         await new Promise<void>((res) => {
             /**
-         * @analyze-how-to-pass-in-out-streams
-         * We need to make sure to close input and output streams
-         * after Sequence terminates.
-         *
-         * pipe the last `stream` value to output stream
-         * unless there is NO LAST STREAM
-         */
+             * @analyze-how-to-pass-in-out-streams
+             * We need to make sure to close input and output streams
+             * after Sequence terminates.
+             *
+             * pipe the last `stream` value to output stream
+             * unless there is NO LAST STREAM
+             */
             if (!isSynchronousStreamable(intermediate)) {
                 this.logger.info("Primitive returned as last value");
 

@@ -3,8 +3,18 @@ import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
 import { PassThrough, Writable } from "stream";
 
 import { getName } from "./utils/get-name";
+import { JSONParserStream } from "./utils/streams";
+
+type ObjLogPipeOptions = {
+    stringified?: boolean;
+};
 
 export class ObjLogger implements IObjectLogger {
+    /**
+     * Identifies if you can still write messages.
+     */
+    ended: boolean = false;
+
     /**
      * @type {PassThrough} Stream used to write logs.
      */
@@ -18,7 +28,7 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: false });
+    inputStringifiedLogStream = new PassThrough({ objectMode: true });;
 
     /**
      * Output stream in object mode.
@@ -62,17 +72,10 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
         this.logLevel = logLevel;
 
-        StringStream
-            .from(this.inputStringifiedLogStream)
-            .JSONParse(true)
-            .catch((e: any) => {
-                this.error("Error parsing incoming log", e.chunk);
-            })
-            .pipe(this.inputLogStream);
-
-        DataStream
-            .from(this.inputLogStream)
-            .each((entry: LogEntry) => {
+        this.inputStringifiedLogStream
+            .pipe(new JSONParserStream())
+            .pipe(this.inputLogStream)
+            .on("data", (entry: LogEntry) => {
                 const a: any = { ...entry };
 
                 a.from = entry.from || this.name;
@@ -87,6 +90,9 @@ export class ObjLogger implements IObjectLogger {
     }
 
     write(level: LogLevel, entry: LogEntry | string, ...optionalParams: any[]) {
+        if (this.ended)
+            throw new Error("Cannot write to the stream anymore.");
+
         if (ObjLogger.levels.indexOf(level) > ObjLogger.levels.indexOf(this.logLevel)) {
             return;
         }
@@ -150,6 +156,12 @@ export class ObjLogger implements IObjectLogger {
         this.baseLog = baseLog;
     }
 
+    private _stringifiedOutput?: StringStream;
+    get stringifiedOutput(): StringStream {
+        if (!this._stringifiedOutput) this._stringifiedOutput = this.output.JSONStringify();
+        return this._stringifiedOutput;
+    }
+
     /**
      * Pipes output logger to provided target. The target can be a writable stream
      * or an Instance of class fulfilling IObjectLogger interface.
@@ -158,7 +170,33 @@ export class ObjLogger implements IObjectLogger {
      * @param options Pipe options. If option `stringified` is set to true, the output will be stringified.
      * @returns {Writable} Piped stream
      */
-    pipe(target: Writable | IObjectLogger, options: { stringified?: boolean } = {}): Writable {
+    pipe(
+        target: Writable | IObjectLogger,
+        { end, stringified }: { end?: boolean, stringified?: boolean } = {}
+    ): Writable {
+        if (target instanceof ObjLogger) {
+            this.logLevel = target.logLevel;
+
+            target = target.inputLogStream;
+        }
+
+        target = target as Writable;
+
+        if (stringified || !target.writableObjectMode)
+            return this.stringifiedOutput.pipe(target, { end });
+
+        return this.output.pipe(target, { end });
+    }
+
+    /**
+     * Pipes output logger to provided target. The target can be a writable stream
+     * or an instance of class fulfiling IObjectLogger interface.
+     *
+     * @param {Writable | IObjectLogger} target Target for log stream.
+     * @param options Pipe options. Should be the same as passed to @see ObjectLogger.pipe
+     * @returns {Writable} Unpiped stream
+     */
+    unpipe(target: Writable | IObjectLogger | undefined, options: ObjLogPipeOptions = {}) {
         if (target instanceof ObjLogger) {
             this.logLevel = target.logLevel;
 
@@ -168,9 +206,17 @@ export class ObjLogger implements IObjectLogger {
         target = target as Writable;
 
         if (options.stringified || !target.writableObjectMode) {
-            return this.output.JSONStringify().pipe(target);
+            return this.stringifiedOutput.unpipe(target);
         }
 
-        return this.output.pipe(target);
+        return this.output.unpipe(target);
+    }
+
+    end() {
+        if (this.ended) return;
+
+        this.ended = true;
+        this.inputStringifiedLogStream.end();
     }
 }
+

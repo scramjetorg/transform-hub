@@ -21,7 +21,7 @@ export const completion: CommandDefinition = (program) => {
         .description("completion operations")
         .action(function() {
             if (!process.env.COMP_LINE || !process.env.COMP_POINT) {
-                console.log("COMP_ variables are nonexistent. Did you mean si completion install?"); //eslint-disable-line
+                console.error("COMP_ variables are nonexistent. Did you mean si completion install?"); //eslint-disable-line
             } else {
                 program.complete({
                     line: process.env.COMP_LINE,
@@ -46,6 +46,6 @@ export const completion: CommandDefinition = (program) => {
         .description("Installs bash completion script in .bashrc")
         .action(async () => {
             await exec("bash -c 'si completion bash >>$HOME/.bashrc'");
-            console.log("Scramjet CLI completion installed in .bashrc. Please run source ~/.bashrc for immediate effect."); //eslint-disable-line
+            console.error("Scramjet CLI completion installed in .bashrc. Please run source ~/.bashrc for immediate effect."); //eslint-disable-line
         });
 };

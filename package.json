@@ -17,25 +17,32 @@
   },
   "scripts": {
     "build": "yarn build:all",
-    "build:packages-esbuild": "lerna run build:esbuild",
-    "build:all": "yarn build:packages && yarn build:refapps && yarn download-refapps && yarn build:docker",
-    "postbuild:refapps": "LOCAL_PACKAGES=true lerna run postbuild:refapps",
-    "prebuild:packages": "scripts/build-all.js --dirs packages/* --config-name=tsconfig.build.json --copy-dist",
-    "prebuild:refapps:node": "NO_WORKSPACE=true scripts/build-all.js --dirs packages/reference-apps/* --config-name=tsconfig.json --copy-dist",
+    "build:all": "yarn build:packages && yarn build:refapps && yarn download:refapps && yarn build:docker",
+    "build:all-packages": "yarn build:packages && yarn build:refapps",
+
+    "prebuild:refapps": "yarn download:refapps",
     "build:refapps": "LOCAL_PACKAGES=true yarn build:refapps:node && LOCAL_PACKAGES=true yarn build:refapps:python",
     "build:refapps:python": "lerna run build:refapps:python",
     "build:refapps:node": "lerna run build:refapps:node",
+    "prebuild:refapps:node": "NO_WORKSPACE=true scripts/build-all.js --dirs packages/reference-apps/* --config-name=tsconfig.json --copy-dist",
+    "postbuild:refapps": "LOCAL_PACKAGES=true lerna run postbuild:refapps",
+
+    "prebuild:packages": "scripts/build-all.js --dirs packages/* --config-name=tsconfig.build.json --copy-dist",
     "build:packages": "LOCAL_PACKAGES=true lerna run build:only && LOCAL_PACKAGES=true lerna run postbuild",
-    "build:all-packages": "LOCAL_PACKAGES=true lerna run build && LOCAL_PACKAGES=true lerna run build:refapps",
+
     "build:docker": "lerna run build:docker",
+
     "build:readme": "node ./scripts/mk-readme",
     "build:docs": "lerna run build:docs",
     "build:all-docs": "node ./scripts/mk-readme && lerna run build:docs",
+    "cloc": "cloc . --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
+
     "pack-one-app": "([ -n \"$APPNAME\" ] || ( echo 'usage: APPNAME=@scramjet/reference-transform-1-seq yarn pack-one-app' ; exit 1 ) ) && yarn build:refapps --scope=$APPNAME",
+
+    "clean": "lerna run clean && yarn clean:root",
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -or -name __pypackages__ -prune -exec rm -rf {} ';' 2> /dev/null",
-    "clean": "lerna run clean && yarn clean:root",
-    "cloc": "cloc . --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
+
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js --dirs 'packages/{**,**/*}' --config-name=tsconfig.json --copy-dist",
     "packseq": "lerna run packseq",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
@@ -48,18 +55,23 @@
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "postinstall": "lerna link",
     "prepare": "npx husky install",
-    "download-refapps": "cd packages/reference-apps && curl -# https://api.github.com/repos/scramjetorg/reference-apps/releases/latest | jq -r '.assets[].browser_download_url' | xargs -n 1 curl -LO#",
-    "test": "lerna run test",
+
+    "download:refapps": "cd packages/reference-apps && curl -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q -nc",
+
+    "test": "yarn test:packages",
     "test:packages": "lerna run test",
     "test:packages-no-concurrent": "lerna run test --concurrency=1",
+
+    "test:bdd-ci-hub": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-hub",
+
+    "test:bdd-ci-api": "yarn test:bdd-ci-api-py && yarn test:bdd-ci-api-node",
+    "test:bdd-ci-api-py": "yarn --cwd=./packages/api-client-py run test:bdd -f pretty -t @ci ",
+    "test:bdd-ci-api-node": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-api",
+
+    "test:bdd-ci-python": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-instance-python",
+    "test:bdd-ci-node": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-instance",
+
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
-    "test:bdd-ci-py-api": "yarn --cwd=./packages/api-client-py run test:bdd -t @ci",
-    "test:bdd-ci": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"not @starts-host\"",
-    "test:bdd-ci-py": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci-python --tags=\"not @starts-host\"",
-    "test:bdd-cli": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@cli",
-    "test:bdd-ci-no-host": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter --tags=@ci --tags=\"@starts-host\"",
-    "test:bdd-ci-no-docker": "RUNTIME_ADAPTER=process yarn test:bdd-ci --tags=\"not @docker-specific\"",
-    "test:bdd-ci-no-host-no-docker": "RUNTIME_ADAPTER=process yarn test:bdd-ci-no-host --tags=\"not @docker-specific\"",
     "prebump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && git diff --exit-code --quiet && yarn bump:images && lerna version -y --force-publish --no-git-tag-version ${NEXT_VER} && git add .",
     "bump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && yarn version --new-version ${NEXT_VER}",
     "bump:images": "./scripts/bump_docker_images.sh",

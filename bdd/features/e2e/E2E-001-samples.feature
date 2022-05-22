@@ -1,5 +1,6 @@
 Feature: Sample e2e tests
 
+    @ci-instance-node
     Scenario: E2E-001 TC-002 API test - Get instance output
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
@@ -10,8 +11,7 @@ Feature: Sample e2e tests
         When response in every line contains "Hello " followed by name from file "data.json" finished by "!"
         And send kill message to instance
         And wait for instance healthy is "false"
-        # Give instance some time to close correctly
-        And wait for "1000" ms
+        And runner has ended execution
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         Then runner has ended execution

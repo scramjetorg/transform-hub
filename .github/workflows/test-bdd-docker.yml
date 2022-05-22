@@ -1,4 +1,4 @@
-name: Test STH - CLI suite with Docker Adapter
+name: Test STH - Main suite with Docker Adapter
 
 on:
   workflow_call:
@@ -11,33 +11,33 @@ on:
         required: false
         default: '3.9'
         type: string
+      test-name:
+        required: true
+        type: string
+      test-title:
+        required: true
+        type: string
 
 jobs:
-  test-bdd-ci-no-host-sth:
-    name: Test STH - CLI suite with Docker Adapter (Nodejs ${{ inputs.node-version }})
+  test-bdd-sth:
+    name: ${{ inputs.test-title }} (${{ inputs.test-name }}, Adapter "docker", Nodejs ${{ inputs.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
-
       - name: Download dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         uses: actions/download-artifact@v2
         with:
           name: dist-sth-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
-
-      - name: Download reference apps (latest release)
-        run: yarn download-refapps
 
       - name: Download dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         uses: actions/download-artifact@v2
         with:
           name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
-      - name: Download dockerImg artifact
+      - name: Download dockerImg Runner Node artifact
         uses: actions/download-artifact@v2
         with:
           name: dockerRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
@@ -66,6 +66,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
-      - name: Run BDD for HUB params
-        run: SCRAMJET_TEST_LOG=1 yarn test:bdd-ci-no-host
+      - name: Install dependencies
+        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
 
+      - name: Run BDD tests
+      # SCRAMJET_SPAWN_JS will run cli test from dist directory
+        run: RUNTIME_ADAPTER=docker SCRAMJET_TEST_LOG=1 SCRAMJET_SPAWN_JS=1 yarn ${{ inputs.test-name }}

@@ -1,12 +1,12 @@
 import { InstanceClient, HostClient } from "@scramjet/api-client";
 import { access, readdir } from "fs/promises";
-import { createReadStream, createWriteStream, constants, PathLike } from "fs";
+import { createReadStream, constants, PathLike } from "fs";
 import { resolve } from "path";
 import { displayEntity } from "./output";
 import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
-import { Readable } from "stream";
+import { Readable, Writable } from "stream";
 import { globalConfig, sessionConfig } from "./config";
 import { getMiddlewareClient } from "./platform";
 
@@ -40,6 +40,12 @@ export const getHostClient = (): HostClient => {
 
                 // eslint-disable-next-line no-console
                 console.error("Request ok:", url, `status: ${status} ${statusText}`);
+            },
+            end(result) {
+                const { url, type } = result;
+
+                // eslint-disable-next-line no-console
+                console.error("Response ended:", url, { type });
             },
             error(error) {
                 const { code, reason: result } = error;
@@ -109,7 +115,7 @@ export const getIgnoreFunction = async (file: PathLike) => {
  * @param {boolean} stdout If true, package will be piped to stdout.
  * @param {output} string Output filename.
  */
-export const packAction = async (directory: string, { stdout, output }: { stdout: boolean; output: string }) => {
+export const packAction = async (directory: string, { output }: { output: Writable }) => {
     const cwd = resolve(process.cwd(), directory);
     const packageLocation = resolve(cwd, "package.json");
 
@@ -118,11 +124,6 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
     await access(packageLocation, F_OK | R_OK).catch(() => {
         throw new Error(`${packageLocation} not found.`);
     });
-
-    const ouputPath = output ? resolve(process.cwd(), output) : `${cwd}.tar.gz`;
-    const target = stdout ? process.stdout : createWriteStream(ouputPath);
-
-    if (!stdout) sessionConfig.setLastPackagePath(ouputPath);
 
     const ignoreLocation = resolve(cwd, ".siignore");
     const filter = await getIgnoreFunction(ignoreLocation);
@@ -133,7 +134,7 @@ export const packAction = async (directory: string, { stdout, output }: { stdout
             filter,
         },
         await readdir(directory)
-    ).pipe(target);
+    ).pipe(output);
 
     await new Promise((res, rej) => {
         out.on("finish", res);

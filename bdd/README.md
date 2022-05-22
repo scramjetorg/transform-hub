@@ -74,14 +74,22 @@ yarn test:BDD --name="E2E"
 - you can also execute a bulk of tests by using their `--tag` (`@tag_name`). Tags are used to group related features, independent of your file and directory structure. For example:
 
 ```bash
-yarn test:bdd --tags="@cli"
+yarn test:bdd --tags="@ci"
 ```
+
+The list of scenarios marked with `@ci` tag is quite long so I will paste only start of the test and the summary of the test execution:
+
+![test_ci.png](../images/test_ci.png)
+
+(...)
+
+![test3.png](../images/test3.png)
 
 Scenario can have more that one tag, can have two or even more, for example:
 
 ![tags.png](../images/tags.png)
 
-In the situation like this above, when you want to execute tests with `` tag but without `@starts-host` tag, command like this below will do the job:
+In the situation like this above, when you want to execute tests with `@ci` tag but without `@starts-host` tag, command like this below will do the job:
 
 ```bash
 yarn test:bdd --tags="@ci" --tags="not @starts-host"

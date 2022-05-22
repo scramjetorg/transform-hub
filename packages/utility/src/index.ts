@@ -8,3 +8,4 @@ export * from "./typed-emitter";
 export * from "./read-json-file";
 export * from "./read-config-file";
 export * from "./normalize-url";
+export * from "./stream-to-string";
