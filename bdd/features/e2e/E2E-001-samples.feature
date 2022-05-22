@@ -1,7 +1,7 @@
 Feature: Sample e2e tests
 
     @ci-instance-node
-    Scenario: E2E-001 TC-002 API test - Get instance output
+    Scenario: E2E-001 TC-001 API test - Get instance output
         Given host is running
         When sequence "../packages/reference-apps/hello-alice-out.tar.gz" loaded
         And instance started
@@ -15,4 +15,17 @@ Feature: Sample e2e tests
         And delete sequence and volumes
         And confirm that sequence and volumes are removed
         Then runner has ended execution
+        And host is still running
+
+    @ci-instance-node
+    Scenario: E2E-001 TC-002 Test stdio available after the sequence is completed
+        Given host is running
+        When I execute CLI with "seq pack data/sequences/simple-stdio -o data/simple-stdio-2.tar.gz" arguments
+        And sequence "data/simple-stdio-2.tar.gz" loaded
+        And instance started with arguments "1"
+        And wait for "500" ms
+        Then send "Hello Alice!" to stdin
+        And wait for "3000" ms
+        And get instance info
+        Then "stdout" is ">>> Hello Alice!"
         And host is still running

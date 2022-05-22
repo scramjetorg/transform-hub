@@ -161,7 +161,7 @@ This feature checks CLI functionalities
         Given host is running
         Then I set json format
         Then I use apiUrl in config
-        When I execute CLI with "seq pack data/sequences/simple-stdio" arguments
+        When I execute CLI with "seq pack data/sequences/simple-stdio -o data/simple-stdio.tar.gz" arguments
         And I execute CLI with "seq send -" arguments
         And I execute CLI with "seq start -" arguments
         And I execute CLI with "inst info -" arguments

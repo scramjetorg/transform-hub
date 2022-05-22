@@ -168,59 +168,20 @@ export function removeBoundaryQuotes(str: string) {
     return str;
 }
 
-export function loopStream<T extends unknown>(
-    stream: Readable,
-    iter: (chunk: string | Buffer) => { action: "continue" } | { action: "end"; data: T; unconsumedData?: Buffer }
-): Promise<T> {
-    return new Promise((res, rej) => {
-        const onReadable = () => {
-            let chunk;
-
-            while ((chunk = stream.read()) !== null) {
-                const result = iter(chunk);
-
-                if (result.action === "continue") {
-                    continue;
-                }
-
-                stream.off("error", rej);
-                stream.off("readable", onReadable);
-                if (result.unconsumedData?.length) {
-                    stream.unshift(result.unconsumedData);
-                }
-
-                res(result.data);
-                break;
-            }
-        };
-
-        stream.on("error", rej);
-
-        // run it in case readable was already triggered
-        onReadable();
-        stream.on("readable", onReadable);
-    });
-}
-
-export async function waitForValueInStream(stream: Readable, expected: string, timeout = 10000): Promise<string> {
+export async function waitUntilStreamEquals(stream: Readable, expected: string, timeout = 10000): Promise<string> {
     let response = "";
 
     await Promise.race([
-        loopStream(
-            stream,
-            (chunk) => {
-                response += chunk.toString();
-                if (response === expected) {
-                    return { action: "end", data: response };
-                }
-                return { action: "continue" };
-            }
-        ),
-        defer(timeout)
-    ]);
+        (async () => {
+            for await (const chunk of stream.pipe(new PassThrough({ encoding: "utf-8" }))) {
+                response += chunk;
 
-    // eslint-disable-next-line no-console
-    console.error({ response });
+                if (response === expected) return expected;
+            }
+            throw new Error("End of stream reached");
+        })(),
+        defer(timeout).then(() => Promise.reject("Timeout reached"))
+    ]);
 
     return response;
 }

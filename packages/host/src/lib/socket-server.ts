@@ -39,8 +39,6 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
         this.server
             .on("connection", async (connection) => {
-                this.logger.info("New incoming Runner connection to SocketServer");
-
                 connection.on("error", (err) => {
                     this.logger.error("Error on connection from runner", err);
                 });
@@ -50,8 +48,6 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                         resolve(connection.read(36).toString());
                     });
                 });
-
-                this.logger.info("Connection from Instance", id);
 
                 let runner = this.runnerConnectionsInProgress.get(id);
 
@@ -66,11 +62,9 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
                     });
                 });
 
-                connection.on("error", (err) => {
-                    this.logger.error("Error on Instance in stream", id, channel, err);
-                });
-
-                this.logger.info("Connection on channel", channel);
+                connection
+                    .on("error", (err) => this.logger.error("Error on Instance in stream", id, channel, err))
+                    .on("end", () => this.logger.debug(`Channel [${id}:${channel}] ended`));
 
                 if (runner[channel] === null) {
                     runner[channel] = connection;

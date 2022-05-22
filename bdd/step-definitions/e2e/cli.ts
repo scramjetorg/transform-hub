@@ -5,7 +5,7 @@ import { Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
 import { STHRestAPI } from "@scramjet/types";
-import { getStreamsFromSpawn, defer, waitForValueInStream } from "../../lib/utils";
+import { getStreamsFromSpawn, defer, waitUntilStreamEquals } from "../../lib/utils";
 import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
@@ -395,14 +395,14 @@ Then("confirm data named {string} received", async function(data) {
 Then("confirm data named {string} will be received", async function(this: CustomWorld, data) {
     const expected = expectedResponses[data];
     const { stdout } = this.cliResources!.commandInProgress!;
-    const response = await waitForValueInStream(stdout, expected);
+    const response = await waitUntilStreamEquals(stdout, expected);
 
     assert.equal(response, expected);
 });
 
 Then("confirm instance logs received", async function(this: CustomWorld) {
     const { stdout } = this.cliResources!.commandInProgress!;
-    const response = await waitForValueInStream(stdout, "");
+    const response = await waitUntilStreamEquals(stdout, "");
 
     assert.ok(response.includes('"level":"DEBUG","msg":"Streams initialized"'));
 });
