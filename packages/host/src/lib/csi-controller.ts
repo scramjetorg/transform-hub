@@ -311,6 +311,7 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             streams[CC.STDOUT].pipe(process.stdout);
             streams[CC.STDERR].pipe(process.stderr);
+            streams[CC.LOG].pipe(this.logger.inputStringifiedLogStream);
         }
 
         this.upStreams = [
