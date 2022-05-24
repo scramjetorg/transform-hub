@@ -4,23 +4,22 @@ WORKDIR /build
 
 COPY ./dist/adapters ./dist/adapters
 COPY ./dist/api-server ./dist/api-server
-COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/host ./dist/host
-COPY ./dist/logger ./dist/logger
-COPY ./dist/obj-logger ./dist/obj-logger
+COPY ./dist/load-check ./dist/load-check
 COPY ./dist/model ./dist/model
-COPY ./dist/runner ./dist/runner
+COPY ./dist/obj-logger ./dist/obj-logger
 COPY ./dist/pre-runner ./dist/pre-runner
 COPY ./dist/python-runner ./dist/python-runner
+COPY ./dist/runner ./dist/runner
 COPY ./dist/sth ./dist/sth
+COPY ./dist/sth-config ./dist/sth-config
 COPY ./dist/symbols ./dist/symbols
-COPY ./dist/types ./dist/types
-COPY ./dist/load-check ./dist/load-check
 COPY ./dist/utility ./dist/utility
 COPY ./dist/verser ./dist/verser
-COPY LICENSE ./
 
+COPY LICENSE ./
 COPY ./dist/package.json ./dist/package.json
+
 RUN cd dist && npx -y npm@8 i
 RUN cd dist && npx npm r npm@8
 

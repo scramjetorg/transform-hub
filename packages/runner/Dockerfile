@@ -27,7 +27,6 @@ COPY packages/types ./packages/types
 COPY packages/utility ./packages/utility
 COPY packages/symbols ./packages/symbols
 COPY packages/obj-logger ./packages/obj-logger
-COPY packages/logger ./packages/logger
 COPY packages/model ./packages/model
 COPY packages/runner ./packages/runner
 COPY scripts ./scripts
