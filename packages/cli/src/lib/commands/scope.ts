@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../scope";
 import { displayObject } from "../output";
@@ -27,7 +28,6 @@ export const scope: CommandDefinition = (program) => {
             const scopeConfig = getScope(name);
 
             if (!scopeConfig) {
-                // eslint-disable-next-line no-console
                 console.error(`Couldn't find scope: ${name}`);
                 return;
             }
@@ -38,6 +38,7 @@ export const scope: CommandDefinition = (program) => {
     if (isDevelopment())
         scopeCmd
             .command("add")
+            .argument("<name>")
             .option("--hub <name> <id>", "Add a Hub to specified scope")
             .option("--space <name> <apiUrl>", "Add space to specified scope")
             .description("TO BE IMPLEMENTED / Add a Hub or space to specified scope")
@@ -50,7 +51,7 @@ export const scope: CommandDefinition = (program) => {
         scopeCmd
             .command("save")
             .argument("<name>")
-            .description("TO BE IMPLEMENTED / Save current chosen space and Hub under a scope")
+            .description("TO BE IMPLEMENTED / Save current chosen space and Hub under a scope name")
             .action(() => {
             // FIXME: implement me
                 throw new Error("Implement me");
@@ -62,7 +63,6 @@ export const scope: CommandDefinition = (program) => {
         .description("Work on the selected scope")
         .action((name: string) => {
             if (!scopeExists(name)) {
-                // eslint-disable-next-line no-console
                 console.error(`Couldn't find scope: ${name}`);
                 return;
             }
@@ -75,12 +75,10 @@ export const scope: CommandDefinition = (program) => {
         .description("Delete specific scope")
         .action((name: string) => {
             if (globalConfig.getConfig().scope === name) {
-                // eslint-disable-next-line no-console
                 console.error(`WARN: can't remove scope ${name} set in configuration.`);
                 return;
             }
             if (sessionConfig.getConfig().scope === name) {
-                // eslint-disable-next-line no-console
                 console.error(`WARN: can't remove currently used scope ${name}`);
                 return;
             }
