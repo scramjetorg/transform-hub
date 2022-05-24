@@ -43,9 +43,7 @@ export const space: CommandDefinition = (program) => {
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
             const version = await managerClient.getVersion();
 
-            displayObject({ spaceId });
-            displayObject(version);
-            displayObject(managerClient);
+            displayObject({ spaceId, version, managerClient });
         });
 
     spaceCmd
