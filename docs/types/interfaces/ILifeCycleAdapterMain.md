@@ -13,6 +13,7 @@
 ### Methods
 
 - [cleanup](ILifeCycleAdapterMain.md#cleanup)
+- [getCrashLog](ILifeCycleAdapterMain.md#getcrashlog)
 - [init](ILifeCycleAdapterMain.md#init)
 - [remove](ILifeCycleAdapterMain.md#remove)
 
@@ -35,6 +36,20 @@ Removes resources.
 #### Defined in
 
 [packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
+
+___
+
+### getCrashLog
+
+▸ **getCrashLog**(): `Promise`<`string`[]\>
+
+#### Returns
+
+`Promise`<`string`[]\>
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L24)
 
 ___
 

@@ -23,6 +23,7 @@ Adapter for running Instance by Runner executed in separate process.
 ### Methods
 
 - [cleanup](KubernetesInstanceAdapter.md#cleanup)
+- [getCrashLog](KubernetesInstanceAdapter.md#getcrashlog)
 - [init](KubernetesInstanceAdapter.md#init)
 - [monitorRate](KubernetesInstanceAdapter.md#monitorrate)
 - [remove](KubernetesInstanceAdapter.md#remove)
@@ -37,6 +38,7 @@ Adapter for running Instance by Runner executed in separate process.
 ### Accessors
 
 - [kubeClient](KubernetesInstanceAdapter.md#kubeclient)
+- [runnerResourcesConfig](KubernetesInstanceAdapter.md#runnerresourcesconfig)
 
 ## Properties
 
@@ -46,7 +48,7 @@ Adapter for running Instance by Runner executed in separate process.
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L31)
+[kubernetes-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L32)
 
 ___
 
@@ -56,7 +58,7 @@ ___
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L30)
+[kubernetes-instance-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L31)
 
 ___
 
@@ -66,7 +68,7 @@ ___
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L33)
+[kubernetes-instance-adapter.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L34)
 
 ___
 
@@ -80,7 +82,7 @@ ILifeCycleAdapterMain.logger
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L27)
+[kubernetes-instance-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L28)
 
 ___
 
@@ -90,7 +92,7 @@ ___
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L28)
+[kubernetes-instance-adapter.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L29)
 
 ## Methods
 
@@ -108,7 +110,25 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:152](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L152)
+[kubernetes-instance-adapter.ts:169](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L169)
+
+___
+
+### getCrashLog
+
+▸ **getCrashLog**(): `Promise`<`string`[]\>
+
+#### Returns
+
+`Promise`<`string`[]\>
+
+#### Implementation of
+
+ILifeCycleAdapterMain.getCrashLog
+
+#### Defined in
+
+[kubernetes-instance-adapter.ts:194](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L194)
 
 ___
 
@@ -126,7 +146,7 @@ ILifeCycleAdapterMain.init
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L56)
+[kubernetes-instance-adapter.ts:57](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L57)
 
 ___
 
@@ -150,7 +170,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:157](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L157)
+[kubernetes-instance-adapter.ts:174](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L174)
 
 ___
 
@@ -174,7 +194,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L166)
+[kubernetes-instance-adapter.ts:183](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L183)
 
 ___
 
@@ -200,7 +220,7 @@ ILifeCycleAdapterRun.run
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L69)
+[kubernetes-instance-adapter.ts:83](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L83)
 
 ___
 
@@ -224,7 +244,7 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L63)
+[kubernetes-instance-adapter.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L64)
 
 ___
 
@@ -244,7 +264,7 @@ ___
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L161)
+[kubernetes-instance-adapter.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L178)
 
 ## Constructors
 
@@ -260,7 +280,7 @@ ___
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L35)
+[kubernetes-instance-adapter.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L36)
 
 ## Accessors
 
@@ -274,4 +294,27 @@ ___
 
 #### Defined in
 
-[kubernetes-instance-adapter.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L48)
+[kubernetes-instance-adapter.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L49)
+
+___
+
+### runnerResourcesConfig
+
+• `Private` `get` **runnerResourcesConfig**(): `Object`
+
+#### Returns
+
+`Object`
+
+| Name | Type |
+| :------ | :------ |
+| `limits` | { `cpu`: `string` ; `memory`: `string`  } |
+| `limits.cpu` | `string` |
+| `limits.memory` | `string` |
+| `requests` | { `cpu`: `string` ; `memory`: `string`  } |
+| `requests.cpu` | `string` |
+| `requests.memory` | `string` |
+
+#### Defined in
+
+[kubernetes-instance-adapter.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-instance-adapter.ts#L70)

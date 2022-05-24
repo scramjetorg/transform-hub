@@ -6,13 +6,17 @@
 
 ### Methods
 
+- [addObjectLoggerSource](IObjectLogger.md#addobjectloggersource)
 - [addOutput](IObjectLogger.md#addoutput)
+- [addSerializedLoggerSource](IObjectLogger.md#addserializedloggersource)
 - [debug](IObjectLogger.md#debug)
+- [end](IObjectLogger.md#end)
 - [error](IObjectLogger.md#error)
 - [fatal](IObjectLogger.md#fatal)
 - [info](IObjectLogger.md#info)
 - [pipe](IObjectLogger.md#pipe)
 - [trace](IObjectLogger.md#trace)
+- [unpipe](IObjectLogger.md#unpipe)
 - [warn](IObjectLogger.md#warn)
 - [write](IObjectLogger.md#write)
 
@@ -24,6 +28,26 @@
 - [outputLogStream](IObjectLogger.md#outputlogstream)
 
 ## Methods
+
+### addObjectLoggerSource
+
+▸ **addObjectLoggerSource**(`source`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `source` | [`IObjectLogger`](IObjectLogger.md) |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/types/src/object-logger.ts:66](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L66)
+
+___
 
 ### addOutput
 
@@ -45,6 +69,26 @@
 
 ___
 
+### addSerializedLoggerSource
+
+▸ **addSerializedLoggerSource**(`source`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `source` | `Readable` |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/types/src/object-logger.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L67)
+
+___
+
 ### debug
 
 ▸ **debug**(`entry`, ...`optionalParams`): `void`
@@ -55,6 +99,20 @@ ___
 | :------ | :------ |
 | `entry` | `string` \| `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: [`LogLevel`](../modules.md#loglevel) ; `msg`: `string` ; `ts`: `number`  }\> |
 | `...optionalParams` | `any`[] |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/types/src/object-logger.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L59)
+
+___
+
+### end
+
+▸ **end**(): `void`
 
 #### Returns
 
@@ -83,7 +141,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L58)
+[packages/types/src/object-logger.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L60)
 
 ___
 
@@ -104,7 +162,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:59](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L59)
+[packages/types/src/object-logger.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L61)
 
 ___
 
@@ -125,7 +183,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:60](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L60)
+[packages/types/src/object-logger.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L62)
 
 ___
 
@@ -139,6 +197,7 @@ ___
 | :------ | :------ |
 | `target` | `Writable` \| [`IObjectLogger`](IObjectLogger.md) |
 | `options?` | `Object` |
+| `options.end?` | `boolean` |
 | `options.stringified?` | `boolean` |
 
 #### Returns
@@ -147,7 +206,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L63)
+[packages/types/src/object-logger.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L69)
 
 ___
 
@@ -168,7 +227,27 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L61)
+[packages/types/src/object-logger.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L63)
+
+___
+
+### unpipe
+
+▸ **unpipe**(`target`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `target` | `Writable` \| [`IObjectLogger`](IObjectLogger.md) |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/types/src/object-logger.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L70)
 
 ___
 
@@ -189,7 +268,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/object-logger.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L62)
+[packages/types/src/object-logger.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L64)
 
 ___
 

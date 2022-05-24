@@ -20,6 +20,8 @@
 - [DockerVolume](modules.md#dockervolume)
 - [ExitData](modules.md#exitdata)
 - [InstanceAdapterOptions](modules.md#instanceadapteroptions)
+- [RunnerEnvConfig](modules.md#runnerenvconfig)
+- [RunnerEnvironmentVariables](modules.md#runnerenvironmentvariables)
 
 ### Classes
 
@@ -278,6 +280,37 @@ ___
 #### Defined in
 
 [types.ts:306](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L306)
+
+___
+
+### RunnerEnvConfig
+
+Ƭ **RunnerEnvConfig**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `instanceId` | `InstanceId` |
+| `instancesServerHost` | `string` |
+| `instancesServerPort` | `number` |
+| `paths?` | ``"posix"`` \| ``"win32"`` |
+| `pipesPath` | `string` |
+| `sequencePath` | `string` |
+
+#### Defined in
+
+[types.ts:310](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L310)
+
+___
+
+### RunnerEnvironmentVariables
+
+Ƭ **RunnerEnvironmentVariables**: `Partial`<{ `[key: string]`: `string`; `CRASH_LOG`: `string` ; `DEVELOPMENT`: `string` ; `INSTANCES_SERVER_HOST`: `string` ; `INSTANCES_SERVER_PORT`: `string` ; `INSTANCE_ID`: `string` ; `PATH`: `string` ; `PIPES_LOCATION`: `string` ; `PRODUCTION`: `string` ; `SEQUENCE_PATH`: `string`  }\>
+
+#### Defined in
+
+[types.ts:319](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/types.ts#L319)
 
 ## Variables
 

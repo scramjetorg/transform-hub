@@ -4,6 +4,10 @@
 
 ## Table of contents
 
+### Type aliases
+
+- [CancellablePromise](modules.md#cancellablepromise)
+
 ### Classes
 
 - [FreePortsFinder](classes/FreePortsFinder.md)
@@ -11,6 +15,7 @@
 
 ### Functions
 
+- [cancellableDefer](modules.md#cancellabledefer)
 - [defer](modules.md#defer)
 - [isDefined](modules.md#isdefined)
 - [isStartSequenceDTO](modules.md#isstartsequencedto)
@@ -20,8 +25,39 @@
 - [readConfigFile](modules.md#readconfigfile)
 - [readJsonFile](modules.md#readjsonfile)
 - [readStreamedJSON](modules.md#readstreamedjson)
+- [streamToString](modules.md#streamtostring)
+
+## Type aliases
+
+### CancellablePromise
+
+Ƭ **CancellablePromise**: `Promise`<`void`\> & { `cancel`: () => `boolean`  }
+
+#### Defined in
+
+[packages/utility/src/defer.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/defer.ts#L13)
 
 ## Functions
+
+### cancellableDefer
+
+▸ **cancellableDefer**(`timeout?`): [`CancellablePromise`](modules.md#cancellablepromise)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `timeout?` | `number` |
+
+#### Returns
+
+[`CancellablePromise`](modules.md#cancellablepromise)
+
+#### Defined in
+
+[packages/utility/src/defer.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/defer.ts#L17)
+
+___
 
 ### defer
 
@@ -251,3 +287,23 @@ Promise that resolves with the parsed JSON.
 #### Defined in
 
 [packages/utility/src/read-streamed-json.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-streamed-json.ts#L10)
+
+___
+
+### streamToString
+
+▸ **streamToString**(`stream`): `Promise`<`string`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `stream` | `Readable` |
+
+#### Returns
+
+`Promise`<`string`\>
+
+#### Defined in
+
+[packages/utility/src/stream-to-string.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/stream-to-string.ts#L3)
