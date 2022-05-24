@@ -94,7 +94,6 @@ export const hub: CommandDefinition = (program) => {
                 const host = hosts.find((h: any) => h.id === id);
 
                 displayObject(host);
-                displayObject(space);
             });
     }
 
