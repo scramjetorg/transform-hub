@@ -4,7 +4,7 @@ import { Readable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { MaybePromise } from "./utils";
 import { ExitCode } from "./lifecycle-adapters";
-import { InstanceConifg } from "./runner-config";
+import { InstanceConfig } from "./runner-config";
 
 // TODO: Rename. it is not a runner config but response from Pre-runner.
 export interface ILifeCycleAdapter {
@@ -19,15 +19,15 @@ export interface ILifeCycleAdapter {
      * @param {Readable} stream Stream with package.
      * @returns {MaybePromise<SequenceConfig>}
      */
-    identify(stream: Readable): MaybePromise<InstanceConifg>;
+    identify(stream: Readable): MaybePromise<InstanceConfig>;
 
     /**
       * Starts Runner.
       *
-      * @param {InstanceConifg} Runner configuration.
+      * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    run(config: InstanceConifg): Promise<ExitCode>;
+    run(config: InstanceConfig): Promise<ExitCode>;
 
     /**
      * Removes resources.

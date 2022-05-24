@@ -6,5 +6,8 @@ export type StartSequencePayload = {
     appConfig: AppConfig,
     args?: any[],
     outputTopic?: string,
-    inputTopic?: string
+    inputTopic?: string,
+    limits?: {
+        memory: number
+    }
 }

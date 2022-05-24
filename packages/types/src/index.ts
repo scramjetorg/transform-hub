@@ -31,6 +31,7 @@ export * from "./load-check-stat";
 export * from "./network-info";
 export * from "./instance-store";
 export * from "./instance";
+export * from "./instance-limits";
 export * from "./sth-command-options";
 
 export { MRestAPI };

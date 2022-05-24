@@ -1,5 +1,6 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
+import { InstanceLimits } from "./instance-limits";
 import { PortConfig } from "./sequence-package-json";
 import { RunnerContainerConfiguration } from "./sth-configuration";
 
@@ -34,4 +35,4 @@ export type KubernetesSequenceConfig = CommonSequenceConfig & {
 
 export type SequenceConfig = DockerSequenceConfig | ProcessSequenceConfig | KubernetesSequenceConfig
 
-export type InstanceConifg = SequenceConfig & { instanceAdapterExitDelay: number }
+export type InstanceConfig = SequenceConfig & { instanceAdapterExitDelay: number, limits: InstanceLimits }

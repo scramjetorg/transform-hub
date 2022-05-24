@@ -8,7 +8,7 @@ import {
     ILifeCycleAdapterRun,
     IObjectLogger,
     MonitoringMessageData,
-    SequenceConfig,
+    InstanceConfig,
     RunnerContainerConfiguration,
 } from "@scramjet/types";
 import path from "path";
@@ -160,13 +160,15 @@ IComponent {
     }
 
     // eslint-disable-next-line complexity
-    async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "docker") {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
 
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
+
+        config.container.maxMem = config.limits.memory || config.container.maxMem;
 
         this.logger.info("Instance preparation done for config", config);
 

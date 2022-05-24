@@ -11,12 +11,13 @@ import {
     ReadableStream,
     SequenceInfo,
     WritableStream,
-    InstanceConifg,
+    InstanceConfig,
     ILifeCycleAdapterRun,
     MessageDataType,
     IObjectLogger,
     STHRestAPI,
     STHConfiguration,
+    InstanceLimits,
     InstanceStatus
 } from "@scramjet/types";
 import {
@@ -64,6 +65,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     private keepAliveRequested?: boolean;
     sthConfig: STHConfiguration;
+    limits: InstanceLimits;
     sequence: SequenceInfo;
     appConfig: AppConfig;
     instancePromise?: Promise<number>;
@@ -157,6 +159,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.outputTopic = payload.outputTopic;
         this.inputTopic = payload.inputTopic;
 
+        this.limits = { memory: (payload.limits?.memory || this.sthConfig.docker.runner.maxMem) as InstanceLimits["memory"] };
+
         this.communicationHandler = communicationHandler;
 
         this.logger = new ObjLogger(this, { id: this.id });
@@ -217,8 +221,9 @@ export class CSIController extends TypedEmitter<Events> {
         this._instanceAdapter = getInstanceAdapter(this.sthConfig);
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
-        const instanceConfig: InstanceConifg = {
+        const instanceConfig: InstanceConfig = {
             ...this.sequence.config,
+            limits: this.limits,
             instanceAdapterExitDelay: this.sthConfig.instanceAdapterExitDelay
         };
 
