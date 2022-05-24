@@ -77,6 +77,9 @@ New features:
 - **Python in Docker image** - When running STH from docker image, you will have python installed to run python Sequences inside
 - **Infrastructure as Code mode** - allow configuring Sequences that should be started automatically when STH is started.
 - **Audit stream** - Adds middleware to Host API Server to intercept all requests and push their details to Audit stream.
+- **API client** in Python (basic implemantation).
+- **Resource limits** for runner pod in kubernetes adapter.
+- **Runner crashlog** - logs from a crashed runner should be available in host, even if the runner crashed before connecting.
 
 
 Bugfixes and minor improvements:
@@ -151,8 +154,17 @@ Bugfixes and minor improvements:
 - Select first healthy hub as default in CLI
 - Make rebuilding STH much faster
 - Ability to pass a RequestInit object to stream requests in Api clients (Fix ClientUtils for browser)
+- Handle async generator in python runner
+- Include the original API response status code and message in the api-client error type
+- Add sequence add/del, instance start/end status change to audit stream
+- Various improvements in CLI output and option handling
+- Handle Runner failure and Sequence errors on Sequence start, show errors
+- Move (almost all) reference apps to separate repository
+- Show more information with `si hub info` command
+- Fix CLI output format
+- Rewrite build scripts
 
 
-## @scramjet/transform Hub - v0.22.0
+## @scramjet/transform Hub - v0.23.0
 
 This is the last release in changelog.
