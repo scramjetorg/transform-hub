@@ -50,7 +50,7 @@ Feature: Test our shiny new Python runner
         Given host is running
         When sequence "../packages/reference-apps/python-chunk-lengths.tar.gz" loaded
         And instance started
-        And send file "../python/test/sample_unicode_1.txt" as text input
+        And send file "data/test-data/sample_unicode_1.txt" as text input
         Then "output" is "4,8,5,"
         And host is still running
 
@@ -60,7 +60,7 @@ Feature: Test our shiny new Python runner
         Given host is running
         When sequence "../packages/reference-apps/python-chunk-lengths.tar.gz" loaded
         And instance started
-        And send file "../python/test/sample_unicode_1.txt" as binary input
+        And send file "data/test-data/sample_unicode_1.txt" as binary input
         Then "output" is "20,"
         And host is still running
 
