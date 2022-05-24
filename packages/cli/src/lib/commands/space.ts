@@ -31,6 +31,24 @@ export const space: CommandDefinition = (program) => {
             });
 
     spaceCmd
+        .command("info")
+        /* TODO for future use
+    .argument("[<name>|<id>]")
+    // eslint-disable-next-line max-len
+    .description("display chosen space version if a name|id is not provided it displays a version of a current space")
+    */
+        .description("Display info about the default space")
+        .action(async () => {
+            const spaceId = sessionConfig.getConfig().lastSpaceId;
+            const managerClient = getMiddlewareClient().getManagerClient(spaceId);
+            const version = await managerClient.getVersion();
+
+            displayObject({ spaceId });
+            displayObject(version);
+            displayObject(managerClient);
+        });
+
+    spaceCmd
         .command("list")
         .alias("ls")
         .description("List all existing spaces")
