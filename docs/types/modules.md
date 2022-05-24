@@ -24,6 +24,7 @@
 
 ### Type aliases
 
+- [APIErrorMessage](modules.md#apierrormessage)
 - [AcknowledgeMessage](modules.md#acknowledgemessage)
 - [AcknowledgeMessageData](modules.md#acknowledgemessagedata)
 - [AppConfig](modules.md#appconfig)
@@ -186,6 +187,24 @@
 - [STHRestAPI](modules/STHRestAPI.md)
 
 ## Type aliases
+
+### APIErrorMessage
+
+Ƭ **APIErrorMessage**: `Object`
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `code` | `APIErrorCode` | A unique reference number for a given error type. |
+| `message` | `string` | An error message describing the potential cause of the error and possibly a way how to fix it. |
+| `url?` | `string` | A link to the detail information about the error. |
+
+#### Defined in
+
+[packages/types/src/rest-api-error/rest-api-error.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-error/rest-api-error.ts#L3)
+
+___
 
 ### AcknowledgeMessage
 
@@ -457,7 +476,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L93)
+[packages/types/src/message-streams.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L95)
 
 ___
 
@@ -587,7 +606,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L18)
+[packages/types/src/runner-config.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L19)
 
 ___
 
@@ -597,7 +616,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:127](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L127)
+[packages/types/src/message-streams.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L129)
 
 ___
 
@@ -613,7 +632,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L114)
+[packages/types/src/message-streams.ts:116](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L116)
 
 ___
 
@@ -650,7 +669,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L112)
+[packages/types/src/message-streams.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L114)
 
 ___
 
@@ -660,7 +679,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:99](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L99)
+[packages/types/src/message-streams.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L101)
 
 ___
 
@@ -676,7 +695,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L89)
+[packages/types/src/message-streams.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L91)
 
 ___
 
@@ -686,7 +705,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L111)
+[packages/types/src/message-streams.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L113)
 
 ___
 
@@ -696,7 +715,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:108](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L108)
+[packages/types/src/message-streams.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L110)
 
 ___
 
@@ -706,7 +725,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L109)
+[packages/types/src/message-streams.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L111)
 
 ___
 
@@ -943,7 +962,7 @@ ___
 
 ### HostErrorCode
 
-Ƭ **HostErrorCode**: ``"UNINITIALIZED_STREAM"`` \| ``"UNATTACHED_STREAMS"`` \| ``"UNKNOWN_CHANNEL"`` \| ``"LOG_NOT_AVAILABLE"`` \| ``"SEQUENCE_IDENTIFICATION_FAILED"`` \| ``"UNKNOWN_SEQUENCE"`` \| ``"UNKNOWN_INSTANCE"`` \| ``"EVENT_NAME_MISSING"`` \| ``"CONTROLLER_ERROR"`` \| ``"SOCKET_TAKEN"`` \| ``"API_CONFIGURATION_ERROR"`` \| ``"SEQUENCE_STARTUP_CONFIG_READ_ERROR"``
+Ƭ **HostErrorCode**: ``"UNINITIALIZED_STREAM"`` \| ``"UNATTACHED_STREAMS"`` \| ``"UNKNOWN_CHANNEL"`` \| ``"LOG_NOT_AVAILABLE"`` \| ``"SEQUENCE_IDENTIFICATION_FAILED"`` \| ``"UNKNOWN_SEQUENCE"`` \| ``"UNKNOWN_INSTANCE"`` \| ``"EVENT_NAME_MISSING"`` \| ``"CONTROLLER_ERROR"`` \| ``"SOCKET_TAKEN"`` \| ``"API_CONFIGURATION_ERROR"`` \| ``"SEQUENCE_STARTUP_CONFIG_READ_ERROR"`` \| ``"CPM_CONFIGURATION_ERROR"``
 
 #### Defined in
 
@@ -1016,6 +1035,7 @@ ___
 | :------ | :------ |
 | `appConfig?` | [`AppConfig`](modules.md#appconfig) |
 | `created?` | `Date` |
+| `ended?` | `Date` |
 | `id` | `string` |
 | `ports?` | `Record`<`string`, `number`\> |
 | `sequence` | `string` |
@@ -1061,7 +1081,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L38)
+[packages/types/src/runner-config.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L37)
 
 ___
 
@@ -1116,6 +1136,10 @@ ___
 | `runnerImages` | { `node`: `string` ; `python3`: `string`  } |
 | `runnerImages.node` | `string` |
 | `runnerImages.python3` | `string` |
+| `runnerResourcesLimitsCpu?` | `string` |
+| `runnerResourcesLimitsMemory?` | `string` |
+| `runnerResourcesRequestsCpu?` | `string` |
+| `runnerResourcesRequestsMemory?` | `string` |
 | `sequencesRoot` | `string` |
 | `sthPodHost` | `string` |
 | `timeout?` | `string` |
@@ -1195,7 +1219,7 @@ ___
 
 ### KubernetesSequenceConfig
 
-Ƭ **KubernetesSequenceConfig**: `CommonSequenceConfig` & { `sequenceDir`: `string` ; `type`: ``"kubernetes"``  }
+Ƭ **KubernetesSequenceConfig**: `CommonSequenceConfig` & { `type`: ``"kubernetes"``  }
 
 #### Defined in
 
@@ -1209,7 +1233,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L41)
+[packages/types/src/lifecycle-adapters.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L43)
 
 ___
 
@@ -1403,7 +1427,7 @@ ___
 
 ### MessageDataType
 
-Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? [`EmptyMessageData`](modules.md#emptymessagedata) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
+Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? [`EmptyMessageData`](modules.md#emptymessagedata) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_COMPLETED` ? `SequenceCompleteMessageData` : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
 
 #### Type parameters
 
@@ -1413,7 +1437,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:64](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L64)
+[packages/types/src/message-streams.ts:65](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L65)
 
 ___
 
@@ -1429,7 +1453,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L46)
+[packages/types/src/message-streams.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L47)
 
 ___
 
@@ -1506,7 +1530,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L101)
+[packages/types/src/message-streams.ts:103](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L103)
 
 ___
 
@@ -1692,7 +1716,7 @@ ___
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `objectId` | `string` | An instance of the object which the operation concerns, e.g. Instance ID. |
-| `opCode` | `OpRecordCode` | The type of recorded operation is identified by the code value from the OpRecord enumeration. |
+| `opCode` | `OpRecordCode` \| `SequenceMessageCode` \| `InstanceMessageCode` | The type of recorded operation is identified by the code value from the OpRecord enumeration. |
 | `opState` | `string` | The operation state from the OpState enumeration. |
 | `receivedAt` | `number` | The timestamp of when the operation was registered. |
 | `requestId?` | `string` | The generated unique request ID for operations coming from the API. |
@@ -1803,7 +1827,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L143)
+[packages/types/src/message-streams.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L145)
 
 ___
 
@@ -1847,11 +1871,11 @@ ___
 
 ### ProcessSequenceConfig
 
-Ƭ **ProcessSequenceConfig**: `CommonSequenceConfig` & { `sequenceDir`: `string` ; `type`: ``"process"``  }
+Ƭ **ProcessSequenceConfig**: `CommonSequenceConfig` & { `type`: ``"process"``  }
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L26)
+[packages/types/src/runner-config.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L27)
 
 ___
 
@@ -1861,7 +1885,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:201](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L201)
+[packages/types/src/sth-configuration.ts:205](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L205)
 
 ___
 
@@ -2031,6 +2055,10 @@ ___
 | `k8sRunnerCleanupTimeout` | `string` |
 | `k8sRunnerImage` | `string` |
 | `k8sRunnerPyImage` | `string` |
+| `k8sRunnerResourcesLimitsCpu` | `string` |
+| `k8sRunnerResourcesLimitsMemory` | `string` |
+| `k8sRunnerResourcesRequestsCpu` | `string` |
+| `k8sRunnerResourcesRequestsMemory` | `string` |
 | `k8sSequencesRoot` | `string` |
 | `k8sSthPodHost` | `string` |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) |
@@ -2086,7 +2114,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L81)
+[packages/types/src/sth-configuration.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L85)
 
 ___
 
@@ -2135,14 +2163,14 @@ ___
 
 ### SequenceCompleteMessage
 
-Ƭ **SequenceCompleteMessage**: { `msgCode`: `RunnerMessageCode.SEQUENCE_COMPLETED`  } & [`EmptyMessageData`](modules.md#emptymessagedata)
+Ƭ **SequenceCompleteMessage**: { `msgCode`: `RunnerMessageCode.SEQUENCE_COMPLETED`  } & `SequenceCompleteMessageData`
 
 Message from the Runner indicating that the Sequence has completed sending it's data
 and now can be asked to exit with high probability of accepting the exit gracefully.
 
 #### Defined in
 
-[packages/types/src/messages/sequence-complete.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence-complete.ts#L8)
+[packages/types/src/messages/sequence-complete.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/sequence-complete.ts#L11)
 
 ___
 
@@ -2152,7 +2180,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L36)
+[packages/types/src/runner-config.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L35)
 
 ___
 
@@ -2668,7 +2696,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/message-streams.ts:131](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L131)
+[packages/types/src/message-streams.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L133)
 
 ___
 

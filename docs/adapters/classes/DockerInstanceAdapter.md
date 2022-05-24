@@ -15,6 +15,7 @@ Adapter for running Instance by Runner executed in Docker container.
 ### Methods
 
 - [cleanup](DockerInstanceAdapter.md#cleanup)
+- [getCrashLog](DockerInstanceAdapter.md#getcrashlog)
 - [getNetworkSetup](DockerInstanceAdapter.md#getnetworksetup)
 - [getPortsConfig](DockerInstanceAdapter.md#getportsconfig)
 - [init](DockerInstanceAdapter.md#init)
@@ -30,6 +31,7 @@ Adapter for running Instance by Runner executed in Docker container.
 
 ### Properties
 
+- [crashLogStreams](DockerInstanceAdapter.md#crashlogstreams)
 - [dockerHelper](DockerInstanceAdapter.md#dockerhelper)
 - [logger](DockerInstanceAdapter.md#logger)
 - [resources](DockerInstanceAdapter.md#resources)
@@ -53,7 +55,25 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[docker-instance-adapter.ts:252](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L252)
+[docker-instance-adapter.ts:237](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L237)
+
+___
+
+### getCrashLog
+
+▸ **getCrashLog**(): `Promise`<`string`[]\>
+
+#### Returns
+
+`Promise`<`string`[]\>
+
+#### Implementation of
+
+ILifeCycleAdapterMain.getCrashLog
+
+#### Defined in
+
+[docker-instance-adapter.ts:266](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L266)
 
 ___
 
@@ -67,7 +87,7 @@ ___
 
 #### Defined in
 
-[docker-instance-adapter.ts:123](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L123)
+[docker-instance-adapter.ts:125](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L125)
 
 ___
 
@@ -92,7 +112,7 @@ Configuration for exposing and binding ports in Docker container.
 
 #### Defined in
 
-[docker-instance-adapter.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L87)
+[docker-instance-adapter.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L89)
 
 ___
 
@@ -110,7 +130,7 @@ ILifeCycleAdapterMain.init
 
 #### Defined in
 
-[docker-instance-adapter.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L42)
+[docker-instance-adapter.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L44)
 
 ___
 
@@ -134,7 +154,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[docker-instance-adapter.ts:264](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L264)
+[docker-instance-adapter.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L249)
 
 ___
 
@@ -160,7 +180,7 @@ Promise resolving with map of ports mapping.
 
 #### Defined in
 
-[docker-instance-adapter.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L56)
+[docker-instance-adapter.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L58)
 
 ___
 
@@ -180,7 +200,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[docker-instance-adapter.ts:271](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L271)
+[docker-instance-adapter.ts:256](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L256)
 
 ___
 
@@ -206,7 +226,7 @@ ILifeCycleAdapterRun.run
 
 #### Defined in
 
-[docker-instance-adapter.ts:161](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L161)
+[docker-instance-adapter.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L163)
 
 ___
 
@@ -234,7 +254,7 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[docker-instance-adapter.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L104)
+[docker-instance-adapter.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L106)
 
 ## Constructors
 
@@ -244,9 +264,19 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[docker-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L35)
+[docker-instance-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L37)
 
 ## Properties
+
+### crashLogStreams
+
+• `Optional` **crashLogStreams**: `Promise`<`string`[]\>
+
+#### Defined in
+
+[docker-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L35)
+
+___
 
 ### dockerHelper
 
@@ -254,7 +284,7 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[docker-instance-adapter.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L29)
+[docker-instance-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L30)
 
 ___
 
@@ -268,7 +298,7 @@ ILifeCycleAdapterMain.logger
 
 #### Defined in
 
-[docker-instance-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L33)
+[docker-instance-adapter.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L34)
 
 ___
 
@@ -278,4 +308,4 @@ ___
 
 #### Defined in
 
-[docker-instance-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L31)
+[docker-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L32)

@@ -6,6 +6,7 @@
 
 ### Enumerations
 
+- [APIErrorCode](enums/APIErrorCode.md)
 - [CPMMessageCode](enums/CPMMessageCode.md)
 - [CommunicationChannel](enums/CommunicationChannel.md)
 - [InstanceMessageCode](enums/InstanceMessageCode.md)

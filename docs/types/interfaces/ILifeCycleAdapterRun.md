@@ -13,6 +13,7 @@
 ### Methods
 
 - [cleanup](ILifeCycleAdapterRun.md#cleanup)
+- [getCrashLog](ILifeCycleAdapterRun.md#getcrashlog)
 - [init](ILifeCycleAdapterRun.md#init)
 - [monitorRate](ILifeCycleAdapterRun.md#monitorrate)
 - [remove](ILifeCycleAdapterRun.md#remove)
@@ -42,6 +43,24 @@ Removes resources.
 #### Defined in
 
 [packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
+
+___
+
+### getCrashLog
+
+▸ **getCrashLog**(): `Promise`<`string`[]\>
+
+#### Returns
+
+`Promise`<`string`[]\>
+
+#### Inherited from
+
+[ILifeCycleAdapterMain](ILifeCycleAdapterMain.md).[getCrashLog](ILifeCycleAdapterMain.md#getcrashlog)
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L24)
 
 ___
 
@@ -81,7 +100,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L35)
+[packages/types/src/lifecycle-adapters.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L37)
 
 ___
 
@@ -125,7 +144,7 @@ Runner exit code.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L33)
+[packages/types/src/lifecycle-adapters.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L35)
 
 ___
 
@@ -145,7 +164,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L37)
+[packages/types/src/lifecycle-adapters.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L39)
 
 ## Properties
 

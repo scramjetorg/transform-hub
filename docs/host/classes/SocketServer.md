@@ -88,7 +88,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L100)
+[packages/host/src/lib/socket-server.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L91)
 
 ___
 
@@ -499,7 +499,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L38)
+[packages/host/src/lib/socket-server.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L37)
 
 ## Constructors
 
@@ -519,7 +519,7 @@ TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L32)
+[packages/host/src/lib/socket-server.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L31)
 
 ## Properties
 
@@ -533,7 +533,7 @@ IComponent.logger
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L28)
+[packages/host/src/lib/socket-server.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L27)
 
 ___
 
@@ -543,4 +543,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/socket-server.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L26)
+[packages/host/src/lib/socket-server.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/socket-server.ts#L25)

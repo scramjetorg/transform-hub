@@ -64,7 +64,7 @@ Object with container's standard I/O streams.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:243](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L243)
+[dockerode-docker-helper.ts:269](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L269)
 
 ___
 
@@ -89,7 +89,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:335](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L335)
+[dockerode-docker-helper.ts:361](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L361)
 
 ___
 
@@ -128,7 +128,7 @@ Promise resolving with created container id.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:80](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L80)
+[dockerode-docker-helper.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L81)
 
 ___
 
@@ -152,7 +152,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:339](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L339)
+[dockerode-docker-helper.ts:365](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L365)
 
 ___
 
@@ -180,7 +180,7 @@ Volume name.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:207](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L207)
+[dockerode-docker-helper.ts:233](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L233)
 
 ___
 
@@ -204,7 +204,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:321](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L321)
+[dockerode-docker-helper.ts:347](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L347)
 
 ___
 
@@ -224,7 +224,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:168](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L168)
+[dockerode-docker-helper.ts:169](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L169)
 
 ___
 
@@ -242,7 +242,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:316](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L316)
+[dockerode-docker-helper.ts:342](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L342)
 
 ___
 
@@ -262,7 +262,7 @@ Lists existing volumes
 
 #### Defined in
 
-[dockerode-docker-helper.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L228)
+[dockerode-docker-helper.ts:254](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L254)
 
 ___
 
@@ -289,7 +289,7 @@ Fetches the image from repo
 
 #### Defined in
 
-[dockerode-docker-helper.ts:174](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L174)
+[dockerode-docker-helper.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L175)
 
 ___
 
@@ -317,7 +317,7 @@ Promise which resolves when container has been removed.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L154)
+[dockerode-docker-helper.ts:155](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L155)
 
 ___
 
@@ -345,7 +345,7 @@ Promise which resolves when volume has been removed.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L224)
+[dockerode-docker-helper.ts:250](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L250)
 
 ___
 
@@ -373,7 +373,7 @@ Starts container.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:253](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L253)
+[dockerode-docker-helper.ts:279](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L279)
 
 ___
 
@@ -401,7 +401,7 @@ Promise resolving when container has been started.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:134](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L134)
+[dockerode-docker-helper.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L135)
 
 ___
 
@@ -429,7 +429,7 @@ Promise which resolves with container statistics.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:164](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L164)
+[dockerode-docker-helper.ts:165](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L165)
 
 ___
 
@@ -457,7 +457,7 @@ Promise which resolves when the container has been stopped.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L144)
+[dockerode-docker-helper.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L145)
 
 ___
 
@@ -485,7 +485,7 @@ Translated volumes configuration.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L54)
+[dockerode-docker-helper.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L55)
 
 ___
 
@@ -514,7 +514,7 @@ Container exit code.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:310](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L310)
+[dockerode-docker-helper.ts:336](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L336)
 
 ## Constructors
 
@@ -530,7 +530,7 @@ Container exit code.
 
 #### Defined in
 
-[dockerode-docker-helper.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L44)
+[dockerode-docker-helper.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L45)
 
 ___
 
@@ -544,7 +544,7 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L46)
+[dockerode-docker-helper.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L47)
 
 ___
 
@@ -558,4 +558,4 @@ ___
 
 #### Defined in
 
-[dockerode-docker-helper.ts:172](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L172)
+[dockerode-docker-helper.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/dockerode-docker-helper.ts#L173)
