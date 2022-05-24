@@ -3,13 +3,14 @@ const glob = require("glob");
 const path = require("path");
 const { promises: { access }, constants } = require("fs");
 const { chmod, readFile, writeFile } = require("fs/promises");
-const { runCommand } = require("./build-utils");
+const { runCommand, exists } = require("./build-utils");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
     PACKAGES_DIR = process.env.PACKAGES_DIR || "packages";
 
     constructor(options) {
+        this.logs = [];
         this.options = options || {};
 
         if (!this.options.outDir) {
@@ -35,6 +36,11 @@ class PrePack {
         this.packagesMap = null;
     }
 
+    log(...txt) {
+        this.logs.push(txt);
+        (this.options.log || console.error)(...txt);
+    }
+
     async build() {
         try {
             await this.readPackageJson();
@@ -48,7 +54,7 @@ class PrePack {
             await this.readRootPackage();
             await this.makePackagesMap();
 
-            if (!this.options.localCopy) {
+            if (await exists(this.currDirDist) && !this.options.localCopy) {
                 await this.copyFiles();
             }
 
@@ -59,9 +65,9 @@ class PrePack {
             if (!this.options.noInstall) {
                 await this.install();
             }
-        } catch (message) {
-            console.error(message);
-            process.exitCode = 1;
+        } catch (err) {
+            this.log(err);
+            throw err;
         }
     }
 
@@ -166,7 +172,7 @@ class PrePack {
     }
 
     async copy(input, output) {
-        console.log(`Copy files from ${input} to ${output}`);
+        this.log(`Copy files from ${input} to ${output}`);
 
         return fse.copy(input, output, { recursive: true })
             .catch(err => {
@@ -261,7 +267,7 @@ class PrePack {
 
                 if (!contents.match(/^\s*#!\/usr\/bin\/env ts-node/)) return;
 
-                console.log(`Replacing shebang in ${file}`);
+                this.log(`Replacing shebang in ${file}`);
                 await writeFile(file, contents.replace(/^\s*#!\/usr\/bin\/env ts-node/, "#!/usr/bin/env node"));
                 await chmod(file, 0o755);
             }
@@ -269,7 +275,7 @@ class PrePack {
     }
 
     async savePkgJson(content) {
-        console.log(`Add package.json to ${this.rootDistPackPath}`);
+        this.log(`Add package.json to ${this.rootDistPackPath}`);
 
         return fse.outputJSON(path.join(this.rootDistPackPath, "package.json"), content, { spaces: 2 })
             .catch(err => {

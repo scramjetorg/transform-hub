@@ -4,6 +4,8 @@ const { join, resolve } = require("path");
 const glob = require("glob");
 const { exec } = require("child_process");
 
+const { access } = require("fs/promises");
+
 function getTSDirectoriesFromGlobs(cwd, globs, tsConfigName = "tsconfig.json") {
     const packages = globs
         .map((pattern) => glob.sync(pattern, { cwd }))
@@ -14,6 +16,15 @@ function getTSDirectoriesFromGlobs(cwd, globs, tsConfigName = "tsconfig.json") {
 
     return packages;
 }
+
+const exists = async (name) => {
+    try {
+        await access(name);
+        return true;
+    } catch {
+        return false;
+    }
+};
 
 function getTSDirectoriesFromPackage(_cwd, _dir, pkg, workspaceFilter, tsConfigName = "tsconfig.json") {
     const cwd = resolve(_cwd, _dir || ".");
@@ -38,10 +49,10 @@ const findClosestPackageJSONLocation = (_cwd) => {
     const pathParts = cwd.split(path.sep);
 
     while (pathParts.length) {
-        const package = path.resolve(...pathParts, "package.json");
+        const pkg = path.resolve(...pathParts, "package.json");
 
-        if (existsSync(package)) {
-            return package;
+        if (existsSync(pkg)) {
+            return pkg;
         }
         pathParts.pop();
     }
@@ -85,6 +96,7 @@ async function runCommand(cmd, verbose) {
 
 module.exports = {
     runCommand,
+    exists,
     getPackageList,
     findClosestPackageJSONLocation,
     readClosestPackageJSON,

@@ -10,6 +10,13 @@
     "clean:docker": "docker rm -f scramjetorg/pre-runner; docker volume rm scramjetorg/prerunner-$(git rev-parse --short HEAD)",
     "clean": "rm -rf ./dist .bic_cache"
   },
+  "assets": [
+    "env.sh",
+    "identify.sh",
+    "permissions.sh",
+    "unpack-identify.sh",
+    "unpack.sh"
+  ],
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
   "repository": {
