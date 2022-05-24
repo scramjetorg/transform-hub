@@ -16,6 +16,7 @@ WORKDIR ${HUB_DIR}
 
 COPY ./env.sh .
 COPY ./unpack.sh .
+COPY ./permissions.sh .
 COPY ./identify.sh .
 COPY ./unpack-identify.sh .
 
