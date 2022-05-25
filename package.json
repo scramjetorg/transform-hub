@@ -44,7 +44,7 @@
     "start:dev:cli": "ts-node packages/cli/src/bin/index.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "prepare": "npx husky install",
-    "download:refapps": "cd packages/reference-apps && curl -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q -nc",
+    "download:refapps": "cd packages/reference-apps && wget -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' -O - | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q -nc",
     "test": "yarn test:packages",
     "test:packages": "scripts/run-script.js test",
     "test:packages-no-concurrent": "scripts/run-script.js -j 1 test",
