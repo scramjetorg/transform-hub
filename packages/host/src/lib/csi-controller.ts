@@ -65,7 +65,7 @@ export class CSIController extends TypedEmitter<Events> {
 
     private keepAliveRequested?: boolean;
     sthConfig: STHConfiguration;
-    limits: InstanceLimits;
+    limits: InstanceLimits = {};
     sequence: SequenceInfo;
     appConfig: AppConfig;
     instancePromise?: Promise<number>;

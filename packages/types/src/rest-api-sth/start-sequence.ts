@@ -1,4 +1,5 @@
 import { AppConfig } from "../app-config";
+import { InstanceLimits } from "../instance-limits";
 
 export type StartSequenceResponse = { result: "success", id: string } | { result: "error", error: unknown }
 
@@ -7,7 +8,5 @@ export type StartSequencePayload = {
     args?: any[],
     outputTopic?: string,
     inputTopic?: string,
-    limits?: {
-        memory: number
-    }
+    limits?: InstanceLimits
 }
