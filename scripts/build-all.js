@@ -1,26 +1,78 @@
 #!/usr/bin/env node
 
-const { createSolutionBuilderHost, sys } = require("typescript");
-const { createSolutionBuilder } = require("typescript");
-const { readClosestPackageJSON, runCommand, getPackageList } = require("./lib/build-utils");
+"use strict";
+
+const {
+    runCommand, getPackagesInWorkspace,
+    makeTypescriptSolutionForPackageList, findClosestPackageJSONLocation
+} = require("./lib/build-utils");
 const minimist = require("minimist");
-const { join } = require("path");
+const { join, resolve, relative } = require("path");
 
 const { DataStream } = require("scramjet");
 const PrePack = require("./lib/pre-pack");
 const { writeFile } = require("fs/promises");
+const { getDeepDeps } = require("./lib/get-deep-deps");
+const { cwd, env } = require("process");
+const { getDepTypes } = require("./lib/opts");
+const { existsSync } = require("fs");
 
-const opts = minimist(process.argv.slice(2), { boolean: ["dirs", "list", "workspaces"] });
+const opts = minimist(process.argv.slice(2), {
+    alias: {
+        list: "l",
+        fast: "f",
+        help: ["h", "?"],
+        workspace: "w",
+        dependencies: "d",
+        root: "r",
+    },
+    default: {
+        root: env.WORKSPACE_ROOT || cwd(),
+        build: !env.NO_BUILD,
+        dist: !env.NO_COPY_DIST,
+        install: !env.NO_INSTALL,
+        outdir: env.OUT_DIR || "dist",
+        "link-packages": env.LOCAL_PACKAGES,
+        "local-copy": env.LOCAL_COPY,
+        "flat-packages": env.FLAT_PACKAGES,
+        "make-public": env.MAKE_PUBLIC,
+    },
+    boolean: [
+        "install", "build", "dist",
+        "list", "long-help", "fast", "help"
+    ]
+});
 
-if (opts.help || opts.h || opts["?"]) {
-    console.error(`Usage: ${process.argv[1]} [--workspaces] [<workdir>] [<workspace> [<workspaces>...]] [--build-script=<name>] [--config-name=<tsconfig.name.json>] [--fast] [--copy-dist]`);
-    console.error(`       ${process.argv[1]} --dirs <dir> [<dirs>...] [--config-name=<tsconfig.name.json>] [--fast] #builds specific directories`);
-    console.error(`       ${process.argv[1]} --list [--workspaces|--dirs] [<args>...] # prints list of dirs or workspaces`);
-    console.error(`       ${process.argv[1]} --config=<tsconfig.location.json> # builds one specific tsconfig`);
+if (opts.help || opts["long-help"]) {
+    const pName = relative(cwd(), process.argv[1]);
+    const spaces = " ".repeat(pName.length);
+
+    console.error("Builds TS and copies results to dist dir");
+    console.error(`Usage: ${pName} [options]`);
+    console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
+    console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
+    console.error(`       ${spaces} -l,--list - prints list of dirs and exits`);
+    console.error(`       ${spaces} -r,--root <root> - main directory (default is cwd, env: WORKSPACE_ROOT)`);
+    console.error(`       ${spaces} -f,--fast - do not install if package-lock.json exists in dist`);
+    console.error(`       ${spaces} --long-help - for more options`);
+
+    if (opts["long-help"]) {
+        console.error(`       ${spaces} --ts-config <name> - the name of tsconfig.json file (default is tsconfig.json)`);
+        console.error(`       ${spaces} --outdir - output directory (default <root>/DIST, env: OUT_DIR)`);
+        console.error(`       ${spaces} --no-build - do not run install in dist, env: NO_BUILD`);
+        console.error(`       ${spaces} --no-dist - do not run copy to dist, env: NO_COPY_DIST`);
+        console.error(`       ${spaces} --no-install - do not run install in dist, env: NO_INSTALL`);
+        console.error(`       ${spaces} --link-packages - hardlink packages via file://, env: LOCAL_PACKAGES`);
+        console.error(`       ${spaces} --flat-packages - copy all packages to one dir, env: FLAT_PACKAGES`);
+        console.error(`       ${spaces} --local-copy - copy license and readme, env: LOCAL_COPY`);
+        console.error(`       ${spaces} --make-public - unprivate the package, env: MAKE_PUBLIC`);
+        console.error(`       ${spaces} --bundle - install locally in the package not workspace`);
+    }
+
     process.exit(1);
 }
 
-const BUILD_NAME = "=== === === === === ===\nbuild";
+const BUILD_NAME = "build";
 
 console.time(BUILD_NAME);
 
@@ -28,38 +80,30 @@ console.time(BUILD_NAME);
 (async function() {
     let exitcode;
 
-    if (!opts["no-build"]) {
-        console.timeLog(BUILD_NAME, "Finding packages to build");
+    const pkg = findClosestPackageJSONLocation(opts.root);
+    const allPackages = getPackagesInWorkspace(pkg, [opts.workspace].flat().filter(x => x));
+    let packages = allPackages;
 
-        const pkg = readClosestPackageJSON();
-        const nodeSystem = createSolutionBuilderHost(sys);
-        const configName = opts["config-name"] || "tsconfig.json";
+    if (opts.dependencies) {
+        packages = await getDeepDeps(opts.root, getDepTypes({ a: true }), [opts.dependencies].flat(), packages);
+        // potentially is there reason not to build all dependency types?
+    }
 
-        const packages = getPackageList(pkg, configName, opts);
+    if (opts.list) {
+        console.log(packages.join("\n"));
+        process.exit();
+    }
 
-        console.timeLog(BUILD_NAME, `Found ${packages.length} packages to build`);
+    if (opts.build) {
+        console.timeLog(BUILD_NAME, "Finding packages to build typescript.");
 
-        if (opts.list) {
-            console.log(packages.join("\n"));
-            process.exit();
-        }
+        const configName = opts["ts-config"] || "tsconfig.json";
+        const tsPackages = packages
+            .filter((pkgDir) => existsSync(join(pkgDir, configName)));
 
-        packages.forEach(packageDir => {
-            if (packageDir) {
-                nodeSystem.readDirectory(packageDir);
-            }
-        });
+        const solution = makeTypescriptSolutionForPackageList(tsPackages, configName);
 
-        const rootnames = packages.map(x => join(x, configName));
-
-        const solution = createSolutionBuilder(nodeSystem, rootnames, {
-            dry: false,
-            assumeChangesOnlyAffectDirectDependencies: true,
-            incremental: true,
-            verbose: false
-        });
-
-        console.timeLog(BUILD_NAME, `Found ${packages.length} configs, building...`);
+        console.timeLog(BUILD_NAME, `Found ${tsPackages.length} configs, building...`);
 
         exitcode = solution.build();
 
@@ -71,23 +115,20 @@ console.time(BUILD_NAME);
         throw new Error(`Build failed with exitcode=${exitcode}`);
     }
 
-    if (opts["copy-dist"]) {
+    if (opts.dist) {
         console.timeLog(BUILD_NAME, "Finding all packages...");
 
-        const pkg = readClosestPackageJSON();
-        const packages = getPackageList(pkg, "package.json", opts);
-
-        const outDir = process.env.OUT_DIR || "dist";
+        const outDir = resolve(opts.root, opts.outdir);
         const prepacks = packages.map((root) => new PrePack({
             cwd: root,
             outDir,
             log: () => 0,
-            localPkgs: process.env.LOCAL_PACKAGES,
-            flatPkgs: process.env.FLAT_PACKAGES,
-            localCopy: process.env.LOCAL_COPY,
+            distPackDir: opts.outdir,
+            localPkgs: opts["link-packages"],
+            flatPkgs: opts["flat-packages"],
+            localCopy: opts["local-copy"],
             noInstall: true,
-            public: process.env.MAKE_PUBLIC,
-            distPackDir: process.env.DIST_PACK_DIR
+            public: opts["make-public"]
         }));
 
         console.timeLog(BUILD_NAME, `Found ${prepacks.length} packages, prepacking...`);
@@ -107,19 +148,23 @@ console.time(BUILD_NAME);
 
         console.timeLog(BUILD_NAME, "Done, setting up workspace...");
 
-        if (opts.fast && exists(join(outDir, "package-lock.json"))) return;
+        if (opts.install) {
+            const contents = {
+                private: true,
+                workspaces: prepacks.map(x => relative(outDir, x.rootDistPackPath))
+            };
 
-        if (!process.env.NO_WORKSPACE)
-            await writeFile(join(outDir, "package.json"), "{\"private\": true, \"workspaces\": [\"**\"]}");
-
-        if (!process.env.NO_INSTALL) {
-            console.timeLog(BUILD_NAME, "Done, installing packages...");
-
-            console.error(`Installing packages in ${outDir}`);
+            await writeFile(join(outDir, "package.json"), JSON.stringify(contents, null, 2));
+            console.timeLog(BUILD_NAME, `Done, installing packages in ${outDir}...`);
 
             const cmd = `cd ${outDir} && pwd >&2 && npx npm@8 install -q -ws --no-audit`;
 
-            await runCommand(cmd, true);
+            await runCommand(cmd, false);
+        }
+
+        if (opts.bundle) {
+            console.timeLog(BUILD_NAME, "Done, bundling...");
+
             await DataStream.from(prepacks)
                 .do((/** @type {PrePack} */ pack) => pack.install())
                 .run();

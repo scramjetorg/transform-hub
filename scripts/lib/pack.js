@@ -17,7 +17,7 @@ class Pack {
         this.packagesDir = options.packagesDir || this.packagesDir;
         this.rootDistPackPath = this.currDir.replace(this.packagesDir, this.options.outDir);
 
-        console.log(`Packing ${this.rootDistPackPath} in ${options.packagesDir}`)
+        console.log(`Packing ${this.rootDistPackPath} in ${options.packagesDir}`);
     }
 
     async pack() {

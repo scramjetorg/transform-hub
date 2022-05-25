@@ -9,7 +9,7 @@
     "build:docs": "typedoc",
     "test:expose": "scripts/generate.js",
     "test": "yarn run test:expose && npx tsc -p ./tsconfig.test.json --noEmit",
-    "postbuild": "npm run test:expose"
+    "build:only": "npm run test:expose"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",

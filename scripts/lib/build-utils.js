@@ -1,18 +1,28 @@
-const { existsSync } = require("fs");
+const { sys, createSolutionBuilderHost, createSolutionBuilder } = require("typescript");
+const { existsSync, readFileSync } = require("fs");
 const path = require("path");
-const { join, resolve } = require("path");
+const { join, dirname } = require("path");
 const glob = require("glob");
 const { exec } = require("child_process");
 
 const { access } = require("fs/promises");
+const { cwd } = require("process");
+const globrex = require("globrex");
 
-function getTSDirectoriesFromGlobs(cwd, globs, tsConfigName = "tsconfig.json") {
+function getDirectoriesFromGlobs(wd, globs, configName) {
     const packages = globs
-        .map((pattern) => glob.sync(pattern, { cwd }))
+        .map((pattern) => {
+            try {
+                return glob.sync(pattern, { cwd: wd });
+            } catch (e) {
+                e.message = `${e.message} [${pattern}]`;
+                throw e;
+            }
+        })
         .flat()
-        .filter(x => !["/node_modules/"].find(m => x.includes(m)))
-        .map((x) => resolve(cwd, x))
-        .filter((pkg) => existsSync(join(pkg, tsConfigName)));
+        .filter((/** @type {string} x */ x) => !x.match(/(\/|^)node_modules\//))
+        .filter((pkg) => existsSync(join(pkg, configName)))
+    ;
 
     return packages;
 }
@@ -26,10 +36,28 @@ const exists = async (name) => {
     }
 };
 
-function getTSDirectoriesFromPackage(_cwd, _dir, pkg, workspaceFilter, tsConfigName = "tsconfig.json") {
-    const cwd = resolve(_cwd, _dir || ".");
+function makeTypescriptSolutionForPackageList(packages, configName) {
+    const nodeSystem = createSolutionBuilderHost(sys);
 
-    if (!pkg.workspaces) return [cwd];
+    packages.forEach(packageDir => {
+        if (packageDir) {
+            nodeSystem.readDirectory(packageDir);
+        }
+    });
+
+    const rootnames = packages.map(x => join(x, configName));
+    const solution = createSolutionBuilder(nodeSystem, rootnames, {
+        dry: false,
+        assumeChangesOnlyAffectDirectDependencies: true,
+        incremental: true,
+        verbose: false
+    });
+
+    return solution;
+}
+
+function getTSDirectoriesFromPackage(_cwd = ".", pkg, workspaceFilter = [], tsConfigName = "tsconfig.json") {
+    if (!pkg.workspaces) return [_cwd];
 
     const workspaces = Array.isArray(pkg.workspaces) ? { default: pkg.workspaces } : pkg.workspaces;
     const globs = Object.entries(workspaces)
@@ -41,12 +69,12 @@ function getTSDirectoriesFromPackage(_cwd, _dir, pkg, workspaceFilter, tsConfigN
             return entries;
         });
 
-    return getTSDirectoriesFromGlobs(cwd, globs, tsConfigName);
+    return getDirectoriesFromGlobs(cwd(), globs, tsConfigName);
 }
 
-const findClosestPackageJSONLocation = (_cwd) => {
-    const cwd = path.resolve(process.cwd(), _cwd || ".");
-    const pathParts = cwd.split(path.sep);
+const findClosestPackageJSONLocation = (_cwd = ".") => {
+    const wd = path.resolve(_cwd);
+    const pathParts = wd.split(path.sep);
 
     while (pathParts.length) {
         const pkg = path.resolve(...pathParts, "package.json");
@@ -56,12 +84,12 @@ const findClosestPackageJSONLocation = (_cwd) => {
         }
         pathParts.pop();
     }
-    throw new Error(`Cannot find package.json anywhere in path "${cwd}"`);
+    throw new Error(`Cannot find package.json anywhere in path "${wd}"`);
 };
 
-const readClosestPackageJSON = (cwd) => {
+const readClosestPackageJSON = (wd) => {
     // eslint-disable-next-line import/no-dynamic-require
-    return require(findClosestPackageJSONLocation(cwd));
+    return require(findClosestPackageJSONLocation(wd));
 };
 
 function getPackageList(pkg, configName, opts) {
@@ -70,13 +98,47 @@ function getPackageList(pkg, configName, opts) {
     let packages;
 
     if (opts.config) {
-        packages = getTSDirectoriesFromPackage(process.cwd(), dirname(opts.config), pkg, workspaceFilter, configName);
+        packages = getTSDirectoriesFromPackage(dirname(opts.config), pkg, workspaceFilter, configName);
     } else if (opts.dirs) {
-        packages = getTSDirectoriesFromGlobs(process.cwd(), opts._, configName);
+        packages = getDirectoriesFromGlobs(cwd(), opts._, configName);
     } else {
-        packages = getTSDirectoriesFromPackage(process.cwd(), opts._[0], pkg, workspaceFilter, configName);
+        packages = getTSDirectoriesFromPackage(opts._[0], pkg, workspaceFilter, configName);
     }
     return packages;
+}
+
+function getPackagesInWorkspace(pkgLocation, workspaces = []) {
+    const pkg = JSON.parse(readFileSync(pkgLocation));
+    const dir = dirname(pkgLocation);
+
+    if (!workspaces.length) {
+        workspaces.push(...Object.values(pkg.workspaces).flat());
+    } else {
+        const nre = [];
+        const yre = [];
+
+        workspaces.forEach(pt => {
+            const not = pt.startsWith("!");
+            const re = globrex(not ? pt.substr(1) : pt).regex;
+
+            if (not)
+                nre.push((x) => `${x}`.match(re));
+            else
+                yre.push((x) => `${x}`.match(re));
+        });
+
+        workspaces = Object.entries(pkg.workspaces)
+            .filter(([x]) => {
+                if (nre.some(re => re(x))) return false;
+
+                if (!yre.length) return true;
+                return yre.some(re => re(x));
+            })
+            .map(([, x]) => x)
+            .flat();
+    }
+
+    return getDirectoriesFromGlobs(dir, workspaces, "package.json");
 }
 
 async function runCommand(cmd, verbose) {
@@ -84,7 +146,12 @@ async function runCommand(cmd, verbose) {
 
     await new Promise((res, rej) => {
         const proc = exec(cmd)
-            .on("exit", (err) => err ? rej(new Error(`Command exited with code ${err}, caused by call\n${stack}\n---`)) : res());
+            .on(
+                "exit",
+                (err) => err
+                    ? rej(new Error(`Command exited with code ${err}, caused by call\n${stack}\n---`))
+                    : res()
+            );
 
         if (verbose) {
             console.error("Started command:", cmd);
@@ -100,6 +167,8 @@ module.exports = {
     getPackageList,
     findClosestPackageJSONLocation,
     readClosestPackageJSON,
+    getPackagesInWorkspace,
     getTSDirectoriesFromPackage,
-    getTSDirectoriesFromGlobs
+    getDirectoriesFromGlobs,
+    makeTypescriptSolutionForPackageList
 };

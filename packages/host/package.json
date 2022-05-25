@@ -12,7 +12,6 @@
     "test": "npm run test:ava",
     "test:ava": "ava",
     "prebuild": "yarn savehash",
-    "postbuild": "rm -f ./src/build.info.json",
     "savehash": "node ../../scripts/hash-to-file.js ./src/"
   },
   "author": "Scramjet <open-source@scramjet.org>",
