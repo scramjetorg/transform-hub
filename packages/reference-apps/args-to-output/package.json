@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/args-to-output",
-  "version": "0.23.1",
+  "version": "0.23.2",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.23.1",
+    "@scramjet/types": "^0.23.2",
     "@types/node": "15.12.5"
   },
   "repository": {
