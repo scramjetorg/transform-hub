@@ -4,7 +4,7 @@ const path = require("path");
 const { promises: { access }, constants } = require("fs");
 const { chmod, readFile, writeFile } = require("fs/promises");
 const { runCommand, exists } = require("./build-utils");
-const { join, relative } = require("path");
+const { join } = require("path");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
@@ -179,10 +179,7 @@ class PrePack {
 
         return fse.copy(input, output, { recursive: true })
             .catch(err => {
-                const relI = relative(process.cwd(), input);
-                const relO = relative(process.cwd(), output);
-
-                throw new Error(`Unable to copy file(s) form ${relI} to ${relO}, error code: ${err}`);
+                throw new Error(`Unable to copy file(s) form ${input} to ${output}, error code: ${err}`);
             });
     }
 
@@ -267,8 +264,8 @@ class PrePack {
         // TODO: what about package.json/files?
 
         await Promise.all(entries.map(
-            async ([, rel]) => {
-                const file = path.resolve(this.rootDistPackPath, rel);
+            async ([, relative]) => {
+                const file = path.resolve(this.rootDistPackPath, relative);
                 const contents = await readFile(file, "utf-8");
 
                 if (!contents.match(/^\s*#!\/usr\/bin\/env ts-node/)) return;

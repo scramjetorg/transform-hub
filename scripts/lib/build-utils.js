@@ -1,5 +1,5 @@
 const { sys, createSolutionBuilderHost, createSolutionBuilder } = require("typescript");
-const { existsSync, readFileSync } = require("fs");
+const { existsSync, readFileSync, statSync } = require("fs");
 const path = require("path");
 const { join, dirname } = require("path");
 const glob = require("glob");
@@ -10,7 +10,7 @@ const { cwd } = require("process");
 const globrex = require("globrex");
 
 function getDirectoriesFromGlobs(wd, globs, configName) {
-    const packages = globs
+    const matches = globs
         .map((pattern) => {
             try {
                 return glob.sync(pattern, { cwd: wd });
@@ -20,8 +20,12 @@ function getDirectoriesFromGlobs(wd, globs, configName) {
             }
         })
         .flat()
+    ;
+
+    const packages = matches
         .filter((/** @type {string} x */ x) => !x.match(/(\/|^)node_modules\//))
-        .filter((pkg) => existsSync(join(pkg, configName)))
+        .filter((dir) => { try { return statSync(join(wd, dir)).isDirectory(); } catch { return false; } })
+        .filter((pkg) => existsSync(join(wd, pkg, configName)))
     ;
 
     return packages;
@@ -77,7 +81,7 @@ const findClosestPackageJSONLocation = (_cwd = ".") => {
     const pathParts = wd.split(path.sep);
 
     while (pathParts.length) {
-        const pkg = path.resolve(...pathParts, "package.json");
+        const pkg = path.resolve(pathParts.join(path.sep), "package.json");
 
         if (existsSync(pkg)) {
             return pkg;

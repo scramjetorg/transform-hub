@@ -86,12 +86,22 @@ console.time(BUILD_NAME);
 
     await DataStream.from(packages)
         .setOptions({ maxParallel: cpus().length })
-        .map(async path => error ? Promise.reject(new Error()) : [Date.now(), await runScript({
-            stdioString: true,
-            event: scriptName,
-            args,
-            path
-        })])
+        .flatMap(async path => {
+            if (error)
+                return Promise.reject(new Error("Fail fast..."));
+
+            const runconfig = {
+                stdioString: true,
+                args,
+                path
+            };
+
+            return [
+                [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
+                [Date.now(), await runScript({ ...runconfig, event: scriptName })],
+                [Date.now(), await runScript({ ...runconfig, event: `post${scriptName}` })]
+            ];
+        })
         .do(([ts, out]) => {
             const { path, event } = out;
 

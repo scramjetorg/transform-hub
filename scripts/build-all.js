@@ -22,6 +22,7 @@ const opts = minimist(process.argv.slice(2), {
         list: "l",
         fast: "f",
         help: ["h", "?"],
+        outdir: "o",
         workspace: "w",
         dependencies: "d",
         root: "r",
@@ -31,6 +32,7 @@ const opts = minimist(process.argv.slice(2), {
         build: !env.NO_BUILD,
         dist: !env.NO_COPY_DIST,
         install: !env.NO_INSTALL,
+        distws: !env.NO_WORKSPACE,
         outdir: env.OUT_DIR || "dist",
         "link-packages": env.LOCAL_PACKAGES,
         "local-copy": env.LOCAL_COPY,
@@ -62,6 +64,7 @@ if (opts.help || opts["long-help"]) {
         console.error(`       ${spaces} --no-build - do not run install in dist, env: NO_BUILD`);
         console.error(`       ${spaces} --no-dist - do not run copy to dist, env: NO_COPY_DIST`);
         console.error(`       ${spaces} --no-install - do not run install in dist, env: NO_INSTALL`);
+        console.error(`       ${spaces} --no-distws - do not create package.json in distr, env: NO_WORKSPACE`);
         console.error(`       ${spaces} --link-packages - hardlink packages via file://, env: LOCAL_PACKAGES`);
         console.error(`       ${spaces} --flat-packages - copy all packages to one dir, env: FLAT_PACKAGES`);
         console.error(`       ${spaces} --local-copy - copy license and readme, env: LOCAL_COPY`);
@@ -146,15 +149,17 @@ console.time(BUILD_NAME);
                 throw e.cause;
             });
 
-        console.timeLog(BUILD_NAME, "Done, setting up workspace...");
-
-        if (opts.install) {
+        if (opts.distws) {
+            console.timeLog(BUILD_NAME, "Done, setting up workspace...");
             const contents = {
                 private: true,
                 workspaces: prepacks.map(x => relative(outDir, x.rootDistPackPath))
             };
 
             await writeFile(join(outDir, "package.json"), JSON.stringify(contents, null, 2));
+        }
+
+        if (opts.install) {
             console.timeLog(BUILD_NAME, `Done, installing packages in ${outDir}...`);
 
             const cmd = `cd ${outDir} && pwd >&2 && npx npm@8 install -q -ws --no-audit`;
