@@ -38,7 +38,7 @@ const startSequence = async (
             inputTopic?: string,
             limits?: InstanceLimits
         }
-    ) => {
+) => {
     if (configFile && configString) {
         console.error("Provide one source of configuration");
         return Promise.resolve();

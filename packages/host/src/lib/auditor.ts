@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { OpRecord, ParsedMessage } from "@scramjet/types";
+import { InstanceStats, OpRecord, ParsedMessage } from "@scramjet/types";
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 import { StringStream } from "scramjet";
 import { ReReadable } from "rereadable-stream";
@@ -108,14 +108,15 @@ export class Auditor {
         }
     }
 
-    auditInstanceHeartBeat(id: string) {
+    auditInstanceHeartBeat(id: string, lastStats: InstanceStats) {
         this.logger.info("Instance heartbeat", id);
         this.write({
             opState: "ACTIVE",
             opCode: OpRecordCode.INSTANCE_HEARTBEAT,
             objectId: id,
             requestorId: "system",
-            receivedAt: Date.now()
+            receivedAt: Date.now(),
+            limits: lastStats.limits
         });
     }
 

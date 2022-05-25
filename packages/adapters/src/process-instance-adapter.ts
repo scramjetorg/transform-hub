@@ -54,6 +54,7 @@ class ProcessInstanceAdapter implements
         }
 
         return {
+            // @TODO: Provide stats and limits
             ...msg,
             processId: this.runnerProcess?.pid
         };

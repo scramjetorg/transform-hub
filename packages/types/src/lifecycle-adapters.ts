@@ -40,7 +40,6 @@ export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
     monitorRate(rps: number): this;
 
     stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
-
 }
 
-export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});
+export type LifeCycleError = any | (Error & { exitCode?: number, errorMessage?: string });

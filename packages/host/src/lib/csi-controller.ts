@@ -18,7 +18,9 @@ import {
     STHRestAPI,
     STHConfiguration,
     InstanceLimits,
-    InstanceStatus
+    InstanceStatus,
+    MonitoringMessageData,
+    InstanceStats
 } from "@scramjet/types";
 import {
     AppError,
@@ -64,6 +66,19 @@ export class CSIController extends TypedEmitter<Events> {
     id: string;
 
     private keepAliveRequested?: boolean;
+    private _lastStats?: MonitoringMessageData;
+
+    get lastStats(): InstanceStats {
+        return {
+            limits: {
+                memory: (this._lastStats?.limit! / (1024 * 1024)) as InstanceLimits["memory"],
+            },
+            current: {
+                memory: this._lastStats?.memoryUsage
+            }
+        };
+    }
+
     sthConfig: STHConfiguration;
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
@@ -188,8 +203,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.status = "running";
         this.logger.trace("Instance started");
 
-        this.heartBeatStart();
-
         let code = 0;
 
         try {
@@ -267,16 +280,10 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.instancePromise = instanceMain()
             .then((exitcode) => this.mapRunnerExitCode(exitcode))
-            .catch((error) => this.initResolver?.rej(error));
-
-        this.instancePromise
-            .finally(() => this.heartBeatStop());
-    }
-
-    heartBeatStart(): void {
-        this.heartBeatTicker = setInterval(() => {
-            this.heartBeatTick();
-        }, 5000);
+            .catch((error) => this.initResolver?.rej(error))
+            .finally(() => {
+                this.heartBeatResolver?.res(this.id);
+            });
     }
 
     heartBeatTick(): void {
@@ -284,11 +291,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.heartBeatPromise = new Promise((res, rej) => {
             this.heartBeatResolver = { res, rej };
         });
-    }
-
-    heartBeatStop(): void {
-        clearInterval(this.heartBeatTicker!);
-        this.heartBeatResolver?.res();
     }
 
     private mapRunnerExitCode(exitcode: number) {
@@ -395,15 +397,23 @@ export class CSIController extends TypedEmitter<Events> {
                 this.provides ||= pangData.provides;
             } else if (pangData.requires) {
                 this.requires ||= pangData.requires;
+
                 if (pangData.requires !== "") {
                     this.apiInputEnabled = false;
                 }
             }
+
             this.emit("pang", message[1]);
         });
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.MONITORING, async message => {
-            message[1] = await this.instanceAdapter.stats(message[1]);
+            const stats = await this.instanceAdapter.stats(message[1]);
+
+            this._lastStats = stats;
+
+            this.heartBeatTick();
+
+            message[1] = stats;
             return message;
         }, true);
 

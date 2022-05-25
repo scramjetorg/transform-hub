@@ -69,6 +69,7 @@ IComponent {
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         return {
+            // @TODO: provide limits and stats
             ...msg,
         };
     }
@@ -76,11 +77,11 @@ IComponent {
     private get runnerResourcesConfig() {
         return {
             requests: {
-                memory: this.limits?.memory ? (this.limits?.memory + "M") : this.adapterConfig.runnerResourcesRequestsMemory || "128M",
+                memory: this.limits?.memory ? this.limits?.memory + "M" : this.adapterConfig.runnerResourcesRequestsMemory || "128M",
                 cpu: this.adapterConfig.runnerResourcesRequestsCpu || "250m"
             },
             limits: {
-                memory: this.limits?.memory ? (this.limits?.memory * 2 + "M") : this.adapterConfig.runnerResourcesLimitsMemory || "1G",
+                memory: this.limits?.memory ? this.limits?.memory * 2 + "M" : this.adapterConfig.runnerResourcesLimitsMemory || "1G",
                 cpu: this.adapterConfig.runnerResourcesLimitsCpu || "1000m"
             }
         };

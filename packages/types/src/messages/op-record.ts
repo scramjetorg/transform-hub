@@ -1,4 +1,6 @@
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
+import { InstanceLimits } from "../instance-limits";
+import { DeepPartial } from "../utils";
 
 export type OpRecord = {
     /**
@@ -40,5 +42,10 @@ export type OpRecord = {
     * An instance of the object which the operation concerns, e.g. Instance ID.
     */
     objectId: string;
+
+    /**
+     * Instance stats
+     */
+    limits?: DeepPartial<InstanceLimits>
 }
 
