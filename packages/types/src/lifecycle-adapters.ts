@@ -2,6 +2,7 @@ import { MonitoringMessageData } from "./messages";
 import { MaybePromise } from "./utils";
 import { InstanceConfig } from "./runner-config";
 import { IObjectLogger } from "./object-logger";
+import { InstanceLimits } from "./instance-limits";
 
 export type ExitCode = number;
 
@@ -26,6 +27,8 @@ export interface ILifeCycleAdapterMain {
 // @TODO create ISequenceAdapter interface
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
+    limits: InstanceLimits;
+
     /**
       * Starts Runner.
       *

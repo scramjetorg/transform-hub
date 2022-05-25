@@ -5,6 +5,8 @@ import {
     IComponent,
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
+    InstanceConfig,
+    InstanceLimits,
     IObjectLogger,
     MonitoringMessageData,
     SequenceConfig
@@ -28,6 +30,13 @@ class ProcessInstanceAdapter implements
 
     private runnerProcess?: ChildProcess;
     private crashLogStreams?: Promise<string[]>;
+    private _limits?: InstanceLimits = {};
+
+    get limits() { return this._limits || {} as InstanceLimits; }
+    private set limits(value: InstanceLimits) {
+        this._limits = value;
+        this.logger.warn("Limits are not yet supported in process runner");
+    }
 
     constructor() {
         this.logger = new ObjLogger(this);
@@ -94,7 +103,7 @@ class ProcessInstanceAdapter implements
         return pythonpath;
     }
 
-    async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "process") {
             throw new Error("Process instance adapter run with invalid runner config");
         }

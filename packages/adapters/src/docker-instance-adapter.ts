@@ -10,6 +10,7 @@ import {
     MonitoringMessageData,
     InstanceConfig,
     RunnerContainerConfiguration,
+    InstanceLimits,
 } from "@scramjet/types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -28,11 +29,14 @@ ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
     private dockerHelper: IDockerHelper;
-
+    private _limits?: InstanceLimits = {};
     private resources: DockerAdapterResources = {};
 
     logger: IObjectLogger;
     crashLogStreams?: Promise<string[]>;
+
+    get limits() { return this._limits || {} as InstanceLimits; }
+    private set limits(value: InstanceLimits) { this._limits = value; }
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -164,6 +168,8 @@ IComponent {
         if (config.type !== "docker") {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
+
+        this.limits = config.limits;
 
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;

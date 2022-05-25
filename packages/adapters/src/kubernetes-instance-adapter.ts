@@ -34,7 +34,10 @@ IComponent {
     private _kubeClient?: KubernetesClientAdapter;
 
     private adapterConfig: K8SAdapterConfiguration
-    private limits?: InstanceLimits;
+    private _limits?: InstanceLimits = {};
+
+    get limits() { return this._limits || {} as InstanceLimits; }
+    private set limits(value: InstanceLimits) { this._limits = value; }
 
     constructor(sthConfig: STHConfiguration) {
         // @TODO this is a redundant check (it was already checked in sequence adapter)
