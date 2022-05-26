@@ -24,6 +24,7 @@ const opts = minimist(process.argv.slice(2), {
         help: ["h", "?"],
         outdir: "o",
         workspace: "w",
+        verbose: "v",
         dependencies: "d",
         "dep-types": "D",
         root: "r",
@@ -42,7 +43,8 @@ const opts = minimist(process.argv.slice(2), {
     },
     boolean: [
         "install", "build", "dist",
-        "list", "long-help", "fast", "help"
+        "list", "long-help", "fast", "help",
+        "verbose"
     ]
 });
 
@@ -176,7 +178,7 @@ console.time(BUILD_NAME);
             console.timeLog(BUILD_NAME, "Done, bundling...");
 
             await DataStream.from(prepacks)
-                .do((/** @type {PrePack} */ pack) => pack.install())
+                .do((/** @type {PrePack} */ pack) => pack.install("", opts.verbose))
                 .run();
         }
 

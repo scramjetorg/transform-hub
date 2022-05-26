@@ -21,11 +21,10 @@
     "build:all-packages": "yarn build:packages && yarn build:refapps",
 
     "prebuild:refapps": "yarn download:refapps",
-    "build:refapps": "LOCAL_PACKAGES=true yarn build:refapps:node && LOCAL_PACKAGES=true yarn build:refapps:python",
+    "build:refapps": "LOCAL_PACKAGES=true yarn build:refapps:node",
     "postbuild:refapps": "scripts/run-script.js -w refapps postbuild:refapps",
-    "prebuild:refapps:node": "scripts/build-all.js -w refapps --outdir=dist/reference-apps --no-install --bundle",
-    "build:refapps:node": "scripts/run-script.js -w refapps build:refapps:node --ts-config tsconfig.build.json",
-    "build:refapps:python": "scripts/run-script.js -w refapps build:refapps:python --no-install --bundle",
+    "prebuild:refapps:node": "scripts/build-all.js -w refapps --outdir=dist/reference-apps --no-distws --bundle --ts-config tsconfig.build.json",
+    "build:refapps:node": "scripts/run-script.js -w refapps build:refapps:node",
 
     "prebuild:packages": "scripts/run-script.js -w packages build:only",
     "build:packages": "scripts/build-all.js -w packages --ts-config tsconfig.build.json",

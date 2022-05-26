@@ -22,7 +22,6 @@ WORKDIR /app/
 COPY ./dist/utility ./dist/utility
 COPY ./dist/symbols ./dist/symbols
 COPY ./dist/obj-logger ./dist/obj-logger
-COPY ./dist/logger ./dist/logger
 COPY ./dist/model ./dist/model
 COPY ./dist/runner ./dist/runner
 
