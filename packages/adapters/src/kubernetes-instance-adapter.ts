@@ -17,6 +17,7 @@ import { createReadStream } from "fs";
 import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 import { getRunnerEnvEntries } from "./get-runner-env";
+import { PassThrough } from "stream";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -126,7 +127,7 @@ IComponent {
 
         const startPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Running", "Failed"]);
 
-        if (startPodStatus === "Failed") {
+        if (startPodStatus.status === "Failed") {
             this.logger.error("Runner unable to start", startPodStatus);
 
             await this.remove(this.adapterConfig.timeout);
@@ -134,30 +135,29 @@ IComponent {
             // This means runner pod was unable to start. So it went from "Pending" to "Failed" state directly.
             // Return 1 which is Linux exit code for "General Error" since we are not able
             // to determine what happened exactly.
-            return 1;
+            return startPodStatus.code || 137;
         }
 
         this.logger.debug("Copy sequence files to Runner");
 
         const compressedStream = createReadStream(path.join(config.sequenceDir, "compressed.tar.gz"));
+        const stdErrorStream = new PassThrough();
 
-        await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, process.stderr, compressedStream, 2);
+        stdErrorStream.on("data", (data) => { this.logger.error("POD stderr", data.toString()); });
+
+        await this.kubeClient.exec(runnerName, runnerName, ["unpack.sh", "/package"], process.stdout, stdErrorStream, compressedStream, 2);
 
         const exitPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Succeeded", "Failed", "Unknown"]);
 
-        // this.logger.debug("For some reasone this wont be printed", exitPodStatus);
-        // console.log("And this willl :(", exitPodStatus);
-
-        if (exitPodStatus !== "Succeeded") {
+        if (exitPodStatus.status !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
             this.logger.error("Container failure reason is: ", await this.kubeClient.getPodTerminatedContainerReason(runnerName));
 
             await this.remove(this.adapterConfig.timeout);
 
-            // This means runner was stopped forcefully or incorrectly (via external kill or sequence error).
-            // So we return 137 (SIGKILL).
-            return 137;
+            return exitPodStatus.code || 137;
         }
+
         this.logger.error("Runner stopped without issues");
 
         await this.remove(this.adapterConfig.timeout);
