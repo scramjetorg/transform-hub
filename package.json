@@ -23,7 +23,7 @@
     "prebuild:refapps": "yarn download:refapps",
     "build:refapps": "yarn build:refapps:node",
     "postbuild:refapps": "scripts/run-script.js -w refapps postbuild:refapps",
-    "prebuild:refapps:node": "scripts/build-all.js -w refapps --outdir=dist/reference-apps --no-distws --bundle --ts-config tsconfig.build.json",
+    "prebuild:refapps:node": "scripts/build-all.js -w refapps --outdir=dist/reference-apps --no-distws --bundle",
     "build:refapps:node": "scripts/run-script.js -w refapps build:refapps:node",
 
     "prebuild:packages": "scripts/run-script.js -w packages build:only",
