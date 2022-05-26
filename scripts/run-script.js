@@ -113,13 +113,12 @@ console.time(BUILD_NAME);
 
             const runconfig = {
                 stdioString: true,
-                args,
                 path
             };
 
             return [
                 [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
-                [Date.now(), await runScript({ ...runconfig, event: scriptName })],
+                [Date.now(), await runScript({ ...runconfig, args, event: scriptName })],
                 [Date.now(), await runScript({ ...runconfig, event: `post${scriptName}` })]
             ];
         })
