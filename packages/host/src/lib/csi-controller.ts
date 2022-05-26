@@ -198,6 +198,8 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.info.ended = new Date();
 
+        this.logger.trace("Finalizing...");
+
         await this.finalize();
 
         this.emit("end", code);
@@ -295,7 +297,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
         case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
             return Promise.reject({
-                message: "Sequence failed on start", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
+                message: "Sequence unpack failed", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
             });
         }
         }
@@ -315,10 +317,13 @@ export class CSIController extends TypedEmitter<Events> {
 
     async finalize() {
         await defer(runnerExitDelay);
-        this.logger.end();
+
         this.finalizingPromise = cancellableDefer(csiLifetimeExtensionDelay);
 
         await this.finalizingPromise;
+
+        this.logger.info("Finalized");
+        this.logger.end();
     }
 
     instanceStopped(): Promise<ExitCode> {

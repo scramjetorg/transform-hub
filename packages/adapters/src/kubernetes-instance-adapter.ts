@@ -149,6 +149,8 @@ IComponent {
 
         const exitPodStatus = await this.kubeClient.waitForPodStatus(runnerName, ["Succeeded", "Failed", "Unknown"]);
 
+        stdErrorStream.end();
+
         if (exitPodStatus.status !== "Succeeded") {
             this.logger.error("Runner stopped incorrectly", exitPodStatus);
             this.logger.error("Container failure reason is: ", await this.kubeClient.getPodTerminatedContainerReason(runnerName));
@@ -159,7 +161,6 @@ IComponent {
         }
 
         this.logger.error("Runner stopped without issues");
-
         await this.remove(this.adapterConfig.timeout);
 
         // @TODO handle error status
