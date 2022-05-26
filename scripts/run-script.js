@@ -24,6 +24,7 @@ const opts = minimist(process.argv.slice(2), {
         install: "i",
         build: "b",
         dist: "d",
+        verbose: "v",
         fast: "f",
         help: ["h", "?"],
         workspace: "w",
@@ -41,7 +42,7 @@ const opts = minimist(process.argv.slice(2), {
         "flat-packages": env.FLAT_PACKAGES,
         "make-public": env.MAKE_PUBLIC,
     },
-    boolean: ["list", "long-help", "install", "build", "dist", "fast", "help"]
+    boolean: ["list", "long-help", "verbose", "install", "build", "dist", "fast", "help"]
 });
 
 if (!opts._.length || opts.help || opts["long-help"]) {
@@ -50,6 +51,7 @@ if (!opts._.length || opts.help || opts["long-help"]) {
 
     console.error("Runs scripts in workspaces");
     console.error(`Usage: ${pName} [options] <script-name> [...args]`);
+    console.error(`       ${spaces} -v,--verbose - verbose output`);
     console.error(`       ${spaces} -s,--scope <path|name> - run in specific package only`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
     console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
@@ -116,6 +118,8 @@ console.time(BUILD_NAME);
                 path
             };
 
+            if (opts.verbose) runconfig.stdio = "inherit";
+
             return [
                 [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
                 [Date.now(), await runScript({ ...runconfig, args, event: scriptName })],
@@ -137,8 +141,11 @@ console.time(BUILD_NAME);
 
             console.timeLog(BUILD_NAME, `${path}: script ${event} failed with code=${code}!`);
             console.error(`${path}: command was: "${script}"`);
-            console.error(stdout);
-            console.error(stderr);
+
+            if (!opts.verbose) {
+                console.error(stdout);
+                console.error(stderr);
+            }
 
             error = true;
         })

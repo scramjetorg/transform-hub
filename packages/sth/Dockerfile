@@ -2,7 +2,23 @@ FROM node:lts-bullseye-slim as builder
 
 WORKDIR /build
 
-COPY ./dist/docker-sth ./dist
+COPY ./dist/adapters ./dist/adapters
+COPY ./dist/api-server ./dist/api-server
+COPY ./dist/sth-config ./dist/sth-config
+COPY ./dist/host ./dist/host
+COPY ./dist/logger ./dist/logger
+COPY ./dist/obj-logger ./dist/obj-logger
+COPY ./dist/model ./dist/model
+COPY ./dist/runner ./dist/runner
+COPY ./dist/pre-runner ./dist/pre-runner
+COPY ./dist/python-runner ./dist/python-runner
+COPY ./dist/sth ./dist/sth
+COPY ./dist/symbols ./dist/symbols
+COPY ./dist/types ./dist/types
+COPY ./dist/load-check ./dist/load-check
+COPY ./dist/utility ./dist/utility
+COPY ./dist/verser ./dist/verser
+COPY LICENSE ./
 
 RUN cd dist && npx -y npm@8 i
 

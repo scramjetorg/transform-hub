@@ -10,7 +10,7 @@
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install -d packages/sth -o ./dist/docker-sth/",
+    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install -d packages/sth",
     "build:docker": "docker build -t scramjetorg/sth:$npm_package_version -f Dockerfile ../../",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "echo no tests yet -- # npm run test:ava",

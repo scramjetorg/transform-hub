@@ -25,6 +25,7 @@ const opts = minimist(process.argv.slice(2), {
         outdir: "o",
         workspace: "w",
         dependencies: "d",
+        "dep-types": "D",
         root: "r",
     },
     default: {
@@ -59,8 +60,9 @@ if (opts.help || opts["long-help"]) {
     console.error(`       ${spaces} --long-help - for more options`);
 
     if (opts["long-help"]) {
-        console.error(`       ${spaces} --ts-config <name> - the name of tsconfig.json file (default is tsconfig.json)`);
         console.error(`       ${spaces} --outdir - output directory (default <root>/DIST, env: OUT_DIR)`);
+        console.error(`       ${spaces} --ts-config <name> - the name of tsconfig.json file (default is tsconfig.json)`);
+        console.error(`       ${spaces} -D,--dep-types - dependency types ([Dsop]) (default: all)`);
         console.error(`       ${spaces} --no-build - do not run install in dist, env: NO_BUILD`);
         console.error(`       ${spaces} --no-dist - do not run copy to dist, env: NO_COPY_DIST`);
         console.error(`       ${spaces} --no-install - do not run install in dist, env: NO_INSTALL`);
@@ -88,7 +90,10 @@ console.time(BUILD_NAME);
     let packages = allPackages;
 
     if (opts.dependencies) {
-        packages = await getDeepDeps(opts.root, getDepTypes({ a: true }), [opts.dependencies].flat(), packages);
+        const depTypeObject = opts["dep-types"] ? Object.fromEntries([...opts["dep-types"]].map(k => [k, true])) : { a: true };
+        const depTypes = getDepTypes(depTypeObject);
+
+        packages = await getDeepDeps(opts.root, depTypes, [opts.dependencies].flat(), packages);
         // potentially is there reason not to build all dependency types?
     }
 
