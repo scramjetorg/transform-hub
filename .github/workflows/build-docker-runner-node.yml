@@ -22,6 +22,12 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
+      - name: Install dependencies
+        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
+
+      - name: Prebuild packages
+        run: scripts/run-script.js --scope packages/runner prebuild:docker
+
       - name: build runner Docker image
         run: docker build -q -t scramjetorg/runner:$(jq -r .version package.json) -f Dockerfile ../../
         working-directory: packages/runner

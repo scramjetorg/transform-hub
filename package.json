@@ -53,6 +53,7 @@
     "start:dev": "ts-node packages/sth/src/bin/hub.ts",
     "start:dev:cli": "ts-node packages/cli/src/bin/index.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
+    "postinstall": "yarn --cwd bdd install",
     "prepare": "npx husky install",
 
     "download:refapps": "cd packages/reference-apps && curl -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q -nc",
@@ -112,7 +113,7 @@
   "workspaces": {
     "refapps": [ "packages/reference-apps/*" ],
     "packages": [ "packages/*" ],
-    "bdd": [ "bdd" ]
+    "bdd": [ "bdd/" ]
   },
   "husky": {
     "hooks": {
