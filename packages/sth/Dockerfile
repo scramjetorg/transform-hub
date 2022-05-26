@@ -18,7 +18,6 @@ COPY ./dist/load-check ./dist/load-check
 COPY ./dist/utility ./dist/utility
 COPY ./dist/verser ./dist/verser
 COPY ./dist/package.json ./dist/package.json
-COPY ./dist/package-lock.json ./dist/package-lock.json
 COPY LICENSE ./
 
 RUN cd dist && npx -y npm@8 i
