@@ -1,5 +1,6 @@
 import { ClientProvider, ClientUtils, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
+import { InstanceClient } from "./instance-client";
 import { SequenceClient } from "./sequence-client";
 
 /**
@@ -51,7 +52,10 @@ export class HostClient implements ClientProvider {
      * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
      * @returns {SequenceClient} Sequence client.
      */
-    async sendSequence(sequencePackage: Parameters<HttpClient["sendStream"]>[1], requestInit?: RequestInit): Promise<SequenceClient> {
+    async sendSequence(
+        sequencePackage: Parameters<HttpClient["sendStream"]>[1],
+        requestInit?: RequestInit
+    ): Promise<SequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
             parseResponse: "json",
         });
@@ -151,5 +155,15 @@ export class HostClient implements ClientProvider {
 
     async getTopics(): Promise<STHRestAPI.GetTopicsResponse> {
         return this.client.get("topics");
+    }
+
+    /**
+     * Creates InstanceClient based on current HostClient and instance id.
+     *
+     * @param id Instance id.
+     * @returns InstanceClient instance.
+     */
+    getInstanceClient(id: string) {
+        return InstanceClient.from(id, this);
     }
 }
