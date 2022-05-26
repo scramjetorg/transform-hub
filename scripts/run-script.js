@@ -15,7 +15,8 @@ const { getDepTypes } = require("./lib/opts");
 const { cpus } = require("os");
 
 const runScript = require("@npmcli/run-script");
-const { relative } = require("path");
+const { relative, resolve, join } = require("path");
+const { readFile } = require("fs/promises");
 
 const opts = minimist(process.argv.slice(2), {
     alias: {
@@ -49,6 +50,7 @@ if (!opts._.length || opts.help || opts["long-help"]) {
 
     console.error("Runs scripts in workspaces");
     console.error(`Usage: ${pName} [options] <script-name> [...args]`);
+    console.error(`       ${spaces} -s,--scope <path|name> - run in specific package only`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
     console.error(`       ${spaces} -d,-dependencies <package> - builds dependencies of a package`);
     console.error(`       ${spaces} -l,--list - prints list of dirs and exits`);
@@ -72,7 +74,26 @@ console.time(BUILD_NAME);
     const allPackages = getPackagesInWorkspace(pkg, [opts.workspace].flat().filter(x => x));
     let packages = allPackages;
 
-    if (opts.dependencies) {
+    if (opts.scope) {
+        const scopes = [opts.scope].flat();
+
+        for (const _path of packages) {
+            const path = resolve(opts.root, _path);
+
+            if (scopes.includes(path)) {
+                packages = [_path];
+                break;
+            }
+
+            const location = join(path, "package.json");
+            const pkgc = JSON.parse(await readFile(location));
+
+            if (scopes.includes(pkgc.name)) {
+                packages = [_path];
+                break;
+            }
+        }
+    } else if (opts.dependencies) {
         packages = await getDeepDeps(opts.root, getDepTypes({ a: true }), [opts.dependencies].flat(), packages);
         // potentially is there reason not to build all dependency types?
     }
@@ -127,6 +148,6 @@ console.time(BUILD_NAME);
 })()
     .catch(e => {
         console.timeLog(BUILD_NAME, "Error occured.");
-        // console.error(e.stack);
+        console.error(e.stack);
         process.exitCode = e.exitCode || 10;
     });
