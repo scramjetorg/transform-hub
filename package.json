@@ -24,11 +24,11 @@
     "build:refapps": "LOCAL_PACKAGES=true yarn build:refapps:node && LOCAL_PACKAGES=true yarn build:refapps:python",
     "postbuild:refapps": "scripts/run-script.js -w refapps postbuild:refapps",
     "prebuild:refapps:node": "scripts/build-all.js -w refapps --outdir=dist/reference-apps --no-install --bundle",
-    "build:refapps:node": "scripts/run-script.js -w refapps build:refapps:node",
+    "build:refapps:node": "scripts/run-script.js -w refapps build:refapps:node --ts-config tsconfig.build.json",
     "build:refapps:python": "scripts/run-script.js -w refapps build:refapps:python --no-install --bundle",
 
     "prebuild:packages": "scripts/run-script.js -w packages build:only",
-    "build:packages": "scripts/build-all.js -w packages",
+    "build:packages": "scripts/build-all.js -w packages --ts-config tsconfig.build.json",
 
     "build:docker": "scripts/run-script.js -w packages build:docker",
 
@@ -36,7 +36,7 @@
     "build:docs": "scripts/run-script.js -w packages build:docs",
     "build:all-docs": "yarn build:readme && yarn build:docs",
 
-    "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd'",
+    "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd' --ts-config tsconfig.build.json",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
 
     "cloc": "cloc . --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",

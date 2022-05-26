@@ -5,7 +5,7 @@
   "main": "./src/bin/start-runner.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
-    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install -d packages/runner -o ./dist/docker-runner/",
+    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json",
     "build:docker": "docker build -t scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
