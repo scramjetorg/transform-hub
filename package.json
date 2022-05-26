@@ -22,12 +22,12 @@
 
     "prebuild:refapps": "yarn download:refapps",
     "build:refapps": "yarn build:refapps:node",
-    "postbuild:refapps": "scripts/run-script.js -w refapps postbuild:refapps",
-    "prebuild:refapps:node": "scripts/build-all.js -w refapps --outdir=dist/reference-apps --no-distws --bundle",
-    "build:refapps:node": "scripts/run-script.js -w refapps build:refapps:node",
+    "postbuild:refapps": "scripts/run-script.js -v -w refapps postbuild:refapps",
+    "prebuild:refapps:node": "scripts/build-all.js -v -w refapps --outdir=dist/reference-apps --no-install --no-distws --bundle",
+    "build:refapps:node": "scripts/run-script.js -v -w refapps build:refapps:node",
 
-    "prebuild:packages": "scripts/run-script.js -w packages build:only",
-    "build:packages": "scripts/build-all.js -w packages --ts-config tsconfig.build.json",
+    "prebuild:packages": "scripts/run-script.js -v -w packages build:only",
+    "build:packages": "scripts/build-all.js -v -w packages --ts-config tsconfig.build.json",
 
     "build:docker": "scripts/run-script.js -w packages build:docker",
 

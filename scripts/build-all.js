@@ -65,6 +65,7 @@ if (opts.help || opts["long-help"]) {
         console.error(`       ${spaces} --outdir - output directory (default <root>/DIST, env: OUT_DIR)`);
         console.error(`       ${spaces} --ts-config <name> - the name of tsconfig.json file (default is tsconfig.json)`);
         console.error(`       ${spaces} -D,--dep-types - dependency types ([Dsop]) (default: all)`);
+        console.error(`       ${spaces} --verbose - show verbose output`);
         console.error(`       ${spaces} --no-build - do not run install in dist, env: NO_BUILD`);
         console.error(`       ${spaces} --no-dist - do not run copy to dist, env: NO_COPY_DIST`);
         console.error(`       ${spaces} --no-install - do not run install in dist, env: NO_INSTALL`);
@@ -171,13 +172,14 @@ console.time(BUILD_NAME);
 
             const cmd = `cd ${outDir} && pwd >&2 && npx npm@8 install -q -ws --no-audit`;
 
-            await runCommand(cmd, false);
+            await runCommand(cmd, opts.verbose);
         }
 
         if (opts.bundle) {
             console.timeLog(BUILD_NAME, "Done, bundling...");
 
             await DataStream.from(prepacks)
+                .setOptions({ maxParallel: 1 })
                 .do((/** @type {PrePack} */ pack) => pack.install("", opts.verbose))
                 .run();
         }
