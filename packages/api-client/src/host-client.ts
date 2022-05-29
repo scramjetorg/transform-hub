@@ -166,4 +166,14 @@ export class HostClient implements ClientProvider {
     getInstanceClient(id: string) {
         return InstanceClient.from(id, this);
     }
+
+    /**
+     * Creates SequenceClient based on current HostClient and instance id.
+     *
+     * @param id Sequence id.
+     * @returns SequenceClient instance.
+     */
+    getSequenceClient(id: string) {
+        return SequenceClient.from(id, this);
+    }
 }
