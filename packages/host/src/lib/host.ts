@@ -722,6 +722,7 @@ export class Host implements IComponent {
 
         csic.on("end", (code) => {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
+            csic.logger.unpipe(this.logger);
 
             delete InstanceStore[csic.id];
 
