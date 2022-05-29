@@ -14,22 +14,42 @@ export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: S
         return next();
     }
 
-    let rx = req.socket.bytesRead;
-    let tx = req.socket.bytesWritten;
+    let rx = 0;
+    let tx = 0;
 
     request.auditData = {
         id: IDProvider.generate(),
-        object: (req.params || {}).id
+        object: (request.params || {}).id,
+        tx: 0,
+        rx: 0
     };
 
     auditor.auditRequest(request, "START");
 
+    request.on("data", (chunk) => {
+        request.auditData.rx += chunk.length;
+    }).pause();
+
+    const write = res.write;
+
+    (res.write as (
+        chunk: any,
+        encoding: BufferEncoding,
+        cb: ((error: Error | null | undefined) => void) | undefined
+    ) => boolean) = (
+        chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void) | undefined
+    ) => {
+        request.auditData.tx += chunk.length;
+
+        return write.apply(res, [chunk, encoding, cb]);
+    };
+
     const interval = setInterval(() => {
-        if (req.socket.bytesRead !== rx || req.socket.bytesWritten !== tx) {
+        if (request.auditData.rx !== rx || request.auditData.tx !== tx) {
             auditor.auditRequest(request, "ACTIVE");
 
-            rx = req.socket.bytesRead;
-            tx = req.socket.bytesWritten;
+            rx = request.auditData.rx;
+            tx = request.auditData.tx;
         }
     }, ACTIVE_REQUEST_AUDIT_INTERVAL);
 
