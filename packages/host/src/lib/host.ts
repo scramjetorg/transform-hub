@@ -653,7 +653,7 @@ export class Host implements IComponent {
         this.instancesStore[id] = csic;
 
         csic.on("error", (err) => {
-            this.logger.error("CSIController errored", err);
+            this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
         csic.on("pang", (data) => {

@@ -190,13 +190,15 @@ export class CSIController extends TypedEmitter<Events> {
 
             this.logger.trace("Instance stopped.");
         } catch (e: any) {
-            code = e;
-            this.logger.error("Instance caused error, code:", e);
+            code = e.exitcode;
+            this.logger.error("Instance caused error", e.message, code);
         }
 
         this.emit("stop", code);
 
         this.info.ended = new Date();
+
+        this.logger.trace("Finalizing...");
 
         await this.finalize();
 
@@ -277,18 +279,31 @@ export class CSIController extends TypedEmitter<Events> {
         // eslint-disable-next-line default-case
         switch (exitcode) {
         case RunnerExitCode.INVALID_ENV_VARS: {
-            return Promise.reject("Runner was started with invalid configuration. This is probably a bug in STH.");
+            return Promise.reject({
+                message: "Runner was started with invalid configuration. This is probably a bug in STH.",
+                exitcode: RunnerExitCode.INVALID_ENV_VARS
+            });
         }
         case RunnerExitCode.INVALID_SEQUENCE_PATH: {
-            return Promise.reject(`Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. Check "main" field in Sequence package.json`);
+            return Promise.reject({
+                message: `Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. ` +
+                    "Check `main` field in Sequence package.json",
+                exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH });
         }
         case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
-            return Promise.reject("Sequence failed on start");
+            return Promise.reject({
+                message: "Sequence failed on start", exitcode: RunnerExitCode.SEQUENCE_FAILED_ON_START
+            });
+        }
+        case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
+            return Promise.reject({
+                message: "Sequence unpack failed", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
+            });
         }
         }
 
         if (exitcode > 0) {
-            return Promise.reject("Runner failed");
+            return Promise.reject({ message: "Runner failed", exitcode });
         }
 
         return Promise.resolve();
@@ -302,10 +317,13 @@ export class CSIController extends TypedEmitter<Events> {
 
     async finalize() {
         await defer(runnerExitDelay);
-        this.logger.end();
+
         this.finalizingPromise = cancellableDefer(csiLifetimeExtensionDelay);
 
         await this.finalizingPromise;
+
+        this.logger.info("Finalized");
+        this.logger.end();
     }
 
     instanceStopped(): Promise<ExitCode> {

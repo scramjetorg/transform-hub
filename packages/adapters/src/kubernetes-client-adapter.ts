@@ -89,7 +89,7 @@ class KubernetesClientAdapter {
         );
     }
 
-    async waitForPodStatus(podName: string, expectedStatuses: string[]): Promise<string> {
+    async waitForPodStatus(podName: string, expectedStatuses: string[]): Promise<{ status: string, code?: number }> {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
         let failCount = 0;
@@ -100,8 +100,13 @@ class KubernetesClientAdapter {
                 const response = await kubeApi.readNamespacedPodStatus(podName, this._namespace);
                 const status = response.body.status?.phase || "";
 
+                const container = (response.body.status?.containerStatuses || []).find(c => c.name === podName);
+
                 if (expectedStatuses.includes(status)) {
-                    return status;
+                    return {
+                        status,
+                        code: container?.state?.terminated?.exitCode
+                    };
                 }
             } catch (err: any) {
                 if (err instanceof HttpError) {
