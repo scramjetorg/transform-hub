@@ -685,9 +685,10 @@ When("send {string} to stdin", async function(this: CustomWorld, str) {
 
 Then("{string} is {string}", async function(this: CustomWorld, stream, text) {
     const result = await this.resources.instance?.getStream(stream);
+    const response = await waitUntilStreamEquals(result!, text);
 
     if (!result) assert.fail(`No data in ${stream}!`);
-    assert.equal(text, await streamToString(result));
+    assert.equal(text, response);
 });
 
 Then("{string} will be data named {string}", async function(this: CustomWorld, streamName, dataName) {

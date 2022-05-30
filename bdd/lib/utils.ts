@@ -194,10 +194,13 @@ export async function waitUntilStreamEquals(stream: Readable, expected: string, 
                 response += chunk;
 
                 if (response === expected) return expected;
+                if (response.length >= expected.length) {
+                    assert.equal(response, expected);
+                }
             }
             throw new Error("End of stream reached");
         })(),
-        defer(timeout).then(() => { throw new Error("Timeout reached"); })
+        defer(timeout).then(() => { assert.equal(response, expected); })
     ]);
 
     return response;
