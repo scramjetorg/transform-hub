@@ -41,6 +41,9 @@ jobs:
         with:
           node-version: ${{ inputs.node-version }}
 
+      - name: Inspect dist
+        run: ls dist/ -la
+
       - name: Install dependencies
         run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
 

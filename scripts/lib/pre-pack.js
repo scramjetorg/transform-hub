@@ -4,10 +4,10 @@ const path = require("path");
 const { promises: { access }, constants } = require("fs");
 const { chmod, readFile, writeFile } = require("fs/promises");
 const { runCommand, exists } = require("./build-utils");
+const { join } = require("path");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
-    PACKAGES_DIR = process.env.PACKAGES_DIR || "packages";
 
     constructor(options) {
         this.logs = [];
@@ -17,18 +17,21 @@ class PrePack {
             throw new Error("No output folder specified");
         }
 
+        this.packagesDir = options.packagesDir || "packages";
         this.currDir = options.cwd || process.cwd();
-        this.rootDir = path.resolve(__dirname, "../..");
+        this.rootDir = options.rootDir || path.resolve(__dirname, "../..");
         this.currDirDist = path.join(this.currDir, "dist");
 
-        if (this.options.localCopy) {
-            this.rootDistPackPath = this.currDirDist;
-        } else {
-            this.rootDistPackPath = this.currDir.replace(this.PACKAGES_DIR, this.options.outDir);
-        }
+        const packageDirName = this.currDir.split("/").pop();
 
         if (this.options.distPackDir) {
-            this.rootDistPackPath = this.options.distPackDir + "/" + this.currDir.split("/").pop();
+            this.rootDistPackPath = join(this.options.distPackDir, packageDirName);
+        } else if (this.options.rootDistPack) {
+            this.rootDistPackPath = this.options.rootDistPack;
+        } else if (this.options.localCopy) {
+            this.rootDistPackPath = this.currDirDist;
+        } else {
+            this.rootDistPackPath = join(this.currDirDist, packageDirName);
         }
 
         this.rootPackageJson = null;
@@ -75,7 +78,7 @@ class PrePack {
      * @returns {string[]} found package paths
      */
     async findPackages() {
-        const cwd = path.join(this.rootDir, this.PACKAGES_DIR);
+        const cwd = path.join(this.rootDir, this.packagesDir);
 
         return new Promise((res, rej) => {
             glob("!(node_modules)/package.json", { cwd }, (err, packages) => {
@@ -135,8 +138,8 @@ class PrePack {
         ));
     }
 
-    async install(extraParams = "") {
-        return runCommand(`cd ${this.rootDistPackPath} && npx -y npm@8 install${extraParams}`);
+    async install(extraParams = "", verbose = false) {
+        return runCommand(`cd ${this.rootDistPackPath} && npx -y npm@8 install${extraParams}`, verbose);
     }
 
     async isReadable(file) {

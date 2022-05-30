@@ -10,9 +10,8 @@
   "scripts": {
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/sth --ts-config tsconfig.build.json",
     "build:docker": "docker build -t scramjetorg/sth:$npm_package_version -f Dockerfile ../../",
-    "build:esbuild": "esbuild src/**/*.ts --tsconfig=tsconfig.build.json --outdir=dist/ --bundle --platform=node --external:@scramjet/runner --external:ssh2 --external:cpu-features",
-    "postbuild:esbuild": "mkdir -p ../../dist/sth && cp -r dist/** ../../dist/sth  && cp package.json ../../dist/sth",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "echo no tests yet -- # npm run test:ava",
     "test:ava": "ava"

@@ -107,5 +107,3 @@ Used to find built source code.
 `NO_INSTALL`
 
 `MAKE_PUBLIC`
-
-`DIST_PACK_DIR`

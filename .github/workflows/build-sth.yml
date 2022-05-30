@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
 
+      - name: Update saved git hash
+        run: yarn savehash
+
       - name: Build packages
         run: yarn build:packages
 

@@ -5,14 +5,13 @@
   "main": "./src/bin/start-runner.ts",
   "scripts": {
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/runner -o ./dist/docker-runner/ --ts-config tsconfig.build.json",
     "build:docker": "docker build -t scramjetorg/runner:$npm_package_version -f Dockerfile ../../",
     "build:docs": "typedoc",
     "start": "ts-node ./src/index",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$npm_package_version",
     "clean": "rm -rf ./dist .bic_cache",
-    "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)",
-    "build:esbuild": "esbuild src/**/*.ts --tsconfig=tsconfig.build.json --outdir=dist --bundle --platform=node --external:@scramjet/runner --external:ssh2 --external:cpu-features",
-    "postbuild:esbuild": "mkdir -p ../../dist/runner && cp -r dist/** ../../dist/runner && cp package.json ../../dist/runner"
+    "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
