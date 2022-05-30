@@ -21,7 +21,8 @@ export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: S
         id: IDProvider.generate(),
         object: (request.params || {}).id,
         tx: 0,
-        rx: 0
+        rx: 0,
+        requestorId: (request.headers["x-mw-billable"] || "system") as string
     };
 
     auditor.auditRequest(request, "START");

@@ -27,7 +27,7 @@ import { ConfigService } from "@scramjet/sth-config";
 import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
-import { Auditor } from "./auditor";
+import { AuditedRequest, Auditor } from "./auditor";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -609,7 +609,8 @@ export class Host implements IComponent {
                 status: csic.status,
             }, InstanceMessageCode.INSTANCE_STARTED);
 
-            this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_STARTED);
+            this.logger.debug("Instance limits", csic.limits);
+            this.auditor.auditInstanceStart(id, req as AuditedRequest, csic.limits);
 
             return {
                 result: "success",
@@ -637,6 +638,8 @@ export class Host implements IComponent {
     ): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
+
+        this.logger.debug("CSIC start payload", payload);
 
         const csic = new CSIController(
             id,

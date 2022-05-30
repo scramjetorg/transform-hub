@@ -174,7 +174,9 @@ export class CSIController extends TypedEmitter<Events> {
         this.outputTopic = payload.outputTopic;
         this.inputTopic = payload.inputTopic;
 
-        this.limits = payload.limits || {};
+        this.limits = {
+            memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
+        };
 
         this.communicationHandler = communicationHandler;
 

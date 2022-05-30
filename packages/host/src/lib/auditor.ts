@@ -1,5 +1,5 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { InstanceStats, OpRecord, ParsedMessage } from "@scramjet/types";
+import { InstanceLimits, InstanceStats, OpRecord, ParsedMessage } from "@scramjet/types";
 import { InstanceMessageCode, OpRecordCode, SequenceMessageCode } from "@scramjet/symbols";
 import { StringStream } from "scramjet";
 import { ReReadable } from "rereadable-stream";
@@ -14,6 +14,7 @@ type AuditData = {
     object?: string;
     rx: number;
     tx: number;
+    requestorId: string;
 }
 
 export type AuditedRequest = ParsedMessage & { auditData: AuditData };
@@ -84,8 +85,8 @@ export class Auditor {
         return code;
     }
 
-    getRequestorId(req: ParsedMessage): string {
-        return req.headers["x-mw-billable"] as string || "system";
+    getRequestorId(req?: AuditedRequest): string {
+        return req?.auditData.requestorId as string || "system";
     }
 
     auditRequest(req: AuditedRequest, status: OpRecord["opState"]) {
@@ -131,14 +132,30 @@ export class Auditor {
         });
     }
 
-    auditInstance(id: string, state: InstanceMessageCode) {
+    auditInstance(id: string, state: InstanceMessageCode, req?: AuditedRequest) {
+        const requestorId = this.getRequestorId(req);
+
         this.logger.info("Instance state", id, state);
         this.write({
             opState: "",
             opCode: state,
             objectId: id,
-            requestorId: "system",
+            requestorId: requestorId,
             receivedAt: Date.now()
+        });
+    }
+
+    auditInstanceStart(id: string, req: AuditedRequest, limits: InstanceLimits) {
+        const requestorId = this.getRequestorId(req);
+
+        this.logger.info("Instance started", id);
+        this.write({
+            opState: "",
+            opCode: InstanceMessageCode.INSTANCE_STARTED,
+            objectId: id,
+            requestorId: requestorId,
+            receivedAt: Date.now(),
+            limits
         });
     }
 
