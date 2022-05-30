@@ -26,13 +26,13 @@
     "prebuild:refapps:node": "scripts/build-all.js -v -w refapps --outdir=dist/reference-apps --no-install --no-distws --bundle",
     "build:refapps:node": "scripts/run-script.js -v -w refapps build:refapps:node",
 
-    "prebuild:packages": "scripts/run-script.js -v -w packages build:only",
-    "build:packages": "scripts/build-all.js -v -w packages --ts-config tsconfig.build.json",
+    "prebuild:packages": "scripts/run-script.js -v -w modules build:only",
+    "build:packages": "scripts/build-all.js -v -w modules --ts-config tsconfig.build.json",
 
-    "build:docker": "scripts/run-script.js -w packages build:docker",
+    "build:docker": "scripts/run-script.js -w modules build:docker",
 
     "build:readme": "node ./scripts/mk-readme",
-    "build:docs": "scripts/run-script.js -w packages build:docs",
+    "build:docs": "scripts/run-script.js -w modules build:docs",
     "build:all-docs": "yarn build:readme && yarn build:docs",
 
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd' --ts-config tsconfig.build.json",
@@ -52,7 +52,6 @@
     "start:dev": "ts-node packages/sth/src/bin/hub.ts",
     "start:dev:cli": "ts-node packages/cli/src/bin/index.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
-    "postinstall": "yarn --cwd bdd install",
     "prepare": "npx husky install",
 
     "download:refapps": "cd packages/reference-apps && curl -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q -nc",
@@ -78,7 +77,7 @@
 
     "align": "syncpack fix-mismatches --source all-deps/package.json --source bdd/package.json --source='packages/**(!node_modules)/package.json' --source='packages/reference-apps/**(!node_modules)/package.json' --source='template/package.json'",
     "upgrade:all": "node scripts/deps-update.js && yarn align && rm -rf ./all-deps && yarn install",
-    "savehash": "scripts/run-script.js -w packages savehash"
+    "savehash": "scripts/run-script.js -w modules savehash"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
@@ -110,8 +109,9 @@
     "yarn": "^1.22.18"
   },
   "workspaces": {
+    "packages": [ "packages/*", "packages/reference-apps/*", "bdd/" ],
     "refapps": [ "packages/reference-apps/*" ],
-    "packages": [ "packages/*" ],
+    "modules": [ "packages/*" ],
     "bdd": [ "bdd/" ]
   },
   "husky": {
