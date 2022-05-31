@@ -10,5 +10,5 @@ export type Instance = {
     created?: Date,
     started?: Date,
     ended?: Date,
-    status: InstanceStatus,
+    status?: InstanceStatus,
 }

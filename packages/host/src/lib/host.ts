@@ -605,7 +605,8 @@ export class Host implements IComponent {
                 sequence: id,
                 ports: csic.info.ports,
                 created: csic.info.created,
-                started: csic.info.started
+                started: csic.info.started,
+                status: csic.status,
             }, InstanceMessageCode.INSTANCE_STARTED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_STARTED);
