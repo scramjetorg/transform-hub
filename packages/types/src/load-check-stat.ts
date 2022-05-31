@@ -21,6 +21,7 @@ export type LoadCheckStat = {
 
 export type LoadCheckConfig = {
     safeOperationLimit: number;
+    fsPaths: string[],
     instanceRequirements: {
         freeMem: number,
         cpuLoad: number,

@@ -28,6 +28,8 @@ import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramj
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
+import { parse } from "path";
+import { homedir } from "os";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -167,7 +169,15 @@ export class Host implements IComponent {
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
-        this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements });
+        const fsPaths = [
+            parse(process.cwd()).root, // root dir
+            homedir(),
+            this.config.sequencesRoot
+        ];
+
+        if (this.config.kubernetes.sequencesRoot) fsPaths.push(this.config.kubernetes.sequencesRoot);
+
+        this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements, fsPaths });
 
         this.socketServer = socketServer;
         this.socketServer.logger.pipe(this.logger);

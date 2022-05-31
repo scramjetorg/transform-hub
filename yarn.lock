@@ -1675,6 +1675,11 @@
     "@types/node" "*"
     form-data "^3.0.0"
 
+"@types/node-os-utils@^1.2.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@types/node-os-utils/-/node-os-utils-1.3.0.tgz#df06d65292a4ccf99d332e39c4f64e94c538fad5"
+  integrity sha512-XwVteWQx/XkfRPyaGkw8dEbrCAkoRZ73pI3XznUYIpzbCfpQB3UnDlR5TnmdhetlT889tUJGF8QWo9xrgTpsiA==
+
 "@types/node@*", "@types/node@15.12.5":
   version "15.12.5"
   resolved "https://registry.npmjs.org/@types/node/-/node-15.12.5.tgz"
@@ -3327,6 +3332,11 @@ dir-glob@^3.0.1:
   integrity sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==
   dependencies:
     path-type "^4.0.0"
+
+diskusage-ng@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/diskusage-ng/-/diskusage-ng-1.0.2.tgz#5ded0862ce3726ca2ddc2956a66b0673877cd3a1"
+  integrity sha512-IO+Dbvxf5kXGuOEAHFCSf/aW9z/E96OwUH1Szstf2Rjzy+AP6sr/Y5yQh70fdX8SEFKdkTMpVG+b5jR7Uw3Q1Q==
 
 docker-modem@^3.0.0:
   version "3.0.3"
@@ -6407,6 +6417,11 @@ node-gyp@^9.0.0:
     tar "^6.1.2"
     which "^2.0.2"
 
+node-os-utils@1.3.7:
+  version "1.3.7"
+  resolved "https://registry.yarnpkg.com/node-os-utils/-/node-os-utils-1.3.7.tgz#77cc341ae39584e12d3aadf6046fe420ff4c9340"
+  integrity sha512-fvnX9tZbR7WfCG5BAy3yO/nCLyjVWD6MghEq0z5FDfN+ZXpLWNITBdbifxQkQ25ebr16G0N7eRWJisOcMEHG3Q==
+
 node-preload@^0.2.1:
   version "0.2.1"
   resolved "https://registry.npmjs.org/node-preload/-/node-preload-0.2.1.tgz"
@@ -8488,11 +8503,6 @@ syncpack@^5.7.11:
     read-yaml-file "2.1.0"
     semver "7.3.5"
 
-systeminformation@^5.11.25:
-  version "5.11.25"
-  resolved "https://registry.yarnpkg.com/systeminformation/-/systeminformation-5.11.25.tgz#d94d7ec0125ff6ebe823898047b262ff4eab1a91"
-  integrity sha512-qjBpIYDCEUnwxy8ewm+ybO4pOl+lNRB5zC6YcCT+kp5QdCXRZ7e0ZS/++PkV7rGu76Xxzbmw3LSzBQitDX2seQ==
-
 table@^6.0.9:
   version "6.8.0"
   resolved "https://registry.npmjs.org/table/-/table-6.8.0.tgz"
@@ -8762,7 +8772,7 @@ ts-node@^10.8.2:
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
 
-ts.data.json@^2.1.1:
+ts.data.json@^2.1.0:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/ts.data.json/-/ts.data.json-2.1.1.tgz#435e36202fe62dc1f4d6712fd0625050a5bf64c3"
   integrity sha512-TzMVDIxVxDjHkqM6rOTuv+4iIed+264G3Pwyxxs5z6oY7Qfams41BsY30hbctmS7SZy8aNu35ywyJVc8+AkyyQ==
