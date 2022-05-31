@@ -75,10 +75,7 @@ export class CSIController extends TypedEmitter<Events> {
     requires?: string;
 
     initResolver?: { res: Function, rej: Function };
-    startResolver?: { res: Function, rej: Function };
     heartBeatResolver?: { res: Function, rej: Function };
-
-    startPromise: Promise<void>;
     heartBeatPromise?: Promise<string>;
 
     heartBeatTicker?: NodeJS.Timeout;
@@ -155,10 +152,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.inputTopic = payload.inputTopic;
 
         this.communicationHandler = communicationHandler;
-
-        this.startPromise = new Promise((res, rej) => {
-            this.startResolver = { res, rej };
-        });
 
         this.logger = new ObjLogger(this, { id: this.id });
 
@@ -441,9 +434,6 @@ export class CSIController extends TypedEmitter<Events> {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
 
-        this.startResolver?.res();
-        this.status = "running";
-
         this.info.started = new Date();
         this.logger.info("Instance started", this.info);
     }
@@ -626,18 +616,16 @@ export class CSIController extends TypedEmitter<Events> {
         };
     }
 
-    async getInfo(): Promise<STHRestAPI.GetInstanceResponse> {
-        await this.startPromise;
-
+    getInfo(): STHRestAPI.GetInstanceResponse {
         return {
-            ports: this.info.ports,
-            started: this.info.started,
-            created: this.info.created,
-            ended: this.info.ended,
             id: this.id,
-            sequence: this.sequence.id,
             appConfig: this.appConfig,
-            sequenceArgs: this.sequenceArgs
+            sequenceArgs: this.sequenceArgs,
+            sequence: this.sequence.id,
+            ports: this.info.ports,
+            created: this.info.created,
+            started: this.info.started,
+            ended: this.info.ended,
         };
     }
 
