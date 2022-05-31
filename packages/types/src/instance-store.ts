@@ -1,7 +1,8 @@
 import { AppConfig } from "./app-config";
+import { InstanceId, InstanceStatus } from "./instance";
 
 export type Instance = {
-    id: string,
+    id: InstanceId,
     appConfig?: AppConfig,
     sequenceArgs?: any[],
     sequence: string,
@@ -9,4 +10,5 @@ export type Instance = {
     created?: Date,
     started?: Date,
     ended?: Date,
+    status: InstanceStatus,
 }

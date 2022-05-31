@@ -16,7 +16,8 @@ import {
     MessageDataType,
     IObjectLogger,
     STHRestAPI,
-    STHConfiguration
+    STHConfiguration,
+    InstanceStatus
 } from "@scramjet/types";
 import {
     AppError,
@@ -70,7 +71,7 @@ export class CSIController extends TypedEmitter<Events> {
         started?: Date;
         ended?: Date;
     } = {};
-    status: "initializing" | "starting" | "running" | "finishing" | "ended" | "errored";
+    status: InstanceStatus;
     provides?: string;
     requires?: string;
 
@@ -627,6 +628,7 @@ export class CSIController extends TypedEmitter<Events> {
             created: this.info.created,
             started: this.info.started,
             ended: this.info.ended,
+            status: this.status,
         };
     }
 
