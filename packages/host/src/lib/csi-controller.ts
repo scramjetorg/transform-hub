@@ -70,6 +70,7 @@ export class CSIController extends TypedEmitter<Events> {
         started?: Date;
         ended?: Date;
     } = {};
+    status: "initializing" | "starting" | "running" | "finishing" | "ended" | "errored";
     provides?: string;
     requires?: string;
 
@@ -163,6 +164,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
+        this.status = "initializing";
     }
 
     async start() {
@@ -179,6 +181,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async main() {
+        this.status = "running";
         this.logger.trace("Instance started");
 
         this.heartBeatStart();
@@ -194,6 +197,8 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.error("Instance caused error", e.message, code);
         }
 
+        this.status = code === 0 ? "finishing" : "errored";
+
         this.emit("stop", code);
 
         this.info.ended = new Date();
@@ -201,6 +206,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Finalizing...");
 
         await this.finalize();
+
+        this.status = code === 0 ? "ended" : "errored";
 
         this.emit("end", code);
         // removed log close from here - should be done in cleanup in GC.
@@ -217,6 +224,8 @@ export class CSIController extends TypedEmitter<Events> {
 
         const instanceMain = async () => {
             try {
+                this.status = "starting";
+
                 await this.instanceAdapter.init();
 
                 this.logger.trace("Streams hooked and routed");
@@ -233,6 +242,7 @@ export class CSIController extends TypedEmitter<Events> {
                 if (exitcode === 0) {
                     this.logger.trace("Sequence finished with success", exitcode);
                 } else {
+                    this.status = "errored";
                     this.logger.error("Sequence finished with error", exitcode);
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
@@ -241,6 +251,7 @@ export class CSIController extends TypedEmitter<Events> {
 
                 return exitcode;
             } catch (error: any) {
+                this.status = "errored";
                 this.logger.error("Error caught", error.stack);
 
                 await this.cleanup();
@@ -431,6 +442,7 @@ export class CSIController extends TypedEmitter<Events> {
         }
 
         this.startResolver?.res();
+        this.status = "running";
 
         this.info.started = new Date();
         this.logger.info("Instance started", this.info);
