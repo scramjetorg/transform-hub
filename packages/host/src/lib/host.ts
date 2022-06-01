@@ -610,7 +610,7 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_STARTED);
 
             this.logger.debug("Instance limits", csic.limits);
-            this.auditor.auditInstanceStart(id, req as AuditedRequest, csic.limits);
+            this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
 
             return {
                 result: "success",
