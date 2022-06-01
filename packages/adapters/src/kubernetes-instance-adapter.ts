@@ -4,10 +4,11 @@ import {
     IComponent,
     ILifeCycleAdapterMain,
     ILifeCycleAdapterRun,
+    InstanceConfig,
+    InstanceLimits,
     IObjectLogger,
     K8SAdapterConfiguration,
     MonitoringMessageData,
-    SequenceConfig,
     STHConfiguration,
 } from "@scramjet/types";
 
@@ -33,6 +34,10 @@ IComponent {
     private _kubeClient?: KubernetesClientAdapter;
 
     private adapterConfig: K8SAdapterConfiguration
+    private _limits?: InstanceLimits = {};
+
+    get limits() { return this._limits || {} as InstanceLimits; }
+    private set limits(value: InstanceLimits) { this._limits = value; }
 
     constructor(sthConfig: STHConfiguration) {
         // @TODO this is a redundant check (it was already checked in sequence adapter)
@@ -64,6 +69,7 @@ IComponent {
 
     async stats(msg: MonitoringMessageData): Promise<MonitoringMessageData> {
         return {
+            // @TODO: provide limits and stats
             ...msg,
         };
     }
@@ -71,20 +77,22 @@ IComponent {
     private get runnerResourcesConfig() {
         return {
             requests: {
-                memory:  this.adapterConfig.runnerResourcesRequestsMemory || "128M",
+                memory: this.limits?.memory ? this.limits?.memory + "M" : this.adapterConfig.runnerResourcesRequestsMemory || "128M",
                 cpu: this.adapterConfig.runnerResourcesRequestsCpu || "250m"
             },
             limits: {
-                memory: this.adapterConfig.runnerResourcesLimitsMemory || "1G",
+                memory: this.limits?.memory ? this.limits?.memory * 2 + "M" : this.adapterConfig.runnerResourcesLimitsMemory || "1G",
                 cpu: this.adapterConfig.runnerResourcesLimitsCpu || "1000m"
             }
         };
     }
 
-    async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
         }
+
+        this.limits = config.limits;
 
         const runnerName = this._runnerName = `runner-${ instanceId }`;
 

@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { SequenceClient } from "@scramjet/api-client";
+import { InstanceLimits } from "@scramjet/types";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { defer } from "@scramjet/utility";
 import { createWriteStream, lstatSync } from "fs";
@@ -27,12 +28,22 @@ const sendPackage = async (sequencePackage: string) => {
     }
 };
 
-const startSequence = async (id: string, { configFile, configString, args, outputTopic, inputTopic }:
-    { configFile: any, configString: string, args?: any[], outputTopic?: string, inputTopic?: string }) => {
+const startSequence = async (
+    id: string, { configFile, configString, args, outputTopic, inputTopic, limits }:
+        {
+            configFile: any,
+            configString: string,
+            args?: any[],
+            outputTopic?: string,
+            inputTopic?: string,
+            limits?: InstanceLimits
+        }
+) => {
     if (configFile && configString) {
         console.error("Provide one source of configuration");
         return Promise.resolve();
     }
+
     let appConfig = {};
 
     try {
@@ -45,7 +56,7 @@ const startSequence = async (id: string, { configFile, configString, args, outpu
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
 
     try {
-        const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic });
+        const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic, limits });
 
         sessionConfig.setLastInstanceId(instance.id);
         return displayObject(instance);
@@ -153,11 +164,13 @@ export const sequence: CommandDefinition = (program) => {
         .option("--output-topic <string>", "Topic to which the output stream should be routed")
         .option("--input-topic <string>", "Topic to which the input stream should be routed")
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
+        .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
-        .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr }) => {
+        .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr }) => {
             const args = parseSequenceArgs(argsStr);
+            const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
-            await startSequence(id, { configFile, configString, args, outputTopic, inputTopic });
+            await startSequence(id, { configFile, configString, args, outputTopic, inputTopic, limits });
         });
 
     type DeployArgs = {

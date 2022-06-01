@@ -8,8 +8,9 @@ import {
     ILifeCycleAdapterRun,
     IObjectLogger,
     MonitoringMessageData,
-    SequenceConfig,
+    InstanceConfig,
     RunnerContainerConfiguration,
+    InstanceLimits,
 } from "@scramjet/types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -28,11 +29,14 @@ ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
     private dockerHelper: IDockerHelper;
-
+    private _limits?: InstanceLimits = {};
     private resources: DockerAdapterResources = {};
 
     logger: IObjectLogger;
     crashLogStreams?: Promise<string[]>;
+
+    get limits() { return this._limits || {} as InstanceLimits; }
+    private set limits(value: InstanceLimits) { this._limits = value; }
 
     constructor() {
         this.dockerHelper = new DockerodeDockerHelper();
@@ -160,13 +164,17 @@ IComponent {
     }
 
     // eslint-disable-next-line complexity
-    async run(config: SequenceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
+    async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "docker") {
             throw new Error("Docker instance adapter run with invalid runner config");
         }
 
+        this.limits = config.limits;
+
         this.resources.ports =
             config.config?.ports ? await this.getPortsConfig(config.config.ports, config.container) : undefined;
+
+        config.container.maxMem = config.limits.memory || config.container.maxMem;
 
         this.logger.info("Instance preparation done for config", config);
 

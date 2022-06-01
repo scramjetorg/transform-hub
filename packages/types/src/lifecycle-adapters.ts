@@ -1,7 +1,8 @@
 import { MonitoringMessageData } from "./messages";
 import { MaybePromise } from "./utils";
-import { InstanceConifg } from "./runner-config";
+import { InstanceConfig } from "./runner-config";
 import { IObjectLogger } from "./object-logger";
+import { InstanceLimits } from "./instance-limits";
 
 export type ExitCode = number;
 
@@ -26,18 +27,19 @@ export interface ILifeCycleAdapterMain {
 // @TODO create ISequenceAdapter interface
 
 export interface ILifeCycleAdapterRun extends ILifeCycleAdapterMain {
+    limits: InstanceLimits;
+
     /**
       * Starts Runner.
       *
-      * @param {InstanceConifg} Runner configuration.
+      * @param {InstanceConfig} Runner configuration.
       * @returns {ExitCode} Runner exit code.
       */
-    run(config: InstanceConifg, instancesServerPort: number, instanceId: string): Promise<ExitCode>;
+    run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode>;
 
     monitorRate(rps: number): this;
 
     stats(msg: MonitoringMessageData): Promise<MonitoringMessageData>;
-
 }
 
-export type LifeCycleError = any | (Error & {exitCode?: number, errorMessage?: string});
+export type LifeCycleError = any | (Error & { exitCode?: number, errorMessage?: string });
