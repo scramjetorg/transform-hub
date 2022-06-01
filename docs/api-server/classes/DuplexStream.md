@@ -96,7 +96,7 @@
 
 #### Inherited from
 
-Duplex.\_\_@asyncIterator@3229
+Duplex.\_\_@asyncIterator@3235
 
 #### Defined in
 

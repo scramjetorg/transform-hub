@@ -114,7 +114,7 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `msgCode` | `X` |
-| `msgData` | `MonitoringMessageData` \| `DescribeSequenceMessageData` \| `ErrorMessageData` \| `StatusMessageData` \| `KeepAliveMessageData` \| `AcknowledgeMessageData` \| `HandshakeAcknowledgeMessageData` \| `StopSequenceMessageData` \| `MonitoringRateMessageData` \| `PingMessageData` \| `SequenceStoppedMessageData` \| `SequenceCompleteMessageData` \| `PangMessageData` \| `EmptyMessageData` \| `EventMessageData` \| `STHIDMessageData` \| `LoadCheckStat` \| `NetworkInfo`[] \| `InstanceBulkMessage` \| `SequenceBulkMessage` \| `InstanceMessage` \| `SequenceMessage` |
+| `msgData` | `LoadCheckStat` \| `ErrorMessageData` \| `AcknowledgeMessageData` \| `DescribeSequenceMessageData` \| `StatusMessageData` \| `EventMessageData` \| `PingMessageData` \| `PangMessageData` \| `HandshakeAcknowledgeMessageData` \| `KeepAliveMessageData` \| `EmptyMessageData` \| `MonitoringRateMessageData` \| `MonitoringMessageData` \| `StopSequenceMessageData` \| `SequenceCompleteMessageData` \| `STHIDMessageData` \| `InstanceMessage` \| `InstanceBulkMessage` \| `SequenceMessage` \| `SequenceBulkMessage` \| `SequenceStoppedMessageData` \| `NetworkInfo`[] |
 
 #### Returns
 

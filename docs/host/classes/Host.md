@@ -336,7 +336,7 @@ Stops running servers.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:862](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L862)
+[packages/host/src/lib/host.ts:860](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L860)
 
 ___
 
@@ -370,7 +370,7 @@ List of Instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:769](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L769)
+[packages/host/src/lib/host.ts:770](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L770)
 
 ___
 
@@ -394,7 +394,7 @@ Sequence info object.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:784](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L784)
+[packages/host/src/lib/host.ts:782](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L782)
 
 ___
 
@@ -418,7 +418,7 @@ List of Instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:821](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L821)
+[packages/host/src/lib/host.ts:819](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L819)
 
 ___
 
@@ -436,7 +436,7 @@ List of Sequences.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:806](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L806)
+[packages/host/src/lib/host.ts:804](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L804)
 
 ___
 
@@ -450,7 +450,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:832](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L832)
+[packages/host/src/lib/host.ts:830](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L830)
 
 ___
 
@@ -670,7 +670,7 @@ Creates new CSIController [CSIController](CSIController.md) object and handles i
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:633](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L633)
+[packages/host/src/lib/host.ts:634](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L634)
 
 ___
 
@@ -687,7 +687,7 @@ using its CSIController [CSIController](CSIController.md)
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:845](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L845)
+[packages/host/src/lib/host.ts:843](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L843)
 
 ___
 

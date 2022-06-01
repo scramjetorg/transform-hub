@@ -191,7 +191,7 @@ ___
 
 ### sources
 
-• **sources**: `Set`<`IObjectLogger` \| `Readable`\>
+• **sources**: `Set`<`Readable` \| `IObjectLogger`\>
 
 Other logger sources
 
@@ -419,7 +419,7 @@ ___
 
 ### pipe
 
-▸ **pipe**(`target`, `options?`): `IObjectLogger` \| `Writable`
+▸ **pipe**(`target`, `options?`): `Writable` \| `IObjectLogger`
 
 Pipes output logger to provided target. The target can be a writable stream
 or an Instance of class fulfilling IObjectLogger interface.
@@ -428,14 +428,14 @@ or an Instance of class fulfilling IObjectLogger interface.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `target` | `IObjectLogger` \| `Writable` | Target for log stream. |
+| `target` | `Writable` \| `IObjectLogger` | Target for log stream. |
 | `options` | `Object` | Pipe options. If option `stringified` is set to true, the output will be stringified. |
 | `options.end?` | `boolean` | - |
 | `options.stringified?` | `boolean` | - |
 
 #### Returns
 
-`IObjectLogger` \| `Writable`
+`Writable` \| `IObjectLogger`
 
 Piped stream
 
@@ -485,7 +485,7 @@ or an instance of class fulfiling IObjectLogger interface.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `target` | `undefined` \| `IObjectLogger` \| `Writable` | Target for log stream. |
+| `target` | `undefined` \| `Writable` \| `IObjectLogger` | Target for log stream. |
 | `options` | `ObjLogPipeOptions` | Pipe options. Should be the same as passed to @see ObjectLogger.pipe |
 
 #### Returns
