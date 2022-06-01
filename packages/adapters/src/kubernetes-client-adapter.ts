@@ -111,6 +111,10 @@ class KubernetesClientAdapter {
             } catch (err: any) {
                 if (err instanceof HttpError) {
                     this.logger.error(`Status for "${podName}" pod responded with error`, err?.body?.message);
+
+                    if (err.statusCode === 404) {
+                        this.logger.error("You have deleted this pod already! Try to increase runnerExitDelay in CSIController.");
+                    }
                 } else {
                     this.logger.error(`Failed to get pod status: ${podName}.`, err);
                 }

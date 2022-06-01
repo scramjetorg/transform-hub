@@ -41,7 +41,12 @@ import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitt
 import { ObjLogger } from "@scramjet/obj-logger";
 import { ReasonPhrases } from "http-status-codes";
 
-const runnerExitDelay = 11000;
+/**
+ * @TODO: Runner exits after 10secs and k8s client checks status every 500ms so we need to give it some time
+ * before we delete pod or it will fail with 404
+ * and instance adapter will throw an error even when everything was ok.
+ */
+const runnerExitDelay = 12000;
 const csiLifetimeExtensionDelay = 180e3;
 
 type Events = {
