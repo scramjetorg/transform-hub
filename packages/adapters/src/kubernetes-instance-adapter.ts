@@ -160,7 +160,8 @@ IComponent {
             return exitPodStatus.code || 137;
         }
 
-        this.logger.error("Runner stopped without issues");
+        this.logger.info("Runner stopped without issues");
+
         await this.remove(this.adapterConfig.timeout);
 
         // @TODO handle error status
