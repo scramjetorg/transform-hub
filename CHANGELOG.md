@@ -163,8 +163,11 @@ Bugfixes and minor improvements:
 - Show more information with `si hub info` command
 - Fix CLI output format
 - Rewrite build scripts
+- Added getSequenceClient and getInstanceClient methods to MiddlewareApiClient
+- Exit runner when sequence is damged rather than falling into infinite loop
+- Refactor build scripts
 
 
-## @scramjet/transform Hub - v0.23.0
+## @scramjet/transform Hub - v0.24.0
 
 This is the last release in changelog.
