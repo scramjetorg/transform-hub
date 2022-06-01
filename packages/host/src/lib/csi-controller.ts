@@ -334,6 +334,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.info("Cleanup completed");
     }
 
+    get isRunning() { return !this.finalizingPromise; }
+
     async finalize() {
         await defer(runnerExitDelay);
 
