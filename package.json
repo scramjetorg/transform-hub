@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/transform-hub",
-  "version": "0.23.2",
+  "version": "0.24.0",
   "private": true,
   "description": "A development repo for Scramjet Transform Hub, a container supervisor that allows deployment, execution and monitoring of any application based on a simple interface.",
   "main": "index.js",
@@ -19,43 +19,32 @@
     "build": "yarn build:all",
     "build:all": "yarn build:packages && yarn build:refapps && yarn build:docker",
     "build:all-packages": "yarn build:packages && yarn build:refapps",
-
     "prebuild:refapps": "yarn download:refapps",
     "build:refapps": "yarn build:refapps:node",
     "postbuild:refapps": "scripts/run-script.js -v -w refapps postbuild:refapps",
     "prebuild:refapps:node": "scripts/build-all.js -v -w refapps --outdir=dist/reference-apps --no-install --no-distws --bundle",
     "build:refapps:node": "scripts/run-script.js -v -w refapps build:refapps:node",
-
     "prebuild:packages": "scripts/run-script.js -v -w modules build:only",
     "build:packages": "scripts/build-all.js -v -w modules --ts-config tsconfig.build.json",
-
     "build:docker": "scripts/run-script.js -w modules build:docker",
-
     "build:readme": "node ./scripts/mk-readme",
     "build:docs": "scripts/run-script.js -w modules build:docs",
     "build:all-docs": "yarn build:readme && yarn build:docs",
-
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd' --ts-config tsconfig.build.json",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
-
     "cloc": "cloc . --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
-
     "clean": "yarn clean:root && scripts/run-script.js clean",
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -or -name __pypackages__ -prune -exec rm -rf {} ';' 2> /dev/null",
-
     "lint": "eslint . --ext .ts --cache --cache-strategy=content --cache-location=.eslintcache_scramjet-csi",
     "lint:uncached": "rm /tmp/.eslintcache_scramjet-csi && yarn lint",
     "lint:dedupe": "scripts/dedupe.js",
-
     "start": "node dist/sth/bin/hub.js",
     "start:dev": "ts-node packages/sth/src/bin/hub.ts",
     "start:dev:cli": "ts-node packages/cli/src/bin/index.ts",
     "install:clean": "yarn clean && yarn clean:modules && yarn install",
     "prepare": "npx husky install",
-
     "download:refapps": "cd packages/reference-apps && curl -q 'https://api.github.com/repos/scramjetorg/reference-apps/releases/latest' | jq -r '.assets[].browser_download_url' | xargs -n 4 -P ${MAX_PARALLEL:-$(nproc)} wget -q -nc",
-
     "test": "yarn test:packages",
     "test:packages": "scripts/run-script.js test",
     "test:packages-no-concurrent": "scripts/run-script.js -j 1 test",
@@ -66,7 +55,6 @@
     "test:bdd-ci-python": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-instance-python",
     "test:bdd-ci-node": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-instance-node",
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
-
     "prebump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && git diff --exit-code --quiet && yarn bump:images && lerna version -y --force-publish --no-git-tag-version ${NEXT_VER} && git add .",
     "bump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && yarn version --new-version ${NEXT_VER}",
     "bump:images": "./scripts/bump_docker_images.sh",
@@ -74,7 +62,6 @@
     "bump:version:patch": "VERSION_LEVEL=patch yarn bump:packages",
     "bump:version": "yarn bump:packages --no-git-tag-version",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags",
-
     "align": "syncpack fix-mismatches --source all-deps/package.json --source bdd/package.json --source='packages/**(!node_modules)/package.json' --source='packages/reference-apps/**(!node_modules)/package.json' --source='template/package.json'",
     "upgrade:all": "node scripts/deps-update.js && yarn align && rm -rf ./all-deps && yarn install",
     "savehash": "scripts/run-script.js -w modules savehash"
@@ -109,10 +96,20 @@
     "yarn": "^1.22.18"
   },
   "workspaces": {
-    "packages": [ "packages/*", "packages/reference-apps/*", "bdd/" ],
-    "refapps": [ "packages/reference-apps/*" ],
-    "modules": [ "packages/*" ],
-    "bdd": [ "bdd/" ]
+    "packages": [
+      "packages/*",
+      "packages/reference-apps/*",
+      "bdd/"
+    ],
+    "refapps": [
+      "packages/reference-apps/*"
+    ],
+    "modules": [
+      "packages/*"
+    ],
+    "bdd": [
+      "bdd/"
+    ]
   },
   "husky": {
     "hooks": {

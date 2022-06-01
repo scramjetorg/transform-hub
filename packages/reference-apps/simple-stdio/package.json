@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/reference-simple-stdio",
-  "version": "0.23.2",
+  "version": "0.24.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "ISC",
   "devDependencies": {
-    "@scramjet/types": "^0.23.2",
+    "@scramjet/types": "^0.24.0",
     "@types/node": "15.12.5"
   },
   "repository": {

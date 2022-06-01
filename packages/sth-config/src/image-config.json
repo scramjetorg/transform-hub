@@ -1,7 +1,7 @@
 {
-  "prerunner": "scramjetorg/pre-runner:0.23.2",
+  "prerunner": "scramjetorg/pre-runner:0.24.0",
   "runner": {
-    "node": "scramjetorg/runner:0.23.2",
-    "python3": "scramjetorg/runner-py:0.23.2"
+    "node": "scramjetorg/runner:0.24.0",
+    "python3": "scramjetorg/runner-py:0.24.0"
   }
 }
