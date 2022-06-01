@@ -605,7 +605,8 @@ export class Host implements IComponent {
                 sequence: id,
                 ports: csic.info.ports,
                 created: csic.info.created,
-                started: csic.info.started
+                started: csic.info.started,
+                status: csic.status,
             }, InstanceMessageCode.INSTANCE_STARTED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_STARTED);
@@ -769,10 +770,7 @@ export class Host implements IComponent {
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.info("List Instances");
 
-        return Object.values(this.instancesStore).map(csiController => ({
-            id: csiController.id,
-            sequence: csiController.sequence.id,
-        }));
+        return Object.values(this.instancesStore).map(csiController => csiController.getInfo());
     }
 
     /**

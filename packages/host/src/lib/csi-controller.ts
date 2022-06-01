@@ -16,7 +16,8 @@ import {
     MessageDataType,
     IObjectLogger,
     STHRestAPI,
-    STHConfiguration
+    STHConfiguration,
+    InstanceStatus
 } from "@scramjet/types";
 import {
     AppError,
@@ -70,14 +71,12 @@ export class CSIController extends TypedEmitter<Events> {
         started?: Date;
         ended?: Date;
     } = {};
+    status: InstanceStatus;
     provides?: string;
     requires?: string;
 
     initResolver?: { res: Function, rej: Function };
-    startResolver?: { res: Function, rej: Function };
     heartBeatResolver?: { res: Function, rej: Function };
-
-    startPromise: Promise<void>;
     heartBeatPromise?: Promise<string>;
 
     heartBeatTicker?: NodeJS.Timeout;
@@ -155,14 +154,11 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.communicationHandler = communicationHandler;
 
-        this.startPromise = new Promise((res, rej) => {
-            this.startResolver = { res, rej };
-        });
-
         this.logger = new ObjLogger(this, { id: this.id });
 
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
+        this.status = "initializing";
     }
 
     async start() {
@@ -172,6 +168,7 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         i.then(() => this.main()).catch(e => {
+            this.status = "errored";
             this.emit("error", e);
         });
 
@@ -179,6 +176,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async main() {
+        this.status = "running";
         this.logger.trace("Instance started");
 
         this.heartBeatStart();
@@ -194,6 +192,8 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.error("Instance caused error", e.message, code);
         }
 
+        this.status = code === 0 ? "finishing" : "errored";
+
         this.emit("stop", code);
 
         this.info.ended = new Date();
@@ -201,6 +201,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Finalizing...");
 
         await this.finalize();
+
+        this.status = code === 0 ? "ended" : "errored";
 
         this.emit("end", code);
         // removed log close from here - should be done in cleanup in GC.
@@ -217,6 +219,8 @@ export class CSIController extends TypedEmitter<Events> {
 
         const instanceMain = async () => {
             try {
+                this.status = "starting";
+
                 await this.instanceAdapter.init();
 
                 this.logger.trace("Streams hooked and routed");
@@ -233,6 +237,7 @@ export class CSIController extends TypedEmitter<Events> {
                 if (exitcode === 0) {
                     this.logger.trace("Sequence finished with success", exitcode);
                 } else {
+                    this.status = "errored";
                     this.logger.error("Sequence finished with error", exitcode);
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
@@ -241,6 +246,7 @@ export class CSIController extends TypedEmitter<Events> {
 
                 return exitcode;
             } catch (error: any) {
+                this.status = "errored";
                 this.logger.error("Error caught", error.stack);
 
                 await this.cleanup();
@@ -430,8 +436,6 @@ export class CSIController extends TypedEmitter<Events> {
             throw new CSIControllerError("UNINITIALIZED_STREAM", "control");
         }
 
-        this.startResolver?.res();
-
         this.info.started = new Date();
         this.logger.info("Instance started", this.info);
     }
@@ -614,18 +618,17 @@ export class CSIController extends TypedEmitter<Events> {
         };
     }
 
-    async getInfo(): Promise<STHRestAPI.GetInstanceResponse> {
-        await this.startPromise;
-
+    getInfo(): STHRestAPI.GetInstanceResponse {
         return {
-            ports: this.info.ports,
-            started: this.info.started,
-            created: this.info.created,
-            ended: this.info.ended,
             id: this.id,
-            sequence: this.sequence.id,
             appConfig: this.appConfig,
-            sequenceArgs: this.sequenceArgs
+            sequenceArgs: this.sequenceArgs,
+            sequence: this.sequence.id,
+            ports: this.info.ports,
+            created: this.info.created,
+            started: this.info.started,
+            ended: this.info.ended,
+            status: this.status,
         };
     }
 
