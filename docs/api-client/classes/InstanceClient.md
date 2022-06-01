@@ -329,7 +329,7 @@ Pipes given stream to Instance "input".
 | :------ | :------ | :------ |
 | `stream` | `string` \| `Readable` | Stream to be piped. Or string written to "stdin" stream. |
 | `requestInit?` | `RequestInit` | - |
-| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\> | - |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> | - |
 
 #### Returns
 
@@ -380,7 +380,7 @@ Sends stream to one of the Instance inputs.
 | `streamId` | [`InstanceInputStream`](../modules.md#instanceinputstream) | Target input stream. |
 | `stream` | `string` \| `Readable` | Stream to send. |
 | `requestInit?` | `RequestInit` | - |
-| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\> | - |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> | - |
 
 #### Returns
 

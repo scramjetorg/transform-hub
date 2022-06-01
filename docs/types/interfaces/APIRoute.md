@@ -162,7 +162,7 @@ router.op("post", `${this.apiBase}/start`, (req) => this.handleStartRequest(req)
 | :------ | :------ | :------ |
 | `method` | [`HttpMethod`](../modules.md#httpmethod) | - |
 | `path` | `string` \| `RegExp` | the request path as string or regex |
-| `message` | [`OpResolver`](../modules.md#opresolver) \| `T` | which operation to expose |
+| `message` | `T` \| [`OpResolver`](../modules.md#opresolver) | which operation to expose |
 | `conn?` | [`ICommunicationHandler`](ICommunicationHandler.md) | the communication handler to use |
 
 #### Returns

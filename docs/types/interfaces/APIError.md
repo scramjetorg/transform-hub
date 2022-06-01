@@ -65,7 +65,7 @@ Error.message
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:1023
+node_modules/typescript/lib/lib.es5.d.ts:1029
 
 ___
 
@@ -79,7 +79,7 @@ Error.name
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:1022
+node_modules/typescript/lib/lib.es5.d.ts:1028
 
 ___
 
@@ -93,4 +93,4 @@ Error.stack
 
 #### Defined in
 
-node_modules/typescript/lib/lib.es5.d.ts:1024
+node_modules/typescript/lib/lib.es5.d.ts:1030

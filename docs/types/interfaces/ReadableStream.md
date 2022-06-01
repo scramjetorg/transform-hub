@@ -76,7 +76,7 @@ A readable stream representation with generic chunks.
 
 #### Overrides
 
-PipeableStream.\_\_@asyncIterator@3229
+PipeableStream.\_\_@asyncIterator@3235
 
 #### Defined in
 

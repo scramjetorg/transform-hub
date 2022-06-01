@@ -10,6 +10,7 @@
 - [INVALID\_SEQUENCE\_PATH](RunnerExitCode.md#invalid_sequence_path)
 - [SEQUENCE\_FAILED\_DURING\_EXECUTION](RunnerExitCode.md#sequence_failed_during_execution)
 - [SEQUENCE\_FAILED\_ON\_START](RunnerExitCode.md#sequence_failed_on_start)
+- [SEQUENCE\_UNPACK\_FAILED](RunnerExitCode.md#sequence_unpack_failed)
 
 ## Enumeration members
 
@@ -50,3 +51,13 @@ ___
 #### Defined in
 
 [runner-exit-code.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-exit-code.ts#L4)
+
+___
+
+### SEQUENCE\_UNPACK\_FAILED
+
+• **SEQUENCE\_UNPACK\_FAILED** = `10`
+
+#### Defined in
+
+[runner-exit-code.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-exit-code.ts#L6)

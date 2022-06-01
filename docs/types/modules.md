@@ -83,6 +83,7 @@
 - [InstanceId](modules.md#instanceid)
 - [InstanceMessage](modules.md#instancemessage)
 - [InstanceMessageData](modules.md#instancemessagedata)
+- [InstanceStatus](modules.md#instancestatus)
 - [K8SAdapterConfiguration](modules.md#k8sadapterconfiguration)
 - [KeepAliveMessage](modules.md#keepalivemessage)
 - [KeepAliveMessageData](modules.md#keepalivemessagedata)
@@ -1036,15 +1037,16 @@ ___
 | `appConfig?` | [`AppConfig`](modules.md#appconfig) |
 | `created?` | `Date` |
 | `ended?` | `Date` |
-| `id` | `string` |
+| `id` | [`InstanceId`](modules.md#instanceid) |
 | `ports?` | `Record`<`string`, `number`\> |
 | `sequence` | `string` |
 | `sequenceArgs?` | `any`[] |
 | `started?` | `Date` |
+| `status?` | [`InstanceStatus`](modules.md#instancestatus) |
 
 #### Defined in
 
-[packages/types/src/instance-store.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L3)
+[packages/types/src/instance-store.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L4)
 
 ___
 
@@ -1120,6 +1122,16 @@ ___
 #### Defined in
 
 [packages/types/src/messages/instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/instance.ts#L3)
+
+___
+
+### InstanceStatus
+
+Ƭ **InstanceStatus**: ``"initializing"`` \| ``"starting"`` \| ``"running"`` \| ``"finishing"`` \| ``"ended"`` \| ``"errored"``
+
+#### Defined in
+
+[packages/types/src/instance.ts:2](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L2)
 
 ___
 
