@@ -18,6 +18,9 @@ on:
         required: true
         type: string
 
+env:
+  nexus_repo: repo.int.scp.ovh
+
 jobs:
   test-bdd-sth:
     name: ${{ inputs.test-title }} (${{ inputs.test-name }}, Adapter "docker", Nodejs ${{ inputs.node-version }})
@@ -47,10 +50,15 @@ jobs:
         with:
           name: dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
 
-      - name: Download dockerPreRunnerImg artifact
-        uses: actions/download-artifact@v2
+      - name: Login to ${{ env.nexus_repo }}
+        uses: docker/login-action@v1
         with:
-          name: dockerPreRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          registry: ${{ env.nexus_repo }}
+          username: ${{ secrets.NEXUS_USER }}
+          password: ${{ secrets.NEXUS_PASS }}
+
+      - name: Pull pre-runner image
+        run: docker pull ${{ env.nexus_repo }}/pre-runner:${{ github.event.pull_request.head.sha }}
 
       - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         run: pigz -d docker*Img*.tar.gz

@@ -8,6 +8,9 @@ on:
         default: '16.x'
         type: string
 
+env:
+  nexus_repo: repo.int.scp.ovh
+
 jobs:
   build-docker-prerunner-image:
     name: Build pre-runner docker image (Nodejs ${{ inputs.node-version }})
@@ -23,18 +26,16 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Build runner Docker image
-        run: docker build -q -t scramjetorg/pre-runner:$(git rev-parse HEAD) .
+        run: docker build -q -t ${{ env.nexus_repo }}/pre-runner:$(git rev-parse HEAD) .
         working-directory: packages/pre-runner
 
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerPreRunnerImg-$name-$tag-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
-
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
-
-      - name: Archive production artifacts
-        uses: actions/upload-artifact@v2
+      - name: Login to ${{ env.nexus_repo }}
+        uses: docker/login-action@v1
         with:
-          name:  dockerPreRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-          path: '*.tar.gz'
-          retention-days: 1
+          registry: ${{ env.nexus_repo }}
+          username: ${{ secrets.NEXUS_USER }}
+          password: ${{ secrets.NEXUS_PASS }}
+
+      - name: Push image to nexus
+        run: docker push ${{ env.nexus_repo }}/pre-runner:$(git rev-parse HEAD)
+        working-directory: sth/
