@@ -106,6 +106,14 @@ export class HostUtils {
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
         if (extraArgs.length) command.push(...extraArgs);
 
+        if (process.env.RUNNER_IMGS_TAG) {
+            command.push(
+                `--runner-image=scramjetorg/runner:${process.env.RUNNER_IMGS_TAG}`,
+                `--prerunner-image=scramjetorg/pre-runner:${process.env.RUNNER_IMGS_TAG}`,
+                `--runner-py-image=scramjetorg/runner-py:${process.env.RUNNER_IMGS_TAG}`
+            );
+        }
+
         if (process.env.SCRAMJET_TEST_LOG) {
             // eslint-disable-next-line no-console
             console.log("Spawning with command:", ...command);

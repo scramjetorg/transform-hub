@@ -31,11 +31,11 @@ jobs:
         run: yarn build:refapps
 
       - name: build runner Docker image
-        run: docker build -q -t scramjetorg/runner:$(jq -r .version package.json) -f Dockerfile ../../
+        run: docker build -q -t scramjetorg/runner:$(git rev-parse HEAD) -f Dockerfile ../../
         working-directory: packages/runner
 
       - name: Build runner Docker image
-        run: docker build -q -t scramjetorg/pre-runner:$(jq -r .version package.json) .
+        run: docker build -q -t scramjetorg/pre-runner:$(git rev-parse HEAD) .
         working-directory: packages/pre-runner
 
       - name: npm link STH
