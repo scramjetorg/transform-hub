@@ -243,7 +243,7 @@ When("wait for {string} ms", async (timeoutMs: number) => {
 });
 
 When("find and upload sequence {string}", { timeout: 50000 }, async function(this: CustomWorld, packageName: string) {
-    const packagePath = `${process.env.PACKAGES_DIR}/${packageName}`;
+    const packagePath = `${process.env.PACKAGES_DIR}${packageName}`;
 
     if (!existsSync(packagePath))
         assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
