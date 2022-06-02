@@ -29,7 +29,7 @@ jobs:
         run: scripts/run-script.js --scope packages/runner prebuild:docker
 
       - name: build runner Docker image
-        run: docker build -q -t scramjetorg/runner:$(jq -r .version package.json) -f Dockerfile ../../
+        run: docker build -q -t scramjetorg/runner:$(git rev-parse HEAD) -f Dockerfile ../../
         working-directory: packages/runner
 
       - name: Export Docker images
