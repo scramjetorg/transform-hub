@@ -2,8 +2,8 @@
 import { CommandDefinition } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../scope";
 import { displayObject } from "../output";
-import { globalConfig, sessionConfig } from "../config";
-import { isDevelopment } from "../../utils/isDevelopment";
+import { profileConfig } from "../config";
+import { isDevelopment } from "../../utils/envs";
 
 /**
  * Initializes `scope` command.
@@ -32,7 +32,7 @@ export const scope: CommandDefinition = (program) => {
                 return;
             }
 
-            displayObject(scopeConfig);
+            displayObject(scopeConfig, profileConfig.getConfig().format);
         });
 
     if (isDevelopment())
@@ -66,7 +66,7 @@ export const scope: CommandDefinition = (program) => {
                 console.error(`Couldn't find scope: ${name}`);
                 return;
             }
-            sessionConfig.setScope(name);
+            profileConfig.setScope(name);
         });
 
     scopeCmd
@@ -74,11 +74,11 @@ export const scope: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Delete specific scope")
         .action((name: string) => {
-            if (globalConfig.getConfig().scope === name) {
+            if (profileConfig.getConfig().scope === name) {
                 console.error(`WARN: can't remove scope ${name} set in configuration.`);
                 return;
             }
-            if (sessionConfig.getConfig().scope === name) {
+            if (profileConfig.getConfig().scope === name) {
                 console.error(`WARN: can't remove currently used scope ${name}`);
                 return;
             }

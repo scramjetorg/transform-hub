@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
-import { existsSync, rmSync, readdirSync, readFileSync } from "fs";
+import { existsSync, rmSync, readFileSync } from "fs";
 import { basename, format } from "path";
-import { scopesDir, configFileExt } from "./paths";
+import { scopesDir, configFileExt, listDirFileNames } from "./paths";
 
 const getScopePath = (scopeName: string) => {
     const scopePath = format({ dir: scopesDir, name: scopeName, ext: configFileExt });
@@ -15,8 +15,7 @@ const getScopePath = (scopeName: string) => {
  * Prints list of available scopes
  */
 export const listScopes = () => {
-    if (existsSync(scopesDir))
-        readdirSync(scopesDir).forEach((scopeFile) => console.log(basename(scopeFile, configFileExt)));
+    listDirFileNames(scopesDir).forEach((scopeFile) => console.log(basename(scopeFile, configFileExt)));
 };
 
 /**

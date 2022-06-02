@@ -2,8 +2,10 @@
 
 import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
-import { globalConfig, sessionConfig } from "../config";
-import { displayObject } from "../output";
+import { ProfileConfig, profileConfig, profileManager, siConfig } from "../config";
+import { displayError, displayMessage, displayObject } from "../output";
+import commander from "commander";
+import { defaultConfigName, listDirFileNames, profileExists, profileNameToPath, profileRemove, profilesDir } from "../paths";
 
 /**
  * Initializes `config` command.
@@ -11,7 +13,8 @@ import { displayObject } from "../output";
  * @param {Command} program Commander object.
  */
 export const config: CommandDefinition = (program) => {
-    const defaultConfig = globalConfig.getDefaultConfig();
+    const defaultConfig = profileConfig.getDefaultConfig();
+
     const { apiUrl: defaultApiUrl,
         middlewareApiUrl: defaulMiddlewareApiUrl,
         env: defaultEnv,
@@ -30,18 +33,11 @@ export const config: CommandDefinition = (program) => {
         .command("print")
         .alias("p")
         .description("Print out the current configuration")
-        .action(() => displayObject(globalConfig.getConfig()));
+        .action(() => {
+            const configuration = profileConfig.getConfig();
 
-    const useCmd = configCmd
-        .command("use")
-        .addHelpCommand(false)
-        .description("Add properties to the session configuration");
-
-    useCmd
-        .command("apiUrl")
-        .argument("<url>")
-        .description(`Specify the Hub API url (current: ${sessionConfig.getConfig().apiUrl})`)
-        .action(url => sessionConfig.setApiUrl(url) as unknown as void);
+            displayObject(configuration, configuration.format);
+        });
 
     const setCmd = configCmd
         .command("set")
@@ -54,52 +50,52 @@ export const config: CommandDefinition = (program) => {
         .description("Set configuration properties from a json object")
         .action(json => {
             try {
-                if (!globalConfig.setConfig(JSON.parse(json))) {
-                    console.error("Invalid configuration in json object");
+                if (!profileConfig.setConfig(JSON.parse(json))) {
+                    displayError("Invalid configuration in json object");
                 }
             } catch (_) {
-                console.error("Parsing error: Invalid JSON format");
+                displayError("Parsing error: Invalid JSON format");
             }
         });
 
     setCmd
         .command("apiUrl")
         .argument("<url>")
-        .description(`Specify the Hub API Url (default: ${defaultApiUrl})`)
+        .description("Specify the Hub API Url")
         .action(url => {
-            if (!globalConfig.setApiUrl(url)) {
-                console.error("Invalid url");
+            if (!profileConfig.setApiUrl(url)) {
+                displayError("Invalid url");
             }
         });
 
     setCmd
         .command("log")
-        .option("--debug <boolean>", `Specify log to show extended view (default: ${defaultDebug})`)
-        .option("--format <format>", `Specify format between "pretty" or "json" (default: ${defaultFormat})`)
+        .option("--debug <boolean>", "Specify log to show extended view")
+        .option("--format <format>", "Specify format between \"pretty\" or \"json\"")
         .description("Specify log options")
-        .action(({ debug, format }) => {
+        .action(({ debug, format: newFormat }) => {
             if (debug) {
                 const debugVal = stringToBoolean(debug);
 
                 if (typeof debugVal === "undefined") {
-                    console.error("Invalid debug value");
+                    displayError("Invalid debug value");
                 }
-                if (!globalConfig.setDebug(debugVal as boolean)) {
-                    console.error("Unable to set debug value");
+                if (!profileConfig.setDebug(debugVal as boolean)) {
+                    displayError("Unable to set debug value");
                 }
             }
-            if (format && !globalConfig.setFormat(format)) {
-                console.error("Unable to set format value");
+            if (newFormat && !profileConfig.setFormat(newFormat)) {
+                displayError("Unable to set format value");
             }
         });
 
     setCmd
         .command("middlewareApiUrl")
         .argument("<url>")
-        .description(`Specify middleware API url ${defaulMiddlewareApiUrl}`)
+        .description("Specify middleware API url")
         .action(url => {
-            if (!globalConfig.setMiddlewareApiUrl(url)) {
-                console.error("Invalid url");
+            if (!profileConfig.setMiddlewareApiUrl(url)) {
+                displayError("Invalid url");
             }
         });
 
@@ -108,28 +104,28 @@ export const config: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Specify default scope that should be used when session start")
         .action(scope => {
-            if (!globalConfig.setScope(scope)) {
-                console.error(`Invalid name: ${scope}`);
+            if (!profileConfig.setScope(scope)) {
+                displayError(`Invalid name: ${scope}`);
             }
         });
 
     setCmd
         .command("token")
         .argument("<jwt>")
-        .description(`Specify platform authorization token (default: ${defaultToken})`)
+        .description("Specify platform authorization token")
         .action(token => {
-            if (!globalConfig.setToken(token)) {
-                console.error("Invalid token");
+            if (!profileConfig.setToken(token)) {
+                displayError("Invalid token");
             }
         });
 
     setCmd
         .command("env")
-        .argument("<production|develop>")
-        .description(`Specify the environment (default: ${defaultEnv})`)
+        .addArgument(new commander.Argument("<production|develop>").choices(["production", "develop"]))
+        .description("Specify the environment")
         .action(env => {
-            if (!globalConfig.setEnv(env)) {
-                console.error("Invalid environment");
+            if (!profileConfig.setEnv(env)) {
+                displayError("Invalid environment");
             }
         });
 
@@ -140,38 +136,88 @@ export const config: CommandDefinition = (program) => {
 
     const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
         if (!setCallback(defaultValue)) {
-            console.error("Reset failed.");
+            displayError("Reset failed.");
         }
     };
 
     resetCmd
         .command("apiUrl")
         .description("Reset apiUrl")
-        .action(() => resetValue(defaultApiUrl, v => globalConfig.setApiUrl(v)));
+        .action(() => resetValue(defaultApiUrl, v => profileConfig.setApiUrl(v)));
 
     resetCmd
         .command("log")
         .description("Reset logger")
         .action(() => resetValue({ defaultFormat, defaultDebug },
-            ({ defaultFormat: f, defaultDebug: d }) => globalConfig.setFormat(f) && globalConfig.setDebug(d)));
+            ({ defaultFormat: f, defaultDebug: d }) => profileConfig.setFormat(f) && profileConfig.setDebug(d)));
 
     resetCmd
         .command("middlewareApiUrl")
         .description("Reset middlewareApiUrl")
-        .action(() => resetValue(defaulMiddlewareApiUrl, v => globalConfig.setMiddlewareApiUrl(v)));
+        .action(() => resetValue(defaulMiddlewareApiUrl, v => profileConfig.setMiddlewareApiUrl(v)));
 
     resetCmd
         .command("token")
         .description("Reset token")
-        .action(() => resetValue(defaultToken, v => globalConfig.setToken(v)));
+        .action(() => resetValue(defaultToken, v => profileConfig.setToken(v)));
 
     resetCmd
         .command("env")
         .description("Reset env")
-        .action(() => resetValue(defaultEnv, v => globalConfig.setEnv(v)));
+        .action(() => resetValue(defaultEnv, v => profileConfig.setEnv(v)));
 
     resetCmd
         .command("all")
         .description("Reset all configuration")
-        .action(() => resetValue(defaultConfig, v => globalConfig.setConfig(v)));
+        .action(() => resetValue(defaultConfig, v => profileConfig.setConfig(v)));
+
+    const profileCmd = configCmd
+        .command("profile")
+        .alias("pr")
+        .addHelpCommand(false)
+        .description("Select and work with user profiles");
+
+    profileCmd
+        .command("list")
+        .alias("ls")
+        .description("Show available configuration profiles")
+        .action(() => {
+            const currentProfile = profileManager.getProfileName();
+
+            displayMessage("Available profiles:");
+            listDirFileNames(profilesDir).sort().forEach((profile) => {
+                displayMessage(`${profile === currentProfile ? "-> " : "   "}${profile}`);
+            });
+        });
+
+    profileCmd
+        .command("use")
+        .argument("<name>")
+        .description("Set configuration profile as default to use")
+        .action((name) => {
+            if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);
+            siConfig.setProfile(name);
+        });
+
+    profileCmd
+        .command("create")
+        .argument("<name>")
+        .description("Create new configuration profile")
+        .action((name) => {
+            if (profileExists(name)) throw Error(`Profile ${name} already exist`);
+            new ProfileConfig(profileNameToPath(name)).writeConfig(profileConfig.getDefaultConfig());
+        });
+
+    profileCmd
+        .command("remove")
+        .argument("<name>")
+        .description("Remove existing profile configuration")
+        .action((name) => {
+            if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);
+            if (name === defaultConfigName) {
+                displayError(`You can't remove ${defaultConfigName} profile`);
+                return;
+            }
+            profileRemove(name);
+        });
 };

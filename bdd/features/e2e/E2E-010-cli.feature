@@ -6,7 +6,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-001 CLI displays help, version, hub load
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "--help" arguments
         Then I get a help information
         When I execute CLI with "--version" arguments
@@ -19,7 +19,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-002 Pack Sequence
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz" arguments
         Then I get location "../packages/reference-apps/transform-function.tar.gz" of compressed directory
         And host is still running
@@ -28,7 +28,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-003 Send, list and delete Sequence
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "config print" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
@@ -41,7 +41,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-004 Get Instance info, health, kill Instance
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -55,7 +55,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-005 Get 404 on health endpoint for finished Instance
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -67,7 +67,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-006 Get log from Instance
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -80,7 +80,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-007 Send input data to Instance
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -93,7 +93,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-008 Send input data to Instance and close input stream
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -107,7 +107,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-009 List Instances and stop Instance
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -120,7 +120,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-010 Send event
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/event-sequence-v2.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence
@@ -133,7 +133,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-011 Start Sequence with multiple JSON arguments
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
@@ -148,7 +148,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-012 Deploy Sequence with multiple JSON arguments
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq deploy data/sequences/args-to-output --args [\"Hello\",123,{\"abc\":456},[\"789\"]]" arguments
         Then I get Instance id after deployment
         And I get Instance output without waiting for the end
@@ -160,7 +160,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-013 Check minus replacements with a Sequence
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq pack data/sequences/simple-stdio -o data/simple-stdio.tar.gz" arguments
         And I execute CLI with "seq send -" arguments
         And I execute CLI with "seq start -" arguments
@@ -176,7 +176,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-014 API to API
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "topic send cities features/e2e/cities.json" arguments
         Then I execute CLI with "topic get cities" arguments without waiting for the end
         Then confirm data named "nyc-city-nl" will be received
@@ -186,7 +186,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-015 Instance to API
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         Then I get Sequence id
         When I start Sequence with options "--output-topic names5"
@@ -199,7 +199,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-016 API to Instance
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "topic send names6 features/e2e/data.json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         Then I get Sequence id
@@ -216,7 +216,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-017 Instance to Instance
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq prune -f" arguments
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
@@ -235,7 +235,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-018 Rename topic output
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names2"
@@ -248,7 +248,7 @@ This feature checks CLI functionalities
     Scenario: E2E-010 TC-019 Rename topic input
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "topic send names4 features/e2e/data.json" arguments
         When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
         Then I get Sequence id

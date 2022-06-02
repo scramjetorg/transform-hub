@@ -49,7 +49,7 @@ Feature: Test our shiny new Python runner
     Scenario: E2E-014 TC-014 Rename topic output and input
         Given host is running
         Then I set json format
-        Then I use apiUrl in config
+        Then I set apiUrl in config
         When I execute CLI with "seq send ../packages/reference-apps/python-topic-producer.tar.gz" arguments
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names3"

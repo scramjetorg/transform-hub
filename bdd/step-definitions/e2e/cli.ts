@@ -28,10 +28,10 @@ When("I set json format", { timeout: 30000 }, async function() {
     assert.equal(res.stdio[2], 0);
 });
 
-When("I use apiUrl in config", { timeout: 30000 }, async function() {
+When("I set apiUrl in config", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "use", "apiUrl", `${process.env.LOCAL_HOST_BASE_URL}`]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "apiUrl", `${process.env.LOCAL_HOST_BASE_URL}`]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error(res.stdio);

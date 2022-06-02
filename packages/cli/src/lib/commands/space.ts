@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
-import { isDevelopment } from "../../utils/isDevelopment";
-import { sessionConfig } from "../config";
+import { isDevelopment } from "../../utils/envs";
+import { profileConfig, sessionConfig } from "../config";
 import { displayObject } from "../output";
 import { getMiddlewareClient } from "../platform";
 
@@ -43,7 +43,7 @@ export const space: CommandDefinition = (program) => {
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
             const version = await managerClient.getVersion();
 
-            displayObject({ spaceId, version, managerClient });
+            displayObject({ spaceId, version, managerClient }, profileConfig.getConfig().format);
         });
 
     spaceCmd
@@ -54,7 +54,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
 
-            return displayObject(managers);
+            return displayObject(managers, profileConfig.getConfig().format);
         });
 
     spaceCmd
@@ -65,7 +65,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(name);
 
-            displayObject({ name, ...await managerClient.getVersion() });
+            displayObject({ name, ...await managerClient.getVersion() }, profileConfig.getConfig().format);
             sessionConfig.setLastSpaceId(name);
         });
 

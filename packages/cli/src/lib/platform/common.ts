@@ -1,5 +1,5 @@
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
-import { globalConfig, sessionConfig } from "../config";
+import { profileConfig, sessionConfig } from "../config";
 
 /**
  * Returns host client for host pointed by command options.
@@ -7,7 +7,7 @@ import { globalConfig, sessionConfig } from "../config";
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (): MiddlewareClient => {
-    const { middlewareApiUrl, debug } = globalConfig.getConfig();
+    const { middlewareApiUrl, debug } = profileConfig.getConfig();
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");
@@ -37,9 +37,9 @@ export const getMiddlewareClient = (): MiddlewareClient => {
 };
 
 export const setPlatformDefaults = async () => {
-    const session = sessionConfig.getConfig();
+    const { lastSpaceId, lastHubId } = sessionConfig.getConfig();
 
-    if (session.lastSpaceId || session.lastHubId) {
+    if (lastSpaceId || lastHubId) {
         return false;
     }
 

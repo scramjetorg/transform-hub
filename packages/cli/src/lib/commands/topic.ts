@@ -1,6 +1,7 @@
 import { CommandDefinition } from "../../types";
-import { isDevelopment } from "../../utils/isDevelopment";
+import { isDevelopment } from "../../utils/envs";
 import { getHostClient, getReadStreamFromFile } from "../common";
+import { profileConfig } from "../config";
 import { displayEntity, displayStream } from "../output";
 
 /**
@@ -63,5 +64,5 @@ export const topic: CommandDefinition = (program) => {
 
     topicCmd.command("ls")
         .description("List information about topics")
-        .action(async () => displayEntity(getHostClient().getTopics()));
+        .action(async () => displayEntity(getHostClient().getTopics(), profileConfig.getConfig().format));
 };

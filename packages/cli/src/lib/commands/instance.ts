@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
-import { getInstanceId, sessionConfig } from "../config";
+import { getInstanceId, profileConfig, sessionConfig } from "../config";
 import { displayEntity, displayStream } from "../output";
 
 /**
@@ -10,6 +10,8 @@ import { displayEntity, displayStream } from "../output";
  * @param {Command} program Commander object.
  */
 export const instance: CommandDefinition = (program) => {
+    // const { format } = profileConfig.getConfig();
+
     const instanceCmd = program
         .command("instance [command]")
         .addHelpCommand(false)
@@ -21,7 +23,7 @@ export const instance: CommandDefinition = (program) => {
         .command("list")
         .alias("ls")
         .description("List the Instances")
-        .action(async () => displayEntity(getHostClient().listInstances()));
+        .action(async () => displayEntity(getHostClient().listInstances(), profileConfig.getConfig().format));
 
     instanceCmd
         .command("use")
@@ -34,13 +36,15 @@ export const instance: CommandDefinition = (program) => {
         .command("health")
         .argument("<id>", "Instance id or '-' for the last one started")
         .description("Display Instance health status")
-        .action((id: string) => displayEntity(getInstance(getInstanceId(id)).getHealth()));
+        .action((id: string) => displayEntity(getInstance(getInstanceId(id)).getHealth(),
+            profileConfig.getConfig().format));
 
     instanceCmd
         .command("info")
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .description("Display the info about the Instance")
-        .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id))));
+        .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id)),
+            profileConfig.getConfig().format));
 
     instanceCmd
         .command("log")
@@ -54,7 +58,8 @@ export const instance: CommandDefinition = (program) => {
         .command("kill")
         .argument("<id>", "Instance id or '-' for the last one started")
         .description("Kill the Instance without waiting for the unfinished task")
-        .action(async (id: string) => displayEntity(getInstance(getInstanceId(id)).kill()));
+        .action(async (id: string) => displayEntity(getInstance(getInstanceId(id)).kill(),
+            profileConfig.getConfig().format));
 
     /**
      * @canCallKeepAlive
@@ -67,7 +72,8 @@ export const instance: CommandDefinition = (program) => {
         .argument("<timeout>", "Timeout in milliseconds")
         .description("End the Instance gracefully waiting for the unfinished tasks")
         .action(async (id: string, timeout: string) =>
-            displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true)));
+            displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true),
+                profileConfig.getConfig().format));
 
     instanceCmd
         .command("input")
@@ -117,7 +123,8 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, eventName: string, message: string) => {
             const instanceClient = getInstance(getInstanceId(id));
 
-            return displayEntity(instanceClient.sendEvent(eventName, message));
+            return displayEntity(instanceClient.sendEvent(eventName, message),
+                profileConfig.getConfig().format);
         });
 
     eventCmd
@@ -130,8 +137,9 @@ export const instance: CommandDefinition = (program) => {
         .description("Get the last event occurrence (will wait for the first one if not yet retrieved)")
         .action(async (id: string, event: string, { next, stream }) => {
             if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
-            if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event));
-            return displayEntity(getInstance(getInstanceId(id)).getEvent(event));
+            if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event),
+                profileConfig.getConfig().format);
+            return displayEntity(getInstance(getInstanceId(id)).getEvent(event), profileConfig.getConfig().format);
         });
 
     instanceCmd
@@ -142,11 +150,8 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, file: string) => {
             const instanceClient = getInstance(getInstanceId(id));
 
-            return displayEntity(instanceClient.sendStdin(
-                file
-                    ? await getReadStreamFromFile(file)
-                    : process.stdin
-            ));
+            return displayEntity(instanceClient.sendStdin(file ? await getReadStreamFromFile(file) : process.stdin),
+                profileConfig.getConfig().format);
         });
 
     instanceCmd

@@ -7,8 +7,9 @@ import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
 import { Readable, Writable } from "stream";
-import { globalConfig, sessionConfig } from "./config";
+import { profileConfig, sessionConfig } from "./config";
 import { getMiddlewareClient } from "./platform";
+import { isDevelopmentEnv, isProductionEnv } from "../types";
 
 const { F_OK, R_OK } = constants;
 
@@ -22,12 +23,13 @@ let hostClient: HostClient;
 export const getHostClient = (): HostClient => {
     if (hostClient) return hostClient;
 
-    const { lastSpaceId, lastHubId, apiUrl } = sessionConfig.getConfig();
-    const { env, debug } = globalConfig.getConfig();
+    const { apiUrl } = profileConfig.getConfig();
+    const { lastSpaceId, lastHubId } = sessionConfig.getConfig();
+    const { env, debug } = profileConfig.getConfig();
 
-    if (globalConfig.isDevelopmentEnv(env)) {
+    if (isDevelopmentEnv(env)) {
         hostClient = new HostClient(apiUrl);
-    } else if (globalConfig.isProductionEnv(env)) {
+    } else if (isProductionEnv(env)) {
         hostClient = getMiddlewareClient()
             .getManagerClient(lastSpaceId)
             .getHostClient(lastHubId);
@@ -75,13 +77,14 @@ export const getInstance = (id: string) => InstanceClient.from(id, getHostClient
  * @returns {Promise<void>} Promise resolving when all stdio streams finish.
  */
 export const attachStdio = (instanceClient: InstanceClient) => {
+    const { format } = profileConfig.getConfig();
+
     return displayEntity(
         Promise.all([
             instanceClient.sendStdin(process.stdin),
             instanceClient.getStream("stdout").then((out) => out.pipe(process.stdout)),
             instanceClient.getStream("stderr").then((err) => err.pipe(process.stderr)),
-        ]).then(() => undefined)
-    );
+        ]).then(() => undefined), format);
 };
 
 /**

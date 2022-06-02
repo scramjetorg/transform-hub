@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-import { CommandDefinition } from "../../types";
-import { isDevelopment } from "../../utils/isDevelopment";
+import { CommandDefinition, isProductionEnv } from "../../types";
+import { isDevelopment } from "../../utils/envs";
 import { getHostClient } from "../common";
-import { globalConfig, sessionConfig } from "../config";
+import { profileConfig, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
@@ -12,7 +12,8 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const hub: CommandDefinition = (program) => {
-    const isProductionEnv = globalConfig.isProductionEnv(globalConfig.getEnv());
+    const { env, format } = profileConfig.getConfig();
+    const isProductionEnviroment = isProductionEnv(env);
 
     const hubCmd = program
         .command("hub")
@@ -25,7 +26,7 @@ export const hub: CommandDefinition = (program) => {
     */
         .description("Allows to run programs in different data centers, computers or devices in local network");
 
-    if (isDevelopment() && isProductionEnv) {
+    if (isDevelopment() && isProductionEnviroment) {
         hubCmd
             .command("create")
             .argument("<name>")
@@ -38,7 +39,7 @@ export const hub: CommandDefinition = (program) => {
             });
     }
 
-    if (isProductionEnv) {
+    if (isProductionEnviroment) {
         hubCmd
             .command("use")
             .argument("<name|id>")
@@ -58,7 +59,7 @@ export const hub: CommandDefinition = (program) => {
             });
     }
 
-    if (isProductionEnv) {
+    if (isProductionEnviroment) {
         hubCmd
             .command("list")
             .alias("ls")
@@ -74,11 +75,11 @@ export const hub: CommandDefinition = (program) => {
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
 
-                displayObject(hosts);
+                displayObject(hosts, format);
             });
     }
 
-    if (isProductionEnv) {
+    if (isProductionEnviroment) {
         hubCmd
             .command("info")
         /* TODO for future use
@@ -87,13 +88,12 @@ export const hub: CommandDefinition = (program) => {
         */
             .description("Display info about the default Hub")
             .action(async () => {
-                const space = sessionConfig.getConfig().lastSpaceId;
-                const id = sessionConfig.getConfig().lastHubId;
+                const { lastSpaceId: space, lastHubId: id } = sessionConfig.getConfig();
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
                 const host = hosts.find((h: any) => h.id === id);
 
-                displayObject(host);
+                displayObject(host, format);
             });
     }
 
@@ -105,10 +105,10 @@ export const hub: CommandDefinition = (program) => {
     hubCmd
         .command("load")
         .description("Monitor CPU, memory and disk usage on the Hub")
-        .action(async () => displayEntity(getHostClient().getLoadCheck()));
+        .action(async () => displayEntity(getHostClient().getLoadCheck(), format));
 
     hubCmd
         .command("version")
         .description("Display version of the default Hub")
-        .action(async () => displayEntity(getHostClient().getVersion()));
+        .action(async () => displayEntity(getHostClient().getVersion(), format));
 };
