@@ -16,9 +16,14 @@ export class VerserConnection {
     private logger = new ObjLogger(this);
 
     private request: IncomingMessage;
-    private bpmux: any;
+    private bpmux?: {[key: string]: any};
 
     private _socket: Duplex;
+    private agent?: Agent & { createConnection: typeof createConnection; };
+
+    get connected() {
+        return !this._socket.destroyed && this.bpmux;
+    }
 
     get socket(): Duplex {
         return this._socket;
@@ -78,7 +83,9 @@ export class VerserConnection {
      * @param res {ServerResponse} Response object.
      */
     async forward(req: IncomingMessage, res: ServerResponse) {
-        const channel = this.bpmux.multiplex() as Duplex;
+        if (!this.connected) throw new Error("BPMux not connected");
+
+        const channel = this.bpmux?.multiplex() as Duplex;
 
         channel
             .on("error", (error: Error) => {
@@ -144,12 +151,10 @@ export class VerserConnection {
     public async makeRequest(
         options: RequestOptions
     ): Promise<VerserRequestResult> {
-        const agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
-
-        agent.createConnection = () => this.bpmux.multiplex() as Socket;
+        if (!this.connected) throw new Error("BPMux not connected");
 
         return new Promise((resolve, reject) => {
-            const clientRequest = httpRequest({ ...options, agent })
+            const clientRequest = httpRequest({ ...options, agent: this.agent })
                 .on("response", (incomingMessage: IncomingMessage) => {
                     resolve({ incomingMessage, clientRequest });
                 })
@@ -169,14 +174,28 @@ export class VerserConnection {
      * @returns Duplex stream.
      */
     createChannel(id: number): Duplex {
+        if (!this.bpmux) throw new Error("BPMux not connected");
+
         return this.bpmux.multiplex({ channel: id });
     }
 
     reconnect() {
-        this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
-            this.logger.error(error.message);
+        const bpmux = this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
+            this.logger.error("BPMux Error", error.message);
             // TODO: Error handling?
         });
+
+        this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+        this.agent.createConnection = () => {
+            try {
+                return bpmux.multiplex() as Socket;
+            } catch (e) {
+                const ret = new Socket();
+
+                setImmediate(() => ret.emit("error", e));
+                return ret;
+            }
+        };
     }
 
     /**
