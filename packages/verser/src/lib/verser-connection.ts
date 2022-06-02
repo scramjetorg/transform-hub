@@ -189,12 +189,13 @@ export class VerserConnection {
         this.agent.createConnection = () => {
             try {
                 return bpmux.multiplex() as Socket;
-            } catch(e) {
+            } catch (e) {
                 const ret = new Socket();
+
                 setImmediate(() => ret.emit("error", e));
                 return ret;
             }
-        }
+        };
     }
 
     /**

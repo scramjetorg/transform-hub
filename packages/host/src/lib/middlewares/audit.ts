@@ -33,7 +33,10 @@ export const auditMiddleware = (auditor: Auditor) => (req: ParsedMessage, res: S
 
     const write = res.write;
 
-    (res.write as (chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void) | undefined) => boolean) = (chunk: any, encoding: BufferEncoding, cb: ((error: Error | null | undefined) => void) | undefined) => {
+    type Callback = ((error: Error | null | undefined) => void) | undefined;
+    type WriteType = (chunk: any, encoding: BufferEncoding, cb: Callback) => boolean;
+
+    (res.write as WriteType) = (chunk: any, encoding: BufferEncoding, cb: Callback) => {
         request.auditData.tx += chunk.length;
 
         return write.apply(res, [chunk, encoding, cb]);

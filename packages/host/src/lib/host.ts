@@ -472,8 +472,10 @@ export class Host implements IComponent {
         Promise.all(
             Object.values(this.instancesStore).map(csiController =>
                 Promise.race([
-                    csiController.heartBeatPromise?.then((id) => this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)),
-                    defer(this.config.heartBeatInterval).then(() => { throw new Error("HeartBeat promise not resolved"); })
+                    csiController.heartBeatPromise
+                        ?.then((id) => this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)),
+                    defer(this.config.heartBeatInterval)
+                        .then(() => { throw new Error("HeartBeat promise not resolved"); })
                 ]).catch((error) => {
                     this.logger.error("Instance heartbeat error", csiController.id, error.message);
                 })
