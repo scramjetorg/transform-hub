@@ -242,6 +242,15 @@ When("wait for {string} ms", async (timeoutMs: number) => {
     await defer(timeoutMs);
 });
 
+When("find and upload sequence {string}", { timeout: 50000 }, async function(this: CustomWorld, packageName: string) {
+    const packagePath = `${process.env.PACKAGES_DIR}${packageName}`;
+
+    if (!existsSync(packagePath))
+        assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
+
+    this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
+});
+
 When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath))
         assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
