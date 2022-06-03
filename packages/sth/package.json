@@ -11,7 +11,7 @@
     "start": "ts-node ./src/index",
     "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
     "prebuild:docker": "cd ../.. && scripts/build-all.js --no-install --link-packages -d packages/sth --ts-config tsconfig.build.json",
-    "build:docker": "docker build -t scramjetorg/sth:$npm_package_version -f Dockerfile ../../",
+    "build:docker": "docker build -t scramjetorg/sth:$(git rev-parse HEAD) -f Dockerfile ../../",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "echo no tests yet -- # npm run test:ava",
     "test:ava": "ava"
