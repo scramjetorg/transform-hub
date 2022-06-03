@@ -61,18 +61,18 @@ export class LoadCheck implements IComponent {
 
         const [usage, _fsSize] = await Promise.all([
             mem.info(),
-            Promise.all(this.config.fsPaths.map(async (path) => ({path, usage: await du(path)})))
+            Promise.all(this.config.fsPaths.map(async (path) => ({ path, usage: await du(path) })))
         ]);
 
         const memFree = (usage.totalMemMb - usage.usedMemMb) * MEBIBYTE;
         const memUsed = usage.usedMemMb * MEBIBYTE;
 
-        const fsSize = _fsSize.map(({path, usage}) => ({
+        const fsSize = _fsSize.map(({ path, usage: fsUsage }) => ({
             fs: path,
-            available: usage.available - safeOperationsLimit,
-            size: usage.total,
-            used: usage.used,
-            use: usage.used / usage.total
+            available: fsUsage.available - safeOperationsLimit,
+            size: fsUsage.total,
+            used: fsUsage.used,
+            use: fsUsage.used / fsUsage.total
         }));
 
         return {
@@ -112,12 +112,12 @@ export class LoadCheck implements IComponent {
      * @returns {DataStream} Stream with load check data.
      */
     getLoadCheckStream(): StringStream {
-        const ref = this;
+        const _this = this;
 
         return DataStream.from(
             async function*() {
                 while (true) {
-                    yield ref.getLoadCheck();
+                    yield _this.getLoadCheck();
 
                     await defer(1000);
                 }

@@ -437,29 +437,29 @@ export class CPMConnector extends TypedEmitter<Events> {
         const ifs: NetworkInfo[] = [];
 
         for (const [ifname, ifdata] of net) {
-            const ipv4 = ifdata?.find(({family}) => family === "IPv4");
-            const ipv6 = ifdata?.find(({family}) => family === "IPv6");
+            const ipv4 = ifdata?.find(({ family }) => family === "IPv4");
+            const ipv6 = ifdata?.find(({ family }) => family === "IPv6");
 
             if (!ipv4?.mac && !ipv6?.mac) continue;
 
-            const net: NetworkInfo = {
+            const netInfo: NetworkInfo = {
                 iface: ifname,
                 ifaceName: ifname,
                 mac: (ipv4?.mac || ipv6?.mac) as string,
                 dhcp: false
 
-            }
+            };
 
             if (ipv4?.address) {
-                net.ip4 = ipv4?.address;
-                net.ip4subnet = ipv4?.cidr as "string";
+                netInfo.ip4 = ipv4?.address;
+                netInfo.ip4subnet = ipv4?.cidr as "string";
             }
             if (ipv6?.address) {
-                net.ip6 =  ipv6?.address;
-                net.ip6subnet =  ipv6?.cidr as "string";
+                netInfo.ip6 = ipv6?.address;
+                netInfo.ip6subnet = ipv6?.cidr as "string";
             }
 
-            ifs.push(net)
+            ifs.push(netInfo);
         }
 
         return ifs;

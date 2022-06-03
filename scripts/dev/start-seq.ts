@@ -9,8 +9,8 @@ const host = new HostClient("http://localhost:8000/api/v1");
     const pkg = createReadStream(resolve(__dirname, "../../sth/packages/reference-apps/stdio-sequence.tar.gz"));
 
     const sequence = await host.sendSequence(pkg);
-    const instance = await sequence.start({}, []);
-    const instanceInfo = { id: instance.id, ...(await instance.getInfo()).data };
+    const instance = await sequence.start({ appConfig: {} });
+    const instanceInfo = { id: instance.id, ...await instance.getInfo() };
 
     // eslint-disable-next-line no-console
     console.error(instanceInfo);
