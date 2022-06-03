@@ -11,7 +11,7 @@
     "start": "ts-node ./src/index",
     "test:docker": "docker run -i --name runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/runner:$(git rev-parse HEAD)",
     "clean": "rm -rf ./dist .bic_cache",
-    "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse --short HEAD)"
+    "clean:docker": "docker rm -f runner; docker volume rm prerunner-$(git rev-parse HEAD)"
   },
   "author": "Scramjet <opensource@scramjet.org>",
   "license": "MIT",
