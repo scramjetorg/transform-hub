@@ -7,7 +7,7 @@
     "prepare-sample-tar": "mkdir -p sample-package && tar -zcvf ./sample-package/package.tar.gz -C ../../dist/reference-apps/hello-alice-out .",
     "test": "echo \"Warning: no test specified\"",
     "test:docker": "yarn prepare-sample-tar && cat sample-package/package.tar.gz | docker run -i --name pre-runner -v prerunner-$(git rev-parse --short HEAD):/package scramjetorg/pre-runner:$(git rev-parse HEAD)",
-    "clean:docker": "docker rm -f scramjetorg/pre-runner; docker volume rm scramjetorg/prerunner-$(git rev-parse --short HEAD)",
+    "clean:docker": "docker rm -f scramjetorg/pre-runner; docker volume rm scramjetorg/prerunner-$(git rev-parse HEAD)",
     "clean": "rm -rf ./dist .bic_cache"
   },
   "assets": [
