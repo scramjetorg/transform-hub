@@ -196,6 +196,7 @@ export class CSIController extends TypedEmitter<Events> {
         i.then(() => this.main()).catch(e => {
             this.status = "errored";
             this.emit("error", e);
+            this.emit("end", e);
         });
 
         return i;
