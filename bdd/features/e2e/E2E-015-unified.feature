@@ -78,3 +78,14 @@ Feature: Test our shiny new Python runner
             {"eventName":"test-response","message":"reply to foo"}
             """
         And host is still running
+
+    @ci-unified
+    Scenario: E2E-015 TC-015 Output is available after the sequence is completed
+        Given host is running
+        When find and upload sequence "hello.tar.gz"
+        And instance started
+        And send "read result later" to input
+        And wait for "1000" ms
+        Then instance is stopped
+        And "output" is "Hello read result later!"
+        And host is still running
