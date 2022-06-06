@@ -327,7 +327,7 @@ export class CSIController extends TypedEmitter<Events> {
             return Promise.reject({ message: "Runner failed", exitcode });
         }
 
-        return Promise.resolve();
+        return Promise.resolve(exitcode);
     }
 
     async cleanup() {
