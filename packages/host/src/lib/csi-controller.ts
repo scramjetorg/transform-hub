@@ -217,7 +217,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.error("Instance caused error", e.message, code);
         }
 
-        this.status = code === 0 ? "finishing" : "errored";
+        this.status = code === 0 ? "completed" : "errored";
 
         this.emit("stop", code);
 
@@ -226,8 +226,6 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Finalizing...");
 
         await this.finalize();
-
-        this.status = code === 0 ? "ended" : "errored";
 
         this.emit("end", code);
         // removed log close from here - should be done in cleanup in GC.
@@ -613,6 +611,8 @@ export class CSIController extends TypedEmitter<Events> {
     private async handleStop(req: ParsedMessage) {
         const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
 
+        this.status = "stopping";
+
         await this.communicationHandler.sendControlMessage(...message);
 
         const [, { timeout }] = message;
@@ -626,10 +626,12 @@ export class CSIController extends TypedEmitter<Events> {
             await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
         }
 
-        return {};
+        return { opStatus: ReasonPhrases.ACCEPTED, ...this.getInfo() };
     }
 
     private async handleKill() {
+        this.status = "killing";
+
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
 
         // This will be resolved after HTTP response. It's not awaited on purpose
@@ -637,7 +639,8 @@ export class CSIController extends TypedEmitter<Events> {
             .catch(() => this.instanceAdapter.remove());
 
         return {
-            opStatus: ReasonPhrases.ACCEPTED
+            opStatus: ReasonPhrases.ACCEPTED,
+            ...this.getInfo()
         };
     }
 
