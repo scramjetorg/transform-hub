@@ -56,6 +56,7 @@ const _defaultConfig: STHConfiguration = {
     },
     startupConfig: "",
     exitWithLastInstance: false,
+    instanceLifetimeExtensionDelay: 180e3,
     heartBeatInterval: 10000
 };
 
