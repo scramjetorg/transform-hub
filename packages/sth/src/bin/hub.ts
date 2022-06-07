@@ -42,6 +42,7 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-resources-requests-memory <memory>", "Requests memory for pod e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
     .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
+    .option("--instance-lifetime-extension-delay <ms>", "Instance lifetime extension delay in ms")
     .parse(process.argv)
     .opts() as STHCommandOptions;
 
@@ -92,7 +93,8 @@ configService.update({
         runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
         runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
         runnerResourcesLimitsMemory: options.k8sRunnerResourcesLimitsMemory
-    }
+    },
+    instanceLifetimeExtensionDelay: options.instanceLifetimeExtensionDelay
 });
 
 const tips = [

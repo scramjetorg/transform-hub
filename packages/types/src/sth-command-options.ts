@@ -26,10 +26,11 @@ export type STHCommandOptions = {
     k8sSequencesRoot: string;
     docker: boolean;
     k8sRunnerCleanupTimeout: string,
-    k8sRunnerResourcesRequestsCpu: string,
-    k8sRunnerResourcesRequestsMemory: string,
-    k8sRunnerResourcesLimitsCpu: string,
-    k8sRunnerResourcesLimitsMemory: string
+    k8sRunnerResourcesRequestsCpu: string;
+    k8sRunnerResourcesRequestsMemory: string;
+    k8sRunnerResourcesLimitsCpu: string;
+    k8sRunnerResourcesLimitsMemory: string;
     startupConfig: string;
     exitWithLastInstance: boolean;
+    instanceLifetimeExtensionDelay: number;
 }
