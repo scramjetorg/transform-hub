@@ -143,7 +143,16 @@ export class DockerodeDockerHelper implements IDockerHelper {
      * @returns Promise which resolves when the container has been stopped.
      */
     stopContainer(containerId: DockerContainer): Promise<void> {
-        return this.dockerode.getContainer(containerId).stop();
+        return this.dockerode.getContainer(containerId).stop().catch((error: any) => {
+            this.logger.warn("Failed to stop container");
+
+            if (error.statusCode === 304) {
+                this.logger.warn("Container is already stopped");
+                return;
+            } else {
+                throw error;
+            }
+        });
     }
 
     /**

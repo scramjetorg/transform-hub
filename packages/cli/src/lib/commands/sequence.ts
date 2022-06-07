@@ -2,7 +2,7 @@
 import { SequenceClient } from "@scramjet/api-client";
 import { InstanceLimits } from "@scramjet/types";
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { defer } from "@scramjet/utility";
+import { defer, promiseTimeout } from "@scramjet/utility";
 import { createWriteStream, lstatSync } from "fs";
 import { readFile } from "fs/promises";
 import { resolve } from "path";
@@ -110,36 +110,12 @@ export const sequence: CommandDefinition = (program) => {
         });
 
     const waitForInstanceKills = async (seq: GetSequenceResponse, timeout: number) => {
-        const ts = Date.now();
-
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const { instances } = await getHostClient().getSequence(seq.id);
-
-            await defer(500);
-
-            if (!instances.length) break;
-
-            if (Date.now() - ts > timeout) {
-                throw new Error();
+        return promiseTimeout(new Promise<void>(async(resolve) => {
+            while ((await getHostClient().getSequence(seq.id)).instances.length)  {
+                await defer(500);
             }
-        }
-    };
-
-    const killAllSequenceInstances = async (seq: GetSequenceResponse, lastInstanceId: string) => {
-        displayMessage(`Killing instances of the Sequence ${seq.id}`);
-
-        await Promise.all(
-            seq.instances.map(async (id) => {
-                if (lastInstanceId === id) {
-                    sessionConfig.setLastInstanceId("");
-                }
-
-                return getInstance(id).kill({ removeImmediately: true });
-            })
-        ).catch(() => {
-            throw new Error(`Could not kill all instances of the Sequence ${seq.id}`);
-        });
+            resolve();
+        }), timeout);
     };
 
     sequenceCmd
@@ -233,48 +209,49 @@ export const sequence: CommandDefinition = (program) => {
         // .option("--filter")
         .option("-f,--force", "Removes also active Sequences (with its running Instances)")
         .description("Remove all Sequences from the current scope (use with caution)")
-
         .action(async ({ force }) => {
-            console.log("Force", force);
             const seqs = await getHostClient().listSequences();
             const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
-            const timeout = 15e3;
 
             let fullSuccess = true;
 
-            for (const seq of seqs) {
-                try {
-                    if (seq.instances.length) {
-                        if (!force) {
-                            displayMessage(`Sequence ${seq.id} has running Instances, use --force to kill those.`);
-                            continue;
+            await Promise.all(
+                seqs.map(async seq => {
+                    if (seq.instances.length && !force) {
+                        displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those`);
+                        return Promise.resolve();
+                    }
+
+                    await Promise.all(
+                        seq.instances.map(async instanceId => {
+                            return getInstance(instanceId).kill({ removeImmediately: true }).then(() => {
+                                if (lastInstanceId === instanceId) {
+                                    sessionConfig.setLastInstanceId("");
+                                }
+                            })
+                        })
+                    );
+
+                    const timeout = 17e3 + seq.instances.length * 3e3;
+
+                    await waitForInstanceKills(seq, timeout);
+
+                    return getHostClient().deleteSequence(seq.id).then(() => {
+                        if (lastSequenceId === seq.id) {
+                            sessionConfig.setLastSequenceId("");
                         }
+                    });
+                })
+            ).catch(error => {
+                fullSuccess = false;
 
-                        await killAllSequenceInstances(seq, lastInstanceId);
-                        await waitForInstanceKills(seq, timeout);
-                    }
-
-                    await getHostClient().deleteSequence(seq.id);
-
-                    if (lastSequenceId === seq.id) {
-                        sessionConfig.setLastSequenceId("");
-                    }
-                } catch (e: any) {
-                    fullSuccess = false;
-
-                    displayMessage(`WARN: Could not delete Sequence ${seq.id}`);
-
-                    if (isDevelopment()) {
-                        displayMessage("error stack", e?.stack);
-                    }
-
-                    if (!force) {
-                        displayMessage("Please try to run 'si seq prune -f' again to remove all Sequences.");
-                    }
+                if (isDevelopment()) {
+                    displayMessage("error stack", error?.stack);
                 }
+            });
 
-                if (!fullSuccess)
-                    throw new Error("Some Sequences may have not been deleted.");
+            if (!fullSuccess) {
+                throw new Error("Some Sequences may have not been deleted.");
             }
 
             displayMessage("Sequences removed successfully.");

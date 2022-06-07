@@ -49,7 +49,7 @@ import { ReasonPhrases } from "http-status-codes";
  * before we delete pod or it will fail with 404
  * and instance adapter will throw an error even when everything was ok.
  */
-const runnerExitDelay = 12000;
+const runnerExitDelay = 15000;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
@@ -196,9 +196,9 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         i.then(() => this.main()).catch(e => {
+            this.logger.info("Instance status: errored", e);
             this.status = "errored";
             this.emit("error", e);
-            this.emit("end", e);
         });
 
         return i;
@@ -213,15 +213,13 @@ export class CSIController extends TypedEmitter<Events> {
         try {
             code = await this.instanceStopped();
 
-            this.logger.trace("Instance stopped.");
+            this.logger.trace("Instance stopped with code", code);
         } catch (e: any) {
             code = e.exitcode;
             this.logger.error("Instance caused error", e.message, code);
         }
 
         this.status = code === 0 ? "completed" : "errored";
-
-        this.emit("stop", code);
 
         this.info.ended = new Date();
 
@@ -268,7 +266,9 @@ export class CSIController extends TypedEmitter<Events> {
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
-                await this.cleanup();
+                await this.cleanup().catch(e => {
+                    this.logger.error("Cleanup failed", e);
+                })
 
                 return exitcode;
             } catch (error: any) {
@@ -283,10 +283,16 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.instancePromise = instanceMain()
             .then((exitcode) => this.mapRunnerExitCode(exitcode))
-            .catch((error) => this.initResolver?.rej(error))
-            .finally(() => {
-                this.heartBeatResolver?.res(this.id);
+            .catch((error) => {
+                this.logger.error("Instance promise rejected", error);
+                this.initResolver?.rej(error);
+
+                return error.exitcode;
             });
+
+        this.instancePromise.finally(() => {
+            this.heartBeatResolver?.res(this.id);
+        });
     }
 
     heartBeatTick(): void {
@@ -319,6 +325,11 @@ export class CSIController extends TypedEmitter<Events> {
         case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
             return Promise.reject({
                 message: "Sequence unpack failed", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
+            });
+        }
+        case RunnerExitCode.KILLED: {
+            return Promise.reject({
+                message: "Instance killed", exitcode: RunnerExitCode.KILLED
             });
         }
         }
