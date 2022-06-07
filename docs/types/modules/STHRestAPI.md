@@ -243,11 +243,12 @@ ___
 | `appConfig` | [`AppConfig`](../modules.md#appconfig) |
 | `args?` | `any`[] |
 | `inputTopic?` | `string` |
+| `limits?` | [`InstanceLimits`](../modules.md#instancelimits) |
 | `outputTopic?` | `string` |
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/start-sequence.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L5)
+[packages/types/src/rest-api-sth/start-sequence.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L6)
 
 ___
 
@@ -257,7 +258,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/start-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L3)
+[packages/types/src/rest-api-sth/start-sequence.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/start-sequence.ts#L4)
 
 ## References
 

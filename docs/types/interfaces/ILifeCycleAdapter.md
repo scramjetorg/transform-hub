@@ -57,7 +57,7 @@ ___
 
 ### identify
 
-▸ **identify**(`stream`): `MaybePromise`<[`InstanceConifg`](../modules.md#instanceconifg)\>
+▸ **identify**(`stream`): `MaybePromise`<[`InstanceConfig`](../modules.md#instanceconfig)\>
 
 Passes stream to PreRunner and resolves with PreRunner's results.
 
@@ -69,7 +69,7 @@ Passes stream to PreRunner and resolves with PreRunner's results.
 
 #### Returns
 
-`MaybePromise`<[`InstanceConifg`](../modules.md#instanceconifg)\>
+`MaybePromise`<[`InstanceConfig`](../modules.md#instanceconfig)\>
 
 #### Defined in
 
@@ -137,7 +137,7 @@ Starts Runner.
 
 | Name | Type |
 | :------ | :------ |
-| `config` | [`InstanceConifg`](../modules.md#instanceconifg) |
+| `config` | [`InstanceConfig`](../modules.md#instanceconfig) |
 
 #### Returns
 

@@ -166,8 +166,12 @@ Bugfixes and minor improvements:
 - Added getSequenceClient and getInstanceClient methods to MiddlewareApiClient
 - Exit runner when sequence is damged rather than falling into infinite loop
 - Refactor build scripts
+- Fix reported instance statuses
+- Fix CLI errors on Windows
+- AuditStream limit info
+- Remove zombie instances
 
 
-## @scramjet/transform Hub - v0.24.0
+## @scramjet/transform Hub - v0.24.2
 
 This is the last release in changelog.

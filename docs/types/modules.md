@@ -79,10 +79,12 @@
 - [Instance](modules.md#instance)
 - [InstanceAdapterErrorCode](modules.md#instanceadaptererrorcode)
 - [InstanceBulkMessage](modules.md#instancebulkmessage)
-- [InstanceConifg](modules.md#instanceconifg)
+- [InstanceConfig](modules.md#instanceconfig)
 - [InstanceId](modules.md#instanceid)
+- [InstanceLimits](modules.md#instancelimits)
 - [InstanceMessage](modules.md#instancemessage)
 - [InstanceMessageData](modules.md#instancemessagedata)
+- [InstanceStats](modules.md#instancestats)
 - [InstanceStatus](modules.md#instancestatus)
 - [K8SAdapterConfiguration](modules.md#k8sadapterconfiguration)
 - [KeepAliveMessage](modules.md#keepalivemessage)
@@ -607,7 +609,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L19)
+[packages/types/src/runner-config.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L20)
 
 ___
 
@@ -798,7 +800,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L6)
+[packages/types/src/lifecycle-adapters.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L7)
 
 ___
 
@@ -1077,13 +1079,13 @@ ___
 
 ___
 
-### InstanceConifg
+### InstanceConfig
 
-Ƭ **InstanceConifg**: [`SequenceConfig`](modules.md#sequenceconfig) & { `instanceAdapterExitDelay`: `number`  }
+Ƭ **InstanceConfig**: [`SequenceConfig`](modules.md#sequenceconfig) & { `instanceAdapterExitDelay`: `number` ; `limits`: [`InstanceLimits`](modules.md#instancelimits)  }
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L37)
+[packages/types/src/runner-config.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L38)
 
 ___
 
@@ -1094,6 +1096,22 @@ ___
 #### Defined in
 
 [packages/types/src/instance.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L1)
+
+___
+
+### InstanceLimits
+
+Ƭ **InstanceLimits**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `memory?` | `number` |
+
+#### Defined in
+
+[packages/types/src/instance-limits.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-limits.ts#L1)
 
 ___
 
@@ -1125,9 +1143,28 @@ ___
 
 ___
 
+### InstanceStats
+
+Ƭ **InstanceStats**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `current` | { `cpu?`: `number` ; `memory?`: `number`  } |
+| `current.cpu?` | `number` |
+| `current.memory?` | `number` |
+| `limits` | [`InstanceLimits`](modules.md#instancelimits) |
+
+#### Defined in
+
+[packages/types/src/instance-stats.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-stats.ts#L3)
+
+___
+
 ### InstanceStatus
 
-Ƭ **InstanceStatus**: ``"initializing"`` \| ``"starting"`` \| ``"running"`` \| ``"finishing"`` \| ``"ended"`` \| ``"errored"``
+Ƭ **InstanceStatus**: ``"initializing"`` \| ``"starting"`` \| ``"running"`` \| ``"stopping"`` \| ``"killing"`` \| ``"completed"`` \| ``"errored"``
 
 #### Defined in
 
@@ -1235,7 +1272,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L31)
+[packages/types/src/runner-config.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L32)
 
 ___
 
@@ -1245,7 +1282,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L43)
+[packages/types/src/lifecycle-adapters.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L45)
 
 ___
 
@@ -1727,6 +1764,7 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `limits?` | [`DeepPartial`](modules.md#deeppartial)<[`InstanceLimits`](modules.md#instancelimits)\> | Instance stats |
 | `objectId` | `string` | An instance of the object which the operation concerns, e.g. Instance ID. |
 | `opCode` | `OpRecordCode` \| `SequenceMessageCode` \| `InstanceMessageCode` | The type of recorded operation is identified by the code value from the OpRecord enumeration. |
 | `opState` | `string` | The operation state from the OpState enumeration. |
@@ -1738,7 +1776,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/messages/op-record.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/op-record.ts#L3)
+[packages/types/src/messages/op-record.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/op-record.ts#L5)
 
 ___
 
@@ -1887,7 +1925,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L27)
+[packages/types/src/runner-config.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L28)
 
 ___
 
@@ -2192,7 +2230,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L35)
+[packages/types/src/runner-config.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L36)
 
 ___
 
