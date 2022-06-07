@@ -12,6 +12,14 @@ Adapter for running Instance by Runner executed in Docker container.
 
 ## Table of contents
 
+### Properties
+
+- [\_limits](DockerInstanceAdapter.md#_limits)
+- [crashLogStreams](DockerInstanceAdapter.md#crashlogstreams)
+- [dockerHelper](DockerInstanceAdapter.md#dockerhelper)
+- [logger](DockerInstanceAdapter.md#logger)
+- [resources](DockerInstanceAdapter.md#resources)
+
 ### Methods
 
 - [cleanup](DockerInstanceAdapter.md#cleanup)
@@ -29,12 +37,63 @@ Adapter for running Instance by Runner executed in Docker container.
 
 - [constructor](DockerInstanceAdapter.md#constructor)
 
-### Properties
+### Accessors
 
-- [crashLogStreams](DockerInstanceAdapter.md#crashlogstreams)
-- [dockerHelper](DockerInstanceAdapter.md#dockerhelper)
-- [logger](DockerInstanceAdapter.md#logger)
-- [resources](DockerInstanceAdapter.md#resources)
+- [limits](DockerInstanceAdapter.md#limits)
+
+## Properties
+
+### \_limits
+
+• `Private` `Optional` **\_limits**: `InstanceLimits` = `{}`
+
+#### Defined in
+
+[docker-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L32)
+
+___
+
+### crashLogStreams
+
+• `Optional` **crashLogStreams**: `Promise`<`string`[]\>
+
+#### Defined in
+
+[docker-instance-adapter.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L36)
+
+___
+
+### dockerHelper
+
+• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/IDockerHelper.md)
+
+#### Defined in
+
+[docker-instance-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L31)
+
+___
+
+### logger
+
+• **logger**: `IObjectLogger`
+
+#### Implementation of
+
+ILifeCycleAdapterMain.logger
+
+#### Defined in
+
+[docker-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L35)
+
+___
+
+### resources
+
+• `Private` **resources**: [`DockerAdapterResources`](../modules.md#dockeradapterresources) = `{}`
+
+#### Defined in
+
+[docker-instance-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L33)
 
 ## Methods
 
@@ -55,7 +114,7 @@ ILifeCycleAdapterMain.cleanup
 
 #### Defined in
 
-[docker-instance-adapter.ts:237](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L237)
+[docker-instance-adapter.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L245)
 
 ___
 
@@ -73,7 +132,7 @@ ILifeCycleAdapterMain.getCrashLog
 
 #### Defined in
 
-[docker-instance-adapter.ts:266](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L266)
+[docker-instance-adapter.ts:274](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L274)
 
 ___
 
@@ -87,7 +146,7 @@ ___
 
 #### Defined in
 
-[docker-instance-adapter.ts:125](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L125)
+[docker-instance-adapter.ts:129](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L129)
 
 ___
 
@@ -112,7 +171,7 @@ Configuration for exposing and binding ports in Docker container.
 
 #### Defined in
 
-[docker-instance-adapter.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L89)
+[docker-instance-adapter.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L93)
 
 ___
 
@@ -130,7 +189,7 @@ ILifeCycleAdapterMain.init
 
 #### Defined in
 
-[docker-instance-adapter.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L44)
+[docker-instance-adapter.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L48)
 
 ___
 
@@ -154,7 +213,7 @@ ILifeCycleAdapterRun.monitorRate
 
 #### Defined in
 
-[docker-instance-adapter.ts:249](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L249)
+[docker-instance-adapter.ts:257](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L257)
 
 ___
 
@@ -180,7 +239,7 @@ Promise resolving with map of ports mapping.
 
 #### Defined in
 
-[docker-instance-adapter.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L58)
+[docker-instance-adapter.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L62)
 
 ___
 
@@ -200,7 +259,7 @@ ILifeCycleAdapterMain.remove
 
 #### Defined in
 
-[docker-instance-adapter.ts:256](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L256)
+[docker-instance-adapter.ts:264](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L264)
 
 ___
 
@@ -212,7 +271,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `config` | `SequenceConfig` |
+| `config` | `InstanceConfig` |
 | `instancesServerPort` | `number` |
 | `instanceId` | `string` |
 
@@ -226,7 +285,7 @@ ILifeCycleAdapterRun.run
 
 #### Defined in
 
-[docker-instance-adapter.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L163)
+[docker-instance-adapter.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L167)
 
 ___
 
@@ -254,7 +313,7 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[docker-instance-adapter.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L106)
+[docker-instance-adapter.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L110)
 
 ## Constructors
 
@@ -264,48 +323,42 @@ ILifeCycleAdapterRun.stats
 
 #### Defined in
 
-[docker-instance-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L37)
+[docker-instance-adapter.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L41)
 
-## Properties
+## Accessors
 
-### crashLogStreams
+### limits
 
-• `Optional` **crashLogStreams**: `Promise`<`string`[]\>
+• `get` **limits**(): `InstanceLimits`
 
-#### Defined in
+#### Returns
 
-[docker-instance-adapter.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L35)
-
-___
-
-### dockerHelper
-
-• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/IDockerHelper.md)
-
-#### Defined in
-
-[docker-instance-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L30)
-
-___
-
-### logger
-
-• **logger**: `IObjectLogger`
+`InstanceLimits`
 
 #### Implementation of
 
-ILifeCycleAdapterMain.logger
+ILifeCycleAdapterRun.limits
 
 #### Defined in
 
-[docker-instance-adapter.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L34)
+[docker-instance-adapter.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L38)
 
-___
+• `set` **limits**(`value`): `void`
 
-### resources
+#### Parameters
 
-• `Private` **resources**: [`DockerAdapterResources`](../modules.md#dockeradapterresources) = `{}`
+| Name | Type |
+| :------ | :------ |
+| `value` | `InstanceLimits` |
+
+#### Returns
+
+`void`
+
+#### Implementation of
+
+ILifeCycleAdapterRun.limits
 
 #### Defined in
 
-[docker-instance-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L32)
+[docker-instance-adapter.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-instance-adapter.ts#L39)

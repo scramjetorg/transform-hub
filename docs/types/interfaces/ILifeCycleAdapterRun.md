@@ -22,6 +22,7 @@
 
 ### Properties
 
+- [limits](ILifeCycleAdapterRun.md#limits)
 - [logger](ILifeCycleAdapterRun.md#logger)
 
 ## Methods
@@ -42,7 +43,7 @@ Removes resources.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L19)
+[packages/types/src/lifecycle-adapters.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L20)
 
 ___
 
@@ -60,7 +61,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L24)
+[packages/types/src/lifecycle-adapters.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L25)
 
 ___
 
@@ -80,7 +81,7 @@ Initializes Lifecycle adapter.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L14)
+[packages/types/src/lifecycle-adapters.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L15)
 
 ___
 
@@ -100,7 +101,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L37)
+[packages/types/src/lifecycle-adapters.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L40)
 
 ___
 
@@ -118,7 +119,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L22)
+[packages/types/src/lifecycle-adapters.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L23)
 
 ___
 
@@ -132,7 +133,7 @@ Starts Runner.
 
 | Name | Type |
 | :------ | :------ |
-| `config` | [`InstanceConifg`](../modules.md#instanceconifg) |
+| `config` | [`InstanceConfig`](../modules.md#instanceconfig) |
 | `instancesServerPort` | `number` |
 | `instanceId` | `string` |
 
@@ -144,7 +145,7 @@ Runner exit code.
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L35)
+[packages/types/src/lifecycle-adapters.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L38)
 
 ___
 
@@ -164,9 +165,19 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L39)
+[packages/types/src/lifecycle-adapters.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L42)
 
 ## Properties
+
+### limits
+
+• **limits**: [`InstanceLimits`](../modules.md#instancelimits)
+
+#### Defined in
+
+[packages/types/src/lifecycle-adapters.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L30)
+
+___
 
 ### logger
 
@@ -178,4 +189,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L9)
+[packages/types/src/lifecycle-adapters.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L10)

@@ -486,7 +486,7 @@ or an instance of class fulfiling IObjectLogger interface.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `target` | `undefined` \| `Writable` \| `IObjectLogger` | Target for log stream. |
-| `options` | `ObjLogPipeOptions` | Pipe options. Should be the same as passed to @see ObjectLogger.pipe |
+| `options` | `ObjLogPipeOptions` | - |
 
 #### Returns
 
