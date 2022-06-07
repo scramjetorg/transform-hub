@@ -64,7 +64,7 @@ type Events = {
 export class CSIController extends TypedEmitter<Events> {
     id: string;
 
-    private csiLifetimeExtensionDelay: number;
+    private instanceLifetimeExtensionDelay: number;
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
@@ -179,7 +179,7 @@ export class CSIController extends TypedEmitter<Events> {
             memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
         };
 
-        this.csiLifetimeExtensionDelay = +sthConfig.instanceLifetimeExtensionDelay;
+        this.instanceLifetimeExtensionDelay = +sthConfig.instanceLifetimeExtensionDelay;
         this.communicationHandler = communicationHandler;
 
         this.logger = new ObjLogger(this, { id: this.id });
@@ -341,8 +341,8 @@ export class CSIController extends TypedEmitter<Events> {
     async finalize() {
         await defer(runnerExitDelay);
 
-        this.logger.debug(`Extended CSICLifetime: ${this.csiLifetimeExtensionDelay}ms`);
-        this.finalizingPromise = cancellableDefer(this.csiLifetimeExtensionDelay);
+        this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
+        this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
 
         await this.finalizingPromise;
 
@@ -647,7 +647,7 @@ export class CSIController extends TypedEmitter<Events> {
             const message = req.body as EncodedMessage<RunnerMessageCode.KILL>;
 
             if (message[1].removeImmediately) {
-                this.csiLifetimeExtensionDelay = 0;
+                this.instanceLifetimeExtensionDelay = 0;
 
                 if (this.finalizingPromise) {
                     this.finalizingPromise.cancel();
