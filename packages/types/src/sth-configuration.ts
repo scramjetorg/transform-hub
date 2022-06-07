@@ -169,6 +169,11 @@ export type STHConfiguration = {
     instanceAdapterExitDelay: number;
 
     /**
+     * Time to wait before CSIController emits `end` event.
+     */
+    instanceLifetimeExtensionDelay: number;
+
+    /**
      * Which sequence and instance adapters should STH use.
      * One of 'docker', 'process', 'kubernetes'
      */

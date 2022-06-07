@@ -779,7 +779,7 @@ export class Host implements IComponent {
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.info("List Instances");
 
-        return Object.values(this.instancesStore).filter((csi) => !csi.isRunning).map(csiController => ({
+        return Object.values(this.instancesStore).map(csiController => ({
             id: csiController.id,
             sequence: csiController.sequence.id,
         }));

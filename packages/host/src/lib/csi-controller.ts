@@ -50,7 +50,6 @@ import { ReasonPhrases } from "http-status-codes";
  * and instance adapter will throw an error even when everything was ok.
  */
 const runnerExitDelay = 12000;
-const csiLifetimeExtensionDelay = 180e3;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
@@ -611,7 +610,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
 
         this.router.op("post", "/_stop", (req) => this.handleStop(req), this.communicationHandler);
-        this.router.op("post", "/_kill", () => this.handleKill(), this.communicationHandler);
+        this.router.op("post", "/_kill", (req) => this.handleKill(req), this.communicationHandler);
     }
 
     private async handleStop(req: ParsedMessage) {
@@ -635,7 +634,7 @@ export class CSIController extends TypedEmitter<Events> {
         return { opStatus: ReasonPhrases.ACCEPTED, ...this.getInfo() };
     }
 
-    private async handleKill() {
+    private async handleKill(req: ParsedMessage) {
         this.status = "killing";
 
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
@@ -643,6 +642,20 @@ export class CSIController extends TypedEmitter<Events> {
         // This will be resolved after HTTP response. It's not awaited on purpose
         promiseTimeout(this.endOfSequence, runnerExitDelay)
             .catch(() => this.instanceAdapter.remove());
+
+        try {
+            const message = req.body as EncodedMessage<RunnerMessageCode.KILL>;
+
+            if (message[1].removeImmediately) {
+                this.csiLifetimeExtensionDelay = 0;
+
+                if (this.finalizingPromise) {
+                    this.finalizingPromise.cancel();
+                }
+            }
+        } catch (e) {
+            this.logger.warn("Failed to parse KILL message", e);
+        }
 
         return {
             opStatus: ReasonPhrases.ACCEPTED,
