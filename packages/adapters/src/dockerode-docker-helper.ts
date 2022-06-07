@@ -149,9 +149,9 @@ export class DockerodeDockerHelper implements IDockerHelper {
             if (error.statusCode === 304) {
                 this.logger.warn("Container is already stopped");
                 return;
-            } else {
-                throw error;
             }
+
+            throw error;
         });
     }
 

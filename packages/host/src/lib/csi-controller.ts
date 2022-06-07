@@ -182,7 +182,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.instanceLifetimeExtensionDelay = +sthConfig.instanceLifetimeExtensionDelay;
         this.communicationHandler = communicationHandler;
 
-        this.logger = new ObjLogger(this, { id: this.id });
+        this.logger = new ObjLogger(`CSIC ${this.id.slice(0, 7)}-...`, { id: this.id });
 
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
@@ -266,9 +266,7 @@ export class CSIController extends TypedEmitter<Events> {
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
-                await this.cleanup().catch(e => {
-                    this.logger.error("Cleanup failed", e);
-                })
+                await this.cleanup();
 
                 return exitcode;
             } catch (error: any) {

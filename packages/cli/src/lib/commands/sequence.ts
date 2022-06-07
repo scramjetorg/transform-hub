@@ -109,13 +109,13 @@ export const sequence: CommandDefinition = (program) => {
             return packAction(path, { output });
         });
 
-    const waitForInstanceKills = async (seq: GetSequenceResponse, timeout: number) => {
-        return promiseTimeout(new Promise<void>(async(resolve) => {
-            while ((await getHostClient().getSequence(seq.id)).instances.length)  {
+    const waitForInstanceKills = (seq: GetSequenceResponse, timeout: number) => {
+        return promiseTimeout((async () => {
+            while ((await getHostClient().getSequence(seq.id)).instances.length) {
                 await defer(500);
             }
-            resolve();
-        }), timeout);
+            return Promise.resolve();
+        })(), timeout);
     };
 
     sequenceCmd
@@ -217,6 +217,8 @@ export const sequence: CommandDefinition = (program) => {
 
             await Promise.all(
                 seqs.map(async seq => {
+                    const timeout = 17e3 + seq.instances.length * 3e3;
+
                     if (seq.instances.length && !force) {
                         displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those`);
                         return Promise.resolve();
@@ -224,15 +226,13 @@ export const sequence: CommandDefinition = (program) => {
 
                     await Promise.all(
                         seq.instances.map(async instanceId => {
-                            return getInstance(instanceId).kill({ removeImmediately: true }).then(() => {
-                                if (lastInstanceId === instanceId) {
-                                    sessionConfig.setLastInstanceId("");
-                                }
-                            })
+                            if (lastInstanceId === instanceId) {
+                                sessionConfig.setLastInstanceId("");
+                            }
+
+                            return getInstance(instanceId).kill({ removeImmediately: true });
                         })
                     );
-
-                    const timeout = 17e3 + seq.instances.length * 3e3;
 
                     await waitForInstanceKills(seq, timeout);
 
