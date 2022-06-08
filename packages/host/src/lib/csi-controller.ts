@@ -49,8 +49,7 @@ import { ReasonPhrases } from "http-status-codes";
  * before we delete pod or it will fail with 404
  * and instance adapter will throw an error even when everything was ok.
  */
-const runnerExitDelay = 12000;
-const csiLifetimeExtensionDelay = 180e3;
+const runnerExitDelay = 15000;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
@@ -64,6 +63,8 @@ type Events = {
  */
 export class CSIController extends TypedEmitter<Events> {
     id: string;
+
+    private instanceLifetimeExtensionDelay: number;
 
     private keepAliveRequested?: boolean;
     private _lastStats?: MonitoringMessageData;
@@ -178,9 +179,10 @@ export class CSIController extends TypedEmitter<Events> {
             memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
         };
 
+        this.instanceLifetimeExtensionDelay = +sthConfig.instanceLifetimeExtensionDelay;
         this.communicationHandler = communicationHandler;
 
-        this.logger = new ObjLogger(this, { id: this.id });
+        this.logger = new ObjLogger(`CSIC ${this.id.slice(0, 7)}-...`, { id: this.id });
 
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
@@ -194,9 +196,9 @@ export class CSIController extends TypedEmitter<Events> {
         });
 
         i.then(() => this.main()).catch(e => {
+            this.logger.info("Instance status: errored", e);
             this.status = "errored";
             this.emit("error", e);
-            this.emit("end", e);
         });
 
         return i;
@@ -211,15 +213,13 @@ export class CSIController extends TypedEmitter<Events> {
         try {
             code = await this.instanceStopped();
 
-            this.logger.trace("Instance stopped.");
+            this.logger.trace("Instance stopped with code", code);
         } catch (e: any) {
             code = e.exitcode;
             this.logger.error("Instance caused error", e.message, code);
         }
 
         this.status = code === 0 ? "completed" : "errored";
-
-        this.emit("stop", code);
 
         this.info.ended = new Date();
 
@@ -281,10 +281,16 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.instancePromise = instanceMain()
             .then((exitcode) => this.mapRunnerExitCode(exitcode))
-            .catch((error) => this.initResolver?.rej(error))
-            .finally(() => {
-                this.heartBeatResolver?.res(this.id);
+            .catch((error) => {
+                this.logger.error("Instance promise rejected", error);
+                this.initResolver?.rej(error);
+
+                return error.exitcode;
             });
+
+        this.instancePromise.finally(() => {
+            this.heartBeatResolver?.res(this.id);
+        });
     }
 
     heartBeatTick(): void {
@@ -319,6 +325,11 @@ export class CSIController extends TypedEmitter<Events> {
                 message: "Sequence unpack failed", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
             });
         }
+        case RunnerExitCode.KILLED: {
+            return Promise.reject({
+                message: "Instance killed", exitcode: RunnerExitCode.KILLED
+            });
+        }
         }
 
         if (exitcode > 0) {
@@ -334,10 +345,13 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.info("Cleanup completed");
     }
 
+    get isRunning() { return !this.finalizingPromise; }
+
     async finalize() {
         await defer(runnerExitDelay);
 
-        this.finalizingPromise = cancellableDefer(csiLifetimeExtensionDelay);
+        this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
+        this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
 
         await this.finalizingPromise;
 
@@ -605,7 +619,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.op("post", "/_event", RunnerMessageCode.EVENT, this.communicationHandler);
 
         this.router.op("post", "/_stop", (req) => this.handleStop(req), this.communicationHandler);
-        this.router.op("post", "/_kill", () => this.handleKill(), this.communicationHandler);
+        this.router.op("post", "/_kill", (req) => this.handleKill(req), this.communicationHandler);
     }
 
     private async handleStop(req: ParsedMessage) {
@@ -629,7 +643,7 @@ export class CSIController extends TypedEmitter<Events> {
         return { opStatus: ReasonPhrases.ACCEPTED, ...this.getInfo() };
     }
 
-    private async handleKill() {
+    private async handleKill(req: ParsedMessage) {
         this.status = "killing";
 
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
@@ -637,6 +651,20 @@ export class CSIController extends TypedEmitter<Events> {
         // This will be resolved after HTTP response. It's not awaited on purpose
         promiseTimeout(this.endOfSequence, runnerExitDelay)
             .catch(() => this.instanceAdapter.remove());
+
+        try {
+            const message = req.body as EncodedMessage<RunnerMessageCode.KILL>;
+
+            if (message[1].removeImmediately) {
+                this.instanceLifetimeExtensionDelay = 0;
+
+                if (this.finalizingPromise) {
+                    this.finalizingPromise.cancel();
+                }
+            }
+        } catch (e) {
+            this.logger.warn("Failed to parse KILL message", e);
+        }
 
         return {
             opStatus: ReasonPhrases.ACCEPTED,

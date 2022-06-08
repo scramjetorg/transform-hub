@@ -11,7 +11,6 @@ import {
     AcknowledgeMessageData,
     DescribeSequenceMessage,
     DescribeSequenceMessageData,
-    EmptyMessageData,
     ErrorMessage,
     ErrorMessageData,
     KeepAliveMessage,
@@ -43,6 +42,7 @@ import { CPMMessageSTHID, STHIDMessageData } from "./messages/sth-id";
 import { LoadCheckStat } from "./load-check-stat";
 import { NetworkInfo } from "./network-info";
 import { SequenceCompleteMessageData } from "./messages/sequence-complete";
+import { KillMessageData } from "./messages/kill-sequence";
 
 export type MessageType<T> =
     T extends RunnerMessageCode.ACKNOWLEDGE ? AcknowledgeMessage :
@@ -68,7 +68,7 @@ export type MessageDataType<T> =
     T extends RunnerMessageCode.DESCRIBE_SEQUENCE ? DescribeSequenceMessageData :
     T extends RunnerMessageCode.STATUS ? StatusMessageData :
     T extends RunnerMessageCode.ERROR ? ErrorMessageData :
-    T extends RunnerMessageCode.KILL ? EmptyMessageData :
+    T extends RunnerMessageCode.KILL ? KillMessageData :
     T extends RunnerMessageCode.MONITORING ? MonitoringMessageData :
     T extends RunnerMessageCode.MONITORING_RATE ? MonitoringRateMessageData :
     T extends RunnerMessageCode.STOP ? StopSequenceMessageData :

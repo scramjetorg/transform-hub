@@ -69,12 +69,14 @@ export class InstanceClient {
     /**
      * Send kill command to Instance
      *
+     * @param {object} opts Options.
+     * @param {boolean} opts.removeImmediately If true, Instance lifetime extension delay will be bypassed.
      * @returns {Promise<SendKillInstanceResponse>} Promise resolving to kill Instance result.
      */
-    async kill(): Promise<STHRestAPI.SendKillInstanceResponse> {
+    async kill(opts = { removeImmediately: false }): Promise<STHRestAPI.SendKillInstanceResponse> {
         return this.clientUtils.post<STHRestAPI.SendKillInstanceResponse>(
             `${this.instanceURL}/_kill`,
-            [RunnerMessageCode.KILL, {}] as EncodedControlMessage,
+            [RunnerMessageCode.KILL, { removeImmediately: opts.removeImmediately }] as EncodedControlMessage,
             {},
             { json: true, parse: "json" }
         );

@@ -430,7 +430,10 @@ export class Host implements IComponent {
 
         if (sequenceInfo.instances.size > 0) {
             const instances = [...sequenceInfo.instances].every(
-                instanceId => this.instancesStore[instanceId]?.finalizingPromise?.cancel()
+                instanceId => {
+                    this.instancesStore[instanceId]?.finalizingPromise?.cancel();
+                    return !this.instancesStore[instanceId]?.isRunning;
+                }
             );
 
             if (instances) {
@@ -776,7 +779,10 @@ export class Host implements IComponent {
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.info("List Instances");
 
-        return Object.values(this.instancesStore).map(csiController => csiController.getInfo());
+        return Object.values(this.instancesStore).map(csiController => ({
+            id: csiController.id,
+            sequence: csiController.sequence.id,
+        }));
     }
 
     /**
