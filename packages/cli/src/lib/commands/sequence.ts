@@ -111,8 +111,12 @@ export const sequence: CommandDefinition = (program) => {
 
     const waitForInstanceKills = (seq: GetSequenceResponse, timeout: number) => {
         return promiseTimeout((async () => {
-            while ((await getHostClient().getSequence(seq.id)).instances.length) {
-                await defer(500);
+            let l;
+
+            // eslint-disable-next-line no-cond-assign
+            while (l = (await getHostClient().getSequence(seq.id)).instances.length) {
+                displayMessage(`Sequence ${seq.id}. Waiting for ${l} instance${l > 1 ? "s" : ""} to finish...`);
+                await defer(1000);
             }
             return Promise.resolve();
         })(), timeout);
@@ -217,7 +221,7 @@ export const sequence: CommandDefinition = (program) => {
 
             await Promise.all(
                 seqs.map(async seq => {
-                    const timeout = 17e3 + seq.instances.length * 3e3;
+                    const timeout = seq.instances.length * 5e3;
 
                     if (seq.instances.length && !force) {
                         displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those`);
@@ -234,6 +238,9 @@ export const sequence: CommandDefinition = (program) => {
                         })
                     );
 
+                    displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
+
+                    await defer(15000);
                     await waitForInstanceKills(seq, timeout);
 
                     return getHostClient().deleteSequence(seq.id).then(() => {
