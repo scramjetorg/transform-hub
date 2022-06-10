@@ -132,6 +132,7 @@ console.time(BUILD_NAME);
         const outDir = resolve(opts.root, opts.outdir);
         const prepacks = packages.map((root) => new PrePack({
             cwd: root,
+            rootDir: opts.root,
             outDir,
             log: () => 0,
             distPackDir: opts.outdir,
