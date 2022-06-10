@@ -130,19 +130,19 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {IncomingMessage} req Request object.
      * @param {ServerResponse} res Server response.
      * @param {ControlMessageCode} message Control message.
-     * @param {ICommunicationHandler} conn Communication handler.
+     * @param {ICommunicationHandler} comm Communication handler.
      * @returns void
      */
     const opControlMessageHandler = async <T extends ControlMessageCode>(
         req: ParsedMessage,
         res: ServerResponse,
         message: T,
-        conn: ICommunicationHandler
+        comm: ICommunicationHandler
     ) => {
         // eslint-disable-next-line no-extra-parens
         const obj = ((await getData(req)) as Array<any>)[1] as MessageDataType<T>;
 
-        await conn.sendControlMessage(message, checkMessage(message, obj));
+        await comm.sendControlMessage(message, checkMessage(message, obj));
 
         res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
         return res.end(JSON.stringify({ accepted: true }));
@@ -162,14 +162,14 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {string} method Request method.
      * @param {string|RegExp} path Request address.
      * @param {ControlMessageCode|OpResolver} message which operation.
-     * @param {ICommunicationHandler} conn the communication handler to use.
+     * @param {ICommunicationHandler} comm Communication handler.
      * @param {boolean} rawBody Flag if the body will be parsed.
      */
     const op = <T extends ControlMessageCode>(
         method: string = "post",
         path: string | RegExp,
         message: T | OpResolver,
-        conn: ICommunicationHandler,
+        comm?: ICommunicationHandler,
         rawBody?: boolean
     ): void => {
         const handler: Middleware = async (req, res, next) => {
@@ -179,8 +179,10 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
                 if (typeof message === "function") {
                     return await opDataHandler(req, res, message, rawBody);
                 }
-
-                return await opControlMessageHandler(req, res, message, conn);
+                if (comm) {
+                    return await opControlMessageHandler(req, res, message, comm);
+                }
+                throw new Error("ERR_UNSUPPORTED_HANDLER_CONFIGURATION");
             } catch (e: any) {
                 return next(e);
             }
