@@ -17,6 +17,7 @@ const { cpus } = require("os");
 const runScript = require("@npmcli/run-script");
 const { relative, resolve, join } = require("path");
 const { readFile } = require("fs/promises");
+const { exec } = require("child_process");
 
 const opts = minimist(process.argv.slice(2), {
     alias: {
@@ -30,6 +31,7 @@ const opts = minimist(process.argv.slice(2), {
         workspace: "w",
         dependencies: "d",
         root: "r",
+        exec: "e",
     },
     default: {
         root: env.WORKSPACE_ROOT || cwd(),
@@ -42,15 +44,15 @@ const opts = minimist(process.argv.slice(2), {
         "flat-packages": env.FLAT_PACKAGES,
         "make-public": env.MAKE_PUBLIC,
     },
-    boolean: ["list", "long-help", "verbose", "install", "build", "dist", "fast", "help"]
+    boolean: ["list", "verbose", "install", "build", "dist", "fast", "help", "exec"]
 });
 
-if (!opts._.length || opts.help || opts["long-help"]) {
+if (opts.help || (!opts._.length && !opts.list)) {
     const pName = relative(cwd(), process.argv[1]);
     const spaces = " ".repeat(pName.length);
 
     console.error("Runs scripts in workspaces");
-    console.error(`Usage: ${pName} [options] <script-name> [...args]`);
+    console.error(`Usage: ${pName} [options] <script> [...args]`);
     console.error(`       ${spaces} -v,--verbose - verbose output`);
     console.error(`       ${spaces} -s,--scope <path|name> - run in specific package only`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
@@ -58,13 +60,10 @@ if (!opts._.length || opts.help || opts["long-help"]) {
     console.error(`       ${spaces} -l,--list - prints list of dirs and exits`);
     console.error(`       ${spaces} -j,--jobs - how many jobs in parallel (default: cpu count)`);
     console.error(`       ${spaces} -r,--root <root> - main directory (default is cwd, env: WORKSPACE_ROOT)`);
-    console.error(`       ${spaces} --long-help - for more options`);
+    console.error(`       ${spaces} -e,--exec - treat <script> as a full command to exec, not a yarn script. `);
 
     process.exit(1);
 }
-
-const scriptName = opts._[0];
-const args = opts._.slice(1);
 
 const BUILD_NAME = "run-script";
 
@@ -118,13 +117,36 @@ console.time(BUILD_NAME);
                 path
             };
 
-            if (opts.verbose) runconfig.stdio = "inherit";
+            if (opts.exec) {
+                if (opts._.slice(1).length)
+                    console.error("Did you forget to quote the command? Got extra", opts._.slice(1));
 
-            return [
-                [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
-                [Date.now(), await runScript({ ...runconfig, args, event: scriptName })],
-                [Date.now(), await runScript({ ...runconfig, event: `post${scriptName}` })]
-            ];
+                const command = opts._[0]
+                console.log(`> ${path}\n> ${command}\n`)
+
+                const child = exec(command, {cwd: path})
+
+                if (opts.verbose) {
+                    child.stdout.pipe(process.stdout)
+                    child.stderr.pipe(process.stderr)
+                }
+
+                return [
+                    [Date.now(), await child]
+                ]
+            } else {
+                if (opts.verbose) runconfig.stdio = "inherit";
+
+                const scriptName = opts._[0];
+                const args = opts._.slice(1);
+
+                return [
+                    [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
+                    [Date.now(), await runScript({ ...runconfig, args, event: scriptName })],
+                    [Date.now(), await runScript({ ...runconfig, event: `post${scriptName}` })]
+                ];
+            }
+
         })
         .do(([ts, out]) => {
             const { path, event } = out;
