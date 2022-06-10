@@ -5,13 +5,13 @@ import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
 import { MaybePromise } from "./utils";
 
-export type ParsedMessage = IncomingMessage & { body?: any, params: { [key: string]: any } | undefined };
+export type ParsedMessage = IncomingMessage & { body?: any; params: { [key: string]: any } | undefined };
 export type HttpMethod = "get" | "head" | "post" | "put" | "delete" | "connect" | "trace" | "patch";
 
 export type StreamInput =
-    ((req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>) | MaybePromise<Readable>;
-export type StreamOutput =
-    ((req: ParsedMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
+    | ((req: ParsedMessage, res: ServerResponse) => MaybePromise<Readable>)
+    | MaybePromise<Readable>;
+export type StreamOutput = ((req: ParsedMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
 export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
 
@@ -83,7 +83,12 @@ export interface APIBase {
      * @param conn the communication handler to use
      */
     op<T extends ControlMessageCode>(
-        method: HttpMethod, path: string | RegExp, message: OpResolver | T, conn?: ICommunicationHandler): void;
+        method: HttpMethod,
+        path: string | RegExp,
+        message: OpResolver | T,
+        comm?: ICommunicationHandler,
+        rawBody?: boolean
+    ): void;
 
     /**
      * Simple GET request hook for static data in monitoring stream.
@@ -92,8 +97,7 @@ export interface APIBase {
      * @param op which operation
      * @param conn the communication handler to use
      */
-    get<T extends MonitoringMessageCode>(
-        path: string | RegExp, msg: T, conn: ICommunicationHandler): void;
+    get<T extends MonitoringMessageCode>(path: string | RegExp, msg: T, conn: ICommunicationHandler): void;
 
     /**
      * Alternative GET request hook with dynamic resolution
@@ -110,11 +114,7 @@ export interface APIBase {
      * @param stream the stream that will be sent in reposnse body or a method to be called then
      * @param config configuration of the stream
      */
-    upstream(
-        path: string | RegExp,
-        stream: StreamInput,
-        config?: StreamConfig
-    ): void;
+    upstream(path: string | RegExp, stream: StreamInput, config?: StreamConfig): void;
 
     /**
      * A method that allows to consume incoming stream from the specified path on the API server
@@ -123,11 +123,7 @@ export interface APIBase {
      * @param stream the output that will be piped to from request or a method to be called then
      * @param config configuration of the stream
      */
-    downstream(
-        path: string | RegExp,
-        stream: StreamOutput,
-        config?: StreamConfig
-    ): void;
+    downstream(path: string | RegExp, stream: StreamOutput, config?: StreamConfig): void;
 
     /**
      * Allows to handle dual direction (duplex) streams.
@@ -135,10 +131,7 @@ export interface APIBase {
      * @param path the request path as string or regex
      * @param callback A method to be called when the stream is ready.
      */
-    duplex(
-        path: string | RegExp,
-        callback: (stream: Duplex, headers: IncomingHttpHeaders) => void
-    ): void;
+    duplex(path: string | RegExp, callback: (stream: Duplex, headers: IncomingHttpHeaders) => void): void;
 
     /**
      * Allows to register middlewares for specific paths, for all HTTP methods.
@@ -153,9 +146,9 @@ export interface APIExpose extends APIBase {
     /**
      * The raw HTTP server
      */
-    server: Server
-    log: DataStream
-    decorate(path: string | RegExp, ...decorators: Decorator[]): void
+    server: Server;
+    log: DataStream;
+    decorate(path: string | RegExp, ...decorators: Decorator[]): void;
 }
 
 export interface APIRoute extends APIBase {
