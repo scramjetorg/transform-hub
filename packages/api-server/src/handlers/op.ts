@@ -5,6 +5,7 @@ import {
     ICommunicationHandler,
     MessageDataType,
     Middleware,
+    OpOptions,
     OpResolver,
     ParsedMessage,
 } from "@scramjet/types";
@@ -30,7 +31,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {boolean} rawBody Flag if the body will be parsed.
      * @returns BufferEncoding string
      */
-    const getEncoding = (req: IncomingMessage, { rawBody: false }: OpOptions): BufferEncoding => {
+    const getEncoding = (req: IncomingMessage, { rawBody }: OpOptions = {}): BufferEncoding => {
         if (!req.headers["content-type"]) throw new CeroError("ERR_INVALID_CONTENT_TYPE");
 
         if (!rawBody) mimeAccepts(req.headers["content-type"], ["application/json", "text/json"]);
@@ -75,7 +76,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {boolean} rawBody Flag if the body will be parsed.
      * @returns JSON object.
      */
-    const getData = async (req: IncomingMessage, { rawBody }: OpOptions): Promise<object | undefined> => {
+    const getData = async (req: IncomingMessage, { rawBody }: OpOptions = {}): Promise<object | undefined> => {
         const encoding = getEncoding(req, { rawBody });
         const body = await getBody(req, encoding);
 
@@ -94,8 +95,9 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {boolean} rawBody Flag if the body will be parsed.
      * @returns void
      */
-    const opDataHandler = async (req: ParsedMessage, res: ServerResponse, resolver: OpResolver, { rawBody }: OpOptions) => {
-        req.body = await getData(req, rawBody);
+    const opDataHandler = async (req: ParsedMessage, res: ServerResponse, resolver: OpResolver,
+        { rawBody }: OpOptions = {}) => {
+        req.body = await getData(req, { rawBody });
 
         const result = await resolver(req, res);
 
@@ -173,7 +175,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
 
             try {
                 if (typeof message === "function") {
-                    return await opDataHandler(req, res, message, rawBody);
+                    return await opDataHandler(req, res, message, { rawBody });
                 }
                 if (comm) {
                     return await opControlMessageHandler(req, res, message, comm);
