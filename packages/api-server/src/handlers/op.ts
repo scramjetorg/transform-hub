@@ -28,7 +28,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
     /**
      * Checking content-type and getting encoding from request
      * @param {IncomingMessage} req Request object.
-     * @param {boolean} rawBody Flag if the body will be parsed.
+     * @param {OpOptions} options Options for encoding getter.
      * @returns BufferEncoding string
      */
     const getEncoding = (req: IncomingMessage, { rawBody }: OpOptions = {}): BufferEncoding => {
@@ -73,7 +73,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * Tries to parse data from the request body.
      *
      * @param {IncomingMessage} req Request object.
-     * @param {boolean} rawBody Flag if the body will be parsed.
+     * @param {OpOptions} options Options for data parser.
      * @returns JSON object.
      */
     const getData = async (req: IncomingMessage, { rawBody }: OpOptions = {}): Promise<object | undefined> => {
@@ -92,11 +92,15 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {IncomingMessage} req Request object.
      * @param {ServerResponse} res Server response.
      * @param {OpResolver} resolver Data callback
-     * @param {boolean} rawBody Flag if the body will be parsed.
+     * @param {OpOptions} options Handler options.
      * @returns void
      */
-    const opDataHandler = async (req: ParsedMessage, res: ServerResponse, resolver: OpResolver,
-        { rawBody }: OpOptions = {}) => {
+    const opDataHandler = async (
+        req: ParsedMessage,
+        res: ServerResponse,
+        resolver: OpResolver,
+        { rawBody }: OpOptions = {}
+    ) => {
         req.body = await getData(req, { rawBody });
 
         const result = await resolver(req, res);
