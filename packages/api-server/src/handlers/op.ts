@@ -30,7 +30,7 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @param {boolean} rawBody Flag if the body will be parsed.
      * @returns BufferEncoding string
      */
-    const getEncoding = (req: IncomingMessage, rawBody: boolean = false): BufferEncoding => {
+    const getEncoding = (req: IncomingMessage, { rawBody: boolean = false }): BufferEncoding => {
         if (!req.headers["content-type"]) throw new CeroError("ERR_INVALID_CONTENT_TYPE");
 
         if (!rawBody) mimeAccepts(req.headers["content-type"], ["application/json", "text/json"]);
@@ -80,11 +80,8 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
         const body = await getBody(req, encoding);
 
         try {
-            if (!body) {
-                return undefined;
-            }
 
-            return rawBody ? body : JSON.parse(body);
+            return body && rawBody ? body : JSON.parse(body);
         } catch (e: any) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
