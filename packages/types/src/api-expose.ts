@@ -14,6 +14,7 @@ export type StreamInput =
 export type StreamOutput = ((req: ParsedMessage, res: ServerResponse) => MaybePromise<any>) | MaybePromise<Writable>;
 export type GetResolver = (req: ParsedMessage) => MaybePromise<any>;
 export type OpResolver = (req: ParsedMessage, res?: ServerResponse) => MaybePromise<any>;
+export type OpOptions = { rawBody?: boolean };
 
 export type NextCallback = (err?: Error) => void;
 export type Middleware = (req: ParsedMessage, res: ServerResponse, next: NextCallback) => void;
