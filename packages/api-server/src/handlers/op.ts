@@ -77,10 +77,10 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      * @returns JSON object.
      */
     const getData = async (req: IncomingMessage, { rawBody }: OpOptions = {}): Promise<object | undefined> => {
-        const encoding = getEncoding(req, { rawBody });
-        const body = await getBody(req, encoding);
-
         try {
+            const encoding = getEncoding(req, { rawBody });
+            const body = await getBody(req, encoding);
+
             return body && (rawBody ? body : JSON.parse(body));
         } catch (e: any) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
