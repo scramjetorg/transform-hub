@@ -22,6 +22,9 @@ export class Verser extends TypedEmitter<Events> {
         this.server = server;
 
         this.server.on("connect", (req, socket) => {
+            socket.setTimeout(0);
+            socket.setNoDelay(true);
+
             const connection = new VerserConnection(req, socket);
 
             this.connections.push(connection);
