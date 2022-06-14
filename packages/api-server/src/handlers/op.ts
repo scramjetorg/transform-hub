@@ -1,7 +1,16 @@
 import { CeroError, SequentialCeroRouter } from "../lib/definitions";
-import { APIRoute, ControlMessageCode, ICommunicationHandler, MessageDataType, Middleware, OpResolver } from "@scramjet/types";
+import {
+    APIRoute,
+    ControlMessageCode,
+    ICommunicationHandler,
+    MessageDataType,
+    Middleware,
+    OpOptions,
+    OpResolver,
+    ParsedMessage,
+} from "@scramjet/types";
 import { checkMessage } from "@scramjet/model";
-import { IncomingMessage } from "http";
+import { IncomingMessage, ServerResponse } from "http";
 import { mimeAccepts } from "../lib/mime";
 import { StringDecoder } from "string_decoder";
 import { getStatusCode, ReasonPhrases, StatusCodes } from "http-status-codes";
@@ -17,16 +26,15 @@ const logger = new ObjLogger("API");
  */
 export function createOperationHandler(router: SequentialCeroRouter): APIRoute["op"] {
     /**
-     * Tries to parse data from the request body.
-     *
+     * Checking content-type and getting encoding from request
      * @param {IncomingMessage} req Request object.
-     * @returns JSON object.
+     * @param {OpOptions} options Options for encoding getter.
+     * @returns BufferEncoding string
      */
-    const getData = async (req: IncomingMessage): Promise<object|undefined> => {
-        if (!req.headers["content-type"])
-            throw new CeroError("ERR_INVALID_CONTENT_TYPE");
+    const getEncoding = (req: IncomingMessage, { rawBody }: OpOptions = {}): BufferEncoding => {
+        if (!req.headers["content-type"]) throw new CeroError("ERR_INVALID_CONTENT_TYPE");
 
-        mimeAccepts(req.headers["content-type"], ["application/json", "text/json"]);
+        if (!rawBody) mimeAccepts(req.headers["content-type"], ["application/json", "text/json"]);
 
         const encodings = req.headers["content-type"].match(/charset=([-\w\d]+)/);
         const encoding = encodings ? encodings[1] : "utf-8";
@@ -35,6 +43,16 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             throw new CeroError("ERR_UNSUPPORTED_ENCODING");
         }
 
+        return encoding;
+    };
+
+    /**
+     * Getting body out of request
+     * @param {IncomingMessage} req Request object.
+     * @param {BufferEncoding} encoding Encoding for string decoder
+     * @returns Promise with req body string or undefined
+     */
+    const getBody = async (req: IncomingMessage, encoding: BufferEncoding) => {
         if (req.headers["content-length"] === "0") {
             return undefined;
         }
@@ -48,15 +66,88 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
         }
         out += decoder.end();
 
-        try {
-            if (!out) {
-                return undefined;
-            }
+        return out;
+    };
 
-            return JSON.parse(out);
+    /**
+     * Tries to parse data from the request body.
+     *
+     * @param {IncomingMessage} req Request object.
+     * @param {OpOptions} options Options for data parser.
+     * @returns JSON object.
+     */
+    const getData = async (req: IncomingMessage, { rawBody }: OpOptions = {}): Promise<object | undefined> => {
+        try {
+            const encoding = getEncoding(req, { rawBody });
+            const body = await getBody(req, encoding);
+
+            return body && (rawBody ? body : JSON.parse(body));
         } catch (e: any) {
             throw new CeroError("ERR_CANNOT_PARSE_CONTENT");
         }
+    };
+
+    /**
+     * Handler for data calls
+     * @param {IncomingMessage} req Request object.
+     * @param {ServerResponse} res Server response.
+     * @param {OpResolver} resolver Data callback
+     * @param {OpOptions} options Handler options.
+     * @returns void
+     */
+    const opDataHandler = async (
+        req: ParsedMessage,
+        res: ServerResponse,
+        resolver: OpResolver,
+        { rawBody }: OpOptions = {}
+    ) => {
+        req.body = await getData(req, { rawBody });
+
+        const result = await resolver(req, res);
+
+        let response = "{}";
+
+        if (result) {
+            result.opStatus = result.opStatus || ReasonPhrases.OK;
+
+            const statusCode = getStatusCode(result.opStatus);
+            const reason = result.opStatus;
+
+            res.writeHead(statusCode, reason, { "content-type": "application/json" });
+
+            if (Object.keys(result).length) {
+                response = JSON.stringify(result);
+            }
+        } else {
+            res.writeHead(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND, {
+                "content-type": "application/json",
+            });
+        }
+
+        return res.end(response);
+    };
+
+    /**
+     * Control Message handler
+     * @param {IncomingMessage} req Request object.
+     * @param {ServerResponse} res Server response.
+     * @param {ControlMessageCode} message Control message.
+     * @param {ICommunicationHandler} comm Communication handler.
+     * @returns void
+     */
+    const opControlMessageHandler = async <T extends ControlMessageCode>(
+        req: ParsedMessage,
+        res: ServerResponse,
+        message: T,
+        comm: ICommunicationHandler
+    ) => {
+        // eslint-disable-next-line no-extra-parens
+        const obj = ((await getData(req)) as Array<any>)[1] as MessageDataType<T>;
+
+        await comm.sendControlMessage(message, checkMessage(message, obj));
+
+        res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
+        return res.end(JSON.stringify({ accepted: true }));
     };
 
     /**
@@ -72,66 +163,42 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
      *
      * @param {string} method Request method.
      * @param {string|RegExp} path Request address.
-     * @param {OpResolver} message which operation.
-     * @param {ICommunicationHandler} conn the communication handler to use.
+     * @param {ControlMessageCode|OpResolver} message which operation.
+     * @param {ICommunicationHandler} comm Communication handler.
+     * @param {boolean} rawBody Flag if the body will be parsed.
      */
     const op = <T extends ControlMessageCode>(
         method: string = "post",
-        path: string|RegExp, message: T | OpResolver, conn: ICommunicationHandler): void => {
+        path: string | RegExp,
+        message: T | OpResolver,
+        comm?: ICommunicationHandler,
+        rawBody?: boolean
+    ): void => {
         const handler: Middleware = async (req, res, next) => {
             logger.trace("Request", req.method, req.url);
 
             try {
                 if (typeof message === "function") {
-                    req.body = await getData(req);
-
-                    const result = await message(req, res);
-
-                    let response = "{}";
-
-                    if (result) {
-                        result.opStatus = result.opStatus || ReasonPhrases.OK;
-
-                        const statusCode = getStatusCode(result.opStatus);
-                        const reason = result.opStatus;
-
-                        res.writeHead(
-                            statusCode,
-                            reason,
-                            { "content-type": "application/json" }
-                        );
-
-                        if (Object.keys(result).length) {
-                            response = JSON.stringify(result);
-                        }
-                    } else {
-                        res.writeHead(StatusCodes.NOT_FOUND, ReasonPhrases.NOT_FOUND, { "content-type": "application/json" });
-                    }
-
-                    return res.end(response);
+                    return await opDataHandler(req, res, message, { rawBody });
                 }
-
-                // eslint-disable-next-line no-extra-parens
-                const obj = (await getData(req) as Array<any>)[1] as MessageDataType<T>;
-
-                await conn.sendControlMessage(message, checkMessage(message, obj));
-
-                res.writeHead(StatusCodes.ACCEPTED, ReasonPhrases.ACCEPTED, { "content-type": "application/json" });
-                return res.end(JSON.stringify({ accepted: true }));
+                if (comm) {
+                    return await opControlMessageHandler(req, res, message, comm);
+                }
+                throw new Error("ERR_UNSUPPORTED_HANDLER_CONFIGURATION");
             } catch (e: any) {
                 return next(e);
             }
         };
 
         switch (method) {
-        case "post":
-            router.post(path, handler);
-            break;
-        case "delete":
-            router.delete(path, handler);
-            break;
-        default:
-            throw new Error("ERR_UNSUPPORTED_METHOD");
+            case "post":
+                router.post(path, handler);
+                break;
+            case "delete":
+                router.delete(path, handler);
+                break;
+            default:
+                throw new Error("ERR_UNSUPPORTED_METHOD");
         }
     };
 
