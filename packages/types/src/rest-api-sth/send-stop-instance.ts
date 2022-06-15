@@ -1,3 +1,3 @@
-import { ControlMessageResponse } from "./common";
+import { Instance } from "../instance-store";
 
-export type SendStopInstanceResponse = ControlMessageResponse
+export type SendStopInstanceResponse = Instance;

@@ -20,7 +20,8 @@ import {
     InstanceLimits,
     InstanceStatus,
     MonitoringMessageData,
-    InstanceStats
+    InstanceStats,
+    OpResponse
 } from "@scramjet/types";
 import {
     AppError,
@@ -622,7 +623,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.router.op("post", "/_kill", (req) => this.handleKill(req), this.communicationHandler);
     }
 
-    private async handleStop(req: ParsedMessage) {
+    private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
         const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
 
         this.status = "stopping";
@@ -643,7 +644,7 @@ export class CSIController extends TypedEmitter<Events> {
         return { opStatus: ReasonPhrases.ACCEPTED, ...this.getInfo() };
     }
 
-    private async handleKill(req: ParsedMessage) {
+    private async handleKill(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendKillInstanceResponse>> {
         this.status = "killing";
 
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
