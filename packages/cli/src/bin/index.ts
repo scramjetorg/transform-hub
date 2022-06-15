@@ -47,16 +47,13 @@ const initPlatform = async () => {
     await initPlatform();
 
     for (const command of Object.values(commands)) command(program);
-    if (process.argv.includes("--config-path")) {
-        profileManager.setFlagProfilePathSource();
-    }
 
     program
         .description(
             "This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
         .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
-        .option("--config <name>", "Set global configuration profile", (name) => profileManager.setFlagProfile(name))
-        .option("--config-path <path>", "Set global configuration from file", (path) => profileManager.setFlagProfilePath(path))
+        .option("--config <name>", "Set global configuration profile")
+        .option("--config-path <path>", "Set global configuration from file")
         .addHelpCommand(false)
         .addHelpText("beforeAll", `Current profile: ${profileManager.getProfileName()}`)
         .addHelpText(

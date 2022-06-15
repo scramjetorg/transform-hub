@@ -5,7 +5,7 @@ import { configEnv, isConfigEnv, isConfigFormat, ProfileConfigEntity, SiConfigEn
 import isUrl from "validator/lib/isURL";
 import isJWT from "validator/lib/isJWT";
 import { envs } from "../utils/envs";
-import { displayError } from "./output";
+import { displayError, displayMessage } from "./output";
 
 abstract class Config {
     abstract getConfig(): any | null;
@@ -38,8 +38,7 @@ abstract class FileConfig extends Config {
             try {
                 return JSON.parse(readFileSync(this.filePath, "utf-8"));
             } catch {
-                // eslint-disable-next-line no-console
-                console.error(`WARN: Parse error in config at ${this.filePath}.`);
+                displayError(`Parse error in config at ${this.filePath}.`);
             }
         return null;
     }
@@ -48,16 +47,16 @@ abstract class FileConfig extends Config {
             writeFileSync(this.filePath, JSON.stringify(config, null, 2), "utf-8");
             return true;
         } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error("WARN: Couldn't write config to ", this.filePath);
+            displayError(`Couldn't write config to ${this.filePath}`);
             return false;
         }
     }
     setConfigValue(key: string, value: any): boolean | void {
-        const conf = this.getConfig();
         const validValue = this.validateConfigValue(key, value);
 
         if (validValue) {
+            const conf = this.getConfig();
+
             conf[key] = value;
             this.writeConfig(conf);
             return true;
@@ -108,7 +107,7 @@ class DefaultFileConfig extends FileConfig {
     }
 }
 
-// Config class for internal use only
+// Global configuration class for internal use only
 export class SiConfig extends DefaultFileConfig {
     constructor(configFile: string) {
         const siDefaultConfig: SiConfigEntity = {
@@ -134,6 +133,7 @@ export class SiConfig extends DefaultFileConfig {
 
 export const siConfig = new SiConfig(siConfigFile);
 
+// Profile configuration class. Represents configuration that can be maniupulated by user.
 export class ProfileConfig extends DefaultFileConfig {
     protected readOnlyConfig: boolean;
 
@@ -141,12 +141,14 @@ export class ProfileConfig extends DefaultFileConfig {
         const profileConfig: ProfileConfigEntity = {
             configVersion: 1,
             apiUrl: "http://127.0.0.1:8000/api/v1",
-            debug: false,
-            format: "pretty",
             middlewareApiUrl: "",
             env: "development",
             scope: "",
             token: "",
+            log: {
+                debug: false,
+                format: "pretty",
+            },
         };
 
         super(configFile, profileConfig);
@@ -155,22 +157,54 @@ export class ProfileConfig extends DefaultFileConfig {
     getConfig(): ProfileConfigEntity {
         return super.getConfig();
     }
-    validateConfig(config: any) {
-        if (typeof config !== "object") return false;
-        if (config.length !== this.defaultConfig.length) return false;
+
+    get apiUrl() { return this.getConfig().apiUrl; }
+    get middlewareApiUrl() { return this.getConfig().middlewareApiUrl; }
+    get env() { return this.getConfig().env; }
+    get scope() { return this.getConfig().scope; }
+    get token() { return this.getConfig().token; }
+    get debug() { return this.getConfig().log.debug; }
+    get format() { return this.getConfig().log.format; }
+    get path() { return this.filePath; }
+
+    protected validateConfigPart(config: Object) {
         for (const [key, value] of Object.entries(config)) {
             if (!this.validateConfigValue(key, value)) return false;
         }
         return true;
     }
+
+    validateConfig(config: any): boolean {
+        if (typeof config !== "object" || typeof config?.log !== "object") return false;
+
+        const configKeys = Object.keys(config);
+        const configLogKeys = Object.keys(config.log);
+        const profileKeys = Object.keys(this.defaultConfig);
+        const profileLogKeys = Object.keys(this.defaultConfig.log);
+
+        if (configKeys.length !== profileKeys.length || configLogKeys.length !== profileLogKeys.length) {
+            displayMessage("Invalid number of keys in configuration");
+            return false;
+        }
+        if (!profileKeys.every((key: any) => configKeys.includes(key)) ||
+            !profileLogKeys.every((logKey: any) => configLogKeys.includes(logKey))) {
+            displayMessage("Missing keys in configuration");
+            return false;
+        }
+
+        return this.validateConfigPart(config);
+    }
+
     set readOnly(readOnly: boolean) { this.readOnlyConfig = readOnly; }
     get readOnly() { return this.readOnlyConfig; }
 
     checkIfWritable() { if (this.readOnlyConfig) throw Error("Unable to write for read only configuration"); }
     setConfig(config: any): boolean {
         this.checkIfWritable();
-        if (!this.validateConfig(config)) return false;
-        const overlap = { ...this.getConfig(), ...config };
+        if (typeof config !== "object" || !this.validateConfigPart(config)) return false;
+        const { log: currentLog, ...currentConfig } = this.getConfig();
+        const { log: newLog, ...newConfig } = config;
+        const overlap = { ...currentConfig, ...newConfig, log: { ...currentLog, ...newLog } };
 
         return this.writeConfig(overlap);
     }
@@ -182,17 +216,27 @@ export class ProfileConfig extends DefaultFileConfig {
         return this.getConfig().env;
     }
 
+    setConfigValue(key: string, value: any): boolean | void {
+        const validValue = this.validateConfigValue(key, value);
+
+        if (validValue) {
+            const conf: any = this.getConfig();
+
+            if (key === "log") {
+                for (const [logKey, logValue] of Object.entries(value)) {
+                    conf.log[logKey] = logValue;
+                }
+            } else conf[key] = value;
+
+            this.writeConfig(conf);
+            return true;
+        }
+        return validValue;
+    }
+
     setApiUrl(apiUrl: string): boolean {
         this.checkIfWritable();
         return this.setConfigValue("apiUrl", normalizeUrl(apiUrl)) as boolean;
-    }
-    setDebug(debug: boolean): boolean {
-        this.checkIfWritable();
-        return this.setConfigValue("debug", debug) as boolean;
-    }
-    setFormat(format: string): boolean {
-        this.checkIfWritable();
-        return this.setConfigValue("format", format) as boolean;
     }
     setMiddlewareApiUrl(middlewareApiUrl: string): boolean {
         this.checkIfWritable();
@@ -210,16 +254,27 @@ export class ProfileConfig extends DefaultFileConfig {
         this.checkIfWritable();
         return this.setConfigValue("token", token) as boolean;
     }
+    setDebug(debug: boolean): boolean {
+        this.checkIfWritable();
+        return this.setConfigValue("log", { debug }) as boolean;
+    }
+    setFormat(format: string): boolean {
+        this.checkIfWritable();
+        return this.setConfigValue("log", { format }) as boolean;
+    }
 
+    // eslint-disable-next-line complexity
     validateConfigValue(key: string, value: any): boolean {
-        const valid = super.validateConfigValue(key, value);
+        if (!super.validateConfigValue(key, value)) return false;
 
-        if (!valid) {
-            return false;
-        }
         switch (key) {
             case "apiUrl": return isUrl(value);
-            case "format": return isConfigFormat(value);
+            case "log": {
+                for (const [logKey, logValue] of Object.entries(value)) {
+                    if (!this.validateConfigLogValue(logKey, logValue)) return false;
+                }
+                return true;
+            }
             case "middlewareApiUrl": {
                 if (value === this.defaultConfig.middlewareApiUrl) return true;
                 return isUrl(value);
@@ -233,8 +288,17 @@ export class ProfileConfig extends DefaultFileConfig {
                 return true;
         }
     }
+    validateConfigLogValue(key: string, value: any):boolean {
+        type logConfigKey = keyof typeof this.defaultConfig.log;
+        if (!(key in this.defaultConfig.log) || typeof value !== typeof this.defaultConfig.log[key as logConfigKey])
+            return false;
+        if (key === "format") return isConfigFormat(value);
+        return true;
+    }
 }
 
+// Session configuration represents configuration used by internally 
+// that is stored and used through current shell session time that runs Cli.
 class SessionConfig extends DefaultFileConfig {
     constructor() {
         const defaultSessionConfig: SessionConfigEntity = {
@@ -286,6 +350,12 @@ const profileSource = {
 type ProfileSourceKeys = keyof typeof profileSource;
 type ProfileSourceValues = typeof profileSource[ProfileSourceKeys];
 
+/**
+ * Helper class used to manage controll of precedence of different profiles
+ * that can be set by user.
+ * @param path .
+ * @returns .
+ */
 export class ProfileManager {
     protected source: ProfileSourceValues;
     protected profile: ProfileConfig;
@@ -366,6 +436,7 @@ const createDefaultProfileIfNotExist = () => {
     defaultProfile.setFilePath(defaultConfigProfileFile);
 };
 
+// eslint-disable-next-line complexity
 export const initConfig = () => {
     createDefaultProfileIfNotExist();
     let { profile } = siConfig.getConfig();
@@ -379,7 +450,17 @@ export const initConfig = () => {
         displayError(e);
     }
 
-    if (envs.siConfigPathEnv) profileManager.setEnvProfilePath(envs.siConfigPathEnv);
+    if (process.argv.includes("--config-path")) {
+        const idx = process.argv.lastIndexOf("--config-path");
+
+        if (process.argv.length <= idx + 1) throw Error("--config-path argument missing");
+        profileManager.setFlagProfilePath(process.argv[idx + 1]);
+    } else if (process.argv.includes("--config")) {
+        const idx = process.argv.lastIndexOf("--config");
+
+        if (process.argv.length <= idx + 1) throw Error("--config argument missing");
+        profileManager.setFlagProfile(process.argv[idx + 1]);
+    } else if (envs.siConfigPathEnv) profileManager.setEnvProfilePath(envs.siConfigPathEnv);
     else if (envs.siConfigEnv) profileManager.setEnvProfile(envs.siConfigEnv);
     else profileManager.setConfigProfile(profile);
 };

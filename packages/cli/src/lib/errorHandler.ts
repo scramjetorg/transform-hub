@@ -14,7 +14,7 @@ const getExitCode = (_err: ClientError | Error) => 1;
 
 export const errorHandler = async (err: Error) => {
     process.exitCode = getExitCode(err);
-    const { format, debug } = profileConfig.getConfig();
+    const { log:{ format, debug } } = profileConfig.getConfig();
 
     if (err instanceof ClientError) {
         displayObject({

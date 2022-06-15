@@ -12,9 +12,6 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const hub: CommandDefinition = (program) => {
-    const { env, format } = profileConfig.getConfig();
-    const isProductionEnviroment = isProductionEnv(env);
-
     const hubCmd = program
         .command("hub")
         .addHelpCommand(false)
@@ -26,7 +23,7 @@ export const hub: CommandDefinition = (program) => {
     */
         .description("Allows to run programs in different data centers, computers or devices in local network");
 
-    if (isDevelopment() && isProductionEnviroment) {
+    if (isDevelopment() && isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("create")
             .argument("<name>")
@@ -39,7 +36,7 @@ export const hub: CommandDefinition = (program) => {
             });
     }
 
-    if (isProductionEnviroment) {
+    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("use")
             .argument("<name|id>")
@@ -59,7 +56,7 @@ export const hub: CommandDefinition = (program) => {
             });
     }
 
-    if (isProductionEnviroment) {
+    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("list")
             .alias("ls")
@@ -75,11 +72,11 @@ export const hub: CommandDefinition = (program) => {
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
 
-                displayObject(hosts, format);
+                displayObject(hosts, profileConfig.format);
             });
     }
 
-    if (isProductionEnviroment) {
+    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("info")
         /* TODO for future use
@@ -93,7 +90,7 @@ export const hub: CommandDefinition = (program) => {
                 const hosts = await managerClient.getHosts();
                 const host = hosts.find((h: any) => h.id === id);
 
-                displayObject(host, format);
+                displayObject(host, profileConfig.format);
             });
     }
 
@@ -105,10 +102,10 @@ export const hub: CommandDefinition = (program) => {
     hubCmd
         .command("load")
         .description("Monitor CPU, memory and disk usage on the Hub")
-        .action(async () => displayEntity(getHostClient().getLoadCheck(), format));
+        .action(async () => displayEntity(getHostClient().getLoadCheck(), profileConfig.format));
 
     hubCmd
         .command("version")
         .description("Display version of the default Hub")
-        .action(async () => displayEntity(getHostClient().getVersion(), format));
+        .action(async () => displayEntity(getHostClient().getVersion(), profileConfig.format));
 };

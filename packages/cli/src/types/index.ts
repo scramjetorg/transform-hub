@@ -24,12 +24,14 @@ export interface SiConfigEntity {
 export interface ProfileConfigEntity {
     configVersion: number;
     apiUrl: string;
-    debug: boolean;
-    format: displayFormat;
     middlewareApiUrl: string;
     env: configEnv;
     scope: string;
     token: string,
+    log: {
+        debug: boolean;
+        format: displayFormat;
+    }
 }
 
 export interface SessionConfigEntity {

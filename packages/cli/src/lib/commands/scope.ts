@@ -32,7 +32,7 @@ export const scope: CommandDefinition = (program) => {
                 return;
             }
 
-            displayObject(scopeConfig, profileConfig.getConfig().format);
+            displayObject(scopeConfig, profileConfig.format);
         });
 
     if (isDevelopment())

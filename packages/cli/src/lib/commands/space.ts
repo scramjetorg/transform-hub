@@ -43,7 +43,7 @@ export const space: CommandDefinition = (program) => {
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
             const version = await managerClient.getVersion();
 
-            displayObject({ spaceId, version, managerClient }, profileConfig.getConfig().format);
+            displayObject({ spaceId, version, managerClient }, profileConfig.format);
         });
 
     spaceCmd
@@ -54,7 +54,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
 
-            return displayObject(managers, profileConfig.getConfig().format);
+            return displayObject(managers, profileConfig.format);
         });
 
     spaceCmd
@@ -65,7 +65,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(name);
 
-            displayObject({ name, ...await managerClient.getVersion() }, profileConfig.getConfig().format);
+            displayObject({ name, ...await managerClient.getVersion() }, profileConfig.format);
             sessionConfig.setLastSpaceId(name);
         });
 

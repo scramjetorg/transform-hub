@@ -23,9 +23,8 @@ let hostClient: HostClient;
 export const getHostClient = (): HostClient => {
     if (hostClient) return hostClient;
 
-    const { apiUrl } = profileConfig.getConfig();
+    const { apiUrl, env, log: { debug } } = profileConfig.getConfig();
     const { lastSpaceId, lastHubId } = sessionConfig.getConfig();
-    const { env, debug } = profileConfig.getConfig();
 
     if (isDevelopmentEnv(env)) {
         hostClient = new HostClient(apiUrl);
@@ -77,14 +76,12 @@ export const getInstance = (id: string) => InstanceClient.from(id, getHostClient
  * @returns {Promise<void>} Promise resolving when all stdio streams finish.
  */
 export const attachStdio = (instanceClient: InstanceClient) => {
-    const { format } = profileConfig.getConfig();
-
     return displayEntity(
         Promise.all([
             instanceClient.sendStdin(process.stdin),
             instanceClient.getStream("stdout").then((out) => out.pipe(process.stdout)),
             instanceClient.getStream("stderr").then((err) => err.pipe(process.stderr)),
-        ]).then(() => undefined), format);
+        ]).then(() => undefined), profileConfig.format);
 };
 
 /**

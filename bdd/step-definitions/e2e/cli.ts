@@ -20,7 +20,7 @@ const si = process.env.SCRAMJET_SPAWN_JS
 When("I set json format", { timeout: 30000 }, async function() {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "json", `{ "format": "json"}`]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "log", "--format", "json"]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
         console.error(res.stdio);

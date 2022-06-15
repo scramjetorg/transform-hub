@@ -7,7 +7,7 @@ import { profileConfig, sessionConfig } from "../config";
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (): MiddlewareClient => {
-    const { middlewareApiUrl, debug } = profileConfig.getConfig();
+    const { middlewareApiUrl, log:{ debug } } = profileConfig.getConfig();
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");

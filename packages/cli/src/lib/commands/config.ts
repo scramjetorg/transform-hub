@@ -19,8 +19,11 @@ export const config: CommandDefinition = (program) => {
         middlewareApiUrl: defaulMiddlewareApiUrl,
         env: defaultEnv,
         token: defaultToken,
-        debug: defaultDebug,
-        format: defaultFormat } = defaultConfig;
+        log:{
+            debug: defaultDebug,
+            format: defaultFormat
+        }
+    } = defaultConfig;
 
     const configCmd = program
         .command("config")
@@ -36,7 +39,11 @@ export const config: CommandDefinition = (program) => {
         .action(() => {
             const configuration = profileConfig.getConfig();
 
-            displayObject(configuration, configuration.format);
+            if (profileManager.isPathSource())
+                displayMessage(`Current configuration: ${profileConfig.path}\n`);
+            else
+                displayMessage(`Current profile: ${profileManager.getProfileName()}\n`);
+            displayObject(configuration, configuration.log.format);
         });
 
     const setCmd = configCmd

@@ -92,7 +92,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("list")
         .alias("ls")
         .description("Lists all available Sequences")
-        .action(async () => displayEntity(getHostClient().listSequences(), profileConfig.getConfig().format));
+        .action(async () => displayEntity(getHostClient().listSequences(), profileConfig.format));
 
     sequenceCmd
         .command("pack")
@@ -127,7 +127,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("send")
         .argument("<package>", "The file to upload or '-' to use the last packed")
         .description("Send the Sequence package to the Hub")
-        .action(async (sequencePackage: string) => sendPackage(sequencePackage, profileConfig.getConfig().format));
+        .action(async (sequencePackage: string) => sendPackage(sequencePackage, profileConfig.format));
 
     sequenceCmd
         .command("use")
@@ -154,7 +154,7 @@ export const sequence: CommandDefinition = (program) => {
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
             await startSequence(id, { configFile, configString, args, outputTopic, inputTopic, limits },
-                profileConfig.getConfig().format);
+                profileConfig.format);
         });
 
     type DeployArgs = {
@@ -183,7 +183,7 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
-            const { format } = profileConfig.getConfig();
+            const { log:{ format } } = profileConfig.getConfig();
 
             if (lstatSync(path).isDirectory()) {
                 await packAction(path, { output });
@@ -202,7 +202,7 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<id>", "Sequence id to start or '-' for the last uploaded")
         .description("Obtain a basic information about the Sequence")
         .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)),
-            profileConfig.getConfig().format));
+            profileConfig.format));
 
     sequenceCmd
         .command("delete")
@@ -210,7 +210,7 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
         .description("Delete the Sequence from the Hub")
         .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id)),
-            profileConfig.getConfig().format));
+            profileConfig.format));
 
     sequenceCmd
         .command("prune")

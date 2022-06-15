@@ -15,7 +15,6 @@ test("CliConfig validation test", t => {
         });
     };
 
-    const validFormat = ["json", "pretty"];
     const validEnv = ["production", "development"];
     const validToken = ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbiBLb3dhbHNraSIsImlhdCI6MTUxNjIzOTAyMn0.tgHyqtA_hPO94mvcY_zLpHBwvQeaYK7_9mgqjgFlZvQ"];
@@ -27,7 +26,6 @@ test("CliConfig validation test", t => {
     const invalidDataWithEmpty = [...invalidData, ""];
 
     testConfigValidation("apiUrl", validUrl, invalidUrl);
-    testConfigValidation("format", validFormat, invalidDataWithEmpty);
     testConfigValidation("middlewareApiUrl", [...validUrl, ""], middlewareInvalidUrl);
     testConfigValidation("env", validEnv, invalidDataWithEmpty);
     testConfigValidation("token", validToken, invalidData);
