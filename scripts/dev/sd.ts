@@ -83,22 +83,22 @@ const waitForText = (stream: Stream, text: string) => new Promise<void>((res, _r
     let seq1, seq2, inst1, inst2;
 
     switch (scenario) {
-    case 1:
-        await startHost1({ cpm: false });
+        case 1:
+            await startHost1({ cpm: false });
 
-        const hostCllient = new HostClient("http://localhost:8001/api/v1");
+            const hostCllient = new HostClient("http://localhost:8001/api/v1");
 
-        seq1 = await hostCllient.sendSequence(sequence1);
-        seq2 = await hostCllient.sendSequence(sequence2);
+            seq1 = await hostCllient.sendSequence(sequence1);
+            seq2 = await hostCllient.sendSequence(sequence2);
 
-        inst1 = await seq1.start({}, []);
-        inst2 = await seq2.start({}, []);
+            inst1 = await seq1.start({}, []);
+            inst2 = await seq2.start({}, []);
 
-        (await inst2.getStream("output")).data?.pipe(process.stdout);
+            (await inst2.getStream("output")).data?.pipe(process.stdout);
 
-        break;
-    default:
-        console.log("unknown scenario");
-        break;
+            break;
+        default:
+            console.log("unknown scenario");
+            break;
     }
 })();

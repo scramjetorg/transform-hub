@@ -304,33 +304,33 @@ export class CSIController extends TypedEmitter<Events> {
     private mapRunnerExitCode(exitcode: number) {
         // eslint-disable-next-line default-case
         switch (exitcode) {
-        case RunnerExitCode.INVALID_ENV_VARS: {
-            return Promise.reject({
-                message: "Runner was started with invalid configuration. This is probably a bug in STH.",
-                exitcode: RunnerExitCode.INVALID_ENV_VARS
-            });
-        }
-        case RunnerExitCode.INVALID_SEQUENCE_PATH: {
-            return Promise.reject({
-                message: `Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. ` +
+            case RunnerExitCode.INVALID_ENV_VARS: {
+                return Promise.reject({
+                    message: "Runner was started with invalid configuration. This is probably a bug in STH.",
+                    exitcode: RunnerExitCode.INVALID_ENV_VARS
+                });
+            }
+            case RunnerExitCode.INVALID_SEQUENCE_PATH: {
+                return Promise.reject({
+                    message: `Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. ` +
                     "Check `main` field in Sequence package.json",
-                exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH });
-        }
-        case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
-            return Promise.reject({
-                message: "Sequence failed on start", exitcode: RunnerExitCode.SEQUENCE_FAILED_ON_START
-            });
-        }
-        case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
-            return Promise.reject({
-                message: "Sequence unpack failed", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
-            });
-        }
-        case RunnerExitCode.KILLED: {
-            return Promise.reject({
-                message: "Instance killed", exitcode: RunnerExitCode.KILLED
-            });
-        }
+                    exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH });
+            }
+            case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
+                return Promise.reject({
+                    message: "Sequence failed on start", exitcode: RunnerExitCode.SEQUENCE_FAILED_ON_START
+                });
+            }
+            case RunnerExitCode.SEQUENCE_UNPACK_FAILED: {
+                return Promise.reject({
+                    message: "Sequence unpack failed", exitcode: RunnerExitCode.SEQUENCE_UNPACK_FAILED
+                });
+            }
+            case RunnerExitCode.KILLED: {
+                return Promise.reject({
+                    message: "Instance killed", exitcode: RunnerExitCode.KILLED
+                });
+            }
         }
 
         if (exitcode > 0) {
