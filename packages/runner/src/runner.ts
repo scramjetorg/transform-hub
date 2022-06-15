@@ -159,25 +159,25 @@ export class Runner<X extends AppConfig> implements IComponent {
         this.logger.debug("Control message received", code, data);
 
         switch (code) {
-        case RunnerMessageCode.MONITORING_RATE:
-            await this.handleMonitoringRequest(data as MonitoringRateMessageData);
-            break;
-        case RunnerMessageCode.KILL:
-            await this.handleKillRequest();
-            break;
-        case RunnerMessageCode.STOP:
-            await this.addStopHandlerRequest(data as StopSequenceMessageData);
-            break;
-        case RunnerMessageCode.PONG:
-            this.handshakeResolver?.res(data);
-            break;
-        case RunnerMessageCode.EVENT:
-            const eventData = data as EventMessageData;
+            case RunnerMessageCode.MONITORING_RATE:
+                await this.handleMonitoringRequest(data as MonitoringRateMessageData);
+                break;
+            case RunnerMessageCode.KILL:
+                await this.handleKillRequest();
+                break;
+            case RunnerMessageCode.STOP:
+                await this.addStopHandlerRequest(data as StopSequenceMessageData);
+                break;
+            case RunnerMessageCode.PONG:
+                this.handshakeResolver?.res(data);
+                break;
+            case RunnerMessageCode.EVENT:
+                const eventData = data as EventMessageData;
 
-            this.emitter.emit(eventData.eventName, eventData.message);
-            break;
-        default:
-            break;
+                this.emitter.emit(eventData.eventName, eventData.message);
+                break;
+            default:
+                break;
         }
     }
 

@@ -190,19 +190,19 @@ class GlobalConfig extends DefaultFileConfig {
             return false;
         }
         switch (key) {
-        case "apiUrl": return isValidUrl(value);
-        case "format": return isConfigFormat(value);
-        case "middlewareApiUrl": {
-            if (value === this.defaultConfig.middlewareApiUrl) return true;
-            return isValidUrl(value);
-        }
-        case "env" : return isConfigEnv(value);
-        case "token": {
-            if (value === this.defaultConfig.token) return true;
-            return isJWT(value);
-        }
-        default:
-            return true;
+            case "apiUrl": return isValidUrl(value);
+            case "format": return isConfigFormat(value);
+            case "middlewareApiUrl": {
+                if (value === this.defaultConfig.middlewareApiUrl) return true;
+                return isValidUrl(value);
+            }
+            case "env" : return isConfigEnv(value);
+            case "token": {
+                if (value === this.defaultConfig.token) return true;
+                return isJWT(value);
+            }
+            default:
+                return true;
         }
     }
 }
@@ -256,9 +256,9 @@ class SessionConfig extends DefaultFileConfig {
             return false;
         }
         switch (key) {
-        case "apiUrl": return isValidUrl(value);
-        default:
-            return true;
+            case "apiUrl": return isValidUrl(value);
+            default:
+                return true;
         }
     }
 }
