@@ -53,8 +53,14 @@ jobs:
         with:
           path: docker-images
 
+      - name: debug
+        run: tree
+
       - name: Unzip docker images
         run: pigz -d docker-images/*/*image*.tar.gz
+
+      - name: debug
+        run: tree
 
       - name: Load docker images
         run: ls -1 docker-images/*/*docker-image.tar | while read line; do docker load -i $line; done
@@ -66,10 +72,10 @@ jobs:
         run: |
           echo $COMMIT_ID
           echo $RELEASE_VERSION
-          docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:latest
-          docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:$RELEASE_VERSION
-          docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:latest
-          docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:$RELEASE_VERSION
+          # docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:latest
+          # docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:$RELEASE_VERSION
+          # docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:latest
+          # docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:$RELEASE_VERSION
           docker tag scramjetorg/runner-py:$COMMIT_ID scramjetorg/runner-py:latest
           docker tag scramjetorg/runner-py:$COMMIT_ID scramjetorg/runner-py:$RELEASE_VERSION
           docker tag scramjetorg/pre-runner:$COMMIT_ID scramjetorg/pre-runner:latest
