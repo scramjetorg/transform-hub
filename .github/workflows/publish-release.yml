@@ -40,9 +40,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: v0.24.2
 
-      - name: Get release version number
+      - name: Get release version number & commit
         run: |
+          echo "COMMIT_ID=$(git rev-parse HEAD)" >> $GITHUB_ENV
           echo "RELEASE_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
 
       - name: Download docker images
@@ -56,16 +59,21 @@ jobs:
       - name: Load docker images
         run: ls -1 docker-images/*/*docker-image.tar | while read line; do docker load -i $line; done
 
+      - name: List docker images for inspection
+        run: docker image ls
+
       - name: Tag images with release version
         run: |
-          docker tag scramjetorg/sth:v0.24.2 scramjetorg/sth:latest
-          docker tag scramjetorg/sth:v0.24.2 scramjetorg/sth:$RELEASE_VERSION
-          docker tag scramjetorg/runner:v0.24.2 scramjetorg/runner:latest
-          docker tag scramjetorg/runner:v0.24.2 scramjetorg/runner:$RELEASE_VERSION
-          docker tag scramjetorg/runner-py:v0.24.2 scramjetorg/runner-py:latest
-          docker tag scramjetorg/runner-py:v0.24.2 scramjetorg/runner-py:$RELEASE_VERSION
-          docker tag scramjetorg/pre-runner:v0.24.2 scramjetorg/pre-runner:latest
-          docker tag scramjetorg/pre-runner:v0.24.2 scramjetorg/pre-runner:$RELEASE_VERSION
+          echo $COMMIT_ID
+          echo $RELEASE_VERSION
+          docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:latest
+          docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:$RELEASE_VERSION
+          docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:latest
+          docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:$RELEASE_VERSION
+          docker tag scramjetorg/runner-py:$COMMIT_ID scramjetorg/runner-py:latest
+          docker tag scramjetorg/runner-py:$COMMIT_ID scramjetorg/runner-py:$RELEASE_VERSION
+          docker tag scramjetorg/pre-runner:$COMMIT_ID scramjetorg/pre-runner:latest
+          docker tag scramjetorg/pre-runner:$COMMIT_ID scramjetorg/pre-runner:$RELEASE_VERSION
 
       - name: List docker images for inspection
         run: docker image ls
