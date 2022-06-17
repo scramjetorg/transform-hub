@@ -24,7 +24,7 @@ jobs:
           ref: ${{ inputs.git-revision }}
 
       - name: Build image
-        run: docker build -t scramjetorg/runner-py:${{ inputs.git-revision }} -f Dockerfile ../../
+        run: docker build -t scramjetorg/runner-py:$(git rev-parse HEAD) -f Dockerfile ../../
         working-directory: packages/python-runner
 
       - name: Export image
@@ -42,6 +42,6 @@ jobs:
       - name: Upload image as artifact
         uses: actions/upload-artifact@v2
         with:
-          name:  runner-python-image-${{ inputs.python-version }}.tar.gz
+          name:  runner-python-image
           path: '*.tar.gz'
           retention-days: 1

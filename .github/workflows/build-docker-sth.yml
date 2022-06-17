@@ -30,16 +30,13 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
+        run: yarn install --ignore-engines --frozen-lockfile --prefer-offline
 
       - name: Update saved git hash
         run: yarn savehash
 
       - name: Build sth Docker image
         run: scripts/run-script.js --scope @scramjet/sth build:docker
-
-      - name: Add tag
-        run: docker tag scramjetorg/sth:$(git rev-parse HEAD) scramjetorg/sth:${{ inputs.git-revision }}
 
       - name: Export image
         run: >
@@ -56,6 +53,6 @@ jobs:
       - name: Upload image as artifact
         uses: actions/upload-artifact@v2
         with:
-          name:  sth-image-node${{ inputs.node-version }}.tar.gz
+          name:  sth-image
           path: '*.tar.gz'
           retention-days: 1

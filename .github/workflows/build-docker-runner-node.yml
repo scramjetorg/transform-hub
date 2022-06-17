@@ -36,7 +36,7 @@ jobs:
         run: scripts/run-script.js --scope packages/runner prebuild:docker
 
       - name: Build image
-        run: docker build -t scramjetorg/runner:${{ inputs.git-revision }} -f Dockerfile ../../
+        run: docker build -t scramjetorg/runner:$(git rev-parse HEAD) -f Dockerfile ../../
         working-directory: packages/runner
 
       - name: Export image
@@ -54,6 +54,6 @@ jobs:
       - name: Upload image as artifact
         uses: actions/upload-artifact@v2
         with:
-          name:  runner-image-node${{ inputs.node-version }}.tar.gz
+          name:  runner-node-image
           path: '*.tar.gz'
           retention-days: 1
