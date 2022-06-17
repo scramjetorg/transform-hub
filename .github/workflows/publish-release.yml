@@ -34,7 +34,7 @@ jobs:
 
   docker-publish:
     name: Push images to Docker Hub
-    needs: [runner-py-image, pre-runner-image]  # sth-image, runner-image, 
+    needs: [sth-image, runner-image, runner-py-image, pre-runner-image]
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -53,29 +53,18 @@ jobs:
         with:
           path: docker-images
 
-      - name: debug
-        run: tree
-
       - name: Unzip docker images
-        run: pigz -d docker-images/*/*image*.tar.gz
-
-      - name: debug
-        run: tree
+        run: pigz -d docker-images/*/*-docker-image.tar.gz
 
       - name: Load docker images
-        run: ls -1 docker-images/*/*docker-image.tar | while read line; do docker load -i $line; done
-
-      - name: List docker images for inspection
-        run: docker image ls
+        run: ls -1 docker-images/*/*-docker-image.tar | while read line; do docker load -i $line; done
 
       - name: Tag images with release version
         run: |
-          echo $COMMIT_ID
-          echo $RELEASE_VERSION
-          # docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:latest
-          # docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:$RELEASE_VERSION
-          # docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:latest
-          # docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:$RELEASE_VERSION
+          docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:latest
+          docker tag scramjetorg/sth:$COMMIT_ID scramjetorg/sth:$RELEASE_VERSION
+          docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:latest
+          docker tag scramjetorg/runner:$COMMIT_ID scramjetorg/runner:$RELEASE_VERSION
           docker tag scramjetorg/runner-py:$COMMIT_ID scramjetorg/runner-py:latest
           docker tag scramjetorg/runner-py:$COMMIT_ID scramjetorg/runner-py:$RELEASE_VERSION
           docker tag scramjetorg/pre-runner:$COMMIT_ID scramjetorg/pre-runner:latest
