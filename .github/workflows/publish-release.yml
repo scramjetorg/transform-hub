@@ -34,7 +34,7 @@ jobs:
 
   docker-publish:
     name: Push images to Docker Hub
-    needs: [sth-image, runner-image, runner-py-image, pre-runner-image]
+    needs: [runner-py-image, pre-runner-image]  # sth-image, runner-image, 
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
