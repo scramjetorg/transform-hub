@@ -1,0 +1,116 @@
+name: Publish new release to NPM and Docker hub
+
+on:
+  push:
+    branches:
+      - release-via-gha
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: Version tag (without leading 'v')
+
+jobs:
+  sth-image:
+    uses: ./.github/workflows/build-docker-sth.yml
+    with:
+      git-revision: v0.24.2
+
+  runner-image:
+    uses: ./.github/workflows/build-docker-runner-node.yml
+    with:
+      git-revision: v0.24.2
+
+  runner-py-image:
+    uses: ./.github/workflows/build-docker-runner-python.yml
+    with:
+      git-revision: v0.24.2
+
+  pre-runner-image:
+    uses: ./.github/workflows/build-docker-prerunner.yml
+    with:
+      git-revision: v0.24.2
+
+  docker-publish:
+    name: Push images to Docker Hub
+    needs: [sth-image, runner-image, runner-py-image, pre-runner-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get release version number
+        run: |
+          echo "RELEASE_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
+
+      - name: Download docker images
+        uses: actions/download-artifact@v3
+        with:
+          path: docker-images
+
+      - name: Unzip docker images
+        run: pigz -d docker-images/*/*image*.tar.gz
+
+      - name: Load docker images
+        run: ls -1 docker-images/*/*docker-image.tar | while read line; do docker load -i $line; done
+
+      - name: Tag images with release version
+        run: |
+          docker tag scramjetorg/sth:v0.24.2 scramjetorg/sth:latest
+          docker tag scramjetorg/sth:v0.24.2 scramjetorg/sth:$RELEASE_VERSION
+          docker tag scramjetorg/runner:v0.24.2 scramjetorg/runner:latest
+          docker tag scramjetorg/runner:v0.24.2 scramjetorg/runner:$RELEASE_VERSION
+          docker tag scramjetorg/runner-py:v0.24.2 scramjetorg/runner-py:latest
+          docker tag scramjetorg/runner-py:v0.24.2 scramjetorg/runner-py:$RELEASE_VERSION
+          docker tag scramjetorg/pre-runner:v0.24.2 scramjetorg/pre-runner:latest
+          docker tag scramjetorg/pre-runner:v0.24.2 scramjetorg/pre-runner:$RELEASE_VERSION
+
+      - name: List docker images for inspection
+        run: docker image ls
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: scramjetci
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+        
+      # - name: Push images to Docker Hub
+      #   run: |
+      #     docker push scramjetorg/pre-runner:latest
+      #     docker push scramjetorg/pre-runner:$RELEASE_VERSION
+
+
+  npm-publish:
+    name: Publish packages to NPM
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Nodejs 16
+        uses: actions/setup-node@v2
+        with:
+          cache: 'yarn'
+          node-version: 16
+
+      - name: Configure npm registry access
+        run: |
+          echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > ~/.npmrc
+          echo always-auth=true >> ~/.npmrc
+          echo @scramjet:registry=https://registry.npmjs.org/ >> ~/.npmrc
+          chmod 600 ~/.npmrc
+
+      - name: Install dependencies
+        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
+
+      - name: Update saved git hash for marking build version
+        run: yarn savehash
+
+      - name: Build packages in publication mode
+        run: yarn pack:pub
+
+      - name: Publish packages to NPM
+        run: ./scripts/publish-order-dist-packages.js -s -p
