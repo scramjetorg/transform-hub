@@ -7,6 +7,10 @@ on:
         required: false
         default: '16.x'
         type: string
+      git-revision:
+        required: false
+        default: ${{ github.sha }}
+        type: string
 
 jobs:
   build-docker-sth-image:
@@ -16,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.git-revision }}
 
       - name: Setup Nodejs ${{ inputs.node-version }}
         uses: actions/setup-node@v2
