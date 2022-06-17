@@ -37,29 +37,29 @@ jobs:
         with:
           name: dist-refapps-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz
 
-      - name: Download dockerImg Runner Node artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dockerRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-
-      - name: Download dockerImg Runner Python artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-
-      - name: Download dockerPreRunnerImg artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: dockerPreRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
-
-      - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
-        run: pigz -d docker*Img*.tar.gz
-
       - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
-        run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
+        run: ls dist*tar.gz | xargs -n1 tar -I pigz -xf
 
-      - name: Load Docker images
-        run: ls -1  docker*Img*.tar| while read line; do docker load -i $line; done
+      - name: Download node runner artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: runner-node-image
+
+      - name: Download python runner artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: runner-python-image
+
+      - name: Download pre-runner artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: pre-runner-image
+
+      - name: Unzip docker images from artifacts
+        run: pigz -d *-docker-image.tar.gz
+
+      - name: Load docker images
+        run: ls -1 *-docker-image.tar | while read line; do docker load -i $line; done
 
       - name: Setup Nodejs ${{ inputs.node-version }}
         uses: actions/setup-node@v2

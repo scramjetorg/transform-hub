@@ -24,7 +24,7 @@ jobs:
           node-version: ${{ inputs.node-version }}
 
       - name: Install dependencies
-        run: yarn install --ignore-engines  --frozen-lockfile --prefer-offline --silent
+        run: yarn install --ignore-engines --frozen-lockfile --prefer-offline
 
       - name: Update saved git hash
         run: yarn savehash
@@ -32,15 +32,21 @@ jobs:
       - name: Build sth Docker image
         run: scripts/run-script.js --scope @scramjet/sth build:docker
 
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerSthImg-$name-$tag-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+      - name: Export image
+        run: >
+          docker images |
+          awk '/scramjet/{print $1,$2,$3}' |
+          sed 's|/| |' |
+          while read repo name tag id; do
+            docker save $repo/$name:$tag -o $repo-$name-$tag-node-${{ inputs.node-version }}-docker-image.tar
+          done
 
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
+      - name: Zip image
+        run: pigz *-docker-image.tar
 
-      - name: Archive production artifacts
+      - name: Upload image as an artifact
         uses: actions/upload-artifact@v2
         with:
-          name:  dockerSthImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name: sth-image
           path: '*.tar.gz'
           retention-days: 1

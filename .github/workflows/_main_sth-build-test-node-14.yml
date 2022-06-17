@@ -33,8 +33,6 @@ jobs:
 
   build-docker-runner-py-image:
     uses: ./.github/workflows/build-docker-runner-python.yml
-    with:
-      node-version: 14.x
 
   build-docker-pre-runner-image:
     uses: ./.github/workflows/build-docker-prerunner.yml
