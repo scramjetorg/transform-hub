@@ -7,6 +7,10 @@ on:
         required: false
         default: '16.x'
         type: string
+      git-revision:
+        required: false
+        default: ${{ github.sha }}
+        type: string
 
 jobs:
   build-docker-sth-image:
@@ -16,6 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.git-revision }}
 
       - name: Setup Nodejs ${{ inputs.node-version }}
         uses: actions/setup-node@v2
@@ -32,15 +38,24 @@ jobs:
       - name: Build sth Docker image
         run: scripts/run-script.js --scope @scramjet/sth build:docker
 
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerSthImg-$name-$tag-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+      - name: Add tag
+        run: docker tag scramjetorg/sth:$(git rev-parse HEAD) scramjetorg/sth:${{ inputs.git-revision }}
 
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
+      - name: Export image
+        run: >
+          docker images |
+          awk '/scramjet/{print $1,$2,$3}' |
+          sed 's|/| |' |
+          while read repo name tag id; do
+            docker save $repo/$name:$tag -o $repo-$name-$tag-node-${{ inputs.node-version }}-docker-image.tar
+          done
 
-      - name: Archive production artifacts
+      - name: Zip exported images
+        run: pigz *-docker-image.tar
+
+      - name: Upload image as artifact
         uses: actions/upload-artifact@v2
         with:
-          name:  dockerSthImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name:  sth-image-node${{ inputs.node-version }}.tar.gz
           path: '*.tar.gz'
           retention-days: 1

@@ -40,26 +40,26 @@ jobs:
       - name: Download dockerImg Runner Node artifact
         uses: actions/download-artifact@v2
         with:
-          name: dockerRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name: runner-image-node${{ inputs.node-version }}.tar.gz
 
       - name: Download dockerImg Runner Python artifact
         uses: actions/download-artifact@v2
         with:
-          name: dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name: runner-python-image-${{ inputs.python-version }}.tar.gz
 
       - name: Download dockerPreRunnerImg artifact
         uses: actions/download-artifact@v2
         with:
-          name: dockerPreRunnerImg-${{ inputs.node-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name: pre-runner-image-node${{ inputs.node-version }}.tar.gz
 
-      - name: Unzip dockerImg-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
-        run: pigz -d docker*Img*.tar.gz
+      - name: Unzip docker images artifacts
+        run: pigz -d *image*.tar.gz
 
       - name: Unzip dist-${{ github.event.pull_request.head.sha }}-${{ inputs.node-version }}.tar.gz artifact
         run: ls dist*tar.gz |xargs -n1 tar -I pigz -xf
 
       - name: Load Docker images
-        run: ls -1  docker*Img*.tar| while read line; do docker load -i $line; done
+        run: ls -1  *docker-image.tar| while read line; do docker load -i $line; done
 
       - name: Setup Nodejs ${{ inputs.node-version }}
         uses: actions/setup-node@v2

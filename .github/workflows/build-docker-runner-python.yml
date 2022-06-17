@@ -3,13 +3,13 @@ name: Build Runner Docker Image Python
 on:
   workflow_call:
     inputs:
-      node-version:
-        required: false
-        default: '16.x'
-        type: string
       python-version:
         required: false
         default: '3.9'
+        type: string
+      git-revision:
+        required: false
+        default: ${{ github.sha }}
         type: string
 
 jobs:
@@ -20,20 +20,28 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.git-revision }}
 
-      - name: build runner Docker image
-        run: docker build -q -t scramjetorg/runner-py:$(git rev-parse HEAD) -f Dockerfile ../../
+      - name: Build image
+        run: docker build -t scramjetorg/runner-py:${{ inputs.git-revision }} -f Dockerfile ../../
         working-directory: packages/python-runner
 
-      - name: Export Docker images
-        run: echo "$(docker images)" |awk '/scramjet/{print $1,$2,$3,$1}' |sed 's|/|_|2' | while read repo tag id name; do docker save $id -o dockerRunnerPyImg-$name-$tag-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar $repo:$tag ; done
+      - name: Export image
+        run: >
+          docker images |
+          awk '/scramjet/{print $1,$2,$3}' |
+          sed 's|/| |' |
+          while read repo name tag id; do
+            docker save $repo/$name:$tag -o $repo-$name-$tag-docker-image.tar
+          done
 
-      - name: Zip Docker images
-        run: pigz docker*Img*.tar
+      - name: Zip exported images
+        run: pigz *-docker-image.tar
 
-      - name: Archive production artifacts
+      - name: Upload image as artifact
         uses: actions/upload-artifact@v2
         with:
-          name:  dockerRunnerPyImg-${{ inputs.python-version }}-${{ github.event.pull_request.head.sha }}.tar.gz
+          name:  runner-python-image-${{ inputs.python-version }}.tar.gz
           path: '*.tar.gz'
           retention-days: 1
