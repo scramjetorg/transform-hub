@@ -120,81 +120,81 @@
   resolved "https://registry.yarnpkg.com/@cucumber/tag-expressions/-/tag-expressions-3.0.1.tgz#ca0702342bc4234ad73d9de3f1bf97461c3b5eb7"
   integrity sha512-OGCXaJ1BQXmQ5b9pw+JYsBGumK2/LPZiLmbj1o1JFVeSNs2PY8WPQFSyXrskhrHz5Nd/6lYg7lvGMtFHOncC4w==
 
-"@scramjet/api-client@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/api-client/-/api-client-0.23.2.tgz#cc1e8bd986f48be090a7f59fbed75d984daf0f11"
-  integrity sha512-Eu1JLCqcKBF0p5xw2Cq/b0+sepCVK+rxTiXOkwIJR946TIOynr8vUoPLKbr0pogqaGNhCyA3kghwEnnPlKmT7Q==
+"@scramjet/api-client@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/api-client/-/api-client-0.24.1.tgz#e94765548e9d3eba59e45aeb3773daace32cd5b3"
+  integrity sha512-RRbKeqoxJTSh2Z5dajXiuagkn+VWzoOzgkBp9/Br2ghmAZ8VRy5odAR6Xa0+XbLWNEAlgASiGD86KXeuzBo9ng==
   dependencies:
-    "@scramjet/client-utils" "^0.23.2"
-    "@scramjet/sth-config" "^0.23.2"
-    "@scramjet/symbols" "^0.23.2"
+    "@scramjet/client-utils" "^0.24.1"
+    "@scramjet/sth-config" "^0.24.1"
+    "@scramjet/symbols" "^0.24.1"
     n-readlines "^1.0.1"
     scramjet "^4.36.6"
 
-"@scramjet/client-utils@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/client-utils/-/client-utils-0.23.2.tgz#093a397b7852be1190c679bbd9f3169ae179d171"
-  integrity sha512-Tt2+I4W2oa9GVPNnjCpUd5DfX22qSIRA4DO80Re3dAuWgDMWuwj5GNyyF8NZwo8ldq3zc7CYemnk6M/a8cKC3Q==
+"@scramjet/client-utils@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/client-utils/-/client-utils-0.24.1.tgz#3328d16d60ce20a77023c07765b08dbfc61a8301"
+  integrity sha512-YeVbEQXXWd+35iigaMbetK6ceLPkXBe1NkktIGYt8l+8rNXkZZPWhw4+T8PZwjuFE9hgjC2Q7RmzglyTvftV2w==
   dependencies:
-    "@scramjet/model" "^0.23.2"
-    "@scramjet/obj-logger" "^0.23.2"
-    "@scramjet/sth-config" "^0.23.2"
-    "@scramjet/symbols" "^0.23.2"
-    "@scramjet/utility" "^0.23.2"
+    "@scramjet/model" "^0.24.1"
+    "@scramjet/obj-logger" "^0.24.1"
+    "@scramjet/sth-config" "^0.24.1"
+    "@scramjet/symbols" "^0.24.1"
+    "@scramjet/utility" "^0.24.1"
     abort-controller "^3.0.0"
     n-readlines "^1.0.1"
     node-fetch "^2.6.7"
     normalize-url "^5.3.1"
     scramjet "^4.36.6"
 
-"@scramjet/logger@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/logger/-/logger-0.23.2.tgz#61b97fb895fa02ecf85abbd319ed317117410e67"
-  integrity sha512-YwFfxux3wbBmjpGMjz+EYwgWlcrKC4kNvgneXwgbU6Fgg98LVbcjTrlo6Wig/a25ULwqa04nIriKd8MFi61uYw==
+"@scramjet/logger@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/logger/-/logger-0.24.1.tgz#872ae9bf6da3b335520294b5ca4a70f28f2d2d6b"
+  integrity sha512-1ObR0L61G6g1T13yHSwWdiBFKrbQS8Bf5zq++qzH7qI4Pgi/RBUcCYgBs2euzN7XcLDV5TVkI3VyvLXnRVfmKA==
   dependencies:
     scramjet "^4.36.6"
 
-"@scramjet/model@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/model/-/model-0.23.2.tgz#4c8adc5615b500fdd8c5884b5c844838d4df699a"
-  integrity sha512-IoKdTHAFg0wZwgniduW6quIpMZr+eQ6olC+6VmyEpKzcQhm1LErlg4K2yRMkQH6Va3+Dj+UGGox9sxnEIhjQKg==
+"@scramjet/model@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/model/-/model-0.24.1.tgz#5a82a5f0612f6aa88069bd405e93fbc0d8b5570e"
+  integrity sha512-bnsyey4LQu1XIp6rv+v2cc3pZFNwaI38ZSqaPf2syajpo3nDfV9rI2gUR8draPIgVyxWlkBM/KklxSY/rw9SQw==
   dependencies:
-    "@scramjet/obj-logger" "^0.23.2"
-    "@scramjet/symbols" "^0.23.2"
+    "@scramjet/obj-logger" "^0.24.1"
+    "@scramjet/symbols" "^0.24.1"
     scramjet "^4.36.6"
     uuid "^8.3.2"
 
-"@scramjet/obj-logger@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/obj-logger/-/obj-logger-0.23.2.tgz#37c0bda273f954709fc9714c9685c4f4c500b974"
-  integrity sha512-nvwX0kbpYIymUc5hUpK8deS6Bc7QFuntVHMOvOK1MilVaQegFg1fIK7AQXy50u2y6cuERGONApGoCw43NnDHvw==
+"@scramjet/obj-logger@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/obj-logger/-/obj-logger-0.24.1.tgz#55f251a9fb6ec9a75105d0c56f70f7ca101c86a2"
+  integrity sha512-I7fZRjPjiYwoLFJzJsbHh1rjVYcZlkf2EDiRMv1GIBpnhFm59+Al932MgkFxmV2tTsxsHO8JCzju/nQ81uLZ9Q==
   dependencies:
     scramjet "^4.36.6"
 
-"@scramjet/sth-config@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/sth-config/-/sth-config-0.23.2.tgz#efecbf10f7d88c784b31f5720b06d9bf5e2e65fe"
-  integrity sha512-wxLP7zR1l59twUXLhAKtgRk7bewQ3xMESut72tXg7UwcpmJ1DKUR/2Ku+Ur53qnFWNEX299HcQDxpb1O/+vq1A==
+"@scramjet/sth-config@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/sth-config/-/sth-config-0.24.1.tgz#cf0ce8cbcaeef0066f5075c7fb0c96787c05e4f5"
+  integrity sha512-YzTFZdqHOGPoT4k7GGBDkzmBDe57z1N0OUR765eHXBEFLTy7eQmfVoAyfgmTzBq69hOtDbwiRfXT3YhviWourQ==
   dependencies:
-    "@scramjet/utility" "^0.23.2"
+    "@scramjet/utility" "^0.24.1"
 
-"@scramjet/symbols@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.23.2.tgz#f8bd6e1a07021b500a553cd9f7c3d2a45e143122"
-  integrity sha512-K7rmDPZDw+zDJ8sLRUaGyR+yYQQJis676HdveXt9jfYv9TpT4zP5zczFjHf74ZLbE4DTBEWDs2YRxlQsFQzVfg==
+"@scramjet/symbols@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.24.1.tgz#938e407633215329fd39ac4a4d67c44c9e45414a"
+  integrity sha512-awk0WqGHNrPjZjstQeMAS7rXD1BZvbUFxdJTReRzVQeGom5iTIBjnkFUysgrxaguQSAQeWg+iO6t8rHzD5wQ5w==
 
-"@scramjet/types@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.23.2.tgz#fc6836feef8b0a589c7e802e4e5d93ac7abeef98"
-  integrity sha512-t0VW7u9DEd9bs8tvgz0jPvIDGNTiJ3ehUMmdS1BWZt+wvX9HVMserhlAtfLAAPkzsW68v8nRz0+/BOUuSGx1pg==
+"@scramjet/types@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.24.1.tgz#85e8419ead7e3a34141ebc92cadf51ed8b981680"
+  integrity sha512-GElmd7K6GVaxnG8mTRkwN5StZlLw2mb7tVjQfbcHZJiNiNk7FqGdJvrzd167ngnFmp6Bpq+6RDGIbe5N/mLWvQ==
   dependencies:
-    "@scramjet/symbols" "^0.23.2"
+    "@scramjet/symbols" "^0.24.1"
     http-status-codes "^2.2.0"
 
-"@scramjet/utility@^0.23.2":
-  version "0.23.2"
-  resolved "https://registry.yarnpkg.com/@scramjet/utility/-/utility-0.23.2.tgz#29a2855fb481c8c3c0d72d6be427c4fcb07457bf"
-  integrity sha512-6niqNrjf9bjf8QGa3PqP9YiPRlA1cSTmRYM8tPwRyZ6yHEl0asy2xylmno9VUoTCfjCkgq2gVL2TaHtV2dJm4Q==
+"@scramjet/utility@^0.24.1":
+  version "0.24.1"
+  resolved "https://registry.yarnpkg.com/@scramjet/utility/-/utility-0.24.1.tgz#d217d9ed36b8f61975612174d5463bc7cca4bde5"
+  integrity sha512-3aA89fFBzVILYJ5rNhbwf1uflSVoNFWQIr7d9s25PG2mvea4uW3JO/L4Hucex7eE5Uvwuv8yXOWF4RNVVKgmCw==
   dependencies:
     normalize-url "^5.3.1"
 

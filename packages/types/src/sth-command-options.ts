@@ -13,6 +13,7 @@ export type STHCommandOptions = {
     runnerImage: string;
     runnerPyImage: string;
     runnerMaxMem: number;
+    safeOperationLimit: number;
     prerunnerImage: string;
     prerunnerMaxMem: number;
     exposeHostIp: string;
