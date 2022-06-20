@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/adapters",
-  "version": "0.24.2",
+  "version": "0.24.3",
   "description": "This package is part of Scramjet Transform Hub. This module holds the docker adapters utilized by Scramjet Transform Hub",
   "main": "./src/index.ts",
   "scripts": {
@@ -16,14 +16,14 @@
   "license": "AGPL-3.0",
   "dependencies": {
     "@kubernetes/client-node": "^0.16.3",
-    "@scramjet/model": "^0.24.2",
-    "@scramjet/obj-logger": "^0.24.2",
-    "@scramjet/pre-runner": "^0.24.2",
-    "@scramjet/python-runner": "^0.24.2",
-    "@scramjet/runner": "^0.24.2",
-    "@scramjet/sth-config": "^0.24.2",
-    "@scramjet/symbols": "^0.24.2",
-    "@scramjet/utility": "^0.24.2",
+    "@scramjet/model": "^0.24.3",
+    "@scramjet/obj-logger": "^0.24.3",
+    "@scramjet/pre-runner": "^0.24.3",
+    "@scramjet/python-runner": "^0.24.3",
+    "@scramjet/runner": "^0.24.3",
+    "@scramjet/sth-config": "^0.24.3",
+    "@scramjet/symbols": "^0.24.3",
+    "@scramjet/utility": "^0.24.3",
     "dockerode": "^3.3.1",
     "scramjet": "^4.36.6",
     "shell-escape": "^0.2.0",
@@ -31,7 +31,7 @@
     "ts.data.json": "^2.1.0"
   },
   "devDependencies": {
-    "@scramjet/types": "^0.24.2",
+    "@scramjet/types": "^0.24.3",
     "@types/dockerode": "<=3.3.3",
     "@types/node": "15.12.5",
     "@types/shell-escape": "^0.2.0",
