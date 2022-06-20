@@ -48,6 +48,7 @@ const options: STHCommandOptions = program
     .opts() as STHCommandOptions;
 
 const configService = new ConfigService();
+const resolveFile = (path: string) => path && resolve(process.cwd(), path);
 
 configService.update({
     cpmUrl: options.cpmUrl,
@@ -76,8 +77,8 @@ configService.update({
     },
     identifyExisting: options.identifyExisting,
     runtimeAdapter: getRuntimeAdapterOption(options),
-    sequencesRoot: options.sequencesRoot && resolve(process.cwd(), options.sequencesRoot),
-    startupConfig: options.startupConfig && resolve(process.cwd(), options.startupConfig),
+    sequencesRoot: resolveFile(options.sequencesRoot),
+    startupConfig: resolveFile(options.startupConfig),
     exitWithLastInstance: options.exitWithLastInstance,
     safeOperationLimit: options.safeOperationLimit,
     logLevel: options.logLevel,
@@ -89,7 +90,7 @@ configService.update({
             node: options.k8sRunnerImage,
             python3: options.k8sRunnerPyImage
         },
-        sequencesRoot: options.k8sSequencesRoot,
+        sequencesRoot: resolveFile(options.k8sSequencesRoot),
         timeout: options.k8sRunnerCleanupTimeout,
         runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
         runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
