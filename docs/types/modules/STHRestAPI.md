@@ -198,7 +198,7 @@ ___
 
 ### SendKillInstanceResponse
 
-Ƭ **SendKillInstanceResponse**: [`ControlMessageResponse`](STHRestAPI.md#controlmessageresponse)
+Ƭ **SendKillInstanceResponse**: [`Instance`](../modules.md#instance)
 
 #### Defined in
 
@@ -224,7 +224,7 @@ ___
 
 ### SendStopInstanceResponse
 
-Ƭ **SendStopInstanceResponse**: [`ControlMessageResponse`](STHRestAPI.md#controlmessageresponse)
+Ƭ **SendStopInstanceResponse**: [`Instance`](../modules.md#instance)
 
 #### Defined in
 

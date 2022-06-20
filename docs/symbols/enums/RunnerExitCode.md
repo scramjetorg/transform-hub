@@ -8,6 +8,7 @@
 
 - [INVALID\_ENV\_VARS](RunnerExitCode.md#invalid_env_vars)
 - [INVALID\_SEQUENCE\_PATH](RunnerExitCode.md#invalid_sequence_path)
+- [KILLED](RunnerExitCode.md#killed)
 - [SEQUENCE\_FAILED\_DURING\_EXECUTION](RunnerExitCode.md#sequence_failed_during_execution)
 - [SEQUENCE\_FAILED\_ON\_START](RunnerExitCode.md#sequence_failed_on_start)
 - [SEQUENCE\_UNPACK\_FAILED](RunnerExitCode.md#sequence_unpack_failed)
@@ -31,6 +32,16 @@ ___
 #### Defined in
 
 [runner-exit-code.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-exit-code.ts#L3)
+
+___
+
+### KILLED
+
+• **KILLED** = `137`
+
+#### Defined in
+
+[runner-exit-code.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/runner-exit-code.ts#L7)
 
 ___
 

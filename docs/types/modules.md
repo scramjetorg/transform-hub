@@ -120,6 +120,7 @@
 - [NetworkInfo](modules.md#networkinfo)
 - [NetworkInfoMessage](modules.md#networkinfomessage)
 - [NextCallback](modules.md#nextcallback)
+- [OpOptions](modules.md#opoptions)
 - [OpRecord](modules.md#oprecord)
 - [OpResolver](modules.md#opresolver)
 - [OpResponse](modules.md#opresponse)
@@ -533,7 +534,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L20)
+[packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
 
 ___
 
@@ -1248,21 +1249,15 @@ ___
 
 ### KillSequenceMessage
 
-Ƭ **KillSequenceMessage**: `Object`
+Ƭ **KillSequenceMessage**: { `msgCode`: `RunnerMessageCode.KILL`  } & `KillMessageData`
 
 Message instructing Runner to terminate Sequence using the kill signal.
 It causes an ungraceful termination of Sequence.
 This message type is sent from CSIController.
 
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `msgCode` | `RunnerMessageCode.KILL` |
-
 #### Defined in
 
-[packages/types/src/messages/kill-sequence.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/kill-sequence.ts#L8)
+[packages/types/src/messages/kill-sequence.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/kill-sequence.ts#L15)
 
 ___
 
@@ -1476,7 +1471,7 @@ ___
 
 ### MessageDataType
 
-Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? [`EmptyMessageData`](modules.md#emptymessagedata) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_COMPLETED` ? `SequenceCompleteMessageData` : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
+Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? `KillMessageData` : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_COMPLETED` ? `SequenceCompleteMessageData` : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
 
 #### Type parameters
 
@@ -1528,7 +1523,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L19)
+[packages/types/src/api-expose.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L20)
 
 ___
 
@@ -1752,7 +1747,23 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L18)
+[packages/types/src/api-expose.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L19)
+
+___
+
+### OpOptions
+
+Ƭ **OpOptions**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `rawBody?` | `boolean` |
+
+#### Defined in
+
+[packages/types/src/api-expose.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L17)
 
 ___
 
@@ -1935,7 +1946,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:205](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L205)
+[packages/types/src/sth-configuration.ts:210](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L210)
 
 ___
 
@@ -2099,6 +2110,7 @@ ___
 | `hostname` | `string` |
 | `id?` | `string` |
 | `identifyExisting` | `boolean` |
+| `instanceLifetimeExtensionDelay` | `number` |
 | `instancesServerPort` | `string` |
 | `k8sAuthConfigPath` | `string` |
 | `k8sNamespace` | `string` |
@@ -2150,6 +2162,7 @@ ___
 | `host` | [`HostConfig`](modules.md#hostconfig) | Host configuration. |
 | `identifyExisting` | `boolean` | Should we identify existing sequences. |
 | `instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time Instance API is still available. |
+| `instanceLifetimeExtensionDelay` | `number` | Time to wait before CSIController emits `end` event. |
 | `instanceRequirements` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } | Minimum requirements to start new Instance. |
 | `instanceRequirements.cpuLoad` | `number` | Required free CPU. In percentage. |
 | `instanceRequirements.freeMem` | `number` | Free memory required to start Instance. In megabytes. |
@@ -2505,7 +2518,7 @@ Configuration options for streaming endpoints
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L25)
+[packages/types/src/api-expose.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L26)
 
 ___
 
@@ -2525,7 +2538,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L13)
+[packages/types/src/api-expose.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L14)
 
 ___
 
