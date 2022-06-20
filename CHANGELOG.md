@@ -170,8 +170,10 @@ Bugfixes and minor improvements:
 - Fix CLI errors on Windows
 - AuditStream limit info
 - Remove zombie instances
+- Update missing types for kill/stop responses
+- Restore instances details in /instances endpoint
+- Fix si seq prune command
 
-
-## @scramjet/transform Hub - v0.24.2
+## @scramjet/transform Hub - v0.24.3
 
 This is the last release in changelog.
