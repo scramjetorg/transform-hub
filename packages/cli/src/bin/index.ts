@@ -24,7 +24,7 @@ const initPlatform = async () => {
 
     /**
      * Set the default values for platform only when all required settings
-     * are provided in the global-config.json file.
+     * are provided in the profile configuration.
      * Do not set the default platform values when displaying the help commands.
      */
     if (token && isProductionEnv(env) && middlewareApiUrl &&

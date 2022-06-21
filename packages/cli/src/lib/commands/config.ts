@@ -3,7 +3,7 @@
 import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
 import { ProfileConfig, profileConfig, profileManager, siConfig } from "../config";
-import { displayError, displayMessage, displayObject } from "../output";
+import { displayMessage, displayObject } from "../output";
 import commander from "commander";
 import { defaultConfigName, listDirFileNames, profileExists, profileNameToPath, profileRemove, profilesDir } from "../paths";
 
@@ -56,12 +56,15 @@ export const config: CommandDefinition = (program) => {
         .argument("<json>")
         .description("Set configuration properties from a json object")
         .action(json => {
+            let jsonConfig = {};
+
             try {
-                if (!profileConfig.setConfig(JSON.parse(json))) {
-                    displayError("Invalid configuration in json object");
-                }
+                jsonConfig = JSON.parse(json);
             } catch (_) {
-                displayError("Parsing error: Invalid JSON format");
+                throw new Error("Parsing error: Invalid JSON format");
+            }
+            if (!profileConfig.setConfig(jsonConfig)) {
+                throw new Error("Invalid configuration in json object");
             }
         });
 
@@ -71,7 +74,7 @@ export const config: CommandDefinition = (program) => {
         .description("Specify the Hub API Url")
         .action(url => {
             if (!profileConfig.setApiUrl(url)) {
-                displayError("Invalid url");
+                throw new Error("Invalid url");
             }
         });
 
@@ -85,14 +88,14 @@ export const config: CommandDefinition = (program) => {
                 const debugVal = stringToBoolean(debug);
 
                 if (typeof debugVal === "undefined") {
-                    displayError("Invalid debug value");
+                    throw new Error("Invalid debug value");
                 }
                 if (!profileConfig.setDebug(debugVal as boolean)) {
-                    displayError("Unable to set debug value");
+                    throw new Error("Unable to set debug value");
                 }
             }
             if (newFormat && !profileConfig.setFormat(newFormat)) {
-                displayError("Unable to set format value");
+                throw new Error("Unable to set format value");
             }
         });
 
@@ -102,7 +105,7 @@ export const config: CommandDefinition = (program) => {
         .description("Specify middleware API url")
         .action(url => {
             if (!profileConfig.setMiddlewareApiUrl(url)) {
-                displayError("Invalid url");
+                throw new Error("Invalid url");
             }
         });
 
@@ -112,7 +115,7 @@ export const config: CommandDefinition = (program) => {
         .description("Specify default scope that should be used when session start")
         .action(scope => {
             if (!profileConfig.setScope(scope)) {
-                displayError(`Invalid name: ${scope}`);
+                throw new Error(`Invalid name: ${scope}`);
             }
         });
 
@@ -122,7 +125,7 @@ export const config: CommandDefinition = (program) => {
         .description("Specify platform authorization token")
         .action(token => {
             if (!profileConfig.setToken(token)) {
-                displayError("Invalid token");
+                throw new Error("Invalid token");
             }
         });
 
@@ -132,7 +135,7 @@ export const config: CommandDefinition = (program) => {
         .description("Specify the environment")
         .action(env => {
             if (!profileConfig.setEnv(env)) {
-                displayError("Invalid environment");
+                throw new Error("Invalid environment");
             }
         });
 
@@ -143,7 +146,7 @@ export const config: CommandDefinition = (program) => {
 
     const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
         if (!setCallback(defaultValue)) {
-            displayError("Reset failed.");
+            throw new Error("Reset failed.");
         }
     };
 
@@ -222,8 +225,7 @@ export const config: CommandDefinition = (program) => {
         .action((name) => {
             if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);
             if (name === defaultConfigName) {
-                displayError(`You can't remove ${defaultConfigName} profile`);
-                return;
+                throw new Error(`You can't remove ${defaultConfigName} profile`);
             }
             profileRemove(name);
         });

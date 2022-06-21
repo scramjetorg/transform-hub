@@ -2,7 +2,7 @@ import { InstanceClient, HostClient } from "@scramjet/api-client";
 import { access, readdir } from "fs/promises";
 import { createReadStream, constants, PathLike } from "fs";
 import { resolve } from "path";
-import { displayEntity } from "./output";
+import { displayEntity, displayError, displayMessage } from "./output";
 import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
@@ -39,21 +39,18 @@ export const getHostClient = (): HostClient => {
             ok(result) {
                 const { status, statusText, url } = result;
 
-                // eslint-disable-next-line no-console
-                console.error("Request ok:", url, `status: ${status} ${statusText}`);
+                displayMessage(`Request ok: ${url} status: ${status} ${statusText}`);
             },
             end(result) {
                 const { url, type } = result;
 
-                // eslint-disable-next-line no-console
-                console.error("Response ended:", url, { type });
+                displayMessage(`Response ended: ${url} ${{ type }}`);
             },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
-                // eslint-disable-next-line no-console
-                console.error(`Request failed with code "${code}" status: ${message}`);
+                displayError(`Request failed with code "${code}" status: ${message}`);
             },
         });
     }

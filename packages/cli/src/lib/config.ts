@@ -76,8 +76,7 @@ abstract class FileConfig extends Config {
             this.writeConfig(conf);
             return true;
         }
-        // eslint-disable-next-line no-console
-        console.error(`WARN: Unknown config entry: ${key}`);
+        displayError(`Unknown config entry: ${key}`);
         return false;
     }
 }
@@ -198,14 +197,14 @@ export class ProfileConfig extends DefaultFileConfig {
     set readOnly(readOnly: boolean) { this.readOnlyConfig = readOnly; }
     get readOnly() { return this.readOnlyConfig; }
 
-    checkIfWritable() { 
-        if (this.readOnlyConfig) throw Error("Unable to write for read only configuration"); 
+    checkIfWritable() {
+        if (this.readOnlyConfig) throw Error("Unable to write for read only configuration");
     }
 
     setConfig(config: any): boolean {
         this.checkIfWritable();
         if (typeof config !== "object" || !this.validateConfigPart(config)) return false;
-        
+
         const { log: currentLog, ...currentConfig } = this.getConfig();
         const { log: newLog, ...newConfig } = config;
         const overlap = { ...currentConfig, ...newConfig, log: { ...currentLog, ...newLog } };
@@ -272,13 +271,13 @@ export class ProfileConfig extends DefaultFileConfig {
         if (!super.validateConfigValue(key, value)) return false;
 
         switch (key) {
-            case "apiUrl": 
+            case "apiUrl":
                 return isUrl(value, {
-                    protocols: ['http','https'], 
-                    require_tld: false, 
-                    require_protocol: true, 
-                    require_port: true, 
-                    allow_underscores: true 
+                    protocols: ["http", "https"],
+                    require_tld: false,
+                    require_protocol: true,
+                    require_port: true,
+                    allow_underscores: true
                 });
             case "log": {
                 for (const [logKey, logValue] of Object.entries(value)) {

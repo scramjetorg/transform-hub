@@ -3,7 +3,7 @@ import { CommandDefinition, isProductionEnv } from "../../types";
 import { isDevelopment } from "../../utils/envs";
 import { getHostClient } from "../common";
 import { profileConfig, sessionConfig } from "../config";
-import { displayEntity, displayObject, displayStream } from "../output";
+import { displayEntity, displayError, displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -48,7 +48,7 @@ export const hub: CommandDefinition = (program) => {
                 const host = hosts.find((h: any) => h.id === id);
 
                 if (!host) {
-                    console.error("Host not found");
+                    displayError("Host not found");
                     return;
                 }
                 managerClient.getHostClient(id);
@@ -65,7 +65,7 @@ export const hub: CommandDefinition = (program) => {
                 const space = sessionConfig.getConfig().lastSpaceId;
 
                 if (!space) {
-                    console.error("No space selected");
+                    displayError("No space selected");
                     return;
                 }
 

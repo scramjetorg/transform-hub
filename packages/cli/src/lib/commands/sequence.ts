@@ -41,7 +41,7 @@ const startSequence = async (
     , format: displayFormat
 ) => {
     if (configFile && configString) {
-        console.error("Provide one source of configuration");
+        displayError("Provide one source of configuration");
         return Promise.resolve();
     }
 
@@ -51,7 +51,7 @@ const startSequence = async (
         if (configString) appConfig = JSON.parse(configString);
         if (configFile) appConfig = JSON.parse(await readFile(configFile, "utf-8"));
     } catch (_) {
-        console.error("Unable to read configuration");
+        displayError("Unable to read configuration");
         return Promise.reject();
     }
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());

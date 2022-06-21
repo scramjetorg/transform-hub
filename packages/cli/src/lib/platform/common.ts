@@ -1,5 +1,6 @@
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
 import { profileConfig, sessionConfig } from "../config";
+import { displayError, displayMessage } from "../output";
 
 /**
  * Returns host client for host pointed by command options.
@@ -20,15 +21,13 @@ export const getMiddlewareClient = (): MiddlewareClient => {
             ok(result: any) {
                 const { status, statusText, url } = result;
 
-                // eslint-disable-next-line no-console
-                console.error("Request ok:", url, `status: ${status} ${statusText}`);
+                displayMessage(`Request ok: ${url} status: ${status} ${statusText}`);
             },
             error(error: any) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
-                // eslint-disable-next-line no-console
-                console.error(`Request failed with code "${code}" status: ${message}`);
+                displayError(`Request failed with code "${code}" status: ${message}`);
             },
         });
     }
@@ -63,13 +62,10 @@ export const setPlatformDefaults = async () => {
         sessionConfig.setLastSpaceId(selectedManager.id);
         sessionConfig.setLastHubId(selectedHost.id);
 
-        // eslint-disable-next-line no-console
-        console.log(`Defaults set to: Space: ${selectedManager.id}, Hub: ${selectedHost.id}`);
-
+        displayMessage(`Defaults set to: Space: ${selectedManager.id}, Hub: ${selectedHost.id}`);
         return true;
     } catch (_) {
-        // eslint-disable-next-line no-console
-        console.error("Warning: Unable to set platform defaults\n");
+        displayError("Unable to set platform defaults\n");
         return false;
     }
 };
