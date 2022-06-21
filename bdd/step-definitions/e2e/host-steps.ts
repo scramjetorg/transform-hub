@@ -781,3 +781,8 @@ Then("confirm json {string} will be received", async function(this: CustomWorld,
 
     assert.equal(response, data);
 });
+
+When("instance is stopped", async function(this: CustomWorld) {
+    const status = await this.resources.instance?.getInfo();
+    assert(status?.ended, "Instance is still running");
+});
