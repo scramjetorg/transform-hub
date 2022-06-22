@@ -1,6 +1,6 @@
 {
   "name": "@scramjet/api-client-py",
-  "version": "0.24.3",
+  "version": "0.25.0",
   "description": "This package is part of Scramjet Transform Hub. The package provides the Python API Client for use with Scramjet Transform Hub.",
   "main": "./__init__.py",
   "scripts": {
