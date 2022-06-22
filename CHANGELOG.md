@@ -174,15 +174,6 @@ Bugfixes and minor improvements:
 - Restore instances details in /instances endpoint
 - Fix si seq prune command
 
-## @scramjet/transform Hub - v0.25.0
+## @scramjet/transform Hub - v0.24.3
 
-Introduction of the new CLI that allows using separate profiles for multiple environments at the same time.
-
-You can now control Hubs in our Scramjet Cloud Platform Beta (see www.scramjet.org!) and control a number of STH's
-running on local devices. Simply run:
-
-```
-si config profile help
-```
-
-And check the options! :)
+This is the last release in changelog.
