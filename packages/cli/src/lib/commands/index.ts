@@ -1,4 +1,4 @@
-import { CommandDefinition } from "../../types";
+import { CommandDefinition, isProductionEnv } from "../../types";
 import { config } from "./config";
 import { hub } from "./hub";
 import { instance } from "./instance";
@@ -9,16 +9,16 @@ import { topic } from "./topic";
 import { completion } from "./completion";
 import { util } from "./util";
 import { init } from "./init";
-import { isDevelopment } from "../../utils/isDevelopment";
-import { globalConfig } from "../config";
+import { isDevelopment } from "../../utils/envs";
+import { profileConfig } from "../config";
 
-const isProductionEnv = globalConfig.isProductionEnv(globalConfig.getEnv());
+const isProdEnv = isProductionEnv(profileConfig.getEnv());
 
 export const commands: CommandDefinition[] = [
     hub,
     config,
-    isProductionEnv ? scope : () => {},
-    isProductionEnv ? space : () => {},
+    isProdEnv ? scope : () => {},
+    isProdEnv ? space : () => {},
     sequence,
     instance,
     topic,

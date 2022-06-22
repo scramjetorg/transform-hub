@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
-import { CommandDefinition } from "../../types";
-import { isDevelopment } from "../../utils/isDevelopment";
+import { CommandDefinition, isProductionEnv } from "../../types";
+import { isDevelopment } from "../../utils/envs";
 import { getHostClient } from "../common";
-import { globalConfig, sessionConfig } from "../config";
-import { displayEntity, displayObject, displayStream } from "../output";
+import { profileConfig, sessionConfig } from "../config";
+import { displayEntity, displayError, displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -12,8 +12,6 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const hub: CommandDefinition = (program) => {
-    const isProductionEnv = globalConfig.isProductionEnv(globalConfig.getEnv());
-
     const hubCmd = program
         .command("hub")
         .addHelpCommand(false)
@@ -25,7 +23,7 @@ export const hub: CommandDefinition = (program) => {
     */
         .description("Allows to run programs in different data centers, computers or devices in local network");
 
-    if (isDevelopment() && isProductionEnv) {
+    if (isDevelopment() && isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("create")
             .argument("<name>")
@@ -38,7 +36,7 @@ export const hub: CommandDefinition = (program) => {
             });
     }
 
-    if (isProductionEnv) {
+    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("use")
             .argument("<name|id>")
@@ -50,7 +48,7 @@ export const hub: CommandDefinition = (program) => {
                 const host = hosts.find((h: any) => h.id === id);
 
                 if (!host) {
-                    console.error("Host not found");
+                    displayError("Host not found");
                     return;
                 }
                 managerClient.getHostClient(id);
@@ -58,7 +56,7 @@ export const hub: CommandDefinition = (program) => {
             });
     }
 
-    if (isProductionEnv) {
+    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("list")
             .alias("ls")
@@ -67,18 +65,18 @@ export const hub: CommandDefinition = (program) => {
                 const space = sessionConfig.getConfig().lastSpaceId;
 
                 if (!space) {
-                    console.error("No space selected");
+                    displayError("No space selected");
                     return;
                 }
 
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
 
-                displayObject(hosts);
+                displayObject(hosts, profileConfig.format);
             });
     }
 
-    if (isProductionEnv) {
+    if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("info")
         /* TODO for future use
@@ -87,13 +85,12 @@ export const hub: CommandDefinition = (program) => {
         */
             .description("Display info about the default Hub")
             .action(async () => {
-                const space = sessionConfig.getConfig().lastSpaceId;
-                const id = sessionConfig.getConfig().lastHubId;
+                const { lastSpaceId: space, lastHubId: id } = sessionConfig.getConfig();
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
                 const host = hosts.find((h: any) => h.id === id);
 
-                displayObject(host);
+                displayObject(host, profileConfig.format);
             });
     }
 
@@ -105,10 +102,10 @@ export const hub: CommandDefinition = (program) => {
     hubCmd
         .command("load")
         .description("Monitor CPU, memory and disk usage on the Hub")
-        .action(async () => displayEntity(getHostClient().getLoadCheck()));
+        .action(async () => displayEntity(getHostClient().getLoadCheck(), profileConfig.format));
 
     hubCmd
         .command("version")
         .description("Display version of the default Hub")
-        .action(async () => displayEntity(getHostClient().getVersion()));
+        .action(async () => displayEntity(getHostClient().getVersion(), profileConfig.format));
 };

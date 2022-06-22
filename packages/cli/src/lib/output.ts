@@ -1,18 +1,17 @@
 /* eslint-disable no-console */
 import { Readable, Stream, Writable } from "stream";
-import { globalConfig } from "./config";
 import { MaybePromise } from "@scramjet/types";
 import { inspect } from "util";
+import { displayFormat, isJsonFormat } from "../types";
 
 /**
  * Displays object.
  *
  * @param object returned object form
+ * @param format format of displayed data: pretty|json
  */
-export function displayObject(object: any) {
-    const { format } = globalConfig.getConfig();
-
-    if (globalConfig.isJsonFormat(format)) {
+export function displayObject(object: any, format: displayFormat) {
+    if (isJsonFormat(format)) {
         console.log(JSON.stringify(object));
     } else {
         console.dir(object);
@@ -50,8 +49,9 @@ export async function displayStream(
  * Displays response data.
  *
  * @param response Response object with data to be displayed.
+ * @param format format of displayed data: pretty|json
  */
-export async function displayEntity(response: MaybePromise<any>): Promise<void> {
+export async function displayEntity(response: MaybePromise<any>, format: displayFormat): Promise<void> {
     // todo: different displays depending on _program.opts().format
     const res = await Promise.resolve(response).catch((e: any) => {
         throw e;
@@ -61,7 +61,7 @@ export async function displayEntity(response: MaybePromise<any>): Promise<void> 
         return;
     }
 
-    displayObject(res);
+    displayObject(res, format);
 }
 
 export function displayMessage(message: string, ...args: any[]): void {

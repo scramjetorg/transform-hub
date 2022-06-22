@@ -7,13 +7,13 @@ import { createWriteStream, lstatSync } from "fs";
 import { readFile } from "fs/promises";
 import { resolve } from "path";
 import { PassThrough } from "stream";
-import { CommandDefinition } from "../../types";
-import { isDevelopment } from "../../utils/isDevelopment";
+import { CommandDefinition, displayFormat } from "../../types";
+import { isDevelopment } from "../../utils/envs";
 import { getHostClient, getInstance, getReadStreamFromFile, packAction } from "../common";
-import { getPackagePath, getSequenceId, sessionConfig } from "../config";
+import { getPackagePath, getSequenceId, profileConfig, sessionConfig } from "../config";
 import { displayEntity, displayError, displayMessage, displayObject } from "../output";
 
-const sendPackage = async (sequencePackage: string) => {
+const sendPackage = async (sequencePackage: string, format: displayFormat) => {
     try {
         const sequencePath = getPackagePath(sequencePackage);
         const seq = await getHostClient().sendSequence(
@@ -22,7 +22,7 @@ const sendPackage = async (sequencePackage: string) => {
 
         sessionConfig.setLastSequenceId(seq.id);
 
-        return displayObject(seq);
+        return displayObject(seq, format);
     } catch (e: any) {
         return displayError(e);
     }
@@ -38,9 +38,10 @@ const startSequence = async (
             inputTopic?: string,
             limits?: InstanceLimits
         }
+    , format: displayFormat
 ) => {
     if (configFile && configString) {
-        console.error("Provide one source of configuration");
+        displayError("Provide one source of configuration");
         return Promise.resolve();
     }
 
@@ -50,7 +51,7 @@ const startSequence = async (
         if (configString) appConfig = JSON.parse(configString);
         if (configFile) appConfig = JSON.parse(await readFile(configFile, "utf-8"));
     } catch (_) {
-        console.error("Unable to read configuration");
+        displayError("Unable to read configuration");
         return Promise.reject();
     }
     const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
@@ -59,7 +60,7 @@ const startSequence = async (
         const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic, limits });
 
         sessionConfig.setLastInstanceId(instance.id);
-        return displayObject(instance);
+        return displayObject(instance, format);
     } catch (error: any) {
         displayError(error);
         return process.exit(1);
@@ -91,7 +92,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("list")
         .alias("ls")
         .description("Lists all available Sequences")
-        .action(async () => displayEntity(getHostClient().listSequences()));
+        .action(async () => displayEntity(getHostClient().listSequences(), profileConfig.format));
 
     sequenceCmd
         .command("pack")
@@ -126,7 +127,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("send")
         .argument("<package>", "The file to upload or '-' to use the last packed")
         .description("Send the Sequence package to the Hub")
-        .action(async (sequencePackage: string) => sendPackage(sequencePackage));
+        .action(async (sequencePackage: string) => sendPackage(sequencePackage, profileConfig.format));
 
     sequenceCmd
         .command("use")
@@ -152,7 +153,8 @@ export const sequence: CommandDefinition = (program) => {
             const args = parseSequenceArgs(argsStr);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
-            await startSequence(id, { configFile, configString, args, outputTopic, inputTopic, limits });
+            await startSequence(id, { configFile, configString, args, outputTopic, inputTopic, limits },
+                profileConfig.format);
         });
 
     type DeployArgs = {
@@ -181,6 +183,7 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
+            const { log:{ format } } = profileConfig.getConfig();
 
             if (lstatSync(path).isDirectory()) {
                 await packAction(path, { output });
@@ -188,24 +191,26 @@ export const sequence: CommandDefinition = (program) => {
 
                 sessionConfig.setLastSequenceId(seq.id);
             } else
-                await sendPackage(path);
+                await sendPackage(path, format);
             const args = parseSequenceArgs(argsStr);
 
-            await startSequence("-", { configFile, configString, args });
+            await startSequence("-", { configFile, configString, args }, format);
         });
 
     sequenceCmd
         .command("get")
         .argument("<id>", "Sequence id to start or '-' for the last uploaded")
         .description("Obtain a basic information about the Sequence")
-        .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id))));
+        .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)),
+            profileConfig.format));
 
     sequenceCmd
         .command("delete")
         .alias("rm")
         .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
         .description("Delete the Sequence from the Hub")
-        .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id))));
+        .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id)),
+            profileConfig.format));
 
     sequenceCmd
         .command("prune")

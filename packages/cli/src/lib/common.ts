@@ -2,13 +2,14 @@ import { InstanceClient, HostClient } from "@scramjet/api-client";
 import { access, readdir } from "fs/promises";
 import { createReadStream, constants, PathLike } from "fs";
 import { resolve } from "path";
-import { displayEntity } from "./output";
+import { displayEntity, displayError, displayMessage } from "./output";
 import { c } from "tar";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
 import { Readable, Writable } from "stream";
-import { globalConfig, sessionConfig } from "./config";
+import { profileConfig, sessionConfig } from "./config";
 import { getMiddlewareClient } from "./platform";
+import { isDevelopmentEnv, isProductionEnv } from "../types";
 
 const { F_OK, R_OK } = constants;
 
@@ -22,12 +23,12 @@ let hostClient: HostClient;
 export const getHostClient = (): HostClient => {
     if (hostClient) return hostClient;
 
-    const { lastSpaceId, lastHubId, apiUrl } = sessionConfig.getConfig();
-    const { env, debug } = globalConfig.getConfig();
+    const { apiUrl, env, log: { debug } } = profileConfig.getConfig();
+    const { lastSpaceId, lastHubId } = sessionConfig.getConfig();
 
-    if (globalConfig.isDevelopmentEnv(env)) {
+    if (isDevelopmentEnv(env)) {
         hostClient = new HostClient(apiUrl);
-    } else if (globalConfig.isProductionEnv(env)) {
+    } else if (isProductionEnv(env)) {
         hostClient = getMiddlewareClient()
             .getManagerClient(lastSpaceId)
             .getHostClient(lastHubId);
@@ -38,21 +39,18 @@ export const getHostClient = (): HostClient => {
             ok(result) {
                 const { status, statusText, url } = result;
 
-                // eslint-disable-next-line no-console
-                console.error("Request ok:", url, `status: ${status} ${statusText}`);
+                displayMessage(`Request ok: ${url} status: ${status} ${statusText}`);
             },
             end(result) {
                 const { url, type } = result;
 
-                // eslint-disable-next-line no-console
-                console.error("Response ended:", url, { type });
+                displayMessage(`Response ended: ${url} ${{ type }}`);
             },
             error(error) {
                 const { code, reason: result } = error;
                 const { message } = result || {};
 
-                // eslint-disable-next-line no-console
-                console.error(`Request failed with code "${code}" status: ${message}`);
+                displayError(`Request failed with code "${code}" status: ${message}`);
             },
         });
     }
@@ -80,8 +78,7 @@ export const attachStdio = (instanceClient: InstanceClient) => {
             instanceClient.sendStdin(process.stdin),
             instanceClient.getStream("stdout").then((out) => out.pipe(process.stdout)),
             instanceClient.getStream("stderr").then((err) => err.pipe(process.stderr)),
-        ]).then(() => undefined)
-    );
+        ]).then(() => undefined), profileConfig.format);
 };
 
 /**
