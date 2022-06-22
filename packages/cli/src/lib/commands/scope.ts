@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../scope";
-import { displayObject } from "../output";
-import { globalConfig, sessionConfig } from "../config";
-import { isDevelopment } from "../../utils/isDevelopment";
+import { displayError, displayObject } from "../output";
+import { profileConfig } from "../config";
+import { isDevelopment } from "../../utils/envs";
 
 /**
  * Initializes `scope` command.
@@ -28,11 +28,11 @@ export const scope: CommandDefinition = (program) => {
             const scopeConfig = getScope(name);
 
             if (!scopeConfig) {
-                console.error(`Couldn't find scope: ${name}`);
+                displayError(`Couldn't find scope: ${name}`);
                 return;
             }
 
-            displayObject(scopeConfig);
+            displayObject(scopeConfig, profileConfig.format);
         });
 
     if (isDevelopment())
@@ -63,10 +63,10 @@ export const scope: CommandDefinition = (program) => {
         .description("Work on the selected scope")
         .action((name: string) => {
             if (!scopeExists(name)) {
-                console.error(`Couldn't find scope: ${name}`);
+                displayError(`Couldn't find scope: ${name}`);
                 return;
             }
-            sessionConfig.setScope(name);
+            profileConfig.setScope(name);
         });
 
     scopeCmd
@@ -74,12 +74,12 @@ export const scope: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Delete specific scope")
         .action((name: string) => {
-            if (globalConfig.getConfig().scope === name) {
-                console.error(`WARN: can't remove scope ${name} set in configuration.`);
+            if (profileConfig.getConfig().scope === name) {
+                displayError(`Can't remove scope ${name} set in configuration.`);
                 return;
             }
-            if (sessionConfig.getConfig().scope === name) {
-                console.error(`WARN: can't remove currently used scope ${name}`);
+            if (profileConfig.getConfig().scope === name) {
+                displayError(`Can't remove currently used scope ${name}`);
                 return;
             }
             deleteScope(name);

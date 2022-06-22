@@ -4,66 +4,30 @@
 import findPackage from "find-package-json";
 import commander from "commander";
 import completionMixin, { Command } from "commander-completion";
-import { ClientError, ClientUtils } from "@scramjet/client-utils";
+import { ClientUtils } from "@scramjet/client-utils";
 
+import { errorHandler } from "../lib/errorHandler";
 import { commands } from "../lib/commands/index";
 import { setPlatformDefaults } from "../lib/platform";
-import { globalConfig } from "../lib/config";
+import { initConfig, profileConfig, profileManager } from "../lib/config";
 import { initPaths } from "../lib/paths";
 import chalk from "chalk";
+import { isProductionEnv } from "../types";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const CommandClass = completionMixin(commander).Command;
 
-async function jsonize(err: ClientError) {
-    if (!err.toJSON) return undefined;
-
-    return await err.toJSON().then((body) => body).catch(() => undefined);
-}
-
-const getExitCode = (_err: ClientError) => 1;
 const program = new CommandClass() as Command;
-const errorHandler = async (err: ClientError) => {
-    process.exitCode = getExitCode(err);
-    const { format, debug } = globalConfig.getConfig();
 
-    if (globalConfig.isJsonFormat(format)) {
-        // TODO Check if it is a CLI or an API Client Error.
-        console.log(
-            JSON.stringify({
-                error: true,
-                code: err?.code,
-                stack: debug ? err?.stack : undefined,
-                message: err?.message,
-                reason: err?.reason?.message,
-                apiStatusCode: err?.status,
-                apiError: await jsonize(err),
-            })
-        );
-    } else if (err) {
-        console.error(err.stack);
-
-        if (err.reason) {
-            console.error("Caused by:");
-            console.error(err.reason.stack);
-        }
-    }
-    process.exit();
-};
-
-/**
- * Start commander using defined config {@link Apple.seeds}
- */
-(async () => {
-    initPaths();
-    const { token, env, middlewareApiUrl } = globalConfig.getConfig();
+const initPlatform = async () => {
+    const { token, env, middlewareApiUrl } = profileConfig.getConfig();
 
     /**
      * Set the default values for platform only when all required settings
-     * are provided in the global-config.json file.
+     * are provided in the profile configuration.
      * Do not set the default platform values when displaying the help commands.
      */
-    if (token && globalConfig.isProductionEnv(env) && middlewareApiUrl &&
+    if (token && isProductionEnv(env) && middlewareApiUrl &&
         !process.argv.includes((program as any)._helpShortFlag) &&
         !process.argv.includes((program as any)._helpLongFlag)) {
         ClientUtils.setDefaultHeaders({
@@ -72,6 +36,15 @@ const errorHandler = async (err: ClientError) => {
 
         await setPlatformDefaults();
     }
+};
+
+/**
+ * Start commander using defined config {@link Apple.seeds}
+ */
+(async () => {
+    initPaths();
+    initConfig();
+    await initPlatform();
 
     for (const command of Object.values(commands)) command(program);
 
@@ -79,7 +52,10 @@ const errorHandler = async (err: ClientError) => {
         .description(
             "This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
         .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
+        .option("--config <name>", "Set global configuration profile")
+        .option("--config-path <path>", "Set global configuration from file")
         .addHelpCommand(false)
+        .addHelpText("beforeAll", `Current profile: ${profileManager.getProfileName()}`)
         .addHelpText(
             "afterAll",
             chalk.greenBright("\nTo find out more about CLI, please check out our docs at https://hub.scramjet.org/docs/cli\n"))
