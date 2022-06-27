@@ -304,19 +304,24 @@ export class Host implements IComponent {
      * Initializes connector and connects to Manager.
      */
     async connectToCPM() {
+        this.logger.trace("Host.connectToCPM()");
         const connector = this.cpmConnector;
 
         if (!connector) return;
 
         connector.init();
+        this.logger.trace("cpmConnector connected?", connector?.connected);
 
         connector.on("connect", async () => {
+            this.logger.trace("cpmConnector \"connect\" event");
+            this.logger.trace("cpmConnector connected?", connector?.connected);
             await connector.sendSequencesInfo(this.getSequences());
             await connector.sendInstancesInfo(this.getInstances());
             await connector.sendTopicsInfo(this.getTopics());
         });
 
         await connector.connect();
+        this.logger.trace("cpmConnector connected?", connector?.connected);
     }
 
     /**
@@ -837,6 +842,8 @@ export class Host implements IComponent {
     }
 
     getTopics() {
+        this.logger.info("List Topics");
+
         return this.serviceDiscovery.getTopics().map(
             (topic) => ({
                 name: topic.topic,

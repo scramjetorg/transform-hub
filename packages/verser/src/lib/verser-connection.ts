@@ -176,6 +176,8 @@ export class VerserConnection {
     createChannel(id: number): Duplex {
         if (!this.bpmux) throw new Error("BPMux not connected");
 
+        this.logger.trace("VerserConnection.createChannel()", id);
+
         return this.bpmux.multiplex({ channel: id });
     }
 
@@ -188,6 +190,7 @@ export class VerserConnection {
         this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
+                this.logger.trace("agent.createConnection()");
                 return bpmux.multiplex() as Socket;
             } catch (e) {
                 const ret = new Socket();

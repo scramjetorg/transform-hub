@@ -277,7 +277,10 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Channel 1 is reserved for log stream sent to Manager.
      */
     registerChannels() {
+        this.logger.trace("CPMConnector.registerChannels()")
+
         this.verserClient.registerChannel(0, async (duplex: Duplex) => {
+            this.logger.trace("Running callback for verser channel 0")
             this.communicationChannel = duplex;
 
             StringStream.from(this.communicationChannel as Readable)
@@ -317,6 +320,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.verserClient.registerChannel(
             1, (duplex: Duplex) => {
+                this.logger.trace("Running callback for verser channel 1")
                 duplex.on("error", (err: Error) => {
                     this.logger.error(err.message);
                 });
@@ -362,6 +366,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connectionAttempts = 0;
 
         this.registerChannels();
+        this.logger.debug("registeredChannels");
 
         connection.req.on("error", (error: any) => {
             this.logger.error("Request error", error);
@@ -450,6 +455,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Sets up a method sending load check data and to be called with interval
      */
     setLoadCheckMessageSender() {
+        this.logger.trace("setLoadCheckMessageSender")
         this.loadInterval = setInterval(async () => {
             const load = await this.getLoad();
 

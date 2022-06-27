@@ -107,8 +107,11 @@ export class VerserClient extends TypedEmitter<Events> {
      * @param {VerserClientConnection} connection Connection object.
      */
     private mux() {
+        console.log("VerserClient.mux()")
         new BPMux(this.socket)
             .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
+                console.log("BPMux \"handshake\" event on channel", mSocket._chan)
+                console.log("VerserClient.registeredChannels:", this.registeredChannels)
                 const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
 
                 if (registeredChannelCallback) {
@@ -118,6 +121,7 @@ export class VerserClient extends TypedEmitter<Events> {
                 }
             })
             .on("error", (err: Error) => {
+                console.log("VerserClient.mux() error")
                 this.emit("error", err);
             });
     }
@@ -138,6 +142,7 @@ export class VerserClient extends TypedEmitter<Events> {
      * @param data {RegisteredChannelCallback} Callback to be called when channel is created.
      */
     registerChannel(channelId: number, data: RegisteredChannelCallback) {
+        console.log("registerChannel", channelId)
         this.registeredChannels.set(channelId, data);
     }
 }
