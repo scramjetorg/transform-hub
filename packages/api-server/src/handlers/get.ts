@@ -49,7 +49,7 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
                 delete data.opStatus;
             }
 
-            const out = JSON.stringify(data);
+            const out = Object.keys(data).length ? JSON.stringify(data) : undefined;
 
             res.writeHead(statusCode, reason, {
                 "content-type": "application/json"
