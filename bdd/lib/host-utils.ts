@@ -10,6 +10,8 @@ const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
     : ["node", "../dist/sth/bin/hub.js"]
 ;
 
+type NoDefault = ("port"|"instances-server-port"|"cpm-url"|"runtime-adapter")[];
+
 export class HostUtils {
     hostProcessStopped = false;
     host?: ChildProcess;
@@ -42,7 +44,7 @@ export class HostUtils {
         }
     }
 
-    async spawnHost(...extraArgs: any[]): Promise<string> {
+    async spawnHost(ommit: NoDefault, ...extraArgs: any[]): Promise<string> {
         if (this.hostUrl) {
             // eslint-disable-next-line no-console
             console.error("Host is supposedly running at", this.hostUrl);
@@ -58,7 +60,7 @@ export class HostUtils {
         return new Promise<string>((resolve) => {
             const command: string[] = [...hostExecutableCommand];
 
-            this.setArgs(command, extraArgs);
+            this.setArgs(command, extraArgs, ommit);
 
             const hub = this.host = spawn("/usr/bin/env", command);
 
@@ -95,14 +97,14 @@ export class HostUtils {
     }
 
     // eslint-disable-next-line complexity
-    private setArgs(command: string[], extraArgs: string[]) {
-        if (!extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
+    private setArgs(command: string[], extraArgs: string[], noDefault: NoDefault = []) {
+        if (!noDefault.includes("port") && !extraArgs.includes("-P") && !command.includes("--port") && process.env.LOCAL_HOST_PORT)
             command.push("-P", process.env.LOCAL_HOST_PORT);
-        if (!extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
+        if (!noDefault.includes("instances-server-port") && !extraArgs.includes("--instances-server-port") && process.env.LOCAL_HOST_INSTANCES_SERVER_PORT)
             command.push("--instances-server-port", process.env.LOCAL_HOST_INSTANCES_SERVER_PORT);
-        if (!extraArgs.includes("-C") && !command.includes("--cpm-url") && process.env.CPM_URL)
+        if (!noDefault.includes("cpm-url") && !extraArgs.includes("-C") && !command.includes("--cpm-url") && process.env.CPM_URL)
             command.push("-C", process.env.CPM_URL);
-        if (!extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
+        if (!noDefault.includes("runtime-adapter") && !extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
         if (extraArgs.length) command.push(...extraArgs);
 

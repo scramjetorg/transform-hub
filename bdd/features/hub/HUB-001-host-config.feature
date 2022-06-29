@@ -77,12 +77,12 @@ Feature: HUB-001 Host configuration
 
     @ci-hub @starts-host
     Scenario: HUB-001 TC-014 Use YAML config with port
-        When hub process is started with parameters "--config data/test-data/sth-config.yml"
+        When hub process is started with port changing parameters "--config data/test-data/sth-config.yml"
         Then API is available on port 9078
         * exit hub process
 
     @ci-hub @starts-host
     Scenario: HUB-001 TC-015 Use JSON config with port
-        When hub process is started with parameters "--config data/test-data/sth-config.json"
+        When hub process is started with port changing parameters "--config data/test-data/sth-config.json"
         Then API is available on port 9079
         * exit hub process

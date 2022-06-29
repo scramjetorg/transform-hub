@@ -31,9 +31,9 @@ process.on("exit", (sig) => {
     });
 });
 
-async function startHubWithParams({ resources }: CustomWorld, params: string[]) {
+async function startHubWithParams({ resources }: CustomWorld, params: string[], noDefaultPorts: boolean = false) {
     const hostUtils = new HostUtils();
-    const out = await hostUtils.spawnHost(...params);
+    const out = await hostUtils.spawnHost(noDefaultPorts ? ["port", "instances-server-port"] : [], ...params);
 
     if (!hostUtils.host) throw new Error("Missing host from utils.");
 
@@ -60,10 +60,12 @@ When("hub process is started with random ports and parameters {string}",
             process.env.LOCAL_HOST_BASE_URL =
                 `http://localhost:${apiPort}/api/v1`;
 
-        return startHubWithParams(this, [
-            ...params.split(" ")
-        ]);
+        return startHubWithParams(this, params.split(" "));
     });
+
+When("hub process is started with port changing parameters {string}", function(this: CustomWorld, params: string) {
+    return startHubWithParams(this, params.split(" "));
+});
 
 When("hub process is started with parameters {string}", function(this: CustomWorld, params: string) {
     return startHubWithParams(this, params.split(" "));
