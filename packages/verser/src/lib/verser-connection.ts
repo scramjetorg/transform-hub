@@ -13,7 +13,7 @@ const BPMux = require("bpmux").BPMux;
  * Provides methods for handling connection to Verser server and streams in connection socket.
  */
 export class VerserConnection {
-    private logger = new ObjLogger(this);
+    public logger = new ObjLogger(this);
 
     private request: IncomingMessage;
     private bpmux?: {[key: string]: any};

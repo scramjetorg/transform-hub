@@ -2,6 +2,7 @@ import { Server } from "http";
 
 import { VerserConnection } from "./verser-connection";
 import { TypedEmitter } from "@scramjet/utility";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 type Events = {
     connect: (connection: VerserConnection) => void;
@@ -14,6 +15,8 @@ type Events = {
  * When a new connection is received it emits "connect" event with VerserConnection instance
  */
 export class Verser extends TypedEmitter<Events> {
+    public logger = new ObjLogger(this);
+
     private server: Server;
     private connections: VerserConnection[] = [];
 
@@ -23,6 +26,7 @@ export class Verser extends TypedEmitter<Events> {
 
         this.server.on("connect", (req, socket) => {
             const connection = new VerserConnection(req, socket);
+            connection.logger.pipe(this.logger)
 
             this.connections.push(connection);
 
