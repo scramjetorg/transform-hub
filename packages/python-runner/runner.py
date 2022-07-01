@@ -31,9 +31,10 @@ class Runner:
         self.seq_path = sequence_path
         self._logging_setup = log_setup
         self.logger = log_setup.logger
-        self.stop_handler = None
+        self.stop_handlers = []
         self.health_check = lambda: {'healthy': True}
         self.emitter = EventEmitter()
+        self.keep_alive_requested = False
 
 
     async def main(self, server_host, server_port):
@@ -146,22 +147,23 @@ class Runner:
 
 
     async def handle_stop(self, data):
-        stop = self.stop_handler()
-        if asyncio.iscoroutine(stop):
-            await stop
-        # TODO: add canCallKeppAlive feature, asyncio.wait?
-        # canCallKeepAlive = data.get('canCallKeppalive')
         self.logger.info(f'Gracefully shutting down...{data}')
-        try:
-            timeout = data.get('timeout') / 1000
-            await asyncio.sleep(timeout)
-            send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, {})
-            self.exit_immediately()
+        self.keep_alive_requested = False
+        timeout = data.get('timeout') / 1000
+        can_keep_alive = data.get('canCallKeepalive')
+        try:         
+            for handler in self.stop_handlers:
+                await handler(timeout, can_keep_alive)
         except Exception as e:
             self.logger.error('Error stopping sequence', e)
             send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, e)
 
+        if not can_keep_alive or not self.keep_alive_requested:
+            send_encoded_msg(self.streams[CC.MONITORING], msg_codes.SEQUENCE_STOPPED, {})
+            self.exit_immediately()
+
         await self.cleanup()
+
 
     async def setup_heartbeat(self):
         while True:
@@ -216,7 +218,7 @@ class Runner:
             self.logger.debug('Sequence returned no output.')
 
         self.logger.info('Finished.')
-        await self.cleanup();
+        await self.cleanup()
 
     async def cleanup(self):
         self.streams[CC.LOG].write_eof()
@@ -264,6 +266,13 @@ class Runner:
 
         await output.write_to(self.streams[CC.OUT])
 
+    
+    async def send_keep_alive(self, timeout: int = 0, can_keep_alive: bool = False):
+        monitoring = self.streams[CC.MONITORING]
+        send_encoded_msg(monitoring, msg_codes.ALIVE)
+        self.keep_alive_requested = True
+        await asyncio.sleep(timeout)
+
 
     def exit_immediately(self):
         sys.exit(1)
@@ -277,8 +286,8 @@ class AppContext:
         self.runner = runner
         self.emitter = runner.emitter
 
-    def set_stop_handler(self, handler):
-        self.runner.stop_handler = handler
+    def set_stop_handler(self, handler, *args):
+        self.runner.stop_handlers.append(handler)
 
     def set_health_check(self, health_check):
         self.runner.health_check = health_check
@@ -292,6 +301,9 @@ class AppContext:
             msg_codes.EVENT,
             {'eventName': event_name, 'message': message}
         )
+    
+    async def keep_alive(self, timeout: int = 0):
+        await self.runner.send_keep_alive(timeout)
 
 log_target = open(sys.argv[1], 'a+') if len(sys.argv) > 1 else sys.stdout
 log_setup = LoggingSetup(log_target)
