@@ -15,8 +15,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: v${{ inputs.version }}
+
       - name: Check version alignments
-      - run: test "$(jq -r .version package.json)" == "${{ inputs.version }}"
+        run: test "$(jq -r .version package.json)" == "${{ inputs.version }}"
 
   sth-image:
     needs: [ checks ]
