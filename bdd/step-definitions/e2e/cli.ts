@@ -1,7 +1,8 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable quote-props */
 /* eslint-disable quotes */
-/* eslint-disable no-console */
-import { Then, When } from "@cucumber/cucumber";
+
+import { Given, Then, When } from "@cucumber/cucumber";
 import { strict as assert } from "assert";
 import fs from "fs";
 import { STHRestAPI } from "@scramjet/types";
@@ -10,46 +11,40 @@ import { expectedResponses } from "./expectedResponses";
 import { CustomWorld } from "../world";
 import { spawn } from "child_process";
 import { once } from "events";
+import { addLoggerOutput, getLogger } from "@scramjet/logger";
 
-// eslint-disable-next-line no-nested-ternary
+addLoggerOutput(process.stdout, process.stdout);
+
+const logger = getLogger("test");
 const si = process.env.SCRAMJET_SPAWN_JS
     ? ["node", "../dist/cli/bin"] : process.env.SCRAMJET_SPAWN_TS
         ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"] : ["si"]
 ;
 
-When("I set json format", { timeout: 30000 }, async function() {
-    const res = (this as CustomWorld).cliResources;
+Given("I set config for local Hub", { timeout: 30000 }, async function(this: CustomWorld) {
+    const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "log", "--format", "json"]);
-
-    if (process.env.SCRAMJET_TEST_LOG) {
-        console.error(res.stdio);
-    }
-    assert.equal(res.stdio[2], 0);
-});
-
-When("I set apiUrl in config", { timeout: 30000 }, async function() {
-    const res = (this as CustomWorld).cliResources;
-
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "apiUrl", `${process.env.LOCAL_HOST_BASE_URL}`]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "env", "development"]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
-        console.error(res.stdio);
+        logger.debug(res.stdio);
     }
     assert.equal(res.stdio[2], 0);
 });
 
-When("I execute CLI with {string} arguments", { timeout: 30000 }, async function(args: string) {
-    const res = (this as CustomWorld).cliResources;
+When("I execute CLI with {string}", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
+    const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" ")]);
     if (process.env.SCRAMJET_TEST_LOG) {
-        console.error(res.stdio);
+        logger.debug(res.stdio);
     }
     assert.equal(res.stdio[2], 0);
 });
 
-When("I execute CLI with {string} arguments without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
+When("I execute CLI with {string} without waiting for the end", { timeout: 30000 }, async function(this: CustomWorld, args: string) {
     const cmdProcess = spawn("/usr/bin/env", [...si, ...args.split(" ")]);
 
     if (process.env.SCRAMJET_TEST_LOG) {
@@ -61,16 +56,16 @@ When("I execute CLI with {string} arguments without waiting for the end", { time
 
 Then("I get a help information", function() {
     const res = (this as CustomWorld).cliResources;
-    const stdio = res.stdio || [];
+    const stdio: any[] = res.stdio || [];
 
     assert.equal(stdio[0]?.includes("Usage:"), true);
 });
 
 Then("I get a version", function() {
     const res = (this as CustomWorld).cliResources;
-    const stdio = res.stdio || [];
+    const stdio: any = res.stdio || [];
 
-    console.log("Version:", stdio[0]);
+    logger.log("Version:", stdio[0]);
     assert.equal(stdio[2], 0);
 });
 
@@ -110,7 +105,7 @@ Then("I start the first Sequence", async function() {
         assert.equal(res.stdio1[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            console.error(res.stdio1[0]);
+            logger.debug(res.stdio1[0]);
         }
 
         const instance1 = JSON.parse(res.stdio1[0].replace("\n", ""));
@@ -119,7 +114,7 @@ Then("I start the first Sequence", async function() {
 
         assert.equal(typeof res.instance1Id !== "undefined", true);
     } catch (e: any) {
-        console.error(e.stack, res.stdio);
+        logger.error(e.stack, res.stdio);
         assert.fail("Error occurred");
     }
 });
@@ -133,7 +128,7 @@ Then("I start the second Sequence", async function() {
         assert.equal(res.stdio2[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            console.error(res.stdio2[0]);
+            logger.debug(res.stdio2[0]);
         }
 
         const instance2 = JSON.parse(res.stdio2[0].replace("\n", ""));
@@ -142,16 +137,9 @@ Then("I start the second Sequence", async function() {
 
         assert.equal(typeof res.instance2Id !== "undefined", true);
     } catch (e: any) {
-        console.error(e.stack, res.stdio);
+        logger.error(e.stack, res.stdio);
         assert.fail("Error occurred");
     }
-});
-
-Then("I get Hub load information", function() {
-    const res = (this as CustomWorld).cliResources;
-    const stdio = res.stdio || [];
-
-    assert.equal(stdio[2], 0);
 });
 
 Then("I get array of information about Sequences", function() {
@@ -171,14 +159,14 @@ Then("I start Sequence", async function() {
         assert.equal(res.stdio[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            console.error(res.stdio[0]);
+            logger.debug(res.stdio[0]);
         }
 
         const instance = JSON.parse(res.stdio[0].replace("\n", ""));
 
         res.instanceId = instance._id;
     } catch (e: any) {
-        console.error(e.stack, res.stdio);
+        logger.error(e.stack, res.stdio);
         assert.fail("Error occurred");
     }
 });
@@ -193,14 +181,14 @@ Then("I start Sequence with options {string}", async function(optionsStr: string
         assert.equal(res.stdio[2], 0);
 
         if (process.env.SCRAMJET_TEST_LOG) {
-            console.error(res.stdio[0]);
+            logger.debug(res.stdio[0]);
         }
 
         const instance = JSON.parse(res.stdio[0].replace("\n", ""));
 
         res.instanceId = instance._id;
     } catch (e: any) {
-        console.error(e.stack, res.stdio);
+        logger.error(e.stack, res.stdio);
         assert.fail("Error occurred");
     }
 });
@@ -247,19 +235,20 @@ Then("I get Instance health", { timeout: 10000 }, async function() {
     assert.equal(typeof msg.healthy !== "undefined", true);
 });
 
-Then("I wait for Instance to have ended", { timeout: 20000 }, async function() {
+Then("I wait for Instance to end", { timeout: 25e4 }, async function() {
     const res = (this as CustomWorld).cliResources;
     let success = false;
 
-    setTimeout(() => { success = true; }, 19000);
-
     while (!success) {
-        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "info", res.instanceId || ""]);
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "health", "-" || ""]);
 
-        const data = JSON.parse(res.stdio[0]) as STHRestAPI.GetInstanceResponse;
+        const data = JSON.parse(res.stdio[0]);
 
-        if (data.ended) return;
-        await defer(500);
+        if (data.apiStatusCode) {
+            assert.equal(data.apiStatusCode, "404");
+            success = true;
+        }
+        await defer(5000);
     }
 });
 
@@ -342,7 +331,7 @@ Then("there are some instances", async function() {
     assert.notEqual(instances?.length, 0);
 });
 
-Then('I see a sequence called {string}', function(string: string) {
+Then("I see a sequence called {string}", function(string: string) {
     const { sequences } = (this as CustomWorld).cliResources;
 
     // Write code here that turns the phrase above into concrete actions
@@ -366,30 +355,30 @@ Then("I get list of Instances", async function() {
     assert.equal(instanceFound, true);
 });
 
-When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
-    const res = (this as CustomWorld).cliResources;
+// When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
+//     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "emit", res.instanceId || "", eventName, eventMsg]);
-    assert.equal(res.stdio[2], 0);
-});
+//     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "emit", res.instanceId || "", eventName, eventMsg]);
+//     assert.equal(res.stdio[2], 0);
+// });
 
 Then("I get event {string} with event message {string} from Instance", async function(eventName: string, value: string) {
     const res = (this as CustomWorld).cliResources;
 
-    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "on", res.instanceId || "", eventName]);
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "on", "-" || "", eventName]);
     assert.equal(res.stdio[2], 0);
     assert.equal(res.stdio[0].trim(), value);
 });
 
-Then("confirm data named {string} received", async function(data) {
+Then("I confirm data named {string} received", async function(data) {
     const res = (this as CustomWorld).cliResources;
     const stdio = res.stdio || [];
 
-    console.log("Received data:\n", stdio);
+    logger.log("Received data:\n", stdio);
     assert.equal(stdio[0], expectedResponses[data]);
 });
 
-Then("confirm data named {string} will be received", async function(this: CustomWorld, data) {
+Then("I confirm data named {string} will be received", async function(this: CustomWorld, data) {
     const expected = expectedResponses[data];
     const { stdout } = this.cliResources!.commandInProgress!;
     const response = await waitUntilStreamEquals(stdout, expected);
@@ -402,3 +391,27 @@ Then("confirm instance logs received", async function(this: CustomWorld) {
 
     await waitUntilStreamContains(stdout, "");
 });
+
+Then("I confirm {string} list is empty", async function(this: CustomWorld, entity: string) {
+    const res = this.cliResources!;
+
+    if (entity === "Sequence") {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls"]);
+        const emptyList = res.stdio[0];
+
+        assert.equal(emptyList.trim(), "[]");
+    }
+    if (entity === "Instance") {
+        res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls"]);
+        const emptyList = res.stdio[0];
+
+        assert.equal(emptyList.trim(), "[]");
+    }
+});
+
+// Then("I confirm Hub is running", async function(this: CustomWorld) {
+//     const res = this.cliResources!;
+//     const hubLoadStatus = res.stdio![2];
+
+//     assert.equal(hubLoadStatus, 0);
+// });

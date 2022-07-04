@@ -3,258 +3,168 @@ Feature: CLI tests
 This feature checks CLI functionalities
 
     @ci-api @cli
-    Scenario: E2E-010 TC-001 CLI displays help, version, hub load
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "--help" arguments
-        Then I get a help information
-        When I execute CLI with "--version" arguments
-        Then I get a version
-        When I execute CLI with "hub load" arguments
-        Then I get Hub load information
-        And host is still running
+    Scenario: E2E-010 TC-001 Test 'si --help' and 'si --version' display
+        Given I set config for local Hub
+        When I execute CLI with "--help"
+        When I execute CLI with "--version"
 
     @ci-api @cli
-    Scenario: E2E-010 TC-002 Pack Sequence
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz" arguments
+    Scenario: E2E-010 TC-002 Test 'si hub' options
+        When I execute CLI with "hub --help"
+        When I execute CLI with "hub load"
+        When I execute CLI with "hub version"
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-003 Test Sequence 'pack' option
+        When I execute CLI with "seq pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz"
         Then I get location "../packages/reference-apps/transform-function.tar.gz" of compressed directory
-        And host is still running
 
     @ci-api @cli
-    Scenario: E2E-010 TC-003 Send, list and delete Sequence
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "config print" arguments
-        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
-        Then I get Sequence id
-        When I execute CLI with "seq ls" arguments
-        Then I get array of information about Sequences
-        Then I delete Sequence
-        And host is still running
+    Scenario: E2E-010 TC-004 Test Sequence options
+        When I execute CLI with "seq --help"
+        When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz"
+        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz"
+        When I execute CLI with "seq get -"
+        When I execute CLI with "seq list"
+        When I execute CLI with "seq delete -"
+        When I execute CLI with "seq list"
+        When I execute CLI with "seq prune"
+        When I execute CLI with "seq list"
 
     @ci-api @cli
-    Scenario: E2E-010 TC-004 Get Instance info, health, kill Instance
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        And I get Instance id
-        When I execute CLI with "inst info -" arguments
-        Then I get Instance health
-        Then I kill Instance
-        And host is still running
+    Scenario: E2E-010 TC-005 Test Sequence 'prune --force' option
+        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "seq send ../packages/reference-apps/csv-transform.tar.gz"
+        When I execute CLI with "seq list"
+        When I execute CLI with "seq start -"
+        When I execute CLI with "inst list"
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Instance" list is empty
+        Then I confirm "Sequence" list is empty
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-006 Test Instance options
+        When I execute CLI with "inst --help"
+        When I execute CLI with "seq send ../packages/reference-apps/csv-transform.tar.gz"
+        When I execute CLI with "seq start -"
+        When I execute CLI with "inst info -"
+        When I execute CLI with "inst health -"
+        When I execute CLI with "inst list"
+        When I execute CLI with "inst kill -"
+        And I wait for Instance to end
+        Then I confirm "Instance" list is empty
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-007 Test Instance 'log' option
+        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz"
+        When I execute CLI with "seq start -"
+        When I execute CLI with "inst log -" without waiting for the end
+        Then I confirm instance logs received
+        When I execute CLI with "inst kill -"
 
     @ci-api @cli @not-github
-    Scenario: E2E-010 TC-005 Get 404 on health endpoint for finished Instance
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        Then I get Instance health
-        Then I wait for Instance to have ended
-        And host is still running
+    Scenario: E2E-010 TC-008 Get 404 on health endpoint for finished Instance
+        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz"
+        When I execute CLI with "seq start -"
+        When I execute CLI with "inst health -"
+        And I wait for Instance to end
+        Then I confirm "Instance" list is empty
+
+    Scenario: E2E-010 TC-009 Test Instance 'input' option
+        When I execute CLI with "seq deploy ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "inst input - data/test-data/checksum.json"
+        When I execute CLI with "inst kill -"
 
     @ci-api @cli
-    Scenario: E2E-010 TC-006 Get log from Instance
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        And I get Instance id
-        When I execute CLI with "inst log -" arguments without waiting for the end
-        Then confirm instance logs received
-        And host is still running
+    Scenario: E2E-010 TC-010 Test Instance 'input --end' option and confirm output received
+        When I execute CLI with "seq deploy ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "inst input - data/test-data/checksum.json --end"
+        When I execute CLI with "inst output -"
+        Then I confirm data named "checksum" received
 
     @ci-api @cli
-    Scenario: E2E-010 TC-007 Send input data to Instance
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        And I get Instance id
-        Then I send input data from file "data/test-data/checksum.json"
-        Then I kill Instance
-        And host is still running
+    Scenario: E2E-010 TC-011 Test Instances 'stop' option
+        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "seq start -"
+        When I execute CLI with "inst ls"
+        When I execute CLI with "inst stop - 3000"
+        And I wait for Instance to end
+        Then I confirm "Instance" list is empty
 
     @ci-api @cli
-    Scenario: E2E-010 TC-008 Send input data to Instance and close input stream
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        And I get Instance id
-        Then I send input data from file "data/test-data/checksum.json" with options "--end"
-        Then I get Instance output
-        Then confirm data named "checksum" received
-        And host is still running
-
-    @ci-api @cli
-    Scenario: E2E-010 TC-009 List Instances and stop Instance
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        And I get Instance id
-        Then I get list of Instances
-        Then I stop Instance "3000" "false"
-        And host is still running
-
-    @ci-api @cli
-    Scenario: E2E-010 TC-010 Send event
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/event-sequence-v2.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence
-        Then I get Instance id
-        Then I send an event named "test-event" with event message "test message" to Instance
+    Scenario: E2E-010 TC-012 Test Instance 'event' option
+        When I execute CLI with "seq deploy ../packages/reference-apps/event-sequence-v2.tar.gz"
+        When I execute CLI with "inst event emit - test-event test message"
+        When I execute CLI with "inst event on - test-event-response"
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
-        And host is still running
 
     @ci-api @cli
-    Scenario: E2E-010 TC-011 Start Sequence with multiple JSON arguments
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence with options "--args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
-        Then I get Instance health
-        Then I get Instance id
-        And I get Instance output without waiting for the end
-        Then confirm data named "args-on-output" will be received
-        And host is still running
+    Scenario: E2E-010 TC-013 Test Sequence 'start' with multiple JSON arguments
+        When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz"
+        When I execute CLI with "seq start - --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
+        When I execute CLI with "inst output -" without waiting for the end
+        Then I confirm data named "args-on-output" will be received
+        When I execute CLI with "inst kill -"
 
-    # TODO: This test fails hanging on deployy. Need to investigate.
     @ci-api @cli
-    Scenario: E2E-010 TC-012 Deploy Sequence with multiple JSON arguments
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq deploy data/sequences/args-to-output --args [\"Hello\",123,{\"abc\":456},[\"789\"]]" arguments
-        Then I get Instance id after deployment
-        And I get Instance output without waiting for the end
-        Then confirm data named "args-on-output" will be received
-        And host is still running
+    Scenario: E2E-010 TC-014 Deploy Sequence with multiple JSON arguments
+        When I execute CLI with "seq deploy data/sequences/deploy-app/dist --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
+        When I execute CLI with "inst output -" without waiting for the end
+        Then I confirm data named "args-on-output" will be received
+        When I execute CLI with "inst kill -"
 
     # This tests writes and uses shared config file so it may fail if run in parallel
     @ci-api @cli @no-parallel
-    Scenario: E2E-010 TC-013 Check minus replacements with a Sequence
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq pack data/sequences/simple-stdio -o data/simple-stdio.tar.gz" arguments
-        And I execute CLI with "seq send -" arguments
-        And I execute CLI with "seq start -" arguments
-        And I execute CLI with "inst info -" arguments
-        And I execute CLI with "inst kill -" arguments
-        And wait for instance healthy is "false"
-        # Give instance some time to close correctly
-        And wait for "1000" ms
-        And I execute CLI with "seq rm -" arguments
-        And host is still running
+    Scenario: E2E-010 TC-015 Check minus replacements with a Sequence
+        When I execute CLI with "seq pack data/sequences/simple-stdio -o data/simple-stdio.tar.gz"
+        And I execute CLI with "seq send -"
+        And I execute CLI with "seq start -"
+        And I execute CLI with "inst info -"
+        And I execute CLI with "inst kill -"
+        And I wait for Instance to end
+        And I execute CLI with "seq rm -"
+        Then I confirm "Instance" list is empty
+        Then I confirm "Sequence" list is empty
 
     @ci-api @cli
-    Scenario: E2E-010 TC-014 API to API
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "topic send cities features/e2e/cities.json" arguments
-        Then I execute CLI with "topic get cities" arguments without waiting for the end
-        Then confirm data named "nyc-city-nl" will be received
-        And host is still running
+    Scenario: E2E-010 TC-016 API to API
+        When I execute CLI with "topic send cities features/e2e/cities.json"
+        Then I execute CLI with "topic get cities" without waiting for the end
+        Then I confirm data named "nyc-city-nl" will be received
 
     @ci-api @cli
-    Scenario: E2E-010 TC-015 Instance to API
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
-        Then I get Sequence id
-        When I start Sequence with options "--output-topic names5"
-        Then I get Instance health
-        Then I execute CLI with "topic get names5" arguments without waiting for the end
-        Then confirm data named "endless-names-10" will be received
-        And host is still running
+    Scenario: E2E-010 TC-017 Instance to API
+        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz"
+        When I execute CLI with "seq start - --output-topic names13"
+        Then I execute CLI with "topic get names13" without waiting for the end
+        Then I confirm data named "endless-names-10" will be received
+        Then I execute CLI with "inst kill -"
 
     @ci-api @cli
-    Scenario: E2E-010 TC-016 API to Instance
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "topic send names6 features/e2e/data.json" arguments
-        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence with options "--input-topic names6"
-        Then I get Instance health
-        Then I get Instance id
+    Scenario: E2E-010 TC-018 API to Instance
+        When I execute CLI with "topic send names14 features/e2e/data.json"
+        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz"
+        When I execute CLI with "seq start - --input-topic names14 "
         And wait for "10000" ms
-        And I get Instance output without waiting for the end
-        Then confirm data named "hello-avengers" will be received
-        And host is still running
+        And I execute CLI with "inst output -" without waiting for the end
+        Then I confirm data named "hello-avengers" will be received
+        Then I execute CLI with "inst kill -"
 
     # TODO: need to test this via separate two sequences
     @ci-api @cli @not-github
-    Scenario: E2E-010 TC-017 Instance to Instance
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq prune -f" arguments
-        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
-        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
-        And I get list of Sequences
-        And there are some sequences
-        Then I get id from both Sequences
-        Then I start the first Sequence
+    Scenario: E2E-010 TC-019 Instance to Instance
+        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz"
+        When I execute CLI with "seq start - --output-topic names15"
         And wait for "6000" ms
-        Then I start the second Sequence
+        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz"
+        When I execute CLI with "seq start - --input-topic names15"
         And wait for "4000" ms
-        And I get the second Instance output without waiting for the end
-        Then confirm data named "hello-input-out-10" will be received
-        And host is still running
+        And I execute CLI with "inst output -" without waiting for the end
+        Then I confirm data named "hello-input-out-10" will be received
+        Then I execute CLI with "inst kill -"
 
     @ci-api @cli
-    Scenario: E2E-010 TC-018 Rename topic output
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence with options "--output-topic names2"
-        Then I get Instance health
-        Then I execute CLI with "topic get names2" arguments without waiting for the end
-        Then confirm data named "endless-names-10" will be received
-        And host is still running
-
-    @ci-api @cli
-    Scenario: E2E-010 TC-019 Rename topic input
-        Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "topic send names4 features/e2e/data.json" arguments
-        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz" arguments
-        Then I get Sequence id
-        Then I start Sequence with options "--input-topic names4"
-        Then I get Instance health
-        Then I get Instance id
-        And I get Instance output without waiting for the end
-        Then confirm data named "hello-avengers" will be received
-        And host is still running
+    Scenario: E2E-010 TC-020 Get Hub logs
+        When I execute SI command "hub logs" without waiting for the end
+        Then I confirm Hub logs received
