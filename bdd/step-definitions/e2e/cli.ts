@@ -355,13 +355,6 @@ Then("I get list of Instances", async function() {
     assert.equal(instanceFound, true);
 });
 
-// When("I send an event named {string} with event message {string} to Instance", async function(eventName: string, eventMsg: string) {
-//     const res = (this as CustomWorld).cliResources;
-
-//     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "event", "emit", res.instanceId || "", eventName, eventMsg]);
-//     assert.equal(res.stdio[2], 0);
-// });
-
 Then("I get event {string} with event message {string} from Instance", async function(eventName: string, value: string) {
     const res = (this as CustomWorld).cliResources;
 
@@ -409,9 +402,9 @@ Then("I confirm {string} list is empty", async function(this: CustomWorld, entit
     }
 });
 
-// Then("I confirm Hub is running", async function(this: CustomWorld) {
-//     const res = this.cliResources!;
-//     const hubLoadStatus = res.stdio![2];
+Then("I confirm Hub logs received", async function(this: CustomWorld) {
+    const { stdout } = this.cliResources!.commandInProgress!;
 
-//     assert.equal(hubLoadStatus, 0);
-// });
+    await waitUntilStreamContains(stdout, "");
+});
+

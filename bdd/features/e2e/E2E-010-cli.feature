@@ -61,7 +61,8 @@ This feature checks CLI functionalities
         When I execute CLI with "seq start -"
         When I execute CLI with "inst log -" without waiting for the end
         Then I confirm instance logs received
-        When I execute CLI with "inst kill -"
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     @ci-api @cli @not-github
     Scenario: E2E-010 TC-008 Get 404 on health endpoint for finished Instance
@@ -69,12 +70,10 @@ This feature checks CLI functionalities
         When I execute CLI with "seq start -"
         When I execute CLI with "inst health -"
         And I wait for Instance to end
-        Then I confirm "Instance" list is empty
 
     Scenario: E2E-010 TC-009 Test Instance 'input' option
         When I execute CLI with "seq deploy ../packages/reference-apps/checksum-sequence.tar.gz"
         When I execute CLI with "inst input - data/test-data/checksum.json"
-        When I execute CLI with "inst kill -"
 
     @ci-api @cli
     Scenario: E2E-010 TC-010 Test Instance 'input --end' option and confirm output received
@@ -82,6 +81,8 @@ This feature checks CLI functionalities
         When I execute CLI with "inst input - data/test-data/checksum.json --end"
         When I execute CLI with "inst output -"
         Then I confirm data named "checksum" received
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-011 Test Instances 'stop' option
@@ -91,6 +92,8 @@ This feature checks CLI functionalities
         When I execute CLI with "inst stop - 3000"
         And I wait for Instance to end
         Then I confirm "Instance" list is empty
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-012 Test Instance 'event' option
@@ -98,21 +101,26 @@ This feature checks CLI functionalities
         When I execute CLI with "inst event emit - test-event test message"
         When I execute CLI with "inst event on - test-event-response"
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-013 Test Sequence 'start' with multiple JSON arguments
+        Given I set config for local Hub
         When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz"
         When I execute CLI with "seq start - --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
         When I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "args-on-output" will be received
-        When I execute CLI with "inst kill -"
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-014 Deploy Sequence with multiple JSON arguments
         When I execute CLI with "seq deploy data/sequences/deploy-app/dist --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
         When I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "args-on-output" will be received
-        When I execute CLI with "inst kill -"
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     # This tests writes and uses shared config file so it may fail if run in parallel
     @ci-api @cli @no-parallel
@@ -166,5 +174,5 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-020 Get Hub logs
-        When I execute SI command "hub logs" without waiting for the end
+        When I execute CLI with "hub logs" without waiting for the end
         Then I confirm Hub logs received

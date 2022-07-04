@@ -48,17 +48,16 @@ Feature: Test our shiny new Python runner
     @ci-instance-python
     Scenario: E2E-014 TC-014 Rename topic output and input
         Given host is running
-        Then I set json format
-        Then I set apiUrl in config
-        When I execute CLI with "seq send ../packages/reference-apps/python-topic-producer.tar.gz" arguments
+        Then I set config for local Hub
+        When I execute CLI with "seq send ../packages/reference-apps/python-topic-producer.tar.gz"
         Then I get Sequence id
         Then I start Sequence with options "--output-topic names3"
         Then I send input data "topic test input" with options "--end"
-        When I execute CLI with "seq send ../packages/reference-apps/python-topic-consumer.tar.gz" arguments
+        When I execute CLI with "seq send ../packages/reference-apps/python-topic-consumer.tar.gz"
         Then I get Sequence id
         Then I start Sequence with options "--input-topic names3"
         And I get Instance output without waiting for the end
-        Then confirm data named "python-topics" will be received
+        Then I confirm data named "python-topics" will be received
         And host is still running
 
     @ci-instance-python
