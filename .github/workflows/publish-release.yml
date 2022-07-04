@@ -10,22 +10,34 @@ on:
 
 
 jobs:
+  checks:
+    name: Pre-flight-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check version alignments
+      - run: test "$(jq -r .version package.json)" == "${{ inputs.version }}"
+
   sth-image:
+    needs: [ checks ]
     uses: ./.github/workflows/build-docker-sth.yml
     with:
       git-revision: v${{ inputs.version }}
 
   runner-image:
+    needs: [ checks ]
     uses: ./.github/workflows/build-docker-runner-node.yml
     with:
       git-revision: v${{ inputs.version }}
 
   runner-py-image:
+    needs: [ checks ]
     uses: ./.github/workflows/build-docker-runner-python.yml
     with:
       git-revision: v${{ inputs.version }}
 
   pre-runner-image:
+    needs: [ checks ]
     uses: ./.github/workflows/build-docker-prerunner.yml
     with:
       git-revision: v${{ inputs.version }}
@@ -98,6 +110,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: v${{ inputs.version }}
 
       - name: Setup Nodejs 16
         uses: actions/setup-node@v2
