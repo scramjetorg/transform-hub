@@ -229,31 +229,38 @@ export const sequence: CommandDefinition = (program) => {
             const seqs = await getHostClient().listSequences();
             const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
 
+            if (seqs.length === 0) {
+                displayMessage("Sequence list is empty, nothing to delete.");
+                return;
+            }
+
             let fullSuccess = true;
 
             await Promise.all(
                 seqs.map(async seq => {
                     const timeout = seq.instances.length * 5e3;
 
-                    if (seq.instances.length && !force) {
-                        displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those`);
+                    if (seq.instances.length > 0 && !force) {
+                        displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those.`);
                         return Promise.resolve();
                     }
 
-                    await Promise.all(
-                        seq.instances.map(async instanceId => {
-                            if (lastInstanceId === instanceId) {
-                                sessionConfig.setLastInstanceId("");
-                            }
+                    if (seq.instances.length > 0 && force) {
+                        await Promise.all(
+                            seq.instances.map(async instanceId => {
+                                if (lastInstanceId === instanceId) {
+                                    sessionConfig.setLastInstanceId("");
+                                }
 
-                            return getInstance(instanceId).kill({ removeImmediately: true });
-                        })
-                    );
+                                return getInstance(instanceId).kill({ removeImmediately: true });
+                            })
+                        );
 
-                    displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
+                        displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
 
-                    await defer(15000);
-                    await waitForInstanceKills(seq, timeout);
+                        await defer(15000);
+                        await waitForInstanceKills(seq, timeout);
+                    }
 
                     return getHostClient().deleteSequence(seq.id).then(() => {
                         if (lastSequenceId === seq.id) {
