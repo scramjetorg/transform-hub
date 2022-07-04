@@ -333,8 +333,6 @@ Then("there are some instances", async function() {
 
 Then("I see a sequence called {string}", function(string: string) {
     const { sequences } = (this as CustomWorld).cliResources;
-
-    // Write code here that turns the phrase above into concrete actions
     const sequenceFound = sequences?.find(({ id }: { id: string }) => {
         return id === string;
     });
@@ -400,6 +398,12 @@ Then("I confirm {string} list is empty", async function(this: CustomWorld, entit
 
         assert.equal(emptyList.trim(), "[]");
     }
+});
+
+Then("I confirm instance logs received", async function(this: CustomWorld) {
+    const { stdout } = this.cliResources!.commandInProgress!;
+
+    await waitUntilStreamContains(stdout, "");
 });
 
 Then("I confirm Hub logs received", async function(this: CustomWorld) {

@@ -70,10 +70,14 @@ This feature checks CLI functionalities
         When I execute CLI with "seq start -"
         When I execute CLI with "inst health -"
         And I wait for Instance to end
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     Scenario: E2E-010 TC-009 Test Instance 'input' option
         When I execute CLI with "seq deploy ../packages/reference-apps/checksum-sequence.tar.gz"
         When I execute CLI with "inst input - data/test-data/checksum.json"
+        When I execute CLI with "seq prune --force"
+        Then I confirm "Sequence" list is empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-010 Test Instance 'input --end' option and confirm output received
@@ -106,7 +110,6 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-013 Test Sequence 'start' with multiple JSON arguments
-        Given I set config for local Hub
         When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz"
         When I execute CLI with "seq start - --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
         When I execute CLI with "inst output -" without waiting for the end
