@@ -173,8 +173,12 @@ Bugfixes and minor improvements:
 - Update missing types for kill/stop responses
 - Restore instances details in /instances endpoint
 - Fix si seq prune command
+- Fix workflow (npm publish)
+- Do not return empty object in get op
+- Python runner support for keepalive
+- Force killing runner when hanged
 
-## @scramjet/transform Hub - v0.25.0
+## @scramjet/transform Hub - v0.25.1
 
 Introduction of the new CLI that allows using separate profiles for multiple environments at the same time.
 
