@@ -50,13 +50,12 @@ Feature: Test our shiny new Python runner
         Given host is running
         Then I set config for local Hub
         When I execute CLI with "seq send ../packages/reference-apps/python-topic-producer.tar.gz"
-        Then I get Sequence id
-        Then I start Sequence with options "--output-topic names3"
+        When I execute CLI with "seq start - --output-topic names3"
+        When I execute CLI with ""
         Then I send input data "topic test input" with options "--end"
         When I execute CLI with "seq send ../packages/reference-apps/python-topic-consumer.tar.gz"
-        Then I get Sequence id
-        Then I start Sequence with options "--input-topic names3"
-        And I get Instance output without waiting for the end
+        When I execute CLI with "seq start - --input-topic names3"
+        And I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "python-topics" will be received
         And host is still running
 

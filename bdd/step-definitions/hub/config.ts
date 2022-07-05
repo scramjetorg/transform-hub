@@ -88,6 +88,29 @@ Then("I get list of instances", async function(this: CustomWorld) {
     this.cliResources.instances = await hostClient.listInstances();
 });
 
+Then("there are some instances", async function() {
+    const { instances } = (this as CustomWorld).cliResources;
+
+    assert.notEqual(instances, undefined);
+    assert.notEqual(instances?.length, 0);
+});
+
+Then("there are some sequences", async function() {
+    const { sequences } = (this as CustomWorld).cliResources;
+
+    assert.notEqual(sequences, undefined);
+    assert.notEqual(sequences?.length, 0);
+});
+
+Then("I see a sequence called {string}", function(string: string) {
+    const { sequences } = (this as CustomWorld).cliResources;
+    const sequenceFound = sequences?.find(({ id }: { id: string }) => {
+        return id === string;
+    });
+
+    assert.notStrictEqual(typeof sequenceFound, "undefined", `Sequence ${string} not found`);
+});
+
 Then("the output of an instance of {string} is as in {string} file", async function(this: CustomWorld, sequenceId, outputContentsFile) {
     const fileData = await readFile(outputContentsFile, "utf-8");
     const hostClient = getHostClient();
