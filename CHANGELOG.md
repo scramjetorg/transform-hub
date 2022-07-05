@@ -177,8 +177,9 @@ Bugfixes and minor improvements:
 - Do not return empty object in get op
 - Python runner support for keepalive
 - Force killing runner when hanged
+- Fix si seq deploy
 
-## @scramjet/transform Hub - v0.25.1
+## @scramjet/transform Hub - v0.25.2
 
 Introduction of the new CLI that allows using separate profiles for multiple environments at the same time.
 
