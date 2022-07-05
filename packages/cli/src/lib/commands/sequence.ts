@@ -184,17 +184,21 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
+
             const { log:{ format } } = profileConfig.getConfig();
 
             if (lstatSync(path).isDirectory()) {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
-                getHostClient().sendSequence(output).then(seq => {
+                const sendSeqPromise = getHostClient().sendSequence(output).then(seq => {
                     sessionConfig.setLastSequenceId(seq.id);
                 });
 
                 await packAction(path, { output });
-            } else
+                await sendSeqPromise;
+            } else {
                 await sendPackage(path, format);
+            }
+
             const args = parseSequenceArgs(argsStr);
 
             await startSequence("-", { configFile, configString, args }, format);
