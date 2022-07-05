@@ -1,17 +1,18 @@
-/* eslint-disable no-console */
-import { SequenceClient } from "@scramjet/api-client";
-import { InstanceLimits } from "@scramjet/types";
-import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { defer, promiseTimeout } from "@scramjet/utility";
-import { createWriteStream, lstatSync } from "fs";
-import { readFile } from "fs/promises";
-import { resolve } from "path";
-import { PassThrough } from "stream";
 import { CommandDefinition, displayFormat } from "../../types";
-import { isDevelopment } from "../../utils/envs";
+import { createWriteStream, lstatSync } from "fs";
+import { defer, promiseTimeout } from "@scramjet/utility";
+import { displayEntity, displayError, displayMessage, displayObject } from "../output";
 import { getHostClient, getInstance, getReadStreamFromFile, packAction } from "../common";
 import { getPackagePath, getSequenceId, profileConfig, sessionConfig } from "../config";
-import { displayEntity, displayError, displayMessage, displayObject } from "../output";
+
+import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
+import { InstanceLimits } from "@scramjet/types";
+import { PassThrough } from "stream";
+/* eslint-disable no-console */
+import { SequenceClient } from "@scramjet/api-client";
+import { isDevelopment } from "../../utils/envs";
+import { readFile } from "fs/promises";
+import { resolve } from "path";
 
 const sendPackage = async (sequencePackage: string, format: displayFormat) => {
     try {
@@ -183,15 +184,21 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
+
             const { log:{ format } } = profileConfig.getConfig();
 
             if (lstatSync(path).isDirectory()) {
-                await packAction(path, { output });
-                const seq = await getHostClient().sendSequence(output);
+                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                const sendSeqPromise = getHostClient().sendSequence(output).then(seq => {
+                    sessionConfig.setLastSequenceId(seq.id);
+                });
 
-                sessionConfig.setLastSequenceId(seq.id);
-            } else
+                await packAction(path, { output });
+                await sendSeqPromise;
+            } else {
                 await sendPackage(path, format);
+            }
+
             const args = parseSequenceArgs(argsStr);
 
             await startSequence("-", { configFile, configString, args }, format);

@@ -645,6 +645,9 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleKill(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendKillInstanceResponse>> {
+        if (this.status === "killing") {
+            await this.instanceAdapter.remove();
+        }
         this.status = "killing";
 
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
