@@ -122,7 +122,7 @@ This feature checks CLI functionalities
         Then I confirm data named "args-on-output" will be received
 
     @ci-api @cli
-    Scenario: E2E-010 TC-015 Deploy Sequence with multiple JSON arguments
+    Scenario: E2E-010 TC-015 Deploy uncompressed Sequence with multiple JSON arguments
         When I execute CLI with "seq deploy data/sequences/deploy-app/dist --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
         When I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "args-on-output" will be received

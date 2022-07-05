@@ -184,8 +184,7 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
-
-            const { log:{ format } } = profileConfig.getConfig();
+            const { log: { format } } = profileConfig.getConfig();
 
             if (lstatSync(path).isDirectory()) {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -226,10 +225,10 @@ export const sequence: CommandDefinition = (program) => {
         .option("-f,--force", "Removes also active Sequences (with its running Instances)")
         .description("Remove all Sequences from the current scope (use with caution)")
         .action(async ({ force }) => {
-            const seqs = await getHostClient().listSequences();
+            let seqs = await getHostClient().listSequences();
             const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
 
-            if (seqs.length === 0) {
+            if (!seqs.length) {
                 displayMessage("Sequence list is empty, nothing to delete.");
                 return;
             }
@@ -240,26 +239,28 @@ export const sequence: CommandDefinition = (program) => {
                 seqs.map(async seq => {
                     const timeout = seq.instances.length * 5e3;
 
-                    if (seq.instances.length > 0 && !force) {
-                        displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those.`);
-                        return Promise.resolve();
-                    }
+                    if (seq.instances.length) {
+                        if (!force) {
+                            displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those.`);
+                            return Promise.resolve();
+                        }
 
-                    if (seq.instances.length > 0 && force) {
-                        await Promise.all(
-                            seq.instances.map(async instanceId => {
-                                if (lastInstanceId === instanceId) {
-                                    sessionConfig.setLastInstanceId("");
-                                }
+                        if (force) {
+                            await Promise.all(
+                                seq.instances.map(async instanceId => {
+                                    if (lastInstanceId === instanceId) {
+                                        sessionConfig.setLastInstanceId("");
+                                    }
 
-                                return getInstance(instanceId).kill({ removeImmediately: true });
-                            })
-                        );
+                                    return getInstance(instanceId).kill({ removeImmediately: true });
+                                })
+                            );
 
-                        displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
+                            displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
 
-                        await defer(15000);
-                        await waitForInstanceKills(seq, timeout);
+                            await defer(15000);
+                            await waitForInstanceKills(seq, timeout);
+                        }
                     }
 
                     return getHostClient().deleteSequence(seq.id).then(() => {
@@ -280,7 +281,12 @@ export const sequence: CommandDefinition = (program) => {
                 throw new Error("Some Sequences may have not been deleted.");
             }
 
-            displayMessage("Sequences removed successfully.");
-        })
-    ;
+            seqs = await getHostClient().listSequences();
+
+            if (!seqs.length) {
+                displayMessage("Sequences removed successfully.");
+            } else {
+                displayMessage("Some Sequences may have not been deleted.");
+            }
+        });
 };
