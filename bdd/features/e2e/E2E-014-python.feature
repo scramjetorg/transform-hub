@@ -51,7 +51,6 @@ Feature: Test our shiny new Python runner
         Then I set config for local Hub
         When I execute CLI with "seq send ../packages/reference-apps/python-topic-producer.tar.gz"
         When I execute CLI with "seq start - --output-topic names3"
-        When I execute CLI with ""
         Then I send input data "topic test input" with options "--end"
         When I execute CLI with "seq send ../packages/reference-apps/python-topic-consumer.tar.gz"
         When I execute CLI with "seq start - --input-topic names3"
