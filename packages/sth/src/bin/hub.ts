@@ -27,6 +27,7 @@ const options: STHCommandOptions = program
     .option("--runner-max-mem <mb>", "Maximum mem used by runner")
     .option("--prerunner-image <image name>", "Image used by prerunner")
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
+    .option("--safe-operation-limit <mb>", "NUmber of MB reserved by the host for safe operation")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--isp, --instances-server-port <port>", "Port on which server that instances connect to should run.")
     .option("--k8s-namespace <namespace>", "Kubernetes namespace used in Sequence and Instance adapters.")
@@ -47,6 +48,7 @@ const options: STHCommandOptions = program
     .opts() as STHCommandOptions;
 
 const configService = new ConfigService();
+const resolveFile = (path: string) => path && resolve(process.cwd(), path);
 
 configService.update({
     cpmUrl: options.cpmUrl,
@@ -75,9 +77,10 @@ configService.update({
     },
     identifyExisting: options.identifyExisting,
     runtimeAdapter: getRuntimeAdapterOption(options),
-    sequencesRoot: options.sequencesRoot && resolve(process.cwd(), options.sequencesRoot),
-    startupConfig: options.startupConfig && resolve(process.cwd(), options.startupConfig),
+    sequencesRoot: resolveFile(options.sequencesRoot),
+    startupConfig: resolveFile(options.startupConfig),
     exitWithLastInstance: options.exitWithLastInstance,
+    safeOperationLimit: options.safeOperationLimit,
     logLevel: options.logLevel,
     kubernetes: {
         namespace: options.k8sNamespace,
@@ -87,7 +90,7 @@ configService.update({
             node: options.k8sRunnerImage,
             python3: options.k8sRunnerPyImage
         },
-        sequencesRoot: options.k8sSequencesRoot,
+        sequencesRoot: resolveFile(options.k8sSequencesRoot),
         timeout: options.k8sRunnerCleanupTimeout,
         runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
         runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
