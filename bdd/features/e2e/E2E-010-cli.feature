@@ -16,15 +16,15 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-003 Test Sequence 'pack' option
-        When I execute CLI with "seq pack ../packages/reference-apps/transform-function  -o ../packages/reference-apps/transform-function.tar.gz"
-        Then I get location "../packages/reference-apps/transform-function.tar.gz" of compressed directory
+        When I execute CLI with "seq pack data/sequences/simple-stdio  -o ../packages/simple-stdio.tar.gz"
+        Then I get location "../packages/simple-stdio.tar.gz" of compressed directory
 
     @ci-api @cli
     Scenario: E2E-010 TC-004 Test Sequence options
         When I execute CLI with "seq --help"
-        When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz"
-        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz"
-        When I execute CLI with "seq send ../packages/reference-apps/hello-alice-out.tar.gz"
+        When I execute CLI with "seq send ../packages/args-to-output.tar.gz"
+        When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
+        When I execute CLI with "seq send ../packages/hello-alice-out.tar.gz"
         When I execute CLI with "seq get -"
         When I execute CLI with "seq list"
         When I execute CLI with "seq delete -"
@@ -47,8 +47,8 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-006 Test Sequence 'prune --force' option
-        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz"
-        When I execute CLI with "seq send ../packages/reference-apps/csv-transform.tar.gz"
+        When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
+        When I execute CLI with "seq send ../packages/csv-transform.tar.gz"
         When I execute CLI with "seq list"
         When I execute CLI with "seq start -"
         When I execute CLI with "inst list"
@@ -59,7 +59,7 @@ This feature checks CLI functionalities
     @ci-api @cli
     Scenario: E2E-010 TC-007 Test Instance options
         When I execute CLI with "inst --help"
-        When I execute CLI with "seq send ../packages/reference-apps/csv-transform.tar.gz"
+        When I execute CLI with "seq send ../packages/csv-transform.tar.gz"
         When I execute CLI with "seq start -"
         When I execute CLI with "inst info -"
         When I execute CLI with "inst health -"
@@ -70,7 +70,7 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-008 Test Instances 'stop' option
-        When I execute CLI with "seq send ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "seq send ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "seq start -"
         When I execute CLI with "inst ls"
         When I execute CLI with "inst stop - 3000"
@@ -81,7 +81,7 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-009 Get 404 on health endpoint for finished Instance
-        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz"
+        When I execute CLI with "seq send ../packages/inert-function.tar.gz"
         When I execute CLI with "seq start -"
         When I execute CLI with "inst health -"
         And I wait for Instance to end
@@ -90,33 +90,33 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-010 Test Instance 'log' option
-        When I execute CLI with "seq send ../packages/reference-apps/inert-function.tar.gz"
+        When I execute CLI with "seq send ../packages/inert-function.tar.gz"
         When I execute CLI with "seq start -"
         When I execute CLI with "inst log -" without waiting for the end
         Then I confirm instance logs received
 
     @ci-api @cli
     Scenario: E2E-010 TC-011 Test Instance 'input' option
-        When I execute CLI with "seq deploy ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "seq deploy ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "inst input - data/test-data/checksum.json"
 
     @ci-api @cli
     Scenario: E2E-010 TC-012 Test Instance 'input --end' option and confirm output received
-        When I execute CLI with "seq deploy ../packages/reference-apps/checksum-sequence.tar.gz"
+        When I execute CLI with "seq deploy ../packages/checksum-sequence.tar.gz"
         When I execute CLI with "inst input - data/test-data/checksum.json --end"
         When I execute CLI with "inst output -"
         Then I confirm data named "checksum" received
 
     @ci-api @cli
     Scenario: E2E-010 TC-013 Test Instance 'event' option
-        When I execute CLI with "seq deploy ../packages/reference-apps/event-sequence-v2.tar.gz"
+        When I execute CLI with "seq deploy ../packages/event-sequence-v2.tar.gz"
         When I execute CLI with "inst event emit - test-event test message"
         When I execute CLI with "inst event on - test-event-response"
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
 
     @ci-api @cli
     Scenario: E2E-010 TC-014 Test Sequence 'start' with multiple JSON arguments
-        When I execute CLI with "seq send ../packages/reference-apps/args-to-output.tar.gz"
+        When I execute CLI with "seq send ../packages/args-to-output.tar.gz"
         When I execute CLI with "seq start - --args [\"Hello\",123,{\"abc\":456},[\"789\"]]"
         When I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "args-on-output" will be received
@@ -135,7 +135,7 @@ This feature checks CLI functionalities
 
     @ci-api @cli
     Scenario: E2E-010 TC-017 Instance to API
-        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz"
+        When I execute CLI with "seq send ../packages/endless-names-output.tar.gz"
         When I execute CLI with "seq start - --output-topic names13"
         Then I execute CLI with "topic get names13" without waiting for the end
         Then I confirm data named "endless-names-10" will be received
@@ -143,7 +143,7 @@ This feature checks CLI functionalities
     @ci-api @cli
     Scenario: E2E-010 TC-018 API to Instance
         When I execute CLI with "topic send names14 features/e2e/data.json"
-        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz"
+        When I execute CLI with "seq send ../packages/hello-input-out.tar.gz"
         When I execute CLI with "seq start - --input-topic names14 "
         And wait for "10000" ms
         And I execute CLI with "inst output -" without waiting for the end
@@ -152,10 +152,10 @@ This feature checks CLI functionalities
     # TODO: need to test this via separate two sequences
     @ci-api @cli
     Scenario: E2E-010 TC-019 Instance to Instance
-        When I execute CLI with "seq send ../packages/reference-apps/endless-names-output.tar.gz"
+        When I execute CLI with "seq send ../packages/endless-names-output.tar.gz"
         When I execute CLI with "seq start - --output-topic names15"
         And wait for "6000" ms
-        When I execute CLI with "seq send ../packages/reference-apps/hello-input-out.tar.gz"
+        When I execute CLI with "seq send ../packages/hello-input-out.tar.gz"
         When I execute CLI with "seq start - --input-topic names15"
         And wait for "4000" ms
         And I execute CLI with "inst output -" without waiting for the end
