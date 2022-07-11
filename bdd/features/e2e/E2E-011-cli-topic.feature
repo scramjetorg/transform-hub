@@ -4,6 +4,7 @@ This feature checks topic functionalities over CLI
 
     @ci-topic @cli
     Scenario: E2E-011 TC-001 API to API
+        Given I set config for local Hub
         When I execute CLI with "topic send cities features/e2e/cities.json"
         Then I execute CLI with "topic get cities" without waiting for the end
         Then I confirm data named "nyc-city-nl" will be received
@@ -35,8 +36,3 @@ This feature checks topic functionalities over CLI
         And wait for "4000" ms
         And I execute CLI with "inst output -" without waiting for the end
         Then I confirm data named "hello-input-out-10" will be received
-
-    @ci-topic @cli
-    Scenario: E2E-011 TC-005 Get Hub logs
-        When I execute CLI with "hub logs" without waiting for the end
-        Then I confirm Hub logs received
