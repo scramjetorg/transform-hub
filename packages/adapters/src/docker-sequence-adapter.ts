@@ -52,7 +52,11 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         await this.fetch(this.config.docker.prerunner.image);
 
-        this.logger.trace("Initialization done");
+        this.logger.info("Docker adapter initialized with options", {
+            "python3 runner image": this.config.docker.runnerImages.python3,
+            "node runner image": this.config.docker.runnerImages.node,
+            "prerunner image": this.config.docker.prerunner.image
+        });
     }
 
     /**

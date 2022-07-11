@@ -59,8 +59,12 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<void>} Promise resolving after initialization.
      */
     async init(): Promise<void> {
-        return fs.access(this.config.sequencesRoot)
+        await fs.access(this.config.sequencesRoot)
             .catch(() => fs.mkdir(this.config.sequencesRoot));
+
+        this.logger.info("Proces adapter initialized with options", {
+            "sequence root": this.config.sequencesRoot
+        });
     }
 
     /**

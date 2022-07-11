@@ -86,6 +86,7 @@ const options: STHCommandOptions = program
         runtimeAdapter: getRuntimeAdapterOption(options),
         sequencesRoot: resolveFile(options.sequencesRoot),
         startupConfig: resolveFile(options.startupConfig),
+        identifyExisting: options.identifyExisting,
         exitWithLastInstance: options.exitWithLastInstance,
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,

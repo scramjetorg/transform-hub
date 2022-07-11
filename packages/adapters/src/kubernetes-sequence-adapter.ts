@@ -69,8 +69,14 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
      * @returns {Promise<void>} Promise resolving after initialization.
      */
     async init(): Promise<void> {
-        return fs.access(this.adapterConfig.sequencesRoot)
+        await fs.access(this.adapterConfig.sequencesRoot)
             .catch(() => fs.mkdir(this.adapterConfig.sequencesRoot));
+
+        this.logger.info("Kubernetes adapter initialized with options", {
+            "runner images": this.adapterConfig.runnerImages,
+            "sequences root": this.adapterConfig.sequencesRoot,
+            timeout: this.adapterConfig.timeout
+        });
     }
 
     /**
