@@ -104,7 +104,9 @@ const options: STHCommandOptions = program
             runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
             runnerResourcesLimitsMemory: options.k8sRunnerResourcesLimitsMemory
         },
-        instanceLifetimeExtensionDelay: options.instanceLifetimeExtensionDelay
+        timings: {
+            instanceLifetimeExtensionDelay: options.instanceLifetimeExtensionDelay
+        }
     });
 
     const tips = [

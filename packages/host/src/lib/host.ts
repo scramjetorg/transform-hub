@@ -475,7 +475,7 @@ export class Host implements IComponent {
                 Promise.race([
                     csiController.heartBeatPromise
                         ?.then((id) => this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)),
-                    defer(this.config.heartBeatInterval)
+                    defer(this.config.timings.heartBeatInterval)
                         .then(() => { throw new Error("HeartBeat promise not resolved"); })
                 ]).catch((error) => {
                     this.logger.error("Instance heartbeat error", csiController.id, error.message);
@@ -489,7 +489,7 @@ export class Host implements IComponent {
     }
 
     async handleAuditRequest(req: ParsedMessage, res: ServerResponse) {
-        const i = setInterval(() => this.heartBeat(), this.config.heartBeatInterval);
+        const i = setInterval(() => this.heartBeat(), this.config.timings.heartBeatInterval);
 
         req.socket.on("end", () => {
             clearInterval(i);

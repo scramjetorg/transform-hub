@@ -10,7 +10,7 @@ const hostExecutableCommand = process.env.SCRAMJET_SPAWN_TS
     : ["node", "../dist/sth/bin/hub.js"]
 ;
 
-type NoDefault = ("port"|"instances-server-port"|"cpm-url"|"runtime-adapter")[];
+type NoDefault = ("port"|"instances-server-port"|"cpm-url"|"runtime-adapter"|"instance-lifetime-extension-delay")[];
 
 export class HostUtils {
     hostProcessStopped = false;
@@ -106,6 +106,8 @@ export class HostUtils {
             command.push("-C", process.env.CPM_URL);
         if (!noDefault.includes("runtime-adapter") && !extraArgs.includes("--runtime-adapter") && process.env.RUNTIME_ADAPTER)
             command.push(`--runtime-adapter=${process.env.RUNTIME_ADAPTER}`);
+        if (!noDefault.includes("instance-lifetime-extension-delay") && !extraArgs.includes("--instance-lifetime-extension-delay") && process.env.RUNTIME_ADAPTER)
+            command.push("--instance-lifetime-extension-delay=100");
         if (extraArgs.length) command.push(...extraArgs);
 
         if (process.env.RUNNER_IMGS_TAG) {

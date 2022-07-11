@@ -163,17 +163,6 @@ export type STHConfiguration = {
     identifyExisting: boolean;
 
     /**
-     * Time to wait after Runner container exit.
-     * In this additional time Instance API is still available.
-     */
-    instanceAdapterExitDelay: number;
-
-    /**
-     * Time to wait before CSIController emits `end` event.
-     */
-    instanceLifetimeExtensionDelay: number;
-
-    /**
      * Which sequence and instance adapters should STH use.
      * One of 'docker', 'process', 'kubernetes'
      */
@@ -202,9 +191,26 @@ export type STHConfiguration = {
     exitWithLastInstance: boolean,
 
     /**
-     * Heartbeat interval in miliseconds
+     * Various timeout and interval configurations
      */
-    heartBeatInterval: number,
+    timings: {
+        /**
+         * Heartbeat interval in miliseconds
+         */
+        heartBeatInterval: number,
+
+        /**
+         * Time to wait after Runner container exit.
+         * In this additional time Instance API is still available.
+         */
+        instanceAdapterExitDelay: number;
+
+        /**
+         * Time to wait before CSIController emits `end` event.
+         */
+        instanceLifetimeExtensionDelay: number;
+
+    };
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {
