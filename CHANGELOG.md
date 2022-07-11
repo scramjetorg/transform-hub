@@ -2,8 +2,20 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-Prominent
+## [0.25.3] - 2022-07-11
 
+### Features
+
+### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.25.2] - 2022-07-05
+### Added
 - 6eef4229 - Every topic test scenario starts own host
 - eb32427b - Remove unnecessary pipe on adding new topic
 - f31916d7 - Fixes for stream ending with `x-stream-end` header.
@@ -54,7 +66,7 @@ Prominent
 - 913b8877 - IaC startup mode (#239)
 - 93391784 - Introduce Auditor class to provide audit stream
 
-New features:
+### Features
 
 - **Topics** - You can now send data to STH without having to have a Sequence
 - **Cloud Platform Connection** - Scramjet will allow to connect multiple STH to allow multipoint data sharing between them
@@ -81,8 +93,7 @@ New features:
 - **Resource limits** for runner pod in kubernetes adapter.
 - **Runner crashlog** - logs from a crashed runner should be available in host, even if the runner crashed before connecting.
 
-
-Bugfixes and minor improvements:
+### Fixed
 
 - Fix for spawning runner process
 - Container close issues now show not occur
@@ -178,16 +189,3 @@ Bugfixes and minor improvements:
 - Python runner support for keepalive
 - Force killing runner when hanged
 - Fix si seq deploy
-
-## @scramjet/transform Hub - v0.25.2
-
-Introduction of the new CLI that allows using separate profiles for multiple environments at the same time.
-
-You can now control Hubs in our Scramjet Cloud Platform Beta (see www.scramjet.org!) and control a number of STH's
-running on local devices. Simply run:
-
-```
-si config profile help
-```
-
-And check the options! :)
