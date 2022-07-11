@@ -2,19 +2,24 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-## [0.25.3] - 2022-07-11
+## [0.26.0] - 2022-07-11
 
 ### Features
 
-### Added
-
-### Changed
+* #570 - allow changing the same operation limits for operation on Raspberry Pi's.
 
 ### Fixed
 
+* #578 - fixed docs with better naming conventions
+* #585 - fixes in CLI tests and minor improvements
+* #570 - fixes path resolution on STH command lines
+
 ### Removed
 
-## [0.25.2] - 2022-07-05
+* #580 - removal of refapps in favor of [scramjetorg/reference-apps repo](https://github.com/scramjetorg/reference-apps/)
+
+## Previous releases
+
 ### Added
 - 6eef4229 - Every topic test scenario starts own host
 - eb32427b - Remove unnecessary pipe on adding new topic
