@@ -90,7 +90,7 @@ function older(v1, v2) {
 
     // Update deps.
     try {
-        await promisify(exec)(`cd ${outDir} && npm install --package-lock-only`);
+        await promisify(exec)(`cd ${outDir} && npm install --package-lock-only --force`);
 
         const lockFile = JSON.parse(await readFile(resolve(outDir, "package-lock.json"), { encoding: "utf-8" }));
         const newDeps = JSON.parse(await readFile(resolve(cwd, outFile), { encoding: "utf-8" }));
