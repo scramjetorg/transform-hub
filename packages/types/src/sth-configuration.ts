@@ -70,10 +70,25 @@ export type HostConfig = {
 }
 
 export type K8SAdapterConfiguration = {
+    /**
+     * The Kubernetes namespace to use for running sequences
+     */
     namespace: string,
+    /**
+     * Authentication configuration path
+     */
     authConfigPath?: string,
+    /**
+     * The host where to start STH Pods
+     */
     sthPodHost: string,
+    /**
+     * Runner images to use
+     */
     runnerImages: { python3: string, node: string },
+    /**
+     * Path to store sequences
+     */
     sequencesRoot: string,
     timeout?: string,
     runnerResourcesRequestsMemory?: string,
@@ -153,7 +168,7 @@ export type STHConfiguration = {
     },
 
     /**
-     * The amount of memory that must remain free.
+     * The amount of memory that must remain free. In megabytes.
      */
     safeOperationLimit: number;
 
