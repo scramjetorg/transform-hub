@@ -11,7 +11,7 @@ import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@sc
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck } from "@scramjet/load-check";
-import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
+import { getSequenceAdapter, initializeSequenceAdapter } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
@@ -228,11 +228,9 @@ export class Host implements IComponent {
             await this.identifyExistingSequences();
         }
 
-        if (this.config.runtimeAdapter === "docker") {
-            this.logger.trace("Setting up Docker networking");
+        const adapter = await initializeSequenceAdapter(this.config);
 
-            await setupDockerNetworking(new DockerodeDockerHelper());
-        }
+        this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
 
         await this.socketServer.start();
 

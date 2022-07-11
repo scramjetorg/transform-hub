@@ -2,6 +2,8 @@ import { ProcessSequenceAdapter } from "./process-sequence-adapter";
 import { DockerSequenceAdapter } from "./docker-sequence-adapter";
 import { ISequenceAdapter, STHConfiguration } from "@scramjet/types";
 import { KubernetesSequenceAdapter } from "./kubernetes-sequence-adapter";
+import { setupDockerNetworking } from "./docker-networking";
+import { DockerodeDockerHelper } from "./dockerode-docker-helper";
 
 type SequenceAdapterClass = {new (config: STHConfiguration): ISequenceAdapter};
 
@@ -13,6 +15,14 @@ const sequenceAdapters: Record<
     process: ProcessSequenceAdapter,
     kubernetes: KubernetesSequenceAdapter,
 };
+
+export async function initializeSequenceAdapter(config: STHConfiguration): Promise<string> {
+    if (config.runtimeAdapter === "docker") {
+        await setupDockerNetworking(new DockerodeDockerHelper());
+    }
+
+    return config.runtimeAdapter;
+}
 
 /**
  * Provides Sequence adapter basing on Host configuration.
