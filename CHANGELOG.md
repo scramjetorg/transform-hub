@@ -2,8 +2,25 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
-Prominent
+## [0.26.0] - 2022-07-11
 
+### Features
+
+* #570 - allow changing the same operation limits for operation on Raspberry Pi's.
+
+### Fixed
+
+* #578 - fixed docs with better naming conventions
+* #585 - fixes in CLI tests and minor improvements
+* #570 - fixes path resolution on STH command lines
+
+### Removed
+
+* #580 - removal of refapps in favor of [scramjetorg/reference-apps repo](https://github.com/scramjetorg/reference-apps/)
+
+## Previous releases
+
+### Added
 - 6eef4229 - Every topic test scenario starts own host
 - eb32427b - Remove unnecessary pipe on adding new topic
 - f31916d7 - Fixes for stream ending with `x-stream-end` header.
@@ -54,7 +71,7 @@ Prominent
 - 913b8877 - IaC startup mode (#239)
 - 93391784 - Introduce Auditor class to provide audit stream
 
-New features:
+### Features
 
 - **Topics** - You can now send data to STH without having to have a Sequence
 - **Cloud Platform Connection** - Scramjet will allow to connect multiple STH to allow multipoint data sharing between them
@@ -81,8 +98,7 @@ New features:
 - **Resource limits** for runner pod in kubernetes adapter.
 - **Runner crashlog** - logs from a crashed runner should be available in host, even if the runner crashed before connecting.
 
-
-Bugfixes and minor improvements:
+### Fixed
 
 - Fix for spawning runner process
 - Container close issues now show not occur
@@ -178,16 +194,3 @@ Bugfixes and minor improvements:
 - Python runner support for keepalive
 - Force killing runner when hanged
 - Fix si seq deploy
-
-## @scramjet/transform Hub - v0.25.2
-
-Introduction of the new CLI that allows using separate profiles for multiple environments at the same time.
-
-You can now control Hubs in our Scramjet Cloud Platform Beta (see www.scramjet.org!) and control a number of STH's
-running on local devices. Simply run:
-
-```
-si config profile help
-```
-
-And check the options! :)

@@ -131,7 +131,7 @@ export const config: CommandDefinition = (program) => {
 
     setCmd
         .command("env")
-        .addArgument(new commander.Argument("<production|develop>").choices(["production", "develop"]))
+        .addArgument(new commander.Argument("<production|development>").choices(["production", "development"]))
         .description("Specify the environment")
         .action(env => {
             if (!profileConfig.setEnv(env)) {

@@ -28,7 +28,7 @@ Feature: HUB-001 Host configuration
     @starts-host @docker-specific
     Scenario: HUB-001 TC-009  Set runner image (--runner-image)
         When hub process is started with parameters "-P 9002 --instances-server-port 19002 --runner-image repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7"
-        And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
+        And sequence "../packages/inert-function.tar.gz" is loaded
         And instance started
         And get runner container information
         Then container uses "repo.int.scp.ovh/scramjet/runner:0.10.0-pre.7" image
@@ -38,7 +38,7 @@ Feature: HUB-001 Host configuration
     @starts-host @docker-specific
     Scenario: HUB-001 TC-010  Default runner image for js/ts sequences
         When hub process is started with parameters "-P 9002 --instances-server-port 19002"
-        And sequence "../packages/reference-apps/inert-function.tar.gz" is loaded
+        And sequence "../packages/inert-function.tar.gz" is loaded
         And instance started
         And get runner container information
         Then container uses node image defined in sth-config
@@ -48,7 +48,7 @@ Feature: HUB-001 Host configuration
     @starts-host @docker-specific
     Scenario: HUB-001 TC-011  Set runner memory limit (--runner-max-mem)
         When hub process is started with random ports and parameters "--runner-max-mem 128"
-        And sequence "../packages/reference-apps/hello-alice-out.tar.gz" is loaded
+        And sequence "../packages/hello-alice-out.tar.gz" is loaded
         And instance started
         And get runner container information
         Then container memory limit is 128
