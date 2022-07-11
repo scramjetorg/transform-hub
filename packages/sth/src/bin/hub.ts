@@ -24,7 +24,7 @@ const options: STHCommandOptions = program
     .option("-D, --sequences-root <path>", "Only works with --runtime-adapter='process' option. Where should ProcessSequenceAdapter save new sequences")
     .option("--no-docker", "Run all the instances on the host machine instead of in docker containers. UNSAFE FOR RUNNING ARBITRARY CODE.", false)
     .option("--instance-lifetime-extension-delay <ms>", "Instance lifetime extension delay in ms")
-    .option("--safe-operation-limit <mb>", "NUmber of MB reserved by the host for safe operation")
+    .option("--safe-operation-limit <mb>", "Number of MB reserved by the host for safe operation")
     .option("--expose-host-ip <ip>", "Host IP address that the Runner container's port is mapped to.")
     .option("--isp, --instances-server-port <port>", "Port on which server that instances connect to should run.")
     .option("--runner-image <image name>", "Image used by docker runner for Node.js")

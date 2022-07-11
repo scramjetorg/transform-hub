@@ -123,3 +123,32 @@ timings:
     instanceLifetimeExtensionDelay: 9000
 ```
 
+## Config options and command line table
+
+
+| Config name | CMD Parameter | Default | Description | Example |
+|-|-|-|-|-|-|
+| N/A | `-c, --config <path>` | `null` | Specifies path to config
+| `logLevel` | `-L, --log-level <level>` | `trace` | Specify log level
+| `host.id` | `-I, --id <id>` | Random | The id assigned to this server
+| `host.hostname` | `-H, --hostname <IP>` | `0.0.0.0` | API IP
+| `host.port` | `-P, --port <port>` | `8000` | API port
+| `host.instancesServerPort` | `--isp,--instances-server-port <port>` | `8001` | Port on which server that instances connect to should run.
+| `identifyExisting` | `-E, --identify-existing` | `false` | Index existing volumes as sequences
+| `runtimeAdapter` | `--runtime-adapter <adapter>` | `process` | Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'
+| `safeOperationLimit` | `--safe-operation-limit <mb>` | `512` | Number of MB reserved by the host for safe operation
+| `exitWithLastInstance` | `-X, --exit-with-last-instance` | `false` | Exits host when no more instances exist.
+| `startupConfig` | `-S, --startup-config <path>` | `null` | Only works with process adapter. The configuration of startup sequences.
+| `sequencesRoot` | `-D, --sequences-root <path>` | `~/.scramjet_sequences` | Only works with `--runtime-adapter='process'` option. Where should ProcessSequenceAdapter save new sequences
+| `timings.instanceLifetimeExtensionDelay` | `--instance-lifetime-extension-delay <ms>` | 180000 | Instance lifetime extension delay in ms
+| `docker.runnerImages.node` | `--runner-image <image name>` | auto resolved | Image used by docker runner for Node.js
+| `docker.runnerImages.python3` | `--runner-py-image <image>` | auto resolved | Image used by docker runner for Python
+| `docker.runner.maxMem` | `--runner-max-mem <mb>` | 512M | Maximum mem used by runner
+| `docker.prerunner.image` | `--prerunner-image <image name>` | auto resolved | Image used by prerunner
+| `docker.prerunner.maxMem` | `--prerunner-max-mem <mb>` | 128M | Maximum mem used by prerunner
+| `kubernetes.namespace` | `--k8s-namespace <namespace>` | `default` | Kubernetes namespace used in Sequence and Instance adapters.
+|  `kubernetes.authConfigPath` | `--k8s-auth-config-path <path>` |  | Kubernetes authorization config path. If not supplied the mounted service account will be used.
+|  `kubernetes.sthPodHost` | `--k8s-sth-pod-host <host>`|  | Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to.
+|  `kubernetes.runnerImages.node` | `--k8s-runner-image <image>` | auto resolved | Runner image spawned in NodeJs Pod.
+|  `kubernetes.runnerImages.python3` | `--k8s-runner-py-image <image>` | auto resolved | Runner image spawned in Python Pod.
+|  `kubernetes.sequencesRoot` | `--k8s-sequences-root <path>` | `~/.scramjet_k8s_sequences` | Kubernetes Process Adapter will store sequences here.
