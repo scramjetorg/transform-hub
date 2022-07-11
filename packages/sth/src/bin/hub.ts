@@ -48,99 +48,100 @@ const options: STHCommandOptions = program
     .parse(process.argv)
     .opts() as STHCommandOptions;
 
-const configService = new ConfigService();
-const resolveFile = (path: string) => path && resolve(process.cwd(), path);
+(async () => {
+    const configService = new ConfigService();
+    const resolveFile = (path: string) => path && resolve(process.cwd(), path);
 
-if (options.config) {
-    const configContents = readConfigFile(options.config) as DeepPartial<STHConfiguration>;
+    if (options.config) {
+        const configContents = await readConfigFile(options.config) as DeepPartial<STHConfiguration>;
 
-    configService.update(configContents);
-}
+        configService.update(configContents);
+    }
 
-configService.update({
-    cpmUrl: options.cpmUrl,
-    cpmId: options.cpmId,
-    cpmSslCaPath: options.cpmSslCaPath,
-    docker: {
-        prerunner: {
-            image: options.prerunnerImage,
-            maxMem: options.prerunnerMaxMem
-        },
-        runner: {
-            maxMem: options.runnerMaxMem,
-            hostIp: options.exposeHostIp
-        },
-        runnerImages: {
-            node: options.runnerImage,
-            python3: options.runnerPyImage
-        }
-    },
-    host: {
-        apiBase: "/api/v1",
-        instancesServerPort: options.instancesServerPort ? parseInt(options.instancesServerPort, 10) : undefined,
-        port: options.port,
-        hostname: options.hostname,
-        id: options.id
-    },
-    identifyExisting: options.identifyExisting,
-    runtimeAdapter: getRuntimeAdapterOption(options),
-    sequencesRoot: resolveFile(options.sequencesRoot),
-    startupConfig: resolveFile(options.startupConfig),
-    exitWithLastInstance: options.exitWithLastInstance,
-    safeOperationLimit: options.safeOperationLimit,
-    logLevel: options.logLevel,
-    kubernetes: {
-        namespace: options.k8sNamespace,
-        authConfigPath: options.k8sAuthConfigPath,
-        sthPodHost: options.k8sSthPodHost,
-        runnerImages: {
-            node: options.k8sRunnerImage,
-            python3: options.k8sRunnerPyImage
-        },
-        sequencesRoot: resolveFile(options.k8sSequencesRoot),
-        timeout: options.k8sRunnerCleanupTimeout,
-        runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
-        runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
-        runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
-        runnerResourcesLimitsMemory: options.k8sRunnerResourcesLimitsMemory
-    },
-    instanceLifetimeExtensionDelay: options.instanceLifetimeExtensionDelay
-});
-
-const tips = [
-    ["Run Sequences in our cloud.", { "Check it": "out as a beta tester", here: "https://scr.je/join-beta-sth" }],
-    ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "check the": "beta version", "at-this-link": "https://scr.je/join-beta-sth" }],
-    ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scr.je/join-beta-sth" }]
-];
-
-// before here we actually load the host and we have the config imported elsewhere
-// so the config is changed before compile time, not in runtime.
-require("@scramjet/host").startHost({}, configService.getConfig())
-    .then(async (host: Host) => {
-        const [message, extra] = tips[~~(Math.random() * 100 * tips.length) % tips.length] as [string, object];
-
-        host.logger.info(message, extra);
-
-        // Host..main is done, so we can now wait until all sequences exited.
-        // If no sequences started, we exit as well...
-        if (options.exitWithLastInstance) {
-            if (Object.keys(host.instancesStore).length === 0) {
-                process.exit(101);
+    configService.update({
+        cpmUrl: options.cpmUrl,
+        cpmId: options.cpmId,
+        cpmSslCaPath: options.cpmSslCaPath,
+        docker: {
+            prerunner: {
+                image: options.prerunnerImage,
+                maxMem: options.prerunnerMaxMem
+            },
+            runner: {
+                maxMem: options.runnerMaxMem,
+                hostIp: options.exposeHostIp
+            },
+            runnerImages: {
+                node: options.runnerImage,
+                python3: options.runnerPyImage
             }
+        },
+        host: {
+            apiBase: "/api/v1",
+            instancesServerPort: options.instancesServerPort ? parseInt(options.instancesServerPort, 10) : undefined,
+            port: options.port,
+            hostname: options.hostname,
+            id: options.id
+        },
+        runtimeAdapter: getRuntimeAdapterOption(options),
+        sequencesRoot: resolveFile(options.sequencesRoot),
+        startupConfig: resolveFile(options.startupConfig),
+        exitWithLastInstance: options.exitWithLastInstance,
+        safeOperationLimit: options.safeOperationLimit,
+        logLevel: options.logLevel,
+        kubernetes: {
+            namespace: options.k8sNamespace,
+            authConfigPath: options.k8sAuthConfigPath,
+            sthPodHost: options.k8sSthPodHost,
+            runnerImages: {
+                node: options.k8sRunnerImage,
+                python3: options.k8sRunnerPyImage
+            },
+            sequencesRoot: resolveFile(options.k8sSequencesRoot),
+            timeout: options.k8sRunnerCleanupTimeout,
+            runnerResourcesRequestsCpu: options.k8sRunnerResourcesRequestsCpu,
+            runnerResourcesRequestsMemory: options.k8sRunnerResourcesRequestsMemory,
+            runnerResourcesLimitsCpu: options.k8sRunnerResourcesLimitsCpu,
+            runnerResourcesLimitsMemory: options.k8sRunnerResourcesLimitsMemory
+        },
+        instanceLifetimeExtensionDelay: options.instanceLifetimeExtensionDelay
+    });
 
-            // TODO: fix this up once heartbeats are up
-            const interval = setInterval(async () => {
+    const tips = [
+        ["Run Sequences in our cloud.", { "Check it": "out as a beta tester", here: "https://scr.je/join-beta-sth" }],
+        ["Now you can run Sequences in the cloud and deploy them to multiple locations simultaneously", { "check the": "beta version", "at-this-link": "https://scr.je/join-beta-sth" }],
+        ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scr.je/join-beta-sth" }]
+    ];
+
+    // before here we actually load the host and we have the config imported elsewhere
+    // so the config is changed before compile time, not in runtime.
+    return require("@scramjet/host").startHost({}, configService.getConfig())
+        .then(async (host: Host) => {
+            const [message, extra] = tips[~~(Math.random() * 100 * tips.length) % tips.length] as [string, object];
+
+            host.logger.info(message, extra);
+
+            // Host..main is done, so we can now wait until all sequences exited.
+            // If no sequences started, we exit as well...
+            if (options.exitWithLastInstance) {
                 if (Object.keys(host.instancesStore).length === 0) {
-                    clearInterval(interval);
-                    try {
-                        await host.stop();
-                    } catch {
-                        process.exit(1);
-                    }
+                    process.exit(101);
                 }
-            }, 250);
-        }
-    })
+
+                // TODO: fix this up once heartbeats are up
+                const interval = setInterval(async () => {
+                    if (Object.keys(host.instancesStore).length === 0) {
+                        clearInterval(interval);
+                        try {
+                            await host.stop();
+                        } catch {
+                            process.exit(1);
+                        }
+                    }
+                }, 250);
+            }
+        });
+})()
     .catch((e: (Error | HostError) & { exitCode?: number }) => {
         if ((e as HostError).code) {
             const hostError = e as HostError;
@@ -155,4 +156,3 @@ require("@scramjet/host").startHost({}, configService.getConfig())
         process.exitCode = e.exitCode || 1;
         process.exit();
     });
-

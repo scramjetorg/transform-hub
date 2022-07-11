@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import { parseDocument } from "yaml";
+import YAML from "yaml";
 
 async function readJsonFile(filename: string) {
     const configString = await readFile(filename, "utf-8");
@@ -10,7 +10,7 @@ async function readJsonFile(filename: string) {
 async function readYmlFile(filename: string) {
     const configString = await readFile(filename, "utf-8");
 
-    return parseDocument(configString);
+    return YAML.parse(configString);
 }
 
 export async function readConfigFile(filename: string): Promise<any> {
