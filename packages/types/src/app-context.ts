@@ -1,10 +1,10 @@
-import { MonitoringMessageFromRunnerData } from "./messages";
-
-import { MaybePromise } from "./utils";
 import { AppError, AppErrorConstructor } from "./error-codes/app-error";
+
 import { AppConfig } from "./app-config";
-import { IObjectLogger } from "./object-logger";
 import { FunctionDefinition } from "./messages/describe-sequence";
+import { IObjectLogger } from "./object-logger";
+import { MaybePromise } from "./utils";
+import { MonitoringMessageFromRunnerData } from "./messages";
 
 /**
  * A callback that will be called when the Sequence is being stopped gracefully.
@@ -144,7 +144,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     initialState?: State;
 
     /**
-     * Receives events sent by the Instance that can be triggered via CLI and configured
+     * Adds event handler for events that can be sent by CLI and configured
      * actions.
      *
      * @param ev
@@ -154,7 +154,7 @@ export interface AppContext<AppConfigType extends AppConfig, State extends any> 
     on(ev: "error", handler: (message: Error) => void): this;
 
     /**
-     * Sends events to the Instance that can be received by CLI and configured actions
+     * Sends event from the Instance that can be received by CLI and configured actions
      *
      * @param ev event name
      * @param message any serializable object
