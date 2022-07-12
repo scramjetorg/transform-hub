@@ -1,14 +1,14 @@
 {
   "name": "scramjet-bdd",
-  "version": "0.26.0",
+  "version": "0.26.1",
   "description": "",
   "main": "_cucumber.js",
   "dependencies": {
-    "@scramjet/api-client": "^0.26.0",
-    "@scramjet/logger": "^0.26.0",
-    "@scramjet/obj-logger": "^0.26.0",
-    "@scramjet/sth-config": "^0.26.0",
-    "dockerode": "^3.3.1",
+    "@scramjet/api-client": "^0.26.1",
+    "@scramjet/logger": "^0.26.1",
+    "@scramjet/obj-logger": "^0.26.1",
+    "@scramjet/sth-config": "^0.26.1",
+    "dockerode": "^3.3.2",
     "find-package-json": "^1.2.0",
     "freeport": "^1.0.5",
     "n-readlines": "^1.0.1",
@@ -16,8 +16,8 @@
   },
   "devDependencies": {
     "@cucumber/cucumber": "^7.3.2",
-    "@cucumber/pretty-formatter": "^1.0.0-alpha.2",
-    "@scramjet/types": "^0.26.0"
+    "@cucumber/pretty-formatter": "^1.0.0",
+    "@scramjet/types": "^0.26.1"
   },
   "scripts": {
     "build:bdd": "tsc -p tsconfig.json",
