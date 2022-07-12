@@ -74,9 +74,11 @@ jobs:
 
       - name: Run BDD tests
       # SCRAMJET_SPAWN_JS will run cli test from dist directory
-        run: RUNNER_IMGS_TAG=$(git rev-parse HEAD) yarn ${{ inputs.test-name }} -t "not @not-github"
+        run: yarn ${{ inputs.test-name }} -t "not @not-github"
         env:
+          RUNNER_IMGS_TAG: $(git rev-parse HEAD)
           RUNTIME_ADAPTER: docker
           SCRAMJET_TEST_LOG: 1
           SCRAMJET_SPAWN_JS: 1
           NODE_OPTIONS: "--trace-warnings"
+          SCRAMJET_DEVELOPMENT: 1
