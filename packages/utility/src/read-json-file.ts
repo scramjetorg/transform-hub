@@ -1,8 +1,9 @@
 import { join, resolve } from "path";
 import { existsSync, readFileSync } from "fs";
 
-export const readJsonFile = (fileName: string, ...path: string[]): {[key: string]: any} => {
-    const filePath = join(...path, `${fileName}.json`);
+export const readJsonFile = (fileNameCandidate: string, ...path: string[]): {[key: string]: any} => {
+    const fileName = fileNameCandidate.endsWith(".json") ? fileNameCandidate : `${fileNameCandidate}.json`;
+    const filePath = join(...path, fileName);
     const realPath = resolve(filePath);
 
     let data = {};

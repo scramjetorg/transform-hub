@@ -141,7 +141,7 @@ BeforeAll({ timeout: 10e3 }, async () => {
             },
         });
     }
-    await hostUtils.spawnHost();
+    await hostUtils.spawnHost([]);
 });
 
 AfterAll(async () => {
@@ -197,7 +197,7 @@ const startHost = async () => {
             },
         });
     }
-    await hostUtils.spawnHost();
+    await hostUtils.spawnHost([]);
 };
 
 Given("start host", () => startHost());

@@ -180,7 +180,7 @@ export class CSIController extends TypedEmitter<Events> {
             memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
         };
 
-        this.instanceLifetimeExtensionDelay = +sthConfig.instanceLifetimeExtensionDelay;
+        this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
         this.communicationHandler = communicationHandler;
 
         this.logger = new ObjLogger(`CSIC ${this.id.slice(0, 7)}-...`, { id: this.id });
@@ -239,7 +239,7 @@ export class CSIController extends TypedEmitter<Events> {
         const instanceConfig: InstanceConfig = {
             ...this.sequence.config,
             limits: this.limits,
-            instanceAdapterExitDelay: this.sthConfig.instanceAdapterExitDelay
+            instanceAdapterExitDelay: this.sthConfig.timings.instanceAdapterExitDelay
         };
 
         const instanceMain = async () => {
