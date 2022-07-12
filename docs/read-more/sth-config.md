@@ -152,3 +152,123 @@ timings:
 |  `kubernetes.runnerImages.node` | `--k8s-runner-image <image>` | auto resolved | Runner image spawned in NodeJs Pod.
 |  `kubernetes.runnerImages.python3` | `--k8s-runner-py-image <image>` | auto resolved | Runner image spawned in Python Pod.
 |  `kubernetes.sequencesRoot` | `--k8s-sequences-root <path>` | `~/.scramjet_k8s_sequences` | Kubernetes Process Adapter will store sequences here.
+
+## Example configs
+
+Here are some full configs for reference:
+
+### Kubernetes
+
+This is a complete kubernetes config
+
+```yaml
+logLevel: info
+logColors: true
+host:
+  hostname: 0.0.0.0
+  port: 9078
+  apiBase: "/api/v1"
+  instancesServerPort: 8001
+  infoFilePath: "/tmp/sth-id.json"
+  id: polololo-kube
+instanceRequirements:
+  freeMem: 128
+  cpuLoad: 10
+  freeSpace: 128
+safeOperationLimit: 64
+runtimeAdapter: kubernetes
+timings:
+  heartBeatInterval: 10000
+  instanceLifetimeExtensionDelay: 180000
+  instanceAdapterExitDelay: 9000
+kubernetes:
+  namespace: default
+  sthPodHost: sth-runner
+  runnerImages:
+    python3: scramjetorg/runner-py:0.26.0
+    node: scramjetorg/runner:0.26.0
+  timeout: 0
+  runnerResourcesRequestsCpu: 0.01
+  runnerResourcesRequestsMemory: 8M
+  runnerResourcesLimitsCpu: 0.565
+  runnerResourcesLimitsMemory: 1024MB
+```
+
+And the JSON structure:
+
+```json
+{
+  "logLevel": "info",
+  "logColors": true,
+  "identifyExisting": false,
+  "host": {
+    "hostname": "0.0.0.0",
+    "port": 9078,
+    "apiBase": "/api/v1",
+    "instancesServerPort": 8001,
+    "infoFilePath": "/tmp/sth-id.json",
+    "id": "scramjet-sth"
+  },
+  "instanceRequirements": {
+    "freeMem": 256,
+    "cpuLoad": 10,
+    "freeSpace": 128
+  },
+  "safeOperationLimit": 512,
+  "runtimeAdapter": "kubernetes",
+  "kubernetes": {
+    "namespace": "default",
+    "sthPodHost": "sth-runner",
+    "runnerImages": {
+      "python3": "scramjetorg/runner-py:0.26.0",
+      "node": "scramjetorg/runner:0.26.0"
+    },
+    "timeout": 0,
+    "runnerResourcesRequestsCpu": 0.01,
+    "runnerResourcesRequestsMemory": "8M",
+    "runnerResourcesLimitsCpu": 0.565,
+    "runnerResourcesLimitsMemory": "1024MB"
+  }
+}
+```
+
+### Docker config
+
+This is a complete docker based config:
+
+```yaml
+logLevel: info
+logColors: true
+identifyExisting: true
+host:
+  hostname: 0.0.0.0
+  port: 9078
+  apiBase: "/api/v1"
+  instancesServerPort: 8001
+  infoFilePath: "/tmp/sth-id.json"
+  id: scramjet-sth
+instanceRequirements:
+  freeMem: 256
+  cpuLoad: 10
+  freeSpace: 128
+safeOperationLimit: 512
+runtimeAdapter: docker
+timings:
+  heartBeatInterval: 10000
+  instanceLifetimeExtensionDelay: 180000
+  instanceAdapterExitDelay: 9000
+docker:
+  prerunner:
+    image: scramjetorg/pre-runner:0.26.0
+    maxMem: 128
+  runner:
+    image: ''
+    maxMem: 512
+    exposePortsRange:
+    - 30000
+    - 32767
+    hostIp: 0.0.0.0
+  runnerImages:
+    python3: scramjetorg/runner-py:0.26.0
+    node: scramjetorg/runner:0.26.0
+```
