@@ -12,10 +12,10 @@ import { readConfigFile } from "@scramjet/utility";
 const program = new Command();
 const options: STHCommandOptions = program
     .option("-c, --config <path>", "Specifies path to config")
-    .option("-L, --log-level <level>", "Specify log level", "trace")
+    .option("-L, --log-level <level>", "Specify log level")
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
-    .option("-E, --identify-existing", "Index existing volumes as sequences", false)
+    .option("-E, --identify-existing", "Index existing volumes as sequences")
     .option("-C, --cpm-url <host:ip>")
     .option("-I, --id <id>", "The id assigned to this server")
     .option("--runtime-adapter <adapter>", "Determines adapters used for loading and starting sequence. One of 'docker', 'process', 'kubernetes'")
