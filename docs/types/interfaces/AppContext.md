@@ -253,7 +253,7 @@ ___
 
 ▸ **emit**(`ev`, `message?`): [`AppContext`](AppContext.md)<`AppConfigType`, `State`\>
 
-Sends events to the Instance that can be received by CLI and configured actions
+Sends event from the Instance that can be received by CLI and configured actions
 
 #### Parameters
 
@@ -345,7 +345,7 @@ ___
 
 ▸ **on**(`ev`, `handler`): [`AppContext`](AppContext.md)<`AppConfigType`, `State`\>
 
-Receives events sent by the Instance that can be triggered via CLI and configured
+Adds event handler for events that can be sent by CLI and configured
 actions.
 
 #### Parameters
