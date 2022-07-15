@@ -139,7 +139,7 @@ ___
 
 ### merge
 
-▸ **merge**<`T`\>(`target`, `source?`): `void`
+▸ **merge**<`T`\>(`target`, `source?`, `strict?`): `void`
 
 Deep merge objects.
 Copies all properties from source to target.
@@ -152,10 +152,11 @@ Copies all properties from source to target.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `target` | `T` | Target object. |
-| `source` | `DeepPartial`<`T`\> | Source object. |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `target` | `T` | `undefined` | Target object. |
+| `source` | `DeepPartial`<`T`\> | `{}` | Source object. |
+| `strict` | `boolean` | `false` | Throws an error if unknown value is found |
 
 #### Returns
 
@@ -165,7 +166,7 @@ Returns nothing.
 
 #### Defined in
 
-[packages/utility/src/merge.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/merge.ts#L11)
+[packages/utility/src/merge.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/merge.ts#L12)
 
 ___
 
@@ -241,19 +242,19 @@ ___
 
 #### Defined in
 
-[packages/utility/src/read-config-file.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-config-file.ts#L3)
+[packages/utility/src/read-config-file.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-config-file.ts#L16)
 
 ___
 
 ### readJsonFile
 
-▸ **readJsonFile**(`fileName`, ...`path`): `Object`
+▸ **readJsonFile**(`fileNameCandidate`, ...`path`): `Object`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `fileName` | `string` |
+| `fileNameCandidate` | `string` |
 | `...path` | `string`[] |
 
 #### Returns
