@@ -2,10 +2,15 @@ import { ObjLogger } from "@scramjet/obj-logger";
 import { IComponent, LoadCheckStat, LoadCheckConfig, LoadCheckContstants } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 
-import sysinfo from "systeminformation";
 import { DataStream, StringStream } from "scramjet";
+import { loadavg } from "os";
 
-const MB = 1024 * 1024;
+import _du from "diskusage-ng";
+import { promisify } from "util";
+import { mem } from "node-os-utils";
+
+const MEBIBYTE = 1024 * 1024;
+const du = promisify(_du);
 
 /**
  * Provides methods to monitor resources usage and determine if machine is not overloaded.
@@ -35,11 +40,11 @@ export class LoadCheck implements IComponent {
     constructor(config: LoadCheckConfig) {
         this.config = config;
         this.constants = {
-            SAFE_OPERATION_LIMIT: this.config.safeOperationLimit * MB,
+            SAFE_OPERATION_LIMIT: this.config.safeOperationLimit * MEBIBYTE,
             MIN_INSTANCE_REQUIREMENTS: {
-                freeMem: this.config.instanceRequirements.freeMem * MB,
+                freeMem: this.config.instanceRequirements.freeMem * MEBIBYTE,
                 cpuLoad: this.config.instanceRequirements.cpuLoad,
-                freeSpace: this.config.instanceRequirements.freeSpace * MB
+                freeSpace: this.config.instanceRequirements.freeSpace * MEBIBYTE
             }
         };
     }
@@ -50,18 +55,32 @@ export class LoadCheck implements IComponent {
      * @returns {Promise<LoadCheckStat>} Promise resolving to gathered load check data.
      */
     async getLoadCheck(): Promise<LoadCheckStat> {
-        const [load, disksInfo, memInfo] = await Promise.all([
-            sysinfo.currentLoad(),
-            sysinfo.fsSize(),
-            sysinfo.mem()
+        const safeOperationsLimit = this.constants.SAFE_OPERATION_LIMIT;
+
+        const [currentLoad = 85, , avgLoad] = loadavg();
+
+        const [usage, _fsSize] = await Promise.all([
+            mem.info(),
+            Promise.all(this.config.fsPaths.map(async (path) => ({ path, usage: await du(path) })))
         ]);
 
+        const memFree = (usage.totalMemMb - usage.usedMemMb) * MEBIBYTE;
+        const memUsed = usage.usedMemMb * MEBIBYTE;
+
+        const fsSize = _fsSize.map(({ path, usage: fsUsage }) => ({
+            fs: path,
+            available: fsUsage.available - safeOperationsLimit,
+            size: fsUsage.total,
+            used: fsUsage.used,
+            use: fsUsage.used / fsUsage.total
+        }));
+
         return {
-            avgLoad: load.avgLoad,
-            currentLoad: load.currentLoad || 85,
-            memFree: memInfo.free + Math.max(0, memInfo.buffcache - this.constants.SAFE_OPERATION_LIMIT),
-            memUsed: memInfo.used,
-            fsSize: disksInfo
+            avgLoad,
+            currentLoad,
+            memFree,
+            memUsed,
+            fsSize
         };
     }
 
@@ -93,27 +112,12 @@ export class LoadCheck implements IComponent {
      * @returns {DataStream} Stream with load check data.
      */
     getLoadCheckStream(): StringStream {
-        const safeOperationsLimit = this.constants.SAFE_OPERATION_LIMIT;
+        const _this = this;
 
         return DataStream.from(
             async function*() {
                 while (true) {
-                    const [load, disksInfo, memInfo] = await Promise.all([
-                        sysinfo.currentLoad(),
-                        sysinfo.fsSize(),
-                        sysinfo.mem()
-                    ]);
-
-                    yield {
-                        avgLoad: load.avgLoad,
-                        currentLoad: load.currentLoad || 85,
-                        memFree: memInfo.free + Math.max(
-                            0,
-                            memInfo.buffcache - safeOperationsLimit
-                        ),
-                        memUsed: memInfo.used,
-                        fsSize: disksInfo
-                    };
+                    yield _this.getLoadCheck();
 
                     await defer(1000);
                 }

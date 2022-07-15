@@ -17,10 +17,10 @@ import {
 import { MessageUtilities } from "@scramjet/model";
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
-import { networkInterfaces } from "systeminformation";
 import { VerserClient } from "@scramjet/verser";
 import { TypedEmitter, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { networkInterfaces } from "os";
 
 type STHInformation = {
     id?: string;
@@ -430,20 +430,39 @@ export class CPMConnector extends TypedEmitter<Events> {
     /**
      * Returns network interfaces information.
      *
-     * @returns {Promise<NetworkInfo>} Promise resolving to NetworkInfo object.
+     * @returns Promise resolving to NetworkInfo object.
      */
     async getNetworkInfo(): Promise<NetworkInfo[]> {
-        const fields = ["iface", "ifaceName", "ip4", "ip4subnet", "ip6", "ip6subnet", "mac", "dhcp"];
+        const net = Object.entries(networkInterfaces());
+        const ifs: NetworkInfo[] = [];
 
-        return (await networkInterfaces()).map((iface: any) => {
-            const info: any = {};
+        for (const [ifname, ifdata] of net) {
+            const ipv4 = ifdata?.find(({ family }) => family === "IPv4");
+            const ipv6 = ifdata?.find(({ family }) => family === "IPv6");
 
-            for (const field of fields) {
-                info[field] = iface[field];
+            if (!ipv4?.mac && !ipv6?.mac) continue;
+
+            const netInfo: NetworkInfo = {
+                iface: ifname,
+                ifaceName: ifname,
+                mac: (ipv4?.mac || ipv6?.mac) as string,
+                dhcp: false
+
+            };
+
+            if (ipv4?.address) {
+                netInfo.ip4 = ipv4?.address;
+                netInfo.ip4subnet = ipv4?.cidr as "string";
+            }
+            if (ipv6?.address) {
+                netInfo.ip6 = ipv6?.address;
+                netInfo.ip6subnet = ipv6?.cidr as "string";
             }
 
-            return info;
-        });
+            ifs.push(netInfo);
+        }
+
+        return ifs;
     }
 
     /**
