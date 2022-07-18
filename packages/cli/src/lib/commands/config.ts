@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 
-import { CommandDefinition } from "../../types";
+import { CommandDefinition, displayFormat } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
-import { ProfileConfig, profileConfig, profileManager, siConfig } from "../config";
+import { ProfileConfig, profileConfig, profileManager, siConfig, sessionConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
 import commander from "commander";
 import { defaultConfigName, listDirFileNames, profileExists, profileNameToPath, profileRemove, profilesDir } from "../paths";
@@ -35,7 +35,7 @@ export const config: CommandDefinition = (program) => {
     configCmd
         .command("print")
         .alias("p")
-        .description("Print out the current configuration")
+        .description("Print out the current profile configuration")
         .action(() => {
             const configuration = profileConfig.getConfig();
 
@@ -46,10 +46,20 @@ export const config: CommandDefinition = (program) => {
             displayObject(configuration, configuration.log.format);
         });
 
+    configCmd
+        .command("session")
+        .alias("s")
+        .description("Print out the current session configuration")
+        .action((format: displayFormat) => {
+            const session= sessionConfig.getConfig();
+
+            displayObject(session, format);
+        });
+
     const setCmd = configCmd
         .command("set")
         .addHelpCommand(false)
-        .description("Add properties to the global config ");
+        .description("Set property value in the current profile config");
 
     setCmd
         .command("json")
@@ -142,7 +152,7 @@ export const config: CommandDefinition = (program) => {
     const resetCmd = configCmd
         .command("reset")
         .addHelpCommand(false)
-        .description("Reset configuration value to default");
+        .description("Reset property value to default in the current profile config");
 
     const resetValue = (defaultValue: any, setCallback: (val: typeof defaultValue) => boolean) => {
         if (!setCallback(defaultValue)) {
