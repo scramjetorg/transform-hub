@@ -1,0 +1,29 @@
+{
+  "name": "@scramjet/sequence",
+  "version": "0.26.1",
+  "description": "This is a simple utility belt for writing Scramjet Sequences.",
+  "main": "./src/bin/sequence.ts",
+  "scripts": {
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "build:docs": "typedoc",
+    "clean": "rm -rf ./dist .bic_cache"
+  },
+  "author": "Scramjet <opensource@scramjet.org>",
+  "license": "MIT",
+  "dependencies": {
+    "scramjet": "^4.36.6",
+    "@scramjet/runner": "^0.26.1",
+    "@scramjet/python-runner": "^0.26.1"
+  },
+  "devDependencies": {
+    "@scramjet/types": "^0.26.1",
+    "@types/node": "15.12.5",
+    "typedoc": "^0.22.18",
+    "typedoc-plugin-markdown": "^3.13.3",
+    "typescript": "^4.7.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  }
+}
