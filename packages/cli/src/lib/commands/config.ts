@@ -51,7 +51,7 @@ export const config: CommandDefinition = (program) => {
         .alias("s")
         .description("Print out the current session configuration")
         .action((format: displayFormat) => {
-            const session= sessionConfig.getConfig();
+            const session = sessionConfig.getConfig();
 
             displayObject(session, format);
         });
