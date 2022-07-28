@@ -550,7 +550,7 @@ export class CSIController extends TypedEmitter<Events> {
             }
 
             return { opStatus: 406, error: "Input provided in other way." };
-        }, { checkContentType: false, end: true, encoding: "utf-8" });
+        }, { checkContentType: false, end: true, encoding: "binary" });
 
         // monitoring data
         this.router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
