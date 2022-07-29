@@ -133,6 +133,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
                     await new Promise<void>((resolve, reject) => {
                         if (encoding) {
                             req.setEncoding(encoding);
+                            (data as Writable).setDefaultEncoding(encoding);
                         }
 
                         req
