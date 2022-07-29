@@ -21,11 +21,12 @@
 -
 -
 
-**Gotchas:**
-<!-- Any known shortcomings, alternatives to consider, future todos... -->
--
--
--
+**Review checks:**
 
-<!-- PS try to make PR title suitable for pasting into CHANGELOG.md. -->
-<!-- Thanks! -->
+These aspects need to be checked by the reviewer:
+
+- [ ] Verify and confirm operation (please post a screenshot) <!-- remove if trivial tag added -->
+- [ ] All STH tests pass
+- [ ] All [Scramjet Cloud Platform](https://docs.scramjet.org/platform) tests pass
+- [ ] Documentation is updated or no changes
+
