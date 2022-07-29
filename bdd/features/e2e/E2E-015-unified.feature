@@ -66,9 +66,20 @@ Feature: Test our shiny new Python runner
         And instance started
         Then "output" will be data named "python-topics"
         And host is still running
+    
+    @ci-unified
+    Scenario: E2E-015 TC-012 Send data between instances using topics
+        Given host is running
+        When find and upload sequence "topic-producer-runtime.tar.gz"
+        And instance started
+        And send "topic test input" to input
+        And find and upload sequence "topic-consumer-runtime.tar.gz"
+        And instance started
+        Then "output" will be data named "python-topics"
+        And host is still running
 
     @ci-unified
-    Scenario: E2E-015 TC-012 Sequence can receive and emit events
+    Scenario: E2E-015 TC-013 Sequence can receive and emit events
         Given host is running
         When find and upload sequence "events.tar.gz"
         And instance started
