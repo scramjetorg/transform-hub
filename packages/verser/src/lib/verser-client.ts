@@ -103,8 +103,6 @@ export class VerserClient extends TypedEmitter<Events> {
      *
      * If channel is registered, callback will be called with the duplex stream,
      * otherwise stream will be passed to the server.
-     *
-     * @param {VerserClientConnection} connection Connection object.
      */
     private mux() {
         new BPMux(this.socket)

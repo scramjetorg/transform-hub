@@ -205,7 +205,7 @@ export class Host implements IComponent {
 
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
-            this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
+
             this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
@@ -360,7 +360,7 @@ export class Host implements IComponent {
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-
+        this.api.duplex(`${this.apiBase}/manager-cc`, (stream, headers) => this.cpmConnector?.handleCommunicationRequest(stream, headers));
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
