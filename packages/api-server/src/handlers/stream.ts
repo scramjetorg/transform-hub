@@ -190,6 +190,7 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
 
                 callback(d, req.headers);
             } catch (e: any) {
+                logger.error("Duplex error", e.error);
                 return next(new CeroError("ERR_FAILED_FETCH_DATA", e));
             }
 

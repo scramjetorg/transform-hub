@@ -70,7 +70,7 @@ export abstract class ClientUtilsBase implements HttpClient {
 
                     const fetchError = new QueryError(
                         input.toString(),
-                        errorBodyJson.error?.code,
+                        errorBodyJson.error?.code || result.status,
                         result.status,
                         errorBodyJson,
                         result,
