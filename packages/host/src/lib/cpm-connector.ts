@@ -311,7 +311,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         } catch (err) {
             this.logger.error("Can not connect to Manager", err);
 
-            this.reconnect();
+            await this.reconnect();
 
             return;
         }
@@ -324,16 +324,16 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connected = true;
         this.connectionAttempts = 0;
 
-        connection.req.on("error", (error: any) => {
+        connection.req.on("error", async (error: any) => {
             this.logger.error("Request error", error);
 
-            this.reconnect();
+            await this.reconnect();
         });
 
-        this.verserClient.on("error", (error: any) => {
+        this.verserClient.on("error", async (error: any) => {
             this.logger.error("VerserClient error", error);
 
-            this.reconnect();
+            await this.reconnect();
         });
     }
 
@@ -352,7 +352,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             clearInterval(this.loadInterval);
         }
 
-        this.reconnect();
+        await this.reconnect();
     }
 
     /**
@@ -360,7 +360,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @returns {void}
      */
-    reconnect():void {
+    async reconnect(): Promise<void> {
         if (this.isReconnecting) {
             return;
         }
@@ -377,11 +377,13 @@ export class CPMConnector extends TypedEmitter<Events> {
         if (shouldReconnect) {
             this.isReconnecting = true;
 
-            setTimeout(async () => {
-                this.logger.info("Connection lost, retrying", this.connectionAttempts);
+            await new Promise<void>((res) => {
+                setTimeout(async () => {
+                    this.logger.info("Connection lost, retrying", this.connectionAttempts);
 
-                await this.connect();
-            }, this.config.reconnectionDelay);
+                    await this.connect();
+                }, this.config.reconnectionDelay);
+            });
         }
     }
 
