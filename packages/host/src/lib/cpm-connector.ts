@@ -321,6 +321,12 @@ export class CPMConnector extends TypedEmitter<Events> {
         connection.socket
             .on("close", async () => { await this.handleConnectionClose(); });
 
+        /**
+         * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
+         * and made requests to it).
+         * @TODO: Provide detailed communication status.
+        */
+
         this.connected = true;
         this.connectionAttempts = 0;
 

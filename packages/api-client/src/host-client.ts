@@ -115,6 +115,13 @@ export class HostClient implements ClientProvider {
     }
 
     /**
+     * Returns Host status.
+     */
+    async getStatus() {
+        return this.client.get<STHRestAPI.GetStatusResponse>("status");
+    }
+
+    /**
      * Returns Host public configuration.
      *
      * @returns {Promise<GetConfigResponse>} Promise resolving to Host configuration (public part).

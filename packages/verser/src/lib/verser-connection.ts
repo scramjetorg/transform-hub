@@ -33,6 +33,11 @@ export class VerserConnection {
         this.request = request;
         this._socket = socket;
 
+        this.socket.on("error", (error: Error) => {
+            this.logger.error("Socket request error:", error);
+            // TODO: handle error.
+        });
+
         this.request.on("error", (error: Error) => {
             this.logger.error("Request error:", error);
             // TODO: handle error.
@@ -159,6 +164,7 @@ export class VerserConnection {
                     resolve({ incomingMessage, clientRequest });
                 })
                 .on("error", (error: Error) => {
+                    this.logger.error("Error making request", options);
                     reject(error);
                 });
 
@@ -188,7 +194,9 @@ export class VerserConnection {
         this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
-                return bpmux.multiplex() as Socket;
+                return (bpmux.multiplex() as Socket).on("error", () => {
+                    this.logger.error("Muxed stream error");
+                });
             } catch (e) {
                 const ret = new Socket();
 
