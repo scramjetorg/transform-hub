@@ -199,12 +199,13 @@ class Runner:
         self.logger.info(f'Sending PANG')
         monitoring = self.streams[CC.MONITORING]
 
-        if hasattr(self.sequence, 'provides'):
-            produces = self.sequence.provides
+        produces = getattr(result, 'provides', None) or getattr(self.sequence, 'provides', None)
+        if produces:
             self.logger.info(f'Sending PANG with {produces}')
             send_encoded_msg(monitoring, msg_codes.PANG, produces)
-        if hasattr(self.sequence, 'requires'):
-            consumes = self.sequence.requires
+
+        consumes = getattr(result, 'requires', None) or getattr(self.sequence, 'requires', None)
+        if consumes:
             self.logger.info(f'Sending PANG with {consumes}')
             send_encoded_msg(monitoring, msg_codes.PANG, consumes)
 
@@ -225,7 +226,7 @@ class Runner:
 
     async def connect_input_stream(self, input_stream):
         if hasattr(self.sequence, "requires"):
-            input_type = self.sequence.requires['contentType']
+            input_type = self.sequence.requires.get('contentType')
         else:
             raw_headers = await self.streams[CC.IN].readuntil(b'\r\n\r\n')
             header_list = raw_headers.decode().rstrip().split('\r\n')
@@ -233,7 +234,7 @@ class Runner:
                 key.lower(): val for key, val in [el.split(': ') for el in header_list]
             }
             self.logger.info(f'Input headers: {repr(headers)}')
-            input_type = headers['content-type']
+            input_type = headers.get('content-type')
 
         if input_type == 'text/plain':
             input = Stream.read_from(self.streams[CC.IN])
@@ -250,17 +251,21 @@ class Runner:
 
 
     async def forward_output_stream(self, output):
-        try:
-            output_type = self.sequence.output_type
-        except AttributeError:
-            self.logger.debug('Output type not set, using default')
-            output_type = 'text/plain'
-        self.logger.info(f'Output type: {output_type}')
-
-        if output_type == 'text/plain':
+        if hasattr(output, 'content_type'):
+            content_type = output.content_type
+        else:
+            # Deprecated
+            if hasattr(self.sequence, 'output_type'):
+                content_type = self.sequence.output_type
+            else:
+                self.logger.debug('Output type not set, using default')
+                content_type = 'text/plain'
+        self.logger.info(f'Content-type: {content_type}')
+        
+        if content_type == 'text/plain':
             self.logger.debug('Output stream will be treated as text and encoded')
             output = output.map(lambda s: s.encode())
-        if output_type == 'application/x-ndjson':
+        if content_type == 'application/x-ndjson':
             self.logger.debug('Output will be converted to JSON')
             output = output.map(lambda chunk: (json.dumps(chunk)+'\n').encode())
 
