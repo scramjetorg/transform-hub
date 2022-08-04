@@ -430,7 +430,7 @@ export class Host implements IComponent {
             const instances = [...sequenceInfo.instances].every(
                 instanceId => {
                     this.instancesStore[instanceId]?.finalizingPromise?.cancel();
-                    return !this.instancesStore[instanceId]?.isRunning;
+                    return this.instancesStore[instanceId]?.isRunning;
                 }
             );
 
