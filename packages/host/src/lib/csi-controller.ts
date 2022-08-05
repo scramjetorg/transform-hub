@@ -624,6 +624,11 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
+        if (["stopping", "killing", "completed", "errored"].includes(this.status)) {
+            this.logger.debug("instance stop conflict", this.getInfo());
+            return { opStatus: ReasonPhrases.CONFLICT, ...this.getInfo() };
+        }
+
         const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
 
         this.status = "stopping";
