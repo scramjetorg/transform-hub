@@ -3,7 +3,6 @@ import {
     AppConfig,
     DownstreamStreamsConfig,
     EncodedMessage,
-    ExitCode,
     HandshakeAcknowledgeMessage,
     ICommunicationHandler,
     ParsedMessage,
@@ -59,6 +58,13 @@ type Events = {
     end: (code: number) => void
 }
 
+enum TerminateReason {
+    STOPPED = "stopped",
+    ERRORED = "errored",
+    KILLED = "killed",
+    COMPLETED = "completed"
+}
+
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
  */
@@ -85,7 +91,7 @@ export class CSIController extends TypedEmitter<Events> {
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
     appConfig: AppConfig;
-    instancePromise?: Promise<number>;
+    instancePromise?: Promise<{ exitcode: number, reason: TerminateReason }>;
     sequenceArgs: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
@@ -96,6 +102,10 @@ export class CSIController extends TypedEmitter<Events> {
         ended?: Date;
     } = {};
     status: InstanceStatus;
+    terminated?: {
+        exitcode: number,
+        reason: string
+    }
     provides?: string;
     requires?: string;
 
@@ -210,17 +220,22 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Instance started");
 
         let code = 0;
+        let errored = false;
 
         try {
-            code = await this.instanceStopped();
+            const stopResult = await this.instanceStopped();
 
-            this.logger.trace("Instance stopped with code", code);
+            code = stopResult?.exitcode!;
+            this.logger.trace("Instance ended with code", code);
+            this.setExitInfo(code, stopResult?.reason!);
         } catch (e: any) {
+            this.setExitInfo(e.exitcode, e.reason);
             code = e.exitcode;
+            errored = true;
             this.logger.error("Instance caused error", e.message, code);
         }
 
-        this.status = code === 0 ? "completed" : "errored";
+        this.status = !errored ? "completed" : "errored";
 
         this.info.ended = new Date();
 
@@ -259,11 +274,8 @@ export class CSIController extends TypedEmitter<Events> {
 
                 const exitcode = await this.endOfSequence;
 
-                if (exitcode === 0) {
-                    this.logger.trace("Sequence finished with success", exitcode);
-                } else {
+                if (exitcode > 0) {
                     this.status = "errored";
-                    this.logger.error("Sequence finished with error", exitcode);
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
@@ -286,7 +298,7 @@ export class CSIController extends TypedEmitter<Events> {
                 this.logger.error("Instance promise rejected", error);
                 this.initResolver?.rej(error);
 
-                return error.exitcode;
+                return error;
             });
 
         this.instancePromise.finally(() => {
@@ -327,8 +339,13 @@ export class CSIController extends TypedEmitter<Events> {
                 });
             }
             case RunnerExitCode.KILLED: {
-                return Promise.reject({
-                    message: "Instance killed", exitcode: RunnerExitCode.KILLED
+                return Promise.resolve({
+                    message: "Instance killed", exitcode: RunnerExitCode.KILLED, reason: TerminateReason.KILLED
+                });
+            }
+            case RunnerExitCode.STOPPED: {
+                return Promise.resolve({
+                    message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, reason: TerminateReason.STOPPED
                 });
             }
         }
@@ -337,7 +354,7 @@ export class CSIController extends TypedEmitter<Events> {
             return Promise.reject({ message: "Runner failed", exitcode });
         }
 
-        return Promise.resolve(exitcode);
+        return Promise.resolve({ exitcode });
     }
 
     async cleanup() {
@@ -360,7 +377,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.end();
     }
 
-    instanceStopped(): Promise<ExitCode> {
+    instanceStopped(): CSIController["instancePromise"] {
         if (!this.instancePromise) {
             throw new CSIControllerError("UNATTACHED_STREAMS");
         }
@@ -687,6 +704,7 @@ export class CSIController extends TypedEmitter<Events> {
             started: this.info.started,
             ended: this.info.ended,
             status: this.status,
+            terminated: this.terminated
         };
     }
 
@@ -754,5 +772,9 @@ export class CSIController extends TypedEmitter<Events> {
         this.keepAliveRequested = true;
 
         return message;
+    }
+
+    setExitInfo(exitcode: number, reason: TerminateReason) {
+        this.terminated ||= { exitcode, reason };
     }
 }

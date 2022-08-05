@@ -110,7 +110,6 @@ export class Runner<X extends AppConfig> implements IComponent {
     private keepAliveRequested?: boolean;
 
     private stopExpected: boolean = false;
-
     handshakeResolver?: { res: Function, rej: Function };
 
     logger: IObjectLogger;
@@ -235,14 +234,13 @@ export class Runner<X extends AppConfig> implements IComponent {
 
         this.context.killHandler();
 
-        //TODO: investigate why we need to wait (process.tick - no all logs)
         if (!this.stopExpected) {
-            this.logger.trace("Exiting (unexpected, 137)");
-            return this.exit(137);
+            this.logger.trace(`Exiting (unexpected, ${RunnerExitCode.KILLED})`);
+            return this.exit(RunnerExitCode.KILLED);
         }
 
         this.logger.trace("Exiting (expected)");
-        return this.exit();
+        return this.exit(RunnerExitCode.STOPPED);
     }
 
     async addStopHandlerRequest(data: StopSequenceMessageData): Promise<void> {
@@ -266,6 +264,8 @@ export class Runner<X extends AppConfig> implements IComponent {
                 [RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError }], this.hostClient.monitorStream
             );
         }
+
+        this.stopExpected = true;
     }
 
     private keepAliveIssued(): void {
@@ -386,7 +386,7 @@ export class Runner<X extends AppConfig> implements IComponent {
 
             await this.hostClient.disconnect();
         } catch (e: any) {
-            exitcode = 223;
+            exitcode = RunnerExitCode.CLEANUP_FAILED;
         }
 
         return exitcode;
@@ -420,7 +420,6 @@ export class Runner<X extends AppConfig> implements IComponent {
             keepAliveIssued: () => this.keepAliveIssued(),
             sendStop: (err?: Error) => {
                 this.writeMonitoringMessage([RunnerMessageCode.SEQUENCE_STOPPED, { sequenceError: err }]);
-                this.stopExpected = true;
             },
             sendKeepAlive: (ev) => this.writeMonitoringMessage([RunnerMessageCode.ALIVE, ev]),
             sendEvent: (ev) => this.writeMonitoringMessage([RunnerMessageCode.EVENT, ev])

@@ -11,4 +11,8 @@ export type Instance = {
     started?: Date,
     ended?: Date,
     status?: InstanceStatus,
+    terminated?: {
+        exitcode: number,
+        reason: string
+    }
 }
