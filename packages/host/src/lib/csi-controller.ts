@@ -28,7 +28,8 @@ import {
     CommunicationHandler,
     HostError,
     MessageUtilities,
-    InstanceAdapterError
+    InstanceAdapterError,
+    isStopSequenceMessage
 } from "@scramjet/model";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
@@ -641,7 +642,11 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
-        const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
+        const message = (req.body || []) as EncodedMessage<RunnerMessageCode.STOP>;
+
+        if (!isStopSequenceMessage(message[1] || {})) {
+            return { opStatus: ReasonPhrases.BAD_REQUEST };
+        }
 
         this.status = "stopping";
 
@@ -651,7 +656,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.keepAliveRequested = false;
 
-        await defer(timeout);
+        await defer(timeout || 0);
 
         if (!this.keepAliveRequested) {
             // TODO: shouldn't this be just this.handleKill();
