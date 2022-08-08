@@ -108,9 +108,16 @@ This feature checks CLI functionalities without topics
         Then I confirm data named "checksum" received
 
     @ci-api @cli
-    Scenario: E2E-010 TC-013 Test Instance 'event' option
+    Scenario: E2E-010 TC-013 Test Instance 'event' option with payload
         When I execute CLI with "seq deploy ../packages/event-sequence-v2.tar.gz"
         When I execute CLI with "inst event emit - test-event test message"
+        When I execute CLI with "inst event on - test-event-response"
+        Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
+
+    @ci-api @cli
+    Scenario: E2E-010 TC-013a Test Instance 'event' option without payload
+        When I execute CLI with "seq deploy ../packages/event-sequence-v2.tar.gz"
+        When I execute CLI with "inst event emit - test-event"
         When I execute CLI with "inst event on - test-event-response"
         Then I get event "test-event-response" with event message "{\"eventName\":\"test-event-response\",\"message\":\"message from sequence\"}" from Instance
 
