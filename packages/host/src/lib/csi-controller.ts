@@ -585,6 +585,7 @@ export class CSIController extends TypedEmitter<Events> {
             const event = data[1];
 
             if (!event.eventName) return;
+
             localEmitter.lastEvents[event.eventName] = event;
             localEmitter.emit(event.eventName, event);
         });
@@ -631,6 +632,7 @@ export class CSIController extends TypedEmitter<Events> {
 
             return awaitEvent(req);
         });
+
         this.router.get("/once/:name", awaitEvent);
 
         // operations

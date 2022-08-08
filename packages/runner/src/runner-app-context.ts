@@ -139,7 +139,7 @@ implements AppContext<AppConfigType, State> {
         return this;
     }
 
-    emit(eventName: string, message: any) {
+    emit(eventName: string, message?: any) {
         this.runner.sendEvent({ eventName, message });
         // this.emitter.emit(eventName, message);
         return this;
