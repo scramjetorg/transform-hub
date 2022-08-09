@@ -119,7 +119,8 @@ export const packAction = async (directory: string, { output }: { output: Writab
     // TODO: error handling?
     // TODO: check package contents?
     await access(packageLocation, F_OK | R_OK).catch(() => {
-        throw new Error(`${packageLocation} not found.`);
+        displayError(`${packageLocation} not found.`);
+        process.exit(1);
     });
 
     const ignoreLocation = resolve(cwd, ".siignore");
@@ -151,6 +152,7 @@ export const getReadStreamFromFile = async (file: string): Promise<Readable> => 
     return access(resolvedFilePath, F_OK)
         .then(() => createReadStream(resolvedFilePath))
         .catch(() => {
-            throw new Error(`File "${file}" not found.`);
+            displayError(`File "${file}" not found.`);
+            process.exit(1);
         });
 };
