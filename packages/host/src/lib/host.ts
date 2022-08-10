@@ -28,6 +28,7 @@ import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramj
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
+import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -47,6 +48,8 @@ export class Host implements IComponent {
      * @type {Auditor}
      */
     auditor: Auditor;
+
+    telemetryAdapter?: ITelemetryAdapter;
 
     /**
      * Configuration.
@@ -157,10 +160,11 @@ export class Host implements IComponent {
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
 
         this.logger.addOutput(prettyLog);
-        this.serviceDiscovery.logger.pipe(this.logger);
+
         prettyLog.pipe(process.stdout);
 
-        this.logger.info("Log Level", sthConfig.logLevel);
+        this.serviceDiscovery.logger.pipe(this.logger);
+        this.telemetryAdapter?.logger.pipe(this.logger);
 
         this.auditor = new Auditor();
         this.auditor.logger.pipe(this.logger);
@@ -219,12 +223,18 @@ export class Host implements IComponent {
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
     async main(): Promise<void> {
+        await this.setTelemetry().catch(() => {
+            this.logger.error("Setting telemetry failed");
+        });
+
+        this.telemetryAdapter?.push("info", { message: "Host started" });
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
 
+        this.logger.info("Log Level", this.config.logLevel);
         this.logger.trace("Host main called", { version });
 
         if (this.config.identifyExisting) {
@@ -1017,6 +1027,33 @@ export class Host implements IComponent {
                 })
                 .close();
         });
+    }
+
+    async setTelemetry(): Promise<void> {
+        if (this.config.telemetry.status === "ask") {
+            await new Promise<void>((resolve, _reject) => {
+                require("readline").createInterface({
+                    input: process.stdin,
+                    output: process.stdout
+                }).question("Do You consent to the transmission of anonymous usage data to help us improve Transform Hub? (y/n) ", (reply: string) => {
+                    this.logger.info("User replied", reply);
+
+                    this.config.telemetry.status = ["yes", "y"].includes(reply.trim()) ? "on" : "off";
+                    resolve();
+                });
+            });
+        }
+
+        if (this.config.telemetry.status === "on") {
+            this.telemetryAdapter = await getTelemetryAdapter(this.config.telemetry.adapter, this.config.telemetry);
+            this.telemetryAdapter.logger.pipe(this.logger);
+
+            this.logger.info(`Telemetry is active. Adapter: ${this.config.telemetry.adapter}`);
+
+            return;
+        }
+
+        this.logger.info("No telemetry");
     }
 }
 

@@ -64,6 +64,15 @@ const _defaultConfig: STHConfiguration = {
         heartBeatInterval: 10000,
         instanceLifetimeExtensionDelay: 180e3,
         instanceAdapterExitDelay: 9000,
+    },
+    telemetry: {
+        status: "ask",
+        adapter: "loki",
+        loki: {
+            host: "http://localhost:3100",
+            replaceTimestamp: true,
+            labels: { module: "host" }
+        }
     }
 };
 
