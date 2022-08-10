@@ -54,8 +54,7 @@ Feature: HUB-001 Host configuration
         Then container memory limit is 128
         * exit hub process
 
-    # Needs to be fixed.
-    @starts-host @docker-specific
+    @ci-hub @starts-host @docker-specific
     Scenario: HUB-001 TC-012  Set prerunner image (--prerunner-image)
         When hub process is started with random ports and parameters "--prerunner-image repo.int.scp.ovh/scramjet/pre-runner:0.10.0-pre.7"
         And get all containers
@@ -65,7 +64,7 @@ Feature: HUB-001 Host configuration
         And end fake stream
         * exit hub process
 
-    @starts-host @docker-specific
+    @ci-hub @starts-host @docker-specific
     Scenario: HUB-001 TC-013  Set prerunner memory limit (--prerunner-max-mem)
         When hub process is started with random ports and parameters "--prerunner-max-mem 64"
         And get all containers
