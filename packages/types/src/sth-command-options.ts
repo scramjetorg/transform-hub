@@ -1,4 +1,5 @@
 import { LogLevel } from "./object-logger";
+import { TelemetryConfig } from "./telemetry-config";
 
 export type STHCommandOptions = {
     logLevel: LogLevel;
@@ -38,4 +39,5 @@ export type STHCommandOptions = {
     startupConfig: string;
     exitWithLastInstance: boolean;
     instanceLifetimeExtensionDelay: number;
+    telemetry: TelemetryConfig["status"]
 }

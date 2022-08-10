@@ -1,0 +1,13 @@
+# `@scramjet/telemetry`
+
+This package is part of Scramjet Transform Hub. The package provides modules for gathering analytics data.
+
+## Docs
+
+>!docs telemetry/modules.md &
+
+>@sth
+>@use-cases
+>@links
+>@license-agpl
+>@contrib
