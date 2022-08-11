@@ -1,6 +1,6 @@
 import { existsSync, writeFileSync, readFileSync } from "fs";
 import { normalizeUrl } from "@scramjet/utility";
-import { createSessionDirIfNotExists, defaultConfigName, defaultConfigProfileFile, profileExists, profileNameToPath, sessionConfigFile, siConfigFile } from "./paths";
+import { createConfigDirIfNotExists, createSessionDirIfNotExists, defaultConfigName, defaultConfigProfileFile, profileExists, profileNameToPath, sessionConfigFile, siConfigFile } from "./paths";
 import { configEnv, isConfigEnv, isConfigFormat, ProfileConfigEntity, SiConfigEntity, SessionConfigEntity } from "../types";
 import isUrl from "validator/lib/isURL";
 import isJWT from "validator/lib/isJWT";
@@ -44,6 +44,7 @@ abstract class FileConfig extends Config {
     }
     writeConfig(config: any): boolean {
         try {
+            createConfigDirIfNotExists();
             writeFileSync(this.filePath, JSON.stringify(config, null, 2), "utf-8");
             return true;
         } catch (e) {
@@ -307,7 +308,7 @@ export class ProfileConfig extends DefaultFileConfig {
     }
 }
 
-// Session configuration represents configuration used by internally 
+// Session configuration represents configuration used by internally
 // that is stored and used through current shell session time that runs Cli.
 class SessionConfig extends DefaultFileConfig {
     constructor() {
