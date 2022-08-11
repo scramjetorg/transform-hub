@@ -2,6 +2,37 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.27.0] - 2022-08-11
+
+### Changed
+* Update pull_request_template.md by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/614
+* Remove stream object from topics response by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/615
+* Update sinon and tar deps by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/618
+* Change the way of choosing content-type for Python Sequences by @Tatarinho in https://github.com/scramjetorg/transform-hub/pull/613
+* Allow to send event without payload by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/626
+
+### Features
+* Add yaml loader by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/572
+* Added jsdoc descriptions to middleware-api-client by @kociolekscramjet in https://github.com/scramjetorg/transform-hub/pull/599
+* [CLI] Add session config display command by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/600
+
+### Fixed
+* Fix description in AppContext by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/593
+* Fixing installation of python-runner libs by @Tatarinho in https://github.com/scramjetorg/transform-hub/pull/609
+* Fix handling binary input by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/612
+* Allow Arrays in AppConfig by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/603
+* Fix delete Sequence with running Instances by @Tatarinho in https://github.com/scramjetorg/transform-hub/pull/621
+* Use response code if error code not provided in body by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/619
+* Change Stopped / Killed instance status to `completed`, provide exit info by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/622
+* Return 400 if stop request is not valid by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/630
+* Use correct hub in tests by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/627
+* Fix for #634 by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/635
+
+## [ 0.26.1] - 2022-07-12
+
+### Fixed
+ * Fix dependencies by @MichalCz in #597
+
 ## [0.26.0] - 2022-07-11
 
 ### Features
