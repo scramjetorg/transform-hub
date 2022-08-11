@@ -333,11 +333,21 @@ export class CPMConnector extends TypedEmitter<Events> {
         connection.req.on("error", async (error: any) => {
             this.logger.error("Request error", error);
 
-            await this.reconnect();
+            try {
+                await this.reconnect();
+            } catch (e) {
+                this.logger.error("Reconnect failed");
+            }
         });
 
         this.verserClient.on("error", async (error: any) => {
             this.logger.error("VerserClient error", error);
+
+            try {
+                await this.reconnect();
+            } catch (e) {
+                this.logger.error("Reconnect failed");
+            }
 
             await this.reconnect();
         });
@@ -383,11 +393,11 @@ export class CPMConnector extends TypedEmitter<Events> {
         if (shouldReconnect) {
             this.isReconnecting = true;
 
-            await new Promise<void>((res) => {
+            await new Promise<void>((resolve, reject) => {
                 setTimeout(async () => {
                     this.logger.info("Connection lost, retrying", this.connectionAttempts);
 
-                    await this.connect();
+                    await this.connect().then(resolve, reject);
                 }, this.config.reconnectionDelay);
             });
         }
