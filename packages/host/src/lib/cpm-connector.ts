@@ -38,27 +38,6 @@ type Events = {
  */
 export class CPMConnector extends TypedEmitter<Events> {
     /**
-     * Maximum attempts for first connection try.
-     *
-     * @type {number}
-     */
-    MAX_CONNECTION_ATTEMPTS = 100;
-
-    /**
-     * Maximum retries on connection lost.
-     *
-     * @type {number}
-     */
-    MAX_RECONNECTION_ATTEMPTS = 100;
-
-    /**
-     * Delay between connection attempts.
-     *
-     * @type {number}
-     */
-    RECONNECT_INTERVAL = 2000;
-
-    /**
      * Load check instance to be used to get load check data.
      *
      * @type {LoadCheck}
@@ -408,12 +387,9 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         let shouldReconnect = true;
 
-        if (this.wasConnected) {
-            if (this.connectionAttempts > this.MAX_RECONNECTION_ATTEMPTS) {
-                shouldReconnect = false;
-            }
-        } else if (this.connectionAttempts > this.MAX_CONNECTION_ATTEMPTS) {
+        if (~this.config.maxReconnections && this.connectionAttempts > this.config.maxReconnections) {
             shouldReconnect = false;
+            this.logger.warn("Maximum reconnection attempts reached. Giving up.");
         }
 
         if (shouldReconnect) {
@@ -423,7 +399,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 this.logger.info("Connection lost, retrying", this.connectionAttempts);
 
                 await this.connect();
-            }, this.RECONNECT_INTERVAL);
+            }, this.config.reconnectionDelay);
         }
     }
 

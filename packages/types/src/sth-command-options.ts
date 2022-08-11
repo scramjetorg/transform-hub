@@ -9,6 +9,8 @@ export type STHCommandOptions = {
     cpmUrl?: string;
     cpmId?: string;
     cpmSslCaPath?: string;
+    cpmMaxReconnections: number,
+    cpmReconnectionDelay: number,
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;

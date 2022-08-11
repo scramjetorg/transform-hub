@@ -10,6 +10,10 @@ const _defaultConfig: STHConfiguration = {
     logColors: true,
     cpmUrl: "",
     cpmId: "",
+    cpm: {
+        maxReconnections: 100,
+        reconnectionDelay: 2000,
+    },
     docker: {
         prerunner: {
             image: "",
