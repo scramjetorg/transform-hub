@@ -151,7 +151,7 @@ export class Host implements IComponent {
             this,
             {},
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
-                ObjLogger.levels[ObjLogger.levels.length - 1]
+            ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
@@ -706,7 +706,8 @@ export class Host implements IComponent {
                 );
 
                 this.serviceDiscovery.update({
-                    requires: data.requires, contentType: data.contentType!, topicName: data.requires });
+                    requires: data.requires, contentType: data.contentType!, topicName: data.requires
+                });
             }
 
             // Do not route output stream to original topic if --output-topic is specified
@@ -722,7 +723,8 @@ export class Host implements IComponent {
                 );
 
                 this.serviceDiscovery.update({
-                    provides: data.provides, contentType: data.contentType!, topicName: data.provides });
+                    provides: data.provides, contentType: data.contentType!, topicName: data.provides
+                });
             }
         });
 

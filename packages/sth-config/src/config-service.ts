@@ -1,4 +1,5 @@
 import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
+
 import { merge } from "@scramjet/utility";
 import path from "path";
 import { homedir } from "os";

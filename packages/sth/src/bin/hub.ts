@@ -13,6 +13,7 @@ const program = new Command();
 const options: STHCommandOptions = program
     .option("-c, --config <path>", "Specifies path to config")
     .option("-L, --log-level <level>", "Specify log level")
+    .option("--no-colors", "Disable colors in output", false)
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
@@ -46,7 +47,7 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
     .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .parse(process.argv)
-    .opts() as STHCommandOptions;
+    .opts();
 
 (async () => {
     const configService = new ConfigService();
@@ -90,6 +91,7 @@ const options: STHCommandOptions = program
         exitWithLastInstance: options.exitWithLastInstance,
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,
+        logColors: options.colors,
         kubernetes: {
             namespace: options.k8sNamespace,
             authConfigPath: options.k8sAuthConfigPath,
