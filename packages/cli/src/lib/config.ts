@@ -6,6 +6,7 @@ import isUrl from "validator/lib/isURL";
 import isJWT from "validator/lib/isJWT";
 import { envs } from "../utils/envs";
 import { displayError, displayMessage } from "./output";
+import { sessionId } from "../utils/sessionId";
 
 abstract class Config {
     abstract getConfig(): any | null;
@@ -307,7 +308,7 @@ export class ProfileConfig extends DefaultFileConfig {
     }
 }
 
-// Session configuration represents configuration used by internally 
+// Session configuration represents configuration used by internally
 // that is stored and used through current shell session time that runs Cli.
 class SessionConfig extends DefaultFileConfig {
     constructor() {
@@ -317,6 +318,7 @@ class SessionConfig extends DefaultFileConfig {
             lastSequenceId: "",
             lastSpaceId: "",
             lastHubId: "",
+            sessionId: sessionId()
         };
 
         super(sessionConfigFile, defaultSessionConfig);

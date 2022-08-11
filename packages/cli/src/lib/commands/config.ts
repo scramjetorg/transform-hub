@@ -2,7 +2,6 @@
 
 import { CommandDefinition, displayFormat } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
-import { sessionId } from "../../utils/sessionId";
 import { ProfileConfig, profileConfig, profileManager, siConfig, sessionConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
 import commander from "commander";
@@ -53,9 +52,7 @@ export const config: CommandDefinition = (program) => {
         .description("Print out the current session configuration")
         .action((format: displayFormat) => {
             const session = sessionConfig.getConfig();
-            const id = sessionId();
 
-            displayMessage(`Session id: ${id}\n`);
             displayObject(session, format);
         });
 

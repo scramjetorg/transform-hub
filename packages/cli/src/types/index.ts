@@ -40,4 +40,5 @@ export interface SessionConfigEntity {
     lastSequenceId: string;
     lastSpaceId: string,
     lastHubId: string,
+    sessionId: string
 }
