@@ -40,7 +40,6 @@ const _defaultConfig: STHConfiguration = {
         freeSpace: 128
     },
     safeOperationLimit: 512,
-    instanceAdapterExitDelay: 9000,
     runtimeAdapter: "docker",
     sequencesRoot: path.join(homedir(), ".scramjet_sequences"),
     kubernetes: {
@@ -56,8 +55,11 @@ const _defaultConfig: STHConfiguration = {
     },
     startupConfig: "",
     exitWithLastInstance: false,
-    instanceLifetimeExtensionDelay: 180e3,
-    heartBeatInterval: 10000
+    timings: {
+        heartBeatInterval: 10000,
+        instanceLifetimeExtensionDelay: 180e3,
+        instanceAdapterExitDelay: 9000,
+    }
 };
 
 merge(_defaultConfig, {

@@ -70,10 +70,25 @@ export type HostConfig = {
 }
 
 export type K8SAdapterConfiguration = {
+    /**
+     * The Kubernetes namespace to use for running sequences
+     */
     namespace: string,
+    /**
+     * Authentication configuration path
+     */
     authConfigPath?: string,
+    /**
+     * The host where to start STH Pods
+     */
     sthPodHost: string,
+    /**
+     * Runner images to use
+     */
     runnerImages: { python3: string, node: string },
+    /**
+     * Path to store sequences
+     */
     sequencesRoot: string,
     timeout?: string,
     runnerResourcesRequestsMemory?: string,
@@ -153,7 +168,7 @@ export type STHConfiguration = {
     },
 
     /**
-     * The amount of memory that must remain free.
+     * The amount of memory that must remain free. In megabytes.
      */
     safeOperationLimit: number;
 
@@ -161,17 +176,6 @@ export type STHConfiguration = {
      * Should we identify existing sequences.
      */
     identifyExisting: boolean;
-
-    /**
-     * Time to wait after Runner container exit.
-     * In this additional time Instance API is still available.
-     */
-    instanceAdapterExitDelay: number;
-
-    /**
-     * Time to wait before CSIController emits `end` event.
-     */
-    instanceLifetimeExtensionDelay: number;
 
     /**
      * Which sequence and instance adapters should STH use.
@@ -202,9 +206,26 @@ export type STHConfiguration = {
     exitWithLastInstance: boolean,
 
     /**
-     * Heartbeat interval in miliseconds
+     * Various timeout and interval configurations
      */
-    heartBeatInterval: number,
+    timings: {
+        /**
+         * Heartbeat interval in miliseconds
+         */
+        heartBeatInterval: number,
+
+        /**
+         * Time to wait after Runner container exit.
+         * In this additional time Instance API is still available.
+         */
+        instanceAdapterExitDelay: number;
+
+        /**
+         * Time to wait before CSIController emits `end` event.
+         */
+        instanceLifetimeExtensionDelay: number;
+
+    };
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

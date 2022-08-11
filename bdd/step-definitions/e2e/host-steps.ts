@@ -34,6 +34,7 @@ const version = findPackage(__dirname).next().value?.version || "unknown";
 const hostUtils = new HostUtils();
 const testPath = "../packages/reference-apps/hello-alice-out/";
 const dockerode = new Dockerode();
+const getHostClient = ({ resources } : CustomWorld): HostClient => resources.hostClient || hostClient;
 const actualResponse = () => actualStatusResponse || actualHealthResponse;
 const startWith = async function(this: CustomWorld, instanceArg: string) {
     this.resources.instance = await this.resources.sequence!.start({
@@ -141,7 +142,7 @@ BeforeAll({ timeout: 10e3 }, async () => {
             },
         });
     }
-    await hostUtils.spawnHost();
+    await hostUtils.spawnHost([]);
 });
 
 AfterAll(async () => {
@@ -197,7 +198,7 @@ const startHost = async () => {
             },
         });
     }
-    await hostUtils.spawnHost();
+    await hostUtils.spawnHost([]);
 };
 
 Given("start host", () => startHost());
@@ -206,7 +207,7 @@ Then("stop host", () => hostUtils.stopHost());
 Then("send fake stream as sequence", async function(this: CustomWorld) {
     this.resources.pkgFake = new PassThrough();
 
-    this.resources.sequenceSendPromise = hostClient.sendSequence(
+    this.resources.sequenceSendPromise = getHostClient(this).sendSequence(
         this.resources.pkgFake as unknown as ReadStream
     ).catch((err: any) => console.log(err));
 
@@ -224,18 +225,18 @@ Then("end fake stream", async function(this: CustomWorld): Promise<void> {
     });
 });
 
-Given("host is running", async () => {
+Given("host is running", async function(this: CustomWorld) {
     const apiUrl = process.env.SCRAMJET_HOST_BASE_URL;
 
     if (apiUrl) {
-        hostClient = new HostClient(apiUrl);
+        hostClient = this.resources.hostClient = new HostClient(apiUrl);
     }
 
     assert.ok(await hostClient.getLoadCheck());
 });
 
-Then("host is still running", async () => {
-    assert.ok(await hostClient.getLoadCheck());
+Then("host is still running", async function(this: CustomWorld) {
+    assert.ok(await getHostClient(this).getLoadCheck());
 });
 
 When("wait for {string} ms", async (timeoutMs: number) => {
@@ -248,21 +249,21 @@ When("find and upload sequence {string}", { timeout: 50000 }, async function(thi
     if (!existsSync(packagePath))
         assert.fail(`"${packagePath}" does not exist, did you forget to set PACKAGES_DIR?`);
 
-    this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
+    this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} loaded", { timeout: 50000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath))
         assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
-    this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
+    this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
 });
 
 When("sequence {string} is loaded", { timeout: 15000 }, async function(this: CustomWorld, packagePath: string) {
     if (!existsSync(packagePath))
         assert.fail(`"${packagePath}" does not exist, did you forget 'yarn build:refapps'?`);
 
-    this.resources.sequence = await hostClient.sendSequence(createReadStream(packagePath));
+    this.resources.sequence = await getHostClient(this).sendSequence(createReadStream(packagePath));
     console.log("Package successfully loaded, sequence started.");
 });
 

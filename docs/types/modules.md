@@ -1179,20 +1179,20 @@ ___
 
 #### Type declaration
 
-| Name | Type |
-| :------ | :------ |
-| `authConfigPath?` | `string` |
-| `namespace` | `string` |
-| `runnerImages` | { `node`: `string` ; `python3`: `string`  } |
-| `runnerImages.node` | `string` |
-| `runnerImages.python3` | `string` |
-| `runnerResourcesLimitsCpu?` | `string` |
-| `runnerResourcesLimitsMemory?` | `string` |
-| `runnerResourcesRequestsCpu?` | `string` |
-| `runnerResourcesRequestsMemory?` | `string` |
-| `sequencesRoot` | `string` |
-| `sthPodHost` | `string` |
-| `timeout?` | `string` |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `authConfigPath?` | `string` | Authentication configuration path |
+| `namespace` | `string` | The Kubernetes namespace to use for running sequences |
+| `runnerImages` | { `node`: `string` ; `python3`: `string`  } | Runner images to use |
+| `runnerImages.node` | `string` | - |
+| `runnerImages.python3` | `string` | - |
+| `runnerResourcesLimitsCpu?` | `string` | - |
+| `runnerResourcesLimitsMemory?` | `string` | - |
+| `runnerResourcesRequestsCpu?` | `string` | - |
+| `runnerResourcesRequestsMemory?` | `string` | - |
+| `sequencesRoot` | `string` | Path to store sequences |
+| `sthPodHost` | `string` | The host where to start STH Pods |
+| `timeout?` | `string` | - |
 
 #### Defined in
 
@@ -1946,7 +1946,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:210](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L210)
+[packages/types/src/sth-configuration.ts:231](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L231)
 
 ___
 
@@ -2101,6 +2101,7 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `config?` | `string` |
 | `cpmId?` | `string` |
 | `cpmSslCaPath?` | `string` |
 | `cpmUrl?` | `string` |
@@ -2131,6 +2132,7 @@ ___
 | `runnerMaxMem` | `number` |
 | `runnerPyImage` | `string` |
 | `runtimeAdapter` | `string` |
+| `safeOperationLimit` | `number` |
 | `sequencesRoot` | `string` |
 | `startupConfig` | `string` |
 
@@ -2158,11 +2160,8 @@ ___
 | `docker.runnerImages.node` | `string` | - |
 | `docker.runnerImages.python3` | `string` | - |
 | `exitWithLastInstance` | `boolean` | Should the hub exit when the last instance ends |
-| `heartBeatInterval` | `number` | Heartbeat interval in miliseconds |
 | `host` | [`HostConfig`](modules.md#hostconfig) | Host configuration. |
 | `identifyExisting` | `boolean` | Should we identify existing sequences. |
-| `instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time Instance API is still available. |
-| `instanceLifetimeExtensionDelay` | `number` | Time to wait before CSIController emits `end` event. |
 | `instanceRequirements` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } | Minimum requirements to start new Instance. |
 | `instanceRequirements.cpuLoad` | `number` | Required free CPU. In percentage. |
 | `instanceRequirements.freeMem` | `number` | Free memory required to start Instance. In megabytes. |
@@ -2171,13 +2170,17 @@ ___
 | `logColors` | `boolean` | Enable colors in logging. |
 | `logLevel` | [`LogLevel`](modules.md#loglevel) | Logging level. |
 | `runtimeAdapter` | `string` | Which sequence and instance adapters should STH use. One of 'docker', 'process', 'kubernetes' |
-| `safeOperationLimit` | `number` | The amount of memory that must remain free. |
+| `safeOperationLimit` | `number` | The amount of memory that must remain free. In megabytes. |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
 | `startupConfig` | `string` | Provides the location of a config file with the list of sequences to be started along with the host |
+| `timings` | { `heartBeatInterval`: `number` ; `instanceAdapterExitDelay`: `number` ; `instanceLifetimeExtensionDelay`: `number`  } | Various timeout and interval configurations |
+| `timings.heartBeatInterval` | `number` | Heartbeat interval in miliseconds |
+| `timings.instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time Instance API is still available. |
+| `timings.instanceLifetimeExtensionDelay` | `number` | Time to wait before CSIController emits `end` event. |
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L85)
+[packages/types/src/sth-configuration.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L100)
 
 ___
 

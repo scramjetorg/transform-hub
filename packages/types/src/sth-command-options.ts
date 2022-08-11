@@ -5,6 +5,7 @@ export type STHCommandOptions = {
     port: number;
     hostname: string;
     identifyExisting: boolean;
+    config?: string;
     cpmUrl?: string;
     cpmId?: string;
     cpmSslCaPath?: string;

@@ -511,7 +511,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:676](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L676)
+[packages/host/src/lib/csi-controller.ts:679](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L679)
 
 ___
 
@@ -525,7 +525,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:694](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L694)
+[packages/host/src/lib/csi-controller.ts:697](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L697)
 
 ___
 
@@ -539,7 +539,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:698](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L698)
+[packages/host/src/lib/csi-controller.ts:701](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L701)
 
 ___
 
@@ -571,7 +571,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:690](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L690)
+[packages/host/src/lib/csi-controller.ts:693](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L693)
 
 ___
 
@@ -631,7 +631,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:748](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L748)
+[packages/host/src/lib/csi-controller.ts:751](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L751)
 
 ___
 
@@ -651,7 +651,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:703](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L703)
+[packages/host/src/lib/csi-controller.ts:706](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L706)
 
 ___
 
@@ -671,7 +671,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:721](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L721)
+[packages/host/src/lib/csi-controller.ts:724](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L724)
 
 ___
 

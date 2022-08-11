@@ -25,7 +25,7 @@
 
 #### Defined in
 
-[sth-config/src/config-service.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L73)
+[sth-config/src/config-service.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/sth-config/src/config-service.ts#L75)
 
 ## Functions
 
@@ -45,7 +45,7 @@ ___
 
 ### getRuntimeAdapterOption
 
-▸ **getRuntimeAdapterOption**(`options`): `string`
+▸ **getRuntimeAdapterOption**(`options`): `string` \| `undefined`
 
 #### Parameters
 
@@ -55,7 +55,7 @@ ___
 
 #### Returns
 
-`string`
+`string` \| `undefined`
 
 #### Defined in
 

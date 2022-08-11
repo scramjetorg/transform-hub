@@ -11,7 +11,7 @@ import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@sc
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
 import { LoadCheck } from "@scramjet/load-check";
-import { DockerodeDockerHelper, getSequenceAdapter, setupDockerNetworking } from "@scramjet/adapters";
+import { getSequenceAdapter, initializeSequenceAdapter } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
 import { CSIController } from "./csi-controller";
@@ -228,11 +228,9 @@ export class Host implements IComponent {
             await this.identifyExistingSequences();
         }
 
-        if (this.config.runtimeAdapter === "docker") {
-            this.logger.trace("Setting up Docker networking");
+        const adapter = await initializeSequenceAdapter(this.config);
 
-            await setupDockerNetworking(new DockerodeDockerHelper());
-        }
+        this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
 
         await this.socketServer.start();
 
@@ -432,7 +430,7 @@ export class Host implements IComponent {
             const instances = [...sequenceInfo.instances].every(
                 instanceId => {
                     this.instancesStore[instanceId]?.finalizingPromise?.cancel();
-                    return !this.instancesStore[instanceId]?.isRunning;
+                    return this.instancesStore[instanceId]?.isRunning;
                 }
             );
 
@@ -477,7 +475,7 @@ export class Host implements IComponent {
                 Promise.race([
                     csiController.heartBeatPromise
                         ?.then((id) => this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)),
-                    defer(this.config.heartBeatInterval)
+                    defer(this.config.timings.heartBeatInterval)
                         .then(() => { throw new Error("HeartBeat promise not resolved"); })
                 ]).catch((error) => {
                     this.logger.error("Instance heartbeat error", csiController.id, error.message);
@@ -491,7 +489,7 @@ export class Host implements IComponent {
     }
 
     async handleAuditRequest(req: ParsedMessage, res: ServerResponse) {
-        const i = setInterval(() => this.heartBeat(), this.config.heartBeatInterval);
+        const i = setInterval(() => this.heartBeat(), this.config.timings.heartBeatInterval);
 
         req.socket.on("end", () => {
             clearInterval(i);

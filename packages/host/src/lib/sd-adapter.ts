@@ -162,7 +162,9 @@ export class ServiceDiscovery {
      */
     getTopics() {
         return Array.from(this.dataMap, ([key, value]) => ({
-            ...value, topic: key
+            contentType: value.contentType,
+            localProvider: value.localProvider,
+            topic: key
         }));
     }
 

@@ -3,7 +3,6 @@ import {
     AppConfig,
     DownstreamStreamsConfig,
     EncodedMessage,
-    ExitCode,
     HandshakeAcknowledgeMessage,
     ICommunicationHandler,
     ParsedMessage,
@@ -29,7 +28,8 @@ import {
     CommunicationHandler,
     HostError,
     MessageUtilities,
-    InstanceAdapterError
+    InstanceAdapterError,
+    isStopSequenceMessage
 } from "@scramjet/model";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
@@ -59,6 +59,13 @@ type Events = {
     end: (code: number) => void
 }
 
+enum TerminateReason {
+    STOPPED = "stopped",
+    ERRORED = "errored",
+    KILLED = "killed",
+    COMPLETED = "completed"
+}
+
 /**
  * Handles all Instance lifecycle, exposes instance's HTTP API.
  */
@@ -85,7 +92,7 @@ export class CSIController extends TypedEmitter<Events> {
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
     appConfig: AppConfig;
-    instancePromise?: Promise<number>;
+    instancePromise?: Promise<{ exitcode: number, reason: TerminateReason }>;
     sequenceArgs: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
@@ -96,6 +103,10 @@ export class CSIController extends TypedEmitter<Events> {
         ended?: Date;
     } = {};
     status: InstanceStatus;
+    terminated?: {
+        exitcode: number,
+        reason: string
+    }
     provides?: string;
     requires?: string;
 
@@ -180,7 +191,7 @@ export class CSIController extends TypedEmitter<Events> {
             memory: payload.limits?.memory || sthConfig.docker.runner.maxMem
         };
 
-        this.instanceLifetimeExtensionDelay = +sthConfig.instanceLifetimeExtensionDelay;
+        this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
         this.communicationHandler = communicationHandler;
 
         this.logger = new ObjLogger(`CSIC ${this.id.slice(0, 7)}-...`, { id: this.id });
@@ -210,17 +221,22 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Instance started");
 
         let code = 0;
+        let errored = false;
 
         try {
-            code = await this.instanceStopped();
+            const stopResult = await this.instanceStopped();
 
-            this.logger.trace("Instance stopped with code", code);
+            code = stopResult?.exitcode!;
+            this.logger.trace("Instance ended with code", code);
+            this.setExitInfo(code, stopResult?.reason!);
         } catch (e: any) {
+            this.setExitInfo(e.exitcode, e.reason);
             code = e.exitcode;
+            errored = true;
             this.logger.error("Instance caused error", e.message, code);
         }
 
-        this.status = code === 0 ? "completed" : "errored";
+        this.status = !errored ? "completed" : "errored";
 
         this.info.ended = new Date();
 
@@ -239,7 +255,7 @@ export class CSIController extends TypedEmitter<Events> {
         const instanceConfig: InstanceConfig = {
             ...this.sequence.config,
             limits: this.limits,
-            instanceAdapterExitDelay: this.sthConfig.instanceAdapterExitDelay
+            instanceAdapterExitDelay: this.sthConfig.timings.instanceAdapterExitDelay
         };
 
         const instanceMain = async () => {
@@ -259,11 +275,8 @@ export class CSIController extends TypedEmitter<Events> {
 
                 const exitcode = await this.endOfSequence;
 
-                if (exitcode === 0) {
-                    this.logger.trace("Sequence finished with success", exitcode);
-                } else {
+                if (exitcode > 0) {
                     this.status = "errored";
-                    this.logger.error("Sequence finished with error", exitcode);
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
@@ -286,7 +299,7 @@ export class CSIController extends TypedEmitter<Events> {
                 this.logger.error("Instance promise rejected", error);
                 this.initResolver?.rej(error);
 
-                return error.exitcode;
+                return error;
             });
 
         this.instancePromise.finally(() => {
@@ -327,8 +340,13 @@ export class CSIController extends TypedEmitter<Events> {
                 });
             }
             case RunnerExitCode.KILLED: {
-                return Promise.reject({
-                    message: "Instance killed", exitcode: RunnerExitCode.KILLED
+                return Promise.resolve({
+                    message: "Instance killed", exitcode: RunnerExitCode.KILLED, reason: TerminateReason.KILLED
+                });
+            }
+            case RunnerExitCode.STOPPED: {
+                return Promise.resolve({
+                    message: "Instance stopped", exitcode: RunnerExitCode.STOPPED, reason: TerminateReason.STOPPED
                 });
             }
         }
@@ -337,7 +355,7 @@ export class CSIController extends TypedEmitter<Events> {
             return Promise.reject({ message: "Runner failed", exitcode });
         }
 
-        return Promise.resolve(exitcode);
+        return Promise.resolve({ exitcode });
     }
 
     async cleanup() {
@@ -360,7 +378,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.end();
     }
 
-    instanceStopped(): Promise<ExitCode> {
+    instanceStopped(): CSIController["instancePromise"] {
         if (!this.instancePromise) {
             throw new CSIControllerError("UNATTACHED_STREAMS");
         }
@@ -550,7 +568,7 @@ export class CSIController extends TypedEmitter<Events> {
             }
 
             return { opStatus: 406, error: "Input provided in other way." };
-        }, { checkContentType: false, end: true, encoding: "utf-8" });
+        }, { checkContentType: false, end: true, encoding: "binary" });
 
         // monitoring data
         this.router.get("/health", RunnerMessageCode.MONITORING, this.communicationHandler);
@@ -567,6 +585,7 @@ export class CSIController extends TypedEmitter<Events> {
             const event = data[1];
 
             if (!event.eventName) return;
+
             localEmitter.lastEvents[event.eventName] = event;
             localEmitter.emit(event.eventName, event);
         });
@@ -613,6 +632,7 @@ export class CSIController extends TypedEmitter<Events> {
 
             return awaitEvent(req);
         });
+
         this.router.get("/once/:name", awaitEvent);
 
         // operations
@@ -624,7 +644,11 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
-        const message = req.body as EncodedMessage<RunnerMessageCode.STOP>;
+        const message = (req.body || []) as EncodedMessage<RunnerMessageCode.STOP>;
+
+        if (!isStopSequenceMessage(message[1] || {})) {
+            return { opStatus: ReasonPhrases.BAD_REQUEST };
+        }
 
         this.status = "stopping";
 
@@ -634,7 +658,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.keepAliveRequested = false;
 
-        await defer(timeout);
+        await defer(timeout || 0);
 
         if (!this.keepAliveRequested) {
             // TODO: shouldn't this be just this.handleKill();
@@ -687,6 +711,7 @@ export class CSIController extends TypedEmitter<Events> {
             started: this.info.started,
             ended: this.info.ended,
             status: this.status,
+            terminated: this.terminated
         };
     }
 
@@ -754,5 +779,9 @@ export class CSIController extends TypedEmitter<Events> {
         this.keepAliveRequested = true;
 
         return message;
+    }
+
+    setExitInfo(exitcode: number, reason: TerminateReason) {
+        this.terminated ||= { exitcode, reason };
     }
 }

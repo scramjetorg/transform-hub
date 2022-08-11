@@ -13,7 +13,7 @@ import {
     EventMessageData, EventMessage
 } from "@scramjet/types";
 
-function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
+export function isStopSequenceMessage(data: object): data is StopSequenceMessageData {
     if (typeof (data as StopSequenceMessageData).timeout !== "number") return false;
     if (typeof (data as StopSequenceMessageData).canCallKeepalive !== "boolean") return false;
     return true;
@@ -33,7 +33,7 @@ function isDescribeSequenceMessage(data: object): data is DescribeSequenceMessag
 }
 function isEventMessage(data: object): data is EventMessageData {
     return typeof (data as EventMessageData).eventName === "string" &&
-        typeof (data as EventMessageData).message === "string";
+        ((data as EventMessageData).message === undefined || typeof (data as EventMessageData).message === "string");
 }
 function isErrorMessage(data: object): data is ErrorMessageData {
     if (typeof (data as ErrorMessageData).message === "string") return false;

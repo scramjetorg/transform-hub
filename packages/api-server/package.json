@@ -24,10 +24,10 @@
   "devDependencies": {
     "@scramjet/types": "^0.26.1",
     "@types/node": "15.12.5",
-    "@types/sinon": "^10.0.12",
+    "@types/sinon": "^10.0.13",
     "@types/trouter": "^3.1.1",
     "ava": "^3.15.0",
-    "sinon": "^11.1.2",
+    "sinon": "^14.0.0",
     "trouter": "^3.2.0",
     "ts-node": "^10.8.2",
     "typedoc": "^0.22.18",

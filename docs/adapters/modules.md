@@ -44,6 +44,7 @@
 - [getHostname](modules.md#gethostname)
 - [getInstanceAdapter](modules.md#getinstanceadapter)
 - [getSequenceAdapter](modules.md#getsequenceadapter)
+- [initializeSequenceAdapter](modules.md#initializesequenceadapter)
 - [isHostSpawnedInDockerContainer](modules.md#ishostspawnedindockercontainer)
 - [setupDockerNetworking](modules.md#setupdockernetworking)
 
@@ -382,7 +383,27 @@ Sequence adapter.
 
 #### Defined in
 
-[get-sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L23)
+[get-sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L33)
+
+___
+
+### initializeSequenceAdapter
+
+▸ **initializeSequenceAdapter**(`config`): `Promise`<`string`\>
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `STHConfiguration` |
+
+#### Returns
+
+`Promise`<`string`\>
+
+#### Defined in
+
+[get-sequence-adapter.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-sequence-adapter.ts#L19)
 
 ___
 

@@ -34,6 +34,11 @@ const initDir = (dir: string) => {
     }
 };
 
+export const createConfigDirIfNotExists = () => {
+    if (!existsSync(siDir))
+        initDir(siDir);
+};
+
 export const createSessionDirIfNotExists = () => {
     if (!existsSync(sessionDir))
         initDir(sessionDir);
