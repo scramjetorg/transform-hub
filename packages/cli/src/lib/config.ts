@@ -6,6 +6,7 @@ import isUrl from "validator/lib/isURL";
 import isJWT from "validator/lib/isJWT";
 import { envs } from "../utils/envs";
 import { displayError, displayMessage } from "./output";
+import { sessionId } from "../utils/sessionId";
 
 abstract class Config {
     abstract getConfig(): any | null;
@@ -318,6 +319,7 @@ class SessionConfig extends DefaultFileConfig {
             lastSequenceId: "",
             lastSpaceId: "",
             lastHubId: "",
+            sessionId: sessionId()
         };
 
         super(sessionConfigFile, defaultSessionConfig);
