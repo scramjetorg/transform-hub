@@ -63,7 +63,11 @@ Copy a content below and save it as `package.json` file:
 Open a terminal run your program on the hub:
 
 ```bash
-si pack /path/to/my/folder -o ~/package.tar.gz # compress the app to a package
+cd /path/to/my/folder
+
+npm install                                    # install dependencies
+
+si seq pack . -o ~/package.tar.gz              # compress the app to a package
 SEQ_ID=$(si seq send ~/package.tar.gz)         # upload the package to the server SEQ_ID is now it's id
 INT_ID=$(si seq start $SEQ_ID -C "{}" $APIKEY BTC EUR)
                                                # start the program on the host with arguments
