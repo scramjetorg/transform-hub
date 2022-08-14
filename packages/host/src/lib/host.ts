@@ -536,7 +536,7 @@ export class Host implements IComponent {
     async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         this.logger.info("New Sequence incoming");
 
-        const id = IDProvider.generate();
+        let id = IDProvider.generate();
 
         try {
             const sequenceAdapter = getSequenceAdapter(this.config);
@@ -547,13 +547,21 @@ export class Host implements IComponent {
 
             await sequenceAdapter.init();
 
+            const sequenceName = stream.headers["x-name"] as string;
+            const existingSequence = this.getSequenceByName(sequenceName);
+
+            if (existingSequence) {
+                this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
+                id = existingSequence.id;
+            }
+
             const config = await sequenceAdapter.identify(stream, id);
 
-            this.sequencesStore.set(config.id, { id: config.id, config, instances: new Set() });
+            this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName });
 
             this.logger.info("Sequence identified", config);
 
-            await this.cpmConnector?.sendSequenceInfo(config.id, SequenceMessageCode.SEQUENCE_CREATED);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
 
@@ -569,6 +577,19 @@ export class Host implements IComponent {
                 error
             };
         }
+    }
+
+    getSequenceByName(sequenceName: string): SequenceInfo | undefined {
+        let seq;
+
+        for (const i of this.sequencesStore.values()) {
+            if (sequenceName === this.sequencesStore.get(i.id)?.name) {
+                seq = i;
+                break;
+            }
+        }
+
+        return seq;
     }
 
     /**
@@ -798,6 +819,7 @@ export class Host implements IComponent {
         return {
             opStatus: ReasonPhrases.OK,
             id: sequence.id,
+            name: sequence.name,
             config: sequence.config,
             instances: Array.from(sequence.instances.values())
         };
@@ -899,3 +921,4 @@ export class Host implements IComponent {
         });
     }
 }
+

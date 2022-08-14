@@ -4,9 +4,10 @@ import { InstanceId } from "./instance";
 import { IObjectLogger } from "./object-logger";
 
 export type SequenceInfo = {
-    id: string;
     config: SequenceConfig;
+    id: string;
     instances: Set<InstanceId>;
+    name?: string;
 }
 
 export interface ISequenceAdapter {

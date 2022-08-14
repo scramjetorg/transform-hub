@@ -14,11 +14,19 @@ import { isDevelopment } from "../../utils/envs";
 import { readFile } from "fs/promises";
 import { resolve } from "path";
 
-const sendPackage = async (sequencePackage: string, format: displayFormat) => {
+type SequenceStartsOptions = {
+    name?: string;
+}
+
+const sendPackage = async (sequencePackage: string, options: SequenceStartsOptions = {}, format: displayFormat) => {
     try {
         const sequencePath = getPackagePath(sequencePackage);
         const seq = await getHostClient().sendSequence(
-            await getReadStreamFromFile(sequencePath)
+            await getReadStreamFromFile(sequencePath), {
+                headers: {
+                    "x-name": options.name || ""
+                }
+            }
         );
 
         sessionConfig.setLastSequenceId(seq.id);
@@ -127,8 +135,11 @@ export const sequence: CommandDefinition = (program) => {
     sequenceCmd
         .command("send")
         .argument("<package>", "The file to upload or '-' to use the last packed")
+        .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Hub")
-        .action(async (sequencePackage: string) => sendPackage(sequencePackage, profileConfig.format));
+        .action(
+            async (sequencePackage: string, { name }) => sendPackage(sequencePackage, { name }, profileConfig.format)
+        );
 
     sequenceCmd
         .command("use")
@@ -195,7 +206,7 @@ export const sequence: CommandDefinition = (program) => {
                 await packAction(path, { output });
                 await sendSeqPromise;
             } else {
-                await sendPackage(path, format);
+                await sendPackage(path, {}, format);
             }
 
             const args = parseSequenceArgs(argsStr);
