@@ -93,7 +93,7 @@ if (opts.help || opts["long-help"]) {
     const packageContents = {};
 
     // Gather all deps from all packages.
-    await Promise.all(packages.map(x => join(x, "package.json")).map(async (file) => {
+    await Promise.all([wd, ...packages].map(x => join(x, "package.json")).map(async (file) => {
         console.log(`- ${file}`);
 
         try {
