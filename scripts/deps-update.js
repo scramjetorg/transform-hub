@@ -97,6 +97,7 @@ if (opts.help || opts["long-help"]) {
             return [file, JSON.parse(await readFile(resolve(wd, file), { encoding: "utf-8" }))];
         } catch (e) {
             console.error(`Error reading file ${file}:`, e.stack);
+            return null;
         }
     }).filter(x => x));
 
