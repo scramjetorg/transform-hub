@@ -131,10 +131,15 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      *
      * @param {Readable} stream Stream containing sequence to be identified.
      * @param {string} id Id for the new docker volume where sequence will be stored.
+     * @param {boolean} override Removes previous sequence
      * @returns {Promise<SequenceConfig>} Promise resolving to sequence config.
      */
-    async identify(stream: Readable, id: string): Promise<SequenceConfig> {
+    async identify(stream: Readable, id: string, override = false): Promise<SequenceConfig> {
         const volStart = new Date();
+
+        if (override) {
+            await this.dockerHelper.removeVolume(id);
+        }
 
         const volumeId = await this.createVolume(id);
 

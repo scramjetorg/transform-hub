@@ -338,7 +338,7 @@ export class Host implements IComponent {
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
 
         this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
-        this.api.op("put", `${this.apiBase}/sequence`, (req: ParsedMessage) => this.handleSequenceUpdate(req), undefined, true);
+        this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleSequenceUpdate(req), { end: true, method: "put" });
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
@@ -528,7 +528,9 @@ export class Host implements IComponent {
 
     async handleIncomingSequence(stream: ParsedMessage, id: string):
         Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        this.logger.info("New Sequence incoming");
+        const sequenceName = stream.headers["x-name"] || undefined;
+
+        this.logger.info("New Sequence incoming", { name: sequenceName });
 
         try {
             const sequenceAdapter = getSequenceAdapter(this.config);
@@ -539,21 +541,25 @@ export class Host implements IComponent {
 
             await sequenceAdapter.init();
 
-            const sequenceName = stream.headers["x-name"] as string;
-            const existingSequence = this.getSequenceByName(sequenceName);
+            if (sequenceName) {
+                const existingSequence = this.getSequenceByName(sequenceName as string);
 
-            if (existingSequence) {
-                this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
-                id = existingSequence.id;
+                if (existingSequence) {
+                    if (stream.method === "post") {
+                        this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
 
-                return {
-                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
-                };
+                        return {
+                            opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                        };
+                    }
+
+                    id = existingSequence.id;
+                }
             }
 
             const config = await sequenceAdapter.identify(stream, id);
 
-            this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName });
+            this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName as string });
 
             this.logger.info("Sequence identified", config);
 
@@ -566,7 +572,7 @@ export class Host implements IComponent {
                 opStatus: ReasonPhrases.OK
             };
         } catch (error: any) {
-            this.logger.error(error);
+            this.logger.error("Error processing sequence", error);
 
             return {
                 opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
@@ -580,6 +586,13 @@ export class Host implements IComponent {
         const existingSequence = this.getSequenceByName(sequenceName);
 
         if (existingSequence) {
+            if (existingSequence.instances.size) {
+                return {
+                    opStatus: ReasonPhrases.CONFLICT,
+                    error: "Can not update sequence in use"
+                };
+            }
+
             this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
 
             return this.handleIncomingSequence(stream, existingSequence.id);
@@ -600,14 +613,17 @@ export class Host implements IComponent {
      */
     async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         const sequenceName = stream.headers["x-name"] as string;
-        const existingSequence = this.getSequenceByName(sequenceName);
 
-        if (existingSequence) {
-            this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
+        if (sequenceName) {
+            const existingSequence = this.getSequenceByName(sequenceName);
 
-            return {
-                opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
-            };
+            if (existingSequence) {
+                this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
+
+                return {
+                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                };
+            }
         }
 
         return this.handleIncomingSequence(stream, IDProvider.generate());

@@ -18,15 +18,19 @@ type SequenceStartsOptions = {
     name?: string;
 }
 
-const sendPackage = async (sequencePackage: string, options: SequenceStartsOptions = {}, format: displayFormat) => {
+const sendPackage = async (
+    sequencePackage: string, options: SequenceStartsOptions = {}, format: displayFormat, update = false
+) => {
     try {
         const sequencePath = getPackagePath(sequencePackage);
         const seq = await getHostClient().sendSequence(
-            await getReadStreamFromFile(sequencePath), {
+            await getReadStreamFromFile(sequencePath),
+            {
                 headers: {
                     "x-name": options.name || ""
                 }
-            }
+            },
+            update
         );
 
         sessionConfig.setLastSequenceId(seq.id);
@@ -139,6 +143,16 @@ export const sequence: CommandDefinition = (program) => {
         .description("Send the Sequence package to the Hub")
         .action(
             async (sequencePackage: string, { name }) => sendPackage(sequencePackage, { name }, profileConfig.format)
+        );
+
+    sequenceCmd
+        .command("update")
+        .argument("<package>", "The file to upload or '-' to use the last packed")
+        .option("--name <name>", "Sequence to be updated (by name)")
+        .description("Updates sequence with given name")
+        .action(
+            async (sequencePackage: string, { name }) =>
+                sendPackage(sequencePackage, { name }, profileConfig.format, true)
         );
 
     sequenceCmd

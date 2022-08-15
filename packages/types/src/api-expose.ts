@@ -52,6 +52,8 @@ export type StreamConfig = {
      *  @default true
      */
     checkEndHeader?: boolean;
+
+    method?: "post" | "put";
 };
 
 export interface APIError extends Error {

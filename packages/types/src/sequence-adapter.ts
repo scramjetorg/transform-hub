@@ -26,7 +26,7 @@ export interface ISequenceAdapter {
     /**
      * Identifies new Sequence
      */
-    identify(stream: Readable, id: string): Promise<SequenceConfig>;
+    identify(stream: Readable, id: string, override?: boolean): Promise<SequenceConfig>;
 
     remove(conifg: SequenceConfig): Promise<void>
 

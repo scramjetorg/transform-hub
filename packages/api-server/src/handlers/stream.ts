@@ -105,9 +105,9 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     const downstream = (
         path: string | RegExp,
         stream: StreamOutput,
-        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true }: StreamConfig = {}
+        { json = false, text = false, end: _end = false, encoding = "utf-8", checkContentType = true, checkEndHeader = true, method = "post" }: StreamConfig = {}
     ): void => {
-        router.post(path, async (req, res, next) => {
+        router[method](path, async (req, res, next) => {
             try {
                 if (checkContentType) {
                     checkAccepts(req.headers["content-type"], text, json);
