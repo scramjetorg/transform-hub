@@ -173,6 +173,7 @@ export class Host implements IComponent {
         this.socketServer.logger.pipe(this.logger);
 
         this.api = apiServer;
+        this.api.opLogger?.pipe(this.logger);
 
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
@@ -335,9 +336,9 @@ export class Host implements IComponent {
         this.api.use("*", optionsMiddleware);
 
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
-        this.api.downstream(`${this.apiBase}/sequence`,
-            async (req) => this.handleNewSequence(req), { end: true }
-        );
+
+        this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
+        this.api.op("put", `${this.apiBase}/sequence`, (req: ParsedMessage) => this.handleSequenceUpdate(req), undefined, true);
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
@@ -525,18 +526,9 @@ export class Host implements IComponent {
         }
     }
 
-    /**
-     * Handles incoming Sequence.
-     * Uses Sequence adapter to unpack and identify Sequence.
-     * Notifies Manager (if connected) about new Sequence.
-     *
-     * @param {IncomingMessage} stream Stream of packaged Sequence.
-     * @returns {Promise} Promise resolving to operation result.
-     */
-    async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+    async handleIncomingSequence(stream: ParsedMessage, id: string):
+        Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         this.logger.info("New Sequence incoming");
-
-        let id = IDProvider.generate();
 
         try {
             const sequenceAdapter = getSequenceAdapter(this.config);
@@ -553,6 +545,10 @@ export class Host implements IComponent {
             if (existingSequence) {
                 this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
                 id = existingSequence.id;
+
+                return {
+                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                };
             }
 
             const config = await sequenceAdapter.identify(stream, id);
@@ -577,6 +573,44 @@ export class Host implements IComponent {
                 error
             };
         }
+    }
+
+    async handleSequenceUpdate(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+        const sequenceName = stream.headers["x-name"] as string;
+        const existingSequence = this.getSequenceByName(sequenceName);
+
+        if (existingSequence) {
+            this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
+
+            return this.handleIncomingSequence(stream, existingSequence.id);
+        }
+
+        return {
+            opStatus: ReasonPhrases.NOT_FOUND
+        };
+    }
+
+    /**
+     * Handles incoming Sequence.
+     * Uses Sequence adapter to unpack and identify Sequence.
+     * Notifies Manager (if connected) about new Sequence.
+     *
+     * @param {IncomingMessage} stream Stream of packaged Sequence.
+     * @returns {Promise} Promise resolving to operation result.
+     */
+    async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+        const sequenceName = stream.headers["x-name"] as string;
+        const existingSequence = this.getSequenceByName(sequenceName);
+
+        if (existingSequence) {
+            this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
+
+            return {
+                opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+            };
+        }
+
+        return this.handleIncomingSequence(stream, IDProvider.generate());
     }
 
     getSequenceByName(sequenceName: string): SequenceInfo | undefined {
