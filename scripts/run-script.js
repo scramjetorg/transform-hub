@@ -47,7 +47,7 @@ const opts = minimist(process.argv.slice(2), {
     boolean: ["list", "verbose", "install", "build", "dist", "fast", "help", "exec"]
 });
 
-if (opts.help || (!opts._.length && !opts.list)) {
+if (opts.help || !opts._.length && !opts.list) {
     const pName = relative(cwd(), process.argv[1]);
     const spaces = " ".repeat(pName.length);
 
@@ -121,32 +121,31 @@ console.time(BUILD_NAME);
                 if (opts._.slice(1).length)
                     console.error("Did you forget to quote the command? Got extra", opts._.slice(1));
 
-                const command = opts._[0]
-                console.log(`> ${path}\n> ${command}\n`)
+                const command = opts._[0];
 
-                const child = exec(command, {cwd: path})
+                console.log(`> ${path}\n> ${command}\n`);
+
+                const child = exec(command, { cwd: path });
 
                 if (opts.verbose) {
-                    child.stdout.pipe(process.stdout)
-                    child.stderr.pipe(process.stderr)
+                    child.stdout.pipe(process.stdout);
+                    child.stderr.pipe(process.stderr);
                 }
 
                 return [
                     [Date.now(), await child]
-                ]
-            } else {
-                if (opts.verbose) runconfig.stdio = "inherit";
-
-                const scriptName = opts._[0];
-                const args = opts._.slice(1);
-
-                return [
-                    [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
-                    [Date.now(), await runScript({ ...runconfig, args, event: scriptName })],
-                    [Date.now(), await runScript({ ...runconfig, event: `post${scriptName}` })]
                 ];
             }
+            if (opts.verbose) runconfig.stdio = "inherit";
 
+            const scriptName = opts._[0];
+            const args = opts._.slice(1);
+
+            return [
+                [Date.now(), await runScript({ ...runconfig, event: `pre${scriptName}` })],
+                [Date.now(), await runScript({ ...runconfig, args, event: scriptName })],
+                [Date.now(), await runScript({ ...runconfig, event: `post${scriptName}` })]
+            ];
         })
         .do(([ts, out]) => {
             const { path, event } = out;
