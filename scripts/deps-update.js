@@ -88,25 +88,22 @@ if (opts.help || opts["long-help"]) {
     // eslint-disable-next-line no-empty
     } catch {}
 
-
     console.log("Reading packages...");
-
 
     const allContents = await Promise.all([wd, ...packages].map(x => join(x, "package.json")).map(async (file) => {
         console.log(`- ${file}`);
 
         try {
             return [file, JSON.parse(await readFile(resolve(wd, file), { encoding: "utf-8" }))];
-        } catch(e) {
-            console.error(":")
+        } catch (e) {
+            console.error(`Error reading file ${file}:`, e.stack);
         }
     }).filter(x => x));
-
 
     console.log("Indexing packages:");
 
     const packageContents = {};
-    const localVersions = allContents.reduce((acc, [, {name, version}]) => {
+    const localVersions = allContents.reduce((acc, [, { name, version }]) => {
         acc[name] = version.replace(/^\^?|^(?=\d)/, "^");
         return acc;
     }, {});
