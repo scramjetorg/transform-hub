@@ -66,7 +66,7 @@
     "bump:version:patch": "VERSION_LEVEL=patch yarn bump:packages",
     "bump:version": "yarn bump:packages --no-git-tag-version",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags",
-    "upgrade:all": "node scripts/deps-update.js -f && npm install",
+    "upgrade:all": "scripts/deps-update.js -f && npm install",
     "savehash": "scripts/run-script.js -w modules savehash"
   },
   "author": "Scramjet <open-source@scramjet.org>",
