@@ -88,17 +88,34 @@ if (opts.help || opts["long-help"]) {
     // eslint-disable-next-line no-empty
     } catch {}
 
-    console.log("Indexing packages:");
 
-    const packageContents = {};
+    console.log("Reading packages...");
 
-    // Gather all deps from all packages.
-    await Promise.all([wd, ...packages].map(x => join(x, "package.json")).map(async (file) => {
+
+    const allContents = await Promise.all([wd, ...packages].map(x => join(x, "package.json")).map(async (file) => {
         console.log(`- ${file}`);
 
         try {
-            const package = JSON.parse(await readFile(resolve(wd, file), { encoding: "utf-8" }));
+            return [file, JSON.parse(await readFile(resolve(wd, file), { encoding: "utf-8" }))];
+        } catch(e) {
+            console.error(":")
+        }
+    }).filter(x => x));
 
+
+    console.log("Indexing packages:");
+
+    const packageContents = {};
+    const localVersions = allContents.reduce((acc, [, {name, version}]) => {
+        acc[name] = version.replace(/^\^?|^(?=\d)/, "^");
+        return acc;
+    }, {});
+
+    // Gather all deps from all packages.
+    await Promise.all(allContents.map(async ([file, package]) => {
+        console.log(`- ${file} = ${package.name}@${package.version}`);
+
+        try {
             packageContents[file] = package;
 
             // Update packageTpl version to the latest one.
@@ -111,6 +128,8 @@ if (opts.help || opts["long-help"]) {
             for (const depType of depTypes) {
                 if (package[depType]) {
                     for (const dep of Object.keys(package[depType])) {
+                        if (dep in localVersions) continue;
+
                         allDeps[depType][dep] = allDeps[depType][dep] || [];
                         allDeps[depType][dep].push(package[depType][dep]);
                     }
@@ -146,6 +165,8 @@ if (opts.help || opts["long-help"]) {
         for (const depType of depTypes) {
             if (newDeps[depType]) {
                 for (const dep of Object.entries(newDeps[depType])) {
+                    if (dep in localVersions) continue;
+
                     const [name, version] = dep;
                     const newVersion = version.replace(/\d+\.\d+\.\d+[^\s]*/, lockFile.dependencies[dep[0]].version);
 
@@ -189,7 +210,9 @@ if (opts.help || opts["long-help"]) {
         for (const depType of depTypes) {
             if (contents[depType]) {
                 for (const [dep, version] of Object.entries(contents[depType])) {
-                    if (version !== allDeps[depType][dep]) {
+                    if (dep in localVersions) {
+                        contents[depType][dep] = localVersions[dep];
+                    } else if (version !== allDeps[depType][dep]) {
                         contents[depType][dep] = newDeps[depType][dep];
                         changed++;
                     }
