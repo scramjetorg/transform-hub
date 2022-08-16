@@ -661,7 +661,8 @@ export class Host implements IComponent {
 
         const id = req.params?.id;
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
-        const sequence = this.sequencesStore.get(id);
+        const sequence = this.sequencesStore.get(id) ||
+            Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
         if (!sequence) {
             return { opStatus: ReasonPhrases.NOT_FOUND };
