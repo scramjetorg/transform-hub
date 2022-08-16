@@ -123,6 +123,11 @@ export type STHConfiguration = {
      */
     cpmId: string;
 
+    cpm: {
+        maxReconnections: number,
+        reconnectionDelay: number,
+    }
+
     /**
      * Docker related configuration.
      */

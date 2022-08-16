@@ -195,7 +195,9 @@ export class Host implements IComponent {
                 {
                     id: this.config.host.id,
                     infoFilePath: this.config.host.infoFilePath,
-                    cpmSslCaPath: this.config.cpmSslCaPath
+                    cpmSslCaPath: this.config.cpmSslCaPath,
+                    maxReconnections: this.config.cpm.maxReconnections,
+                    reconnectionDelay: this.config.cpm.reconnectionDelay
                 },
                 this.api.server
             );
