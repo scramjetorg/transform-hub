@@ -19,7 +19,7 @@ export const config: CommandDefinition = (program) => {
         middlewareApiUrl: defaulMiddlewareApiUrl,
         env: defaultEnv,
         token: defaultToken,
-        log:{
+        log: {
             debug: defaultDebug,
             format: defaultFormat
         }
@@ -216,6 +216,11 @@ export const config: CommandDefinition = (program) => {
         .description("Set configuration profile as default to use")
         .action((name) => {
             if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);
+            const currentProfile = siConfig.getConfig().profile;
+
+            if (name === currentProfile)
+                return;
+            sessionConfig.restoreDefaultConfig();
             siConfig.setProfile(name);
         });
 
