@@ -1,4 +1,4 @@
-import { OutgoingHttpHeaders, Agent as HttpAgent } from "http";
+import { OutgoingHttpHeaders, Agent as HttpAgent, Agent } from "http";
 import { Agent as HttpsAgent, request } from "https";
 import { merge, TypedEmitter } from "@scramjet/utility";
 import { IObjectLogger } from "@scramjet/types";
@@ -173,6 +173,7 @@ export class VerserClient extends TypedEmitter<Events> {
     }
 
     /**
+     * @deprecated
      * Registers a channel on the client.
      *
      * @param channelId {number} Channel id.

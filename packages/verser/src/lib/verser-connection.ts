@@ -87,6 +87,7 @@ export class VerserConnection {
     }
 
     /**
+     * @deprecated Use makeRequest instead.
      * Forwards data from the request to the new duplex stream multiplexed in the socket.
      *
      * @param req {IncomingMessage} Request object.

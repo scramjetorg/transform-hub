@@ -165,6 +165,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 ? { ca: [this.cpmSslCa] }
                 : undefined
         });
+
         this.verserClient.logger.pipe(this.logger);
 
         this.logger.trace("Initialized.");

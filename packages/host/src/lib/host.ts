@@ -697,7 +697,7 @@ export class Host implements IComponent {
             };
         }
 
-        let id = req.params?.id;
+        const id = req.params?.id;
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
 
         let sequence = this.sequencesStore.get(id) ||
@@ -734,10 +734,14 @@ export class Host implements IComponent {
             }
         }
 
-        this.logger.info("Start sequence", sequence?.id, sequence?.config.name);
+        if (!sequence) {
+            return { opStatus: ReasonPhrases.NOT_FOUND };
+        }
+
+        this.logger.info("Start sequence", sequence.id, sequence.config.name);
 
         try {
-            const csic = await this.startCSIController(sequence!, payload);
+            const csic = await this.startCSIController(sequence, payload);
 
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
