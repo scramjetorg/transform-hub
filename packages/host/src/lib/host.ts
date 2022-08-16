@@ -885,6 +885,7 @@ export class Host implements IComponent {
         return Array.from(this.sequencesStore.values())
             .map(sequence => ({
                 id: sequence.id,
+                name: sequence.name,
                 config: sequence.config,
                 instances: Array.from(sequence.instances.values())
             }));
