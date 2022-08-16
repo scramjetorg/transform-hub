@@ -2,7 +2,7 @@ import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 import { Readable, Writable } from "stream";
-import { Server, ServerResponse } from "http";
+import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
 import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, StartSequenceDTO, STHConfiguration, STHRestAPI } from "@scramjet/types";
@@ -697,9 +697,10 @@ export class Host implements IComponent {
             };
         }
 
-        const id = req.params?.id;
+        let id = req.params?.id;
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
-        const sequence = this.sequencesStore.get(id) ||
+
+        let sequence = this.sequencesStore.get(id) ||
             Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
         if (!req.body.args && sequence?.config?.args) {
@@ -707,16 +708,36 @@ export class Host implements IComponent {
         }
 
         if (!sequence) {
-            return {
-                opStatus: ReasonPhrases.NOT_FOUND,
-                error: `Sequence ${id} not found`
-            };
+            if (this.cpmConnector?.connected) {
+                let packageStream: IncomingMessage | undefined;
+
+                try {
+                    packageStream = await this.cpmConnector?.getSequence(id);
+
+                    const result = await this.handleNewSequence(
+                        packageStream as ParsedMessage
+                    ) as STHRestAPI.SendSequenceResponse;
+
+                    sequence = this.sequencesStore.get(result.id);
+                } catch (e) {
+                    this.logger.error("Error requesting sequence", e);
+
+                    return {
+                        opStatus: ReasonPhrases.SERVICE_UNAVAILABLE
+                    };
+                }
+            } else {
+                return {
+                    opStatus: ReasonPhrases.NOT_FOUND,
+                    error: `Sequence ${id} not found`
+                };
+            }
         }
 
-        this.logger.info("Start sequence", sequence.id, sequence.config.name);
+        this.logger.info("Start sequence", sequence?.id, sequence?.config.name);
 
         try {
-            const csic = await this.startCSIController(sequence, payload);
+            const csic = await this.startCSIController(sequence!, payload);
 
             await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,

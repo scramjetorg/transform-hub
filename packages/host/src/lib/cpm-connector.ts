@@ -566,4 +566,15 @@ export class CPMConnector extends TypedEmitter<Events> {
                 }).end();
         });
     }
+
+    async getSequence(id: string): Promise<http.IncomingMessage> {
+        return new Promise<http.IncomingMessage>((resolve, _reject) => {
+            this.makeHttpRequestToCpm("GET", `sequence-store/${id}`)
+                .on("response", (res: http.IncomingMessage) => {
+                    resolve(res);
+                }).on("error", (err: Error) => {
+                    this.logger.error("Sequence request error:", err);
+                }).end();
+        });
+    }
 }

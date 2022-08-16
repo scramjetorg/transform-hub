@@ -71,6 +71,10 @@ export class VerserClient extends TypedEmitter<Events> {
         return this._verserAgent;
     }
 
+    get agent() {
+        return this.httpAgent;
+    }
+
     constructor(opts: VerserClientOptions = defaultVerserClientOptions) {
         super();
 
