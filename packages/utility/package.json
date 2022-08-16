@@ -37,7 +37,7 @@
     "ava": "^3.15.0",
     "typed-emitter": "^1.4.0",
     "typedoc": "^0.22.18",
-    "typedoc-plugin-markdown": "^3.13.3"
+    "typedoc-plugin-markdown": "^3.13.4"
   },
   "dependencies": {
     "normalize-url": "^5.3.1",

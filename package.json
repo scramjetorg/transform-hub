@@ -36,9 +36,8 @@
     "clean": "yarn clean:root && scripts/run-script.js clean",
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -or -name __pypackages__ -prune -exec rm -rf {} ';' 2> /dev/null",
-    "lint": "eslint . --ext .ts --cache --cache-strategy=content --cache-location=.eslintcache_scramjet-csi",
-    "lint:uncached": "rm /tmp/.eslintcache_scramjet-csi && yarn lint",
-    "lint:dedupe": "scripts/dedupe.js",
+    "lint": "eslint . --ext .ts --ext .js --cache --cache-strategy=content --cache-location=.eslintcache_scramjet-csi",
+    "lint:uncached": "rm .eslintcache_scramjet-csi && yarn lint",
     "start": "node dist/sth/bin/hub.js",
     "start:dev": "ts-node packages/sth/src/bin/hub.ts",
     "start:dev:cli": "ts-node packages/cli/src/bin/index.ts",
@@ -66,8 +65,7 @@
     "bump:version:patch": "VERSION_LEVEL=patch yarn bump:packages",
     "bump:version": "yarn bump:packages --no-git-tag-version",
     "bump:postversion": "yarn pack:pub && yarn publish:dist && git push --follow-tags",
-    "align": "syncpack fix-mismatches --source all-deps/package.json --source bdd/package.json --source='packages/**(!node_modules)/package.json' --source='packages/**(!node_modules)/package.json' --source='template/package.json'",
-    "upgrade:all": "node scripts/deps-update.js && yarn align && rm -rf ./all-deps && yarn install",
+    "upgrade:all": "scripts/deps-update.js -f && npm install",
     "savehash": "scripts/run-script.js -w modules savehash"
   },
   "author": "Scramjet <open-source@scramjet.org>",
@@ -77,27 +75,28 @@
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
   "devDependencies": {
+    "@npmcli/run-script": "4.2.1",
     "@types/node": "15.12.5",
-    "@typescript-eslint/eslint-plugin": "^4.27.0",
-    "@typescript-eslint/parser": "^4.27.0",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
     "build-if-changed": "^1.5.5",
-    "cloc": "^2.8.0",
-    "esbuild": "^0.14.13",
-    "eslint": "^7.29.0",
-    "eslint-plugin-import": "^2.23.3",
+    "cloc": "^2.10.0",
+    "esbuild": "^0.14.54",
+    "eslint": "^7.32.0",
+    "eslint-plugin-import": "^2.26.0",
     "eslint-to-editorconfig": "^2.0.0",
     "fs-extra": "^9.1.0",
-    "glob": "^7.1.7",
+    "glob": "^7.2.3",
     "globrex": "^0.1.2",
     "husky": "^6.0.0",
-    "lerna": "^4.0.0",
-    "semver": "^7.3.5",
-    "syncpack": "^5.7.11",
+    "lerna": "^5.4.2",
+    "semver": "^7.3.7",
+    "syncpack": "^5.8.15",
     "tar": "^6.1.11",
     "toposort": "^2.0.2",
-    "ts-node": "^10.0.0",
-    "typescript": "^4.3.4",
-    "yarn": "^1.22.18"
+    "ts-node": "^10.9.1",
+    "typescript": "^4.7.4",
+    "yarn": "^1.22.19"
   },
   "workspaces": {
     "packages": [
@@ -123,6 +122,6 @@
   "dependencies": {
     "minimist": "^1.2.6",
     "npm": "8",
-    "scramjet": "^4.36.0"
+    "scramjet": "^4.36.7"
   }
 }
