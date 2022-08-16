@@ -393,6 +393,7 @@ export class Host implements IComponent {
         }
 
         res.statusCode = 404;
+        res.write(JSON.stringify({ error: `The instance ${params.id} does not exist.` }));
         res.end();
 
         return next();
