@@ -13,6 +13,7 @@ const program = new Command();
 const options: STHCommandOptions = program
     .option("-c, --config <path>", "Specifies path to config")
     .option("-L, --log-level <level>", "Specify log level")
+    .option("--no-colors", "Disable colors in output", false)
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
@@ -96,6 +97,7 @@ const options: STHCommandOptions = program
         exitWithLastInstance: options.exitWithLastInstance,
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,
+        logColors: options.colors,
         kubernetes: {
             namespace: options.k8sNamespace,
             authConfigPath: options.k8sAuthConfigPath,

@@ -2,6 +2,7 @@ import { LogLevel } from "./object-logger";
 
 export type STHCommandOptions = {
     logLevel: LogLevel;
+    colors: boolean,
     port: number;
     hostname: string;
     identifyExisting: boolean;
