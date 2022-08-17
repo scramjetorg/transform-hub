@@ -338,7 +338,7 @@ export class Host implements IComponent {
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
 
         this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
-        this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleSequenceUpdate(req), { end: true, method: "put" });
+        this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), { end: true, method: "put" });
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
@@ -528,7 +528,9 @@ export class Host implements IComponent {
 
     async handleIncomingSequence(stream: ParsedMessage, id: string):
         Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        const sequenceName = stream.headers["x-name"] || undefined;
+        stream.params ||= {};
+
+        const sequenceName = stream.params.id_name || stream.headers["x-name"];
 
         this.logger.info("New Sequence incoming", { name: sequenceName });
 
@@ -559,7 +561,7 @@ export class Host implements IComponent {
 
             const config = await sequenceAdapter.identify(stream, id);
 
-            this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName as string });
+            this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName });
 
             this.logger.info("Sequence identified", config);
 
@@ -582,8 +584,10 @@ export class Host implements IComponent {
     }
 
     async handleSequenceUpdate(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        const sequenceName = stream.headers["x-name"] as string;
-        const existingSequence = this.getSequenceByName(sequenceName);
+        stream.params ||= {};
+
+        const seqQuery = stream.params.id_name as string;
+        const existingSequence = this.sequencesStore.get(seqQuery) || this.getSequenceByName(seqQuery);
 
         if (existingSequence) {
             if (existingSequence.instances.size) {
@@ -593,7 +597,7 @@ export class Host implements IComponent {
                 };
             }
 
-            this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
+            this.logger.debug("Overriding sequence", existingSequence.name, existingSequence.id);
 
             return this.handleIncomingSequence(stream, existingSequence.id);
         }

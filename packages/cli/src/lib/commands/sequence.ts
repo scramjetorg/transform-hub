@@ -8,30 +8,44 @@ import { getPackagePath, getSequenceId, profileConfig, sessionConfig } from "../
 import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
 import { InstanceLimits } from "@scramjet/types";
 import { PassThrough } from "stream";
-/* eslint-disable no-console */
+
 import { SequenceClient } from "@scramjet/api-client";
 import { isDevelopment } from "../../utils/envs";
 import { readFile } from "fs/promises";
 import { resolve } from "path";
 
-type SequenceStartsOptions = {
+type SequenceUploadOptions = {
     name?: string;
 }
 
 const sendPackage = async (
-    sequencePackage: string, options: SequenceStartsOptions = {}, format: displayFormat, update = false
+    sequencePackage: string, options: SequenceUploadOptions = {}, format: displayFormat, update = false
 ) => {
     try {
+        const id = getSequenceId(options.name!);
+
         const sequencePath = getPackagePath(sequencePackage);
-        const seq = await getHostClient().sendSequence(
-            await getReadStreamFromFile(sequencePath),
-            {
-                headers: {
-                    "x-name": options.name || ""
+
+        let seq: SequenceClient;
+
+        if (update) {
+            seq = await getHostClient().getSequenceClient(id)?.overwrite(
+                await getReadStreamFromFile(sequencePath),
+            );
+        } else {
+            const headers: HeadersInit = {};
+
+            if (options.name) {
+                headers["x-name"] = options.name;
+            }
+
+            seq = await getHostClient().sendSequence(
+                await getReadStreamFromFile(sequencePath),
+                {
+                    headers
                 }
-            },
-            update
-        );
+            );
+        }
 
         sessionConfig.setLastSequenceId(seq.id);
 
@@ -147,12 +161,12 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("update")
-        .argument("<package>", "The file to upload or '-' to use the last packed")
-        .option("--name <name>", "Sequence to be updated (by name)")
+        .argument("<query>", "Sequence id or name to be overwritten")
+        .argument("<package>", "The file to upload")
         .description("Updates sequence with given name")
         .action(
-            async (sequencePackage: string, { name }) =>
-                sendPackage(sequencePackage, { name }, profileConfig.format, true)
+            async (query: string, sequencePackage: string) =>
+                sendPackage(sequencePackage, { name: query }, profileConfig.format, true)
         );
 
     sequenceCmd
