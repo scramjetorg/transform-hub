@@ -419,7 +419,7 @@ export class Host implements IComponent {
 
         this.logger.trace("Deleting Sequence...", id);
 
-        const sequenceInfo = this.sequencesStore.get(id);
+        const sequenceInfo = this.sequencesStore.get(id) || this.getSequenceByName(id);
 
         if (!sequenceInfo) {
             return {
