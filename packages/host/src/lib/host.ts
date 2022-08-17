@@ -423,7 +423,8 @@ export class Host implements IComponent {
 
         if (!sequenceInfo) {
             return {
-                opStatus: ReasonPhrases.NOT_FOUND
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `The sequence ${id} does not exist.`
             };
         }
 
@@ -792,7 +793,8 @@ export class Host implements IComponent {
 
         if (!sequence) {
             return {
-                opStatus: ReasonPhrases.NOT_FOUND
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `The sequence ${id} does not exist.`
             };
         }
 
