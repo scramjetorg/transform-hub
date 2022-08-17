@@ -4,7 +4,7 @@ import { IncomingMessage, ServerResponse, Server as HttpServer, createServer as 
 import { Server as HttpsServer, createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
-import { createOperationHandler } from "./handlers/op";
+import { createOperationHandler, logger as opLogger } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
 import { cero, sequentialRouter } from "./lib/0http";
 import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
@@ -19,7 +19,9 @@ export type ServerConfig = {
 
 export { cero, sequentialRouter };
 
-const logger = new ObjLogger("ApiServer");
+export const logger = new ObjLogger("ApiServer");
+
+opLogger.pipe(logger);
 
 function safeHandler<T extends unknown[]>(cb: (...args: T) => MaybePromise<void>) {
     return async (...args: T) => {
@@ -115,6 +117,7 @@ export function createServer(conf: ServerConfig = {}): APIExpose {
     return {
         server: srv,
         get,
+        opLogger,
         op,
         duplex,
         downstream,

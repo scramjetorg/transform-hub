@@ -16,7 +16,7 @@ import { StringDecoder } from "string_decoder";
 import { getStatusCode, ReasonPhrases, StatusCodes } from "http-status-codes";
 import { ObjLogger } from "@scramjet/obj-logger";
 
-const logger = new ObjLogger("API");
+export const logger = new ObjLogger("API op");
 
 /**
  * Creates and returns a method to set up a POST/DELETE handlers for the given path.
@@ -190,12 +190,17 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             }
         };
 
+        logger.debug("Registering", method);
+
         switch (method) {
             case "post":
                 router.post(path, handler);
                 break;
             case "delete":
                 router.delete(path, handler);
+                break;
+            case "put":
+                router.put(path, handler);
                 break;
             default:
                 throw new Error("ERR_UNSUPPORTED_METHOD");

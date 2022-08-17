@@ -3,6 +3,7 @@ import { DataStream } from "scramjet";
 import { Duplex, Readable, Writable } from "stream";
 import { ICommunicationHandler } from "./communication-handler";
 import { ControlMessageCode, MonitoringMessageCode } from "./message-streams";
+import { IObjectLogger } from "./object-logger";
 import { MaybePromise } from "./utils";
 
 export type ParsedMessage = IncomingMessage & { body?: any; params: { [key: string]: any } | undefined };
@@ -51,6 +52,8 @@ export type StreamConfig = {
      *  @default true
      */
     checkEndHeader?: boolean;
+
+    method?: "post" | "put";
 };
 
 export interface APIError extends Error {
@@ -149,6 +152,7 @@ export interface APIExpose extends APIBase {
      */
     server: Server;
     log: DataStream;
+    opLogger?: IObjectLogger;
     decorate(path: string | RegExp, ...decorators: Decorator[]): void;
 }
 
