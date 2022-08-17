@@ -395,6 +395,7 @@ export class Host implements IComponent {
         }
 
         res.statusCode = 404;
+        res.write(JSON.stringify({ error: `The instance ${params.id} does not exist.` }));
         res.end();
 
         return next();
@@ -424,7 +425,8 @@ export class Host implements IComponent {
 
         if (!sequenceInfo) {
             return {
-                opStatus: ReasonPhrases.NOT_FOUND
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `The sequence ${id} does not exist.`
             };
         }
 
@@ -795,7 +797,8 @@ export class Host implements IComponent {
 
         if (!sequence) {
             return {
-                opStatus: ReasonPhrases.NOT_FOUND
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `The sequence ${id} does not exist.`
             };
         }
 
