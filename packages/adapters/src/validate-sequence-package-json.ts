@@ -28,5 +28,8 @@ export const sequencePackageJSONDecoder = JsonDecoder.object<SequencePackageJSON
     version: JsonDecoder.optional(JsonDecoder.string),
     main: JsonDecoder.string,
     engines: JsonDecoder.optional(enginesDecoder),
-    scramjet: JsonDecoder.optional(scramjetDecoder)
+    scramjet: JsonDecoder.optional(scramjetDecoder),
+    description: JsonDecoder.optional(JsonDecoder.string),
+    author: JsonDecoder.optional(JsonDecoder.string),
+    keywords: JsonDecoder.optional(JsonDecoder.array(JsonDecoder.string, "keywordsDecoder")),
 }, "SequencePackageJSON");

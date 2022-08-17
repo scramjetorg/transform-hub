@@ -219,6 +219,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
      * @param {DockerVolume} volumeId Id of the volume where sequence is stored.
      * @returns {Promise<DockerSequenceConfig>} Promise resolving to sequence configuration.
      */
+    // eslint-disable-next-line complexity
     private async parsePackage(
         streams: DockerAdapterStreams,
         wait: Function,
@@ -262,7 +263,10 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             config,
             sequenceDir: PACKAGE_DIR,
             entrypointPath: validPackageJson.main,
-            id: volumeId
+            id: volumeId,
+            description: validPackageJson.description || "",
+            author: validPackageJson.author || "",
+            keywords: validPackageJson.keywords || [],
         };
     }
 
