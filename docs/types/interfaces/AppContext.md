@@ -88,7 +88,7 @@ ___
 • `Optional` **initialState**: `State`
 
 Holds the previous state if there was a previous process in existence and it called the
-{@link this#save}.
+this#save.
 
 #### Defined in
 
@@ -329,7 +329,7 @@ stop it.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `milliseconds?` | `number` | provides information on how long the process should wait before assuming that the Sequence is stale and attempt to kill it.  If the method is called after {@link AutoAppContext.addStopHandler \| stop has been issued} this parameter value should not exceed the given timeout and another stop command will be called again when the lower |
+| `milliseconds?` | `number` | provides information on how long the process should wait before assuming that the Sequence is stale and attempt to kill it.  If the method is called after AutoAppContext.addStopHandler \| stop has been issued this parameter value should not exceed the given timeout and another stop command will be called again when the lower |
 
 #### Returns
 

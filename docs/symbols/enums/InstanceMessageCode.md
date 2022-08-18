@@ -4,17 +4,17 @@
 
 ## Table of contents
 
-### Enumeration members
+### Enumeration Members
 
 - [INSTANCE\_ENDED](InstanceMessageCode.md#instance_ended)
 - [INSTANCE\_STARTED](InstanceMessageCode.md#instance_started)
 - [INSTANCE\_STOPPED](InstanceMessageCode.md#instance_stopped)
 
-## Enumeration members
+## Enumeration Members
 
 ### INSTANCE\_ENDED
 
-• **INSTANCE\_ENDED** = `2`
+• **INSTANCE\_ENDED** = ``2``
 
 #### Defined in
 
@@ -24,7 +24,7 @@ ___
 
 ### INSTANCE\_STARTED
 
-• **INSTANCE\_STARTED** = `0`
+• **INSTANCE\_STARTED** = ``0``
 
 #### Defined in
 
@@ -34,7 +34,7 @@ ___
 
 ### INSTANCE\_STOPPED
 
-• **INSTANCE\_STOPPED** = `1`
+• **INSTANCE\_STOPPED** = ``1``
 
 #### Defined in
 

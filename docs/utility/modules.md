@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [CancellablePromise](modules.md#cancellablepromise)
 
@@ -27,7 +27,7 @@
 - [readStreamedJSON](modules.md#readstreamedjson)
 - [streamToString](modules.md#streamtostring)
 
-## Type aliases
+## Type Aliases
 
 ### CancellablePromise
 
@@ -65,9 +65,12 @@ ___
 
 Returns a promise that resolves after the specified duration.
 
-**`example`**
+**`Example`**
+
+```ts
 // waits for 10 second
 await defer(10 * 1000);
+```
 
 #### Parameters
 
@@ -181,7 +184,7 @@ Normalizes provided URL.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `url` | `string` | URL to be normalized. |
-| `options?` | `Options` | - |
+| `options?` | `Options` | Normalization options. |
 
 #### Returns
 

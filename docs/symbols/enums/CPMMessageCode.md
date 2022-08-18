@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Enumeration members
+### Enumeration Members
 
 - [INSTANCE](CPMMessageCode.md#instance)
 - [INSTANCES](CPMMessageCode.md#instances)
@@ -15,11 +15,11 @@
 - [STH\_ID](CPMMessageCode.md#sth_id)
 - [TOPIC](CPMMessageCode.md#topic)
 
-## Enumeration members
+## Enumeration Members
 
 ### INSTANCE
 
-• **INSTANCE** = `7005`
+• **INSTANCE** = ``7005``
 
 #### Defined in
 
@@ -29,7 +29,7 @@ ___
 
 ### INSTANCES
 
-• **INSTANCES** = `7003`
+• **INSTANCES** = ``7003``
 
 #### Defined in
 
@@ -39,7 +39,7 @@ ___
 
 ### LOAD
 
-• **LOAD** = `7001`
+• **LOAD** = ``7001``
 
 #### Defined in
 
@@ -49,7 +49,7 @@ ___
 
 ### NETWORK\_INFO
 
-• **NETWORK\_INFO** = `7002`
+• **NETWORK\_INFO** = ``7002``
 
 #### Defined in
 
@@ -59,7 +59,7 @@ ___
 
 ### SEQUENCE
 
-• **SEQUENCE** = `7006`
+• **SEQUENCE** = ``7006``
 
 #### Defined in
 
@@ -69,7 +69,7 @@ ___
 
 ### SEQUENCES
 
-• **SEQUENCES** = `7004`
+• **SEQUENCES** = ``7004``
 
 #### Defined in
 
@@ -79,7 +79,7 @@ ___
 
 ### STH\_ID
 
-• **STH\_ID** = `7000`
+• **STH\_ID** = ``7000``
 
 #### Defined in
 
@@ -89,7 +89,7 @@ ___
 
 ### TOPIC
 
-• **TOPIC** = `7007`
+• **TOPIC** = ``7007``
 
 #### Defined in
 

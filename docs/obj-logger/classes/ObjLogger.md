@@ -481,12 +481,16 @@ ___
 Pipes output logger to provided target. The target can be a writable stream
 or an instance of class fulfiling IObjectLogger interface.
 
+**`See`**
+
+ObjectLogger.pipe
+
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `target` | `undefined` \| `Writable` \| `IObjectLogger` | Target for log stream. |
-| `options` | `ObjLogPipeOptions` | - |
+| `options?` | `ObjLogPipeOptions` | Pipe options. Should be the same as passed to |
 
 #### Returns
 

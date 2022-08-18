@@ -4,7 +4,9 @@
 
 Provides HTTP communication methods.
 
-**`classdesc`** Provides HTTP communication methods.
+**`Classdesc`**
+
+Provides HTTP communication methods.
 
 ## Hierarchy
 
@@ -25,6 +27,7 @@ Provides HTTP communication methods.
 - [get](ClientUtils.md#get)
 - [getStream](ClientUtils.md#getstream)
 - [post](ClientUtils.md#post)
+- [put](ClientUtils.md#put)
 - [sendStream](ClientUtils.md#sendstream)
 - [setDefaultHeaders](ClientUtils.md#setdefaultheaders)
 
@@ -65,7 +68,7 @@ ClientUtilsBase.addLogger
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L27)
+[packages/client-utils/src/client-utils.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L26)
 
 ___
 
@@ -104,7 +107,7 @@ ClientUtilsBase.delete
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:170](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L170)
+[packages/client-utils/src/client-utils.ts:201](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L201)
 
 ___
 
@@ -143,7 +146,7 @@ ClientUtilsBase.get
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:116](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L116)
+[packages/client-utils/src/client-utils.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L115)
 
 ___
 
@@ -176,7 +179,7 @@ ClientUtilsBase.getStream
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:127](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L127)
+[packages/client-utils/src/client-utils.ts:126](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L126)
 
 ___
 
@@ -217,7 +220,44 @@ ClientUtilsBase.post
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:140](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L140)
+[packages/client-utils/src/client-utils.ts:139](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L139)
+
+___
+
+### put
+
+▸ **put**<`T`\>(`url`, `data`, `requestInit?`, `config?`): `Promise`<`T`\>
+
+Performs PUT request and returns response in given type.
+
+#### Type parameters
+
+| Name |
+| :------ |
+| `T` |
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | Request URL. |
+| `data` | `any` | Data to be send. |
+| `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
+| `config` | `RequestConfig` | Request config. |
+
+#### Returns
+
+`Promise`<`T`\>
+
+Promise resolving to given type.
+
+#### Inherited from
+
+ClientUtilsBase.put
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:171](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L171)
 
 ___
 
@@ -240,7 +280,7 @@ Performs POST request for streamed data.
 | `url` | `string` | Request url. |
 | `stream` | `any` | stream to be send. |
 | `requestInit` | `RequestInit` | RequestInit object to be passed to fetch. |
-| `options` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> | send stream options. |
+| `options` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> | send stream options. |
 
 #### Returns
 
@@ -258,7 +298,7 @@ ClientUtilsBase.sendStream
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L193)
+[packages/client-utils/src/client-utils.ts:224](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L224)
 
 ___
 
@@ -282,7 +322,7 @@ ClientUtilsBase.setDefaultHeaders
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L37)
+[packages/client-utils/src/client-utils.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L36)
 
 ## Properties
 
@@ -293,6 +333,10 @@ ClientUtilsBase.setDefaultHeaders
 #### Inherited from
 
 ClientUtilsBase.apiBase
+
+#### Defined in
+
+[packages/client-utils/src/client-utils.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L14)
 
 ___
 
@@ -306,7 +350,7 @@ ClientUtilsBase.headers
 
 #### Defined in
 
-[packages/client-utils/src/client-utils.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L12)
+[packages/client-utils/src/client-utils.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-utils.ts#L11)
 
 ## Constructors
 

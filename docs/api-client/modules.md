@@ -9,7 +9,7 @@
 - [ClientError](classes/ClientError.md)
 - [ClientUtils](classes/ClientUtils.md)
 
-### Type aliases
+### Type Aliases
 
 - [ClientErrorCode](modules.md#clienterrorcode)
 - [RequestLogger](modules.md#requestlogger)
@@ -20,7 +20,7 @@
 - [ClientProvider](interfaces/ClientProvider.md)
 - [HttpClient](interfaces/HttpClient.md)
 
-## Type aliases
+## Type Aliases
 
 ### ClientErrorCode
 
@@ -49,13 +49,13 @@ Request logger.
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L21)
+[packages/client-utils/src/types/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L22)
 
 ___
 
 ### SendStreamOptions
 
-Ƭ **SendStreamOptions**: `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `type`: `string`  }\>
+Ƭ **SendStreamOptions**: `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"json"`` \| ``"text"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\>
 
 Options for sending sending stream.
 

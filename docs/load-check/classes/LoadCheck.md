@@ -88,7 +88,7 @@ IComponent.logger
 
 ▸ **getLoadCheck**(): `Promise`<`LoadCheckStat`\>
 
-Gathers various resources usage and returns it as a {@link LoadCheckStat} object.
+Gathers various resources usage and returns it as a LoadCheckStat object.
 
 #### Returns
 

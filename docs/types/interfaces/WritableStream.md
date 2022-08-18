@@ -4,7 +4,9 @@
 
 Writable stream representation with generic chunks.
 
-**`see`** https://nodejs.org/api/stream.html#stream_writable_streams Node.js Writable stream documentation
+**`See`**
+
+https://nodejs.org/api/stream.html#stream_writable_streams Node.js Writable stream documentation
 
 ## Type parameters
 

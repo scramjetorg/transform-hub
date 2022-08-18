@@ -13,7 +13,6 @@
 ### Methods
 
 - [captureStackTrace](InstanceAdapterError.md#capturestacktrace)
-- [prepareStackTrace](InstanceAdapterError.md#preparestacktrace)
 
 ### Properties
 
@@ -21,6 +20,7 @@
 - [data](InstanceAdapterError.md#data)
 - [message](InstanceAdapterError.md#message)
 - [name](InstanceAdapterError.md#name)
+- [prepareStackTrace](InstanceAdapterError.md#preparestacktrace)
 - [stack](InstanceAdapterError.md#stack)
 - [stackTraceLimit](InstanceAdapterError.md#stacktracelimit)
 
@@ -54,35 +54,6 @@ Create .stack property on a target object
 #### Defined in
 
 node_modules/@types/node/globals.d.ts:4
-
-___
-
-### prepareStackTrace
-
-▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
-
-Optional override for formatting stack traces
-
-**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-#### Returns
-
-`any`
-
-#### Inherited from
-
-[AppError](AppError.md).[prepareStackTrace](AppError.md#preparestacktrace)
-
-#### Defined in
-
-node_modules/@types/node/globals.d.ts:11
 
 ## Properties
 
@@ -139,6 +110,41 @@ ___
 #### Defined in
 
 node_modules/typescript/lib/lib.es5.d.ts:1028
+
+___
+
+### prepareStackTrace
+
+▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+
+#### Type declaration
+
+▸ (`err`, `stackTraces`): `any`
+
+Optional override for formatting stack traces
+
+**`See`**
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `err` | `Error` |
+| `stackTraces` | `CallSite`[] |
+
+##### Returns
+
+`any`
+
+#### Inherited from
+
+[AppError](AppError.md).[prepareStackTrace](AppError.md#preparestacktrace)
+
+#### Defined in
+
+node_modules/@types/node/globals.d.ts:11
 
 ___
 

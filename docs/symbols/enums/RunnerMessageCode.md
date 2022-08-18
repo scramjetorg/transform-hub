@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Enumeration members
+### Enumeration Members
 
 - [ACKNOWLEDGE](RunnerMessageCode.md#acknowledge)
 - [ALIVE](RunnerMessageCode.md#alive)
@@ -23,11 +23,11 @@
 - [STATUS](RunnerMessageCode.md#status)
 - [STOP](RunnerMessageCode.md#stop)
 
-## Enumeration members
+## Enumeration Members
 
 ### ACKNOWLEDGE
 
-• **ACKNOWLEDGE** = `3004`
+• **ACKNOWLEDGE** = ``3004``
 
 #### Defined in
 
@@ -37,7 +37,7 @@ ___
 
 ### ALIVE
 
-• **ALIVE** = `3010`
+• **ALIVE** = ``3010``
 
 #### Defined in
 
@@ -47,7 +47,7 @@ ___
 
 ### DESCRIBE\_SEQUENCE
 
-• **DESCRIBE\_SEQUENCE** = `3002`
+• **DESCRIBE\_SEQUENCE** = ``3002``
 
 #### Defined in
 
@@ -57,7 +57,7 @@ ___
 
 ### ERROR
 
-• **ERROR** = `3003`
+• **ERROR** = ``3003``
 
 #### Defined in
 
@@ -67,7 +67,7 @@ ___
 
 ### EVENT
 
-• **EVENT** = `5001`
+• **EVENT** = ``5001``
 
 #### Defined in
 
@@ -77,7 +77,7 @@ ___
 
 ### INPUT\_CONTENT\_TYPE
 
-• **INPUT\_CONTENT\_TYPE** = `3013`
+• **INPUT\_CONTENT\_TYPE** = ``3013``
 
 #### Defined in
 
@@ -87,7 +87,7 @@ ___
 
 ### KILL
 
-• **KILL** = `4002`
+• **KILL** = ``4002``
 
 #### Defined in
 
@@ -97,7 +97,7 @@ ___
 
 ### MONITORING
 
-• **MONITORING** = `3001`
+• **MONITORING** = ``3001``
 
 #### Defined in
 
@@ -107,7 +107,7 @@ ___
 
 ### MONITORING\_RATE
 
-• **MONITORING\_RATE** = `4003`
+• **MONITORING\_RATE** = ``4003``
 
 #### Defined in
 
@@ -117,7 +117,7 @@ ___
 
 ### PANG
 
-• **PANG** = `3012`
+• **PANG** = ``3012``
 
 #### Defined in
 
@@ -127,7 +127,7 @@ ___
 
 ### PING
 
-• **PING** = `3000`
+• **PING** = ``3000``
 
 #### Defined in
 
@@ -137,7 +137,7 @@ ___
 
 ### PONG
 
-• **PONG** = `4000`
+• **PONG** = ``4000``
 
 #### Defined in
 
@@ -147,7 +147,7 @@ ___
 
 ### SEQUENCE\_COMPLETED
 
-• **SEQUENCE\_COMPLETED** = `3011`
+• **SEQUENCE\_COMPLETED** = ``3011``
 
 #### Defined in
 
@@ -157,7 +157,7 @@ ___
 
 ### SEQUENCE\_STOPPED
 
-• **SEQUENCE\_STOPPED** = `3006`
+• **SEQUENCE\_STOPPED** = ``3006``
 
 #### Defined in
 
@@ -167,7 +167,7 @@ ___
 
 ### STATUS
 
-• **STATUS** = `3007`
+• **STATUS** = ``3007``
 
 #### Defined in
 
@@ -177,7 +177,7 @@ ___
 
 ### STOP
 
-• **STOP** = `4001`
+• **STOP** = ``4001``
 
 #### Defined in
 

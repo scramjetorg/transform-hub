@@ -17,7 +17,6 @@
 ### Methods
 
 - [captureStackTrace](CeroError.md#capturestacktrace)
-- [prepareStackTrace](CeroError.md#preparestacktrace)
 
 ### Properties
 
@@ -26,6 +25,7 @@
 - [httpMessage](CeroError.md#httpmessage)
 - [message](CeroError.md#message)
 - [name](CeroError.md#name)
+- [prepareStackTrace](CeroError.md#preparestacktrace)
 - [stackTraceLimit](CeroError.md#stacktracelimit)
 - [type](CeroError.md#type)
 
@@ -63,35 +63,6 @@ Error.captureStackTrace
 #### Defined in
 
 node_modules/@types/node/globals.d.ts:4
-
-___
-
-### prepareStackTrace
-
-▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
-
-Optional override for formatting stack traces
-
-**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-#### Returns
-
-`any`
-
-#### Inherited from
-
-Error.prepareStackTrace
-
-#### Defined in
-
-node_modules/@types/node/globals.d.ts:11
 
 ## Properties
 
@@ -170,6 +141,41 @@ Error.name
 #### Defined in
 
 node_modules/typescript/lib/lib.es5.d.ts:1028
+
+___
+
+### prepareStackTrace
+
+▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+
+#### Type declaration
+
+▸ (`err`, `stackTraces`): `any`
+
+Optional override for formatting stack traces
+
+**`See`**
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `err` | `Error` |
+| `stackTraces` | `CallSite`[] |
+
+##### Returns
+
+`any`
+
+#### Inherited from
+
+Error.prepareStackTrace
+
+#### Defined in
+
+node_modules/@types/node/globals.d.ts:11
 
 ___
 

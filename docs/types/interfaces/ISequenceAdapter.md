@@ -20,7 +20,7 @@
 
 ### identify
 
-▸ **identify**(`stream`, `id`): `Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)\>
+▸ **identify**(`stream`, `id`, `override?`): `Promise`<[`SequenceConfig`](../modules.md#sequenceconfig)\>
 
 Identifies new Sequence
 
@@ -30,6 +30,7 @@ Identifies new Sequence
 | :------ | :------ |
 | `stream` | `Readable` |
 | `id` | `string` |
+| `override?` | `boolean` |
 
 #### Returns
 
@@ -37,7 +38,7 @@ Identifies new Sequence
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L28)
+[packages/types/src/sequence-adapter.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L29)
 
 ___
 
@@ -51,7 +52,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L18)
+[packages/types/src/sequence-adapter.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L19)
 
 ___
 
@@ -67,7 +68,7 @@ Identifies existing Sequences
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L23)
+[packages/types/src/sequence-adapter.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L24)
 
 ___
 
@@ -87,7 +88,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L30)
+[packages/types/src/sequence-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L31)
 
 ## Properties
 
@@ -97,7 +98,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L32)
+[packages/types/src/sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L33)
 
 ___
 
@@ -109,4 +110,4 @@ Adapter name.
 
 #### Defined in
 
-[packages/types/src/sequence-adapter.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L16)
+[packages/types/src/sequence-adapter.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-adapter.ts#L17)

@@ -22,7 +22,7 @@
 - [ReadableStream](interfaces/ReadableStream.md)
 - [WritableStream](interfaces/WritableStream.md)
 
-### Type aliases
+### Type Aliases
 
 - [APIErrorMessage](modules.md#apierrormessage)
 - [AcknowledgeMessage](modules.md#acknowledgemessage)
@@ -190,7 +190,7 @@
 - [MessageCodes](modules/MessageCodes.md)
 - [STHRestAPI](modules/STHRestAPI.md)
 
-## Type aliases
+## Type Aliases
 
 ### APIErrorMessage
 
@@ -201,7 +201,7 @@
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `code` | `APIErrorCode` | A unique reference number for a given error type. |
-| `message` | `string` | An error message describing the potential cause of the error and possibly a way how to fix it. |
+| `message` | `string` | An error message describing the potential cause of the error  and possibly a way how to fix it. |
 | `url?` | `string` | A link to the detail information about the error. |
 
 #### Defined in
@@ -251,11 +251,11 @@ App configuration primitive.
 
 #### Index signature
 
-▪ [key: `string`]: ``null`` \| `string` \| `number` \| `boolean` \| [`AppConfig`](modules.md#appconfig)
+▪ [key: `string`]: `MaybeArray`<`SimpleType`\> \| `MaybeArray`<[`AppConfig`](modules.md#appconfig)\>
 
 #### Defined in
 
-[packages/types/src/app-config.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-config.ts#L5)
+[packages/types/src/app-config.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/app-config.ts#L10)
 
 ___
 
@@ -312,7 +312,7 @@ ___
 
 Application is an acceptable input for the runner.
 
-**`interface`**
+**`Interface`**
 
 #### Type parameters
 
@@ -403,6 +403,8 @@ ___
 | `cpmSslCaPath?` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpmSslCaPath"``] |
 | `id` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"id"``] |
 | `infoFilePath` | [`STHConfiguration`](modules.md#sthconfiguration)[``"host"``][``"infoFilePath"``] |
+| `maxReconnections` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpm"``][``"maxReconnections"``] |
+| `reconnectionDelay` | [`STHConfiguration`](modules.md#sthconfiguration)[``"cpm"``][``"reconnectionDelay"``] |
 
 #### Defined in
 
@@ -534,7 +536,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
+[packages/types/src/api-expose.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L22)
 
 ___
 
@@ -610,7 +612,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L20)
+[packages/types/src/runner-config.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L23)
 
 ___
 
@@ -869,7 +871,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L15)
+[packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L16)
 
 ___
 
@@ -980,7 +982,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L9)
+[packages/types/src/api-expose.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L10)
 
 ___
 
@@ -990,7 +992,7 @@ ___
 
 An Inert App is an app that doesn't accept data from the platform and doesn't output it.
 
-**`interface`**
+**`Interface`**
 
 #### Type parameters
 
@@ -1046,6 +1048,9 @@ ___
 | `sequenceArgs?` | `any`[] |
 | `started?` | `Date` |
 | `status?` | [`InstanceStatus`](modules.md#instancestatus) |
+| `terminated?` | { `exitcode`: `number` ; `reason`: `string`  } |
+| `terminated.exitcode` | `number` |
+| `terminated.reason` | `string` |
 
 #### Defined in
 
@@ -1086,7 +1091,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L38)
+[packages/types/src/runner-config.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L41)
 
 ___
 
@@ -1267,7 +1272,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L32)
+[packages/types/src/runner-config.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L35)
 
 ___
 
@@ -1523,7 +1528,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L20)
+[packages/types/src/api-expose.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L21)
 
 ___
 
@@ -1747,7 +1752,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L19)
+[packages/types/src/api-expose.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L20)
 
 ___
 
@@ -1763,7 +1768,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L17)
+[packages/types/src/api-expose.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L18)
 
 ___
 
@@ -1812,7 +1817,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L16)
+[packages/types/src/api-expose.ts:17](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L17)
 
 ___
 
@@ -1856,7 +1861,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L8)
+[packages/types/src/api-expose.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L9)
 
 ___
 
@@ -1936,7 +1941,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L28)
+[packages/types/src/runner-config.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L31)
 
 ___
 
@@ -1946,7 +1951,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:231](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L231)
+[packages/types/src/sth-configuration.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L236)
 
 ___
 
@@ -2027,7 +2032,7 @@ ___
 A Readable App is an app that obtains the data by it's own means and preforms
 0 to any number of transforms on that data before returning it.
 
-**`interface`**
+**`Interface`**
 
 #### Type parameters
 
@@ -2101,8 +2106,11 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `colors` | `boolean` |
 | `config?` | `string` |
 | `cpmId?` | `string` |
+| `cpmMaxReconnections` | `number` |
+| `cpmReconnectionDelay` | `number` |
 | `cpmSslCaPath?` | `string` |
 | `cpmUrl?` | `string` |
 | `docker` | `boolean` |
@@ -2150,6 +2158,9 @@ ___
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
+| `cpm` | { `maxReconnections`: `number` ; `reconnectionDelay`: `number`  } | - |
+| `cpm.maxReconnections` | `number` | - |
+| `cpm.reconnectionDelay` | `number` | - |
 | `cpmId` | `string` | CPM id. |
 | `cpmSslCaPath?` | `string` | Path to the certificate authority file for verifying self-signed CPM certs |
 | `cpmUrl` | `string` | CPM url. |
@@ -2246,7 +2257,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L36)
+[packages/types/src/runner-config.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L39)
 
 ___
 
@@ -2291,6 +2302,7 @@ ___
 | `config` | [`SequenceConfig`](modules.md#sequenceconfig) |
 | `id` | `string` |
 | `instances` | `Set`<[`InstanceId`](modules.md#instanceid)\> |
+| `name?` | `string` |
 
 #### Defined in
 
@@ -2333,7 +2345,10 @@ ___
 
 | Name | Type |
 | :------ | :------ |
+| `author?` | `string` \| ``null`` |
+| `description?` | `string` \| ``null`` |
 | `engines?` | `Record`<`string`, `string`\> \| ``null`` |
+| `keywords?` | `string`[] \| ``null`` |
 | `main` | `string` |
 | `name?` | `string` \| ``null`` |
 | `scramjet?` | [`SequencePackageJSONScramjetSection`](modules.md#sequencepackagejsonscramjetsection) \| ``null`` |
@@ -2513,15 +2528,16 @@ Configuration options for streaming endpoints
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `checkContentType?` | `boolean` | Perform stream content-type type checks |
-| `checkEndHeader?` | `boolean` | Should consider x-end-stream header or just use the 'end'  **`default`** true |
+| `checkEndHeader?` | `boolean` | Should consider x-end-stream header or just use the 'end'  **`Default`**  true |
 | `encoding?` | `BufferEncoding` | Encoding used in the stream |
 | `end?` | `boolean` | Should request end also end the stream or can the endpoint accept subsequent connections |
 | `json?` | `boolean` | Is the stream a JSON stream? |
+| `method?` | ``"post"`` \| ``"put"`` | - |
 | `text?` | `boolean` | Is the stream a text stream? |
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L26)
+[packages/types/src/api-expose.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L27)
 
 ___
 
@@ -2531,7 +2547,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L11)
+[packages/types/src/api-expose.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L12)
 
 ___
 
@@ -2541,7 +2557,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L14)
+[packages/types/src/api-expose.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L15)
 
 ___
 
@@ -2691,7 +2707,7 @@ and returns the data to the platforms for further use.
 
 Has both active readable and writable sides.
 
-**`interface`**
+**`Interface`**
 
 ##### Parameters
 
@@ -2789,7 +2805,7 @@ ___
 A Writable App is an app that accepts the data from the platform, performs any number
 of transforms and then saves it to the data destination by it's own means.
 
-**`interface`**
+**`Interface`**
 
 #### Type parameters
 

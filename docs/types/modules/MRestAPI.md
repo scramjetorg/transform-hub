@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [ConnectedSTHInfo](MRestAPI.md#connectedsthinfo)
 - [GetConfigResponse](MRestAPI.md#getconfigresponse)
@@ -19,7 +19,7 @@
 - [GetVersionResponse](MRestAPI.md#getversionresponse)
 - [HealthCheckInfo](MRestAPI.md#healthcheckinfo)
 
-## Type aliases
+## Type Aliases
 
 ### ConnectedSTHInfo
 

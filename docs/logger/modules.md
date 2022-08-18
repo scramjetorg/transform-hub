@@ -8,7 +8,7 @@
 
 - [Logger](classes/Logger.md)
 
-### Type aliases
+### Type Aliases
 
 - [MessageFormatter](modules.md#messageformatter)
 
@@ -19,7 +19,7 @@
 - [getLogger](modules.md#getlogger)
 - [removeLoggerOutput](modules.md#removeloggeroutput)
 
-## Type aliases
+## Type Aliases
 
 ### MessageFormatter
 

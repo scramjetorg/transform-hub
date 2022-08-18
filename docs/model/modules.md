@@ -16,7 +16,7 @@
 - [RunnerError](classes/RunnerError.md)
 - [SequenceAdapterError](classes/SequenceAdapterError.md)
 
-### Type aliases
+### Type Aliases
 
 - [ConfiguredMessageHandler](modules.md#configuredmessagehandler)
 - [ICSIControllerErrorData](modules.md#icsicontrollererrordata)
@@ -32,9 +32,10 @@
 - [checkMessage](modules.md#checkmessage)
 - [deserializeMessage](modules.md#deserializemessage)
 - [getMessage](modules.md#getmessage)
+- [isStopSequenceMessage](modules.md#isstopsequencemessage)
 - [serializeMessage](modules.md#serializemessage)
 
-## Type aliases
+## Type Aliases
 
 ### ConfiguredMessageHandler
 
@@ -179,6 +180,26 @@ A helper method used for deserializing messages.
 #### Defined in
 
 [packages/model/src/get-message.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/get-message.ts#L94)
+
+___
+
+### isStopSequenceMessage
+
+▸ **isStopSequenceMessage**(`data`): data is StopSequenceMessageData
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `data` | `object` |
+
+#### Returns
+
+data is StopSequenceMessageData
+
+#### Defined in
+
+[packages/model/src/get-message.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/model/src/get-message.ts#L16)
 
 ___
 

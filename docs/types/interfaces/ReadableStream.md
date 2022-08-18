@@ -4,7 +4,9 @@
 
 A readable stream representation with generic chunks.
 
-**`see`** https://nodejs.org/api/stream.html#stream_readable_streams Node.js Readable stream documentation
+**`See`**
+
+https://nodejs.org/api/stream.html#stream_readable_streams Node.js Readable stream documentation
 
 ## Type parameters
 

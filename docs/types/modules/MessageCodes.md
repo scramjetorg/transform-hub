@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [ACKNOWLEDGE](MessageCodes.md#acknowledge)
 - [ALIVE](MessageCodes.md#alive)
@@ -18,7 +18,7 @@
 - [PONG](MessageCodes.md#pong)
 - [STOP](MessageCodes.md#stop)
 
-## Type aliases
+## Type Aliases
 
 ### ACKNOWLEDGE
 

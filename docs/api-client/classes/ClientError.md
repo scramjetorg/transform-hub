@@ -16,6 +16,7 @@
 - [code](ClientError.md#code)
 - [message](ClientError.md#message)
 - [name](ClientError.md#name)
+- [prepareStackTrace](ClientError.md#preparestacktrace)
 - [reason](ClientError.md#reason)
 - [source](ClientError.md#source)
 - [stack](ClientError.md#stack)
@@ -26,7 +27,6 @@
 
 - [captureStackTrace](ClientError.md#capturestacktrace)
 - [from](ClientError.md#from)
-- [prepareStackTrace](ClientError.md#preparestacktrace)
 - [toJSON](ClientError.md#tojson)
 
 ### Constructors
@@ -80,6 +80,41 @@ Error.name
 #### Defined in
 
 node_modules/typescript/lib/lib.es5.d.ts:1028
+
+___
+
+### prepareStackTrace
+
+▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+
+#### Type declaration
+
+▸ (`err`, `stackTraces`): `any`
+
+Optional override for formatting stack traces
+
+**`See`**
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `err` | `Error` |
+| `stackTraces` | `CallSite`[] |
+
+##### Returns
+
+`any`
+
+#### Inherited from
+
+Error.prepareStackTrace
+
+#### Defined in
+
+node_modules/@types/node/globals.d.ts:11
 
 ___
 
@@ -187,35 +222,6 @@ ___
 #### Defined in
 
 [packages/client-utils/src/client-error.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/client-error.ts#L67)
-
-___
-
-### prepareStackTrace
-
-▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
-
-Optional override for formatting stack traces
-
-**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-#### Returns
-
-`any`
-
-#### Inherited from
-
-Error.prepareStackTrace
-
-#### Defined in
-
-node_modules/@types/node/globals.d.ts:11
 
 ___
 
