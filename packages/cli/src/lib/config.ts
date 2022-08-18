@@ -6,6 +6,7 @@ import isUrl from "validator/lib/isURL";
 import isJWT from "validator/lib/isJWT";
 import { envs } from "../utils/envs";
 import { displayError, displayMessage } from "./output";
+import { sessionId } from "../utils/sessionId";
 
 abstract class Config {
     abstract getConfig(): any | null;
@@ -96,6 +97,9 @@ class DefaultFileConfig extends FileConfig {
     }
     getDefaultConfig() {
         return this.defaultConfig;
+    }
+    restoreDefaultConfig() {
+        return this.writeConfig(this.getDefaultConfig());
     }
 
     validateConfigValue(key: string, value: any): boolean {
@@ -290,7 +294,7 @@ export class ProfileConfig extends DefaultFileConfig {
                 if (value === this.defaultConfig.middlewareApiUrl) return true;
                 return isUrl(value);
             }
-            case "env" : return isConfigEnv(value);
+            case "env": return isConfigEnv(value);
             case "token": {
                 if (value === this.defaultConfig.token) return true;
                 return isJWT(value);
@@ -299,7 +303,7 @@ export class ProfileConfig extends DefaultFileConfig {
                 return true;
         }
     }
-    validateConfigLogValue(key: string, value: any):boolean {
+    validateConfigLogValue(key: string, value: any): boolean {
         type logConfigKey = keyof typeof this.defaultConfig.log;
         if (!(key in this.defaultConfig.log) || typeof value !== typeof this.defaultConfig.log[key as logConfigKey])
             return false;
@@ -318,6 +322,7 @@ class SessionConfig extends DefaultFileConfig {
             lastSequenceId: "",
             lastSpaceId: "",
             lastHubId: "",
+            sessionId: sessionId()
         };
 
         super(sessionConfigFile, defaultSessionConfig);
@@ -378,7 +383,7 @@ export class ProfileManager {
     isPathSource() {
         return this.source === profileSource.envProfilePath || this.source === profileSource.flagProfilePath;
     }
-    getProfileName():string {
+    getProfileName(): string {
         if (this.isPathSource())
             return "user configuration file";
         return siConfig.getConfig().profile;
@@ -419,14 +424,14 @@ export class ProfileManager {
         return incomingSource >= this.source;
     }
 
-    protected setProfileFromName(profileName: string):boolean {
+    protected setProfileFromName(profileName: string): boolean {
         if (!profileExists(profileName)) throw Error(`Unable to find profile: ${profileName}`);
         this.profile.readOnly = false;
         this.profile.setFilePath(profileNameToPath(profileName));
         return true;
     }
 
-    protected setProfileFromFile = (path:string):boolean => {
+    protected setProfileFromFile = (path: string): boolean => {
         const fileConfig = JSON.parse(readFileSync(path, "utf-8"));
 
         if (!this.profile.validateConfig(fileConfig)) throw Error("Invalid config file");

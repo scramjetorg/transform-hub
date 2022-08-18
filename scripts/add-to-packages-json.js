@@ -63,7 +63,6 @@ for (const file of packages) {
 
         if (obj && typeof obj === "object" && key in obj) console.log(file, obj[key]);
         else console.error(file, "<no key>");
-
     } catch (e) {
         console.error(file, "ERR", e.message);
     }

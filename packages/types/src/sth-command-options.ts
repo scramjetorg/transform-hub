@@ -2,6 +2,7 @@ import { LogLevel } from "./object-logger";
 
 export type STHCommandOptions = {
     logLevel: LogLevel;
+    colors: boolean,
     port: number;
     hostname: string;
     identifyExisting: boolean;
@@ -9,6 +10,8 @@ export type STHCommandOptions = {
     cpmUrl?: string;
     cpmId?: string;
     cpmSslCaPath?: string;
+    cpmMaxReconnections: number,
+    cpmReconnectionDelay: number,
     id?: string;
     runtimeAdapter: string;
     runnerImage: string;

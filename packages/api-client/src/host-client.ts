@@ -50,14 +50,16 @@ export class HostClient implements ClientProvider {
      *
      * @param sequencePackage Stream with packed Sequence.
      * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
+     * @param {boolean} update Send request with post or put method
      * @returns {SequenceClient} Sequence client.
      */
     async sendSequence(
         sequencePackage: Parameters<HttpClient["sendStream"]>[1],
-        requestInit?: RequestInit
+        requestInit?: RequestInit,
+        update?: boolean
     ): Promise<SequenceClient> {
         const response = await this.client.sendStream<any>("sequence", sequencePackage, requestInit, {
-            parseResponse: "json",
+            parseResponse: "json", put: update
         });
 
         return SequenceClient.from(response.id, this);
@@ -110,6 +112,13 @@ export class HostClient implements ClientProvider {
      */
     async getVersion() {
         return this.client.get<STHRestAPI.GetVersionResponse>("version");
+    }
+
+    /**
+     * Returns Host status.
+     */
+    async getStatus() {
+        return this.client.get<STHRestAPI.GetStatusResponse>("status");
     }
 
     /**

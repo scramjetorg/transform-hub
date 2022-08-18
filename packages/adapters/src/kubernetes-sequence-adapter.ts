@@ -38,7 +38,10 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         name: validPackageJson.name ?? "",
         id,
         sequenceDir,
-        engines
+        engines,
+        description: validPackageJson.description || "",
+        author: validPackageJson.author || "",
+        keywords: validPackageJson.keywords || [],
     };
 }
 
@@ -103,12 +106,17 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
      *
      * @param {Readable} stream Stream with packed sequence.
      * @param {string} id Sequence Id.
+     * @param {boolean} override Removes previous sequence
      * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
      */
-    async identify(stream: Readable, id: string): Promise<SequenceConfig> {
+    async identify(stream: Readable, id: string, override = false): Promise<SequenceConfig> {
         // 1. Unpack package.json to stdout and map to config
         // 2. Create compressed package on the disk
         const sequenceDir = path.join(this.adapterConfig.sequencesRoot, id);
+
+        if (override) {
+            await fs.rm(sequenceDir, { recursive: true, force: true });
+        }
 
         await fs.mkdir(sequenceDir);
 

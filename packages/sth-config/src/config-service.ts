@@ -1,4 +1,5 @@
 import { DeepPartial, PublicSTHConfiguration, STHConfiguration } from "@scramjet/types";
+
 import { merge } from "@scramjet/utility";
 import path from "path";
 import { homedir } from "os";
@@ -10,6 +11,10 @@ const _defaultConfig: STHConfiguration = {
     logColors: true,
     cpmUrl: "",
     cpmId: "",
+    cpm: {
+        maxReconnections: 100,
+        reconnectionDelay: 2000,
+    },
     docker: {
         prerunner: {
             image: "",

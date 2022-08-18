@@ -1,5 +1,6 @@
-import { COLORS } from "./colors";
 import { LogEntry, LogLevel } from "@scramjet/types";
+
+import { COLORS } from "./colors";
 import { inspect } from "util";
 
 const COLOR_MAP: { [ key: string]: string } = {
@@ -20,6 +21,6 @@ export const prettyPrint = (opts: { colors?: boolean }) => opts.colors
     ? (obj: LogEntry) => {
         return `${colorDate(obj.ts)} ${colorLevel(obj.level)} ${colorSource(obj.from)} ${obj.msg} ${colorData(obj.data)}\n`;
     } : (obj: LogEntry) => {
-        return `${obj.ts} ${obj.level} ${obj.from} ${obj.msg} ${(obj.data || []).length ? inspect(obj.data, { colors: false, depth: 2 }) : ""}\n`;
+        return `${new Date(obj.ts!).toISOString()} ${obj.level} ${obj.from} ${obj.msg} ${(obj.data || []).length ? inspect(obj.data, { colors: false, depth: 2 }) : ""}\n`;
     };
 

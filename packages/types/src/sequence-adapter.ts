@@ -4,9 +4,10 @@ import { InstanceId } from "./instance";
 import { IObjectLogger } from "./object-logger";
 
 export type SequenceInfo = {
-    id: string;
     config: SequenceConfig;
+    id: string;
     instances: Set<InstanceId>;
+    name?: string;
 }
 
 export interface ISequenceAdapter {
@@ -25,7 +26,7 @@ export interface ISequenceAdapter {
     /**
      * Identifies new Sequence
      */
-    identify(stream: Readable, id: string): Promise<SequenceConfig>;
+    identify(stream: Readable, id: string, override?: boolean): Promise<SequenceConfig>;
 
     remove(conifg: SequenceConfig): Promise<void>
 

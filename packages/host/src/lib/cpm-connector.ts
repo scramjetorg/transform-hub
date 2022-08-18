@@ -38,27 +38,6 @@ type Events = {
  */
 export class CPMConnector extends TypedEmitter<Events> {
     /**
-     * Maximum attempts for first connection try.
-     *
-     * @type {number}
-     */
-    MAX_CONNECTION_ATTEMPTS = 100;
-
-    /**
-     * Maximum retries on connection lost.
-     *
-     * @type {number}
-     */
-    MAX_RECONNECTION_ATTEMPTS = 100;
-
-    /**
-     * Delay between connection attempts.
-     *
-     * @type {number}
-     */
-    RECONNECT_INTERVAL = 2000;
-
-    /**
      * Load check instance to be used to get load check data.
      *
      * @type {LoadCheck}
@@ -271,58 +250,42 @@ export class CPMConnector extends TypedEmitter<Events> {
         }
     }
 
-    /**
-     * Sets up handlers for specific channels on the VerserClient connection.
-     * Channel 0 is reserved to handle control messages from Manager.
-     * Channel 1 is reserved for log stream sent to Manager.
-     */
-    registerChannels() {
-        this.verserClient.registerChannel(0, async (duplex: Duplex) => {
-            this.communicationChannel = duplex;
+    async handleCommunicationRequest(stream: Duplex, _headers: http.IncomingHttpHeaders) {
+        this.communicationChannel = stream;
 
-            StringStream.from(this.communicationChannel as Readable)
-                .JSONParse()
-                .map(async (message: EncodedControlMessage) => {
-                    this.logger.trace("Received message", message);
+        StringStream.from(this.communicationChannel as Readable)
+            .JSONParse()
+            .map(async (message: EncodedControlMessage) => {
+                this.logger.trace("Received message", message);
 
-                    if (message[0] === CPMMessageCode.STH_ID) {
-                        // eslint-disable-next-line no-extra-parens
-                        this.info.id = (message[1] as STHIDMessageData).id;
+                if (message[0] === CPMMessageCode.STH_ID) {
+                    // eslint-disable-next-line no-extra-parens
+                    this.info.id = (message[1] as STHIDMessageData).id;
 
-                        this.logger.trace("Received id", this.info.id);
+                    this.logger.trace("Received id", this.info.id);
 
-                        this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
+                    this.verserClient.updateHeaders({ "x-sth-id": this.info.id });
 
-                        fs.writeFileSync(
-                            this.config.infoFilePath,
-                            JSON.stringify(this.info)
-                        );
-                    }
+                    fs.writeFileSync(
+                        this.config.infoFilePath,
+                        JSON.stringify(this.info)
+                    );
+                }
 
-                    return message;
-                }).catch((e: any) => {
-                    this.logger.error("communicationChannel error", e.message);
-                });
+                return message;
+            }).catch((e: any) => {
+                this.logger.error("communicationChannel error", e.message);
+            });
 
-            this.communicationStream = new StringStream();
-            this.communicationStream.pipe(this.communicationChannel);
+        this.communicationStream = new StringStream();
+        this.communicationStream.pipe(this.communicationChannel);
 
-            await this.communicationStream.whenWrote(
-                JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
-            );
-
-            this.emit("connect");
-            this.setLoadCheckMessageSender();
-        });
-
-        this.verserClient.registerChannel(
-            1, (duplex: Duplex) => {
-                duplex.on("error", (err: Error) => {
-                    this.logger.error(err.message);
-                });
-                this.emit("log_connect", duplex);
-            }
+        await this.communicationStream.whenWrote(
+            JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
         );
+
+        this.emit("connect");
+        this.setLoadCheckMessageSender();
     }
 
     /**
@@ -348,7 +311,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         } catch (err) {
             this.logger.error("Can not connect to Manager", err);
 
-            this.reconnect();
+            await this.reconnect();
 
             return;
         }
@@ -358,21 +321,35 @@ export class CPMConnector extends TypedEmitter<Events> {
         connection.socket
             .on("close", async () => { await this.handleConnectionClose(); });
 
+        /**
+         * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
+         * and made requests to it).
+         * @TODO: Provide detailed communication status.
+        */
+
         this.connected = true;
         this.connectionAttempts = 0;
 
-        this.registerChannels();
-
-        connection.req.on("error", (error: any) => {
+        connection.req.on("error", async (error: any) => {
             this.logger.error("Request error", error);
 
-            this.reconnect();
+            try {
+                await this.reconnect();
+            } catch (e) {
+                this.logger.error("Reconnect failed");
+            }
         });
 
-        this.verserClient.on("error", (error: any) => {
+        this.verserClient.on("error", async (error: any) => {
             this.logger.error("VerserClient error", error);
 
-            this.reconnect();
+            try {
+                await this.reconnect();
+            } catch (e) {
+                this.logger.error("Reconnect failed");
+            }
+
+            await this.reconnect();
         });
     }
 
@@ -391,7 +368,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             clearInterval(this.loadInterval);
         }
 
-        this.reconnect();
+        await this.reconnect();
     }
 
     /**
@@ -399,7 +376,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      *
      * @returns {void}
      */
-    reconnect():void {
+    async reconnect(): Promise<void> {
         if (this.isReconnecting) {
             return;
         }
@@ -408,22 +385,21 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         let shouldReconnect = true;
 
-        if (this.wasConnected) {
-            if (this.connectionAttempts > this.MAX_RECONNECTION_ATTEMPTS) {
-                shouldReconnect = false;
-            }
-        } else if (this.connectionAttempts > this.MAX_CONNECTION_ATTEMPTS) {
+        if (~this.config.maxReconnections && this.connectionAttempts > this.config.maxReconnections) {
             shouldReconnect = false;
+            this.logger.warn("Maximum reconnection attempts reached. Giving up.");
         }
 
         if (shouldReconnect) {
             this.isReconnecting = true;
 
-            setTimeout(async () => {
-                this.logger.info("Connection lost, retrying", this.connectionAttempts);
+            await new Promise<void>((resolve, reject) => {
+                setTimeout(async () => {
+                    this.logger.info("Connection lost, retrying", this.connectionAttempts);
 
-                await this.connect();
-            }, this.RECONNECT_INTERVAL);
+                    await this.connect().then(resolve, reject);
+                }, this.config.reconnectionDelay);
+            });
         }
     }
 

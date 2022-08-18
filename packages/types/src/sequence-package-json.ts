@@ -14,4 +14,7 @@ export type SequencePackageJSON = {
     main: string,
     engines?: Record<string, string> | null
     scramjet?: SequencePackageJSONScramjetSection | null
+    description?: string | null
+    author?: string | null
+    keywords?: string[] | null
 }

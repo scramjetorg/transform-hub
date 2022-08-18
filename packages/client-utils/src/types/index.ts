@@ -8,6 +8,7 @@ export type SendStreamOptions = Partial<{
     type: string;
     end: boolean;
     parseResponse?: "json" | "text" | "stream";
+    put: boolean
 }>;
 
 /**

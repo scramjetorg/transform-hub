@@ -37,7 +37,10 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         version: validPackageJson.version ?? "",
         name: validPackageJson.name ?? "",
         id,
-        sequenceDir
+        sequenceDir,
+        description: validPackageJson.description || "",
+        author: validPackageJson.author || "",
+        keywords: validPackageJson.keywords || [],
     };
 }
 
@@ -91,10 +94,15 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
      *
      * @param {Readable} stream Stream with packed sequence.
      * @param {string} id Sequence Id.
+     * @param {boolean} override Removes previous sequence
      * @returns {Promise<SequenceConfig>} Promise resolving to identified sequence configuration.
      */
-    async identify(stream: Readable, id: string): Promise<SequenceConfig> {
+    async identify(stream: Readable, id: string, override = false): Promise<SequenceConfig> {
         const sequenceDir = path.join(this.config.sequencesRoot, id);
+
+        if (override) {
+            await fs.rm(sequenceDir, { recursive: true, force: true });
+        }
 
         await fs.mkdir(sequenceDir);
 

@@ -1,5 +1,6 @@
 import { ClientProvider, HttpClient } from "@scramjet/client-utils";
 import { STHRestAPI } from "@scramjet/types";
+import { Readable } from "stream";
 
 import { InstanceClient } from "./instance-client";
 
@@ -94,10 +95,11 @@ export class SequenceClient {
         return this.clientUtils.get<STHRestAPI.GetSequenceResponse>(this.sequenceURL);
     }
 
-    /**
-     * Not implemented.
-     */
-    async overwrite() {
-        throw Error("Not yet implemented");
+    async overwrite(stream: Readable) {
+        const response = await this.clientUtils.sendStream<any>("sequence", stream, { method: "PUT" }, {
+            parseResponse: "json"
+        });
+
+        return SequenceClient.from(response.id, this.host);
     }
 }

@@ -15,6 +15,9 @@ type CommonSequenceConfig = {
     name: string;
     version: string;
     sequenceDir: string;
+    description: string;
+    author: string;
+    keywords: string[];
 }
 
 export type DockerSequenceConfig = CommonSequenceConfig & {

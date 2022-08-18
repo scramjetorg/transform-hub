@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { ClientError, QueryError } from "./client-error";
 import { Headers, HttpClient, RequestLogger, SendStreamOptions, RequestConfig } from "./types";
 
@@ -161,6 +160,38 @@ export abstract class ClientUtilsBase implements HttpClient {
     }
 
     /**
+     * Performs PUT request and returns response in given type.
+     *
+     * @param url Request URL.
+     * @param data Data to be send.
+     * @param {RequestInit} requestInit RequestInit object to be passed to fetch.
+     * @param config Request config.
+     * @returns {Promise<T>} Promise resolving to given type.
+     */
+    async put<T>(
+        url: string,
+        data: any,
+        requestInit: RequestInit = {},
+        config: RequestConfig = { parse: "stream", json: false }
+    ): Promise<T> {
+        if (config.json) {
+            requestInit.headers ||= {} as Headers;
+            (requestInit.headers as Headers)["Content-Type"] = "application/json";
+            data = JSON.stringify(data);
+        }
+
+        return this.safeRequest<T>(
+            this.normalizeUrlFn(`${this.apiBase}/${url}`),
+            {
+                ...requestInit,
+                method: "put",
+                body: data
+            },
+            config
+        );
+    }
+
+    /**
      * Performs DELETE request.
      *
      * @param {string} url Request URL.
@@ -194,7 +225,8 @@ export abstract class ClientUtilsBase implements HttpClient {
         url: string,
         stream: any | string,
         requestInit: RequestInit = {},
-        { type = "application/octet-stream", end, parseResponse = "stream" }: SendStreamOptions = {}
+        { type = "application/octet-stream", end, parseResponse = "stream", put = false }: SendStreamOptions = {},
+
     ): Promise<T> {
         requestInit.headers ||= {} as Headers;
 
@@ -207,6 +239,6 @@ export abstract class ClientUtilsBase implements HttpClient {
             (requestInit.headers as Headers)["x-end-stream"] = end ? "true" : "false";
         }
 
-        return this.post<T>(url, stream, requestInit, { parse: parseResponse });
+        return this[put ? "put" : "post"]<T>(url, stream, requestInit, { parse: parseResponse });
     }
 }

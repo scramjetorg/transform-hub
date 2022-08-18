@@ -151,7 +151,7 @@ export class Host implements IComponent {
             this,
             {},
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
-                ObjLogger.levels[ObjLogger.levels.length - 1]
+            ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
@@ -173,6 +173,7 @@ export class Host implements IComponent {
         this.socketServer.logger.pipe(this.logger);
 
         this.api = apiServer;
+        this.api.opLogger?.pipe(this.logger);
 
         this.apiBase = this.config.host.apiBase;
         this.instanceBase = `${this.config.host.apiBase}/instance`;
@@ -195,14 +196,16 @@ export class Host implements IComponent {
                 {
                     id: this.config.host.id,
                     infoFilePath: this.config.host.infoFilePath,
-                    cpmSslCaPath: this.config.cpmSslCaPath
+                    cpmSslCaPath: this.config.cpmSslCaPath,
+                    maxReconnections: this.config.cpm.maxReconnections,
+                    reconnectionDelay: this.config.cpm.reconnectionDelay
                 },
                 this.api.server
             );
 
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
-            this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
+
             this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
@@ -237,9 +240,29 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-        await this.connectToCPM();
         await this.performStartup();
         await this.startListening();
+
+        if (this.config.cpmUrl && this.config.cpmId) {
+            this.cpmConnector = new CPMConnector(
+                this.config.cpmUrl,
+                this.config.cpmId,
+                {
+                    id: this.config.host.id,
+                    infoFilePath: this.config.host.infoFilePath,
+                    cpmSslCaPath: this.config.cpmSslCaPath,
+                    maxReconnections: this.config.cpm.maxReconnections,
+                    reconnectionDelay: this.config.cpm.reconnectionDelay
+                },
+                this.api.server
+            );
+
+            this.cpmConnector.logger.pipe(this.logger);
+            this.cpmConnector.setLoadCheck(this.loadCheck);
+
+            this.serviceDiscovery.setConnector(this.cpmConnector);
+            await this.connectToCPM();
+        }
     }
 
     private async startListening() {
@@ -335,9 +358,9 @@ export class Host implements IComponent {
         this.api.use("*", optionsMiddleware);
 
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
-        this.api.downstream(`${this.apiBase}/sequence`,
-            async (req) => this.handleNewSequence(req), { end: true }
-        );
+
+        this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
+        this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), { end: true, method: "put" });
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
@@ -352,12 +375,12 @@ export class Host implements IComponent {
             ({ service: this.service, apiVersion: this.apiVersion, version, build: this.build }));
 
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
-
+        this.api.get(`${this.apiBase}/status`, () => this.getStatus());
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-
+        this.api.duplex(`${this.apiBase}/platform`, (stream, headers) => this.cpmConnector?.handleCommunicationRequest(stream, headers));
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
@@ -393,6 +416,7 @@ export class Host implements IComponent {
         }
 
         res.statusCode = 404;
+        res.write(JSON.stringify({ error: `The instance ${params.id} does not exist.` }));
         res.end();
 
         return next();
@@ -418,11 +442,12 @@ export class Host implements IComponent {
 
         this.logger.trace("Deleting Sequence...", id);
 
-        const sequenceInfo = this.sequencesStore.get(id);
+        const sequenceInfo = this.sequencesStore.get(id) || this.getSequenceByName(id);
 
         if (!sequenceInfo) {
             return {
-                opStatus: ReasonPhrases.NOT_FOUND
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `The sequence ${id} does not exist.`
             };
         }
 
@@ -525,18 +550,13 @@ export class Host implements IComponent {
         }
     }
 
-    /**
-     * Handles incoming Sequence.
-     * Uses Sequence adapter to unpack and identify Sequence.
-     * Notifies Manager (if connected) about new Sequence.
-     *
-     * @param {IncomingMessage} stream Stream of packaged Sequence.
-     * @returns {Promise} Promise resolving to operation result.
-     */
-    async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
-        this.logger.info("New Sequence incoming");
+    async handleIncomingSequence(stream: ParsedMessage, id: string):
+        Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+        stream.params ||= {};
 
-        const id = IDProvider.generate();
+        const sequenceName = stream.params.id_name || stream.headers["x-name"];
+
+        this.logger.info("New Sequence incoming", { name: sequenceName });
 
         try {
             const sequenceAdapter = getSequenceAdapter(this.config);
@@ -547,13 +567,29 @@ export class Host implements IComponent {
 
             await sequenceAdapter.init();
 
+            if (sequenceName) {
+                const existingSequence = this.getSequenceByName(sequenceName as string);
+
+                if (existingSequence) {
+                    if (stream.method === "post") {
+                        this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
+
+                        return {
+                            opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                        };
+                    }
+
+                    id = existingSequence.id;
+                }
+            }
+
             const config = await sequenceAdapter.identify(stream, id);
 
-            this.sequencesStore.set(config.id, { id: config.id, config, instances: new Set() });
+            this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName });
 
             this.logger.info("Sequence identified", config);
 
-            await this.cpmConnector?.sendSequenceInfo(config.id, SequenceMessageCode.SEQUENCE_CREATED);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
 
@@ -562,13 +598,76 @@ export class Host implements IComponent {
                 opStatus: ReasonPhrases.OK
             };
         } catch (error: any) {
-            this.logger.error(error);
+            this.logger.error("Error processing sequence", error);
 
             return {
                 opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
                 error
             };
         }
+    }
+
+    async handleSequenceUpdate(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+        stream.params ||= {};
+
+        const seqQuery = stream.params.id_name as string;
+        const existingSequence = this.sequencesStore.get(seqQuery) || this.getSequenceByName(seqQuery);
+
+        if (existingSequence) {
+            if (existingSequence.instances.size) {
+                return {
+                    opStatus: ReasonPhrases.CONFLICT,
+                    error: "Can not update sequence in use"
+                };
+            }
+
+            this.logger.debug("Overriding sequence", existingSequence.name, existingSequence.id);
+
+            return this.handleIncomingSequence(stream, existingSequence.id);
+        }
+
+        return {
+            opStatus: ReasonPhrases.NOT_FOUND
+        };
+    }
+
+    /**
+     * Handles incoming Sequence.
+     * Uses Sequence adapter to unpack and identify Sequence.
+     * Notifies Manager (if connected) about new Sequence.
+     *
+     * @param {IncomingMessage} stream Stream of packaged Sequence.
+     * @returns {Promise} Promise resolving to operation result.
+     */
+    async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+        const sequenceName = stream.headers["x-name"] as string;
+
+        if (sequenceName) {
+            const existingSequence = this.getSequenceByName(sequenceName);
+
+            if (existingSequence) {
+                this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
+
+                return {
+                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                };
+            }
+        }
+
+        return this.handleIncomingSequence(stream, IDProvider.generate());
+    }
+
+    getSequenceByName(sequenceName: string): SequenceInfo | undefined {
+        let seq;
+
+        for (const i of this.sequencesStore.values()) {
+            if (sequenceName === this.sequencesStore.get(i.id)?.name) {
+                seq = i;
+                break;
+            }
+        }
+
+        return seq;
     }
 
     /**
@@ -590,7 +689,8 @@ export class Host implements IComponent {
 
         const id = req.params?.id;
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
-        const sequence = this.sequencesStore.get(id);
+        const sequence = this.sequencesStore.get(id) ||
+            Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
         if (!sequence) {
             return { opStatus: ReasonPhrases.NOT_FOUND };
@@ -706,7 +806,8 @@ export class Host implements IComponent {
                 );
 
                 this.serviceDiscovery.update({
-                    requires: data.requires, contentType: data.contentType!, topicName: data.requires });
+                    requires: data.requires, contentType: data.contentType!, topicName: data.requires
+                });
             }
 
             // Do not route output stream to original topic if --output-topic is specified
@@ -722,7 +823,8 @@ export class Host implements IComponent {
                 );
 
                 this.serviceDiscovery.update({
-                    provides: data.provides, contentType: data.contentType!, topicName: data.provides });
+                    provides: data.provides, contentType: data.contentType!, topicName: data.provides
+                });
             }
         });
 
@@ -791,13 +893,15 @@ export class Host implements IComponent {
 
         if (!sequence) {
             return {
-                opStatus: ReasonPhrases.NOT_FOUND
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `The sequence ${id} does not exist.`
             };
         }
 
         return {
             opStatus: ReasonPhrases.OK,
             id: sequence.id,
+            name: sequence.name,
             config: sequence.config,
             instances: Array.from(sequence.instances.values())
         };
@@ -812,6 +916,7 @@ export class Host implements IComponent {
         return Array.from(this.sequencesStore.values())
             .map(sequence => ({
                 id: sequence.id,
+                name: sequence.name,
                 config: sequence.config,
                 instances: Array.from(sequence.instances.values())
             }));
@@ -841,6 +946,14 @@ export class Host implements IComponent {
                 contentType: topic.contentType
             })
         );
+    }
+
+    getStatus(): STHRestAPI.GetStatusResponse {
+        const { connected, cpmId } = this.cpmConnector || {};
+
+        return {
+            cpm: { connected, cpmId }
+        };
     }
 
     /**
@@ -899,3 +1012,4 @@ export class Host implements IComponent {
         });
     }
 }
+

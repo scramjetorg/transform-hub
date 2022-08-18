@@ -13,6 +13,7 @@ const program = new Command();
 const options: STHCommandOptions = program
     .option("-c, --config <path>", "Specifies path to config")
     .option("-L, --log-level <level>", "Specify log level")
+    .option("--no-colors", "Disable colors in output", false)
     .option("-P, --port <port>", "API port")
     .option("-H, --hostname <IP>", "API IP")
     .option("-E, --identify-existing", "Index existing volumes as sequences")
@@ -34,6 +35,8 @@ const options: STHCommandOptions = program
     .option("--prerunner-max-mem <mb>", "Maximum mem used by prerunner")
     .option("--cpm-ssl-ca-path <path>", "Certificate Authority for self-signed CPM SSL certificates")
     .option("--cpm-id <id>")
+    .option("--cpm-max-reconnections <number>", "Maximum reconnection attempts (-1 no limit)")
+    .option("--cpm-reconnection-delay <number>", "Time to wait before next reconnection attempt")
     .option("--k8s-namespace <namespace>", "Kubernetes namespace used in Sequence and Instance adapters.")
     .option("--k8s-auth-config-path <path>", "Kubernetes authorization config path. If not supplied the mounted service account will be used.")
     .option("--k8s-sth-pod-host <host>", "Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to.")
@@ -46,7 +49,7 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
     .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .parse(process.argv)
-    .opts() as STHCommandOptions;
+    .opts();
 
 (async () => {
     const configService = new ConfigService();
@@ -62,6 +65,10 @@ const options: STHCommandOptions = program
         cpmUrl: options.cpmUrl,
         cpmId: options.cpmId,
         cpmSslCaPath: options.cpmSslCaPath,
+        cpm: {
+            reconnectionDelay: options.cpmReconnectionDelay,
+            maxReconnections: options.cpmMaxReconnections
+        },
         docker: {
             prerunner: {
                 image: options.prerunnerImage,
@@ -90,6 +97,7 @@ const options: STHCommandOptions = program
         exitWithLastInstance: options.exitWithLastInstance,
         safeOperationLimit: options.safeOperationLimit,
         logLevel: options.logLevel,
+        logColors: options.colors,
         kubernetes: {
             namespace: options.k8sNamespace,
             authConfigPath: options.k8sAuthConfigPath,
