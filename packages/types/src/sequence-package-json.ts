@@ -17,4 +17,9 @@ export type SequencePackageJSON = {
     description?: string | null
     author?: string | null
     keywords?: string[] | null
+    repository?: {
+        type: string;
+        url: string;
+        directory?: string;
+    } | string | null;
 }

@@ -7,4 +7,4 @@ if [ ! -r "${pkg_dir}/${pkg_file}" ]; then
 fi
 
 cat ${pkg_dir}/${pkg_file} \
-  | jq -c '{ name, author, version, keywords, description, main, engines, scramjet }'
+  | jq -c '{ name, author, version, keywords, description, main, engines, scramjet, repository }'

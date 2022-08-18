@@ -272,6 +272,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             description: validPackageJson.description || "",
             author: validPackageJson.author || "",
             keywords: validPackageJson.keywords || [],
+            repository: validPackageJson.repository || "",
         };
     }
 
