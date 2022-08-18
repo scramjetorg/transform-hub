@@ -205,7 +205,7 @@ export class Host implements IComponent {
 
             this.cpmConnector.logger.pipe(this.logger);
             this.cpmConnector.setLoadCheck(this.loadCheck);
-            this.cpmConnector.on("log_connect", (channel) => this.commonLogsPipe.getOut().pipe(channel));
+
             this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
@@ -240,9 +240,29 @@ export class Host implements IComponent {
         this.attachListeners();
         this.attachHostAPIs();
 
-        await this.connectToCPM();
         await this.performStartup();
         await this.startListening();
+
+        if (this.config.cpmUrl && this.config.cpmId) {
+            this.cpmConnector = new CPMConnector(
+                this.config.cpmUrl,
+                this.config.cpmId,
+                {
+                    id: this.config.host.id,
+                    infoFilePath: this.config.host.infoFilePath,
+                    cpmSslCaPath: this.config.cpmSslCaPath,
+                    maxReconnections: this.config.cpm.maxReconnections,
+                    reconnectionDelay: this.config.cpm.reconnectionDelay
+                },
+                this.api.server
+            );
+
+            this.cpmConnector.logger.pipe(this.logger);
+            this.cpmConnector.setLoadCheck(this.loadCheck);
+
+            this.serviceDiscovery.setConnector(this.cpmConnector);
+            await this.connectToCPM();
+        }
     }
 
     private async startListening() {
@@ -355,12 +375,12 @@ export class Host implements IComponent {
             ({ service: this.service, apiVersion: this.apiVersion, version, build: this.build }));
 
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
-
+        this.api.get(`${this.apiBase}/status`, () => this.getStatus());
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
 
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-
+        this.api.duplex(`${this.apiBase}/platform`, (stream, headers) => this.cpmConnector?.handleCommunicationRequest(stream, headers));
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
@@ -926,6 +946,14 @@ export class Host implements IComponent {
                 contentType: topic.contentType
             })
         );
+    }
+
+    getStatus(): STHRestAPI.GetStatusResponse {
+        const { connected, cpmId } = this.cpmConnector || {};
+
+        return {
+            cpm: { connected, cpmId }
+        };
     }
 
     /**

@@ -16,6 +16,7 @@ export * from "./get-health";
 export * from "./send-event";
 export * from "./get-event";
 export * from "./get-topics";
+export * from "./get-status";
 
 export type GetEventResponse = any;
 export type GetNextEventResponse = any;
