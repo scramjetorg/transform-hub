@@ -45,23 +45,24 @@ $ scramjet-transform-hub
 
 ```
 
-Now create an application, let's say you want to get the currency rates every 10 seconds and do something. In a clean folder save this as `index.js`:
+Now create an application, let's say you want to get the currency rates every 10 seconds and do something. This example below simply prints out the actual cryptocurrency price in the desired currency. Both the cryptocurrency and the currency we want to check the price in are passed to the sequence as arguments.
+
+In a clean folder save this as `index.js`:
 
 ```js
 const { DataStream } = require("scramjet");
 const fetch = require("node-fetch");
 
-module.exports = function(_stream, apikey, fr, to) {
-    const idx = `${fr}_${to}`;
-    const get = () => fetch(`https://free.currconv.com/api/v7/convert?q=${idx}&compact=ultra&apiKey=${apikey}`).then(r => r.json());
+module.exports = function(_stream, fr, to) {
     const defer = (t = 10000) => new Promise((res) => setTimeout(res, t));
+    const get = () => fetch(`https://api.coinbase.com/v2/prices/${fr}-${to}/spot`).then((res) => res.json());
 
     return DataStream
         .from(async function*() {
             while (true)
                 yield await Promise.all([get(), defer()]).then(([data]) => data);
         })
-        .do(async x => { console.log(x[idx]); }) // add some logic here
+        .do((x) => console.log(`Actual ${fr} cryptocurrency price is ${x.data.amount} ${to}`)) // add some logic here
         .run();
 };
 ```
@@ -86,7 +87,7 @@ Copy a content below and save it as `package.json` file:
 }
 ```
 
-Open a terminal and follow the steps to run your program on the hub:
+Keep your hub running in one terminal. Open another terminal and follow the steps to run your program on the hub:
 
 ```bash
 # go to the folder with the app
@@ -103,10 +104,10 @@ si seq send ~/app.tar.gz
 # <sequence-id> will be returned
 
 # start the program on the transform-hub with arguments
-si seq start <sequence-id> --args [$APIKEY, "BTC", "EUR"]
+si seq start <sequence-id> --args [\"BTC\",\"EUR\"]
 
 # alternatively - param will send the last packaged sequence
-si seq start - --args [$APIKEY, "BTC", "EUR"]
+si seq start - --args [\"BTC\",\"EUR\"]
 # <instance-id> will be returned
 
 # see the output from the program by reading the stdout stream
@@ -115,9 +116,12 @@ si inst stdout <instance-id>
 # alternatively use - param instead of <instance-id>
 si inst stdout -
 
+# expected output
+Actual BTC currency price is 23128.42 EUR
+Actual BTC currency price is 23124.8 EUR
 ```
 
-See `si help` for more information. Also you will need to get an [API key for this example](https://free.currencyconverterapi.com/).
+See `si help` for more information.
 
 ## The basics
 
