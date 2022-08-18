@@ -30,26 +30,39 @@ scramjet-transform-hub
 Depending on your machine this may take some time. When it's done the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
 ```shell
-2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
+$ scramjet-transform-hub
+2022-08-18T07:55:13.135Z INFO  Host Log Level [ 'TRACE' ]
+2022-08-18T07:55:13.137Z TRACE Host Host main called [ { version: '0.27.0' } ]
+2022-08-18T07:55:13.155Z INFO  Host Will use the "docker" adapter for running Sequences
+2022-08-18T07:55:13.157Z INFO  SocketServer SocketServer on [ { address: '::', family: 'IPv6', port: 8001 } ]
+2022-08-18T07:55:13.159Z INFO  Host API on [ '0.0.0.0:8000' ]
+2022-08-18T07:55:13.160Z INFO  Host You don't need to maintain your own server anymore [
+  {
+    'Check out': 'Scramjet Cloud Platform',
+    here: 'https://scr.je/join-beta-sth'
+  }
+]
+
 ```
 
-Now create an application, let's say you want to get the currency rates every 10 seconds and do something. In a clean folder save this as `index.js`:
+Now create an application, let's say you want to get the currency rates every 10 seconds and do something. This example below simply prints out the actual cryptocurrency price in the desired currency. Both the cryptocurrency and the currency we want to check the price in are passed to the sequence as arguments.
+
+In a clean folder save this as `index.js`:
 
 ```js
 const { DataStream } = require("scramjet");
 const fetch = require("node-fetch");
 
-module.exports = function(_stream, apikey, fr, to) {
-    const idx = `${fr}_${to}`;
-    const get = () => fetch(`https://free.currconv.com/api/v7/convert?q=${idx}&compact=ultra&apiKey=${apikey}`).then(r => r.json());
+module.exports = function(_stream, fr, to) {
     const defer = (t = 10000) => new Promise((res) => setTimeout(res, t));
+    const get = () => fetch(`https://api.coinbase.com/v2/prices/${fr}-${to}/spot`).then((res) => res.json());
 
     return DataStream
         .from(async function*() {
             while (true)
                 yield await Promise.all([get(), defer()]).then(([data]) => data);
         })
-        .do(async x => { console.log(x[idx]); }) // add some logic here
+        .do((x) => console.log(`Actual ${fr} cryptocurrency price is ${x.data.amount} ${to}`)) // add some logic here
         .run();
 };
 ```
@@ -74,17 +87,41 @@ Copy a content below and save it as `package.json` file:
 }
 ```
 
-Open a terminal run your program on the hub:
+Keep your hub running in one terminal. Open another terminal and follow the steps to run your program on the hub:
 
 ```bash
-si pack /path/to/my/folder -o ~/package.tar.gz # compress the app to a package
-SEQ_ID=$(si seq send ~/package.tar.gz)         # upload the package to the server SEQ_ID is now it's id
-INT_ID=$(si seq start $SEQ_ID -C "{}" $APIKEY BTC EUR)
-                                               # start the program on the host with arguments
-si inst stdout $INT_ID                         # see the output from the program.
+# go to the folder with the app
+cd /path/to/my/folder
+
+# install dependencies
+npm install
+
+# compress the app to a `tar.gz` package
+si seq pack . -o ~/app.tar.gz
+
+# upload the compressed app package to the transform-hub
+si seq send ~/app.tar.gz
+# <sequence-id> will be returned
+
+# start the program on the transform-hub with arguments
+si seq start <sequence-id> --args [\"BTC\",\"EUR\"]
+
+# alternatively - param will send the last packaged sequence
+si seq start - --args [\"BTC\",\"EUR\"]
+# <instance-id> will be returned
+
+# see the output from the program by reading the stdout stream
+si inst stdout <instance-id>
+
+# alternatively use - param instead of <instance-id>
+si inst stdout -
+
+# expected output
+Actual BTC currency price is 23128.42 EUR
+Actual BTC currency price is 23124.8 EUR
 ```
 
-See `si help` for more information. Also you will need to get an [API key for this example](https://free.currencyconverterapi.com/).
+See `si help` for more information.
 
 ## The basics
 
