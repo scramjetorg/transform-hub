@@ -1,6 +1,24 @@
 # Scramjet Transform Hub Changelog
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
+
+## [0.28.0] - 2022-08-18
+
+## Changed
+* Rewrite STH-SCP connection by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/617
+
+## Features
+* [CLI] Add session id display by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/633
+* Allow to configure CPMConnector by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/642
+* Add --no-colors flag by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/641
+* Support x-name header on sequence post|put by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/643
+
+## Fixed
+* CLI clean session config on profile change by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/646
+* sth add error msg on invalid instance id by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/647
+* STH add missing sequence info by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/650
+* Add missing commands to the start snippet by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/636
+
 ## [0.27.0] - 2022-08-11
 
 ### Changed
