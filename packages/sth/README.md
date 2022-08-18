@@ -30,7 +30,19 @@ scramjet-transform-hub
 Depending on your machine this may take some time. When it's done the Hub should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
 
 ```shell
-2021-07-07T18:19:36.808Z info (object:Host) API listening on port: localhost:8000
+$ scramjet-transform-hub
+2022-08-18T07:55:13.135Z INFO  Host Log Level [ 'TRACE' ]
+2022-08-18T07:55:13.137Z TRACE Host Host main called [ { version: '0.27.0' } ]
+2022-08-18T07:55:13.155Z INFO  Host Will use the "docker" adapter for running Sequences
+2022-08-18T07:55:13.157Z INFO  SocketServer SocketServer on [ { address: '::', family: 'IPv6', port: 8001 } ]
+2022-08-18T07:55:13.159Z INFO  Host API on [ '0.0.0.0:8000' ]
+2022-08-18T07:55:13.160Z INFO  Host You don't need to maintain your own server anymore [
+  {
+    'Check out': 'Scramjet Cloud Platform',
+    here: 'https://scr.je/join-beta-sth'
+  }
+]
+
 ```
 
 Now create an application, let's say you want to get the currency rates every 10 seconds and do something. In a clean folder save this as `index.js`:
@@ -74,18 +86,35 @@ Copy a content below and save it as `package.json` file:
 }
 ```
 
-Open a terminal run your program on the hub:
+Open a terminal and follow the steps to run your program on the hub:
 
 ```bash
+# go to the folder with the app
 cd /path/to/my/folder
 
-npm install                                    # install dependencies
+# install dependencies
+npm install
 
-si seq pack . -o ~/package.tar.gz              # compress the app to a package
-SEQ_ID=$(si seq send ~/package.tar.gz)         # upload the package to the server SEQ_ID is now it's id
-INT_ID=$(si seq start $SEQ_ID -C "{}" $APIKEY BTC EUR)
-                                               # start the program on the host with arguments
-si inst stdout $INT_ID                         # see the output from the program.
+# compress the app to a `tar.gz` package
+si seq pack . -o ~/app.tar.gz
+
+# upload the compressed app package to the transform-hub
+si seq send ~/app.tar.gz
+# <sequence-id> will be returned
+
+# start the program on the transform-hub with arguments
+si seq start <sequence-id> --args [$APIKEY, "BTC", "EUR"]
+
+# alternatively - param will send the last packaged sequence
+si seq start - --args [$APIKEY, "BTC", "EUR"]
+# <instance-id> will be returned
+
+# see the output from the program by reading the stdout stream
+si inst stdout <instance-id>
+
+# alternatively use - param instead of <instance-id>
+si inst stdout -
+
 ```
 
 See `si help` for more information. Also you will need to get an [API key for this example](https://free.currencyconverterapi.com/).
