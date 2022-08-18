@@ -816,7 +816,9 @@ ___
 
 ▸ `Static` **listenerCount**(`emitter`, `event`): `number`
 
-**`deprecated`** since v4.0.0
+**`Deprecated`**
+
+since v4.0.0
 
 #### Parameters
 

@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [DockerAdapterResources](modules.md#dockeradapterresources)
 - [DockerAdapterRunConfig](modules.md#dockeradapterrunconfig)
@@ -48,7 +48,7 @@
 - [isHostSpawnedInDockerContainer](modules.md#ishostspawnedindockercontainer)
 - [setupDockerNetworking](modules.md#setupdockernetworking)
 
-## Type aliases
+## Type Aliases
 
 ### DockerAdapterResources
 
@@ -79,17 +79,17 @@ Configuration used to run command in container.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `autoRemove?` | `boolean` | **`property`** {boolean} autoRemove If true container will be removed after container's process exit. |
-| `binds?` | `string`[] | **`property`** {string[]} binds Directories mount configuration. |
-| `command?` | `string`[] | Command with optional parameters.  **`property`** {string[]} command Command to be executed. |
-| `envs?` | `string`[] | **`property`** {string[]} envs A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
-| `imageName` | `string` | **`property`** {string} imageName Image name. |
+| `autoRemove?` | `boolean` | **`Property`**  If true container will be removed after container's process exit. |
+| `binds?` | `string`[] | **`Property`**  Directories mount configuration. |
+| `command?` | `string`[] | Command with optional parameters.  **`Property`**  Command to be executed. |
+| `envs?` | `string`[] | **`Property`**  A list of environment variables to set inside the container in the form ```["VAR=value", ...]``` |
+| `imageName` | `string` | **`Property`**  Image name. |
 | `labels?` | { `[key: string]`: `string`;  } | - |
-| `maxMem?` | `number` | **`property`** {number} maxMem Container memory limit (bytes). |
+| `maxMem?` | `number` | **`Property`**  Container memory limit (bytes). |
 | `networkMode?` | `string` | - |
-| `ports?` | [`DockerAdapterRunPortsConfig`](modules.md#dockeradapterrunportsconfig) | **`property`** {DockerAdapterRunPortsConfig} ports Docker ports configuration |
+| `ports?` | [`DockerAdapterRunPortsConfig`](modules.md#dockeradapterrunportsconfig) | **`Property`**  Docker ports configuration |
 | `publishAllPorts?` | `boolean` | - |
-| `volumes?` | [`DockerAdapterVolumeConfig`](modules.md#dockeradaptervolumeconfig)[] | **`property`** {DockerAdapterVolumeConfig[]} volumes Volumes configuration. |
+| `volumes?` | [`DockerAdapterVolumeConfig`](modules.md#dockeradaptervolumeconfig)[] | **`Property`**  Volumes configuration. |
 
 #### Defined in
 

@@ -35,7 +35,7 @@ Adapter for preparing Sequence to be run in process.
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L53)
+[kubernetes-sequence-adapter.ts:56](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L56)
 
 ___
 
@@ -49,7 +49,7 @@ ISequenceAdapter.logger
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L49)
+[kubernetes-sequence-adapter.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L52)
 
 ___
 
@@ -63,7 +63,7 @@ ISequenceAdapter.name
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L51)
+[kubernetes-sequence-adapter.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L54)
 
 ## Constructors
 
@@ -79,22 +79,23 @@ ISequenceAdapter.name
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L55)
+[kubernetes-sequence-adapter.ts:58](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L58)
 
 ## Methods
 
 ### identify
 
-▸ **identify**(`stream`, `id`): `Promise`<`SequenceConfig`\>
+▸ **identify**(`stream`, `id`, `override?`): `Promise`<`SequenceConfig`\>
 
 Unpacks and identifies sequence.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `stream` | `Readable` | Stream with packed sequence. |
-| `id` | `string` | Sequence Id. |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `stream` | `Readable` | `undefined` | Stream with packed sequence. |
+| `id` | `string` | `undefined` | Sequence Id. |
+| `override` | `boolean` | `false` | Removes previous sequence |
 
 #### Returns
 
@@ -108,7 +109,7 @@ ISequenceAdapter.identify
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:108](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L108)
+[kubernetes-sequence-adapter.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L112)
 
 ___
 
@@ -130,7 +131,7 @@ ISequenceAdapter.init
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L71)
+[kubernetes-sequence-adapter.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L74)
 
 ___
 
@@ -152,7 +153,7 @@ ISequenceAdapter.list
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L87)
+[kubernetes-sequence-adapter.ts:90](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L90)
 
 ___
 
@@ -180,4 +181,4 @@ ISequenceAdapter.remove
 
 #### Defined in
 
-[kubernetes-sequence-adapter.ts:134](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L134)
+[kubernetes-sequence-adapter.ts:142](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/kubernetes-sequence-adapter.ts#L142)

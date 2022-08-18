@@ -66,7 +66,7 @@ reacts to control messages such as stopping etc.
 
 #### Defined in
 
-[runner.ts:248](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L248)
+[runner.ts:246](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L246)
 
 ___
 
@@ -100,7 +100,7 @@ ___
 
 #### Defined in
 
-[runner.ts:158](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L158)
+[runner.ts:157](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L157)
 
 ___
 
@@ -114,7 +114,7 @@ ___
 
 #### Defined in
 
-[runner.ts:184](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L184)
+[runner.ts:183](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L183)
 
 ___
 
@@ -128,7 +128,7 @@ ___
 
 #### Defined in
 
-[runner.ts:452](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L452)
+[runner.ts:451](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L451)
 
 ___
 
@@ -142,7 +142,7 @@ ___
 
 #### Defined in
 
-[runner.ts:233](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L233)
+[runner.ts:232](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L232)
 
 ___
 
@@ -162,7 +162,7 @@ ___
 
 #### Defined in
 
-[runner.ts:207](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L207)
+[runner.ts:206](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L206)
 
 ___
 
@@ -176,7 +176,7 @@ ___
 
 #### Defined in
 
-[runner.ts:600](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L600)
+[runner.ts:599](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L599)
 
 ___
 
@@ -234,7 +234,7 @@ ___
 
 #### Defined in
 
-[runner.ts:470](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L470)
+[runner.ts:469](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L469)
 
 ___
 
@@ -248,7 +248,7 @@ ___
 
 #### Defined in
 
-[runner.ts:440](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L440)
+[runner.ts:439](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L439)
 
 ___
 
@@ -268,7 +268,7 @@ ___
 
 #### Defined in
 
-[runner.ts:194](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L194)
+[runner.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L193)
 
 ___
 
@@ -282,7 +282,7 @@ ___
 
 #### Defined in
 
-[runner.ts:446](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L446)
+[runner.ts:445](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L445)
 
 ## Constructors
 
@@ -306,7 +306,7 @@ ___
 
 #### Defined in
 
-[runner.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L121)
+[runner.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L120)
 
 ## Accessors
 
@@ -320,7 +320,7 @@ ___
 
 #### Defined in
 
-[runner.ts:148](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L148)
+[runner.ts:147](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L147)
 
 ## Properties
 
@@ -337,7 +337,7 @@ ___
 
 #### Defined in
 
-[runner.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L114)
+[runner.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L113)
 
 ___
 
@@ -351,4 +351,4 @@ IComponent.logger
 
 #### Defined in
 
-[runner.ts:116](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L116)
+[runner.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/runner/src/runner.ts#L115)

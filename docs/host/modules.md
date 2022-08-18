@@ -17,7 +17,7 @@
 
 - [InstanceStore](modules.md#instancestore)
 
-### Type aliases
+### Type Aliases
 
 - [dataType](modules.md#datatype)
 - [streamType](modules.md#streamtype)
@@ -43,7 +43,7 @@ Object storing Instance controllers.
 
 [packages/host/src/lib/instance-store.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/instance-store.ts#L6)
 
-## Type aliases
+## Type Aliases
 
 ### dataType
 

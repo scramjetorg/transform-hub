@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [CeroCode](modules.md#cerocode)
 - [CeroConfig](modules.md#ceroconfig)
@@ -31,7 +31,11 @@
 - [getRouter](modules.md#getrouter)
 - [sequentialRouter](modules.md#sequentialrouter)
 
-## Type aliases
+### Variables
+
+- [logger](modules.md#logger)
+
+## Type Aliases
 
 ### CeroCode
 
@@ -184,7 +188,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:87](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L87)
+[packages/api-server/src/index.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L89)
 
 ___
 
@@ -198,7 +202,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:69](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L69)
+[packages/api-server/src/index.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L71)
 
 ___
 
@@ -219,3 +223,13 @@ ___
 #### Defined in
 
 [packages/api-server/src/lib/0http.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/lib/0http.ts#L6)
+
+## Variables
+
+### logger
+
+• `Const` **logger**: `ObjLogger`
+
+#### Defined in
+
+[packages/api-server/src/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L22)

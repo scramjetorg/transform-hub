@@ -8,7 +8,7 @@
 
 - [GetVersionResponse](MWRestAPI.md#getversionresponse)
 
-### Type aliases
+### Type Aliases
 
 - [MultiManagerResponse](MWRestAPI.md#multimanagerresponse)
 - [MultiManagersResponse](MWRestAPI.md#multimanagersresponse)
@@ -19,7 +19,7 @@
 
 Re-exports [GetVersionResponse](MRestAPI.md#getversionresponse)
 
-## Type aliases
+## Type Aliases
 
 ### MultiManagerResponse
 

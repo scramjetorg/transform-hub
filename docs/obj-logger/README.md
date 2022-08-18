@@ -43,4 +43,4 @@
 
 #### Defined in
 
-[obj-logger/src/utils/pretty-print.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/utils/pretty-print.ts#L19)
+[obj-logger/src/utils/pretty-print.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/utils/pretty-print.ts#L20)

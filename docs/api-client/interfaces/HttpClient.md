@@ -47,7 +47,7 @@ HttpClient.addLogger
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L49)
+[packages/client-utils/src/types/index.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L50)
 
 ___
 
@@ -78,7 +78,7 @@ HttpClient.delete
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L53)
+[packages/client-utils/src/types/index.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L54)
 
 ___
 
@@ -109,7 +109,7 @@ HttpClient.get
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L50)
+[packages/client-utils/src/types/index.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L51)
 
 ___
 
@@ -134,7 +134,7 @@ HttpClient.getStream
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:61](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L61)
+[packages/client-utils/src/types/index.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L62)
 
 ___
 
@@ -167,7 +167,7 @@ HttpClient.post
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L52)
+[packages/client-utils/src/types/index.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L53)
 
 ___
 
@@ -188,7 +188,7 @@ ___
 | `url` | `string` |
 | `stream` | `string` \| `Readable` |
 | `requestInit?` | `RequestInit` |
-| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `type`: `string`  }\> |
+| `options?` | `Partial`<{ `end`: `boolean` ; `parseResponse?`: ``"text"`` \| ``"json"`` \| ``"stream"`` ; `put`: `boolean` ; `type`: `string`  }\> |
 
 #### Returns
 
@@ -200,4 +200,4 @@ HttpClient.sendStream
 
 #### Defined in
 
-[packages/client-utils/src/types/index.ts:62](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L62)
+[packages/client-utils/src/types/index.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/client-utils/src/types/index.ts#L63)

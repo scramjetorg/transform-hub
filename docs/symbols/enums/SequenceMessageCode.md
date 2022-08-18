@@ -4,16 +4,16 @@
 
 ## Table of contents
 
-### Enumeration members
+### Enumeration Members
 
 - [SEQUENCE\_CREATED](SequenceMessageCode.md#sequence_created)
 - [SEQUENCE\_DELETED](SequenceMessageCode.md#sequence_deleted)
 
-## Enumeration members
+## Enumeration Members
 
 ### SEQUENCE\_CREATED
 
-• **SEQUENCE\_CREATED** = `0`
+• **SEQUENCE\_CREATED** = ``0``
 
 #### Defined in
 
@@ -23,7 +23,7 @@ ___
 
 ### SEQUENCE\_DELETED
 
-• **SEQUENCE\_DELETED** = `1`
+• **SEQUENCE\_DELETED** = ``1``
 
 #### Defined in
 

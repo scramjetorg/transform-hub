@@ -43,7 +43,7 @@ A method that allows to consume incoming stream from the specified path on the A
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:127](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L127)
+[packages/types/src/api-expose.ts:130](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L130)
 
 ___
 
@@ -66,7 +66,7 @@ Allows to handle dual direction (duplex) streams.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:135](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L135)
+[packages/types/src/api-expose.ts:138](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L138)
 
 ___
 
@@ -96,7 +96,7 @@ Simple GET request hook for static data in monitoring stream.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L101)
+[packages/types/src/api-expose.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L104)
 
 ▸ **get**(`path`, `msg`): `void`
 
@@ -115,7 +115,7 @@ Alternative GET request hook with dynamic resolution
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L109)
+[packages/types/src/api-expose.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L112)
 
 ___
 
@@ -126,7 +126,8 @@ ___
 Simple POST/DELETE request hook.
 This method can be used in two ways - as a control message handler or as general data handler.
 
-**`example`**
+**`Example`**
+
 // Control message handler
 router.op("post", "/_kill", RunnerMessageCode.KILL, this.communicationHandler);
 // Data handler
@@ -154,7 +155,7 @@ router.op("post", `${this.apiBase}/start`, (req) => this.handleStartRequest(req)
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:86](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L86)
+[packages/types/src/api-expose.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L89)
 
 ___
 
@@ -178,7 +179,7 @@ A method that allows to pass a stream to the specified path on the API server
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L118)
+[packages/types/src/api-expose.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L121)
 
 ___
 
@@ -201,4 +202,4 @@ Allows to register middlewares for specific paths, for all HTTP methods.
 
 #### Defined in
 
-[packages/types/src/api-expose.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L143)
+[packages/types/src/api-expose.ts:146](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/api-expose.ts#L146)

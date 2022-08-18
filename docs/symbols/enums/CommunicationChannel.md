@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Enumeration members
+### Enumeration Members
 
 - [CONTROL](CommunicationChannel.md#control)
 - [IN](CommunicationChannel.md#in)
@@ -16,11 +16,11 @@
 - [STDIN](CommunicationChannel.md#stdin)
 - [STDOUT](CommunicationChannel.md#stdout)
 
-## Enumeration members
+## Enumeration Members
 
 ### CONTROL
 
-• **CONTROL** = `3`
+• **CONTROL** = ``3``
 
 #### Defined in
 
@@ -30,7 +30,7 @@ ___
 
 ### IN
 
-• **IN** = `5`
+• **IN** = ``5``
 
 #### Defined in
 
@@ -40,7 +40,7 @@ ___
 
 ### LOG
 
-• **LOG** = `7`
+• **LOG** = ``7``
 
 #### Defined in
 
@@ -50,7 +50,7 @@ ___
 
 ### MONITORING
 
-• **MONITORING** = `4`
+• **MONITORING** = ``4``
 
 #### Defined in
 
@@ -60,7 +60,7 @@ ___
 
 ### OUT
 
-• **OUT** = `6`
+• **OUT** = ``6``
 
 #### Defined in
 
@@ -70,7 +70,7 @@ ___
 
 ### PACKAGE
 
-• **PACKAGE** = `8`
+• **PACKAGE** = ``8``
 
 #### Defined in
 
@@ -80,7 +80,7 @@ ___
 
 ### STDERR
 
-• **STDERR** = `2`
+• **STDERR** = ``2``
 
 #### Defined in
 
@@ -90,7 +90,7 @@ ___
 
 ### STDIN
 
-• **STDIN** = `0`
+• **STDIN** = ``0``
 
 #### Defined in
 
@@ -100,7 +100,7 @@ ___
 
 ### STDOUT
 
-• **STDOUT** = `1`
+• **STDOUT** = ``1``
 
 #### Defined in
 

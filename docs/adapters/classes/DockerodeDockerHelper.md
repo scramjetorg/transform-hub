@@ -124,7 +124,7 @@ Promise resolving with created container id.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[createContainer](../interfaces/IDockerHelper.md#createcontainer)
+IDockerHelper.createContainer
 
 #### Defined in
 
@@ -176,7 +176,7 @@ Volume name.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[createVolume](../interfaces/IDockerHelper.md#createvolume)
+IDockerHelper.createVolume
 
 #### Defined in
 
@@ -256,9 +256,11 @@ Lists existing volumes
 
 `Promise`<`string`[]\>
 
+List of existing volumes
+
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[listVolumes](../interfaces/IDockerHelper.md#listvolumes)
+IDockerHelper.listVolumes
 
 #### Defined in
 
@@ -274,10 +276,10 @@ Fetches the image from repo
 
 #### Parameters
 
-| Name | Type | Default value |
-| :------ | :------ | :------ |
-| `name` | `string` | `undefined` |
-| `fetchOnlyIfNotExists` | `boolean` | `true` |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `name` | `string` | `undefined` | the name of the image, eg. ubuntu:latest |
+| `fetchOnlyIfNotExists` | `boolean` | `true` | fetch only if not exists (defaults to true) |
 
 #### Returns
 
@@ -313,7 +315,7 @@ Promise which resolves when container has been removed.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[removeContainer](../interfaces/IDockerHelper.md#removecontainer)
+IDockerHelper.removeContainer
 
 #### Defined in
 
@@ -341,7 +343,7 @@ Promise which resolves when volume has been removed.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[removeVolume](../interfaces/IDockerHelper.md#removevolume)
+IDockerHelper.removeVolume
 
 #### Defined in
 
@@ -355,6 +357,8 @@ ___
 
 Starts container.
 
+**`See`**
+
 #### Parameters
 
 | Name | Type | Description |
@@ -365,11 +369,9 @@ Starts container.
 
 `Promise`<[`DockerAdapterRunResponse`](../modules.md#dockeradapterrunresponse)\>
 
-@see {DockerAdapterRunResponse}
-
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[run](../interfaces/IDockerHelper.md#run)
+IDockerHelper.run
 
 #### Defined in
 
@@ -397,7 +399,7 @@ Promise resolving when container has been started.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[startContainer](../interfaces/IDockerHelper.md#startcontainer)
+IDockerHelper.startContainer
 
 #### Defined in
 
@@ -425,7 +427,7 @@ Promise which resolves with container statistics.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[stats](../interfaces/IDockerHelper.md#stats)
+IDockerHelper.stats
 
 #### Defined in
 
@@ -453,7 +455,7 @@ Promise which resolves when the container has been stopped.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[stopContainer](../interfaces/IDockerHelper.md#stopcontainer)
+IDockerHelper.stopContainer
 
 #### Defined in
 
@@ -481,7 +483,7 @@ Translated volumes configuration.
 
 #### Implementation of
 
-[IDockerHelper](../interfaces/IDockerHelper.md).[translateVolumesConfig](../interfaces/IDockerHelper.md#translatevolumesconfig)
+IDockerHelper.translateVolumesConfig
 
 #### Defined in
 
@@ -495,12 +497,14 @@ ___
 
 Waits for container status change.
 
+**`See`**
+
 #### Parameters
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `container` | `string` | Container id. |
-| `options` | [`DockerAdapterWaitOptions`](../modules.md#dockeradapterwaitoptions) | Condition to be fulfilled. @see {DockerAdapterWaitOptions} |
+| `options` | [`DockerAdapterWaitOptions`](../modules.md#dockeradapterwaitoptions) | Condition to be fulfilled. |
 
 #### Returns
 

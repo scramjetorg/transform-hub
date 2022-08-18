@@ -4,19 +4,19 @@
 
 ## Table of contents
 
-### Enumeration members
+### Enumeration Members
 
 - [INSUFFICIENT\_RESOURCES](APIErrorCode.md#insufficient_resources)
 - [NOT\_AUTHORIZED](APIErrorCode.md#not_authorized)
 - [UNPROCESSABLE\_ENTITY](APIErrorCode.md#unprocessable_entity)
 
-## Enumeration members
+## Enumeration Members
 
 ### INSUFFICIENT\_RESOURCES
 
-• **INSUFFICIENT\_RESOURCES** = `1002`
+• **INSUFFICIENT\_RESOURCES** = ``1002``
 
-There is not enough space to perform the operation.
+There is not enough space to perform the operation. 
 Usually this is caused by the user exceeding the disk quota.
 It may be thrown when sending a Sequence to the STH.
 
@@ -28,7 +28,7 @@ ___
 
 ### NOT\_AUTHORIZED
 
-• **NOT\_AUTHORIZED** = `1001`
+• **NOT\_AUTHORIZED** = ``1001``
 
 A user is not authorized to access a particular Space.
 
@@ -40,7 +40,7 @@ ___
 
 ### UNPROCESSABLE\_ENTITY
 
-• **UNPROCESSABLE\_ENTITY** = `1003`
+• **UNPROCESSABLE\_ENTITY** = ``1003``
 
 The Sequence package sent to the STH was not processed by the Pre-Runner.
 It may be caused by the Sequence package not following the package requirements:

@@ -28,7 +28,6 @@
 ### Methods
 
 - [captureStackTrace](AppError.md#capturestacktrace)
-- [prepareStackTrace](AppError.md#preparestacktrace)
 
 ### Properties
 
@@ -36,6 +35,7 @@
 - [data](AppError.md#data)
 - [message](AppError.md#message)
 - [name](AppError.md#name)
+- [prepareStackTrace](AppError.md#preparestacktrace)
 - [stack](AppError.md#stack)
 - [stackTraceLimit](AppError.md#stacktracelimit)
 
@@ -69,35 +69,6 @@ Error.captureStackTrace
 #### Defined in
 
 node_modules/@types/node/globals.d.ts:4
-
-___
-
-### prepareStackTrace
-
-▸ `Static` `Optional` **prepareStackTrace**(`err`, `stackTraces`): `any`
-
-Optional override for formatting stack traces
-
-**`see`** https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `err` | `Error` |
-| `stackTraces` | `CallSite`[] |
-
-#### Returns
-
-`any`
-
-#### Inherited from
-
-Error.prepareStackTrace
-
-#### Defined in
-
-node_modules/@types/node/globals.d.ts:11
 
 ## Properties
 
@@ -162,6 +133,41 @@ Error.name
 #### Defined in
 
 node_modules/typescript/lib/lib.es5.d.ts:1028
+
+___
+
+### prepareStackTrace
+
+▪ `Static` `Optional` **prepareStackTrace**: (`err`: `Error`, `stackTraces`: `CallSite`[]) => `any`
+
+#### Type declaration
+
+▸ (`err`, `stackTraces`): `any`
+
+Optional override for formatting stack traces
+
+**`See`**
+
+https://v8.dev/docs/stack-trace-api#customizing-stack-traces
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `err` | `Error` |
+| `stackTraces` | `CallSite`[] |
+
+##### Returns
+
+`any`
+
+#### Inherited from
+
+Error.prepareStackTrace
+
+#### Defined in
+
+node_modules/@types/node/globals.d.ts:11
 
 ___
 

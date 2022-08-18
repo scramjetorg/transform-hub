@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [ControlMessageResponse](STHRestAPI.md#controlmessageresponse)
 - [DeleteSequenceResponse](STHRestAPI.md#deletesequenceresponse)
@@ -17,6 +17,7 @@
 - [GetSequenceInstancesResponse](STHRestAPI.md#getsequenceinstancesresponse)
 - [GetSequenceResponse](STHRestAPI.md#getsequenceresponse)
 - [GetSequencesResponse](STHRestAPI.md#getsequencesresponse)
+- [GetStatusResponse](STHRestAPI.md#getstatusresponse)
 - [GetTopicsResponse](STHRestAPI.md#gettopicsresponse)
 - [SendEventResponse](STHRestAPI.md#sendeventresponse)
 - [SendKillInstanceResponse](STHRestAPI.md#sendkillinstanceresponse)
@@ -30,7 +31,7 @@
 - [GetLoadCheckResponse](STHRestAPI.md#getloadcheckresponse)
 - [GetVersionResponse](STHRestAPI.md#getversionresponse)
 
-## Type aliases
+## Type Aliases
 
 ### ControlMessageResponse
 
@@ -80,7 +81,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/index.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L20)
+[packages/types/src/rest-api-sth/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L21)
 
 ___
 
@@ -110,11 +111,11 @@ ___
 
 ### GetInstanceResponse
 
-Ƭ **GetInstanceResponse**: [`Instance`](../modules.md#instance)
+Ƭ **GetInstanceResponse**: [`Instance`](../modules.md#instance) & { `sequenceInfo`: [`DeepPartial`](../modules.md#deeppartial)<[`GetSequenceResponse`](STHRestAPI.md#getsequenceresponse)\>  }
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/get-instance.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-instance.ts#L3)
+[packages/types/src/rest-api-sth/get-instance.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-instance.ts#L5)
 
 ___
 
@@ -134,7 +135,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/index.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L21)
+[packages/types/src/rest-api-sth/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/index.ts#L22)
 
 ___
 
@@ -159,6 +160,7 @@ ___
 | `config` | [`SequenceConfig`](../modules.md#sequenceconfig) |
 | `id` | `string` |
 | `instances` | readonly `string`[] |
+| `name?` | `string` |
 
 #### Defined in
 
@@ -173,6 +175,24 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-sth/get-sequences.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-sequences.ts#L3)
+
+___
+
+### GetStatusResponse
+
+Ƭ **GetStatusResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `cpm` | { `connected?`: `boolean` ; `cpmId?`: `string`  } |
+| `cpm.connected?` | `boolean` |
+| `cpm.cpmId?` | `string` |
+
+#### Defined in
+
+[packages/types/src/rest-api-sth/get-status.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-status.ts#L1)
 
 ___
 

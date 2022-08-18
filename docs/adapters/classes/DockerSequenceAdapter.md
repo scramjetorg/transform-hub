@@ -70,7 +70,7 @@ Created volume.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:204](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L204)
+[docker-sequence-adapter.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L209)
 
 ___
 
@@ -98,7 +98,7 @@ ___
 
 ### identify
 
-▸ **identify**(`stream`, `id`): `Promise`<`SequenceConfig`\>
+▸ **identify**(`stream`, `id`, `override?`): `Promise`<`SequenceConfig`\>
 
 Unpacks and identifies sequence in Docker volume.
 This is the main adapter method creating new Docker volume and starting Prerunner
@@ -107,10 +107,11 @@ When Prerunner finishes, it will return JSON with sequence information.
 
 #### Parameters
 
-| Name | Type | Description |
-| :------ | :------ | :------ |
-| `stream` | `Readable` | Stream containing sequence to be identified. |
-| `id` | `string` | Id for the new docker volume where sequence will be stored. |
+| Name | Type | Default value | Description |
+| :------ | :------ | :------ | :------ |
+| `stream` | `Readable` | `undefined` | Stream containing sequence to be identified. |
+| `id` | `string` | `undefined` | Id for the new docker volume where sequence will be stored. |
+| `override` | `boolean` | `false` | Removes previous sequence |
 
 #### Returns
 
@@ -124,7 +125,7 @@ ISequenceAdapter.identify
 
 #### Defined in
 
-[docker-sequence-adapter.ts:136](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L136)
+[docker-sequence-adapter.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L137)
 
 ___
 
@@ -216,7 +217,7 @@ Promise resolving to sequence configuration.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:222](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L222)
+[docker-sequence-adapter.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L228)
 
 ___
 
@@ -242,7 +243,7 @@ ISequenceAdapter.remove
 
 #### Defined in
 
-[docker-sequence-adapter.ts:274](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L274)
+[docker-sequence-adapter.ts:283](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L283)
 
 ## Properties
 

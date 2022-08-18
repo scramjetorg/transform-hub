@@ -229,7 +229,7 @@ Finds free port for every port requested in Sequence configuration and returns m
 | :------ | :------ | :------ | :------ |
 | `declaredPorts` | `string`[] | `undefined` | Ports declared in sequence config. |
 | `containerConfig` | `ContainerConfiguration` & `ContainerConfigurationWithExposedPorts` | `undefined` | Container configuration extended with configuration for ports exposing. |
-| `exposed` | `boolean` | `false` | - |
+| `exposed?` | `boolean` | `false` | Defines configuration output type. Exposed ports when true or port bindings. |
 
 #### Returns
 

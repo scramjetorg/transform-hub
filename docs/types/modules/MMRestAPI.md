@@ -4,7 +4,7 @@
 
 ## Table of contents
 
-### Type aliases
+### Type Aliases
 
 - [ControlMessageResponse](MMRestAPI.md#controlmessageresponse)
 - [GetInfoReposnse](MMRestAPI.md#getinforeposnse)
@@ -19,7 +19,7 @@
 
 - [GetVersionResponse](MMRestAPI.md#getversionresponse)
 
-## Type aliases
+## Type Aliases
 
 ### ControlMessageResponse
 
