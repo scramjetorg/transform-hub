@@ -5,7 +5,20 @@ import { Readable, Writable } from "stream";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
-import { APIExpose, IComponent, IObjectLogger, LogLevel, NextCallback, OpResponse, ParsedMessage, PublicSTHConfiguration, SequenceInfo, StartSequenceDTO, STHConfiguration, STHRestAPI } from "@scramjet/types";
+import {
+    APIExpose,
+    IComponent,
+    IObjectLogger,
+    LogLevel,
+    NextCallback,
+    OpResponse,
+    ParsedMessage,
+    PublicSTHConfiguration,
+    SequenceInfo,
+    StartSequenceDTO,
+    STHConfiguration,
+    STHRestAPI,
+} from "@scramjet/types";
 import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
@@ -228,9 +241,14 @@ export class Host implements IComponent {
 
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
-        this.api.log.each(
-            ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
-        ).resume();
+        this.api.log
+            .each(({ date, method, url, status }) =>
+                this.logger.debug(
+                    "Request",
+                    `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`
+                )
+            )
+            .resume();
 
         this.logger.info("Log Level", this.config.logLevel);
         this.logger.trace("Host main called", { version });
@@ -263,7 +281,7 @@ export class Host implements IComponent {
                     infoFilePath: this.config.host.infoFilePath,
                     cpmSslCaPath: this.config.cpmSslCaPath,
                     maxReconnections: this.config.cpm.maxReconnections,
-                    reconnectionDelay: this.config.cpm.reconnectionDelay
+                    reconnectionDelay: this.config.cpm.reconnectionDelay,
                 },
                 this.api.server
             );
@@ -284,7 +302,7 @@ export class Host implements IComponent {
 
     private async startListening() {
         this.api.server.listen(this.config.host.port, this.config.host.hostname);
-        await new Promise<void>(res => {
+        await new Promise<void>((res) => {
             this.api?.server.once("listening", () => {
                 const serverInfo: AddressInfo = this.api?.server?.address() as AddressInfo;
 
@@ -312,7 +330,10 @@ export class Host implements IComponent {
 
         // Validate the config
         if (_config && !Array.isArray(_config.sequences))
-            throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR", "Startup config doesn't contain array of sequences");
+            throw new HostError(
+                "SEQUENCE_STARTUP_CONFIG_READ_ERROR",
+                "Startup config doesn't contain array of sequences"
+            );
 
         for (const seq of _config.sequences) {
             if (!isStartSequenceDTO(seq))
@@ -333,7 +354,7 @@ export class Host implements IComponent {
 
                 await this.startCSIController(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
-                    args: seqenceConfig.args
+                    args: seqenceConfig.args,
                 });
                 this.logger.debug("Starting sequence based on config", seqenceConfig);
             })
@@ -382,18 +403,30 @@ export class Host implements IComponent {
         this.api.upstream(`${this.apiBase}/audit`, async (req, res) => this.handleAuditRequest(req, res));
 
         this.api.downstream(`${this.apiBase}/sequence`, async (req) => this.handleNewSequence(req), { end: true });
-        this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), { end: true, method: "put" });
+        this.api.downstream(`${this.apiBase}/sequence/:id_name`, async (req) => this.handleSequenceUpdate(req), {
+            end: true,
+            method: "put",
+        });
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
+
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
+
         this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
         this.api.get(`${this.apiBase}/instances`, () => this.getInstances());
 
         this.api.get(`${this.apiBase}/load-check`, () => this.loadCheck.getLoadCheck());
-        this.api.get(`${this.apiBase}/version`, (): STHRestAPI.GetVersionResponse =>
-            ({ service: this.service, apiVersion: this.apiVersion, version, build: this.build }));
+        this.api.get(
+            `${this.apiBase}/version`,
+            (): STHRestAPI.GetVersionResponse => ({
+                service: this.service,
+                apiVersion: this.apiVersion,
+                version,
+                build: this.build,
+            })
+        );
 
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
@@ -401,7 +434,9 @@ export class Host implements IComponent {
 
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-        this.api.duplex(`${this.apiBase}/platform`, (stream, headers) => this.cpmConnector?.handleCommunicationRequest(stream, headers));
+        this.api.duplex(`${this.apiBase}/platform`, (stream, headers) =>
+            this.cpmConnector?.handleCommunicationRequest(stream, headers)
+        );
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
@@ -468,17 +503,15 @@ export class Host implements IComponent {
         if (!sequenceInfo) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
-                error: `Sequence ${id} not found`
+                error: `The sequence ${id} does not exist.`
             };
         }
 
         if (sequenceInfo.instances.size > 0) {
-            const instances = [...sequenceInfo.instances].every(
-                instanceId => {
-                    this.instancesStore[instanceId]?.finalizingPromise?.cancel();
-                    return this.instancesStore[instanceId]?.isRunning;
-                }
-            );
+            const instances = [...sequenceInfo.instances].every((instanceId) => {
+                this.instancesStore[instanceId]?.finalizingPromise?.cancel();
+                return this.instancesStore[instanceId]?.isRunning;
+            });
 
             if (instances) {
                 this.logger.warn("Can't remove Sequence in use:", id);
@@ -503,26 +536,28 @@ export class Host implements IComponent {
 
             return {
                 opStatus: ReasonPhrases.OK,
-                id
+                id,
             };
         } catch (error: any) {
             this.logger.error("Error removing Sequence!", error);
 
             return {
                 opStatus: ReasonPhrases.INTERNAL_SERVER_ERROR,
-                error: `Error removing Sequence: ${error.message}`
+                error: `Error removing Sequence: ${error.message}`,
             };
         }
     }
 
     heartBeat() {
         Promise.all(
-            Object.values(this.instancesStore).map(csiController =>
+            Object.values(this.instancesStore).map((csiController) =>
                 Promise.race([
-                    csiController.heartBeatPromise
-                        ?.then((id) => this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)),
-                    defer(this.config.timings.heartBeatInterval)
-                        .then(() => { throw new Error("HeartBeat promise not resolved"); })
+                    csiController.heartBeatPromise?.then((id) =>
+                        this.auditor.auditInstanceHeartBeat(id, csiController.lastStats)
+                    ),
+                    defer(this.config.timings.heartBeatInterval).then(() => {
+                        throw new Error("HeartBeat promise not resolved");
+                    }),
                 ]).catch((error) => {
                     this.logger.error("Instance heartbeat error", csiController.id, error.message);
                 })
@@ -571,8 +606,10 @@ export class Host implements IComponent {
         }
     }
 
-    async handleIncomingSequence(stream: ParsedMessage, id: string):
-        Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+    async handleIncomingSequence(
+        stream: ParsedMessage,
+        id: string
+    ): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         stream.params ||= {};
 
         const sequenceName = stream.params.id_name || stream.headers["x-name"];
@@ -618,14 +655,14 @@ export class Host implements IComponent {
 
             return {
                 id: config.id,
-                opStatus: ReasonPhrases.OK
+                opStatus: ReasonPhrases.OK,
             };
         } catch (error: any) {
             this.logger.error("Error processing sequence", error);
 
             return {
                 opStatus: ReasonPhrases.UNPROCESSABLE_ENTITY,
-                error
+                error,
             };
         }
     }
@@ -695,6 +732,39 @@ export class Host implements IComponent {
         return seq;
     }
 
+    async getExternalSequence(id: string): Promise<SequenceInfo> {
+        if (this.cpmConnector?.connected) {
+            let packageStream: IncomingMessage | undefined;
+
+            try {
+                this.logger.info("Retrieving sequence", id);
+
+                const response = await this.s3Client?.getObject({ filename: id, directory: "sequences" });
+
+                this.logger.info("Sequence package retrieved");
+
+                if (!response) {
+                    throw new Error(ReasonPhrases.NOT_FOUND);
+                }
+
+                packageStream = response.data as IncomingMessage;
+                packageStream.headers = response.headers;
+
+                const result = (await this.handleNewSequence(
+                    packageStream as ParsedMessage
+                )) as STHRestAPI.SendSequenceResponse;
+
+                return this.sequencesStore.get(result.id)!;
+            } catch (e: any) {
+                this.logger.error("Error requesting sequence", e.message);
+
+                throw new Error(ReasonPhrases.SERVICE_UNAVAILABLE);
+            }
+        }
+
+        throw new Error(ReasonPhrases.NOT_FOUND);
+    }
+
     /**
      * Handles Sequence start request.
      * Parses request body for Sequence configuration and parameters to be passed to first Sequence method.
@@ -708,61 +778,21 @@ export class Host implements IComponent {
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
         if (await this.loadCheck.overloaded()) {
             return {
-                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE
+                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
             };
         }
 
         const id = req.params?.id as string;
-        const payload = req.body || {} as STHRestAPI.StartSequencePayload;
+        const payload = req.body || ({} as STHRestAPI.StartSequencePayload);
 
-        let sequence = this.sequencesStore.get(id) ||
+        let sequence =
+            this.sequencesStore.get(id) ||
             Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
-        if (!req.body.args && sequence?.config?.args) {
-            payload.args = sequence.config.args;
-        }
-
-        if (!sequence) {
-            if (this.cpmConnector?.connected) {
-                let packageStream: IncomingMessage | undefined;
-
-                try {
-                    this.logger.info("Retrieving sequence", id);
-
-                    const response = await this.s3Client?.getObject({ filename: id, directory: "sequences" });
-
-                    this.logger.info("Sequence package retrieved");
-
-                    if (!response) {
-                        return {
-                            error: "Sequence not found on S3",
-                            opStatus: ReasonPhrases.NOT_FOUND
-                        }
-                    }
-
-                    packageStream = response.data as IncomingMessage;
-                    packageStream.headers = response.headers;
-
-                    const result = await this.handleNewSequence(
-                        packageStream as ParsedMessage
-                    ) as STHRestAPI.SendSequenceResponse;
-
-                    sequence = this.sequencesStore.get(result.id);
-                } catch (e: any) {
-                    this.logger.error("Error requesting sequence", e.message);
-
-                    return {
-                        opStatus: ReasonPhrases.SERVICE_UNAVAILABLE,
-                        error: "Store not avaliable"
-                    };
-                }
-            } else {
-                return {
-                    opStatus: ReasonPhrases.NOT_FOUND,
-                    error: `Sequence ${id} not found`
-                };
-            }
-        }
+        sequence ||= await this.getExternalSequence(id).catch((error: ReasonPhrases) => {
+            this.logger.error("Error getting sequence from external sources", error);
+            return undefined;
+        });
 
         if (!sequence) {
             return { opStatus: ReasonPhrases.NOT_FOUND };
@@ -802,7 +832,7 @@ export class Host implements IComponent {
 
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST,
-                error: error
+                error: error,
             };
         }
     }
@@ -813,22 +843,13 @@ export class Host implements IComponent {
      * @param {SequenceInfo} sequence Sequence info object.
      * @param {STHRestAPI.StartSequencePayload} payload App start configuration.
      */
-    async startCSIController(
-        sequence: SequenceInfo,
-        payload: STHRestAPI.StartSequencePayload
-    ): Promise<CSIController> {
+    async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
         const id = IDProvider.generate();
 
         this.logger.debug("CSIC start payload", payload);
 
-        const csic = new CSIController(
-            id,
-            sequence,
-            payload,
-            communicationHandler,
-            this.config
-        );
+        const csic = new CSIController(id, sequence, payload, communicationHandler, this.config);
 
         csic.logger.pipe(this.logger, { end: false });
         communicationHandler.logger.pipe(this.logger, { end: false });
@@ -931,25 +952,15 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
-
-            if (csic.provides && csic.provides !== "") {
-                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
-                    {
-                        topic: csic.provides,
-                        contentType: ""
-                    }
-                ) as Writable);
-            }
         });
 
         csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
-                (this.serviceDiscovery.getData(
-                    {
+                (this.serviceDiscovery.getData({
                         topic: csic.requires,
-                        contentType: ""
-                    }
-                ) as Readable).unpipe(csic.getInputStream()!);
+                        contentType: "",
+                    }) as Readable
+                ).unpipe(csic.getInputStream()!);
             }
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
@@ -978,7 +989,7 @@ export class Host implements IComponent {
     getInstances(): STHRestAPI.GetInstancesResponse {
         this.logger.info("List Instances");
 
-        return Object.values(this.instancesStore).map(csiController => csiController.getInfo());
+        return Object.values(this.instancesStore).map((csiController) => csiController.getInfo());
     }
 
     /**
@@ -1002,7 +1013,7 @@ export class Host implements IComponent {
             id: sequence.id,
             name: sequence.name,
             config: sequence.config,
-            instances: Array.from(sequence.instances.values())
+            instances: Array.from(sequence.instances.values()),
         };
     }
 
@@ -1012,13 +1023,12 @@ export class Host implements IComponent {
      * @returns {STHRestAPI.GetSequencesResponse} List of Sequences.
      */
     getSequences(): STHRestAPI.GetSequencesResponse {
-        return Array.from(this.sequencesStore.values())
-            .map(sequence => ({
-                id: sequence.id,
-                name: sequence.name,
-                config: sequence.config,
-                instances: Array.from(sequence.instances.values())
-            }));
+        return Array.from(this.sequencesStore.values()).map((sequence) => ({
+            id: sequence.id,
+            name: sequence.name,
+            config: sequence.config,
+            instances: Array.from(sequence.instances.values()),
+        }));
     }
 
     /**
@@ -1041,19 +1051,17 @@ export class Host implements IComponent {
     }
 
     getTopics() {
-        return this.serviceDiscovery.getTopics().map(
-            (topic) => ({
-                name: topic.topic,
-                contentType: topic.contentType
-            })
-        );
+        return this.serviceDiscovery.getTopics().map((topic) => ({
+            name: topic.topic,
+            contentType: topic.contentType,
+        }));
     }
 
     getStatus(): STHRestAPI.GetStatusResponse {
         const { connected, cpmId } = this.cpmConnector || {};
 
         return {
-            cpm: { connected, cpmId }
+            cpm: { connected, cpmId },
         };
     }
 
@@ -1065,9 +1073,9 @@ export class Host implements IComponent {
         this.logger.trace("Stopping instances");
 
         await Promise.all(
-            Object.values(this.instancesStore)
-                .map((csiController) =>
-                    csiController.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {}))
+            Object.values(this.instancesStore).map((csiController) =>
+                csiController.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {})
+            )
         );
 
         this.logger.info("Instances stopped");
@@ -1084,7 +1092,7 @@ export class Host implements IComponent {
         const instancesStore = this.instancesStore;
 
         this.logger.trace("Finalizing remaining instances");
-        await Promise.all(Object.values(instancesStore).map(csi => csi.finalize()));
+        await Promise.all(Object.values(instancesStore).map((csi) => csi.finalize()));
 
         this.instancesStore = {};
         this.sequencesStore = new Map();
