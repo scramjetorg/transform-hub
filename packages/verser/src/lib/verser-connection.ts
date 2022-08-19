@@ -1,6 +1,12 @@
 import { Duplex, Writable } from "stream";
-import { request as httpRequest, Agent, IncomingHttpHeaders,
-    IncomingMessage, RequestOptions, ServerResponse } from "http";
+import {
+    request as httpRequest,
+    Agent,
+    IncomingHttpHeaders,
+    IncomingMessage,
+    RequestOptions,
+    ServerResponse,
+} from "http";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { createConnection, Socket } from "net";
 import { VerserRequestResult } from "../types";
@@ -16,10 +22,10 @@ export class VerserConnection {
     private logger = new ObjLogger(this);
 
     private request: IncomingMessage;
-    private bpmux?: {[key: string]: any};
+    private bpmux?: { [key: string]: any };
 
     private _socket: Duplex;
-    private agent?: Agent & { createConnection: typeof createConnection; };
+    private agent?: Agent & { createConnection: typeof createConnection };
     private channelListeners: ((socket: Duplex, data?: any) => any)[] = [];
 
     get connected() {
@@ -139,10 +145,7 @@ export class VerserConnection {
         try {
             for await (const chunk of req) {
                 const eol = Buffer.from("\r\n");
-                const chunked = Buffer.concat([
-                    Buffer.from(chunk.length.toString(16)), eol,
-                    chunk, eol
-                ]);
+                const chunked = Buffer.concat([Buffer.from(chunk.length.toString(16)), eol, chunk, eol]);
 
                 await whenWrote(chunked, "binary", channel);
             }
@@ -159,9 +162,7 @@ export class VerserConnection {
      * @param {RequestOptions} options Request options.
      * @returns {Promise<VerserRequestResult>} Promise resolving to Response and Request objects.
      */
-    public async makeRequest(
-        options: RequestOptions
-    ): Promise<VerserRequestResult> {
+    public async makeRequest(options: RequestOptions): Promise<VerserRequestResult> {
         if (!this.connected) throw new Error("BPMux not connected");
 
         return new Promise((resolve, reject) => {

@@ -1,15 +1,16 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { Agent } from "http";
+import { Agent, IncomingHttpHeaders } from "http";
 import { PicoS3, CLOUD_PROVIDERS, getObject } from "pico-s3";
+import { Readable } from "stream";
 
 type SequenceStoreClientConfig = {
-    host: string,
-    region: string,
-    bucket: string,
-    accessKeyId: string,
+    host: string;
+    region: string;
+    bucket: string;
+    accessKeyId: string;
     secretAccessKey: string;
     provider: CLOUD_PROVIDERS;
-}
+};
 
 export class S3Client {
     agent = new Agent({ keepAlive: true });
@@ -26,26 +27,25 @@ export class S3Client {
             accessKeyId: config.accessKeyId || "",
             secretAccessKey: config.secretAccessKey || "",
             provider: CLOUD_PROVIDERS.MINIO,
-            ...config
-        }
+            ...config,
+        };
 
         this.client = new PicoS3(this.clientConfig);
         this.logger.debug("S3 config", this.clientConfig);
-        console.log("S3 config", this.clientConfig);
+        this.logger.info("S3 client created", this.clientConfig);
     }
 
     setAgent(agent: Agent) {
         this.agent = agent;
     }
 
-    getSequence(key: string) {
-
-    }
-
-    getObject(options: { filename: string, directory?: string }) {
-        return getObject({
-            ...this.clientConfig,
-            ...options
-        }, { httpAgent: this.agent, responseType: "stream" });
+    async getObject(options: { filename: string; directory?: string }): Promise<{status: number, data: Readable, headers: IncomingHttpHeaders }> {
+        return getObject(
+            {
+                ...this.clientConfig,
+                ...options,
+            },
+            { httpAgent: this.agent, responseType: "stream" }
+        );
     }
 }

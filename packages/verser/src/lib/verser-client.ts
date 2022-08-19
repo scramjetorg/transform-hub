@@ -13,7 +13,7 @@ const BPMux = require("bpmux").BPMux;
 
 type Events = {
     error: (err: Error) => void;
-}
+};
 
 /**
  * VerserClient class.
@@ -40,10 +40,16 @@ export class VerserClient extends TypedEmitter<Events> {
      */
     private httpAgent: HttpsAgent | HttpAgent;
 
+<<<<<<< HEAD
     /**
      * HTTP Agent but on BPMux'ed stream.
      */
     private _verserAgent?: HttpAgent & { createConnection: typeof createConnection };
+||||||| constructed merge base
+    private _verserAgent?: HttpAgent & { createConnection: typeof createConnection; };;
+=======
+    private _verserAgent?: HttpAgent & { createConnection: typeof createConnection };
+>>>>>>> eslint fixes
 
     /**
      * Connection socket.
@@ -89,8 +95,8 @@ export class VerserClient extends TypedEmitter<Events> {
      */
     public async connect(): Promise<VerserClientConnection> {
         return new Promise((resolve, reject) => {
-            const { hostname, port, pathname } = this.opts.verserUrl instanceof URL
-                ? this.opts.verserUrl : new URL(this.opts.verserUrl);
+            const { hostname, port, pathname } =
+                this.opts.verserUrl instanceof URL ? this.opts.verserUrl : new URL(this.opts.verserUrl);
 
             const connectRequest = request({
                 agent: this.httpAgent,
@@ -149,10 +155,18 @@ export class VerserClient extends TypedEmitter<Events> {
                     this.logger.error("Muxed stream error");
                 });
 
+<<<<<<< HEAD
                 // some libs call it but it is not here, in BPMux.
                 socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
 
                 this.logger.info("Creating connection to verser server");
+||||||| constructed merge base
+                // needed when using axios
+                socket.setKeepAlive = (enable?: boolean, initialDelay?: number | undefined) => socket;
+=======
+                // for axios, it want to set keepAlive but bpmmux doesn't provide it.
+                socket.setKeepAlive = (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+>>>>>>> eslint fixes
 
                 return socket;
             } catch (error) {
