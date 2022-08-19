@@ -150,9 +150,10 @@ export class VerserClient extends TypedEmitter<Events> {
                 });
 
                 // some libs call it but it is not here, in BPMux.
-                socket.setKeepAlive = (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
 
-                this.logger.debug("Created new muxed stream with setKeepAlive");
+                this.logger.info("Creating connection to verser server");
+
                 return socket;
             } catch (error) {
                 const ret = new Socket();

@@ -30,6 +30,7 @@ import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/
 import { AuditedRequest, Auditor } from "./auditor";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, totalmem } from "os";
+import { S3Client } from "./s3-client";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -118,6 +119,11 @@ export class Host implements IComponent {
     hostSize = this.getSize();
     ipvAddress: any;
     adapterName: string = "uninitialized";
+
+    /**
+     * S3 client.
+     */
+    s3Client?: S3Client;
 
     /**
      * Sets listener for connections to socket server.
@@ -268,6 +274,12 @@ export class Host implements IComponent {
             this.serviceDiscovery.setConnector(this.cpmConnector);
             await this.connectToCPM();
         }
+
+        this.s3Client = new S3Client({
+            host: `http://${this.config.cpmUrl}/api/v1`,
+            bucket: `cpm/${this.config.cpmId}/api/v1/s3`,
+        });
+        this.s3Client.logger.pipe(this.logger);
     }
 
     private async startListening() {
@@ -342,6 +354,9 @@ export class Host implements IComponent {
             await connector.sendSequencesInfo(this.getSequences());
             await connector.sendInstancesInfo(this.getInstances());
             await connector.sendTopicsInfo(this.getTopics());
+
+            // @TODO this causes problem with axios.
+            this.s3Client?.setAgent(connector.getHttpAgent());
         });
 
         await connector.connect();
@@ -693,11 +708,11 @@ export class Host implements IComponent {
     async handleStartSequence(req: ParsedMessage): Promise<OpResponse<STHRestAPI.StartSequenceResponse>> {
         if (await this.loadCheck.overloaded()) {
             return {
-                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE,
+                opStatus: ReasonPhrases.INSUFFICIENT_SPACE_ON_RESOURCE
             };
         }
 
-        const id = req.params?.id;
+        const id = req.params?.id as string;
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
 
         let sequence = this.sequencesStore.get(id) ||
@@ -712,18 +727,33 @@ export class Host implements IComponent {
                 let packageStream: IncomingMessage | undefined;
 
                 try {
-                    packageStream = await this.cpmConnector?.getSequence(id);
+                    this.logger.info("Retrieving sequence", id);
+
+                    const response = await this.s3Client?.getObject({ filename: id, directory: "sequences" });
+
+                    this.logger.info("Sequence package retrieved");
+
+                    if (!response) {
+                        return {
+                            error: "Sequence not found on S3",
+                            opStatus: ReasonPhrases.NOT_FOUND
+                        }
+                    }
+
+                    packageStream = response.data as IncomingMessage;
+                    packageStream.headers = response.headers;
 
                     const result = await this.handleNewSequence(
                         packageStream as ParsedMessage
                     ) as STHRestAPI.SendSequenceResponse;
 
                     sequence = this.sequencesStore.get(result.id);
-                } catch (e) {
-                    this.logger.error("Error requesting sequence", e);
+                } catch (e: any) {
+                    this.logger.error("Error requesting sequence", e.message);
 
                     return {
-                        opStatus: ReasonPhrases.SERVICE_UNAVAILABLE
+                        opStatus: ReasonPhrases.SERVICE_UNAVAILABLE,
+                        error: "Store not avaliable"
                     };
                 }
             } else {

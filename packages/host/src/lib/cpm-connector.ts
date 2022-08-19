@@ -291,6 +291,10 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.setLoadCheckMessageSender();
     }
 
+    getHttpAgent(): http.Agent {
+        return this.verserClient.verserAgent as http.Agent;
+    }
+
     /**
      * Connect to Manager using VerserClient.
      * Host send its id to Manager in headers. If id is not set, it will be received from Manager.
@@ -322,7 +326,9 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.info("Connected to Manager");
 
         connection.socket
-            .on("close", async () => { await this.handleConnectionClose(); });
+            .once("close", async () => {
+                await this.handleConnectionClose();
+            });
 
         /**
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
@@ -351,8 +357,6 @@ export class CPMConnector extends TypedEmitter<Events> {
             } catch (e) {
                 this.logger.error("Reconnect failed");
             }
-
-            await this.reconnect();
         });
     }
 
@@ -361,6 +365,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Tries to reconnect.
      */
     async handleConnectionClose() {
+        this.connection?.removeAllListeners();
         this.connected = false;
 
         this.logger.trace("Tunnel closed", this.getId());
