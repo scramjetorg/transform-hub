@@ -35,6 +35,8 @@ class HostClient implements IHostClient {
                     // Error handling for each connection is process crash for now
                     const connection = net.createConnection(this.instancesServerPort, this.instancesServerHost);
 
+                    connection.setNoDelay();
+
                     return new Promise<net.Socket>(res => {
                         connection.on("connect", () => res(connection));
                     });
