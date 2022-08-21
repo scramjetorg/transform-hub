@@ -1030,7 +1030,6 @@ export class Host implements IComponent {
     }
 
     async setTelemetry(): Promise<void> {
-        console.log(this.config.telemetry)
         if (this.config.telemetry.status === "ask") {
             await new Promise<void>((resolve, _reject) => {
                 require("readline").createInterface({

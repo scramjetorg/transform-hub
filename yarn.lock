@@ -1612,34 +1612,6 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
-"@scramjet/obj-logger@^0.27.0":
-  version "0.27.0"
-  resolved "https://registry.yarnpkg.com/@scramjet/obj-logger/-/obj-logger-0.27.0.tgz#52406692d8c3f6d4476c416424285efe03faecba"
-  integrity sha512-+b0YHB948PJQ3v3k7LUw6QBOiURGAWn4VY4bn5lGhwx3KWunaFRxPzegEaBML9nwS0MAFlscLLJ3jysjeXxgNA==
-  dependencies:
-    scramjet "^4.36.6"
-
-"@scramjet/symbols@^0.27.0":
-  version "0.27.0"
-  resolved "https://registry.yarnpkg.com/@scramjet/symbols/-/symbols-0.27.0.tgz#77e18016ce022ece2e01d363bb042f50f1bf94a1"
-  integrity sha512-O/m3xZyFwTExxJlarIZQURg+mU0h2Cqzy5rCZl9aSeSiaz1AeNnDGAXQ7+A0TYFE3xLDljypT/Ji0XJFu5lxUQ==
-
-"@scramjet/types@^0.27.0":
-  version "0.27.0"
-  resolved "https://registry.yarnpkg.com/@scramjet/types/-/types-0.27.0.tgz#dbc918d3093401bfd722fe1ac0de7345f6054fa3"
-  integrity sha512-vCdzDk5AJQN4I3J2n3CgQTTUBfAFF0IEsWpZ8lWqtw+c8uLZ0Jve904TAT5xIGYNCWlFqkwk76CMEZNrdLYDzg==
-  dependencies:
-    "@scramjet/symbols" "^0.27.0"
-    http-status-codes "^2.2.0"
-
-"@scramjet/utility@^0.27.0":
-  version "0.27.0"
-  resolved "https://registry.yarnpkg.com/@scramjet/utility/-/utility-0.27.0.tgz#fa3aa3a401f4e01ccaaf0a1102b62eb76dd020fa"
-  integrity sha512-iTHgY76pXGwPGUHamtbOFnvEgpDRg75ry3zlShKzd9ent2zxhVX7Q8LDIB3vgmDdioBDSWfArYaPeB2EpBL/aw==
-  dependencies:
-    normalize-url "^5.3.1"
-    yaml "^2.1.1"
-
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"
   resolved "https://registry.npmjs.org/@sindresorhus/is/-/is-0.14.0.tgz"
@@ -8021,20 +7993,6 @@ scramjet-core@^4.32.8:
   version "4.32.8"
   resolved "https://registry.npmjs.org/scramjet-core/-/scramjet-core-4.32.8.tgz"
   integrity sha512-J3YRo9AaaU/xcqb2/dlsnGwzpqInTAYmWrf6Wn4IYegnO3UjZ79JsQBOYtXrG99wl8hLB2dVcsdAdwQ+wCX4CA==
-
-scramjet-core@^4.32.9:
-  version "4.32.9"
-  resolved "https://registry.yarnpkg.com/scramjet-core/-/scramjet-core-4.32.9.tgz#67b4b359e58399ac22e280866f8a7d59b8774e77"
-  integrity sha512-LZKFxr61A9F7POXKWp54B0Amy202PqaN7IvbjFv2lF2XTrbkw056dEBciKnQCj3bLR0ptEyiN47qcorDc1Rn/w==
-
-scramjet@^4.36.6:
-  version "4.36.8"
-  resolved "https://registry.yarnpkg.com/scramjet/-/scramjet-4.36.8.tgz#2b0d4945acbb00a5f3fb552707aef8791bc3f6b2"
-  integrity sha512-MTNOv2AKJcfmwBoksbnTCOGdHzknB3pGNWXuT5HWKESwvrffud7lvK9y8dh1eNkKO/PmRbRHM6rYohoQUP6E8w==
-  dependencies:
-    papaparse "^5.3.2"
-    rereadable-stream "^1.4.13"
-    scramjet-core "^4.32.9"
 
 scramjet@^4.36.7:
   version "4.36.7"
