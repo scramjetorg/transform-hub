@@ -159,7 +159,7 @@ const options: STHCommandOptions = program
             }
 
             if (config.telemetry.status === "on") {
-                host.logger.info(`Telemetry status is "on". If you don't want to send anonymous telemetry data set "--telemetry off" when starting STH`)
+                host.logger.info("Telemetry status is 'on'. If you don't want to send anonymous telemetry data set '--telemetry off' when starting STH or set it in the config file.");
             }
         });
 })()
