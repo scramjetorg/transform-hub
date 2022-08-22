@@ -603,7 +603,7 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
-            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase() }});
+            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase() } });
 
             return {
                 id: config.id,
@@ -731,13 +731,16 @@ export class Host implements IComponent {
 
             this.logger.debug("Instance limits", csic.limits);
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
+            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id } });
 
             return {
                 opStatus: ReasonPhrases.OK,
                 message: `Sequence ${csic.id} starting`,
                 id: csic.id
             };
-        } catch (error) {
+        } catch (error: any) {
+            this.telemetryAdapter?.push("error", { message: "Instance start failed", labels: { error: error.message } });
+
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST,
                 error: error
@@ -776,6 +779,7 @@ export class Host implements IComponent {
         this.instancesStore[id] = csic;
 
         csic.on("error", (err) => {
+            this.telemetryAdapter?.push("error", { message: "Instance error", labels: { ...err } });
             this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
@@ -1061,7 +1065,7 @@ export class Host implements IComponent {
     async getSize() {
         return ["xs", "s", "m", "l", "xl"][Math.min(
             4, // maximum index in array
-            Math.floor(cpus().length * .25 + Math.ceil(totalmem() / (1024 << 20)) * .25)
+            Math.floor(cpus().length * 0.25 + Math.ceil(totalmem() / (1024 << 20)) * 0.25)
         )];
     }
 }

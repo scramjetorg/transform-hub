@@ -22,6 +22,7 @@ import { SequenceAdapterError } from "@scramjet/model";
  * @param {string} id Sequence Id.
  * @returns {ProcessSequenceConfig} Sequence configuration.
  */
+// eslint-disable-next-line complexity
 async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
     const sequenceDir = path.join(sequencesRoot, id);
     const packageJsonPath = path.join(sequenceDir, "package.json");
