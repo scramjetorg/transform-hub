@@ -255,7 +255,6 @@ class DockerSequenceAdapter implements ISequenceAdapter {
 
         const container = Object.assign({}, this.config.docker.runner);
 
-
         container.image = "python3" in engines
             ? this.config.docker.runnerImages.python3
             : this.config.docker.runnerImages.node;
