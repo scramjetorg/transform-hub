@@ -110,6 +110,8 @@ export class Host implements IComponent {
 
     publicConfig: PublicSTHConfiguration;
 
+    hostSize = this.getSize();
+
     /**
      * Sets listener for connections to socket server.
      */
@@ -228,7 +230,7 @@ export class Host implements IComponent {
             this.logger.error("Setting telemetry failed");
         });
 
-        this.telemetryAdapter?.push("info", { message: "Host started", labels: { size: await this.getSize() } });
+        this.telemetryAdapter?.push("info", { message: "Host started", labels: { hostSize: this.hostSize } });
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
@@ -603,7 +605,7 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
-            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase() } });
+            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase(), hostSize: this.hostSize } });
 
             return {
                 id: config.id,
@@ -731,7 +733,7 @@ export class Host implements IComponent {
 
             this.logger.debug("Instance limits", csic.limits);
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
-            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id } });
+            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id, language: csic.sequence.config.language, hostSize: this.hostSize } });
 
             return {
                 opStatus: ReasonPhrases.OK,
@@ -739,7 +741,7 @@ export class Host implements IComponent {
                 id: csic.id
             };
         } catch (error: any) {
-            this.telemetryAdapter?.push("error", { message: "Instance start failed", labels: { error: error.message } });
+            this.telemetryAdapter?.push("error", { message: "Instance start failed", labels: { error: error.message, hostSize: this.hostSize } });
 
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST,
@@ -878,13 +880,17 @@ export class Host implements IComponent {
                     }
                 ) as Readable).unpipe(csic.getInputStream()!);
             }
+        });
 
+        csic.once("terminated", (code) => {
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
             this.telemetryAdapter?.push("info", {
                 message: "Instance ended",
                 labels: {
                     executionTime: csic.info.ended && csic.info.started ? ((csic.info.ended?.getTime() - csic.info.started.getTime()) / 1000).toString() : "-1",
-                    id: csic.id
+                    id: csic.id,
+                    code: code.toString(),
+                    hostSize: this.hostSize
                 }
             });
         });
@@ -1069,10 +1075,10 @@ export class Host implements IComponent {
         this.logger.info("No telemetry");
     }
 
-    async getSize() {
+    getSize(): "xs" | "s" | "m" | "l" | "xl" {
         return ["xs", "s", "m", "l", "xl"][Math.min(
             4, // maximum index in array
             Math.floor(cpus().length * 0.25 + Math.ceil(totalmem() / (1024 << 20)) * 0.25)
-        )];
+        )] as ReturnType<this["getSize"]>;
     }
 }

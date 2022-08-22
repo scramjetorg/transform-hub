@@ -53,10 +53,11 @@ import { ReasonPhrases } from "http-status-codes";
 const runnerExitDelay = 15000;
 
 type Events = {
-    pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
-    error: (error: any) => void,
-    stop: (code: number) => void
-    end: (code: number) => void
+    pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
+    error: (error: any) => void;
+    stop: (code: number) => void;
+    end: (code: number) => void;
+    terminated: (code: number) => void;
 }
 
 enum TerminateReason {
@@ -241,6 +242,8 @@ export class CSIController extends TypedEmitter<Events> {
         this.info.ended = new Date();
 
         this.logger.trace("Finalizing...");
+
+        this.emit("terminated", code);
 
         await this.finalize();
 
