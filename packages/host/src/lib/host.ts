@@ -883,6 +883,15 @@ export class Host implements IComponent {
                     }
                 ) as Readable).unpipe(csic.getInputStream()!);
             }
+
+            this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
+            this.telemetryAdapter?.push("info", {
+                message: "Instance ended",
+                labels: {
+                    executionTime: csic.info.ended && csic.info.started ? ((csic.info.ended?.getTime() - csic.info.started.getTime()) / 1000).toString() : "-1",
+                    id: csic.id
+                }
+            });
         });
 
         await csic.start();
