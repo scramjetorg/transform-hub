@@ -222,6 +222,7 @@ class PrePack {
             bugs = this.rootPackageJson.bugs,
             repository = this.rootPackageJson.repository,
             engines = this.rootPackageJson.engines,
+            scripts,
             os = this.rootPackageJson.os,
             cpu = this.rootPackageJson.cpu,
             publishConfig = this.rootPackageJson.publishConfig,
@@ -246,13 +247,23 @@ class PrePack {
 
         if (typeof bin === "object") await this.fixShebang(bin);
 
+        const { postinstall } = scripts || {};
+        let _scripts;
+
+        if (postinstall && postinstall.match(/^.?\/([A-z0-9-_+]+.)*([A-z0-9]+\.ts)$/)) {
+            _scripts = {
+                postinstall: srcRe(scripts.postinstall)
+            };
+            await this.fixShebang(_scripts);
+        }
+
         return {
             name, version, description, keywords, homepage, bugs,
             license, author, contributors, funding, files, main, types,
             bin, man, directories, repository, config, browser,
             dependencies, peerDependencies, peerDependenciesMeta,
             bundledDependencies, optionalDependencies,
-            engines, os, cpu, private: priv, publishConfig, scramjet
+            engines, os, cpu, private: priv, publishConfig, scramjet, scripts: _scripts
         };
     }
 
