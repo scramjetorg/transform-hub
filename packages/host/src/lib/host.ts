@@ -29,6 +29,7 @@ import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
+import { cpus, totalmem } from "os";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -227,7 +228,7 @@ export class Host implements IComponent {
             this.logger.error("Setting telemetry failed");
         });
 
-        this.telemetryAdapter?.push("info", { message: "Host started" });
+        this.telemetryAdapter?.push("info", { message: "Host started", labels: { size: await this.getSize() } });
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
@@ -1055,5 +1056,11 @@ export class Host implements IComponent {
 
         this.logger.info("No telemetry");
     }
-}
 
+    async getSize() {
+        return ["xs", "s", "m", "l", "xl"][Math.min(
+            4, // maximum index in array
+            Math.floor(cpus().length * .25 + Math.ceil(totalmem() / (1024 << 20)) * .25)
+        )];
+    }
+}
