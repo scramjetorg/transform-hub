@@ -14,7 +14,8 @@
     "build:docker": "docker build -t scramjetorg/sth:$(git rev-parse HEAD) -f Dockerfile ../../",
     "clean": "rm -rf ./dist .bic_cache",
     "test": "echo no tests yet -- # npm run test:ava",
-    "test:ava": "ava"
+    "test:ava": "ava",
+    "postinstall": "./src/postinstall.ts"
   },
   "author": "Scramjet <open-source@scramjet.org>",
   "license": "AGPL-3.0",
