@@ -1,9 +1,11 @@
 export type DiskSpace = {
     fs: string,
+    type?: string,
     size: number,
     used: number,
     available: number,
     use: number
+    mount?: string
 }
 
 export type LoadCheckStat = {

@@ -1,6 +1,12 @@
+export type ConnectedSTHInfoDetails = {
+    created?: Date;
+    lastConnected?: Date;
+    lastDisconnected?: Date;
+}
+
 export type ConnectedSTHInfo = {
     id: string,
-    info: { [key: string]: any },
+    info: ConnectedSTHInfoDetails,
     healthy: boolean,
     isConnectionActive: boolean
 };
