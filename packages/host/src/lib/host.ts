@@ -605,7 +605,7 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
-            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase(), hostSize: this.hostSize } });
+            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase(), hostSize: this.hostSize, seqId: id } });
 
             return {
                 id: config.id,
@@ -733,7 +733,7 @@ export class Host implements IComponent {
 
             this.logger.debug("Instance limits", csic.limits);
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
-            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id, language: csic.sequence.config.language, hostSize: this.hostSize } });
+            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id, language: csic.sequence.config.language, hostSize: this.hostSize, seqId: csic.sequence.id } });
 
             return {
                 opStatus: ReasonPhrases.OK,
@@ -895,7 +895,8 @@ export class Host implements IComponent {
                     executionTime: csic.info.ended && csic.info.started ? ((csic.info.ended?.getTime() - csic.info.started.getTime()) / 1000).toString() : "-1",
                     id: csic.id,
                     code: code.toString(),
-                    hostSize: this.hostSize
+                    hostSize: this.hostSize,
+                    seqId: csic.sequence.id
                 }
             });
         });
