@@ -1055,21 +1055,7 @@ export class Host implements IComponent {
     }
 
     async setTelemetry(): Promise<void> {
-        if (this.config.telemetry.status === "ask") {
-            await new Promise<void>((resolve, _reject) => {
-                require("readline").createInterface({
-                    input: process.stdin,
-                    output: process.stdout
-                }).question("Do You consent to the transmission of anonymous usage data to help us improve Transform Hub? (y/n) ", (reply: string) => {
-                    this.logger.info("User replied", reply);
-
-                    this.config.telemetry.status = ["yes", "y"].includes(reply.trim()) ? "on" : "off";
-                    resolve();
-                });
-            });
-        }
-
-        if (this.config.telemetry.status === "on") {
+        if (this.config.telemetry.status) {
             this.telemetryAdapter = await getTelemetryAdapter(this.config.telemetry.adapter, this.config.telemetry);
             this.telemetryAdapter.logger.pipe(this.logger);
 

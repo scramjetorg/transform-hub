@@ -258,7 +258,8 @@ class DockerSequenceAdapter implements ISequenceAdapter {
         container.image = "python3" in engines
             ? this.config.docker.runnerImages.python3
             : this.config.docker.runnerImages.node;
-        const language = (validPackageJson.main?.match(/(?:\.)([^.\\/:*?"<>|\r\n]+$)/) || { 1: "unknown" })[1];
+
+        const language = (validPackageJson.main?.match(/(?:\.)([^.\\/:*?"<>|\r\n]+$)/) || { 1: undefined })[1];
 
         return {
             type: "docker",
@@ -274,7 +275,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             author: validPackageJson.author || "",
             keywords: validPackageJson.keywords || [],
             repository: validPackageJson.repository || "",
-            language
+            language: language || engines?.node ? "js" : "unknown"
         };
     }
 

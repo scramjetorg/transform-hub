@@ -8,6 +8,6 @@ export type TelemetryAdaptersConfig = {
 }
 
 export type TelemetryConfig = {
-    status: "off" | "on" | "ask",
+    status: boolean,
     adapter: "loki"
 } & TelemetryAdaptersConfig;
