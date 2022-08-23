@@ -1,7 +1,7 @@
 module.exports = {
-    ignorePatterns: [".eslintrc.js"],
+    ignorePatterns: [".eslintrc.js", "postinstall.js"],
     parserOptions:{
         project: "./tsconfig.json",
-        tsconfigRootDir: __dirname
+        tsconfigRootDir: __dirname,
     }
 };
