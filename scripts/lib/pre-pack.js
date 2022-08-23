@@ -6,6 +6,7 @@ const { chmod, readFile, writeFile } = require("fs/promises");
 const { runCommand, exists } = require("./build-utils");
 const { join } = require("path");
 const { merge } = require("../utils");
+
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
 
@@ -269,7 +270,7 @@ class PrePack {
         };
 
         if (postBuildOverride) {
-            merge(transformedPackageJSON, postBuildOverride)
+            merge(transformedPackageJSON, postBuildOverride);
         }
 
         return transformedPackageJSON;
