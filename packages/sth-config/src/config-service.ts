@@ -66,7 +66,7 @@ const _defaultConfig: STHConfiguration = {
         instanceAdapterExitDelay: 9000,
     },
     telemetry: {
-        status: "on",
+        status: true,
         adapter: "loki",
         loki: {
             host: "http://localhost:3100",
