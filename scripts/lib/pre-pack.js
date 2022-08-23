@@ -5,7 +5,7 @@ const { promises: { access }, constants } = require("fs");
 const { chmod, readFile, writeFile } = require("fs/promises");
 const { runCommand, exists } = require("./build-utils");
 const { join } = require("path");
-
+const { merge } = require("../utils");
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
 
@@ -63,7 +63,9 @@ class PrePack {
 
             await this.copyAssets();
 
-            await this.savePkgJson(await this.transformPackageJson());
+            const transformedPackageJSON = await this.transformPackageJson();
+
+            await this.savePkgJson(transformedPackageJSON);
 
             if (!this.options.noInstall) {
                 await this.install();
@@ -227,7 +229,7 @@ class PrePack {
             cpu = this.rootPackageJson.cpu,
             publishConfig = this.rootPackageJson.publishConfig,
             man, directories, config, peerDependencies, scramjet,
-            peerDependenciesMeta, bundledDependencies, optionalDependencies
+            peerDependenciesMeta, bundledDependencies, optionalDependencies, postBuildOverride
         } = content;
         const priv = !this.options.public && this.rootPackageJson.private;
         const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, rp);
@@ -257,7 +259,7 @@ class PrePack {
             await this.fixShebang(_scripts);
         }
 
-        return {
+        const transformedPackageJSON = {
             name, version, description, keywords, homepage, bugs,
             license, author, contributors, funding, files, main, types,
             bin, man, directories, repository, config, browser,
@@ -265,6 +267,12 @@ class PrePack {
             bundledDependencies, optionalDependencies,
             engines, os, cpu, private: priv, publishConfig, scramjet, scripts: _scripts
         };
+
+        if (postBuildOverride) {
+            merge(transformedPackageJSON, postBuildOverride)
+        }
+
+        return transformedPackageJSON;
     }
 
     async fixShebang(assets) {
