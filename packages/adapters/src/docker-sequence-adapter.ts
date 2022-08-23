@@ -19,6 +19,7 @@ import {
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
+import { detectLanguage } from "./utils";
 
 const PACKAGE_DIR = "/package";
 
@@ -259,8 +260,6 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             ? this.config.docker.runnerImages.python3
             : this.config.docker.runnerImages.node;
 
-        const language = (validPackageJson.main?.match(/(?:\.)([^.\\/:*?"<>|\r\n]+$)/) || { 1: undefined })[1];
-
         return {
             type: "docker",
             container,
@@ -275,7 +274,7 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             author: validPackageJson.author || "",
             keywords: validPackageJson.keywords || [],
             repository: validPackageJson.repository || "",
-            language: language || engines?.node ? "js" : "unknown"
+            language: detectLanguage(validPackageJson)
         };
     }
 

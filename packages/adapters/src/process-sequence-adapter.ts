@@ -14,6 +14,7 @@ import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 import { SequenceAdapterError } from "@scramjet/model";
+import { detectLanguage } from "./utils";
 
 /**
  * Returns existing Sequence configuration.
@@ -30,7 +31,6 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
 
     const validPackageJson = await sequencePackageJSONDecoder.decodeToPromise(packageJson);
     const engines = validPackageJson.engines ? { ...validPackageJson.engines } : {};
-    const language = (validPackageJson.main?.match(/(?:\.)([^.\\/:*?"<>|\r\n]+$)/) || { 1: "unknown" })[1];
 
     return {
         type: "process",
@@ -44,7 +44,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         author: validPackageJson.author || "",
         keywords: validPackageJson.keywords || [],
         repository: validPackageJson.repository || "",
-        language: language || engines?.node ? "js" : "unknown"
+        language: detectLanguage(validPackageJson)
     };
 }
 
