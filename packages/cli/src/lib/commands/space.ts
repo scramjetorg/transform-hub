@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { CommandDefinition } from "../../types";
+import { CommandDefinition, isProductionEnv } from "../../types";
 import { isDevelopment } from "../../utils/envs";
 import { profileConfig, sessionConfig } from "../config";
 import { displayObject } from "../output";
@@ -11,6 +11,10 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const space: CommandDefinition = (program) => {
+    const isProdEnv = isProductionEnv(profileConfig.getEnv());
+
+    if (!isProdEnv) return;
+
     const spaceCmd = program
         .command("space")
         .addHelpCommand(false)

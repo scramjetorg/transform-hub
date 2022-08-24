@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { CommandDefinition } from "../../types";
+import { CommandDefinition, isProductionEnv } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../scope";
 import { displayError, displayObject } from "../output";
 import { profileConfig } from "../config";
@@ -11,6 +11,10 @@ import { isDevelopment } from "../../utils/envs";
  * @param {Command} program Commander object.
  */
 export const scope: CommandDefinition = (program) => {
+    const isProdEnv = isProductionEnv(profileConfig.getEnv());
+
+    if (!isProdEnv) return;
+
     const scopeCmd = program
         .command("scope")
         .addHelpCommand(false)
@@ -43,7 +47,7 @@ export const scope: CommandDefinition = (program) => {
             .option("--space <name> <apiUrl>", "Add space to specified scope")
             .description("TO BE IMPLEMENTED / Add a Hub or space to specified scope")
             .action(() => {
-            // FIXME: implement me
+                // FIXME: implement me
                 throw new Error("Implement me");
             });
 
@@ -53,7 +57,7 @@ export const scope: CommandDefinition = (program) => {
             .argument("<name>")
             .description("TO BE IMPLEMENTED / Save current chosen space and Hub under a scope name")
             .action(() => {
-            // FIXME: implement me
+                // FIXME: implement me
                 throw new Error("Implement me");
             });
 
