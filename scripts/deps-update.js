@@ -2,7 +2,7 @@
 /* eslint-disable complexity */
 
 const semver = require("semver");
-const { resolve, dirname, join } = require("path");
+const { resolve, relative, dirname, join } = require("path");
 const { readFile, writeFile, mkdir } = require("fs/promises");
 const { exec } = require("child_process");
 const { promisify } = require("util");
@@ -35,7 +35,7 @@ if (opts.help || opts["long-help"]) {
     const pName = relative(cwd(), process.argv[1]);
     const spaces = " ".repeat(pName.length);
 
-    console.error("Builds TS and copies results to dist dir");
+    console.error("Updates dependencies in the whole workspace");
     console.error(`Usage: ${pName} [options]`);
     console.error(`       ${spaces} -f,--fix - write changes to packages`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
