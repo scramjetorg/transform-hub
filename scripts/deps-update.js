@@ -19,11 +19,13 @@ const opts = minimist(process.argv.slice(2), {
         list: "l",
         help: ["h", "?"],
         workspace: "w",
+        range: "R",
         fix: "f",
         verbose: "v",
         root: "r",
     },
     default: {
+        range: "^",
         root: env.WORKSPACE_ROOT || cwd(),
     },
     boolean: [
@@ -181,6 +183,7 @@ if (opts.help || opts["long-help"]) {
     console.log("Updated dependencies:");
 
     let newDeps;
+    const depsToUpdate = {};
 
     // Report changes.
     try {
@@ -192,6 +195,7 @@ if (opts.help || opts["long-help"]) {
                 for (const dep of Object.entries(newDeps[depType])) {
                     if (oldDeps[depType][dep[0]] !== dep[1]) {
                         console.log(`- ${dep[0]} ${depType} from ${oldDeps[depType][dep[0]]} to ${dep[1]}`);
+                        depsToUpdate[dep[0]] = dep[1];
                     }
                 }
             }
@@ -208,10 +212,11 @@ if (opts.help || opts["long-help"]) {
         for (const depType of depTypes) {
             if (contents[depType]) {
                 for (const [dep, version] of Object.entries(contents[depType])) {
+                    const wantedVersion = depsToUpdate[dep];
                     if (dep in localVersions) {
                         contents[depType][dep] = localVersions[dep];
-                    } else if (version !== allDeps[depType][dep]) {
-                        contents[depType][dep] = allDeps[depType][dep];
+                    } else if (wantedVersion && version !== wantedVersion) {
+                        contents[depType][dep] = wantedVersion;
                         changed++;
                     }
                 }
@@ -219,11 +224,9 @@ if (opts.help || opts["long-help"]) {
         }
 
         if (changed) {
+            console.log(` - File ${file} needs ${changed} dependencies updates`);
             if (opts.fix) {
                 await writeFile(file, `${JSON.stringify(contents, null, 2)}\n`, "utf-8");
-                console.log(` - Updated ${changed} dependencies in ${file}`);
-            } else {
-                console.log(` - File ${file} needs ${changed} dependencies updates`);
             }
         }
     }));
