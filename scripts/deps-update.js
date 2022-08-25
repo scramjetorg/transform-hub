@@ -211,7 +211,7 @@ if (opts.help || opts["long-help"]) {
                     if (dep in localVersions) {
                         contents[depType][dep] = localVersions[dep];
                     } else if (version !== allDeps[depType][dep]) {
-                        contents[depType][dep] = newDeps[depType][dep];
+                        contents[depType][dep] = allDeps[depType][dep];
                         changed++;
                     }
                 }
@@ -219,9 +219,11 @@ if (opts.help || opts["long-help"]) {
         }
 
         if (changed) {
-            console.log(` - File ${file} needs ${changed} dependencies updates`);
             if (opts.fix) {
                 await writeFile(file, `${JSON.stringify(contents, null, 2)}\n`, "utf-8");
+                console.log(` - Updated ${changed} dependencies in ${file}`);
+            } else {
+                console.log(` - File ${file} needs ${changed} dependencies updates`);
             }
         }
     }));
