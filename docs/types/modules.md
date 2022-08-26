@@ -612,7 +612,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:23](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L23)
+[packages/types/src/runner-config.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L28)
 
 ___
 
@@ -1091,7 +1091,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L41)
+[packages/types/src/runner-config.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L46)
 
 ___
 
@@ -1272,7 +1272,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L35)
+[packages/types/src/runner-config.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L40)
 
 ___
 
@@ -1941,7 +1941,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L31)
+[packages/types/src/runner-config.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L36)
 
 ___
 
@@ -2257,7 +2257,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L39)
+[packages/types/src/runner-config.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L44)
 
 ___
 
@@ -2351,6 +2351,7 @@ ___
 | `keywords?` | `string`[] \| ``null`` |
 | `main` | `string` |
 | `name?` | `string` \| ``null`` |
+| `repository?` | { `directory?`: `string` ; `type`: `string` ; `url`: `string`  } \| `string` \| ``null`` |
 | `scramjet?` | [`SequencePackageJSONScramjetSection`](modules.md#sequencepackagejsonscramjetsection) \| ``null`` |
 | `version?` | `string` \| ``null`` |
 
