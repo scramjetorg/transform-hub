@@ -14,7 +14,7 @@ export function displayObject(object: any, format: displayFormat) {
     if (isJsonFormat(format)) {
         console.log(JSON.stringify(object));
     } else {
-        console.dir(object);
+        console.dir(object, { depth: null });
     }
 }
 

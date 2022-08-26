@@ -23,6 +23,21 @@ const scramjetDecoder = JsonDecoder.object<SequencePackageJSONScramjetSection>({
     config: JsonDecoder.optional(configDecoder)
 }, "ScramjetSectionDecoder");
 
+type RepositoryObject = {
+    type: string;
+    url: string;
+    directory?: string;
+}
+
+const repositoryDecoder = JsonDecoder.oneOf<string | RepositoryObject>([
+    JsonDecoder.string,
+    JsonDecoder.object<RepositoryObject>({
+        type: JsonDecoder.string,
+        url: JsonDecoder.string,
+        directory: JsonDecoder.optional(JsonDecoder.string)
+    }, "repositoryObjectDecoder")
+], "repositoryDecoder");
+
 export const sequencePackageJSONDecoder = JsonDecoder.object<SequencePackageJSON>({
     name: JsonDecoder.optional(JsonDecoder.string),
     version: JsonDecoder.optional(JsonDecoder.string),
@@ -32,4 +47,5 @@ export const sequencePackageJSONDecoder = JsonDecoder.object<SequencePackageJSON
     description: JsonDecoder.optional(JsonDecoder.string),
     author: JsonDecoder.optional(JsonDecoder.string),
     keywords: JsonDecoder.optional(JsonDecoder.array(JsonDecoder.string, "keywordsDecoder")),
+    repository: JsonDecoder.optional(repositoryDecoder),
 }, "SequencePackageJSON");
