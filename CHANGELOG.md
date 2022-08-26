@@ -2,6 +2,13 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.28.1] - 2022-08-26
+
+## Fixed
+* [STH] Add missing repository field to /sequences by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/653
+* [CLI] display object depth null by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/654
+* [CLI] Fix broken prod_env check by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/659
+
 ## [0.28.0] - 2022-08-18
 
 ## Changed
