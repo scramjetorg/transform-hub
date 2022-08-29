@@ -326,8 +326,9 @@ export class CSIController extends TypedEmitter<Events> {
             case RunnerExitCode.INVALID_SEQUENCE_PATH: {
                 return Promise.reject({
                     message: `Sequence entrypoint path ${this.sequence.config.entrypointPath} is invalid. ` +
-                    "Check `main` field in Sequence package.json",
-                    exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH });
+                        "Check `main` field in Sequence package.json",
+                    exitcode: RunnerExitCode.INVALID_SEQUENCE_PATH
+                });
             }
             case RunnerExitCode.SEQUENCE_FAILED_ON_START: {
                 return Promise.reject({
@@ -542,7 +543,6 @@ export class CSIController extends TypedEmitter<Events> {
         if (development()) {
             this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
         }
-
         this.router.upstream("/output", this.upStreams[CC.OUT]);
 
         let inputHeadersSent = false;
@@ -555,7 +555,7 @@ export class CSIController extends TypedEmitter<Events> {
                 // @TODO: Check if subsequent requests have the same content-type.
                 if (!inputHeadersSent) {
                     if (contentType === undefined) {
-                        throw new Error("Content-Type must be defined");
+                        return { opStatus: ReasonPhrases.NOT_ACCEPTABLE, error: "Content-Type must be defined" };
                     }
 
                     stream.write(`Content-Type: ${contentType}\r\n`);
@@ -567,7 +567,7 @@ export class CSIController extends TypedEmitter<Events> {
                 return stream;
             }
 
-            return { opStatus: 406, error: "Input provided in other way." };
+            return { opStatus: ReasonPhrases.METHOD_NOT_ALLOWED, error: "Input provided in other way" };
         }, { checkContentType: false, end: true, encoding: "binary" });
 
         // monitoring data
@@ -578,7 +578,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         const localEmitter = Object.assign(
             new EventEmitter(),
-                { lastEvents: {} } as { lastEvents: { [evname: string]: any } }
+            { lastEvents: {} } as { lastEvents: { [evname: string]: any } }
         );
 
         this.communicationHandler.addMonitoringHandler(RunnerMessageCode.EVENT, (data) => {
@@ -589,7 +589,6 @@ export class CSIController extends TypedEmitter<Events> {
             localEmitter.lastEvents[event.eventName] = event;
             localEmitter.emit(event.eventName, event);
         });
-
         this.router.upstream("/events/:name", async (req: ParsedMessage, res: ServerResponse) => {
             const name = req.params?.name;
 
@@ -632,7 +631,6 @@ export class CSIController extends TypedEmitter<Events> {
 
             return awaitEvent(req);
         });
-
         this.router.get("/once/:name", awaitEvent);
 
         // operations

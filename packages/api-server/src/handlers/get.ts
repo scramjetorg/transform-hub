@@ -46,6 +46,10 @@ export function createGetterHandler(router: SequentialCeroRouter): APIRoute["get
                 statusCode = getStatusCode(data.opStatus);
                 reason = data.opStatus;
 
+                if (statusCode >= 400) {
+                    data.error ||= data.opStatus;
+                }
+
                 delete data.opStatus;
             }
 

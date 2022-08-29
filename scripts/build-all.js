@@ -31,6 +31,7 @@ const opts = minimist(process.argv.slice(2), {
     },
     default: {
         root: env.WORKSPACE_ROOT || cwd(),
+        verbose: !!env.SCRAMJET_VERBOSE,
         build: !env.NO_BUILD,
         dist: !env.NO_COPY_DIST,
         install: !env.NO_INSTALL,

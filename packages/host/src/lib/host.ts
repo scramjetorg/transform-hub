@@ -1,5 +1,5 @@
 import findPackage from "find-package-json";
-import { ReasonPhrases } from "http-status-codes";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 import { Readable, Writable } from "stream";
 import { Server, ServerResponse } from "http";
@@ -364,7 +364,6 @@ export class Host implements IComponent {
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
-
         this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
@@ -377,8 +376,8 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
-        this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
 
+        this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (stream, headers) => this.cpmConnector?.handleCommunicationRequest(stream, headers));
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
@@ -415,8 +414,8 @@ export class Host implements IComponent {
             return instance.router.lookup(req, res, next);
         }
 
-        res.statusCode = 404;
-        res.write(JSON.stringify({ error: `The instance ${params.id} does not exist.` }));
+        res.statusCode = StatusCodes.NOT_FOUND;
+        res.write(JSON.stringify({ error: `Instance ${params.id} not found` }));
         res.end();
 
         return next();
@@ -447,7 +446,7 @@ export class Host implements IComponent {
         if (!sequenceInfo) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
-                error: `The sequence ${id} does not exist.`
+                error: `Sequence ${id} not found`
             };
         }
 
@@ -464,7 +463,7 @@ export class Host implements IComponent {
 
                 return {
                     opStatus: ReasonPhrases.CONFLICT,
-                    error: "Can't remove Sequence in use."
+                    error: "Can't remove- Sequence in use"
                 };
             }
         }
@@ -575,7 +574,8 @@ export class Host implements IComponent {
                         this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
 
                         return {
-                            opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                            opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
+                            error: `Sequence with name ${sequenceName} already exist`
                         };
                     }
 
@@ -617,7 +617,7 @@ export class Host implements IComponent {
             if (existingSequence.instances.size) {
                 return {
                     opStatus: ReasonPhrases.CONFLICT,
-                    error: "Can not update sequence in use"
+                    error: `Sequence with name ${seqQuery} already exists`
                 };
             }
 
@@ -627,7 +627,8 @@ export class Host implements IComponent {
         }
 
         return {
-            opStatus: ReasonPhrases.NOT_FOUND
+            opStatus: ReasonPhrases.NOT_FOUND,
+            error: `Sequence with name ${seqQuery} not found`
         };
     }
 
@@ -649,7 +650,8 @@ export class Host implements IComponent {
                 this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
 
                 return {
-                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
+                    error: `Sequence with name ${sequenceName} already exist`
                 };
             }
         }
@@ -693,7 +695,10 @@ export class Host implements IComponent {
             Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
         if (!sequence) {
-            return { opStatus: ReasonPhrases.NOT_FOUND };
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `Sequence ${id} not found`
+            };
         }
 
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
@@ -716,13 +721,12 @@ export class Host implements IComponent {
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
 
             return {
-                result: "success",
                 opStatus: ReasonPhrases.OK,
+                message: `Sequence ${csic.id} starting`,
                 id: csic.id
             };
         } catch (error) {
             return {
-                result: "error",
                 opStatus: ReasonPhrases.BAD_REQUEST,
                 error: error
             };
@@ -894,7 +898,7 @@ export class Host implements IComponent {
         if (!sequence) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
-                error: `The sequence ${id} does not exist.`
+                error: `Sequence ${id} not found`
             };
         }
 
@@ -933,7 +937,10 @@ export class Host implements IComponent {
         const sequence = this.sequencesStore.get(sequenceId);
 
         if (!sequence) {
-            return undefined;
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `Sequence ${sequenceId} not found`
+            };
         }
 
         return Array.from(sequence.instances.values());

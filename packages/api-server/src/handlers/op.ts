@@ -113,6 +113,11 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             const statusCode = getStatusCode(result.opStatus);
             const reason = result.opStatus;
 
+            if (statusCode >= 400) {
+                result.error ||= result.opStatus;
+            }
+            delete result.opStatus;
+
             res.writeHead(statusCode, reason, { "content-type": "application/json" });
 
             if (Object.keys(result).length) {
