@@ -39,13 +39,14 @@ export class S3Client {
         this.agent = agent;
     }
 
-    async getObject(options: { filename: string; directory?: string }): Promise<{status: number, data: Readable, headers: IncomingHttpHeaders }> {
+    async getObject(options: { filename: string; directory?: string }):
+        Promise<{status: number, data: Readable, headers: IncomingHttpHeaders }> {
         return getObject(
             {
                 ...this.clientConfig,
                 ...options,
             },
-            { httpAgent: this.agent, responseType: "stream" }
+            { httpAgent: this.agent, responseType: "stream", headers: { Accept: "*/*", "Content-Type": "application/octet-stream" } }
         );
     }
 }

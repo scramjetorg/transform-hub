@@ -29,4 +29,10 @@ export type ManagerConfiguration = {
          */
         unhealthyTimeoutMs: number;
     };
+
+    s3?: {
+        endPoint: string;
+        accessKey: string;
+        secretKey: string;
+    }
 };

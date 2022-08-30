@@ -698,9 +698,11 @@ export class Host implements IComponent {
      * Notifies Manager (if connected) about new Sequence.
      *
      * @param {IncomingMessage} stream Stream of packaged Sequence.
+     * @param {string} id Sequence id.
      * @returns {Promise} Promise resolving to operation result.
      */
-    async handleNewSequence(stream: ParsedMessage): Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
+    async handleNewSequence(stream: ParsedMessage, id = IDProvider.generate()):
+        Promise<OpResponse<STHRestAPI.SendSequenceResponse>> {
         const sequenceName = stream.headers["x-name"] as string;
 
         if (sequenceName) {
@@ -716,7 +718,7 @@ export class Host implements IComponent {
             }
         }
 
-        return this.handleIncomingSequence(stream, IDProvider.generate());
+        return this.handleIncomingSequence(stream, id);
     }
 
     getSequenceByName(sequenceName: string): SequenceInfo | undefined {
@@ -751,7 +753,8 @@ export class Host implements IComponent {
                 packageStream.headers = response.headers;
 
                 const result = (await this.handleNewSequence(
-                    packageStream as ParsedMessage
+                    packageStream as ParsedMessage,
+                    id
                 )) as STHRestAPI.SendSequenceResponse;
 
                 return this.sequencesStore.get(result.id)!;
