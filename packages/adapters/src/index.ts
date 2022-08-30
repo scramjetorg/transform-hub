@@ -10,3 +10,6 @@ export * from "./docker-networking";
 
 export * from "./kubernetes-sequence-adapter";
 export * from "./kubernetes-instance-adapter";
+
+export * from "./process-sequence-adapter";
+export * from "./process-instance-adapter";

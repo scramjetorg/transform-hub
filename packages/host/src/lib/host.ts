@@ -739,7 +739,7 @@ export class Host implements IComponent {
             try {
                 this.logger.info("Retrieving sequence", id);
 
-                const response = await this.s3Client?.getObject({ filename: id, directory: "sequences" });
+                const response = await this.s3Client?.getObject({ filename: id + ".tar.gz" });
 
                 this.logger.info("Sequence package retrieved");
 
