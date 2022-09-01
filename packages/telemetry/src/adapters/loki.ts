@@ -21,6 +21,7 @@ export default class LokiAdapter implements ITelemetryAdapter {
 
         this.config = config.loki!;
 
+        //@TODO: Handle connection problem
         this.winstonLogger = createLogger({
             transports: [
                 new LokiTransport({
