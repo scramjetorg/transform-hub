@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 import { promisify } from "util";
 import { CommandDefinition } from "../../types";
+import { displayMessage } from "../output";
 const exec = promisify(require("child_process").exec);
 
 const bashCompletionPath = resolve(__dirname, "../../completion/si");
@@ -21,13 +22,12 @@ export const completion: CommandDefinition = (program) => {
         .description("completion operations")
         .action(function() {
             if (!process.env.COMP_LINE || !process.env.COMP_POINT) {
-                console.error("COMP_ variables are nonexistent. Did you mean si completion install?"); //eslint-disable-line
-            } else {
-                program.complete({
-                    line: process.env.COMP_LINE,
-                    cursor: process.env.COMP_POINT
-                });
+                throw new Error("COMP_ variables are nonexistent. Did you mean si completion install?");
             }
+            program.complete({
+                line: process.env.COMP_LINE,
+                cursor: process.env.COMP_POINT
+            });
         });
 
     /**
@@ -36,7 +36,7 @@ export const completion: CommandDefinition = (program) => {
     */
     completionCmd.command("bash")
         .description("Print out bash completion script")
-        .action(() => console.log(readFileSync(bashCompletionPath, {encoding:"utf8", flag:"r"}))); //eslint-disable-line
+        .action(() => displayMessage(readFileSync(bashCompletionPath, { encoding: "utf8", flag: "r" })));
 
     /**
     * Command: `si completion install`
@@ -46,6 +46,6 @@ export const completion: CommandDefinition = (program) => {
         .description("Installs bash completion script in .bashrc")
         .action(async () => {
             await exec("bash -c 'si completion bash >>$HOME/.bashrc'");
-            console.error("Scramjet CLI completion installed in .bashrc. Please run source ~/.bashrc for immediate effect."); //eslint-disable-line
+            displayMessage("Scramjet CLI completion installed in .bashrc. Please run source ~/.bashrc for immediate effect.");
         });
 };

@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
 import { existsSync, rmSync, readFileSync } from "fs";
 import { basename, format } from "path";
-import { displayError, displayMessage } from "./output";
-import { scopesDir, configFileExt, listDirFileNames } from "./paths";
+import { displayError, displayMessage } from "../output";
+import { scopesDir, configFileExt, listDirFileNames } from "../paths";
 
 const getScopePath = (scopeName: string) => {
     const scopePath = format({ dir: scopesDir, name: scopeName, ext: configFileExt });

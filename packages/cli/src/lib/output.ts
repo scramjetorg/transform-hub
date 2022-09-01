@@ -71,8 +71,12 @@ export function displayMessage(message: string, ...args: any[]): void {
     }
 }
 
-export function displayError(error: Error | string) {
-    const message = error instanceof Error ? error.message : error;
-
-    console.error("\x1b[31m%s\x1b[0m", "Error:", message);
+export function displayError(error: Error | string, showStack: boolean = false) {
+    if (error instanceof Error) {
+        if (error.message)
+            console.error("\x1b[31m%s\x1b[0m", "Error:", error.message);
+        if (showStack && error.stack)
+            console.error(error.stack);
+    } else
+        console.error("\x1b[31m%s\x1b[0m", "Error:", error);
 }

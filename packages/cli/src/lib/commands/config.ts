@@ -224,6 +224,7 @@ export const config: CommandDefinition = (program) => {
 
             if (name === currentProfile)
                 return;
+
             sessionConfig.restoreDefaultConfig();
             siConfig.setProfile(name);
         });
@@ -234,7 +235,9 @@ export const config: CommandDefinition = (program) => {
         .description("Create new configuration profile")
         .action((name) => {
             if (profileExists(name)) throw Error(`Profile ${name} already exist`);
-            new ProfileConfig(profileNameToPath(name)).writeConfig(profileConfig.getDefaultConfig());
+            const newProfile = new ProfileConfig(profileNameToPath(name));
+
+            newProfile.writeConfig(profileConfig.getDefaultConfig());
         });
 
     profileCmd

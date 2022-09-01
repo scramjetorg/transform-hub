@@ -3,7 +3,7 @@ import { CommandDefinition, isProductionEnv } from "../../types";
 import { isDevelopment } from "../../utils/envs";
 import { getHostClient } from "../common";
 import { profileConfig, sessionConfig } from "../config";
-import { displayEntity, displayError, displayObject, displayStream } from "../output";
+import { displayEntity, displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
 /**
@@ -31,7 +31,7 @@ export const hub: CommandDefinition = (program) => {
             .option("--file <pathToFile>")
             .description("TO BE IMPLEMENTED / Create a Hub with parameters")
             .action(() => {
-            // FIXME: implement me
+                // FIXME: implement me
                 throw new Error("Implement me");
             });
     }
@@ -48,8 +48,7 @@ export const hub: CommandDefinition = (program) => {
                 const host = hosts.find((h: any) => h.id === id);
 
                 if (!host) {
-                    displayError("Host not found");
-                    return;
+                    throw new Error("Host not found");
                 }
                 managerClient.getHostClient(id);
                 sessionConfig.setLastHubId(id);
@@ -65,8 +64,7 @@ export const hub: CommandDefinition = (program) => {
                 const space = sessionConfig.getConfig().lastSpaceId;
 
                 if (!space) {
-                    displayError("No space selected");
-                    return;
+                    throw new Error("No space selected");
                 }
 
                 const managerClient = getMiddlewareClient().getManagerClient(space);
@@ -79,10 +77,10 @@ export const hub: CommandDefinition = (program) => {
     if (isProductionEnv(profileConfig.env)) {
         hubCmd
             .command("info")
-        /* TODO for future use
-        .argument("[name|id]")
-        .description("display chosen hub version if a name is not provided it displays a version of a current hub")
-        */
+            /* TODO for future use
+            .argument("[name|id]")
+            .description("display chosen hub version if a name is not provided it displays a version of a current hub")
+            */
             .description("Display info about the default Hub")
             .action(async () => {
                 const { lastSpaceId: space, lastHubId: id } = sessionConfig.getConfig();
