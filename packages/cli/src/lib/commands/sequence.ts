@@ -11,7 +11,7 @@ import { PassThrough } from "stream";
 
 import { SequenceClient } from "@scramjet/api-client";
 import { isDevelopment } from "../../utils/envs";
-import { readFile } from "fs/promises";
+import { readFile, lstat } from "fs/promises";
 import { resolve } from "path";
 
 type SequenceUploadOptions = {
@@ -24,7 +24,12 @@ const sendPackage = async (
     try {
         const id = getSequenceId(options.name!);
 
-        const sequencePath = getPackagePath(sequencePackage);
+        let sequencePath = getPackagePath(sequencePackage);
+
+        if ((await lstat(sequencePath)).isDirectory()) {
+            await packAction(sequencePackage, { output: createWriteStream(`${sequencePackage}.tar.gz`) });
+            sequencePath = `${sequencePackage}.tar.gz`;
+        }
 
         let seq: SequenceClient;
 
@@ -152,7 +157,7 @@ export const sequence: CommandDefinition = (program) => {
 
     sequenceCmd
         .command("send")
-        .argument("<package>", "The file to upload or '-' to use the last packed")
+        .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and send.")
         .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Hub")
         .action(
