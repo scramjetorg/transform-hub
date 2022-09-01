@@ -63,16 +63,16 @@ export function createStreamHandlers(router: SequentialCeroRouter) {
     ) => {
         try {
             const out = data;
-            const cType = type.startsWith("text/")
+            /*const cType = type.startsWith("text/")
                 ? `${type}; charset=${encoding}`
                 : type;
-
+            */
             //out.setEncoding(encoding);
 
-            res.setHeader("content-type", cType);
-            res.setHeader("transfer-encoding", "chunked");
-            res.writeHead(200);
-            res.flushHeaders();
+            //res.setHeader("content-type", cType);
+            //res.setHeader("transfer-encoding", "chunked");
+            //res.writeHead(200);
+            //res.flushHeaders();
 
             // Error handling on disconnect!
             const disconnect = () => out.unpipe(res);
