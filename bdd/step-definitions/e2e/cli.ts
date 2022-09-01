@@ -37,9 +37,11 @@ When("I execute CLI with {string}", { timeout: 30000 }, async function(this: Cus
     const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" ")]);
+
     if (process.env.SCRAMJET_TEST_LOG) {
         logger.debug(res.stdio);
     }
+
     assert.equal(res.stdio[2], 0);
 });
 
