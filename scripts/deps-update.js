@@ -213,6 +213,7 @@ if (opts.help || opts["long-help"]) {
             if (contents[depType]) {
                 for (const [dep, version] of Object.entries(contents[depType])) {
                     const wantedVersion = depsToUpdate[dep];
+
                     if (dep in localVersions) {
                         contents[depType][dep] = localVersions[dep];
                     } else if (wantedVersion && version !== wantedVersion) {
