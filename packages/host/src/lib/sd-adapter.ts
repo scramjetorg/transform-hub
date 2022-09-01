@@ -103,7 +103,7 @@ export class ServiceDiscovery {
             return {};
         }, { checkContentType: false });
 
-        this.router.upstream("/:topic", (req) => {
+        this.router.upstream("/:topic", (req, res) => {
             //TODO: what should be the default content type and where to store this information?
             const contentType = req.headers["content-type"] || "application/x-ndjson";
             const { topic } = req.params || {};
@@ -116,7 +116,8 @@ export class ServiceDiscovery {
                 this.logger.debug(`Incoming Upstream CPM request for topic '${topic}'`);
             }
 
-            return this.getData({ topic, contentType });
+            this.getData({ topic, contentType }).pipe(res) ;
+            return new PassThrough();
         });
     }
 
