@@ -2,7 +2,7 @@
 /* eslint-disable complexity */
 
 const semver = require("semver");
-const { resolve, dirname, join } = require("path");
+const { resolve, relative, dirname, join } = require("path");
 const { readFile, writeFile, mkdir } = require("fs/promises");
 const { exec } = require("child_process");
 const { promisify } = require("util");
@@ -19,11 +19,13 @@ const opts = minimist(process.argv.slice(2), {
         list: "l",
         help: ["h", "?"],
         workspace: "w",
+        range: "R",
         fix: "f",
         verbose: "v",
         root: "r",
     },
     default: {
+        range: "^",
         root: env.WORKSPACE_ROOT || cwd(),
     },
     boolean: [
@@ -35,7 +37,7 @@ if (opts.help || opts["long-help"]) {
     const pName = relative(cwd(), process.argv[1]);
     const spaces = " ".repeat(pName.length);
 
-    console.error("Builds TS and copies results to dist dir");
+    console.error("Updates dependencies in the whole workspace");
     console.error(`Usage: ${pName} [options]`);
     console.error(`       ${spaces} -f,--fix - write changes to packages`);
     console.error(`       ${spaces} -w,--workspace <name> - workspace filter - default all workspaces`);
@@ -181,6 +183,7 @@ if (opts.help || opts["long-help"]) {
     console.log("Updated dependencies:");
 
     let newDeps;
+    const depsToUpdate = {};
 
     // Report changes.
     try {
@@ -192,6 +195,7 @@ if (opts.help || opts["long-help"]) {
                 for (const dep of Object.entries(newDeps[depType])) {
                     if (oldDeps[depType][dep[0]] !== dep[1]) {
                         console.log(`- ${dep[0]} ${depType} from ${oldDeps[depType][dep[0]]} to ${dep[1]}`);
+                        depsToUpdate[dep[0]] = dep[1];
                     }
                 }
             }
@@ -208,10 +212,12 @@ if (opts.help || opts["long-help"]) {
         for (const depType of depTypes) {
             if (contents[depType]) {
                 for (const [dep, version] of Object.entries(contents[depType])) {
+                    const wantedVersion = depsToUpdate[dep];
+
                     if (dep in localVersions) {
                         contents[depType][dep] = localVersions[dep];
-                    } else if (version !== allDeps[depType][dep]) {
-                        contents[depType][dep] = newDeps[depType][dep];
+                    } else if (wantedVersion && version !== wantedVersion) {
+                        contents[depType][dep] = wantedVersion;
                         changed++;
                     }
                 }
