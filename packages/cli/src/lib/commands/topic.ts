@@ -6,7 +6,7 @@ import { profileConfig } from "../config";
 import { displayEntity, displayStream } from "../output";
 
 const validateTopicName = (topicName: string) => {
-    if (topicName.match(/^[a-zA-Z0-9_-+\.]*$/)) {
+    if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) {
         return;
     }
 
