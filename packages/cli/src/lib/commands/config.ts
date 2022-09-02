@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { CommandDefinition, displayFormat } from "../../types";
+import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
 import { ProfileConfig, profileConfig, profileManager, siConfig, sessionConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
@@ -50,10 +50,11 @@ export const config: CommandDefinition = (program) => {
         .command("session")
         .alias("s")
         .description("Print out the current session configuration")
-        .action((format: displayFormat) => {
+        .action(() => {
+            const configuration = profileConfig.getConfig();
             const session = sessionConfig.getConfig();
 
-            displayObject(session, format);
+            displayObject(session, configuration.log.format);
         });
 
     const setCmd = configCmd
