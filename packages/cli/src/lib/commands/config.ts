@@ -189,7 +189,10 @@ export const config: CommandDefinition = (program) => {
     resetCmd
         .command("all")
         .description("Reset all configuration")
-        .action(() => resetValue(defaultConfig, v => profileConfig.setConfig(v)));
+        .action(() => {
+            profileConfig.restoreDefaultConfig();
+            sessionConfig.restoreDefaultConfig();
+        });
 
     const profileCmd = configCmd
         .command("profile")
