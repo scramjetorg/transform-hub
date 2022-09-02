@@ -70,7 +70,9 @@ This is a development repo for Scramjet Transform Hub, a container supervisor th
 
 This repository contains the source code for <https://hub.scramjet.org>.
 
-If you want to [read the usage docs, go here ☝🏼](https://github.com/scramjetorg/scramjet-cloud-docs)
+If you want to read more about the usage please go to [Quick Start](https://github.com/scramjetorg/platform-docs) repo.
+
+You may also be interested in our [Scramjet Cloud Platform](https://docs.scramjet.org/platform) that is based on Transform-Hub.
 
 What's more, this repository is intended for developers who would like to:
 
@@ -129,7 +131,7 @@ Some important links 👀:
 
 # Development instructions :construction_worker:
 
-This section contains more detailed installation descriptions, it is intended for developers who would like to contribute or build Transform Hub from source. If you wish to fire up STH quickly and without unnecessary installations, go to [Quick Start](https://github.com/scramjetorg/scramjet-cloud-docs#3-install-scramjet-transform-hub) installation, which focuses on starting STH and deploying a sample application.
+This section contains more detailed installation descriptions, it is intended for developers who would like to contribute or build Transform Hub from source. If you wish to fire up STH quickly and without unnecessary installations, go to Quick Start [installation section](https://github.com/scramjetorg/platform-docs#2-installation), which focuses on starting STH and deploying a sample application.
 
 In this section we will also show you some useful commands, tools and functionalities that you can use to develop your own programs.
 
@@ -242,18 +244,15 @@ If they are not present, refer to the official installation guide for [Python](h
 We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
 
 ```bash
-sudo apt install -y docker.io docker-compose   # command will install docker and docker-compose
-```
+# Install docker and docker-compose
+sudo apt install -y docker.io docker-compose
 
-```bash
-sudo gpasswd -a $USER docker   # command will add you to the docker group
-```
-
-Verify that Docker and Docker-Compose are installed by getting their versions:
-
-```bash
+# Verify installations by getting versions
 sudo docker version
 docker-compose version
+
+# Add you user to the docker group
+sudo gpasswd -a $USER docker
 ```
 
 ### STH installation
@@ -366,7 +365,7 @@ Options:
 
 ## Install CLI and execute :white_check_mark:
 
-Thi installation was already done at the end of the [Installation](#installation-:clamp:) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
+Thi installation was already done at the end of the [Installation](#installation-clamp) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
 
 - from the source code. In the root folder, after building, run the commands:
 
@@ -388,7 +387,7 @@ Running `si help` command will confirm that the installation went properly and a
 
 ![si_help](./images/si_help.png)
 
-We will use CLI later on to execute the Sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/main/docs/interfaces/CLI-command-reference.md).
+We will use CLI later on to execute the Sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/main/docs/cli).
 
 ## Build the packages :building_construction:
 
@@ -402,7 +401,7 @@ This is how to perform a clean install and build of all the packages:
 
 ```bash
 yarn install:clean        # this command will perform 'yarn clean && yarn clean:modules && yarn install' at once
-yarn build:all-packages   # optionally 'build:all' if you want all dockerfiles.
+yarn build:packages   # optionally 'build:all' if you want all dockerfiles.
 ```
 
 ![build_clean](./images/clean_install.png)
@@ -488,7 +487,6 @@ Below command installs completion script in ~/.bashrc.
 
 ```bash
 si completion install
-
 ```
 
 For immediate effect make sure to run `source ~/.bashrc`. Also you can manage completion script by yourself. Running `si completion bash` prints script to the terminal.
@@ -512,19 +510,18 @@ The purpose of having two branches is to keep important bugfixes separate from
 new features, so that a bugfix version (a release without new features, just
 bugfixes) can be published immediately if needed.
 
-
 # Sample usage :sunglasses:
 
 ## "Hello Alice" sample :wave:
 
 The sample will work only if you have properly configured your environment, installed hub and build all the packages.
-By this time you should already have all those things done by going through the [Installation](#installation-:clamp:) section.
+By this time you should already have all those things done by going through the [Installation](#installation-clamp) section.
 
-> 💡 **HINT:** _The following instructions apply to the state of the repository from the `release/0.14`._
+> 💡 **HINT:** _The following instructions apply to the state of the repository from the `release/0.28.0`._
 
 To start the "Hello Alice" sample we will need these basic steps:
 
-- [start STH](#start-the-hub-checkered_flag)
+- [start STH](#start-sth-checkered_flag)
 - [compress the Sequence](#compress-the-sequence)
 - [send compressed package to the hub](#upload-the-package)
 - [start Sequence](#start-the-sequence)
@@ -532,31 +529,18 @@ To start the "Hello Alice" sample we will need these basic steps:
 
 ### Compress the Sequence <!-- omit in toc -->
 
-The Sequence needs to be compressed into a `tar.gz` file format before we send it to the hub.
-
-Assuming that you have the [host running](#start-the-hub-checkered_flag) use the command:
+The Sequence needs to be compressed into a `tar.gz` file format before we send it to the hub. Use one of our [reference apps](https://github.com/scramjetorg/reference-apps). The script below will download .tar.gz files:
 
 ```bash
-yarn build:refapps    # this builds all the refapps in the 'reference-apps' package
-```
-
-When the host is not running you can use a script:
-
-```bash
-lerna run prepare-sample-tar
-```
-
-To compress specific package use linux tar command:
-
-```bash
-tar -C /path/to/package/dir czf <package-name.tar.gz> .
+# this builds refapps, the will be available in .tar.gz files in 'packages' directory
+yarn build:refapps
 ```
 
 ### Execute sample <!-- omit in toc -->
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **💡 HINT**: remember that to use curl commands hub must be running. [See how to start STH =>](#start-the-hub-checkered_flag)
+> **💡 HINT**: remember that to use curl commands hub must be running. [See how to start STH =>](#start-sth-checkered_flag)
 
 #### **Upload the package** <!-- omit in toc -->
 
@@ -566,15 +550,15 @@ Copy and paste the following command to the terminal:
 SEQ_ID=$( \
     curl --location --request POST "http://localhost:8000/api/v1/sequence" \
     --header 'content-type: application/octet-stream' \
-    --data-binary '@packages/reference-apps/hello-alice-out.tar.gz' | jq ".id" -r \
+    --data-binary '@packages/hello-alice-out.tar.gz' | jq ".id" -r \
 )
 ```
 
 During your development or checking out our code, you may want to edit some of our reference apps. After that you are very welcome to use our scripts to speed up your developing process. In this case, you can use the following, that will build and send any of the reference packages and samples in this repo:
 
 ```bash
-SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out) # -> when you want to upload the package (it will be built if needed)
-SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r) # -> when you want to upload the package and make sure it's rebuilt
+SEQ_ID=$(./scripts/_/upload-sequence path/to/the/sequence) # -> when you want to upload the package (it will be built if needed)
+SEQ_ID=$(./scripts/_/upload-sequence path/to/the/sequence -r) # -> when you want to upload the package and make sure it's rebuilt
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
@@ -617,13 +601,11 @@ To check out more of our ready-to-go samples, please go to our [Quick Start repo
 
 We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates). For this moment we support two variants of template in two programming languages:
 
-- JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
-- TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
+- JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/platform-docs/tree/main/templates/template-js)
+- TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/platform-docs/tree/main/templates/template-ts)
+- Python 👉 [template](https://github.com/scramjetorg/platform-docs/tree/main/templates/template-ts)
 
-There are two more templates that we will support, but they are still in development stage:
-
-- Python
-- C++
+There is also C++ template that is still in development stage:
 
 # Troubleshooting :collision:
 
