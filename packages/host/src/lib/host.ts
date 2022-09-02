@@ -231,7 +231,6 @@ export class Host implements IComponent {
             this.logger.error("Setting telemetry failed");
         });
 
-        this.telemetryAdapter?.push("info", { message: "Host started", labels: { hostSize: this.hostSize, ip: this.ipvAddress} });
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
@@ -248,6 +247,8 @@ export class Host implements IComponent {
         const adapter = await initializeSequenceAdapter(this.config);
 
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
+
+        this.telemetryAdapter?.push("info", { message: "Host started", labels: { hostSize: this.hostSize, ip: this.ipvAddress, adapter: adapter} });
 
         await this.socketServer.start();
 
