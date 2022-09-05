@@ -39,7 +39,7 @@ This feature checks topic functionalities over CLI
         Then I confirm data named "hello-input-out-10" will be received
 
     @ci-topic @cli
-    Scenario: E2E-013 TC-009 Completeness of data transmission
+    Scenario: E2E-011 TC-005 Complete data delivery
         Given host is running
         Then send json data "Bonnie" named "pets"
         Then send json data "Rosa" named "pets"
