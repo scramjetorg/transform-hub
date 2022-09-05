@@ -116,6 +116,8 @@ Then("I confirm data named {string} will be received", async function(this: Cust
     const response = await waitUntilStreamEquals(stdout, expected);
 
     assert.equal(response, expected);
+
+    await this.cliResources!.commandInProgress!.kill();
 });
 
 Then("I confirm {string} list is empty", async function(this: CustomWorld, entity: string) {
