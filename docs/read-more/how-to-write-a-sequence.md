@@ -87,12 +87,12 @@ export default function () {
 
 ### Typescript
 
-Sequences that only produce data should be typed as [ReadableApp](https://hub.scramjet.org/docs/types/modules#readableapp).  
+Sequences that only produce data should be typed as [ReadableApp](https://hub.scramjet.org/docs/types/modules#readableapp).
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/scraping/app.ts).
 
 ### Reading from output stream
 
-You could read this stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
+You could read this stream using our [CLI](https://docs.scramjet.org/platform/cli-reference), [REST API](https://docs.scramjet.org/platform/api-reference).
 
 ## Consuming data (input stream)
 
@@ -138,7 +138,7 @@ Sequences that only consumes data should be typed as [WritableApp](https://hub.s
 
 ### Writing to input stream
 
-You can write to Instance input stream using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
+You can write to Instance input stream using our [CLI](https://docs.scramjet.org/platform/cli-reference), [REST API](https://docs.scramjet.org/platform/api-reference).
 
 ## Transforming data
 
@@ -180,7 +180,7 @@ export default function (input) {
 
 ### Typescript
 
-Sequences that transform data should be typed as [TransformApp](https://hub.scramjet.org/docs/types/modules#transformapp).  
+Sequences that transform data should be typed as [TransformApp](https://hub.scramjet.org/docs/types/modules#transformapp).
 [Here's an example](https://github.com/scramjetorg/scramjet-cloud-docs/blob/main/samples/transform-string-stream/src/index.ts).
 
 ## Sequence arguments
@@ -215,7 +215,7 @@ To have your output stream routed to a topic, it needs to have a property `topic
 export default function () {
     const out = new PassThrough();
 
-    temparatureSensor.on("update", data => {
+    temperatureSensor.on("update", data => {
         out.write(data);
     });
 
@@ -228,10 +228,10 @@ export default function () {
 
 ### Reading from a topic
 
-To send topic as input stream you specify a topic config object with two properites: `requires` - with a name of topic, and `contentType` for ensuring proper encoding.
+To send topic as input stream you specify a topic config object with two properties: `requires` - with a name of topic, and `contentType` for ensuring proper encoding.
 
 ```ts
-const CRITICAL_TEMP_CELCIUS = 40;
+const CRITICAL_TEMP_CELSIUS = 40;
 
 const app = [
     {
@@ -240,8 +240,8 @@ const app = [
     },
     async function* (input) {
         for await (const data of input) {
-            if (+data > CRITICAL_TEMP_CELCIUS) {
-                this.logger.trace("Temparature exceeded critical level");
+            if (+data > CRITICAL_TEMP_CELSIUS) {
+                this.logger.trace("Temperature exceeded critical level");
             }
         }
     },
@@ -252,7 +252,7 @@ export default app;
 
 ### Typescript
 
-Writing to a topic requires specifying two additional properties that might not be present on your output stream. You can extend the type of your output stream by [HasTopicInformation](https://hub.scramjet.org/docs/types/modules#hastopicinformation) type.  
+Writing to a topic requires specifying two additional properties that might not be present on your output stream. You can extend the type of your output stream by [HasTopicInformation](https://hub.scramjet.org/docs/types/modules#hastopicinformation) type.
 Reading from a topic would require you to type your app as a tuple similar to this example:
 
 ```ts
@@ -266,7 +266,7 @@ const app: [{ requires: string; contentType: string }, ReadableApp] = [
 
 ### Interacting with topics
 
-Apart from Sequences communicating between each other you can also feed/consume a topic using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/HostClient).
+Apart from Sequences communicating between each other you can also feed/consume a topic using our [CLI](https://docs.scramjet.org/platform/cli-reference), [REST API](https://docs.scramjet.org/platform/api-reference), or [API Client](https://docs.scramjet.org/platform/api-reference/HostClient).
 
 ## Standard streams (stdin/stdout/stderr)
 
@@ -288,7 +288,7 @@ export default async function () {
 }
 ```
 
-These streams are also accessible through our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
+These streams are also accessible through our [CLI](https://docs.scramjet.org/platform/cli-reference), [REST API](https://docs.scramjet.org/platform/api-reference).
 
 ## Debugging (logger)
 
@@ -308,7 +308,7 @@ export default function (input) {
 ### Typescript
 
 If you typed your Sequence using appropriate "App" type (ReadableApp, WritableApp, TransformApp), then the `this` context should be already typed.
-Alternatively, you can use [AppContext](https://hub.scramjet.org/docs/types/AppContext#interface-appcontextappconfigtype-state) to do it maunally.
+Alternatively, you can use [AppContext](https://docs.scramjet.org/platform/app-reference) to do it manually.
 
 ```ts
 export default function(this: AppContext<{}, void>) { ... }
@@ -316,4 +316,4 @@ export default function(this: AppContext<{}, void>) { ... }
 
 ### Reading logs
 
-You can read the logs using our [CLI](https://hub.scramjet.org/docs/cli), [REST API](https://hub.scramjet.org/docs/api-client), or [API Client](https://hub.scramjet.org/docs/api-client/InstanceClient).
+You can read the logs using our [CLI](https://docs.scramjet.org/platform/cli-reference), [REST API](https://docs.scramjet.org/platform/api-reference).
