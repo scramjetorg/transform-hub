@@ -294,7 +294,7 @@ export class Host implements IComponent {
         }
 
         this.s3Client = new S3Client({
-            host: `http://${this.config.cpmUrl}/api/v1`,
+            host: `${this.config.cpmUrl}/api/v1`,
             bucket: `cpm/${this.config.cpmId}/api/v1/s3`,
         });
         this.s3Client.logger.pipe(this.logger);

@@ -34,5 +34,9 @@ export type ManagerConfiguration = {
         endPoint: string;
         accessKey: string;
         secretKey: string;
+        bucket: string;
+        useSSL: boolean,
+        region: string
+        port: number
     }
 };
