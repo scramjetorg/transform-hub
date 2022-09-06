@@ -58,7 +58,7 @@ const initPlatform = async () => {
         .addHelpText("beforeAll", `Current profile: ${profileManager.getProfileName()}`)
         .addHelpText(
             "afterAll",
-            chalk.greenBright("\nTo find out more about CLI, please check out our docs at https://hub.scramjet.org/docs/cli\n"))
+            chalk.greenBright("\nTo find out more about CLI, please check out our docs at https://docs.scramjet.org/platform/cli-reference\n"))
         .addHelpText(
             "afterAll",
             `${chalk.hex("#7ed2e4")("Read more about Scramjet at https://scramjet.org/ 🚀\n")}`)
