@@ -20,7 +20,8 @@ import {
     InstanceStatus,
     MonitoringMessageData,
     InstanceStats,
-    OpResponse
+    OpResponse,
+    StopSequenceMessageData,
 } from "@scramjet/types";
 import {
     AppError,
@@ -29,7 +30,6 @@ import {
     HostError,
     MessageUtilities,
     InstanceAdapterError,
-    isStopSequenceMessage
 } from "@scramjet/model";
 import { CommunicationChannel as CC, RunnerExitCode, RunnerMessageCode } from "@scramjet/symbols";
 import { PassThrough, Readable } from "stream";
@@ -198,7 +198,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
-        this.status = "initializing";
+        this.status = InstanceStatus.INITIALIZING;
     }
 
     async start() {
@@ -209,7 +209,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         i.then(() => this.main()).catch(e => {
             this.logger.info("Instance status: errored", e);
-            this.status = "errored";
+            this.status = InstanceStatus.ERRORED;
             this.emit("error", e);
         });
 
@@ -217,7 +217,7 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     async main() {
-        this.status = "running";
+        this.status = InstanceStatus.RUNNING;
         this.logger.trace("Instance started");
 
         let code = 0;
@@ -236,7 +236,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.logger.error("Instance caused error", e.message, code);
         }
 
-        this.status = !errored ? "completed" : "errored";
+        this.status = !errored ? InstanceStatus.COMPLETED : InstanceStatus.ERRORED;
 
         this.info.ended = new Date();
 
@@ -260,7 +260,7 @@ export class CSIController extends TypedEmitter<Events> {
 
         const instanceMain = async () => {
             try {
-                this.status = "starting";
+                this.status = InstanceStatus.STARTING;
 
                 await this.instanceAdapter.init();
 
@@ -276,7 +276,7 @@ export class CSIController extends TypedEmitter<Events> {
                 const exitcode = await this.endOfSequence;
 
                 if (exitcode > 0) {
-                    this.status = "errored";
+                    this.status = InstanceStatus.ERRORED;
                     this.logger.error("Crashlog", await this.instanceAdapter.getCrashLog());
                 }
 
@@ -284,7 +284,7 @@ export class CSIController extends TypedEmitter<Events> {
 
                 return exitcode;
             } catch (error: any) {
-                this.status = "errored";
+                this.status = InstanceStatus.ERRORED;
                 this.logger.error("Error caught", error.stack);
 
                 await this.cleanup();
@@ -642,17 +642,19 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleStop(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendStopInstanceResponse>> {
-        const message = (req.body || []) as EncodedMessage<RunnerMessageCode.STOP>;
+        const { body: { timeout = 7000, canCallKeepalive = false } = { timeout: 7000, canCallKeepalive: false } } = req;
 
-        if (!isStopSequenceMessage(message[1] || {})) {
-            return { opStatus: ReasonPhrases.BAD_REQUEST };
+        if (typeof timeout !== "number") {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid timeout format" };
         }
+        if (typeof canCallKeepalive !== "boolean") {
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid canCallKeepalive format" };
+        }
+        const message: StopSequenceMessageData = { timeout, canCallKeepalive };
 
-        this.status = "stopping";
+        this.status = InstanceStatus.STOPPING;
 
-        await this.communicationHandler.sendControlMessage(...message);
-
-        const [, { timeout }] = message;
+        await this.communicationHandler.sendControlMessage(RunnerMessageCode.STOP, message);
 
         this.keepAliveRequested = false;
 
@@ -667,10 +669,15 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     private async handleKill(req: ParsedMessage): Promise<OpResponse<STHRestAPI.SendKillInstanceResponse>> {
-        if (this.status === "killing") {
+        const { body: { removeImmediately = false } = { removeImmediately: false } } = req;
+
+        if (typeof removeImmediately !== "boolean")
+            return { opStatus: ReasonPhrases.BAD_REQUEST, error: "Invalid removeImmediately format" };
+
+        if (this.status === InstanceStatus.KILLING) {
             await this.instanceAdapter.remove();
         }
-        this.status = "killing";
+        this.status = InstanceStatus.KILLING;
 
         await this.communicationHandler.sendControlMessage(RunnerMessageCode.KILL, {});
 
@@ -678,18 +685,12 @@ export class CSIController extends TypedEmitter<Events> {
         promiseTimeout(this.endOfSequence, runnerExitDelay)
             .catch(() => this.instanceAdapter.remove());
 
-        try {
-            const message = req.body as EncodedMessage<RunnerMessageCode.KILL>;
+        if (removeImmediately) {
+            this.instanceLifetimeExtensionDelay = 0;
 
-            if (message[1].removeImmediately) {
-                this.instanceLifetimeExtensionDelay = 0;
-
-                if (this.finalizingPromise) {
-                    this.finalizingPromise.cancel();
-                }
+            if (this.finalizingPromise) {
+                this.finalizingPromise.cancel();
             }
-        } catch (e) {
-            this.logger.warn("Failed to parse KILL message", e);
         }
 
         return {

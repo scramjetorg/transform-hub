@@ -1,2 +1,10 @@
 export type InstanceId = string;
-export type InstanceStatus = "initializing" | "starting" | "running" | "stopping" | "killing" | "completed" | "errored";
+export const enum InstanceStatus {
+    INITIALIZING = "initializing",
+    STARTING = "starting",
+    RUNNING = "running",
+    STOPPING = "stopping",
+    KILLING = "killing",
+    COMPLETED ="completed",
+    ERRORED = "errored",
+}

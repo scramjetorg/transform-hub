@@ -6,7 +6,7 @@ export { EventMessage, EventMessageData } from "./event";
 export { PangMessageData, PingMessageData, HandshakeMessage } from "./handshake";
 export { HandshakeAcknowledgeMessage, HandshakeAcknowledgeMessageData } from "./handshake-acknowledge";
 export { KeepAliveMessage, KeepAliveMessageData } from "./keep-alive";
-export { KillSequenceMessage } from "./kill-sequence";
+export { KillSequenceMessage, KillMessageData } from "./kill-sequence";
 export { EmptyMessageData, Message } from "./message";
 export { MonitoringRateMessage, MonitoringRateMessageData } from "./monitor-rate";
 export { MonitoringMessage, MonitoringMessageData, MonitoringMessageFromRunnerData } from "./monitoring";

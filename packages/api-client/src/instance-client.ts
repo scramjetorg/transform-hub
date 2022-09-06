@@ -1,5 +1,5 @@
 import { RunnerMessageCode } from "@scramjet/symbols";
-import { EncodedControlMessage, STHRestAPI } from "@scramjet/types";
+import { EncodedControlMessage, STHRestAPI, StopSequenceMessageData, KillMessageData } from "@scramjet/types";
 import { ClientProvider, HttpClient, SendStreamOptions } from "@scramjet/client-utils";
 
 export type InstanceInputStream = "stdin" | "input";
@@ -54,13 +54,7 @@ export class InstanceClient {
     async stop(timeout: number, canCallKeepalive: boolean): Promise<STHRestAPI.SendStopInstanceResponse> {
         return this.clientUtils.post<STHRestAPI.SendStopInstanceResponse>(
             `${this.instanceURL}/_stop`,
-            [
-                RunnerMessageCode.STOP,
-                {
-                    timeout,
-                    canCallKeepalive,
-                },
-            ] as EncodedControlMessage,
+            { timeout, canCallKeepalive, } as StopSequenceMessageData,
             {},
             { json: true, parse: "json" }
         );
@@ -73,10 +67,10 @@ export class InstanceClient {
      * @param {boolean} opts.removeImmediately If true, Instance lifetime extension delay will be bypassed.
      * @returns {Promise<SendKillInstanceResponse>} Promise resolving to kill Instance result.
      */
-    async kill(opts = { removeImmediately: false }): Promise<STHRestAPI.SendKillInstanceResponse> {
+    async kill(opts: KillMessageData = {}): Promise<STHRestAPI.SendKillInstanceResponse> {
         return this.clientUtils.post<STHRestAPI.SendKillInstanceResponse>(
             `${this.instanceURL}/_kill`,
-            [RunnerMessageCode.KILL, { removeImmediately: opts.removeImmediately }] as EncodedControlMessage,
+            opts,
             {},
             { json: true, parse: "json" }
         );
