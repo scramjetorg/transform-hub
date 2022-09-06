@@ -1,8 +1,17 @@
+/* eslint-disable no-console */
 import { CommandDefinition } from "../../types";
 import { isDevelopment } from "../../utils/envs";
 import { getHostClient, getReadStreamFromFile } from "../common";
 import { profileConfig } from "../config";
 import { displayEntity, displayStream } from "../output";
+
+const validateTopicName = (topicName: string) => {
+    if (topicName.match(/^[\\a-zA-Z0-9_+-]+$/)) {
+        return;
+    }
+
+    throw new Error("Invalid topic name");
+};
 
 /**
  * Initializes `topic` command.
@@ -16,7 +25,7 @@ export const topic: CommandDefinition = (program) => {
         .usage("[command] [options...]")
         .description("Manage data flow through topics operations");
 
-    if (isDevelopment())
+    if (isDevelopment()) {
         topicCmd
             .command("create")
             .argument("<topic-name>")
@@ -25,6 +34,7 @@ export const topic: CommandDefinition = (program) => {
             // FIXME: implement me
                 throw new Error("Implement me");
             });
+    }
 
     topicCmd
         .command("get")
@@ -34,9 +44,10 @@ export const topic: CommandDefinition = (program) => {
             "Specifies data type of <topic-name> (default: application/x-ndjson)"
         )
         .description("Get data from topic")
+        .hook("preAction", (command) => { validateTopicName(command.args[0]); })
         .action(async (topicName) => displayStream(getHostClient().getNamedData(topicName)));
 
-    if (isDevelopment())
+    if (isDevelopment()) {
         topicCmd
             .command("delete")
             .alias("rm")
@@ -46,6 +57,7 @@ export const topic: CommandDefinition = (program) => {
             // FIXME: implement me
                 throw new Error("Implement me");
             });
+    }
 
     topicCmd
         .command("send")
@@ -53,6 +65,7 @@ export const topic: CommandDefinition = (program) => {
         .argument("[<file>]")
         .option("-t, --content-type <value>", "Content-Type", "text/plain")
         .description("Send data on topic from file, directory or directly through the console")
+        .hook("preAction", (command) => { validateTopicName(command.args[0]); })
         .action(async (topicName, filename, { contentType }) => {
             await getHostClient().sendNamedData(
                 topicName,
