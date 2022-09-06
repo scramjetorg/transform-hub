@@ -54,9 +54,10 @@ const runnerExitDelay = 15000;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
-    error: (error: any) => void,
-    stop: (code: number) => void
-    end: (code: number) => void
+    error: (error: any) => void;
+    stop: (code: number) => void;
+    end: (code: number) => void;
+    terminated: (code: number) => void;
 }
 
 enum TerminateReason {
@@ -239,6 +240,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.status = !errored ? "completed" : "errored";
 
         this.info.ended = new Date();
+        this.emit("terminated", code);
 
         this.logger.trace("Finalizing...");
 

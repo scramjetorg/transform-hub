@@ -834,6 +834,16 @@ export class Host implements IComponent {
 
         csic.on("end", (code) => {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
+
+            if (csic.provides && csic.provides !== "") {
+                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
+                    {
+                        topic: csic.provides,
+                        contentType: ""
+                    }
+                ) as Writable);
+            }
+
             csic.logger.unpipe(this.logger);
 
             delete InstanceStore[csic.id];
@@ -846,16 +856,9 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
+        });
 
-            if (csic.provides && csic.provides !== "") {
-                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
-                    {
-                        topic: csic.provides,
-                        contentType: ""
-                    }
-                ) as Writable);
-            }
-
+        csic.once("terminated", (_code) => {
             if (csic.requires && csic.requires !== "") {
                 (this.serviceDiscovery.getData(
                     {
