@@ -30,7 +30,7 @@ export const space: CommandDefinition = (program) => {
             .argument("<name>")
             .description("TO BE IMPLEMENTED / Create the space/workspace if name not provided will be generated")
             .action(() => {
-            // FIXME: implement me
+                // FIXME: implement me
                 throw new Error("Implement me");
             });
 
@@ -80,7 +80,7 @@ export const space: CommandDefinition = (program) => {
             .argument("<name|id>")
             .description("TO BE IMPLEMENTED / User can only delete empty space")
             .action(() => {
-            // FIXME: implement me
+                // FIXME: implement me
                 throw new Error("Implement me");
             });
 
@@ -92,7 +92,7 @@ export const space: CommandDefinition = (program) => {
             .option("--name", "")
             .description("TO BE IMPLEMENTED / Update space parameters")
             .action(() => {
-            // FIXME: implement me
+                // FIXME: implement me
                 throw new Error("Implement me");
             });
 };

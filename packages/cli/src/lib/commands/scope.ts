@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { CommandDefinition, isProductionEnv } from "../../types";
-import { listScopes, deleteScope, getScope, scopeExists } from "../scope";
-import { displayError, displayObject } from "../output";
+import { listScopes, deleteScope, getScope, scopeExists } from "../helpers/scope";
+import { displayObject } from "../output";
 import { profileConfig } from "../config";
 import { isDevelopment } from "../../utils/envs";
 
@@ -32,8 +32,7 @@ export const scope: CommandDefinition = (program) => {
             const scopeConfig = getScope(name);
 
             if (!scopeConfig) {
-                displayError(`Couldn't find scope: ${name}`);
-                return;
+                throw new Error(`Couldn't find scope: ${name}`);
             }
 
             displayObject(scopeConfig, profileConfig.format);
@@ -67,8 +66,7 @@ export const scope: CommandDefinition = (program) => {
         .description("Work on the selected scope")
         .action((name: string) => {
             if (!scopeExists(name)) {
-                displayError(`Couldn't find scope: ${name}`);
-                return;
+                throw new Error(`Couldn't find scope: ${name}`);
             }
             profileConfig.setScope(name);
         });
@@ -79,12 +77,10 @@ export const scope: CommandDefinition = (program) => {
         .description("Delete specific scope")
         .action((name: string) => {
             if (profileConfig.getConfig().scope === name) {
-                displayError(`Can't remove scope ${name} set in configuration.`);
-                return;
+                throw new Error(`Can't remove scope ${name} set in configuration.`);
             }
             if (profileConfig.getConfig().scope === name) {
-                displayError(`Can't remove currently used scope ${name}`);
-                return;
+                throw new Error(`Can't remove currently used scope ${name}`);
             }
             deleteScope(name);
         });

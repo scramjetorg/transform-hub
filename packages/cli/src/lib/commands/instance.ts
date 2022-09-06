@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
+import { instanceKill } from "../helpers/instance";
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
 import { getInstanceId, profileConfig, sessionConfig } from "../config";
-import { displayEntity, displayStream } from "../output";
+import { displayEntity, displayObject, displayStream } from "../output";
+import { ClientError } from "@scramjet/client-utils";
 
 /**
  * Initializes `instance` command.
@@ -28,7 +30,18 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id")
         .description("Select the Instance to communicate with by using '-' alias instead of Instance id")
         .addHelpText("after", `\nCurrent Instance id saved under '-' : ${sessionConfig.getConfig().lastInstanceId}`)
-        .action(async (id: string) => sessionConfig.setLastInstanceId(id) as unknown as void);
+        .action(async (id: string) => {
+            try {
+                await getHostClient().getInstanceInfo(id);
+            } catch (error) {
+                if (error instanceof ClientError && error.code === "NOT_FOUND") {
+                    error.message = `Unable to find instance ${id}`;
+                }
+                throw error;
+            }
+
+            sessionConfig.setLastInstanceId(id);
+        });
 
     instanceCmd
         .command("health")
@@ -55,9 +68,14 @@ export const instance: CommandDefinition = (program) => {
     instanceCmd
         .command("kill")
         .argument("<id>", "Instance id or '-' for the last one started")
+        .option("--removeImmediately", "Remove instance from all flows right after kill")
         .description("Kill the Instance without waiting for the unfinished task")
-        .action(async (id: string) => displayEntity(getInstance(getInstanceId(id)).kill(),
-            profileConfig.format));
+        .action(async (id: string, { removeImmediately = false }: { removeImmediately: boolean }) => {
+            const instanceKillResponse = await instanceKill(id, removeImmediately);
+
+            displayObject(instanceKillResponse, profileConfig.format);
+        }
+        );
 
     /**
      * @canCallKeepAlive

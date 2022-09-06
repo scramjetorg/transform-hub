@@ -1,17 +1,15 @@
 import { InstanceClient, HostClient } from "@scramjet/api-client";
-import { access, readdir } from "fs/promises";
-import { createReadStream, constants, PathLike } from "fs";
+import { access } from "fs/promises";
+import { createReadStream, constants } from "fs";
 import { resolve } from "path";
 import { displayEntity, displayError, displayMessage } from "./output";
-import { c } from "tar";
-import { StringStream } from "scramjet";
-import { filter as mmfilter } from "minimatch";
-import { Readable, Writable } from "stream";
+
+import { Readable } from "stream";
 import { profileConfig, sessionConfig } from "./config";
 import { getMiddlewareClient } from "./platform";
 import { isDevelopmentEnv, isProductionEnv } from "../types";
 
-const { F_OK, R_OK } = constants;
+const { F_OK } = constants;
 
 let hostClient: HostClient;
 
@@ -79,64 +77,6 @@ export const attachStdio = (instanceClient: InstanceClient) => {
             instanceClient.getStream("stdout").then((out) => out.pipe(process.stdout)),
             instanceClient.getStream("stderr").then((err) => err.pipe(process.stderr)),
         ]).then(() => undefined), profileConfig.format);
-};
-
-/**
- * TODO: Comment.
- *
- * @param {PathLike} file Filepath to read rules from.
- * @returns TODO: Comment.
- */
-export const getIgnoreFunction = async (file: PathLike) => {
-    try {
-        await access(file, R_OK);
-    } catch {
-        return () => true;
-    }
-
-    const rules: ReturnType<typeof mmfilter>[] = await StringStream.from(createReadStream(file))
-        .lines()
-        .filter((line: string) => line.substr(0, line.indexOf("#")).trim() === "")
-        .parse((line: string) => mmfilter(line))
-        .catch(() => undefined)
-        .toArray();
-    const fakeArr: string[] = [];
-
-    return (f: string) => !rules.find((x) => x(f, 0, fakeArr));
-};
-
-/**
- * Creates package with contents of given directory.
- *
- * @param {string} directory Directory to be packaged.
- * @param {boolean} stdout If true, package will be piped to stdout.
- * @param {output} string Output filename.
- */
-export const packAction = async (directory: string, { output }: { output: Writable }) => {
-    const cwd = resolve(process.cwd(), directory);
-    const packageLocation = resolve(cwd, "package.json");
-
-    // TODO: error handling?
-    // TODO: check package contents?
-    await access(packageLocation, F_OK | R_OK).catch(() => {
-        throw new Error(`${packageLocation} not found.`);
-    });
-
-    const ignoreLocation = resolve(cwd, ".siignore");
-    const filter = await getIgnoreFunction(ignoreLocation);
-    const out = c(
-        {
-            gzip: true,
-            cwd,
-            filter,
-        },
-        await readdir(directory)
-    ).pipe(output);
-
-    await new Promise((res, rej) => {
-        out.on("finish", res);
-        out.on("error", rej);
-    });
 };
 
 /**
