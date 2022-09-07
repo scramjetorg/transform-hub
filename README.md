@@ -83,7 +83,9 @@ What's more, this repository is intended for developers who would like to:
 
 The developers who would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
 
-![gh_logo](./images/gh_logo.png) [Repository with Introductory README and code samples](https://github.com/scramjetorg/scramjet-cloud-docs)
+![gh_logo](./images/gh_logo.png) [Repository with Introductory README and templates](https://github.com/scramjetorg/platform-docs)
+
+![gh_logo](./images/gh_logo.png) [Repository with samples](https://github.com/scramjetorg/platform-samples)
 
 ![npm_logo](./images/npm_logo.png) [NPM page for main scramjet/sth package](https://www.npmjs.com/package/@scramjet/sth)
 
@@ -187,33 +189,32 @@ export NVM_DIR="$HOME/.nvm"
 Export lines from above will be saved in your ~/.bashrc file so that you will not need to run it every session start.
 After that you can check nvm version just to confirm that you have successfully installed nvm.
 
-command: `nvm --version`
-
-output e.g.: `v0.39.0`
+```bash
+$ nvm --version
+0.39.0
+```
 
 Now you are ready to install node.js, simply type in your console:
 
 ```bash
-nvm install     # command will install latest LTS Version of Node.js
+nvm install --lts    # command will install latest LTS Version of Node.js
 ```
 
 > 💡 **Note**:
-> The project is working on Node Long Term Support (LTS) Version, which contains Node Package Manager (NPM) in `^8.1.0` version.
+> The project is working on Node Long Term Support (LTS) Version, which contains Node Package Manager (NPM) in `^8.15.0` version.
 > NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
 
 🤓 For more info you can check out the node.js official [webpage](https://nodejs.org).
 
 Now you can check the installed version of node.js and npm, run the following command in your console:
 
-command: `node -v`
+```bash
+$ node -v
+v16.17.0
 
-output: `v16.13.0`
-
-command: `npm -v`
-
-output: `8.1.0`
-
-![node&npm_version](./images/node&npm_version.png)
+$ npm -v
+8.15.0
+```
 
 OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
@@ -239,7 +240,7 @@ OK! The installation was successful. 🎉 🎆
 STH can run python packages, and for that it needs to have `python` and `pip`. These should be already installed on your system - check with:
 
 ```bash
-python --version
+python3 --version
 pip --version
 ```
 
@@ -464,15 +465,8 @@ docker stop $(docker ps -a -q) # stops all running containers
 Build from current source:
 
 ```bash
-cd ./packages/host/
+cd ./packages/sth/
 yarn build:docker
-```
-
-Build current release:
-
-```bash
-cd ./packages/host/
-yarn build:docker-release
 ```
 
 ## Run Transform Hub in Docker :robot:
