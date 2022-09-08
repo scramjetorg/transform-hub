@@ -4,7 +4,7 @@ import { merge, TypedEmitter } from "@scramjet/utility";
 import { IObjectLogger } from "@scramjet/types";
 import { VerserClientOptions, VerserClientConnection, RegisteredChannels, RegisteredChannelCallback } from "../types";
 import { Duplex } from "stream";
-import { Socket } from "net";
+import { createConnection, Socket } from "net";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { defaultVerserClientOptions } from "./verser-client-default-config";
 import { URL } from "url";
@@ -22,6 +22,11 @@ type Events = {
  */
 export class VerserClient extends TypedEmitter<Events> {
     /**
+     * BPMux instance.
+     */
+    private bpmux: any;
+
+    /**
      * VerserClient options.
      *
      * @type {VerserClientOptions}
@@ -29,11 +34,16 @@ export class VerserClient extends TypedEmitter<Events> {
     private opts: VerserClientOptions;
 
     /**
-     * HTTP connection Agent
+     * HTTP connection Agent.
      *
      * @type {http.Agent} @see https://nodejs.org/api/http.html#http_class_http_agent.
      */
-    private agent: HttpsAgent | HttpAgent;
+    private httpAgent: HttpsAgent | HttpAgent;
+
+    /**
+     * HTTP Agent but on BPMux'ed stream.
+     */
+    private _verserAgent?: HttpAgent & { createConnection: typeof createConnection };
 
     /**
      * Connection socket.
@@ -54,11 +64,18 @@ export class VerserClient extends TypedEmitter<Events> {
      */
     public logger: IObjectLogger = new ObjLogger(this);
 
+    /**
+     * Return BPMux instance.
+     */
+    get verserAgent() {
+        return this._verserAgent;
+    }
+
     constructor(opts: VerserClientOptions = defaultVerserClientOptions) {
         super();
 
         this.opts = opts;
-        this.agent = this.opts.https ? new HttpsAgent({ keepAlive: true }) : new HttpAgent({ keepAlive: true });
+        this.httpAgent = this.opts.https ? new HttpsAgent({ keepAlive: true }) : new HttpAgent({ keepAlive: true });
     }
 
     /**
@@ -72,7 +89,7 @@ export class VerserClient extends TypedEmitter<Events> {
                 ? this.opts.verserUrl : new URL(this.opts.verserUrl);
 
             const connectRequest = request({
-                agent: this.agent,
+                agent: this.httpAgent,
                 headers: this.opts.headers,
                 hostname,
                 method: "CONNECT",
@@ -87,11 +104,11 @@ export class VerserClient extends TypedEmitter<Events> {
                 reject(err);
             });
 
-            connectRequest.on("connect", (_req, socket) => {
+            connectRequest.on("connect", (req, socket) => {
                 this.socket = socket;
                 this.mux();
 
-                resolve({ req: _req, socket });
+                resolve({ req, socket });
             });
 
             connectRequest.end();
@@ -105,8 +122,8 @@ export class VerserClient extends TypedEmitter<Events> {
      * otherwise stream will be passed to the server.
      */
     private mux() {
-        new BPMux(this.socket)
-            .on("handshake", async (mSocket: Duplex & { _chan: number }) => {
+        this.bpmux = new BPMux(this.socket)
+            .on("peer_multiplex", async (mSocket: Duplex & { _chan: number }) => {
                 const registeredChannelCallback = this.registeredChannels.get(mSocket._chan);
 
                 if (registeredChannelCallback) {
@@ -118,6 +135,28 @@ export class VerserClient extends TypedEmitter<Events> {
             .on("error", (err: Error) => {
                 this.emit("error", err);
             });
+
+        this._verserAgent = new HttpAgent() as HttpAgent & { createConnection: typeof createConnection }; // lack of types?
+        this._verserAgent.createConnection = () => {
+            try {
+                const socket = this.bpmux!.multiplex() as Socket;
+
+                socket.on("error", () => {
+                    this.logger.error("Muxed stream error");
+                });
+
+                // some libs call it but it is not here, in BPMux.
+                socket.setKeepAlive = (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+
+                this.logger.debug("Created new muxed stream with setKeepAlive");
+                return socket;
+            } catch (error) {
+                const ret = new Socket();
+
+                setImmediate(() => ret.emit("error", error));
+                return ret;
+            }
+        };
     }
 
     /**

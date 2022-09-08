@@ -2,6 +2,7 @@ import { Server } from "http";
 
 import { VerserConnection } from "./verser-connection";
 import { TypedEmitter } from "@scramjet/utility";
+import { ObjLogger } from "@scramjet/obj-logger";
 
 type Events = {
     connect: (connection: VerserConnection) => void;
@@ -16,16 +17,18 @@ type Events = {
 export class Verser extends TypedEmitter<Events> {
     private server: Server;
     private connections: VerserConnection[] = [];
+    logger = new ObjLogger(this);
 
     constructor(server: Server) {
         super();
         this.server = server;
 
         this.server.on("connect", (req, socket) => {
+            this.logger.info("New connection:", req.url);
+
             const connection = new VerserConnection(req, socket);
 
             this.connections.push(connection);
-
             this.emit("connect", connection);
         });
     }

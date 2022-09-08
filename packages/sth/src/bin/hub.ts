@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 
-import { Command } from "commander";
+import { Command, OptionValues } from "commander";
 import { ConfigService, getRuntimeAdapterOption } from "@scramjet/sth-config";
 import { DeepPartial, STHCommandOptions, STHConfiguration } from "@scramjet/types";
 import { resolve } from "path";
@@ -10,7 +10,7 @@ import { Host } from "@scramjet/host";
 import { readConfigFile } from "@scramjet/utility";
 
 const program = new Command();
-const options: STHCommandOptions = program
+const options: OptionValues & STHCommandOptions = program
     .option("-c, --config <path>", "Specifies path to config")
     .option("-L, --log-level <level>", "Specify log level")
     .option("--no-colors", "Disable colors in output", false)
@@ -50,7 +50,7 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .option("--no-telemetry", "Disables telemetry", false)
     .parse(process.argv)
-    .opts();
+    .opts() as STHCommandOptions;
 
 (async () => {
     const configService = new ConfigService();

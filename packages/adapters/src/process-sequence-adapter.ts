@@ -108,7 +108,7 @@ class ProcessSequenceAdapter implements ISequenceAdapter {
             await fs.rm(sequenceDir, { recursive: true, force: true });
         }
 
-        await fs.mkdir(sequenceDir);
+        await fs.mkdir(sequenceDir, { recursive: true });
 
         const uncompressingProc = exec(`tar zxf - -C ${sequenceDir} >/dev/null 2>&1 || echo >&2 '{"error":"Invalid pkg tar.gz archive"}' && exit 1`);
 
