@@ -2,6 +2,27 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+
+## [0.28.2] - 2022-09-08
+
+## Fixed
+
+* [STH] Unify error responses by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/658
+* Disable Nagle in Runner connections by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/655
+* Fix the dependencies update script by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/660
+* [CLI] fix-reset all not clearing session by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/669
+* Fix: topic data lost by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/670
+* Test scenario for topics: completeness of data transmission by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/672
+* Validate topic name by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/625
+* Unpipe input from topic when instance is terminated by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/666
+* [CLI] fix returned exit codes by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/665
+* [STH] Instance stop and kill body params fix by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/673
+* Update main README by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/671
+* (fix) docker compose for sth by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/674
+### Features
+* Loki telemetry adapter by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/632
+* si seq send `<dir>` by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/664
+
 ## [0.28.1] - 2022-08-26
 
 ## Fixed
