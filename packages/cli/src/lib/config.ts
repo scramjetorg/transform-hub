@@ -5,7 +5,7 @@ import { configEnv, isConfigEnv, isConfigFormat, ProfileConfigEntity, SiConfigEn
 import isUrl from "validator/lib/isURL";
 import isJWT from "validator/lib/isJWT";
 import { envs } from "../utils/envs";
-import { displayError, displayMessage } from "./output";
+import { displayMessage } from "./output";
 import { sessionId } from "../utils/sessionId";
 
 abstract class Config {
@@ -39,7 +39,7 @@ abstract class FileConfig extends Config {
             try {
                 return JSON.parse(readFileSync(this.filePath, "utf-8"));
             } catch {
-                displayError(`Parse error in config at ${this.filePath}.`);
+                throw new Error(`Parse error in config at ${this.filePath}.`);
             }
         return null;
     }
@@ -49,8 +49,7 @@ abstract class FileConfig extends Config {
             writeFileSync(this.filePath, JSON.stringify(config, null, 2), "utf-8");
             return true;
         } catch (e) {
-            displayError(`Couldn't write config to ${this.filePath}`);
-            return false;
+            throw new Error(`Couldn't write config to ${this.filePath}`);
         }
     }
     setConfigValue(key: string, value: any): boolean | void {
@@ -60,8 +59,7 @@ abstract class FileConfig extends Config {
             const conf = this.getConfig();
 
             conf[key] = value;
-            this.writeConfig(conf);
-            return true;
+            return this.writeConfig(conf);
         }
         return validValue;
     }
@@ -75,11 +73,9 @@ abstract class FileConfig extends Config {
         if (!conf) return false;
         if (this.keyExists(key)) {
             delete conf[key];
-            this.writeConfig(conf);
-            return true;
+            return this.writeConfig(conf);
         }
-        displayError(`Unknown config entry: ${key}`);
-        return false;
+        throw new Error(`Unknown config entry: ${key}`);
     }
 }
 
@@ -457,13 +453,9 @@ export const initConfig = () => {
     createDefaultProfileIfNotExist();
     let { profile } = siConfig.getConfig();
 
-    try {
-        if (!profile || !profileExists(profile)) {
-            siConfig.setProfile(defaultConfigName);
-            profile = defaultConfigName;
-        }
-    } catch (e: any) {
-        displayError(e);
+    if (!profile || !profileExists(profile)) {
+        siConfig.setProfile(defaultConfigName);
+        profile = defaultConfigName;
     }
 
     if (process.argv.includes("--config-path")) {

@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-import { CommandDefinition, displayFormat } from "../../types";
+import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
 import { ProfileConfig, profileConfig, profileManager, siConfig, sessionConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
@@ -50,10 +50,11 @@ export const config: CommandDefinition = (program) => {
         .command("session")
         .alias("s")
         .description("Print out the current session configuration")
-        .action((format: displayFormat) => {
+        .action(() => {
+            const configuration = profileConfig.getConfig();
             const session = sessionConfig.getConfig();
 
-            displayObject(session, format);
+            displayObject(session, configuration.log.format);
         });
 
     const setCmd = configCmd
@@ -189,7 +190,10 @@ export const config: CommandDefinition = (program) => {
     resetCmd
         .command("all")
         .description("Reset all configuration")
-        .action(() => resetValue(defaultConfig, v => profileConfig.setConfig(v)));
+        .action(() => {
+            profileConfig.restoreDefaultConfig();
+            sessionConfig.restoreDefaultConfig();
+        });
 
     const profileCmd = configCmd
         .command("profile")
@@ -220,6 +224,7 @@ export const config: CommandDefinition = (program) => {
 
             if (name === currentProfile)
                 return;
+
             sessionConfig.restoreDefaultConfig();
             siConfig.setProfile(name);
         });
@@ -230,7 +235,9 @@ export const config: CommandDefinition = (program) => {
         .description("Create new configuration profile")
         .action((name) => {
             if (profileExists(name)) throw Error(`Profile ${name} already exist`);
-            new ProfileConfig(profileNameToPath(name)).writeConfig(profileConfig.getDefaultConfig());
+            const newProfile = new ProfileConfig(profileNameToPath(name));
+
+            newProfile.writeConfig(profileConfig.getDefaultConfig());
         });
 
     profileCmd

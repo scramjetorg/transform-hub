@@ -64,6 +64,15 @@ const _defaultConfig: STHConfiguration = {
         heartBeatInterval: 10000,
         instanceLifetimeExtensionDelay: 180e3,
         instanceAdapterExitDelay: 9000,
+    },
+    telemetry: {
+        status: true,
+        adapter: "loki",
+        loki: {
+            host: "https://analytics.scramjet.org/sth-usage",
+            replaceTimestamp: true,
+            labels: { module: "host", job: "telemetry" }
+        }
     }
 };
 

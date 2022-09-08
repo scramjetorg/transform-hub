@@ -5,6 +5,7 @@ const { promises: { access }, constants } = require("fs");
 const { chmod, readFile, writeFile } = require("fs/promises");
 const { runCommand, exists } = require("./build-utils");
 const { join } = require("path");
+const { merge } = require("../utils");
 
 class PrePack {
     LICENSE_FILENAME = "LICENSE";
@@ -63,7 +64,9 @@ class PrePack {
 
             await this.copyAssets();
 
-            await this.savePkgJson(await this.transformPackageJson());
+            const transformedPackageJSON = await this.transformPackageJson();
+
+            await this.savePkgJson(transformedPackageJSON);
 
             if (!this.options.noInstall) {
                 await this.install();
@@ -222,11 +225,12 @@ class PrePack {
             bugs = this.rootPackageJson.bugs,
             repository = this.rootPackageJson.repository,
             engines = this.rootPackageJson.engines,
+            scripts,
             os = this.rootPackageJson.os,
             cpu = this.rootPackageJson.cpu,
             publishConfig = this.rootPackageJson.publishConfig,
             man, directories, config, peerDependencies, scramjet,
-            peerDependenciesMeta, bundledDependencies, optionalDependencies
+            peerDependenciesMeta, bundledDependencies, optionalDependencies, postBuildOverride
         } = content;
         const priv = !this.options.public && this.rootPackageJson.private;
         const srcRe = (str, rp = ".js") => str.replace(/^(?:\.\/)?src\//, "./").replace(/.ts$/, rp);
@@ -246,14 +250,30 @@ class PrePack {
 
         if (typeof bin === "object") await this.fixShebang(bin);
 
-        return {
+        const { postinstall } = scripts || {};
+        let _scripts;
+
+        if (postinstall && postinstall.match(/^.?\/([A-z0-9-_+]+.)*([A-z0-9]+\.ts)$/)) {
+            _scripts = {
+                postinstall: srcRe(scripts.postinstall)
+            };
+            await this.fixShebang(_scripts);
+        }
+
+        const transformedPackageJSON = {
             name, version, description, keywords, homepage, bugs,
             license, author, contributors, funding, files, main, types,
             bin, man, directories, repository, config, browser,
             dependencies, peerDependencies, peerDependenciesMeta,
             bundledDependencies, optionalDependencies,
-            engines, os, cpu, private: priv, publishConfig, scramjet
+            engines, os, cpu, private: priv, publishConfig, scramjet, scripts: _scripts
         };
+
+        if (postBuildOverride) {
+            merge(transformedPackageJSON, postBuildOverride);
+        }
+
+        return transformedPackageJSON;
     }
 
     async fixShebang(assets) {

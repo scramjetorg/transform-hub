@@ -1,15 +1,14 @@
 /* eslint-disable no-console */
 import { existsSync, rmSync, readFileSync } from "fs";
 import { basename, format } from "path";
-import { displayError, displayMessage } from "./output";
-import { scopesDir, configFileExt, listDirFileNames } from "./paths";
+import { displayMessage } from "../output";
+import { scopesDir, configFileExt, listDirFileNames } from "../paths";
 
 const getScopePath = (scopeName: string) => {
     const scopePath = format({ dir: scopesDir, name: scopeName, ext: configFileExt });
 
-    if (existsSync(scopePath)) return scopePath;
-    displayError(`Couldn't find scope ${scopeName}.`);
-    return null;
+    if (!existsSync(scopePath)) throw new Error(`Couldn't find scope ${scopeName}.`);
+    return scopePath;
 };
 
 /**
@@ -35,8 +34,7 @@ export const getScope = (scopeName: string) => {
 
         return scopeConfig;
     } catch {
-        displayError(`Parse error in scope config at ${scopePath}.`);
-        return null;
+        throw new Error(`Parse error in scope config at ${scopePath}.`);
     }
 };
 

@@ -40,7 +40,8 @@
   },
   "readme": "README.md",
   "assets": [
-    "sth-logo.svg"
+    "sth-logo.svg",
+    "postinstall.js"
   ],
   "funding": [
     {
@@ -66,5 +67,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "postBuildOverride": {
+    "scripts": {
+      "postinstall": "./postinstall.js"
+    }
   }
 }

@@ -1,5 +1,5 @@
 import findPackage from "find-package-json";
-import { ReasonPhrases } from "http-status-codes";
+import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 import { Readable, Writable } from "stream";
 import { Server, ServerResponse } from "http";
@@ -28,6 +28,8 @@ import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramj
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
+import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
+import { cpus, totalmem } from "os";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -47,6 +49,8 @@ export class Host implements IComponent {
      * @type {Auditor}
      */
     auditor: Auditor;
+
+    telemetryAdapter?: ITelemetryAdapter;
 
     /**
      * Configuration.
@@ -106,6 +110,9 @@ export class Host implements IComponent {
 
     publicConfig: PublicSTHConfiguration;
 
+    hostSize = this.getSize();
+    ipvAddress: any;
+
     /**
      * Sets listener for connections to socket server.
      */
@@ -157,10 +164,11 @@ export class Host implements IComponent {
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
 
         this.logger.addOutput(prettyLog);
-        this.serviceDiscovery.logger.pipe(this.logger);
+
         prettyLog.pipe(process.stdout);
 
-        this.logger.info("Log Level", sthConfig.logLevel);
+        this.serviceDiscovery.logger.pipe(this.logger);
+        this.telemetryAdapter?.logger.pipe(this.logger);
 
         this.auditor = new Auditor();
         this.auditor.logger.pipe(this.logger);
@@ -219,12 +227,17 @@ export class Host implements IComponent {
      * @returns {Promise<this>} Promise resolving to Instance of Host.
      */
     async main(): Promise<void> {
+        await this.setTelemetry().catch(() => {
+            this.logger.error("Setting telemetry failed");
+        });
+
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
         this.api.log.each(
             ({ date, method, url, status }) => this.logger.debug("Request", `date: ${new Date(date).toISOString()}, method: ${method}, url: ${url}, status: ${status}`)
         ).resume();
 
+        this.logger.info("Log Level", this.config.logLevel);
         this.logger.trace("Host main called", { version });
 
         if (this.config.identifyExisting) {
@@ -234,6 +247,8 @@ export class Host implements IComponent {
         const adapter = await initializeSequenceAdapter(this.config);
 
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
+
+        this.telemetryAdapter?.push("info", { message: "Host started", labels: { hostSize: this.hostSize, ip: this.ipvAddress, adapter: adapter } });
 
         await this.socketServer.start();
 
@@ -364,7 +379,6 @@ export class Host implements IComponent {
 
         this.api.op("delete", `${this.apiBase}/sequence/:id`, (req: ParsedMessage) => this.handleDeleteSequence(req));
         this.api.op("post", `${this.apiBase}/sequence/:id/start`, async (req: ParsedMessage) => this.handleStartSequence(req));
-
         this.api.get(`${this.apiBase}/sequence/:id`, (req) => this.getSequence(req.params?.id));
         this.api.get(`${this.apiBase}/sequence/:id/instances`, (req) => this.getSequenceInstances(req.params?.id));
         this.api.get(`${this.apiBase}/sequences`, () => this.getSequences());
@@ -377,8 +391,8 @@ export class Host implements IComponent {
         this.api.get(`${this.apiBase}/config`, () => this.publicConfig);
         this.api.get(`${this.apiBase}/status`, () => this.getStatus());
         this.api.get(`${this.apiBase}/topics`, () => this.serviceDiscovery.getTopics());
-        this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
 
+        this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
         this.api.duplex(`${this.apiBase}/platform`, (stream, headers) => this.cpmConnector?.handleCommunicationRequest(stream, headers));
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
@@ -415,8 +429,8 @@ export class Host implements IComponent {
             return instance.router.lookup(req, res, next);
         }
 
-        res.statusCode = 404;
-        res.write(JSON.stringify({ error: `The instance ${params.id} does not exist.` }));
+        res.statusCode = StatusCodes.NOT_FOUND;
+        res.write(JSON.stringify({ error: `Instance ${params.id} not found` }));
         res.end();
 
         return next();
@@ -447,7 +461,7 @@ export class Host implements IComponent {
         if (!sequenceInfo) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
-                error: `The sequence ${id} does not exist.`
+                error: `Sequence ${id} not found`
             };
         }
 
@@ -464,7 +478,7 @@ export class Host implements IComponent {
 
                 return {
                     opStatus: ReasonPhrases.CONFLICT,
-                    error: "Can't remove Sequence in use."
+                    error: "Can't remove- Sequence in use"
                 };
             }
         }
@@ -575,7 +589,8 @@ export class Host implements IComponent {
                         this.logger.debug("Overriding named sequence", sequenceName, existingSequence.id);
 
                         return {
-                            opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                            opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
+                            error: `Sequence with name ${sequenceName} already exist`
                         };
                     }
 
@@ -592,6 +607,7 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
+            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase(), hostSize: this.hostSize, seqId: id, ip: this.ipvAddress } });
 
             return {
                 id: config.id,
@@ -617,7 +633,7 @@ export class Host implements IComponent {
             if (existingSequence.instances.size) {
                 return {
                     opStatus: ReasonPhrases.CONFLICT,
-                    error: "Can not update sequence in use"
+                    error: `Sequence with name ${seqQuery} already exists`
                 };
             }
 
@@ -627,7 +643,8 @@ export class Host implements IComponent {
         }
 
         return {
-            opStatus: ReasonPhrases.NOT_FOUND
+            opStatus: ReasonPhrases.NOT_FOUND,
+            error: `Sequence with name ${seqQuery} not found`
         };
     }
 
@@ -649,7 +666,8 @@ export class Host implements IComponent {
                 this.logger.debug("Method not allowed", sequenceName, existingSequence.id);
 
                 return {
-                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED
+                    opStatus: ReasonPhrases.METHOD_NOT_ALLOWED,
+                    error: `Sequence with name ${sequenceName} already exist`
                 };
             }
         }
@@ -693,7 +711,10 @@ export class Host implements IComponent {
             Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
         if (!sequence) {
-            return { opStatus: ReasonPhrases.NOT_FOUND };
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `Sequence ${id} not found`
+            };
         }
 
         this.logger.info("Start sequence", sequence.id, sequence.config.name);
@@ -714,15 +735,17 @@ export class Host implements IComponent {
 
             this.logger.debug("Instance limits", csic.limits);
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
+            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id, language: csic.sequence.config.language, hostSize: this.hostSize, seqId: csic.sequence.id, ip: this.ipvAddress } });
 
             return {
-                result: "success",
                 opStatus: ReasonPhrases.OK,
+                message: `Sequence ${csic.id} starting`,
                 id: csic.id
             };
-        } catch (error) {
+        } catch (error: any) {
+            this.telemetryAdapter?.push("error", { message: "Instance start failed", labels: { error: error.message, hostSize: this.hostSize, ip: this.ipvAddress } });
+
             return {
-                result: "error",
                 opStatus: ReasonPhrases.BAD_REQUEST,
                 error: error
             };
@@ -760,6 +783,7 @@ export class Host implements IComponent {
         this.instancesStore[id] = csic;
 
         csic.on("error", (err) => {
+            this.telemetryAdapter?.push("error", { message: "Instance error", labels: { ...err } });
             this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
@@ -830,6 +854,16 @@ export class Host implements IComponent {
 
         csic.on("end", (code) => {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
+
+            if (csic.provides && csic.provides !== "") {
+                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
+                    {
+                        topic: csic.provides,
+                        contentType: ""
+                    }
+                ) as Writable);
+            }
+
             csic.logger.unpipe(this.logger);
 
             delete InstanceStore[csic.id];
@@ -842,16 +876,9 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
+        });
 
-            if (csic.provides && csic.provides !== "") {
-                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
-                    {
-                        topic: csic.provides,
-                        contentType: ""
-                    }
-                ) as Writable);
-            }
-
+        csic.once("terminated", (_code) => {
             if (csic.requires && csic.requires !== "") {
                 (this.serviceDiscovery.getData(
                     {
@@ -860,6 +887,20 @@ export class Host implements IComponent {
                     }
                 ) as Readable).unpipe(csic.getInputStream()!);
             }
+        });
+
+        csic.once("terminated", (code) => {
+            this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
+            this.telemetryAdapter?.push("info", {
+                message: "Instance ended",
+                labels: {
+                    executionTime: csic.info.ended && csic.info.started ? ((csic.info.ended?.getTime() - csic.info.started.getTime()) / 1000).toString() : "-1",
+                    id: csic.id,
+                    code: code.toString(),
+                    hostSize: this.hostSize,
+                    seqId: csic.sequence.id
+                }
+            });
         });
 
         await csic.start();
@@ -894,7 +935,7 @@ export class Host implements IComponent {
         if (!sequence) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
-                error: `The sequence ${id} does not exist.`
+                error: `Sequence ${id} not found`
             };
         }
 
@@ -933,7 +974,10 @@ export class Host implements IComponent {
         const sequence = this.sequencesStore.get(sequenceId);
 
         if (!sequence) {
-            return undefined;
+            return {
+                opStatus: ReasonPhrases.NOT_FOUND,
+                error: `Sequence ${sequenceId} not found`
+            };
         }
 
         return Array.from(sequence.instances.values());
@@ -1011,5 +1055,31 @@ export class Host implements IComponent {
                 .close();
         });
     }
-}
 
+    async setTelemetry(): Promise<void> {
+        if (this.config.telemetry.status) {
+            this.telemetryAdapter = await getTelemetryAdapter(this.config.telemetry.adapter, this.config.telemetry);
+            this.telemetryAdapter.logger.pipe(this.logger);
+
+            const ipAddress = require("ext-ip")();
+
+            ipAddress.on("ip", (ip: any) => {
+                this.ipvAddress = ip;
+            });
+            await ipAddress();
+
+            this.logger.info(`Telemetry is active. Adapter: ${this.config.telemetry.adapter}`);
+
+            return;
+        }
+
+        this.logger.info("No telemetry");
+    }
+
+    getSize(): "xs" | "s" | "m" | "l" | "xl" {
+        return ["xs", "s", "m", "l", "xl"][Math.min(
+            4, // maximum index in array
+            Math.floor(cpus().length * 0.25 + Math.ceil(totalmem() / (1024 << 20)) * 0.25)
+        )] as ReturnType<this["getSize"]>;
+    }
+}

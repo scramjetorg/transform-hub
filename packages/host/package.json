@@ -24,6 +24,7 @@
     "@scramjet/obj-logger": "^0.28.1",
     "@scramjet/sth-config": "^0.28.1",
     "@scramjet/symbols": "^0.28.1",
+    "@scramjet/telemetry": "^0.28.1",
     "@scramjet/utility": "^0.28.1",
     "@scramjet/verser": "^0.28.1",
     "bpmux": "^8.2.0",
@@ -32,7 +33,8 @@
     "minimist": "^1.2.6",
     "rereadable-stream": "^1.4.13",
     "scramjet": "^4.36.7",
-    "systeminformation": "^5.12.5"
+    "systeminformation": "^5.12.5",
+    "ext-ip": "^0.3.9"
   },
   "devDependencies": {
     "@scramjet/types": "^0.28.1",

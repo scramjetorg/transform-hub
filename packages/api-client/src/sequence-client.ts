@@ -52,18 +52,18 @@ export class SequenceClient {
      * @returns {Promise<InstanceClient>} Promise resolving to Instance Client.
      */
     async start(payload: STHRestAPI.StartSequencePayload): Promise<InstanceClient> {
-        const response = await this.clientUtils.post<STHRestAPI.StartSequenceResponse>(
-            `${this.sequenceURL}/start`,
-            payload,
-            {},
-            { json: true, parse: "json", throwOnErrorHttpCode: false }
-        );
+        try {
+            const response = await this.clientUtils.post<STHRestAPI.StartSequenceResponse>(
+                `${this.sequenceURL}/start`,
+                payload,
+                {},
+                { json: true, parse: "json", throwOnErrorHttpCode: true }
+            );
 
-        if (response.result === "error") {
-            return Promise.reject(response.error);
+            return InstanceClient.from(response.id, this.host);
+        } catch (error: any) {
+            return Promise.reject(JSON.parse(error.body)?.error || error);
         }
-
-        return InstanceClient.from(response.id, this.host);
     }
 
     /**

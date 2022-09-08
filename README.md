@@ -70,7 +70,9 @@ This is a development repo for Scramjet Transform Hub, a container supervisor th
 
 This repository contains the source code for <https://hub.scramjet.org>.
 
-If you want to [read the usage docs, go here ☝🏼](https://github.com/scramjetorg/scramjet-cloud-docs)
+If you want to read more about the usage please go to [Quick Start](https://github.com/scramjetorg/platform-docs) repo.
+
+You may also be interested in our [Scramjet Cloud Platform](https://docs.scramjet.org/platform) that is based on Transform-Hub.
 
 What's more, this repository is intended for developers who would like to:
 
@@ -129,7 +131,7 @@ Some important links 👀:
 
 # Development instructions :construction_worker:
 
-This section contains more detailed installation descriptions, it is intended for developers who would like to contribute or build Transform Hub from source. If you wish to fire up STH quickly and without unnecessary installations, go to [Quick Start](https://github.com/scramjetorg/scramjet-cloud-docs#3-install-scramjet-transform-hub) installation, which focuses on starting STH and deploying a sample application.
+This section contains more detailed installation descriptions, it is intended for developers who would like to contribute or build Transform Hub from source. If you wish to fire up STH quickly and without unnecessary installations, go to Quick Start [installation section](https://github.com/scramjetorg/platform-docs#2-installation), which focuses on starting STH and deploying a sample application.
 
 In this section we will also show you some useful commands, tools and functionalities that you can use to develop your own programs.
 
@@ -187,14 +189,12 @@ After that you can check nvm version just to confirm that you have successfully 
 
 command: `nvm --version`
 
-output e.g.: `v0.37.2`
-
-![nvm_version](./images/nvm_version.png)
+output e.g.: `v0.39.0`
 
 Now you are ready to install node.js, simply type in your console:
 
 ```bash
-nvm install 16     # command will install latest LTS Version of Node.js
+nvm install     # command will install latest LTS Version of Node.js
 ```
 
 > 💡 **Note**:
@@ -218,15 +218,21 @@ output: `8.1.0`
 OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
-npm install -g lerna
-npm install -g yarn
+npm install -g lerna   # lerna is a tool that we use for publishing multiple packages to npm.
+npm install -g yarn   # yarn is a package manager
 ```
 
 ![installations](./images/installations.png)
 
 The same as before the installations can be confirmed by checking the installed versions:
 
-![versions](./images/versions.png)
+```bash
+$ lerna -v
+4.0.0
+
+$ yarn -v
+1.22.17
+```
 
 OK! The installation was successful. 🎉 🎆
 
@@ -242,18 +248,15 @@ If they are not present, refer to the official installation guide for [Python](h
 We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
 
 ```bash
-sudo apt install -y docker.io docker-compose   # command will install docker and docker-compose
-```
+# Install docker and docker-compose
+sudo apt install -y docker.io docker-compose
 
-```bash
-sudo gpasswd -a $USER docker   # command will add you to the docker group
-```
-
-Verify that Docker and Docker-Compose are installed by getting their versions:
-
-```bash
+# Verify installations by getting versions
 sudo docker version
 docker-compose version
+
+# Add you user to the docker group
+sudo gpasswd -a $USER docker
 ```
 
 ### STH installation
@@ -313,34 +316,34 @@ If you managed to start STH, it confirms that the installation process was perfo
 STH can be started in multiple ways. The default way is to run it with Docker and on localhost and port number 8000.
 
 ```bash
-node dist/sth/bin/hub                 # Starts Host after it's been built
+yarn start               # Starts Hub after it's been built using script
 
-yarn start                            # This is the same as above but using script
+yarn start:dev           # Starts Hub in development mode
 
-ts-node packages/sth/src/bin/hub.ts   # Starts Host in development mode
+scramjet-transform-hub   # Starts Hub from installed npm package (@scramjet/sth)
 
-yarn start:dev                        # This is the same as above but using script
+sth                      # alias for scramjet-transform-hub
 ```
 
 You can also start STH without Docker, use the same commands as above but with added `--runtime-adapter=process` option:
 
 ```bash
-node dist/sth/bin/hub --runtime-adapter=process
-
 yarn start --runtime-adapter=process
 
-ts-node packages/sth/src/bin/hub.ts --runtime-adapter=process
-
 yarn start:dev --runtime-adapter=process
+
+sth --runtime-adapter=process
 ```
 
 There is a wide range of options that you can start STH with. Please add `--help` or `-h` flag to list all the options:
 
-`scramjet-transform-hub --help`
+```bash
+yarn start --help
 
-or
+yarn start:dev --help
 
-`sth --help`
+sth --help
+```
 
 ```shell
 $ sth --help
@@ -366,7 +369,7 @@ Options:
 
 ## Install CLI and execute :white_check_mark:
 
-Thi installation was already done at the end of the [Installation](#installation-:clamp:) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
+Thi installation was already done at the end of the [Installation](#installation-clamp) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
 
 - from the source code. In the root folder, after building, run the commands:
 
@@ -386,9 +389,43 @@ si help                # show CLI commands
 
 Running `si help` command will confirm that the installation went properly and also to see the list of available commands:
 
-![si_help](./images/si_help.png)
+```bash
+$ si --help
+Current profile: default
+Usage: si [options] [command]
 
-We will use CLI later on to execute the Sequence. You can also [jump right away to CLI reference](https://github.com/scramjetorg/transform-hub/blob/main/docs/interfaces/CLI-command-reference.md).
+This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.
+
+Options:
+  -v, --version            Display current CLI version
+  --config <name>          Set global configuration profile
+  --config-path <path>     Set global configuration from file
+  -h, --help               display help for command
+
+Commands:
+  hub                      Allows to run programs in different data centers, computers or devices in local network
+  config|c                 Config contains default Scramjet Transform Hub (STH) and Scramjet Cloud Platform (SCP) settings
+  sequence|seq             Operations on a Sequence package, consisting of one or more functions executed one after another
+  instance|inst [command]  Operations on the running Sequence
+  topic                    Manage data flow through topics operations
+  completion               completion operations
+  util|u                   Various utilities
+
+To find out more about CLI, please check out our docs at https://hub.scramjet.org/docs/cli
+
+Read more about Scramjet at https://scramjet.org/ 🚀
+```
+
+You can also run CLI commands from the source code using `yarn start:dev:cli` instead of `si`, in this case no installation is needed, eg.:
+
+```bash
+$ yarn start:dev:cli --version
+yarn run v1.22.17
+$ ts-node packages/cli/src/bin/index.ts --version
+CLI version: 0.28.1
+```
+
+We will use CLI later on to execute the Sequence. If you would like to read more about our command line interface jump right away to [CLI docs](https://github.com/scramjetorg/transform-hub/blob/main/docs/cli) in this repo or explore [CLI Reference](https://docs.scramjet.org/platform/cli-reference) section on our official website [www.scramjet.org](https://scramjet.org/).
 
 ## Build the packages :building_construction:
 
@@ -401,8 +438,8 @@ All the packages in the project need to be installed and built before the can be
 This is how to perform a clean install and build of all the packages:
 
 ```bash
-yarn install:clean        # this command will perform 'yarn clean && yarn clean:modules && yarn install' at once
-yarn build:all-packages   # optionally 'build:all' if you want all dockerfiles.
+yarn install:clean    # this command will perform 'yarn clean && yarn clean:modules && yarn install' at once
+yarn build:packages   # optionally 'build:all' if you want all dockerfiles.
 ```
 
 ![build_clean](./images/clean_install.png)
@@ -488,7 +525,6 @@ Below command installs completion script in ~/.bashrc.
 
 ```bash
 si completion install
-
 ```
 
 For immediate effect make sure to run `source ~/.bashrc`. Also you can manage completion script by yourself. Running `si completion bash` prints script to the terminal.
@@ -512,51 +548,36 @@ The purpose of having two branches is to keep important bugfixes separate from
 new features, so that a bugfix version (a release without new features, just
 bugfixes) can be published immediately if needed.
 
-
 # Sample usage :sunglasses:
 
 ## "Hello Alice" sample :wave:
 
 The sample will work only if you have properly configured your environment, installed hub and build all the packages.
-By this time you should already have all those things done by going through the [Installation](#installation-:clamp:) section.
+By this time you should already have all those things done by going through the [Installation](#installation-clamp) section.
 
-> 💡 **HINT:** _The following instructions apply to the state of the repository from the `release/0.14`._
+> 💡 **HINT:** _The following instructions apply to the state of the repository from the `release/0.28.0`._
 
 To start the "Hello Alice" sample we will need these basic steps:
 
-- [start STH](#start-the-hub-checkered_flag)
-- [compress the Sequence](#compress-the-sequence)
-- [send compressed package to the hub](#upload-the-package)
-- [start Sequence](#start-the-sequence)
+- [start STH](#start-sth-checkered_flag)
+- [build refapps](#build-refapps)
+- [execute](#execute)
 - [get the result](#get-the-output)
 
-### Compress the Sequence <!-- omit in toc -->
+### Build refapps
 
-The Sequence needs to be compressed into a `tar.gz` file format before we send it to the hub.
-
-Assuming that you have the [host running](#start-the-hub-checkered_flag) use the command:
+The Sequence needs to be compressed into a `tar.gz` file format before we send it to the hub. Use one of our [reference apps](https://github.com/scramjetorg/reference-apps). The script below will download .tar.gz files:
 
 ```bash
-yarn build:refapps    # this builds all the refapps in the 'reference-apps' package
+# this builds refapps, they will be available in .tar.gz files in 'packages' directory
+yarn build:refapps
 ```
 
-When the host is not running you can use a script:
-
-```bash
-lerna run prepare-sample-tar
-```
-
-To compress specific package use linux tar command:
-
-```bash
-tar -C /path/to/package/dir czf <package-name.tar.gz> .
-```
-
-### Execute sample <!-- omit in toc -->
+### Execute
 
 To execute the sample run the commands listed below from the level of the main folder.
 
-> **💡 HINT**: remember that to use curl commands hub must be running. [See how to start STH =>](#start-the-hub-checkered_flag)
+> **💡 HINT**: remember that to use curl commands hub must be running. [See how to start STH =>](#start-sth-checkered_flag)
 
 #### **Upload the package** <!-- omit in toc -->
 
@@ -566,15 +587,15 @@ Copy and paste the following command to the terminal:
 SEQ_ID=$( \
     curl --location --request POST "http://localhost:8000/api/v1/sequence" \
     --header 'content-type: application/octet-stream' \
-    --data-binary '@packages/reference-apps/hello-alice-out.tar.gz' | jq ".id" -r \
+    --data-binary '@packages/hello-alice-out.tar.gz' | jq ".id" -r \
 )
 ```
 
 During your development or checking out our code, you may want to edit some of our reference apps. After that you are very welcome to use our scripts to speed up your developing process. In this case, you can use the following, that will build and send any of the reference packages and samples in this repo:
 
 ```bash
-SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out) # -> when you want to upload the package (it will be built if needed)
-SEQ_ID=$(./scripts/_/upload-sequence packages/reference-apps/hello-alice-out -r) # -> when you want to upload the package and make sure it's rebuilt
+SEQ_ID=$(./scripts/_/upload-sequence path/to/the/sequence) # -> when you want to upload the package (it will be built if needed)
+SEQ_ID=$(./scripts/_/upload-sequence path/to/the/sequence -r) # -> when you want to upload the package and make sure it's rebuilt
 SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
 ```
 
@@ -593,7 +614,7 @@ INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/seque
 
 > **💡 HINT:** _INSTANCE_ID and SEQ_ID are shell variables._
 
-#### **GET the output** <!-- omit in toc -->
+#### **GET the output**
 
 To get the output we need to send GET request to `/stdout` endpoint:
 
@@ -611,19 +632,17 @@ This is what you should get as a result:
 
 ## More samples :books:
 
-To check out more of our ready-to-go samples, please go to our [Quick Start repo](https://github.com/scramjetorg/scramjet-cloud-docs#scramjet-transform-hub---quick-start-introduction) on GitHub, [samples directory](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/samples).
+To check out more of our ready-to-go samples, please go to our [Samples repo](https://github.com/scramjetorg/platform-samples) on GitHub, or to our [Samples Hub](https://docs.scramjet.org/platform/samples).
 
 ## Configure your own sample :pencil:
 
-We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates). For this moment we support two variants of template in two programming languages:
+We have also prepared a template for you to use. You can use it as a base for your own samples 👉 [sample template](https://github.com/scramjetorg/platform-docs/tree/main/templates). For this moment we support two variants of template in two programming languages:
 
-- JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-js)
-- TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/scramjet-cloud-docs/tree/main/templates/template-ts)
+- JavaScript (Node.js) 👉 [template](https://github.com/scramjetorg/platform-docs/tree/main/templates/template-js)
+- TypeScript (ts-node) 👉 [template](https://github.com/scramjetorg/platform-docs/tree/main/templates/template-ts)
+- Python 👉 [template](https://github.com/scramjetorg/platform-docs/tree/main/templates/template-ts)
 
-There are two more templates that we will support, but they are still in development stage:
-
-- Python
-- C++
+There is also C++ template that is still in development stage:
 
 # Troubleshooting :collision:
 

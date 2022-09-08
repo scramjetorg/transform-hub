@@ -17,12 +17,12 @@ addLoggerOutput(process.stdout, process.stdout);
 const logger = getLogger("test");
 const si = process.env.SCRAMJET_SPAWN_JS
     ? ["node", "../dist/cli/bin"] : process.env.SCRAMJET_SPAWN_TS
-        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"] : ["si"]
-;
+        ? ["npx", "ts-node", "../packages/cli/src/bin/index.ts"] : ["si"];
 
 Given("I set config for local Hub", { timeout: 30000 }, async function(this: CustomWorld) {
     const res = this.cliResources;
 
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "log", "--debug", "true"]);
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "log", "--format", "json"]);
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "apiUrl", `${process.env.LOCAL_HOST_BASE_URL}`]);
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "set", "env", "development"]);
@@ -37,9 +37,11 @@ When("I execute CLI with {string}", { timeout: 30000 }, async function(this: Cus
     const res = this.cliResources;
 
     res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, ...args.split(" ")]);
+
     if (process.env.SCRAMJET_TEST_LOG) {
         logger.debug(res.stdio);
     }
+
     assert.equal(res.stdio[2], 0);
 });
 
@@ -68,6 +70,7 @@ Then("I get Instance id after deployment", function() {
 
 Then("I wait for Instance to end", { timeout: 25e4 }, async function() {
     const res = (this as CustomWorld).cliResources;
+
     let success = false;
 
     while (!success) {
@@ -76,8 +79,8 @@ Then("I wait for Instance to end", { timeout: 25e4 }, async function() {
         const data = JSON.parse(res.stdio[0]);
 
         if (data.apiStatusCode) {
-            assert.equal(data.apiStatusCode, "404");
             success = true;
+            assert.equal(data.apiStatusCode, "404");
         }
         await defer(5000);
     }
@@ -116,6 +119,32 @@ Then("I confirm data named {string} will be received", async function(this: Cust
     const response = await waitUntilStreamEquals(stdout, expected);
 
     assert.equal(response, expected);
+
+    await this.cliResources!.commandInProgress!.kill();
+});
+
+Then("I wait for {string} list to be empty", { timeout: 25e4 }, async function(this: CustomWorld, entity: string) {
+    const res = this.cliResources!;
+
+    let success = false;
+
+    while (!success) {
+        if (entity === "Sequence") {
+            res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls"]);
+        } else if (entity === "Instance") {
+            res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls"]);
+        } else {
+            throw new Error(`Unknown ${entity} list name`);
+        }
+
+        const list = res.stdio[0];
+
+        if (list.trim() === "[]") {
+            success = true;
+            assert.ok(true);
+        }
+        await defer(5000);
+    }
 });
 
 Then("I confirm {string} list is empty", async function(this: CustomWorld, entity: string) {
@@ -123,16 +152,15 @@ Then("I confirm {string} list is empty", async function(this: CustomWorld, entit
 
     if (entity === "Sequence") {
         res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "seq", "ls"]);
-        const emptyList = res.stdio[0];
-
-        assert.equal(emptyList.trim(), "[]");
     }
     if (entity === "Instance") {
         res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "inst", "ls"]);
-        const emptyList = res.stdio[0];
-
-        assert.equal(emptyList.trim(), "[]");
+    } else {
+        throw new Error(`Unknown ${entity} list name`);
     }
+    const emptyList = res.stdio[0];
+
+    assert.equal(emptyList.trim(), "[]");
 });
 
 Then("I confirm instance logs received", async function(this: CustomWorld) {

@@ -1,12 +1,11 @@
 version: "3"
 services:
   scramjet-hub:
-    image: scramjetorg/sth:0.12.2
+    image: scramjetorg/sth:0.28.1
     volumes:
       - /tmp/:/tmp/
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 8000:8000
     restart: unless-stopped
-    init: true
     command: ["scramjet-transform-hub"]

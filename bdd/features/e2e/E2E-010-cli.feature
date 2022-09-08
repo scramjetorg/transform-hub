@@ -1,6 +1,6 @@
 Feature: CLI tests
 
-This feature checks CLI functionalities without topics
+    This feature checks CLI functionalities without topics
 
     @ci-api @cli
     Scenario: E2E-010 TC-001 Test 'si --help' and 'si --version' display
@@ -39,11 +39,10 @@ This feature checks CLI functionalities without topics
         And I execute CLI with "seq send -"
         And I execute CLI with "seq start -"
         And I execute CLI with "inst info -"
-        And I execute CLI with "inst kill -"
-        And I wait for Instance to end
+        And I execute CLI with "inst kill - --removeImmediately"
+        Then I wait for "Instance" list to be empty
         And I execute CLI with "seq rm -"
-        Then I confirm "Instance" list is empty
-        Then I confirm "Sequence" list is empty
+        Then I wait for "Sequence" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-006 Test Sequence 'prune --force' option
@@ -53,8 +52,8 @@ This feature checks CLI functionalities without topics
         When I execute CLI with "seq start -"
         When I execute CLI with "inst list"
         When I execute CLI with "seq prune --force"
-        Then I confirm "Instance" list is empty
-        Then I confirm "Sequence" list is empty
+        Then I wait for "Instance" list to be empty
+        Then I wait for "Sequence" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-007 Test Instance options
@@ -64,9 +63,8 @@ This feature checks CLI functionalities without topics
         When I execute CLI with "inst info -"
         When I execute CLI with "inst health -"
         When I execute CLI with "inst list"
-        When I execute CLI with "inst kill -"
-        And I wait for Instance to end
-        Then I confirm "Instance" list is empty
+        When I execute CLI with "inst kill - --removeImmediately"
+        Then I wait for "Instance" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-008 Test Instances 'stop' option
@@ -77,7 +75,7 @@ This feature checks CLI functionalities without topics
         And I wait for Instance to end
         Then I confirm "Instance" list is empty
         When I execute CLI with "seq prune --force"
-        Then I confirm "Sequence" list is empty
+        Then I wait for "Sequence" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-009 Get 404 on health endpoint for finished Instance
@@ -86,7 +84,7 @@ This feature checks CLI functionalities without topics
         When I execute CLI with "inst health -"
         And I wait for Instance to end
         When I execute CLI with "seq prune --force"
-        Then I confirm "Sequence" list is empty
+        Then I wait for "Sequence" list to be empty
 
     @ci-api @cli
     Scenario: E2E-010 TC-010 Test Instance 'log' option

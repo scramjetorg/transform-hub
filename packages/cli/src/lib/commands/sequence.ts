@@ -1,106 +1,18 @@
-import { CommandDefinition, displayFormat } from "../../types";
+import { CommandDefinition } from "../../types";
 import { createWriteStream, lstatSync } from "fs";
-import { defer, promiseTimeout } from "@scramjet/utility";
-import { displayEntity, displayError, displayMessage, displayObject } from "../output";
-import { getHostClient, getInstance, getReadStreamFromFile, packAction } from "../common";
-import { getPackagePath, getSequenceId, profileConfig, sessionConfig } from "../config";
+import { defer } from "@scramjet/utility";
+import { displayEntity, displayMessage, displayObject } from "../output";
+import { getHostClient } from "../common";
+import { getSequenceId, profileConfig, sessionConfig } from "../config";
 
-import { GetSequenceResponse } from "@scramjet/types/src/rest-api-sth";
-import { InstanceLimits } from "@scramjet/types";
 import { PassThrough } from "stream";
 
-import { SequenceClient } from "@scramjet/api-client";
 import { isDevelopment } from "../../utils/envs";
-import { readFile } from "fs/promises";
+
 import { resolve } from "path";
-
-type SequenceUploadOptions = {
-    name?: string;
-}
-
-const sendPackage = async (
-    sequencePackage: string, options: SequenceUploadOptions = {}, format: displayFormat, update = false
-) => {
-    try {
-        const id = getSequenceId(options.name!);
-
-        const sequencePath = getPackagePath(sequencePackage);
-
-        let seq: SequenceClient;
-
-        if (update) {
-            seq = await getHostClient().getSequenceClient(id)?.overwrite(
-                await getReadStreamFromFile(sequencePath),
-            );
-        } else {
-            const headers: HeadersInit = {};
-
-            if (options.name) {
-                headers["x-name"] = options.name;
-            }
-
-            seq = await getHostClient().sendSequence(
-                await getReadStreamFromFile(sequencePath),
-                {
-                    headers
-                }
-            );
-        }
-
-        sessionConfig.setLastSequenceId(seq.id);
-
-        return displayObject(seq, format);
-    } catch (e: any) {
-        return displayError(e);
-    }
-};
-
-const startSequence = async (
-    id: string, { configFile, configString, args, outputTopic, inputTopic, limits }:
-        {
-            configFile: any,
-            configString: string,
-            args?: any[],
-            outputTopic?: string,
-            inputTopic?: string,
-            limits?: InstanceLimits
-        }
-    , format: displayFormat
-) => {
-    if (configFile && configString) {
-        displayError("Provide one source of configuration");
-        return Promise.resolve();
-    }
-
-    let appConfig = {};
-
-    try {
-        if (configString) appConfig = JSON.parse(configString);
-        if (configFile) appConfig = JSON.parse(await readFile(configFile, "utf-8"));
-    } catch (_) {
-        displayError("Unable to read configuration");
-        return Promise.reject();
-    }
-    const sequenceClient = SequenceClient.from(getSequenceId(id), getHostClient());
-
-    try {
-        const instance = await sequenceClient.start({ appConfig, args, outputTopic, inputTopic, limits });
-
-        sessionConfig.setLastInstanceId(instance.id);
-        return displayObject(instance, format);
-    } catch (error: any) {
-        displayError(error);
-        return process.exit(1);
-    }
-};
-
-function parseSequenceArgs(argsStr: string | undefined): any[] {
-    try {
-        return argsStr ? JSON.parse(argsStr) : [];
-    } catch (err) {
-        throw new Error(`Error while parsing the provided Instance arguments. '${(err as Error).message}'`);
-    }
-}
+import { sequenceDelete, sequencePack, sequenceParseArgs, sequenceSendPackage, sequenceStart, waitForInstanceKills } from "../helpers/sequence";
+import { ClientError } from "@scramjet/client-utils";
+import { instanceKill } from "../helpers/instance";
 
 /**
  * Initializes `sequence` command.
@@ -134,29 +46,20 @@ export const sequence: CommandDefinition = (program) => {
             if (!stdout)
                 sessionConfig.setLastPackagePath(outputPath);
 
-            return packAction(path, { output });
+            return sequencePack(path, { output });
         });
-
-    const waitForInstanceKills = (seq: GetSequenceResponse, timeout: number) => {
-        return promiseTimeout((async () => {
-            let l;
-
-            // eslint-disable-next-line no-cond-assign
-            while (l = (await getHostClient().getSequence(seq.id)).instances.length) {
-                displayMessage(`Sequence ${seq.id}. Waiting for ${l} instance${l > 1 ? "s" : ""} to finish...`);
-                await defer(1000);
-            }
-            return Promise.resolve();
-        })(), timeout);
-    };
 
     sequenceCmd
         .command("send")
-        .argument("<package>", "The file to upload or '-' to use the last packed")
+        .argument("<package>", "The file or directory to upload or '-' to use the last packed. If directory, it will be packed and send.")
         .option("--name <name>", "Allows to name sequence")
         .description("Send the Sequence package to the Hub")
         .action(
-            async (sequencePackage: string, { name }) => sendPackage(sequencePackage, { name }, profileConfig.format)
+            async (sequencePackage: string, { name }) => {
+                const sequenceClient = await sequenceSendPackage(sequencePackage, { name });
+
+                displayObject(sequenceClient, profileConfig.format);
+            }
         );
 
     sequenceCmd
@@ -165,8 +68,11 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<package>", "The file to upload")
         .description("Updates sequence with given name")
         .action(
-            async (query: string, sequencePackage: string) =>
-                sendPackage(sequencePackage, { name: query }, profileConfig.format, true)
+            async (query: string, sequencePackage: string) => {
+                const sequenceClient = await sequenceSendPackage(sequencePackage, { name: query }, true);
+
+                displayObject(sequenceClient, profileConfig.format);
+            }
         );
 
     sequenceCmd
@@ -175,7 +81,18 @@ export const sequence: CommandDefinition = (program) => {
         .description("Select the Sequence to communicate with by using '-' alias instead of Sequence id")
         .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.getConfig().lastSequenceId}`)
         .argument("<id>", "Sequence id")
-        .action(async (id: string) => sessionConfig.setLastSequenceId(id) as unknown as void);
+        .action(async (id: string) => {
+            try {
+                await getHostClient().getSequence(id);
+            } catch (error) {
+                if (error instanceof ClientError && error.code === "NOT_FOUND") {
+                    error.message = `Unable to find sequence ${id}`;
+                }
+                throw error;
+            }
+
+            sessionConfig.setLastSequenceId(id);
+        });
 
     sequenceCmd
         .command("start")
@@ -190,11 +107,13 @@ export const sequence: CommandDefinition = (program) => {
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
         .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr }) => {
-            const args = parseSequenceArgs(argsStr);
+            const args = sequenceParseArgs(argsStr);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
-            await startSequence(id, { configFile, configString, args, outputTopic, inputTopic, limits },
-                profileConfig.format);
+            const instanceClient = await sequenceStart(
+                id, { configFile, configString, args, outputTopic, inputTopic, limits });
+
+            displayObject(instanceClient, profileConfig.format);
         });
 
     type DeployArgs = {
@@ -231,15 +150,19 @@ export const sequence: CommandDefinition = (program) => {
                     sessionConfig.setLastSequenceId(seq.id);
                 });
 
-                await packAction(path, { output });
+                await sequencePack(path, { output });
                 await sendSeqPromise;
             } else {
-                await sendPackage(path, {}, format);
+                const sequenceClient = await sequenceSendPackage(path, {});
+
+                displayObject(sequenceClient, profileConfig.format);
             }
 
-            const args = parseSequenceArgs(argsStr);
+            const args = sequenceParseArgs(argsStr);
 
-            await startSequence("-", { configFile, configString, args }, format);
+            const instanceClient = await sequenceStart("-", { configFile, configString, args });
+
+            displayObject(instanceClient, format);
         });
 
     sequenceCmd
@@ -254,8 +177,18 @@ export const sequence: CommandDefinition = (program) => {
         .alias("rm")
         .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
         .description("Delete the Sequence from the Hub")
-        .action(async (id: string) => displayEntity(getHostClient().deleteSequence(getSequenceId(id)),
-            profileConfig.format));
+        .action(async (id: string) => {
+            try {
+                const sequenceDeleteResponse = await sequenceDelete(id);
+
+                displayObject(sequenceDeleteResponse, profileConfig.format);
+            } catch (error) {
+                if (error instanceof ClientError && error.code === "NOT_FOUND") {
+                    error.message = `Unable to find sequence ${id}`;
+                }
+                throw error;
+            }
+        });
 
     sequenceCmd
         .command("prune")
@@ -280,33 +213,20 @@ export const sequence: CommandDefinition = (program) => {
 
                     if (seq.instances.length) {
                         if (!force) {
-                            displayMessage(`Sequence ${seq.id} has running instances. Use --force to kill those.`);
+                            displayMessage(`Sequence ${seq.id} has instances. Use --force to kill those.`);
                             return Promise.resolve();
                         }
 
-                        if (force) {
-                            await Promise.all(
-                                seq.instances.map(async instanceId => {
-                                    if (lastInstanceId === instanceId) {
-                                        sessionConfig.setLastInstanceId("");
-                                    }
+                        await Promise.all(
+                            seq.instances.map(async instanceId => instanceKill(instanceId, true, lastInstanceId))
+                        );
 
-                                    return getInstance(instanceId).kill({ removeImmediately: true });
-                                })
-                            );
+                        displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
 
-                            displayMessage(`KILL requested for Instances of Sequence ${seq.id}. Waiting...`);
-
-                            await defer(15000);
-                            await waitForInstanceKills(seq, timeout);
-                        }
+                        await defer(15000);
+                        await waitForInstanceKills(seq, timeout);
                     }
-
-                    return getHostClient().deleteSequence(seq.id).then(() => {
-                        if (lastSequenceId === seq.id) {
-                            sessionConfig.setLastSequenceId("");
-                        }
-                    });
+                    return sequenceDelete(seq.id, lastSequenceId);
                 })
             ).catch(error => {
                 fullSuccess = false;
@@ -322,10 +242,10 @@ export const sequence: CommandDefinition = (program) => {
 
             seqs = await getHostClient().listSequences();
 
-            if (!seqs.length) {
-                displayMessage("Sequences removed successfully.");
-            } else {
-                displayMessage("Some Sequences may have not been deleted.");
+            if (seqs.length) {
+                throw new Error("Some Sequences may have not been deleted.");
             }
+
+            displayMessage("Sequences removed successfully.");
         });
 };

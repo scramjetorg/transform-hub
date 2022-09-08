@@ -15,6 +15,7 @@ import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
+import { detectLanguage } from "./utils";
 
 /**
  * Returns existing Sequence configuration.
@@ -43,6 +44,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         author: validPackageJson.author || "",
         keywords: validPackageJson.keywords || [],
         repository: validPackageJson.repository || "",
+        language: detectLanguage(validPackageJson)
     };
 }
 
