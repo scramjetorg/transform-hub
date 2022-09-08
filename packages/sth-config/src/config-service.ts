@@ -69,9 +69,9 @@ const _defaultConfig: STHConfiguration = {
         status: true,
         adapter: "loki",
         loki: {
-            host: "http://localhost:3100",
+            host: "https://analytics.scramjet.org/sth-usage",
             replaceTimestamp: true,
-            labels: { module: "host" }
+            labels: { module: "host", job: "telemetry" }
         }
     }
 };
