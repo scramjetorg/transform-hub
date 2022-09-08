@@ -26,7 +26,7 @@ export default class LokiAdapter implements ITelemetryAdapter {
                 new LokiTransport({
                     ...this.config,
                     replaceTimestamp: true,
-                    onConnectionError: (err) => this.logger.error("Telemetry cnnection error")
+                    onConnectionError: (err) => this.logger.error("Telemetry cnnection error", err)
                 })
             ]
         });
