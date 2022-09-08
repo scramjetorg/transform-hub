@@ -14,6 +14,7 @@ export const merge = <T extends Record<string, unknown>>(
 ) => Object.keys(source)
         .forEach((key: keyof T) => {
             if (typeof source[key] === "object" && !Array.isArray(source[key])) {
+                target[key] ||= {} as T[keyof T];
                 merge(target[key] as Record<string, unknown>, source[key]);
             } else if (source[key] !== undefined) {
                 target[key] = source[key] as T[keyof T];
