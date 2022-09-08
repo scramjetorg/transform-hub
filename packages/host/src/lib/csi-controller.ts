@@ -244,6 +244,8 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.logger.trace("Finalizing...");
 
+        this.emit("terminated", code);
+
         await this.finalize();
 
         this.emit("end", code);

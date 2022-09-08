@@ -1,4 +1,5 @@
 import { LogLevel } from "./object-logger";
+import { TelemetryConfig } from "./telemetry-config";
 
 export type ContainerConfiguration = {
     /**
@@ -229,8 +230,9 @@ export type STHConfiguration = {
          * Time to wait before CSIController emits `end` event.
          */
         instanceLifetimeExtensionDelay: number;
-
     };
+
+    telemetry: TelemetryConfig
 }
 
 export type PublicSTHConfiguration = Omit<Omit<Omit<STHConfiguration, "sequencesRoot">, "cpmSslCaPath">, "kubernetes"> & {

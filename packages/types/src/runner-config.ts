@@ -23,6 +23,7 @@ type CommonSequenceConfig = {
         url: string;
         directory?: string;
     } | string;
+    language: string;
 }
 
 export type DockerSequenceConfig = CommonSequenceConfig & {

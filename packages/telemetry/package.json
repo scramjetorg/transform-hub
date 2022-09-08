@@ -1,0 +1,46 @@
+{
+  "name": "@scramjet/telemetry",
+  "version": "0.28.1",
+  "description": "This package is part of Scramjet Transform Hub. The package provides modules for gathering analytics data.",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "homepage": "https://github.com/scramjetorg/transform-hub#readme",
+  "license": "ISC",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "build:docs": "typedoc",
+    "clean": "rm -rf ./dist .bic_cache",
+    "copy:configs": "cd src; tar c `find -iname *.json` | tar x -C ../dist/",
+    "test":"echo \"Warning: no test specified\""
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "files": [
+      "**/*.spec.ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/scramjetorg/transform-hub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/scramjetorg/transform-hub/issues"
+  },
+  "dependencies": {
+    "@scramjet/utility": "^0.28.0",
+    "@scramjet/obj-logger": "^0.28.0",
+    "winston": "^3.3.3",
+    "winston-loki": "^6.0.6"
+  },
+  "devDependencies": {
+    "@scramjet/types": "^0.28.0",
+    "ava": "^3.15.0",
+    "typedoc": "^0.22.18",
+    "typedoc-plugin-markdown": "^3.13.3"
+  }
+}

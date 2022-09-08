@@ -14,6 +14,7 @@ import { exec } from "child_process";
 import { isDefined, readStreamedJSON } from "@scramjet/utility";
 import { sequencePackageJSONDecoder } from "./validate-sequence-package-json";
 import { SequenceAdapterError } from "@scramjet/model";
+import { detectLanguage } from "./utils";
 
 /**
  * Returns existing Sequence configuration.
@@ -22,6 +23,7 @@ import { SequenceAdapterError } from "@scramjet/model";
  * @param {string} id Sequence Id.
  * @returns {ProcessSequenceConfig} Sequence configuration.
  */
+// eslint-disable-next-line complexity
 async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: string): Promise<ProcessSequenceConfig> {
     const sequenceDir = path.join(sequencesRoot, id);
     const packageJsonPath = path.join(sequenceDir, "package.json");
@@ -42,6 +44,7 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         author: validPackageJson.author || "",
         keywords: validPackageJson.keywords || [],
         repository: validPackageJson.repository || "",
+        language: detectLanguage(validPackageJson)
     };
 }
 

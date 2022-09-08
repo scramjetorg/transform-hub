@@ -48,6 +48,7 @@ const options: STHCommandOptions = program
     .option("--k8s-runner-resources-requests-memory <memory>", "Requests memory for pod e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
     .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
+    .option("--no-telemetry", "Disables telemetry", false)
     .parse(process.argv)
     .opts();
 
@@ -115,6 +116,9 @@ const options: STHCommandOptions = program
         },
         timings: {
             instanceLifetimeExtensionDelay: options.instanceLifetimeExtensionDelay
+        },
+        telemetry: {
+            status: options.telemetry
         }
     });
 
@@ -124,9 +128,11 @@ const options: STHCommandOptions = program
         ["You don't need to maintain your own server anymore", { "Check out": "Scramjet Cloud Platform", here: "https://scr.je/join-beta-sth" }]
     ];
 
+    const config = configService.getConfig();
+
     // before here we actually load the host and we have the config imported elsewhere
     // so the config is changed before compile time, not in runtime.
-    return require("@scramjet/host").startHost({}, configService.getConfig())
+    return require("@scramjet/host").startHost({}, config)
         .then(async (host: Host) => {
             const [message, extra] = tips[~~(Math.random() * 100 * tips.length) % tips.length] as [string, object];
 
@@ -150,6 +156,10 @@ const options: STHCommandOptions = program
                         }
                     }
                 }, 250);
+            }
+
+            if (config.telemetry.status) {
+                host.logger.info("Telemetry is active. If you don't want to send anonymous telemetry data use '--no-telemetry' when starting STH or set it in the config file.");
             }
         });
 })()
