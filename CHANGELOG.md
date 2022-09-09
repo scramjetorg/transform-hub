@@ -2,6 +2,11 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.28.3] - 2022-09-09
+
+## Fixed
+
+* [STH] (fix) missing telemetry dependency in Dockerfile
 
 ## [0.28.2] - 2022-09-08
 
