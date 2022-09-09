@@ -20,6 +20,7 @@ export class VerserConnection {
 
     private _socket: Duplex;
     private agent?: Agent & { createConnection: typeof createConnection; };
+    private channelListeners: ((socket: Duplex, data?: any) => any)[] = [];
 
     get connected() {
         return !this._socket.destroyed && this.bpmux;
@@ -42,6 +43,10 @@ export class VerserConnection {
             this.logger.error("Request error:", error);
             // TODO: handle error.
         });
+    }
+
+    addChannelListener(cb: (socket: Duplex, data?: Buffer) => any) {
+        this.channelListeners.push(cb);
     }
 
     /**
@@ -173,6 +178,7 @@ export class VerserConnection {
     }
 
     /**
+     * @deprecated
      * Creates new multiplexed duplex stream in the socket.
      * Created channel has id to be identified in VerserClient.
      *
@@ -186,7 +192,8 @@ export class VerserConnection {
     }
 
     reconnect() {
-        const bpmux = this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
+        this.logger.debug("Reconnecting...");
+        this.bpmux = this.bpmux = new BPMux(this.socket).on("error", (error: Error) => {
             this.logger.error("BPMux Error", error.message);
             // TODO: Error handling?
         });
@@ -194,9 +201,17 @@ export class VerserConnection {
         this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
-                return (bpmux.multiplex() as Socket).on("error", () => {
+                const socket = this.bpmux!.multiplex() as Socket;
+
+                socket.on("error", () => {
                     this.logger.error("Muxed stream error");
                 });
+
+                // some libs call it but it is not here, in BPMux.
+                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+
+                this.logger.debug("Created new muxed stream");
+                return socket;
             } catch (e) {
                 const ret = new Socket();
 
@@ -204,6 +219,12 @@ export class VerserConnection {
                 return ret;
             }
         };
+
+        this.bpmux!.on("peer_multiplex", (socket: Duplex, data: any) => {
+            this.channelListeners.forEach((listener) => {
+                listener(socket, data);
+            });
+        });
     }
 
     /**
@@ -214,7 +235,7 @@ export class VerserConnection {
     async close() {
         this.logger.trace("Closing VerserConnection");
 
-        return new Promise<void>(res => {
+        return new Promise<void>((res) => {
             this.socket.end(() => {
                 this.logger.trace("VerserConnection closed");
                 res();

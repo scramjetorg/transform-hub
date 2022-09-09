@@ -158,7 +158,7 @@ export class Host implements IComponent {
             this,
             {},
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
-            ObjLogger.levels[ObjLogger.levels.length - 1]
+                ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
@@ -195,26 +195,6 @@ export class Host implements IComponent {
 
         if (!!this.config.cpmUrl !== !!this.config.cpmId) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
-        }
-
-        if (this.config.cpmUrl && this.config.cpmId) {
-            this.cpmConnector = new CPMConnector(
-                this.config.cpmUrl,
-                this.config.cpmId,
-                {
-                    id: this.config.host.id,
-                    infoFilePath: this.config.host.infoFilePath,
-                    cpmSslCaPath: this.config.cpmSslCaPath,
-                    maxReconnections: this.config.cpm.maxReconnections,
-                    reconnectionDelay: this.config.cpm.reconnectionDelay
-                },
-                this.api.server
-            );
-
-            this.cpmConnector.logger.pipe(this.logger);
-            this.cpmConnector.setLoadCheck(this.loadCheck);
-
-            this.serviceDiscovery.setConnector(this.cpmConnector);
         }
     }
 
@@ -876,9 +856,18 @@ export class Host implements IComponent {
             }, InstanceMessageCode.INSTANCE_ENDED);
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
+
+            if (csic.provides && csic.provides !== "") {
+                csic.getOutputStream()!.unpipe(this.serviceDiscovery.getData(
+                    {
+                        topic: csic.provides,
+                        contentType: ""
+                    }
+                ) as Writable);
+            }
         });
 
-        csic.once("terminated", (_code) => {
+        csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
                 (this.serviceDiscovery.getData(
                     {
@@ -887,9 +876,7 @@ export class Host implements IComponent {
                     }
                 ) as Readable).unpipe(csic.getInputStream()!);
             }
-        });
 
-        csic.once("terminated", (code) => {
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
             this.telemetryAdapter?.push("info", {
                 message: "Instance ended",
@@ -970,7 +957,6 @@ export class Host implements IComponent {
      * @returns List of Instances.
      */
     getSequenceInstances(sequenceId: string): STHRestAPI.GetSequenceInstancesResponse {
-        // @TODO: this should probably return error response when there's not corresponding Sequence
         const sequence = this.sequencesStore.get(sequenceId);
 
         if (!sequence) {
@@ -1056,6 +1042,11 @@ export class Host implements IComponent {
         });
     }
 
+    /**
+     * Sets up telemetry.
+     *
+     * @returns {void}
+     */
     async setTelemetry(): Promise<void> {
         if (this.config.telemetry.status) {
             this.telemetryAdapter = await getTelemetryAdapter(this.config.telemetry.adapter, this.config.telemetry);
@@ -1066,6 +1057,7 @@ export class Host implements IComponent {
             ipAddress.on("ip", (ip: any) => {
                 this.ipvAddress = ip;
             });
+
             await ipAddress();
 
             this.logger.info(`Telemetry is active. Adapter: ${this.config.telemetry.adapter}`);
@@ -1076,10 +1068,15 @@ export class Host implements IComponent {
         this.logger.info("No telemetry");
     }
 
-    getSize(): "xs" | "s" | "m" | "l" | "xl" {
+    /**
+     * Calculates the machine's T-Shirt size.
+     *
+     * @returns {string} Size
+     */
+    getSize(): string {
         return ["xs", "s", "m", "l", "xl"][Math.min(
             4, // maximum index in array
-            Math.floor(cpus().length * 0.25 + Math.ceil(totalmem() / (1024 << 20)) * 0.25)
-        )] as ReturnType<this["getSize"]>;
+            Math.floor((cpus().length + Math.ceil(totalmem() / (1024 << 20))) / 0.25)
+        )];
     }
 }
