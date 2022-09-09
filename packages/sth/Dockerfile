@@ -17,6 +17,7 @@ COPY ./dist/types ./dist/types
 COPY ./dist/load-check ./dist/load-check
 COPY ./dist/utility ./dist/utility
 COPY ./dist/verser ./dist/verser
+COPY ./dist/telemetry ./dist/telemetry
 COPY ./dist/package.json ./dist/package.json
 COPY LICENSE ./
 
