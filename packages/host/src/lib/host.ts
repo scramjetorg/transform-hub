@@ -38,6 +38,9 @@ const name = packageFile.value?.name || "unknown";
 
 const PARALLEL_SEQUENCE_STARTUP = 4;
 
+type HostSizes = "xs" | "s" | "m" | "l" | "xl";
+const GigaByte = 1024 << 20;
+
 /**
  * Host provides functionality to manage Instances and Sequences.
  * Using provided servers to set up API and server for communicating with Instance controllers.
@@ -51,6 +54,8 @@ export class Host implements IComponent {
     auditor: Auditor;
 
     telemetryAdapter?: ITelemetryAdapter;
+
+    telemetryEnvironmentName: string = "not-set";
 
     /**
      * Configuration.
@@ -168,7 +173,9 @@ export class Host implements IComponent {
         prettyLog.pipe(process.stdout);
 
         this.serviceDiscovery.logger.pipe(this.logger);
-        this.telemetryAdapter?.logger.pipe(this.logger);
+
+        if (sthConfig.telemetry.environment)
+            this.telemetryEnvironmentName = sthConfig.telemetry.environment;
 
         this.auditor = new Auditor();
         this.auditor.logger.pipe(this.logger);
@@ -210,6 +217,7 @@ export class Host implements IComponent {
         await this.setTelemetry().catch(() => {
             this.logger.error("Setting telemetry failed");
         });
+        this.telemetryAdapter?.logger.pipe(this.logger);
 
         this.logger.pipe(this.commonLogsPipe.getIn(), { stringified: true });
 
@@ -228,7 +236,7 @@ export class Host implements IComponent {
 
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
 
-        this.telemetryAdapter?.push("info", { message: "Host started", labels: { hostSize: this.hostSize, ip: this.ipvAddress, adapter: adapter } });
+        this.telemetryAdapter?.push("info", { message: "Host started", labels: { environment: this.telemetryEnvironmentName, hostSize: this.hostSize, ip: this.ipvAddress, adapter: adapter } });
 
         await this.socketServer.start();
 
@@ -587,7 +595,7 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
-            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase(), hostSize: this.hostSize, seqId: id, ip: this.ipvAddress } });
+            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase(), environment: this.telemetryEnvironmentName, hostSize: this.hostSize, seqId: id, ip: this.ipvAddress } });
 
             return {
                 id: config.id,
@@ -715,7 +723,7 @@ export class Host implements IComponent {
 
             this.logger.debug("Instance limits", csic.limits);
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
-            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id, language: csic.sequence.config.language, hostSize: this.hostSize, seqId: csic.sequence.id, ip: this.ipvAddress } });
+            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id, language: csic.sequence.config.language, environment: this.telemetryEnvironmentName, hostSize: this.hostSize, seqId: csic.sequence.id, ip: this.ipvAddress } });
 
             return {
                 opStatus: ReasonPhrases.OK,
@@ -723,7 +731,7 @@ export class Host implements IComponent {
                 id: csic.id
             };
         } catch (error: any) {
-            this.telemetryAdapter?.push("error", { message: "Instance start failed", labels: { error: error.message, hostSize: this.hostSize, ip: this.ipvAddress } });
+            this.telemetryAdapter?.push("error", { message: "Instance start failed", labels: { error: error.message, environment: this.telemetryEnvironmentName, hostSize: this.hostSize, ip: this.ipvAddress } });
 
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST,
@@ -885,6 +893,7 @@ export class Host implements IComponent {
                     id: csic.id,
                     code: code.toString(),
                     hostSize: this.hostSize,
+                    environment: this.telemetryEnvironmentName,
                     seqId: csic.sequence.id
                 }
             });
@@ -1073,10 +1082,10 @@ export class Host implements IComponent {
      *
      * @returns {string} Size
      */
-    getSize(): string {
+    getSize(): HostSizes {
         return ["xs", "s", "m", "l", "xl"][Math.min(
             4, // maximum index in array
-            Math.floor((cpus().length + Math.ceil(totalmem() / (1024 << 20))) / 0.25)
-        )];
+            Math.floor(Math.log2(cpus().length) / 2 + Math.log2(totalmem() / GigaByte) / 4)
+        )] as HostSizes;
     }
 }
