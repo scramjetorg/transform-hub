@@ -46,7 +46,7 @@ Adapter for preparing Sequence to be run in Docker container.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L39)
+[docker-sequence-adapter.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L40)
 
 ## Methods
 
@@ -70,7 +70,7 @@ Created volume.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:209](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L209)
+[docker-sequence-adapter.ts:210](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L210)
 
 ___
 
@@ -92,7 +92,7 @@ Pulls image from registry.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L67)
+[docker-sequence-adapter.ts:68](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L68)
 
 ___
 
@@ -125,7 +125,7 @@ ISequenceAdapter.identify
 
 #### Defined in
 
-[docker-sequence-adapter.ts:137](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L137)
+[docker-sequence-adapter.ts:138](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L138)
 
 ___
 
@@ -149,7 +149,7 @@ Sequence configuration or undefined if sequence cannot be identified.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L96)
+[docker-sequence-adapter.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L97)
 
 ___
 
@@ -169,7 +169,7 @@ ISequenceAdapter.init
 
 #### Defined in
 
-[docker-sequence-adapter.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L50)
+[docker-sequence-adapter.ts:51](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L51)
 
 ___
 
@@ -191,7 +191,7 @@ ISequenceAdapter.list
 
 #### Defined in
 
-[docker-sequence-adapter.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L76)
+[docker-sequence-adapter.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L77)
 
 ___
 
@@ -217,7 +217,7 @@ Promise resolving to sequence configuration.
 
 #### Defined in
 
-[docker-sequence-adapter.ts:228](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L228)
+[docker-sequence-adapter.ts:229](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L229)
 
 ___
 
@@ -243,7 +243,7 @@ ISequenceAdapter.remove
 
 #### Defined in
 
-[docker-sequence-adapter.ts:284](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L284)
+[docker-sequence-adapter.ts:286](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L286)
 
 ## Properties
 
@@ -253,7 +253,7 @@ ISequenceAdapter.remove
 
 #### Defined in
 
-[docker-sequence-adapter.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L29)
+[docker-sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L30)
 
 ___
 
@@ -269,7 +269,7 @@ ISequenceAdapter.logger
 
 #### Defined in
 
-[docker-sequence-adapter.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L37)
+[docker-sequence-adapter.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L38)
 
 ___
 
@@ -283,7 +283,7 @@ ISequenceAdapter.name
 
 #### Defined in
 
-[docker-sequence-adapter.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L32)
+[docker-sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L33)
 
 ___
 
@@ -293,4 +293,4 @@ ___
 
 #### Defined in
 
-[docker-sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L30)
+[docker-sequence-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L31)

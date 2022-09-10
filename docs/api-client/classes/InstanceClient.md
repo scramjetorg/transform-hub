@@ -161,7 +161,7 @@ Promise resolving to event data.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L121)
+[api-client/src/instance-client.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L115)
 
 ___
 
@@ -185,7 +185,7 @@ stream of events from Instance
 
 #### Defined in
 
-[api-client/src/instance-client.ts:131](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L131)
+[api-client/src/instance-client.ts:125](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L125)
 
 ___
 
@@ -203,7 +203,7 @@ Promise resolving to Instance health.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:140](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L140)
+[api-client/src/instance-client.ts:134](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L134)
 
 ___
 
@@ -221,7 +221,7 @@ Promise resolving to Instance info.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:149](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L149)
+[api-client/src/instance-client.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L143)
 
 ___
 
@@ -245,7 +245,7 @@ Promise resolving to event data.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:110](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L110)
+[api-client/src/instance-client.ts:104](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L104)
 
 ___
 
@@ -270,7 +270,7 @@ Promise resolving to readable stream.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:160](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L160)
+[api-client/src/instance-client.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L154)
 
 ___
 
@@ -282,10 +282,9 @@ Send kill command to Instance
 
 #### Parameters
 
-| Name | Type | Default value | Description |
-| :------ | :------ | :------ | :------ |
-| `opts` | `Object` | `undefined` | Options. |
-| `opts.removeImmediately` | `boolean` | `false` | If true, Instance lifetime extension delay will be bypassed. |
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `opts` | `KillMessageData` | Options. |
 
 #### Returns
 
@@ -295,7 +294,7 @@ Promise resolving to kill Instance result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L76)
+[api-client/src/instance-client.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L70)
 
 ___
 
@@ -320,7 +319,7 @@ Promise resolving to send event result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L92)
+[api-client/src/instance-client.ts:86](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L86)
 
 ___
 
@@ -346,7 +345,7 @@ Promise resolving to send stream result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:185](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L185)
+[api-client/src/instance-client.ts:179](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L179)
 
 ___
 
@@ -370,7 +369,7 @@ Promise resolving to send stream result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L195)
+[api-client/src/instance-client.ts:189](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L189)
 
 ___
 
@@ -397,7 +396,7 @@ Promise resolving to send stream result.
 
 #### Defined in
 
-[api-client/src/instance-client.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L173)
+[api-client/src/instance-client.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-client/src/instance-client.ts#L167)
 
 ___
 
