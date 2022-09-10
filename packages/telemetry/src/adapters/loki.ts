@@ -35,7 +35,7 @@ export default class LokiAdapter implements ITelemetryAdapter {
     }
 
     push(level: logLevel, { message, labels }: { message: string, labels: { [ key: string ]: string } }): void {
-        this.logger.debug("Pushing log entry", [message, labels]);
+        this.logger.debug("Pushing log entry", JSON.stringify([message, labels]));
         this.winstonLogger[level]({ message, labels });
     }
 }
