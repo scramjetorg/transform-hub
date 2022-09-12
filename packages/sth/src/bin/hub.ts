@@ -48,7 +48,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("--k8s-runner-resources-requests-memory <memory>", "Requests memory for pod e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
     .option("--k8s-runner-resources-limits-cpu <cpu unit>", "Set limits for CPU  [1 CPU unit is equivalent to 1 physical CPU core, or 1 virtual core]")
     .option("--k8s-runner-resources-limits-memory <memory>", "Set limits for memory e.g [128974848, 129e6, 129M,  128974848000m, 123Mi]")
-    .option("--environment-name", "Sets the environment name for telemetry reporting (defaults to SCP_ENVIRONMENT_NAME env var or 'not-set')")
+    .option("--environment-name <name>", "Sets the environment name for telemetry reporting (defaults to SCP_ENVIRONMENT_NAME env var or 'not-set')")
     .option("--no-telemetry", "Disables telemetry", false)
     .parse(process.argv)
     .opts() as STHCommandOptions;
