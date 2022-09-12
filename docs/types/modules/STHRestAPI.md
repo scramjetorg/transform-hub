@@ -141,11 +141,11 @@ ___
 
 ### GetSequenceInstancesResponse
 
-Ƭ **GetSequenceInstancesResponse**: readonly `string`[] \| `undefined`
+Ƭ **GetSequenceInstancesResponse**: readonly `string`[] \| { `error?`: `string` \| `Error` \| `unknown` ; `opStatus`: `Exclude`<`ReasonPhrases`, `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`\>  }
 
 #### Defined in
 
-[packages/types/src/rest-api-sth/get-sequence-instances.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-sequence-instances.ts#L1)
+[packages/types/src/rest-api-sth/get-sequence-instances.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-sth/get-sequence-instances.ts#L3)
 
 ___
 
@@ -274,7 +274,13 @@ ___
 
 ### StartSequenceResponse
 
-Ƭ **StartSequenceResponse**: { `id`: `string` ; `result`: ``"success"``  } \| { `error`: `unknown` ; `result`: ``"error"``  }
+Ƭ **StartSequenceResponse**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `id` | `string` |
 
 #### Defined in
 

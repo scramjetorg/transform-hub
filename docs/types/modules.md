@@ -85,11 +85,11 @@
 - [InstanceMessage](modules.md#instancemessage)
 - [InstanceMessageData](modules.md#instancemessagedata)
 - [InstanceStats](modules.md#instancestats)
-- [InstanceStatus](modules.md#instancestatus)
 - [K8SAdapterConfiguration](modules.md#k8sadapterconfiguration)
 - [KeepAliveMessage](modules.md#keepalivemessage)
 - [KeepAliveMessageData](modules.md#keepalivemessagedata)
 - [KillHandler](modules.md#killhandler)
+- [KillMessageData](modules.md#killmessagedata)
 - [KillSequenceMessage](modules.md#killsequencemessage)
 - [KubernetesSequenceConfig](modules.md#kubernetessequenceconfig)
 - [LifeCycleError](modules.md#lifecycleerror)
@@ -171,6 +171,8 @@
 - [SynchronousStreamablePayload](modules.md#synchronousstreamablepayload)
 - [TFunction](modules.md#tfunction)
 - [TFunctionChain](modules.md#tfunctionchain)
+- [TelemetryAdaptersConfig](modules.md#telemetryadaptersconfig)
+- [TelemetryConfig](modules.md#telemetryconfig)
 - [TranformFunction](modules.md#tranformfunction)
 - [TransformApp](modules.md#transformapp)
 - [TransformAppAcceptableSequence](modules.md#transformappacceptablesequence)
@@ -180,6 +182,10 @@
 - [WritableApp](modules.md#writableapp)
 - [WriteFunction](modules.md#writefunction)
 - [WriteSequence](modules.md#writesequence)
+
+### Enumerations
+
+- [InstanceStatus](enums/InstanceStatus.md)
 
 ### Namespaces
 
@@ -455,7 +461,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L3)
+[packages/types/src/sth-configuration.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L4)
 
 ___
 
@@ -472,7 +478,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:15](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L15)
+[packages/types/src/sth-configuration.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L16)
 
 ___
 
@@ -596,7 +602,9 @@ ___
 | :------ | :------ |
 | `available` | `number` |
 | `fs` | `string` |
+| `mount?` | `string` |
 | `size` | `number` |
+| `type?` | `string` |
 | `use` | `number` |
 | `used` | `number` |
 
@@ -612,7 +620,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L28)
+[packages/types/src/runner-config.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L29)
 
 ___
 
@@ -962,7 +970,7 @@ Host process configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L40)
+[packages/types/src/sth-configuration.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L41)
 
 ___
 
@@ -1047,7 +1055,7 @@ ___
 | `sequence` | `string` |
 | `sequenceArgs?` | `any`[] |
 | `started?` | `Date` |
-| `status?` | [`InstanceStatus`](modules.md#instancestatus) |
+| `status?` | [`InstanceStatus`](enums/InstanceStatus.md) |
 | `terminated?` | { `exitcode`: `number` ; `reason`: `string`  } |
 | `terminated.exitcode` | `number` |
 | `terminated.reason` | `string` |
@@ -1091,7 +1099,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L46)
+[packages/types/src/runner-config.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L47)
 
 ___
 
@@ -1168,16 +1176,6 @@ ___
 
 ___
 
-### InstanceStatus
-
-Ƭ **InstanceStatus**: ``"initializing"`` \| ``"starting"`` \| ``"running"`` \| ``"stopping"`` \| ``"killing"`` \| ``"completed"`` \| ``"errored"``
-
-#### Defined in
-
-[packages/types/src/instance.ts:2](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance.ts#L2)
-
-___
-
 ### K8SAdapterConfiguration
 
 Ƭ **K8SAdapterConfiguration**: `Object`
@@ -1201,7 +1199,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L72)
+[packages/types/src/sth-configuration.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L73)
 
 ___
 
@@ -1252,9 +1250,25 @@ ___
 
 ___
 
+### KillMessageData
+
+Ƭ **KillMessageData**: `Object`
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `removeImmediately?` | `boolean` | Bypass waiting. |
+
+#### Defined in
+
+[packages/types/src/messages/kill-sequence.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/kill-sequence.ts#L3)
+
+___
+
 ### KillSequenceMessage
 
-Ƭ **KillSequenceMessage**: { `msgCode`: `RunnerMessageCode.KILL`  } & `KillMessageData`
+Ƭ **KillSequenceMessage**: { `msgCode`: `RunnerMessageCode.KILL`  } & [`KillMessageData`](modules.md#killmessagedata)
 
 Message instructing Runner to terminate Sequence using the kill signal.
 It causes an ungraceful termination of Sequence.
@@ -1272,7 +1286,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L40)
+[packages/types/src/runner-config.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L41)
 
 ___
 
@@ -1302,7 +1316,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/load-check-stat.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L22)
+[packages/types/src/load-check-stat.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L24)
 
 ___
 
@@ -1322,7 +1336,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/load-check-stat.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L31)
+[packages/types/src/load-check-stat.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L33)
 
 ___
 
@@ -1342,7 +1356,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/load-check-stat.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L9)
+[packages/types/src/load-check-stat.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L11)
 
 ___
 
@@ -1476,7 +1490,7 @@ ___
 
 ### MessageDataType
 
-Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? `KillMessageData` : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_COMPLETED` ? `SequenceCompleteMessageData` : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
+Ƭ **MessageDataType**<`T`\>: `T` extends `RunnerMessageCode.ACKNOWLEDGE` ? [`AcknowledgeMessageData`](modules.md#acknowledgemessagedata) : `T` extends `RunnerMessageCode.ALIVE` ? [`KeepAliveMessageData`](modules.md#keepalivemessagedata) : `T` extends `RunnerMessageCode.DESCRIBE_SEQUENCE` ? [`DescribeSequenceMessageData`](modules.md#describesequencemessagedata) : `T` extends `RunnerMessageCode.STATUS` ? [`StatusMessageData`](modules.md#statusmessagedata) : `T` extends `RunnerMessageCode.ERROR` ? [`ErrorMessageData`](modules.md#errormessagedata) : `T` extends `RunnerMessageCode.KILL` ? [`KillMessageData`](modules.md#killmessagedata) : `T` extends `RunnerMessageCode.MONITORING` ? [`MonitoringMessageData`](modules.md#monitoringmessagedata) : `T` extends `RunnerMessageCode.MONITORING_RATE` ? [`MonitoringRateMessageData`](modules.md#monitoringratemessagedata) : `T` extends `RunnerMessageCode.STOP` ? [`StopSequenceMessageData`](modules.md#stopsequencemessagedata) : `T` extends `RunnerMessageCode.PING` ? [`PingMessageData`](modules.md#pingmessagedata) : `T` extends `RunnerMessageCode.PONG` ? [`HandshakeAcknowledgeMessageData`](modules.md#handshakeacknowledgemessagedata) : `T` extends `RunnerMessageCode.PANG` ? [`PangMessageData`](modules.md#pangmessagedata) : `T` extends `RunnerMessageCode.SEQUENCE_COMPLETED` ? `SequenceCompleteMessageData` : `T` extends `RunnerMessageCode.SEQUENCE_STOPPED` ? [`SequenceStoppedMessageData`](modules.md#sequencestoppedmessagedata) : `T` extends `RunnerMessageCode.EVENT` ? [`EventMessageData`](modules.md#eventmessagedata) : `T` extends `CPMMessageCode.STH_ID` ? [`STHIDMessageData`](modules.md#sthidmessagedata) : `T` extends `CPMMessageCode.LOAD` ? [`LoadCheckStat`](modules.md#loadcheckstat) : `T` extends `CPMMessageCode.NETWORK_INFO` ? [`NetworkInfo`](modules.md#networkinfo)[] : `T` extends `CPMMessageCode.INSTANCES` ? [`InstanceBulkMessage`](modules.md#instancebulkmessage) : `T` extends `CPMMessageCode.INSTANCE` ? [`InstanceMessage`](modules.md#instancemessage) : `T` extends `CPMMessageCode.SEQUENCES` ? [`SequenceBulkMessage`](modules.md#sequencebulkmessage) : `T` extends `CPMMessageCode.SEQUENCE` ? [`SequenceMessage`](modules.md#sequencemessage) : `never`
 
 #### Type parameters
 
@@ -1823,7 +1837,7 @@ ___
 
 ### OpResponse
 
-Ƭ **OpResponse**<`PayloadType`\>: `PayloadType` & { `opStatus`: `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`  } \| { `error?`: `unknown` ; `opStatus`: `Exclude`<`ReasonPhrases`, `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`\>  }
+Ƭ **OpResponse**<`PayloadType`\>: `PayloadType` & { `message?`: `string` ; `opStatus`: `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`  } \| { `error?`: `string` \| `Error` \| `unknown` ; `opStatus`: `Exclude`<`ReasonPhrases`, `ReasonPhrases.OK` \| `ReasonPhrases.ACCEPTED`\>  }
 
 #### Type parameters
 
@@ -1931,7 +1945,7 @@ PreRunner container configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L30)
+[packages/types/src/sth-configuration.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L31)
 
 ___
 
@@ -1941,7 +1955,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L36)
+[packages/types/src/runner-config.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L37)
 
 ___
 
@@ -1951,7 +1965,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L236)
+[packages/types/src/sth-configuration.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L238)
 
 ___
 
@@ -2058,7 +2072,7 @@ Runner container configuration.
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L35)
+[packages/types/src/sth-configuration.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L36)
 
 ___
 
@@ -2114,6 +2128,7 @@ ___
 | `cpmSslCaPath?` | `string` |
 | `cpmUrl?` | `string` |
 | `docker` | `boolean` |
+| `environmentName?` | `string` |
 | `exitWithLastInstance` | `boolean` |
 | `exposeHostIp` | `string` |
 | `hostname` | `string` |
@@ -2143,10 +2158,11 @@ ___
 | `safeOperationLimit` | `number` |
 | `sequencesRoot` | `string` |
 | `startupConfig` | `string` |
+| `telemetry` | [`TelemetryConfig`](modules.md#telemetryconfig)[``"status"``] |
 
 #### Defined in
 
-[packages/types/src/sth-command-options.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-command-options.ts#L3)
+[packages/types/src/sth-command-options.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-command-options.ts#L4)
 
 ___
 
@@ -2184,6 +2200,7 @@ ___
 | `safeOperationLimit` | `number` | The amount of memory that must remain free. In megabytes. |
 | `sequencesRoot` | `string` | Only used when `noDocker` is true Where should ProcessSequenceAdapter save new Sequences |
 | `startupConfig` | `string` | Provides the location of a config file with the list of sequences to be started along with the host |
+| `telemetry` | [`TelemetryConfig`](modules.md#telemetryconfig) | - |
 | `timings` | { `heartBeatInterval`: `number` ; `instanceAdapterExitDelay`: `number` ; `instanceLifetimeExtensionDelay`: `number`  } | Various timeout and interval configurations |
 | `timings.heartBeatInterval` | `number` | Heartbeat interval in miliseconds |
 | `timings.instanceAdapterExitDelay` | `number` | Time to wait after Runner container exit. In this additional time Instance API is still available. |
@@ -2191,7 +2208,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L100)
+[packages/types/src/sth-configuration.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L101)
 
 ___
 
@@ -2257,7 +2274,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L44)
+[packages/types/src/runner-config.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L45)
 
 ___
 
@@ -2649,6 +2666,36 @@ ___
 #### Defined in
 
 [packages/types/src/functions.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/functions.ts#L43)
+
+___
+
+### TelemetryAdaptersConfig
+
+Ƭ **TelemetryAdaptersConfig**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `loki?` | { `host`: `string` ; `interval?`: `number` ; `labels`: { `[key: string]`: `string`;  } ; `replaceTimestamp`: `boolean`  } |
+| `loki.host` | `string` |
+| `loki.interval?` | `number` |
+| `loki.labels` | { `[key: string]`: `string`;  } |
+| `loki.replaceTimestamp` | `boolean` |
+
+#### Defined in
+
+[packages/types/src/telemetry-config.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/telemetry-config.ts#L1)
+
+___
+
+### TelemetryConfig
+
+Ƭ **TelemetryConfig**: { `adapter`: ``"loki"`` ; `environment?`: `string` ; `status`: `boolean`  } & [`TelemetryAdaptersConfig`](modules.md#telemetryadaptersconfig)
+
+#### Defined in
+
+[packages/types/src/telemetry-config.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/telemetry-config.ts#L10)
 
 ___
 

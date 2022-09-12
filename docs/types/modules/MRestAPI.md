@@ -7,6 +7,7 @@
 ### Type Aliases
 
 - [ConnectedSTHInfo](MRestAPI.md#connectedsthinfo)
+- [ConnectedSTHInfoDetails](MRestAPI.md#connectedsthinfodetails)
 - [GetConfigResponse](MRestAPI.md#getconfigresponse)
 - [GetHealthCheckResponse](MRestAPI.md#gethealthcheckresponse)
 - [GetHostInfoResponse](MRestAPI.md#gethostinforesponse)
@@ -31,8 +32,26 @@
 | :------ | :------ |
 | `healthy` | `boolean` |
 | `id` | `string` |
-| `info` | { `[key: string]`: `any`;  } |
+| `info` | [`ConnectedSTHInfoDetails`](MRestAPI.md#connectedsthinfodetails) |
 | `isConnectionActive` | `boolean` |
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/common.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/common.ts#L7)
+
+___
+
+### ConnectedSTHInfoDetails
+
+Ƭ **ConnectedSTHInfoDetails**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `created?` | `Date` |
+| `lastConnected?` | `Date` |
+| `lastDisconnected?` | `Date` |
 
 #### Defined in
 
@@ -169,4 +188,4 @@ ___
 
 #### Defined in
 
-[packages/types/src/rest-api-manager/common.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/common.ts#L8)
+[packages/types/src/rest-api-manager/common.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/common.ts#L14)
