@@ -81,7 +81,7 @@ What's more, this repository is intended for developers who would like to:
 - build Transform Hub from source
 - dive into code and see how it works
 
-The developers who would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
+For developers who would like to simply use Scramjet Transform Hub to run data processing applications, we recommend following resources:
 
 ![gh_logo](./images/gh_logo.png) [Repository with Introductory README and templates](https://github.com/scramjetorg/platform-docs)
 
@@ -97,15 +97,16 @@ The developers who would like to simply use Scramjet Transform Hub to run data p
 
 Scramjet Transform Hub is a deployment and execution platform. Once installed on a server, it will allow you to start your programs and keep them running on a remote machine. You will be able to start programs in the background or connect to them and see their output directly on your terminal. You will be able to pipe your local data to the program as if it was running from your terminal. You can start your server in AWS, Google Cloud or Azure, start it on your local machine, install it on a Raspberry Pi or wherever else you'd like.
 
-There's no limit to what you can use it for. Do you want a stock checker? A chatbot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real-time? Hey, you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) 📧 or hop on our [Scramjet Discord ![discord](./images/discord.png)](https://scr.je/join-community-mg1)
+There's no limit to what you can use it for. Do you want a stock checker? A chatbot? Maybe you'd like to automate your home? Retrieve sensor data? Maybe you have a lot of data and want to transfer and wrangle it? You have a database of cities and you'd like to enrich your data? You do machine learning and you want to train your set while the data is fetched in real-time? Or perhaps you want to use it for something else and ask us if that's a good use? Ask us [via email](mailto:get@scramjet.org) 📧 or hop on our [Scramjet Discord ![discord](./images/discord.png)](https://scr.je/join-community-mg1) and we'll be happy to talk with you.
 
 [Check our proposition of sample architecture for use cases in different industries.](https://scramjet.org/#use-cases)
 
-This is the STH development repo, in order to use it, you need to have linux based operating system, for instance [Ubuntu](https://ubuntu.com/download/server) installed. We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
 
 ---
 
 # The basics :abcd:
+
+**NOTE:** This is the STH development repo and in order to use it, you need to have **Unix/linux** based operating system, for example [Ubuntu](https://ubuntu.com/download/server). We also use [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/). We're working on development guides for Mac and Windows. 🔜
 
 Scramjet Transform Hub allows you to deploy and execute programs that you build and develop. As mentioned above, you can run any program you like, but you need to know a couple of important things:
 
@@ -141,12 +142,10 @@ If you want to help out, we're happy to accept your pull requests. Please follow
 
 ## Installation :clamp:
 
-> **Reminder:** This is a development guide. In order to use it, you need to have linux based os (e.g. [Ubuntu](https://ubuntu.com/download/server)), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
+> **Reminder:** This is a development guide. In order to use it, you need to have a Unix/linux based os (e.g. [Ubuntu](https://ubuntu.com/download/server)), [docker](https://www.docker.com/get-started) and [node.js v16.x](https://nodejs.org/en/) installed. We're working on development guides for Mac and Windows. 🔜
 
 ### Environment setup
 
-Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
-We will guide you step by step through the installation process.
 
 There are several installations you need to perform to get STH up and running, and even more to start developing with us. You may already have some of these below installed, but we will show you how to install them anyway.
 
@@ -159,26 +158,30 @@ There are several installations you need to perform to get STH up and running, a
 - docker
 - pip
 
-To check if you already have Node.js(v16.xx.x) and npm installed, please check the installed version, run the following commands in your console:
+Our hub is based on node.js, so you need to install node.js and npm, which is the default package manager for node.js.
+To check if you already have Node.js(v16.xx.x) and npm installed, run the following commands in your console:
 
 ```bash
 node -v
 npm -v
 ```
 
-If none of the above commands is found, please proceed with the installation.
+If none of the above commands is found, **you must proceed with the installation.**
 
-It is recommended to use a Node version manager like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using the following cURL command presented below in your console. Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script).
+It is recommended to use a **Node version manager** like [nvm](https://github.com/nvm-sh/nvm/blob/master/README.md) to install Node.js and npm. Do it by running the install script using either of the commands bellow. 
+> Note: Make sure you replace v0.39.0 with the latest version of nvm. The actual version of nvm to install is [here](https://github.com/nvm-sh/nvm/blob/master/README.md#install--update-script).
 
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 ```
 
-After executing the above command you should get in the console this info:
+After executing the above command you should see:
 
 ![nvm_installation_output](./images/nvm_installation_output.png)
 
-Which means that you need to run those two more commands to finish the installation:
+which means that you need to run those two more commands to finish the nvm installation:
 
 ```bash
 export NVM_DIR="$HOME/.nvm"
@@ -186,15 +189,11 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 ```
 
-Export lines from above will be saved in your ~/.bashrc file so that you will not need to run it every session start.
-After that you can check nvm version just to confirm that you have successfully installed nvm.
+Export lines from above will be saved in your ~/.bashrc file so that you won't need to run it with every session start.
 
-```bash
-$ nvm --version
-0.39.0
-```
 
-Now you are ready to install node.js, simply type in your console:
+
+Now you are ready to **install node.js**, simply type in your console:
 
 ```bash
 nvm install --lts    # command will install latest LTS Version of Node.js
@@ -204,19 +203,26 @@ nvm install --lts    # command will install latest LTS Version of Node.js
 > The project is working on Node Long Term Support (LTS) Version, which contains Node Package Manager (NPM) in `^8.15.0` version.
 > NodeJS in version `^17.XX.X` will install NPM in version `^8.1.2` and we don't use it right now 😉.
 
-🤓 For more info you can check out the node.js official [webpage](https://nodejs.org).
+🤓 For more info visit the node.js official [webpage](https://nodejs.org).
 
-Now you can check the installed version of node.js and npm, run the following command in your console:
+Now you can check installed versions of node.js and npm, run the following commands in your console:
+
 
 ```bash
 $ node -v
-v16.17.0
+v16.13.0
+
+$ npm -v
+8.1.0
+```
 
 $ npm -v
 8.15.0
 ```
 
-OK! It looks like you have successfully installed node.js and npm. There are two more installations you need to perform, run the following commands in your console one after another:
+**OK!** It looks like you have successfully installed node.js and npm. 
+
+There are two more installations you need to perform, run the following commands in your console one after another:
 
 ```bash
 npm install -g lerna   # lerna is a tool that we use for publishing multiple packages to npm.
@@ -235,7 +241,7 @@ $ yarn -v
 1.22.17
 ```
 
-OK! The installation was successful. 🎉 🎆
+**OK!** The installation was successful. 🎉 🎆
 
 STH can run python packages, and for that it needs to have `python` and `pip`. These should be already installed on your system - check with:
 
@@ -246,7 +252,9 @@ pip --version
 
 If they are not present, refer to the official installation guide for [Python](https://wiki.python.org/moin/BeginnersGuide/Download) and [Pip](https://pip.pypa.io/en/stable/installation/).
 
-We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you don't want to use Docker, please skip this step. If you want to use Docker, you can install it by running the following commands in your console:
+> **If you don't want to use Docker, please skip this step!**
+
+We also work with Docker, but this is optional. Running STH is possible without Docker in the background. If you want to use Docker, you can install it by running the following commands in your console:
 
 ```bash
 # Install docker and docker-compose
@@ -262,43 +270,9 @@ sudo gpasswd -a $USER docker
 
 ### STH installation
 
-There are two ways to install STH, either by cloning the repo or by using the npm registry.
+There are two ways to install STH, either by getting the package from npmjs or by cloning repo.
 
-First, let's clone the transform-hub repo. After that, some more installations will be required. Please copy the following commands to the terminal:
-
-```bash
-git clone https://github.com/scramjetorg/transform-hub.git && \
-cd transform-hub && \
-yarn install && yarn build:all && npm i -g ./dist/cli
-```
-
-Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘 Meantime let me describe you what is happening in the command you have just pasted into the console:
-
-- `git clone https://github.com/scramjetorg/transform-hub.git` is cloning STH repository.
-- `cd transform-hub` is changing the directory to STH repository.
-- `yarn install` is installing all the dependencies of STH.
-- `yarn build:all` is building all STH packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
-- `npm i -g ./dist/cli` is installing STH CLI as a global command.
-
-When the package installation and build is complete, STH should be ready to run. To confirm that we will try to start it. There are several ways to do it, but for now we will use the [script](package.json#start) that will run STH from node:
-
-```bash
-yarn start -P 8000
-```
-
-The parameter `-P` makes STH listen on port 8000. If you skip this parameter, it will listen on port 8000 anyway. This port is set as a default value in STH configuration file.
-
-When it's done, STH should be running and you should see initial logs showing that the API server has been started on port 8000, something like this:
-
-```bash
-2022-01-14T10:26:39.201Z info (object:Host) API listening on: 0.0.0.0:8000
-```
-
-STH is all set and ready to work with. To stop it use `Ctrl+C` or kill the process with command: `kill -9 $(lsof -t -i:8000)`.
-
-![hub_start](./images/hub_start.png)
-
-As we mentioned before, the current STH can be also installed from the npm registry -> [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth):
+**First**, let's install current STH from the npm registry -> [@scramjet/sth](https://www.npmjs.com/package/@scramjet/sth):
 
 ```bash
 npm i -g @scramjet/sth   # installs the package globally
@@ -306,34 +280,61 @@ npm i -g @scramjet/sth   # installs the package globally
 
 ![npm_package](./images/npm_package.png)
 
-When you start STH from npm, no package installations or builds are required. You can start STH right away, with one of those two commands: `scramjet-transform-hub` or `sth`.
+When you start STH from npm, no package installations or builds are required. You can start STH right away, with one of those two commands: `scramjet-transform-hub` or `sth`. This was quick, wasn't it?:D
 
-If you managed to start STH, it confirms that the installation process was performed successfully. This is the command we used to start STH: `yarn start -P 8000`. The `-P` option is used to start STH on localhost and port number 8000 (0.0.0.0:8000). It is worth mentioning, that STH can be started on any port number, and it can be started in several ways, which is described in the following section.
+
+**Second** way is designed for developers who want to contribute and not just use STH.
+
+ Let's clone the transform-hub repo. After that, some more installations will be required. Please copy the following commands to the terminal:
+
+```bash
+git clone https://github.com/scramjetorg/transform-hub.git && \
+cd transform-hub && \
+yarn install && yarn build:all && npm i -g ./dist/cli
+```
+
+Depending on your machine this may take some time, so it is a perfect time for another hot beverage ☕ or walk 🚶🏼‍♀️ or joggling 🤹‍♂️ or push-ups maybe..? no? Then simply wait 🧘.
+
+In the meantime let me describe for you what is happening in the command you have just pasted into the console:
+
+- `git clone https://github.com/scramjetorg/transform-hub.git` is cloning STH repository.
+- `cd transform-hub` is changing the directory to STH repository.
+- `yarn install` is installing all the dependencies of STH.
+- `yarn build:all` is building all STH packages, this script includes three other building scripts (yarn build:packages && yarn build:refapps && yarn build:docker).
+- `npm i -g ./dist/cli` is installing STH [CLI](https://github.com/scramjetorg/scramjet-cli) as a global command.
+
+When both the package installation and build are complete, STH should be ready to run.
+
+ 
 
 ---
 
 ## Start STH :checkered_flag:
 
-STH can be started in multiple ways. The default way is to run it with Docker and on localhost and port number 8000.
+STH can be started in multiple ways. The default way is to run it with Docker and on localhost and port number 8000. Choose one of the following:
+
+If installed by **cloning the repo**:
 
 ```bash
 yarn start               # Starts Hub after it's been built using script
 
 yarn start:dev           # Starts Hub in development mode
+```
+If installed as **npm package**:
 
+```bash
 scramjet-transform-hub   # Starts Hub from installed npm package (@scramjet/sth)
 
 sth                      # alias for scramjet-transform-hub
 ```
-
-You can also start STH without Docker, use the same commands as above but with added `--runtime-adapter=process` option:
+You can also start STH without Docker, use the same commands as above but add `--no-docker` flag:
 
 ```bash
-yarn start --runtime-adapter=process
+yarn start --no-docker
 
-yarn start:dev --runtime-adapter=process
+yarn start:dev --no-docker
 
-sth --runtime-adapter=process
+sth --no-docker
 ```
 
 There is a wide range of options that you can start STH with. Please add `--help` or `-h` flag to list all the options:
@@ -370,9 +371,9 @@ Options:
 
 ## Install CLI and execute :white_check_mark:
 
-Thi installation was already done at the end of the [Installation](#installation-clamp) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
+CLI installation was already done at the end of the [Installation](#installation-clamp) section, just before starting STH. But it is worth mentioning, that there are two ways to install the CLI:
 
-- from the source code. In the root folder, after building, run the commands:
+- from the source code. In the root folder, **after building**, run the commands:
 
 ```bash
 npm i -g ./dist/cli # install CLI globally from the source folder
@@ -422,6 +423,7 @@ You can also run CLI commands from the source code using `yarn start:dev:cli` in
 ```bash
 $ yarn start:dev:cli --version
 yarn run v1.22.17
+
 $ ts-node packages/cli/src/bin/index.ts --version
 CLI version: 0.28.1
 ```
@@ -430,7 +432,7 @@ We will use CLI later on to execute the Sequence. If you would like to read more
 
 ## Build the packages :building_construction:
 
-All the packages in the project need to be installed and built before the can be used.
+All the packages in the project need to be installed and built before they can be used.
 
 **Install** will create a `node_modules` folder in the root of the project and in each package (dependencies will be installed).
 
@@ -544,14 +546,14 @@ bugfixes) can be published immediately if needed.
 
 # Sample usage :sunglasses:
 
-## "Hello Alice" sample :wave:
+## "Hello World!" sample :wave:
 
-The sample will work only if you have properly configured your environment, installed hub and build all the packages.
+The sample will work only if you have properly configured your environment, installed hub and built all the packages.
 By this time you should already have all those things done by going through the [Installation](#installation-clamp) section.
 
 > 💡 **HINT:** _The following instructions apply to the state of the repository from the `release/0.28.0`._
 
-To start the "Hello Alice" sample we will need these basic steps:
+To start the the sample, we will need to perform some steps:
 
 - [start STH](#start-sth-checkered_flag)
 - [build refapps](#build-refapps)
