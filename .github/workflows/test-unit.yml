@@ -34,5 +34,5 @@ jobs:
         run: yarn install --ignore-engines --frozen-lockfile --cache-folder=$( $( dirname yarn cache dir ) )
 
       - name: Run packages tests
-        run: yarn test:packages-no-concurrent
+        run: SCP_ENV_VALUE=GH_CI yarn test:packages-no-concurrent
 
