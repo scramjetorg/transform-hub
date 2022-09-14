@@ -48,10 +48,10 @@ jobs:
         run: scramjet-transform-hub >> scramjet.log 2>&1 &
 
       - name: Run BDD npm tests (parallel)
-        run: SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd-ci --tags="not @no-parallel" --parallel=2 --format=summary
+        run: SCP_ENV_VALUE=GH_CI SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd-ci --tags="not @no-parallel" --parallel=2 --format=summary
 
       - name: Run BDD npm tests (no-parallel)
-        run: SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd-ci --tags="@no-parallel"
+        run: SCP_ENV_VALUE=GH_CI SCRAMJET_TEST_LOG=1 SCRAMJET_HOST_BASE_URL="http://127.0.0.1:8000/api/v1" NO_HOST=1 yarn test:bdd-ci --tags="@no-parallel"
 
       - name: Show logs
         if: always()
