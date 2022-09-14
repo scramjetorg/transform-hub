@@ -62,7 +62,7 @@ export class HostUtils {
 
             this.setArgs(command, extraArgs, ommit);
 
-            const hub = this.host = spawn("/usr/bin/env", command, { env: { ...process.env, SCP_ENV_VALUE: "GH_CI" }});
+            const hub = this.host = spawn("/usr/bin/env", command, { env: { ...process.env, SCP_ENV_VALUE: "GH_CI" } });
 
             this.hostProcessStopped = false;
 
