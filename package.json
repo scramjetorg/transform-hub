@@ -32,7 +32,7 @@
     "build:all-docs": "yarn build:readme && yarn build:docs",
     "pack:pub": "yarn clean:root && FLAT_PACKAGES=true MAKE_PUBLIC=true NO_INSTALL=true scripts/build-all.js -w '!bdd' --ts-config tsconfig.build.json",
     "publish:dist": "find dist/ -iname package.json -not -wholename '*node_modules*' -execdir yarn publish --no-git-tag-version --non-interactive \\;",
-    "cloc": "cloc . --fullpath --include-lang TypeScript --not-match-d \"(node_modules|test|dist|bdd)\" --by-percent cm",
+    "cloc": "cloc . --fullpath --include-lang TypeScript,JavaScript,Python,Dockerfile,Markdown  --match-d=\"(packages|bdd\/step-definitions|bdd\/lib)\" --not-match-d \"(node_modules|test|dist)\" --by-percent cmb --found=foundFiles",
     "clean": "yarn clean:root && scripts/run-script.js clean",
     "clean:root": "rm -rf ./dist/",
     "clean:modules": "find -name node_modules -or -name __pypackages__ -prune -exec rm -rf {} ';' 2> /dev/null",
@@ -58,6 +58,7 @@
     "test:bdd": "yarn --cwd=./bdd run test:bdd --fail-fast",
     "test:unified-py": "PACKAGES_DIR=../packages/python- yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-unified",
     "test:unified-js": "PACKAGES_DIR=../packages/ yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-unified",
+    "test:coverage": "nyc yarn yarn --cwd=./bdd run test:bdd",
     "prebump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && git diff --exit-code --quiet && yarn bump:images && lerna version -y --force-publish --no-git-tag-version ${NEXT_VER} && git add .",
     "bump:packages": "NEXT_VER=$(npx semver -i ${VERSION_LEVEL:-prerelease} $(jq -r .version < package.json)) && yarn version --new-version ${NEXT_VER}",
     "bump:images": "./scripts/bump_docker_images.sh",
@@ -75,6 +76,7 @@
     "url": "https://github.com/scramjetorg/transform-hub.git"
   },
   "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "4.2.1",
     "@types/node": "15.12.5",
     "@typescript-eslint/eslint-plugin": "^4.33.0",
@@ -90,6 +92,7 @@
     "globrex": "^0.1.2",
     "husky": "^6.0.0",
     "lerna": "^5.4.2",
+    "nyc": "^15.1.0",
     "semver": "^7.3.7",
     "syncpack": "^5.8.15",
     "tar": "^6.1.11",
