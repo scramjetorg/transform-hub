@@ -116,7 +116,7 @@ BeforeAll({ timeout: 10e3 }, async () => {
         const instancesServerPort = await freeport();
 
         process.env.LOCAL_HOST_PORT = apiPort.toString();
-        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
 
         process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
 
@@ -172,7 +172,7 @@ const startHost = async () => {
         const instancesServerPort = await freeport();
 
         process.env.LOCAL_HOST_PORT = apiPort.toString();
-        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://localhost:${apiPort}/api/v1`;
+        apiUrl = process.env.LOCAL_HOST_BASE_URL = `http://127.0.0.1:${apiPort}/api/v1`;
 
         process.env.LOCAL_HOST_INSTANCES_SERVER_PORT = instancesServerPort.toString();
 
