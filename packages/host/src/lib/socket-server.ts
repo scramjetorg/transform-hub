@@ -28,7 +28,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
     private runnerConnectionsInProgress = new Map<string, RunnerConnectionsInProgress>()
 
-    constructor(private port: number) {
+    constructor(private port: number, private hostname: string) {
         super();
 
         this.logger = new ObjLogger(this);
@@ -80,7 +80,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
         return new Promise((res, rej) => {
             this.server!
-                .listen(this.port, () => {
+                .listen(this.port, this.hostname, () => {
                     this.logger.info("SocketServer on", this.server?.address());
                     res();
                 })

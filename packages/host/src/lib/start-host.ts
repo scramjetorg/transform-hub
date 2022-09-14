@@ -5,7 +5,7 @@ import { SocketServer } from "./socket-server";
 
 function createHost(apiServerConfig: ServerConfig, sthConfig: STHConfiguration) {
     const apiServer = createServer(apiServerConfig);
-    const tcpServer = new SocketServer(sthConfig.host.instancesServerPort);
+    const tcpServer = new SocketServer(sthConfig.host.instancesServerPort, sthConfig.host.hostname);
     const host = new Host(apiServer, tcpServer, sthConfig);
 
     return host;

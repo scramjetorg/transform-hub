@@ -33,15 +33,15 @@ const _defaultConfig: STHConfiguration = {
     },
     identifyExisting: false,
     host: {
-        hostname: "0.0.0.0",
-        port: 8000,
         apiBase: "/api/v1",
+        infoFilePath: "/tmp/sth-id.json",
         instancesServerPort: 8001,
-        infoFilePath: "/tmp/sth-id.json"
+        hostname: "::",
+        port: 8000
     },
     instanceRequirements: {
-        freeMem: 256,
         cpuLoad: 10,
+        freeMem: 256,
         freeSpace: 128
     },
     safeOperationLimit: 512,
