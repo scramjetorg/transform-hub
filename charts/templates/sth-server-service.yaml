@@ -1,0 +1,23 @@
+{{- if .Values.sthRunner.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: sth-runner
+  labels:
+    app.kubernetes.io/name: {{ include "sth.name" . }}
+    helm.sh/chart: {{ include "sth.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    service: sth
+spec:
+  type: {{ .Values.sthRunner.service.type }}
+  ports:
+  - port: {{ .Values.sthRunner.service.port }}
+    name: sth
+    targetPort: sth-runner
+  {{- if or (eq .Values.sthRunner.service.type "LoadBalancer") (eq .Values.sthRunner.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.sthRunner.service.externalTrafficPolicy }}
+  {{- end }}
+  selector:
+    app: sth
+{{- end }}
