@@ -548,81 +548,50 @@ bugfixes) can be published immediately if needed.
 
 ## "Hello World!" sample :wave:
 
-The sample will work only if you have properly configured your environment, installed hub and built all the packages.
+Further actions will work only if you have properly configured your environment, installed hub and built all the packages.
 By this time you should already have all those things done by going through the [Installation](#installation-clamp) section.
 
 > 💡 **HINT:** _The following instructions apply to the state of the repository from the `release/0.28.0`._
 
-To start the the sample, we will need to perform some steps:
-
-- [start STH](#start-sth-checkered_flag)
-- [build refapps](#build-refapps)
-- [execute](#execute)
-- [get the result](#get-the-output)
-
-### Build refapps
-
-The Sequence needs to be compressed into a `tar.gz` file format before we send it to the hub. Use one of our [reference apps](https://github.com/scramjetorg/reference-apps). The script below will download .tar.gz files:
-
+- Run STH:
 ```bash
-# this builds refapps, they will be available in .tar.gz files in 'packages' directory
-yarn build:refapps
+yarn start      # if cloned STH repo
+
+sth             # if installed STH as npm package
+```
+Open a new terminal window **inside transform-hub root** folder and do the following:
+
+- Send the hello-world Sequence package to the STH and start it:
+```bash
+si seq send packages/hello-world.tar.gz
+
+si seq start -      # '-' means last uploaded Sequence
+si seq start <id>   # or you can specify id parameter instead
 ```
 
-### Execute
-
-To execute the sample run the commands listed below from the level of the main folder.
-
-> **💡 HINT**: remember that to use curl commands hub must be running. [See how to start STH =>](#start-sth-checkered_flag)
-
-#### **Upload the package** <!-- omit in toc -->
-
-Copy and paste the following command to the terminal:
+Alternatively, you can use ***deploy*** which does 3in1 - it packs (if neccessary), sends and starts the Sequence:
 
 ```bash
-SEQ_ID=$( \
-    curl --location --request POST "http://localhost:8000/api/v1/sequence" \
-    --header 'content-type: application/octet-stream' \
-    --data-binary '@packages/hello-alice-out.tar.gz' | jq ".id" -r \
-)
+si seq deploy packages/hello-world.tar.gz
 ```
+You should see on the STH terminal that it received the Sequence.
 
-During your development or checking out our code, you may want to edit some of our reference apps. After that you are very welcome to use our scripts to speed up your developing process. In this case, you can use the following, that will build and send any of the reference packages and samples in this repo:
-
+**Let's connect to the output stream.** Run this command:
 ```bash
-SEQ_ID=$(./scripts/_/upload-sequence path/to/the/sequence) # -> when you want to upload the package (it will be built if needed)
-SEQ_ID=$(./scripts/_/upload-sequence path/to/the/sequence -r) # -> when you want to upload the package and make sure it's rebuilt
-SEQ_ID=$(./scripts/_/upload-sequence dist/my-package.tgz -r) # -> when you want to upload a ready tarball
+si inst output -        # '-' means last uploaded Sequence
+si inst output <id>     # or you can specify id parameter instead
 ```
-
-#### **Start the Sequence** <!-- omit in toc -->
-
-Copy and paste the following command to the terminal:
-
+Note that we need an instance ID, not the Sequence.
+If the output from previous command have been cleared on your terminal, you can still list all your Sequences and instances by running the following:
+- **List Sequences:**
 ```bash
-INSTANCE_ID=$(curl --location --request POST "http://localhost:8000/api/v1/sequence/$SEQ_ID/start" \
---header 'content-type: application/json' \
---data-raw '{
-    "appConfig": {},
-    "args": ["/package/data.json"]
-}' | jq ".id" -r)
+si seq list
 ```
-
-> **💡 HINT:** _INSTANCE_ID and SEQ_ID are shell variables._
-
-#### **GET the output**
-
-To get the output we need to send GET request to `/stdout` endpoint:
-
+- **List instances:**
 ```bash
-curl --location --request GET "http://localhost:8000/api/v1/instance/$INSTANCE_ID/stdout" \
---header 'Transfer-Encoding: chunked' \
---header 'content-type: application/octet-stream'
+si inst list
 ```
-
-This is what you should get as a result:
-
-![hello_alice](./images/hello_alice.png)
+After using instance's ID with `si inst output` command, you should see **"Hello World!"** on your terminal window.
 
 [See more about streams and curl commands =>](docs/read-more/stream-and-api.md)
 
@@ -695,7 +664,7 @@ To solve this issue you need to add the current user to the docker group, please
 ```bash
 sudo gpasswd -a $USER docker
 ```
-
+If the problem persists, restart your PC.
 </details><br>
 
 ### **Packages issues:** <!-- omit in toc -->
