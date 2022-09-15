@@ -57,4 +57,8 @@ export class ManagerClient implements ClientProvider {
     async getInstances() {
         return this.client.get<MRestAPI.GetInstancesResponse>("instances");
     }
+
+    async getTopics() {
+        return this.client.get<MRestAPI.GetTopicsResponse>("topics");
+    }
 }
