@@ -1,9 +1,10 @@
 import fs from "fs";
-
-import * as http from "http";
-import * as https from "https";
-import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import { Duplex, Readable } from "stream";
+import * as http from "http";
+
+import { networkInterfaces } from "systeminformation";
+
+import { CPMMessageCode, InstanceMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 import {
     STHRestAPI,
     CPMConnectorOptions,
@@ -17,7 +18,6 @@ import {
 import { MessageUtilities } from "@scramjet/model";
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
-import { networkInterfaces } from "systeminformation";
 import { VerserClient } from "@scramjet/verser";
 import { TypedEmitter, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
@@ -153,6 +153,8 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.cpmId = cpmId;
         this.config = config;
 
+        this.logger = new ObjLogger(this);
+
         this.verserClient = new VerserClient({
             verserUrl: `${this.cpmUrl}/verser`,
             headers: {
@@ -163,8 +165,8 @@ export class CPMConnector extends TypedEmitter<Events> {
                 ? { ca: [this.cpmSslCa] }
                 : undefined
         });
+        this.verserClient.logger.pipe(this.logger);
 
-        this.logger = new ObjLogger(this);
         this.logger.trace("Initialized.");
     }
 
@@ -308,8 +310,8 @@ export class CPMConnector extends TypedEmitter<Events> {
         try {
             this.logger.trace("Connecting to Manager", this.cpmUrl, this.cpmId);
             connection = await this.verserClient.connect();
-        } catch (err) {
-            this.logger.error("Can not connect to Manager", err);
+        } catch (error: any) {
+            this.logger.error("Can not connect to Manager", this.cpmUrl, this.cpmId, error.message);
 
             await this.reconnect();
 
@@ -330,7 +332,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.connected = true;
         this.connectionAttempts = 0;
 
-        connection.req.on("error", async (error: any) => {
+        connection.req.once("error", async (error: any) => {
             this.logger.error("Request error", error);
 
             try {
@@ -340,7 +342,7 @@ export class CPMConnector extends TypedEmitter<Events> {
             }
         });
 
-        this.verserClient.on("error", async (error: any) => {
+        this.verserClient.once("error", async (error: any) => {
             this.logger.error("VerserClient error", error);
 
             try {
@@ -542,17 +544,9 @@ export class CPMConnector extends TypedEmitter<Events> {
         reqPath: string,
         headers: Record<string, string> = {}
     ): http.ClientRequest {
-        const url = `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`;
-        const agent = this.isHttps
-            ? new https.Agent({
-                keepAlive: true, ca: [this.cpmSslCa]
-            })
-            : new http.Agent({ keepAlive: true });
-        const requestFn = this.isHttps ? https.request : http.request;
-
-        return requestFn(
-            url,
-            { method, agent, headers }
+        return http.request(
+            `${this.cpmUrl}/api/v1/cpm/${this.cpmId}/api/v1/${reqPath}`,
+            { method, agent: this.verserClient.verserAgent, headers }
         );
     }
 

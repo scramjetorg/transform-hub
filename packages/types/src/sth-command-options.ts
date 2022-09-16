@@ -39,5 +39,6 @@ export type STHCommandOptions = {
     startupConfig: string;
     exitWithLastInstance: boolean;
     instanceLifetimeExtensionDelay: number;
+    environmentName?: string;
     telemetry: TelemetryConfig["status"]
 }

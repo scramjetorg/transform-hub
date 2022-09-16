@@ -9,5 +9,6 @@ export type TelemetryAdaptersConfig = {
 
 export type TelemetryConfig = {
     status: boolean,
+    environment?: string,
     adapter: "loki"
 } & TelemetryAdaptersConfig;

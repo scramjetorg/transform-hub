@@ -68,6 +68,7 @@ const _defaultConfig: STHConfiguration = {
     telemetry: {
         status: true,
         adapter: "loki",
+        environment: process.env.SCP_ENV_VALUE || "not-set",
         loki: {
             host: "https://analytics.scramjet.org/sth-usage",
             replaceTimestamp: true,
