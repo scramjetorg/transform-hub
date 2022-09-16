@@ -15,6 +15,9 @@ spec:
   - port: {{ .Values.sthApi.service.port }}
     name: sth
     targetPort: sth-api
+    {{- if (eq .Values.sthApi.service.type "NodePort") }}
+    nodePort: {{ .Values.sthApi.service.port }}
+    {{- end }}
   {{- if or (eq .Values.sthApi.service.type "LoadBalancer") (eq .Values.sthApi.service.type "NodePort") }}
   externalTrafficPolicy: {{ .Values.sthApi.service.externalTrafficPolicy }}
   {{- end }}

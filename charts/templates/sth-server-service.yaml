@@ -15,6 +15,9 @@ spec:
   - port: {{ .Values.sthRunner.service.port }}
     name: sth
     targetPort: sth-runner
+    {{- if (eq .Values.sthRunner.service.type "NodePort") }}
+    nodePort: {{ .Values.sthRunner.service.port }}
+    {{- end }}
   {{- if or (eq .Values.sthRunner.service.type "LoadBalancer") (eq .Values.sthRunner.service.type "NodePort") }}
   externalTrafficPolicy: {{ .Values.sthRunner.service.externalTrafficPolicy }}
   {{- end }}

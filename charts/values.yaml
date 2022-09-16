@@ -42,7 +42,7 @@ serviceAccountToken:
 sthApi:
   enabled: true
   service:
-    type: nodePort
+    type: NodePort
     port: 8000
     externalTrafficPolicy: Local
 
@@ -50,7 +50,7 @@ sthApi:
 sthRunner:
   enabled: false
   service:
-    type: ClusterIP
+    type: NodePort
     port: 8001
     externalTrafficPolicy: Cluster
 
