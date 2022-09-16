@@ -1,4 +1,4 @@
-## Exaple of deployment:
+## Example of deployment:
 
 `helm upgrade --install sth charts/ --namespace <namespace>`
 
