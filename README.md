@@ -279,7 +279,7 @@ npm i -g @scramjet/sth   # installs the package globally
 When you start STH from npm, no package installations or builds are required. You can start STH right away, with one of those two commands: `scramjet-transform-hub` or `sth`. This was quick, wasn't it?:D
 
 
-**Second** way is designed for developers who want to contribute and not just use STH.
+**Second** way is designed for developers who want to contribute and not *just* use STH.
 
  Let's clone the transform-hub repo. After that, some more installations will be required. Please copy the following commands to the terminal:
 
