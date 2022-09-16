@@ -2,6 +2,21 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+
+## [0.28.4] - 2022-09-16
+
+## Fixed
+* Small fixes by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/680
+* Fix telemtry sizes and environment by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/682
+* Rename Telemetry ENV to the one described in the [SHN-832] task by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/685
+* Instruction fixes by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/675
+
+## Features
+* Allow to merge if target key not exists by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/679
+* [SHN-832] telemetry ENV SCP_ENV_VALUE=GH_CI by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/683
+* Add `getTopics()` method in manager client by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/688
+* [STH] line count and coverage script added by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/686
+
 ## [0.28.3] - 2022-09-09
 
 ## Fixed
