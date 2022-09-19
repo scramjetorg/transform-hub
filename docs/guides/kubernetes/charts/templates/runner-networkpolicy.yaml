@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: runner-np
+  labels:
+    app.kubernetes.io/name: {{ include "sth.name" . }}
+    helm.sh/chart: {{ include "sth.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+    - to:
+        - podSelector:
+            matchLabels:
+              app: sth
+              owner: sth-{{ .Release.Namespace }}
+      ports:
+        - port: 8001
+          protocol: TCP
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: coredns
+      ports:
+        - port: 53
+          protocol: UDP
+  podSelector:
+    matchLabels:
+       app: runner
+  policyTypes:
+  - Egress

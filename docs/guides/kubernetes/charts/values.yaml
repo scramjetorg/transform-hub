@@ -1,0 +1,64 @@
+replicaCount: 1
+repo: scramjetorg
+app: sth
+version: 0.28.3
+
+# fullnameOverride: ""
+
+# -- Additional command line arguments to pass to STH If none set extraArgs: []
+extraArgs:
+  - "--runtime-adapter=kubernetes"
+  - "--k8s-runner-image=scramjetorg/runner:0.28.3"
+  - "--k8s-runner-py-image=scramjetorg/runner-py:0.28.3"
+  - "--k8s-runner-cleanup-timeout=0"
+  - "--no-colors"
+
+# -- runnerAutoNamespace apliable only with runtime-adapter=kubernetes; if true helm Chart will automaticcly adds argument with proper namespace "--k8s-namespace={{ .Release.Namespace }}"
+# this is important because token that STH receives is authorized only to that specific namespace in which the STH is located
+# You can also set it to false and add custom value directly to extraArgs.
+kubernetesAdapter:
+  runnerAutoNamespace: true
+  # sets --k8s-sth-pod-host to STH POD instead of service. This is suggested solution if STH > 1
+  runnerAutoSth: true
+
+# -- Additional environment variables to pass to STH. If none set env: []
+env:
+  - name: DEVELOPMENT
+    value: "1"
+  - name: SCRAMJET_TEST_LOG
+    value: "1"
+
+# -- Additional labels. If none set env: {}
+labels: {}
+
+# -- Additional annotations. If none set env: {}
+annotations: {}
+ 
+# -- Creates serviceAccountToken, secret, role and rolebinding. Required by STH kubernetes runtime adapter
+serviceAccountToken:
+  enabled: true
+
+# -- Manage STH API service
+sthApi:
+  enabled: true
+  service:
+    type: NodePort
+    port: 8000
+    externalTrafficPolicy: Local
+
+# -- Manage STH Runner API service
+sthRunner:
+  enabled: false
+  service:
+    type: NodePort
+    port: 8001
+    externalTrafficPolicy: Cluster
+
+## The storage volume used by each Pod in the StatefulSet.
+persistentVolume:
+  enabled: false
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  size: 10Gi
+  storageClassName: "csi-rbd-sc"
