@@ -22,8 +22,8 @@ export const listDirFileNames = (dir: string) => {
 };
 
 export const profileExists = (name: string) => listDirFileNames(profilesDir).includes(name);
-export const profileNameToPath = (name:string) => resolve(profilesDir, `${name}${configFileExt}`);
-export const profileRemove = (name:string) => rmSync(profileNameToPath(name));
+export const profileNameToPath = (name: string) => resolve(profilesDir, `${name}${configFileExt}`);
+export const profileRemove = (name: string) => rmSync(profileNameToPath(name));
 
 const initDir = (dir: string) => {
     if (existsSync(dir)) return;
@@ -34,15 +34,9 @@ const initDir = (dir: string) => {
     }
 };
 
-export const createConfigDirIfNotExists = () => {
-    if (!existsSync(siDir))
-        initDir(siDir);
-};
-
-export const createSessionDirIfNotExists = () => {
-    if (!existsSync(sessionDir))
-        initDir(sessionDir);
-};
+export const createConfigDirIfNotExists = () => initDir(siDir);
+export const createSessionDirIfNotExists = () => initDir(sessionDir);
+export const createProfileDirIfNotExists = () => initDir(profilesDir);
 
 const procPath = "/proc";
 /**
