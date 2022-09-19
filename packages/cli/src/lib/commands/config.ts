@@ -2,10 +2,9 @@
 
 import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
-import { ProfileConfig, profileConfig, profileManager, siConfig, sessionConfig } from "../config";
+import { profileConfig, profileManager, siConfig, sessionConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
 import commander from "commander";
-import { defaultConfigName, listDirFileNames, profileExists, profileNameToPath, profileRemove, profilesDir } from "../paths";
 
 /**
  * Initializes `config` command.
@@ -209,7 +208,7 @@ export const config: CommandDefinition = (program) => {
             const currentProfile = profileManager.getProfileName();
 
             displayMessage("Available profiles:");
-            listDirFileNames(profilesDir).sort().forEach((profile) => {
+            profileManager.listProfiles().sort().forEach((profile) => {
                 displayMessage(`${profile === currentProfile ? "-> " : "   "}${profile}`);
             });
         });
@@ -219,7 +218,8 @@ export const config: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Set configuration profile as default to use")
         .action((name) => {
-            if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);
+            if (!profileManager.profileExists(name)) throw Error(`Unknown profile: ${name}`);
+            if (!profileManager.profileIsValid(name)) throw Error(`Profile ${name} contain errors`);
             const currentProfile = siConfig.getConfig().profile;
 
             if (name === currentProfile)
@@ -233,22 +233,11 @@ export const config: CommandDefinition = (program) => {
         .command("create")
         .argument("<name>")
         .description("Create new configuration profile")
-        .action((name) => {
-            if (profileExists(name)) throw Error(`Profile ${name} already exist`);
-            const newProfile = new ProfileConfig(profileNameToPath(name));
-
-            newProfile.writeConfig(profileConfig.getDefaultConfig());
-        });
+        .action((name) => { profileManager.createProfile(name); });
 
     profileCmd
         .command("remove")
         .argument("<name>")
         .description("Remove existing profile configuration")
-        .action((name) => {
-            if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);
-            if (name === defaultConfigName) {
-                throw new Error(`You can't remove ${defaultConfigName} profile`);
-            }
-            profileRemove(name);
-        });
+        .action((name) => { profileManager.removeProfile(name); });
 };
