@@ -7,8 +7,10 @@
  * @returns {string} Detected language or "unknown"
  */
 export const detectLanguage = (packageJson: {[key: string]: any}) => {
-    if ("python3" in packageJson.engines) return "py";
-    if ("node" in packageJson.engines) return "js";
+    if (packageJson.engines) {
+        if ("python3" in packageJson.engines) return "py";
+        if ("node" in packageJson.engines) return "js";
+    }
 
     return (packageJson.main?.match(/(?:\.)([^.\\/:*?"<>|\r\n]+$)/) || { 1: undefined })[1] || "unknown";
 };

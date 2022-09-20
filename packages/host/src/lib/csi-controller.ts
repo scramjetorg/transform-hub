@@ -54,6 +54,7 @@ const runnerExitDelay = 15000;
 
 type Events = {
     pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
+    hourChime: () => void;
     error: (error: any) => void;
     stop: (code: number) => void;
     end: (code: number) => void;
@@ -224,6 +225,8 @@ export class CSIController extends TypedEmitter<Events> {
         let code = 0;
         let errored = false;
 
+        const interval = setInterval(() => this.emit("hourChime"), 3600e3);
+
         try {
             const stopResult = await this.instanceStopped();
 
@@ -235,6 +238,8 @@ export class CSIController extends TypedEmitter<Events> {
             code = e.exitcode;
             errored = true;
             this.logger.error("Instance caused error", e.message, code);
+        } finally {
+            clearInterval(interval);
         }
 
         this.status = !errored ? InstanceStatus.COMPLETED : InstanceStatus.ERRORED;

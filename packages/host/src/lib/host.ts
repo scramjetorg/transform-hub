@@ -727,6 +727,10 @@ export class Host implements IComponent {
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
             this.pushTelemetry("Instance started", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
 
+            csic.on("hourChime", () => {
+                this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
+            });
+
             return {
                 opStatus: ReasonPhrases.OK,
                 message: `Sequence ${csic.id} starting`,
