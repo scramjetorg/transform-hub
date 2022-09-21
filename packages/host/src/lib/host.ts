@@ -163,7 +163,7 @@ export class Host implements IComponent {
             this,
             {},
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
-                ObjLogger.levels[ObjLogger.levels.length - 1]
+            ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
@@ -697,6 +697,10 @@ export class Host implements IComponent {
         const payload = req.body || {} as STHRestAPI.StartSequencePayload;
         const sequence = this.sequencesStore.get(id) ||
             Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
+
+        if (!req.body.args && sequence?.config?.args) {
+            payload.args = sequence.config.args;
+        }
 
         if (!sequence) {
             return {
