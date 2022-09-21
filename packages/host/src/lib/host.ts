@@ -713,7 +713,7 @@ export class Host implements IComponent {
             this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
                 appConfig: csic.appConfig,
-                sequenceArgs: csic.sequenceArgs,
+                args: csic.args,
                 sequence: id,
                 ports: csic.info.ports,
                 created: csic.info.created,

@@ -94,7 +94,7 @@ export class CSIController extends TypedEmitter<Events> {
     sequence: SequenceInfo;
     appConfig: AppConfig;
     instancePromise?: Promise<{ exitcode: number; reason: TerminateReason }>;
-    sequenceArgs: Array<any> | undefined;
+    args: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
     info: {
@@ -184,7 +184,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.sequence = sequence;
         this.appConfig = payload.appConfig;
         this.sthConfig = sthConfig;
-        this.sequenceArgs = payload.args;
+        this.args = payload.args;
         this.outputTopic = payload.outputTopic;
         this.inputTopic = payload.inputTopic;
 
@@ -499,7 +499,7 @@ export class CSIController extends TypedEmitter<Events> {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
-                args: this.sequenceArgs
+                args: this.args
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
@@ -719,7 +719,7 @@ export class CSIController extends TypedEmitter<Events> {
         return {
             id: this.id,
             appConfig: this.appConfig,
-            sequenceArgs: this.sequenceArgs,
+            args: this.args,
             sequence: this.sequence.id,
             sequenceInfo: {
                 id: this.sequence.id,
