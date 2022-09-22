@@ -107,7 +107,9 @@ export const sequence: CommandDefinition = (program) => {
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
         .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr }) => {
-            const args = sequenceParseArgs(argsStr);
+            let args;
+
+            if (argsStr) args = sequenceParseArgs(argsStr);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
             const instanceClient = await sequenceStart(
@@ -120,7 +122,7 @@ export const sequence: CommandDefinition = (program) => {
         output: string;
         configFile: any;
         configString: string;
-        args: string;
+        args?: string;
     };
 
     sequenceCmd
@@ -134,6 +136,10 @@ export const sequence: CommandDefinition = (program) => {
         .option("--args <json-string>", "Arguments to be passed to the first function in the Sequence")
         .description("Pack (if needed), send and start the Sequence")
         .action(async (path: string, { output: fileoutput, configFile, configString, args: argsStr }: DeployArgs) => {
+            let args;
+
+            if (argsStr) args = sequenceParseArgs(argsStr);
+
             const output = new PassThrough();
 
             if (fileoutput) {
@@ -157,8 +163,6 @@ export const sequence: CommandDefinition = (program) => {
 
                 displayObject(sequenceClient, profileConfig.format);
             }
-
-            const args = sequenceParseArgs(argsStr);
 
             const instanceClient = await sequenceStart("-", { configFile, configString, args });
 

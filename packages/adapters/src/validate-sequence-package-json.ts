@@ -48,4 +48,5 @@ export const sequencePackageJSONDecoder = JsonDecoder.object<SequencePackageJSON
     author: JsonDecoder.optional(JsonDecoder.string),
     keywords: JsonDecoder.optional(JsonDecoder.array(JsonDecoder.string, "keywordsDecoder")),
     repository: JsonDecoder.optional(repositoryDecoder),
+    args: JsonDecoder.optional(JsonDecoder.array(JsonDecoder.succeed, "argsDecoder")),
 }, "SequencePackageJSON");

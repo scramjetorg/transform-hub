@@ -1,6 +1,7 @@
 // TODO: Rename. it is not a runner config but response from Pre-runner. - valid!!!
 
 import { InstanceLimits } from "./instance-limits";
+import { InstanceArgs } from "./instance-store";
 import { PortConfig } from "./sequence-package-json";
 import { RunnerContainerConfiguration } from "./sth-configuration";
 
@@ -15,10 +16,11 @@ type CommonSequenceConfig = {
     name: string;
     version: string;
     sequenceDir: string;
-    description: string;
-    author: string;
-    keywords: string[];
-    repository: {
+    description?: string;
+    author?: string;
+    keywords?: string[];
+    args?: InstanceArgs;
+    repository?: {
         type: string;
         url: string;
         directory?: string;
