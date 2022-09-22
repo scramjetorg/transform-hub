@@ -107,7 +107,7 @@ export const sequence: CommandDefinition = (program) => {
         .option("--limits <json-string>", "Instance limits")
         .description("Start the Sequence with or without given arguments")
         .action(async (id, { configFile, configString, outputTopic, inputTopic, args: argsStr, limits: limitsStr }) => {
-            const args = argsStr ? sequenceParseArgs(argsStr) : undefined;
+            const args = argsStr && sequenceParseArgs(argsStr);
             const limits = limitsStr ? JSON.parse(limitsStr) : {};
 
             const instanceClient = await sequenceStart(
