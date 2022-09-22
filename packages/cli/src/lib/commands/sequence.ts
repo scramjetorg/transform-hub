@@ -158,7 +158,7 @@ export const sequence: CommandDefinition = (program) => {
                 displayObject(sequenceClient, profileConfig.format);
             }
 
-            const args = argsStr ? sequenceParseArgs(argsStr) : undefined;
+            const args = argsStr && sequenceParseArgs(argsStr);
 
             const instanceClient = await sequenceStart("-", { configFile, configString, args });
 
