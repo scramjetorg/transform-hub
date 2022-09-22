@@ -46,6 +46,10 @@ export class ManagerClient implements ClientProvider {
         return this.client.getStream("log", requestInit);
     }
 
+    async getAuditStream(requestInit?: RequestInit) {
+        return this.client.getStream("audit", requestInit);
+    }
+
     async getConfig() {
         return this.client.get<any>("config");
     }
