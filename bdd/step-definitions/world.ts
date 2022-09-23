@@ -4,6 +4,7 @@ import { InstanceClient, SequenceClient } from "@scramjet/api-client";
 import { STHRestAPI } from "@scramjet/types";
 import { ChildProcess, ChildProcessWithoutNullStreams } from "child_process";
 import { Readable } from "stream";
+import * as dns from "dns";
 
 const DEFAULT_TIMEOUT = 20000;
 
@@ -13,16 +14,16 @@ export class CustomWorld implements World {
     readonly parameters: any;
 
     resources: {
-        [key: string]: any,
-        hub?: ChildProcess,
-        instance?: InstanceClient,
-        instance1?: InstanceClient,
-        instance2?: InstanceClient,
-        sequence?: SequenceClient,
-        sequence1?: SequenceClient,
-        sequence2?: SequenceClient,
+        [key: string]: any;
+        hub?: ChildProcess;
+        instance?: InstanceClient;
+        instance1?: InstanceClient;
+        instance2?: InstanceClient;
+        sequence?: SequenceClient;
+        sequence1?: SequenceClient;
+        sequence2?: SequenceClient;
         outStream?: Readable;
-    } = {}
+    } = {};
 
     cliResources: {
         stdio?: [stdout: string, stderr: string, statusCode: any];
@@ -36,10 +37,17 @@ export class CustomWorld implements World {
         instance2Id?: string;
         sequences?: STHRestAPI.GetSequencesResponse;
         instances?: STHRestAPI.GetInstancesResponse;
-        commandInProgress?: ChildProcessWithoutNullStreams
+        commandInProgress?: ChildProcessWithoutNullStreams;
     } = {};
 
     constructor({ attach, log, parameters }: any) {
+        // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder
+        const { setDefaultResultOrder } = dns as unknown as { setDefaultResultOrder?: (param: string) => void };
+
+        if (setDefaultResultOrder) {
+            setDefaultResultOrder("ipv4first");
+        }
+
         this.attach = attach;
         this.log = log;
         this.parameters = parameters;

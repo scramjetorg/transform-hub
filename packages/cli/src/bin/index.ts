@@ -13,6 +13,7 @@ import { initConfig, profileConfig, profileManager } from "../lib/config";
 import { initPaths } from "../lib/paths";
 import chalk from "chalk";
 import { isProductionEnv } from "../types";
+import * as dns from "dns";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const CommandClass = completionMixin(commander).Command;
@@ -27,11 +28,15 @@ const initPlatform = async () => {
      * are provided in the profile configuration.
      * Do not set the default platform values when displaying the help commands.
      */
-    if (token && isProductionEnv(env) && middlewareApiUrl &&
+    if (
+        token &&
+        isProductionEnv(env) &&
+        middlewareApiUrl &&
         !process.argv.includes((program as any)._helpShortFlag) &&
-        !process.argv.includes((program as any)._helpLongFlag)) {
+        !process.argv.includes((program as any)._helpLongFlag)
+    ) {
         ClientUtils.setDefaultHeaders({
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
         });
 
         await setPlatformDefaults();
@@ -42,6 +47,13 @@ const initPlatform = async () => {
  * Start commander using defined config {@link Apple.seeds}
  */
 (async () => {
+    // https://nodejs.org/api/dns.html#dnssetdefaultresultorderorder
+    const { setDefaultResultOrder } = dns as unknown as { setDefaultResultOrder?: (param: string) => void };
+
+    if (setDefaultResultOrder) {
+        setDefaultResultOrder("ipv4first");
+    }
+
     initPaths();
     initConfig();
     await initPlatform();
@@ -49,8 +61,7 @@ const initPlatform = async () => {
     for (const command of Object.values(commands)) command(program);
 
     program
-        .description(
-            "This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
+        .description("This is a Scramjet Command Line Interface to communicate with Transform Hub and Cloud Platform.")
         .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
         .option("--config <name>", "Set global configuration profile")
         .option("--config-path <path>", "Set global configuration from file")
@@ -58,10 +69,11 @@ const initPlatform = async () => {
         .addHelpText("beforeAll", `Current profile: ${profileManager.getProfileName()}`)
         .addHelpText(
             "afterAll",
-            chalk.greenBright("\nTo find out more about CLI, please check out our docs at https://docs.scramjet.org/platform/cli-reference\n"))
-        .addHelpText(
-            "afterAll",
-            `${chalk.hex("#7ed2e4")("Read more about Scramjet at https://scramjet.org/ 🚀\n")}`)
+            chalk.greenBright(
+                "\nTo find out more about CLI, please check out our docs at https://docs.scramjet.org/platform/cli-reference\n"
+            )
+        )
+        .addHelpText("afterAll", `${chalk.hex("#7ed2e4")("Read more about Scramjet at https://scramjet.org/ 🚀\n")}`)
         .parse(process.argv);
 
     await new Promise((res) => program.hook("postAction", res));
