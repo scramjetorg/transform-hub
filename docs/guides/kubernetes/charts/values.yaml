@@ -7,6 +7,7 @@ version: 0.28.3
 
 # -- Additional command line arguments to pass to STH If none set extraArgs: []
 extraArgs:
+  - "--identify-existing"
   - "--runtime-adapter=kubernetes"
   - "--k8s-runner-image=scramjetorg/runner:0.28.3"
   - "--k8s-runner-py-image=scramjetorg/runner-py:0.28.3"
@@ -62,3 +63,14 @@ persistentVolume:
   volumeMode: Filesystem
   size: 10Gi
   storageClassName: "csi-rbd-sc"
+
+# -- Init containers to add to the STH pod
+initContainers: []
+  # - name: download-sequence
+  #   image: alpine:3.8
+  #   command: [sh, -c]
+  #   args:
+  #     - mkdir -p /root/.scramjet_k8s_sequences/default && wget -qO- https://github.com/scramjetorg/reference-apps/releases/download/v0.24.12/hello-alice-out.tar.gz | tar -C /root/.scramjet_k8s_sequences/default -xzf- && echo 'Done'
+  #   volumeMounts:
+  #     - mountPath: /root/.scramjet_k8s_sequences
+  #       name: scramjet-sequences

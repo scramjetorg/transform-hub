@@ -70,12 +70,16 @@ spec:
               fieldPath: metadata.name
         volumeMounts:
         - name: scramjet-sequences
-          mountPath: /root/.scramjet_sequences
+          mountPath: /root/.scramjet_k8s_sequences
         ports:
         - name: sth-api
           containerPort: {{ .Values.sthApi.service.port }}
         - name: sth-runner
           containerPort: {{ .Values.sthRunner.service.port }}
+      {{- if .Values.initContainers }}
+      initContainers:
+      {{- toYaml .Values.initContainers | nindent 6 }}
+      {{- end }}
       restartPolicy: Always
       terminationGracePeriodSeconds: 10
 {{- if not .Values.persistentVolume.enabled }}
