@@ -137,6 +137,30 @@ class KubernetesClientAdapter {
         return response.body.status?.containerStatuses?.[0].state?.terminated?.reason;
     }
 
+    async isPodsLimitReached() {
+        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+
+        try {
+            const getQuotaPromise =
+                await kubeApi.readNamespacedResourceQuota("object-counts", this._namespace);
+
+            const responseBody = getQuotaPromise.body;
+
+            if (responseBody) {
+                const used = parseInt(responseBody.status?.used?.pods || "", 10) || 0;
+                const hard = parseInt(responseBody.status?.hard?.pods || "", 10) || Infinity;
+
+                this.logger.info("Pods limit quota", used, hard);
+
+                return used >= hard;
+            }
+        } catch (e) {
+            this.logger.warn("Can't get quota object. ");
+        }
+
+        return false;
+    }
+
     private async runWithRetries(retries: number, name: string, callback: any) {
         let tries = 0;
         let sleepMs = 1000;

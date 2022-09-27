@@ -299,7 +299,7 @@ export class CSIController extends TypedEmitter<Events> {
 
                 await this.cleanup();
 
-                return 213;
+                return error.code || 213;
             }
         };
 
@@ -331,6 +331,12 @@ export class CSIController extends TypedEmitter<Events> {
                 return Promise.reject({
                     message: "Runner was started with invalid configuration. This is probably a bug in STH.",
                     exitcode: RunnerExitCode.INVALID_ENV_VARS
+                });
+            }
+            case RunnerExitCode.PODS_LIMIT_REACHED: {
+                return Promise.reject({
+                    message: "Pods limit reached",
+                    exitcode: RunnerExitCode.PODS_LIMIT_REACHED
                 });
             }
             case RunnerExitCode.INVALID_SEQUENCE_PATH: {

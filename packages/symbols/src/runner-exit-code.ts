@@ -7,5 +7,6 @@ export enum RunnerExitCode {
     KILLED = 137,
     STOPPED = 138,
     SUCCESS = 0,
-    CLEANUP_FAILED = 223
+    CLEANUP_FAILED = 223,
+    PODS_LIMIT_REACHED = 24
 }

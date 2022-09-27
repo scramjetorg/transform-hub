@@ -19,6 +19,7 @@ import { KubernetesClientAdapter } from "./kubernetes-client-adapter";
 import { adapterConfigDecoder } from "./kubernetes-config-decoder";
 import { getRunnerEnvEntries } from "./get-runner-env";
 import { PassThrough } from "stream";
+import { RunnerExitCode } from "@scramjet/symbols";
 
 /**
  * Adapter for running Instance by Runner executed in separate process.
@@ -90,6 +91,10 @@ IComponent {
     async run(config: InstanceConfig, instancesServerPort: number, instanceId: string): Promise<ExitCode> {
         if (config.type !== "kubernetes") {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
+        }
+
+        if (await this.kubeClient.isPodsLimitReached()) {
+            return RunnerExitCode.PODS_LIMIT_REACHED;
         }
 
         this.limits = config.limits;
