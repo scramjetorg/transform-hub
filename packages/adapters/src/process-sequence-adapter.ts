@@ -40,10 +40,11 @@ async function getRunnerConfigForStoredSequence(sequencesRoot: string, id: strin
         name: validPackageJson.name ?? "",
         id,
         sequenceDir,
-        description: validPackageJson.description || "",
-        author: validPackageJson.author || "",
-        keywords: validPackageJson.keywords || [],
-        repository: validPackageJson.repository || "",
+        description: validPackageJson.description,
+        author: validPackageJson.author,
+        keywords: validPackageJson.keywords,
+        args: validPackageJson.args,
+        repository: validPackageJson.repository,
         language: detectLanguage(validPackageJson)
     };
 }

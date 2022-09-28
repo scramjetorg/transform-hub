@@ -174,7 +174,7 @@ It is recommended to use a **Node version manager** like [nvm](https://github.co
 ```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
 ```
 
 After executing the above command you should see:
@@ -211,10 +211,6 @@ Now you can check installed versions of node.js and npm, run the following comma
 ```bash
 $ node -v
 v16.13.0
-
-$ npm -v
-8.1.0
-```
 
 $ npm -v
 8.15.0
@@ -283,7 +279,7 @@ npm i -g @scramjet/sth   # installs the package globally
 When you start STH from npm, no package installations or builds are required. You can start STH right away, with one of those two commands: `scramjet-transform-hub` or `sth`. This was quick, wasn't it?:D
 
 
-**Second** way is designed for developers who want to contribute and not just use STH.
+**Second** way is designed for developers who want to contribute and not *just* use STH.
 
  Let's clone the transform-hub repo. After that, some more installations will be required. Please copy the following commands to the terminal:
 

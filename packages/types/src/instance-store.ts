@@ -1,10 +1,12 @@
 import { AppConfig } from "./app-config";
 import { InstanceId, InstanceStatus } from "./instance";
 
+export type InstanceArgs = any[];
+
 export type Instance = {
     id: InstanceId,
     appConfig?: AppConfig,
-    sequenceArgs?: any[],
+    args?: InstanceArgs,
     sequence: string,
     ports?: Record<string, number>
     created?: Date,

@@ -270,10 +270,11 @@ class DockerSequenceAdapter implements ISequenceAdapter {
             sequenceDir: PACKAGE_DIR,
             entrypointPath: validPackageJson.main,
             id: volumeId,
-            description: validPackageJson.description || "",
-            author: validPackageJson.author || "",
-            keywords: validPackageJson.keywords || [],
-            repository: validPackageJson.repository || "",
+            description: validPackageJson.description,
+            author: validPackageJson.author,
+            keywords: validPackageJson.keywords,
+            args: validPackageJson.args,
+            repository: validPackageJson.repository,
             language: detectLanguage(validPackageJson)
         };
     }

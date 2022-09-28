@@ -53,12 +53,13 @@ import { ReasonPhrases } from "http-status-codes";
 const runnerExitDelay = 15000;
 
 type Events = {
-    pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void,
+    pang: (payload: MessageDataType<RunnerMessageCode.PANG>) => void;
+    hourChime: () => void;
     error: (error: any) => void;
     stop: (code: number) => void;
     end: (code: number) => void;
     terminated: (code: number) => void;
-}
+};
 
 enum TerminateReason {
     STOPPED = "stopped",
@@ -84,7 +85,7 @@ export class CSIController extends TypedEmitter<Events> {
                 memory: (this._lastStats?.limit! / (1024 * 1024)) as InstanceLimits["memory"],
             },
             current: {
-                memory: this._lastStats?.memoryUsage
+                memory: this._lastStats?.memoryUsage,
             }
         };
     }
@@ -93,8 +94,8 @@ export class CSIController extends TypedEmitter<Events> {
     limits: InstanceLimits = {};
     sequence: SequenceInfo;
     appConfig: AppConfig;
-    instancePromise?: Promise<{ exitcode: number, reason: TerminateReason }>;
-    sequenceArgs: Array<any> | undefined;
+    instancePromise?: Promise<{ exitcode: number; reason: TerminateReason }>;
+    args: Array<any> | undefined;
     controlDataStream?: DataStream;
     router?: APIRoute;
     info: {
@@ -105,14 +106,14 @@ export class CSIController extends TypedEmitter<Events> {
     } = {};
     status: InstanceStatus;
     terminated?: {
-        exitcode: number,
-        reason: string
-    }
+        exitcode: number;
+        reason: string;
+    };
     provides?: string;
     requires?: string;
 
-    initResolver?: { res: Function, rej: Function };
-    heartBeatResolver?: { res: Function, rej: Function };
+    initResolver?: { res: Function; rej: Function };
+    heartBeatResolver?: { res: Function; rej: Function };
     heartBeatPromise?: Promise<string>;
 
     heartBeatTicker?: NodeJS.Timeout;
@@ -124,12 +125,12 @@ export class CSIController extends TypedEmitter<Events> {
     /**
      * Topic to which the output stream should be routed
      */
-    public outputTopic?: string
+    public outputTopic?: string;
 
     /**
      * Topic to which the input stream should be routed
      */
-    public inputTopic?: string
+    public inputTopic?: string;
 
     /**
      * Logger.
@@ -184,7 +185,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.sequence = sequence;
         this.appConfig = payload.appConfig;
         this.sthConfig = sthConfig;
-        this.sequenceArgs = payload.args;
+        this.args = payload.args;
         this.outputTopic = payload.outputTopic;
         this.inputTopic = payload.inputTopic;
 
@@ -208,7 +209,7 @@ export class CSIController extends TypedEmitter<Events> {
             this.startInstance();
         });
 
-        i.then(() => this.main()).catch(e => {
+        i.then(() => this.main()).catch((e) => {
             this.logger.info("Instance status: errored", e);
             this.status = InstanceStatus.ERRORED;
             this.emit("error", e);
@@ -224,6 +225,8 @@ export class CSIController extends TypedEmitter<Events> {
         let code = 0;
         let errored = false;
 
+        const interval = setInterval(() => this.emit("hourChime"), 3600e3);
+
         try {
             const stopResult = await this.instanceStopped();
 
@@ -235,6 +238,8 @@ export class CSIController extends TypedEmitter<Events> {
             code = e.exitcode;
             errored = true;
             this.logger.error("Instance caused error", e.message, code);
+        } finally {
+            clearInterval(interval);
         }
 
         this.status = !errored ? InstanceStatus.COMPLETED : InstanceStatus.ERRORED;
@@ -273,7 +278,8 @@ export class CSIController extends TypedEmitter<Events> {
                 this.endOfSequence = this.instanceAdapter.run(
                     instanceConfig,
                     this.sthConfig.host.instancesServerPort,
-                    this.id);
+                    this.id
+                );
 
                 this.logger.trace("Sequence initialized");
 
@@ -372,12 +378,23 @@ export class CSIController extends TypedEmitter<Events> {
     get isRunning() { return !this.finalizingPromise; }
 
     async finalize() {
+        this.upStreams![CC.STDIN].unpipe();
+        this.upStreams![CC.IN].unpipe();
+
         await defer(runnerExitDelay);
 
         this.logger.debug(`Extended CSICLifetime: ${this.instanceLifetimeExtensionDelay}ms`);
         this.finalizingPromise = cancellableDefer(this.instanceLifetimeExtensionDelay);
 
         await this.finalizingPromise;
+
+        this.downStreams![CC.STDOUT].unpipe();
+        this.downStreams![CC.STDERR].unpipe();
+        this.downStreams![CC.OUT].unpipe();
+
+        this.upStreams![CC.STDOUT].end();
+        this.upStreams![CC.STDERR].end();
+        this.upStreams![CC.OUT].end();
 
         this.logger.info("Finalized");
         this.logger.end();
@@ -487,7 +504,7 @@ export class CSIController extends TypedEmitter<Events> {
             const pongMsg: HandshakeAcknowledgeMessage = {
                 msgCode: RunnerMessageCode.PONG,
                 appConfig: this.appConfig,
-                args: this.sequenceArgs
+                args: this.args
             };
 
             await this.controlDataStream.whenWrote(MessageUtilities.serializeMessage<RunnerMessageCode.PONG>(pongMsg));
@@ -707,7 +724,7 @@ export class CSIController extends TypedEmitter<Events> {
         return {
             id: this.id,
             appConfig: this.appConfig,
-            sequenceArgs: this.sequenceArgs,
+            args: this.args,
             sequence: this.sequence.id,
             sequenceInfo: {
                 id: this.sequence.id,
@@ -740,8 +757,9 @@ export class CSIController extends TypedEmitter<Events> {
         this.logger.trace("Got message: SEQUENCE_COMPLETED.");
 
         try {
-            if (this.instancePromise)
+            if (this.instancePromise) {
                 await promiseTimeout(this.instancePromise, runnerExitDelay);
+            }
 
             this.logger.trace("Sequence terminated itself");
         } catch {

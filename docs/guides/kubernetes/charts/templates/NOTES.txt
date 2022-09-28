@@ -1,0 +1,6 @@
+In order to access the Transform-Hub API you have the following options:
+
+kubectl get pods,svc,deployment.apps,pvc -n {{ .Release.Namespace }}
+
+Check STH version
+curl -s <EXTERNAL-IP>:{{ .Values.sthApi.service.port }}/api/v1/version |jq

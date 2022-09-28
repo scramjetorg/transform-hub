@@ -117,6 +117,7 @@ export class Host implements IComponent {
 
     hostSize = this.getSize();
     ipvAddress: any;
+    adapterName: string = "uninitialized";
 
     /**
      * Sets listener for connections to socket server.
@@ -163,7 +164,7 @@ export class Host implements IComponent {
             this,
             {},
             ObjLogger.levels.find((l: LogLevel) => l.toLowerCase() === sthConfig.logLevel) ||
-                ObjLogger.levels[ObjLogger.levels.length - 1]
+            ObjLogger.levels[ObjLogger.levels.length - 1]
         );
 
         const prettyLog = new DataStream().map(prettyPrint({ colors: this.config.logColors }));
@@ -234,9 +235,10 @@ export class Host implements IComponent {
 
         const adapter = await initializeSequenceAdapter(this.config);
 
+        this.adapterName = adapter;
         this.logger.info(`Will use the "${adapter}" adapter for running Sequences`);
 
-        this.telemetryAdapter?.push("info", { message: "Host started", labels: { environment: this.telemetryEnvironmentName, hostSize: this.hostSize, ip: this.ipvAddress, adapter: adapter } });
+        this.pushTelemetry("Host started");
 
         await this.socketServer.start();
 
@@ -595,7 +597,7 @@ export class Host implements IComponent {
             await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_CREATED);
 
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_CREATED);
-            this.telemetryAdapter?.push("info", { message: "Sequence uploaded", labels: { language: config.language.toLowerCase(), environment: this.telemetryEnvironmentName, hostSize: this.hostSize, seqId: id, ip: this.ipvAddress } });
+            this.pushTelemetry("Sequence uploaded", { language: config.language.toLowerCase(), seqId: id });
 
             return {
                 id: config.id,
@@ -698,6 +700,10 @@ export class Host implements IComponent {
         const sequence = this.sequencesStore.get(id) ||
             Array.from(this.sequencesStore.values()).find((seq: SequenceInfo) => seq.name === id);
 
+        if (!req.body.args && sequence?.config?.args) {
+            payload.args = sequence.config.args;
+        }
+
         if (!sequence) {
             return {
                 opStatus: ReasonPhrases.NOT_FOUND,
@@ -713,7 +719,7 @@ export class Host implements IComponent {
             this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
                 appConfig: csic.appConfig,
-                sequenceArgs: csic.sequenceArgs,
+                args: csic.args,
                 sequence: id,
                 ports: csic.info.ports,
                 created: csic.info.created,
@@ -723,7 +729,11 @@ export class Host implements IComponent {
 
             this.logger.debug("Instance limits", csic.limits);
             this.auditor.auditInstanceStart(csic.id, req as AuditedRequest, csic.limits);
-            this.telemetryAdapter?.push("info", { message: "Instance started", labels: { id: csic.id, language: csic.sequence.config.language, environment: this.telemetryEnvironmentName, hostSize: this.hostSize, seqId: csic.sequence.id, ip: this.ipvAddress } });
+            this.pushTelemetry("Instance started", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
+
+            csic.on("hourChime", () => {
+                this.pushTelemetry("Instance hour chime", { id: csic.id, language: csic.sequence.config.language, seqId: csic.sequence.id });
+            });
 
             return {
                 opStatus: ReasonPhrases.OK,
@@ -731,7 +741,7 @@ export class Host implements IComponent {
                 id: csic.id
             };
         } catch (error: any) {
-            this.telemetryAdapter?.push("error", { message: "Instance start failed", labels: { error: error.message, environment: this.telemetryEnvironmentName, hostSize: this.hostSize, ip: this.ipvAddress } });
+            this.pushTelemetry("Instance start failed", { error: error.message }, "error");
 
             return {
                 opStatus: ReasonPhrases.BAD_REQUEST,
@@ -771,7 +781,7 @@ export class Host implements IComponent {
         this.instancesStore[id] = csic;
 
         csic.on("error", (err) => {
-            this.telemetryAdapter?.push("error", { message: "Instance error", labels: { ...err } });
+            this.pushTelemetry("Instance error", { ...err }, "error");
             this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
@@ -886,16 +896,11 @@ export class Host implements IComponent {
             }
 
             this.auditor.auditInstance(id, InstanceMessageCode.INSTANCE_ENDED);
-            this.telemetryAdapter?.push("info", {
-                message: "Instance ended",
-                labels: {
-                    executionTime: csic.info.ended && csic.info.started ? ((csic.info.ended?.getTime() - csic.info.started.getTime()) / 1000).toString() : "-1",
-                    id: csic.id,
-                    code: code.toString(),
-                    hostSize: this.hostSize,
-                    environment: this.telemetryEnvironmentName,
-                    seqId: csic.sequence.id
-                }
+            this.pushTelemetry("Instance ended", {
+                executionTime: csic.info.ended && csic.info.started ? ((csic.info.ended?.getTime() - csic.info.started.getTime()) / 1000).toString() : "-1",
+                id: csic.id,
+                code: code.toString(),
+                seqId: csic.sequence.id
             });
         });
 
@@ -1087,5 +1092,19 @@ export class Host implements IComponent {
             4, // maximum index in array
             Math.floor(Math.log2(cpus().length) / 2 + Math.log2(totalmem() / GigaByte) / 4)
         )] as HostSizes;
+    }
+
+    pushTelemetry(message: string, labels: {[key: string]: string} = {}, level: "info" | "error" = "info") {
+        this.telemetryAdapter?.push(level, {
+            message,
+            labels: {
+                version: this.version,
+                environment: this.telemetryEnvironmentName,
+                hostSize: this.hostSize,
+                ip: this.ipvAddress,
+                adapter: this.adapterName,
+                ...labels
+            }
+        });
     }
 }

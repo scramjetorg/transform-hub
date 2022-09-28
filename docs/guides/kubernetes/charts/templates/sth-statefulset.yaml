@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sth
+  labels:
+    app.kubernetes.io/name: {{ include "sth.name" . }}
+    helm.sh/chart: {{ include "sth.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    owner: sth-{{ .Release.Namespace }}
+  {{- range $key, $value := .Values.labels }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  annotations:
+  {{- range $key, $value := .Values.annotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+spec:
+  serviceName: "sth"
+  revisionHistoryLimit: 3
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "sth.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "sth.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        owner: sth-{{ .Release.Namespace }}
+        app: sth
+      {{- range $key, $value := .Values.labels }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+      annotations:
+      {{- range $key, $value := .Values.annotations }}
+        {{ $key }}: {{ $value | quote }}
+      {{- end }}
+    spec:
+      {{- if .Values.serviceAccountToken.enabled }}
+      serviceAccountName: sth-sa
+      automountServiceAccountToken: true
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ .Values.repo}}/{{ .Values.app }}:{{ .Values.version }}
+        command: [sth]
+        args:
+        {{- if .Values.extraArgs }}
+        {{- toYaml .Values.extraArgs | nindent 10 }}
+        {{- end }}
+          - '--id'
+          - '$(POD_NAME)'
+        {{- if .Values.kubernetesAdapter.runnerAutoNamespace }}
+          - "--k8s-namespace={{ .Release.Namespace }}"
+        {{- end }}
+        {{- if .Values.kubernetesAdapter.runnerAutoSth }}
+          - "--k8s-sth-pod-host=$(POD_NAME).sth.{{ .Release.Namespace }}.svc.cluster.local"
+        {{- end }}
+        env:
+        {{- if .Values.env }}
+        {{- toYaml .Values.env | nindent 8 }}
+        {{- end }}
+        - name: SCP_ENV_VALUE
+          value: "{{ .Release.Namespace }}"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: scramjet-sequences
+          mountPath: /root/.scramjet_k8s_sequences
+        ports:
+        - name: sth-api
+          containerPort: {{ .Values.sthApi.service.port }}
+        - name: sth-runner
+          containerPort: {{ .Values.sthRunner.service.port }}
+      {{- if .Values.initContainers }}
+      initContainers:
+      {{- toYaml .Values.initContainers | nindent 6 }}
+      {{- end }}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 10
+{{- if not .Values.persistentVolume.enabled }}
+      volumes:
+            - name: scramjet-sequences
+              emptyDir: {}
+{{- else }}
+  volumeClaimTemplates:
+  - metadata:
+      name: scramjet-sequences
+      labels:
+        app: {{ include "sth.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      accessModes:
+      {{- range .Values.persistentVolume.accessModes }}
+        - {{ . | quote }}
+      {{- end }}
+      volumeMode: {{ .Values.persistentVolume.volumeMode | quote }}
+      resources:
+        requests:
+          storage: {{ .Values.persistentVolume.size | quote }}
+    {{- if .Values.persistentVolume.storageClassName }}
+    {{- if (eq "-" .Values.persistentVolume.storageClassName) }}
+      storageClassName: ""
+    {{- else }}
+      storageClassName: "{{ .Values.persistentVolume.storageClassName }}"
+    {{- end }}
+    {{- end }}
+{{- end }}

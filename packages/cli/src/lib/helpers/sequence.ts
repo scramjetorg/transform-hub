@@ -153,12 +153,18 @@ export const sequenceStart = async (
     }
 };
 
-export function sequenceParseArgs(argsStr: string | undefined): any[] {
+export function sequenceParseArgs(argsStr: string): any[] {
+    let args;
+
     try {
-        return argsStr ? JSON.parse(argsStr) : [];
+        args = JSON.parse(argsStr);
     } catch (err) {
         throw new Error(`Error while parsing the provided Instance arguments. '${(err as Error).message}'`);
     }
+    if (!Array.isArray(args))
+        throw new Error("Arguments must be in array");
+
+    return args;
 }
 
 export const sequenceDelete = async (id: string, lastSequenceId = sessionConfig.getConfig().lastSequenceId) => {
