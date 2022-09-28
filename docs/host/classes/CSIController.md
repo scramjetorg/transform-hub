@@ -18,6 +18,7 @@ Handles all Instance lifecycle, exposes instance's HTTP API.
 - [apiInputEnabled](CSIController.md#apiinputenabled)
 - [apiOutput](CSIController.md#apioutput)
 - [appConfig](CSIController.md#appconfig)
+- [args](CSIController.md#args)
 - [communicationHandler](CSIController.md#communicationhandler)
 - [controlDataStream](CSIController.md#controldatastream)
 - [finalizingPromise](CSIController.md#finalizingpromise)
@@ -37,7 +38,6 @@ Handles all Instance lifecycle, exposes instance's HTTP API.
 - [requires](CSIController.md#requires)
 - [router](CSIController.md#router)
 - [sequence](CSIController.md#sequence)
-- [sequenceArgs](CSIController.md#sequenceargs)
 - [status](CSIController.md#status)
 - [sthConfig](CSIController.md#sthconfig)
 - [terminated](CSIController.md#terminated)
@@ -98,7 +98,7 @@ Handles all Instance lifecycle, exposes instance's HTTP API.
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:152](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L152)
+[packages/host/src/lib/csi-controller.ts:153](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L153)
 
 ___
 
@@ -108,7 +108,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:122](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L122)
+[packages/host/src/lib/csi-controller.ts:123](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L123)
 
 ___
 
@@ -118,7 +118,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L121)
+[packages/host/src/lib/csi-controller.ts:122](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L122)
 
 ___
 
@@ -128,7 +128,17 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L95)
+[packages/host/src/lib/csi-controller.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L96)
+
+___
+
+### args
+
+• **args**: `undefined` \| `any`[]
+
+#### Defined in
+
+[packages/host/src/lib/csi-controller.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L98)
 
 ___
 
@@ -138,7 +148,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:172](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L172)
+[packages/host/src/lib/csi-controller.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L173)
 
 ___
 
@@ -148,7 +158,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:98](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L98)
+[packages/host/src/lib/csi-controller.ts:99](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L99)
 
 ___
 
@@ -158,7 +168,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:142](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L142)
+[packages/host/src/lib/csi-controller.ts:143](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L143)
 
 ___
 
@@ -168,7 +178,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:116](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L116)
+[packages/host/src/lib/csi-controller.ts:117](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L117)
 
 ___
 
@@ -185,7 +195,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L115)
+[packages/host/src/lib/csi-controller.ts:116](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L116)
 
 ___
 
@@ -195,7 +205,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:118](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L118)
+[packages/host/src/lib/csi-controller.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L119)
 
 ___
 
@@ -205,7 +215,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:74](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L74)
+[packages/host/src/lib/csi-controller.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L75)
 
 ___
 
@@ -224,7 +234,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L100)
+[packages/host/src/lib/csi-controller.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L101)
 
 ___
 
@@ -241,7 +251,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:114](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L114)
+[packages/host/src/lib/csi-controller.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L115)
 
 ___
 
@@ -253,7 +263,7 @@ Topic to which the input stream should be routed
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:132](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L132)
+[packages/host/src/lib/csi-controller.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L133)
 
 ___
 
@@ -263,7 +273,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:96](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L96)
+[packages/host/src/lib/csi-controller.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L97)
 
 ___
 
@@ -273,7 +283,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L93)
+[packages/host/src/lib/csi-controller.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L94)
 
 ___
 
@@ -283,7 +293,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L119)
+[packages/host/src/lib/csi-controller.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L120)
 
 ___
 
@@ -295,7 +305,7 @@ Logger.
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:139](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L139)
+[packages/host/src/lib/csi-controller.ts:140](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L140)
 
 ___
 
@@ -307,7 +317,7 @@ Topic to which the output stream should be routed
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:127](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L127)
+[packages/host/src/lib/csi-controller.ts:128](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L128)
 
 ___
 
@@ -317,7 +327,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L111)
+[packages/host/src/lib/csi-controller.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L112)
 
 ___
 
@@ -327,7 +337,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:112](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L112)
+[packages/host/src/lib/csi-controller.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L113)
 
 ___
 
@@ -337,7 +347,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:99](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L99)
+[packages/host/src/lib/csi-controller.ts:100](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L100)
 
 ___
 
@@ -347,17 +357,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:94](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L94)
-
-___
-
-### sequenceArgs
-
-• **sequenceArgs**: `undefined` \| `any`[]
-
-#### Defined in
-
-[packages/host/src/lib/csi-controller.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L97)
+[packages/host/src/lib/csi-controller.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L95)
 
 ___
 
@@ -367,7 +367,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:106](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L106)
+[packages/host/src/lib/csi-controller.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L107)
 
 ___
 
@@ -377,7 +377,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:92](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L92)
+[packages/host/src/lib/csi-controller.ts:93](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L93)
 
 ___
 
@@ -394,7 +394,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L107)
+[packages/host/src/lib/csi-controller.ts:108](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L108)
 
 ## Methods
 
@@ -439,7 +439,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:366](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L366)
+[packages/host/src/lib/csi-controller.ts:372](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L372)
 
 ___
 
@@ -453,7 +453,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:514](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L514)
+[packages/host/src/lib/csi-controller.ts:531](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L531)
 
 ___
 
@@ -516,7 +516,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:374](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L374)
+[packages/host/src/lib/csi-controller.ts:380](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L380)
 
 ___
 
@@ -530,7 +530,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:706](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L706)
+[packages/host/src/lib/csi-controller.ts:723](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L723)
 
 ___
 
@@ -544,7 +544,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:730](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L730)
+[packages/host/src/lib/csi-controller.ts:747](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L747)
 
 ___
 
@@ -558,7 +558,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:734](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L734)
+[packages/host/src/lib/csi-controller.ts:751](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L751)
 
 ___
 
@@ -590,7 +590,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:726](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L726)
+[packages/host/src/lib/csi-controller.ts:743](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L743)
 
 ___
 
@@ -610,7 +610,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:477](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L477)
+[packages/host/src/lib/csi-controller.ts:494](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L494)
 
 ___
 
@@ -630,7 +630,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:502](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L502)
+[packages/host/src/lib/csi-controller.ts:519](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L519)
 
 ___
 
@@ -650,7 +650,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:784](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L784)
+[packages/host/src/lib/csi-controller.ts:802](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L802)
 
 ___
 
@@ -670,7 +670,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:739](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L739)
+[packages/host/src/lib/csi-controller.ts:756](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L756)
 
 ___
 
@@ -690,7 +690,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:757](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L757)
+[packages/host/src/lib/csi-controller.ts:775](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L775)
 
 ___
 
@@ -704,7 +704,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:314](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L314)
+[packages/host/src/lib/csi-controller.ts:320](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L320)
 
 ___
 
@@ -724,7 +724,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:394](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L394)
+[packages/host/src/lib/csi-controller.ts:411](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L411)
 
 ___
 
@@ -738,7 +738,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:386](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L386)
+[packages/host/src/lib/csi-controller.ts:403](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L403)
 
 ___
 
@@ -812,7 +812,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:220](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L220)
+[packages/host/src/lib/csi-controller.ts:221](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L221)
 
 ___
 
@@ -1079,7 +1079,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:792](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L792)
+[packages/host/src/lib/csi-controller.ts:810](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L810)
 
 ___
 
@@ -1117,7 +1117,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:205](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L205)
+[packages/host/src/lib/csi-controller.ts:206](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L206)
 
 ___
 
@@ -1131,7 +1131,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:255](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L255)
+[packages/host/src/lib/csi-controller.ts:260](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L260)
 
 ## Constructors
 
@@ -1155,7 +1155,7 @@ TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:174](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L174)
+[packages/host/src/lib/csi-controller.ts:175](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L175)
 
 ## Accessors
 
@@ -1169,7 +1169,7 @@ TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:154](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L154)
+[packages/host/src/lib/csi-controller.ts:155](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L155)
 
 • `set` **endOfSequence**(`prm`): `void`
 
@@ -1185,7 +1185,7 @@ TypedEmitter&lt;Events\&gt;.constructor
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:162](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L162)
+[packages/host/src/lib/csi-controller.ts:163](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L163)
 
 ___
 
@@ -1199,7 +1199,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:144](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L144)
+[packages/host/src/lib/csi-controller.ts:145](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L145)
 
 ___
 
@@ -1213,7 +1213,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:372](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L372)
+[packages/host/src/lib/csi-controller.ts:378](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L378)
 
 ___
 
@@ -1227,4 +1227,4 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/csi-controller.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L81)
+[packages/host/src/lib/csi-controller.ts:82](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/csi-controller.ts#L82)
