@@ -93,7 +93,7 @@ IComponent {
             throw new Error(`Invalid config type for kubernetes adapter: ${config.type}`);
         }
 
-        if (await this.kubeClient.isPodsLimitReached()) {
+        if (this.adapterConfig.quotaName && await this.kubeClient.isPodsLimitReached(this.adapterConfig.quotaName)) {
             return RunnerExitCode.PODS_LIMIT_REACHED;
         }
 

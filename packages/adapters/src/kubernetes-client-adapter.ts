@@ -137,12 +137,12 @@ class KubernetesClientAdapter {
         return response.body.status?.containerStatuses?.[0].state?.terminated?.reason;
     }
 
-    async isPodsLimitReached() {
+    async isPodsLimitReached(quotaName: string) {
         const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
 
         try {
             const getQuotaPromise =
-                await kubeApi.readNamespacedResourceQuota("object-counts", this._namespace);
+                await kubeApi.readNamespacedResourceQuota(quotaName, this._namespace);
 
             const responseBody = getQuotaPromise.body;
 

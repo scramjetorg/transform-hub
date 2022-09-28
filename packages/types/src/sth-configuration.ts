@@ -75,6 +75,12 @@ export type K8SAdapterConfiguration = {
      * The Kubernetes namespace to use for running sequences
      */
     namespace: string,
+
+    /**
+     * Quota object name to determine namespace limits.
+     */
+    quotaName: string;
+
     /**
      * Authentication configuration path
      */
