@@ -243,7 +243,7 @@ ISequenceAdapter.remove
 
 #### Defined in
 
-[docker-sequence-adapter.ts:286](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L286)
+[docker-sequence-adapter.ts:287](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L287)
 
 ## Properties
 

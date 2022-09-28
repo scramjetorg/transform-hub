@@ -505,13 +505,14 @@ ___
 
 ### constructor
 
-• **new SocketServer**(`port`)
+• **new SocketServer**(`port`, `hostname`)
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
 | `port` | `number` |
+| `hostname` | `string` |
 
 #### Overrides
 

@@ -2,6 +2,21 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.28.5] - 2022-09-28
+
+## Fixed
+* Readme code fixing by @S4adam in https://github.com/scramjetorg/transform-hub/pull/693
+* (feat) transform-hub helm chart by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/689
+* Start host default on :: by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/687
+* Unpipe instance streams when it is ended by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/695
+* Replace localhost with ip (bdd tests) by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/696
+* [CLI] fix loading of broken profile files by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/697
+* Add version to telemetry by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/698
+* Add args field to instance, change sequenceArgs to args in sequences by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/700
+* Add method to get audit stream in MultiManager by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/701
+* [SHN-854] add nodejs 18.x LTS by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/684
+* cli/tests, default to ipv4 by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/690
+* (feat) adds initContainer to helm chart by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/703
 
 ## [0.28.4] - 2022-09-16
 

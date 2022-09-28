@@ -78,6 +78,7 @@
 - [InertSequence](modules.md#inertsequence)
 - [Instance](modules.md#instance)
 - [InstanceAdapterErrorCode](modules.md#instanceadaptererrorcode)
+- [InstanceArgs](modules.md#instanceargs)
 - [InstanceBulkMessage](modules.md#instancebulkmessage)
 - [InstanceConfig](modules.md#instanceconfig)
 - [InstanceId](modules.md#instanceid)
@@ -620,7 +621,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L29)
+[packages/types/src/runner-config.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L31)
 
 ___
 
@@ -1048,12 +1049,12 @@ ___
 | Name | Type |
 | :------ | :------ |
 | `appConfig?` | [`AppConfig`](modules.md#appconfig) |
+| `args?` | [`InstanceArgs`](modules.md#instanceargs) |
 | `created?` | `Date` |
 | `ended?` | `Date` |
 | `id` | [`InstanceId`](modules.md#instanceid) |
 | `ports?` | `Record`<`string`, `number`\> |
 | `sequence` | `string` |
-| `sequenceArgs?` | `any`[] |
 | `started?` | `Date` |
 | `status?` | [`InstanceStatus`](enums/InstanceStatus.md) |
 | `terminated?` | { `exitcode`: `number` ; `reason`: `string`  } |
@@ -1062,7 +1063,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/instance-store.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L4)
+[packages/types/src/instance-store.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L6)
 
 ___
 
@@ -1073,6 +1074,16 @@ ___
 #### Defined in
 
 [packages/types/src/error-codes/instance-adapter-error.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/error-codes/instance-adapter-error.ts#L1)
+
+___
+
+### InstanceArgs
+
+Ƭ **InstanceArgs**: `any`[]
+
+#### Defined in
+
+[packages/types/src/instance-store.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/instance-store.ts#L4)
 
 ___
 
@@ -1099,7 +1110,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L47)
+[packages/types/src/runner-config.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L49)
 
 ___
 
@@ -1286,7 +1297,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:41](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L41)
+[packages/types/src/runner-config.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L43)
 
 ___
 
@@ -1933,7 +1944,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-package-json.ts:1](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L1)
+[packages/types/src/sequence-package-json.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L3)
 
 ___
 
@@ -1955,7 +1966,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L37)
+[packages/types/src/runner-config.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L39)
 
 ___
 
@@ -2274,7 +2285,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/runner-config.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L45)
+[packages/types/src/runner-config.ts:47](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/runner-config.ts#L47)
 
 ___
 
@@ -2362,19 +2373,20 @@ ___
 
 | Name | Type |
 | :------ | :------ |
-| `author?` | `string` \| ``null`` |
-| `description?` | `string` \| ``null`` |
+| `args?` | [`InstanceArgs`](modules.md#instanceargs) |
+| `author?` | `string` |
+| `description?` | `string` |
 | `engines?` | `Record`<`string`, `string`\> \| ``null`` |
-| `keywords?` | `string`[] \| ``null`` |
+| `keywords?` | `string`[] |
 | `main` | `string` |
 | `name?` | `string` \| ``null`` |
-| `repository?` | { `directory?`: `string` ; `type`: `string` ; `url`: `string`  } \| `string` \| ``null`` |
+| `repository?` | { `directory?`: `string` ; `type`: `string` ; `url`: `string`  } \| `string` |
 | `scramjet?` | [`SequencePackageJSONScramjetSection`](modules.md#sequencepackagejsonscramjetsection) \| ``null`` |
 | `version?` | `string` \| ``null`` |
 
 #### Defined in
 
-[packages/types/src/sequence-package-json.ts:11](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L11)
+[packages/types/src/sequence-package-json.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L13)
 
 ___
 
@@ -2390,7 +2402,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-package-json.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L3)
+[packages/types/src/sequence-package-json.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L5)
 
 ___
 
@@ -2406,7 +2418,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sequence-package-json.ts:7](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L7)
+[packages/types/src/sequence-package-json.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sequence-package-json.ts#L9)
 
 ___
 
