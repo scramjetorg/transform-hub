@@ -20,4 +20,8 @@ rules:
   - apiGroups: [""]
     resources: ["pods/status"]
     verbs: ["get", "list"]
+
+  - apiGroups: [""]
+    resources: ["resourcequotas"]
+    verbs: ["get", "list"]
 {{- end }}
