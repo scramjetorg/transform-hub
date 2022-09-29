@@ -1,0 +1,33 @@
+{
+  "name": "@scramjet/config",
+  "version": "0.28.4",
+  "description": "This package is part of Scramjet Transform Hub. The package holds configuration API for all common STH interfaces.",
+  "main": "./src/index.ts",
+  "scripts": {
+    "clean": "rm -rf ./dist .bic_cache",
+    "build": "../../scripts/build-all.js --config-name=tsconfig.build.json --copy-dist",
+    "build:docs": "typedoc",
+    "test": "ava",
+    "test:coverage": "nyc ava"
+  },
+  "repository": "https://github.com/scramjetorg/transform-hub.git",
+  "author": "Scramjet <open-source@scramjet.org>",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "ava": "^4.3.3"
+  },
+  "ava": {
+    "extensions": [
+      "ts"
+    ],
+    "files": [
+      "**/*.spec.ts"
+    ],
+    "require": [
+      "ts-node/register"
+    ]
+  },
+  "dependencies": {
+    "yaml": "^2.1.1"
+  }
+}
