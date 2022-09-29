@@ -25,6 +25,7 @@ export type STHCommandOptions = {
     instancesServerPort: string;
     sequencesRoot: string;
     k8sNamespace: string;
+    k8sQuotaName: string;
     k8sAuthConfigPath: string;
     k8sSthPodHost: string;
     k8sRunnerImage: string,
