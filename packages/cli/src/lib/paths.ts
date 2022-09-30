@@ -34,10 +34,6 @@ const initDir = (dir: string) => {
     }
 };
 
-export const createConfigDirIfNotExists = () => initDir(siDir);
-export const createSessionDirIfNotExists = () => initDir(sessionDir);
-export const createProfileDirIfNotExists = () => initDir(profilesDir);
-
 const procPath = "/proc";
 /**
  * Checks existing si session directories and compares it with list of running sessions.

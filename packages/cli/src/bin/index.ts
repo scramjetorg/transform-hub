@@ -21,7 +21,7 @@ const CommandClass = completionMixin(commander).Command;
 const program = new CommandClass() as Command;
 
 const initPlatform = async () => {
-    const { token, env, middlewareApiUrl } = profileConfig.getConfig();
+    const { token, env, middlewareApiUrl } = profileConfig.get();
 
     /**
      * Set the default values for platform only when all required settings

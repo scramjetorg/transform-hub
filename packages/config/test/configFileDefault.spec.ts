@@ -2,7 +2,8 @@ import avaTest, { TestFn } from "ava";
 import { tmpdir } from "os";
 import { resolve } from "path";
 import { ConfigFileDefault } from "../src";
-import { File } from "../src/helpers/file";
+import { FileBuilder } from "../src/file";
+import { File } from "../src/types/file";
 
 const validTestFilePath = resolve(tmpdir(), "validTestFile.json");
 const invalidTestFilePath = resolve(tmpdir(), "invalidTestFile.json");
@@ -64,8 +65,8 @@ const hasSameValues = (obj1: Object, obj2: Object) => {
 const test = avaTest as TestFn<{validTestFile: File, invalidTestFile: File}>;
 
 test.before(t => {
-    const validTestFile = new File(validTestFilePath);
-    const invalidTestFile = new File(invalidTestFilePath);
+    const validTestFile = FileBuilder(validTestFilePath);
+    const invalidTestFile = FileBuilder(invalidTestFilePath);
 
     if (!validTestFile.exists())
         validTestFile.create();
@@ -84,7 +85,7 @@ test("Default file returned on invalid file path", (t) => {
     const defaultConfig = testConfig.getDefault();
     const config = testConfig.get();
 
-    t.false(testConfig.isValidPath());
+    t.false(testConfig.fileExist());
     t.false(testConfig.isValid());
     t.true(hasSameKeys(defaultConfig, config));
     t.true(hasSameValues(defaultConfig, config));
@@ -95,7 +96,7 @@ test("Default config returned on invalid config in file", (t) => {
     const defaultConfig = testConfig.getDefault();
     const config = testConfig.get();
 
-    t.true(testConfig.isValidPath());
+    t.true(testConfig.fileExist());
     t.false(testConfig.isValid());
     t.true(hasSameKeys(defaultConfig, config));
     t.true(hasSameValues(defaultConfig, config));
@@ -106,7 +107,7 @@ test("Config returned on valid config in file", (t) => {
     const defaultConfig = testConfig.getDefault();
     const config = testConfig.get();
 
-    t.true(testConfig.isValidPath());
+    t.true(testConfig.fileExist());
     t.true(testConfig.isValid());
     t.true(hasSameKeys(defaultConfig, config));
     t.false(hasSameValues(defaultConfig, config));
@@ -114,7 +115,7 @@ test("Config returned on valid config in file", (t) => {
 
 test("Restore default configuration", t => {
     const fixableTestFilePath = resolve(tmpdir(), "fixableTestFile.json");
-    const fixableTestFile = new File(fixableTestFilePath);
+    const fixableTestFile = FileBuilder(fixableTestFilePath);
 
     if (!fixableTestFile.exists())
         fixableTestFile.create();
@@ -124,7 +125,7 @@ test("Restore default configuration", t => {
     const defaultConfig = testConfig.getDefault();
     let config = testConfig.get();
 
-    t.true(testConfig.isValidPath());
+    t.true(testConfig.fileExist());
     t.true(testConfig.isValid());
     t.true(hasSameKeys(defaultConfig, config));
     t.false(hasSameValues(defaultConfig, config));
@@ -132,7 +133,7 @@ test("Restore default configuration", t => {
     testConfig.restoreDefault();
     config = testConfig.get();
 
-    t.true(testConfig.isValidPath());
+    t.true(testConfig.fileExist());
     t.true(testConfig.isValid());
     t.true(hasSameKeys(defaultConfig, config));
     t.true(hasSameValues(defaultConfig, config));

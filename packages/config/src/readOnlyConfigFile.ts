@@ -1,15 +1,16 @@
-import { File } from "./helpers/file";
+import { FileBuilder } from "./file";
 import { ReadOnlyConfig } from "./readOnlyConfig";
+import { File } from "./types/file";
 
 /**
  * Configuration object held in file
  */
-export abstract class ReadOnlyConfigFile extends ReadOnlyConfig {
+export abstract class ReadOnlyConfigFile<Type extends Object> extends ReadOnlyConfig<Type> {
     protected readonly file: File;
 
     constructor(filePath: string) {
-        const file = new File(filePath);
-        let configuration = {};
+        const file = FileBuilder(filePath);
+        let configuration = {} as Type;
 
         if (file.exists() && file.isReadable())
             configuration = file.read();
@@ -21,10 +22,10 @@ export abstract class ReadOnlyConfigFile extends ReadOnlyConfig {
      * Check if path exists
      * @returns true if path to config file exists
      */
-    isValidPath(): boolean {
+    fileExist(): boolean {
         return this.file.exists();
     }
     isValid(): boolean {
-        return this.isValidPath() && super.isValid();
+        return this.fileExist() && super.isValid();
     }
 }

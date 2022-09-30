@@ -2,7 +2,7 @@
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../helpers/scope";
 import { displayObject } from "../output";
-import { profileConfig } from "../config";
+import { isProfileConfig, profileConfig } from "../config";
 import { isDevelopment } from "../../utils/envs";
 
 /**
@@ -11,7 +11,7 @@ import { isDevelopment } from "../../utils/envs";
  * @param {Command} program Commander object.
  */
 export const scope: CommandDefinition = (program) => {
-    const isProdEnv = isProductionEnv(profileConfig.getEnv());
+    const isProdEnv = isProductionEnv(profileConfig.env);
 
     if (!isProdEnv) return;
 
@@ -68,7 +68,10 @@ export const scope: CommandDefinition = (program) => {
             if (!scopeExists(name)) {
                 throw new Error(`Couldn't find scope: ${name}`);
             }
-            profileConfig.setScope(name);
+            if (isProfileConfig(profileConfig)) {
+                profileConfig.setScope(name);
+            } else
+                throw new Error("Can't modify user configuration file");
         });
 
     scopeCmd
@@ -76,10 +79,7 @@ export const scope: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Delete specific scope")
         .action((name: string) => {
-            if (profileConfig.getConfig().scope === name) {
-                throw new Error(`Can't remove scope ${name} set in configuration.`);
-            }
-            if (profileConfig.getConfig().scope === name) {
+            if (profileConfig.scope === name) {
                 throw new Error(`Can't remove currently used scope ${name}`);
             }
             deleteScope(name);

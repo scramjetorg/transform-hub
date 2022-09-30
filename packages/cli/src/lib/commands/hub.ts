@@ -42,7 +42,7 @@ export const hub: CommandDefinition = (program) => {
             .argument("<name|id>")
             .description("Specify the default Hub you want to work with, all subsequent requests will be sent to this Hub")
             .action(async (id: string) => {
-                const space = sessionConfig.getConfig().lastSpaceId;
+                const space = sessionConfig.lastSpaceId;
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
                 const host = hosts.find((h: any) => h.id === id);
@@ -61,7 +61,7 @@ export const hub: CommandDefinition = (program) => {
             .alias("ls")
             .description("List all the Hubs in the default space")
             .action(async () => {
-                const space = sessionConfig.getConfig().lastSpaceId;
+                const space = sessionConfig.lastSpaceId;
 
                 if (!space) {
                     throw new Error("No space selected");
@@ -83,7 +83,7 @@ export const hub: CommandDefinition = (program) => {
             */
             .description("Display info about the default Hub")
             .action(async () => {
-                const { lastSpaceId: space, lastHubId: id } = sessionConfig.getConfig();
+                const { lastSpaceId: space, lastHubId: id } = sessionConfig.get();
                 const managerClient = getMiddlewareClient().getManagerClient(space);
                 const hosts = await managerClient.getHosts();
                 const host = hosts.find((h: any) => h.id === id);

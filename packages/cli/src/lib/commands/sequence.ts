@@ -79,7 +79,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("use")
         .alias("select")
         .description("Select the Sequence to communicate with by using '-' alias instead of Sequence id")
-        .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.getConfig().lastSequenceId}`)
+        .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.lastSequenceId}`)
         .argument("<id>", "Sequence id")
         .action(async (id: string) => {
             try {
@@ -148,7 +148,7 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
-            const { log: { format } } = profileConfig.getConfig();
+            const format = profileConfig.format;
 
             if (lstatSync(path).isDirectory()) {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -202,7 +202,7 @@ export const sequence: CommandDefinition = (program) => {
         .description("Remove all Sequences from the current scope (use with caution)")
         .action(async ({ force }) => {
             let seqs = await getHostClient().listSequences();
-            const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
+            const { lastSequenceId, lastInstanceId } = sessionConfig.get();
 
             if (!seqs.length) {
                 displayMessage("Sequence list is empty, nothing to delete.");

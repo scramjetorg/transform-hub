@@ -1,15 +1,16 @@
 import { Config } from "./config";
-import { File } from "./helpers/file";
+import { FileBuilder } from "./file";
+import { File } from "./types/file";
 
 /**
  * Modifiable configuration object held in file
  */
-export abstract class ConfigFile extends Config {
+export abstract class ConfigFile<Type extends Object> extends Config<Type> {
     protected file: File;
 
     constructor(filePath: string) {
-        const file = new File(filePath);
-        let configuration = {};
+        const file = FileBuilder(filePath);
+        let configuration = {} as Type;
 
         if (file.exists() && file.isReadWritable())
             configuration = file.read() || {};
@@ -21,23 +22,30 @@ export abstract class ConfigFile extends Config {
      * Check if path exists
      * @returns true if path to config file exists
      */
-    isValidPath(): boolean {
+    fileExist(): boolean {
         return this.file.exists();
     }
     isValid(): boolean {
-        return this.isValidPath() && super.isValid();
+        return super.isValid();
+    }
+
+    private createIfNotExistAndWrite(value: any) {
+        if (!this.fileExist() && !this.file.create())
+            return false;
+        this.file.write(value);
+        return true;
     }
 
     set(config: any): boolean {
         if (!super.set(config)) return false;
-        return this.file.write(this.configuration);
+        return this.createIfNotExistAndWrite(this.configuration);
     }
-    setEntry(key: keyof Object, value: any): boolean {
+    setEntry(key: keyof Type, value: any): boolean {
         if (!super.setEntry(key, value)) return false;
-        return this.file.write(this.configuration);
+        return this.createIfNotExistAndWrite(this.configuration);
     }
-    deleteEntry(key: keyof Object): boolean {
+    deleteEntry(key: keyof Type): boolean {
         if (!super.deleteEntry(key)) return false;
-        return this.file.write(this.configuration);
+        return this.createIfNotExistAndWrite(this.configuration);
     }
 }

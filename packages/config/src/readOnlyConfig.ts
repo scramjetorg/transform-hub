@@ -1,27 +1,23 @@
-import { ReadOnlyConfigBase } from "./readOnlyConfigBase";
+import ReadOnlyConfiguration from "./types/readOnlyConfiguration";
 
 /**
  * Read only configuration object
  */
-export abstract class ReadOnlyConfig extends ReadOnlyConfigBase {
-    protected readonly configuration: Object;
+export abstract class ReadOnlyConfig<Type extends Object> implements ReadOnlyConfiguration<Type> {
+    protected readonly configuration: Type;
     protected readonly isValidConfig: boolean;
 
-    constructor(configuration: Object) {
-        super();
+    constructor(configuration: Type) {
         if (this.validate(configuration)) {
             this.isValidConfig = true;
             this.configuration = configuration;
         } else {
             this.isValidConfig = false;
-            this.configuration = {};
+            this.configuration = {} as Type;
         }
     }
 
-    /**
-     * @returns Configuration object, or empty object if configuration is not valid.
-     */
-    get(): Object {
+    get(): Type {
         return this.configuration;
     }
 
@@ -35,20 +31,11 @@ export abstract class ReadOnlyConfig extends ReadOnlyConfigBase {
     }
     isValid() { return this.isValidConfig; }
 
-    /**
-     * Check if key exist in configuration
-     * @param key key to check if exists
-     * @return true if key exists in configuration
-     */
-    has(key: keyof Object): boolean {
+    has(key: keyof Type): boolean {
         return key in this.configuration;
     }
-    /**
-     * Get value of specified entry
-     * @param key Entry key to get
-     * @returns Value of entry or null if invalid configuration
-     */
-    getEntry(key: keyof Object): any | null {
+
+    getEntry(key: keyof Type): any | null {
         if (!this.isValidConfig) return null;
         return this.configuration[key];
     }

@@ -4,25 +4,25 @@ import { ConfigFile } from "./configFile";
  * Modifiable configuration object held in file. If file
  * is invalid, or not existing, default configuration is used.
  */
-export abstract class ConfigFileDefault extends ConfigFile {
-    protected readonly defaultConfiguration: object;
+export abstract class ConfigFileDefault<Type extends Object> extends ConfigFile<Type> {
+    protected readonly defaultConfiguration: Type;
 
-    constructor(filePath: string, defaultConf: Object) {
+    constructor(filePath: string, defaultConf: Type) {
         super(filePath);
         this.defaultConfiguration = defaultConf;
     }
-    get(): Object {
+    /**
+     * @returns File configuration if valid, default configuration otherwise
+     */
+    get(): Type {
         if (!this.isValid())
             return this.defaultConfiguration;
         return super.get();
     }
-    getDefault(): Object {
+    getDefault(): Type {
         return this.defaultConfiguration;
     }
     restoreDefault(): boolean {
-        if (!this.file.write(this.defaultConfiguration)) return false;
-        this.isValidConfig = true;
-        this.configuration = this.defaultConfiguration;
-        return true;
+        return this.set(this.defaultConfiguration);
     }
 }
