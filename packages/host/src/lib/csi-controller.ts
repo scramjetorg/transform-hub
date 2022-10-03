@@ -209,10 +209,11 @@ export class CSIController extends TypedEmitter<Events> {
             this.startInstance();
         });
 
-        i.then(() => this.main()).catch((e) => {
+        i.then(() => this.main()).catch(async (e) => {
             this.logger.info("Instance status: errored", e);
             this.status = InstanceStatus.ERRORED;
             this.emit("error", e);
+            this.emit("end", e.exitcode);
         });
 
         return i;
@@ -249,12 +250,9 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.logger.trace("Finalizing...");
 
-        this.emit("terminated", code);
-
         await this.finalize();
 
         this.emit("end", code);
-        // removed log close from here - should be done in cleanup in GC.
     }
 
     startInstance() {
