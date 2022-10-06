@@ -53,7 +53,7 @@ class ProfileManager {
     }
     profileExists(name: string) { return profileExists(name); }
     profileIsValid(name: string) {
-        return this.profileConfig.validateConfig(new ProfileConfig(profileNameToPath(name)));
+        return this.profileConfig.validateConfig(new ProfileConfig(profileNameToPath(name)).getConfig());
     }
 
     isPathSource() {
