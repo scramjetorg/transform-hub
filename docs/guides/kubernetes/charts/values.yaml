@@ -1,7 +1,7 @@
 replicaCount: 1
 repo: scramjetorg
 app: sth
-version: 0.28.3
+version: 0.28.5
 
 # fullnameOverride: ""
 
@@ -9,8 +9,8 @@ version: 0.28.3
 extraArgs:
   - "--identify-existing"
   - "--runtime-adapter=kubernetes"
-  - "--k8s-runner-image=scramjetorg/runner:0.28.3"
-  - "--k8s-runner-py-image=scramjetorg/runner-py:0.28.3"
+  - "--k8s-runner-image=scramjetorg/runner:0.28.5"
+  - "--k8s-runner-py-image=scramjetorg/runner-py:0.28.5"
   - "--k8s-runner-cleanup-timeout=0"
   - "--no-colors"
 
@@ -54,6 +54,19 @@ sthRunner:
     type: NodePort
     port: 8001
     externalTrafficPolicy: Cluster
+
+
+## ConfigMaps
+configDir: /config/
+
+config: {}
+    # config.json: |
+    #   {
+    #     "sequences": [
+    #       { "id": "default", "args": [],  "appConfig": {} }
+    #     ]
+    #   }
+
 
 ## The storage volume used by each Pod in the StatefulSet.
 persistentVolume:
