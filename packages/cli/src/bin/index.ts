@@ -65,6 +65,7 @@ const initPlatform = async () => {
         .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
         .option("--config <name>", "Set global configuration profile")
         .option("--config-path <path>", "Set global configuration from file")
+        .option("--progress")
         .addHelpCommand(false)
         .addHelpText("beforeAll", `Current profile: ${profileManager.getProfileName()}`)
         .addHelpText(
