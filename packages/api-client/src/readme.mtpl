@@ -584,6 +584,23 @@ ___
 
 <details>
 <summary>
+    <strong class="post">[ POST ]</strong>  <code>/api/v1/instance/:id/inout</code> <small>- Experimental. Send data to the input stream of the Instance to consume it. Get stream data from instance.</small>
+</summary>
+
+<br> <strong>Parameters</strong>
+
+<small>No parameters</small>
+
+<strong>Responses</strong>
+
+| Name                     | Code  | Description                                                  |
+| :----------------------- | :---- | :----------------------------------------------------------- |
+| Successful operation     | `200` | -                                                            |
+
+</details>
+
+<details>
+<summary>
     <strong class="post">[ POST ]</strong>  <code>/api/v1/instance/:id/stdin​</code> <small>- process.stdin</small>
 </summary>
 

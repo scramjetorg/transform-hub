@@ -38,7 +38,7 @@ import { development } from "@scramjet/sth-config";
 import { DataStream } from "scramjet";
 import { EventEmitter, once } from "events";
 import { ServerResponse } from "http";
-import { getRouter } from "@scramjet/api-server";
+import { DuplexStream, getRouter } from "@scramjet/api-server";
 
 import { getInstanceAdapter } from "@scramjet/adapters";
 import { cancellableDefer, CancellablePromise, defer, promiseTimeout, TypedEmitter } from "@scramjet/utility";
@@ -533,6 +533,8 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     createInstanceAPIRouter() {
+        let inputHeadersSent = false;
+
         if (!this.upStreams) {
             throw new AppError("UNATTACHED_STREAMS");
         }
@@ -540,6 +542,21 @@ export class CSIController extends TypedEmitter<Events> {
         this.router = getRouter();
 
         this.router.get("/", () => this.getInfo());
+
+        /**
+         * @experimental
+         */
+        this.router.duplex("/inout", (duplex, _headers) => {
+            if (!inputHeadersSent) {
+                this.downStreams![CC.IN].write(`Content-Type: ${_headers["content-type"]}\r\n`);
+                this.downStreams![CC.IN].write("\r\n");
+
+                inputHeadersSent = true;
+            }
+
+            (duplex as unknown as DuplexStream).input.pipe(this.downStreams![CC.IN], { end: false });
+            this.upStreams![CC.OUT]?.pipe((duplex as unknown as DuplexStream).output, { end: false });
+        });
 
         this.router.upstream("/stdout", this.upStreams[CC.STDOUT]);
         this.router.upstream("/stderr", this.upStreams[CC.STDERR]);
@@ -569,8 +586,6 @@ export class CSIController extends TypedEmitter<Events> {
             this.router.upstream("/monitoring", this.upStreams[CC.MONITORING]);
         }
         this.router.upstream("/output", this.upStreams[CC.OUT]);
-
-        let inputHeadersSent = false;
 
         this.router.downstream("/input", (req) => {
             if (this.apiInputEnabled) {
