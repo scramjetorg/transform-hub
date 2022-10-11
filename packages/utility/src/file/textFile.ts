@@ -1,6 +1,6 @@
 import { accessSync, constants, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
 import { basename, dirname, extname } from "path";
-import { File } from "../types/file";
+import { File } from "./file";
 
 export class TextFile implements File {
     public readonly path: string;

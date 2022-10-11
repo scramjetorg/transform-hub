@@ -3,6 +3,10 @@ import { PassThrough, Readable, Writable } from "stream";
 import { DataStream } from "scramjet";
 
 export type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "FATAL" | "TRACE";
+export const LogLevelStrings: LogLevel[] = ["FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"];
+export const isLogLevel = (lvl: string): lvl is LogLevel => {
+    return (LogLevelStrings as string[]).includes(lvl);
+}
 
 /**
  * Single log entry.

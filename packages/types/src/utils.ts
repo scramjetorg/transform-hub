@@ -4,7 +4,7 @@ import { Readable, Writable } from "stream";
  * This is a polyfill to TypeScripts rather poor expression of `function*`
  * @ignore
  */
-export type Gen<W, R, C extends any[] = any[]> = (...config: C) => Generator<R|undefined, void, W|undefined>;
+export type Gen<W, R, C extends any[] = any[]> = (...config: C) => Generator<R | undefined, void, W | undefined>;
 /**
  * This is a polyfill to TypeScripts rather poor expression of `async function*`
  * @ignore
@@ -105,3 +105,45 @@ export type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;
 export type DeepPartial<T> = {
     [K in keyof T]?: DeepPartial<T[K]>;
 };
+
+/**
+ * Basic pattern used in modules id checks
+ */
+const idPattern = /^[a-zA-z0-9_-]+$/;
+
+/**
+ * Function to check for valid id pattern
+ */
+export const isIdPattern = (id: string): boolean => {
+    if (id.length > 50) return false;
+    return idPattern.test(id);
+}
+
+export type UrlPath = string;
+
+const urlPathPart = /^[\b/](([a-z0-9]+(?:-[a-z0-9]+)*)[\b/]{0,1})*$/;
+/**
+ * Function checking slugs in url
+ * 
+ * Example valid paterns: /xx /xx/ /xxx/aa /xxx-ddd/ /xxx/aaa-ddd/ /xx-cc/aaa-ddd etc.
+ * @param url url to check
+ * @returns true if valid slug format
+ */
+export const isUrlPath = (url: string): boolean => urlPathPart.test(url);
+
+export type Port = number;
+export const isPort = (port: number): port is Port => {
+    return Number.isInteger(port) && port >= 0 && port <= 65535;
+}
+
+export type ApiVersion = string;
+
+const apiVersionPattern = /^v[0-9]+([.][0-9]+)*$/
+/**
+ * Function checking proper version format
+ * 
+ * Example valid formats: v1, v2.13, v3.333.111
+ * @param version version to check
+ * @returns true if valid version format
+ */
+export const isApiVersion = (version: string): version is ApiVersion => apiVersionPattern.test(version)

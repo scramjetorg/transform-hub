@@ -1,9 +1,9 @@
 import avaTest, { TestFn } from "ava";
 import { tmpdir } from "os";
 import { resolve } from "path";
-import { ConfigFileDefault } from "../src";
+import { ConfigFileDefault } from "../src/config";
 import { FileBuilder } from "../src/file";
-import { File } from "../src/types/file";
+import { File } from "../src/file";
 
 const validTestFilePath = resolve(tmpdir(), "validTestFile.json");
 const invalidTestFilePath = resolve(tmpdir(), "invalidTestFile.json");
@@ -22,7 +22,7 @@ const testDefaultConfig = {
     stringValue: "someString",
 };
 
-class TestConfigFileDefault extends ConfigFileDefault {
+class TestConfigFileDefault extends ConfigFileDefault<typeof testDefaultConfig> {
     constructor(path: string) {
         super(path, testDefaultConfig);
     }
@@ -62,7 +62,7 @@ const hasSameValues = (obj1: Object, obj2: Object) => {
     return true;
 };
 
-const test = avaTest as TestFn<{validTestFile: File, invalidTestFile: File}>;
+const test = avaTest as TestFn<{ validTestFile: File, invalidTestFile: File }>;
 
 test.before(t => {
     const validTestFile = FileBuilder(validTestFilePath);

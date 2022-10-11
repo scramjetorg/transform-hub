@@ -5,5 +5,3 @@ export { ReadOnlyConfigFileDefault } from "./readOnlyConfigFileDefault";
 export { Config } from "./config";
 export { ConfigFile } from "./configFile";
 export { ConfigFileDefault } from "./configFileDefault";
-
-export { FileBuilder } from "./file";

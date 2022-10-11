@@ -1,4 +1,4 @@
-import Configuration from "./types/configuration";
+import Configuration from "./configuration";
 
 /**
  * Modifiable configuration object

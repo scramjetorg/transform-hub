@@ -1,4 +1,4 @@
-import ReadOnlyConfiguration from "./types/readOnlyConfiguration";
+import ReadOnlyConfiguration from "./readOnlyConfiguration";
 
 /**
  * Read only configuration object

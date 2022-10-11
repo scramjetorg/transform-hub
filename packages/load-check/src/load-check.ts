@@ -1,9 +1,10 @@
 import { ObjLogger } from "@scramjet/obj-logger";
-import { IComponent, LoadCheckStat, LoadCheckConfig, LoadCheckContstants } from "@scramjet/types";
+import { IComponent, LoadCheckStat, LoadCheckRequirements, LoadCheckContstants } from "@scramjet/types";
 import { defer } from "@scramjet/utility";
 
 import sysinfo from "systeminformation";
 import { DataStream, StringStream } from "scramjet";
+import { LoadCheckConfig } from "./config/load-check-config";
 
 const MB = 1024 * 1024;
 
@@ -14,9 +15,9 @@ export class LoadCheck implements IComponent {
     /**
      * Configuration object with requirements to determine if machine is overloaded.
      *
-     * @type {LoadCheckConfig}
+     * @type {LoadCheckRequirements}
      */
-    config: LoadCheckConfig;
+    config: LoadCheckRequirements;
 
     /**
      * Values calculated from configuration indicating minimum requirements.
@@ -33,7 +34,8 @@ export class LoadCheck implements IComponent {
     logger: ObjLogger = new ObjLogger(this);
 
     constructor(config: LoadCheckConfig) {
-        this.config = config;
+        if(!config.isValid()) throw new Error("Invalid load-check configuration")
+        this.config = config.get();
         this.constants = {
             SAFE_OPERATION_LIMIT: this.config.safeOperationLimit * MB,
             MIN_INSTANCE_REQUIREMENTS: {
