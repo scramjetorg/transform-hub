@@ -1,4 +1,4 @@
-import { ConfigFileDefault } from "@scramjet/config";
+import { ConfigFileDefault } from "@scramjet/utility";
 import { SessionConfigEntity } from "../../types";
 import { sessionId } from "../../utils/sessionId";
 import isUUID from "validator/lib/isUUID";

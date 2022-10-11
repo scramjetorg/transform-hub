@@ -1,4 +1,4 @@
-import { ConfigFileDefault } from "@scramjet/config";
+import { ConfigFileDefault } from "@scramjet/utility";
 import { SiConfigEntity } from "../../types";
 import { siConfigFile } from "../paths";
 

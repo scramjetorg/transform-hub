@@ -24,7 +24,6 @@
     "@scramjet/middleware-api-client": "^0.28.5",
     "@scramjet/obj-logger": "^0.28.5",
     "@scramjet/utility": "^0.28.5",
-    "@scramjet/config": "^0.28.5",
     "chalk": "^4.1.2",
     "commander": "^8.3.0",
     "commander-completion": "^1.0.1",

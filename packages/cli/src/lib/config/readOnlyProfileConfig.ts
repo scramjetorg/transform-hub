@@ -1,5 +1,5 @@
 import { ProfileConfigEntity } from "../../types";
-import { ReadOnlyConfigFileDefault } from "@scramjet/config";
+import { ReadOnlyConfigFileDefault } from "@scramjet/utility";
 import { profileConfigDefault, validateProfileEntry, validateProfileKeysSize } from "./commonProfileConfig";
 
 // Profile configuration class. Represents configuration that can be maniupulated by user.

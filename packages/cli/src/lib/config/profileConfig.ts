@@ -1,6 +1,5 @@
-import { normalizeUrl } from "@scramjet/utility";
+import { normalizeUrl, ConfigFileDefault } from "@scramjet/utility";
 import { configEnv, ProfileConfigEntity } from "../../types";
-import { ConfigFileDefault } from "@scramjet/config";
 import { profileConfigDefault, validateProfileEntry, validateProfileKeysSize } from "./commonProfileConfig";
 
 // Profile configuration class. Represents configuration that can be maniupulated by user.
