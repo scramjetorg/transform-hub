@@ -69,8 +69,16 @@ spec:
             fieldRef:
               fieldPath: metadata.name
         volumeMounts:
-        - name: scramjet-sequences
-          mountPath: /root/.scramjet_k8s_sequences
+          - name: scramjet-sequences
+            mountPath: /root/.scramjet_k8s_sequences
+          {{- if .Values.config }}
+          {{- $configDir := .Values.configDir -}}
+          {{- range $path, $config := .Values.config }}
+          - name: sth-cm
+            mountPath: {{ $configDir }}/{{ $path }}
+            subPath: {{ $path }}
+          {{- end }}
+          {{- end }}
         ports:
         - name: sth-api
           containerPort: {{ .Values.sthApi.service.port }}
@@ -82,10 +90,15 @@ spec:
       {{- end }}
       restartPolicy: Always
       terminationGracePeriodSeconds: 10
-{{- if not .Values.persistentVolume.enabled }}
       volumes:
-            - name: scramjet-sequences
-              emptyDir: {}
+          {{- if .Values.config }}
+          - name: sth-cm
+            configMap:
+              name: sth-cm
+          {{- end }}
+{{- if not .Values.persistentVolume.enabled }}
+          - name: scramjet-sequences
+            emptyDir: {}
 {{- else }}
   volumeClaimTemplates:
   - metadata:
