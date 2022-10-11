@@ -1,6 +1,6 @@
-# `@scramjet/sth-config`
+# `@scramjet/telemetry`
 
-This package provides telemetry adapters.
+This package is part of Scramjet Transform Hub. The package provides modules for gathering analytics data.
 
 ## Docs
 

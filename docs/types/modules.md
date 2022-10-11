@@ -1197,6 +1197,7 @@ ___
 | :------ | :------ | :------ |
 | `authConfigPath?` | `string` | Authentication configuration path |
 | `namespace` | `string` | The Kubernetes namespace to use for running sequences |
+| `quotaName` | `string` | Quota object name to determine namespace limits. |
 | `runnerImages` | { `node`: `string` ; `python3`: `string`  } | Runner images to use |
 | `runnerImages.node` | `string` | - |
 | `runnerImages.python3` | `string` | - |
@@ -1976,7 +1977,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:238](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L238)
+[packages/types/src/sth-configuration.ts:244](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L244)
 
 ___
 
@@ -2149,6 +2150,7 @@ ___
 | `instancesServerPort` | `string` |
 | `k8sAuthConfigPath` | `string` |
 | `k8sNamespace` | `string` |
+| `k8sQuotaName` | `string` |
 | `k8sRunnerCleanupTimeout` | `string` |
 | `k8sRunnerImage` | `string` |
 | `k8sRunnerPyImage` | `string` |
@@ -2219,7 +2221,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/sth-configuration.ts:101](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L101)
+[packages/types/src/sth-configuration.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/sth-configuration.ts#L107)
 
 ___
 

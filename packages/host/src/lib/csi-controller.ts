@@ -543,6 +543,9 @@ export class CSIController extends TypedEmitter<Events> {
 
         this.router.get("/", () => this.getInfo());
 
+        /**
+         * @experimental
+         */
         this.router.duplex("/inout", (duplex, _headers) => {
             if (!inputHeadersSent) {
                 this.downStreams![CC.IN].write(`Content-Type: ${_headers["content-type"]}\r\n`);
