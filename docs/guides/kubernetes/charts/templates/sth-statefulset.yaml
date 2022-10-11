@@ -50,6 +50,8 @@ spec:
         {{- if .Values.extraArgs }}
         {{- toYaml .Values.extraArgs | nindent 10 }}
         {{- end }}
+          - '--port={{ .Values.sthApi.service.port }}'
+          - '--instances-server-port={{ .Values.sthRunner.service.port }}'
           - '--id'
           - '$(POD_NAME)'
         {{- if .Values.kubernetesAdapter.runnerAutoNamespace }}
@@ -68,6 +70,30 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        {{- if .Values.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.livenessProbe.path }}
+            port: {{ .Values.sthApi.service.port }}
+            scheme: {{ .Values.livenessProbe.scheme }}
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.livenessProbe.successThreshold }}
+          failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.readinessProbe.path }}
+            port: {{ .Values.sthApi.service.port }}
+            scheme: {{ .Values.readinessProbe.scheme }}
+          initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          successThreshold: {{ .Values.readinessProbe.successThreshold }}
+          failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+        {{- end }}
         volumeMounts:
         - name: scramjet-sequences
           mountPath: /root/.scramjet_k8s_sequences
