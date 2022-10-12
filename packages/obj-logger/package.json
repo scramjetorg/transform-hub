@@ -24,6 +24,7 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "@scramjet/utility": "^0.28.5",
     "scramjet": "^4.36.7"
   },
   "ava": {
