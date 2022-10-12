@@ -10,7 +10,7 @@ import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { LoadCheck } from "@scramjet/load-check";
+import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
 import { getSequenceAdapter, initializeSequenceAdapter } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
@@ -183,7 +183,7 @@ export class Host implements IComponent {
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
-        this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements });
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
 
         this.socketServer = socketServer;
         this.socketServer.logger.pipe(this.logger);
