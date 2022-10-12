@@ -1,13 +1,12 @@
 import { InstanceRequirements } from "@scramjet/types";
 import { ReadOnlyConfig } from "@scramjet/utility";
 
-
 export class InstanceRequirementsConfig extends ReadOnlyConfig<InstanceRequirements> {
-
     get freeMem() { return this.configuration.freeMem; }
     get cpuLoad() { return this.configuration.cpuLoad; }
     get freeSpace() { return this.configuration.freeSpace; }
 
+    // eslint-disable-next-line complexity
     protected validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "freeMem": {

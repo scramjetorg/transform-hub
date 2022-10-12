@@ -110,7 +110,7 @@ export const sequenceSendPackage = async (
                     const proc = Math.round(total / size * 100);
                     const filledCount = Math.floor(proc * (barSize / 100));
 
-                    text = `Uploading ${"".padEnd(filledCount, "█") + "".padEnd(barSize - filledCount, "░")} ${proc}%, ${(total >>> 10)}/${Math.floor(size >>> 10)}KB`;
+                    text = `Uploading ${"".padEnd(filledCount, "█") + "".padEnd(barSize - filledCount, "░")} ${proc}%, ${total >>> 10}/${Math.floor(size >>> 10)}KB`;
 
                     process.stderr.write(text);
                     process.stderr.moveCursor(-text.length, 0);

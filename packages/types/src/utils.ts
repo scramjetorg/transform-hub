@@ -113,15 +113,19 @@ const idPattern = /^[a-zA-z0-9_-]+$/;
 
 /**
  * Function to check for valid id pattern
+ * 
+ * @param id Id to validate
+ * @returns true if id is in valid format
  */
 export const isIdPattern = (id: string): boolean => {
     if (id.length > 50) return false;
     return idPattern.test(id);
-}
+};
 
 export type UrlPath = string;
 
 const urlPathPart = /^[\b/](([a-z0-9]+(?:-[a-z0-9]+)*)[\b/]{0,1})*$/;
+
 /**
  * Function checking slugs in url
  * 
@@ -134,11 +138,12 @@ export const isUrlPath = (url: string): boolean => urlPathPart.test(url);
 export type Port = number;
 export const isPort = (port: number): port is Port => {
     return Number.isInteger(port) && port >= 0 && port <= 65535;
-}
+};
 
 export type ApiVersion = string;
 
-const apiVersionPattern = /^v[0-9]+([.][0-9]+)*$/
+const apiVersionPattern = /^v[0-9]+([.][0-9]+)*$/;
+
 /**
  * Function checking proper version format
  * 
@@ -146,4 +151,4 @@ const apiVersionPattern = /^v[0-9]+([.][0-9]+)*$/
  * @param version version to check
  * @returns true if valid version format
  */
-export const isApiVersion = (version: string): version is ApiVersion => apiVersionPattern.test(version)
+export const isApiVersion = (version: string): version is ApiVersion => apiVersionPattern.test(version);

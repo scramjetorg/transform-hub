@@ -1,6 +1,5 @@
 import { Config } from "./config";
-import { FileBuilder } from "@scramjet/utility/src/file";
-import { File } from "@scramjet/utility/src/file/file";
+import { FileBuilder, File } from "../file";
 
 /**
  * Modifiable configuration object held in file

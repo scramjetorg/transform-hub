@@ -2,9 +2,7 @@ import { LoadCheckRequirements } from "@scramjet/types";
 import { ReadOnlyConfig } from "@scramjet/utility";
 import { InstanceRequirementsConfig } from "./instance-requirements-config";
 
-
 export class LoadCheckConfig extends ReadOnlyConfig<LoadCheckRequirements> {
-
     get safeOperationLimit() { return this.configuration.safeOperationLimit; }
     get instanceRequirements() { return this.configuration.instanceRequirements; }
 

@@ -2,8 +2,7 @@ import avaTest, { TestFn } from "ava";
 import { tmpdir } from "os";
 import { resolve } from "path";
 import { ConfigFileDefault } from "../src/config";
-import { FileBuilder } from "../src/file";
-import { File } from "../src/file";
+import { FileBuilder, File } from "../src/file";
 
 const validTestFilePath = resolve(tmpdir(), "validTestFile.json");
 const invalidTestFilePath = resolve(tmpdir(), "invalidTestFile.json");

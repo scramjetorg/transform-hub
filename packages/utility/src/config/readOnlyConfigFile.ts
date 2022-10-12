@@ -1,6 +1,5 @@
-import { FileBuilder } from "@scramjet/utility/src/file";
 import { ReadOnlyConfig } from "./readOnlyConfig";
-import { File } from "@scramjet/utility/src/file/file";
+import { FileBuilder, File } from "../file";
 
 /**
  * Configuration object held in file

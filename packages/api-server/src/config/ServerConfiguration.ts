@@ -1,7 +1,8 @@
 import { FileBuilder, ReadOnlyConfig } from "@scramjet/utility";
-import { ServerConfig } from "@scramjet/api-server"
+import { ServerConfig } from "../types/ServerConfig";
 
-export class ServerConfiguration extends ReadOnlyConfig<ServerConfig>{
+export class ServerConfiguration extends ReadOnlyConfig<ServerConfig> {
+    // eslint-disable-next-line complexity
     protected validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "verbose":
@@ -12,12 +13,13 @@ export class ServerConfiguration extends ReadOnlyConfig<ServerConfig>{
                 return null;
             case "sslKeyPath":
             case "sslCertPath":
-                {
-                    if (value === undefined) return null;
-                    if (typeof value !== "string") return false;
-                    const sslFile = FileBuilder(value)
-                    return (sslFile.exists() && sslFile.isReadable());
-                }
+            {
+                if (value === undefined) return null;
+                if (typeof value !== "string") return false;
+                const sslFile = FileBuilder(value);
+
+                return sslFile.exists() && sslFile.isReadable();
+            }
             case "router":
                 return null;
             default:

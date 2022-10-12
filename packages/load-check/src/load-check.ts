@@ -34,7 +34,7 @@ export class LoadCheck implements IComponent {
     logger: ObjLogger = new ObjLogger(this);
 
     constructor(config: LoadCheckConfig) {
-        if(!config.isValid()) throw new Error("Invalid load-check configuration")
+        if (!config.isValid()) throw new Error("Invalid load-check configuration");
         this.config = config.get();
         this.constants = {
             SAFE_OPERATION_LIMIT: this.config.safeOperationLimit * MB,

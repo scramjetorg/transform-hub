@@ -10,4 +10,4 @@ export * from "./read-config-file";
 export * from "./normalize-url";
 export * from "./stream-to-string";
 export * from "./config";
-export * from "./file"
+export * from "./file";
