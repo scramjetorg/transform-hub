@@ -1,8 +1,4 @@
-import { isIdPattern } from "./utils";
-
-export type ManagerId = string
-
-export const isManagerId = (id: string): id is ManagerId => isIdPattern(id);
+import { IdString } from "./utils";
 
 /**
  * Manager configuration type definition.
@@ -21,7 +17,7 @@ export type ManagerConfiguration = {
     /**
      * Manager id.
      */
-    id: ManagerId;
+    id: IdString;
 
     /**
      * Host controller configuration.
