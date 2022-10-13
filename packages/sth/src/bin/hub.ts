@@ -7,7 +7,7 @@ import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { Host } from "@scramjet/host";
-import { readConfigFile } from "@scramjet/utility";
+import { FileBuilder } from "@scramjet/utility";
 
 const program = new Command();
 const options: OptionValues & STHCommandOptions = program
@@ -59,7 +59,10 @@ const options: OptionValues & STHCommandOptions = program
     const resolveFile = (path: string) => path && resolve(process.cwd(), path);
 
     if (options.config) {
-        const configContents = await readConfigFile(options.config) as DeepPartial<STHConfiguration>;
+        const configFile = FileBuilder(options.config);
+
+        if (!(configFile.exists() && configFile.isReadable())) throw new Error("Unable to read config file");
+        const configContents = configFile.read() as DeepPartial<STHConfiguration>;
 
         configService.update(configContents);
     }
