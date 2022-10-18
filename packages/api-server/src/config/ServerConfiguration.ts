@@ -2,7 +2,6 @@ import { FileBuilder, ReadOnlyConfig } from "@scramjet/utility";
 import { ServerConfig } from "../types/ServerConfig";
 
 export class ServerConfiguration extends ReadOnlyConfig<ServerConfig> {
-
     protected validateEntry(key: string, value: any): boolean | null {
         return ServerConfiguration.validateEntry(key, value);
     }

@@ -9,7 +9,7 @@ export class LoadCheckConfig extends ReadOnlyConfig<LoadCheckRequirements> {
     protected validateEntry(key: string, value: any): boolean | null {
         return LoadCheckConfig.validateEntry(key, value);
     }
-    
+
     static validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "safeOperationLimit": {
