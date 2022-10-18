@@ -8,7 +8,7 @@ interface ReadOnlyConfiguration<Type extends Object> extends ConfigurationBase {
      * @returns Configuration object, or empty object if configuration is not valid.
      */
     get(): Type;
-    validate(config: Object): boolean ;
+    validate(config: Record<string, any>): boolean ;
     isValid(): boolean;
 
     /**

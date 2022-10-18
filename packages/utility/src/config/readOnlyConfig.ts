@@ -21,7 +21,7 @@ export abstract class ReadOnlyConfig<Type extends Object> implements ReadOnlyCon
         return this.configuration;
     }
 
-    validate(config: Object): boolean {
+    validate(config: Record<string, any>): boolean {
         if (Object.keys(config).length === 0) return false;
 
         for (const key in config) {

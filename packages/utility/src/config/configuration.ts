@@ -9,7 +9,7 @@ interface Configuration<Type extends Object> extends ReadOnlyConfiguration<Type>
      * @param config configuration to set
      * @returns true if config was valid and set
      */
-    set(config: any): boolean
+    set(config: Record<string, any>): boolean
     /**
      * Set configuration entry
      * @param key key to set

@@ -2,8 +2,12 @@ import { FileBuilder, ReadOnlyConfig } from "@scramjet/utility";
 import { ServerConfig } from "../types/ServerConfig";
 
 export class ServerConfiguration extends ReadOnlyConfig<ServerConfig> {
-    // eslint-disable-next-line complexity
+
     protected validateEntry(key: string, value: any): boolean | null {
+        return ServerConfiguration.validateEntry(key, value);
+    }
+    // eslint-disable-next-line complexity
+    static validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "verbose":
                 if (value === undefined) return null;
@@ -23,7 +27,7 @@ export class ServerConfiguration extends ReadOnlyConfig<ServerConfig> {
             case "router":
                 return null;
             default:
-                return true; // because ServerConfig can be an empty object
+                return false;
         }
     }
 }

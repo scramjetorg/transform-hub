@@ -20,11 +20,11 @@ export abstract class Config<Type extends Object> implements Configuration<Type>
         return this.configuration;
     }
 
-    validate(config: Object): boolean {
+    validate(config: Record<string, any>): boolean {
         if (Object.keys(config).length === 0) return false;
 
         for (const key in config) {
-            if (this.validateEntry(key, config[key as keyof Object]) === false) return false;
+            if (this.validateEntry(key, config[key]) === false) return false;
         }
         return true;
     }
