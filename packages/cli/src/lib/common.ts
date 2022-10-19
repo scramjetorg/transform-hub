@@ -21,8 +21,8 @@ let hostClient: HostClient;
 export const getHostClient = (): HostClient => {
     if (hostClient) return hostClient;
 
-    const { apiUrl, env, log: { debug } } = profileConfig.getConfig();
-    const { lastSpaceId, lastHubId } = sessionConfig.getConfig();
+    const { apiUrl, env, log: { debug } } = profileConfig.get();
+    const { lastSpaceId, lastHubId } = sessionConfig.get();
 
     if (isDevelopmentEnv(env)) {
         hostClient = new HostClient(apiUrl);

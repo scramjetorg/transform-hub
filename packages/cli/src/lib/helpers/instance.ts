@@ -13,7 +13,7 @@ import { getInstanceId, sessionConfig } from "../config";
 export const instanceKill = async (
     id: string,
     removeImmediately: boolean = false,
-    lastInstanceId = sessionConfig.getConfig().lastInstanceId
+    lastInstanceId = sessionConfig.lastInstanceId
 ): Promise<STHRestAPI.SendKillInstanceResponse> => {
     const instanceId = getInstanceId(id);
     const instanseKillResponse = await getInstance(instanceId).kill({ removeImmediately });

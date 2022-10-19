@@ -1,7 +1,7 @@
-import { readFileSync } from "fs";
 import { defaultConfigName, defaultConfigProfileFile, listDirFileNames, profileExists, profileNameToPath, profileRemove, profilesDir } from "../paths";
 import ProfileConfig from "./profileConfig";
-import { siConfig } from "./siConfig";
+import ReadOnlyProfileConfig from "./readOnlyProfileConfig";
+import { SiConfig } from "./siConfig";
 
 const enum ProfileSource {
     Default,
@@ -12,20 +12,23 @@ const enum ProfileSource {
     FlagProfilePath,
 }
 
+export const isProfileConfig = (profile: ProfileConfig | ReadOnlyProfileConfig): profile is ProfileConfig => {
+    return (profile as ProfileConfig).set !== undefined;
+};
+
 // Helper class used to manage controll of precedence of different profiles
 // that can be set by user.
-class ProfileManager {
+export class ProfileManager {
     private static instance: ProfileManager;
     protected source: ProfileSource;
-    protected profileConfig: ProfileConfig;
+    protected profileConfig: ProfileConfig | ReadOnlyProfileConfig;
 
     private constructor() {
         this.source = ProfileSource.Default;
         const defaultProfile = new ProfileConfig(defaultConfigProfileFile);
 
         if (!defaultProfile.isValid()) {
-            defaultProfile.writeConfig(defaultProfile.getDefaultConfig());
-            defaultProfile.setFilePath(defaultConfigProfileFile);
+            defaultProfile.restoreDefault();
         }
         this.profileConfig = defaultProfile;
     }
@@ -37,9 +40,7 @@ class ProfileManager {
     }
     createProfile(name: string) {
         if (profileExists(name)) throw Error(`Profile ${name} already exist`);
-        const newProfile = new ProfileConfig(profileNameToPath(name));
-
-        newProfile.writeConfig(newProfile.getDefaultConfig());
+        new ProfileConfig(profileNameToPath(name)).restoreDefault();
     }
     removeProfile(name: string) {
         if (!profileExists(name)) throw Error(`Unknown profile: ${name}`);
@@ -53,7 +54,7 @@ class ProfileManager {
     }
     profileExists(name: string) { return profileExists(name); }
     profileIsValid(name: string) {
-        return this.profileConfig.validateConfig(new ProfileConfig(profileNameToPath(name)).getConfig());
+        return new ProfileConfig(profileNameToPath(name)).isValid();
     }
 
     isPathSource() {
@@ -62,17 +63,17 @@ class ProfileManager {
     getProfileName(): string {
         if (this.isPathSource())
             return "user configuration file";
-        return siConfig.getConfig().profile;
+        return SiConfig.getInstance().profile;
     }
     setFlagProfilePathSource() {
         this.source = ProfileSource.FlagProfilePath;
     }
-    getProfileConfig(): ProfileConfig {
+    getProfileConfig(): ProfileConfig | ReadOnlyProfileConfig {
         return this.profileConfig;
     }
     useDefaultProfile() {
         this.source = ProfileSource.Default;
-        this.profileConfig.setFilePath(defaultConfigProfileFile);
+        this.profileConfig = new ProfileConfig(defaultConfigProfileFile);
     }
     setDefaultProfile() {
         if (!this.validSourcePrecedence(ProfileSource.Default)) return;
@@ -105,19 +106,16 @@ class ProfileManager {
 
     protected setProfileFromName(profileName: string): boolean {
         if (!profileExists(profileName)) throw Error(`Unable to find profile: ${profileName}`);
-        this.profileConfig.readOnly = false;
-        this.profileConfig.setFilePath(profileNameToPath(profileName));
+        this.profileConfig = new ProfileConfig(profileNameToPath(profileName));
         return true;
     }
 
     protected setProfileFromFile = (path: string): boolean => {
-        const fileConfig = JSON.parse(readFileSync(path, "utf-8"));
+        const userProfileConfigFile = new ReadOnlyProfileConfig(path);
 
-        if (!this.profileConfig.validateConfig(fileConfig)) throw Error("Invalid config file");
-        this.profileConfig.readOnly = true;
-        this.profileConfig.setFilePath(path);
+        if (!userProfileConfigFile.isValid()) throw Error("Invalid config file");
+        this.profileConfig = userProfileConfigFile;
         return true;
     };
 }
 
-export const profileManager = ProfileManager.getInstance();

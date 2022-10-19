@@ -1,7 +1,7 @@
 import { join, resolve } from "path";
-import { existsSync, readFileSync } from "fs";
+import { JsonFile } from "./file";
 
-export const readJsonFile = (fileNameCandidate: string, ...path: string[]): {[key: string]: any} => {
+export const readJsonFile = (fileNameCandidate: string, ...path: string[]): { [key: string]: any } => {
     const fileName = fileNameCandidate.endsWith(".json") ? fileNameCandidate : `${fileNameCandidate}.json`;
     const filePath = join(...path, fileName);
     const realPath = resolve(filePath);
@@ -9,9 +9,10 @@ export const readJsonFile = (fileNameCandidate: string, ...path: string[]): {[ke
     let data = {};
 
     try {
-        if (existsSync(realPath)) {
-            data = JSON.parse(readFileSync(realPath, "utf8"));
-        }
+        const jsonFile = new JsonFile(realPath);
+
+        if (jsonFile.exists() && jsonFile.isReadable())
+            data = jsonFile.read();
     } catch (err) {
         // Ignore.
     } finally {

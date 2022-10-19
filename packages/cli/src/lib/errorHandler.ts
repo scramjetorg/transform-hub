@@ -18,7 +18,7 @@ const getLogParams = () => {
     let format: displayFormat = "pretty";
 
     try {
-        const { log: { format: profileFormat, debug: profileDebug } } = profileConfig.getConfig();
+        const { log: { format: profileFormat, debug: profileDebug } } = profileConfig.get();
 
         if (profileFormat) format = profileFormat;
         if (profileDebug) debug = profileDebug;

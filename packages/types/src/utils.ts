@@ -4,7 +4,7 @@ import { Readable, Writable } from "stream";
  * This is a polyfill to TypeScripts rather poor expression of `function*`
  * @ignore
  */
-export type Gen<W, R, C extends any[] = any[]> = (...config: C) => Generator<R|undefined, void, W|undefined>;
+export type Gen<W, R, C extends any[] = any[]> = (...config: C) => Generator<R | undefined, void, W | undefined>;
 /**
  * This is a polyfill to TypeScripts rather poor expression of `async function*`
  * @ignore
@@ -105,3 +105,11 @@ export type StreambleMaybeFunction<Produces> = FReturns<Streamable<Produces>>;
 export type DeepPartial<T> = {
     [K in keyof T]?: DeepPartial<T[K]>;
 };
+
+export type IdString = string;
+
+export type UrlPath = string;
+
+export type Port = number;
+
+export type ApiVersion = string;

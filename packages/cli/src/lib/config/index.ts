@@ -1,18 +1,23 @@
 import { defaultConfigName, profileExists } from "../paths";
 import { envs } from "../../utils/envs";
 import { displayError, displayMessage } from "../output";
-import { siConfig } from "./siConfig";
+import { SiConfig } from "./siConfig";
 import { SessionConfig } from "./sessionConfig";
-import { profileManager } from "./profileManager";
+import { ProfileManager } from "./profileManager";
+import ProfileConfig from "./profileConfig";
+import ReadOnlyProfileConfig from "./readOnlyProfileConfig";
 
-export { siConfig } from "./siConfig";
-export { profileManager } from "./profileManager";
+export { ProfileConfig, ReadOnlyProfileConfig };
+export { isProfileConfig } from "./profileManager";
+
+export const profileManager = ProfileManager.getInstance();
+export const siConfig = SiConfig.getInstance();
 export const sessionConfig = new SessionConfig();
 export const profileConfig = profileManager.getProfileConfig();
 
 // eslint-disable-next-line complexity
 export const initConfig = () => {
-    let { profile } = siConfig.getConfig();
+    let profile = siConfig.profile;
 
     if (!profile || !profileExists(profile)) {
         siConfig.setProfile(defaultConfigName);
@@ -37,8 +42,8 @@ export const initConfig = () => {
     let config;
 
     try {
-        config = profileConfig.getConfig();
-        const isProfileConfigValid = profileConfig.validateConfig(config);
+        config = profileConfig.get();
+        const isProfileConfigValid = profileConfig.validate(config);
 
         if (isProfileConfigValid) return;
     } catch (error: any) {
@@ -51,7 +56,7 @@ export const initConfig = () => {
         siConfig.setProfile(defaultConfigName);
     } else {
         displayMessage("Default Profile contain errors- reseting to base configuration.");
-        profileConfig.restoreDefaultConfig();
+        (profileConfig as ProfileConfig).restoreDefault();
     }
 };
 
@@ -68,7 +73,7 @@ const getDashDefaultValue = (id: string, def: string) => {
  * @param id - dash or anything else
  * @returns the correct id
  */
-export const getSequenceId = (id: string) => getDashDefaultValue(id, sessionConfig.getConfig().lastSequenceId);
+export const getSequenceId = (id: string) => getDashDefaultValue(id, sessionConfig.lastSequenceId);
 
 /**
  * Gets last Instance id if dash is provided, otherwise returns the first argument
@@ -76,7 +81,7 @@ export const getSequenceId = (id: string) => getDashDefaultValue(id, sessionConf
  * @param id - dash or anything else
  * @returns the correct id
  */
-export const getInstanceId = (id: string) => getDashDefaultValue(id, sessionConfig.getConfig().lastInstanceId);
+export const getInstanceId = (id: string) => getDashDefaultValue(id, sessionConfig.lastInstanceId);
 
 /**
  * Gets package file path if dash is provided, otherwise returns the first argument
@@ -84,4 +89,4 @@ export const getInstanceId = (id: string) => getDashDefaultValue(id, sessionConf
  * @param path - dash or anything else
  * @returns the correct id
  */
-export const getPackagePath = (path: string) => getDashDefaultValue(path, sessionConfig.getConfig().lastPackagePath);
+export const getPackagePath = (path: string) => getDashDefaultValue(path, sessionConfig.lastPackagePath);

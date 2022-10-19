@@ -10,7 +10,7 @@ import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { LoadCheck } from "@scramjet/load-check";
+import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
 import { getSequenceAdapter, initializeSequenceAdapter } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
@@ -24,7 +24,7 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
-import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramjet/utility";
+import { isStartSequenceDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
@@ -183,7 +183,7 @@ export class Host implements IComponent {
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
-        this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements });
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
 
         this.socketServer = socketServer;
         this.socketServer.logger.pipe(this.logger);
@@ -290,7 +290,9 @@ export class Host implements IComponent {
 
         // Load the config
         try {
-            _config = await readConfigFile(this.config.startupConfig);
+            const configFile = FileBuilder(this.config.startupConfig);
+
+            _config = configFile.read();
             this.logger.debug("Sequence config loaded", _config);
         } catch {
             throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
@@ -1094,7 +1096,7 @@ export class Host implements IComponent {
         )] as HostSizes;
     }
 
-    pushTelemetry(message: string, labels: {[key: string]: string} = {}, level: "info" | "error" = "info") {
+    pushTelemetry(message: string, labels: { [key: string]: string } = {}, level: "info" | "error" = "info") {
         this.telemetryAdapter?.push(level, {
             message,
             labels: {
