@@ -17,16 +17,16 @@
     "@scramjet/sth-config": "^0.28.5",
     "@scramjet/symbols": "^0.28.5",
     "n-readlines": "^1.0.1",
-    "scramjet": "^4.36.7"
+    "scramjet": "^4.36.9"
   },
   "devDependencies": {
     "@scramjet/types": "^0.28.5",
     "@types/node": "15.12.5",
     "ava": "^3.15.0",
     "ts-node": "^10.9.1",
-    "typedoc": "^0.23.10",
-    "typedoc-plugin-markdown": "^3.13.4",
-    "typescript": "^4.7.4"
+    "typedoc": "^0.23.17",
+    "typedoc-plugin-markdown": "^3.13.6",
+    "typescript": "^4.8.4"
   },
   "ava": {
     "extensions": [
