@@ -156,7 +156,8 @@ export class CPMConnector extends TypedEmitter<Events> {
                 "x-sth-description": typeof this.config.description !== "undefined" ? this.config.description : "",
                 "x-sth-tags": JSON.stringify(typeof this.config.tags !== "undefined" ? this.config.tags : []),
                 "x-manager-id": cpmId,
-                "x-sth-id": this.config.id || ""
+                "x-sth-id": this.config.id || "",
+                ...(config.token ? { "Authorization": `Bearer ${config.token}` } : {})
             },
             server,
             https: this.isHttps

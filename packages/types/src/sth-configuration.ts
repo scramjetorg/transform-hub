@@ -151,7 +151,11 @@ export type STHConfiguration = {
 
     cpm: {
         maxReconnections: number,
-        reconnectionDelay: number,
+        reconnectionDelay: number
+    }
+
+    platform?: {
+        token?: string;
     }
 
     /**
