@@ -155,7 +155,8 @@ export class CPMConnector extends TypedEmitter<Events> {
             verserUrl: `${this.cpmUrl}/verser`,
             headers: {
                 "x-manager-id": cpmId,
-                "x-sth-id": this.config.id || ""
+                "x-sth-id": this.config.id || "",
+                ...(config.token ? { "Authorization": `Bearer ${config.token}` } : {})
             },
             server,
             https: this.isHttps

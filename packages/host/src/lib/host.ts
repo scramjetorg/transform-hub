@@ -336,6 +336,7 @@ export class Host implements IComponent {
                     cpmSslCaPath: this.config.cpmSslCaPath,
                     maxReconnections: this.config.cpm.maxReconnections,
                     reconnectionDelay: this.config.cpm.reconnectionDelay,
+                    token: this.config.platform?.token
                 },
                 this.api.server
             );
