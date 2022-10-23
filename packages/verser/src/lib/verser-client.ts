@@ -89,15 +89,17 @@ export class VerserClient extends TypedEmitter<Events> {
      */
     public async connect(): Promise<VerserClientConnection> {
         return new Promise((resolve, reject) => {
-            const { hostname, port, pathname } =
-                this.opts.verserUrl instanceof URL ? this.opts.verserUrl : new URL(this.opts.verserUrl);
+            const { hostname, port, pathname, href } = this.opts.verserUrl instanceof URL
+                ? this.opts.verserUrl : new URL(this.opts.verserUrl);
 
+            this.logger.info("------", { hostname, port, pathname, href });
             const connectRequest = request({
                 agent: this.httpAgent,
                 headers: this.opts.headers,
                 hostname,
                 method: "connect",
                 path: pathname,
+                href,
                 port,
                 protocol: this.opts.https ? "https:" : "http:",
                 ca: typeof this.opts.https === "object" ? this.opts.https.ca : undefined,
