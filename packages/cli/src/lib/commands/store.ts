@@ -34,6 +34,6 @@ export const store: CommandDefinition = (program) => {
         .command("delete")
         .alias("rm")
         .argument("<id>", "The Sequence id to remove or '-' for the last uploaded")
-        .description("Delete the Sequence from the Hub");
+        .description("Delete the Sequence from the Store");
     // .action(async (id: string) => { });
 };
