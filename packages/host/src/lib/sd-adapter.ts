@@ -70,7 +70,7 @@ export class ServiceDiscovery {
 
     cpmConnector?: CPMConnector;
 
-    public router: APIRoute = getRouter()
+    public router: APIRoute = getRouter();
 
     constructor() {
         this.createTopicsRouter();
@@ -95,7 +95,7 @@ export class ServiceDiscovery {
             pipeToTopic(req, target);
 
             if (!cpm) {
-                this.update({
+                await this.update({
                     provides: topic, contentType: contentType, topicName: topic });
             } else {
                 this.logger.debug(`Incoming Downstream CPM request for topic '${topic}'`);
@@ -103,14 +103,14 @@ export class ServiceDiscovery {
             return {};
         }, { checkContentType: false });
 
-        this.router.upstream("/:topic", (req) => {
+        this.router.upstream("/:topic", async (req) => {
             //TODO: what should be the default content type and where to store this information?
             const contentType = req.headers["content-type"] || "application/x-ndjson";
             const { topic } = req.params || {};
             const { cpm } = req.headers;
 
             if (!cpm) {
-                this.update({
+                await this.update({
                     requires: topic, contentType, topicName: topic });
             } else {
                 this.logger.debug(`Incoming Upstream CPM request for topic '${topic}'`);
@@ -242,24 +242,24 @@ export class ServiceDiscovery {
         }
     }
 
-    public routeTopicToStream(topicData: dataType, target: Writable) {
+    public async routeTopicToStream(topicData: dataType, target: Writable) {
         this.getData(topicData).pipe(target);
 
-        this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ requires: topicData.topic, contentType: topicData.contentType });
     }
 
-    public routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string) {
+    public async routeStreamToTopic(source: Readable, topicData: dataType, localProvider?: string) {
         const topic = this.addData(topicData, localProvider);
 
         pipeToTopic(source, topic);
-        this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, contentType: topicData.contentType });
+        await this.cpmConnector?.sendTopicInfo({ provides: topicData.topic, contentType: topicData.contentType });
     }
 
-    update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
+    async update(data: { provides?: string, requires?: string, topicName: string, contentType: string }) {
         this.logger.trace("Topic update. Send topic info to CPM", data);
 
         if (this.cpmConnector?.connected) {
-            this.cpmConnector?.sendTopicInfo(data);
+            await this.cpmConnector?.sendTopicInfo(data);
         }
     }
 }

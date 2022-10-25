@@ -29,7 +29,7 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: true });;
+    inputStringifiedLogStream = new PassThrough({ objectMode: true });
 
     /**
      * Output stream in object mode.

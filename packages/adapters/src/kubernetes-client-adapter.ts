@@ -14,7 +14,7 @@ class KubernetesClientAdapter {
     name = "KubernetesClientAdapter";
 
     private _configPath: string;
-    private _config?: k8s.KubeConfig
+    private _config?: k8s.KubeConfig;
     private _namespace: string;
 
     constructor(configPath: string = "", namespace: string = "default") {

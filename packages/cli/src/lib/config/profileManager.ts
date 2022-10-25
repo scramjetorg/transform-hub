@@ -19,6 +19,7 @@ export const isProfileConfig = (profile: ProfileConfig | ReadOnlyProfileConfig):
 // Helper class used to manage controll of precedence of different profiles
 // that can be set by user.
 export class ProfileManager {
+    // eslint-disable-next-line no-use-before-define
     private static instance: ProfileManager;
     protected source: ProfileSource;
     protected profileConfig: ProfileConfig | ReadOnlyProfileConfig;

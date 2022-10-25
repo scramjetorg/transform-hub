@@ -111,7 +111,7 @@ export class Host implements IComponent {
      */
     serviceDiscovery = new ServiceDiscovery();
 
-    commonLogsPipe = new CommonLogsPipe()
+    commonLogsPipe = new CommonLogsPipe();
 
     publicConfig: PublicSTHConfiguration;
 
@@ -483,7 +483,7 @@ export class Host implements IComponent {
 
             this.logger.trace("Sequence removed:", id);
 
-            this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
@@ -718,7 +718,7 @@ export class Host implements IComponent {
         try {
             const csic = await this.startCSIController(sequence, payload);
 
-            this.cpmConnector?.sendInstanceInfo({
+            await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
                 appConfig: csic.appConfig,
                 args: csic.args,
@@ -787,7 +787,7 @@ export class Host implements IComponent {
             this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
-        csic.on("pang", (data) => {
+        csic.on("pang", async (data) => {
             // @TODO REFACTOR possibly send only one PANG in Runner and throw on more pangs
             this.logger.trace("PANG received", data);
 
@@ -798,7 +798,7 @@ export class Host implements IComponent {
 
                     csic.requires = csic.inputTopic;
 
-                    this.serviceDiscovery.routeTopicToStream(
+                    await this.serviceDiscovery.routeTopicToStream(
                         { topic: csic.inputTopic, contentType: "" },
                         csic.getInputStream()
                     );
@@ -810,7 +810,7 @@ export class Host implements IComponent {
                     csic.provides = csic.outputTopic;
 
                     // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
-                    this.serviceDiscovery.routeStreamToTopic(
+                    await this.serviceDiscovery.routeStreamToTopic(
                         csic.getOutputStream(),
                         { topic: csic.outputTopic, contentType: "" },
                         csic.id
@@ -824,12 +824,12 @@ export class Host implements IComponent {
 
                 csic.requires = data.requires;
 
-                this.serviceDiscovery.routeTopicToStream(
+                await this.serviceDiscovery.routeTopicToStream(
                     { topic: data.requires, contentType: data.contentType! },
                     csic.getInputStream()
                 );
 
-                this.serviceDiscovery.update({
+                await this.serviceDiscovery.update({
                     requires: data.requires, contentType: data.contentType!, topicName: data.requires
                 });
             }
@@ -840,19 +840,19 @@ export class Host implements IComponent {
 
                 csic.provides = data.provides;
 
-                this.serviceDiscovery.routeStreamToTopic(
+                await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
                     { topic: data.provides, contentType: "" },
                     csic.id
                 );
 
-                this.serviceDiscovery.update({
+                await this.serviceDiscovery.update({
                     provides: data.provides, contentType: data.contentType!, topicName: data.provides
                 });
             }
         });
 
-        csic.on("end", (code) => {
+        csic.on("end", async (code) => {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
 
             if (csic.provides && csic.provides !== "") {
@@ -870,7 +870,7 @@ export class Host implements IComponent {
 
             sequence.instances.delete(id);
 
-            this.cpmConnector?.sendInstanceInfo({
+            await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
                 sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);

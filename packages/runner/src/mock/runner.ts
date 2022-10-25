@@ -10,7 +10,7 @@ class Runner {
         {
             healthy: true
         }
-    ]
+    ];
 
     private statusIntervalHandle: any;
 
