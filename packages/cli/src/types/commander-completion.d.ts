@@ -30,8 +30,8 @@ declare module "commander-completion" {
   export type CompletionFunction = (info: LineInfo, cb?: CompletionCallback) => Command; // eslint-disable-line no-use-before-define
 
   export class Command extends commander.Command {
-    complete: CompleteFunction
-    completion: CompletionFunction
+      complete: CompleteFunction;
+      completion: CompletionFunction;
   }
 
   type CommanderDefaultExport = typeof commander;

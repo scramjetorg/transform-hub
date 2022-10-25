@@ -29,12 +29,12 @@ ILifeCycleAdapterMain,
 ILifeCycleAdapterRun,
 IComponent {
     logger: IObjectLogger;
-    name = "KubernetesInstanceAdapter"
+    name = "KubernetesInstanceAdapter";
 
-    private _runnerName?: string
+    private _runnerName?: string;
     private _kubeClient?: KubernetesClientAdapter;
 
-    private adapterConfig: K8SAdapterConfiguration
+    private adapterConfig: K8SAdapterConfiguration;
     private _limits?: InstanceLimits = {};
 
     get limits() { return this._limits || {} as InstanceLimits; }

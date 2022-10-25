@@ -26,7 +26,7 @@ export class SocketServer extends TypedEmitter<Events> implements IComponent {
 
     logger: IObjectLogger;
 
-    private runnerConnectionsInProgress = new Map<string, RunnerConnectionsInProgress>()
+    private runnerConnectionsInProgress = new Map<string, RunnerConnectionsInProgress>();
 
     constructor(private port: number, private hostname: string) {
         super();

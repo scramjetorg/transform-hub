@@ -4,6 +4,7 @@ import { siConfigFile } from "../paths";
 
 // Global configuration class for internal use only
 export class SiConfig extends ConfigFileDefault<SiConfigEntity> {
+    // eslint-disable-next-line no-use-before-define
     private static instance: SiConfig;
 
     private constructor(configFile: string) {
