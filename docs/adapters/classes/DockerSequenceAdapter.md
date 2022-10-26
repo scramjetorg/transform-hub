@@ -10,6 +10,14 @@ Adapter for preparing Sequence to be run in Docker container.
 
 ## Table of contents
 
+### Properties
+
+- [config](DockerSequenceAdapter.md#config)
+- [dockerHelper](DockerSequenceAdapter.md#dockerhelper)
+- [logger](DockerSequenceAdapter.md#logger)
+- [name](DockerSequenceAdapter.md#name)
+- [resources](DockerSequenceAdapter.md#resources)
+
 ### Constructors
 
 - [constructor](DockerSequenceAdapter.md#constructor)
@@ -25,12 +33,65 @@ Adapter for preparing Sequence to be run in Docker container.
 - [parsePackage](DockerSequenceAdapter.md#parsepackage)
 - [remove](DockerSequenceAdapter.md#remove)
 
-### Properties
+## Properties
 
-- [dockerHelper](DockerSequenceAdapter.md#dockerhelper)
-- [logger](DockerSequenceAdapter.md#logger)
-- [name](DockerSequenceAdapter.md#name)
-- [resources](DockerSequenceAdapter.md#resources)
+### config
+
+• `Private` **config**: `STHConfiguration`
+
+#### Defined in
+
+[docker-sequence-adapter.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L40)
+
+___
+
+### dockerHelper
+
+• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/IDockerHelper.md)
+
+#### Defined in
+
+[docker-sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L30)
+
+___
+
+### logger
+
+• **logger**: `IObjectLogger`
+
+Instance of class providing logging utilities.
+
+#### Implementation of
+
+ISequenceAdapter.logger
+
+#### Defined in
+
+[docker-sequence-adapter.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L38)
+
+___
+
+### name
+
+• **name**: `string` = `"DockerSequenceAdapter"`
+
+#### Implementation of
+
+ISequenceAdapter.name
+
+#### Defined in
+
+[docker-sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L33)
+
+___
+
+### resources
+
+• `Private` **resources**: [`DockerAdapterResources`](../modules.md#dockeradapterresources) = `{}`
+
+#### Defined in
+
+[docker-sequence-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L31)
 
 ## Constructors
 
@@ -244,53 +305,3 @@ ISequenceAdapter.remove
 #### Defined in
 
 [docker-sequence-adapter.ts:287](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L287)
-
-## Properties
-
-### dockerHelper
-
-• `Private` **dockerHelper**: [`IDockerHelper`](../interfaces/IDockerHelper.md)
-
-#### Defined in
-
-[docker-sequence-adapter.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L30)
-
-___
-
-### logger
-
-• **logger**: `IObjectLogger`
-
-Instance of class providing logging utilities.
-
-#### Implementation of
-
-ISequenceAdapter.logger
-
-#### Defined in
-
-[docker-sequence-adapter.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L38)
-
-___
-
-### name
-
-• **name**: `string` = `"DockerSequenceAdapter"`
-
-#### Implementation of
-
-ISequenceAdapter.name
-
-#### Defined in
-
-[docker-sequence-adapter.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L33)
-
-___
-
-### resources
-
-• `Private` **resources**: [`DockerAdapterResources`](../modules.md#dockeradapterresources) = `{}`
-
-#### Defined in
-
-[docker-sequence-adapter.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/docker-sequence-adapter.ts#L31)

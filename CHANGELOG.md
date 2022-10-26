@@ -2,35 +2,56 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.29.0] - 2022-10-26
+
+## Fixed
+
+* [CLI] Fix: c pr use config validation by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/712>
+* (helm) liveness & readiness probe, fix port mapping by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/714>
+* Configuration validation by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/709>
+* Fix/eslintup by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/718>
+
+## Features
+
+* Show sequence upload progress in CLI with --progress flag by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/708>
+* Check k8s quota before instance start by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/704>
+* Remove instance when failed to start by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/711>
+* Removing api-client-py by @Tatarinho in <https://github.com/scramjetorg/transform-hub/pull/702>
+* (helm) sth support configMap by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/713>
+* New instance/inout endpoint by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/628>
+
 ## [0.28.5] - 2022-09-28
 
 ## Fixed
-* Readme code fixing by @S4adam in https://github.com/scramjetorg/transform-hub/pull/693
-* (feat) transform-hub helm chart by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/689
-* Start host default on :: by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/687
-* Unpipe instance streams when it is ended by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/695
-* Replace localhost with ip (bdd tests) by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/696
-* [CLI] fix loading of broken profile files by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/697
-* Add version to telemetry by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/698
-* Add args field to instance, change sequenceArgs to args in sequences by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/700
-* Add method to get audit stream in MultiManager by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/701
-* [SHN-854] add nodejs 18.x LTS by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/684
-* cli/tests, default to ipv4 by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/690
-* (feat) adds initContainer to helm chart by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/703
+
+* Readme code fixing by @S4adam in <https://github.com/scramjetorg/transform-hub/pull/693>
+* (feat) transform-hub helm chart by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/689>
+* Start host default on :: by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/687>
+* Unpipe instance streams when it is ended by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/695>
+* Replace localhost with ip (bdd tests) by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/696>
+* [CLI] fix loading of broken profile files by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/697>
+* Add version to telemetry by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/698>
+* Add args field to instance, change sequenceArgs to args in sequences by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/700>
+* Add method to get audit stream in MultiManager by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/701>
+* [SHN-854] add nodejs 18.x LTS by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/684>
+* cli/tests, default to ipv4 by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/690>
+* (feat) adds initContainer to helm chart by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/703>
 
 ## [0.28.4] - 2022-09-16
 
 ## Fixed
-* Small fixes by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/680
-* Fix telemtry sizes and environment by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/682
-* Rename Telemetry ENV to the one described in the [SHN-832] task by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/685
-* Instruction fixes by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/675
+
+* Small fixes by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/680>
+* Fix telemetry sizes and environment by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/682>
+* Rename Telemetry ENV to the one described in the [SHN-832] task by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/685>
+* Instruction fixes by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/675>
 
 ## Features
-* Allow to merge if target key not exists by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/679
-* [SHN-832] telemetry ENV SCP_ENV_VALUE=GH_CI by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/683
-* Add `getTopics()` method in manager client by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/688
-* [STH] line count and coverage script added by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/686
+
+* Allow to merge if target key not exists by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/679>
+* [SHN-832] telemetry ENV SCP_ENV_VALUE=GH_CI by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/683>
+* Add `getTopics()` method in manager client by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/688>
+* [STH] line count and coverage script added by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/686>
 
 ## [0.28.3] - 2022-09-09
 
@@ -42,76 +63,86 @@ This is the changelog for Scramjet Transform Hub. It holds only notable commits,
 
 ## Fixed
 
-* [STH] Unify error responses by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/658
-* Disable Nagle in Runner connections by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/655
-* Fix the dependencies update script by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/660
-* [CLI] fix-reset all not clearing session by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/669
-* Fix: topic data lost by @alicja-gruzdz in https://github.com/scramjetorg/transform-hub/pull/670
-* Test scenario for topics: completeness of data transmission by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/672
-* Validate topic name by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/625
-* Unpipe input from topic when instance is terminated by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/666
-* [CLI] fix returned exit codes by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/665
-* [STH] Instance stop and kill body params fix by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/673
-* Update main README by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/671
-* (fix) docker compose for sth by @daro1337 in https://github.com/scramjetorg/transform-hub/pull/674
+* [STH] Unify error responses by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/658>
+* Disable Nagle in Runner connections by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/655>
+* Fix the dependencies update script by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/660>
+* [CLI] fix-reset all not clearing session by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/669>
+* Fix: topic data lost by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/670>
+* Test scenario for topics: completeness of data transmission by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/672>
+* Validate topic name by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/625>
+* Unpipe input from topic when instance is terminated by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/666>
+* [CLI] fix returned exit codes by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/665>
+* [STH] Instance stop and kill body params fix by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/673>
+* Update main README by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/671>
+* (fix) docker compose for sth by @daro1337 in <https://github.com/scramjetorg/transform-hub/pull/674>
+
 ### Features
-* Loki telemetry adapter by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/632
-* si seq send `<dir>` by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/664
+
+* Loki telemetry adapter by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/632>
+* si seq send `<dir>` by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/664>
 
 ## [0.28.1] - 2022-08-26
 
 ## Fixed
-* [STH] Add missing repository field to /sequences by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/653
-* [CLI] display object depth null by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/654
-* [CLI] Fix broken prod_env check by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/659
+
+* [STH] Add missing repository field to /sequences by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/653>
+* [CLI] display object depth null by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/654>
+* [CLI] Fix broken prod_env check by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/659>
 
 ## [0.28.0] - 2022-08-18
 
 ## Changed
-* Rewrite STH-SCP connection by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/617
+
+* Rewrite STH-SCP connection by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/617>
 
 ## Features
-* [CLI] Add session id display by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/633
-* Allow to configure CPMConnector by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/642
-* Add --no-colors flag by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/641
-* Support x-name header on sequence post|put by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/643
+
+* [CLI] Add session id display by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/633>
+* Allow to configure CPMConnector by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/642>
+* Add --no-colors flag by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/641>
+* Support x-name header on sequence post|put by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/643>
 
 ## Fixed
-* CLI clean session config on profile change by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/646
-* sth add error msg on invalid instance id by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/647
-* STH add missing sequence info by @ErykSol in https://github.com/scramjetorg/transform-hub/pull/650
-* Add missing commands to the start snippet by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/636
+
+* CLI clean session config on profile change by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/646>
+* sth add error msg on invalid instance id by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/647>
+* STH add missing sequence info by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/650>
+* Add missing commands to the start snippet by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/636>
 
 ## [0.27.0] - 2022-08-11
 
 ### Changed
-* Update pull_request_template.md by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/614
-* Remove stream object from topics response by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/615
-* Update sinon and tar deps by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/618
-* Change the way of choosing content-type for Python Sequences by @Tatarinho in https://github.com/scramjetorg/transform-hub/pull/613
-* Allow to send event without payload by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/626
+
+* Update pull_request_template.md by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/614>
+* Remove stream object from topics response by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/615>
+* Update sinon and tar deps by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/618>
+* Change the way of choosing content-type for Python Sequences by @Tatarinho in <https://github.com/scramjetorg/transform-hub/pull/613>
+* Allow to send event without payload by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/626>
 
 ### Features
-* Add yaml loader by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/572
-* Added jsdoc descriptions to middleware-api-client by @kociolekscramjet in https://github.com/scramjetorg/transform-hub/pull/599
-* [CLI] Add session config display command by @a-tylenda in https://github.com/scramjetorg/transform-hub/pull/600
+
+* Add yaml loader by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/572>
+* Added jsdoc descriptions to middleware-api-client by @kociolekscramjet in <https://github.com/scramjetorg/transform-hub/pull/599>
+* [CLI] Add session config display command by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/600>
 
 ### Fixed
-* Fix description in AppContext by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/593
-* Fixing installation of python-runner libs by @Tatarinho in https://github.com/scramjetorg/transform-hub/pull/609
-* Fix handling binary input by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/612
-* Allow Arrays in AppConfig by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/603
-* Fix delete Sequence with running Instances by @Tatarinho in https://github.com/scramjetorg/transform-hub/pull/621
-* Use response code if error code not provided in body by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/619
-* Change Stopped / Killed instance status to `completed`, provide exit info by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/622
-* Return 400 if stop request is not valid by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/630
-* Use correct hub in tests by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/627
-* Fix for #634 by @MichalCz in https://github.com/scramjetorg/transform-hub/pull/635
+
+* Fix description in AppContext by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/593>
+* Fixing installation of python-runner libs by @Tatarinho in <https://github.com/scramjetorg/transform-hub/pull/609>
+* Fix handling binary input by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/612>
+* Allow Arrays in AppConfig by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/603>
+* Fix delete Sequence with running Instances by @Tatarinho in <https://github.com/scramjetorg/transform-hub/pull/621>
+* Use response code if error code not provided in body by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/619>
+* Change Stopped / Killed instance status to `completed`, provide exit info by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/622>
+* Return 400 if stop request is not valid by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/630>
+* Use correct hub in tests by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/627>
+* Fix for #634 by @MichalCz in <https://github.com/scramjetorg/transform-hub/pull/635>
 
 ## [0.26.1] - 2022-07-12
 
 ### Fixed
- * Fix dependencies by @MichalCz in #597
+
+* Fix dependencies by @MichalCz in #597
 
 ## [0.26.0] - 2022-07-11
 
@@ -132,6 +163,7 @@ This is the changelog for Scramjet Transform Hub. It holds only notable commits,
 ## Previous releases
 
 ### Added
+
 - 6eef4229 - Every topic test scenario starts own host
 - eb32427b - Remove unnecessary pipe on adding new topic
 - f31916d7 - Fixes for stream ending with `x-stream-end` header.

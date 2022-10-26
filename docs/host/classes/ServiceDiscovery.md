@@ -188,7 +188,7 @@ ___
 
 ### routeStreamToTopic
 
-▸ **routeStreamToTopic**(`source`, `topicData`, `localProvider?`): `void`
+▸ **routeStreamToTopic**(`source`, `topicData`, `localProvider?`): `Promise`<`void`\>
 
 #### Parameters
 
@@ -200,7 +200,7 @@ ___
 
 #### Returns
 
-`void`
+`Promise`<`void`\>
 
 #### Defined in
 
@@ -210,7 +210,7 @@ ___
 
 ### routeTopicToStream
 
-▸ **routeTopicToStream**(`topicData`, `target`): `void`
+▸ **routeTopicToStream**(`topicData`, `target`): `Promise`<`void`\>
 
 #### Parameters
 
@@ -221,7 +221,7 @@ ___
 
 #### Returns
 
-`void`
+`Promise`<`void`\>
 
 #### Defined in
 
@@ -253,7 +253,7 @@ ___
 
 ### update
 
-▸ **update**(`data`): `void`
+▸ **update**(`data`): `Promise`<`void`\>
 
 #### Parameters
 
@@ -267,7 +267,7 @@ ___
 
 #### Returns
 
-`void`
+`Promise`<`void`\>
 
 #### Defined in
 

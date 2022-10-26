@@ -27,6 +27,7 @@
 - [APIErrorMessage](modules.md#apierrormessage)
 - [AcknowledgeMessage](modules.md#acknowledgemessage)
 - [AcknowledgeMessageData](modules.md#acknowledgemessagedata)
+- [ApiVersion](modules.md#apiversion)
 - [AppConfig](modules.md#appconfig)
 - [AppError](modules.md#apperror)
 - [AppErrorCode](modules.md#apperrorcode)
@@ -74,6 +75,7 @@
 - [HostConfig](modules.md#hostconfig)
 - [HostErrorCode](modules.md#hosterrorcode)
 - [HttpMethod](modules.md#httpmethod)
+- [IdString](modules.md#idstring)
 - [InertApp](modules.md#inertapp)
 - [InertSequence](modules.md#inertsequence)
 - [Instance](modules.md#instance)
@@ -85,6 +87,7 @@
 - [InstanceLimits](modules.md#instancelimits)
 - [InstanceMessage](modules.md#instancemessage)
 - [InstanceMessageData](modules.md#instancemessagedata)
+- [InstanceRequirements](modules.md#instancerequirements)
 - [InstanceStats](modules.md#instancestats)
 - [K8SAdapterConfiguration](modules.md#k8sadapterconfiguration)
 - [KeepAliveMessage](modules.md#keepalivemessage)
@@ -94,8 +97,8 @@
 - [KillSequenceMessage](modules.md#killsequencemessage)
 - [KubernetesSequenceConfig](modules.md#kubernetessequenceconfig)
 - [LifeCycleError](modules.md#lifecycleerror)
-- [LoadCheckConfig](modules.md#loadcheckconfig)
 - [LoadCheckContstants](modules.md#loadcheckcontstants)
+- [LoadCheckRequirements](modules.md#loadcheckrequirements)
 - [LoadCheckStat](modules.md#loadcheckstat)
 - [LoadCheckStatMessage](modules.md#loadcheckstatmessage)
 - [LogEntry](modules.md#logentry)
@@ -130,6 +133,7 @@
 - [PassThoughStream](modules.md#passthoughstream)
 - [PassThroughStreamsConfig](modules.md#passthroughstreamsconfig)
 - [PingMessageData](modules.md#pingmessagedata)
+- [Port](modules.md#port)
 - [PortConfig](modules.md#portconfig)
 - [PreRunnerContainerConfiguration](modules.md#prerunnercontainerconfiguration)
 - [ProcessSequenceConfig](modules.md#processsequenceconfig)
@@ -179,6 +183,7 @@
 - [TransformAppAcceptableSequence](modules.md#transformappacceptablesequence)
 - [TransformSeqence](modules.md#transformseqence)
 - [UpstreamStreamsConfig](modules.md#upstreamstreamsconfig)
+- [UrlPath](modules.md#urlpath)
 - [WFunction](modules.md#wfunction)
 - [WritableApp](modules.md#writableapp)
 - [WriteFunction](modules.md#writefunction)
@@ -247,6 +252,16 @@ ___
 #### Defined in
 
 [packages/types/src/messages/acknowledge.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/acknowledge.ts#L4)
+
+___
+
+### ApiVersion
+
+Ƭ **ApiVersion**: `string`
+
+#### Defined in
+
+[packages/types/src/utils.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L115)
 
 ___
 
@@ -995,6 +1010,16 @@ ___
 
 ___
 
+### IdString
+
+Ƭ **IdString**: `string`
+
+#### Defined in
+
+[packages/types/src/utils.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L109)
+
+___
+
 ### InertApp
 
 Ƭ **InertApp**<`Z`, `S`, `AppConfigType`, `VoidType`\>: [`TransformApp`](modules.md#transformapp)<`VoidType`, `VoidType`, `Z`, `S`, `AppConfigType`, `void`\>
@@ -1168,6 +1193,24 @@ ___
 
 ___
 
+### InstanceRequirements
+
+Ƭ **InstanceRequirements**: `Object`
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `cpuLoad` | `number` | Required free CPU. In percentage. |
+| `freeMem` | `number` | Free memory required to start Manager instance. In megabytes. |
+| `freeSpace` | `number` | Free disk space required to start instance. In megabytes. |
+
+#### Defined in
+
+[packages/types/src/load-check-stat.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L24)
+
+___
+
 ### InstanceStats
 
 Ƭ **InstanceStats**: `Object`
@@ -1312,26 +1355,6 @@ ___
 
 ___
 
-### LoadCheckConfig
-
-Ƭ **LoadCheckConfig**: `Object`
-
-#### Type declaration
-
-| Name | Type |
-| :------ | :------ |
-| `instanceRequirements` | { `cpuLoad`: `number` ; `freeMem`: `number` ; `freeSpace`: `number`  } |
-| `instanceRequirements.cpuLoad` | `number` |
-| `instanceRequirements.freeMem` | `number` |
-| `instanceRequirements.freeSpace` | `number` |
-| `safeOperationLimit` | `number` |
-
-#### Defined in
-
-[packages/types/src/load-check-stat.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L24)
-
-___
-
 ### LoadCheckContstants
 
 Ƭ **LoadCheckContstants**: `Object`
@@ -1348,7 +1371,24 @@ ___
 
 #### Defined in
 
-[packages/types/src/load-check-stat.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L33)
+[packages/types/src/load-check-stat.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L50)
+
+___
+
+### LoadCheckRequirements
+
+Ƭ **LoadCheckRequirements**: `Object`
+
+#### Type declaration
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `instanceRequirements` | [`InstanceRequirements`](modules.md#instancerequirements) | Minimum requirements to start new Manager instance. |
+| `safeOperationLimit` | `number` | The amount of memory that must remain free. |
+
+#### Defined in
+
+[packages/types/src/load-check-stat.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/load-check-stat.ts#L39)
 
 ___
 
@@ -1458,14 +1498,14 @@ Manager configuration type definition.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `apiBase` | `string` | MultiManager api base. |
-| `id` | `string` | Manager id. |
+| `id` | [`IdString`](modules.md#idstring) | Manager id. |
 | `logColors` | `boolean` | Enables/disables colorized logs. |
 | `sthController` | { `unhealthyTimeoutMs`: `number`  } | Host controller configuration. |
 | `sthController.unhealthyTimeoutMs` | `number` | Number of milliseconds to wait for next LOAD message from `host` before marking it as unhealthy |
 
 #### Defined in
 
-[packages/types/src/manager-configuration.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/manager-configuration.ts#L4)
+[packages/types/src/manager-configuration.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/manager-configuration.ts#L6)
 
 ___
 
@@ -1936,6 +1976,16 @@ ___
 #### Defined in
 
 [packages/types/src/messages/handshake.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/messages/handshake.ts#L10)
+
+___
+
+### Port
+
+Ƭ **Port**: `number`
+
+#### Defined in
+
+[packages/types/src/utils.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L113)
 
 ___
 
@@ -2841,6 +2891,16 @@ ___
 #### Defined in
 
 [packages/types/src/message-streams.ts:133](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/message-streams.ts#L133)
+
+___
+
+### UrlPath
+
+Ƭ **UrlPath**: `string`
+
+#### Defined in
+
+[packages/types/src/utils.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L111)
 
 ___
 

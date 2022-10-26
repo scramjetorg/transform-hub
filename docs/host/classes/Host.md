@@ -382,7 +382,7 @@ Setting up handlers for general Host API endpoints:
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:357](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L357)
+[packages/host/src/lib/host.ts:359](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L359)
 
 ___
 
@@ -398,7 +398,7 @@ Stops running servers.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:1024](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1024)
+[packages/host/src/lib/host.ts:1026](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1026)
 
 ___
 
@@ -414,7 +414,7 @@ Initializes connector and connects to Manager.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:332](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L332)
+[packages/host/src/lib/host.ts:334](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L334)
 
 ___
 
@@ -432,7 +432,7 @@ List of Instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:921](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L921)
+[packages/host/src/lib/host.ts:923](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L923)
 
 ___
 
@@ -456,7 +456,7 @@ Sequence info object.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:933](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L933)
+[packages/host/src/lib/host.ts:935](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L935)
 
 ___
 
@@ -476,7 +476,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:668](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L668)
+[packages/host/src/lib/host.ts:670](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L670)
 
 ___
 
@@ -500,7 +500,7 @@ List of Instances.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:973](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L973)
+[packages/host/src/lib/host.ts:975](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L975)
 
 ___
 
@@ -518,7 +518,7 @@ List of Sequences.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:957](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L957)
+[packages/host/src/lib/host.ts:959](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L959)
 
 ___
 
@@ -536,7 +536,7 @@ Size
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:1090](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1090)
+[packages/host/src/lib/host.ts:1092](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1092)
 
 ___
 
@@ -550,7 +550,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:995](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L995)
+[packages/host/src/lib/host.ts:997](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L997)
 
 ___
 
@@ -564,7 +564,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:986](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L986)
+[packages/host/src/lib/host.ts:988](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L988)
 
 ___
 
@@ -585,7 +585,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:520](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L520)
+[packages/host/src/lib/host.ts:522](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L522)
 
 ___
 
@@ -612,7 +612,7 @@ Promise resolving to operation result object.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:444](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L444)
+[packages/host/src/lib/host.ts:446](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L446)
 
 ___
 
@@ -633,7 +633,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:557](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L557)
+[packages/host/src/lib/host.ts:559](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L559)
 
 ___
 
@@ -659,7 +659,7 @@ Promise resolving to operation result.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:649](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L649)
+[packages/host/src/lib/host.ts:651](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L651)
 
 ___
 
@@ -679,7 +679,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:616](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L616)
+[packages/host/src/lib/host.ts:618](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L618)
 
 ___
 
@@ -707,7 +707,7 @@ Promise resolving to operation result object.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:691](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L691)
+[packages/host/src/lib/host.ts:693](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L693)
 
 ___
 
@@ -721,7 +721,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:501](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L501)
+[packages/host/src/lib/host.ts:503](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L503)
 
 ___
 
@@ -738,7 +738,7 @@ Used to recover Sequences information after restart.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:538](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L538)
+[packages/host/src/lib/host.ts:540](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L540)
 
 ___
 
@@ -768,7 +768,7 @@ Instance middleware.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:403](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L403)
+[packages/host/src/lib/host.ts:405](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L405)
 
 ___
 
@@ -824,7 +824,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:1097](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1097)
+[packages/host/src/lib/host.ts:1099](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1099)
 
 ___
 
@@ -840,7 +840,7 @@ Sets up telemetry.
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:1064](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1064)
+[packages/host/src/lib/host.ts:1066](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1066)
 
 ___
 
@@ -863,7 +863,7 @@ Creates new CSIController [CSIController](CSIController.md) object and handles i
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:759](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L759)
+[packages/host/src/lib/host.ts:761](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L761)
 
 ___
 
@@ -880,7 +880,7 @@ using its CSIController [CSIController](CSIController.md)
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:1007](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1007)
+[packages/host/src/lib/host.ts:1009](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L1009)
 
 ___
 
@@ -902,7 +902,7 @@ ___
 
 #### Defined in
 
-[packages/host/src/lib/host.ts:429](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L429)
+[packages/host/src/lib/host.ts:431](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/host.ts#L431)
 
 ## Constructors
 

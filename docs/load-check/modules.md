@@ -7,3 +7,4 @@
 ### Classes
 
 - [LoadCheck](classes/LoadCheck.md)
+- [LoadCheckConfig](classes/LoadCheckConfig.md)
