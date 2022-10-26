@@ -1,3 +1,5 @@
+import { IdString } from "./utils";
+
 /**
  * Manager configuration type definition.
  */
@@ -15,7 +17,7 @@ export type ManagerConfiguration = {
     /**
      * Manager id.
      */
-    id: string;
+    id: IdString;
 
     /**
      * Host controller configuration.

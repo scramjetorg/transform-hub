@@ -21,7 +21,7 @@ const CommandClass = completionMixin(commander).Command;
 const program = new CommandClass() as Command;
 
 const initPlatform = async () => {
-    const { token, env, middlewareApiUrl } = profileConfig.getConfig();
+    const { token, env, middlewareApiUrl } = profileConfig.get();
 
     /**
      * Set the default values for platform only when all required settings
@@ -65,6 +65,7 @@ const initPlatform = async () => {
         .version(`CLI version: ${version}`, "-v, --version", "Display current CLI version")
         .option("--config <name>", "Set global configuration profile")
         .option("--config-path <path>", "Set global configuration from file")
+        .option("--progress")
         .addHelpCommand(false)
         .addHelpText("beforeAll", `Current profile: ${profileManager.getProfileName()}`)
         .addHelpText(

@@ -49,8 +49,7 @@
     "test:packages": "scripts/run-script.js test",
     "test:packages-no-concurrent": "scripts/run-script.js -j 1 test",
     "test:bdd-ci-hub": "NO_HOST=true yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-hub",
-    "test:bdd-ci-api": "yarn test:bdd-ci-api-py && yarn test:bdd-ci-api-node",
-    "test:bdd-ci-api-py": "yarn --cwd=./packages/api-client-py run test:bdd -f pretty -t @ci ",
+    "test:bdd-ci-api": "yarn test:bdd-ci-api-node",
     "test:bdd-ci-api-node": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-api",
     "test:bdd-ci-api-topic": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-topic",
     "test:bdd-ci-python": "yarn --cwd=./bdd run test:bdd --format=@cucumber/pretty-formatter -t @ci-instance-python",
@@ -79,26 +78,26 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.2",
     "@npmcli/run-script": "4.2.1",
     "@types/node": "15.12.5",
-    "@typescript-eslint/eslint-plugin": "^4.33.0",
-    "@typescript-eslint/parser": "^4.33.0",
+    "@typescript-eslint/eslint-plugin": "^5.41.0",
+    "@typescript-eslint/parser": "^5.41.0",
     "build-if-changed": "^1.5.5",
     "cloc": "^2.10.0",
     "esbuild": "^0.14.54",
-    "eslint": "^7.32.0",
+    "eslint": "^8.26.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-to-editorconfig": "^2.0.0",
     "fs-extra": "^9.1.0",
     "glob": "^7.2.3",
     "globrex": "^0.1.2",
     "husky": "^6.0.0",
-    "lerna": "^5.4.2",
+    "lerna": "^5.6.2",
     "nyc": "^15.1.0",
-    "semver": "^7.3.7",
+    "semver": "^7.3.8",
     "syncpack": "^5.8.15",
     "tar": "^6.1.11",
     "toposort": "^2.0.2",
     "ts-node": "^10.9.1",
-    "typescript": "^4.7.4",
+    "typescript": "~4.7.4",
     "yarn": "^1.22.19"
   },
   "workspaces": {
@@ -123,8 +122,8 @@
     }
   },
   "dependencies": {
-    "minimist": "^1.2.6",
+    "minimist": "^1.2.7",
     "npm": "8",
-    "scramjet": "^4.36.7"
+    "scramjet": "^4.36.9"
   }
 }

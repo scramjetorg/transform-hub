@@ -54,7 +54,7 @@ function makeTypescriptSolutionForPackageList(packages, configName) {
         dry: false,
         assumeChangesOnlyAffectDirectDependencies: true,
         incremental: true,
-        verbose: false
+        verbose: true
     });
 
     return solution;

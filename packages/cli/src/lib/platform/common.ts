@@ -8,7 +8,7 @@ import { displayError, displayMessage } from "../output";
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (): MiddlewareClient => {
-    const { middlewareApiUrl, log:{ debug } } = profileConfig.getConfig();
+    const { middlewareApiUrl, log:{ debug } } = profileConfig.get();
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");
@@ -36,7 +36,7 @@ export const getMiddlewareClient = (): MiddlewareClient => {
 };
 
 export const setPlatformDefaults = async () => {
-    const { lastSpaceId, lastHubId } = sessionConfig.getConfig();
+    const { lastSpaceId, lastHubId } = sessionConfig.get();
 
     if (lastSpaceId || lastHubId) {
         return false;

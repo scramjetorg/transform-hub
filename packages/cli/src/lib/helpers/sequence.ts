@@ -13,6 +13,8 @@ import { Writable } from "stream";
 import { resolve } from "path";
 import { StringStream } from "scramjet";
 import { filter as mmfilter } from "minimatch";
+import * as fs from "fs";
+import { EOL } from "os";
 
 const { F_OK, R_OK } = constants;
 
@@ -79,7 +81,7 @@ export const sequencePack = async (directory: string, { output }: { output: Writ
 };
 
 export const sequenceSendPackage = async (
-    sequencePackage: string, options: SequenceUploadOptions = {}, update = false
+    sequencePackage: string, options: SequenceUploadOptions = {}, update = false, config: { progress?: boolean } = {}
 ): Promise<SequenceClient> => {
     try {
         const id = getSequenceId(options.name!);
@@ -92,10 +94,38 @@ export const sequenceSendPackage = async (
         }
 
         let seq: SequenceClient;
+        const sequenceStream = await getReadStreamFromFile(sequencePath);
+
+        if (config.progress) {
+            const barSize = 24;
+            let total = 0;
+            let text = "";
+
+            const { size } = fs.statSync(sequencePackage);
+
+            sequenceStream.on("data", async (chunk: Buffer) => {
+                total += chunk.length;
+
+                if (total <= size) {
+                    const proc = Math.round(total / size * 100);
+                    const filledCount = Math.floor(proc * (barSize / 100));
+
+                    text = `Uploading ${"".padEnd(filledCount, "█") + "".padEnd(barSize - filledCount, "░")} ${proc}%, ${total >>> 10}/${Math.floor(size >>> 10)}KB`;
+
+                    process.stderr.write(text);
+                    process.stderr.moveCursor(-text.length, 0);
+                }
+
+                if (total === size) {
+                    text = `Sequence package uploaded (size ${Math.round(size >>> 10)}KB)`.padEnd(text.length, " ") + EOL;
+                    process.stderr.write(text);
+                }
+            }).pause();
+        }
 
         if (update) {
             seq = await getHostClient().getSequenceClient(id)?.overwrite(
-                await getReadStreamFromFile(sequencePath),
+                sequenceStream,
             );
         } else {
             const headers: HeadersInit = {};
@@ -105,7 +135,7 @@ export const sequenceSendPackage = async (
             }
 
             seq = await getHostClient().sendSequence(
-                await getReadStreamFromFile(sequencePath),
+                sequenceStream,
                 { headers }
             );
         }
@@ -167,7 +197,7 @@ export function sequenceParseArgs(argsStr: string): any[] {
     return args;
 }
 
-export const sequenceDelete = async (id: string, lastSequenceId = sessionConfig.getConfig().lastSequenceId) => {
+export const sequenceDelete = async (id: string, lastSequenceId = sessionConfig.lastSequenceId) => {
     const deleteSequenceResponse = await getHostClient().deleteSequence(getSequenceId(id));
 
     if (lastSequenceId === id) {

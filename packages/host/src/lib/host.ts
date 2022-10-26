@@ -10,7 +10,7 @@ import { CommunicationHandler, HostError, IDProvider } from "@scramjet/model";
 import { InstanceMessageCode, RunnerMessageCode, SequenceMessageCode } from "@scramjet/symbols";
 
 import { ObjLogger, prettyPrint } from "@scramjet/obj-logger";
-import { LoadCheck } from "@scramjet/load-check";
+import { LoadCheck, LoadCheckConfig } from "@scramjet/load-check";
 import { getSequenceAdapter, initializeSequenceAdapter } from "@scramjet/adapters";
 
 import { CPMConnector } from "./cpm-connector";
@@ -24,7 +24,7 @@ import { DataStream } from "scramjet";
 import { optionsMiddleware } from "./middlewares/options";
 import { corsMiddleware } from "./middlewares/cors";
 import { ConfigService } from "@scramjet/sth-config";
-import { readConfigFile, isStartSequenceDTO, readJsonFile, defer } from "@scramjet/utility";
+import { isStartSequenceDTO, readJsonFile, defer, FileBuilder } from "@scramjet/utility";
 import { inspect } from "util";
 import { auditMiddleware, logger as auditMiddlewareLogger } from "./middlewares/audit";
 import { AuditedRequest, Auditor } from "./auditor";
@@ -111,7 +111,7 @@ export class Host implements IComponent {
      */
     serviceDiscovery = new ServiceDiscovery();
 
-    commonLogsPipe = new CommonLogsPipe()
+    commonLogsPipe = new CommonLogsPipe();
 
     publicConfig: PublicSTHConfiguration;
 
@@ -183,7 +183,7 @@ export class Host implements IComponent {
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
-        this.loadCheck = new LoadCheck({ safeOperationLimit, instanceRequirements });
+        this.loadCheck = new LoadCheck(new LoadCheckConfig({ safeOperationLimit, instanceRequirements }));
 
         this.socketServer = socketServer;
         this.socketServer.logger.pipe(this.logger);
@@ -290,7 +290,9 @@ export class Host implements IComponent {
 
         // Load the config
         try {
-            _config = await readConfigFile(this.config.startupConfig);
+            const configFile = FileBuilder(this.config.startupConfig);
+
+            _config = configFile.read();
             this.logger.debug("Sequence config loaded", _config);
         } catch {
             throw new HostError("SEQUENCE_STARTUP_CONFIG_READ_ERROR");
@@ -481,7 +483,7 @@ export class Host implements IComponent {
 
             this.logger.trace("Sequence removed:", id);
 
-            this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
+            await this.cpmConnector?.sendSequenceInfo(id, SequenceMessageCode.SEQUENCE_DELETED);
             this.auditor.auditSequence(id, SequenceMessageCode.SEQUENCE_DELETED);
 
             return {
@@ -716,7 +718,7 @@ export class Host implements IComponent {
         try {
             const csic = await this.startCSIController(sequence, payload);
 
-            this.cpmConnector?.sendInstanceInfo({
+            await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
                 appConfig: csic.appConfig,
                 args: csic.args,
@@ -785,7 +787,7 @@ export class Host implements IComponent {
             this.logger.error("CSIController errored", err.message, err.exitcode);
         });
 
-        csic.on("pang", (data) => {
+        csic.on("pang", async (data) => {
             // @TODO REFACTOR possibly send only one PANG in Runner and throw on more pangs
             this.logger.trace("PANG received", data);
 
@@ -796,7 +798,7 @@ export class Host implements IComponent {
 
                     csic.requires = csic.inputTopic;
 
-                    this.serviceDiscovery.routeTopicToStream(
+                    await this.serviceDiscovery.routeTopicToStream(
                         { topic: csic.inputTopic, contentType: "" },
                         csic.getInputStream()
                     );
@@ -808,7 +810,7 @@ export class Host implements IComponent {
                     csic.provides = csic.outputTopic;
 
                     // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
-                    this.serviceDiscovery.routeStreamToTopic(
+                    await this.serviceDiscovery.routeStreamToTopic(
                         csic.getOutputStream(),
                         { topic: csic.outputTopic, contentType: "" },
                         csic.id
@@ -822,12 +824,12 @@ export class Host implements IComponent {
 
                 csic.requires = data.requires;
 
-                this.serviceDiscovery.routeTopicToStream(
+                await this.serviceDiscovery.routeTopicToStream(
                     { topic: data.requires, contentType: data.contentType! },
                     csic.getInputStream()
                 );
 
-                this.serviceDiscovery.update({
+                await this.serviceDiscovery.update({
                     requires: data.requires, contentType: data.contentType!, topicName: data.requires
                 });
             }
@@ -838,19 +840,19 @@ export class Host implements IComponent {
 
                 csic.provides = data.provides;
 
-                this.serviceDiscovery.routeStreamToTopic(
+                await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
                     { topic: data.provides, contentType: "" },
                     csic.id
                 );
 
-                this.serviceDiscovery.update({
+                await this.serviceDiscovery.update({
                     provides: data.provides, contentType: data.contentType!, topicName: data.provides
                 });
             }
         });
 
-        csic.on("end", (code) => {
+        csic.on("end", async (code) => {
             this.logger.trace("CSIControlled ended", `Exit code: ${code}`);
 
             if (csic.provides && csic.provides !== "") {
@@ -868,7 +870,7 @@ export class Host implements IComponent {
 
             sequence.instances.delete(id);
 
-            this.cpmConnector?.sendInstanceInfo({
+            await this.cpmConnector?.sendInstanceInfo({
                 id: csic.id,
                 sequence: sequence.id
             }, InstanceMessageCode.INSTANCE_ENDED);
@@ -1094,7 +1096,7 @@ export class Host implements IComponent {
         )] as HostSizes;
     }
 
-    pushTelemetry(message: string, labels: {[key: string]: string} = {}, level: "info" | "error" = "info") {
+    pushTelemetry(message: string, labels: { [key: string]: string } = {}, level: "info" | "error" = "info") {
         this.telemetryAdapter?.push(level, {
             message,
             labels: {

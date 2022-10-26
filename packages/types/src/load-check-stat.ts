@@ -21,13 +21,30 @@ export type LoadCheckStat = {
     fsSize: DiskSpace[]
 }
 
-export type LoadCheckConfig = {
+export type InstanceRequirements = {
+    /**
+     * Free memory required to start Manager instance. In megabytes.
+     */
+    freeMem: number,
+    /**
+     * Required free CPU. In percentage.
+     */
+    cpuLoad: number,
+    /**
+     * Free disk space required to start instance. In megabytes.
+     */
+    freeSpace: number
+}
+
+export type LoadCheckRequirements = {
+    /**
+     * The amount of memory that must remain free.
+     */
     safeOperationLimit: number;
-    instanceRequirements: {
-        freeMem: number,
-        cpuLoad: number,
-        freeSpace: number
-    }
+    /**
+     * Minimum requirements to start new Manager instance.
+     */
+    instanceRequirements: InstanceRequirements
 }
 
 export type LoadCheckContstants = {

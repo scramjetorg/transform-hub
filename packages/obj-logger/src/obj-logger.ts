@@ -1,6 +1,7 @@
 import { DataStream, StringStream } from "scramjet";
 import { IObjectLogger, LogEntry, LogLevel } from "@scramjet/types";
 import { PassThrough, Readable, Writable } from "stream";
+import { LogLevelStrings } from "@scramjet/utility";
 
 import { getName } from "./utils/get-name";
 import { JSONParserStream } from "./utils/streams";
@@ -28,7 +29,7 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: true });;
+    inputStringifiedLogStream = new PassThrough({ objectMode: true });
 
     /**
      * Output stream in object mode.
@@ -58,12 +59,12 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Other logger sources
      */
-    sources: Set<Readable|IObjectLogger> = new Set();
+    sources: Set<Readable | IObjectLogger> = new Set();
 
     /**
      * Logging levels hierarchy.
      */
-    static levels: LogLevel[] = ["FATAL", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"];
+    static levels: LogLevel[] = LogLevelStrings;
 
     /**
      *

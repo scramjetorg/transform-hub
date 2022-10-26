@@ -18,6 +18,10 @@ rules:
     resources: ["pods/status"]
     verbs: ["get", "list"]
 
+  - apiGroups: [""]
+    resources: ["resourcequotas"]
+    verbs: ["get", "list"]
+
 ---
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1

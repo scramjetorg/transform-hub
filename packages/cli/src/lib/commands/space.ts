@@ -11,7 +11,7 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const space: CommandDefinition = (program) => {
-    const isProdEnv = isProductionEnv(profileConfig.getEnv());
+    const isProdEnv = isProductionEnv(profileConfig.env);
 
     if (!isProdEnv) return;
 
@@ -43,7 +43,7 @@ export const space: CommandDefinition = (program) => {
     */
         .description("Display info about the default space")
         .action(async () => {
-            const spaceId = sessionConfig.getConfig().lastSpaceId;
+            const spaceId = sessionConfig.lastSpaceId;
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
             const version = await managerClient.getVersion();
 

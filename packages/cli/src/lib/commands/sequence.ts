@@ -5,7 +5,7 @@ import { displayEntity, displayMessage, displayObject } from "../output";
 import { getHostClient } from "../common";
 import { getSequenceId, profileConfig, sessionConfig } from "../config";
 
-import { PassThrough } from "stream";
+import { PassThrough, Writable } from "stream";
 
 import { isDevelopment } from "../../utils/envs";
 
@@ -40,8 +40,8 @@ export const sequence: CommandDefinition = (program) => {
         .option("-o, --output <file.tar.gz>", "Output path - defaults to dirname")
         .description("Create archived file (package) with the Sequence for later use")
         .action((path, { stdout, output: fileoutput }) => {
-            const outputPath = fileoutput ? resolve(fileoutput) : `${resolve(path)}.tar.gz`;
-            const output = stdout ? process.stdout : createWriteStream(outputPath);
+            const outputPath: string = fileoutput ? resolve(fileoutput) : `${resolve(path)}.tar.gz`;
+            const output: Writable = stdout ? process.stdout : createWriteStream(outputPath);
 
             if (!stdout)
                 sessionConfig.setLastPackagePath(outputPath);
@@ -56,7 +56,7 @@ export const sequence: CommandDefinition = (program) => {
         .description("Send the Sequence package to the Hub")
         .action(
             async (sequencePackage: string, { name }) => {
-                const sequenceClient = await sequenceSendPackage(sequencePackage, { name });
+                const sequenceClient = await sequenceSendPackage(sequencePackage, { name }, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
 
                 displayObject(sequenceClient, profileConfig.format);
             }
@@ -79,7 +79,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("use")
         .alias("select")
         .description("Select the Sequence to communicate with by using '-' alias instead of Sequence id")
-        .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.getConfig().lastSequenceId}`)
+        .addHelpText("after", `\nCurrent Sequence id saved under '-' : ${sessionConfig.lastSequenceId}`)
         .argument("<id>", "Sequence id")
         .action(async (id: string) => {
             try {
@@ -148,7 +148,7 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
-            const { log: { format } } = profileConfig.getConfig();
+            const format = profileConfig.format;
 
             if (lstatSync(path).isDirectory()) {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -159,7 +159,7 @@ export const sequence: CommandDefinition = (program) => {
                 await sequencePack(path, { output });
                 await sendSeqPromise;
             } else {
-                const sequenceClient = await sequenceSendPackage(path, {});
+                const sequenceClient = await sequenceSendPackage(path, {}, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
 
                 displayObject(sequenceClient, profileConfig.format);
             }
@@ -202,7 +202,7 @@ export const sequence: CommandDefinition = (program) => {
         .description("Remove all Sequences from the current scope (use with caution)")
         .action(async ({ force }) => {
             let seqs = await getHostClient().listSequences();
-            const { lastSequenceId, lastInstanceId } = sessionConfig.getConfig();
+            const { lastSequenceId, lastInstanceId } = sessionConfig.get();
 
             if (!seqs.length) {
                 displayMessage("Sequence list is empty, nothing to delete.");

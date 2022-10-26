@@ -57,7 +57,7 @@ class KubernetesSequenceAdapter implements ISequenceAdapter {
 
     name = "KubernetesSequenceAdapter";
 
-    private adapterConfig: K8SAdapterConfiguration
+    private adapterConfig: K8SAdapterConfiguration;
 
     constructor(sthConfig: STHConfiguration) {
         const decodedAdapterConfig = adapterConfigDecoder.decode(sthConfig.kubernetes);

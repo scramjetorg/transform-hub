@@ -19,10 +19,10 @@
   },
   "devDependencies": {
     "@types/node": "15.12.5",
-    "scramjet": "^4.36.7",
-    "typedoc": "^0.23.10",
-    "typedoc-plugin-markdown": "^3.13.4",
-    "typescript": "^4.7.4"
+    "scramjet": "^4.36.9",
+    "typedoc": "^0.23.17",
+    "typedoc-plugin-markdown": "^3.13.6",
+    "typescript": "~4.7.4"
   },
   "repository": {
     "type": "git",

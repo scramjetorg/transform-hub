@@ -1,21 +1,17 @@
 import { ObjLogger } from "@scramjet/obj-logger";
 import { APIExpose, APIRoute, MaybePromise, NextCallback } from "@scramjet/types";
-import { IncomingMessage, ServerResponse, Server as HttpServer, createServer as createHttpServer } from "http";
-import { Server as HttpsServer, createServer as createHttpsServer } from "https";
+import { IncomingMessage, ServerResponse, createServer as createHttpServer } from "http";
+import { createServer as createHttpsServer } from "https";
 import { DataStream } from "scramjet";
 import { createGetterHandler } from "./handlers/get";
 import { createOperationHandler, logger as opLogger } from "./handlers/op";
 import { createStreamHandlers } from "./handlers/stream";
 import { cero, sequentialRouter } from "./lib/0http";
-import { CeroRouter, CeroRouterConfig } from "./lib/definitions";
+import { CeroRouterConfig } from "./lib/definitions";
+import { ServerConfig } from "./types/ServerConfig";
 
-export type ServerConfig = {
-    verbose?: boolean;
-    server?: HttpsServer | HttpServer;
-    sslKeyPath?: string;
-    sslCertPath?: string;
-    router?: CeroRouter;
-};
+export { ServerConfiguration } from "./config/ServerConfiguration";
+export { ServerConfig } from "./types";
 
 export { cero, sequentialRouter };
 

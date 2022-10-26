@@ -7,7 +7,7 @@ import { resolve } from "path";
 import { HostError } from "@scramjet/model";
 import { inspect } from "util";
 import { Host } from "@scramjet/host";
-import { readConfigFile } from "@scramjet/utility";
+import { FileBuilder } from "@scramjet/utility";
 
 const program = new Command();
 const options: OptionValues & STHCommandOptions = program
@@ -38,6 +38,7 @@ const options: OptionValues & STHCommandOptions = program
     .option("--cpm-max-reconnections <number>", "Maximum reconnection attempts (-1 no limit)")
     .option("--cpm-reconnection-delay <number>", "Time to wait before next reconnection attempt")
     .option("--k8s-namespace <namespace>", "Kubernetes namespace used in Sequence and Instance adapters.")
+    .option("--k8s-quota-name <name>", "Quota object name used in Instance adapter.")
     .option("--k8s-auth-config-path <path>", "Kubernetes authorization config path. If not supplied the mounted service account will be used.")
     .option("--k8s-sth-pod-host <host>", "Runner needs to connect to STH. This is the host (IP or hostname) that it will try to connect to.")
     .option("--k8s-runner-image <image>", "Runner image spawned in Nodejs Pod.")
@@ -58,7 +59,10 @@ const options: OptionValues & STHCommandOptions = program
     const resolveFile = (path: string) => path && resolve(process.cwd(), path);
 
     if (options.config) {
-        const configContents = await readConfigFile(options.config) as DeepPartial<STHConfiguration>;
+        const configFile = FileBuilder(options.config);
+
+        if (!(configFile.exists() && configFile.isReadable())) throw new Error("Unable to read config file");
+        const configContents = configFile.read() as DeepPartial<STHConfiguration>;
 
         configService.update(configContents);
     }
@@ -101,6 +105,7 @@ const options: OptionValues & STHCommandOptions = program
         logLevel: options.logLevel,
         logColors: options.colors,
         kubernetes: {
+            quotaName: options.k8sQuotaName,
             namespace: options.k8sNamespace,
             authConfigPath: options.k8sAuthConfigPath,
             sthPodHost: options.k8sSthPodHost,

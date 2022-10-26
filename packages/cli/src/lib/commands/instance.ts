@@ -29,7 +29,7 @@ export const instance: CommandDefinition = (program) => {
         .command("use")
         .argument("<id>", "Instance id")
         .description("Select the Instance to communicate with by using '-' alias instead of Instance id")
-        .addHelpText("after", `\nCurrent Instance id saved under '-' : ${sessionConfig.getConfig().lastInstanceId}`)
+        .addHelpText("after", `\nCurrent Instance id saved under '-' : ${sessionConfig.lastInstanceId}`)
         .action(async (id: string) => {
             try {
                 await getHostClient().getInstanceInfo(id);

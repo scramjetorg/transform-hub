@@ -14,7 +14,7 @@ class KubernetesClientAdapter {
     name = "KubernetesClientAdapter";
 
     private _configPath: string;
-    private _config?: k8s.KubeConfig
+    private _config?: k8s.KubeConfig;
     private _namespace: string;
 
     constructor(configPath: string = "", namespace: string = "default") {
@@ -135,6 +135,30 @@ class KubernetesClientAdapter {
         const response = await kubeApi.readNamespacedPod(podName, this._namespace);
 
         return response.body.status?.containerStatuses?.[0].state?.terminated?.reason;
+    }
+
+    async isPodsLimitReached(quotaName: string) {
+        const kubeApi = this.config.makeApiClient(k8s.CoreV1Api);
+
+        try {
+            const getQuotaPromise =
+                await kubeApi.readNamespacedResourceQuota(quotaName, this._namespace);
+
+            const responseBody = getQuotaPromise.body;
+
+            if (responseBody) {
+                const used = parseInt(responseBody.status?.used?.pods || "", 10) || 0;
+                const hard = parseInt(responseBody.status?.hard?.pods || "", 10) || Infinity;
+
+                this.logger.info("Pods limit quota", used, hard);
+
+                return used >= hard;
+            }
+        } catch (e) {
+            this.logger.warn("Can't get quota object. ");
+        }
+
+        return false;
     }
 
     private async runWithRetries(retries: number, name: string, callback: any) {
