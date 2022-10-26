@@ -6,32 +6,36 @@
 
 ### Interfaces
 
-- [ITelemetryAdapter](undefined)
+- [ITelemetryAdapter](interfaces/ITelemetryAdapter.md)
 
 ### Type Aliases
 
-- [TelemetryAdapter](undefined)
-- [logLevel](undefined)
+- [TelemetryAdapter](modules.md#telemetryadapter)
+- [logLevel](modules.md#loglevel)
 
 ### Functions
 
-- [getTelemetryAdapter](undefined)
-
-## Interfaces
-
-### ITelemetryAdapter
-
-• **ITelemetryAdapter**: Interface ITelemetryAdapter
-
-#### Defined in
-
-[types.ts:6](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/telemetry/src/types.ts#L6)
+- [getTelemetryAdapter](modules.md#gettelemetryadapter)
 
 ## Type Aliases
 
 ### TelemetryAdapter
 
-Ƭ **TelemetryAdapter**: Object
+Ƭ **TelemetryAdapter**: (`config`: `TelemetryAdaptersConfig`) => [`ITelemetryAdapter`](interfaces/ITelemetryAdapter.md)
+
+#### Type declaration
+
+• **new TelemetryAdapter**(`config`): [`ITelemetryAdapter`](interfaces/ITelemetryAdapter.md)
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `config` | `TelemetryAdaptersConfig` |
+
+##### Returns
+
+[`ITelemetryAdapter`](interfaces/ITelemetryAdapter.md)
 
 #### Defined in
 
@@ -41,7 +45,7 @@ ___
 
 ### logLevel
 
-Ƭ **logLevel**: "debug" \| "info" \| "warn" \| "error"
+Ƭ **logLevel**: ``"debug"`` \| ``"info"`` \| ``"warn"`` \| ``"error"``
 
 #### Defined in
 
@@ -51,19 +55,19 @@ ___
 
 ### getTelemetryAdapter
 
-▸ **getTelemetryAdapter**(`adapter`, `config`): Promise<ITelemetryAdapter\>
+▸ **getTelemetryAdapter**(`adapter`, `config`): `Promise`<[`ITelemetryAdapter`](interfaces/ITelemetryAdapter.md)\>
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `adapter` | string |
-| `config` | TelemetryAdaptersConfig |
+| `adapter` | `string` |
+| `config` | `TelemetryAdaptersConfig` |
 
 #### Returns
 
-Promise<ITelemetryAdapter\>
+`Promise`<[`ITelemetryAdapter`](interfaces/ITelemetryAdapter.md)\>
 
 #### Defined in
 
-[index.ts:8](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/telemetry/src/index.ts#L8)
+[index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/telemetry/src/index.ts#L9)

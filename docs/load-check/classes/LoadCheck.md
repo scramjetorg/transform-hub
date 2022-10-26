@@ -30,13 +30,13 @@ Provides methods to monitor resources usage and determine if machine is not over
 
 ### config
 
-• **config**: `LoadCheckConfig`
+• **config**: `LoadCheckRequirements`
 
 Configuration object with requirements to determine if machine is overloaded.
 
 #### Defined in
 
-[load-check.ts:19](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L19)
+[load-check/src/load-check.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L20)
 
 ___
 
@@ -48,7 +48,7 @@ Values calculated from configuration indicating minimum requirements.
 
 #### Defined in
 
-[load-check.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L26)
+[load-check/src/load-check.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L27)
 
 ___
 
@@ -64,7 +64,7 @@ IComponent.logger
 
 #### Defined in
 
-[load-check.ts:33](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L33)
+[load-check/src/load-check.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L34)
 
 ## Constructors
 
@@ -76,11 +76,11 @@ IComponent.logger
 
 | Name | Type |
 | :------ | :------ |
-| `config` | `LoadCheckConfig` |
+| `config` | [`LoadCheckConfig`](LoadCheckConfig.md) |
 
 #### Defined in
 
-[load-check.ts:35](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L35)
+[load-check/src/load-check.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L36)
 
 ## Methods
 
@@ -98,7 +98,7 @@ Promise resolving to gathered load check data.
 
 #### Defined in
 
-[load-check.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L52)
+[load-check/src/load-check.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L54)
 
 ___
 
@@ -117,7 +117,7 @@ Stream with load check data.
 
 #### Defined in
 
-[load-check.ts:95](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L95)
+[load-check/src/load-check.ts:97](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L97)
 
 ___
 
@@ -135,4 +135,4 @@ True if machine is overloaded, false otherwise.
 
 #### Defined in
 
-[load-check.ts:73](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L73)
+[load-check/src/load-check.ts:75](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/load-check/src/load-check.ts#L75)

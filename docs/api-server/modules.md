@@ -18,6 +18,7 @@
 
 - [CeroError](classes/CeroError.md)
 - [DuplexStream](classes/DuplexStream.md)
+- [ServerConfiguration](classes/ServerConfiguration.md)
 
 ### Interfaces
 
@@ -136,7 +137,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L12)
+[packages/api-server/src/types/ServerConfig.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/types/ServerConfig.ts#L5)
 
 ## Functions
 
@@ -188,7 +189,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L89)
+[packages/api-server/src/index.ts:85](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L85)
 
 ___
 
@@ -202,7 +203,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:71](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L71)
+[packages/api-server/src/index.ts:67](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L67)
 
 ___
 
@@ -232,4 +233,4 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/index.ts:22](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L22)
+[packages/api-server/src/index.ts:18](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/index.ts#L18)

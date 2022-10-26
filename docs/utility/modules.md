@@ -10,22 +10,44 @@
 
 ### Classes
 
+- [Config](classes/Config.md)
+- [ConfigFile](classes/ConfigFile.md)
+- [ConfigFileDefault](classes/ConfigFileDefault.md)
 - [FreePortsFinder](classes/FreePortsFinder.md)
+- [JsonFile](classes/JsonFile.md)
+- [ReadOnlyConfig](classes/ReadOnlyConfig.md)
+- [ReadOnlyConfigFile](classes/ReadOnlyConfigFile.md)
+- [ReadOnlyConfigFileDefault](classes/ReadOnlyConfigFileDefault.md)
+- [TextFile](classes/TextFile.md)
 - [TypedEmitter](classes/TypedEmitter.md)
+- [YamlFile](classes/YamlFile.md)
+
+### Interfaces
+
+- [File](interfaces/File.md)
 
 ### Functions
 
+- [FileBuilder](modules.md#filebuilder)
 - [cancellableDefer](modules.md#cancellabledefer)
 - [defer](modules.md#defer)
+- [isApiVersion](modules.md#isapiversion)
 - [isDefined](modules.md#isdefined)
+- [isIdString](modules.md#isidstring)
+- [isLogLevel](modules.md#isloglevel)
+- [isPort](modules.md#isport)
 - [isStartSequenceDTO](modules.md#isstartsequencedto)
+- [isUrlPath](modules.md#isurlpath)
 - [merge](modules.md#merge)
 - [normalizeUrl](modules.md#normalizeurl)
 - [promiseTimeout](modules.md#promisetimeout)
-- [readConfigFile](modules.md#readconfigfile)
 - [readJsonFile](modules.md#readjsonfile)
 - [readStreamedJSON](modules.md#readstreamedjson)
 - [streamToString](modules.md#streamtostring)
+
+### Variables
+
+- [LogLevelStrings](modules.md#loglevelstrings)
 
 ## Type Aliases
 
@@ -38,6 +60,26 @@
 [packages/utility/src/defer.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/defer.ts#L13)
 
 ## Functions
+
+### FileBuilder
+
+▸ **FileBuilder**(`path`): [`File`](interfaces/File.md)
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `path` | `string` |
+
+#### Returns
+
+[`File`](interfaces/File.md)
+
+#### Defined in
+
+[packages/utility/src/file/index.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/index.ts#L9)
+
+___
 
 ### cancellableDefer
 
@@ -90,6 +132,32 @@ await defer(10 * 1000);
 
 ___
 
+### isApiVersion
+
+▸ **isApiVersion**(`version`): version is string
+
+Function checking proper version format
+
+Example valid formats: v1, v2.13, v3.333.111
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `version` | `string` | version to check |
+
+#### Returns
+
+version is string
+
+true if valid version format
+
+#### Defined in
+
+[packages/utility/src/typeguards/is-api-version.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-api-version.ts#L12)
+
+___
+
 ### isDefined
 
 ▸ **isDefined**<`T`\>(`value`): value is T
@@ -120,6 +188,70 @@ Returns true if given value is defined.
 
 ___
 
+### isIdString
+
+▸ **isIdString**(`id`): id is string
+
+Function to check for valid id pattern
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `id` | `string` | Id to validate |
+
+#### Returns
+
+id is string
+
+true if id is in valid format
+
+#### Defined in
+
+[packages/utility/src/typeguards/is-id-string.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-id-string.ts#L14)
+
+___
+
+### isLogLevel
+
+▸ **isLogLevel**(`lvl`): lvl is LogLevel
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `lvl` | `string` |
+
+#### Returns
+
+lvl is LogLevel
+
+#### Defined in
+
+[packages/utility/src/typeguards/is-log-level.ts:4](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-log-level.ts#L4)
+
+___
+
+### isPort
+
+▸ **isPort**(`port`): port is number
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `port` | `string` \| `number` |
+
+#### Returns
+
+port is number
+
+#### Defined in
+
+[packages/utility/src/typeguards/is-port.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-port.ts#L3)
+
+___
+
 ### isStartSequenceDTO
 
 ▸ **isStartSequenceDTO**(`arg`): arg is StartSequenceDTO
@@ -137,6 +269,32 @@ arg is StartSequenceDTO
 #### Defined in
 
 [packages/utility/src/typeguards/dto/sequence-start.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/dto/sequence-start.ts#L3)
+
+___
+
+### isUrlPath
+
+▸ **isUrlPath**(`url`): url is string
+
+Function checking slugs in url
+
+Example valid paterns: /xx /xx/ /xxx/aa /xxx-ddd/ /xxx/aaa-ddd/ /xx-cc/aaa-ddd etc.
+
+#### Parameters
+
+| Name | Type | Description |
+| :------ | :------ | :------ |
+| `url` | `string` | url to check |
+
+#### Returns
+
+url is string
+
+true if valid slug format
+
+#### Defined in
+
+[packages/utility/src/typeguards/is-url-path.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/typeguards/is-url-path.ts#L12)
 
 ___
 
@@ -229,26 +387,6 @@ Promise that reject after timeout or.
 
 ___
 
-### readConfigFile
-
-▸ **readConfigFile**(`filename`): `Promise`<`any`\>
-
-#### Parameters
-
-| Name | Type |
-| :------ | :------ |
-| `filename` | `string` |
-
-#### Returns
-
-`Promise`<`any`\>
-
-#### Defined in
-
-[packages/utility/src/read-config-file.ts:16](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/read-config-file.ts#L16)
-
-___
-
 ### readJsonFile
 
 ▸ **readJsonFile**(`fileNameCandidate`, ...`path`): `Object`
@@ -311,3 +449,13 @@ ___
 #### Defined in
 
 [packages/utility/src/stream-to-string.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/stream-to-string.ts#L3)
+
+## Variables
+
+### LogLevelStrings
+
+• `Const` **LogLevelStrings**: `LogLevel`[]
+
+#### Defined in
+
+[packages/utility/src/constants/object-logger.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/constants/object-logger.ts#L3)
