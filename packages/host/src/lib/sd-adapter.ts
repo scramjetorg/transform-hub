@@ -5,6 +5,7 @@ import { Duplex, PassThrough, Readable, Writable } from "stream";
 import { CPMConnector } from "./cpm-connector";
 import { ObjLogger } from "@scramjet/obj-logger";
 import { getRouter } from "@scramjet/api-server";
+import { ReasonPhrases } from "http-status-codes";
 
 /**
  * TODO: Refactor types below.
@@ -90,6 +91,8 @@ export class ServiceDiscovery {
                     { contentType, topic },
                     "api"
                 );
+            } else if (contentType !== target.contentType) {
+                return { opStatus: ReasonPhrases.UNSUPPORTED_MEDIA_TYPE, error: `Acceptable Content-Type for ${topic.name} is ${topic.contentType}` };
             }
 
             pipeToTopic(req, target);
