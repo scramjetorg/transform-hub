@@ -4,7 +4,7 @@ import { JsonDecoder } from "ts.data.json";
 export const adapterConfigDecoder = JsonDecoder.object<K8SAdapterConfiguration>({
     authConfigPath: JsonDecoder.optional(JsonDecoder.string),
     namespace: JsonDecoder.string,
-    quotaName: JsonDecoder.string,
+    quotaName: JsonDecoder.optional(JsonDecoder.string),
     sthPodHost: JsonDecoder.string,
     runnerImages: JsonDecoder.object({
         python3: JsonDecoder.string,
