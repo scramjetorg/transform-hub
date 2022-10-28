@@ -79,7 +79,7 @@ export type K8SAdapterConfiguration = {
     /**
      * Quota object name to determine namespace limits.
      */
-    quotaName: string;
+    quotaName?: string;
 
     /**
      * Authentication configuration path
