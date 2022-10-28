@@ -30,6 +30,8 @@
 - [DockerodeDockerHelper](classes/DockerodeDockerHelper.md)
 - [KubernetesInstanceAdapter](classes/KubernetesInstanceAdapter.md)
 - [KubernetesSequenceAdapter](classes/KubernetesSequenceAdapter.md)
+- [ProcessInstanceAdapter](classes/ProcessInstanceAdapter.md)
+- [ProcessSequenceAdapter](classes/ProcessSequenceAdapter.md)
 
 ### Interfaces
 

@@ -1240,7 +1240,7 @@ ___
 | :------ | :------ | :------ |
 | `authConfigPath?` | `string` | Authentication configuration path |
 | `namespace` | `string` | The Kubernetes namespace to use for running sequences |
-| `quotaName` | `string` | Quota object name to determine namespace limits. |
+| `quotaName?` | `string` | Quota object name to determine namespace limits. |
 | `runnerImages` | { `node`: `string` ; `python3`: `string`  } | Runner images to use |
 | `runnerImages.node` | `string` | - |
 | `runnerImages.python3` | `string` | - |
@@ -1500,6 +1500,14 @@ Manager configuration type definition.
 | `apiBase` | `string` | MultiManager api base. |
 | `id` | [`IdString`](modules.md#idstring) | Manager id. |
 | `logColors` | `boolean` | Enables/disables colorized logs. |
+| `s3?` | { `accessKey`: `string` ; `bucket`: `string` ; `endPoint`: `string` ; `port`: `number` ; `region`: `string` ; `secretKey`: `string` ; `useSSL`: `boolean`  } | - |
+| `s3.accessKey` | `string` | - |
+| `s3.bucket` | `string` | - |
+| `s3.endPoint` | `string` | - |
+| `s3.port` | `number` | - |
+| `s3.region` | `string` | - |
+| `s3.secretKey` | `string` | - |
+| `s3.useSSL` | `boolean` | - |
 | `sthController` | { `unhealthyTimeoutMs`: `number`  } | Host controller configuration. |
 | `sthController.unhealthyTimeoutMs` | `number` | Number of milliseconds to wait for next LOAD message from `host` before marking it as unhealthy |
 
