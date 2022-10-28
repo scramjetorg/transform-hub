@@ -13,7 +13,7 @@ const BPMux = require("bpmux").BPMux;
 
 type Events = {
     error: (err: Error) => void;
-}
+};
 
 /**
  * VerserClient class.
@@ -71,6 +71,10 @@ export class VerserClient extends TypedEmitter<Events> {
         return this._verserAgent;
     }
 
+    get agent() {
+        return this.httpAgent;
+    }
+
     constructor(opts: VerserClientOptions = defaultVerserClientOptions) {
         super();
 
@@ -85,8 +89,8 @@ export class VerserClient extends TypedEmitter<Events> {
      */
     public async connect(): Promise<VerserClientConnection> {
         return new Promise((resolve, reject) => {
-            const { hostname, port, pathname } = this.opts.verserUrl instanceof URL
-                ? this.opts.verserUrl : new URL(this.opts.verserUrl);
+            const { hostname, port, pathname } =
+                this.opts.verserUrl instanceof URL ? this.opts.verserUrl : new URL(this.opts.verserUrl);
 
             const connectRequest = request({
                 agent: this.httpAgent,
@@ -146,9 +150,10 @@ export class VerserClient extends TypedEmitter<Events> {
                 });
 
                 // some libs call it but it is not here, in BPMux.
-                socket.setKeepAlive = (_enable?: boolean, _initialDelay?: number | undefined) => socket;
+                socket.setKeepAlive ||= (_enable?: boolean, _initialDelay?: number | undefined) => socket;
 
-                this.logger.debug("Created new muxed stream with setKeepAlive");
+                this.logger.info("Creating connection to verser server");
+
                 return socket;
             } catch (error) {
                 const ret = new Socket();
@@ -169,6 +174,7 @@ export class VerserClient extends TypedEmitter<Events> {
     }
 
     /**
+     * @deprecated
      * Registers a channel on the client.
      *
      * @param channelId {number} Channel id.

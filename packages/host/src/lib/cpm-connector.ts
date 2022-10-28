@@ -165,6 +165,7 @@ export class CPMConnector extends TypedEmitter<Events> {
                 ? { ca: [this.cpmSslCa] }
                 : undefined
         });
+
         this.verserClient.logger.pipe(this.logger);
 
         this.logger.trace("Initialized.");
@@ -290,6 +291,10 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.setLoadCheckMessageSender();
     }
 
+    getHttpAgent(): http.Agent {
+        return this.verserClient.verserAgent as http.Agent;
+    }
+
     /**
      * Connect to Manager using VerserClient.
      * Host send its id to Manager in headers. If id is not set, it will be received from Manager.
@@ -321,7 +326,9 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.info("Connected to Manager");
 
         connection.socket
-            .on("close", async () => { await this.handleConnectionClose(); });
+            .once("close", async () => {
+                await this.handleConnectionClose();
+            });
 
         /**
          * @TODO: Distinguish existing `connect` request and started communication (Manager handled this host
@@ -350,8 +357,6 @@ export class CPMConnector extends TypedEmitter<Events> {
             } catch (e) {
                 this.logger.error("Reconnect failed");
             }
-
-            await this.reconnect();
         });
     }
 
@@ -360,6 +365,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Tries to reconnect.
      */
     async handleConnectionClose() {
+        this.connection?.removeAllListeners();
         this.connected = false;
 
         this.logger.trace("Tunnel closed", this.getId());
@@ -563,6 +569,17 @@ export class CPMConnector extends TypedEmitter<Events> {
                     resolve(res);
                 }).on("error", (err: Error) => {
                     this.logger.error("Topic request error:", err);
+                }).end();
+        });
+    }
+
+    async getSequence(id: string): Promise<http.IncomingMessage> {
+        return new Promise<http.IncomingMessage>((resolve, _reject) => {
+            this.makeHttpRequestToCpm("GET", `sequence-store/${id}`)
+                .on("response", (res: http.IncomingMessage) => {
+                    resolve(res);
+                }).on("error", (err: Error) => {
+                    this.logger.error("Sequence request error:", err);
                 }).end();
         });
     }
