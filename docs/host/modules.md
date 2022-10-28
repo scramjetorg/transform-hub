@@ -60,7 +60,7 @@ TODO: Refactor types below.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:12](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L12)
+[packages/host/src/lib/sd-adapter.ts:13](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L13)
 
 ___
 
@@ -79,7 +79,7 @@ Topic stream type definition.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:20](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L20)
+[packages/host/src/lib/sd-adapter.ts:21](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L21)
 
 ___
 
@@ -100,7 +100,7 @@ Topic details type definition.
 
 #### Defined in
 
-[packages/host/src/lib/sd-adapter.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L28)
+[packages/host/src/lib/sd-adapter.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/host/src/lib/sd-adapter.ts#L29)
 
 ## Functions
 

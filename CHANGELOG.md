@@ -2,6 +2,17 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.30.0] - 2022-10-28
+
+## Fixed
+
+* Reject topic upstream request with conflicting content-type by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/717>
+* Make passing k8s pod limit value quota optional by @alicja-gruzdz in <https://github.com/scramjetorg/transform-hub/pull/723>
+
+## Features
+
+* Get sequence from SequenceStore if not found locally by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/648>
+
 ## [0.29.0] - 2022-10-26
 
 ## Fixed
