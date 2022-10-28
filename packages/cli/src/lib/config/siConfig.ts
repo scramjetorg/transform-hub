@@ -9,7 +9,7 @@ export class SiConfig extends ConfigFileDefault<SiConfigEntity> {
 
     private constructor(configFile: string) {
         const siDefaultConfig: SiConfigEntity = {
-            profile: "",
+            profile: "default",
         };
 
         super(configFile, siDefaultConfig);

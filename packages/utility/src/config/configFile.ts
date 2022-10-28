@@ -7,15 +7,17 @@ import { FileBuilder, File } from "../file";
 export abstract class ConfigFile<Type extends Object> extends Config<Type> {
     protected file: File;
 
-    constructor(filePath: string) {
+    constructor(filePath: string, defaultConfig: Type = {} as Type) {
         const file = FileBuilder(filePath);
-        let configuration = {} as Type;
+        let configuration = defaultConfig as Type;
 
         if (file.exists() && file.isReadWritable())
-            configuration = file.read() || {};
+            configuration = file.read();
 
         super(configuration);
+
         this.file = file;
+        this.set(configuration);
     }
     /**
      * Check if path exists

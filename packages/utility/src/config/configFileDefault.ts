@@ -8,7 +8,7 @@ export abstract class ConfigFileDefault<Type extends Object> extends ConfigFile<
     protected readonly defaultConfiguration: Type;
 
     constructor(filePath: string, defaultConf: Type) {
-        super(filePath);
+        super(filePath, defaultConf);
         this.defaultConfiguration = defaultConf;
     }
     /**
