@@ -4,7 +4,7 @@ import { profileConfigDefault, validateProfileEntry, validateProfileKeysSize } f
 
 // Profile configuration class. Represents configuration that can be maniupulated by user.
 export default class ProfileConfig extends ConfigFileDefault<ProfileConfigEntity> {
-    protected readonly defaultConfiguration!: ProfileConfigEntity;
+    protected readonly defaultConfiguration: ProfileConfigEntity = profileConfigDefault;
 
     constructor(configFile: string) {
         super(configFile, profileConfigDefault);
