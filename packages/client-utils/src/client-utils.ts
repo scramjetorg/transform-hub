@@ -225,8 +225,7 @@ export abstract class ClientUtilsBase implements HttpClient {
         url: string,
         stream: any | string,
         requestInit: RequestInit = {},
-        { type = "application/octet-stream", end, parseResponse = "stream", put = false }: SendStreamOptions = {},
-
+        { type = "application/octet-stream", end, parseResponse = "stream", put = false }: SendStreamOptions = {}
     ): Promise<T> {
         requestInit.headers ||= {} as Headers;
 

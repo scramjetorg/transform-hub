@@ -9,3 +9,5 @@ export * from "./get-sequence";
 export * from "./get-instance";
 export * from "./get-instances";
 export * from "./get-topics";
+export * from "./get-store-items";
+export * from "./put-store-item";
