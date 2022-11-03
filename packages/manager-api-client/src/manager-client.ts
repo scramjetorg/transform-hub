@@ -1,6 +1,7 @@
 import { HostClient, } from "@scramjet/api-client";
 import { ClientUtils, ClientProvider, HttpClient } from "@scramjet/client-utils";
 import { MRestAPI, LoadCheckStat } from "@scramjet/types";
+import { Readable } from "stream";
 
 export class ManagerClient implements ClientProvider {
     client: HttpClient;
@@ -64,5 +65,22 @@ export class ManagerClient implements ClientProvider {
 
     async getTopics() {
         return this.client.get<MRestAPI.GetTopicsResponse>("topics");
+    }
+
+    async getStoreItems() {
+        return this.client.get<MRestAPI.GetStoreItemsResponse>("s3");
+    }
+
+    async putStoreItem(
+        sequencePackage: Readable,
+        id: string = ""
+    ) {
+        return this.client.sendStream<MRestAPI.PutStoreItemResponse>(`s3/${id}`, sequencePackage, {}, {
+            parseResponse: "json", put: true
+        });
+    }
+
+    async deleteStoreItem(id: string) {
+        await this.client.delete<any>(`s3/${id}`);
     }
 }

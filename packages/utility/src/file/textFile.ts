@@ -27,9 +27,10 @@ export class TextFile implements File {
         return this.checkAccess(this.path, constants.R_OK | constants.W_OK);
     }
     create(): boolean {
-        if (mkdirSync(dirname(this.path), { recursive: true }) === undefined) {
-            return false;
+        if (!existsSync(dirname(this.path))) {
+            return !!mkdirSync(dirname(this.path), { recursive: true });
         }
+
         this.write("");
         return true;
     }

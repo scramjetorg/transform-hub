@@ -45,13 +45,12 @@ export class SessionConfig extends ConfigFileDefault<SessionConfigEntity> {
     protected validateEntry(key: string, value: any): boolean | null {
         switch (key) {
             case "lastPackagePath":
+            case "lastSpaceId":
+            case "lastSequenceId":
+            case "lastHubId":
                 return null;
             case "lastInstanceId":
-            case "lastSequenceId":
-            case "lastSpaceId":
-            case "lastHubId": {
                 return isUUID(value, 4);
-            }
             case "sessionId":
                 return null;
             default:
