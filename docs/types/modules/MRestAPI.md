@@ -16,9 +16,11 @@
 - [GetLoadResponse](MRestAPI.md#getloadresponse)
 - [GetSequenceResponse](MRestAPI.md#getsequenceresponse)
 - [GetSequencesResponse](MRestAPI.md#getsequencesresponse)
+- [GetStoreItemsResponse](MRestAPI.md#getstoreitemsresponse)
 - [GetTopicsResponse](MRestAPI.md#gettopicsresponse)
 - [GetVersionResponse](MRestAPI.md#getversionresponse)
 - [HealthCheckInfo](MRestAPI.md#healthcheckinfo)
+- [PutStoreItemResponse](MRestAPI.md#putstoreitemresponse)
 
 ## Type Aliases
 
@@ -145,6 +147,16 @@ ___
 
 ___
 
+### GetStoreItemsResponse
+
+Ƭ **GetStoreItemsResponse**: [`SequenceConfig`](../modules.md#sequenceconfig)[]
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/get-store-items.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/get-store-items.ts#L3)
+
+___
+
 ### GetTopicsResponse
 
 Ƭ **GetTopicsResponse**: { `contentType`: `string` ; `name`: `string`  }[]
@@ -189,3 +201,13 @@ ___
 #### Defined in
 
 [packages/types/src/rest-api-manager/common.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/common.ts#L14)
+
+___
+
+### PutStoreItemResponse
+
+Ƭ **PutStoreItemResponse**: [`SequenceConfig`](../modules.md#sequenceconfig)
+
+#### Defined in
+
+[packages/types/src/rest-api-manager/put-store-item.ts:3](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/rest-api-manager/put-store-item.ts#L3)
