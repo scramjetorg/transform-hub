@@ -151,7 +151,7 @@ false if removing entry would invalidate configuration, true otherwise
 
 #### Defined in
 
-[packages/utility/src/config/configFile.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L46)
+[packages/utility/src/config/configFile.ts:48](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L48)
 
 ___
 
@@ -173,7 +173,7 @@ true if path to config file exists
 
 #### Defined in
 
-[packages/utility/src/config/configFile.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L24)
+[packages/utility/src/config/configFile.ts:26](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L26)
 
 ___
 
@@ -273,7 +273,7 @@ ___
 
 #### Defined in
 
-[packages/utility/src/config/configFile.ts:27](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L27)
+[packages/utility/src/config/configFile.ts:29](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L29)
 
 ___
 
@@ -315,7 +315,7 @@ true if config was valid and set
 
 #### Defined in
 
-[packages/utility/src/config/configFile.ts:38](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L38)
+[packages/utility/src/config/configFile.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L40)
 
 ___
 
@@ -344,7 +344,7 @@ false if new entry is invalid, true otherwise
 
 #### Defined in
 
-[packages/utility/src/config/configFile.ts:42](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L42)
+[packages/utility/src/config/configFile.ts:44](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/configFile.ts#L44)
 
 ___
 

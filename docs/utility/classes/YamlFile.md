@@ -91,7 +91,7 @@ ___
 
 #### Defined in
 
-[packages/utility/src/file/textFile.ts:39](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L39)
+[packages/utility/src/file/textFile.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L40)
 
 ___
 
@@ -111,7 +111,7 @@ extension name
 
 #### Defined in
 
-[packages/utility/src/file/textFile.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L49)
+[packages/utility/src/file/textFile.ts:50](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L50)
 
 ___
 
@@ -131,7 +131,7 @@ filename with extension
 
 #### Defined in
 
-[packages/utility/src/file/textFile.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L45)
+[packages/utility/src/file/textFile.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L46)
 
 ___
 
@@ -187,7 +187,7 @@ filename without extension
 
 #### Defined in
 
-[packages/utility/src/file/textFile.ts:53](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L53)
+[packages/utility/src/file/textFile.ts:54](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L54)
 
 ___
 
@@ -223,7 +223,7 @@ ___
 
 #### Defined in
 
-[packages/utility/src/file/textFile.ts:36](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L36)
+[packages/utility/src/file/textFile.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/file/textFile.ts#L37)
 
 ___
 

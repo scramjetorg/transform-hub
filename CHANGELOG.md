@@ -2,6 +2,17 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+
+## [0.30.1] - 2022-11-03
+
+## Fixed
+
+* Fix creating profiles by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/726>
+* Fix validating ids by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/728>
+
+## Features
+
+* Add SequenceStore operations to ManagerClient by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/727>
 ## [0.30.0] - 2022-10-28
 
 ## Fixed
