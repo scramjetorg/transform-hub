@@ -19,7 +19,7 @@ export const completion: CommandDefinition = (program) => {
     const completionCmd = program
         .command("completion")
         .addHelpCommand(false)
-        .description("completion operations")
+        .description("Completion operations")
         .action(function() {
             if (!process.env.COMP_LINE || !process.env.COMP_POINT) {
                 throw new Error("COMP_ variables are nonexistent. Did you mean si completion install?");
