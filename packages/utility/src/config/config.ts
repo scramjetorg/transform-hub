@@ -65,6 +65,7 @@ export abstract class Config<Type extends Object> implements Configuration<Type>
     setEntry(key: keyof Type, value: any): boolean {
         if (this.validateEntry(key as string, value) === false) return false;
         this.configuration[key as keyof Object] = value;
+        this.isValidConfig = true;
         return true;
     }
     /**

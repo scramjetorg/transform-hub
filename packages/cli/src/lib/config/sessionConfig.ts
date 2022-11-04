@@ -28,19 +28,19 @@ export class SessionConfig extends ConfigFileDefault<SessionConfigEntity> {
     get sessionId() { return this.get().sessionId; }
 
     setLastPackagePath(lastPackagePath: string): boolean {
-        return this.setEntry("lastPackagePath", lastPackagePath) as boolean;
+        return this.setEntry("lastPackagePath", lastPackagePath);
     }
     setLastInstanceId(lastInstanceId: string): boolean {
-        return this.setEntry("lastInstanceId", lastInstanceId) as boolean;
+        return this.setEntry("lastInstanceId", lastInstanceId);
     }
     setLastSequenceId(lastSequenceId: string): boolean {
-        return this.setEntry("lastSequenceId", lastSequenceId) as boolean;
+        return this.setEntry("lastSequenceId", lastSequenceId);
     }
     setLastSpaceId(lastSpaceId: string): boolean {
-        return this.setEntry("lastSpaceId", lastSpaceId) as boolean;
+        return this.setEntry("lastSpaceId", lastSpaceId);
     }
     setLastHubId(lastHubId: string): boolean {
-        return this.setEntry("lastHubId", lastHubId) as boolean;
+        return this.setEntry("lastHubId", lastHubId);
     }
     protected validateEntry(key: string, value: any): boolean | null {
         switch (key) {
@@ -48,11 +48,10 @@ export class SessionConfig extends ConfigFileDefault<SessionConfigEntity> {
             case "lastSpaceId":
             case "lastSequenceId":
             case "lastHubId":
-                return null;
-            case "lastInstanceId":
-                return isUUID(value, 4);
             case "sessionId":
                 return null;
+            case "lastInstanceId":
+                return value === "" || isUUID(value, 4);
             default:
                 return false;
         }
