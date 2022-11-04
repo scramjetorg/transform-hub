@@ -63,6 +63,7 @@ export const setPlatformDefaults = async () => {
         sessionConfig.setLastHubId(selectedHost.id);
 
         displayMessage(`Defaults set to: Space: ${selectedManager.id}, Hub: ${selectedHost.id}`);
+
         return true;
     } catch (_) {
         displayError("Unable to set platform defaults\n");
