@@ -11,6 +11,7 @@ import {
     InstanceConfig,
     RunnerContainerConfiguration,
     InstanceLimits,
+    STHConfiguration,
 } from "@scramjet/types";
 import path from "path";
 import { DockerodeDockerHelper } from "./dockerode-docker-helper";
@@ -31,17 +32,20 @@ IComponent {
     private dockerHelper: IDockerHelper;
     private _limits?: InstanceLimits = {};
     private resources: DockerAdapterResources = {};
+    id: string = "";
 
     logger: IObjectLogger;
+
     crashLogStreams?: Promise<string[]>;
 
     get limits() { return this._limits || {} as InstanceLimits; }
     private set limits(value: InstanceLimits) { this._limits = value; }
 
-    constructor() {
+    constructor(_sthConfig: STHConfiguration, id: string = "") {
         this.dockerHelper = new DockerodeDockerHelper();
 
-        this.logger = new ObjLogger(this);
+        this.logger = new ObjLogger(this, { id });
+        this.dockerHelper.logger.updateBaseLog({ id });
         this.dockerHelper.logger.pipe(this.logger);
     }
 
