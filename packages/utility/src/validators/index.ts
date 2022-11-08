@@ -5,3 +5,4 @@ export { idStringValidator } from "./id-string";
 export { logLevelValidator } from "./log-level";
 export { portValidator } from "./port";
 export { urlPathValidator } from "./url-path";
+export { SchemaValidator } from "./schema-validator";
