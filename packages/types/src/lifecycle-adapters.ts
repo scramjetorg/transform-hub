@@ -8,6 +8,7 @@ export type ExitCode = number;
 
 export interface ILifeCycleAdapterMain {
     logger: IObjectLogger;
+    id?: string;
 
     /**
      * Initializes Lifecycle adapter.

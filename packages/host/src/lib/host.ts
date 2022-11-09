@@ -622,6 +622,7 @@ export class Host implements IComponent {
         try {
             const sequenceAdapter = getSequenceAdapter(this.config);
 
+            sequenceAdapter.logger.updateBaseLog({ id });
             sequenceAdapter.logger.pipe(this.logger);
 
             this.logger.debug(`Using ${sequenceAdapter.name} as sequence adapter`);
@@ -963,9 +964,9 @@ export class Host implements IComponent {
         csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
                 (this.serviceDiscovery.getData({
-                        topic: csic.requires,
-                        contentType: "",
-                    }) as Readable
+                    topic: csic.requires,
+                    contentType: "",
+                }) as Readable
                 ).unpipe(csic.getInputStream()!);
             }
 
