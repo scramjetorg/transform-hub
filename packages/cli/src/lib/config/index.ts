@@ -15,6 +15,8 @@ export const siConfig = SiConfig.getInstance();
 export const sessionConfig = new SessionConfig();
 export const profileConfig = profileManager.getProfileConfig();
 
+profileManager.setConfigProfile(profileManager.getProfileName());
+
 // eslint-disable-next-line complexity
 export const initConfig = () => {
     let profile = siConfig.profile;
@@ -39,11 +41,9 @@ export const initConfig = () => {
     else profileManager.setConfigProfile(profile);
 
     const profileUsed = profileManager.getProfileName();
-    let config;
 
     try {
-        config = profileConfig.get();
-        const isProfileConfigValid = profileConfig.validate(config);
+        const isProfileConfigValid = profileConfig.validate(profileManager.getProfileConfig().get());
 
         if (isProfileConfigValid) return;
     } catch (error: any) {

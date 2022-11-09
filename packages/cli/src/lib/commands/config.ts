@@ -36,7 +36,7 @@ export const config: CommandDefinition = (program) => {
         .alias("p")
         .description("Print out the current profile configuration")
         .action(() => {
-            const configuration = profileConfig.get();
+            const configuration = profileManager.getProfileConfig().get();
 
             if (profileManager.isPathSource())
                 displayMessage(`Current configuration: ${profileConfig.path}\n`);
