@@ -12,9 +12,20 @@
 
 ### Properties
 
+- [id](IComponent.md#id)
 - [logger](IComponent.md#logger)
 
 ## Properties
+
+### id
+
+• `Optional` **id**: `string`
+
+#### Defined in
+
+[packages/types/src/component.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/component.ts#L5)
+
+___
 
 ### logger
 

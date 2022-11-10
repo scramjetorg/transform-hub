@@ -338,7 +338,7 @@ IObjectLogger.end
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:236](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L236)
+[obj-logger/src/obj-logger.ts:237](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L237)
 
 ___
 
@@ -504,7 +504,7 @@ IObjectLogger.unpipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:220](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L220)
+[obj-logger/src/obj-logger.ts:221](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L221)
 
 ___
 
@@ -521,6 +521,10 @@ ___
 #### Returns
 
 `void`
+
+#### Implementation of
+
+IObjectLogger.updateBaseLog
 
 #### Defined in
 

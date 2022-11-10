@@ -2,6 +2,17 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.30.2] - 2022-11-10
+
+## Fixed
+
+* Fix setting platform defaults by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/731>
+* Disable Nagle algorithm by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/563>
+* Show components id, objects in one line by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/732>
+
+## Features
+
+* `si store` by @ErykSol in <https://github.com/scramjetorg/transform-hub/pull/710>
 
 ## [0.30.1] - 2022-11-03
 
@@ -13,6 +24,7 @@ This is the changelog for Scramjet Transform Hub. It holds only notable commits,
 ## Features
 
 * Add SequenceStore operations to ManagerClient by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/727>
+
 ## [0.30.0] - 2022-10-28
 
 ## Fixed

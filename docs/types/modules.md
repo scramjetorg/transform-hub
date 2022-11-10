@@ -1351,7 +1351,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/lifecycle-adapters.ts:45](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L45)
+[packages/types/src/lifecycle-adapters.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/lifecycle-adapters.ts#L46)
 
 ___
 

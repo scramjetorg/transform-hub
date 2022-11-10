@@ -343,7 +343,7 @@ ___
 
 ### getInstanceAdapter
 
-▸ **getInstanceAdapter**(`config`): `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
+▸ **getInstanceAdapter**(`config`, `id`): `ILifeCycleAdapterMain` & `ILifeCycleAdapterRun`
 
 Provides Instance adapter.
 
@@ -351,7 +351,8 @@ Provides Instance adapter.
 
 | Name | Type | Description |
 | :------ | :------ | :------ |
-| `config` | `STHConfiguration` | STH config. If true - ProcessInstanceAdapter will be used. |
+| `config` | `STHConfiguration` | STH config. |
+| `id` | `string` | Instance id. |
 
 #### Returns
 
@@ -361,7 +362,7 @@ Instance adapter.
 
 #### Defined in
 
-[get-instance-adapter.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L24)
+[get-instance-adapter.ts:25](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/adapters/src/get-instance-adapter.ts#L25)
 
 ___
 
