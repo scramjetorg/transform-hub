@@ -196,7 +196,7 @@ export class CSIController extends TypedEmitter<Events> {
         this.instanceLifetimeExtensionDelay = +sthConfig.timings.instanceLifetimeExtensionDelay;
         this.communicationHandler = communicationHandler;
 
-        this.logger = new ObjLogger(`CSIC ${this.id.slice(0, 7)}-...`, { id: this.id });
+        this.logger = new ObjLogger(this, { id });
 
         this.logger.debug("Constructor executed");
         this.info.created = new Date();
@@ -256,7 +256,8 @@ export class CSIController extends TypedEmitter<Events> {
     }
 
     startInstance() {
-        this._instanceAdapter = getInstanceAdapter(this.sthConfig);
+        this._instanceAdapter = getInstanceAdapter(this.sthConfig, this.id);
+
         this._instanceAdapter.logger.pipe(this.logger, { end: false });
 
         const instanceConfig: InstanceConfig = {

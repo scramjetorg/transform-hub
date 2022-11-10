@@ -50,7 +50,7 @@ IComponent {
         }
 
         this.adapterConfig = decodedAdapterConfig.value;
-        this.logger = new ObjLogger(this.name);
+        this.logger = new ObjLogger(this);
     }
 
     private get kubeClient() {

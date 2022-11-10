@@ -107,7 +107,7 @@ export class ObjLogger implements IObjectLogger {
             entry = { msg: entry };
         }
 
-        const a: any = { level, msg: entry.msg, ts: entry.ts || Date.now() };
+        const a: any = { ...entry, level, ts: entry.ts || Date.now() };
 
         a.from = entry.from || this.name;
 
@@ -159,7 +159,7 @@ export class ObjLogger implements IObjectLogger {
     }
 
     updateBaseLog(baseLog: LogEntry) {
-        this.baseLog = baseLog;
+        Object.assign(this.baseLog, baseLog);
     }
 
     private _stringifiedOutput?: StringStream;
@@ -195,6 +195,7 @@ export class ObjLogger implements IObjectLogger {
         { end, stringified }: { end?: boolean, stringified?: boolean } = {}
     ): typeof target {
         if (target instanceof ObjLogger) {
+            this.baseLog.id ||= target.baseLog.id;
             this.logLevel = target.logLevel;
 
             target.addObjectLoggerSource(this);

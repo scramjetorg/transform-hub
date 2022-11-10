@@ -10,6 +10,7 @@ import { completion } from "./completion";
 import { util } from "./util";
 import { init } from "./init";
 import { isDevelopment } from "../../utils/envs";
+import { store } from "./store";
 
 export const commands: CommandDefinition[] = [
     hub,
@@ -21,6 +22,7 @@ export const commands: CommandDefinition[] = [
     topic,
     // waiting for working implementation
     isDevelopment() ? init : () => {},
+    store,
     completion,
     util
 ];

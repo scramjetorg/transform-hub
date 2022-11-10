@@ -195,8 +195,6 @@ export function createOperationHandler(router: SequentialCeroRouter): APIRoute["
             }
         };
 
-        logger.debug("Registering", method);
-
         switch (method) {
             case "post":
                 router.post(path, handler);

@@ -38,10 +38,9 @@ class DockerSequenceAdapter implements ISequenceAdapter {
     logger: IObjectLogger;
 
     constructor(private config: STHConfiguration) {
-        this.dockerHelper = new DockerodeDockerHelper();
-
         this.logger = new ObjLogger(this.name);
 
+        this.dockerHelper = new DockerodeDockerHelper();
         this.dockerHelper.logger.pipe(this.logger);
     }
 

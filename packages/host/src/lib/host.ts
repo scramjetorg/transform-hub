@@ -479,6 +479,9 @@ export class Host implements IComponent {
     }
 
     topicsMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
+        req.socket?.setTimeout(0);
+        req.socket?.setNoDelay(true);
+
         req.url = req.url?.substring(this.topicsBase.length);
 
         return this.serviceDiscovery.router.lookup(req, res, next);
@@ -619,6 +622,7 @@ export class Host implements IComponent {
         try {
             const sequenceAdapter = getSequenceAdapter(this.config);
 
+            sequenceAdapter.logger.updateBaseLog({ id });
             sequenceAdapter.logger.pipe(this.logger);
 
             this.logger.debug(`Using ${sequenceAdapter.name} as sequence adapter`);
@@ -960,9 +964,9 @@ export class Host implements IComponent {
         csic.once("terminated", (code) => {
             if (csic.requires && csic.requires !== "") {
                 (this.serviceDiscovery.getData({
-                        topic: csic.requires,
-                        contentType: "",
-                    }) as Readable
+                    topic: csic.requires,
+                    contentType: "",
+                }) as Readable
                 ).unpipe(csic.getInputStream()!);
             }
 
