@@ -13,7 +13,7 @@ export { isProfileConfig } from "./profileManager";
 export const profileManager = ProfileManager.getInstance();
 export const siConfig = SiConfig.getInstance();
 export const sessionConfig = new SessionConfig();
-export const profileConfig = profileManager.getProfileConfig();
+//export const profileConfig = profileManager.getProfileConfig();
 
 profileManager.setConfigProfile(profileManager.getProfileName());
 
@@ -40,15 +40,17 @@ export const initConfig = () => {
     else if (envs.siConfigEnv) profileManager.setEnvProfile(envs.siConfigEnv);
     else profileManager.setConfigProfile(profile);
 
-    const profileUsed = profileManager.getProfileName();
+    const profileConfig = profileManager.getProfileConfig();
 
     try {
-        const isProfileConfigValid = profileConfig.validate(profileManager.getProfileConfig().get());
+        const isProfileConfigValid = profileConfig.validate(profileConfig.get());
 
         if (isProfileConfigValid) return;
     } catch (error: any) {
         displayError(error);
     }
+
+    const profileUsed = profileManager.getProfileName();
 
     if (profileUsed !== defaultConfigName) {
         displayMessage(`Profile ${profile} contain errors- using default profile instead.`);
@@ -56,7 +58,7 @@ export const initConfig = () => {
         siConfig.setProfile(defaultConfigName);
     } else {
         displayMessage("Default Profile contain errors- reseting to base configuration.");
-        (profileConfig as ProfileConfig).restoreDefault();
+        (profileManager.getProfileConfig() as ProfileConfig).restoreDefault();
     }
 };
 

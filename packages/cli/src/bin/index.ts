@@ -9,7 +9,7 @@ import { ClientUtils } from "@scramjet/client-utils";
 import { errorHandler } from "../lib/errorHandler";
 import { commands } from "../lib/commands/index";
 import { setPlatformDefaults } from "../lib/platform";
-import { initConfig, profileConfig, profileManager } from "../lib/config";
+import { initConfig, profileManager } from "../lib/config";
 import { initPaths } from "../lib/paths";
 import chalk from "chalk";
 import { isProductionEnv } from "../types";
@@ -17,7 +17,7 @@ import * as dns from "dns";
 
 const version = findPackage(__dirname).next().value?.version || "unknown";
 const CommandClass = completionMixin(commander).Command;
-
+const profileConfig = profileManager.getProfileConfig();
 const program = new CommandClass() as Command;
 
 const initPlatform = async () => {

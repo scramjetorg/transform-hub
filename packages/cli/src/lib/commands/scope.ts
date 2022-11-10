@@ -2,7 +2,7 @@
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { listScopes, deleteScope, getScope, scopeExists } from "../helpers/scope";
 import { displayObject } from "../output";
-import { isProfileConfig, profileConfig } from "../config";
+import { isProfileConfig, ProfileConfig, profileManager } from "../config";
 import { isDevelopment } from "../../utils/envs";
 
 /**
@@ -11,7 +11,7 @@ import { isDevelopment } from "../../utils/envs";
  * @param {Command} program Commander object.
  */
 export const scope: CommandDefinition = (program) => {
-    const isProdEnv = isProductionEnv(profileConfig.env);
+    const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) return;
 
@@ -35,7 +35,7 @@ export const scope: CommandDefinition = (program) => {
                 throw new Error(`Couldn't find scope: ${name}`);
             }
 
-            displayObject(scopeConfig, profileConfig.format);
+            displayObject(scopeConfig, profileManager.getProfileConfig().format);
         });
 
     if (isDevelopment())
@@ -68,8 +68,8 @@ export const scope: CommandDefinition = (program) => {
             if (!scopeExists(name)) {
                 throw new Error(`Couldn't find scope: ${name}`);
             }
-            if (isProfileConfig(profileConfig)) {
-                profileConfig.setScope(name);
+            if (isProfileConfig(profileManager.getProfileConfig())) {
+                (profileManager.getProfileConfig() as ProfileConfig).setScope(name);
             } else
                 throw new Error("Can't modify user configuration file");
         });
@@ -79,7 +79,7 @@ export const scope: CommandDefinition = (program) => {
         .argument("<name>")
         .description("Delete specific scope")
         .action((name: string) => {
-            if (profileConfig.scope === name) {
+            if (profileManager.getProfileConfig().scope === name) {
                 throw new Error(`Can't remove currently used scope ${name}`);
             }
             deleteScope(name);
