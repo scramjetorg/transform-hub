@@ -25,7 +25,7 @@ export class SchemaValidator {
     validateSchema(obj: Record<string, any>): ValidationResult[] {
         this._errors = [];
 
-        for (const key in this.schema) {
+        for (const key of Object.keys(this.schema)) {
             const result = this.validateSchemaElement(key, obj[key as keyof Object]);
 
             if (result === false) continue;
