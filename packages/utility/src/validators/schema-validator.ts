@@ -2,26 +2,36 @@ import { ValidationResult, ValidationSchema } from "@scramjet/types";
 
 export class SchemaValidator {
     protected schema: ValidationSchema;
+    protected _errors: ValidationResult[];
 
     constructor(schema: ValidationSchema) {
         this.schema = schema;
+        this._errors = [];
+    }
+
+    get errors() {
+        return this._errors;
+    }
+
+    get validators() {
+        return this.schema;
     }
 
     /**
-     * Validate object
+     * Validates object
      * @param obj input object for validation
      * @returns ValidationResult[] with validation info
      */
-    validate(obj: Record<string, any>): ValidationResult[] {
-        const results: ValidationResult[] = [];
+    validateSchema(obj: Record<string, any>): ValidationResult[] {
+        this._errors = [];
 
         for (const key in this.schema) {
-            const result = this.validateEntry(key, obj[key as keyof Object]);
+            const result = this.validateSchemaElement(key, obj[key as keyof Object]);
 
             if (result === false) continue;
 
             if (typeof result === "string") {
-                results.push({
+                this._errors.push({
                     isValid: false,
                     name: key,
                     message: result,
@@ -29,18 +39,18 @@ export class SchemaValidator {
             }
         }
 
-        return results;
+        return this._errors;
     }
 
     /**
-     * Validate entry
-     * @param key entry key
-     * @param value entry value
+     * Validates property using defined schema
+     * @param key property key
+     * @param value property value
      * @returns for valid entry returns true if validation should continue
      * or false if validation should be stopped.
      * Returns string with error message when validation error occurs.
      */
-    validateEntry(key: string, value: any): string | boolean {
+    validateSchemaElement(key: string, value: any): string | boolean {
         const validators = this.schema[key];
 
         if (!validators) {
@@ -49,16 +59,38 @@ export class SchemaValidator {
         }
 
         for (const validator of validators) {
-            if (typeof validator === "function") {
-                const result = validator(value);
+            const result = validator(value);
 
-                if (result) {
-                    return result;
-                }
-            } else {
+            if (!result) {
+                break;
+            }
+
+            if (typeof result === "string") {
+                return result;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Validates object
+     * @param obj input object for validation
+     * @returns true if objech is valid with schema, false otherwise
+     */
+    validate(obj: Record<string, any>): boolean {
+        this.validateSchema(obj);
+
+        return this._errors.length === 0;
+    }
+
+    /**
+     * Validate entry
+     * @param key entry key
+     * @param value entry value
+     * @returns true if entry is valid with schema, false otherwise
+     */
+    validateEntry(key: string, value: any): boolean {
+        return typeof this.validateSchemaElement(key, value) === "boolean";
     }
 }
