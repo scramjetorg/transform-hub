@@ -243,5 +243,11 @@ export const config: CommandDefinition = (program) => {
         .command("remove")
         .argument("<name>")
         .description("Remove existing profile configuration")
-        .action((name) => { profileManager.removeProfile(name); });
+        .action((name) => {
+            if (profileManager.getProfileName() === name) {
+                siConfig.setProfile("default");
+            }
+
+            profileManager.removeProfile(name);
+        });
 };
