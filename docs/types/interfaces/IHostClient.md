@@ -13,6 +13,7 @@
 ### Properties
 
 - [controlStream](IHostClient.md#controlstream)
+- [id](IHostClient.md#id)
 - [inputStream](IHostClient.md#inputstream)
 - [logStream](IHostClient.md#logstream)
 - [logger](IHostClient.md#logger)
@@ -37,6 +38,20 @@
 #### Defined in
 
 [packages/types/src/csh-connector.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/csh-connector.ts#L24)
+
+___
+
+### id
+
+• `Optional` **id**: `string`
+
+#### Inherited from
+
+[IComponent](IComponent.md).[id](IComponent.md#id)
+
+#### Defined in
+
+[packages/types/src/component.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/component.ts#L5)
 
 ___
 

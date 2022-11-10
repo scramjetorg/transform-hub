@@ -17,6 +17,7 @@
 - [pipe](IObjectLogger.md#pipe)
 - [trace](IObjectLogger.md#trace)
 - [unpipe](IObjectLogger.md#unpipe)
+- [updateBaseLog](IObjectLogger.md#updatebaselog)
 - [warn](IObjectLogger.md#warn)
 - [write](IObjectLogger.md#write)
 
@@ -248,6 +249,26 @@ ___
 #### Defined in
 
 [packages/types/src/object-logger.ts:70](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L70)
+
+___
+
+### updateBaseLog
+
+▸ **updateBaseLog**(`entry`): `void`
+
+#### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `entry` | `Partial`<{ `data`: `any`[] ; `error`: `string` ; `from`: `string` ; `id`: `string` ; `level`: [`LogLevel`](../modules.md#loglevel) ; `msg`: `string` ; `ts`: `number`  }\> |
+
+#### Returns
+
+`void`
+
+#### Defined in
+
+[packages/types/src/object-logger.ts:72](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/object-logger.ts#L72)
 
 ___
 

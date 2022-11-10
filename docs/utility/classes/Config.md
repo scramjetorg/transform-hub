@@ -112,7 +112,7 @@ Configuration.deleteEntry
 
 #### Defined in
 
-[packages/utility/src/config/config.ts:76](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/config.ts#L76)
+[packages/utility/src/config/config.ts:77](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/config.ts#L77)
 
 ___
 
