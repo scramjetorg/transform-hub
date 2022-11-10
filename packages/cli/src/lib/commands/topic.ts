@@ -2,7 +2,7 @@
 import { CommandDefinition } from "../../types";
 import { isDevelopment } from "../../utils/envs";
 import { getHostClient, getReadStreamFromFile } from "../common";
-import { profileConfig } from "../config";
+import { profileManager } from "../config";
 import { displayEntity, displayStream } from "../output";
 
 const validateTopicName = (topicName: string) => {
@@ -77,5 +77,5 @@ export const topic: CommandDefinition = (program) => {
 
     topicCmd.command("ls")
         .description("List information about topics")
-        .action(async () => displayEntity(getHostClient().getTopics(), profileConfig.format));
+        .action(async () => displayEntity(getHostClient().getTopics(), profileManager.getProfileConfig().format));
 };

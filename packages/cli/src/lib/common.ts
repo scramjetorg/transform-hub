@@ -5,7 +5,7 @@ import { resolve } from "path";
 import { displayEntity, displayError, displayMessage } from "./output";
 
 import { Readable } from "stream";
-import { profileConfig, sessionConfig } from "./config";
+import { profileManager, sessionConfig } from "./config";
 import { getMiddlewareClient } from "./platform";
 import { isDevelopmentEnv, isProductionEnv } from "../types";
 
@@ -19,6 +19,8 @@ let hostClient: HostClient;
  * @returns {HostClient} Host client.
  */
 export const getHostClient = (): HostClient => {
+    const profileConfig = profileManager.getProfileConfig();
+
     if (hostClient) return hostClient;
 
     const { apiUrl, env, log: { debug } } = profileConfig.get();
@@ -76,7 +78,7 @@ export const attachStdio = (instanceClient: InstanceClient) => {
             instanceClient.sendStdin(process.stdin),
             instanceClient.getStream("stdout").then((out) => out.pipe(process.stdout)),
             instanceClient.getStream("stderr").then((err) => err.pipe(process.stderr)),
-        ]).then(() => undefined), profileConfig.format);
+        ]).then(() => undefined), profileManager.getProfileConfig().format);
 };
 
 /**

@@ -1,5 +1,5 @@
 import { MiddlewareClient } from "@scramjet/middleware-api-client";
-import { profileConfig, sessionConfig } from "../config";
+import { sessionConfig, profileManager } from "../config";
 import { displayError, displayMessage } from "../output";
 
 /**
@@ -8,7 +8,7 @@ import { displayError, displayMessage } from "../output";
  * @returns {MiddlewareClient} Host client.
  */
 export const getMiddlewareClient = (): MiddlewareClient => {
-    const { middlewareApiUrl, log:{ debug } } = profileConfig.get();
+    const { middlewareApiUrl, log:{ debug } } = profileManager.getProfileConfig().get();
 
     if (!middlewareApiUrl) {
         throw new Error("Middleware API URL is not specified");
