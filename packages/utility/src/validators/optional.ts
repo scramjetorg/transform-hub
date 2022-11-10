@@ -1,4 +1,3 @@
-import { Validator } from "@scramjet/types";
-import { isDefined } from "../typeguards";
+import { isDefined, isEmptyString } from "../typeguards";
 
-export const optionalValidator: Validator = () => (value: any) => isDefined(value);
+export const optionalValidator = (value: any) => isDefined(value) && !isEmptyString(value);
