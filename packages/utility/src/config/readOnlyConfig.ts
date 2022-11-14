@@ -22,15 +22,14 @@ export abstract class ReadOnlyConfig<Type extends Object> implements ReadOnlyCon
     }
 
     validate(config: Record<string, any>): boolean {
-        //Commented out - there is no way "any property defined" is proper validation here.
-        //if (Object.keys(config).length === 0) return false;
-
         for (const key in config) {
             if (this.validateEntry(key, config[key as keyof Object]) === false) return false;
         }
         return true;
     }
-    isValid() { return this.isValidConfig; }
+    isValid() {
+        return this.isValidConfig;
+    }
 
     has(key: keyof Type): boolean {
         return key in this.configuration;
