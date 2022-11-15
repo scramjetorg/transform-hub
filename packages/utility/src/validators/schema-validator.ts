@@ -54,7 +54,6 @@ export class SchemaValidator {
         const validators = this.schema[key];
 
         if (!validators) {
-            console.warn(`No ${key} property in schema. No validation performed.`);
             return false;
         }
 
