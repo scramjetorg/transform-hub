@@ -1,5 +1,12 @@
 import { ValidationResult, ValidationSchema } from "@scramjet/types";
 
+/**
+ * Validates objects using schema and stores validation errors inside
+ *
+ * @export
+ * @class SchemaValidator
+ * @typedef {SchemaValidator}
+ */
 export class SchemaValidator {
     protected schema: ValidationSchema;
     protected _errors: ValidationResult[];
@@ -19,8 +26,8 @@ export class SchemaValidator {
 
     /**
      * Validates object
-     * @param obj input object for validation
-     * @returns ValidationResult[] with validation info
+     * @param {Record} obj input object for validation
+     * @returns {ValidationResult[]} with validation info
      */
     validateSchema(obj: Record<string, any>): ValidationResult[] {
         this._errors = [];
@@ -44,9 +51,9 @@ export class SchemaValidator {
 
     /**
      * Validates property using defined schema
-     * @param key property key
-     * @param value property value
-     * @returns for valid entry returns true if validation should continue
+     * @param {string} key property key
+     * @param {any} value property value
+     * @returns {string | boolean} for valid entry returns true if validation should continue
      * or false if validation should be stopped.
      * Returns string with error message when validation error occurs.
      */
@@ -74,8 +81,8 @@ export class SchemaValidator {
 
     /**
      * Validates object
-     * @param obj input object for validation
-     * @returns true if objech is valid with schema, false otherwise
+     * @param {Record} obj input object for validation
+     * @returns {boolean} true if objech is valid with schema, false otherwise
      */
     validate(obj: Record<string, any>): boolean {
         this.validateSchema(obj);
@@ -85,9 +92,9 @@ export class SchemaValidator {
 
     /**
      * Validate entry
-     * @param key entry key
-     * @param value entry value
-     * @returns true if entry is valid with schema, false otherwise
+     * @param {string} key entry key
+     * @param {any} value entry value
+     * @returns {boolean} true if entry is valid with schema, false otherwise
      */
     validateEntry(key: string, value: any): boolean {
         return typeof this.validateSchemaElement(key, value) === "boolean";
