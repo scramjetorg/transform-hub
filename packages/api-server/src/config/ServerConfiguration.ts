@@ -52,7 +52,6 @@ export class ServerConfiguration extends ReadOnlyConfig<ServerConfig> {
     protected validateEntry(key: string, value: any): boolean | null {
         return schemaValidator.validateEntry(key, value);
     }
-    // eslint-disable-next-line complexity
     static validateEntry(key: string, value: any): boolean | null {
         return schemaValidator.validateEntry(key, value);
     }
