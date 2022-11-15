@@ -30,10 +30,10 @@ export type FReturns<T, Z extends any[] = any[]> = MaybePromise<T> | ((...args: 
  */
 export interface PipeableStream<Produces> extends Readable {
     read(count?: number): Produces[] | null;
-    pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean; }): T;
+    pipe<T extends NodeJS.WritableStream>(destination: T, options?: { end?: boolean }): T;
     // Again a hen-egg issue
     // eslint-disable-next-line no-use-before-define
-    pipe<T extends WritableStream<Produces>>(destination: T, options?: { end?: boolean; }): T;
+    pipe<T extends WritableStream<Produces>>(destination: T, options?: { end?: boolean }): T;
 }
 /**
  * A readable stream representation with generic chunks.
@@ -72,13 +72,15 @@ export type PassThoughStream<Passes> = DuplexStream<Passes, Passes>;
  */
 
 export type SynchronousStreamablePayload<Produces> =
-    PipeableStream<Produces> | AsyncGen<Produces, Produces> |
-    Gen<Produces, void> | Iterable<Produces> |
-    AsyncIterable<Produces>;
+    | PipeableStream<Produces>
+    | AsyncGen<Produces, Produces>
+    | Gen<Produces, void>
+    | Iterable<Produces>
+    | AsyncIterable<Produces>;
 
 export type HasTopicInformation = {
-    contentType?: string,
-    topic?: string
+    contentType?: string;
+    topic?: string;
 };
 
 export type SynchronousStreamable<Produces> = SynchronousStreamablePayload<Produces> & HasTopicInformation;
@@ -113,3 +115,7 @@ export type UrlPath = string;
 export type Port = number;
 
 export type ApiVersion = string;
+
+export type Validator = (message: string) => (value: any) => string | boolean;
+export type ValidationSchema = { [key: string]: ((value: any) => string | boolean)[] };
+export type ValidationResult = { name: string; isValid: boolean; message?: string };
