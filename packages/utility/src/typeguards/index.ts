@@ -6,4 +6,5 @@ export { isApiVersion } from "./is-api-version";
 export { isIdString } from "./is-id-string";
 export { isPort } from "./is-port";
 export { isUrlPath } from "./is-url-path";
+export { isHttpUrl } from "./is-http-url";
 export { isLogLevel } from "./is-log-level";
