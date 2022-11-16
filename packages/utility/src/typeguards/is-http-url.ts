@@ -9,7 +9,8 @@ import { URL } from "url";
  */
 export const isHttpUrl = (urlString: string): boolean => {
     try {
-        let url = new URL(urlString);
+        const url = new URL(urlString);
+
         return url.protocol === "http:" || url.protocol === "https:";
     } catch (_) {
         return false;
