@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { isDevelopment } from "../../utils/envs";
-import { profileConfig, sessionConfig } from "../config";
+import { profileManager, sessionConfig } from "../config";
 import { displayObject } from "../output";
 import { getMiddlewareClient } from "../platform";
 
@@ -11,7 +11,7 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const space: CommandDefinition = (program) => {
-    const isProdEnv = isProductionEnv(profileConfig.env);
+    const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) return;
 
@@ -47,7 +47,7 @@ export const space: CommandDefinition = (program) => {
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
             const version = await managerClient.getVersion();
 
-            displayObject({ spaceId, version, managerClient }, profileConfig.format);
+            displayObject({ spaceId, version, managerClient }, profileManager.getProfileConfig().format);
         });
 
     spaceCmd
@@ -58,7 +58,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managers = await mwClient.getManagers();
 
-            return displayObject(managers, profileConfig.format);
+            return displayObject(managers, profileManager.getProfileConfig().format);
         });
 
     spaceCmd
@@ -69,7 +69,7 @@ export const space: CommandDefinition = (program) => {
             const mwClient = getMiddlewareClient();
             const managerClient = mwClient.getManagerClient(name);
 
-            displayObject({ name, ...await managerClient.getVersion() }, profileConfig.format);
+            displayObject({ name, ...await managerClient.getVersion() }, profileManager.getProfileConfig().format);
             sessionConfig.setLastSpaceId(name);
         });
 

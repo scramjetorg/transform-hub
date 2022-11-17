@@ -3,7 +3,7 @@ import { createWriteStream, lstatSync } from "fs";
 import { defer } from "@scramjet/utility";
 import { displayEntity, displayMessage, displayObject } from "../output";
 import { getHostClient } from "../common";
-import { getSequenceId, profileConfig, sessionConfig } from "../config";
+import { getSequenceId, profileManager, sessionConfig } from "../config";
 
 import { PassThrough, Writable } from "stream";
 
@@ -31,7 +31,7 @@ export const sequence: CommandDefinition = (program) => {
         .command("list")
         .alias("ls")
         .description("Lists all available Sequences")
-        .action(async () => displayEntity(getHostClient().listSequences(), profileConfig.format));
+        .action(async () => displayEntity(getHostClient().listSequences(), profileManager.getProfileConfig().format));
 
     sequenceCmd
         .command("pack")
@@ -58,7 +58,7 @@ export const sequence: CommandDefinition = (program) => {
             async (sequencePackage: string, { name }) => {
                 const sequenceClient = await sequenceSendPackage(sequencePackage, { name }, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
 
-                displayObject(sequenceClient, profileConfig.format);
+                displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
         );
 
@@ -71,7 +71,7 @@ export const sequence: CommandDefinition = (program) => {
             async (query: string, sequencePackage: string) => {
                 const sequenceClient = await sequenceSendPackage(sequencePackage, { name: query }, true);
 
-                displayObject(sequenceClient, profileConfig.format);
+                displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
         );
 
@@ -115,7 +115,7 @@ export const sequence: CommandDefinition = (program) => {
             const instanceClient = await sequenceStart(
                 id, { configFile, configString, args, outputTopic, inputTopic, limits });
 
-            displayObject(instanceClient, profileConfig.format);
+            displayObject(instanceClient, profileManager.getProfileConfig().format);
         });
 
     type DeployArgs = {
@@ -148,7 +148,7 @@ export const sequence: CommandDefinition = (program) => {
                 output.pipe(createWriteStream(outputPath));
                 sessionConfig.setLastPackagePath(outputPath);
             }
-            const format = profileConfig.format;
+            const format = profileManager.getProfileConfig().format;
 
             if (lstatSync(path).isDirectory()) {
                 // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -161,7 +161,7 @@ export const sequence: CommandDefinition = (program) => {
             } else {
                 const sequenceClient = await sequenceSendPackage(path, {}, false, { progress: sequenceCmd.parent?.getOptionValue("progress") });
 
-                displayObject(sequenceClient, profileConfig.format);
+                displayObject(sequenceClient, profileManager.getProfileConfig().format);
             }
 
             const instanceClient = await sequenceStart("-", { configFile, configString, args });
@@ -174,7 +174,7 @@ export const sequence: CommandDefinition = (program) => {
         .argument("<id>", "Sequence id to start or '-' for the last uploaded")
         .description("Obtain a basic information about the Sequence")
         .action(async (id: string) => displayEntity(getHostClient().getSequence(getSequenceId(id)),
-            profileConfig.format));
+            profileManager.getProfileConfig().format));
 
     sequenceCmd
         .command("delete")
@@ -185,7 +185,7 @@ export const sequence: CommandDefinition = (program) => {
             try {
                 const sequenceDeleteResponse = await sequenceDelete(id);
 
-                displayObject(sequenceDeleteResponse, profileConfig.format);
+                displayObject(sequenceDeleteResponse, profileManager.getProfileConfig().format);
             } catch (error) {
                 if (error instanceof ClientError && error.code === "NOT_FOUND") {
                     error.message = `Unable to find sequence ${id}`;

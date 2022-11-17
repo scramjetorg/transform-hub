@@ -175,3 +175,35 @@ Then("I confirm Hub logs received", async function(this: CustomWorld) {
     await waitUntilStreamContains(stdout, "");
 });
 
+Then("I confirm apiUrl has changed to {string}", async function(this: CustomWorld, configPropValue: string) {
+    const res = this.cliResources!;
+
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "print"]);
+    const stdio = res.stdio![0].split("\n");
+    const config = JSON.parse(stdio[0]);
+
+    assert.equal(config.apiUrl, configPropValue);
+});
+
+Then("I confirm {string} {string} on the list", async function(this: CustomWorld, profileName: string, presence: string) {
+    const res = this.cliResources!;
+    const stdio = res.stdio![1].split("\n");
+    const isOnList = stdio.includes("   " + profileName);
+
+    if (presence === "exists") {
+        assert.equal(isOnList, true);
+    } else if (presence === "not exist") {
+        assert.equal(isOnList, false);
+    }
+});
+
+Then("I confirm I switched to {string} profile", async function(this: CustomWorld, profileName: string) {
+    const res = this.cliResources!;
+
+    res.stdio = await getStreamsFromSpawn("/usr/bin/env", [...si, "config", "profile", "ls"]);
+
+    const stdio = res.stdio![1].split("\n");
+    const defaultConfig = stdio.includes(`-> ${profileName}`);
+
+    assert.equal(defaultConfig, true);
+});

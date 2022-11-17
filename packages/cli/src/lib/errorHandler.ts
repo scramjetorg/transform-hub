@@ -2,7 +2,7 @@
 
 import { ClientError } from "@scramjet/client-utils";
 import { displayFormat } from "../types";
-import { profileConfig } from "./config";
+import { profileManager } from "./config";
 import { displayError, displayObject } from "./output";
 
 async function jsonize(err: ClientError) {
@@ -18,7 +18,7 @@ const getLogParams = () => {
     let format: displayFormat = "pretty";
 
     try {
-        const { log: { format: profileFormat, debug: profileDebug } } = profileConfig.get();
+        const { log: { format: profileFormat, debug: profileDebug } } = profileManager.getProfileConfig().get();
 
         if (profileFormat) format = profileFormat;
         if (profileDebug) debug = profileDebug;

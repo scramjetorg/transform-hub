@@ -2,7 +2,7 @@
 
 import { CommandDefinition } from "../../types";
 import { stringToBoolean } from "../../utils/stringToBoolean";
-import { profileConfig, profileManager, siConfig, sessionConfig, isProfileConfig, ProfileConfig } from "../config";
+import { profileManager, siConfig, sessionConfig, isProfileConfig, ProfileConfig } from "../config";
 import { displayMessage, displayObject } from "../output";
 import commander from "commander";
 
@@ -12,6 +12,7 @@ import commander from "commander";
  * @param {Command} program Commander object.
  */
 export const config: CommandDefinition = (program) => {
+    const profileConfig = profileManager.getProfileConfig();
     const defaultConfig = profileConfig.getDefault();
 
     const { apiUrl: defaultApiUrl,
@@ -36,7 +37,7 @@ export const config: CommandDefinition = (program) => {
         .alias("p")
         .description("Print out the current profile configuration")
         .action(() => {
-            const configuration = profileConfig.get();
+            const configuration = profileManager.getProfileConfig().get();
 
             if (profileManager.isPathSource())
                 displayMessage(`Current configuration: ${profileConfig.path}\n`);
@@ -242,5 +243,11 @@ export const config: CommandDefinition = (program) => {
         .command("remove")
         .argument("<name>")
         .description("Remove existing profile configuration")
-        .action((name) => { profileManager.removeProfile(name); });
+        .action((name) => {
+            if (profileManager.getProfileName() === name) {
+                siConfig.setProfile("default");
+            }
+
+            profileManager.removeProfile(name);
+        });
 };

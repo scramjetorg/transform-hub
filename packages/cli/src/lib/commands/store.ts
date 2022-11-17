@@ -1,6 +1,6 @@
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { getReadStreamFromFile } from "../common";
-import { profileConfig, sessionConfig } from "../config";
+import { profileManager, sessionConfig } from "../config";
 import { displayObject } from "../output";
 import { getMiddlewareClient } from "../platform";
 
@@ -10,7 +10,7 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const store: CommandDefinition = (program) => {
-    const isProdEnv = isProductionEnv(profileConfig.env);
+    const isProdEnv = isProductionEnv(profileManager.getProfileConfig().env);
 
     if (!isProdEnv) return;
 
@@ -28,7 +28,7 @@ export const store: CommandDefinition = (program) => {
             const spaceId = sessionConfig.lastSpaceId;
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
 
-            displayObject(await managerClient.getStoreItems(), profileConfig.format);
+            displayObject(await managerClient.getStoreItems(), profileManager.getProfileConfig().format);
         });
 
     storeCmd
@@ -43,7 +43,7 @@ export const store: CommandDefinition = (program) => {
                 await getReadStreamFromFile(sequencePackage), name
             );
 
-            displayObject(uploadedItem, profileConfig.format);
+            displayObject(uploadedItem, profileManager.getProfileConfig().format);
         });
 
     storeCmd
@@ -55,6 +55,6 @@ export const store: CommandDefinition = (program) => {
             const spaceId = sessionConfig.lastSpaceId;
             const managerClient = getMiddlewareClient().getManagerClient(spaceId);
 
-            displayObject(await managerClient.deleteStoreItem(id), profileConfig.format);
+            displayObject(await managerClient.deleteStoreItem(id), profileManager.getProfileConfig().format);
         });
 };

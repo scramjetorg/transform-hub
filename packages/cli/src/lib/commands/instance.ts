@@ -2,7 +2,7 @@
 import { instanceKill } from "../helpers/instance";
 import { CommandDefinition } from "../../types";
 import { attachStdio, getHostClient, getInstance, getReadStreamFromFile } from "../common";
-import { getInstanceId, profileConfig, sessionConfig } from "../config";
+import { getInstanceId, profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
 import { ClientError } from "@scramjet/client-utils";
 
@@ -23,7 +23,7 @@ export const instance: CommandDefinition = (program) => {
         .command("list")
         .alias("ls")
         .description("List the Instances")
-        .action(async () => displayEntity(getHostClient().listInstances(), profileConfig.format));
+        .action(async () => displayEntity(getHostClient().listInstances(), profileManager.getProfileConfig().format));
 
     instanceCmd
         .command("use")
@@ -48,14 +48,14 @@ export const instance: CommandDefinition = (program) => {
         .argument("<id>", "Instance id or '-' for the last one started")
         .description("Display Instance health status")
         .action((id: string) => displayEntity(getInstance(getInstanceId(id)).getHealth(),
-            profileConfig.format));
+            profileManager.getProfileConfig().format));
 
     instanceCmd
         .command("info")
         .argument("<id>", "Instance id or '-' for the last one started or selected")
         .description("Display the info about the Instance")
         .action(async (id: string) => displayEntity(getHostClient().getInstanceInfo(getInstanceId(id)),
-            profileConfig.format));
+            profileManager.getProfileConfig().format));
 
     instanceCmd
         .command("log")
@@ -73,7 +73,7 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, { removeImmediately = false }: { removeImmediately: boolean }) => {
             const instanceKillResponse = await instanceKill(id, removeImmediately);
 
-            displayObject(instanceKillResponse, profileConfig.format);
+            displayObject(instanceKillResponse, profileManager.getProfileConfig().format);
         }
         );
 
@@ -89,7 +89,7 @@ export const instance: CommandDefinition = (program) => {
         .description("End the Instance gracefully waiting for the unfinished tasks")
         .action(async (id: string, timeout: string) =>
             displayEntity(getInstance(getInstanceId(id)).stop(+timeout, true),
-                profileConfig.format));
+                profileManager.getProfileConfig().format));
 
     instanceCmd
         .command("input")
@@ -140,7 +140,7 @@ export const instance: CommandDefinition = (program) => {
             const instanceClient = getInstance(getInstanceId(id));
 
             return displayEntity(instanceClient.sendEvent(eventName, message),
-                profileConfig.format);
+                profileManager.getProfileConfig().format);
         });
 
     eventCmd
@@ -154,8 +154,10 @@ export const instance: CommandDefinition = (program) => {
         .action(async (id: string, event: string, { next, stream }) => {
             if (stream) return displayStream(getInstance(getInstanceId(id)).getEventStream(event));
             if (next) return displayEntity(getInstance(getInstanceId(id)).getNextEvent(event),
-                profileConfig.format);
-            return displayEntity(getInstance(getInstanceId(id)).getEvent(event), profileConfig.format);
+                profileManager.getProfileConfig().format);
+            return displayEntity(
+                getInstance(getInstanceId(id)).getEvent(event), profileManager.getProfileConfig().format
+            );
         });
 
     instanceCmd
@@ -167,7 +169,7 @@ export const instance: CommandDefinition = (program) => {
             const instanceClient = getInstance(getInstanceId(id));
 
             return displayEntity(instanceClient.sendStdin(file ? await getReadStreamFromFile(file) : process.stdin),
-                profileConfig.format);
+                profileManager.getProfileConfig().format);
         });
 
     instanceCmd

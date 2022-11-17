@@ -2,7 +2,7 @@
 import { CommandDefinition, isProductionEnv } from "../../types";
 import { isDevelopment } from "../../utils/envs";
 import { getHostClient } from "../common";
-import { profileConfig, sessionConfig } from "../config";
+import { profileManager, sessionConfig } from "../config";
 import { displayEntity, displayObject, displayStream } from "../output";
 import { getMiddlewareClient } from "../platform";
 
@@ -12,6 +12,8 @@ import { getMiddlewareClient } from "../platform";
  * @param {Command} program Commander object.
  */
 export const hub: CommandDefinition = (program) => {
+    const profileConfig = profileManager.getProfileConfig();
+
     const hubCmd = program
         .command("hub")
         .addHelpCommand(false)
