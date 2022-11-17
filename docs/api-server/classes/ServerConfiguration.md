@@ -19,6 +19,16 @@
 
 - [constructor](ServerConfiguration.md#constructor)
 
+### Accessors
+
+- [errors](ServerConfiguration.md#errors)
+- [router](ServerConfiguration.md#router)
+- [schemaValidator](ServerConfiguration.md#schemavalidator)
+- [server](ServerConfiguration.md#server)
+- [sslCertPath](ServerConfiguration.md#sslcertpath)
+- [sslKeyPath](ServerConfiguration.md#sslkeypath)
+- [verbose](ServerConfiguration.md#verbose)
+
 ### Methods
 
 - [get](ServerConfiguration.md#get)
@@ -76,6 +86,104 @@ ReadOnlyConfig<ServerConfig\>.constructor
 #### Defined in
 
 [packages/utility/src/config/readOnlyConfig.ts:10](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/readOnlyConfig.ts#L10)
+
+## Accessors
+
+### errors
+
+• `get` **errors**(): `ValidationResult`[]
+
+#### Returns
+
+`ValidationResult`[]
+
+#### Defined in
+
+[packages/api-server/src/config/ServerConfiguration.ts:43](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L43)
+
+___
+
+### router
+
+• `get` **router**(): `undefined` \| [`CeroRouter`](../interfaces/CeroRouter.md)
+
+#### Returns
+
+`undefined` \| [`CeroRouter`](../interfaces/CeroRouter.md)
+
+#### Defined in
+
+[packages/api-server/src/config/ServerConfiguration.ts:40](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L40)
+
+___
+
+### schemaValidator
+
+• `Static` `get` **schemaValidator**(): `SchemaValidator`
+
+#### Returns
+
+`SchemaValidator`
+
+#### Defined in
+
+[packages/api-server/src/config/ServerConfiguration.ts:46](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L46)
+
+___
+
+### server
+
+• `get` **server**(): `undefined` \| `Server` \| `Server`
+
+#### Returns
+
+`undefined` \| `Server` \| `Server`
+
+#### Defined in
+
+[packages/api-server/src/config/ServerConfiguration.ts:31](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L31)
+
+___
+
+### sslCertPath
+
+• `get` **sslCertPath**(): `undefined` \| `string`
+
+#### Returns
+
+`undefined` \| `string`
+
+#### Defined in
+
+[packages/api-server/src/config/ServerConfiguration.ts:37](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L37)
+
+___
+
+### sslKeyPath
+
+• `get` **sslKeyPath**(): `undefined` \| `string`
+
+#### Returns
+
+`undefined` \| `string`
+
+#### Defined in
+
+[packages/api-server/src/config/ServerConfiguration.ts:34](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L34)
+
+___
+
+### verbose
+
+• `get` **verbose**(): `undefined` \| `boolean`
+
+#### Returns
+
+`undefined` \| `boolean`
+
+#### Defined in
+
+[packages/api-server/src/config/ServerConfiguration.ts:28](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L28)
 
 ## Methods
 
@@ -159,7 +267,7 @@ ReadOnlyConfig.isValid
 
 #### Defined in
 
-[packages/utility/src/config/readOnlyConfig.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/readOnlyConfig.ts#L32)
+[packages/utility/src/config/readOnlyConfig.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/readOnlyConfig.ts#L30)
 
 ___
 
@@ -177,13 +285,13 @@ ___
 
 `boolean`
 
-#### Inherited from
+#### Overrides
 
 ReadOnlyConfig.validate
 
 #### Defined in
 
-[packages/utility/src/config/readOnlyConfig.ts:24](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/readOnlyConfig.ts#L24)
+[packages/api-server/src/config/ServerConfiguration.ts:49](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L49)
 
 ___
 
@@ -204,7 +312,7 @@ ___
 
 #### Defined in
 
-[packages/api-server/src/config/ServerConfiguration.ts:9](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L9)
+[packages/api-server/src/config/ServerConfiguration.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L55)
 
 ___
 
@@ -229,4 +337,4 @@ ReadOnlyConfig.validateEntry
 
 #### Defined in
 
-[packages/api-server/src/config/ServerConfiguration.ts:5](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L5)
+[packages/api-server/src/config/ServerConfiguration.ts:52](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/api-server/src/config/ServerConfiguration.ts#L52)
