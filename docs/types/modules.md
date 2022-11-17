@@ -184,6 +184,9 @@
 - [TransformSeqence](modules.md#transformseqence)
 - [UpstreamStreamsConfig](modules.md#upstreamstreamsconfig)
 - [UrlPath](modules.md#urlpath)
+- [ValidationResult](modules.md#validationresult)
+- [ValidationSchema](modules.md#validationschema)
+- [Validator](modules.md#validator)
 - [WFunction](modules.md#wfunction)
 - [WritableApp](modules.md#writableapp)
 - [WriteFunction](modules.md#writefunction)
@@ -261,7 +264,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L115)
+[packages/types/src/utils.ts:117](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L117)
 
 ___
 
@@ -574,7 +577,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:105](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L105)
+[packages/types/src/utils.ts:107](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L107)
 
 ___
 
@@ -963,7 +966,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:79](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L79)
+[packages/types/src/utils.ts:81](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L81)
 
 ___
 
@@ -1016,7 +1019,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:109](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L109)
+[packages/types/src/utils.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L111)
 
 ___
 
@@ -1993,7 +1996,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L113)
+[packages/types/src/utils.ts:115](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L115)
 
 ___
 
@@ -2666,7 +2669,7 @@ from {@see TFunction}
 
 #### Defined in
 
-[packages/types/src/utils.ts:89](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L89)
+[packages/types/src/utils.ts:91](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L91)
 
 ___
 
@@ -2682,7 +2685,7 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:84](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L84)
+[packages/types/src/utils.ts:86](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L86)
 
 ___
 
@@ -2908,7 +2911,75 @@ ___
 
 #### Defined in
 
-[packages/types/src/utils.ts:111](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L111)
+[packages/types/src/utils.ts:113](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L113)
+
+___
+
+### ValidationResult
+
+Ƭ **ValidationResult**: `Object`
+
+#### Type declaration
+
+| Name | Type |
+| :------ | :------ |
+| `isValid` | `boolean` |
+| `message?` | `string` |
+| `name` | `string` |
+
+#### Defined in
+
+[packages/types/src/utils.ts:121](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L121)
+
+___
+
+### ValidationSchema
+
+Ƭ **ValidationSchema**: `Object`
+
+#### Index signature
+
+▪ [key: `string`]: (`value`: `any`) => `string` \| `boolean`[]
+
+#### Defined in
+
+[packages/types/src/utils.ts:120](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L120)
+
+___
+
+### Validator
+
+Ƭ **Validator**: (`message`: `string`) => (`value`: `any`) => `string` \| `boolean`
+
+#### Type declaration
+
+▸ (`message`): (`value`: `any`) => `string` \| `boolean`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `message` | `string` |
+
+##### Returns
+
+`fn`
+
+▸ (`value`): `string` \| `boolean`
+
+##### Parameters
+
+| Name | Type |
+| :------ | :------ |
+| `value` | `any` |
+
+##### Returns
+
+`string` \| `boolean`
+
+#### Defined in
+
+[packages/types/src/utils.ts:119](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/types/src/utils.ts#L119)
 
 ___
 

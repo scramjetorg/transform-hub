@@ -164,7 +164,7 @@ ReadOnlyConfiguration.isValid
 
 #### Defined in
 
-[packages/utility/src/config/readOnlyConfig.ts:32](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/readOnlyConfig.ts#L32)
+[packages/utility/src/config/readOnlyConfig.ts:30](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/utility/src/config/readOnlyConfig.ts#L30)
 
 ___
 

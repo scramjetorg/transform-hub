@@ -2,6 +2,18 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.30.3] - 2022-11-17
+
+## Fixed
+
+* Fix changing profiles by @patuwwy in <https://github.com/scramjetorg/transform-hub/pull/734>
+* Better validation messages with SchemaValidator utility by @kociolekscramjet in <https://github.com/scramjetorg/transform-hub/pull/740>
+* Added http url typeguard and validator by @kociolekscramjet in <https://github.com/scramjetorg/transform-hub/pull/742>
+
+## Features
+
+* [CLI] config & profile tests by @a-tylenda in <https://github.com/scramjetorg/transform-hub/pull/741>
+
 ## [0.30.2] - 2022-11-10
 
 ## Fixed
