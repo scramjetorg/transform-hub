@@ -1,7 +1,7 @@
 import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-import { Readable, Writable } from "stream";
+import { Duplex, Readable, Writable } from "stream";
 import { IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
@@ -44,6 +44,7 @@ import { AuditedRequest, Auditor } from "./auditor";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
+import { DuplexStream } from "@scramjet/api-server";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -434,8 +435,8 @@ export class Host implements IComponent {
 
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-        this.api.duplex(`${this.apiBase}/platform`, (stream, headers) =>
-            this.cpmConnector?.handleCommunicationRequest(stream, headers)
+        this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers) =>
+            this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers)
         );
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }

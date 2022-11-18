@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Duplex, Readable } from "stream";
+import { Readable } from "stream";
 import * as http from "http";
 
 import { networkInterfaces } from "systeminformation";
@@ -15,12 +15,14 @@ import {
     STHIDMessageData,
     IObjectLogger
 } from "@scramjet/types";
-import { MessageUtilities } from "@scramjet/model";
+
 import { StringStream } from "scramjet";
 import { LoadCheck } from "@scramjet/load-check";
 import { VerserClient } from "@scramjet/verser";
 import { TypedEmitter, normalizeUrl } from "@scramjet/utility";
 import { ObjLogger } from "@scramjet/obj-logger";
+import { ReasonPhrases } from "http-status-codes";
+import { DuplexStream } from "@scramjet/api-server";
 
 type STHInformation = {
     id?: string;
@@ -64,13 +66,6 @@ export class CPMConnector extends TypedEmitter<Events> {
      * @type {StringStream}
      */
     communicationStream?: StringStream;
-
-    /**
-     * Stream used to read and write data to Manager.
-     *
-     * @type {Duplex}
-     */
-    communicationChannel?: Duplex;
 
     /**
      * Logger.
@@ -253,10 +248,26 @@ export class CPMConnector extends TypedEmitter<Events> {
         }
     }
 
-    async handleCommunicationRequest(stream: Duplex, _headers: http.IncomingHttpHeaders) {
-        this.communicationChannel = stream;
+    handleCommunicationRequestEnd() {
+        this.communicationStream?.end();
 
-        StringStream.from(this.communicationChannel as Readable)
+        if (this.loadInterval) {
+            clearInterval(this.loadInterval);
+        }
+
+        this.communicationStream = undefined;
+    }
+
+    async handleCommunicationRequest(duplex: DuplexStream, _headers: http.IncomingHttpHeaders) {
+        if (this.communicationStream) {
+            return {
+                opStatus: ReasonPhrases.CONFLICT
+            };
+        }
+
+        //this.communicationChannel = duplex;
+
+        StringStream.from(duplex.input as Readable)
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
                 this.logger.trace("Received message", message);
@@ -280,15 +291,35 @@ export class CPMConnector extends TypedEmitter<Events> {
                 this.logger.error("communicationChannel error", e.message);
             });
 
-        this.communicationStream = new StringStream();
-        this.communicationStream.pipe(this.communicationChannel);
+        this.communicationStream = new StringStream().JSONStringify().resume();
+        this.communicationStream.pipe(duplex.output);
+
+        this.communicationStream.on("pause", () => {
+            this.logger.warn("Communication stream paused");
+        });
 
         await this.communicationStream.whenWrote(
-            JSON.stringify([CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]) + "\n"
+            [CPMMessageCode.NETWORK_INFO, await this.getNetworkInfo()]
         );
 
         this.emit("connect");
-        this.setLoadCheckMessageSender();
+        await this.setLoadCheckMessageSender();
+
+        return new Promise((resolve, reject) => {
+            duplex.on("end", () => {
+                this.logger.debug("Platform request close");
+
+                this.handleCommunicationRequestEnd();
+                resolve({});
+            });
+
+            duplex.on("error", () => {
+                this.logger.error("Platform request error");
+
+                this.handleCommunicationRequestEnd();
+                reject();
+            });
+        });
     }
 
     getHttpAgent(): http.Agent {
@@ -430,17 +461,20 @@ export class CPMConnector extends TypedEmitter<Events> {
         });
     }
 
+    async sendLoad() {
+        await this.communicationStream!.whenWrote(
+            [CPMMessageCode.LOAD, await this.getLoad()]
+        );
+    }
+
     /**
      * Sets up a method sending load check data and to be called with interval
      */
-    setLoadCheckMessageSender() {
-        this.loadInterval = setInterval(async () => {
-            const load = await this.getLoad();
+    async setLoadCheckMessageSender() {
+        await this.sendLoad();
 
-            await this.communicationStream!.whenWrote(
-                JSON.stringify(MessageUtilities
-                    .serializeMessage<CPMMessageCode.LOAD>(load)) + "\n"
-            );
+        this.loadInterval = setInterval(async () => {
+            await this.sendLoad();
         }, 5000);
     }
 
@@ -471,7 +505,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Sending sequences information, total sequences", sequences.length);
 
         await this.communicationStream!.whenWrote(
-            JSON.stringify([CPMMessageCode.SEQUENCES, { sequences }]) + "\n"
+            [CPMMessageCode.SEQUENCES, { sequences }]
         );
 
         this.logger.trace("Sequences information sent");
@@ -486,7 +520,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Sending instances information");
 
         await this.communicationStream?.whenWrote(
-            JSON.stringify([CPMMessageCode.INSTANCES, { instances }]) + "\n"
+            [CPMMessageCode.INSTANCES, { instances }]
         );
 
         this.logger.trace("Instances information sent");
@@ -502,7 +536,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Send sequence status update", sequenceId, seqStatus);
 
         await this.communicationStream?.whenWrote(
-            JSON.stringify([CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus }]) + "\n"
+            [CPMMessageCode.SEQUENCE, { id: sequenceId, status: seqStatus }]
         );
 
         this.logger.trace("Sequence status update sent", sequenceId, seqStatus);
@@ -518,7 +552,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         this.logger.trace("Send instance status update", instanceStatus);
 
         await this.communicationStream?.whenWrote(
-            JSON.stringify([CPMMessageCode.INSTANCE, { ...instance, status: instanceStatus }]) + "\n"
+            [CPMMessageCode.INSTANCE, { ...instance, status: instanceStatus }]
         );
 
         this.logger.trace("Instance status update sent", instanceStatus);
@@ -532,7 +566,7 @@ export class CPMConnector extends TypedEmitter<Events> {
      */
     async sendTopicInfo(data: { provides?: string, requires?: string, contentType?: string }) {
         await this.communicationStream?.whenWrote(
-            JSON.stringify([CPMMessageCode.TOPIC, { ...data, status: "add" }]) + "\n"
+            [CPMMessageCode.TOPIC, { ...data, status: "add" }]
         );
     }
 
