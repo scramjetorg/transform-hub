@@ -871,41 +871,10 @@ export class Host implements IComponent {
         });
 
         csic.on("pang", async (data) => {
-            // @TODO REFACTOR possibly send only one PANG in Runner and throw on more pangs
             this.logger.trace("PANG received", data);
 
-            // On First empty PANG
-            if (!data.requires && !data.provides) {
-                if (csic.inputTopic) {
-                    this.logger.trace("Routing topic to Sequence input, name from API:", csic.inputTopic);
-
-                    csic.requires = csic.inputTopic;
-
-                    await this.serviceDiscovery.routeTopicToStream(
-                        { topic: csic.inputTopic, contentType: "" },
-                        csic.getInputStream()
-                    );
-                }
-
-                if (csic.outputTopic) {
-                    this.logger.trace("Routing Sequence output to topic, name from API", csic.outputTopic);
-
-                    csic.provides = csic.outputTopic;
-
-                    // @TODO use pang data for contentType, right now it's a bit tricky bc there are multiple pangs
-                    await this.serviceDiscovery.routeStreamToTopic(
-                        csic.getOutputStream(),
-                        { topic: csic.outputTopic, contentType: "" },
-                        csic.id
-                    );
-                }
-            }
-
-            // Do not route original topic to input stream, if --input-topic is specified
-            if (!csic.inputTopic && data.requires) {
-                this.logger.trace("Routing topic to sequence input, name from Sequence:", data.requires);
-
-                csic.requires = data.requires;
+            if (data.requires) {
+                this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
                     { topic: data.requires, contentType: data.contentType! },
@@ -917,15 +886,11 @@ export class Host implements IComponent {
                 });
             }
 
-            // Do not route output stream to original topic if --output-topic is specified
-            if (!csic.outputTopic && data.provides) {
-                this.logger.trace("Routing sequence output to topic, name from Sequence", data.provides);
-
-                csic.provides = data.provides;
-
+            if (data.provides) {
+                this.logger.trace("Routing Sequence output to topic", data.requires);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
-                    { topic: data.provides, contentType: "" },
+                    { topic: data.provides, contentType: data.contentType! },
                     csic.id
                 );
 
