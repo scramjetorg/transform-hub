@@ -876,7 +876,7 @@ export class Host implements IComponent {
         csic.on("pang", async (data) => {
             this.logger.trace("PANG received", data);
 
-            if (data.requires) {
+            if (data.requires && !csic.inputRouted) {
                 this.logger.trace("Routing Sequence input to topic", data.requires);
 
                 await this.serviceDiscovery.routeTopicToStream(
@@ -884,18 +884,22 @@ export class Host implements IComponent {
                     csic.getInputStream()
                 );
 
+                csic.inputRouted = true;
+
                 await this.serviceDiscovery.update({
                     requires: data.requires, contentType: data.contentType!, topicName: data.requires
                 });
             }
 
-            if (data.provides) {
+            if (data.provides && !csic.outputRouted) {
                 this.logger.trace("Routing Sequence output to topic", data.requires);
                 await this.serviceDiscovery.routeStreamToTopic(
                     csic.getOutputStream(),
                     { topic: data.provides, contentType: data.contentType! },
                     csic.id
                 );
+
+                csic.outputRouted = true;
 
                 await this.serviceDiscovery.update({
                     provides: data.provides, contentType: data.contentType!, topicName: data.provides

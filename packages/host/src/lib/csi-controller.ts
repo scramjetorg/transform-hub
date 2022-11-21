@@ -125,6 +125,9 @@ export class CSIController extends TypedEmitter<Events> {
      */
     public inputTopic?: string;
 
+    public outputRouted = false;
+    public inputRouted = false;
+
     /**
      * Logger.
      *
