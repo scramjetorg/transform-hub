@@ -86,6 +86,10 @@ export class ServiceDiscovery {
             this.logger.debug(`Incoming topic '${topic}' request`);
             let target = this.getByTopic(topic);
 
+            req.on("close", () => {
+                //@TODO: Should remove this actor"
+            });
+
             if (!target) {
                 target = this.addData(
                     { contentType, topic },

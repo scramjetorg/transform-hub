@@ -355,6 +355,7 @@ export class Host implements IComponent {
                 await this.startCSIController(sequence, {
                     appConfig: seqenceConfig.appConfig || {},
                     args: seqenceConfig.args,
+                    instanceId: seqenceConfig.instanceId
                 });
                 this.logger.debug("Starting sequence based on config", seqenceConfig);
             })
@@ -479,9 +480,6 @@ export class Host implements IComponent {
     }
 
     topicsMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
-        req.socket?.setTimeout(0);
-        req.socket?.setNoDelay(true);
-
         req.url = req.url?.substring(this.topicsBase.length);
 
         return this.serviceDiscovery.router.lookup(req, res, next);
@@ -852,7 +850,7 @@ export class Host implements IComponent {
      */
     async startCSIController(sequence: SequenceInfo, payload: STHRestAPI.StartSequencePayload): Promise<CSIController> {
         const communicationHandler = new CommunicationHandler();
-        const id = IDProvider.generate();
+        const id = payload.instanceId || IDProvider.generate();
 
         this.logger.debug("CSIC start payload", payload);
 
@@ -995,6 +993,8 @@ export class Host implements IComponent {
      * @returns {STHRestAPI.GetSequencesResponse} List of Sequences.
      */
     getSequences(): STHRestAPI.GetSequencesResponse {
+        this.logger.info("List Sequences");
+
         return Array.from(this.sequencesStore.values()).map((sequence) => ({
             id: sequence.id,
             name: sequence.name,
@@ -1023,10 +1023,9 @@ export class Host implements IComponent {
     }
 
     getTopics() {
-        return this.serviceDiscovery.getTopics().map((topic) => ({
-            name: topic.topic,
-            contentType: topic.contentType,
-        }));
+        this.logger.info("List topics");
+
+        return this.serviceDiscovery.getTopics();
     }
 
     getStatus(): STHRestAPI.GetStatusResponse {
