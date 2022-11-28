@@ -175,6 +175,7 @@ export class VerserConnection {
                     reject(error);
                 });
 
+            clientRequest.setSocketKeepAlive(true);
             clientRequest.flushHeaders();
         });
     }
@@ -200,7 +201,7 @@ export class VerserConnection {
             // TODO: Error handling?
         });
 
-        this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+        this.agent = new Agent({ keepAlive: true }) as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
                 const socket = this.bpmux!.multiplex() as Socket;
