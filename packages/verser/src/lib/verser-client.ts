@@ -103,9 +103,6 @@ export class VerserClient extends TypedEmitter<Events> {
                 ca: typeof this.opts.https === "object" ? this.opts.https.ca : undefined,
             });
 
-            connectRequest.socket?.setTimeout(0);
-            connectRequest.socket?.setNoDelay(true);
-
             connectRequest.on("error", (err) => {
                 this.logger.error("Connect error", err);
                 reject(err);
