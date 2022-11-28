@@ -479,9 +479,6 @@ export class Host implements IComponent {
     }
 
     topicsMiddleware(req: ParsedMessage, res: ServerResponse, next: NextCallback) {
-        req.socket?.setTimeout(0);
-        req.socket?.setNoDelay(true);
-
         req.url = req.url?.substring(this.topicsBase.length);
 
         return this.serviceDiscovery.router.lookup(req, res, next);
