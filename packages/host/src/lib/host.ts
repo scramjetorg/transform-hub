@@ -220,6 +220,8 @@ export class Host implements IComponent {
         }
 
         (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
+        this.api.server.keepAliveTimeout = 0;
+        this.api.server.timeout = 0;
 
         if (!!this.config.cpmUrl !== !!this.config.cpmId) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
@@ -435,9 +437,10 @@ export class Host implements IComponent {
 
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-        this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) =>
-            this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers)
-        );
+        this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
+            this.logger.debug("Platform request");
+            return this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
+        });
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 

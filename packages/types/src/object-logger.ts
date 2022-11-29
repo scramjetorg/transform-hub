@@ -67,7 +67,7 @@ export interface IObjectLogger {
     addSerializedLoggerSource(source: Readable): void;
 
     pipe(target: Writable | IObjectLogger, options?: { end?: boolean; stringified?: boolean }): void;
-    unpipe(target: Writable | IObjectLogger): void;
+    unpipe(target?: Writable | IObjectLogger): void;
 
     updateBaseLog(entry: LogEntry): void;
 }

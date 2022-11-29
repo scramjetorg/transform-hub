@@ -395,6 +395,8 @@ export class CPMConnector extends TypedEmitter<Events> {
      * Tries to reconnect.
      */
     async handleConnectionClose() {
+        this.handleCommunicationRequestEnd();
+
         this.connection?.removeAllListeners();
         this.connected = false;
 
@@ -461,11 +463,15 @@ export class CPMConnector extends TypedEmitter<Events> {
     }
 
     async sendLoad() {
-        await this.communicationStream!.whenWrote(
-            [CPMMessageCode.LOAD, await this.getLoad()]
-        );
+        try {
+            await this.communicationStream!.whenWrote(
+                [CPMMessageCode.LOAD, await this.getLoad()]
+            );
 
-        this.logger.debug("LoadCheck sent");
+            this.logger.debug("LoadCheck sent");
+        } catch (e) {
+            this.logger.error("Error sending loadcheck");
+        }
     }
 
     /**
@@ -476,7 +482,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.loadInterval = setInterval(async () => {
             await this.sendLoad();
-        }, 500);
+        }, 5000);
     }
 
     /**
