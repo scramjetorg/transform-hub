@@ -2,7 +2,7 @@ import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
 import { Duplex, Readable, Writable } from "stream";
-import { IncomingMessage, Server, ServerResponse } from "http";
+import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
 import {
@@ -199,7 +199,7 @@ export class Host implements IComponent {
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
 
         this.auditor = new Auditor();
-        this.auditor.logger.pipe(this.logger);
+        //this.auditor.logger.pipe(this.logger);
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
@@ -435,7 +435,7 @@ export class Host implements IComponent {
 
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-        this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers) =>
+        this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) =>
             this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers)
         );
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));

@@ -24,17 +24,17 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Input log stream in object mode.
      */
-    inputLogStream = new PassThrough({ objectMode: true });
+    inputLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: true });
+    inputStringifiedLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Output stream in object mode.
      */
-    output = new DataStream({ objectMode: true });
+    output = new DataStream({ objectMode: true }).resume();
 
     /**
      * Name used to indicate the source of the log.

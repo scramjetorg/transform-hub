@@ -265,8 +265,6 @@ export class CPMConnector extends TypedEmitter<Events> {
             };
         }
 
-        //this.communicationChannel = duplex;
-
         StringStream.from(duplex.input as Readable)
             .JSONParse()
             .map(async (message: EncodedControlMessage) => {
@@ -303,6 +301,7 @@ export class CPMConnector extends TypedEmitter<Events> {
         );
 
         this.emit("connect");
+
         await this.setLoadCheckMessageSender();
 
         return new Promise((resolve, reject) => {
@@ -465,6 +464,8 @@ export class CPMConnector extends TypedEmitter<Events> {
         await this.communicationStream!.whenWrote(
             [CPMMessageCode.LOAD, await this.getLoad()]
         );
+
+        this.logger.debug("LoadCheck sent");
     }
 
     /**
@@ -475,7 +476,7 @@ export class CPMConnector extends TypedEmitter<Events> {
 
         this.loadInterval = setInterval(async () => {
             await this.sendLoad();
-        }, 5000);
+        }, 500);
     }
 
     /**
