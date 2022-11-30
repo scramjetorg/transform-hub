@@ -220,8 +220,9 @@ export class Host implements IComponent {
         }
 
         (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
-        this.api.server.keepAliveTimeout = 0;
+
         this.api.server.timeout = 0;
+        this.api.server.requestTimeout = 0;
 
         if (!!this.config.cpmUrl !== !!this.config.cpmId) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
