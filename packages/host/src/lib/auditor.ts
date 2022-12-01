@@ -23,7 +23,7 @@ export class Auditor {
     auditStream = new StringStream();
     logger = new ObjLogger(this);
 
-    outStream = new ReReadable({ length: 1e5 });
+    outStream = new ReReadable({ length: 1e6 });
 
     getOutputStream(req: IncomingMessage, res: ServerResponse) {
         this.logger.info("request", req.url, req.method);
@@ -95,7 +95,7 @@ export class Auditor {
 
         this.logger.trace("Requestor, tx, rx", requestorId, req.auditData.rx, req.auditData.tx);
 
-        if (opCode) {
+        if (opCode !== OpRecordCode.NOT_PROCESSABLE) {
             this.write({
                 opState: status,
                 opCode,

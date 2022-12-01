@@ -58,5 +58,7 @@ export enum OpRecordCode {
      * The INSTANCE_STOPPED message is sent when an Instance terminated not
      * in response to the API request but gracefully by itself or by throwing an error.
      */
-    INSTANCE_STOPPED = -1 // NOT YET IMPLEMENTED
+    INSTANCE_STOPPED = -1, // NOT YET IMPLEMENTED
+
+    NOT_PROCESSABLE
 }

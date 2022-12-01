@@ -27,6 +27,7 @@ export class DuplexStream extends Duplex {
         } else {
             this.output.on("drain", () => {
                 this.output.write(chunk);
+                this.resume();
             });
         }
 
