@@ -79,7 +79,7 @@ export class VerserClient extends TypedEmitter<Events> {
         super();
 
         this.opts = opts;
-        this.httpAgent = this.opts.https ? new HttpsAgent({ keepAlive: true }) : new HttpAgent({ keepAlive: true });
+        this.httpAgent = this.opts.https ? new HttpsAgent() : new HttpAgent();
     }
 
     /**
@@ -96,8 +96,8 @@ export class VerserClient extends TypedEmitter<Events> {
                 agent: this.httpAgent,
                 headers: this.opts.headers,
                 hostname,
-                method: "CONNECT",
-                pathname,
+                method: "connect",
+                path: pathname,
                 port,
                 protocol: this.opts.https ? "https:" : "http:",
                 ca: typeof this.opts.https === "object" ? this.opts.https.ca : undefined,
@@ -118,7 +118,7 @@ export class VerserClient extends TypedEmitter<Events> {
                 resolve({ req, socket });
             });
 
-            connectRequest.end();
+            connectRequest.flushHeaders();
         });
     }
 
@@ -143,7 +143,10 @@ export class VerserClient extends TypedEmitter<Events> {
                 this.emit("error", err);
             });
 
-        this._verserAgent = new HttpAgent() as HttpAgent & { createConnection: typeof createConnection }; // lack of types?
+        this._verserAgent = new HttpAgent({ keepAlive: true }) as HttpAgent & {
+            createConnection: typeof createConnection
+        }; // lack of types?
+
         this._verserAgent.createConnection = () => {
             try {
                 const socket = this.bpmux!.multiplex() as Socket;

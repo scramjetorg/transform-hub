@@ -19,7 +19,7 @@ const BPMux = require("bpmux").BPMux;
  * Provides methods for handling connection to Verser server and streams in connection socket.
  */
 export class VerserConnection {
-    private logger = new ObjLogger(this);
+    logger = new ObjLogger(this);
 
     private request: IncomingMessage;
     private bpmux?: { [key: string]: any };
@@ -168,6 +168,7 @@ export class VerserConnection {
         return new Promise((resolve, reject) => {
             const clientRequest = httpRequest({ ...options, agent: this.agent })
                 .on("response", (incomingMessage: IncomingMessage) => {
+                    this.logger.debug("Got Response", options);
                     resolve({ incomingMessage, clientRequest });
                 })
                 .on("error", (error: Error) => {
@@ -175,7 +176,10 @@ export class VerserConnection {
                     reject(error);
                 });
 
+            clientRequest.setSocketKeepAlive(true);
             clientRequest.flushHeaders();
+
+            this.logger.debug("makeRequest headers sent", options);
         });
     }
 
@@ -200,7 +204,7 @@ export class VerserConnection {
             // TODO: Error handling?
         });
 
-        this.agent = new Agent() as Agent & { createConnection: typeof createConnection }; // lack of types?
+        this.agent = new Agent({ keepAlive: true }) as Agent & { createConnection: typeof createConnection }; // lack of types?
         this.agent.createConnection = () => {
             try {
                 const socket = this.bpmux!.multiplex() as Socket;

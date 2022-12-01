@@ -24,17 +24,17 @@ export class ObjLogger implements IObjectLogger {
     /**
      * Input log stream in object mode.
      */
-    inputLogStream = new PassThrough({ objectMode: true });
+    inputLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Input log stream in string mode.
      */
-    inputStringifiedLogStream = new PassThrough({ objectMode: true });
+    inputStringifiedLogStream = new PassThrough({ objectMode: true }).resume();
 
     /**
      * Output stream in object mode.
      */
-    output = new DataStream({ objectMode: true });
+    output = new DataStream({ objectMode: true }).resume();
 
     /**
      * Name used to indicate the source of the log.
@@ -163,8 +163,10 @@ export class ObjLogger implements IObjectLogger {
     }
 
     private _stringifiedOutput?: StringStream;
+
     get stringifiedOutput(): StringStream {
-        if (!this._stringifiedOutput) this._stringifiedOutput = this.output.JSONStringify();
+        // eslint-disable-next-line no-console
+        if (!this._stringifiedOutput) this._stringifiedOutput = this.output.JSONStringify().catch((e: any) => { console.error(e); });
         return this._stringifiedOutput;
     }
 
@@ -192,7 +194,7 @@ export class ObjLogger implements IObjectLogger {
      */
     pipe(
         target: Writable | IObjectLogger,
-        { end, stringified }: { end?: boolean, stringified?: boolean } = {}
+        { end = false, stringified }: { end?: boolean, stringified?: boolean } = {}
     ): typeof target {
         if (target instanceof ObjLogger) {
             this.baseLog.id ||= target.baseLog.id;
@@ -219,6 +221,12 @@ export class ObjLogger implements IObjectLogger {
      * @returns {Writable} Unpiped stream
      */
     unpipe(target: Writable | IObjectLogger | undefined, options: ObjLogPipeOptions = {}) {
+        if (!target) {
+            this.stringifiedOutput.unpipe();
+            this.output.unpipe();
+            return undefined;
+        }
+
         if (target instanceof ObjLogger) {
             this.logLevel = target.logLevel;
 

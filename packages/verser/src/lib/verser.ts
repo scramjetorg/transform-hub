@@ -33,7 +33,13 @@ export class Verser extends TypedEmitter<Events> {
             const connection = new VerserConnection(req, socket);
 
             this.connections.push(connection);
+            this.logger.info("Total connections:", this.connections.length);
+
             this.emit("connect", connection);
+
+            socket.once("close", () => {
+                this.logger.info("Connect request closed");
+            });
         });
     }
 

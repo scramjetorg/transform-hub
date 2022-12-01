@@ -1,8 +1,8 @@
 import findPackage from "find-package-json";
 import { ReasonPhrases, StatusCodes } from "http-status-codes";
 
-import { Readable, Writable } from "stream";
-import { IncomingMessage, Server, ServerResponse } from "http";
+import { Duplex, Readable, Writable } from "stream";
+import { IncomingHttpHeaders, IncomingMessage, Server, ServerResponse } from "http";
 import { AddressInfo } from "net";
 
 import {
@@ -44,6 +44,7 @@ import { AuditedRequest, Auditor } from "./auditor";
 import { getTelemetryAdapter, ITelemetryAdapter } from "@scramjet/telemetry";
 import { cpus, totalmem } from "os";
 import { S3Client } from "./s3-client";
+import { DuplexStream } from "@scramjet/api-server";
 
 const buildInfo = readJsonFile("build.info", __dirname, "..");
 const packageFile = findPackage(__dirname).next();
@@ -198,7 +199,7 @@ export class Host implements IComponent {
             this.telemetryEnvironmentName = sthConfig.telemetry.environment;
 
         this.auditor = new Auditor();
-        this.auditor.logger.pipe(this.logger);
+        //this.auditor.logger.pipe(this.logger);
 
         const { safeOperationLimit, instanceRequirements } = this.config;
 
@@ -219,6 +220,9 @@ export class Host implements IComponent {
         }
 
         (this.api.server as Server & { httpAllowHalfOpen?: boolean }).httpAllowHalfOpen = true;
+
+        this.api.server.timeout = 0;
+        this.api.server.requestTimeout = 0;
 
         if (!!this.config.cpmUrl !== !!this.config.cpmId) {
             throw new HostError("CPM_CONFIGURATION_ERROR", "CPM URL and ID must be provided together");
@@ -434,9 +438,10 @@ export class Host implements IComponent {
 
         this.api.use(this.topicsBase, (req, res, next) => this.topicsMiddleware(req, res, next));
         this.api.upstream(`${this.apiBase}/log`, () => this.commonLogsPipe.getOut());
-        this.api.duplex(`${this.apiBase}/platform`, (stream, headers) =>
-            this.cpmConnector?.handleCommunicationRequest(stream, headers)
-        );
+        this.api.duplex(`${this.apiBase}/platform`, (duplex: Duplex, headers: IncomingHttpHeaders) => {
+            this.logger.debug("Platform request");
+            return this.cpmConnector?.handleCommunicationRequest(duplex as unknown as DuplexStream, headers);
+        });
         this.api.use(`${this.instanceBase}/:id`, (req, res, next) => this.instanceMiddleware(req, res, next));
     }
 
