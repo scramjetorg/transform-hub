@@ -24,6 +24,7 @@
 - [INSTANCE\_HEARTBEAT](OpRecordCode.md#instance_heartbeat)
 - [INSTANCE\_STOPPED](OpRecordCode.md#instance_stopped)
 - [MANAGER\_HEARTBEAT](OpRecordCode.md#manager_heartbeat)
+- [NOT\_PROCESSABLE](OpRecordCode.md#not_processable)
 - [POST\_INSTANCE\_EVENT](OpRecordCode.md#post_instance_event)
 - [POST\_INSTANCE\_INPUT](OpRecordCode.md#post_instance_input)
 - [POST\_INSTANCE\_MONITORING\_RATE](OpRecordCode.md#post_instance_monitoring_rate)
@@ -228,6 +229,16 @@ ___
 #### Defined in
 
 [op-record-code.ts:55](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L55)
+
+___
+
+### NOT\_PROCESSABLE
+
+• **NOT\_PROCESSABLE** = ``0``
+
+#### Defined in
+
+[op-record-code.ts:63](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/op-record-code.ts#L63)
 
 ___
 

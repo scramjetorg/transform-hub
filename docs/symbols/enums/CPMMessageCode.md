@@ -6,6 +6,7 @@
 
 ### Enumeration Members
 
+- [CONFIRM\_MSG](CPMMessageCode.md#confirm_msg)
 - [INSTANCE](CPMMessageCode.md#instance)
 - [INSTANCES](CPMMessageCode.md#instances)
 - [LOAD](CPMMessageCode.md#load)
@@ -16,6 +17,16 @@
 - [TOPIC](CPMMessageCode.md#topic)
 
 ## Enumeration Members
+
+### CONFIRM\_MSG
+
+• **CONFIRM\_MSG** = ``8000``
+
+#### Defined in
+
+[cpm-message-code.ts:14](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/symbols/src/cpm-message-code.ts#L14)
+
+___
 
 ### INSTANCE
 
