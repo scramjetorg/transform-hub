@@ -2,6 +2,11 @@
 
 This is the changelog for Scramjet Transform Hub. It holds only notable commits, others are grouped without commit info.
 
+## [0.30.4] - 2022-12-1
+## Fixed
+
+* Unhealthy bug by @patuwwy in https://github.com/scramjetorg/transform-hub/pull/745
+
 ## [0.30.3] - 2022-11-17
 
 ## Fixed

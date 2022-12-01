@@ -223,7 +223,7 @@ Logging levels hierarchy.
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:166](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L166)
+[obj-logger/src/obj-logger.ts:167](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L167)
 
 ## Methods
 
@@ -247,7 +247,7 @@ IObjectLogger.addObjectLoggerSource
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:171](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L171)
+[obj-logger/src/obj-logger.ts:173](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L173)
 
 ___
 
@@ -295,7 +295,7 @@ IObjectLogger.addSerializedLoggerSource
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:178](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L178)
+[obj-logger/src/obj-logger.ts:180](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L180)
 
 ___
 
@@ -338,7 +338,7 @@ IObjectLogger.end
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:237](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L237)
+[obj-logger/src/obj-logger.ts:245](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L245)
 
 ___
 
@@ -445,7 +445,7 @@ IObjectLogger.pipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:193](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L193)
+[obj-logger/src/obj-logger.ts:195](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L195)
 
 ___
 
@@ -476,7 +476,7 @@ ___
 
 ### unpipe
 
-▸ **unpipe**(`target`, `options?`): `DataStream`
+▸ **unpipe**(`target`, `options?`): `undefined` \| `DataStream`
 
 Pipes output logger to provided target. The target can be a writable stream
 or an instance of class fulfiling IObjectLogger interface.
@@ -494,7 +494,7 @@ ObjectLogger.pipe
 
 #### Returns
 
-`DataStream`
+`undefined` \| `DataStream`
 
 Unpiped stream
 
@@ -504,7 +504,7 @@ IObjectLogger.unpipe
 
 #### Defined in
 
-[obj-logger/src/obj-logger.ts:221](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L221)
+[obj-logger/src/obj-logger.ts:223](https://github.com/scramjetorg/transform-hub/blob/HEAD/packages/obj-logger/src/obj-logger.ts#L223)
 
 ___
 

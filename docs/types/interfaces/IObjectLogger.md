@@ -234,13 +234,13 @@ ___
 
 ### unpipe
 
-▸ **unpipe**(`target`): `void`
+▸ **unpipe**(`target?`): `void`
 
 #### Parameters
 
 | Name | Type |
 | :------ | :------ |
-| `target` | `Writable` \| [`IObjectLogger`](IObjectLogger.md) |
+| `target?` | `Writable` \| [`IObjectLogger`](IObjectLogger.md) |
 
 #### Returns
 
