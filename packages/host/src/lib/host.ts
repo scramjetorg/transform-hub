@@ -653,6 +653,8 @@ export class Host implements IComponent {
 
             const config = await sequenceAdapter.identify(stream, id);
 
+            config.packageSize = stream.socket.bytesRead;
+
             this.sequencesStore.set(id, { id, config, instances: new Set(), name: sequenceName });
 
             this.logger.info("Sequence identified", config);

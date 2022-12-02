@@ -37,6 +37,7 @@ export type ManagerConfiguration = {
         bucket: string;
         useSSL: boolean,
         region: string
-        port: number
+        port: number,
+        bucketLimit: number
     }
 };
