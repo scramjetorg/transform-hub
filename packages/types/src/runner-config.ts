@@ -26,6 +26,7 @@ type CommonSequenceConfig = {
         directory?: string;
     } | string;
     language: string;
+    packageSize?: number;
 }
 
 export type DockerSequenceConfig = CommonSequenceConfig & {
